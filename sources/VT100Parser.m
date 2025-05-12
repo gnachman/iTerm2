@@ -99,7 +99,8 @@
         const NSStringEncoding encoding = self.encoding;
         const BOOL support8BitControlCharacters = (encoding == NSASCIIStringEncoding || encoding == NSISOLatin1StringEncoding);
         const unsigned char firstChar = VT100ByteStreamCursorPeek(&cursor);
-        if (isAsciiString(firstChar) && !_dcsHooked) {
+        const unsigned char secondChar = VT100ByteStreamCursorDoublePeek(&cursor);
+        if (isMixedAsciiString(firstChar, secondChar) && !_dcsHooked) {
             ParseString(&consumer, token, encoding);
             position = cursor;
         } else if (iscontrol(firstChar) ||
@@ -109,9 +110,6 @@
                 token->type = VT100_LITERAL;
                 token->code = firstChar;
                 VT100ByteStreamConsumerSetConsumed(&consumer, 1);
-            } else if (!_dcsHooked && (firstChar == 10 || firstChar == 13)) {
-                ParseString(&consumer, token, encoding);
-                position = cursor;
             } else {
                 [_controlParser parseControlWithConsumer:&consumer
                                            incidentals:vector

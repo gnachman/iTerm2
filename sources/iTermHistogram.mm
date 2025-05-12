@@ -11,6 +11,7 @@
 #include <cmath>
 #include <map>
 #include <numeric>
+#include <random>
 #include <vector>
 
 #if ENABLE_STATS
@@ -63,10 +64,14 @@ namespace iTerm2 {
 
             // Shuffle the two values array because we want to sample from them. Make copies so this
             // method can take a const argument and not have unnecessary side-effects.
+            static std::mt19937_64 rng{std::random_device{}()};
+
+            // then, where you previously called random_shuffle:
             std::vector<double> other_values(other._values);
             std::vector<double> this_values(_values);
-            std::random_shuffle(other_values.begin(), other_values.end());
-            std::random_shuffle(this_values.begin(), this_values.end());
+
+            std::shuffle(other_values.begin(), other_values.end(), rng);
+            std::shuffle(this_values.begin(), this_values.end(), rng);
 
             // The goal of this algorithm is for the resulting values to have
             // been sampled with the same probability. If one sampler has Ni values with a weight of
@@ -183,7 +188,8 @@ namespace iTerm2 {
     self = [super init];
     if (self) {
 #if ENABLE_STATS
-        _sampler = new iTerm2::Sampler(100);
+        _reservoirSize = 100;
+        _sampler = new iTerm2::Sampler(_reservoirSize);
 #endif
     }
     return self;
@@ -202,7 +208,13 @@ namespace iTerm2 {
     _max = 0;
     _count = 0;
     delete _sampler;
-    _sampler = new iTerm2::Sampler(100);
+    _sampler = new iTerm2::Sampler(_reservoirSize);
+#endif
+}
+- (void)setReservoirSize:(int)reservoirSize {
+#if ENABLE_STATS
+    _reservoirSize = reservoirSize;
+    [self clear];
 #endif
 }
 

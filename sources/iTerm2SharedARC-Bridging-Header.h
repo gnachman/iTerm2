@@ -156,6 +156,7 @@
 #import "VT100RemoteHost.h"
 #import "VT100ScreenMutableState.h"
 #import "VT100ScreenMutableState+Resizing.h"
+#import "VT100ScreenMutableState+TerminalDelegate.h"
 #import "VT100Terminal.h"
 #import "charmaps.h"
 #import "SSKeychain.h"

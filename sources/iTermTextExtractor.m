@@ -205,6 +205,9 @@ const NSInteger kLongMaximumWordLength = 100000;
 
 - (int)rowCountForRawLineEncompassingWithAbsY:(long long)absY {
     const long long offset = self.dataSource.totalScrollbackOverflow;
+    if (absY < offset) {
+        return 0;
+    }
     const VT100GridCoordRange lineRange =
     [self rangeForWrappedLineEncompassing:VT100GridCoordMake(0, absY - offset)
                           respectContinuations:NO

@@ -477,6 +477,8 @@ extension VT100Token {
         switch type {
         case VT100_STRING:
             return self.string
+        case VT100_GANG:
+            return subtokens.compactMap { $0.stringValue(encoding: encoding) }.joined()
         case VT100_MIXED_ASCII_CR_LF, VT100_ASCIISTRING:
             let data = NSData(bytes: asciiData.pointee.buffer, length: Int(asciiData.pointee.length))
             return String(data: data as Data, encoding: encoding)

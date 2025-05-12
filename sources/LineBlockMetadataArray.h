@@ -132,7 +132,7 @@ migrationIndex:(iTermExternalAttributeIndex * _Nullable)migrationIndex
 
 // Appends to the last entry already in the array.
 // numEntries > first
-- (const iTermMetadata *)appendToLastLine:(iTermImmutableMetadata *)metadataToAppend
+- (const iTermMetadata *)appendToLastLine:(const iTermImmutableMetadata *)metadataToAppend
                            originalLength:(int)originalLength
                          additionalLength:(int)additionalLength
                              continuation:(screen_char_t)continuation;

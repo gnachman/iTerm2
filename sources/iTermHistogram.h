@@ -14,6 +14,7 @@
 @property (nonatomic, readonly) NSString *stringValue;
 @property (nonatomic, readonly) NSString *sparklines;
 @property (nonatomic, readonly) int64_t count;
+@property (nonatomic) int reservoirSize;
 
 - (void)addValue:(double)value;
 - (void)mergeFrom:(iTermHistogram *)other;

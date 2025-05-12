@@ -2683,6 +2683,7 @@
 		A6936B5A1D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A6936B581D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.m */; };
 		A693C0BD29D0B15900AED4E4 /* DeadlineMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A693C0BC29D0B15900AED4E4 /* DeadlineMonitor.swift */; };
 		A693C0BF29D0B1F100AED4E4 /* MemoryAddressHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A693C0BE29D0B1F100AED4E4 /* MemoryAddressHelper.swift */; };
+		A69553892DD1AA7F002E694D /* TokenArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69553882DD1AA7B002E694D /* TokenArray.swift */; };
 		A695CA7F213DAA8500486440 /* NSHost+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A695CA7D213DAA8500486440 /* NSHost+iTerm.h */; };
 		A695CA80213DAA8500486440 /* NSHost+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A695CA7E213DAA8500486440 /* NSHost+iTerm.m */; };
 		A697100618D82E79007E901D /* iTermAdvancedSettingsViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A697100418D82E79007E901D /* iTermAdvancedSettingsViewController.h */; };
@@ -3455,6 +3456,7 @@
 		A6C7DE5A19A459E9001E5C75 /* iTerm2.sdef in Resources */ = {isa = PBXBuildFile; fileRef = A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */; };
 		A6C7DE5D19A469D6001E5C75 /* NSColor+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE5B19A469D6001E5C75 /* NSColor+Scripting.h */; };
 		A6C811F42DCFD5E40088E628 /* SearchEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6BBBFD42CC87713000A697C /* SearchEngineTests.swift */; };
+		A6C811F92DD1A7870088E628 /* TwoTierTokenQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C811F82DD1A7850088E628 /* TwoTierTokenQueue.swift */; };
 		A6C838AD2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist in Resources */ = {isa = PBXBuildFile; fileRef = A6C838AC2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist */; };
 		A6C838AE2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist in Resources */ = {isa = PBXBuildFile; fileRef = A6C838AC2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist */; };
 		A6C838AF2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist in Resources */ = {isa = PBXBuildFile; fileRef = A6C838AC2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist */; };
@@ -4215,6 +4217,8 @@
 		A6E7E122286E41730067642D /* NSMenu+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E7E121286E41730067642D /* NSMenu+iTerm.swift */; };
 		A6E8BA0419DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */; };
 		A6E8BA0519DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */; };
+		A6E8EA1E2DD2DDC1001143CF /* unordered_dense.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8EA1C2DD2DDC1001143CF /* unordered_dense.h */; };
+		A6E8EA3E2DD3077A001143CF /* TimingStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E8EA3D2DD30773001143CF /* TimingStats.swift */; };
 		A6E9ACCA1A19956D008B0B6F /* NSWindow+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */; };
 		A6E9ACCB1A19956D008B0B6F /* NSWindow+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */; };
 		A6EA071A24EA043600DD6E17 /* NSURL+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A60251671CCD3E5E009BABF1 /* NSURL+iTerm.m */; };
@@ -7138,6 +7142,7 @@
 		A6936B581D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermHotkeyPreferencesModel.m; sourceTree = "<group>"; };
 		A693C0BC29D0B15900AED4E4 /* DeadlineMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeadlineMonitor.swift; sourceTree = "<group>"; };
 		A693C0BE29D0B1F100AED4E4 /* MemoryAddressHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryAddressHelper.swift; sourceTree = "<group>"; };
+		A69553882DD1AA7B002E694D /* TokenArray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenArray.swift; sourceTree = "<group>"; };
 		A695CA7D213DAA8500486440 /* NSHost+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSHost+iTerm.h"; sourceTree = "<group>"; };
 		A695CA7E213DAA8500486440 /* NSHost+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSHost+iTerm.m"; sourceTree = "<group>"; };
 		A696AB3921603A3F000023C3 /* iTermMetalUnavailableReason.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalUnavailableReason.h; sourceTree = "<group>"; };
@@ -7553,6 +7558,7 @@
 		A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = iTerm2.sdef; sourceTree = "<group>"; };
 		A6C7DE5B19A469D6001E5C75 /* NSColor+Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+Scripting.h"; sourceTree = "<group>"; };
 		A6C7DE5C19A469D6001E5C75 /* NSColor+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSColor+Scripting.m"; sourceTree = "<group>"; };
+		A6C811F82DD1A7850088E628 /* TwoTierTokenQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TwoTierTokenQueue.swift; sourceTree = "<group>"; };
 		A6C838AC2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = DeprecatedProfileKeyMappings.plist; sourceTree = "<group>"; };
 		A6C838B02CB9ACF90062BE68 /* success-sound.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "success-sound.mp3"; sourceTree = "<group>"; };
 		A6C838B12CB9ACF90062BE68 /* error-sound.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "error-sound.mp3"; sourceTree = "<group>"; };
@@ -7907,6 +7913,8 @@
 		A6E7E121286E41730067642D /* NSMenu+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSMenu+iTerm.swift"; sourceTree = "<group>"; };
 		A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermIntegerNumberFormatter.h; sourceTree = "<group>"; };
 		A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermIntegerNumberFormatter.m; sourceTree = "<group>"; };
+		A6E8EA1C2DD2DDC1001143CF /* unordered_dense.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = unordered_dense.h; sourceTree = "<group>"; };
+		A6E8EA3D2DD30773001143CF /* TimingStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimingStats.swift; sourceTree = "<group>"; };
 		A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSWindow+PSM.h"; sourceTree = "<group>"; };
 		A6E9ACC91A19956D008B0B6F /* NSWindow+PSM.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSWindow+PSM.m"; sourceTree = "<group>"; };
 		A6EA071C24EA441900DD6E17 /* NSURL+IDN.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSURL+IDN.m"; path = "NSURL-IDN/NSURL+IDN.m"; sourceTree = "<group>"; };
@@ -8878,6 +8886,7 @@
 		1D03D42519144B8E0049EB8F /* ThirdParty */ = {
 			isa = PBXGroup;
 			children = (
+				A6E8EA1D2DD2DDC1001143CF /* unordered_dense */,
 				A6F66B6E2C2E2B6200DC3569 /* BTree */,
 				A6EA071B24EA440600DD6E17 /* NSURL-IDN */,
 				A653F67224CF4EBA0062377E /* fmdb */,
@@ -10467,6 +10476,8 @@
 		A63F40AC1842988A003A6A6D /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				A69553882DD1AA7B002E694D /* TokenArray.swift */,
+				A6C811F82DD1A7850088E628 /* TwoTierTokenQueue.swift */,
 				A697CD702D973E370031583F /* iTermApplicationDelegate.swift */,
 				A61E0C4F2D5ACD4C00D4633A /* PTYSession.swift */,
 				A6F3EB4E2D32EC5500612173 /* TailFindController.swift */,
@@ -11372,6 +11383,7 @@
 		A68A30C9186D101C007F550F /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				A6E8EA3D2DD30773001143CF /* TimingStats.swift */,
 				A60E9FC42DC69A7500E3193B /* EfficientCodec.swift */,
 				A643B7F92DAACF3B00EF918E /* PathCompletionHelper.swift */,
 				A643B7F32DA88F1200EF918E /* PathExtractor.swift */,
@@ -12456,6 +12468,14 @@
 				A62C3B221BCC24AB00B5629D /* iTermRecentDirectoryMO.m */,
 			);
 			name = NSManagedObjects;
+			sourceTree = "<group>";
+		};
+		A6E8EA1D2DD2DDC1001143CF /* unordered_dense */ = {
+			isa = PBXGroup;
+			children = (
+				A6E8EA1C2DD2DDC1001143CF /* unordered_dense.h */,
+			);
+			path = unordered_dense;
 			sourceTree = "<group>";
 		};
 		A6EA071B24EA440600DD6E17 /* NSURL-IDN */ = {
@@ -13875,6 +13895,7 @@
 				A60593E9257DFBCC00CACEE6 /* legacy_server.h in Headers */,
 				A667194D1DCE36C3000CE608 /* iTermWebSocketConnection.h in Headers */,
 				5370679D21C9D2780088D0F3 /* SIGKey.h in Headers */,
+				A6E8EA1E2DD2DDC1001143CF /* unordered_dense.h in Headers */,
 				5370679B21C9D2780088D0F3 /* SIGVerificationAlgorithm.h in Headers */,
 				A6614C7C210AE7350001EAA3 /* iTermPasteViewManager.h in Headers */,
 				A667194E1DCE36C3000CE608 /* iTermInitialDirectory.h in Headers */,
@@ -16626,6 +16647,7 @@
 			files = (
 				A62132D12786109000B80724 /* CapturedOutput.m in Sources */,
 				A667C26027791223006B4DEF /* PTYAnnotation.m in Sources */,
+				A69553892DD1AA7F002E694D /* TokenArray.swift in Sources */,
 				A653F6BB24D4C9B50062377E /* iTermKeyLabels.m in Sources */,
 				A6EC0B0F2C9C9AA800598D20 /* FoldMark.swift in Sources */,
 				53D0FD52237DCB5A00DAFA8A /* NSTableView+iTerm.m in Sources */,
@@ -16722,6 +16744,7 @@
 				A621F10326F2B0FE001DD3A6 /* VT100LineInfo.m in Sources */,
 				A6EC80812828E9F600493544 /* Conductor.swift in Sources */,
 				A6CC7F5C274B6C570060C3C2 /* ToolJobs.m in Sources */,
+				A6C811F92DD1A7870088E628 /* TwoTierTokenQueue.swift in Sources */,
 				A63F0A5D2BF436850096633F /* iTermHostnameFinder.swift in Sources */,
 				535D0915224DD13F00A79581 /* iTermPreferencesSearchEngineResultsWindowController.m in Sources */,
 				A6EC8073281F2C2900493544 /* ExternalSearchResult.swift in Sources */,
@@ -16803,6 +16826,7 @@
 				A6D1A3F72C7E9B2000FECDF2 /* KittyImageCommand.swift in Sources */,
 				A63174A021214698004F0142 /* iTermGenericStatusBarContainer.m in Sources */,
 				53E8F3702244A58800F3770F /* iTermActionsModel.m in Sources */,
+				A6E8EA3E2DD3077A001143CF /* TimingStats.swift in Sources */,
 				A69CCB12211B55FB008ADA71 /* iTermMenuBarObserver.m in Sources */,
 				A6A4865D20B6706700493302 /* ProfilesKeysPreferencesViewController.m in Sources */,
 				5370679121C9D2780088D0F3 /* SIGTrust.m in Sources */,
@@ -19778,7 +19802,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
@@ -20093,7 +20117,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
@@ -20177,7 +20201,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
@@ -20249,7 +20273,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;

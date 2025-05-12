@@ -156,7 +156,7 @@ class iTermNonASCIIString: iTermBaseString, iTermString {
             for (range, rtl) in rtlIndexes.membership(in: Range(nsrange)!) {
                 var style = self.style
                 style.rtlStatus = rtl ? .RTL : .LTR
-#warning("TODO: Test this")
+                // TODO: Test this
                 substrings.append(iTermNonASCIIString(codes: codes[range],
                                                       complex: complex[range].shifted(by: -range.lowerBound),
                                                       style: style,

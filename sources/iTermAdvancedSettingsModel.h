@@ -92,6 +92,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 #if ITERM2_SHARED_ARC
 + (NSString *)browserBundleID;
 #endif  // ITERM2_SHARED_ARC
++ (int)bufferDepth;
 + (BOOL)chaseAnchoredScreen;
 + (BOOL)channelsEnabled;
 + (BOOL)clearBellIconAggressively;

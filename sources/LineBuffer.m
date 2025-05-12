@@ -129,8 +129,12 @@ static const NSInteger kUnicodeVersion = 9;
     [_lineBlocks.lastBlock shrinkToFit];
     [self commitLastBlock];
     return [_lineBlocks addBlockOfSize:size
-                                number:num_dropped_blocks + _lineBlocks.count
+                                number:self.nextBlockNumber
            mayHaveDoubleWidthCharacter:self.mayHaveDoubleWidthCharacter];
+}
+
+- (long long)nextBlockNumber {
+    return num_dropped_blocks + _lineBlocks.count;
 }
 
 - (instancetype)init {
@@ -221,6 +225,12 @@ static const NSInteger kUnicodeVersion = 9;
          ITAssertWithMessage(count == num_wrapped_lines_cache, @"Cached number of wrapped lines is incorrect");
     }
     [self assertUniqueBlockIDs];
+
+    // No empty interior blocks
+    for (int i = 1; i + 1 < _lineBlocks.count; i++) {
+        LineBlock *block = _lineBlocks[i];
+        assert(!block.isEmpty);
+    }
 #endif
 }
 
@@ -304,45 +314,79 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     int totalRawLinesDropped = 0;
 #if DEBUG
     [self assertUniqueBlockIDs];
+    [self sanityCheck];
 #endif
+    NSMutableArray<LineBlock *> *blocksToDealloc = [NSMutableArray array];
     if (max_lines != -1 && nl > max_lines) {
         LineBlock *block = _lineBlocks[0];
         int total_lines = nl;
         while (total_lines > max_lines) {
-            int extra_lines = total_lines - max_lines;
-
-            int block_lines = [block getNumLinesWithWrapWidth: width];
+            const int extra_lines = total_lines - max_lines;
+            const int block_lines = [block getNumLinesWithWrapWidth:width];
 #if ITERM_DEBUG
             ITAssertWithMessage(block_lines > 0, @"Empty leading block");
 #endif
-            int toDrop = block_lines;
-            if (toDrop > extra_lines) {
-                toDrop = extra_lines;
-            }
-            int charsDropped;
-            const int numRawLinesBefore = block.numRawLines;
-            int dropped = [block dropLines:toDrop withWidth:width chars:&charsDropped];
-#if DEBUG
-            [self assertUniqueBlockIDs];
-#endif
-            totalDropped += dropped;
-            const int numRawLinesAfter = block.numRawLines;
-            assert(numRawLinesAfter <= numRawLinesBefore);
-            totalRawLinesDropped += (numRawLinesBefore - numRawLinesAfter);
-            droppedChars += charsDropped;
-            if ([block isEmpty]) {
+            if (extra_lines >= block_lines) {
+                // Drop the entire block.
+                totalDropped += block_lines;
+                totalRawLinesDropped += block.numRawLines;
+                droppedChars += block.nonDroppedSpaceUsed;
+                [blocksToDealloc addObject:block];
                 [_lineBlocks removeFirstBlock];
-                ++num_dropped_blocks;
+                num_dropped_blocks += 1;
                 if (_lineBlocks.count > 0) {
                     block = _lineBlocks[0];
                 }
+                total_lines -= block_lines;
 #if DEBUG
                 [self assertUniqueBlockIDs];
+                [self sanityCheck];
+                if (total_lines > max_lines) {
+                    ITAssertWithMessage([block getNumLinesWithWrapWidth:width] > 0, @"Empty leading block");
+                }
+#endif
+            } else {
+                int charsDropped;
+                const int numRawLinesBefore = block.numRawLines;
+                int dropped = [block dropLines:extra_lines withWidth:width chars:&charsDropped];
+#if DEBUG
+                [self assertUniqueBlockIDs];
+                [self sanityCheck];
+#endif
+                totalDropped += dropped;
+                const int numRawLinesAfter = block.numRawLines;
+                assert(numRawLinesAfter <= numRawLinesBefore);
+                totalRawLinesDropped += (numRawLinesBefore - numRawLinesAfter);
+                droppedChars += charsDropped;
+                const BOOL blockIsEmpty = block.isEmpty;
+                if (blockIsEmpty) {
+                    [_lineBlocks removeFirstBlock];
+                    ++num_dropped_blocks;
+                    [blocksToDealloc addObject:block];
+                    if (_lineBlocks.count > 0) {
+                        block = _lineBlocks[0];
+                    }
+#if DEBUG
+                    [self assertUniqueBlockIDs];
+                    [self sanityCheck];
+#endif
+                }
+                total_lines -= dropped;
+#if DEBUG
+                if (total_lines > max_lines) {
+                    ITAssertWithMessage([block getNumLinesWithWrapWidth:width] > 0, @"Empty leading block");
+                }
 #endif
             }
-            total_lines -= dropped;
         }
         num_wrapped_lines_cache = total_lines;
+    }
+    if (blocksToDealloc.count) {
+        dispatch_async(gDeallocQueue, ^{
+            // LineBlock's dealloc is surprsingly slow considering how little it does, taking over
+            // 1% of total time in a benchmark of printing a large ascii file.
+            [blocksToDealloc removeAllObjects];
+        });
     }
 #if DEBUG
     [self assertUniqueBlockIDs];
@@ -523,6 +567,75 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         return;
     }
     [_lineBlocks.lastBlock setBidiForLastRawLine:bidi];
+}
+
+- (void)appendLines:(CTVector(iTermAppendItem) *)items width:(int)width {
+    self.dirty = YES;
+#ifdef LOG_MUTATIONS
+    NSLog(@"Append: %@\n", ScreenCharArrayToStringDebug(buffer, length));
+#endif
+    [self removeTrailingEmptyBlocks];
+#if DEBUG
+    [self sanityCheck];
+#endif
+    int first = 0;
+    while (first < CTVectorCount(items)) {
+        LineBlock *lastBlock = _lineBlocks.lastBlock;
+        if (!lastBlock.hasPartial) {
+            break;
+        }
+        iTermAppendItem item = CTVectorGet(items, first);
+        if (item.length > 0 || !item.partial) {
+            [self appendLine:item.buffer
+                      length:item.length
+                     partial:item.partial
+                       width:width
+                    metadata:item.metadata
+                continuation:item.continuation];
+#if DEBUG
+    [self sanityCheck];
+#endif
+        }
+#if DEBUG
+    [self sanityCheck];
+#endif
+        first += 1;
+    }
+
+
+    if (first < CTVectorCount(items)) {
+        [self removeTrailingEmptyBlocks];
+#if DEBUG
+    [self sanityCheck];
+#endif
+        LineBlock *block = [[LineBlock alloc] initWithItems:items
+                                                  fromIndex:first
+                                                      width:width
+                                        absoluteBlockNumber:self.nextBlockNumber];
+        if (!block.isEmpty) {
+#if DEBUG
+            [self sanityCheck];
+            assert(!block.isEmpty);
+#endif
+            if (num_wrapped_lines_width == width) {
+                num_wrapped_lines_cache += [block getNumLinesWithWrapWidth:width];
+            } else {
+                // Width change. Invalidate the wrapped lines cache.
+                num_wrapped_lines_width = -1;
+            }
+            [_lineBlocks addBlock:block];
+#if DEBUG
+            [self sanityCheck];
+            assert(!block.isEmpty);
+#endif
+        }
+    }
+
+    if (_wantsSeal) {
+        _wantsSeal = NO;
+        [self ensureLastBlockUncopied];
+    }
+    [self sanityCheck];
 }
 
 - (void)reallyAppendLine:(const screen_char_t *)buffer

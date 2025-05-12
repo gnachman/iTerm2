@@ -104,8 +104,6 @@ class DeltaStringBuilder: NSObject {
 
             if let partNS = ComplexCharRegistry.instance.string(for: code, isComplex: isComplexChar) {
                 let part = partNS as String
-                let utf16Len = part.utf16.count
-                let len = part.utf16.count
 
                 for cu in part.utf16 {
                     runningΔ -= 1

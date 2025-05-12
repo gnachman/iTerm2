@@ -9,6 +9,7 @@
 #import "VT100ScreenMutableState+Private.h"
 #import "VT100ScreenMutableState+MRR.h"
 
+#import "CVector.h"
 #import "DebugLogging.h"
 #import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
@@ -17,6 +18,7 @@
 #import "VT100ScreenState+Private.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermHistogram.h"
 
 @implementation VT100ScreenMutableState (TerminalDelegate)
 
@@ -83,11 +85,25 @@
 }
 
 - (void)terminalAppendMixedAsciiCRLFData:(AsciiData *)asciiData
-                                   crlfs:(NSArray<NSNumber *> *)crlfs {
+                                   crlfs:(CTVector(int) *)crlfs {
+    [self appendMixedAsciiCRLFData:asciiData crlfs:crlfs startOffset:0];
+}
+
+- (int)appendMixedAsciiCRLFData:(AsciiData *)asciiData
+                           crlfs:(CTVector(int) *)crlfs
+                     startOffset:(int)startOffset {
+    int numLines = 0;
     int start = 0;
-    const NSInteger count = crlfs.count;
-    for (NSInteger i = 0; i < count + 1; i++) {
-        const int control = (i < count) ? crlfs[i].intValue : asciiData->length;
+    const int width = self.currentGrid.size.width;
+    const NSInteger count = CTVectorCount(crlfs);
+    for (NSInteger i = 0; i < count + 1; i+=2) {
+        const int control = (i < count) ? CTVectorGet(crlfs, i) : asciiData->length;
+        if (start < startOffset) {
+            start = MIN(startOffset, control + 2);
+            if (start < startOffset || start > control) {
+                continue;
+            }
+        }
         if (control > start) {
             ScreenChars screenChars = {
                 .buffer = asciiData->screenChars->buffer + start,
@@ -98,18 +114,263 @@
                 .length = control - start,
                 .screenChars = &screenChars
             };
+            numLines += temp.length / width;
+            DLog(@"Append ascii data at %@: %.*s", VT100GridCoordDescription(self.currentGrid.cursor), temp.length, temp.buffer);
             [self terminalAppendAsciiData:&temp];
         }
         if (control < asciiData->length) {
-            char c = asciiData->buffer[control];
-            if (c == 10) {
-                [self terminalLineFeed];
-            } else {
-                [self terminalCarriageReturn];
-            }
+            numLines += 1;
+            [self terminalCarriageReturn];
+            [self terminalLineFeed];
+            DLog(@"Append CRLF");
         }
-        start = control + 1;
+        DLog(@"Cursor now at %@", VT100GridCoordDescription(self.currentGrid.cursor));
+        start = control + 2;
     }
+    return numLines;
+}
+
+typedef struct {
+    // Where the cursor would be after appending
+    VT100GridCoord cursor;
+    // How many tokens to append directly to line buffer
+    int tokenCount;
+    // How many characters of the last token to append directly to line buffer
+    int characterCount;
+    // (Over)estimate of the Number of raw lines
+    int lineCount;
+} VT100ScreenMutableStateAppendInfo;
+
+- (VT100ScreenMutableStateAppendInfo)appendInfoForTokens:(NSArray<VT100Token *> *)tokens {
+    VT100ScreenMutableStateAppendInfo info = { 0 };
+
+    // Count how many lines will be appended.
+    const int width = self.width;
+    VT100GridCoord cursor = self.currentGrid.cursor;
+    // A vector of threeples for each raw line in tokens: (token Index, offset into token, line length)
+    CTVector(WrappedLineInfo) wrappedLineInfos;
+    CTVectorCreate(&wrappedLineInfos, tokens.count * 25);
+
+    DLog(@"Initial cursor at %@", VT100GridCoordDescription(cursor));
+
+    int tokenIndex = 0;
+    int lineCount = 0;
+    for (VT100Token *token in tokens) {
+        DLog(@"Begin token number %d", tokenIndex);
+        WrappedLineInfo info = {
+            .tokenIndex = tokenIndex
+        };
+        int start = 0;
+        AsciiData *asciiData = token.asciiData;
+        CTVector(int) *crlfs = token.crlfs;
+        const NSInteger count = CTVectorCount(crlfs);
+        lineCount += count;
+        for (int j = 0; j < count + 2; j += 2) {
+            int control = (j < count) ? CTVectorGet(crlfs, j) : asciiData->length;
+            const int length = control - start;
+            ITAssertWithMessage(length >= 0, @"length >= 0");
+            DLog(@"Check range %@..≤%@ on segment %d/%@: %.*s", @(start), @(control), j, @(count + 1), length, asciiData->buffer + start);
+            info.startOffset = start;
+            info.startX = cursor.x;
+            info.startY = cursor.y;
+            if (length > 0) {
+                if (cursor.x == width) {
+                    cursor.x = 0;
+                    cursor.y += 1;
+                }
+
+                ITAssertWithMessage(cursor.x >= 0, @"cursor.x >= 0");
+                cursor.x += length;
+                ITAssertWithMessage(cursor.x >= 0, @"cursor.x >= 0");
+                cursor.y += cursor.x / width;
+                cursor.x %= width;
+                ITAssertWithMessage(cursor.x >= 0, @"cursor.x >= 0");
+
+                if (cursor.x == 0) {
+                    // Leave cursor in the right margin.
+                    cursor.x = width;
+                    cursor.y -= 1;
+                }
+
+                DLog(@"After text of length %@, cursor is at %@", @(length), VT100GridCoordDescription(cursor));
+            }
+            if (j < count) {
+                cursor.y += 1;
+                cursor.x = 0;
+                DLog(@"After crlf, cursor is at %@", VT100GridCoordDescription(cursor));
+            }
+            info.length = length;
+            info.endX = cursor.x;
+            info.endY = cursor.y;
+            info.hard = j < count;
+            CTVectorAppend(&wrappedLineInfos, info);
+
+            start = control + 2;
+        }
+        tokenIndex += 1;
+    }
+
+    const int cutoff = cursor.y - self.height + 1;
+    info.tokenCount = -1;
+    for (int j = CTVectorCount(&wrappedLineInfos) - 1; j >= 0; j--) {
+        WrappedLineInfo wli = CTVectorGet(&wrappedLineInfos, j);
+        if (wli.startY <= cutoff && wli.endY >= cutoff) {
+            const int distanceToGrid = VT100GridCoordDistance(VT100GridCoordMake(wli.startX, wli.startY),
+                                                              VT100GridCoordMake(0, cutoff),
+                                                              width);
+            info.tokenCount = wli.tokenIndex;
+            info.characterCount = wli.startOffset + distanceToGrid;
+            break;
+        }
+    }
+    CTVectorDestroy(&wrappedLineInfos);
+    info.cursor = cursor;
+    info.lineCount = lineCount;
+    return info;
+}
+
+- (void)terminalAppendMixedAsciiGang:(NSArray<VT100Token *> *)tokens {
+    VT100Terminal *terminal = self.terminal;
+    BOOL canTakeFastPath = (!self.collectInputForPrinting &&
+                            ![self shouldEvaluateTriggers] &&
+                            ![self shouldConvertCharactersToGraphicsCharacterSetInTerminal:terminal] &&
+                            !self.config.publishing &&
+                            self.commandStartCoord.x == -1 &&
+                            tokens.count > 0 &&
+                            self.wraparoundMode &&
+                            !self.ansi &&
+                            !self.insert &&
+                            self.currentGrid == self.primaryGrid &&
+                            self.currentGrid.canTakeFastPath);
+    if (!canTakeFastPath) {
+        const int numLines = [self appendGangSlowPath:tokens];
+        [self.currentGrid didAppendDWCFreeLines:numLines];
+        DLog(@"Slow path done");
+    } else {
+        [self appendGangFastPath:tokens];
+        DLog(@"Fast path done");
+    }
+}
+
+- (void)appendGangFastPath:(NSArray<VT100Token *> *)tokens {
+    if (tokens.count == 1 && tokens[0].asciiData->length < self.height * 2) {
+        // Quick check if this is tiny.
+        DLog(@"Take slow path for tiny data");
+        [self appendGangSlowPath:tokens];
+        return;
+    }
+
+    DLog(@"Begin fast path for tokens:\n%@", tokens);
+
+    // Now check if it's big enough to really benefit.
+    VT100Terminal *terminal = self.terminal;
+    // Remove CR tokens. They are always safe to ignore. See the note in TokenArray about how
+    // the TTY driver inserts spurious CRs.
+    tokens = [tokens filteredArrayUsingBlock:^BOOL(VT100Token *token) {
+        return token.type != VT100CC_CR;
+    }];
+    const VT100ScreenMutableStateAppendInfo info = [self appendInfoForTokens:tokens];
+    const VT100GridCoord coord = info.cursor;
+    if (coord.y < self.height * 2) {
+        [self appendGangSlowPath:tokens];
+        return;
+    }
+
+    ITAssertWithMessage(info.tokenCount >= 0, @"Negative token count. cursor=%d, height=%d, tokens=%@", coord.y, self.height, tokens);
+    // Scroll the whole grid into the line buffer.
+    // This does not drop from the line buffer. We'll do that at the end for better performance.
+    [self.currentGrid fastPathScrollLinesAtAndAboveCursorIntoLineBuffer:self.linebuffer];
+
+    // Append to line buffer, bypassing grid
+    iTermExternalAttribute *ea = [terminal externalAttributes];
+    screen_char_t continuation = [terminal defaultChar];
+    continuation.code = EOL_SOFT;
+    iTermImmutableMetadata metadata;
+    iTermImmutableMetadataInit(&metadata,
+                               self.currentGrid.currentDate,
+                               NO,
+                               ea ? [iTermUniformExternalAttributes withAttribute:ea] : nil);
+    [self.currentGrid setCursorWithoutInvalidatingDWCFreeLineCount:VT100GridCoordMake(0, 0)];
+
+    const int lastTokenIndexToSendToLineBuffer = info.tokenCount;
+    CTVector(iTermAppendItem) items;
+    CTVectorCreate(&items, info.lineCount);
+
+    DLog(@"Will begin building items to add to line buffer");
+    const int width = self.width;
+    for (int ti = 0; ti <= lastTokenIndexToSendToLineBuffer; ti++) {
+        VT100Token *token = tokens[ti];
+
+        CTVector(int) *crlfs = token.crlfs;
+        AsciiData *asciiData = token.asciiData;
+        int start = 0;
+        const NSInteger count = CTVectorCount(crlfs);
+
+        for (NSInteger i = 0; i < count + 2; i += 2) {
+            const int control = (i < count) ? CTVectorGet(crlfs, i) : asciiData->length;
+            ScreenChars screenChars = {
+                .buffer = asciiData->screenChars->buffer + start,
+                .length = control - start
+            };
+            BOOL stop = (ti == lastTokenIndexToSendToLineBuffer && control > info.characterCount);
+            BOOL stoppedEarly = NO;
+            if (stop) {
+                const int remainder = (control - info.characterCount);
+                screenChars.length -= remainder;
+                stoppedEarly = remainder > 0;
+            }
+            const int eol = (stoppedEarly || i == count) ? EOL_SOFT : EOL_HARD;
+            if (!stop || screenChars.length > 0) {
+                iTermAppendItem item = {
+                    .buffer = screenChars.buffer,
+                    .length = screenChars.length,
+                    .partial = eol == EOL_SOFT,
+                    .metadata = metadata,
+                    .continuation = continuation
+                };
+                // Don't append empty partials. That has no effect.
+                if (!item.partial || item.length > 0) {
+                    DLog(@"Append direct to line buffer %d chars starting with %.*s",
+                         screenChars.length,
+                         MIN(screenChars.length, 40),
+                         asciiData->buffer + start);
+                    CTVectorAppend(&items, item);
+                }
+            }
+            if (stop) {
+                break;
+            }
+            start = control + 2;
+        }
+    }
+    [self.linebuffer appendLines:&items
+                           width:width];
+    CTVectorDestroy(&items);
+
+    DLog(@"Append the rest to the grid starting at offset %d in token %d. The predicted cursor X location is %d",
+         info.characterCount, info.tokenCount, coord.x);
+    int startOffset = info.characterCount;
+    for (int ti = info.tokenCount; ti < tokens.count; ti++) {
+        VT100Token *token = tokens[ti];
+        DLog(@"Append to grid: %.*s", token.asciiData->length - startOffset, token.asciiData->buffer + startOffset);
+        [self appendMixedAsciiCRLFData:token.asciiData
+                                 crlfs:token.crlfs
+                           startOffset:startOffset];
+        startOffset = 0;
+    }
+
+    // Drop excess lines and place cursor properly.
+    const int numDropped = [self.linebuffer dropExcessLinesWithWidth:self.width];
+    [self incrementOverflowBy:self.unlimitedScrollback ? 0 : numDropped];
+    [self.currentGrid setCursorWithoutInvalidatingDWCFreeLineCount:VT100GridCoordMake(coord.x, self.height - 1)];
+}
+
+- (int)appendGangSlowPath:(NSArray<VT100Token *> *)tokens {
+    int numLines = 0;
+    for (VT100Token *token in tokens) {
+        numLines += [self appendMixedAsciiCRLFData:token.asciiData crlfs:token.crlfs startOffset:0];
+    }
+    return numLines;
 }
 
 - (void)terminalRingBell {
@@ -2236,7 +2497,8 @@
             [self appendScreenCharArrayAtCursor:chars
                                          length:length
                          externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:self.lastExternalAttribute]
-                                       rtlFound:NO];
+                                       rtlFound:NO
+                                        dwcFree:!self.lastCharacterIsDoubleWidth];
             [self appendStringToTriggerLine:string];
             if (self.config.loggingEnabled) {
                 const BOOL atPrompt = _promptStateMachine.isAtPrompt;

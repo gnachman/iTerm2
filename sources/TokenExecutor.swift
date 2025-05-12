@@ -90,204 +90,6 @@ func CVectorReleaseObjectsAndDestroy(_ vector: CVector) {
     CVectorDestroy(&temp)
 }
 
-private class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
-    var debugDescription: String {
-        var descr = [String]()
-        for i in 0..<cvector.count {
-            let token = CVectorGetObject(&cvector, i) as! VT100Token
-            descr.append(token.description)
-        }
-        return descr.joined(separator: "\n")
-    }
-
-    typealias Element = VT100Token
-    let length: Int
-    private var cvector: CVector
-    private var nextIndex = Int32(0)
-    let count: Int32
-    var numberRemaining: Int32 { count - nextIndex }
-    static var destroyQueue: DispatchQueue = {
-        return DispatchQueue(label: "com.iterm2.token-destroyer")
-    }()
-    private var semaphore: DispatchSemaphore?
-
-    var hasNext: Bool {
-        return nextIndex < count
-    }
-
-    init(_ cvector: CVector, length: Int, semaphore: DispatchSemaphore?) {
-        precondition(length > 0)
-        self.cvector = cvector
-        self.length = length
-        self.semaphore = semaphore
-        count = CVectorCount(&self.cvector)
-    }
-
-    func next() -> VT100Token? {
-        guard hasNext else {
-            return nil
-        }
-        defer {
-            nextIndex += 1
-            if nextIndex == count, let semaphore = semaphore {
-                semaphore.signal()
-                self.semaphore = nil
-            }
-        }
-        return (CVectorGetObject(&cvector, nextIndex) as! VT100Token)
-    }
-
-    // Returns the next token in the queue or nil if it is empty.
-    var peek: VT100Token? {
-        guard hasNext else {
-            return nil
-        }
-        return CVectorGetVT100Token(&cvector, nextIndex)
-    }
-
-    // Returns whether there is another token.
-    func consume() -> Bool {
-        nextIndex += 1
-        if nextIndex == count, let semaphore = semaphore {
-            semaphore.signal()
-            self.semaphore = nil
-        }
-        return hasNext
-    }
-
-    func skipToEnd() {
-        DLog("skipToEnd")
-        if nextIndex >= count {
-            return
-        }
-        nextIndex = count
-        if let semaphore = semaphore {
-            semaphore.signal()
-            self.semaphore = nil
-        }
-    }
-
-    private var dirty = true
-
-    func didFinish() {
-        semaphore?.signal()
-        semaphore = nil
-    }
-
-    func cleanup() {
-        guard dirty else {
-            return
-        }
-        dirty = false
-        semaphore?.signal()
-        CVectorReleaseObjectsAndDestroy(cvector)
-    }
-
-    deinit {
-        cleanup()
-    }
-}
-
-private class TwoTierTokenQueue {
-    class Queue: CustomDebugStringConvertible {
-        var debugDescription: String {
-            return arrays.map {
-                "--BEGIN ARRAY--\n" + $0.debugDescription + "\n--END ARRAY--"
-            }.joined(separator: "\n\n")
-        }
-        private var arrays = [TokenArray]()
-        var first: TokenArray? {
-            return arrays.first
-        }
-
-        func removeFirst() {
-            guard !arrays.isEmpty else {
-                return
-            }
-            arrays.removeFirst()
-        }
-
-        func removeAll() {
-            arrays.removeAll()
-        }
-
-        func append(_ tokenArray: TokenArray) {
-            arrays.append(tokenArray)
-        }
-
-        var isEmpty: Bool {
-            return arrays.isEmpty
-        }
-        var totalNumberRemaining: Int {
-            return arrays.map { Int($0.numberRemaining) }.reduce(0, +)
-        }
-    }
-    static let numberOfPriorities = 2
-    private lazy var queues: [Queue] = {
-        (0..<TwoTierTokenQueue.numberOfPriorities).map { _ in Queue() }
-    }()
-
-    private var nextQueueAndTokenArray: (Queue, TokenArray, Int)? {
-        for (i, queue) in queues.enumerated() {
-            if let tokenArray = queue.first {
-                return (queue, tokenArray, i)
-            }
-        }
-        return nil
-    }
-
-    var isEmpty: Bool {
-        return queues.allSatisfy { $0.isEmpty }
-    }
-
-    // Used to hold on to unused arrays so they can be cleaned up in another queue to reduce latency.
-    private var garbage: [TokenArray] = []
-
-    // Closure returns false to stop, true to keep going
-    func enumerateTokenArrays(_ closure: (TokenArray, Int) -> Bool) {
-        if gDebugLogging.boolValue { DLog("Begin number remaining=\(queues.map { $0.totalNumberRemaining })") }
-        while let tuple = nextQueueAndTokenArray {
-            let (queue, tokenArray, priority) = tuple
-            let shouldContinue = closure(tokenArray, priority)
-            if !tokenArray.hasNext {
-                if gDebugLogging.boolValue { DLog("Token array fully consumed") }
-                tokenArray.didFinish()
-                garbage.append(tokenArray)
-                queue.removeFirst()
-            }
-            if !shouldContinue {
-                if gDebugLogging.boolValue { DLog("Stopping early with number remaining=\(queues.map { $0.totalNumberRemaining })") }
-                break
-            }
-        }
-        if garbage.count >= 16 {
-            let arrays = garbage
-            garbage = []
-            TokenArray.destroyQueue.async {
-                for array in arrays {
-                    array.cleanup()
-                }
-            }
-        }
-    }
-
-    var hasHighPriorityToken: Bool {
-        return !queues[0].isEmpty
-    }
-
-    func removeAll() {
-        DLog("remove all")
-        for i in 0..<queues.count {
-            queues[i].removeAll()
-        }
-    }
-
-    func addTokens(_ tokenArray: TokenArray, highPriority: Bool) {
-        if gDebugLogging.boolValue { DLog("add \(tokenArray.count) tokens, highpri=\(highPriority)") }
-        queues[highPriority ? 0 : 1].append(tokenArray)
-    }
-}
-
 @objc(iTermTokenExecutor)
 class TokenExecutor: NSObject {
     @objc weak var delegate: TokenExecutorDelegate? {
@@ -295,7 +97,7 @@ class TokenExecutor: NSObject {
             impl.delegate = delegate
         }
     }
-    private let semaphore = DispatchSemaphore(value: 4)
+    private let semaphore = DispatchSemaphore(value: Int(iTermAdvancedSettingsModel.bufferDepth()))
     private let impl: TokenExecutorImpl
     private let queue: DispatchQueue
     private static let isTokenExecutorSpecificKey = DispatchSpecificKey<Bool>()
@@ -328,6 +130,13 @@ class TokenExecutor: NSObject {
         addTokens(vector, length: length, highPriority: false)
     }
 
+    private static let addTokensTimingStats: TimingStats = {
+        TimingStats(name: "TokenExecutor")
+    }()
+    // Flip this to true to measure how much time the TaskNotifier thread spends busy (reading,
+    // parsing, and in select()) vs idle (blocked on TokenExecutor's semaphore).
+    private let enableTimingStats = false
+
     // This takes ownership of vector.
     // You can call this on any queue when not high priority.
     // If high priority, then you must be on the main queue or have joined the main & mutation queue.
@@ -349,9 +158,16 @@ class TokenExecutor: NSObject {
         }
         // Normal code path for tokens from PTY. Use the semaphore to give backpressure to reading.
         let semaphore = self.semaphore
+        if enableTimingStats {
+            TokenExecutor.addTokensTimingStats.recordEnd()
+        }
         _ = semaphore.wait(timeout: .distantFuture)
+        if enableTimingStats {
+            TokenExecutor.addTokensTimingStats.recordStart()
+        }
+        reallyAddTokens(vector, length: length, highPriority: highPriority, semaphore: semaphore)
         queue.async { [weak self] in
-            self?.reallyAddTokens(vector, length: length, highPriority: highPriority, semaphore: semaphore)
+            self?.impl.didAddTokens()
         }
     }
 
@@ -395,7 +211,7 @@ class TokenExecutor: NSObject {
     }
 
     // This takes ownership of vector.
-    // You can only call this on `queue`.
+    // You can call this on any queue
     private func reallyAddTokens(_ vector: CVector,
                                  length: Int,
                                  highPriority: Bool,
@@ -532,12 +348,13 @@ private class TokenExecutorImpl {
         tokenQueue.removeAll()
     }
 
+    // You can call this on any queue
     func addTokens(_ tokenArray: TokenArray, highPriority: Bool) {
-#if DEBUG
-        assertQueue()
-#endif
         throughputEstimator.addByteCount(tokenArray.length)
         tokenQueue.addTokens(tokenArray, highPriority: highPriority)
+    }
+
+    func didAddTokens() {
         execute()
     }
 
@@ -675,7 +492,9 @@ private class TokenExecutorImpl {
         guard let delegate = delegate else {
             // This is necessary to avoid deadlock. If the terminal is disabled then the token queue
             // will hold semaphores that need to be signaled.
-            if gDebugLogging.boolValue { DLog("empty queue") }
+            if gDebugLogging.boolValue {
+                DLog("empty queue")
+            }
             tokenQueue.removeAll()
             return
         }
@@ -684,20 +503,26 @@ private class TokenExecutorImpl {
         if !delegate.tokenExecutorShouldQueueTokens() {
             slownessDetector.measure(event: PTYSessionSlownessEventExecute) {
                 var first = true
-                if gDebugLogging.boolValue { DLog("Will enumerate token arrays") }
-                tokenQueue.enumerateTokenArrays { (vector, priority) in
+                if gDebugLogging.boolValue {
+                    DLog("Will enumerate token arrays")
+                }
+                tokenQueue.enumerateTokenArrayGroups { (tokenArrayGroup, priority) in
                     if first {
                         delegate.tokenExecutorWillExecuteTokens()
                         first = false
                     }
-                    if gDebugLogging.boolValue { DLog("Begin executing a batch of tokens of size \(vector.numberRemaining)") }
-                    defer {
-                        if gDebugLogging.boolValue { DLog("Done executing a batch of tokens. Vector has \(vector.numberRemaining) remaining.") }
+                    if gDebugLogging.boolValue {
+                        DLog("Begin executing a batch of tokens of sizes \(tokenArrayGroup.arrays.map(\.numberRemaining))")
                     }
-                    return executeTokens(vector,
-                                         priority: priority,
-                                         accumulatedLength: &accumulatedLength,
-                                         delegate: delegate)
+                    defer {
+                        if gDebugLogging.boolValue {
+                            DLog("Done executing a batch of tokens. Vector has \(tokenArrayGroup.arrays.map(\.numberRemaining)) remaining.")
+                        }
+                    }
+                    return executeTokenGroups(tokenArrayGroup,
+                                              priority: priority,
+                                              accumulatedLength: &accumulatedLength,
+                                              delegate: delegate)
                 }
                 if gDebugLogging.boolValue { DLog("Finished enumerating token arrays") }
             }
@@ -708,40 +533,47 @@ private class TokenExecutorImpl {
         }
     }
 
-    private func executeTokens(_ vector: TokenArray,
-                               priority: Int,
-                               accumulatedLength: inout Int,
-                               delegate: TokenExecutorDelegate) -> Bool {
+    private func executeTokenGroups(_ group: TokenArrayGroup,
+                                    priority: Int,
+                                    accumulatedLength: inout Int,
+                                    delegate: TokenExecutorDelegate) -> Bool {
         if gDebugLogging.boolValue { DLog("Begin for \(delegate)") }
         defer {
-            if gDebugLogging.boolValue { DLog("execute tokens cleanup for \(delegate)") }
+            if gDebugLogging.boolValue {
+                DLog("execute tokens cleanup for \(delegate)")
+            }
             executeHighPriorityTasks()
         }
         var quitVectorEarly = false
         var vectorHasNext = true
         while !isPaused && !quitVectorEarly && vectorHasNext {
-            if gDebugLogging.boolValue { DLog("continuing to next token") }
-            if let token = vector.peek {
+            if gDebugLogging.boolValue {
+                DLog("continuing to next token")
+            }
+            if let token = group.peek {
                 executeHighPriorityTasks()
                 commit = true
                 var consume = true
                 if execute(token: token,
-                           from: vector,
                            priority: priority,
                            accumulatedLength: &accumulatedLength,
                            delegate: delegate) {
-                    if gDebugLogging.boolValue { DLog("quit early") }
+                    if gDebugLogging.boolValue {
+                        DLog("quit early")
+                    }
                     quitVectorEarly = true
                     consume = true
                 } else {
                     consume = commit
                 }
                 if consume {
-                    vectorHasNext = vector.consume()
+                    vectorHasNext = group.consume()
                 } else {
                     vectorHasNext = false
                 }
-                if gDebugLogging.boolValue { DLog("commit=\(commit) consume=\(consume) remaining=\(vector.numberRemaining)") }
+                if gDebugLogging.boolValue {
+                    DLog("commit=\(commit) consume=\(consume) remaining=\(group.arrays.map(\.numberRemaining))")
+                }
             }
         }
         if quitVectorEarly {
@@ -753,7 +585,7 @@ private class TokenExecutorImpl {
             return false
         }
         if gDebugLogging.boolValue { DLog("normal termination") }
-        accumulatedLength += vector.length
+        accumulatedLength += group.length
         return true
     }
 
@@ -769,7 +601,6 @@ private class TokenExecutorImpl {
     // Returns false to continue processing tokens in the vector, if any (and if not go to the next
     // vector).
     private func execute(token: VT100Token,
-                         from vector: TokenArray,
                          priority: Int,
                          accumulatedLength: inout Int,
                          delegate: TokenExecutorDelegate) -> Bool {

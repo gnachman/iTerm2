@@ -9,6 +9,8 @@
 #import <Foundation/Foundation.h>
 
 #import "iTermMalloc.h"
+#import "iTermMetadata.h"
+#import "ScreenChar.h"
 
 // A vector of pointers that is fast and simple.
 typedef struct {
@@ -119,6 +121,25 @@ do { \
 } while(0)
 #define CTVectorElementsFromIndex(__vector, __index) (__vector)->elements + __index
 
+typedef struct {
+    int tokenIndex;
+    int startOffset;
+    int length;
+    int startX;
+    int startY;
+    int endX;
+    int endY;
+    int hard;
+} WrappedLineInfo;
+
+typedef struct {
+    const struct screen_char_t *buffer;
+    int length;
+    int partial;
+    iTermImmutableMetadata metadata;
+    screen_char_t continuation;
+} iTermAppendItem;
+
 // Registry for typed vectors.
 CTVectorDefine(CGFloat);
 CTVectorDefine(float);
@@ -128,6 +149,8 @@ CTVectorDefine(short);
 CTVectorDefine(char);
 CTVectorDefine(NSInteger);
 CTVectorDefine(NSUInteger);
+CTVectorDefine(WrappedLineInfo);
+CTVectorDefine(iTermAppendItem);
 
 #define CTVectorGetData(__v) \
 [NSData dataWithBytes:(void *)(__v)->elements length:(__v)->count * sizeof(*(__v)->elements)]

@@ -407,6 +407,14 @@ static void HandleSigChld(int n) {
     [self.delegate taskDidRegister:self];
 }
 
+// I did extensive benchmarking in May of 2025 when using the VT100_GANG optimization fully.
+// I saw that this function almost never produces more than 1024 bytes. I think what's
+// happening is that the TTY driver has an internal buffer of 1024 bytes. Because token
+// execution is slower than reading and parsing, we enter a backpressure situation. At that
+// point, we are in a situation where each read gives 1024 bytes and allows the PTY to fill
+// with the next 1024 bytes. That becomes the stead state. Consequently, the semaphore that
+// defines the depth of our queue also determines (in the steady state) how much data can be
+// buffered and it's 1024 bytes * initial semaphore count.
 - (void)processRead {
     int iterations = 4;
     int bytesRead = 0;

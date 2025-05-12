@@ -37,7 +37,8 @@ class VT100GridTests: XCTestCase {
                              ansi: false,
                              insert: false,
                              externalAttributeIndex: nil,
-                             rtlFound: false)
+                             rtlFound: false,
+                             dwcFree: false)
             if newline {
                 grid.cursorX = 0
                 grid.moveCursorDownOneLineScrolling(into: lineBuffer,
@@ -589,7 +590,8 @@ class VT100GridTests: XCTestCase {
                          ansi: false,
                          insert: false,
                          externalAttributeIndex: nil,
-                         rtlFound: false)
+                         rtlFound: false,
+                         dwcFree: false)
 
         // After wraparound:
         // Row 0: 'a','b', empty
@@ -2723,7 +2725,8 @@ class VT100GridTests: XCTestCase {
                                                ansi: ansi,
                                                insert: insert,
                                                externalAttributeIndex: nil,
-                                               rtlFound: false)
+                                               rtlFound: false,
+                                               dwcFree: false)
 
         XCTAssertEqual(grid.allLinesAsStrings, expectedLinesArray)
         XCTAssertEqual(lineBuffer.lineStrings, expectedLineBuffer)
@@ -3228,7 +3231,8 @@ class VT100GridTests: XCTestCase {
                          ansi: false,
                          insert: false,
                          externalAttributeIndex: nil,
-                         rtlFound: false)
+                         rtlFound: false,
+                         dwcFree: false)
 
         let before = grid.coordinate(
             before: VT100GridCoord(x: 2, y: 0),
@@ -3716,7 +3720,8 @@ class VT100GridTests: XCTestCase {
                          ansi: false,
                          insert: false,
                          externalAttributeIndex: nil,
-                         rtlFound: false)
+                         rtlFound: false,
+                         dwcFree: false)
 
         XCTAssertEqual(grid.allLinesAsStrings, [
             "89abcdef",
@@ -3823,7 +3828,8 @@ class VT100GridTests: XCTestCase {
                              ansi: false,
                              insert: false,
                              externalAttributeIndex: nil,
-                             rtlFound: false)
+                             rtlFound: false,
+                             dwcFree: false)
             grid.moveCursorToLeftMargin()
             grid.moveCursorDown(1)
             _ = grid.scrollWholeScreenUp(into: lineBuffer,
@@ -3849,7 +3855,8 @@ class VT100GridTests: XCTestCase {
                              ansi: false,
                              insert: false,
                              externalAttributeIndex: nil,
-                             rtlFound: false)
+                             rtlFound: false,
+                             dwcFree: false)
             grid.moveCursorToLeftMargin()
             grid.moveCursorDown(1)
             // Scroll until this “raw” line is moved into the buffer

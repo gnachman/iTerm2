@@ -12,6 +12,7 @@
 #import "NSData+iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermMalloc.h"
+#import "NSArray+iTerm.h"
 
 #include <stdlib.h>
 @interface VT100Token ()
@@ -21,6 +22,7 @@
 @implementation VT100Token {
     AsciiData _asciiData;
     ScreenChars _screenChars;
+    CTVector(int) _crlfs;
 }
 
 + (instancetype)token {
@@ -48,7 +50,7 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
 
     asciiData->length = length;
     if (length > sizeof(asciiData->staticBuffer)) {
-        asciiData->buffer = iTermMalloc(length);
+        asciiData->buffer = iTermUninitializedCalloc(length, 1);
     } else {
         asciiData->buffer = asciiData->staticBuffer;
     }
@@ -77,7 +79,10 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
     [_kvpKey release];
     [_kvpValue release];
     [_savedData release];
-    [_crlfs release];
+    if (_crlfs.elements != nil) {
+        CTVectorDestroy(&_crlfs);
+    }
+    [_subtokens release];
 
     iTermAsciiDataFree(&_asciiData);
 
@@ -310,7 +315,8 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
                 @(SSH_RECOVERY_BOUNDARY):           @"SSH_RECOVERY_BOUNDARY",
                 @(SSH_SIDE_CHANNEL):                @"SSH_SIDE_CHANNEL",
                 
-                @(VT100_LITERAL):                   @"VT100_LITERAL"
+                @(VT100_LITERAL):                   @"VT100_LITERAL",
+                @(VT100_GANG):                      @"VT100_GANG",
         };
         [map retain];
     });
@@ -348,6 +354,9 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
     if (_savedData.length > 0) {
         [params appendFormat:@" savedData=%@", _savedData.shortDebugString];
     }
+    for (VT100Token *sub in _subtokens) {
+        [params appendFormat:@"SUBTOKEN:\n%@", sub.description];
+    }
     return [NSString stringWithFormat:@"<%@: %p type=%@%@>", self.class, self, [self codeName], params];
 }
 
@@ -359,11 +368,11 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
 }
 
 - (BOOL)isAscii {
-    return type == VT100_ASCIISTRING || type == VT100_MIXED_ASCII_CR_LF;
+    return type == VT100_ASCIISTRING || type == VT100_MIXED_ASCII_CR_LF || type == VT100_GANG;
 }
 
 - (BOOL)isStringType {
-    return (type == VT100_STRING || type == VT100_ASCIISTRING || type == VT100_MIXED_ASCII_CR_LF);
+    return (type == VT100_STRING || type == VT100_ASCIISTRING || type == VT100_MIXED_ASCII_CR_LF || type == VT100_GANG);
 }
 
 - (void)setAsciiBytes:(char *)bytes length:(int)length {
@@ -375,6 +384,11 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
 }
 
 - (NSString *)stringForAsciiData {
+    if (self.type == VT100_GANG) {
+        return [[self.subtokens mapWithBlock:^id _Nullable(VT100Token * _Nonnull anObject) {
+            return [anObject stringForAsciiData];
+        }] componentsJoinedByString:@""];
+    }
     return [[[NSString alloc] initWithBytes:_asciiData.buffer
                                      length:_asciiData.length
                                    encoding:NSASCIIStringEncoding] autorelease];
@@ -436,6 +450,19 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
 
 - (void)setType:(VT100TerminalTokenType)newType {
     self->type = newType;
+}
+
+- (void)realizeCRLFsWithCapacity:(int)capacity {
+    assert(!_crlfs.elements);
+    CTVectorCreate(&_crlfs, capacity);
+}
+
+- (CTVector(int) *)crlfs {
+    return &_crlfs;
+}
+
+- (void)appendCRLF:(int)value {
+    CTVectorAppend(&_crlfs, value);
 }
 
 @end

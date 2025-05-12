@@ -54,7 +54,7 @@
 
 - (id<VT100GridReading>)copy;
 
-- (const screen_char_t *)screenCharsAtLineNumber:(int)lineNumber;
+- (const screen_char_t *)immutableScreenCharsAtLineNumber:(int)lineNumber;
 - (iTermImmutableMetadata)immutableMetadataAtLineNumber:(int)lineNumber;
 - (BOOL)isCharDirtyAt:(VT100GridCoord)coord;
 - (BOOL)isAnyCharDirty;
@@ -130,6 +130,14 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 - (int)appendLines:(int)numLines
       toLineBuffer:(LineBuffer *)lineBuffer;
 
+// After appending lines that you know for certain have no DWCs, call this. Once we can prove the
+// whole screen is DWC-free then the fast path for ASCII text becomes available.
+- (void)didAppendDWCFreeLines:(int)count;
+
+// Something happened that either invalidates the DWC-free count (such as the cursor moving up,
+// appending non-ascii text, etc)
+- (void)resetDWCFreeCount;
+
 // This is the sole mutation method. We need it to track which lines need to be redrawn and to reduce
 // the cost of syncing.
 - (void)markAllCharsDirty:(BOOL)dirty updateTimestamps:(BOOL)updateTimestamps;
@@ -184,6 +192,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 // Time of last update. Used for setting timestamps.
 @property(nonatomic) NSTimeInterval currentDate;
 @property(nonatomic) BOOL hasChanged;
+@property(nonatomic, readonly) BOOL canTakeFastPath;
 
 + (VT100GridSize)sizeInStateDictionary:(NSDictionary *)dict;
 
@@ -194,11 +203,15 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 - (VT100Grid *)copy;
 
 - (screen_char_t *)screenCharsAtLineNumber:(int)lineNumber;
+
+// When you call this you promise not to put double-width characters in the line.
+- (screen_char_t *)dwcFreeScreenCharsAtLineNumber:(int)lineNumber;
 - (iTermMetadata)metadataAtLineNumber:(int)lineNumber;
 
 // Set both x and y coord of cursor at once. Cursor positions are clamped to legal values. The cursor
 // may extend into the right edge (cursorX == size.width is allowed).
 - (void)setCursor:(VT100GridCoord)coord;
+- (void)setCursorWithoutInvalidatingDWCFreeLineCount:(VT100GridCoord)coord;
 
 // Mark a specific character dirty. If updateTimestamp is set, then the line's last-modified time is
 // set to the current time.
@@ -257,6 +270,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 // Scroll regions are ignored.
 - (int)scrollWholeScreenUpIntoLineBuffer:(LineBuffer *)lineBuffer
                      unlimitedScrollback:(BOOL)unlimitedScrollback;
+- (void)fastPathScrollLinesAtAndAboveCursorIntoLineBuffer:(LineBuffer *)lineBuffer;
 
 // Scroll the scroll region down by one line.
 - (void)scrollDown;
@@ -294,7 +308,8 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
                       ansi:(BOOL)ansi
                     insert:(BOOL)insert
     externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)attributes
-                  rtlFound:(BOOL)rtlFound;
+                  rtlFound:(BOOL)rtlFound
+                   dwcFree:(BOOL)dwcFree;
 
 // Delete some number of chars starting at a given location, moving chars to the right of them back.
 - (void)deleteChars:(int)num
@@ -382,6 +397,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 - (void)restorePreferredCursorPositionIfPossible;
 
 - (void)mutateCharactersInRange:(VT100GridCoordRange)range
+                        dwcFree:(BOOL)dwcFree
                           block:(void (^)(screen_char_t *sct,
                                           iTermExternalAttribute **eaOut,
                                           VT100GridCoord coord,

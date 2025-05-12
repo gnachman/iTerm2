@@ -152,7 +152,7 @@ void iTermMetadataInitFromArray(iTermMetadata *obj, NSArray *array) {
 
 void iTermMetadataAppend(iTermMetadata *lhs,
                          int lhsLength,
-                         iTermImmutableMetadata *rhs,
+                         const iTermImmutableMetadata *rhs,
                          int rhsLength) {
     lhs->timestamp = rhs->timestamp;
     lhs->rtlFound |= rhs->rtlFound;

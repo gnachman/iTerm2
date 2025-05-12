@@ -264,8 +264,10 @@ static void DecodeOtherBytes(VT100ByteStreamConsumer *consumer,
     }
 }
 
-static void DecodeASCIIBytes(VT100ByteStreamConsumer *consumer,
-                             VT100Token *token) {
+// Mixed ASCII ascii with CRLFs.
+// This is a huge performance win for handling big files of mostly plain ascii text.
+static void DecodeMixedASCIIBytes(VT100ByteStreamConsumer *consumer,
+                                  VT100Token *token) {
     int consumed = 0;
 
     // I tried the ideas mentioned here:
@@ -274,18 +276,21 @@ static void DecodeASCIIBytes(VT100ByteStreamConsumer *consumer,
     // and although this while loop completed faster, the overall benchmark speed on spam.cc did
     // not improve.
     VT100ByteStreamCursor cursor = VT100ByteStreamConsumerGetCursor(consumer);
-    NSMutableArray<NSNumber *> *crlfs = nil;
+    CTVector(int) *crlfs = nil;
     while (VT100ByteStreamCursorGetSize(&cursor) > 0) {
         unsigned char c = VT100ByteStreamCursorPeek(&cursor);
         if (c >= 0x20 && c <= 0x7f) {
             VT100ByteStreamCursorAdvance(&cursor, 1);
             consumed++;
-        } else if (c == 10 || c == 13) {
+        } else if (c == 13 && VT100ByteStreamCursorDoublePeek(&cursor) == 10) {
             if (!crlfs) {
-                crlfs = [NSMutableArray array];
+                [token realizeCRLFsWithCapacity:40];  // This is a wild-ass guess
+                crlfs = token.crlfs;
             }
-            VT100ByteStreamCursorAdvance(&cursor, 1);
-            [crlfs addObject:@(consumed)];
+            VT100ByteStreamCursorAdvance(&cursor, 2);
+            CTVectorAppend(crlfs, consumed);
+            consumed++;
+            CTVectorAppend(crlfs, consumed);
             consumed++;
         } else {
             break;
@@ -301,7 +306,6 @@ static void DecodeASCIIBytes(VT100ByteStreamConsumer *consumer,
             token->type = VT100_ASCIISTRING;
         } else {
             token->type = VT100_MIXED_ASCII_CR_LF;
-            token.crlfs = crlfs;
         }
     }
 }
@@ -315,9 +319,10 @@ void ParseString(VT100ByteStreamConsumer *consumer,
     result->code = VT100ByteStreamConsumerPeek(consumer);
 
     BOOL isAscii = NO;
-    if (isAsciiString(VT100ByteStreamConsumerPeek(consumer))) {
+    if (isMixedAsciiString(VT100ByteStreamConsumerPeek(consumer),
+                           VT100ByteStreamConsumerDoublePeek(consumer))) {
         isAscii = YES;
-        DecodeASCIIBytes(consumer, result);
+        DecodeMixedASCIIBytes(consumer, result);
         encoding = NSASCIIStringEncoding;
     } else if (encoding == NSUTF8StringEncoding) {
         DecodeUTF8Bytes(consumer, result);

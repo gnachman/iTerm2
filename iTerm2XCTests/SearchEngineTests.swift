@@ -570,7 +570,8 @@ fileprivate class Screen: NSObject, iTermSearchEngineDataSource, iTermTextDataSo
                                        ansi: false,
                                        insert: false,
                                        externalAttributeIndex: iTermExternalAttributeIndex(),
-                                       rtlFound: false)
+                                       rtlFound: false,
+                                       dwcFree: false)
         _totalScrollbackOverflow += Int64(dropped)
 
         grid.moveCursorToLeftMargin()

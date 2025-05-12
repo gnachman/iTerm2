@@ -14,5 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // This keeps Swift from trying to do dynamic casting in a performance-critical loop.
 VT100Token *CVectorGetVT100Token(const CVector *vector, int index);
+void CVectorSetVT100Token(const CVector *vector, int index, VT100Token *token);
+void CVectorAppendVT100Token(CVector *vector, VT100Token *token);
 
 NS_ASSUME_NONNULL_END
