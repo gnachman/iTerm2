@@ -354,6 +354,9 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
     if (_savedData.length > 0) {
         [params appendFormat:@" savedData=%@", _savedData.shortDebugString];
     }
+    for (VT100Token *sub in _subtokens) {
+        [params appendFormat:@"SUBTOKEN:\n%@", sub.description];
+    }
     return [NSString stringWithFormat:@"<%@: %p type=%@%@>", self.class, self, [self codeName], params];
 }
 

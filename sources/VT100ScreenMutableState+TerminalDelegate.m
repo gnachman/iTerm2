@@ -84,25 +84,8 @@
     }
 }
 
-#warning DNS
-
-static iTermHistogram *hog;
-- (void)accrueAsciiCount:(int)count {
-    if (!hog) {
-        hog = [[iTermHistogram alloc] init];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            static NSTimer *timer;
-            timer = [NSTimer scheduledTimerWithTimeInterval:1.0 repeats:YES block:^(NSTimer * _Nonnull timer) {
-                NSLog(@"ASCII Counts:\n%@", hog.stringValue);
-            }];
-        });
-    }
-    [hog addValue:count];
-}
-
 - (void)terminalAppendMixedAsciiCRLFData:(AsciiData *)asciiData
                                    crlfs:(CTVector(int) *)crlfs {
-    [self accrueAsciiCount:asciiData->length];
     [self appendMixedAsciiCRLFData:asciiData crlfs:crlfs startOffset:0];
 }
 
@@ -132,13 +115,16 @@ static iTermHistogram *hog;
                 .screenChars = &screenChars
             };
             numLines += temp.length / width;
+            DLog(@"Append ascii data at %@: %.*s", VT100GridCoordDescription(self.currentGrid.cursor), temp.length, temp.buffer);
             [self terminalAppendAsciiData:&temp];
         }
         if (control < asciiData->length) {
             numLines += 1;
             [self terminalCarriageReturn];
             [self terminalLineFeed];
+            DLog(@"Append CRLF");
         }
+        DLog(@"Cursor now at %@", VT100GridCoordDescription(self.currentGrid.cursor));
         start = control + 2;
     }
     return numLines;
@@ -244,12 +230,6 @@ typedef struct {
 }
 
 - (void)terminalAppendMixedAsciiGang:(NSArray<VT100Token *> *)tokens {
-    int count = 0;
-    for (VT100Token *token in tokens) {
-        count += token.asciiData->length;
-    }
-    [self accrueAsciiCount:count];
-
     VT100Terminal *terminal = self.terminal;
     BOOL canTakeFastPath = (!self.collectInputForPrinting &&
                             ![self shouldEvaluateTriggers] &&
@@ -275,9 +255,12 @@ typedef struct {
 - (void)appendGangFastPath:(NSArray<VT100Token *> *)tokens {
     if (tokens.count == 1 && tokens[0].asciiData->length < self.height * 2) {
         // Quick check if this is tiny.
+        DLog(@"Take slow path for tiny data");
         [self appendGangSlowPath:tokens];
         return;
     }
+
+    DLog(@"Begin fast path for tokens:\n%@", tokens);
 
     // Now check if it's big enough to really benefit.
     VT100Terminal *terminal = self.terminal;
@@ -296,7 +279,7 @@ typedef struct {
     ITAssertWithMessage(info.tokenCount >= 0, @"Negative token count. cursor=%d, height=%d, tokens=%@", coord.y, self.height, tokens);
     // Scroll the whole grid into the line buffer.
     // This does not drop from the line buffer. We'll do that at the end for better performance.
-    [self.currentGrid fastPathScrollLinesBelowCursorIntoLineBuffer:self.linebuffer];
+    [self.currentGrid fastPathScrollLinesAtAndAboveCursorIntoLineBuffer:self.linebuffer];
 
     // Append to line buffer, bypassing grid
     iTermExternalAttribute *ea = [terminal externalAttributes];
@@ -313,6 +296,7 @@ typedef struct {
     CTVector(iTermAppendItem) items;
     CTVectorCreate(&items, info.lineCount);
 
+    DLog(@"Will begin building items to add to line buffer");
     const int width = self.width;
     for (int ti = 0; ti <= lastTokenIndexToSendToLineBuffer; ti++) {
         VT100Token *token = tokens[ti];
@@ -346,6 +330,10 @@ typedef struct {
                 };
                 // Don't append empty partials. That has no effect.
                 if (!item.partial || item.length > 0) {
+                    DLog(@"Append direct to line buffer %d chars starting with %.*s",
+                         screenChars.length,
+                         MIN(screenChars.length, 40),
+                         asciiData->buffer + start);
                     CTVectorAppend(&items, item);
                 }
             }
@@ -359,10 +347,12 @@ typedef struct {
                            width:width];
     CTVectorDestroy(&items);
 
-    // Append the rest to the grid.
+    DLog(@"Append the rest to the grid starting at offset %d in token %d. The predicted cursor X location is %d",
+         info.characterCount, info.tokenCount, coord.x);
     int startOffset = info.characterCount;
     for (int ti = info.tokenCount; ti < tokens.count; ti++) {
         VT100Token *token = tokens[ti];
+        DLog(@"Append to grid: %.*s", token.asciiData->length - startOffset, token.asciiData->buffer + startOffset);
         [self appendMixedAsciiCRLFData:token.asciiData
                                  crlfs:token.crlfs
                            startOffset:startOffset];

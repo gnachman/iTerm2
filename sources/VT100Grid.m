@@ -608,7 +608,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     return (screenTop_ + lineNumber) % size_.height;
 }
 
-- (void)fastPathScrollLinesBelowCursorIntoLineBuffer:(LineBuffer *)lineBuffer {
+- (void)fastPathScrollLinesAtAndAboveCursorIntoLineBuffer:(LineBuffer *)lineBuffer {
     const int y = self.cursor.y;
     if (y == 0) {
         return;
@@ -619,7 +619,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     const int width = self.size.width;
     CTVectorCreate(&items, y);
     for (int i = 0; i < y; i++) {
-        screen_char_t *line = VT100GridScreenCharsAtLine(self, i);
+        const screen_char_t *line = VT100GridScreenCharsAtLine(self, i);
         const screen_char_t continuation = line[width];
         iTermAppendItem item = {
             .buffer = line,
@@ -629,6 +629,24 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
             .continuation = continuation
         };
         if (!item.partial || item.length > 0) {
+            DLog(@"Scroll line %d above cursor into linebuffer: %@", i, ScreenCharArrayToStringDebug(item.buffer, item.length));
+            CTVectorAppend(&items, item);
+        }
+    }
+    const int x = self.cursor.x;
+    if (x > 0) {
+        // Append partial line with cursor
+        screen_char_t *line = VT100GridScreenCharsAtLine(self, y);
+        const screen_char_t continuation = line[width];
+        iTermAppendItem item = {
+            .buffer = line,
+            .length = MIN(x, [self lengthOfLine:line]),
+            .partial = YES,
+            .metadata = [self immutableMetadataAtLineNumber:y],
+            .continuation = continuation
+        };
+        if (item.length > 0) {
+            DLog(@"Scroll partial line %d with cursor into linebuffer: %@", y, ScreenCharArrayToStringDebug(item.buffer, item.length));
             CTVectorAppend(&items, item);
         }
     }
@@ -639,7 +657,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     // Clear the bottom lines which have scrolled in.
     const int height = self.size.height;
     const screen_char_t *first = nil;
-    for (int i = 0; i < y; i++) {
+    for (int i = 0; i <= y; i++) {
         const int line = height - i - 1;
         screen_char_t *chars = VT100GridScreenCharsAtLine(self, line);
         if (!first) {
