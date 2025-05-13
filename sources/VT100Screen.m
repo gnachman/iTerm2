@@ -507,6 +507,16 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return string;
 }
 
+- (NSString *)compactLineDumpWithDividedHistoryAndContinuationMarks {
+    NSMutableString *string = [NSMutableString stringWithString:[_state.linebuffer compactLineDumpWithWidth:_state.width
+                                                                                       andContinuationMarks:YES]];
+    if ([string length]) {
+        [string appendString:@"\n--\n"];
+    }
+    [string appendString:[_state.currentGrid compactLineDumpWithContinuationMarks]];
+    return string;
+}
+
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarks {
     NSMutableString *string = [NSMutableString stringWithString:[_state.linebuffer compactLineDumpWithWidth:_state.width
                                                                                        andContinuationMarks:YES]];

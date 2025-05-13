@@ -2,6 +2,7 @@
 
 #import "iTermMalloc.h"
 #import "iTermParser.h"
+#import "CVector.h"
 #import "ScreenChar.h"
 
 typedef enum {
@@ -350,7 +351,7 @@ NS_INLINE NSString *SSHInfoDescription(SSHInfo info) {
 
 // For VT100_STRING
 @property(nonatomic, retain) NSString *string;
-@property(nonatomic, retain) NSArray<NSNumber *> *crlfs;
+@property(nonatomic, readonly) CTVector(int) *crlfs;
 
 // For saved data (when copying to clipboard) or sixel payload.
 @property(nonatomic, retain) NSData *savedData;
@@ -383,5 +384,10 @@ NS_INLINE NSString *SSHInfoDescription(SSHInfo info) {
 - (NSString *)stringForAsciiData;
 
 - (void)translateFromScreenTerminal;
+
+- (void)realizeCRLFsWithCapacity:(int)capacity;
+
+// This is meant for swift code in tests. Everyone else should modify the vector directly.
+- (void)appendCRLF:(int)value;
 
 @end

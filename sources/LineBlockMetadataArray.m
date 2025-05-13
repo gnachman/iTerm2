@@ -347,7 +347,7 @@
     _guts->_numEntries += 1;
 }
 
-- (const iTermMetadata *)appendToLastLine:(iTermImmutableMetadata *)metadataToAppend
+- (const iTermMetadata *)appendToLastLine:(const iTermImmutableMetadata *)metadataToAppend
                            originalLength:(int)originalLength
                          additionalLength:(int)additionalLength 
                              continuation:(screen_char_t)continuation {

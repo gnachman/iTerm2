@@ -274,18 +274,21 @@ static void DecodeASCIIBytes(VT100ByteStreamConsumer *consumer,
     // and although this while loop completed faster, the overall benchmark speed on spam.cc did
     // not improve.
     VT100ByteStreamCursor cursor = VT100ByteStreamConsumerGetCursor(consumer);
-    NSMutableArray<NSNumber *> *crlfs = nil;
+    CTVector(int) *crlfs = nil;
     while (VT100ByteStreamCursorGetSize(&cursor) > 0) {
         unsigned char c = VT100ByteStreamCursorPeek(&cursor);
         if (c >= 0x20 && c <= 0x7f) {
             VT100ByteStreamCursorAdvance(&cursor, 1);
             consumed++;
-        } else if (c == 10 || c == 13) {
+        } else if (c == 13 && VT100ByteStreamCursorDoublePeek(&cursor) == 10) {
             if (!crlfs) {
-                crlfs = [NSMutableArray array];
+                [token realizeCRLFsWithCapacity:40];  // This is a wild-ass guess
+                crlfs = token.crlfs;
             }
-            VT100ByteStreamCursorAdvance(&cursor, 1);
-            [crlfs addObject:@(consumed)];
+            VT100ByteStreamCursorAdvance(&cursor, 2);
+            CTVectorAppend(crlfs, consumed);
+            consumed++;
+            CTVectorAppend(crlfs, consumed);
             consumed++;
         } else {
             break;
@@ -302,7 +305,6 @@ static void DecodeASCIIBytes(VT100ByteStreamConsumer *consumer,
         } else {
 #warning TODO: Did this break ssh side channels?
             token->type = VT100_MIXED_ASCII_CR_LF;
-            token.crlfs = crlfs;
         }
     }
 }

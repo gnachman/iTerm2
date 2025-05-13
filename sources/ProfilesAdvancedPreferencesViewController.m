@@ -57,6 +57,7 @@
     IBOutlet NSTextField *_snippetsFilterLabel;
 
     BOOL _addingBoundHost;  // Don't remove empty-named hosts while this is set
+    BOOL _triggersModelHasChanged;
 }
 
 - (void)dealloc {
@@ -164,6 +165,11 @@
 }
 
 - (IBAction)closeTriggersSheet {
+    if (_triggersModelHasChanged) {
+        ProfileModel *model = [self.delegate profilePreferencesCurrentModel];
+        [iTermProfilePreferences commitModel:model];
+        _triggersModelHasChanged = NO;
+    }
     [[_triggerWindowController.window undoManager] removeAllActionsWithTarget:self];
     [self.view.window endSheet:_triggerWindowController.window];
 }
@@ -183,7 +189,11 @@
                                                           selector:@selector(setTriggersValue:)
                                                             object:[self objectForKey:KEY_TRIGGERS]];
     [[triggerController.window undoManager] setActionName:@"Edit Triggers"];
+
+    // No side effects because we don't want the tableview to get reloaded. We'll save when the
+    // panel is closed. by setting the _triggersModelHasChanged flag.
     [self setObject:value forKey:KEY_TRIGGERS withSideEffects:NO];
+    _triggersModelHasChanged = YES;
 }
 
 - (void)setTriggersValue:(NSArray *)value {

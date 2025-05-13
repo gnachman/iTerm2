@@ -90,7 +90,7 @@ NSArray *iTermMetadataEncodeToArray(iTermMetadata obj);
 
 void iTermMetadataAppend(iTermMetadata *lhs,
                          int lhsLength,
-                         iTermImmutableMetadata *rhs,
+                         const iTermImmutableMetadata *rhs,
                          int rhsLength);
 
 void iTermMetadataInitCopyingSubrange(iTermMetadata *obj,

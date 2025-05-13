@@ -70,7 +70,7 @@ NS_INLINE BOOL isCP949Encoding(NSStringEncoding stringEncoding) {
 }
 
 NS_INLINE BOOL isAsciiString(unsigned char code) {
-    return (code >= 0x20 && code <= 0x7f) || code == 10 || code == 13;
+    return (code >= 0x20 && code <= 0x7f);
 }
 
 NS_INLINE BOOL isString(unsigned char code, NSStringEncoding encoding) {

@@ -27,6 +27,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import "CVector.h"
 #import "FindContext.h"
 #import "iTermEncoderAdapter.h"
 #import "iTermFindDriver.h"
@@ -52,6 +53,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) BOOL dirty;
 @property(nonatomic, readonly) long long numberOfDroppedChars;
 @property(atomic, readonly) long long generation;
+@property(nonatomic, readonly) long long nextBlockNumber;
 
 // Returns the metadata associated with a line when wrapped to the specified width.
 - (iTermImmutableMetadata)metadataForLineNumber:(int)lineNum width:(int)width;
@@ -247,6 +249,9 @@ NS_ASSUME_NONNULL_BEGIN
              width:(int)width
           metadata:(iTermImmutableMetadata)metadata
       continuation:(screen_char_t)continuation;
+
+- (void)appendLines:(CTVector(iTermAppendItem) *)items
+              width:(int)width;
 
 - (void)appendScreenCharArray:(ScreenCharArray *)sca
                         width:(int)width;

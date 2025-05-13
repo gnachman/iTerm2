@@ -22,6 +22,7 @@
 @implementation VT100Token {
     AsciiData _asciiData;
     ScreenChars _screenChars;
+    CTVector(int) _crlfs;
 }
 
 + (instancetype)token {
@@ -78,7 +79,9 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
     [_kvpKey release];
     [_kvpValue release];
     [_savedData release];
-    [_crlfs release];
+    if (_crlfs.elements != nil) {
+        CTVectorDestroy(&_crlfs);
+    }
     [_subtokens release];
 
     iTermAsciiDataFree(&_asciiData);
@@ -444,6 +447,19 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
 
 - (void)setType:(VT100TerminalTokenType)newType {
     self->type = newType;
+}
+
+- (void)realizeCRLFsWithCapacity:(int)capacity {
+    assert(!_crlfs.elements);
+    CTVectorCreate(&_crlfs, capacity);
+}
+
+- (CTVector(int) *)crlfs {
+    return &_crlfs;
+}
+
+- (void)appendCRLF:(int)value {
+    CTVectorAppend(&_crlfs, value);
 }
 
 @end

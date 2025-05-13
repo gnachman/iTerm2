@@ -32,8 +32,8 @@ extern "C" {
 #include <atomic>
 #include <functional>
 #include <mutex>
-#include <unordered_map>
 #include <vector>
+#include "unordered_dense/unordered_dense.h"
 
 static BOOL gEnableDoubleWidthCharacterLineCache = NO;
 static BOOL gUseCachingNumberOfLines = NO;
@@ -51,7 +51,7 @@ NSString *const kLineBlockIsPartialKey = @"Is Partial";
 NSString *const kLineBlockMetadataKey = @"Metadata";
 NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
 NSString *const kLineBlockGuid = @"GUID";
-static dispatch_queue_t gDeallocQueue;
+dispatch_queue_t gDeallocQueue;
 
 #ifdef DEBUG_SEARCH
 @interface NSString(LineBlockDebugging)
@@ -165,7 +165,7 @@ static inline void ModifyLineBlock(LineBlock *self,
 
 @implementation LineBlock {
     // Keys are (offset from _characterBuffer.pointer, length to examine, width).
-    std::unordered_map<iTermNumFullLinesCacheKey, int, iTermNumFullLinesCacheKeyHasher> _numberOfFullLinesCache;
+    ankerl::unordered_dense::map<iTermNumFullLinesCacheKey, int, iTermNumFullLinesCacheKeyHasher> _numberOfFullLinesCache;
 }
 
 @synthesize progenitor = _progenitor;
@@ -213,7 +213,56 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
     return self;
 }
 
+- (instancetype)initWithItems:(CTVector(iTermAppendItem) *)items
+                    fromIndex:(int)startIndex
+                        width:(int)width
+          absoluteBlockNumber:(long long)absoluteBlockNumber {
+    self = [super init];
+    if (self) {
+        _absoluteBlockNumber = absoluteBlockNumber;
+        int size = 0;
+        int lineCount = 1;
+        for (int i = startIndex; i < CTVectorCount(items); i++) {
+            const iTermAppendItem &item = CTVectorGet(items, i);
+            size += item.length;
+            if (!item.partial) {
+                lineCount++;
+            }
+        }
+        _characterBuffer = [[iTermCharacterBuffer alloc] initWithSize:size];
+        cll_capacity = lineCount;
+        iTermAssignToConstPointer((void **)&cumulative_line_lengths, iTermMalloc(sizeof(int) * cll_capacity));
+        [self commonInit];
+        screen_char_t *outPtr = _characterBuffer.mutablePointer;
+        cached_numlines_width = -1;
+        int cll = 0;
+        for (int i = startIndex; i < CTVectorCount(items); i++) {
+            const iTermAppendItem &item = CTVectorGet(items, i);
+            memcpy(outPtr, item.buffer, item.length * sizeof(screen_char_t));
+            outPtr += item.length;
+            const int originalLength = cll_entries > 0 ? cll - cumulative_line_lengths[cll_entries - 1] : 0;
+            cll += item.length;
+            screen_char_t cont = item.continuation;
+            cont.code = item.partial ? EOL_SOFT : EOL_HARD;
+            if (is_partial) {
+                [_metadataArray appendToLastLine:&item.metadata
+                                  originalLength:originalLength
+                                additionalLength:item.length
+                                    continuation:cont];
+            } else {
+                cll_entries += 1;
+                [_metadataArray append:item.metadata continuation:cont];
+            }
+            cumulative_line_lengths[cll_entries - 1] = cll;
+            is_partial = item.partial;
+            assert(_metadataArray.numEntries == cll_entries);
+        }
+    }
+    return self;
+}
+
 - (void)commonInit {
+    _numberOfFullLinesCache.reserve(16);
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         if ([iTermAdvancedSettingsModel dwcLineCache]) {
@@ -495,6 +544,10 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
     }
 }
 
+- (int)nonDroppedSpaceUsed {
+    return self.rawSpaceUsed - _startOffset;
+}
+
 - (void)_appendCumulativeLineLength:(int)cumulativeLength
                            metadata:(iTermImmutableMetadata)lineMetadata
                        continuation:(screen_char_t)continuation
@@ -564,7 +617,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
                              prev + rawOffset + droppedChars,
                              iscont?"yes":"no",
                              md,
-                             [self debugStringForRawLine:i]];
+                             [self debugStringForRawLine:i - _firstEntry]];
         [strings addObject:message];
         prev = cumulative_line_lengths[i];
     }
@@ -1760,16 +1813,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     *charsDropped = 0;
     int initialOffset = self.bufferStartOffset;
 
-    if (_numberOfFullLinesCache.size() > 16) {
-        // A big unordered_map has a lot of tiny malloced regions that are slow to free, so do that in another thread.
-        __block std::unordered_map<iTermNumFullLinesCacheKey, int, iTermNumFullLinesCacheKeyHasher> tempMap;
-        std::swap(_numberOfFullLinesCache, tempMap);
-        dispatch_async(gDeallocQueue, ^{
-            tempMap.clear();
-        });
-    } else {
-        _numberOfFullLinesCache.clear();
-    }
+    _numberOfFullLinesCache.clear();
 
     for (i = _firstEntry; i < cll_entries; ++i) {
         int cll = cumulative_line_lengths[i] - self.bufferStartOffset;

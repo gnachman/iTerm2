@@ -257,6 +257,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 // Scroll regions are ignored.
 - (int)scrollWholeScreenUpIntoLineBuffer:(LineBuffer *)lineBuffer
                      unlimitedScrollback:(BOOL)unlimitedScrollback;
+- (void)fastPathScrollLinesBelowCursorIntoLineBuffer:(LineBuffer *)lineBuffer;
 
 // Scroll the scroll region down by one line.
 - (void)scrollDown;

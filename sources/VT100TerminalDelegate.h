@@ -62,7 +62,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalAppendString:(NSString *)string;
 - (void)terminalAppendAsciiData:(AsciiData *)asciiData;
 - (void)terminalAppendMixedAsciiCRLFData:(AsciiData *)asciiData
-                                   crlfs:(NSArray<NSNumber *> *)crlfs;
+                                   crlfs:(CTVector(int) *)crlfs;
 - (void)terminalAppendMixedAsciiGang:(NSArray<VT100Token *> *)tokens;
 
 // Play/display the bell.

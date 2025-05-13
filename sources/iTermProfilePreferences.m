@@ -765,10 +765,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
   withSideEffects:(BOOL)withSideEffects {
     [model setObject:object forKey:key inBookmark:profile];
     if (withSideEffects) {
-        [model flush];
-        [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles
-                                                            object:nil
-                                                          userInfo:nil];
+        [self commitModel:model];
     }
 }
 
@@ -776,6 +773,10 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                        inProfile:(Profile *)profile
                            model:(ProfileModel *)model {
     [model setObjectsFromDictionary:dictionary inProfile:profile];
+    [self commitModel:model];
+}
+
++ (void)commitModel:(ProfileModel *)model {
     [model flush];
     [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles
                                                         object:nil

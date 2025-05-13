@@ -899,7 +899,7 @@ static _Atomic int gPerformingJoinedBlock;
 
     // If a graphics character set was selected then translate buffer
     // characters into graphics characters.
-    if ([self.charsetUsesLineDrawingMode containsObject:@(terminal.charset)]) {
+    if ([self shouldConvertCharactersToGraphicsCharacterSetInTerminal:terminal]) {
         ConvertCharsToGraphicsCharset(buffer, len);
     }
 
@@ -908,6 +908,10 @@ static _Atomic int gPerformingJoinedBlock;
                  externalAttributeIndex:ea ? [iTermUniformExternalAttributes withAttribute:ea] : nil
                                rtlFound:NO];
     STOPWATCH_LAP(appendAsciiDataAtCursor);
+}
+
+- (BOOL)shouldConvertCharactersToGraphicsCharacterSetInTerminal:(VT100Terminal *)terminal {
+    return [self.charsetUsesLineDrawingMode containsObject:@(terminal.charset)];
 }
 
 - (void)reverseIndex {
@@ -4390,10 +4394,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
+- (BOOL)shouldEvaluateTriggers {
+    return (_triggerEvaluator.haveTriggersOrExpectations ||
+             self.config.loggingEnabled ||
+            _postTriggerActions.count != 0);
+}
+
 - (BOOL)appendAsciiDataToTriggerLine:(AsciiData *)asciiData {
-    if (!_triggerEvaluator.haveTriggersOrExpectations &&
-        !self.config.loggingEnabled &&
-        _postTriggerActions.count == 0) {
+    if (![self shouldEvaluateTriggers]) {
         DLog(@"No expectations or triggers so bail");
         return YES;
     }

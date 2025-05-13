@@ -141,6 +141,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (NSString *)compactLineDump;
 - (NSString *)compactLineDumpWithHistory;
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarks;
+- (NSString *)compactLineDumpWithDividedHistoryAndContinuationMarks;
 
 // This is provided for testing only.
 - (id<VT100GridReading>)currentGrid;

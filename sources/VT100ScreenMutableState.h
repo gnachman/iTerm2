@@ -101,6 +101,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark Write Text
 
 - (void)appendAsciiDataAtCursor:(AsciiData *)asciiData;
+- (BOOL)shouldConvertCharactersToGraphicsCharacterSetInTerminal:(VT100Terminal *)terminal;
 
 // Append a string to the screen at the current cursor position. The terminal's insert and wrap-
 // around modes are respected, the cursor is advanced, the screen may be scrolled, and the line
@@ -374,6 +375,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)appendStringToTriggerLine:(NSString *)string;
 - (BOOL)appendAsciiDataToTriggerLine:(AsciiData *)asciiData;
 - (void)forceCheckTriggers;
+- (BOOL)shouldEvaluateTriggers;
 
 #pragma mark - Color
 

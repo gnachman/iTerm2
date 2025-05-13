@@ -485,6 +485,215 @@ class VT100ScreenTests: XCTestCase {
             intermediateRange: VT100GridCoordRangeMake(0, 12, 77, 12)
         )
     }
+
+    // MARK: -
+
+    private func makeMixedToken(_ string: String) -> VT100Token {
+        let token = VT100Token()
+        token.type = VT100_MIXED_ASCII_CR_LF;
+        var data = string.data(using: .utf8)!
+        data.withUnsafeMutableBytes { umrbp -> Void in
+            let umbp = umrbp.assumingMemoryBound(to: CChar.self)
+            token.setAsciiBytes(umbp.baseAddress!,
+                                length: Int32(umbp.count))
+            token.realizeCRLFs(withCapacity: 10)
+            let crlfs = token.crlfs
+            for i in 0..<umbp.count {
+                if umbp[i] == 10 || umbp[i] == 13 {
+                    token.appendCRLF(Int32(i))
+                }
+            }
+        }
+        return token
+    }
+
+    private func gangExpected(initialLines: [String], mixedTokens: [String]) -> String {
+        let screen = self.screen(width: 10, height: 4)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.maxScrollbackLines = 1000
+        })
+        appendLines(initialLines, screen: screen)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            for token in mixedTokens {
+                var i = token.startIndex
+                while i < token.endIndex {
+                    let nextNewline = token.range(of: "\r\n", range: i..<token.endIndex)
+                    if let nextNewline {
+                        let substring = token[i..<nextNewline.lowerBound]
+                        mutableState!.appendString(atCursor: String(substring))
+                        mutableState!.appendCarriageReturnLineFeed()
+                        i = nextNewline.upperBound
+                    } else {
+                        let substring = token[i..<token.endIndex]
+                        mutableState!.appendString(atCursor: String(substring))
+                        i = token.endIndex
+                    }
+                }
+            }
+        })
+        return screen.compactLineDumpWithDividedHistoryAndContinuationMarks()
+    }
+
+    @discardableResult
+    private func gangTest(initialLines: [String], mixedTokens: [String]) -> Bool {
+        let expected = gangExpected(initialLines: initialLines, mixedTokens: mixedTokens)
+
+        let screen = self.screen(width: 10, height: 4)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.maxScrollbackLines = 1000
+        })
+        appendLines(initialLines, screen: screen)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let gang = mixedTokens.map {
+                makeMixedToken($0)
+            }
+            mutableState!.terminalAppendMixedAsciiGang(gang)
+        })
+        let actual = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()
+        XCTAssertEqual(actual, expected)
+        if actual != expected {
+            print("Actual:\n\(actual!)\n\nExpected:\n\(expected)")
+        }
+        return actual == expected
+    }
+
+    func testGang_basic() {
+        gangTest(
+            initialLines: [
+                "Now is the time for all good men to come to the aid of their party.",
+                "",
+                "Twas brillig and the slithy toves did gyre and gimbal in the wabe."],
+            mixedTokens: [
+                "One for the money\r\ntwo for the show\r\n",
+                "Three to get ready\r\nFour let's",
+                " go"
+            ])
+    }
+
+    private func performRandomGangTest(prng: inout SeededGenerator) -> Bool {
+        let numInitialLines = prng.next(in: 0..<8)
+        let initialLines = (0..<numInitialLines).map { i in
+            String(repeating: Character(UnicodeScalar(65 + i)!), count: prng.next(in: 0..<80))
+        }
+        var tokens = [String]()
+        var letter = 65 + 32
+        let numTokens = prng.next(in: 1..<8)
+        for _ in 0..<numTokens {
+            let numLines = prng.next(in: 0..<8)
+            var token = ""
+            for j in 0..<numLines {
+                token.append(String(repeating: Character(UnicodeScalar(letter)!),
+                                    count: prng.next(in: 0..<80)))
+                letter += 1
+                if letter == 65 + 32 + 26 {
+                    letter = 65 + 32
+                }
+                if j < numLines - 1 || prng.coinflip(p: 0.5) {
+                    token.append("\r\n")
+                }
+            }
+            tokens.append(token)
+        }
+        return gangTest(initialLines: initialLines, mixedTokens: tokens)
+    }
+
+    func testGang_random() {
+        var prng = SeededGenerator(seed: 0)
+        let iterations = 1_000
+        for i in 0..<iterations {
+            var saved = prng
+            if !performRandomGangTest(prng: &prng) {
+                // Set a breakpoint here to debug test failures.
+                NSLog("Random test failed on iteration \(i)")
+                _ = performRandomGangTest(prng: &saved)
+            } else if i % 100 == 0 {
+                NSLog("Iteratrion \(i) passed")
+            }
+        }
+    }
+
+    func testDropFirstBlock() {
+        let screen = self.screen(width: 8, height: 8)
+        session.configuration.maxScrollbackLines = 6
+        session.configuration.isDirty = true
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            do {
+                let gang = [String(repeating: "a", count: 10) + "\r\n",
+                            String(repeating: "b", count: 10) + "\r\n",
+                            String(repeating: "c", count: 10) + "\r\n",
+                            String(repeating: "d", count: 10) + "\r\n",
+                            String(repeating: "e", count: 10) + "\r\n",
+                            String(repeating: "f", count: 10) + "\r\n",
+                            String(repeating: "g", count: 10) + "\r\n",
+                            String(repeating: "h", count: 10) + "\r\n",
+                            String(repeating: "i", count: 10) + "\r\n",
+                            String(repeating: "j", count: 10) + "\r\n"]
+                mutableState?.terminalAppendMixedAsciiGang(gang.map { makeMixedToken($0) })
+            }
+            XCTAssertEqual(screen.compactLineDumpWithHistory()!,
+                           "dd......\n" +
+                           "eeeeeeee\n" +
+                           "ee......\n" +
+                           "ffffffff\n" +
+                           "ff......\n" +
+                           "gggggggg\n" +
+                           // grid
+                           "gg......\n" +
+                           "hhhhhhhh\n" +
+                           "hh......\n" +
+                           "iiiiiiii\n" +
+                           "ii......\n" +
+                           "jjjjjjjj\n" +
+                           "jj......\n" +
+                           "........")
+            do {
+                let gang = [String(repeating: "k", count: 10) + "\r\n",
+                            String(repeating: "l", count: 10) + "\r\n",
+                            String(repeating: "m", count: 10) + "\r\n",
+                            String(repeating: "n", count: 10) + "\r\n",
+                            String(repeating: "o", count: 10) + "\r\n"]
+                mutableState?.terminalAppendMixedAsciiGang(gang.map { makeMixedToken($0) })
+            }
+            XCTAssertEqual(screen.compactLineDumpWithHistory()!,
+                           "ii......\n" +
+                           "jjjjjjjj\n" +
+                           "jj......\n" +
+                           "kkkkkkkk\n" +
+                           "kk......\n" +
+                           "llllllll\n" +
+                           // grid
+                           "ll......\n" +
+                           "mmmmmmmm\n" +
+                           "mm......\n" +
+                           "nnnnnnnn\n" +
+                           "nn......\n" +
+                           "oooooooo\n" +
+                           "oo......\n" +
+                           "........")
+        })
+    }
+}
+
+// a very simple LCG-based RNG
+struct SeededGenerator: RandomNumberGenerator {
+    // pick any non‑zero seed
+    init(seed: UInt64) { state = seed }
+    private var state: UInt64
+    mutating func next() -> UInt64 {
+        // constants from Numerical Recipes
+        state = 6364136223846793005 &* state &+ 1
+        return state
+    }
+    mutating func next(in outputRange: Range<Int>) -> Int {
+        let raw = next()
+        let temp = Int128(outputRange.lowerBound) + Int128(raw)
+        return Int(temp % Int128(outputRange.count))
+    }
+    mutating func coinflip(p: Double) -> Bool {
+        let value = Double(next())
+        let threshold = Double(UInt64.max) * p
+        return value < threshold
+    }
 }
 
 fileprivate class FakeSession: NSObject, VT100ScreenDelegate {

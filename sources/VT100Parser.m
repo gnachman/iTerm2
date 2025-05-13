@@ -109,9 +109,6 @@
                 token->type = VT100_LITERAL;
                 token->code = firstChar;
                 VT100ByteStreamConsumerSetConsumed(&consumer, 1);
-            } else if (!_dcsHooked && (firstChar == 10 || firstChar == 13)) {
-                ParseString(&consumer, token, encoding);
-                position = cursor;
             } else {
                 [_controlParser parseControlWithConsumer:&consumer
                                            incidentals:vector

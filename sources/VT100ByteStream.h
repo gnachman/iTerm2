@@ -124,6 +124,14 @@ NS_INLINE unsigned char VT100ByteStreamCursorPeek(const VT100ByteStreamCursor *s
     return *self->datap;
  }
 
+NS_INLINE unsigned char VT100ByteStreamCursorDoublePeek(const VT100ByteStreamCursor *self) {
+    ITAssertWithMessage(self->datalen > 0, @"Double peek on empty cursor");
+    if (self->datalen < 2) {
+        return 0;
+    }
+    return self->datap[1];
+ }
+
 NS_INLINE void VT100ByteStreamCursorAdvance(VT100ByteStreamCursor *self, int count) {
     ITAssertWithMessage(count <= self->datalen,
                         @"Advance past end of cursor (count=%d, remaining=%d)",

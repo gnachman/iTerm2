@@ -12,6 +12,7 @@
 #import "iTermEncoderAdapter.h"
 #import "iTermExternalAttributeIndex.h"
 #import "iTermMetadata.h"
+#import "CVector.h"
 #import "LineBuffer.h"
 #import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
@@ -562,6 +563,51 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         lineNumber += size_.height;
     }
     return (screenTop_ + lineNumber) % size_.height;
+}
+
+- (void)fastPathScrollLinesBelowCursorIntoLineBuffer:(LineBuffer *)lineBuffer {
+    const int y = self.cursor.y;
+    if (y == 0) {
+        return;
+    }
+    [self setAllDirty:YES];
+
+    CTVector(iTermAppendItem) items;
+    const int width = self.size.width;
+    CTVectorCreate(&items, y);
+    for (int i = 0; i < y; i++) {
+        screen_char_t *line = VT100GridScreenCharsAtLine(self, i);
+        const screen_char_t continuation = line[width];
+        iTermAppendItem item = {
+            .buffer = line,
+            .length = [self lengthOfLine:line],
+            .partial = continuation.code != EOL_HARD,
+            .metadata = [self immutableMetadataAtLineNumber:i],
+            .continuation = continuation
+        };
+        if (!item.partial || item.length > 0) {
+            CTVectorAppend(&items, item);
+        }
+    }
+    [lineBuffer appendLines:&items width:width];
+    screenTop_ = (screenTop_ + y) % size_.height;
+    _haveScrolled = YES;
+
+    // Clear the bottom lines which have scrolled in.
+    const int height = self.size.height;
+    const screen_char_t *first = nil;
+    for (int i = 0; i < y; i++) {
+        const int line = height - i - 1;
+        screen_char_t *chars = VT100GridScreenCharsAtLine(self, line);
+        if (!first) {
+            [self clearLineDataBytes:chars count:width];
+            first = chars;
+        } else {
+            memcpy(chars, first, (width + 1) * sizeof(screen_char_t));
+        }
+        const int j = VT100GridLineInfoIndex(self, line);
+        [lineInfos_[j] resetMetadata];
+    }
 }
 
 - (int)scrollWholeScreenUpIntoLineBuffer:(LineBuffer *)lineBuffer

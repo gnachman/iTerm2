@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "CVector.h"
 #import "FindContext.h"
 #import "ScreenCharArray.h"
 #import "iTermEncoderAdapter.h"
@@ -16,6 +17,7 @@
 
 @class LineBlock;
 
+extern dispatch_queue_t gDeallocQueue;
 
 // LineBlock represents an ordered collection of lines of text. It stores them contiguously
 // in a buffer.
@@ -58,6 +60,11 @@
 
 - (instancetype)initWithRawBufferSize:(int)size
                   absoluteBlockNumber:(long long)absoluteBlockNumber;
+
+- (instancetype)initWithItems:(CTVector(iTermAppendItem) *)items
+                    fromIndex:(int)startIndex
+                        width:(int)width
+          absoluteBlockNumber:(long long)absoluteBlockNumber;
 
 - (instancetype)init NS_UNAVAILABLE;
 
@@ -167,8 +174,11 @@
 // Appends the contents of the block to |s|.
 - (void)appendToDebugString:(NSMutableString *)s;
 
-// Returns the total number of bytes used, including dropped chars.
+// Returns the total number of screen_char_t's used, including dropped cells.
 - (int)rawSpaceUsed;
+
+// Returns the total number of screen_char_t's used, excluding dropped cells.
+- (int)nonDroppedSpaceUsed;
 
 // Returns the total number of lines, including dropped lines.
 - (int)numEntries;
