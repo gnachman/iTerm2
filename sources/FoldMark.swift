@@ -176,7 +176,7 @@ class SavedIntervalTreeObject: NSObject {
         var sum = Int64(baseLine)
         for _ in 0..<rc.verticalAdvance {
             let n = extractor.rowCountForRawLineEncompassing(withAbsY: sum)
-            sum += Int64(n)
+            sum += Int64(max(0, n))
         }
         return sum
     }
