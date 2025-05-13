@@ -431,7 +431,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     const int numLinesInLineBuffer = [_state.linebuffer numLinesWithWidth:width];
     NSMutableArray<ScreenCharArray *> *result = [NSMutableArray array];
     for (NSInteger i = range.location; i < NSMaxRange(range); i++) {
-        const screen_char_t *line = [_state.currentGrid screenCharsAtLineNumber:i - numLinesInLineBuffer];
+        const screen_char_t *line = [_state.currentGrid immutableScreenCharsAtLineNumber:i - numLinesInLineBuffer];
         ScreenCharArray *array = [[[ScreenCharArray alloc] initWithLine:line
                                                                  length:width
                                                            continuation:line[width]] autorelease];

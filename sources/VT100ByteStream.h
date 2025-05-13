@@ -154,7 +154,6 @@ NS_INLINE unsigned char VT100ByteStreamCursorPeekOffset(const VT100ByteStreamCur
     return *(self->datap + offset);
 }
 
-#warning TODO: This is gonna be a problem
 NS_INLINE void VT100ByteStreamCursorWrite(VT100ByteStreamCursor *self, unsigned char c) {
     self->datap[0] = c;
 }
