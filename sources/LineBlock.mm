@@ -673,9 +673,18 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
     }
 }
 
+NS_INLINE int LineBlockNumberOfFullLinesFastPath(int length, int width) {
+    // Need to use max(0) because otherwise we get -1 for length=0 width=1.
+    return MAX(0, length - 1) / width;
+}
+
 - (int)numberOfFullLinesFromOffset:(int)offset
                             length:(int)length
                              width:(int)width {
+    if (width <= 1 || !_mayHaveDoubleWidthCharacter) {
+        return LineBlockNumberOfFullLinesFastPath(length, width);
+    }
+
     auto key = iTermNumFullLinesCacheKey(offset, length, width);
     int result;
     auto insertResult = _numberOfFullLinesCache.insert(std::make_pair(key, -1));
@@ -721,7 +730,7 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
                                  mayHaveDWC:(BOOL)mayHaveDWC {
     if (width <= 1 || !mayHaveDWC) {
         // Need to use max(0) because otherwise we get -1 for length=0 width=1.
-        return MAX(0, length - 1) / width;
+        return LineBlockNumberOfFullLinesFastPath(length, width);
     }
     return iTermLineBlockNumberOfFullLinesImpl(_characterBuffer.pointer + offset, length, width);
 }
@@ -1816,12 +1825,13 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     _numberOfFullLinesCache.clear();
 
     for (i = _firstEntry; i < cll_entries; ++i) {
-        int cll = cumulative_line_lengths[i] - self.bufferStartOffset;
+        const int bufferStartOffset = self.bufferStartOffset;
+        int cll = cumulative_line_lengths[i] - bufferStartOffset;
         length = cll - prev;
         // Get the number of full-length wrapped lines in this raw line. If there
         // were only single-width characters the formula would be:
         //     (length - 1) / width;
-        int spans = [self numberOfFullLinesFromOffset:self.bufferStartOffset + prev
+        int spans = [self numberOfFullLinesFromOffset:bufferStartOffset + prev
                                                length:length
                                                 width:width];
         if (n > spans) {
@@ -1842,7 +1852,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
             } else {
                 cached_numlines -= orig_n;
             }
-            [self setBufferStartOffset:self.bufferStartOffset + prev + offset];
+            [self setBufferStartOffset:bufferStartOffset + prev + offset];
 
             _firstEntry = i;
             [_metadataArray removeFirst:_firstEntry - _metadataArray.first];

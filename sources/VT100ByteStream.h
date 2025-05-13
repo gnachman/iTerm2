@@ -120,7 +120,9 @@ NS_INLINE int VT100ByteStreamCursorGetSize(const VT100ByteStreamCursor *self) {
 }
 
 NS_INLINE unsigned char VT100ByteStreamCursorPeek(const VT100ByteStreamCursor *self) {
+#if DEBUG
     ITAssertWithMessage(self->datalen > 0, @"Peek on empty cursor");
+#endif
     return *self->datap;
  }
 
@@ -198,6 +200,10 @@ NS_INLINE void VT100ByteStreamConsumerReset(VT100ByteStreamConsumer *self) {
 
 NS_INLINE unsigned char VT100ByteStreamConsumerPeek(VT100ByteStreamConsumer *self) {
     return VT100ByteStreamCursorPeek(&self->cursor);
+}
+
+NS_INLINE unsigned char VT100ByteStreamConsumerDoublePeek(VT100ByteStreamConsumer *self) {
+    return VT100ByteStreamCursorDoublePeek(&self->cursor);
 }
 
 NS_INLINE int VT100ByteStreamConsumerGetSize(VT100ByteStreamConsumer *self) {

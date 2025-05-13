@@ -50,7 +50,7 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
 
     asciiData->length = length;
     if (length > sizeof(asciiData->staticBuffer)) {
-        asciiData->buffer = iTermMalloc(length);
+        asciiData->buffer = iTermUninitializedCalloc(length, 1);
     } else {
         asciiData->buffer = asciiData->staticBuffer;
     }

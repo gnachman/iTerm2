@@ -4218,6 +4218,7 @@
 		A6E8BA0419DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */; };
 		A6E8BA0519DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */; };
 		A6E8EA1E2DD2DDC1001143CF /* unordered_dense.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8EA1C2DD2DDC1001143CF /* unordered_dense.h */; };
+		A6E8EA3E2DD3077A001143CF /* TimingStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E8EA3D2DD30773001143CF /* TimingStats.swift */; };
 		A6E9ACCA1A19956D008B0B6F /* NSWindow+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */; };
 		A6E9ACCB1A19956D008B0B6F /* NSWindow+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */; };
 		A6EA071A24EA043600DD6E17 /* NSURL+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A60251671CCD3E5E009BABF1 /* NSURL+iTerm.m */; };
@@ -7913,6 +7914,7 @@
 		A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermIntegerNumberFormatter.h; sourceTree = "<group>"; };
 		A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermIntegerNumberFormatter.m; sourceTree = "<group>"; };
 		A6E8EA1C2DD2DDC1001143CF /* unordered_dense.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = unordered_dense.h; sourceTree = "<group>"; };
+		A6E8EA3D2DD30773001143CF /* TimingStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimingStats.swift; sourceTree = "<group>"; };
 		A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSWindow+PSM.h"; sourceTree = "<group>"; };
 		A6E9ACC91A19956D008B0B6F /* NSWindow+PSM.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSWindow+PSM.m"; sourceTree = "<group>"; };
 		A6EA071C24EA441900DD6E17 /* NSURL+IDN.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSURL+IDN.m"; path = "NSURL-IDN/NSURL+IDN.m"; sourceTree = "<group>"; };
@@ -11381,6 +11383,7 @@
 		A68A30C9186D101C007F550F /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				A6E8EA3D2DD30773001143CF /* TimingStats.swift */,
 				A60E9FC42DC69A7500E3193B /* EfficientCodec.swift */,
 				A643B7F92DAACF3B00EF918E /* PathCompletionHelper.swift */,
 				A643B7F32DA88F1200EF918E /* PathExtractor.swift */,
@@ -16823,6 +16826,7 @@
 				A6D1A3F72C7E9B2000FECDF2 /* KittyImageCommand.swift in Sources */,
 				A63174A021214698004F0142 /* iTermGenericStatusBarContainer.m in Sources */,
 				53E8F3702244A58800F3770F /* iTermActionsModel.m in Sources */,
+				A6E8EA3E2DD3077A001143CF /* TimingStats.swift in Sources */,
 				A69CCB12211B55FB008ADA71 /* iTermMenuBarObserver.m in Sources */,
 				A6A4865D20B6706700493302 /* ProfilesKeysPreferencesViewController.m in Sources */,
 				5370679121C9D2780088D0F3 /* SIGTrust.m in Sources */,

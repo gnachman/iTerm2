@@ -73,6 +73,16 @@ NS_INLINE BOOL isAsciiString(unsigned char code) {
     return (code >= 0x20 && code <= 0x7f);
 }
 
+NS_INLINE BOOL isMixedAsciiString(unsigned char code, unsigned char code2) {
+    if (code >= 0x20 && code <= 0x7f) {
+        return YES;
+    }
+    if (code == 10 && code == 13) {
+        return YES;
+    }
+    return NO;
+}
+
 NS_INLINE BOOL isString(unsigned char code, NSStringEncoding encoding) {
     if (encoding == NSUTF8StringEncoding) {
         return (code >= 0x80);

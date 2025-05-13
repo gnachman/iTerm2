@@ -130,6 +130,13 @@ class TokenExecutor: NSObject {
         addTokens(vector, length: length, highPriority: false)
     }
 
+    private static let addTokensTimingStats: TimingStats = {
+        TimingStats(name: "TokenExecutor")
+    }()
+    // Flip this to true to measure how much time the TaskNotifier thread spends busy (reading,
+    // parsing, and in select()) vs idle (blocked on TokenExecutor's semaphore).
+    private let enableTimingStats = false
+
     // This takes ownership of vector.
     // You can call this on any queue when not high priority.
     // If high priority, then you must be on the main queue or have joined the main & mutation queue.
@@ -151,7 +158,13 @@ class TokenExecutor: NSObject {
         }
         // Normal code path for tokens from PTY. Use the semaphore to give backpressure to reading.
         let semaphore = self.semaphore
+        if enableTimingStats {
+            TokenExecutor.addTokensTimingStats.recordEnd()
+        }
         _ = semaphore.wait(timeout: .distantFuture)
+        if enableTimingStats {
+            TokenExecutor.addTokensTimingStats.recordStart()
+        }
         reallyAddTokens(vector, length: length, highPriority: highPriority, semaphore: semaphore)
         queue.async { [weak self] in
             self?.impl.didAddTokens()

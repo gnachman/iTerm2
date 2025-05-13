@@ -67,8 +67,7 @@ class TwoTierTokenQueue {
 
     private var nextQueueAndTokenArrayGroup: (Queue, TokenArrayGroup, Int)? {
         for (i, queue) in queues.enumerated() {
-            let group = queue.firstGroup
-            if !group.isEmpty {
+            if let group = queue.firstGroup {
                 return (queue, group, i)
             }
         }
@@ -114,7 +113,7 @@ class TwoTierTokenQueue {
             garbage = []
             TokenArray.destroyQueue.async {
                 for array in arrays {
-                    array.cleanup()
+                    array.cleanup(asyncFree: false)
                 }
             }
         }
@@ -154,10 +153,10 @@ fileprivate class Queue: CustomDebugStringConvertible {
         }
     }
 
-    var firstGroup: TokenArrayGroup {
+    var firstGroup: TokenArrayGroup? {
         return mutex.sync {
             guard let firstArray = arrays.first else {
-                return TokenArrayGroup([], coalescable: false, length: 0)
+                return nil
             }
             var result = [TokenArray]()
             var length = 0

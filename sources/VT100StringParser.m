@@ -264,8 +264,10 @@ static void DecodeOtherBytes(VT100ByteStreamConsumer *consumer,
     }
 }
 
-static void DecodeASCIIBytes(VT100ByteStreamConsumer *consumer,
-                             VT100Token *token) {
+// Mixed ASCII ascii with CRLFs.
+// This is a huge performance win for handling big files of mostly plain ascii text.
+static void DecodeMixedASCIIBytes(VT100ByteStreamConsumer *consumer,
+                                  VT100Token *token) {
     int consumed = 0;
 
     // I tried the ideas mentioned here:
@@ -318,9 +320,10 @@ void ParseString(VT100ByteStreamConsumer *consumer,
     result->code = VT100ByteStreamConsumerPeek(consumer);
 
     BOOL isAscii = NO;
-    if (isAsciiString(VT100ByteStreamConsumerPeek(consumer))) {
+    if (isMixedAsciiString(VT100ByteStreamConsumerPeek(consumer),
+                           VT100ByteStreamConsumerDoublePeek(consumer))) {
         isAscii = YES;
-        DecodeASCIIBytes(consumer, result);
+        DecodeMixedASCIIBytes(consumer, result);
         encoding = NSASCIIStringEncoding;
     } else if (encoding == NSUTF8StringEncoding) {
         DecodeUTF8Bytes(consumer, result);

@@ -103,13 +103,19 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
         semaphore = nil
     }
 
-    func cleanup() {
+    func cleanup(asyncFree: Bool) {
         guard dirty else {
             return
         }
         dirty = false
         semaphore?.signal()
-        CVectorReleaseObjectsAndDestroy(cvector)
+        if asyncFree {
+            TokenArray.destroyQueue.async { [cvector] in
+                CVectorReleaseObjectsAndDestroy(cvector)
+            }
+        } else {
+            CVectorReleaseObjectsAndDestroy(cvector)
+        }
     }
 
     func replaceLast(with replacement: VT100Token) {
@@ -119,6 +125,6 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
     }
 
     deinit {
-        cleanup()
+        cleanup(asyncFree: true)
     }
 }
