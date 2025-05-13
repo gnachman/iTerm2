@@ -161,7 +161,7 @@ fileprivate class Queue: CustomDebugStringConvertible {
             var result = [TokenArray]()
             var length = 0
             for i in 0..<arrays.count {
-                if !arrays[i].canCoalesce {
+                if !arrays[i].canCoalesce(withNext: arrays[safe: i + 1]?.peek) {
                     break
                 }
                 result.append(arrays[i])

@@ -257,6 +257,11 @@ typedef struct {
                             self.commandStartCoord.x == -1 &&
                             tokens.count > 0);
     if (canTakeFastPath) {
+        // Remove CR tokens. They are always safe to ignore. See the note in TokenArray about how
+        // the TTY driver inserts spurious CRs.
+        tokens = [tokens filteredArrayUsingBlock:^BOOL(VT100Token *token) {
+            return token.type != VT100CC_CR;
+        }];
         const VT100ScreenMutableStateAppendInfo info = [self appendInfoForTokens:tokens];
         const VT100GridCoord coord = info.cursor;
         if (coord.y >= self.height * 2) {

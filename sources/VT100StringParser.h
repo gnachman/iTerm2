@@ -77,7 +77,7 @@ NS_INLINE BOOL isMixedAsciiString(unsigned char code, unsigned char code2) {
     if (code >= 0x20 && code <= 0x7f) {
         return YES;
     }
-    if (code == 10 && code == 13) {
+    if (code == '\r' && code2 == '\n') {
         return YES;
     }
     return NO;

@@ -30,11 +30,26 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
         return nextIndex < count
     }
 
-    var canCoalesce: Bool {
-        (nextIndex..<count).allSatisfy {
+    func canCoalesce(withNext nextToken: VT100Token?) -> Bool {
+        if count <= nextIndex {
+            return true
+        }
+        if !(nextIndex..<(count - 1)).allSatisfy({
             let type = CVectorGetVT100Token(&cvector, $0).type
             return type == VT100_ASCIISTRING || type == VT100_MIXED_ASCII_CR_LF || type == VT100_GANG
+        }) {
+            return false
         }
+        let type = CVectorGetVT100Token(&cvector, count - 1).type
+        if type == VT100_ASCIISTRING || type == VT100_MIXED_ASCII_CR_LF || type == VT100_GANG {
+            return true
+        }
+        // The TTY driver will sometimes emit two consecutive CRs when `onlcr` is on and it happens
+        // on the boundary of a read. The telltale is a 1024-byte read that ends with a CR and the
+        // next read begins with CR LF. Consecutive CRs are harmless for the purposes of coalescing
+        // tokens into a group. The consumer can simply ignore any VT100_CR tokens.
+        return type == VT100CC_CR && (nextToken?.type == VT100_MIXED_ASCII_CR_LF &&
+                                      nextToken?.asciiData.pointee.buffer[0] == 13)
     }
 
     // length is byte length ofinputs

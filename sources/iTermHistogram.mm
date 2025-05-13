@@ -188,7 +188,8 @@ namespace iTerm2 {
     self = [super init];
     if (self) {
 #if ENABLE_STATS
-        _sampler = new iTerm2::Sampler(100);
+        _reservoirSize = 100;
+        _sampler = new iTerm2::Sampler(_reservoirSize);
 #endif
     }
     return self;
@@ -207,7 +208,13 @@ namespace iTerm2 {
     _max = 0;
     _count = 0;
     delete _sampler;
-    _sampler = new iTerm2::Sampler(100);
+    _sampler = new iTerm2::Sampler(_reservoirSize);
+#endif
+}
+- (void)setReservoirSize:(int)reservoirSize {
+#if ENABLE_STATS
+    _reservoirSize = reservoirSize;
+    [self clear];
 #endif
 }
 
