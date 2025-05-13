@@ -262,105 +262,125 @@ typedef struct {
                             !self.insert &&
                             self.currentGrid == self.primaryGrid &&
                             self.currentGrid.canTakeFastPath);
-    if (canTakeFastPath) {
-        // Remove CR tokens. They are always safe to ignore. See the note in TokenArray about how
-        // the TTY driver inserts spurious CRs.
-        tokens = [tokens filteredArrayUsingBlock:^BOOL(VT100Token *token) {
-            return token.type != VT100CC_CR;
-        }];
-        const VT100ScreenMutableStateAppendInfo info = [self appendInfoForTokens:tokens];
-        const VT100GridCoord coord = info.cursor;
-        if (coord.y >= self.height * 2) {
-            ITAssertWithMessage(info.tokenCount >= 0, @"Negative token count. cursor=%d, height=%d, tokens=%@", coord.y, self.height, tokens);
-            // Scroll the whole grid into the line buffer.
-            // This does not drop from the line buffer. We'll do that at the end for better performance.
-            [self.currentGrid fastPathScrollLinesBelowCursorIntoLineBuffer:self.linebuffer];
+    if (!canTakeFastPath) {
+        const int numLines = [self appendGangSlowPath:tokens];
+        [self.currentGrid didAppendDWCFreeLines:numLines];
+        DLog(@"Slow path done");
+    } else {
+        [self appendGangFastPath:tokens];
+        DLog(@"Fast path done");
+    }
+}
 
-            // Append to line buffer, bypassing grid
-            iTermExternalAttribute *ea = [terminal externalAttributes];
-            screen_char_t continuation = [terminal defaultChar];
-            continuation.code = EOL_SOFT;
-            iTermImmutableMetadata metadata;
-            iTermImmutableMetadataInit(&metadata,
-                                       self.currentGrid.currentDate,
-                                       NO,
-                                       ea ? [iTermUniformExternalAttributes withAttribute:ea] : nil);
-            [self.currentGrid setCursorWithoutInvalidatingDWCFreeLineCount:VT100GridCoordMake(0, 0)];
-
-            const int lastTokenIndexToSendToLineBuffer = info.tokenCount;
-            CTVector(iTermAppendItem) items;
-            CTVectorCreate(&items, info.lineCount);
-
-            const int width = self.width;
-            for (int ti = 0; ti <= lastTokenIndexToSendToLineBuffer; ti++) {
-                VT100Token *token = tokens[ti];
-
-                CTVector(int) *crlfs = token.crlfs;
-                AsciiData *asciiData = token.asciiData;
-                int start = 0;
-                const NSInteger count = CTVectorCount(crlfs);
-
-                for (NSInteger i = 0; i < count + 2; i += 2) {
-                    const int control = (i < count) ? CTVectorGet(crlfs, i) : asciiData->length;
-                    ScreenChars screenChars = {
-                        .buffer = asciiData->screenChars->buffer + start,
-                        .length = control - start
-                    };
-                    BOOL stop = (ti == lastTokenIndexToSendToLineBuffer && control > info.characterCount);
-                    BOOL stoppedEarly = NO;
-                    if (stop) {
-                        const int remainder = (control - info.characterCount);
-                        screenChars.length -= remainder;
-                        stoppedEarly = remainder > 0;
-                    }
-                    const int eol = (stoppedEarly || i == count) ? EOL_SOFT : EOL_HARD;
-                    if (!stop || screenChars.length > 0) {
-                        iTermAppendItem item = {
-                            .buffer = screenChars.buffer,
-                            .length = screenChars.length,
-                            .partial = eol == EOL_SOFT,
-                            .metadata = metadata,
-                            .continuation = continuation
-                        };
-                        // Don't append empty partials. That has no effect.
-                        if (!item.partial || item.length > 0) {
-                            CTVectorAppend(&items, item);
-                        }
-                    }
-                    if (stop) {
-                        break;
-                    }
-                    start = control + 2;
-                }
-            }
-            [self.linebuffer appendLines:&items
-                                   width:width];
-            CTVectorDestroy(&items);
-
-            // Append the rest to the grid.
-            int startOffset = info.characterCount;
-            for (int ti = info.tokenCount; ti < tokens.count; ti++) {
-                VT100Token *token = tokens[ti];
-                [self appendMixedAsciiCRLFData:token.asciiData
-                                         crlfs:token.crlfs
-                                   startOffset:startOffset];
-                startOffset = 0;
-            }
-
-            // Drop excess lines and place cursor properly.
-            const int numDropped = [self.linebuffer dropExcessLinesWithWidth:self.width];
-            [self incrementOverflowBy:self.unlimitedScrollback ? 0 : numDropped];
-            [self.currentGrid setCursorWithoutInvalidatingDWCFreeLineCount:VT100GridCoordMake(coord.x, self.height - 1)];
-            return;
-        }
+- (void)appendGangFastPath:(NSArray<VT100Token *> *)tokens {
+    if (tokens.count == 1 && tokens[0].asciiData->length < self.height * 2) {
+        // Quick check if this is tiny.
+        [self appendGangSlowPath:tokens];
+        return;
     }
 
-    // Slow path
+    // Now check if it's big enough to really benefit.
+    VT100Terminal *terminal = self.terminal;
+    // Remove CR tokens. They are always safe to ignore. See the note in TokenArray about how
+    // the TTY driver inserts spurious CRs.
+    tokens = [tokens filteredArrayUsingBlock:^BOOL(VT100Token *token) {
+        return token.type != VT100CC_CR;
+    }];
+    const VT100ScreenMutableStateAppendInfo info = [self appendInfoForTokens:tokens];
+    const VT100GridCoord coord = info.cursor;
+    if (coord.y < self.height * 2) {
+        [self appendGangSlowPath:tokens];
+        return;
+    }
+
+    ITAssertWithMessage(info.tokenCount >= 0, @"Negative token count. cursor=%d, height=%d, tokens=%@", coord.y, self.height, tokens);
+    // Scroll the whole grid into the line buffer.
+    // This does not drop from the line buffer. We'll do that at the end for better performance.
+    [self.currentGrid fastPathScrollLinesBelowCursorIntoLineBuffer:self.linebuffer];
+
+    // Append to line buffer, bypassing grid
+    iTermExternalAttribute *ea = [terminal externalAttributes];
+    screen_char_t continuation = [terminal defaultChar];
+    continuation.code = EOL_SOFT;
+    iTermImmutableMetadata metadata;
+    iTermImmutableMetadataInit(&metadata,
+                               self.currentGrid.currentDate,
+                               NO,
+                               ea ? [iTermUniformExternalAttributes withAttribute:ea] : nil);
+    [self.currentGrid setCursorWithoutInvalidatingDWCFreeLineCount:VT100GridCoordMake(0, 0)];
+
+    const int lastTokenIndexToSendToLineBuffer = info.tokenCount;
+    CTVector(iTermAppendItem) items;
+    CTVectorCreate(&items, info.lineCount);
+
+    const int width = self.width;
+    for (int ti = 0; ti <= lastTokenIndexToSendToLineBuffer; ti++) {
+        VT100Token *token = tokens[ti];
+
+        CTVector(int) *crlfs = token.crlfs;
+        AsciiData *asciiData = token.asciiData;
+        int start = 0;
+        const NSInteger count = CTVectorCount(crlfs);
+
+        for (NSInteger i = 0; i < count + 2; i += 2) {
+            const int control = (i < count) ? CTVectorGet(crlfs, i) : asciiData->length;
+            ScreenChars screenChars = {
+                .buffer = asciiData->screenChars->buffer + start,
+                .length = control - start
+            };
+            BOOL stop = (ti == lastTokenIndexToSendToLineBuffer && control > info.characterCount);
+            BOOL stoppedEarly = NO;
+            if (stop) {
+                const int remainder = (control - info.characterCount);
+                screenChars.length -= remainder;
+                stoppedEarly = remainder > 0;
+            }
+            const int eol = (stoppedEarly || i == count) ? EOL_SOFT : EOL_HARD;
+            if (!stop || screenChars.length > 0) {
+                iTermAppendItem item = {
+                    .buffer = screenChars.buffer,
+                    .length = screenChars.length,
+                    .partial = eol == EOL_SOFT,
+                    .metadata = metadata,
+                    .continuation = continuation
+                };
+                // Don't append empty partials. That has no effect.
+                if (!item.partial || item.length > 0) {
+                    CTVectorAppend(&items, item);
+                }
+            }
+            if (stop) {
+                break;
+            }
+            start = control + 2;
+        }
+    }
+    [self.linebuffer appendLines:&items
+                           width:width];
+    CTVectorDestroy(&items);
+
+    // Append the rest to the grid.
+    int startOffset = info.characterCount;
+    for (int ti = info.tokenCount; ti < tokens.count; ti++) {
+        VT100Token *token = tokens[ti];
+        [self appendMixedAsciiCRLFData:token.asciiData
+                                 crlfs:token.crlfs
+                           startOffset:startOffset];
+        startOffset = 0;
+    }
+
+    // Drop excess lines and place cursor properly.
+    const int numDropped = [self.linebuffer dropExcessLinesWithWidth:self.width];
+    [self incrementOverflowBy:self.unlimitedScrollback ? 0 : numDropped];
+    [self.currentGrid setCursorWithoutInvalidatingDWCFreeLineCount:VT100GridCoordMake(coord.x, self.height - 1)];
+}
+
+- (int)appendGangSlowPath:(NSArray<VT100Token *> *)tokens {
     int numLines = 0;
     for (VT100Token *token in tokens) {
         numLines += [self appendMixedAsciiCRLFData:token.asciiData crlfs:token.crlfs startOffset:0];
     }
-    [self.currentGrid didAppendDWCFreeLines:numLines];
+    return numLines;
 }
 
 - (void)terminalRingBell {
