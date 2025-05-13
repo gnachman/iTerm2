@@ -111,7 +111,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)appendScreenCharArrayAtCursor:(const screen_char_t *)buffer
                                length:(int)len
                externalAttributeIndex:(id<iTermExternalAttributeIndexReading> _Nullable)externalAttributes
-                             rtlFound:(BOOL)rtlFound;
+                             rtlFound:(BOOL)rtlFound
+                              dwcFree:(BOOL)dwcFree;
 
 - (void)appendTabAtCursor:(BOOL)setBackgroundColors;
 

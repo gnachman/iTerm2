@@ -680,7 +680,8 @@ static _Atomic int gPerformingJoinedBlock;
         [self appendScreenCharArrayAtCursor:line
                                      length:length
                      externalAttributeIndex:externalAttributeIndex
-                                   rtlFound:rtlFound];
+                                   rtlFound:rtlFound
+                                    dwcFree:NO];
         if (continuation.code == EOL_HARD) {
             [self carriageReturn];
             [self appendLineFeed];
@@ -763,6 +764,7 @@ static _Atomic int gPerformingJoinedBlock;
             // This handles the rare case where we receive a combining mark at the beginning of
             // `string` and have to modify the preciding character.
             [self.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(pred.x, pred.y, pred.x + 1, pred.y)
+                                              dwcFree:YES
                                                 block:^(screen_char_t *sct,
                                                         iTermExternalAttribute *__autoreleasing *eaOut,
                                                         VT100GridCoord coord,
@@ -797,7 +799,8 @@ static _Atomic int gPerformingJoinedBlock;
     [self appendScreenCharArrayAtCursor:buffer + bufferOffset
                                  length:len - bufferOffset
                  externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:self.terminal.externalAttributes]
-                               rtlFound:rtlFound];
+                               rtlFound:rtlFound
+                                dwcFree:!dwc];
     if (buffer == dynamicBuffer) {
         free(buffer);
     }
@@ -806,7 +809,8 @@ static _Atomic int gPerformingJoinedBlock;
 - (void)appendScreenCharArrayAtCursor:(const screen_char_t *)buffer
                                length:(int)len
                externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributes
-                             rtlFound:(BOOL)rtlFound {
+                             rtlFound:(BOOL)rtlFound
+                              dwcFree:(BOOL)dwcFree {
     if (len >= 1) {
         screen_char_t lastCharacter = buffer[len - 1];
         if (ScreenCharIsDWC_RIGHT(lastCharacter) && !lastCharacter.complexChar) {
@@ -836,7 +840,8 @@ static _Atomic int gPerformingJoinedBlock;
                                                                    ansi:self.ansi
                                                                  insert:self.insert
                                                  externalAttributeIndex:externalAttributes
-                                                               rtlFound:rtlFound]];
+                                                               rtlFound:rtlFound
+                                                                dwcFree:dwcFree]];
 
         if (self.config.publishing) {
             iTermImmutableMetadata temp;
@@ -906,7 +911,8 @@ static _Atomic int gPerformingJoinedBlock;
     [self appendScreenCharArrayAtCursor:buffer
                                  length:len
                  externalAttributeIndex:ea ? [iTermUniformExternalAttributes withAttribute:ea] : nil
-                               rtlFound:NO];
+                               rtlFound:NO
+                                dwcFree:YES];
     STOPWATCH_LAP(appendAsciiDataAtCursor);
 }
 
@@ -1331,6 +1337,7 @@ static _Atomic int gPerformingJoinedBlock;
     __block BOOL foundProtected = NO;
     const screen_char_t dc = self.currentGrid.defaultChar;
     [self.currentGrid mutateCharactersInRange:range
+                                      dwcFree:YES
                                         block:^(screen_char_t *sct,
                                                 iTermExternalAttribute **eaOut,
                                                 VT100GridCoord coord,
@@ -2026,6 +2033,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                                           rect.origin.y,
                                                                           rect.origin.x + rect.size.width,
                                                                           rect.origin.y + rect.size.height - 1)
+                                          dwcFree:YES
                                             block:^(screen_char_t *sct,
                                                     iTermExternalAttribute **eaOut,
                                                     VT100GridCoord coord,
@@ -2069,6 +2077,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                                           rect.origin.y,
                                                                           rect.origin.x + rect.size.width,
                                                                           rect.origin.y + rect.size.height - 1)
+                                          dwcFree:YES
                                             block:^(screen_char_t *sct,
                                                     iTermExternalAttribute **eaOut,
                                                     VT100GridCoord coord,
@@ -2174,7 +2183,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         }
     }
     const int y = self.currentGrid.cursorY;
-    screen_char_t *aLine = [self.currentGrid screenCharsAtLineNumber:y];
+    screen_char_t *aLine = [self.currentGrid dwcFreeScreenCharsAtLineNumber:y];
     BOOL allNulls = YES;
     for (int i = self.currentGrid.cursorX; i < nextTabStop; i++) {
         if (aLine[i].code) {
@@ -2190,6 +2199,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         const int limit = nextTabStop - 1;
         iTermExternalAttribute *ea = [self.terminal externalAttributes];
         [self.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(startX, y, limit + 1, y)
+                                          dwcFree:YES
                                             block:^(screen_char_t *c,
                                                     iTermExternalAttribute **eaOut,
                                                     VT100GridCoord coord,

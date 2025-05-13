@@ -106,10 +106,12 @@ static iTermHistogram *hog;
     [self appendMixedAsciiCRLFData:asciiData crlfs:crlfs startOffset:0];
 }
 
-- (void)appendMixedAsciiCRLFData:(AsciiData *)asciiData
+- (int)appendMixedAsciiCRLFData:(AsciiData *)asciiData
                            crlfs:(CTVector(int) *)crlfs
                      startOffset:(int)startOffset {
+    int numLines = 0;
     int start = 0;
+    const int width = self.currentGrid.size.width;
     const NSInteger count = CTVectorCount(crlfs);
     for (NSInteger i = 0; i < count + 1; i+=2) {
         const int control = (i < count) ? CTVectorGet(crlfs, i) : asciiData->length;
@@ -129,14 +131,17 @@ static iTermHistogram *hog;
                 .length = control - start,
                 .screenChars = &screenChars
             };
+            numLines += temp.length / width;
             [self terminalAppendAsciiData:&temp];
         }
         if (control < asciiData->length) {
+            numLines += 1;
             [self terminalCarriageReturn];
             [self terminalLineFeed];
         }
         start = control + 2;
     }
+    return numLines;
 }
 
 typedef struct {
@@ -232,15 +237,6 @@ typedef struct {
             break;
         }
     }
-//    if (cursor.y >= self.height * 2) {
-//        NSMutableArray *lines = [NSMutableArray array];
-//        for (int i = 0; i < CTVectorCount(&wrappedLineInfos); i++) {
-//            WrappedLineInfo wli = CTVectorGet(&wrappedLineInfos, i);
-//            [lines addObject:[NSString stringWithFormat:@"%d: (%d,%d) -> (%d,%d): %.*s", i, wli.startX, wli.startY, wli.endX, wli.endY, wli.length, tokens[wli.tokenIndex].asciiData->buffer + wli.startOffset]];
-//        }
-//        NSString *wlis = [lines componentsJoinedByString:@"\n"];
-//        ITAssertWithMessage(info.tokenCount >= 0, @"(1) Negative token count. cursor=%d, height=%d, cutoff=%d, wlis=%@, tokens=%@\n", info.cursor.y, self.height, cutoff, wlis, tokens);
-//    }
     CTVectorDestroy(&wrappedLineInfos);
     info.cursor = cursor;
     info.lineCount = lineCount;
@@ -248,14 +244,24 @@ typedef struct {
 }
 
 - (void)terminalAppendMixedAsciiGang:(NSArray<VT100Token *> *)tokens {
+    int count = 0;
+    for (VT100Token *token in tokens) {
+        count += token.asciiData->length;
+    }
+    [self accrueAsciiCount:count];
+
     VT100Terminal *terminal = self.terminal;
-#warning TODO: The grid has to be in a known safe state: no scrolling regions, nothing below the cursor, in wraparound mode, insert off, no DWCs, etc.
     BOOL canTakeFastPath = (!self.collectInputForPrinting &&
                             ![self shouldEvaluateTriggers] &&
                             ![self shouldConvertCharactersToGraphicsCharacterSetInTerminal:terminal] &&
                             !self.config.publishing &&
                             self.commandStartCoord.x == -1 &&
-                            tokens.count > 0);
+                            tokens.count > 0 &&
+                            self.wraparoundMode &&
+                            !self.ansi &&
+                            !self.insert &&
+                            self.currentGrid == self.primaryGrid &&
+                            self.currentGrid.canTakeFastPath);
     if (canTakeFastPath) {
         // Remove CR tokens. They are always safe to ignore. See the note in TokenArray about how
         // the TTY driver inserts spurious CRs.
@@ -279,7 +285,7 @@ typedef struct {
                                        self.currentGrid.currentDate,
                                        NO,
                                        ea ? [iTermUniformExternalAttributes withAttribute:ea] : nil);
-            self.currentGrid.cursor = VT100GridCoordMake(0, 0);
+            [self.currentGrid setCursorWithoutInvalidatingDWCFreeLineCount:VT100GridCoordMake(0, 0)];
 
             const int lastTokenIndexToSendToLineBuffer = info.tokenCount;
             CTVector(iTermAppendItem) items;
@@ -344,20 +350,17 @@ typedef struct {
             // Drop excess lines and place cursor properly.
             const int numDropped = [self.linebuffer dropExcessLinesWithWidth:self.width];
             [self incrementOverflowBy:self.unlimitedScrollback ? 0 : numDropped];
-            self.currentGrid.cursor = VT100GridCoordMake(coord.x, self.height - 1);
+            [self.currentGrid setCursorWithoutInvalidatingDWCFreeLineCount:VT100GridCoordMake(coord.x, self.height - 1)];
             return;
         }
     }
 
     // Slow path
-    int count = 0;
+    int numLines = 0;
     for (VT100Token *token in tokens) {
-        count += token.asciiData->length;
+        numLines += [self appendMixedAsciiCRLFData:token.asciiData crlfs:token.crlfs startOffset:0];
     }
-    [self accrueAsciiCount:count];
-    for (VT100Token *token in tokens) {
-        [self appendMixedAsciiCRLFData:token.asciiData crlfs:token.crlfs startOffset:0];
-    }
+    [self.currentGrid didAppendDWCFreeLines:numLines];
 }
 
 - (void)terminalRingBell {
@@ -2484,7 +2487,8 @@ typedef struct {
             [self appendScreenCharArrayAtCursor:chars
                                          length:length
                          externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:self.lastExternalAttribute]
-                                       rtlFound:NO];
+                                       rtlFound:NO
+                                        dwcFree:!self.lastCharacterIsDoubleWidth];
             [self appendStringToTriggerLine:string];
             if (self.config.loggingEnabled) {
                 const BOOL atPrompt = _promptStateMachine.isAtPrompt;

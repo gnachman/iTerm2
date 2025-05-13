@@ -706,7 +706,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     screen_char_t *buffer = dataBuffer.mutableBytes;
     if (theIndex >= numLinesInLineBuffer) {
         // Get a line from the circular screen buffer
-        return [self.currentGrid screenCharsAtLineNumber:(theIndex - numLinesInLineBuffer)];
+        return [self.currentGrid immutableScreenCharsAtLineNumber:(theIndex - numLinesInLineBuffer)];
     } else {
         // Get a line from the scrollback buffer.
         screen_char_t continuation;
@@ -719,7 +719,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
                                       continuation:&continuation];
         if (cont == EOL_SOFT &&
             theIndex == numLinesInLineBuffer - 1 &&
-            ScreenCharIsDWC_RIGHT([self.currentGrid screenCharsAtLineNumber:0][1]) &&
+            ScreenCharIsDWC_RIGHT([self.currentGrid immutableScreenCharsAtLineNumber:0][1]) &&
             buffer[self.currentGrid.size.width - 1].code == 0) {
             // The last line in the scrollback buffer is actually a split DWC
             // if the first char on the screen is double-width and the buffer is soft-wrapped without
@@ -1363,14 +1363,14 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     const NSInteger numLinesInLineBuffer = [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
     if (line < numLinesInLineBuffer) {
         const BOOL eligibleForDWC = (line == numLinesInLineBuffer - 1 &&
-                                     ScreenCharIsDWC_RIGHT([self.currentGrid screenCharsAtLineNumber:0][1]));
+                                     ScreenCharIsDWC_RIGHT([self.currentGrid immutableScreenCharsAtLineNumber:0][1]));
         return [self.linebuffer screenCharArrayForLine:line width:self.width paddedTo:self.width eligibleForDWC:eligibleForDWC];
     }
     return [self screenCharArrayAtScreenIndex:line - numLinesInLineBuffer];
 }
 
 - (ScreenCharArray *)screenCharArrayAtScreenIndex:(int)index {
-    const screen_char_t *line = [self.currentGrid screenCharsAtLineNumber:index];
+    const screen_char_t *line = [self.currentGrid immutableScreenCharsAtLineNumber:index];
     const int width = self.width;
     ScreenCharArray *array = [[ScreenCharArray alloc] initWithLine:line
                                                             length:width
