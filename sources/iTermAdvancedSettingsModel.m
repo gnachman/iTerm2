@@ -413,6 +413,7 @@ DEFINE_BOOL(defaultWideMode, NO, SECTION_TERMINAL @"When rendering natively, use
 DEFINE_SECURE_BOOL(enableSecureKeyboardEntryAutomatically, EnableSecureKeyboardEntryAutomatically, SECTION_TERMINAL @"Automatically enable secure keyboard entry at password prompts?");
 #endif  // ITERM2_SHARED_ARC
 
+DEFINE_INT(bufferDepth, 40, SECTION_TERMINAL @"Maximum number of chunks to buffer.\nIn general, these chunks are 1024 bytes. A larger value increases buffer bloat but—up to a limit—can improve performance in the fast path of ASCII text.");
 
 #pragma mark Hotkey
 

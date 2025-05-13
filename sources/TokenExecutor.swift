@@ -97,7 +97,7 @@ class TokenExecutor: NSObject {
             impl.delegate = delegate
         }
     }
-    private let semaphore = DispatchSemaphore(value: 40)
+    private let semaphore = DispatchSemaphore(value: Int(iTermAdvancedSettingsModel.bufferDepth()))
     private let impl: TokenExecutorImpl
     private let queue: DispatchQueue
     private static let isTokenExecutorSpecificKey = DispatchSpecificKey<Bool>()
