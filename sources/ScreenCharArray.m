@@ -870,6 +870,10 @@ const BOOL ScreenCharIsNullOrWhitespace(const screen_char_t c) {
 
 @implementation MutableScreenCharArray
 
+@dynamic continuation;
+@dynamic eol;
+@dynamic bidiInfo;
+
 - (ScreenCharArray *)immutableReplacement {
     ScreenCharArray *sca;
     if (self.data) {
@@ -913,7 +917,6 @@ const BOOL ScreenCharIsNullOrWhitespace(const screen_char_t c) {
 - (void)setExternalAttributesIndex:(iTermExternalAttributeIndex *)eaIndex {
     iTermMetadata temp = iTermImmutableMetadataMutableCopy(_metadata);
     iTermMetadataSetExternalAttributes(&temp, eaIndex);
-#warning TODO: I have no idea if this is right
     iTermImmutableMetadataRelease(_metadata);
     _metadata = iTermMetadataMakeImmutable(temp);
 }
@@ -1004,6 +1007,14 @@ const BOOL ScreenCharIsNullOrWhitespace(const screen_char_t c) {
 - (void)setEol:(int)eol {
     _continuation.code = eol;
     _eol = eol;
+}
+
+- (void)setMutableLine:(screen_char_t * _Nonnull)mutableLine {
+    _line = mutableLine;
+}
+
+- (void)setBidiInfo:(iTermBidiDisplayInfo *)bidiInfo {
+    _bidiInfo = bidiInfo;
 }
 
 - (void)deleteRange:(NSRange)range {
