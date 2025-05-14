@@ -1268,6 +1268,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"TTY is not writable");
         return NO;
     }
+    DLog(@"Checking if mouse event at %@ is reportable", NSStringFromPoint(point));
     if (![self.mouseDelegate mouseHandler:self viewCoordIsReportable:point]) {
         DLog(@"Coord not reportable");
         return NO;

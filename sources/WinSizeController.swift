@@ -56,6 +56,10 @@ class WinSizeController: NSObject {
             return "<Request size=\(size) viewSize=\(viewSize) scaleFactor=\(scaleFactor) regular=\(regular)>"
         }
     }
+    private var currentGridSize: VT100GridSize?
+    private var currentViewSize: NSSize?
+    private var currentScaleFactor: CGFloat?
+
     private var queue = [Request]()
     private var notBefore = TimeInterval(0)
     private var lastRequest: Request?
@@ -164,6 +168,13 @@ class WinSizeController: NSObject {
             DLog("delegate unready")
             return false
         }
+        if queue.isEmpty &&
+            request.size == currentGridSize &&
+            request.viewSize == currentViewSize &&
+            request.scaleFactor == currentScaleFactor {
+            DLog("Already have this exact size")
+            return false
+        }
         var combinedCompletion = request.completion
         if request.regular && (queue.last?.regular ?? false) {
             DLog("Replace last request \(String(describing: queue.last))")
@@ -223,6 +234,9 @@ class WinSizeController: NSObject {
         delegate?.winSizeControllerSet(size: request.size,
                                        viewSize: request.viewSize,
                                        scaleFactor: request.scaleFactor)
+        self.currentGridSize = request.size
+        self.currentViewSize = request.viewSize
+        self.currentScaleFactor = request.scaleFactor
         request.completion?()
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             DLog("Delay finished")
@@ -242,5 +256,11 @@ class WinSizeController: NSObject {
 extension VT100GridSize: CustomDebugStringConvertible {
     public var debugDescription: String {
         return VT100GridSizeDescription(self)
+    }
+}
+
+extension VT100GridSize: Equatable {
+    public static func == (lhs: VT100GridSize, rhs: VT100GridSize) -> Bool {
+        return VT100GridSizeEquals(lhs, rhs)
     }
 }

@@ -589,6 +589,10 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 // Update the scroll position and schedule a redraw. Returns true if anything
 // onscreen is blinking.
 - (BOOL)refresh;
+
+// Like refresh, but doesn't call sync.
+- (BOOL)refreshAfterSync:(VT100SyncResult)syncResult;
+
 - (void)setNeedsDisplayOnLine:(int)line;
 - (void)setCursorNeedsDisplay;
 

@@ -1161,6 +1161,7 @@ static const int kMaxScreenRows = 4096;
     [self updateDefaultChar];
 }
 
+// See comment on executeXtermSetPalette for details of the control sequence.
 - (NSColor *)colorForXtermCCSetPaletteString:(NSString *)argument colorNumberPtr:(int *)numberPtr {
     if ([argument length] == 7) {
         int n, r, g, b;
@@ -1169,13 +1170,6 @@ static const int kMaxScreenRows = 4096;
         if (count == 0) {
             unichar c = [argument characterAtIndex:0];
             n = c - 'a' + 10;
-            // fg = 16 ('g')
-            // bg = 17
-            // bold = 18
-            // selection = 19
-            // selected text = 20
-            // cursor = 21
-            // cursor text = 22
             if (n >= 16 && n <= 22) {
                 ++count;
             }
@@ -4271,6 +4265,23 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
     return [uid rangeOfCharacterFromSet:illegalCharacters].location == NSNotFound;
 }
 
+// This is based on a misbegotten linux console control sequence:
+//
+// OSC P <color> <red> <green> <blue> ST
+//
+// The following codes are defined for <color>:
+//
+// Name          Code   Numeric equivalent (n)
+// ANSI colors   0...f  0...15
+// fg            g      16
+// bg            h      17
+// bold          i      18
+// selection     j      19
+// selected text k      20
+// cursor        l      21
+// cursor text   m      22
+//
+// <red>, <green>, and <blue> are 2-digit hex values
 - (void)executeXtermSetPalette:(VT100Token *)token {
     int n;
     NSColor *theColor = [self colorForXtermCCSetPaletteString:token.string

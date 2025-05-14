@@ -2547,6 +2547,16 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     _inRefresh = YES;
     const VT100SyncResult syncResult = [self.delegate textViewWillRefresh];
     _inRefresh = NO;
+
+    return [self refreshAfterSync:syncResult];
+}
+
+- (BOOL)refreshAfterSync:(VT100SyncResult)syncResult {
+    DLog(@"PTYTextView refreshAfterSync called with delegate %@", _delegate);
+    if (_dataSource == nil || _delegate == nil || _inRefresh) {
+        return YES;
+    }
+
     const int scrollbackOverflow = syncResult.overflow;
     const BOOL frameDidChange = [_delegate textViewResizeFrameIfNeeded];
 
@@ -2603,6 +2613,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         [self updateSubviewFrames];
     }
     [self reloadHoverButtons];
+    DLog(@"Refresh returning. Frame is now %@", NSStringFromRect(self.frame));
     return foundBlink;
 }
 
@@ -6647,6 +6658,7 @@ static NSString *iTermStringFromRange(NSRange range) {
 
 - (BOOL)mouseHandler:(PTYMouseHandler *)handler viewCoordIsReportable:(NSPoint)point {
     const NSRect liveRect = [self liveRect];
+    DLog(@"Point in view is %@, live rect is %@", NSStringFromPoint(point), NSStringFromRect(liveRect));
     return NSPointInRect(point, liveRect);
 }
 

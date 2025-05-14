@@ -144,6 +144,7 @@
     rect.origin.y = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     if (!NSEqualRects(child_.frame, rect)) {
         child_.frame = rect;
+        DLog(@"Set textview's frame to %@", NSStringFromRect(rect));
     }
 }
 

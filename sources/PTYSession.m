@@ -9258,12 +9258,17 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenSync:(VT100ScreenMutableState *)mutableState {
+    DLog(@"Will do screen-initiated sync");
     const VT100SyncResult result = [self syncCheckingTriggers:VT100ScreenTriggerCheckTypeNone
                                                 resetOverflow:NO
                                                  mutableState:mutableState];
     if (result.namedMarksChanged) {
         [[[[iTermNamedMarksDidChangeNotification alloc] initWithSessionGuid:self.guid] autorelease] post];
     }
+    // It's important to refresh after sync so that, for example, PTYTextView
+    // can convert click coordinates to model values correctly. I added this
+    // late in the game so it might cause problems.
+    [_textview refreshAfterSync:result];
 }
 
 - (void)screenSyncExpect:(VT100ScreenMutableState *)mutableState {
@@ -9276,13 +9281,19 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)sync {
     DLog(@"sync\n%@", [NSThread callStackSymbols]);
-    [self syncCheckingTriggers:VT100ScreenTriggerCheckTypeNone
+    const VT100SyncResult result = [self syncCheckingTriggers:VT100ScreenTriggerCheckTypeNone
                  resetOverflow:NO];
+    DLog(@"Sync done");
+    // See comment in screenSync:
+    [_textview refreshAfterSync:result];
 }
 
 - (void)syncCheckingTriggers:(VT100ScreenTriggerCheckType)checkTriggers {
     DLog(@"syncCheckingTriggers:%@", @(checkTriggers));
-    [self syncCheckingTriggers:checkTriggers resetOverflow:NO];
+    const VT100SyncResult result = [self syncCheckingTriggers:checkTriggers resetOverflow:NO];
+    DLog(@"Sync done");
+    // See comment in screenSync:
+    [_textview refreshAfterSync:result];
 }
 
 // Only main-thread-initiated syncs take this route.
