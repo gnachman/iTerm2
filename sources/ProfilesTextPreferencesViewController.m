@@ -37,6 +37,7 @@
     IBOutlet NSButton *_useBoldFont;
     IBOutlet NSButton *_blinkAllowed;
     IBOutlet NSButton *_shadow;
+    IBOutlet NSButton *_hideOnLostFocus;
     IBOutlet NSButton *_animateMovement;
     IBOutlet NSButton *_useItalicFont;
     IBOutlet NSButton *_ambiguousIsDoubleWidth;
@@ -127,6 +128,11 @@
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
     [self updateShadowEnabled];
+
+    [self defineControl:_hideOnLostFocus
+                    key:KEY_CURSOR_HIDDEN_WITHOUT_FOCUS
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_animateMovement
                     key:KEY_ANIMATE_MOVEMENT

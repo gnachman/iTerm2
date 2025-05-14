@@ -394,6 +394,9 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 // Should bar/underscore cursors have a shadow?
 @property(nonatomic) BOOL cursorShadow;
 
+// Hide cursor when keyboard focus lost?
+@property (nonatomic) BOOL hideCursorWhenUnfocused;
+
 // Is blinking text drawn blinking?
 @property(nonatomic, assign) BOOL blinkAllowed;
 

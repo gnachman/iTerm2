@@ -140,6 +140,9 @@ extern const int iTermTextDrawingHelperLineStyleMarkRightInsetCells;
 // Should bar/underscore cursors have a shadow?
 @property(nonatomic) BOOL cursorShadow;
 
+// Hide cursor when unfocused?
+@property(nonatomic) BOOL hideCursorWhenUnfocused;
+
 // Are we in copy mode?
 @property(nonatomic, assign) BOOL copyMode;
 @property(nonatomic, assign) BOOL copyModeSelecting;

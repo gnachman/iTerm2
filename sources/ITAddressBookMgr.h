@@ -149,6 +149,7 @@
 #define KEY_VERTICAL_SPACING       @"Vertical Spacing"
 #define KEY_BLINKING_CURSOR        @"Blinking Cursor"
 #define KEY_CURSOR_SHADOW          @"Cursor Shadow"
+#define KEY_CURSOR_HIDDEN_WITHOUT_FOCUS  @"Cursor Hidden When Unfocused"
 #define KEY_ANIMATE_MOVEMENT       @"Animate Movement"
 #define KEY_BLINK_ALLOWED          @"Blink Allowed"
 #define KEY_CURSOR_TYPE            @"Cursor Type"

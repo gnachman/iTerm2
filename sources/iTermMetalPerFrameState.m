@@ -308,8 +308,12 @@ typedef struct {
     _cursorInfo.coord = cursorCoord;
 
     _cursorInfo.cursorShadow = drawingHelper.cursorShadow;
+
+    const BOOL focused = ((_configuration->_isInKeyWindow && _configuration->_textViewIsActiveSession) || _configuration->_shouldDrawFilledInCursor);
+
     NSInteger lineWithCursor = textView.dataSource.cursorY - 1 + _numberOfScrollbackLines;
     if ([self shouldDrawCursor] &&
+        (!drawingHelper.hideCursorWhenUnfocused || focused) &&
         _cursorVisible &&
         _visibleRange.start.y <= lineWithCursor &&
         lineWithCursor < _visibleRange.end.y) {
@@ -337,9 +341,6 @@ typedef struct {
                                                                   findMatch:row->_matches && CheckFindMatchAtIndex(row->_matches, _cursorInfo.coord.x)];
             if (_cursorInfo.type == CURSOR_BOX) {
                 _cursorInfo.shouldDrawText = YES;
-                const BOOL focused = ((_configuration->_isInKeyWindow && _configuration->_textViewIsActiveSession) || _configuration->_shouldDrawFilledInCursor);
-
-
                 iTermSmartCursorColor *smartCursorColor = nil;
                 if (drawingHelper.useSmartCursorColor) {
                     smartCursorColor = [[iTermSmartCursorColor alloc] init];

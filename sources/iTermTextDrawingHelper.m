@@ -3775,6 +3775,11 @@ typedef struct {
         // will be visible at the bottom of the window).
         return NO;
     }
+
+    if (self.hideCursorWhenUnfocused && !self.isFocused) {
+        return NO;
+    }
+
     // Draw the regular cursor only if there's not an IME open as it draws its
     // own cursor. Also, it must be not blinked-out, and it must be within the expected bounds of
     // the screen (which is just a sanity check, really).

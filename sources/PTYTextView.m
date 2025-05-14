@@ -6252,6 +6252,14 @@ static NSString *iTermStringFromRange(NSRange range) {
     _drawingHelper.cursorShadow = cursorShadow;
 }
 
+- (void)setHideCursorWhenUnfocused:(BOOL)hideCursorWhenUnfocused {
+    _drawingHelper.hideCursorWhenUnfocused = hideCursorWhenUnfocused;
+}
+
+- (BOOL)hideCursorWhenUnfocused {
+    return _drawingHelper.hideCursorWhenUnfocused;
+}
+
 - (BOOL)cursorShadow {
     return _drawingHelper.cursorShadow;
 }
