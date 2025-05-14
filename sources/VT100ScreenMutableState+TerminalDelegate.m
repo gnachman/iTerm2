@@ -2207,8 +2207,9 @@ typedef struct {
 }
 
 - (void)terminalDidReceiveBase64FileData:(NSString *)data {
-    data = [data stringByReplacingCharactersInRange:NSMakeRange(10, 4) withString:@""];
     DLog(@"begin");
+    data = [data stringByReplacingOccurrencesOfString:@"\r" withString:@""];
+    data = [data stringByReplacingOccurrencesOfString:@"\n" withString:@""];
     if (self.inlineImageHelper) {
         DLog(@"append");
         [self.inlineImageHelper appendBase64EncodedData:data];
