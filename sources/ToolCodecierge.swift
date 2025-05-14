@@ -1377,7 +1377,10 @@ class OpenAIMetadata: NSObject {
         Model(name: "Gemini 1.5 flash",
               contextWindowTokens: 1_048_576,
               maxResponseTokens: 8_192,
-              url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent")
+              url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"),
+        Model(name: "deepseek-chat",
+              contextWindowTokens: 8_192,
+              url: "https://api.deepseek.com/chat/completions")
         ]
 
     @objc(enumerateModels:) func enumerateModels(_ closure: (String, Int, String?) -> ()) {
