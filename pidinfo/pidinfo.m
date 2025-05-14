@@ -221,7 +221,7 @@ static int MakeNonBlocking(int fd) {
             reply(buf, -1);
             return;
         }
-        const int rc = stat(path.UTF8String, &buf);
+        const int rc = stat([path stringByExpandingTildeInPath].UTF8String, &buf);
         const int error = (rc == 0) ? 0 : errno;
         
         if (!completion()) {

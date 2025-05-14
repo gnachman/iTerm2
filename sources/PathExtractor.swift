@@ -20,10 +20,10 @@ class PathExtractor {
     // A candidate path is recorded as a tuple of the path string and its coordinate range.
     private(set) var possiblePaths: [Candidate] = []
 
-    // Allowed characters for paths, including all Unicode letters & digits plus “/”, “_”, “.” and “-”.
+    // Allowed characters for paths, including all Unicode letters & digits plus “/”, “_”, “.”, "~", and “-”.
     private let allowedCharacterSet: CharacterSet = {
         var set = CharacterSet.alphanumerics
-        set.insert(charactersIn: "/_.-")
+        set.insert(charactersIn: "/_.-~")
         set.insert(Unicode.Scalar(UInt8(DWC_RIGHT)))
         set.insert(Unicode.Scalar(UInt8(DWC_SKIP)))
         return set

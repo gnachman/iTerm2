@@ -100,3 +100,16 @@ extension NSRect {
     }
 }
 
+extension NSRect {
+    func nudgedHorizontally(into container: NSRect) -> NSRect {
+        var result = self
+        // Return a frame whose x origin is adjusted so it falls into container, if possible.
+        if maxX > container.maxX {
+            result.origin.x -= (maxX - container.maxX)
+        }
+        if minX < container.minX {
+            result.origin.x = container.minX
+        }
+        return result
+    }
+}

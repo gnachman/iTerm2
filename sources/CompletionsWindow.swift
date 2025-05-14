@@ -201,16 +201,18 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
         guard let screen else {
             return NSRect(origin: frame.origin, size: size)
         }
-        if topLeftPointForBelow.y - size.height < screen.visibleFrame.minY {
+        var frame = if topLeftPointForBelow.y - size.height < screen.visibleFrame.minY {
             // Place above
-            return NSRect(origin: bottomLeftPointForAbove, size: size)
+            NSRect(origin: bottomLeftPointForAbove, size: size)
         } else {
             // Place below
-            return NSRect(x: topLeftPointForBelow.x,
+            NSRect(x: topLeftPointForBelow.x,
                           y: topLeftPointForBelow.y - size.height,
                           width: size.width,
                           height: size.height)
         }
+
+        return frame.nudgedHorizontally(into: screen.visibleFrame)
     }
 
     // MARK: - Dynamic Mode Configuration
