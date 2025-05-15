@@ -13,7 +13,7 @@ class NonDefaultIndicator: NSView {
     private var superviewEnabledObserver: NSKeyValueObservation?
 
     override func draw(_ rect: NSRect) {
-        NSColor.orange.set()
+        NSColor.controlAccentColor.set()
         rect.intersection(bounds).fill()
     }
 
