@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="22154" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="23504" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22154"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="23504"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -39,9 +39,9 @@
                     <rect key="frame" x="20" y="20" width="806" height="103"/>
                     <subviews>
                         <stackView distribution="fillProportionally" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7Bu-CZ-ehd" userLabel="Command Horizontal Stack View">
-                            <rect key="frame" x="290" y="195" width="227" height="17"/>
+                            <rect key="frame" x="290" y="86" width="227" height="17"/>
                             <subviews>
-                                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gSV-cc-RpM">
+                                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gSV-cc-RpM">
                                     <rect key="frame" x="-2" y="1" width="70" height="16"/>
                                     <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Command:" id="Xwa-Sy-XcB">
                                         <font key="font" usesAppearanceFont="YES"/>
@@ -49,7 +49,7 @@
                                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
-                                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="QNY-Sg-eif">
+                                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="QNY-Sg-eif">
                                     <rect key="frame" x="72" y="1" width="61" height="15"/>
                                     <constraints>
                                         <constraint firstAttribute="width" relation="lessThanOrEqual" constant="800" id="2nO-Gq-Qe8"/>
@@ -60,7 +60,7 @@
                                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
-                                <button focusRingType="none" translatesAutoresizingMaskIntoConstraints="NO" id="nN8-GS-lBf">
+                                <button toolTip="Write command to terminal" focusRingType="none" translatesAutoresizingMaskIntoConstraints="NO" id="nN8-GS-lBf">
                                     <rect key="frame" x="139" y="-3.5" width="16" height="24"/>
                                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="paperplane.fill" catalog="system" imagePosition="only" alignment="center" focusRingType="none" imageScaling="proportionallyUpOrDown" inset="2" id="VBL-se-Bae">
                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -70,7 +70,7 @@
                                         <action selector="sendCommand:" target="-2" id="GIM-TZ-2HJ"/>
                                     </connections>
                                 </button>
-                                <button focusRingType="none" translatesAutoresizingMaskIntoConstraints="NO" id="gaG-d9-QES" userLabel="Copy">
+                                <button toolTip="Copy command to clipboard" focusRingType="none" translatesAutoresizingMaskIntoConstraints="NO" id="gaG-d9-QES" userLabel="Copy">
                                     <rect key="frame" x="163" y="-4.5" width="16" height="26"/>
                                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="rectangle.portrait.on.rectangle.portrait" catalog="system" imagePosition="only" alignment="center" focusRingType="none" imageScaling="proportionallyUpOrDown" inset="2" id="7a7-5p-Fgo">
                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -80,7 +80,7 @@
                                         <action selector="copyCommand:" target="-2" id="ZKA-q8-wDT"/>
                                     </connections>
                                 </button>
-                                <button focusRingType="none" translatesAutoresizingMaskIntoConstraints="NO" id="lEf-yQ-9GU" userLabel="Edit">
+                                <button toolTip="Open command in Composer" focusRingType="none" translatesAutoresizingMaskIntoConstraints="NO" id="lEf-yQ-9GU" userLabel="Edit">
                                     <rect key="frame" x="187" y="-1.5" width="17.5" height="23"/>
                                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="square.and.pencil" catalog="system" imagePosition="only" alignment="center" focusRingType="none" imageScaling="proportionallyUpOrDown" inset="2" id="VjY-AT-fG3">
                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -90,7 +90,7 @@
                                         <action selector="openInComposer:" target="-2" id="5Yg-zY-i7j"/>
                                     </connections>
                                 </button>
-                                <button focusRingType="none" translatesAutoresizingMaskIntoConstraints="NO" id="WLQ-uR-fm0" userLabel="Share">
+                                <button toolTip="Share command…" focusRingType="none" translatesAutoresizingMaskIntoConstraints="NO" id="WLQ-uR-fm0" userLabel="Share">
                                     <rect key="frame" x="212" y="-2" width="15.5" height="25"/>
                                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="square.and.arrow.up" catalog="system" imagePosition="only" alignment="center" focusRingType="none" imageScaling="proportionallyUpOrDown" inset="2" id="l9U-Dx-9tf">
                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -126,9 +126,9 @@
                             </customSpacing>
                         </stackView>
                         <stackView distribution="fill" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jc4-Tf-63f" userLabel="Directory Horizontal Stack View">
-                            <rect key="frame" x="293" y="170" width="221" height="17"/>
+                            <rect key="frame" x="293" y="61" width="221" height="17"/>
                             <subviews>
-                                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gZ3-4g-znX">
+                                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gZ3-4g-znX">
                                     <rect key="frame" x="-2" y="1" width="64" height="16"/>
                                     <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Directory:" id="OEf-DH-Kf3">
                                         <font key="font" usesAppearanceFont="YES"/>
@@ -136,7 +136,7 @@
                                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
-                                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="USn-lU-ZIc">
+                                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="USn-lU-ZIc">
                                     <rect key="frame" x="66" y="1" width="85" height="15"/>
                                     <constraints>
                                         <constraint firstAttribute="width" relation="lessThanOrEqual" constant="800" id="QfW-YI-LtX"/>
@@ -147,15 +147,15 @@
                                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
-                                <imageView focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="251" placeholderIntrinsicWidth="16" placeholderIntrinsicHeight="16" translatesAutoresizingMaskIntoConstraints="NO" id="lO8-vd-LCm" customClass="iTermDraggableImageView">
-                                    <rect key="frame" x="157" y="-2.5" width="16.5" height="22"/>
+                                <imageView toolTip="Draggable Folder" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="251" placeholderIntrinsicWidth="16" placeholderIntrinsicHeight="16" translatesAutoresizingMaskIntoConstraints="NO" id="lO8-vd-LCm" customClass="iTermDraggableImageView">
+                                    <rect key="frame" x="157" y="-1.5" width="16.5" height="21"/>
                                     <constraints>
                                         <constraint firstAttribute="width" constant="16" id="78G-Hm-gQH"/>
                                         <constraint firstAttribute="height" constant="16" id="wPg-L0-0Vi"/>
                                     </constraints>
                                     <imageCell key="cell" refusesFirstResponder="YES" focusRingType="none" alignment="left" imageScaling="proportionallyDown" image="placeholdertext.fill" catalog="system" id="f7c-RM-uLV"/>
                                 </imageView>
-                                <button focusRingType="none" translatesAutoresizingMaskIntoConstraints="NO" id="Plm-e7-RFK">
+                                <button toolTip="Write directory to terminal" focusRingType="none" translatesAutoresizingMaskIntoConstraints="NO" id="Plm-e7-RFK">
                                     <rect key="frame" x="181" y="-3.5" width="16" height="24"/>
                                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="paperplane.fill" catalog="system" imagePosition="only" alignment="center" focusRingType="none" imageScaling="proportionallyUpOrDown" inset="2" id="IbT-Mg-Gdg">
                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -165,7 +165,7 @@
                                         <action selector="sendDirectory:" target="-2" id="fEa-48-Yhu"/>
                                     </connections>
                                 </button>
-                                <button focusRingType="none" translatesAutoresizingMaskIntoConstraints="NO" id="2qj-sU-AUO">
+                                <button toolTip="Copy directory" focusRingType="none" translatesAutoresizingMaskIntoConstraints="NO" id="2qj-sU-AUO">
                                     <rect key="frame" x="205" y="-4.5" width="16" height="26"/>
                                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="rectangle.portrait.on.rectangle.portrait" catalog="system" imagePosition="only" alignment="center" focusRingType="none" imageScaling="proportionallyUpOrDown" inset="2" id="Bd0-q0-0Gd">
                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -198,9 +198,9 @@
                             </customSpacing>
                         </stackView>
                         <stackView distribution="fill" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" verticalCompressionResistancePriority="250" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="x8h-AV-skv" userLabel="Output Stack View">
-                            <rect key="frame" x="315" y="146" width="177" height="16"/>
+                            <rect key="frame" x="315" y="37" width="177" height="16"/>
                             <subviews>
-                                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="9pg-pI-mpR">
+                                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="9pg-pI-mpR">
                                     <rect key="frame" x="-2" y="0.0" width="50" height="16"/>
                                     <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Output:" id="cYx-Tz-ls5">
                                         <font key="font" usesAppearanceFont="YES"/>
@@ -208,7 +208,7 @@
                                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
-                                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="eKH-d2-hAv">
+                                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="eKH-d2-hAv">
                                     <rect key="frame" x="52" y="0.0" width="55" height="16"/>
                                     <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" title="12 bytes" id="08U-bp-m38">
                                         <font key="font" usesAppearanceFont="YES"/>
@@ -216,7 +216,7 @@
                                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
-                                <button focusRingType="none" translatesAutoresizingMaskIntoConstraints="NO" id="ais-yY-bgC">
+                                <button toolTip="Select command’s output" focusRingType="none" translatesAutoresizingMaskIntoConstraints="NO" id="ais-yY-bgC">
                                     <rect key="frame" x="113" y="-2" width="16" height="20"/>
                                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="text.redaction" catalog="system" imagePosition="only" alignment="center" focusRingType="none" imageScaling="proportionallyUpOrDown" inset="2" id="FpU-9D-uti">
                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -226,7 +226,7 @@
                                         <action selector="selectOutput:" target="-2" id="Anx-Xs-cuf"/>
                                     </connections>
                                 </button>
-                                <button focusRingType="none" translatesAutoresizingMaskIntoConstraints="NO" id="w1e-QE-s74">
+                                <button toolTip="Copy command’s output" focusRingType="none" translatesAutoresizingMaskIntoConstraints="NO" id="w1e-QE-s74">
                                     <rect key="frame" x="137" y="-4.5" width="16" height="25"/>
                                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="rectangle.portrait.on.rectangle.portrait" catalog="system" imagePosition="only" alignment="center" focusRingType="none" imageScaling="proportionallyUpOrDown" inset="2" id="0mg-wR-OoM">
                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -265,18 +265,18 @@
                             <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <stackView distribution="fill" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" ambiguous="YES" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YYc-RZ-Syw" userLabel="Return Code Stack View">
-                                    <rect key="frame" x="0.0" y="94" width="32" height="16"/>
+                                    <rect key="frame" x="0.0" y="94" width="110" height="16"/>
                                     <subviews>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VI2-7b-u2l">
-                                            <rect key="frame" x="-2" y="0.0" width="6" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VI2-7b-u2l">
+                                            <rect key="frame" x="-2" y="0.0" width="84" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Return Code:" id="Oj2-Xr-SWy">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EuV-up-pPP">
-                                            <rect key="frame" x="8" y="0.0" width="26" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EuV-up-pPP">
+                                            <rect key="frame" x="86" y="0.0" width="26" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" title="127" id="YLQ-rO-0Mh">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -294,25 +294,25 @@
                                     </customSpacing>
                                 </stackView>
                                 <customView ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8eL-Rh-mH8" userLabel="Spacer View">
-                                    <rect key="frame" x="40" y="109" width="12" height="1"/>
+                                    <rect key="frame" x="118" y="109" width="12" height="1"/>
                                     <constraints>
                                         <constraint firstAttribute="width" constant="12" id="VHe-tR-z4Z"/>
                                         <constraint firstAttribute="height" constant="1" id="hXo-ch-Erq"/>
                                     </constraints>
                                 </customView>
                                 <stackView distribution="fill" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" ambiguous="YES" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="nNZ-kY-OAT" userLabel="Running Time Stack View">
-                                    <rect key="frame" x="60" y="94" width="140" height="16"/>
+                                    <rect key="frame" x="138" y="94" width="62" height="16"/>
                                     <subviews>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="H9m-o4-Kfp">
-                                            <rect key="frame" x="-2" y="0.0" width="91" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="H9m-o4-Kfp">
+                                            <rect key="frame" x="-2" y="0.0" width="58" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Running Time:" id="ueU-pI-V9e">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="heb-a1-Sbk">
-                                            <rect key="frame" x="93" y="0.0" width="49" height="16"/>
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="heb-a1-Sbk">
+                                            <rect key="frame" x="60" y="0.0" width="4" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" title="1h 35m" id="b7D-W4-4dx">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -345,9 +345,9 @@
                             <rect key="frame" x="234" y="0.0" width="339" height="20"/>
                             <subviews>
                                 <stackView distribution="fill" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" ambiguous="YES" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Iqu-R7-45G" userLabel="Started At">
-                                    <rect key="frame" x="0.0" y="0.0" width="88" height="20"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="88" height="19"/>
                                     <subviews>
-                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UNn-LG-yVR">
+                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UNn-LG-yVR">
                                             <rect key="frame" x="-2" y="3" width="92" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" title="Started at %@" id="KCF-7e-H8C">
                                                 <font key="font" usesAppearanceFont="YES"/>
@@ -406,7 +406,7 @@
                     <rect key="frame" x="0.0" y="4" width="56" height="24"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
-                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="09O-Dw-LYg">
+                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="09O-Dw-LYg">
                             <rect key="frame" x="4" y="4" width="48" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" lineBreakMode="clipping" title="Copied" id="eS6-Vw-gbd">
