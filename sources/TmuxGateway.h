@@ -137,5 +137,6 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
                                              block:(void (^)(NSString *, NSArray<NSString *> *))block;
 - (void)unsubscribe:(iTermTmuxSubscriptionHandle *)handle;
 - (BOOL)supportsSubscriptions;
+- (void)enableWritesAfterDelay;
 
 @end

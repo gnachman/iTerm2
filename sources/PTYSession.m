@@ -1593,7 +1593,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [aSession startTmuxMode:tmuxDCSIdentifier];
         [aSession.tmuxController sessionChangedTo:arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME]
                                         sessionId:[arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] intValue]];
-        [aSession kickOffTmux];
+        [aSession kickOffTmuxForRestoration:YES];
     }
     if (missingProfile) {
         NSDictionary *arrangementProfile = arrangement[SESSION_ARRANGEMENT_BOOKMARK];
@@ -8743,13 +8743,16 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     // This kicks off a chain reaction that leads to windows being opened.
     if (!_haveKickedOffTmux) {
         // In tmux 1.9+ this happens before `tmuxSessionsChanged`.
-        [self kickOffTmux];
+        [self kickOffTmuxForRestoration:NO];
     }
 }
 
 // When guessVersion finishes, if you have called openWindowsInitial, then windows will actually get
 // opened. Initial window opening is always blocked on establishing the server version.
-- (void)kickOffTmux {
+- (void)kickOffTmuxForRestoration:(BOOL)restoration {
+    if (restoration) {
+        [_tmuxGateway enableWritesAfterDelay];
+    }
     _haveKickedOffTmux = YES;
     // This must be first. See the note in -startTmuxMode:.
     [_tmuxController sendPhonyCommand];
@@ -9067,7 +9070,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         // Tell the tmux controller we want to open initial windows after version guessing finishes.
         [_tmuxController openWindowsInitial];
         // In tmux 1.8, this happens before `tmuxInitialCommandDidCompleteSuccessfully`.
-        [self kickOffTmux];
+        [self kickOffTmuxForRestoration:NO];
     }
 }
 

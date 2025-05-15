@@ -409,8 +409,7 @@ static NSString *kCommandTimestamp = @"timestamp";
     [delegate_ tmuxSessionChanged:[components objectAtIndex:2] sessionId:[[components objectAtIndex:1] intValue]];
     if (!_canWrite) {
         // Don't write until we get session-changed. This way we know it's not a one-and-done command (e.g., tmux -CC list-windows).
-        _canWrite = YES;
-        [self flushWriteQueue];
+        [self enableWrites];
     }
 }
 
@@ -1132,6 +1131,18 @@ static const NSTimeInterval TmuxUnresponsiveTimeout = 5;
     [cmd appendString:self.newline];
     TmuxLog(@"Send command: %@", cmd);
     [self write:cmd];
+}
+
+- (void)enableWritesAfterDelay {
+    // Wait a second in case we read nonsense that causes us to disconnect.
+    // This can happen if the tmux server died and we are writing to a shell prompt.
+    // The initial ^C is sent unconditionally.
+    [self performSelector:@selector(enableWrites) withObject:nil afterDelay:1.0];
+}
+
+- (void)enableWrites {
+    _canWrite = YES;
+    [self flushWriteQueue];
 }
 
 - (void)write:(NSString *)string {
