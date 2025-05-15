@@ -360,8 +360,10 @@ typedef struct {
     }
 
     // Drop excess lines and place cursor properly.
-    const int numDropped = [self.linebuffer dropExcessLinesWithWidth:self.width];
-    [self incrementOverflowBy:self.unlimitedScrollback ? 0 : numDropped];
+    if (!self.unlimitedScrollback) {
+        const int numDropped = [self.linebuffer dropExcessLinesWithWidth:self.width];
+        [self incrementOverflowBy:self.unlimitedScrollback ? 0 : numDropped];
+    }
     [self.currentGrid setCursorWithoutInvalidatingDWCFreeLineCount:VT100GridCoordMake(coord.x, self.height - 1)];
 }
 
