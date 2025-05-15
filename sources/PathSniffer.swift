@@ -141,17 +141,19 @@ private extension PathSniffer {
     private func localStat(candidate: PathExtractor.Candidate) {
         count += 1
         iTermSlowOperationGateway.sharedInstance().statFile(candidate.expandedPath) { [weak self] sb, errorCode in
-            guard let self else {
-                return
-            }
-            defer {
-                count -= 1
-            }
-            if errorCode != 0 {
-                return
-            }
-            if Self.acceptable(sb) {
-                accept(candidate)
+            self?.queue.async { [weak self] in
+                guard let self else {
+                    return
+                }
+                defer {
+                    count -= 1
+                }
+                if errorCode != 0 {
+                    return
+                }
+                if Self.acceptable(sb) {
+                    accept(candidate)
+                }
             }
         }
     }
