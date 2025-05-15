@@ -229,6 +229,9 @@ extern const int iTermTextDrawingHelperLineStyleMarkRightInsetCells;
 // If set, the last-modified time of each line on the screen is shown on the right side of the display.
 @property(nonatomic) BOOL shouldShowTimestamps;
 
+// If nonzero, make timestamps relative to this time in seconds since reference date.
+@property(nonatomic) NSTimeInterval timestampBaseline;
+
 // Amount to shift anti-aliased text by horizontally to simulate bold
 @property(nonatomic, assign) CGFloat antiAliasedShift;
 

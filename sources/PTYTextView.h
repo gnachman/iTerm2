@@ -515,6 +515,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 @property (nonatomic, readonly) BOOL drawingHelperIsValid;
 @property (nonatomic, readonly) BOOL canCopy;
 @property (nonatomic) BOOL animateMovement;
+@property (nonatomic) NSTimeInterval timestampBaseline;
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.

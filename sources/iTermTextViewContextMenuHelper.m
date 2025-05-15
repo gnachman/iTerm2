@@ -118,7 +118,44 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     }
 }
 
+- (NSMenu *)timestampContextMenuWithEvent:(NSEvent *)event
+                                 baseline:(NSTimeInterval)baseline
+                              clickedTime:(NSTimeInterval)clickedTime {
+    NSMenu *menu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
+
+    if (baseline != clickedTime) {
+        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:@"Set Baseline for Relative Timestamps"
+                                                      action:@selector(setTimestampBaseline:)
+                                               keyEquivalent:@""];
+        item.target = self;
+        item.representedObject = @(clickedTime);
+        [menu addItem:item];
+    }
+    if (baseline != 0) {
+        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:@"Disable Relative Timestamps"
+                                                      action:@selector(setTimestampBaseline:)
+                                               keyEquivalent:@""];
+        item.target = self;
+        item.representedObject = @0;
+        [menu addItem:item];
+    }
+    return menu;
+}
+
+- (void)setTimestampBaseline:(NSMenuItem *)sender {
+    [self.delegate contextMenuSetTimestampBaseline:[sender.representedObject doubleValue]];
+}
+
 - (NSMenu *)contextMenuWithEvent:(NSEvent *)event {
+    NSTimeInterval baseline = 0;
+    NSTimeInterval clickedTime = 0;
+    if ([self.delegate contextMenuClickIsOnTimestamps:event
+                                      currentBaseline:&baseline
+                                          clickedTime:&clickedTime]) {
+        return [self timestampContextMenuWithEvent:event
+                                          baseline:baseline
+                                       clickedTime:clickedTime];
+    }
     const NSPoint clickPoint = [self.delegate contextMenu:self
                                                clickPoint:event
                                  allowRightMarginOverflow:NO];
@@ -280,6 +317,9 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         return [self.delegate contextMenu:self hasOpenAnnotationInRange:range];
     }
     if (item.action == @selector(foldCommandMark:) || item.action == @selector(unfoldMark:)) {
+        return YES;
+    }
+    if (item.action == @selector(setTimestampBaseline:)) {
         return YES;
     }
     if ([self.smartSelectionActionSelectorDictionary.allValues containsObject:NSStringFromSelector(item.action)]) {

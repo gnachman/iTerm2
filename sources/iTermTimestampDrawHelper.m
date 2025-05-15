@@ -277,11 +277,19 @@ const CGFloat iTermTimestampGradientWidth = 20;
     return fmt;
 }
 
+- (NSString *)relativeStringForTimestamp:(NSTimeInterval)timestamp {
+    const NSTimeInterval delta = timestamp - self.timestampBaseline;
+    return [NSDateFormatter highResolutionCompactRelativeTimeStringFromSeconds:delta];
+}
+
 - (NSString *)stringForTimestamp:(NSDate *)timestamp
                              now:(NSTimeInterval)now
               useTestingTimezone:(BOOL)useTestingTimezone {
     if (!timestamp) {
         return @"";
+    }
+    if (self.timestampBaseline != 0) {
+        return [self relativeStringForTimestamp:timestamp.timeIntervalSinceReferenceDate];
     }
     const NSTimeInterval timeSinceReference = round(timestamp.timeIntervalSinceReferenceDate);
     if (!timeSinceReference) {

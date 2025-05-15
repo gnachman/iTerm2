@@ -2046,6 +2046,39 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     return [[self.dataSource foldMarksInRange:VT100GridRangeMake(line, 1)] firstObject];
 }
 
+- (BOOL)contextMenuClickIsOnTimestamps:(NSEvent *)event
+                       currentBaseline:(out NSTimeInterval *)baselinePtr
+                           clickedTime:(out NSTimeInterval *)clickedTimePtr {
+    if (!self.showTimestamps) {
+        return NO;
+    }
+    const NSPoint locationInWindow = [event locationInWindow];
+    iTermTimestampDrawHelper *tdh = self.drawingHelper.timestampDrawHelper;
+    if (!tdh) {
+        return NO;
+    }
+    *baselinePtr = self.timestampBaseline;
+    const CGFloat hmargin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
+    const CGFloat timestampsWidth = tdh.maximumWidth + hmargin;
+    const CGPoint point = [self convertPoint:locationInWindow
+                                    fromView:nil];
+    const NSRect bounds = self.bounds;
+    if (point.x > (NSMaxX(bounds) - timestampsWidth)) {
+        const VT100GridCoord coord = [self coordForEvent:event];
+        if (!VT100GridCoordIsValid(coord)) {
+            return NO;
+        }
+        *clickedTimePtr = [[self.dataSource timestampForLine:coord.y] timeIntervalSinceReferenceDate];
+        return *clickedTimePtr != 0;
+    }
+    return NO;
+}
+
+- (void)contextMenuSetTimestampBaseline:(NSTimeInterval)baseline {
+    self.timestampBaseline = baseline;
+    [self requestDelegateRedraw];
+}
+
 #pragma mark - NSResponder Additions
 
 - (void)sendSnippet:(id)sender {

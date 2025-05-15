@@ -321,6 +321,7 @@ static NSString *const SESSION_ARRANGEMENT_SSH_STATE = @"SSH State";  // NSNumbe
 static NSString *const SESSION_ARRANGEMENT_CONDUCTOR = @"Conductor";  // NSString (json)
 static NSString *const SESSION_ARRANGEMENT_PENDING_JUMPS = @"Pending Jumps";  // NSArray<NSString *>, optional.
 static NSString *const SESSION_ARRANGEMENT_CHANNEL_ID = @"Channel ID";  // NSString
+static NSString *const SESSION_ARRANGEMENT_TIMESTAMP_BASELINE = @"Timestamp Baseline"; // NSNumber
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 static NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -1520,6 +1521,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }];
     }
 
+    aSession->_textview.timestampBaseline = [arrangement[SESSION_ARRANGEMENT_TIMESTAMP_BASELINE] doubleValue];
     aSession->_channelUID = [arrangement[SESSION_ARRANGEMENT_CHANNEL_ID] copy];
     aSession->_workingDirectoryPollerDisabled = [arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY_POLLER_DISABLED] boolValue] || aSession->_shouldExpectCurrentDirUpdates;
     if (arrangement[SESSION_ARRANGEMENT_COMMANDS]) {
@@ -5964,6 +5966,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 result[SESSION_ARRANGEMENT_CONDUCTOR] = json;
             }
         }
+        result[SESSION_ARRANGEMENT_TIMESTAMP_BASELINE] = @(_textview.timestampBaseline);
     } else {
         if (_conductor &&
             [self.profile[KEY_CUSTOM_COMMAND] isEqualTo:kProfilePreferenceCommandTypeSSHValue]) {

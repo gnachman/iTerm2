@@ -94,6 +94,7 @@ NS_ASSUME_NONNULL_BEGIN
     BOOL _timestampsEnabled;
     BOOL _blinkingItemsVisible;
     NSFont *_timestampFont;
+    NSTimeInterval _timestampBaseline;
     NSArray<iTermTerminalButton *> *_terminalButtons NS_AVAILABLE_MAC(11);
     long long _totalScrollbackOverflow;
     iTermRectArray *_buttonsBackgroundRects;

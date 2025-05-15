@@ -1371,6 +1371,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
                                                            retina:self.isRetina
                                                              font:font
                                                          obscured:obscured];
+    _timestampDrawHelper.timestampBaseline = self.timestampBaseline;
     for (int y = _scrollViewDocumentVisibleRect.origin.y / _cellSize.height;
          y < NSMaxY(_scrollViewDocumentVisibleRect) / _cellSize.height && y < _numberOfLines;
          y++) {

@@ -170,6 +170,10 @@ runCommandInBackground:(NSString *)command;
 - (BOOL)contextMenuIsMouseEventReportable:(iTermTextViewContextMenuHelper *)contextMenu
                                  forEvent:(NSEvent *)event;
 - (BOOL)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu markShouldBeFoldable:(id<VT100ScreenMarkReading>)mark;
+- (BOOL)contextMenuClickIsOnTimestamps:(NSEvent *)event
+                       currentBaseline:(out NSTimeInterval *)baselinePtr
+                           clickedTime:(out NSTimeInterval *)clickedTimePtr;
+- (void)contextMenuSetTimestampBaseline:(NSTimeInterval)baseline;
 @end
 
 @interface iTermTextViewContextMenuHelper : NSObject<NSMenuDelegate>

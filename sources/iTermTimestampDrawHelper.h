@@ -22,6 +22,9 @@ extern const CGFloat iTermTimestampGradientWidth;
 // The font to use
 @property (nonatomic, readonly) NSFont *font;
 
+// Time in seconds-since-reference-date, or 0 to use absolute times.
+@property (nonatomic) NSTimeInterval timestampBaseline;
+
 - (instancetype)initWithBackgroundColor:(NSColor *)backgroundColor
                               textColor:(NSColor *)textColor
                                     now:(NSTimeInterval)now

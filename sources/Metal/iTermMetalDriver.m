@@ -1586,6 +1586,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
         tState.textColor = frameData.perFrameState.timestampsTextColor;
         tState.font = frameData.perFrameState.timestampFont;
         tState.obscured = frameData.cellSize.height / frameData.scale + iTermOffscreenCommandLineVerticalPadding * 2;
+        tState.timestampBaseline = frameData.perFrameState.timestampBaseline;
         tState.timestamps = [frameData.rows mapWithBlock:^id(iTermMetalRowData *row) {
             return row.date;
         }];

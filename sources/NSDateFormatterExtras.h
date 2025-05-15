@@ -16,6 +16,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSString *)durationString:(NSTimeInterval)duration;
 + (NSString *)dateDifferenceStringFromDate:(NSDate *)date
                                    options:(iTermDateDifferenceOptions)options;
++ (NSString *)compactDateDifferenceStringFromTimeDelta:(NSTimeInterval)theTime;
++ (NSString *)highResolutionCompactRelativeTimeStringFromSeconds:(NSTimeInterval)seconds;
 
 @end
 

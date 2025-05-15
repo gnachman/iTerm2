@@ -88,6 +88,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) BOOL thinStrokesForTimestamps;
 @property (nonatomic, readonly) BOOL asciiAntiAliased;
 @property (nonatomic, readonly) NSFont *timestampFont;
+@property (nonatomic) NSTimeInterval timestampBaseline;
 @property (nonatomic, readonly) NSColorSpace *colorSpace;
 @property (nonatomic, readonly) BOOL haveOffscreenCommandLine;
 @property (nonatomic, readonly) vector_float4 offscreenCommandLineOutlineColor;

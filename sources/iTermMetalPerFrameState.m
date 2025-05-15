@@ -2134,6 +2134,10 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     return _configuration->_timestampFont;
 }
 
+- (NSTimeInterval)timestampBaseline {
+    return _configuration->_timestampBaseline;
+}
+
 #pragma mark - Color
 
 - (vector_float4)textColorForCharacter:(const screen_char_t *const)c

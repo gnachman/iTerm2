@@ -57,7 +57,12 @@
 #ifdef ITERM_DEBUG
     assert(now > 0);
 #endif
-    _metadata.timestamp = round(now);
+    // Issue 10633 revealed some instability in timestamps that I was never able to track down so
+    // I fixed it by rounding the value to the nearest second. When adding relative timestamps
+    // I needed ms precision, so we'll still round it but just to the ms. If I'm right that it
+    // was numerical instability this shouldn't be an issue as there's plenty more precision
+    // in a double.
+    _metadata.timestamp = round(now * 1000) / 1000.0;
     _cachedEncodedMetadata = nil;
 }
 

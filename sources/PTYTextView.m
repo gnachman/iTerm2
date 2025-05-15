@@ -1681,6 +1681,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     _drawingHelper.folds = [self.dataSource foldsInRange:range];
     _drawingHelper.rightExtra = self.delegate.textViewRightExtra;
     _drawingHelper.highlightedBlockLineRange = _hoverBlockFoldButton ? [self relativeRangeFromAbsLineRange:_hoverBlockFoldButton.absLineRange] : NSMakeRange(NSNotFound, 0);
+    _drawingHelper.timestampBaseline = _timestampBaseline;
 
     [_drawingHelper updateCachedMetrics];
     if (@available(macOS 11, *)) {

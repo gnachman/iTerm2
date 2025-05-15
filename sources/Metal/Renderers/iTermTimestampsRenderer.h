@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 // How many points at the top are obscured by another view? Ensure a timestamp
 // appears just below this level.
 @property (nonatomic) CGFloat obscured;
+@property (nonatomic) NSTimeInterval timestampBaseline;
 @end
 
 @interface iTermTimestampsRenderer : NSObject<iTermMetalCellRenderer>
