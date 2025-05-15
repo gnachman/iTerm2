@@ -420,7 +420,7 @@ extern const int iTermTextDrawingHelperLineStyleMarkRightInsetCells;
 - (NSRange)underlinedRangeOnLine:(long long)row;
 
 - (void)updateCachedMetrics;
-- (void)updateButtonFrames NS_AVAILABLE_MAC(11);
+- (NSArray<iTermTerminalButton *> *)updateButtonFrames NS_AVAILABLE_MAC(11);
 - (iTermRectArray *)buttonsBackgroundRects;
 - (NSRange)rangeOfVisibleRows;
 - (VT100GridCoord)coordinateByTransformingScreenCoordinateForRTL:(VT100GridCoord)nominal;

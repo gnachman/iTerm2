@@ -1502,12 +1502,13 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     return result;
 }
 
-- (void)updateButtonFrames NS_AVAILABLE_MAC(11) {
+- (NSArray<iTermTerminalButton *> *)updateButtonFrames NS_AVAILABLE_MAC(11) {
     const VT100GridCoordRange drawableCoordRange = [self drawableCoordRangeForRect:_visibleRectExcludingTopMargin];
     const long long minAbsY = drawableCoordRange.start.y + _totalScrollbackOverflow;
     const CGFloat margin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
     int floatingCount = 0;
     NSMutableDictionary<NSNumber *, NSMutableIndexSet *> *usedDict = [NSMutableDictionary dictionary];
+    NSMutableArray<iTermTerminalButton *> *buttons = [NSMutableArray array];
     for (iTermTerminalButton *button in [self.delegate drawingHelperTerminalButtons]) {
         CGFloat x;
         button.enclosingSessionWidth = _gridSize.width;
@@ -1544,6 +1545,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
                                       minAbsLine:minAbsY
                                 cumulativeOffset:_totalScrollbackOverflow
                                         cellSize:_cellSize];
+        [buttons addObject:button];
         DLog(@"Set desired frame of %@ to %@", button, NSStringFromRect(button.desiredFrame));
         if (_selectedCommandRegion.length > 0 && absCoord.y - self.totalScrollbackOverflow == NSMaxRange(_selectedCommandRegion)) {
             NSRect frame = button.desiredFrame;
@@ -1566,6 +1568,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
              @(_totalScrollbackOverflow),
              @(_cellSize.height));
     }
+    return buttons;
 }
 
 #pragma mark - Drawing: Drop targets

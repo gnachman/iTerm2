@@ -190,6 +190,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 
     NSRect _previousCursorFrame;
     BOOL _ignoreMomentumScroll;
+    BOOL _haveTooltips;
 }
 
 
@@ -1685,7 +1686,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
     [_drawingHelper updateCachedMetrics];
     if (@available(macOS 11, *)) {
-        [_drawingHelper updateButtonFrames];
+        [self updateTooltipsForButtons:[_drawingHelper updateButtonFrames]];
     }
 
     const int topBottomMargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
@@ -1705,6 +1706,25 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [_drawingHelper didFinishSetup];
 
     return _drawingHelper;
+}
+
+- (void)updateTooltipsForButtons:(NSArray<iTermTerminalButton *> *)buttons NS_AVAILABLE_MAC(11_0) {
+    if (!buttons.count && _haveTooltips) {
+        [self removeAllToolTips];
+        _haveTooltips = NO;
+        return;
+    }
+    if ([buttons anyWithBlock:^BOOL(iTermTerminalButton *button) {
+        return !NSEqualRects(button.lastTooltipRect, button.desiredFrame);
+    }]) {
+        DLog(@"Update tooltips");
+        [self removeAllToolTips];
+        [buttons enumerateObjectsUsingBlock:^(iTermTerminalButton *button, NSUInteger idx, BOOL *stop) {
+            [self addToolTipRect:button.desiredFrame owner:button userData:NULL];
+            button.lastTooltipRect = button.desiredFrame;
+        }];
+        _haveTooltips = YES;
+    }
 }
 
 - (NSRange)relativeRangeFromAbsLineRange:(NSRange)absRange {
@@ -2687,7 +2707,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     _hoverBlockCopyButton = [[iTermTerminalCopyButton alloc] initWithID:-1
                                                                 blockID:block
                                                                    mark:nil
-                                                                   absY:@(i + _dataSource.totalScrollbackOverflow)];
+                                                                   absY:@(i + _dataSource.totalScrollbackOverflow)
+                                                                tooltip:@"Copy block to clipboard"];
     _hoverBlockCopyButton.isFloating = YES;
     __weak __typeof(self) weakSelf = self;
     const long long offset = _dataSource.totalScrollbackOverflow;
@@ -5512,7 +5533,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                 iTermTerminalButton *button = [[[iTermTerminalCopyButton alloc] initWithID:place.id
                                                                                    blockID:place.mark.copyBlockID
                                                                                       mark:place.mark
-                                                                                      absY:nil] autorelease];
+                                                                                      absY:nil
+                                                                                   tooltip:@"Copy Block to clipboard"] autorelease];
                 NSString *blockID = [[place.mark.copyBlockID copy] autorelease];
 
                 button.action = ^(NSPoint locationInWindow) {
