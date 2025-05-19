@@ -734,7 +734,7 @@ static NSString *kCommandTimestamp = @"timestamp";
     // TODO(georgen): It would be nice to include the command number and flags in
     // endCommand and errorCommand. Tmux 1.8 does not send flags.
     if (currentCommand_ && [command hasPrefix:endCommand]) {
-        TmuxLog(@"End for command %@", currentCommand_);
+        TmuxLog(@"End for command %@:\n%@", currentCommand_[kCommandString], currentCommand_);
         [self stripLastNewline];
         [self currentCommandResponseFinishedWithError:NO];
     } else if (currentCommand_ && [command hasPrefix:errorCommand]) {
@@ -1093,7 +1093,7 @@ static const NSTimeInterval TmuxUnresponsiveTimeout = 5;
     }
     TmuxLog(@"Send command: %@", commandWithNewline);
     [self write:commandWithNewline];
-    TmuxLog(@"Send command: %@", [dict objectForKey:kCommandString]);
+    TmuxLog(@"Sent command with dictionary: %@", [dict objectForKey:kCommandString]);
 }
 
 - (void)sendCommandList:(NSArray *)commandDicts {
@@ -1125,11 +1125,11 @@ static const NSTimeInterval TmuxUnresponsiveTimeout = 5;
             return;
         }
         sep = @"; ";
-        TmuxLog(@"Send command: %@", [dict objectForKey:kCommandString]);
+        TmuxLog(@"Add command to list: %@", [dict objectForKey:kCommandString]);
     }
     TmuxLog(@"-- End command list --");
     [cmd appendString:self.newline];
-    TmuxLog(@"Send command: %@", cmd);
+    TmuxLog(@"Send command (list): %@", cmd);
     [self write:cmd];
 }
 
