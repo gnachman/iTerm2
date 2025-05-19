@@ -39,10 +39,9 @@ class MarkCache: NSObject, MarkCacheReading {
     @objc private(set) var dirty = false
 
     override var description: String {
-        let dictDescription = dict.keys.sorted().map {
-            "\($0)=\(type(of: dict[$0]!))"
-        }.joined(separator: " ")
-        return "<MarkCache: \(it_addressString) dict:\n\(dictDescription)\nsorted=\(sorted.debugDescription)>"
+        return "<MarkCache: \(it_addressString)\n" + dict.keys.sorted().map { i in
+            "  Line \(i): \(self[i]!.shortDebugDescription)"
+        }.joined(separator: "\n") + ">"
     }
     @objc
     override init() {

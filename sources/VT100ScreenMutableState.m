@@ -3798,6 +3798,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (range.start.y <= self.totalScrollbackOverflow) {
         range.start.y = self.totalScrollbackOverflow;
     }
+    VT100ScreenMark *commandMark = [VT100ScreenMark castFrom:self.mutableMarkCache[range.start.y]];
+    Interval *commandMarkInterval = [commandMark.entry.interval copy];
+    if (commandMark) {
+        [self.mutableIntervalTree removeObject:commandMark];
+    }
 
     LineBuffer *lb = [[LineBuffer alloc] init];
     [trimmed enumerateObjectsUsingBlock:^(ScreenCharArray *sca, NSUInteger idx, BOOL * _Nonnull stop) {
@@ -3816,7 +3821,16 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [self.mutableIntervalTree removeObject:mark];
     }
     [self addSavedIntervalTreeObjects:savedITOs baseLine:range.start.y];
-    [self.linebuffer dropExcessLinesWithWidth:self.width];
+
+    if (commandMark && commandMarkInterval) {
+        DLog(@"Add command mark %@ back at %@", commandMark, VT100GridAbsCoordRangeDescription([self absCoordRangeForInterval:commandMarkInterval]));
+        [self.mutableIntervalTree addObject:commandMark withInterval:commandMarkInterval];
+    }
+
+    [self incrementOverflowBy:[self.linebuffer dropExcessLinesWithWidth:self.width]];
+    if (self.config.useLineStyleMarks) {
+        [self movePromptUnderComposerIfNeeded];
+    }
     DLog(@"After unfold:");
     DLog(@"%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbersAndIntervalTreeObjects]);
 }
@@ -3887,6 +3901,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                       promptLength:promptLength];
         [self.mutableIntervalTree addObject:mark withInterval:interval];
     }
+    if (self.config.useLineStyleMarks) {
+        [self movePromptUnderComposerIfNeeded];
+    }
     [self setNeedsRedraw];
 }
 
@@ -3927,6 +3944,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     Interval *interval = [self intervalForGridAbsCoordRange:markRange];
     PortholeMark *mark = [[PortholeMark alloc] init:porthole.uniqueIdentifier];
     [self.mutableIntervalTree addObject:mark withInterval:interval];
+    if (self.config.useLineStyleMarks) {
+        [self movePromptUnderComposerIfNeeded];
+    }
     [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
         [delegate screenDidAddPorthole:porthole];
     }];
@@ -3953,6 +3973,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self.mutableIntervalTree removeObject:mark];
     [self.mutableIntervalTree addObject:mark
                            withInterval:interval];
+    if (self.config.useLineStyleMarks) {
+        [self movePromptUnderComposerIfNeeded];
+    }
 }
 
 - (VT100GridAbsCoordRange)replaceRange:(VT100GridAbsCoordRange)absRange
@@ -4019,7 +4042,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 
     // Temporarily remove the command mark at the first line, if any, so we can re-add it later.
-    VT100ScreenMark *commandMark = [VT100ScreenMark castFrom:self.mutableMarkCache[self.cumulativeScrollbackOverflow + absRange.start.y]];
+    VT100ScreenMark *commandMark = [VT100ScreenMark castFrom:self.mutableMarkCache[absRange.start.y]];
     Interval *commandMarkInterval = [commandMark.entry.interval copy];
     if (commandMark) {
         DLog(@"Temporarily remove command mark %@ at %@", commandMark, VT100GridAbsCoordRangeDescription([self absCoordRangeForInterval:commandMarkInterval]));
