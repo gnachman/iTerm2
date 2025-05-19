@@ -788,6 +788,8 @@ class CodeciergeGoalView: NSView, NSTextViewDelegate, NSControlTextEditingDelega
         textView.isHorizontallyResizable = false
         textView.drawsBackground = false
         textView.textContainer?.widthTracksTextView = true
+        textView.isRichText = false
+        textView.importsGraphics = false
 
         scrollView = NSScrollView()
         scrollView.documentView = textView
