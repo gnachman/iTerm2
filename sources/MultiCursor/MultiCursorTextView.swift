@@ -732,31 +732,35 @@ extension MultiCursorTextView {
         return NSRange(from: range.lowerBound, to: index)
     }
 
+    // The closure transforms the character range of a zero-length selection into the range to delete.
     private func deleteRanges(closure: (Range<Int>) -> (Range<Int>)) {
         guard let ranges = _multiCursorSelectedRanges else {
             return
         }
         settingMultiCursorSelectedRanges = true
         var newRanges = [NSRange]()
-        var count = 0
-        for unadjustedRange in ranges {
-            let glyphRange: NSRange
-            let adjustedRange = unadjustedRange.shiftedDown(by: count)
-            if unadjustedRange.length > 0 {
-                glyphRange = adjustedRange
+        let sortedRanges = ranges.sorted { lhs, rhs in
+            lhs.location < rhs.location
+        }
+        // We delete in ascending order because that makes it easier to calculate where the new
+        // select ranges will be.
+        var shift = 0
+        for originalRange in sortedRanges {
+            let range = originalRange.shiftedDown(by: shift)
+            let characterRange: NSRange
+            if range.length > 0 {
+                characterRange = range
             } else {
                 let count = (self.textStorage!.string as NSString).length
-                let proposed = NSRange(closure(Range(adjustedRange)!))
+                let proposed = NSRange(closure(Range(range)!))
                 guard let safe = proposed.intersection(NSRange(location: 0, length:count)) else {
                     continue
                 }
-                glyphRange = safe
+                characterRange = safe
             }
-            let characterRange = self.layoutManager!.characterRange(forGlyphRange: glyphRange,
-                                                                    actualGlyphRange: nil)
             multiCursorReplaceCharacters(in: characterRange, with: "")
-            newRanges.append(NSRange(location: glyphRange.location, length: 0))
-            count += glyphRange.length
+            shift += characterRange.length
+            newRanges.append(NSRange(location: characterRange.location, length: 0))
         }
         settingMultiCursorSelectedRanges = false
         safelySetSelectedRanges(newRanges)
@@ -1449,6 +1453,8 @@ extension MultiCursorTextView {
         var selectionCharacterRanges: [NSRange] = []
         let preCharacterRanges = ranges.map {
             layoutManager!.characterRange(forGlyphRange: $0, actualGlyphRange: nil)
+        }.sorted { lhs, rhs in
+            lhs.location < rhs.location
         }
 
         undoable {
