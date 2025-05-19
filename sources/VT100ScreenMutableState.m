@@ -2771,10 +2771,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     const long long lastPromptLine = (long long)line + self.cumulativeScrollbackOverflow;
     self.lastPromptLine = lastPromptLine;
     [self assignCurrentCommandEndDate];
-    VT100ScreenMark *mark = (VT100ScreenMark *)[self addMarkOnLine:line ofClass:[VT100ScreenMark class]];
+
+    const BOOL lineStyle = self.config.useLineStyleMarks;
+    VT100ScreenMark *mark = line > 0 ? [self promptMarkOnLine:line - 1] : nil;
+    if (!mark || mark.hasCode || mark.command != nil || mark.lineStyle != lineStyle) {
+        mark = (VT100ScreenMark *)[self addMarkOnLine:line ofClass:[VT100ScreenMark class]];
+    }
     if (mark) {
         const VT100GridAbsCoordRange promptRange = VT100GridAbsCoordRangeMake(0, lastPromptLine, 0, lastPromptLine);
-        const BOOL lineStyle = self.config.useLineStyleMarks;
         [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
             VT100ScreenMark *mark = (VT100ScreenMark *)obj;
             [mark setIsPrompt:YES];
@@ -3208,6 +3212,17 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenCommandDidExitWithCode:returnCode mark:doppelganger];
+    }];
+}
+
+- (VT100ScreenMark *)promptMarkOnLine:(int)line {
+    Interval *interval = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0, line, self.width, line)];
+    NSArray<VT100ScreenMark *> *candidates = [[self.intervalTree objectsInInterval:interval] filteredArrayUsingBlock:^BOOL(id<IntervalTreeImmutableObject> ito) {
+        return [ito isKindOfClass:[VT100ScreenMark class]];
+    }];
+    return [candidates objectPassingTest:^BOOL(VT100ScreenMark *mark, NSUInteger index, BOOL *stop) {
+        Interval *i = mark.entry.interval;
+        return mark.isPrompt && [self coordRangeForInterval:i].start.y == line;
     }];
 }
 
