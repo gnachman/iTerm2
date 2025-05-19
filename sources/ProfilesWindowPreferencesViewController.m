@@ -43,6 +43,7 @@ CGFloat iTermMaxBlurRadius(void) {
     IBOutlet NSSlider *_blurRadius;
     IBOutlet NSButton *_useBackgroundImage;
     IBOutlet NSTextField *_backgroundImageTextField;
+    IBOutlet NSTextField *_transparencyOverrideNotice;
     iTermFunctionCallTextFieldDelegate *_backgroundImageTextFieldDelegate;
 
     IBOutlet iTermImageWell *_backgroundImagePreview;
@@ -115,6 +116,7 @@ CGFloat iTermMaxBlurRadius(void) {
         strongSelf->_transparencyAffectsOnlyDefaultBackgroundColor.enabled = haveTransparency;
         strongSelf->_blurRadius.enabled = (strongSelf->_useBlur.state == NSControlStateValueOn) && haveTransparency;
         strongSelf->_useBlur.enabled = haveTransparency;
+        strongSelf->_transparencyOverrideNotice.hidden = !haveTransparency;
     };
 
     [self defineControl:_initialUseTransparency

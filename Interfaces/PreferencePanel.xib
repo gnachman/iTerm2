@@ -1492,6 +1492,7 @@ DQ
                 <outlet property="_transparency" destination="4978" id="uze-TU-NdW"/>
                 <outlet property="_transparencyAffectsOnlyDefaultBackgroundColor" destination="fwj-4Y-nja" id="caf-eb-abe"/>
                 <outlet property="_transparencyLabel" destination="4975" id="cbr-i4-IkD"/>
+                <outlet property="_transparencyOverrideNotice" destination="Y1h-Ft-NNU" id="9hX-HM-lgu"/>
                 <outlet property="_useBackgroundImage" destination="4973" id="vZ6-QD-p27"/>
                 <outlet property="_useBlur" destination="4976" id="ZfQ-et-Uge"/>
                 <outlet property="_useCustomTabTitle" destination="Sem-hU-dHu" id="Mtd-3k-GUP"/>
@@ -3683,6 +3684,15 @@ DQ
                     <connections>
                         <action selector="settingChanged:" target="BMA-OA-Kzc" id="B3V-R2-idH"/>
                     </connections>
+                </textField>
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Y1h-Ft-NNU">
+                    <rect key="frame" x="374" y="719" width="179" height="22"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" controlSize="mini" title="View &gt; Use Transparency can override this setting temporarily per window." id="RKu-SH-ooZ">
+                        <font key="font" metaFont="miniSystem"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
                 </textField>
             </subviews>
             <accessibility identifier="prefsProfilesWindow"/>
