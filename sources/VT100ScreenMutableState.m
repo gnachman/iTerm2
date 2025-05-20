@@ -2764,6 +2764,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     self.shouldExpectPromptMarks = YES;
 }
 
+- (void)removeUnusedPromptMarkOnLine:(int)line {
+    VT100ScreenMark *mark = [self promptMarkOnLine:line];
+    if (!mark || mark.hasCode || mark.command != nil || mark.lineStyle != self.config.useLineStyleMarks) {
+        return;
+    }
+    [self removeObjectFromIntervalTree:mark];
+    self.mutableMarkCache[line] = nil;
+}
+
 - (VT100ScreenMark *)setPromptStartLine:(int)line detectedByTrigger:(BOOL)detectedByTrigger {
     DLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine.", line);
     // Reset this in case it's taking the "real" shell integration path.
@@ -2773,10 +2782,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self assignCurrentCommandEndDate];
 
     const BOOL lineStyle = self.config.useLineStyleMarks;
-    VT100ScreenMark *mark = line > 0 ? [self promptMarkOnLine:line - 1] : nil;
-    if (!mark || mark.hasCode || mark.command != nil || mark.lineStyle != lineStyle) {
-        mark = (VT100ScreenMark *)[self addMarkOnLine:line ofClass:[VT100ScreenMark class]];
+    if (self.config.useLineStyleMarks) {
+        // You can't ordinarily have two adjacent prompt marks in auto composer mode. This can
+        // happen if the shell sends OSC 7 and also has shell integration installed.
+        [self removeUnusedPromptMarkOnLine:line - 1];
     }
+    VT100ScreenMark *mark = (VT100ScreenMark *)[self addMarkOnLine:line ofClass:[VT100ScreenMark class]];
     if (mark) {
         const VT100GridAbsCoordRange promptRange = VT100GridAbsCoordRangeMake(0, lastPromptLine, 0, lastPromptLine);
         [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
