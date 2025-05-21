@@ -81,6 +81,21 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 @property(nonatomic, strong, readwrite) NSWindow *it_windowBecomingKey;
 @end
 
+@interface NSDocumentController(iTermHacks)
+- (BOOL)_supportsAppCentricBrowsing;
+@end
+@interface NSApplication(AppPrivate)
+- (BOOL)_appHasNonMiniaturizedWindow;
+- (void)_restoreMiniaturizedWindow;
+- (BOOL)_doOpenUntitled;
+- (void)_activateWithInfo:(NSDictionary *)info;
+- (BOOL)_appHasWindowOrPanelVisibleToUser;
+- (id)_appCentricOpenPanel;
+@end
+@interface NSObject(Phony)
+- (BOOL)applicationShowsOpenPanelInsteadOfUntitledFile:(id)obj;
+@end
+
 @implementation iTermApplication {
     BOOL _it_characterPanelIsOpen;
     BOOL _it_characterPanelShouldOpenSoon;
@@ -1102,5 +1117,59 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     return _functionPressed;
 }
 
+- (BOOL)_appHasNonMiniaturizedWindow {
+    const BOOL value = [super _appHasNonMiniaturizedWindow];
+    DLog(@"_appHasNonMiniaturizedWindow returned %@", @(value));
+    return value;
+}
+
+- (void)_restoreMiniaturizedWindow {
+    DLog(@"Will call _restoreMiniaturizedWindow");
+    [super _restoreMiniaturizedWindow];
+    DLog(@"Returned from _restoreMiniaturizedWindow");
+}
+
+- (BOOL)_doOpenUntitled {
+    @try {
+        id<NSApplicationDelegate> delegate = (id<NSApplicationDelegate>)[self delegate];
+        DLog(@"Will call _doOpenUntitled");
+        DLog(@"FYI document controller is %@", [NSDocumentController sharedDocumentController]);
+        NSDocumentController *docController = [NSDocumentController sharedDocumentController];
+//        if ([docController respondsToSelector:@selector(_supportsAppCentricBrowsing)]) {
+            DLog(@"FYI document controller supports app center browsing=%@", @([docController _supportsAppCentricBrowsing]));
+//        } else {
+//            DLog(@"FYI document controller does not respond to _supportsAppCentricBrowsing");
+//        }
+        DLog(@"FYI Delegate implements applicationShowsOpenPanelInsteadOfUntitledFile is %@", @([delegate respondsToSelector:@selector(applicationShowsOpenPanelInsteadOfUntitledFile:)]));
+        DLog(@"FYI delegate implements shouldOpenUntitledFile is %@", @([delegate respondsToSelector:@selector(applicationShouldOpenUntitledFile:)]));
+
+        const BOOL value = [super _doOpenUntitled];
+        DLog(@"_doOpenUntitled returned %@", @(value));
+        return value;
+    } @catch(NSException *exception) {
+        DLog(@"_doOpenUntitled threw %@", exception);
+        @throw exception;
+    }
+}
+
+- (void)unhideWithoutActivation {
+    DLog(@"unhideWithoutActivation");
+    [super unhideWithoutActivation];
+}
+
+- (void)_activateWithInfo:(NSDictionary *)info {
+    DLog(@"_activateWithInfo:%@", info);
+    DLog(@"_appHasWindowOrPanelVisibleToUser=%@", @([self _appHasWindowOrPanelVisibleToUser]));
+    [super _activateWithInfo:info];
+}
+
+- (id)_appCentricOpenPanel {
+    DLog(@"_appCentricOpenPanel");
+    id value = [super _appCentricOpenPanel];
+    DLog(@"value=%@", value);
+    return value;
+}
+
 @end
+
 

@@ -163,6 +163,7 @@ static BOOL gStartupActivitiesPerformed = NO;
 static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
 static BOOL hasBecomeActive = NO;
 
+
 @interface iTermApplicationDelegate () <
     iTermGraphCodable,
     iTermOrphanServerAdopterDelegate,
