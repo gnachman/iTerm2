@@ -2,3 +2,5 @@
 (allow default)
 (deny file* (subpath "/opt/homebrew/Cellar"))
 (allow file* (subpath "/opt/homebrew/Cellar/perl/"))
+(allow file* (subpath "/opt/homebrew/bin/cmake"))
+(allow file* (subpath "/opt/homebrew/Cellar/cmake/"))

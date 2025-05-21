@@ -8,7 +8,7 @@ ITERM_CONF_PLIST = $(HOME)/Library/Preferences/com.googlecode.iterm2.plist
 COMPACTDATE=$(shell date +"%Y%m%d")
 VERSION = $(shell cat version.txt | sed -e "s/%(extra)s/$(COMPACTDATE)/")
 NAME=$(shell echo $(VERSION) | sed -e "s/\\./_/g")
-CMAKE=/usr/local/bin/cmake
+CMAKE ?= /opt/homebrew/bin/cmake
 
 .PHONY: clean all backup-old-iterm restart
 
@@ -143,14 +143,14 @@ x86libssh2: force
 	mkdir -p submodules/libssh2/build_x86_64
 	# Add this flag to enable tracing:
 	# -DCMAKE_C_FLAGS="-DLIBSSH2DEBUG"
-	cd submodules/libssh2/build_x86_64 && $(CMAKE) -DOPENSSL_INCLUDE_DIR=${PWD}/submodules/openssl/build-fat/include -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl/build-fat -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCRYPTO_BACKEND=OpenSSL -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14 -DCMAKE_EXE_LINKER_FLAGS="-ld_classic" -DCMAKE_MODULE_LINKER_FLAGS="-ld_classic" .. && $(MAKE) libssh2_static
+	cd submodules/libssh2/build_x86_64 && $(CMAKE) -DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew -DOPENSSL_INCLUDE_DIR=${PWD}/submodules/openssl/build-fat/include -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl/build-fat -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCRYPTO_BACKEND=OpenSSL -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14 -DCMAKE_EXE_LINKER_FLAGS="-ld_classic" -DCMAKE_MODULE_LINKER_FLAGS="-ld_classic" .. && $(MAKE) libssh2_static
 
 armlibssh2: force
 	echo Begin building armlibssh2
 	mkdir -p submodules/libssh2/build_arm64
 	# Add this flag to enable tracing:
 	# -DCMAKE_C_FLAGS="-DLIBSSH2DEBUG"
-	cd submodules/libssh2/build_arm64 && $(CMAKE) -DOPENSSL_INCLUDE_DIR=${PWD}/submodules/openssl/include -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=arm64 -DCRYPTO_BACKEND=OpenSSL -DCMAKE_EXE_LINKER_FLAGS="-ld_classic" -DCMAKE_MODULE_LINKER_FLAGS="-ld_classic" -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14 .. && $(MAKE) libssh2_static
+	cd submodules/libssh2/build_arm64 && $(CMAKE) -DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew -DOPENSSL_INCLUDE_DIR=${PWD}/submodules/openssl/include -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=arm64 -DCRYPTO_BACKEND=OpenSSL -DCMAKE_EXE_LINKER_FLAGS="-ld_classic" -DCMAKE_MODULE_LINKER_FLAGS="-ld_classic" -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14 .. && $(MAKE) libssh2_static
 
 fatlibssh2: force fatopenssl
 	echo Begin building fatlibssh2
@@ -175,12 +175,12 @@ paranoidNMSSH: force
 
 libgit2: force
 	mkdir -p submodules/libgit2/build
-	PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} -DBUILD_SHARED_LIBS=OFF -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_OSX_DEPLOYMENT_TARGET="10.14" -DCMAKE_INSTALL_PREFIX=../../../ThirdParty/libgit2 -DUSE_SSH=OFF -DUSE_ICONV=OFF ..
+	PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} -DBUILD_CLAR=OFF -DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew -DBUILD_SHARED_LIBS=OFF -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_OSX_DEPLOYMENT_TARGET="10.14" -DCMAKE_INSTALL_PREFIX=../../../ThirdParty/libgit2 -DUSE_SSH=OFF -DUSE_ICONV=OFF ..
 	PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} --build . --target install --parallel "$$(sysctl -n hw.ncpu)"
 
 sparkle: force
 	rm -rf ThirdParty/Sparkle.framework
-	cd submodules/Sparkle && xcodebuild -scheme Sparkle -configuration Release
+	cd submodules/Sparkle && xcodebuild -scheme Sparkle -configuration Release 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)'
 	mv submodules/Sparkle/Build/Release/Sparkle.framework ThirdParty/Sparkle.framework
 
 paranoid-swiftymarkdown: force
@@ -197,6 +197,12 @@ paranoidbetterfontpicker: force
 
 paranoidbetterfontpicker-dev: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BetterFontPicker-Dev
+
+paranoidlibgit2: force
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) libgit2
+
+paranoidsparkle: force
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) sparkle
 
 # You probably want make paranoiddeps to avoid depending on Hombrew stuff.
 deps: force fatlibsixel CoreParse NMSSH bindeps libgit2 sparkle
@@ -218,12 +224,12 @@ bindeps: SwiftyMarkdown Highlightr BetterFontPicker
 	cd SearchableComboListView && $(MAKE)
 
 SwiftyMarkdown: force
-	cd submodules/SwiftyMarkdown && xcodebuild -configuration Release
+	cd submodules/SwiftyMarkdown && xcodebuild -configuration Release 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)'
 	rm -rf ThirdParty/SwiftyMarkdown.framework
 	mv submodules/SwiftyMarkdown/build/Release/SwiftyMarkdown.framework ThirdParty/SwiftyMarkdown.framework
 
 Highlightr: force
-	cd submodules/Highlightr && xcodebuild -project Highlightr.xcodeproj -target Highlightr-macOS
+	cd submodules/Highlightr && xcodebuild -project Highlightr.xcodeproj -target Highlightr-macOS 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)'
 	rm -rf ThirdParty/Highlightr.framework
 	mv submodules/Highlightr/build/Release/Highlightr.framework ThirdParty/Highlightr.framework
 

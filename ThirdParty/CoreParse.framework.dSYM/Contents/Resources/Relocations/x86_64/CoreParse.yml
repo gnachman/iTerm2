@@ -1,6 +1,6 @@
 ---
 triple:          'x86_64-apple-darwin'
-binary-path:     '/Users/gnachman/git/iterm2-alt3/ThirdParty/CoreParse.framework/Versions/A/CoreParse'
+binary-path:     '/Users/gnachman/git/iterm2-alt2/ThirdParty/CoreParse.framework/Versions/A/CoreParse'
 relocations:
   - { offset: 0x49A7D, size: 0x8, addend: 0x0, symName: '-[CPTokeniser init]', symObjAddr: 0x0, symBinAddr: 0x1BDC, symSize: 0x68 }
   - { offset: 0x49ABD, size: 0x8, addend: 0x0, symName: '-[CPTokeniser advanceLineNumber:columnNumber:withInput:range:]', symObjAddr: 0x923, symBinAddr: 0x24FF, symSize: 0xD9 }
