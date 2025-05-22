@@ -1160,8 +1160,11 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 #pragma mark - Title Components
 
 - (void)toggleSelectedTitleComponent {
-    [self toggleSelectedTitleComponentForView:_titleSettings];
-    [self toggleSelectedTitleComponentForView:_titleSettingsForEditCurrentSession];
+    if ([self.delegate profilePreferencesCurrentModel] == [ProfileModel sharedInstance]) {
+        [self toggleSelectedTitleComponentForView:_titleSettings];
+    } else {
+        [self toggleSelectedTitleComponentForView:_titleSettingsForEditCurrentSession];
+    }
 }
 
 - (void)toggleSelectedTitleComponentForView:(NSPopUpButton *)titleSettings {
@@ -1233,8 +1236,11 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 }
 
 - (void)updateSelectedTitleComponents {
-    [self updateSelectedTitleComponentsForView:_titleSettings];
-    [self updateSelectedTitleComponentsForView:_titleSettingsForEditCurrentSession];
+    if ([self.delegate profilePreferencesCurrentModel] == [ProfileModel sharedInstance]) {
+        [self updateSelectedTitleComponentsForView:_titleSettings];
+    } else {
+        [self updateSelectedTitleComponentsForView:_titleSettingsForEditCurrentSession];
+    }
 }
 
 - (void)updateSelectedTitleComponentsForView:(NSPopUpButton *)titleSettings {
