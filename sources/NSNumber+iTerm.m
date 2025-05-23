@@ -60,4 +60,66 @@
     return nil;
 }
 
+- (BOOL)isEqualToString:(NSString *)string
+             threshold:(double)threshold {
+    static NSNumberFormatter *sFormatter;
+    if (!sFormatter) {
+        sFormatter = [[NSNumberFormatter alloc] init];
+        sFormatter.locale = [NSLocale currentLocale];
+        sFormatter.numberStyle = NSNumberFormatterDecimalStyle;
+        sFormatter.generatesDecimalNumbers = YES;
+        sFormatter.allowsFloats = YES;
+        // make sure it recognizes “E” or “e” in strings:
+        sFormatter.exponentSymbol = @"E";
+    }
+
+    // 1) try parsing with our formatter
+    NSNumber *parsed = [sFormatter numberFromString:string];
+    if (!parsed) {
+        return NO;
+    }
+
+    // 2) compare via NSDecimalNumber for full precision
+    NSDecimalNumber *selfDec = [NSDecimalNumber decimalNumberWithDecimal:self.decimalValue];
+    NSDecimalNumber *other  = (id)parsed;
+    NSDecimalNumber *diff   = [selfDec decimalNumberBySubtracting:other];
+    NSDecimalNumber *absDiff;
+    if ([diff compare:[NSDecimalNumber zero]] == NSOrderedAscending) {
+        absDiff = [diff decimalNumberByMultiplyingByPowerOf10:0]; // make positive
+        absDiff = [absDiff decimalNumberByMultiplyingByPowerOf10:0]; // or just abs
+        absDiff = [absDiff decimalNumberByMultiplyingByPowerOf10:0]; // simpler: -diff
+        absDiff = [diff decimalNumberByMultiplyingByPowerOf10:0];
+        if (diff.decimalValue._isNegative) {
+            absDiff = [diff decimalNumberByMultiplyingBy:[NSDecimalNumber decimalNumberWithString:@"-1"]];
+        }
+    } else {
+        absDiff = diff;
+    }
+
+    NSDecimalNumber *threshDec = [NSDecimalNumber
+        decimalNumberWithDecimal:@(threshold).decimalValue];
+    return [absDiff compare:threshDec] != NSOrderedDescending;
+}
+
+- (BOOL)it_hasFractionalPart {
+    // Get full-precision decimal
+    NSDecimal dec = [self decimalValue];
+
+    // Round it down (truncate) to zero decimal places
+    NSDecimal intPart;
+    NSDecimalRound(&intPart,
+                   &dec,
+                   0,            // scale: number of digits after decimal
+                   NSRoundDown); // always toward zero
+
+    // If original ≠ truncated, there was a fractional part
+    NSComparisonResult cmp = NSDecimalCompare(&dec,
+                                             &intPart);
+    if (cmp != NSOrderedSame) {
+        return YES;
+    } else {
+        return NO;
+    }
+}
+
 @end

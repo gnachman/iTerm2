@@ -261,6 +261,10 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
     return [iTermPreferences defaultValueForKey:key isCompatibleWithType:type];
 }
 
+- (id)defaultValueForKey:(NSString *)key {
+    return [iTermPreferences defaultObjectForKey:key];
+}
+
 - (BOOL)valueOfKeyEqualsDefaultValue:(NSString *)key {
     // I use nonzero epsilon because otherwise colors don't compare equal when they ought to.
     return [NSObject object:[iTermPreferences defaultObjectForKey:key]

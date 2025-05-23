@@ -244,6 +244,10 @@
     return [iTermProfilePreferences defaultValueForKey:key isCompatibleWithType:type];
 }
 
+- (id)defaultValueForKey:(NSString *)key {
+    return [iTermProfilePreferences defaultObjectForKey:key];
+}
+
 - (BOOL)valueOfKeyEqualsDefaultValue:(NSString *)key {
     static NSDictionary *presetsDict;
     static dispatch_once_t onceToken;

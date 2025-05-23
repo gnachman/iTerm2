@@ -94,6 +94,7 @@
 #import "NSDictionary+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSImage+iTerm.h"
+#import "NSNumber+iTerm.h"
 #import "NSPopUpButton+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSView+iTerm.h"
@@ -227,7 +228,114 @@ static PreferencePanel *gSessionsPreferencePanel;
 
 @end
 
-@implementation iTermPrefsPanel
+@interface iTermPrefsFieldEditor: NSTextView
+@end
+
+@implementation iTermPrefsFieldEditor
+
+- (BOOL)isFieldEditor {
+    return YES;
+}
+
+- (BOOL)isRichText {
+    return NO;
+}
+
+- (NSMenu *)menuForEvent:(NSEvent *)event {
+    NSMenu *menu = [super menuForEvent:event];
+    if (!menu) {
+        return nil;
+    }
+    NSTextField *textField = [NSTextField castFrom:self.delegate];
+    if (!textField) {
+        return menu;
+    }
+
+    id defaultObj = [self defaultObjectForSetting];
+    if (!defaultObj) {
+        return menu;
+    }
+    NSString *defaultString = nil;
+    if ([defaultObj isKindOfClass:[NSString class]])  {
+        if ([textField.stringValue isEqualToString:defaultObj]) {
+            return menu;
+        }
+        defaultString = defaultObj;
+    } else if ([defaultObj isKindOfClass:[NSNumber class]]) {
+        NSNumber *n = defaultObj;
+        if ([n isEqualToString:textField.stringValue threshold:0.001]) {
+            return menu;
+        }
+        NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
+        formatter.locale = [NSLocale currentLocale];
+        formatter.numberStyle = NSNumberFormatterDecimalStyle;
+        formatter.generatesDecimalNumbers = YES;
+        formatter.allowsFloats = n.it_hasFractionalPart;
+        defaultString = [formatter stringFromNumber:n];
+
+    } else {
+        return menu;
+    }
+    NSString *repr = defaultString;
+    if (!repr.length) {
+        repr = @"Empty Default";
+    }
+    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:[NSString stringWithFormat:@"Reset to %@", repr]
+                                                  action:@selector(resetPrefToDefaultValue:)
+                                           keyEquivalent:@""];
+    item.target = self;
+    item.representedObject = defaultString;
+    [menu insertItem:item atIndex:0];
+    [menu insertItem:[NSMenuItem separatorItem] atIndex:1];
+    return menu;
+}
+
+- (id)defaultObjectForSetting {
+    NSTextField *textField = [NSTextField castFrom:self.delegate];
+    if (!textField) {
+        return nil;
+    }
+
+    NSResponder *responder = textField;
+    while (responder != nil && ![responder isKindOfClass:[iTermPreferencesBaseViewController class]]) {
+        responder = responder.nextResponder;
+    }
+    iTermPreferencesBaseViewController *vc = [iTermPreferencesBaseViewController castFrom:responder];
+    if (!vc) {
+        return nil;
+    }
+    PreferenceInfo *info = [vc infoForControl:textField];
+    if (!info) {
+        return nil;
+    }
+    return [vc defaultValueForKey:info.key];
+}
+
+- (NSString *)defaultValueForSetting {
+    id obj = [self defaultObjectForSetting];
+    NSString *defaultValue = [NSString castFrom:obj];
+    if (!defaultValue) {
+        defaultValue = [[NSNumber castFrom:obj] stringValue];
+    }
+    if (!defaultValue) {
+        return nil;
+    }
+    return defaultValue;
+}
+
+- (void)resetPrefToDefaultValue:(id)sender {
+    NSTextField *textField = [NSTextField castFrom:self.delegate];
+    if (!textField) {
+        return;
+    }
+
+    textField.stringValue = [sender representedObject];
+}
+@end
+
+@implementation iTermPrefsPanel {
+    iTermPrefsFieldEditor *_fieldEditor;
+}
 
 - (BOOL)setFrameUsingName:(NSWindowFrameAutosaveName)name {
     return [self setFrameUsingName:name force:NO];
@@ -298,6 +406,18 @@ static PreferencePanel *gSessionsPreferencePanel;
         [self.prefsPanelDelegate responderWillBecomeFirstResponder:responder];
     }
     return result;
+}
+
+- (NSText *)fieldEditor:(BOOL)createFlag forObject:(id)object {
+    if (![object isKindOfClass:[NSTextField class]]) {
+        return [super fieldEditor:createFlag forObject:object];
+    }
+    if (createFlag && !_fieldEditor) {
+        _fieldEditor = [[iTermPrefsFieldEditor alloc] initWithFrame:NSZeroRect];
+        _fieldEditor.fieldEditor = YES;
+        _fieldEditor.richText = NO;
+    }
+    return _fieldEditor;
 }
 
 @end

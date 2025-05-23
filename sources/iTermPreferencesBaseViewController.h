@@ -149,6 +149,7 @@ extern NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues;
 
 - (BOOL)keyHasDefaultValue:(NSString *)key;
 - (BOOL)defaultValueForKey:(NSString *)key isCompatibleWithType:(PreferenceInfoType)type;
+- (id)defaultValueForKey:(NSString *)key;
 
 - (void)setObject:(NSObject *)object forKey:(NSString *)key;
 - (NSObject *)objectForKey:(NSString *)key;

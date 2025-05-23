@@ -13,7 +13,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (nullable id)it_jsonSafeValue;
 + (instancetype _Nullable)coerceFrom:(id _Nullable)obj;
-
+- (BOOL)isEqualToString:(NSString *)string
+              threshold:(double)threshold;
+- (BOOL)it_hasFractionalPart;
 @end
 
 NS_ASSUME_NONNULL_END
