@@ -2642,6 +2642,7 @@
 		A68ADA0D29D4B2560008E092 /* GridCoordArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68ADA0C29D4B2560008E092 /* GridCoordArray.swift */; };
 		A68BADFB1E0DD52F00E4BB7B /* Touch Bar Function Keys.png in Resources */ = {isa = PBXBuildFile; fileRef = A68BADF91E0DD52F00E4BB7B /* Touch Bar Function Keys.png */; };
 		A68BADFC1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68BADFA1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png */; };
+		A68BE8A52DE10FC0002DD513 /* iTermIntegerNumberFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */; };
 		A68E332B1DE6AFC6003F1D8E /* iTermTouchBarButton.h in Headers */ = {isa = PBXBuildFile; fileRef = A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */; };
 		A68E33331DE746F5003F1D8E /* Add Mark Touch Bar Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E332D1DE746F5003F1D8E /* Add Mark Touch Bar Icon.png */; };
 		A68E33341DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E332E1DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png */; };
@@ -3345,7 +3346,6 @@
 		A6C7630B1B45C52B00E3C992 /* FontSizeEstimator.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */; };
 		A6C7630E1B45C52B00E3C992 /* iTermBackgroundColorRun.m in Sources */ = {isa = PBXBuildFile; fileRef = A61D16FB1AAFD5530013FCCA /* iTermBackgroundColorRun.m */; };
 		A6C763111B45C52B00E3C992 /* iTermFlippedView.m in Sources */ = {isa = PBXBuildFile; fileRef = A682DE9A1915DB1F00BE8758 /* iTermFlippedView.m */; };
-		A6C763141B45C52B00E3C992 /* iTermIntegerNumberFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */; };
 		A6C763151B45C52B00E3C992 /* iTermLogoGenerator.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA3E2B91970ACBE00001E6E /* iTermLogoGenerator.m */; };
 		A6C763161B45C52B00E3C992 /* iTermMinimumSubsequenceMatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = A697E27A1B42501000E175DA /* iTermMinimumSubsequenceMatcher.m */; };
 		A6C763171B45C52B00E3C992 /* iTermMouseCursor.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AE1ECC191FF9DB00780C19 /* iTermMouseCursor.m */; };
@@ -17173,6 +17173,7 @@
 				53E9DFE0220D518E0070C9C0 /* AlertTrigger.m in Sources */,
 				A6FE8D13209528F400B5C648 /* iTermPythonRuntimeDownloader.m in Sources */,
 				A6D1A3E52C7E994B00FECDF2 /* VT100GridTypes+Swift.swift in Sources */,
+				A68BE8A52DE10FC0002DD513 /* iTermIntegerNumberFormatter.m in Sources */,
 				A63011CD20E851E0008114B7 /* iTermStatusBarSpringComponent.m in Sources */,
 				A6E1881D2A535EBB00416B1A /* ToastWindowController.m in Sources */,
 				539E4ECE22E172360084FE9A /* iTermAutomaticProfileSwitcher.m in Sources */,
@@ -17867,7 +17868,6 @@
 				A6CEC1081DCE8146009F4FD2 /* GPBCodedInputStream.m in Sources */,
 				A6C763BA1B45C52B00E3C992 /* iTermTipCardViewController.m in Sources */,
 				A6C763621B45C52B00E3C992 /* PopupWindow.m in Sources */,
-				A6C763141B45C52B00E3C992 /* iTermIntegerNumberFormatter.m in Sources */,
 				A6C762A71B45C52B00E3C992 /* iTermNewWindowCommand.m in Sources */,
 				A6A802EE226EEAE900BC70DC /* PTYTask+MRR.m in Sources */,
 				A6C760431B45C4CF00E3C992 /* NSTableColumn+iTerm.m in Sources */,

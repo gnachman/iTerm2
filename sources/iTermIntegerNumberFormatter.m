@@ -23,3 +23,23 @@
 }
 
 @end
+
+@implementation iTermSaneNumberFormatter
+
+- (BOOL)isPartialStringValid:(NSString *)partialString
+            newEditingString:(NSString * _Nullable __autoreleasing *)newString
+            errorDescription:(NSString * _Nullable __autoreleasing *)error {
+    return YES;
+}
+
+- (NSString *)editingStringForObjectValue:(id)obj {
+    if ([obj isKindOfClass:[NSNumber class]]) {
+        return [obj stringValue];
+    }
+    if ([obj isKindOfClass:[NSString class]]) {
+        return obj;
+    }
+    return [super editingStringForObjectValue:obj];
+}
+
+@end

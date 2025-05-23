@@ -11,3 +11,7 @@
 @interface iTermIntegerNumberFormatter : NSNumberFormatter
 
 @end
+
+// Usable for editable fields   
+@interface iTermSaneNumberFormatter: NSNumberFormatter
+@end
