@@ -201,7 +201,7 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
         guard let screen else {
             return NSRect(origin: frame.origin, size: size)
         }
-        var frame = if topLeftPointForBelow.y - size.height < screen.visibleFrame.minY {
+        let frame = if topLeftPointForBelow.y - size.height < screen.visibleFrame.minY {
             // Place above
             NSRect(origin: bottomLeftPointForAbove, size: size)
         } else {

@@ -44,6 +44,10 @@ class TerminalButton: NSObject {
     @objc var shift = CGFloat(0)
     var selected: Bool { false }
 
+    // If the icon depends on internal state of a subclass, this should expose a key that can be
+    // used to cache the icon.
+    @objc var extraIdentifyingInfoForIcon: AnyHashable? { nil }
+
     init(id: Int, backgroundImage: NSImage, foregroundImage: NSImage, mark: iTermMarkProtocol?, tooltip: String) {
         self.id = id
         tintedForegroundImage = TintedImage(original: foregroundImage)
@@ -311,7 +315,9 @@ class TerminalRevealChannelButton: TerminalButton {
 class TerminalFoldBlockButton: GenericBlockButton {
     @objc let absLineRange: NSRange
     @objc let folded: Bool
-
+    override var extraIdentifyingInfoForIcon: AnyHashable? {
+        folded
+    }
     @objc(initWithID:blockID:mark:absY:currentlyFolded:absLineRange:)
     init?(id: Int,
           blockID: String,

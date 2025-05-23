@@ -22,10 +22,11 @@ class TerminalButtonRendererTransientState: iTermMetalCellRendererTransientState
         var selectedColor: vector_float4
         var shift: CGFloat
         var sizeInPoints: NSSize
+        var extraIdentifyingInfoForIcon: AnyHashable?
     }
     fileprivate var buttons = [Button]()
 
-    @objc(addButton:onScreenLine:column:foregroundColor:backgroundColor:selectedColor:shift:sizeInPoints:)
+    @objc(addButton:onScreenLine:column:foregroundColor:backgroundColor:selectedColor:shift:sizeInPoints:extraIdentifyingInfoForIcon:)
     func add(terminalButton: TerminalButton,
              line: Int,
              column: Int,
@@ -33,7 +34,8 @@ class TerminalButtonRendererTransientState: iTermMetalCellRendererTransientState
              backgroundColor: vector_float4,
              selectedColor: vector_float4,
              shift: CGFloat,
-             sizeInPoints: NSSize) {
+             sizeInPoints: NSSize,
+             extraIdentifyingInfoForIcon: AnyHashable?) {
         buttons.append(Button(terminalButton: terminalButton,
                               line: line,
                               column: column,
@@ -41,7 +43,8 @@ class TerminalButtonRendererTransientState: iTermMetalCellRendererTransientState
                               backgroundColor:backgroundColor,
                               selectedColor: selectedColor,
                               shift: shift,
-                              sizeInPoints: sizeInPoints))
+                              sizeInPoints: sizeInPoints,
+                              extraIdentifyingInfoForIcon: extraIdentifyingInfoForIcon))
     }
 
     override func writeDebugInfo(toFolder folder: URL) {
@@ -66,6 +69,7 @@ class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
         var selected: Bool
         var state: TerminalButton.State
         var size: NSSize
+        var userInfo: AnyHashable?
     }
     private var textureCache: [TextureKey: MTLTexture] = [:]
     private var texturePool = iTermTexturePool()
@@ -184,7 +188,8 @@ class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
                              buttonClassName: String(describing: type(of: button.terminalButton)),
                              selected: button.terminalButton.selected,
                              state: button.terminalButton.state,
-                             size: button.terminalButton.desiredFrame.size)
+                             size: button.terminalButton.desiredFrame.size,
+                             userInfo: button.extraIdentifyingInfoForIcon)
         if let texture = textureCache[key] {
             return texture
         }
