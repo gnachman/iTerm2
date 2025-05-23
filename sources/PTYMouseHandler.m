@@ -148,7 +148,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // Returns yes if [super mouseDown:event] should be run by caller.
 - (BOOL)mouseDownImpl:(NSEvent *)event
           sideEffects:(iTermClickSideEffects *)sideEffects {
-    DLog(@"mouseDownImpl: called");
+    DLog(@"mouseDownImpl: called %@", event);
     if ([self.mouseDelegate mouseHandlerMouseDownAt:event.locationInWindow]) {
         return NO;  // Don't call super because we handled it.
     }
@@ -667,6 +667,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     const BOOL wasMakingThreeFingerSelection = _makingThreeFingerSelection;
     _makingThreeFingerSelection = (_numTouches == 3);
     DLog(@"_makingThreeFingerSelection <- %@", @(_makingThreeFingerSelection));
+    const NSPoint locationInWindow = [event locationInWindow];
+    const NSPoint mouseDownLocation = [_mouseDownEvent locationInWindow];
+    const CGFloat dragDistance = EuclideanDistance(mouseDownLocation, locationInWindow);
+    if (dragDistance >= kDragThreshold) {
+        DLog(@"Cancel three finger tap due to drag of distance %f", dragDistance);
+        _mouseDownIsThreeFingerClick = NO;
+    }
     if (_mouseDownIsThreeFingerClick) {
         DLog(@"is three finger click");
         return iTermClickSideEffectsIgnore;
@@ -675,7 +682,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // Prevent accidental dragging while dragging semantic history item.
     BOOL dragThresholdMet = NO;
-    const NSPoint locationInWindow = [event locationInWindow];
     const NSPoint locationInTextView =
     [self.mouseDelegate mouseHandler:self viewCoordForEvent:event clipped:YES];
 
@@ -684,9 +690,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     const int x = clickPointGridCoord.x;
     const int y = clickPointGridCoord.y;
 
-    NSPoint mouseDownLocation = [_mouseDownEvent locationInWindow];
     const BOOL wasAlreadyDragging = _committedToDrag;
-    if (EuclideanDistance(mouseDownLocation, locationInWindow) >= kDragThreshold) {
+    if (dragDistance >= kDragThreshold) {
         dragThresholdMet = YES;
         _committedToDrag = YES;
     }
@@ -823,6 +828,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 #pragma mark - Right mouse
 
 - (void)rightMouseDown:(NSEvent *)event superCaller:(void (^)(void))superCaller {
+    DLog(@"rightMouseDown called %@", event);
     if ([iTermPreferences boolForKey:kPreferenceKeyFocusOnRightOrMiddleClick]) {
         [_mouseDelegate mouseHandlerMakeKeyAndOrderFrontAndMakeFirstResponderAndActivateApp:self];
     }
@@ -914,6 +920,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 // TODO: disable other, right mouse for inactive panes
 - (void)otherMouseDown:(NSEvent *)event {
+    DLog(@"otherMouseDown called %@", event);
     if ([iTermPreferences boolForKey:kPreferenceKeyFocusOnRightOrMiddleClick]) {
         [_mouseDelegate mouseHandlerMakeKeyAndOrderFrontAndMakeFirstResponderAndActivateApp:self];
     }
