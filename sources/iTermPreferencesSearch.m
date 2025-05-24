@@ -8,6 +8,7 @@
 #import "iTermPreferencesSearch.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSSet+iTerm.h"
 #import "NSStringITerm.h"
 
 @implementation iTermPreferencesSearchDocument
@@ -38,11 +39,21 @@
     return [NSString stringWithFormat:@"<%@: %p docid=%@ identifier=%@ displayName=%@>", self.class, self, self.docid, self.identifier, self.displayName];
 }
 
+- (NSArray<NSString *> *)indexablePhrases {
+    return [_keywordPhrases ?: @[] arrayByAddingObject:_displayName];
+}
+
 - (NSArray<NSString *> *)allKeywords {
-    NSArray *phrases = [_keywordPhrases ?: @[] arrayByAddingObject:_displayName];
+    NSArray *phrases = [self indexablePhrases];
     return [[phrases mapWithBlock:^id(NSString *phrase) {
         return phrase.it_normalizedTokens;
     }] flattenedArray];
+}
+
+- (NSArray<NSString *> *)allStems {
+    return [self.allKeywords mapWithBlock:^id _Nullable(NSString *keyword) {
+        return [keyword it_stem];
+    }];
 }
 
 - (BOOL)isEqual:(id)object {
@@ -64,6 +75,19 @@
 
 - (id)copyWithZone:(NSZone *)zone {
     return self;
+}
+
+// Phrases are arrays of normalized tokens.
+- (BOOL)containsPhrases:(NSArray<NSArray<NSString *> *> *)phrases {
+    return [phrases allWithBlock:^BOOL(NSArray<NSString *> *phrase) {
+        return [self containsPhrase:phrase];
+    }];
+}
+
+- (BOOL)containsPhrase:(NSArray<NSString *> *)phrase {
+    return [self.indexablePhrases anyWithBlock:^BOOL(NSString *haystack) {
+        return [[haystack it_normalizedTokens] it_containsSubarray:phrase];
+    }];
 }
 
 @end
@@ -126,7 +150,7 @@
 
 @interface iTermPreferencesSearchCursor : NSObject
 @property (nonatomic, readonly) iTermPreferencesSearchKeyword *keyword;
-@property (nonatomic) NSInteger index;
+@property (nonatomic) NSInteger index;  // NSNotFound means it represents an empty token and can be ignored.
 @property (nonatomic, readonly) NSSet<NSNumber *> *docIDs;
 
 - (instancetype)initWithToken:(NSString *)token index:(NSInteger)index NS_DESIGNATED_INITIALIZER;
@@ -137,6 +161,19 @@
 
 @implementation iTermPreferencesSearchCursor {
     NSMutableSet<NSNumber *> *_docIDs;
+}
+
+- (instancetype)initWithCursors:(NSArray<iTermPreferencesSearchCursor *> *)cursors {
+    self = [self initWithToken:cursors[0].keyword.keyword
+                         index:0];
+    if (self) {
+        NSMutableSet *docIDs = [NSMutableSet set];
+        [cursors enumerateObjectsUsingBlock:^(iTermPreferencesSearchCursor *cursor, NSUInteger idx, BOOL * _Nonnull stop) {
+            [docIDs unionSet:cursor.docIDs];
+        }];
+        _docIDs = docIDs;
+    }
+    return self;
 }
 
 - (instancetype)initWithToken:(NSString *)token index:(NSInteger)index {
@@ -160,22 +197,32 @@
 @end
 
 @implementation iTermPreferencesSearchEngine {
-    NSMutableArray<iTermPreferencesSearchIndexEntry *> *_index;
+    NSMutableArray<iTermPreferencesSearchIndexEntry *> *_keywordIndex;
+    NSMutableArray<iTermPreferencesSearchIndexEntry *> *_stemIndex;
     NSMutableDictionary<NSNumber *, iTermPreferencesSearchDocument *> *_docs;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _index = [NSMutableArray array];
+        _keywordIndex = [NSMutableArray array];
+        _stemIndex = [NSMutableArray array];
         _docs = [NSMutableDictionary dictionary];
     }
     return self;
 }
 
 - (void)dump {
-    [_index enumerateObjectsUsingBlock:^(iTermPreferencesSearchIndexEntry * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+    NSLog(@"KEYWORDS:");
+    [_keywordIndex enumerateObjectsUsingBlock:^(iTermPreferencesSearchIndexEntry * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         // index: keyword -> ([docid: identifier], ...)
+        NSLog(@"%@: %@ -> %@", @(idx), obj.keyword, [[obj.documents mapWithBlock:^id(iTermPreferencesSearchDocument *doc) {
+            return [NSString stringWithFormat:@"[%@: %@]", doc.docid, doc.identifier];
+        }] componentsJoinedByString:@", "]);
+    }];
+    NSLog(@"STEMS:");
+    [_stemIndex enumerateObjectsUsingBlock:^(iTermPreferencesSearchIndexEntry * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        // index: stem -> ([docid: identifier], ...)
         NSLog(@"%@: %@ -> %@", @(idx), obj.keyword, [[obj.documents mapWithBlock:^id(iTermPreferencesSearchDocument *doc) {
             return [NSString stringWithFormat:@"[%@: %@]", doc.docid, doc.identifier];
         }] componentsJoinedByString:@", "]);
@@ -183,23 +230,34 @@
 }
 
 - (void)addDocumentToIndex:(iTermPreferencesSearchDocument *)document {
-    for (NSString *keyword in document.allKeywords) {
-        iTermPreferencesSearchIndexEntry *entry = [[iTermPreferencesSearchIndexEntry alloc] initWithKeyword:keyword document:document];
-        NSInteger index = [_index indexOfObject:entry
-                                  inSortedRange:NSMakeRange(0, _index.count)
-                                        options:(NSBinarySearchingInsertionIndex | NSBinarySearchingLastEqual)
-                             usingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
-                                 return [obj1 compare:obj2];
-                             }];
-        if (index > 0 && [_index[index - 1].keyword isEqualToString:keyword]) {
-            iTermPreferencesSearchIndexEntry *entry = _index[index - 1];
-            [entry addDocument:document];
-            continue;
-        }
-        [_index insertObject:entry atIndex:index];
+    for (NSString *keyword in [NSSet setWithArray:document.allKeywords]) {
+        [self addToken:keyword inDocument:document toIndex:_keywordIndex];
+    }
+    for (NSString *stem in [NSSet setWithArray:document.allStems]) {
+        [self addToken:stem inDocument:document toIndex:_stemIndex];
     }
     _docs[document.docid] = document;
 }
+
+- (void)addToken:(NSString *)token
+      inDocument:(iTermPreferencesSearchDocument *)document
+         toIndex:(NSMutableArray<iTermPreferencesSearchIndexEntry *> *)index {
+    iTermPreferencesSearchIndexEntry *entry = [[iTermPreferencesSearchIndexEntry alloc] initWithKeyword:token
+                                                                                               document:document];
+    NSInteger i = [index indexOfObject:entry
+                              inSortedRange:NSMakeRange(0, index.count)
+                                   options:(NSBinarySearchingInsertionIndex | NSBinarySearchingLastEqual)
+                           usingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+        return [obj1 compare:obj2];
+    }];
+    if (i > 0 && [index[i - 1].keyword isEqualToString:token]) {
+        iTermPreferencesSearchIndexEntry *entry = index[i - 1];
+        [entry addDocument:document];
+        return;
+    }
+    [index insertObject:entry atIndex:i];
+}
+
 
 - (iTermPreferencesSearchDocument *)documentWithKey:(NSString *)key {
     for (NSNumber *docid in _docs) {
@@ -213,26 +271,61 @@
 
 - (NSArray<iTermPreferencesSearchDocument *> *)documentsMatchingQuery:(NSString *)query {
     NSString *trimmedQuery = [query stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-    NSArray<NSString *> *tokens = [trimmedQuery it_normalizedTokens];
+    iTermTuple<NSArray<NSString *> *, NSString *> *tuple = [trimmedQuery queryBySplittingLiteralPhrases];
+    NSArray<NSString *> *rawTokens = [trimmedQuery it_normalizedTokens];
+    NSArray<NSString *> *stemmedTokens = [rawTokens mapWithBlock:^id _Nullable(NSString *token) {
+        return token.it_stem;
+    }];
+
+    NSArray<iTermPreferencesSearchCursor *> *kwCursors = [self cursorsForQueryTokens:rawTokens
+                                                                         searchIndex:_keywordIndex
+                                                                         prefixMatch:YES];
+    NSArray<iTermPreferencesSearchCursor *> *stemCursors = [self cursorsForQueryTokens:stemmedTokens
+                                                                           searchIndex:_stemIndex
+                                                                           prefixMatch:YES];
+    NSArray<iTermPreferencesSearchCursor *> *cursors = [[kwCursors zip:stemCursors] mapWithBlock:^id _Nullable(iTermTuple * tuple) {
+        return [[iTermPreferencesSearchCursor alloc] initWithCursors:@[tuple.firstObject, tuple.secondObject]];
+    }];
+
+    NSSet<NSNumber *> *docIDs = [self intersectCursorDocIDs:cursors];
+    if (tuple.firstObject.count) {
+        docIDs = [self documentsWithLiteralPhrases:tuple.firstObject fromDocIDs:docIDs];
+    }
+    return [self documentsSortedByDisplayNameWithDocIDs:docIDs];
+}
+
+- (NSSet<NSNumber *> *)documentsWithLiteralPhrases:(NSArray<NSString *> *)phrases fromDocIDs:(NSSet<NSNumber *> *)docIDs {
+    NSArray<NSArray<NSString *> *> *normalizedPhrases = [phrases mapWithBlock:^id _Nullable(NSString *phrase) {
+        return [phrase it_normalizedTokens];
+    }];
+    return [docIDs filteredSetUsingBlock:^BOOL(NSNumber *docID) {
+        iTermPreferencesSearchDocument *doc = self->_docs[docID];
+        return [doc containsPhrases:normalizedPhrases];
+    }];
+}
+
+- (NSArray<iTermPreferencesSearchCursor *> *)cursorsForQueryTokens:(NSArray<NSString *> *)tokens
+                                                       searchIndex:(NSArray<iTermPreferencesSearchIndexEntry *> *)searchIndex
+                                                       prefixMatch:(BOOL)prefixMatch {
     NSArray<iTermPreferencesSearchCursor *> *cursors = [tokens mapWithBlock:^id(NSString *token) {
-        if (token.length == 0) {
-            return nil;
-        }
         iTermPreferencesSearchCursor *cursor = [[iTermPreferencesSearchCursor alloc] initWithToken:token index:NSNotFound];
-        cursor.index = [self firstIndexForKeyword:cursor.keyword];
+        if (token.length == 0) {
+            return cursor;
+        }
+        cursor.index = [self firstIndexForKeyword:cursor.keyword inSearchIndex:searchIndex];
         return cursor;
     }];
-    if (cursors.count == 0) {
-        return @[];
-    }
 
     for (iTermPreferencesSearchCursor *cursor in cursors) {
-        while ([self cursorIsLive:cursor]) {
-            [cursor unionDocIDs:_index[cursor.index].docids];
+        while ([self cursorIsLive:cursor inSearchIndex:searchIndex prefixMatch:prefixMatch]) {
+            [cursor unionDocIDs:searchIndex[cursor.index].docids];
             [cursor advance];
         }
     }
+    return cursors;
+}
 
+- (NSSet<NSNumber *> *)intersectCursorDocIDs:(NSArray<iTermPreferencesSearchCursor *> *)cursors {
     NSSet<NSNumber *> *docids = [self commonDocIDsAmongCursors:cursors];
     NSDictionary<NSString *, NSArray<NSNumber *> *> *identifierToDocids = [docids.allObjects classifyWithBlock:^id(NSNumber *docid) {
         return self->_docs[docid].identifier;
@@ -240,7 +333,7 @@
     docids = [NSSet setWithArray:[identifierToDocids.allValues mapWithBlock:^id(NSArray<NSNumber *> *docids) {
         return docids.firstObject;
     }]];
-    return [self documentsSortedByDisplayNameWithDocIDs:docids];
+    return docids;
 }
 
 - (NSArray<iTermPreferencesSearchDocument *> *)documentsSortedByDisplayNameWithDocIDs:(NSSet<NSNumber *> *)docids {
@@ -263,24 +356,33 @@
 }
 
 // Cursor refers to valid index that has the cursor's keyword as its prefix.
-- (BOOL)cursorIsLive:(iTermPreferencesSearchCursor *)cursor {
-    if (cursor.index == _index.count) {
+- (BOOL)cursorIsLive:(iTermPreferencesSearchCursor *)cursor
+       inSearchIndex:(NSArray<iTermPreferencesSearchKeyword *> *)searchIndex
+         prefixMatch:(BOOL)prefixMatch {
+    if (cursor.index == NSNotFound) {
         return NO;
     }
-    NSString *const indexWord = _index[cursor.index].keyword;
-    return [indexWord hasPrefix:cursor.keyword.keyword];
+    if (cursor.index == searchIndex.count) {
+        return NO;
+    }
+    NSString *const indexWord = searchIndex[cursor.index].keyword;
+    if (prefixMatch) {
+        return [indexWord hasPrefix:cursor.keyword.keyword];
+    } else {
+        return [indexWord isEqualToString:cursor.keyword.keyword];
+    }
 }
 
-- (NSInteger)firstIndexForKeyword:(iTermPreferencesSearchKeyword *)keyword {
-    NSArray<iTermPreferencesSearchKeyword *> *keywords = (NSArray<iTermPreferencesSearchKeyword *> *)_index;
-    NSInteger index = [keywords indexOfObject:keyword
-                                inSortedRange:NSMakeRange(0, _index.count)
-                                      options:NSBinarySearchingInsertionIndex
-                              usingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+- (NSInteger)firstIndexForKeyword:(iTermPreferencesSearchKeyword *)keyword
+                    inSearchIndex:(NSArray<iTermPreferencesSearchKeyword *> *)searchIndex {
+    NSInteger index = [searchIndex indexOfObject:keyword
+                                   inSortedRange:NSMakeRange(0, searchIndex.count)
+                                         options:NSBinarySearchingInsertionIndex
+                                 usingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
                                   return [obj1 compare:obj2];
                               }];
     if (index > 0) {
-        if ([keyword.keyword isEqualToString:keywords[index - 1].keyword]) {
+        if ([keyword.keyword isEqualToString:searchIndex[index - 1].keyword]) {
             return index - 1;
         }
     }

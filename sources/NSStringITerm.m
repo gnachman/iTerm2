@@ -36,6 +36,7 @@
 #import "iTermSwiftyStringParser.h"
 #import "iTermTuple.h"
 #import "iTermVariableScope.h"
+#import "PorterStemmer/objc/PorterStemmer.h"
 #import "NSArray+iTerm.h"
 #import "NSAttributedString+PSM.h"
 #import "NSData+iTerm.h"
@@ -51,6 +52,7 @@
 #import <apr-1/apr_base64.h>
 #import <Carbon/Carbon.h>
 #import <Foundation/Foundation.h>
+#import <NaturalLanguage/NaturalLanguage.h>
 #import <wctype.h>
 
 @implementation NSString (iTerm)
@@ -2376,14 +2378,59 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return result;
 }
 
+- (NSString *)it_normalized {
+    static NSLocale *usEnglish;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        usEnglish = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US"];
+    });
+    return [[self lowercaseString] stringByFoldingWithOptions:NSDiacriticInsensitiveSearch
+                                                            locale:usEnglish];
+}
+
 - (NSArray<NSString *> *)it_normalizedTokens {
     NSMutableArray<NSString *> *tokens = [NSMutableArray array];
     [self enumerateSubstringsInRange:NSMakeRange(0, self.length)
                              options:NSStringEnumerationByWords
                           usingBlock:^(NSString * _Nullable substring, NSRange substringRange, NSRange enclosingRange, BOOL * _Nonnull stop) {
-        [tokens addObject:[substring localizedLowercaseString]];
+        [tokens addObject:[substring it_normalized]];
     }];
     return tokens;
+}
+
+- (iTermTuple<NSArray<NSString *> *, NSString *> *)queryBySplittingLiteralPhrases {
+    NSError *error = nil;
+    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"\"([^\"]*)\""
+                                                                           options:0
+                                                                             error:&error];
+
+    NSArray<NSTextCheckingResult *> *matches = [regex matchesInString:self
+                                                              options:0
+                                                                range:NSMakeRange(0, self.length)];
+    NSMutableArray<NSString *> *literals = [NSMutableArray array];
+    for (NSTextCheckingResult *match in matches) {
+        if (match.numberOfRanges < 2) {
+            continue;
+        }
+        NSRange literalRange = [match rangeAtIndex:1];
+        NSString *literal = [self substringWithRange:literalRange];
+        [literals addObject:literal];
+    }
+    NSString *stripped = [regex stringByReplacingMatchesInString:self
+                                                         options:0
+                                                           range:NSMakeRange(0, self.length)
+                                                    withTemplate:@""];
+    NSArray<NSString *> *parts =
+    [stripped componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSMutableArray<NSString *> *tokens = [NSMutableArray array];
+    for (NSString *token in parts) {
+        if (token.length > 0) {
+            [tokens addObject:token];
+        }
+    }
+    NSString *remaining = [tokens componentsJoinedByString:@" "];
+    return [iTermTuple tupleWithObject:literals
+                             andObject:remaining];
 }
 
 - (double)it_localizedDoubleValue {
@@ -2875,6 +2922,14 @@ static NSDictionary<NSString *, NSNumber *> *iTermKittyDiacriticIndex(void) {
     // SwiftyMarkdown doesn't support escaped backslashes.
     NSString *escaped = [self stringByReplacingOccurrencesOfString:@"`" withString:@"\\`"];
     return [NSString stringWithFormat:@"`%@`", escaped];
+}
+
+- (NSString *)it_stem {
+    if (self.length == 0) {
+        return @"";
+    }
+    NSString *normalized = [self it_normalized];
+    return [PorterStemmer stemFromString:normalized];
 }
 
 @end

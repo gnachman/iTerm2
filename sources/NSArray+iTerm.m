@@ -696,6 +696,37 @@ void iTermFreeeNullTerminatedCStringArray(char **array) {
     return [self isEqualToArray:@[]];
 }
 
+- (BOOL)it_containsSubarray:(NSArray *)subarray {
+    if (subarray.count == 0) {
+        return YES;
+    }
+    const NSUInteger subCount = subarray.count;
+    const NSUInteger count = self.count;
+    id first = subarray[0];
+    NSUInteger start = 0;
+
+    while (start + subCount <= count) {
+        const NSRange searchRange = NSMakeRange(start, count - start);
+        const NSUInteger idx = [self indexOfObject:first inRange:searchRange];
+        if (idx == NSNotFound) {
+            break;
+        }
+
+        BOOL match = YES;
+        for (NSUInteger j = 1; j < subCount; j++) {
+            if (![self[idx + j] isEqual:subarray[j]]) {
+                match = NO;
+                break;
+            }
+        }
+        if (match) {
+            return YES;
+        }
+        start = idx + 1;
+    }
+    return NO;
+}
+
 @end
 
 @implementation NSMutableArray (iTerm)

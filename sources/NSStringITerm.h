@@ -376,6 +376,13 @@ int decode_utf8_char(const unsigned char * restrict datap,
 @property (nonatomic, readonly) NSString *it_sanitized;
 @property(nonatomic, readonly) NSString *stringEnclosedInMarkdownInlineCode;
 
+@property (nonatomic, readonly) NSString *it_stem;
+- (NSString *)it_normalized;
+
+// `foo "bar baz" blotz "punk"` -> (["bar baz", "punk", "foo blotz")
+
+- (iTermTuple<NSArray<NSString *> *, NSString *> *)queryBySplittingLiteralPhrases;
+
 @end
 
 @interface NSMutableString (iTerm)

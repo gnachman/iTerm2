@@ -1,0 +1,33 @@
+A simple Objective-C wrapper around the Porter Stemmer algorithm.
+See http://www.tartarus.org/~martin/PorterStemmer for details.
+
+
+USAGE
+
+	#import "PorterStemmer.h"
+
+	// Call the class method
+	[PorterStemmer stemFromString:@"tomatoes"]; //-> "tomato"
+
+	// Alternatively, call the stem category method on NSString
+	[@"tomatoes" stem]; //-> "tomato"
+
+
+LICENSE
+
+Martin Porter declares that "all these encodings of the algorithm
+can be used free of charge for any purpose". This software adheres
+to that intent.
+
+If you need a more formal license, consider it licensed under a
+less restrictive version of the BSD license. See the file COPYING 
+for details.
+
+
+AUTHOR
+
+The main Porter Stemmer algorithm (porter.c) was written by Martin Porter.
+See http://www.tartarus.org/~martin/PorterStemmer for details.
+
+The Objective-C wrapper was written by Jeff Buck.
+

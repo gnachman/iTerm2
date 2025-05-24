@@ -68,4 +68,10 @@
     return intersection;
 }
 
+- (NSSet *)setByUnioningWithSet:(NSSet *)other {
+    NSMutableSet *u = [self mutableCopy];
+    [u unionSet:other];
+    return u;
+}
+
 @end

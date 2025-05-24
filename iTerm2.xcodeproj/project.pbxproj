@@ -2643,6 +2643,9 @@
 		A68BADFB1E0DD52F00E4BB7B /* Touch Bar Function Keys.png in Resources */ = {isa = PBXBuildFile; fileRef = A68BADF91E0DD52F00E4BB7B /* Touch Bar Function Keys.png */; };
 		A68BADFC1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68BADFA1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png */; };
 		A68BE8A52DE10FC0002DD513 /* iTermIntegerNumberFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */; };
+		A68BE8B22DE1430F002DD513 /* PorterStemmer.m in Sources */ = {isa = PBXBuildFile; fileRef = A68BE8AB2DE1430F002DD513 /* PorterStemmer.m */; };
+		A68BE8B32DE1430F002DD513 /* porter.c in Sources */ = {isa = PBXBuildFile; fileRef = A68BE8A92DE1430F002DD513 /* porter.c */; };
+		A68BE8B42DE1430F002DD513 /* PorterStemmer.h in Headers */ = {isa = PBXBuildFile; fileRef = A68BE8AA2DE1430F002DD513 /* PorterStemmer.h */; };
 		A68E332B1DE6AFC6003F1D8E /* iTermTouchBarButton.h in Headers */ = {isa = PBXBuildFile; fileRef = A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */; };
 		A68E33331DE746F5003F1D8E /* Add Mark Touch Bar Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E332D1DE746F5003F1D8E /* Add Mark Touch Bar Icon.png */; };
 		A68E33341DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E332E1DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png */; };
@@ -7101,6 +7104,13 @@
 		A68ADA0C29D4B2560008E092 /* GridCoordArray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridCoordArray.swift; sourceTree = "<group>"; };
 		A68BADF91E0DD52F00E4BB7B /* Touch Bar Function Keys.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Touch Bar Function Keys.png"; path = "images/Touch Bar Function Keys.png"; sourceTree = "<group>"; };
 		A68BADFA1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Touch Bar Function Keys@2x.png"; path = "images/Touch Bar Function Keys@2x.png"; sourceTree = "<group>"; };
+		A68BE8A92DE1430F002DD513 /* porter.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = porter.c; sourceTree = "<group>"; };
+		A68BE8AA2DE1430F002DD513 /* PorterStemmer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PorterStemmer.h; sourceTree = "<group>"; };
+		A68BE8AB2DE1430F002DD513 /* PorterStemmer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PorterStemmer.m; sourceTree = "<group>"; };
+		A68BE8AD2DE1430F002DD513 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		A68BE8AE2DE1430F002DD513 /* COPYING */ = {isa = PBXFileReference; lastKnownFileType = text; path = COPYING; sourceTree = "<group>"; };
+		A68BE8AF2DE1430F002DD513 /* Nukefile */ = {isa = PBXFileReference; lastKnownFileType = text; path = Nukefile; sourceTree = "<group>"; };
+		A68BE8B02DE1430F002DD513 /* README */ = {isa = PBXFileReference; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
 		A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTouchBarButton.h; sourceTree = "<group>"; };
 		A68E332A1DE6AFC6003F1D8E /* iTermTouchBarButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTouchBarButton.m; sourceTree = "<group>"; };
 		A68E332D1DE746F5003F1D8E /* Add Mark Touch Bar Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Add Mark Touch Bar Icon.png"; path = "images/Add Mark Touch Bar Icon.png"; sourceTree = "<group>"; };
@@ -8886,6 +8896,7 @@
 		1D03D42519144B8E0049EB8F /* ThirdParty */ = {
 			isa = PBXGroup;
 			children = (
+				A68BE8B12DE1430F002DD513 /* PorterStemmer */,
 				A6E8EA1D2DD2DDC1001143CF /* unordered_dense */,
 				A6F66B6E2C2E2B6200DC3569 /* BTree */,
 				A6EA071B24EA440600DD6E17 /* NSURL-IDN */,
@@ -11803,6 +11814,28 @@
 			name = "File Transfer";
 			sourceTree = "<group>";
 		};
+		A68BE8AC2DE1430F002DD513 /* objc */ = {
+			isa = PBXGroup;
+			children = (
+				A68BE8A92DE1430F002DD513 /* porter.c */,
+				A68BE8AA2DE1430F002DD513 /* PorterStemmer.h */,
+				A68BE8AB2DE1430F002DD513 /* PorterStemmer.m */,
+			);
+			path = objc;
+			sourceTree = "<group>";
+		};
+		A68BE8B12DE1430F002DD513 /* PorterStemmer */ = {
+			isa = PBXGroup;
+			children = (
+				A68BE8AC2DE1430F002DD513 /* objc */,
+				A68BE8AD2DE1430F002DD513 /* .gitignore */,
+				A68BE8AE2DE1430F002DD513 /* COPYING */,
+				A68BE8AF2DE1430F002DD513 /* Nukefile */,
+				A68BE8B02DE1430F002DD513 /* README */,
+			);
+			path = PorterStemmer;
+			sourceTree = "<group>";
+		};
 		A697CECE2D9B0FB60031583F /* Help */ = {
 			isa = PBXGroup;
 			children = (
@@ -13658,6 +13691,7 @@
 				A6E2CC0B24E0950600CBD957 /* iTermStatusBarSparklinesComponent.h in Headers */,
 				A6BF8D1721EB188E003CF805 /* iTermDependencyEditorWindowController.h in Headers */,
 				A6E5D20F1FA3C57900EDD002 /* iTermMetalFrameData.h in Headers */,
+				A68BE8B42DE1430F002DD513 /* PorterStemmer.h in Headers */,
 				A6631A2F2D6FB751006C603B /* iTermCharacterSource+Private.h in Headers */,
 				53FF84E2217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.h in Headers */,
 				A6EC0B132C9FA78600598D20 /* Interval+Additions.h in Headers */,
@@ -17117,6 +17151,8 @@
 				A665388B2D10AB10004B723B /* CursorSmearView.swift in Sources */,
 				A6866B7E23CAA31900ACD94C /* iTermPidInfoClient.m in Sources */,
 				A6E716D529FDBF540018738D /* NSSet+iTerm.swift in Sources */,
+				A68BE8B22DE1430F002DD513 /* PorterStemmer.m in Sources */,
+				A68BE8B32DE1430F002DD513 /* porter.c in Sources */,
 				A6D1C41E2861430D00B68526 /* FindIndicatorWindow.swift in Sources */,
 				A6BEE47E26E7E4CC009C0C2C /* PTYSessionZoomState.swift in Sources */,
 				532F942C215DFEF600D509E4 /* iTermCacheableImage.m in Sources */,
