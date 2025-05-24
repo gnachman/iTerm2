@@ -55,8 +55,6 @@
 #import <NaturalLanguage/NaturalLanguage.h>
 #import <wctype.h>
 
-static NSLocale *usEnglish;
-
 @implementation NSString (iTerm)
 
 + (NSString *)stringWithInt:(int)num {
@@ -2381,9 +2379,11 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 }
 
 - (NSString *)it_normalized {
-    if (!usEnglish) {
+    static NSLocale *usEnglish;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
         usEnglish = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US"];
-    }
+    });
     return [[self lowercaseString] stringByFoldingWithOptions:NSDiacriticInsensitiveSearch
                                                             locale:usEnglish];
 }
@@ -2928,13 +2928,7 @@ static NSDictionary<NSString *, NSNumber *> *iTermKittyDiacriticIndex(void) {
     if (self.length == 0) {
         return @"";
     }
-
-    if (!usEnglish) {
-        usEnglish = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US"];
-    }
-    NSString *normalized = self.lowercaseString;
-    normalized = [normalized stringByFoldingWithOptions:NSDiacriticInsensitiveSearch
-                                                 locale:usEnglish];
+    NSString *normalized = [self it_normalized];
     return [PorterStemmer stemFromString:normalized];
 }
 
