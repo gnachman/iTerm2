@@ -130,6 +130,7 @@
 
 - (NSArray *)arrayByStrongifyingWeakBoxes;
 - (NSArray<ObjectType> *)arrayByRemovingNulls;
+- (BOOL)it_containsSubarray:(NSArray<ObjectType> *)subarray;
 
 @end
 
