@@ -221,7 +221,13 @@ BetterFontPicker-Dev: force
 
 bindeps: SwiftyMarkdown Highlightr BetterFontPicker
 	cd ColorPicker && $(MAKE)
+	$(MAKE) SearchableComboListView
+
+SearchableComboListView: force
 	cd SearchableComboListView && $(MAKE)
+
+paranoidsclv: force
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) SearchableComboListView
 
 SwiftyMarkdown: force
 	cd submodules/SwiftyMarkdown && xcodebuild -configuration Release 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)'

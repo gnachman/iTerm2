@@ -72,6 +72,7 @@ class SearchableComboListViewController: NSViewController {
     public override func awakeFromNib() {
         tableViewController = SearchableComboTableViewController(tableView: tableView, groups: groups)
         tableViewController?.delegate = self
+        tableView?.enclosingScrollView?.hasHorizontalScroller = false
         visualEffectView.blendingMode = .behindWindow;
         visualEffectView.material = .menu;
         visualEffectView.state = .active;
