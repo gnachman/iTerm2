@@ -24,7 +24,7 @@ void *const iTermDeclineFirstResponderAssociatedObjectKey = (void *)"iTermDeclin
         [self performMiniaturize:nil];
         return;
     }
-    if (doubleClickAction == nil || [doubleClickAction isEqualToString:@"Maximize"]) {
+    if (doubleClickAction == nil || [doubleClickAction isEqualToString:@"Maximize"] || [doubleClickAction isEqualToString:@"Fill"]) {
         [self performZoom:nil];
         return;
     }
