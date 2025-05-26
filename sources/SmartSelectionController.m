@@ -35,8 +35,6 @@ NSString *const kVeryHighPrecision = @"very_high";
 
 static NSString *const kLogDebugInfoKey = @"Log Smart Selection Debug Info";
 
-static char iTermSmartSelectionControllerAssociatedObjectRowIndexKey;
-
 const double SmartSelectionVeryLowPrecision = 0.00001;
 const double SmartSelectionLowPrecision = 0.001;
 const double SmartSelectionNormalPrecision = 1.0;
