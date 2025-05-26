@@ -394,7 +394,7 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
 
 - (IBAction)changePrecision:(NSPopUpButton *)sender {
     [self pushUndo];
-    const NSInteger rowIndex = [[sender it_associatedObjectForKey:&iTermSmartSelectionControllerAssociatedObjectRowIndexKey] integerValue];
+    const NSInteger rowIndex = tableView_.selectedRow;
     const NSInteger index = sender.indexOfSelectedItem;
     NSMutableDictionary *rule = [self.rules[rowIndex] mutableCopy];
     rule[kPrecisionKey] = [self precisionKeyWithIndex:index];
