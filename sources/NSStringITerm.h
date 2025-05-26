@@ -40,6 +40,7 @@
 #import "VT100GridTypes.h"
 
 @class iTermVariableScope;
+@class ScreenCharArray;
 
 // This is the standard unicode replacement character for when input couldn't
 // be parsed properly but we need to render something there.
@@ -382,6 +383,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // `foo "bar baz" blotz "punk"` -> (["bar baz", "punk", "foo blotz")
 
 - (iTermTuple<NSArray<NSString *> *, NSString *> *)queryBySplittingLiteralPhrases;
+- (ScreenCharArray *)asScreenCharArray;
 
 @end
 

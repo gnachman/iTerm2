@@ -49,6 +49,7 @@
 #import "NSObject+iTerm.h"
 #import "RegexKitLite.h"
 #import "ScreenChar.h"
+#import "ScreenCharArray.h"
 #import <apr-1/apr_base64.h>
 #import <Carbon/Carbon.h>
 #import <Foundation/Foundation.h>
@@ -2385,7 +2386,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         usEnglish = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US"];
     });
     return [[self lowercaseString] stringByFoldingWithOptions:NSDiacriticInsensitiveSearch
-                                                            locale:usEnglish];
+                                                       locale:usEnglish];
 }
 
 - (NSArray<NSString *> *)it_normalizedTokens {
@@ -2931,6 +2932,17 @@ static NSDictionary<NSString *, NSNumber *> *iTermKittyDiacriticIndex(void) {
     NSString *normalized = [self it_normalized];
     return [PorterStemmer stemFromString:normalized];
 }
+
+- (ScreenCharArray *)asScreenCharArray {
+    screen_char_t *buf = iTermCalloc(self.length * 3, sizeof(screen_char_t));
+    int len = self.length;
+    StringToScreenChars(self, buf, (screen_char_t){0}, (screen_char_t){0}, &len, NO, NULL, NULL, iTermUnicodeNormalizationNone, 9, NO, NULL);
+    ScreenCharArray *sca = [[ScreenCharArray alloc] initWithLine:buf length:len continuation:(screen_char_t){.code=EOL_HARD}];
+    [sca makeSafe];
+    free(buf);
+    return sca;
+}
+
 
 @end
 

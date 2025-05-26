@@ -41,6 +41,10 @@ class DeltaString: NSObject {
         free(deltasStore)
         free(backingStore)
     }
+
+    func cellIndexForUTF16Index(_ utf16Index: Int) -> Int {
+        return utf16Index + Int(deltasStore[utf16Index])
+    }
 }
 
 @objc

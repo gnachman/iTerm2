@@ -8,6 +8,7 @@
 import Foundation
 import Cocoa
 
+@objc(iTermPlaceholderTextView)
 class PlaceholderTextView: NSTextView {
     @objc var shiftEnterPressed: (() -> ())?
 

@@ -173,6 +173,14 @@ NMSSH: force fatlibssh2
 paranoidNMSSH: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) NMSSH
 
+librailroad_dsl: force
+	/opt/homebrew/bin/rustup target add x86_64-apple-darwin
+	/opt/homebrew/bin/rustup target add aarch64-apple-darwin
+	PATH=$(PATH):$(HOME)/.cargo/bin cd submodules/railroad_dsl && $(HOME)/.cargo/bin/cargo build --release --target aarch64-apple-darwin && $(HOME)/.cargo/bin/cargo build --release --target x86_64-apple-darwin && lipo -create target/aarch64-apple-darwin/release/librailroad_dsl.dylib target/x86_64-apple-darwin/release/librailroad_dsl.dylib -output ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include
+
+paranoidrailroad: force
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) librailroad_dsl
+
 libgit2: force
 	mkdir -p submodules/libgit2/build
 	PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} -DBUILD_CLAR=OFF -DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew -DBUILD_SHARED_LIBS=OFF -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_OSX_DEPLOYMENT_TARGET="10.14" -DCMAKE_INSTALL_PREFIX=../../../ThirdParty/libgit2 -DUSE_SSH=OFF -DUSE_ICONV=OFF ..
@@ -205,7 +213,7 @@ paranoidsparkle: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) sparkle
 
 # You probably want make paranoiddeps to avoid depending on Hombrew stuff.
-deps: force fatlibsixel CoreParse NMSSH bindeps libgit2 sparkle
+deps: force fatlibsixel CoreParse NMSSH bindeps libgit2 sparkle librailroad_dsl
 
 DepsIfNeeded: force
 	tools/rebuild-deps-if-needed

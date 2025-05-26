@@ -2459,7 +2459,11 @@ static iTermKeyEventReplayer *gReplayer;
 - (IBAction)undo:(id)sender {
     NSResponder *undoResponder = [self responderForMenuItem:sender];
     if (undoResponder) {
-        [undoResponder performSelector:@selector(undo:) withObject:sender];
+        @try {
+            [undoResponder performSelector:@selector(undo:) withObject:sender];
+        } @catch (NSException *exception) {
+            DLog(@"%@", exception);
+        }
     } else {
         [self undoCloseSession:nil];
     }
