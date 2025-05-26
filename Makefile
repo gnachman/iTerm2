@@ -176,7 +176,7 @@ paranoidNMSSH: force
 librailroad_dsl: force
 	/opt/homebrew/bin/rustup target add x86_64-apple-darwin
 	/opt/homebrew/bin/rustup target add aarch64-apple-darwin
-	PATH=$(PATH):$(HOME)/.cargo/bin cd submodules/railroad_dsl && $(HOME)/.cargo/bin/cargo build --release --target aarch64-apple-darwin && $(HOME)/.cargo/bin/cargo build --release --target x86_64-apple-darwin && lipo -create target/aarch64-apple-darwin/release/librailroad_dsl.dylib target/x86_64-apple-darwin/release/librailroad_dsl.dylib -output ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include
+	PATH=$(PATH):$(HOME)/.cargo/bin cd submodules/railroad_dsl && $(HOME)/.cargo/bin/cargo build --release --target aarch64-apple-darwin && $(HOME)/.cargo/bin/cargo build --release --target x86_64-apple-darwin && lipo -create target/aarch64-apple-darwin/release/librailroad_dsl.dylib target/x86_64-apple-darwin/release/librailroad_dsl.dylib -output ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include && install_name_tool -id @rpath/librailroad_dsl.dylib ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib
 
 paranoidrailroad: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) librailroad_dsl

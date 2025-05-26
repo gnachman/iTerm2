@@ -2646,7 +2646,6 @@
 		A68BE9262DE27DB3002DD513 /* PlaygroundTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68BE9252DE27DA3002DD513 /* PlaygroundTextView.swift */; };
 		A68BE9282DE38802002DD513 /* LinkButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68BE9272DE387FE002DD513 /* LinkButton.swift */; };
 		A68BE92A2DE38B41002DD513 /* ICURegexToRailroadConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68BE9292DE38B3E002DD513 /* ICURegexToRailroadConverter.swift */; };
-		A68BE93F2DE3BA3D002DD513 /* librailroad_dsl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = A68BE93E2DE3BA3D002DD513 /* librailroad_dsl.dylib */; };
 		A68BE9412DE4135F002DD513 /* SVGViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68BE9402DE4135C002DD513 /* SVGViewController.swift */; };
 		A68BE9432DE41371002DD513 /* SVGSizeEstimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68BE9422DE4136F002DD513 /* SVGSizeEstimator.swift */; };
 		A68BE9462DE428D5002DD513 /* flowchart@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68BE9452DE428D5002DD513 /* flowchart@2x.png */; };
@@ -2655,6 +2654,8 @@
 		A68BE9492DE428D5002DD513 /* flowchart.png in Resources */ = {isa = PBXBuildFile; fileRef = A68BE9442DE428D5002DD513 /* flowchart.png */; };
 		A68BE94A2DE428D5002DD513 /* flowchart@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68BE9452DE428D5002DD513 /* flowchart@2x.png */; };
 		A68BE94B2DE428D5002DD513 /* flowchart.png in Resources */ = {isa = PBXBuildFile; fileRef = A68BE9442DE428D5002DD513 /* flowchart.png */; };
+		A68BE9502DE5142A002DD513 /* librailroad_dsl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = A68BE93E2DE3BA3D002DD513 /* librailroad_dsl.dylib */; };
+		A68BE9512DE51591002DD513 /* librailroad_dsl.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = A68BE93E2DE3BA3D002DD513 /* librailroad_dsl.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A68E332B1DE6AFC6003F1D8E /* iTermTouchBarButton.h in Headers */ = {isa = PBXBuildFile; fileRef = A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */; };
 		A68E33331DE746F5003F1D8E /* Add Mark Touch Bar Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E332D1DE746F5003F1D8E /* Add Mark Touch Bar Icon.png */; };
 		A68E33341DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E332E1DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png */; };
@@ -4855,6 +4856,7 @@
 				1D3452471451475D007B1ECD /* Sparkle.framework in CopyFiles */,
 				A666130E225CFF6900840E89 /* BetterFontPicker.framework in CopyFiles */,
 				A6FB633423DE802900026D52 /* SearchableComboListView.framework in CopyFiles */,
+				A68BE9512DE51591002DD513 /* librailroad_dsl.dylib in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -8342,7 +8344,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A68BE93F2DE3BA3D002DD513 /* librailroad_dsl.dylib in Frameworks */,
+				A68BE9502DE5142A002DD513 /* librailroad_dsl.dylib in Frameworks */,
 				A6A3D18B2815EF4D00C0C9E0 /* Highlightr.framework in Frameworks */,
 				A6EC8050281BC67900493544 /* SwiftyMarkdown.framework in Frameworks */,
 				A666130D225CFF6900840E89 /* BetterFontPicker.framework in Frameworks */,
