@@ -35,7 +35,8 @@
     IBOutlet NSButton *_okButton;
     IBOutlet NSButton *_cancelButton;
     IBOutlet NSButton *_enabledButton;
-
+    IBOutlet NSButton *_toggleVisualizationButton;
+    
     NSArray<Trigger *> *_triggers;
     NSView *_paramView;
     id _savedDelegate;
@@ -45,6 +46,8 @@
     CGFloat _paramY;
     NSColor *_defaultTextColor;
     NSColor *_defaultBackgroundColor;
+    iTermRegexVisualizationViewController *_visualizationViewController;
+    NSPopover *_popover;
 }
 
 + (void)addTriggerForText:(NSString *)text
@@ -144,6 +147,7 @@
     _instantButton.state = trigger.partialLine ? NSControlStateValueOn : NSControlStateValueOff;
     [_actionButton selectItemAtIndex:i];
     [self updateCustomViewForTrigger:trigger value:trigger.param];
+    _visualizationViewController.regex = _regex ?: @"";
 }
 
 - (void)viewDidLoad {
@@ -184,6 +188,31 @@
     return [_triggers objectPassingTest:^BOOL(Trigger *element, NSUInteger index, BOOL *stop) {
         return [element isKindOfClass:theClass];
     }];
+}
+
+- (IBAction)toggleVisualization:(NSButton *)button {
+    if (!_popover || !_popover.isShown) {
+        [_popover close];
+        _visualizationViewController = [[iTermRegexVisualizationViewController alloc] initWithRegex:_regexTextField.stringValue ?: @""
+                                                                                            maxSize:button.window.screen.visibleFrame.size];
+        NSPopover *popover = [[NSPopover alloc] init];
+        popover.contentViewController = _visualizationViewController;
+        popover.behavior = NSPopoverBehaviorApplicationDefined;
+        [popover showRelativeToRect:button.bounds ofView:button preferredEdge:NSRectEdgeMaxX];
+        _popover = popover;
+
+        button.image = [NSImage it_imageForSymbolName:@"flowchart.fill"
+                             accessibilityDescription:@"Hide visualization"
+                                    fallbackImageName:@"flowchart.fill"
+                                             forClass:[self class]];
+    } else {
+        [_popover close];
+        _popover = nil;
+        button.image = [NSImage it_imageForSymbolName:@"flowchart"
+              accessibilityDescription:@"Show visualization"
+                     fallbackImageName:@"flowchart"
+                              forClass:[self class]];
+    }
 }
 
 - (IBAction)instantDidChange:(id)sender {
@@ -304,6 +333,16 @@
     return _nameTextField.stringValue;
 }
 
+- (void)willHide {
+    [_popover close];
+    _popover = nil;
+    _visualizationViewController = nil;
+    _toggleVisualizationButton.image = [NSImage it_imageForSymbolName:@"flowchart"
+                                             accessibilityDescription:@"Show visualization"
+                                                    fallbackImageName:@"flowchart"
+                                                             forClass:[self class]];
+}
+
 #pragma mark - iTermTriggerParameterController
 
 - (void)parameterPopUpButtonDidChange:(id)sender {
@@ -319,6 +358,7 @@
 
     if (textField == _regexTextField) {
         _regex = [[textField stringValue] copy];
+        _visualizationViewController.regex = _regex ?: @"";
     } else if (textField != _nameTextField) {
         if ([textField.identifier isEqual:kTwoPraramNameColumnIdentifier]) {
             iTermTuple<NSString *, NSString *> *pair = [iTermTwoParameterTriggerCodec tupleFromString:[NSString castFrom:param]];

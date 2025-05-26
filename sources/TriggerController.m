@@ -800,6 +800,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 
 - (void)updateDetailViewController {
     if (_tableView.selectedRowIndexes.count != 1) {
+        [_detailViewController willHide];
         _detailViewController.view.hidden = YES;
         return;
     } else {

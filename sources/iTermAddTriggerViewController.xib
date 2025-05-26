@@ -16,6 +16,7 @@
                 <outlet property="_okButton" destination="ErZ-bu-X8G" id="wTH-aS-FqG"/>
                 <outlet property="_paramContainerView" destination="VIX-Im-Ee0" id="vqf-ar-seF"/>
                 <outlet property="_regexTextField" destination="mbs-JN-UvA" id="qZv-u2-Bex"/>
+                <outlet property="_toggleVisualizationButton" destination="kJ7-CU-xFr" id="qzX-Nt-fDG"/>
                 <outlet property="_updateProfileButton" destination="Nqk-PN-e8M" id="bBn-H5-Pd5"/>
                 <outlet property="view" destination="Hz6-mo-xeY" id="0bl-1N-x8E"/>
             </connections>
@@ -45,7 +46,7 @@
                     </textFieldCell>
                 </textField>
                 <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mbs-JN-UvA">
-                    <rect key="frame" x="146" y="167" width="314" height="21"/>
+                    <rect key="frame" x="146" y="167" width="284" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="N1o-cl-IDe">
                         <font key="font" metaFont="system"/>
@@ -151,8 +152,22 @@ Gw
                         <action selector="enabledDidChange:" target="-2" id="bF5-34-deB"/>
                     </connections>
                 </button>
+                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kJ7-CU-xFr">
+                    <rect key="frame" x="431" y="163" width="28" height="28"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="bevel" bezelStyle="rounded" image="flowchart" catalog="system" imagePosition="only" alignment="center" imageScaling="proportionallyDown" inset="2" id="phJ-YT-0Nf">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES" changeBackground="YES" changeGray="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="toggleVisualization:" target="-2" id="1In-5W-Gzk"/>
+                    </connections>
+                </button>
             </subviews>
             <point key="canvasLocation" x="139" y="120"/>
         </customView>
     </objects>
+    <resources>
+        <image name="flowchart" catalog="system" width="17" height="17"/>
+    </resources>
 </document>

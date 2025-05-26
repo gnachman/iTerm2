@@ -5,6 +5,8 @@
 //  Created by George Nachman on 5/25/25.
 //
 
+import WebKit
+
 @objc
 class SVGViewController: NSViewController {
     private let webView = WKWebView(frame: .zero)

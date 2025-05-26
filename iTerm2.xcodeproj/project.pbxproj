@@ -2649,6 +2649,12 @@
 		A68BE93F2DE3BA3D002DD513 /* librailroad_dsl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = A68BE93E2DE3BA3D002DD513 /* librailroad_dsl.dylib */; };
 		A68BE9412DE4135F002DD513 /* SVGViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68BE9402DE4135C002DD513 /* SVGViewController.swift */; };
 		A68BE9432DE41371002DD513 /* SVGSizeEstimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68BE9422DE4136F002DD513 /* SVGSizeEstimator.swift */; };
+		A68BE9462DE428D5002DD513 /* flowchart@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68BE9452DE428D5002DD513 /* flowchart@2x.png */; };
+		A68BE9472DE428D5002DD513 /* flowchart.png in Resources */ = {isa = PBXBuildFile; fileRef = A68BE9442DE428D5002DD513 /* flowchart.png */; };
+		A68BE9482DE428D5002DD513 /* flowchart@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68BE9452DE428D5002DD513 /* flowchart@2x.png */; };
+		A68BE9492DE428D5002DD513 /* flowchart.png in Resources */ = {isa = PBXBuildFile; fileRef = A68BE9442DE428D5002DD513 /* flowchart.png */; };
+		A68BE94A2DE428D5002DD513 /* flowchart@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68BE9452DE428D5002DD513 /* flowchart@2x.png */; };
+		A68BE94B2DE428D5002DD513 /* flowchart.png in Resources */ = {isa = PBXBuildFile; fileRef = A68BE9442DE428D5002DD513 /* flowchart.png */; };
 		A68E332B1DE6AFC6003F1D8E /* iTermTouchBarButton.h in Headers */ = {isa = PBXBuildFile; fileRef = A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */; };
 		A68E33331DE746F5003F1D8E /* Add Mark Touch Bar Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E332D1DE746F5003F1D8E /* Add Mark Touch Bar Icon.png */; };
 		A68E33341DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E332E1DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png */; };
@@ -7118,6 +7124,8 @@
 		A68BE93E2DE3BA3D002DD513 /* librailroad_dsl.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = librailroad_dsl.dylib; path = ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib; sourceTree = "<group>"; };
 		A68BE9402DE4135C002DD513 /* SVGViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SVGViewController.swift; sourceTree = "<group>"; };
 		A68BE9422DE4136F002DD513 /* SVGSizeEstimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SVGSizeEstimator.swift; sourceTree = "<group>"; };
+		A68BE9442DE428D5002DD513 /* flowchart.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flowchart.png; sourceTree = "<group>"; };
+		A68BE9452DE428D5002DD513 /* flowchart@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "flowchart@2x.png"; sourceTree = "<group>"; };
 		A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTouchBarButton.h; sourceTree = "<group>"; };
 		A68E332A1DE6AFC6003F1D8E /* iTermTouchBarButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTouchBarButton.m; sourceTree = "<group>"; };
 		A68E332D1DE746F5003F1D8E /* Add Mark Touch Bar Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Add Mark Touch Bar Icon.png"; path = "images/Add Mark Touch Bar Icon.png"; sourceTree = "<group>"; };
@@ -8993,6 +9001,8 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A68BE9442DE428D5002DD513 /* flowchart.png */,
+				A68BE9452DE428D5002DD513 /* flowchart@2x.png */,
 				A659C9972DAF235C0036BA52 /* Channel.png */,
 				A659C9982DAF235C0036BA52 /* Channel@2x.png */,
 				A6F370712DAB193900A0A59E /* folder.png */,
@@ -14683,6 +14693,8 @@
 				A6F1B3B0268FD0F300546767 /* StatusBarIconTriggers@2x.png in Resources */,
 				A67F61E3214395D50093940A /* graphic_zip.png in Resources */,
 				1D6ED99319AEA20D005A7799 /* iTerm2.sdef in Resources */,
+				A68BE94A2DE428D5002DD513 /* flowchart@2x.png in Resources */,
+				A68BE94B2DE428D5002DD513 /* flowchart.png in Resources */,
 				A6F18B552AE2F39C006C08EE /* uniE0D1_lego_block_sideways.pdf in Resources */,
 				1D6ED99519AEA20D005A7799 /* BrokenPipeDivider.png in Resources */,
 				1D6ED99619AEA20D005A7799 /* PrefsAdvanced@2x.png in Resources */,
@@ -15150,6 +15162,8 @@
 				A6F18B4E2AE2F39C006C08EE /* uniE0B7_left-half-circle-thin.pdf in Resources */,
 				A67F61B1214395B70093940A /* graphic_php.png in Resources */,
 				A6FE8D0E2093893700B5C648 /* iTermOptionalComponentDownloadWindowController.xib in Resources */,
+				A68BE9482DE428D5002DD513 /* flowchart@2x.png in Resources */,
+				A68BE9492DE428D5002DD513 /* flowchart.png in Resources */,
 				A697CE102D9764E00031583F /* CapturedOutputMenuTip@2x.png in Resources */,
 				A697CE112D9764E00031583F /* CapturedOutputMenuTip.png in Resources */,
 				A697CDF82D9760F00031583F /* FilterMenuTip@2x.jpg in Resources */,
@@ -16051,6 +16065,8 @@
 				9DB3D6E0176C8F0B0071CCF8 /* PrefsAppearance.png in Resources */,
 				A6F7A74C213CB143004DE961 /* StatusBarIconComposer@2x.png in Resources */,
 				A6B4832D29D73DA10055E24A /* rectangle.portrait.on.rectangle.portrait.png in Resources */,
+				A68BE9462DE428D5002DD513 /* flowchart@2x.png in Resources */,
+				A68BE9472DE428D5002DD513 /* flowchart.png in Resources */,
 				A6109B642B969B4100D8E4E9 /* graphic_neovim@2x.png in Resources */,
 				53C5650521B8CB1C002B3167 /* PowerlinePadlock.pdf in Resources */,
 				A697CE842D97C5950031583F /* BurySessionMenuTip@2x.png in Resources */,

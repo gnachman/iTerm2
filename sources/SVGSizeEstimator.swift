@@ -5,7 +5,9 @@
 //  Created by George Nachman on 5/25/25.
 //
 
-fileprivate class SVGSizeEstimator: NSObject, WKNavigationDelegate {
+import WebKit
+
+class SVGSizeEstimator: NSObject, WKNavigationDelegate {
     private let webView = WKWebView(frame: .zero)
     private let js = """
     /**
@@ -90,7 +92,7 @@ fileprivate class SVGSizeEstimator: NSObject, WKNavigationDelegate {
                 _desiredSize = NSSize(width: 400, height: 400)
                 return
             }
-            print("JavaScript result=\(result)")
+            DLog("JavaScript result=\(String(describing: result))")
             guard let array = result as? [Double], array.count == 2 else {
                 _desiredSize = NSSize(width: 400, height: 400)
                 return
@@ -100,8 +102,8 @@ fileprivate class SVGSizeEstimator: NSObject, WKNavigationDelegate {
 
             let resultSize = NSSize(width: CGFloat(w), height: CGFloat(h))
             print("result size is \(resultSize), do dispatch to main")
-            DispatchQueue.main.async {
-                print("Main thread setting desired size \(resultSize)")
+            DispatchQueue.main.async { [self] in
+                DLog("Main thread setting desired size \(resultSize)")
                 _desiredSize = resultSize
                 if let callback = onDesiredSize {
                     onDesiredSize = nil
@@ -115,4 +117,3 @@ fileprivate class SVGSizeEstimator: NSObject, WKNavigationDelegate {
 
     }
 }
-
