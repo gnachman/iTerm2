@@ -56,6 +56,8 @@ class RegexVisualizationViewController: SVGViewController {
     private let maxSize: NSSize
     private var sizeEstimator: SVGSizeEstimator?
     private var _regex: String
+    private var appearanceObservation: NSKeyValueObservation?
+
     @objc var regex: String {
         get {
             _regex
@@ -65,6 +67,7 @@ class RegexVisualizationViewController: SVGViewController {
             reload(sync: false)
         }
     }
+
     @objc(initWithRegex:maxSize:)
     init(regex: String, maxSize: NSSize) {
         self.maxSize = maxSize
@@ -75,10 +78,26 @@ class RegexVisualizationViewController: SVGViewController {
         reload(sync: true)
     }
 
+    deinit {
+      appearanceObservation?.invalidate()
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        appearanceObservation = view.observe(\.effectiveAppearance, options: [.initial, .new]) { [weak self] view, _ in
+            self?.reload(sync: false)
+        }
+    }
+
+    @objc
+    private func appearanceMaybeChanged() {
+        reload(sync: false)
+    }
+
     private func reload(sync: Bool) {
         let dsl = ICURegexToRailroadConverter().convert(regex)
         let svg = dsl.withCString { dslPtr -> UnsafeMutablePointer<CChar>? in
-            let cssPtr = railroad_dsl_css_for_theme("light")!
+            let cssPtr = railroad_dsl_css_for_theme(view.effectiveAppearance.it_isDark ? "dark" : "light")!
             defer {
                 railroad_string_free(cssPtr)
             }
