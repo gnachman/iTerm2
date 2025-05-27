@@ -1460,7 +1460,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     if (alternateMouseScroll || upString.length || downString.length) {
-        DLog(@"Feature enabled, have strings.");
+        DLog(@"alternateMouseScroll=%@, upstring=%@, downString=%@", @(alternateMouseScroll), upString, downString);
         return YES;
     } else {
         DLog(@"Feature disabled or empty/nil string");

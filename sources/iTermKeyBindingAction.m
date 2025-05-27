@@ -318,6 +318,9 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_IGNORE:
             actionString = @"Ignore";
             break;
+        case KEY_ACTION_BYPASS:
+            actionString = @"Bypass Terminal";
+            break;
         case KEY_ACTION_IR_FORWARD:
             actionString = @"Unsupported Command";
             break;
@@ -503,6 +506,7 @@ static NSString *GetProfileName(NSString *guid) {
             return YES;
             
         case KEY_ACTION_IGNORE:
+        case KEY_ACTION_BYPASS:
         case KEY_ACTION_INVALID:
         case KEY_ACTION_NEXT_SESSION:
         case KEY_ACTION_NEXT_WINDOW:
@@ -576,6 +580,7 @@ static NSString *GetProfileName(NSString *guid) {
     switch (self.keyAction) {
         case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
         case KEY_ACTION_REMAP_LOCALLY:
+        case KEY_ACTION_BYPASS:
             return NO;
 
         case KEY_ACTION_IGNORE:

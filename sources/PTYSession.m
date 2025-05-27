@@ -4139,7 +4139,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)hasTextSendingKeyMappingForEvent:(NSEvent *)event {
     iTermKeyBindingAction *action = [self _keyBindingActionForEvent:event];
-    if (action.keyAction == KEY_ACTION_IGNORE) {
+    if (action.keyAction == KEY_ACTION_IGNORE || action.keyAction == KEY_ACTION_BYPASS) {
+        // Prevent it from being remapped
         return YES;
     }
     return [action sendsText];
@@ -9559,6 +9560,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             // No action
             return NO;
 
+        case KEY_ACTION_BYPASS:
+            // Not in a terminal so nothing to bypass. This allows it to go to Cocoa (e.g., to launch a Shortcut; see issue 12273)
+            return NO;
+
         case KEY_ACTION_IGNORE:
             return YES;
 
@@ -9845,6 +9850,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             [self writeStringWithLatin1Encoding:@"\177"]; // decimal 127
             break;
         case KEY_ACTION_IGNORE:
+        case KEY_ACTION_BYPASS:
             break;
         case KEY_ACTION_IR_FORWARD:
             break;

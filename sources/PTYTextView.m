@@ -6876,6 +6876,7 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
 
 - (BOOL)mouseHandlerAlternateScrollModeIsEnabled:(PTYMouseHandler *)handler {
     if ([iTermAdvancedSettingsModel alternateMouseScroll]) {
+        DLog(@"Alternate mouse scroll on because of advanced setting having a non-default value");
         return YES;
     }
     return self.dataSource.terminalAlternateScrollMode;

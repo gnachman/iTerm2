@@ -317,6 +317,7 @@ const CGFloat sideMarginWidth = 40;
     NSArray<iTermSearchableComboViewGroup *> *groups = @[
         [[iTermSearchableComboViewGroup alloc] initWithLabel:@"General" items:[@[
             primary ? [[iTermSearchableComboViewItem alloc] initWithLabel:@"Ignore" tag:KEY_ACTION_IGNORE] : [NSNull null],
+            primary ? [[iTermSearchableComboViewItem alloc] initWithLabel:@"Bypass Terminal" tag:KEY_ACTION_BYPASS] : [NSNull null],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Select Menu Item..." tag:KEY_ACTION_SELECT_MENU_ITEM],
         ] arrayByRemovingNulls]]
     ];
