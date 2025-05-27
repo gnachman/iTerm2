@@ -141,6 +141,7 @@
 #pragma mark - Notifications
 
 - (void)sessionDidBecomeActive:(NSNotification *)notification {
+    DLog(@"sessionDidBecomeActive");
     if (!_suspended) {
         return;
     }
@@ -174,6 +175,7 @@
 }
 
 - (void)sessionDidResignActive:(NSNotification *)notification {
+    DLog(@"sessionDidResignActive");
     if (_suspended) {
         return;
     }
@@ -212,18 +214,25 @@
     DLog(@"Registering shortcut %@. Existing hotkeys: %@", shortcut, existingHotKey);
     EventHotKeyID hotKeyID;
     if (!existingHotKey) {
+        DLog(@"Should register for keycode %@, mods %@", @(shortcut.keyCode), @(shortcut.modifiers));
         hotKeyID = [self nextHotKeyID];
         if (!_suspended) {
-            if (RegisterEventHotKey((UInt32)shortcut.keyCode,
-                                    carbonModifiers,
-                                    hotKeyID,
-                                    GetEventDispatcherTarget(),
-                                    0,
-                                    &eventHotKey)) {
+            DLog(@"Calling RegisterEventHotkey");
+            const OSStatus status = RegisterEventHotKey((UInt32)shortcut.keyCode,
+                                                        carbonModifiers,
+                                                        hotKeyID,
+                                                        GetEventDispatcherTarget(),
+                                                        0,
+                                                        &eventHotKey);
+            if (status) {
+                DLog(@"RegisterEventHotKey failed with %@", @(status));
                 return nil;
             }
+        } else {
+            DLog(@"Not registering because suspended");
         }
     } else {
+        DLog(@"There is an existing hotkey for keycode %@, mods %@", @(shortcut.keyCode), @(shortcut.modifiers));
         hotKeyID = existingHotKey.hotKeyID;
         eventHotKey = existingHotKey.eventHotKey;
     }
@@ -234,7 +243,7 @@
                                                            userData:userData
                                                              target:target
                                                            selector:selector] autorelease];
-    DLog(@"Register %@", hotkey);
+    DLog(@"Registered %@", hotkey);
     if (_suspended) {
         DLog(@"NOTE: Add to suspended list");
         [_suspendedHotKeys addObject:hotkey];
