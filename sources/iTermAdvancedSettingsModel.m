@@ -812,6 +812,8 @@ DEFINE_BOOL(bidi, NO, SECTION_EXPERIMENTAL @"Support right-to-left text?\nThis a
 DEFINE_BOOL(alternateScreenBidi, YES, SECTION_EXPERIMENTAL @"When right-to-left text support is enabled, also support it in alternate screen mode?");
 DEFINE_BOOL(aquaSKKBugfixEnabled, NO, SECTION_EXPERIMENTAL @"Enable AquaSKK bugfix?")
 DEFINE_BOOL(channelsEnabled, NO, SECTION_EXPERIMENTAL @"Enable Channels feature?")
+DEFINE_BOOL(rightJustifyRTLLines, YES, SECTION_EXPERIMENTAL @"Right-justify lines in paragraphs with base writing direction of right-to-left?\nRequires BOTH “right-to-left text support” and “auto-detect paragraph writing detection” to be enabled.");
+DEFINE_BOOL(detectParagraphDirection, YES, SECTION_EXPERIMENTAL @"Auto-detect paragraph writing direction based on the first strong directional character?\nRequires right-to-left text support to be enabled.");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "

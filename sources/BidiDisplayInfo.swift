@@ -122,85 +122,104 @@ struct ResolvedCellPosition: Comparable {
     }
 }
 
+fileprivate struct IntermediateLookupTable {
+    var rtlIndexes = IndexSet()
+    var sourceCellToPositionRange: Array<ClosedRange<CGFloat>?>
+    var count: Int
+
+    init(line: CTLine, deltas: UnsafePointer<Int32>, count: Int) {
+        self.count = count
+        let runs = CTLineGetGlyphRuns(line) as! [CTRun]
+
+        // Source cell to range of positions
+        sourceCellToPositionRange = Array<ClosedRange<CGFloat>?>(repeating: nil, count: count)
+        for run in runs {
+            let isRTL = (run.status.contains(.rightToLeft))
+            let stringIndices = run.stringIndices
+
+            // Update rtlIndexes
+            if isRTL {
+                for stringIndex in run.stringRange {
+                    let sourceCell = Int(CellOffsetFromUTF16Offset(Int32(stringIndex), deltas))
+                    rtlIndexes.insert(sourceCell)
+                }
+            }
+
+            // Update sourceCellToPositionRange
+            let positions = run.positions
+            for i in 0..<run.glyphCount {
+                let stringIndex = stringIndices[i]
+                let sourceCell = Int(CellOffsetFromUTF16Offset(Int32(stringIndex), deltas))
+                if var existing = sourceCellToPositionRange[sourceCell] {
+                    existing.formUnion(positions[i].x...positions[i].x)
+                    sourceCellToPositionRange[sourceCell] = existing
+                } else {
+                    sourceCellToPositionRange[sourceCell] = positions[i].x...positions[i].x
+                }
+            }
+        }
+    }
+
+    private var cellPositionsBySourceCell: [CellPosition] {
+        return sourceCellToPositionRange.enumerated().map { (sourceCell: Int, positionRange: ClosedRange<CGFloat>?) -> CellPosition in
+            if let positionRange {
+                return CellPosition(sourceCell: sourceCell, position: .absolute(positionRange.lowerBound))
+            } else {
+                if rtlIndexes.contains(sourceCell) {
+                    // This is a right-to-left character that contributed to a ligature. It should be placed left of the preceding character.
+                    return CellPosition(sourceCell: sourceCell, position: .leftOfPredecessor)
+                } else {
+                    // This is a left-to-right character that contributed to a ligature. It should be placed right of the preceding character.
+                    return CellPosition(sourceCell: sourceCell, position: .rightOfPredecessor)
+                }
+            }
+        }
+    }
+
+    private var sortedResolvedCellPositions: [ResolvedCellPosition] {
+        var resolvedCellPositions = [ResolvedCellPosition]()
+        resolvedCellPositions.reserveCapacity(cellPositionsBySourceCell.count)
+        for cellPosition in cellPositionsBySourceCell {
+            resolvedCellPositions.append(ResolvedCellPosition(previous: resolvedCellPositions.last,
+                                                              current: cellPosition))
+        }
+        return resolvedCellPositions.sorted()
+
+    }
+
+    var lut: [Int32] {
+        var result = Array(Int32(0)..<Int32(count))
+        for (visualIndex, resolvedCellPosition) in sortedResolvedCellPositions.enumerated() {
+            result[Int(resolvedCellPosition.sourceCell)] = Int32(visualIndex)
+        }
+        return result
+    }
+}
 
 // Make a lookup table that maps source cell to display cell.
 fileprivate func makeLookupTable(_ attributedString: NSAttributedString,
                                      deltas: UnsafePointer<Int32>,
                                  count: Int) -> ([Int32], IndexSet, Bool) {
-    var rtlIndexes = IndexSet()
-
     // Create a CTLine from the attributed string
     let line = CTLineCreateWithAttributedString(attributedString)
-    let runs = CTLineGetGlyphRuns(line) as! [CTRun]
-
-    // Source cell to range of positions
-    var sourceCellToPositionRange = Array<ClosedRange<CGFloat>?>(repeating: nil, count: count)
-    for run in runs {
-        let isRTL = (run.status.contains(.rightToLeft))
-        let stringIndices = run.stringIndices
-
-        // Update rtlIndexes
-        if isRTL {
-            for stringIndex in run.stringRange {
-                let sourceCell = Int(CellOffsetFromUTF16Offset(Int32(stringIndex), deltas))
-                rtlIndexes.insert(sourceCell)
-            }
-        }
-
-        // Update sourceCellToPositionRange
-        let positions = run.positions
-        for i in 0..<run.glyphCount {
-            let stringIndex = stringIndices[i]
-            let sourceCell = Int(CellOffsetFromUTF16Offset(Int32(stringIndex), deltas))
-            if var existing = sourceCellToPositionRange[sourceCell] {
-                existing.formUnion(positions[i].x...positions[i].x)
-                sourceCellToPositionRange[sourceCell] = existing
-            } else {
-                sourceCellToPositionRange[sourceCell] = positions[i].x...positions[i].x
-            }
-        }
-    }
-
-    let cellPositionsBySourceCell = sourceCellToPositionRange.enumerated().map { (sourceCell: Int, positionRange: ClosedRange<CGFloat>?) -> CellPosition in
-        if let positionRange {
-            return CellPosition(sourceCell: sourceCell, position: .absolute(positionRange.lowerBound))
-        } else {
-            if rtlIndexes.contains(sourceCell) {
-                // This is a right-to-left character that contributed to a ligature. It should be placed left of the preceding character.
-                return CellPosition(sourceCell: sourceCell, position: .leftOfPredecessor)
-            } else {
-                // This is a left-to-right character that contributed to a ligature. It should be placed right of the preceding character.
-                return CellPosition(sourceCell: sourceCell, position: .rightOfPredecessor)
-            }
-        }
-    }
-
-    var resolvedCellPositions = [ResolvedCellPosition]()
-    resolvedCellPositions.reserveCapacity(cellPositionsBySourceCell.count)
-    for cellPosition in cellPositionsBySourceCell {
-        resolvedCellPositions.append(ResolvedCellPosition(previous: resolvedCellPositions.last,
-                                                          current: cellPosition))
-    }
-    let sortedResolvedCellPositions = resolvedCellPositions.sorted()
-
-    var lut = Array(Int32(0)..<Int32(count))
-    for (visualIndex, resolvedCellPosition) in sortedResolvedCellPositions.enumerated() {
-        lut[Int(resolvedCellPosition.sourceCell)] = Int32(visualIndex)
-    }
+    let intermediate = IntermediateLookupTable(line: line, deltas: deltas, count: count)
 
     let firstStrongLTR = attributedString.string.rangeOfCharacter(from: NSCharacterSet.strongLTRCodePoints())
     let firstStrongRTL = attributedString.string.rangeOfCharacter(from: NSCharacterSet.strongRTLCodePoints())
 
     let paragraphIsRTL: Bool =
-        if let firstStrongLTR, let firstStrongRTL {
-            firstStrongLTR.lowerBound > firstStrongRTL.lowerBound
-        } else if firstStrongRTL != nil {
-            true
+        if iTermAdvancedSettingsModel.detectParagraphDirection() {
+            if let firstStrongLTR, let firstStrongRTL {
+                firstStrongLTR.lowerBound > firstStrongRTL.lowerBound
+            } else if firstStrongRTL != nil {
+                true
+            } else {
+                false
+            }
         } else {
             false
         }
-
-    return (lut, rtlIndexes, paragraphIsRTL)
+    return (intermediate.lut, intermediate.rtlIndexes, paragraphIsRTL)
 }
 
 extension IndexSet {
@@ -678,6 +697,14 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
         self.paragraphIsRTL = paragraphIsRTL
     }
 
+    private static var paragraphStyle: NSParagraphStyle {
+        let paragraphStyle = NSMutableParagraphStyle()
+        if !iTermAdvancedSettingsModel.detectParagraphDirection() {
+            paragraphStyle.baseWritingDirection = .leftToRight
+        }
+        return paragraphStyle
+    }
+
     // Fails if no RTL was found
     init?(_ sca: ScreenCharArray) {
         let length = Int32(sca.length)
@@ -692,7 +719,8 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
             free(buffer)
         }
 
-        let attributedString = NSAttributedString(string: string)
+        let attributedString = NSAttributedString(string: string,
+                                                  attributes: [.paragraphStyle: Self.paragraphStyle])
         (lut, rtlIndexes, paragraphIsRTL) = makeLookupTable(attributedString,
                                                             deltas: deltas!,
                                                             count: Int(nonEmptyCount))
@@ -702,7 +730,8 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
     }
 
     init?(deltaString: DeltaString, usedCount: Int) {
-        let attributedString = NSAttributedString(string: deltaString.unsafeString as String)
+        let attributedString = NSAttributedString(string: deltaString.unsafeString as String,
+                                                  attributes: [.paragraphStyle: Self.paragraphStyle])
         (lut, rtlIndexes, paragraphIsRTL) = makeLookupTable(attributedString,
                                                             deltas: deltaString.deltas,
                                                             count: usedCount)
@@ -727,7 +756,7 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
         }
         let growth = width - Int32(temp.lut.count)
         self.paragraphIsRTL = temp.paragraphIsRTL
-        if growth == 0 {
+        if growth == 0 || !iTermAdvancedSettingsModel.rightJustifyRTLLines() {
             self.lut = temp.lut
             self.rtlIndexes = temp.rtlIndexes
         } else {
@@ -738,7 +767,7 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
 
     // This assumes the base writing direction is RTL, since otherwise this would not be needed.
     init(basedOn base: BidiDisplayInfo, paddedTo width: Int32) {
-        lut = Self.pad(lut: base.lut, width: width, paragraphIsRTL: base.paragraphIsRTL)
+        lut = iTermAdvancedSettingsModel.rightJustifyRTLLines() ? Self.pad(lut: base.lut, width: width, paragraphIsRTL: base.paragraphIsRTL) : base.lut
         rtlIndexes = base.rtlIndexes
         paragraphIsRTL = base.paragraphIsRTL
     }
