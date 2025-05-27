@@ -3786,7 +3786,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     CGFloat insetBottom = [dict[@"insetBottom"] doubleValue];
     CGFloat insetRight = [dict[@"insetRight"] doubleValue];
 
-    NSString *name = [dict[@"name"] stringByBase64DecodingStringWithEncoding:NSISOLatin1StringEncoding];
+    NSString *name = [dict[@"name"] stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
     if (!name) {
         name = @"Unnamed file";
     }
