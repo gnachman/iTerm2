@@ -19162,14 +19162,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
             return nil;
 
         case iTermLoggingStylePlainText: {
-            static NSDateFormatter *dateFormatter;
-            static dispatch_once_t onceToken;
-            dispatch_once(&onceToken, ^{
-                dateFormatter = [[NSDateFormatter alloc] init];
-                dateFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:[iTermAdvancedSettingsModel logTimestampFormat]
-                                                                           options:0
-                                                                            locale:[NSLocale currentLocale]];
-            });
+            NSDateFormatter *dateFormatter = [NSDateFormatter cacheableFormatterWithTemplate:[iTermAdvancedSettingsModel logTimestampFormat]];
             return [[NSString stringWithFormat:@"[%@] ", [dateFormatter stringFromDate:[NSDate date]]] stringByReplacingUnicodeSpacesWithASCIISpace];
         }
 

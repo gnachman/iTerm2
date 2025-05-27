@@ -1105,6 +1105,7 @@
 		A60EBD171FAED952008C7F5B /* iTermCopyBackground.metal in Sources */ = {isa = PBXBuildFile; fileRef = A63819D21FAECE6800A9EF9E /* iTermCopyBackground.metal */; };
 		A60EBD181FAED953008C7F5B /* iTermCopyBackground.metal in Sources */ = {isa = PBXBuildFile; fileRef = A63819D21FAECE6800A9EF9E /* iTermCopyBackground.metal */; };
 		A60EBD191FAED954008C7F5B /* iTermCopyBackground.metal in Sources */ = {isa = PBXBuildFile; fileRef = A63819D21FAECE6800A9EF9E /* iTermCopyBackground.metal */; };
+		A60EF16C2DE65651002837B9 /* DateFormatter+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A60EF16B2DE6564D002837B9 /* DateFormatter+iTerm.swift */; };
 		A60F6FEC270B7F640017A003 /* iTermModifyOtherKeys1Test.m in Sources */ = {isa = PBXBuildFile; fileRef = A60F6FEA270B7F1D0017A003 /* iTermModifyOtherKeys1Test.m */; };
 		A610941A2A4A213D00AC2268 /* key-dark.png in Resources */ = {isa = PBXBuildFile; fileRef = A61094182A4A213D00AC2268 /* key-dark.png */; };
 		A610941B2A4A213D00AC2268 /* key-dark.png in Resources */ = {isa = PBXBuildFile; fileRef = A61094182A4A213D00AC2268 /* key-dark.png */; };
@@ -5932,6 +5933,7 @@
 		A60E046426E037BD00DD162B /* ContentSubscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentSubscriber.swift; sourceTree = "<group>"; };
 		A60E9FC42DC69A7500E3193B /* EfficientCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EfficientCodec.swift; sourceTree = "<group>"; };
 		A60EAE7C23F9CEB3007536CE /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
+		A60EF16B2DE6564D002837B9 /* DateFormatter+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DateFormatter+iTerm.swift"; sourceTree = "<group>"; };
 		A60F6FEA270B7F1D0017A003 /* iTermModifyOtherKeys1Test.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermModifyOtherKeys1Test.m; sourceTree = "<group>"; };
 		A61094182A4A213D00AC2268 /* key-dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "key-dark.png"; path = "images/key-dark.png"; sourceTree = "<group>"; };
 		A61094192A4A213D00AC2268 /* key-light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "key-light.png"; path = "images/key-light.png"; sourceTree = "<group>"; };
@@ -9656,6 +9658,7 @@
 		1D9DDE31142E73E300275650 /* Categories */ = {
 			isa = PBXGroup;
 			children = (
+				A60EF16B2DE6564D002837B9 /* DateFormatter+iTerm.swift */,
 				A6A723692DBD8DBC00A8115D /* NotificationCenter+iTerm.swift */,
 				A662B2462D937C6900C3D79A /* NSTableView+iTerm.swift */,
 				A6EC47A52D84BD680079845B /* JSONSerialization+iTerm.swift */,
@@ -16847,6 +16850,7 @@
 				A6A4866820B6785400493302 /* iTermAdvancedSettingsViewController.m in Sources */,
 				A6A4867C20B67EFB00493302 /* ProfilesTextPreferencesViewController.m in Sources */,
 				A6DBC03D2003479400F1466D /* iTermImageRenderer.m in Sources */,
+				A60EF16C2DE65651002837B9 /* DateFormatter+iTerm.swift in Sources */,
 				A60D20EF2597FCFA004AC979 /* iTermImage+ImageWithData.m in Sources */,
 				A65429A020BE71E400CE71B1 /* iTermOpenQuicklyModel.m in Sources */,
 				A6AAD5F422F7EB61002DD12C /* iTermWindowSizeView.m in Sources */,
