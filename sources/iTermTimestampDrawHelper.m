@@ -102,6 +102,13 @@ const CGFloat iTermTimestampGradientWidth = 20;
         [self drawBackgroundInFrame:[self backgroundFrameForTextFrame:stringFrame]
                             bgColor:self->_bgColor
                             context:context];
+    }];
+    [_rows enumerateObjectsUsingBlock:^(iTermTimestampRow * _Nonnull row, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSRect stringFrame = [self frameForStringGivenWidth:self->_maximumWidth
+                                                     height:[self fontHeight]
+                                                       line:row.line
+                                                       maxX:NSMaxX(frame)
+                                              virtualOffset:virtualOffset];
         [self drawString:row.string row:idx frame:stringFrame];
     }];
 }

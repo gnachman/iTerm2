@@ -148,7 +148,16 @@
 
 @implementation iTermTimestampsRenderer {
     iTermMetalCellRenderer *_cellRenderer;
-    NSColorSpace *_colorSpace;  // cache is only valid for this color space.
+
+    // Configuration - if any change invalidate the cache
+    NSColorSpace *_colorSpace;
+    NSFont *_font;
+    NSSize _cellSize;
+    NSColor *_backgroundColor;
+    NSColor *_textColor;
+    CGFloat _scale;
+    CGFloat _obscured;
+    
     NSCache<iTermTimestampKey *, iTermPooledTexture *> *_cache;
     iTermTexturePool *_texturePool;
 }
@@ -197,14 +206,45 @@
 - (void)initializeTransientState:(iTermTimestampsRendererTransientState *)tState {
 }
 
+- (BOOL)configurationChanged:(iTermTimestampsRendererTransientState *)tState {
+    if (![NSObject object:tState.configuration.colorSpace isEqualToObject:_colorSpace]) {
+        return YES;
+    }
+    if (![tState.font isEqualTo:_font]) {
+        return YES;
+    }
+    if (!NSEqualSizes(tState.cellConfiguration.cellSize, _cellSize)) {
+        return YES;
+    }
+    if (![tState.backgroundColor isEqual:_backgroundColor]) {
+        return YES;
+    }
+    if (![tState.textColor isEqual:_textColor]) {
+        return YES;
+    }
+    if (tState.cellConfiguration.scale != _scale) {
+        return YES;
+    }
+    if (tState.obscured != _obscured) {
+        return YES;
+    }
+    return NO;
+}
+
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData
            transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
     iTermTimestampsRendererTransientState *tState = transientState;
     _cache.countLimit = tState.cellConfiguration.gridSize.height * 4;
     const CGFloat scale = tState.configuration.scale;
-    if (![NSObject object:tState.configuration.colorSpace isEqualToObject:_colorSpace]) {
+    if ([self configurationChanged:tState]) {
         [_cache removeAllObjects];
         _colorSpace = tState.configuration.colorSpace;
+        _font = tState.font;
+        _cellSize = tState.cellConfiguration.cellSize;
+        _backgroundColor = tState.backgroundColor;
+        _textColor = tState.textColor;
+        _scale = tState.cellConfiguration.scale;
+        _obscured = tState.obscured;
     }
 
     [tState enumerateRows:^(int row, iTermTimestampKey *key, NSRect frame) {
