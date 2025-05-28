@@ -48,6 +48,7 @@ NSString *kSemanticHistoryEditorAction = @"editor";
 NSString *kSemanticHistoryCommandAction = @"command";
 NSString *kSemanticHistoryRawCommandAction = @"raw command";
 NSString *kSemanticHistoryCoprocessAction = @"coprocess";
+NSString *kSemanticHistorySendTextAction = @"send text";
 
 static NSString *const iTermSemanticHistoryPrefsControllerCaveatTextFieldDidClickOnLink = @"iTermSemanticHistoryPrefsControllerCaveatTextFieldDidClickOnLink";
 
@@ -333,7 +334,8 @@ enum {
               @3: kSemanticHistoryEditorAction,
               @4: kSemanticHistoryCommandAction,
               @5: kSemanticHistoryRawCommandAction,
-              @6: kSemanticHistoryCoprocessAction };
+              @6: kSemanticHistoryCoprocessAction,
+              @7: kSemanticHistorySendTextAction };
 }
 
 - (NSString *)actionIdentifier {
@@ -412,6 +414,7 @@ enum {
         case 2:
         case 4:
         case 6:
+        case 7:
             return [@"In this mode semantic history will only be activated when you click on an existing file name.\n"
                     stringByAppendingString:subs];
     }
@@ -476,6 +479,17 @@ enum {
             [[text_ cell] setPlaceholderString:@"Enter command"];
             NSString *text =
             @"Coprocess runs when you activate Semantic History on any filename. "
+            @"Use \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd. ";
+            caveat_.attributedStringValue = [self attributedStringWithLearnMoreLinkAfterText:text];
+            hideCaveat = NO;
+            hideText = NO;
+            break;
+        }
+
+        case 7: {
+            [[text_ cell] setPlaceholderString:@"Enter text"];
+            NSString *text =
+            @"Text is sent when you activate Semantic History on any filename. Use vim-style special characters."
             @"Use \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd. ";
             caveat_.attributedStringValue = [self attributedStringWithLearnMoreLinkAfterText:text];
             hideCaveat = NO;

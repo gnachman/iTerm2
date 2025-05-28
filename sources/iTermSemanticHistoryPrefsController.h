@@ -40,6 +40,7 @@ extern NSString *kSemanticHistoryEditorAction;
 extern NSString *kSemanticHistoryCommandAction;
 extern NSString *kSemanticHistoryRawCommandAction;
 extern NSString *kSemanticHistoryCoprocessAction;
+extern NSString *kSemanticHistorySendTextAction;
 
 @class iTermSemanticHistoryPrefsController;
 

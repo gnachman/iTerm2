@@ -40,6 +40,7 @@ extern NSString *const kSemanticHistoryColumnNumberKey;
 
 @protocol iTermSemanticHistoryControllerDelegate <NSObject>
 - (void)semanticHistoryLaunchCoprocessWithCommand:(NSString *)command;
+- (void)semanticHistorySendText:(NSString *)text;
 @end
 
 @interface iTermSemanticHistoryController : NSObject

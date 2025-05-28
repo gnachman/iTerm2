@@ -5027,6 +5027,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     [_delegate launchCoprocessWithCommand:command];
 }
 
+- (void)semanticHistorySendText:(NSString *)text {
+    [_delegate sendText:text escaping:iTermSendTextEscapingVim];
+}
+
 - (PTYFontInfo *)getFontForChar:(UniChar)ch
                       isComplex:(BOOL)isComplex
                      renderBold:(BOOL *)renderBold

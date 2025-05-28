@@ -781,8 +781,23 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
             DLog(@"Launch coprocess with script %@", evaluator.value);
             if (evaluator.error) {
                 completion(YES);
+                return;
             }
             [weakSelf.delegate semanticHistoryLaunchCoprocessWithCommand:evaluator.value];
+            completion(YES);
+        }];
+        return;
+    }
+
+    if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistorySendTextAction]) {
+        __weak __typeof(self) weakSelf = self;
+        [_expressionEvaluator evaluateWithTimeout:self.evaluationTimeout completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+            DLog(@"Send text %@", evaluator.value);
+            if (evaluator.error) {
+                completion(YES);
+                return;
+            }
+            [weakSelf.delegate semanticHistorySendText:evaluator.value];
             completion(YES);
         }];
         return;
