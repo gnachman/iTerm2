@@ -205,6 +205,9 @@ enum {
     IBOutlet NSPopUpButton *_writeToFilesystemButton;
     IBOutlet NSButton *_apiWarningButton;
     IBOutlet NSButton *_aiCompletions;
+
+    IBOutlet NSButton *_enableRTL;
+    IBOutlet NSButton *_sshIntegrationForURLs;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -810,6 +813,16 @@ enum {
             iTermSecureUserDefaults.instance.aiCompletionsEnabled = [newValue boolValue];
         }
     };
+
+    // ---------------------------------------------------------------------------------------------
+    [self defineControl:_enableRTL
+                    key:kPreferenceKeyBidi
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+     [self defineControl:_sshIntegrationForURLs
+                     key:kPreferenceKeySshIntegrationForURLs
+             relatedView:nil
+                    type:kPreferenceInfoTypeCheckbox];
 
     [self validatePlugin];
     [self updateEnabledState];

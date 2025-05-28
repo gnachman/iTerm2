@@ -14,6 +14,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermImageInfo.h"
 #import "iTermLaunchServices.h"
+#import "iTermPreferences.h"
 #import "iTermSelection.h"
 #import "iTermSemanticHistoryController.h"
 #import "iTermTextExtractor.h"
@@ -73,7 +74,7 @@
         return nil;
     }
     iTermTextExtractor *extractor = [self.delegate urlActionHelperNewTextExtractor:self];
-    extractor.supportBidi = [iTermAdvancedSettingsModel bidi];
+    extractor.supportBidi = [iTermPreferences boolForKey:kPreferenceKeyBidi];
     VT100GridCoord logicalCoord = [extractor logicalCoordForVisualCoord:visualCoord];
     if ([extractor characterAt:logicalCoord].code == 0) {
         completion(nil);

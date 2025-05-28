@@ -5223,7 +5223,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         } else {
             memset(&continuation, 0, sizeof(continuation));
         }
-        if (history.rtlFound && [iTermAdvancedSettingsModel bidi]) {
+        if (history.rtlFound && [iTermPreferences boolForKey:kPreferenceKeyBidi]) {
             metadata.rtlFound = AnnotateRightToLeftInScreenChars(line, len);
         }
         [temp appendLine:line

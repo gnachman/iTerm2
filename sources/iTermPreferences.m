@@ -90,6 +90,9 @@ NSString *const kPreferenceKeyAPIAuthentication = @"API Authentication Method";
 NSString *const kPreferenceKeyEnableAI = @"Enable AI";
 NSString *const kPhonyPreferenceKeyInstallAIPlugin = @"NoUserDefault Install AI Plugin";  // Not a real preference, just used to reveal setting.
 
+NSString *const kPreferenceKeyBidi = @"Bidi";  // Bool
+NSString *const kPreferenceKeySshIntegrationForURLs = @"SshIntegrationForURLs";  // Bool
+
 NSString *const kPreferenceKeyTabStyle_Deprecated = @"TabStyle";  // Pre-10.14
 NSString *const kPreferenceKeyTabStyle = @"TabStyleWithAutomaticOption";  // Pre-10.14
 NSString *const kPreferenceKeyTabPosition = @"TabViewType";
@@ -459,6 +462,8 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyEnableAPIServer: @NO,
                   kPreferenceKeyAPIAuthentication: @0,  // ignored — synthetic value
                   kPreferenceKeyEnableAI: @NO,  // ignored - synthetic value
+                  kPreferenceKeyBidi: @NO,
+                  kPreferenceKeySshIntegrationForURLs: @NO,
                   kPreferenceKeyOpenAIAPIKey: @"",
                   kPreferenceKeyAIPrompt: iTermDefaultAIPrompt,
                   kPreferenceKeyAlertOnMarksInOffscreenSessions: @NO,

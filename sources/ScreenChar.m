@@ -469,7 +469,7 @@ void StringToScreenChars(NSString *s,
     NSCharacterSet *modifierCharactersForcingFullWidthRendition = [NSCharacterSet modifierCharactersForcingFullWidthRendition];
     const BOOL shouldSupportVS16 = [iTermAdvancedSettingsModel vs16Supported] || (!softAlternateScreenMode && [iTermAdvancedSettingsModel vs16SupportedInPrimaryScreen]);
     NSCharacterSet *emojiAcceptingVS16 = [NSCharacterSet emojiAcceptingVS16];
-    NSCharacterSet *rtlSmellingCodePoints = [iTermAdvancedSettingsModel bidi] ? [NSCharacterSet rtlSmellingCodePoints] : [NSCharacterSet characterSetWithCharactersInString:@""];
+    NSCharacterSet *rtlSmellingCodePoints = [iTermPreferences boolForKey:kPreferenceKeyBidi] ? [NSCharacterSet rtlSmellingCodePoints] : [NSCharacterSet characterSetWithCharactersInString:@""];
     const BOOL fullWidthFlags = [iTermAdvancedSettingsModel fullWidthFlags];
     if (rtlFound) {
         *rtlFound = ([s rangeOfCharacterFromSet:rtlSmellingCodePoints].location != NSNotFound);

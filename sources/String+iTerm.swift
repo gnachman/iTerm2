@@ -311,7 +311,7 @@ extension String {
 
 extension String {
     var mayContainRTL: Bool {
-        let rtlSmellingCodePoints = iTermAdvancedSettingsModel.bidi() ? NSCharacterSet.rtlSmellingCodePoints()! : CharacterSet()
+        let rtlSmellingCodePoints = iTermPreferences.bool(forKey: kPreferenceKeyBidi) ? NSCharacterSet.rtlSmellingCodePoints()! : CharacterSet()
         let rtlFound = rangeOfCharacter(from: rtlSmellingCodePoints) != nil
         return rtlFound
     }

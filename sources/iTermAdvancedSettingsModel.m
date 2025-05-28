@@ -791,7 +791,6 @@ DEFINE_BOOL(vs16Supported, NO, SECTION_EXPERIMENTAL @"Support variation selector
 DEFINE_BOOL(vs16SupportedInPrimaryScreen, YES, SECTION_EXPERIMENTAL @"Support variation selector 16 making emoji fullwidth outside of alternate screen mode?");
 DEFINE_BOOL(fastTrackpad, YES, SECTION_EXPERIMENTAL @"Trackpad scrolls fast?\nSet to No for legacy scrolling speed.");
 DEFINE_BOOL(supportDecsetMetaSendsEscape, YES_IF_BETA_ELSE_NO, SECTION_EXPERIMENTAL @"Support DECSET 1036?\nThis allows apps in the terminal to control whether the option key sends esc+ or acts like a regular option key.");
-DEFINE_BOOL(concurrentMutation, NO, SECTION_EXPERIMENTAL @"Mutate session state in a separate thread.");
 DEFINE_BOOL(fastTriggerRegexes, YES, SECTION_EXPERIMENTAL @"Fast regular expression evaluation for triggers.\nThis is experimental because it could potentially change how regular expressions are interpreted.");
 DEFINE_BOOL(postFakeFlagsChangedEvents, NO, SECTION_EXPERIMENTAL @"Post fake flags-changed events when remapping modifiers with an event tap.\nThis is an attempt to work around incompatibilities with AltTab in issue 10220.");
 DEFINE_BOOL(fullWidthFlags, YES, SECTION_EXPERIMENTAL @"Flag emoji render full-width");
@@ -802,19 +801,18 @@ DEFINE_BOOL(autoSearch, NO, SECTION_EXPERIMENTAL @"Automatically search for sele
 DEFINE_BOOL(smartLoggingWithAutoComposer, NO, SECTION_EXPERIMENTAL @"Enable more compact logging when using auto composer?\nThis will avoid logging raw data in your prompt and your interactions with it. Instead, the prompt is logged once in plain text and the command is logged when sent.");
 DEFINE_BOOL(disclaimChildren, NO, SECTION_EXPERIMENTAL @"Disclaim ownership of children.\nBy enabling this, when launching a Cocoa app from a terminal window TCC should attribute ownership to the app, not iTerm2, for permissions. In order for changes to this setting to take effect, you must kill iTermServer.");
 DEFINE_BOOL(restoreKeyModeAutomaticallyOnHostChange, YES, SECTION_EXPERIMENTAL @"Automatically restore keyboard mode when an ssh session ends?");
-DEFINE_BOOL(useSSHIntegrationForURLOpening, NO, SECTION_EXPERIMENTAL @"Use SSH integration when opening an ssh: URL");
+
 DEFINE_BOOL(chaseAnchoredScreen, NO, SECTION_EXPERIMENTAL @"Aggressively keep windows on the screen they were configured to be on");
 DEFINE_STRING(codeciergeGhostRidingPrompt, @"You operate a terminal emulator for me. My goal is $GOAL. $CONTEXT. Ask clarifying questions as needed and run commands using the execute function when you're ready. When I've reached my goal, remind me to click the End Task button.", SECTION_EXPERIMENTAL @"Prompt to send to LLM for Codecierge when it is able to execute commands automatically.\n$GOAL and $CONTEXT are replaced with the user-specified goal and info about the running environment, respectively." );
 DEFINE_INT(codeciergeCommandWarningCount, 10, SECTION_EXPERIMENTAL @"After this many commands, make codecierge confirm that you intend to keep it enabled.");
 DEFINE_STRING(codeciergeRegularPrompt, @"You help a me in a terminal emulator. My goal is $GOAL. $CONTEXT. Start by suggesting a command. Don't overwhelm me with too much information: just go one step at a time. When I've reached my goal, remind me to click the End Task button.", SECTION_EXPERIMENTAL @"Prompt to send to LLM for Codecierge when it is NOT able to execute commands automatically.\n$GOAL and $CONTEXT are replaced with the user-specified goal and info about the running environment, respectively." );
 DEFINE_BOOL(generativeAIAllowed, YES, SECTION_GENERAL @"Allow the use of large language model APIs?\nThe purpose of this setting is to make it easy for managed environments to disable the use of LLMs. The user defaults key is `GenerativeAIAllowed`.");
 DEFINE_STRING(llmPlatform, @"OpenAI", SECTION_GENERAL @"LLM Platform.\nLegal values are: OpenAI, Azure, Gemini. This determines the format of requests and responses.");
-DEFINE_BOOL(bidi, NO, SECTION_EXPERIMENTAL @"Support right-to-left text?\nThis also enables ligature support in the GPU renderer.");
 DEFINE_BOOL(alternateScreenBidi, YES, SECTION_EXPERIMENTAL @"When right-to-left text support is enabled, also support it in alternate screen mode?");
 DEFINE_BOOL(aquaSKKBugfixEnabled, NO, SECTION_EXPERIMENTAL @"Enable AquaSKK bugfix?")
 DEFINE_BOOL(channelsEnabled, NO, SECTION_EXPERIMENTAL @"Enable Channels feature?")
 DEFINE_BOOL(rightJustifyRTLLines, YES, SECTION_EXPERIMENTAL @"Right-justify lines in paragraphs with base writing direction of right-to-left?\nRequires BOTH “right-to-left text support” and “auto-detect paragraph writing detection” to be enabled.");
-DEFINE_BOOL(detectParagraphDirection, YES, SECTION_EXPERIMENTAL @"Auto-detect paragraph writing direction based on the first strong directional character?\nRequires right-to-left text support to be enabled.");
+DEFINE_BOOL(detectParagraphDirection, NO, SECTION_EXPERIMENTAL @"Auto-detect paragraph writing direction based on the first strong directional character?\nRequires right-to-left text support to be enabled.");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "

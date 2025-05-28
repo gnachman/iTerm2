@@ -371,7 +371,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 - (void)mergeFrom:(VT100ScreenMutableState *)source {
     [self copyFastStuffFrom:source];
     [self releaseOverwrittenImagesIn:source];
-    if ([iTermAdvancedSettingsModel bidi]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyBidi]) {
         [source populateRTLStateIfNeeded];
     }
 

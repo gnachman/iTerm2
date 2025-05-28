@@ -11,6 +11,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermController.h"
+#import "iTermPreferences.h"
 #import "iTermSessionFactory.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
@@ -372,7 +373,7 @@
 - (Profile *)profileByModifyingProfile:(NSDictionary *)prototype toSshTo:(NSURL *)url {
     DLog(@"modify profile to ssh to %@", url);
     NSMutableString *tempString = [NSMutableString string];
-    const BOOL useSSHIntegration = [iTermAdvancedSettingsModel useSSHIntegrationForURLOpening];
+    const BOOL useSSHIntegration = [iTermPreferences boolForKey:kPreferenceKeySshIntegrationForURLs];
     if (!useSSHIntegration) {
         [tempString appendString:[iTermAdvancedSettingsModel sshSchemePath]];
         NSCharacterSet *alphanumericSet = [NSMutableCharacterSet alphanumericCharacterSet];

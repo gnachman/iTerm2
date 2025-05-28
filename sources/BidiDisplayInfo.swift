@@ -308,7 +308,7 @@ class BidiDisplayInfoObjc: NSObject {
 
     @objc(initWithDictionary:)
     init?(_ dictionary: NSDictionary) {
-        guard iTermAdvancedSettingsModel.bidi() else {
+        guard iTermPreferences.bool(forKey: kPreferenceKeyBidi) else {
             return nil
         }
         guard let lutObj = dictionary[Keys.lut.rawValue],

@@ -1246,6 +1246,7 @@ DQ
                 <outlet property="_enableAI" destination="VE4-PX-sWF" id="GkA-mF-teG"/>
                 <outlet property="_enableAPI" destination="hxX-te-qT5" id="37I-pK-Hmx"/>
                 <outlet property="_enableBonjour" destination="5051" id="lpI-Ub-bAd"/>
+                <outlet property="_enableRTL" destination="Dt4-v9-hNo" id="Kfx-v6-EBT"/>
                 <outlet property="_enterCopyModeAutomatically" destination="Nhj-1F-dbm" id="UCD-Es-h87"/>
                 <outlet property="_evenIfThereAreNoWindows" destination="7pa-hD-WIi" id="laL-N3-lTV"/>
                 <outlet property="_gpuRendering" destination="YoO-mR-uX5" id="bAe-EI-JTs"/>
@@ -1282,6 +1283,7 @@ DQ
                 <outlet property="_selectionCopiesText" destination="1988" id="V7j-Ak-mbO"/>
                 <outlet property="_separateWindowTitlePerTab" destination="tVY-OD-hsd" id="ODW-a6-e20"/>
                 <outlet property="_smartPlacement" destination="4570" id="jBA-SY-4Wo"/>
+                <outlet property="_sshIntegrationForURLs" destination="vhC-hG-8ds" id="rG6-1z-z2w"/>
                 <outlet property="_syncTmuxClipboard" destination="QIN-eH-Mqt" id="OKK-vn-J7r"/>
                 <outlet property="_tabView" destination="CuK-St-ACL" id="BwT-A2-44D"/>
                 <outlet property="_tmuxPauseModeAgeLimit" destination="hXw-El-HMF" id="mRQ-0c-gkM"/>
@@ -6634,11 +6636,11 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                         </tabViewItem>
                         <tabViewItem label="Software Update" identifier="" id="hxz-xY-wbF">
                             <view key="view" id="QRB-QZ-Yoo">
-                                <rect key="frame" x="10" y="33" width="755" height="674"/>
+                                <rect key="frame" x="10" y="33" width="755" height="693"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="agx-XH-Dlv" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="165" y="560" width="497" height="123"/>
+                                        <rect key="frame" x="165" y="579" width="497" height="123"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button toolTip="Selects whether to install the beta or release build when updating." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5049">
@@ -6899,11 +6901,11 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                         </tabViewItem>
                         <tabViewItem label="Window" identifier="" id="cmW-ac-GOQ">
                             <view key="view" id="5UT-I8-OHp">
-                                <rect key="frame" x="10" y="33" width="755" height="674"/>
+                                <rect key="frame" x="10" y="33" width="755" height="693"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="aL9-Uk-rzg" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="103" y="515" width="482" height="166"/>
+                                        <rect key="frame" x="103" y="534" width="482" height="166"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button toolTip="Smart window placement puts new windows where the most free space is available." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4570">
@@ -7010,11 +7012,11 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                         </tabViewItem>
                         <tabViewItem label="Settings" identifier="" id="A3y-3j-WQF">
                             <view key="view" id="NGW-1C-GwI">
-                                <rect key="frame" x="10" y="33" width="755" height="674"/>
+                                <rect key="frame" x="10" y="33" width="755" height="693"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pnz-ME-DBf" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="27" y="505" width="701" height="176"/>
+                                        <rect key="frame" x="27" y="524" width="701" height="176"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5616">
@@ -7141,11 +7143,11 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                         </tabViewItem>
                         <tabViewItem label="tmux" identifier="" id="dpe-So-Ym8">
                             <view key="view" id="pZ9-bL-Bag">
-                                <rect key="frame" x="10" y="33" width="755" height="674"/>
+                                <rect key="frame" x="10" y="33" width="755" height="693"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="keM-ww-m44" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="80" y="413" width="592" height="268"/>
+                                        <rect key="frame" x="80" y="432" width="592" height="268"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rci-Sr-fks">
@@ -7332,6 +7334,52 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Clipboard:" id="Sck-8q-qxj">
                                                     <font key="font" usesAppearanceFont="YES"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                        </subviews>
+                                    </customView>
+                                </subviews>
+                            </view>
+                        </tabViewItem>
+                        <tabViewItem label="Experimental" identifier="" id="XCA-9w-Cev">
+                            <view key="view" id="2tm-sf-nvY">
+                                <rect key="frame" x="10" y="33" width="755" height="693"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <subviews>
+                                    <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vjG-YS-4xs" customClass="iTermPreferencesInnerTabContainerView">
+                                        <rect key="frame" x="80" y="605" width="592" height="95"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                        <subviews>
+                                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Dt4-v9-hNo">
+                                                <rect key="frame" x="153" y="59" width="258" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <string key="toolTip">Buried sessions appear under Session &gt; Buried Sessions. When this setting is enabled, window sizes are restored when attaching to an existing tmux session.</string>
+                                                <buttonCell key="cell" type="check" title="Enable support for right-to-left scripts" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="ax2-RO-lUC">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="AWK-IC-82X"/>
+                                                </connections>
+                                            </button>
+                                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vhC-hG-8ds">
+                                                <rect key="frame" x="153" y="19" width="233" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="check" title="Use SSH integration for ssh: URLs" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="UfK-dm-ngW">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="rPX-7T-vvC"/>
+                                                </connections>
+                                            </button>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="aKT-xU-w8f">
+                                                <rect key="frame" x="173" y="44" width="331" height="14"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" controlSize="small" lineBreakMode="clipping" title="This setting also enables ligature support in the GPU renderer." id="3cq-GS-KuB">
+                                                    <font key="font" metaFont="smallSystem"/>
                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>

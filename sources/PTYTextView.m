@@ -3154,7 +3154,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                     range:(VT100GridWindowedRange *)rangePtr
           respectDividers:(BOOL)respectDividers {
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
-    extractor.supportBidi = [iTermAdvancedSettingsModel bidi];
+    extractor.supportBidi = [iTermPreferences boolForKey:kPreferenceKeyBidi];
     VT100GridCoord coord = VT100GridCoordMake(x, y);
     if (respectDividers) {
         [extractor restrictToLogicalWindowIncludingCoord:coord];
@@ -4716,7 +4716,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
 - (iTermTextExtractor *)bidiExtractor {
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
-    extractor.supportBidi = [iTermAdvancedSettingsModel bidi];
+    extractor.supportBidi = [iTermPreferences boolForKey:kPreferenceKeyBidi];
     return extractor;
 }
 

@@ -131,6 +131,9 @@ extern NSString *const kPreferenceKeyMaximizeThroughput;
 extern NSString *const kPreferenceKeyEnableAPIServer;
 extern NSString *const kPreferenceKeyAPIAuthentication;
 extern NSString *const kPreferenceKeyEnableAI;
+extern NSString *const kPreferenceKeyBidi;
+extern NSString *const kPreferenceKeySshIntegrationForURLs;
+
 extern NSString *const kPhonyPreferenceKeyInstallAIPlugin;
 extern NSString *const kPreferenceKeyPhonyAllowSendingClipboardContents;
 extern NSString *const kPreferenceKeyAITermURL;
