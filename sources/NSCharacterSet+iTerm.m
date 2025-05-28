@@ -2258,6 +2258,7 @@ unichar iTermMinimumDefaultEmojiPresentationCodePoint = 0x2300;
     if (!filenameChars) {
         filenameChars = [[NSCharacterSet whitespaceCharacterSet] mutableCopy];
         [filenameChars formUnionWithCharacterSet:[self urlCharacterSet]];
+        [filenameChars formUnionWithCharacterSet:[NSCharacterSet characterSetWithCharactersInString:[iTermAdvancedSettingsModel filenameCharacterSet]]];
     }
 
     return filenameChars;
