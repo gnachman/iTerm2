@@ -3561,6 +3561,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     iTermTextExtractor *extractor = [[iTermTextExtractor alloc] initWithDataSource:self];
     const long long offset = self.totalScrollbackOverflow;
     const VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(absRange, offset);
+    if (range.end.y - range.start.y > 5) {
+        DLog(@"Range is too long: %@ (%@)", VT100GridAbsCoordRangeDescription(absRange), VT100GridCoordRangeDescription(range));
+        return;
+    }
     iTermPathSniffer *sniffer = [[iTermPathSniffer alloc] initWithExtractor:extractor
                                                                       range:range
                                                                  remoteHost:self.lastRemoteHost
