@@ -16,6 +16,10 @@
 NSString *const iTermWindowAppearanceDidChange = @"iTermWindowAppearanceDidChange";
 void *const iTermDeclineFirstResponderAssociatedObjectKey = (void *)"iTermDeclineFirstResponderAssociatedObjectKey";
 
+@interface NSWindow(ZoomFill)
+- (void)_zoomFill:(NSView *)view;
+@end
+
 @implementation NSWindow(iTerm)
 
 - (void)it_titleBarDoubleClick {
@@ -26,6 +30,10 @@ void *const iTermDeclineFirstResponderAssociatedObjectKey = (void *)"iTermDeclin
     }
     if (doubleClickAction == nil || [doubleClickAction isEqualToString:@"Maximize"]) {
         [self performZoom:nil];
+        return;
+    }
+    if ([doubleClickAction isEqualToString:@"Fill"] && [self respondsToSelector:@selector(_zoomFill:)]) {
+        [self _zoomFill:self.contentView.superview];
         return;
     }
 }
