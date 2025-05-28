@@ -98,11 +98,11 @@ preview:
 
 x86libsixel: force
 	mkdir -p submodules/libsixel/build-x86
-	cd submodules/libsixel/build-x86 && CC="/usr/bin/clang -target x86_64-apple-macos10.14" LDFLAGS="-ld_classic -target x86_64-apple-macos10.14" CFLAGS="-target x86_64-apple-macos10.14" LIBTOOLFLAGS="-target x86_64-apple-macos10.14" ../configure -host=x86_64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-x86 --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
+	cd submodules/libsixel/build-x86 && PKG_CONFIG=/opt/homebrew/bin/pkg-config CC="/usr/bin/clang -target x86_64-apple-macos10.14" LDFLAGS="-ld_classic -target x86_64-apple-macos10.14" CFLAGS="-target x86_64-apple-macos10.14" LIBTOOLFLAGS="-target x86_64-apple-macos10.14" ../configure -host=x86_64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-x86 --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
 
 armsixel: force
 	mkdir -p submodules/libsixel/build-arm
-	cd submodules/libsixel/build-arm && CC="/usr/bin/clang -target arm64-apple-macos10.14" LDFLAGS="-ld_classic -target arm64-apple-macos10.14" CFLAGS="-target arm64-apple-macos10.14" LIBTOOLFLAGS="-target arm64-apple-macos10.14" ../configure --host=aarch64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-arm --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
+	cd submodules/libsixel/build-arm && PKG_CONFIG=/opt/homebrew/bin/pkg-config CC="/usr/bin/clang -target arm64-apple-macos10.14" LDFLAGS="-ld_classic -target arm64-apple-macos10.14" CFLAGS="-target arm64-apple-macos10.14" LIBTOOLFLAGS="-target arm64-apple-macos10.14" ../configure --host=aarch64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-arm --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
 
 # Usage: go to an intel mac and run make x86libsixel and commit it. Go to an arm mac and run make armsixel && make libsixel.
 fatlibsixel: force armsixel x86libsixel
@@ -211,6 +211,10 @@ paranoidlibgit2: force
 
 paranoidsparkle: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) sparkle
+
+paranoidlibsixel: force
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) fatlibsixel
+
 
 # You probably want make paranoiddeps to avoid depending on Hombrew stuff.
 deps: force fatlibsixel CoreParse NMSSH bindeps libgit2 sparkle librailroad_dsl

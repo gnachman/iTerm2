@@ -30,8 +30,8 @@
 # define SIXELAPI
 #endif
 
-#define LIBSIXEL_VERSION "1.8.6"
-#define LIBSIXEL_ABI_VERSION "1:6:0"
+#define LIBSIXEL_VERSION "1.9.0"
+#define LIBSIXEL_ABI_VERSION "1:9:0"
 
 typedef unsigned char sixel_index_t;
 
@@ -354,6 +354,9 @@ typedef int SIXELSTATUS;
                                                     size -> encode to as small sixel
                                                             sequence as possible
                                                 */
+#define SIXEL_OPTFLAG_ORMODE            ('O')  /* -O, --ormode:
+                                                  output ormode sixel image
+                                                */
 #define SIXEL_OPTFLAG_BGCOLOR           ('B')  /* -B BGCOLOR, --bgcolor=BGCOLOR:
                                                   specify background color
                                                   BGCOLOR is represented by the
@@ -506,7 +509,7 @@ extern "C" {
 #endif
 
 /* create allocator object */
-SIXELSTATUS
+SIXELAPI SIXELSTATUS
 sixel_allocator_new(
     sixel_allocator_t   /* out */ **ppallocator,  /* allocator object to be created */
     sixel_malloc_t      /* in */  fn_malloc,      /* custom malloc() function */
@@ -644,6 +647,11 @@ sixel_output_set_palette_type(
     sixel_output_t /* in */ *output,      /* output context */
     int            /* in */ palettetype); /* PALETTETYPE_RGB: RGB palette
                                              PALETTETYPE_HLS: HLS palette */
+
+SIXELAPI void
+sixel_output_set_ormode(
+    sixel_output_t /* in */ *output,    /* output context */
+    int /* in */ ormode);
 
 /* set encodeing policy: auto, fast or size */
 SIXELAPI void

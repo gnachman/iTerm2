@@ -4,7 +4,7 @@ libdir=${exec_prefix}/lib
 includedir=${prefix}/include
 
 Name: libsixel
-Description: A lightweight, fast implementation of DEC SIXEL graphics codec
-Version: 1.8.6
+Description: A lightweight, fast C implementation of DEC SIXEL graphics codec
+Version: 1.9.0
 Libs: -L${libdir} -lsixel
 Cflags: -I${includedir}

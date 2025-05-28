@@ -25,7 +25,7 @@ weak_library_names=''
 # Version information for libsixel.
 current=1
 age=0
-revision=6
+revision=9
 
 # Is this an already installed library?
 installed=yes
