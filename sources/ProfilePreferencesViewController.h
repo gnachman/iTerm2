@@ -42,6 +42,7 @@ extern NSString *const kProfileSessionHotkeyDidChange;
 - (void)selectGuid:(NSString *)guid;
 
 - (void)openToProfileWithGuid:(NSString *)guid;
+- (void)selectDefaultProfile;
 
 - (void)selectFirstProfileIfNecessary;
 

@@ -575,6 +575,9 @@ static iTermPreferencesSearchEngine *gSearchEngine;
             [self.window addTitlebarAccessoryViewController:unsaved];
         }
     }
+    if (!_editCurrentSessionMode) {
+        [_profilesViewController selectDefaultProfile];
+    }
 }
 
 - (void)layoutSubviewsForEditCurrentSessionMode {

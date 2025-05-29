@@ -327,6 +327,13 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     }
 }
 
+- (void)selectDefaultProfile {
+    NSString *guid = [[[ProfileModel sharedInstance] defaultProfile] objectForKey:KEY_GUID];
+    if (guid) {
+        [self openToProfileWithGuid:guid];
+    }
+}
+
 - (void)openToProfileWithGuid:(NSString *)guid
 andEditComponentWithIdentifier:(NSString *)identifier
                         scope:(iTermVariableScope<iTermSessionScope> *)scope {
