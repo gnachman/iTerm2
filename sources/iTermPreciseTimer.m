@@ -253,22 +253,6 @@ void iTermPreciseTimerPeriodicLog(NSString *identifier,
     }
 }
 
-static NSString *iTermEmojiForDuration(double ms) {
-    if (ms > 100) {
-        return @"😱";
-    } else if (ms > 10) {
-        return @"😳";
-    } else if (ms > 5) {
-        return @"😢";
-    } else if (ms > 1) {
-        return @"🙁";
-    } else if (ms > 0.5) {
-        return @"🤔";
-    } else {
-        return @"  ";
-    }
-}
-
 NSString *iTermPreciseTimerLogString(NSString *identifier,
                                      iTermPreciseTimerStats stats[],
                                      size_t count,
@@ -429,3 +413,19 @@ void iTermPreciseTimerClearLogs(void) {
 }
 
 #endif
+
+NSString *iTermEmojiForDuration(double ms) {
+    if (ms > 100) {
+        return @"😱";
+    } else if (ms > 10) {
+        return @"😳";
+    } else if (ms > 5) {
+        return @"😢";
+    } else if (ms > 1) {
+        return @"🙁";
+    } else if (ms > 0.5) {
+        return @"🤔";
+    } else {
+        return @"  ";
+    }
+}

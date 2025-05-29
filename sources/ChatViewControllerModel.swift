@@ -101,6 +101,24 @@ class ChatViewControllerModel {
 
     private let alwaysAppendDate = false
 
+    static func assertMessageTypeAllowed(_ message: Message?) {
+        switch message {
+        case .none:
+            DLog("Nil message in model")
+            break
+        case .some(let justMessage):
+            switch justMessage.content {
+            case .append, .appendAttachment:
+                it_fatalError("Append type messages not allowed in model")
+            case .plainText, .markdown, .explanationRequest, .explanationResponse,
+                    .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest,
+                    .clientLocal, .renameChat, .commit, .setPermissions, .terminalCommand,
+                    .multipart, .vectorStoreCreated:
+                return
+            }
+        }
+    }
+
     init(chat: Chat, listModel: ChatListModel) {
         self.listModel = listModel
         chatID = chat.id
@@ -114,6 +132,7 @@ class ChatViewControllerModel {
                 if alwaysAppendDate || lastDate != date {
                     items.append(.date(date))
                 }
+                ChatViewControllerModel.assertMessageTypeAllowed(message)
                 items.append(.message(Item.UpdatableMessage(message)))
                 lastDate = Calendar.current.dateComponents([.year, .month, .day], from: message.sentDate)
                 if case .clientLocal(let cl) = message.content,
@@ -176,7 +195,7 @@ class ChatViewControllerModel {
 
     func appendMessage(_ message: Message) {
         switch message.content {
-        case .append(string: _, uuid: let uuid):
+        case .append(string: _, uuid: let uuid), .appendAttachment(attachment: _, uuid: let uuid):
             didAppend(toMessageID: uuid)
             return
         case .explanationResponse(_, let update, markdown: _):
@@ -184,7 +203,9 @@ class ChatViewControllerModel {
                 didAppend(toMessageID: messageID)
                 return
             }
-        default:
+        case .plainText, .markdown, .explanationRequest, .remoteCommandRequest,
+                .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .commit,
+                .setPermissions, .terminalCommand, .multipart, .vectorStoreCreated:
             break
         }
         let saved = showTypingIndicator
@@ -197,6 +218,7 @@ class ChatViewControllerModel {
            (alwaysAppendDate || message.dateErasingTime != lastMessage.message.dateErasingTime) {
             items.append(.date(message.dateErasingTime))
         }
+        Self.assertMessageTypeAllowed(message)
         items.append(.message(Item.UpdatableMessage(message)))
     }
 

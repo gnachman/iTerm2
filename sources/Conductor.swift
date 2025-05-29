@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol SSHCommandRunning {
+protocol SSHCommandRunning: AnyObject {
     func runRemoteCommand(_ commandLine: String,
                           completion: @escaping  (Data, Int32) -> ())
     func registerProcess(_ pid: pid_t)
@@ -92,6 +92,10 @@ class Conductor: NSObject, Codable {
     private var myJump: SSHReconnectionInfo?
     private var suggestionCache = SuggestionCache()
     @objc private(set) var environmentVariables = [String: String]()
+    private static var downloadSemaphore = {
+        let maxConcurrentDownloads = 2
+        return AsyncSemaphore(value: maxConcurrentDownloads)
+    }()
 
     @objc
     lazy var fileChecker: FileChecker? = {
@@ -149,7 +153,13 @@ class Conductor: NSObject, Codable {
         }
         return nil
     }
-    private(set) var framedPID: Int32? = nil
+    private(set) var framedPID: Int32? = nil {
+        didSet {
+            if framedPID != nil {
+                ConductorRegistry.instance.addConductor(self, for: sshIdentity)
+            }
+        }
+    }
     // If this returns true, route writes through sendKeys(_:).
     @objc var handlesKeystrokes: Bool {
         return framedPID != nil && queueWrites
@@ -206,7 +216,7 @@ class Conductor: NSObject, Codable {
 
     enum FileSubcommand: Codable, Equatable {
         case ls(path: Data, sorting: FileSorting)
-        case fetch(path: Data, chunk: DownloadChunk?)
+        case fetch(path: Data, chunk: DownloadChunk?, uniqueID: String?)
         case stat(path: Data)
         case fetchSuggestions(request: SuggestionRequest.Inputs)
         case rm(path: Data, recursive: Bool)
@@ -231,7 +241,7 @@ class Conductor: NSObject, Codable {
                 }
                 return "ls\n\(path.nonEmptyBase64EncodedString())\n\(sortString)"
 
-            case .fetch(let path, let chunk):
+            case .fetch(let path, let chunk, _):
                 if let chunk {
                     return "fetch\n\(path.nonEmptyBase64EncodedString())\n\(chunk.offset)\n\(chunk.size)"
                 } else {
@@ -300,7 +310,7 @@ class Conductor: NSObject, Codable {
             switch self {
             case .ls(let path, let sort):
                 return "ls \(path.stringOrHex) \(sort)"
-            case .fetch(let path, let chunk):
+            case .fetch(let path, let chunk, _):
                 if let chunk {
                     return "fetch \(path.stringOrHex) offset=\(chunk.offset) size=\(chunk.size)"
                 } else {
@@ -668,12 +678,30 @@ class Conductor: NSObject, Codable {
         let handler: Handler
         var canceled = false
 
+        mutating func cancel() {
+            if canceled {
+                return
+            }
+            canceled = true
+            switch handler {
+            case .handleFile(_, let completion):
+                // Cause performFileOperation to throw .connectionclosed
+                completion("", -1)
+            default:
+                break
+            }
+        }
         // Pipelining means many of these can be sent without waiting for the result.
         // It's particularly important for keystrokes to reduce latency when typing quickly.
         var supportsPipelining: Bool {
             switch self.command {
             case .framerSend:
                 return true
+            case .framerFile(let sub):
+                switch sub {
+                case .fetch: return true
+                default: return false
+                }
             default:
                 return false
             }
@@ -687,6 +715,13 @@ class Conductor: NSObject, Codable {
                 // This only needs to be a rough approximation of the size (for example it doesn't
                 // include line breaks or try to account for UTF-8 encoding)
                 return command.stringValue.count * 4 / 3
+            case .framerFile(let sub):
+                switch sub {
+                case .fetch:
+                    return command.stringValue.count * 4 / 3
+                default:
+                    return .max
+                }
             default:
                 return .max
             }
@@ -927,6 +962,16 @@ class Conductor: NSObject, Codable {
         uname = try? container.decode(String?.self, forKey: .uname)
         _terminalConfiguration = try? container.decode(CodableNSDictionary?.self, forKey: .terminalConfiguration)
         restored = true
+
+        super.init()
+
+        if framedPID != nil {
+            ConductorRegistry.instance.addConductor(self, for: sshIdentity)
+        }
+    }
+
+    deinit {
+        ConductorRegistry.instance.remove(conductor: self)
     }
 
     @objc var jsonValue: String? {
@@ -994,6 +1039,8 @@ class Conductor: NSObject, Codable {
             DebugLogImpl(file, Int32(line), function, "[\(self.it_addressString)@\(depth)] \(message)")
             if superVerbose {
                 NSLog("%@", "[\(self.it_addressString)@\(depth)] \(message)")
+            } else {
+                log(message)
             }
         }
     }
@@ -1105,9 +1152,24 @@ class Conductor: NSObject, Codable {
     }
 
     @objc func quit() {
+        cancelEnqueuedRequests(where: { _ in true })
+        switch state {
+        case .willExecutePipeline(var contexts):
+            for i in 0..<contexts.count {
+                contexts[i].cancel()
+            }
+        case .executingPipeline(var current, var pending):
+            current.cancel()
+            for i in 0..<pending.count {
+                pending[i].cancel()
+            }
+        default:
+            break
+        }
         queue = []
         state = .ground
         send(.quit, .fireAndForget)
+        ConductorRegistry.instance.remove(conductor: self)
         delegate?.conductorQuit()
         delegate?.conductorStateDidChange()
     }
@@ -1458,12 +1520,19 @@ class Conductor: NSObject, Codable {
         case .handleFile(let lines, let completion):
             switch result {
             case .line(let line):
+                if case let .framerFile(sub) = executionContext.command,
+                   case let .fetch(_, chunk, _) = sub,
+                   let chunk,
+                   let poc = chunk.performanceOperationCounter {
+                    poc.complete(.sent)
+                }
                 lines.strings.append(line)
             case .abort, .canceled:
                 completion("", -1)
             case .sideChannelLine(line: _, channel: _, pid: _):
                 break
             case .end(let status):
+                DLog("Response from server complete for: \(executionContext.command)")
                 completion(lines.strings.joined(separator: ""), Int32(status))
             }
         case .handlePoll(let output, let completion):
@@ -1597,6 +1666,7 @@ class Conductor: NSObject, Codable {
             update(executionContext: pending, result: .abort)
         }
         state = .unhooked
+        ConductorRegistry.instance.remove(conductor: self)
     }
 
     @objc func handleCommandBegin(identifier: String, depth: Int32) {
@@ -1643,6 +1713,7 @@ class Conductor: NSObject, Codable {
             } else {
                 DLog("Command ended. Remain in willExecute with remaining commands.")
                 let pending = Array(contexts.dropFirst())
+                it_assert(!pending.isEmpty)
                 state = .willExecutePipeline(pending)
                 amendPipeline(pending)
             }
@@ -1654,8 +1725,10 @@ class Conductor: NSObject, Codable {
                 state = .ground
                 dequeue()
             } else {
+                it_assert(!pending.isEmpty)
                 DLog("Command ended. Return to willExecute with remaining commands.")
-                state = .willExecutePipeline(Array(pending.dropFirst()))
+                state = .willExecutePipeline(Array(pending))
+                amendPipeline(pending)
             }
         }
     }
@@ -1862,6 +1935,7 @@ class Conductor: NSObject, Codable {
                       _ handler: ExecutionContext.Handler) {
         log("append \(command) to queue in state \(state)")
         let context = ExecutionContext(command: command, handler: handler)
+        DLog("Enqueue: \(command)")
         if highPriority {
             queue.insert(context, at: 0)
         } else {
@@ -1882,13 +1956,19 @@ class Conductor: NSObject, Codable {
         for i in indexes {
             if !queue[i].canceled {
                 DLog("cancel \(queue[i])")
-                queue[i].canceled = true
+                queue[i].cancel()
             }
         }
     }
 
     private func dequeue() {
         log("dequeue")
+        switch state {
+        case .ground, .recovery:
+            break
+        default:
+            it_fatalError()
+        }
         amendPipeline([])
     }
 
@@ -1905,8 +1985,24 @@ class Conductor: NSObject, Codable {
         }
         state = .willExecutePipeline(contexts)
         for pending in contexts[existing.count...] {
+            willSend(pending)
             let chunked = pending.command.stringValue.components(separatedBy: "\n").map(\.base64Encoded).joined(separator: "\n").chunk(128, continuation: pending.command.isFramer ? "\\" : "").joined(separator: "\n") + "\n"
             write(chunked)
+        }
+    }
+
+    private func willSend(_ pending: ExecutionContext) {
+        DLog("Dequeue and send request: \(pending.command)")
+        switch pending.command {
+        case .framerFile(let sub):
+            switch sub {
+            case .fetch(path: _, chunk: let chunk, uniqueID: _):
+                chunk?.performanceOperationCounter?.complete(.queued)
+            default:
+                return
+            }
+        default:
+            return
         }
     }
 
@@ -1964,16 +2060,16 @@ class Conductor: NSObject, Codable {
         _queueWrites = false
         if let parent = parent {
             if let data = (string + end).data(using: .utf8) {
-                DLog("ask parent to send: \(string)")
+                log("ask parent to send: \(string)")
                 parent.sendKeys(data)
             } else {
-                DLog("can't utf-8 encode string to send: \(string)")
+                log("can't utf-8 encode string to send: \(string)")
             }
         } else {
             if delegate == nil {
-                DLog("[can't send - nil delegate]")
+                log("[can't send - nil delegate]")
             }
-            DLog("[to \(framedPID.map { String($0) } ?? "non-framing")] Write: \(string)")
+            log("[to \(framedPID.map { String($0) } ?? "non-framing")] Write: \(string)")
             delegate?.conductorWrite(string: string + end)
         }
         _queueWrites = savedQueueWrites
@@ -2018,6 +2114,7 @@ class Conductor: NSObject, Codable {
         DLog("FAIL: \(reason)")
         forceReturnToGroundState()
         // Try to launch the login shell so you're not completely stuck.
+        ConductorRegistry.instance.remove(conductor: self)
         delegate?.conductorWrite(string: Command.execLoginShell([]).stringValue + "\n")
         delegate?.conductorAbort(reason: reason)
     }
@@ -2175,144 +2272,6 @@ extension Data {
     }
 }
 
-public enum FileSorting: Codable {
-    case byDate
-    case byName
-}
-
-public struct RemoteFile: Codable, Equatable, CustomDebugStringConvertible
-{
-    public struct FileInfo: Codable, Equatable {
-        public var size: Int?
-
-        public init(size: Int? = nil) {
-            self.size = size
-        }
-    }
-
-    public struct Permissions: Codable, Equatable {
-        public var r: Bool = true
-        public var w: Bool = false
-        public var x: Bool = true
-
-        public init(r: Bool = true,
-                    w: Bool = false,
-                    x: Bool = true) {
-            self.r = r
-            self.w = w
-            self.x = x
-        }
-    }
-
-    public enum Kind: Codable, Equatable, CustomDebugStringConvertible {
-        case file(FileInfo)
-        case folder
-        case host
-        case symlink(String)
-
-        public var debugDescription: String {
-            switch self {
-            case .file(let info):
-                if let size = info.size {
-                    return "<file size=\(size)>"
-                } else {
-                    return "file"
-                }
-            case .symlink(let target):
-                return "<symlink to \(target)>"
-            case .folder:
-                return "folder"
-            case .host:
-                return "host"
-            }
-        }
-    }
-
-    public var kind: Kind
-    public var absolutePath: String
-    public var permissions: Permissions?
-    public var parentPermissions: Permissions?
-    public var ctime: Date?
-    public var mtime: Date?
-    public var size: Int? {
-        switch kind {
-        case .file(let fileInfo):
-            return fileInfo.size
-        case .folder, .host, .symlink:
-            return nil
-        }
-    }
-    public static let workingSetPrefix = ".working"
-    public static var workingSet: RemoteFile {
-        return RemoteFile(kind: .folder,
-                          absolutePath: workingSetPrefix)
-    }
-
-    public static func lessThan(_ lhs: RemoteFile, _ rhs: RemoteFile, sort: FileSorting) -> Bool {
-        switch sort {
-        case .byName:
-            return lhs.absolutePath < rhs.absolutePath
-        case .byDate:
-            return (lhs.mtime ?? Date.distantPast) < (rhs.mtime ?? Date.distantPast)
-        }
-    }
-
-    public init(kind: Kind,
-                absolutePath: String,
-                permissions: Permissions? = nil,
-                parentPermissions: Permissions? = nil,
-                ctime: Date? = nil,
-                mtime: Date? = nil) {
-        self.kind = kind
-        self.absolutePath = absolutePath
-        self.permissions = permissions
-        self.parentPermissions = parentPermissions
-        self.ctime = ctime
-        self.mtime = mtime
-    }
-
-    public var debugDescription: String {
-        return "<RemoteFile: kind=\(kind) absolutePath=\(absolutePath)>"
-    }
-
-    public static var root: RemoteFile {
-        return RemoteFile(kind: .folder,
-                          absolutePath: "/",
-                          permissions: Permissions(r: true, w: false, x: true),
-                          parentPermissions: Permissions(r: false, w: false, x: true))
-    }
-
-    public var name: String {
-        (absolutePath as NSString).lastPathComponent
-    }
-
-    public var parentAbsolutePath: String? {
-        if absolutePath == "/" {
-            return nil
-        }
-        return (absolutePath as NSString).deletingLastPathComponent
-    }
-}
-
-extension RemoteFile {
-    var directoryEntry: iTermDirectoryEntry {
-        var mode = mode_t(0)
-        switch kind {
-        case .folder:
-            mode |= S_IFDIR
-        default:
-            break
-        }
-        if permissions?.r ?? true {
-            mode |= S_IRUSR
-        }
-        if permissions?.x ?? false {
-            mode |= S_IXUSR
-        }
-        return iTermDirectoryEntry(name: name, mode: mode)
-    }
-}
-
 public enum iTermFileProviderServiceError: Error, Codable, CustomDebugStringConvertible {
     case notFound(String)
     case unknown(String)
@@ -2353,6 +2312,7 @@ enum SSHEndpointException: LocalizedError {
     case connectionClosed
     case fileNotFound
     case internalError  // e.g., non-decodable data from fetch
+    case transferCanceled
 
     var errorDescription: String? {
         get {
@@ -2363,63 +2323,13 @@ enum SSHEndpointException: LocalizedError {
                 return "File not found"
             case .internalError:
                 return "Internal error"
+            case .transferCanceled:
+                return "File transfer canceled"
             }
         }
     }
 }
 
-protocol SSHEndpoint: AnyObject {
-    @available(macOS 11.0, *)
-    @MainActor
-    func listFiles(_ path: String, sort: FileSorting) async throws -> [RemoteFile]
-
-    @available(macOS 11.0, *)
-    @MainActor
-    func download(_ path: String, chunk: DownloadChunk?) async throws -> Data
-
-    @available(macOS 11.0, *)
-    @MainActor
-    func stat(_ path: String) async throws -> RemoteFile
-
-    @available(macOS 11.0, *)
-    @MainActor
-    func delete(_ path: String, recursive: Bool) async throws
-
-    @available(macOS 11.0, *)
-    @MainActor
-    func ln(_ source: String, _ symlink: String) async throws -> RemoteFile
-
-    @available(macOS 11.0, *)
-    @MainActor
-    func mv(_ file: String, newParent: String, newName: String) async throws -> RemoteFile
-
-    @available(macOS 11.0, *)
-    @MainActor
-    func mkdir(_ file: String) async throws
-
-    @available(macOS 11.0, *)
-    @MainActor
-    func create(_ file: String, content: Data) async throws
-
-    @available(macOS 11.0, *)
-    @MainActor
-    func replace(_ file: String, content: Data) async throws -> RemoteFile
-
-    @available(macOS 11.0, *)
-    @MainActor
-    func setModificationDate(_ file: String, date: Date) async throws -> RemoteFile
-
-    @available(macOS 11.0, *)
-    @MainActor
-    func chmod(_ file: String, permissions: RemoteFile.Permissions) async throws -> RemoteFile
-
-    var sshIdentity: SSHIdentity { get }
-}
-
-struct DownloadChunk: Codable, Equatable {
-    var offset: Int
-    var size: Int
-}
 
 @available(macOS 11.0, *)
 extension Conductor: SSHEndpoint {
@@ -2498,18 +2408,40 @@ extension Conductor: SSHEndpoint {
     }
 
     @MainActor
-    func download(_ path: String, chunk: DownloadChunk?) async throws -> Data {
+    func download(_ path: String, chunk: DownloadChunk?, uniqueID: String?) async throws -> Data {
         return try await logging("download \(path) \(String(describing: chunk))") {
             guard let pathData = path.data(using: .utf8) else {
                 throw iTermFileProviderServiceError.notFound(path)
             }
-            log("perform file operation to download \(path)")
-            let b64: String = try await performFileOperation(subcommand: .fetch(path: pathData, chunk: chunk))
+            log("perform file operation to download \(path) with uniqueID \(uniqueID.d)")
+            let b64: String = try await performFileOperation(subcommand: .fetch(path: pathData,
+                                                                                chunk: chunk,
+                                                                                uniqueID: uniqueID))
             log("file operation completed with \(b64.count) characters")
             guard let data = Data(base64Encoded: b64) else {
                 throw iTermFileProviderServiceError.internalError("Server returned garbage")
             }
             return data
+        }
+    }
+
+    @MainActor
+    func cancelDownload(uniqueID: String) async throws {
+        DLog("Want to cancel downloads with unique ID \(uniqueID)")
+        cancelEnqueuedRequests { command in
+            switch command {
+            case .framerFile(let sub):
+                switch sub {
+                case .fetch(path: let path, chunk: let chunk, uniqueID: uniqueID):
+                    DLog("Canceling fetch of \(path) with unique ID \(uniqueID)")
+                    chunk?.performanceOperationCounter?.complete(.queued)
+                    return true
+                default:
+                    return false
+                }
+            default:
+                return false
+            }
         }
     }
 
@@ -2851,7 +2783,7 @@ extension Conductor: ConductorFileTransferDelegate {
                     return
                 }
                 let chunk = DownloadChunk(offset: offset, size: chunkSize)
-                let data = try await download(remotePath, chunk: chunk)
+                let data = try await download(remotePath, chunk: chunk, uniqueID: nil)
                 if data.isEmpty {
                     done = true
                 } else {
@@ -2867,6 +2799,177 @@ extension Conductor: ConductorFileTransferDelegate {
         } catch {
             fileTransfer.fail(reason: error.localizedDescription)
         }
+    }
+
+    @MainActor
+    func downloadChunked(remoteFile: RemoteFile,
+                         progress: Progress?,
+                         cancellation: Cancellation?,
+                         destination: URL) async throws -> DownloadType {
+        DLog("Download of \(remoteFile.absolutePath) requested")
+        await Conductor.downloadSemaphore.wait()
+        DLog("Download of \(remoteFile.absolutePath) beginning")
+        defer {
+            Task {
+                DLog("Download of \(remoteFile.absolutePath) completely finished")
+                await Conductor.downloadSemaphore.signal()
+            }
+        }
+        if remoteFile.kind.isFolder {
+            let remoteZipPath = try await zip(remoteFile.absolutePath)
+            do {
+                let zipRemoteFile = try await stat(remoteZipPath)
+                let localZipPath = destination.appendingPathExtension("zip")
+                _ = try await downloadChunked(
+                    remoteFile: zipRemoteFile,
+                    progress: progress,
+                    cancellation: cancellation,
+                    destination: localZipPath)
+
+                // The `destination` argument is the current directory in which unzip is run. I give
+                // -d path in args so it will create destination.path if needed and then
+                // unzip therein.
+                try await iTermCommandRunner.unzipURL(
+                    localZipPath,
+                    withArguments: ["-q", "-o", "-d", destination.path],
+                    destination: "/",
+                    callbackQueue: .main)
+                try? await rm(remoteZipPath, recursive: false)
+                try? FileManager.default.removeItem(at: localZipPath)
+            } catch {
+                try? await rm(remoteZipPath, recursive: false)
+                throw error
+            }
+            return .directory
+        }
+
+        it_assert(remoteFile.kind.isRegularFile, "Only files can be downloaded")
+
+        let chunkSize = 4096
+        progress?.fraction = 0
+        let state = DownloadState(remoteFile: remoteFile,
+                                  chunkSize: chunkSize,
+                                  cancellation: cancellation,
+                                  progress: progress,
+                                  conductor: self)
+        while state.shouldFetchMore {
+            try await state.addTask(conductor: self)
+        }
+        if let cancellation, cancellation.canceled {
+            DLog("Download of \(remoteFile.absolutePath) throwing")
+            throw SSHEndpointException.transferCanceled
+        }
+        DLog("Download of \(remoteFile.absolutePath) finished normally")
+        try state.content.write(to: destination)
+        return .file
+    }
+
+    class DownloadState {
+        var remoteFile: RemoteFile
+        var offset = 0
+        var chunkSize: Int
+        var counter = PerformanceCounter<DownloadOp>()
+        var cancellation: Cancellation?
+        var progress: Progress?
+        var content = Data()
+
+        private struct Pending {
+            var uniqueID: String
+            var offset: Int
+            var task: Task<Data, Error>
+        }
+        private var tasks = [Pending]()
+
+        init(remoteFile: RemoteFile,
+             chunkSize: Int,
+             cancellation: Cancellation?,
+             progress: Progress?,
+             conductor: Conductor) {
+            self.remoteFile = remoteFile
+            self.chunkSize = chunkSize
+            self.cancellation = cancellation
+            self.progress = progress
+
+            cancellation?.impl = { [weak self, weak conductor] in
+                conductor?.DLog("Cancellation requested")
+                Task { @MainActor in
+                    guard let self, let conductor else {
+                        conductor?.DLog("Already dealloced")
+                        return
+                    }
+                    for pending in self.tasks {
+                        try? await conductor.cancelDownload(uniqueID: pending.uniqueID)
+                    }
+                }
+            }
+        }
+
+        var shouldFetchMore: Bool {
+            if cancellation?.canceled == true {
+                return false
+            }
+            return offset < remoteFile.size!
+        }
+
+        func addTask(conductor: Conductor) async throws {
+            let taskOffset = offset
+            offset += chunkSize
+            let uniqueID = UUID().uuidString
+            let pending = Pending(
+                uniqueID: uniqueID,
+                offset: taskOffset,
+                task: Task { @MainActor in
+                    let data = try await conductor.downloadOneChunk(
+                        remoteFile: remoteFile,
+                        offset: taskOffset,
+                        chunkSize: chunkSize,
+                        uniqueID: uniqueID,
+                        counter: counter)
+                    counter.perform(.post) {
+                        if data.isEmpty {
+                            progress?.fraction = 1.0
+                        } else {
+                            progress?.fraction = min(1.0, max(0, Double(offset) / Double(remoteFile.size!)))
+                        }
+                    }
+                    return data
+                })
+            tasks.append(pending)
+            let maxConcurrency = 8
+            while tasks.count >= maxConcurrency || (!tasks.isEmpty && !shouldFetchMore) {
+                if cancellation?.canceled == true {
+                    break
+                }
+                let result = try await tasks.removeFirst().task.value
+                content.append(result)
+                if result.isEmpty && !tasks.isEmpty {
+                    throw ConductorFileTransfer.ConductorFileTransferError(
+                        "Download ended prematurely (received \(content.count) of \(remoteFile.size!) byte\(remoteFile.size! == 1 ? "" : "s")")
+                }
+            }
+        }
+    }
+
+    @MainActor
+    private func downloadOneChunk(remoteFile: RemoteFile,
+                                  offset: Int,
+                                  chunkSize: Int,
+                                  uniqueID: String,
+                                  counter: PerformanceCounter<DownloadOp>) async throws -> Data {
+        let poc = counter.start([.queued, .sent, .transferring])
+        let chunk = DownloadChunk(offset: offset,
+                                  size: chunkSize,
+                                  performanceOperationCounter: poc)
+
+        DLog("Send request to download from offset \(offset)")
+        let data = try await download(remoteFile.absolutePath,
+                                      chunk: chunk,
+                                      uniqueID: uniqueID)
+        DLog("Finished request to download from offset \(offset)")
+        poc.complete(.transferring)
+
+        // counter.log()
+        return data
     }
 
     @MainActor
@@ -3040,3 +3143,4 @@ extension RemoteFile {
         return fileStat
     }
 }
+

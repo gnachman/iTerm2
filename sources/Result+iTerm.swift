@@ -48,3 +48,38 @@ extension Result {
         }
     }
 }
+
+extension Result {
+    var isSuccess: Bool {
+        switch self {
+        case .success:
+            return true
+        case .failure:
+            return false
+        }
+    }
+}
+
+extension Result {
+    func handle<T>(success: (Success) throws -> (T), failure: (Failure) throws -> (T)) rethrows -> T {
+        switch self {
+        case .success(let value):
+            try success(value)
+        case .failure(let value):
+            try failure(value)
+        }
+    }
+
+    var successValue: Success? {
+        switch self {
+        case .success(let value): value
+        case .failure(_): nil
+        }
+    }
+    var failureValue: Failure? {
+        switch self {
+        case .success: nil
+        case .failure(let failure): failure
+        }
+    }
+}

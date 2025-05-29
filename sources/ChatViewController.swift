@@ -7,6 +7,7 @@
 
 import AppKit
 import SwiftyMarkdown
+import UniformTypeIdentifiers
 
 @objc(iTermChatViewControllerDelegate)
 protocol ChatViewControllerDelegate: AnyObject {
@@ -14,16 +15,19 @@ protocol ChatViewControllerDelegate: AnyObject {
     func chatViewControllerDeleteSession(_ controller: ChatViewController)
 }
 
+@objc class WebSearchButton: NSButton { }
+
 @objc
 class ChatViewController: NSViewController {
     @objc weak var delegate: ChatViewControllerDelegate?
     private(set) var chatID: String? = UUID().uuidString
 
+    private let inputView = ChatInputView()
     private var scrollView: NSScrollView!
     private var tableView: NSTableView!
     private var titleLabel = NSTextField()
     private var sessionButton: NSButton!
-    private var inputTextFieldContainer: ChatInputTextFieldContainer!
+    private var webSearchButton: WebSearchButton?
     private var sendButton: NSButton!
     private var showTypingIndicator: Bool {
         get {
@@ -123,17 +127,41 @@ class ChatViewController: NSViewController {
             sessionButton = NSButton(title: "Chat Info", target: nil, action: nil)
         }
 
-
         sessionButton.bezelStyle = .badge
         sessionButton.isBordered = false
         sessionButton.target = self
         sessionButton.action = #selector(showSessionButtonMenu(_:))
         sessionButton.sizeToFit()
         sessionButton.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-
         sessionButton.translatesAutoresizingMaskIntoConstraints = false
         sessionButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         sessionButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+
+        if #available(macOS 11.0, *) {
+            if AITermController.provider.supportsHostedWebSearch {
+                let webSearchButton = WebSearchButton(image: NSImage.it_image(forSymbolName: "globe",
+                                                                              accessibilityDescription: "Web search image",
+                                                                              fallbackImageName: "globe",
+                                                                              for: Self.self),
+                                                      target: nil,
+                                                      action: nil)
+                webSearchButton.imageScaling = .scaleProportionallyUpOrDown
+                webSearchButton.controlSize = .large
+                webSearchButton.contentTintColor = webSearchEnabled ? .controlAccentColor : nil
+                webSearchButton.isBordered = false
+                webSearchButton.bezelStyle = .badge
+                webSearchButton.isBordered = false
+                webSearchButton.target = self
+                webSearchButton.action = #selector(toggleWebSearch(_:))
+                webSearchButton.sizeToFit()
+                webSearchButton.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
+                webSearchButton.translatesAutoresizingMaskIntoConstraints = false
+                webSearchButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+                webSearchButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+                webSearchButton.toolTip = "Allow AI to perform web search?"
+                self.webSearchButton = webSearchButton
+            }
+        }
 
         // Configure Table View
         tableView = NSTableView()
@@ -172,62 +200,26 @@ class ChatViewController: NSViewController {
         scrollView.hasVerticalScroller = true
         scrollView.translatesAutoresizingMaskIntoConstraints = false
 
-        // Input Components
-        inputTextFieldContainer = ChatInputTextFieldContainer()
-        inputTextFieldContainer.translatesAutoresizingMaskIntoConstraints = false
-        inputTextFieldContainer.placeholder = "Type a message…"
-        inputTextFieldContainer.textView.delegate = self
-        inputTextFieldContainer.isEnabled = false
-        inputTextFieldContainer.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-        inputTextFieldContainer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        inputView.delegate = self
+        inputView.translatesAutoresizingMaskIntoConstraints = false
 
-        if #available(macOS 11.0, *) {
-            if let image = NSImage(systemSymbolName: "paperplane.fill", accessibilityDescription: "Send") {
-                sendButton = NSButton(image: image, target: self, action: #selector(sendButtonClicked))
-                sendButton.imageScaling = .scaleProportionallyUpOrDown
-                sendButton.imagePosition = .imageOnly
-                sendButton.bezelStyle = .regularSquare
-                sendButton.isBordered = false
-                sendButton.setButtonType(.momentaryPushIn)
-            } else {
-                sendButton = NSButton(title: "Send", target: self, action: #selector(sendButtonClicked))
-            }
-        } else {
-            sendButton = NSButton(title: "Send", target: self, action: #selector(sendButtonClicked))
-        }
-        sendButton.translatesAutoresizingMaskIntoConstraints = false
-        sendButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-        sendButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-
-        // Input Stack
-        class ChatViewControllerInputStackView: NSStackView {}
-        let inputStack = ChatViewControllerInputStackView(views: [inputTextFieldContainer, sendButton])
-        inputStack.orientation = .horizontal
-        inputStack.spacing = 8
-        inputStack.translatesAutoresizingMaskIntoConstraints = false
-        inputStack.setContentHuggingPriority(.defaultHigh, for: .vertical)
+        let headerSpacer = NSView()
+        headerSpacer.setContentHuggingPriority(.init(1), for: .horizontal)
+        headerSpacer.setContentCompressionResistancePriority(.init(1), for: .horizontal)
 
         // Header stack
         class ChatViewControllerHeaderStackView: NSStackView {}
-        let headerStack = ChatViewControllerHeaderStackView(views: [titleLabel, sessionButton])
+        let headerStack = ChatViewControllerHeaderStackView(views: [titleLabel, headerSpacer, webSearchButton, sessionButton].compactMap { $0 })
         headerStack.orientation = .horizontal
-        headerStack.spacing = 4
+        headerStack.spacing = 8
         headerStack.translatesAutoresizingMaskIntoConstraints = false
         headerStack.setContentHuggingPriority(.defaultLow, for: .horizontal)
         headerStack.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
 
-        let vev = NSVisualEffectView()
-        vev.translatesAutoresizingMaskIntoConstraints = false
-        vev.wantsLayer = true
-        vev.blendingMode = .withinWindow
-        vev.material = .underWindowBackground
-        vev.state = .active
-
         class ChatViewControllerInnerContainer: NSView {}
         let innerContainer = ChatViewControllerInnerContainer()
         innerContainer.addSubview(scrollView)
-        innerContainer.addSubview(vev)
-        innerContainer.addSubview(inputStack)
+        innerContainer.addSubview(inputView)
         innerContainer.translatesAutoresizingMaskIntoConstraints = false
 
         // Main Layout including Title
@@ -238,8 +230,7 @@ class ChatViewController: NSViewController {
         mainStack.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(mainStack)
 
-        let mainStackInsets = NSEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)  // NSEdgeInsets(top: 4, left: 8, bottom: 8, right: 8)
-        let inputStackVerticalInset = CGFloat(12)
+        let mainStackInsets = NSEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
 
         class ChatViewControllerDividerView: GradientView {}
         let divider = ChatViewControllerDividerView(
@@ -265,7 +256,6 @@ class ChatViewController: NSViewController {
             divider.bottomAnchor.constraint(equalTo: scrollView.topAnchor),
             divider.heightAnchor.constraint(equalToConstant: 1),
 
-            sessionButton.trailingAnchor.constraint(equalTo: headerStack.trailingAnchor),
             sessionButton.widthAnchor.constraint(equalToConstant: 18),
             sessionButton.topAnchor.constraint(equalTo: titleLabel.topAnchor),
             sessionButton.bottomAnchor.constraint(equalTo: titleLabel.bottomAnchor),
@@ -275,12 +265,6 @@ class ChatViewController: NSViewController {
             mainStack.topAnchor.constraint(equalTo: view.topAnchor, constant: mainStackInsets.top),
             mainStack.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -mainStackInsets.bottom),
 
-            inputStack.heightAnchor.constraint(equalTo: inputTextFieldContainer.heightAnchor, constant: inputStackVerticalInset * 2),
-            inputStack.leadingAnchor.constraint(equalTo: innerContainer.leadingAnchor, constant: 16),
-            inputStack.trailingAnchor.constraint(equalTo: innerContainer.trailingAnchor, constant: -16),
-
-            sendButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 18),
-
             innerContainer.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             innerContainer.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
             innerContainer.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
@@ -288,7 +272,6 @@ class ChatViewController: NSViewController {
 
             innerContainer.leadingAnchor.constraint(equalTo: mainStack.leadingAnchor),
             innerContainer.trailingAnchor.constraint(equalTo: mainStack.trailingAnchor),
-            innerContainer.bottomAnchor.constraint(equalTo: inputStack.bottomAnchor),
 
             documentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             documentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
@@ -302,16 +285,19 @@ class ChatViewController: NSViewController {
             spacer.leftAnchor.constraint(equalTo: documentView.leftAnchor),
             spacer.rightAnchor.constraint(equalTo: documentView.rightAnchor),
             spacer.bottomAnchor.constraint(equalTo: documentView.bottomAnchor),
-            spacer.heightAnchor.constraint(equalTo: inputStack.heightAnchor),
 
-            vev.leftAnchor.constraint(equalTo: documentView.leftAnchor),
-            vev.rightAnchor.constraint(equalTo: documentView.rightAnchor),
-            vev.bottomAnchor.constraint(equalTo: innerContainer.bottomAnchor),
-            vev.heightAnchor.constraint(equalTo: spacer.heightAnchor),
-
-            inputTextFieldContainer.leadingAnchor.constraint(equalTo: inputStack.leadingAnchor),
-            sendButton.trailingAnchor.constraint(equalTo: inputStack.trailingAnchor),
+            inputView.leftAnchor.constraint(equalTo: documentView.leftAnchor),
+            inputView.rightAnchor.constraint(equalTo: documentView.rightAnchor),
+            inputView.bottomAnchor.constraint(equalTo: innerContainer.bottomAnchor),
+            inputView.heightAnchor.constraint(equalTo: spacer.heightAnchor),
         ])
+        if let webSearchButton {
+            NSLayoutConstraint.activate([
+                webSearchButton.widthAnchor.constraint(equalToConstant: 18),
+                webSearchButton.topAnchor.constraint(equalTo: titleLabel.topAnchor),
+                webSearchButton.bottomAnchor.constraint(equalTo: titleLabel.bottomAnchor),
+            ])
+        }
         view.alphaValue = 0
         self.view = view
     }
@@ -347,7 +333,7 @@ extension ChatViewController {
         } else {
             model = nil
         }
-        inputTextFieldContainer.isEnabled = chatID != nil
+        inputView.isEnabled = chatID != nil
         model?.delegate = self
         titleLabel.stringValue = chat?.title ?? ""
         self.chatID = chat?.id
@@ -402,12 +388,12 @@ extension ChatViewController {
             model.lastStreamingState = .stoppedAutomatically
         }
         scrollToBottom(animated: false)
-        view.window?.makeFirstResponder(inputTextFieldContainer.textView)
+        inputView.makeTextViewFirstResponder()
     }
 
     func offerSelectedText(_ text: String) {
         if eligibleForAutoPaste {
-            inputTextFieldContainer.stringValue = text
+            inputView.stringValue = text
         }
     }
 
@@ -494,6 +480,24 @@ extension ChatViewController {
             let location = NSPoint(x: 0, y: sender.bounds.height)
             menu.popUp(positioning: nil, at: location, in: sender)
         }
+    }
+
+    private static let webSearchUserDefaultsKey = "AI Web Search Enabled"
+    private var webSearchEnabled: Bool {
+        get {
+            if #available(macOS 11, *) {
+                return UserDefaults.standard.bool(forKey: Self.webSearchUserDefaultsKey)
+            }
+            return false
+        }
+        set {
+            return UserDefaults.standard.set(newValue, forKey: Self.webSearchUserDefaultsKey)
+        }
+    }
+
+    @objc private func toggleWebSearch(_ sender: Any) {
+        webSearchEnabled = !webSearchEnabled
+        webSearchButton?.contentTintColor = webSearchEnabled ? .controlAccentColor : nil
     }
 
     @objc private func toggleAlwaysAllow(_ sender: Any) {
@@ -626,25 +630,6 @@ extension ChatViewController {
         }
     }
 
-    @objc private func sendButtonClicked() {
-        let text = inputTextFieldContainer.stringValue
-        guard !text.isEmpty, let chatID else {
-            return
-        }
-        let message = Message(chatID: chatID,
-                              author: .user,
-                              content: .plainText(text),
-                              sentDate: Date(),
-                              uniqueID: UUID())
-        ChatClient.instance?.publish(
-            message: message,
-            toChatID: chatID,
-            partial: false)
-
-        inputTextFieldContainer.stringValue = ""
-        eligibleForAutoPaste = true
-    }
-
     private func scrollToBottom(animated: Bool) {
         guard let model else {
             return
@@ -700,7 +685,17 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 let cell = SystemMessageCellView()
                 configure(cell: cell, for: message.message, isLast: isLastMessage)
                 return cell
-            default:
+            case .multipart:
+                let cell = MultipartMessageCellView()
+                configure(cell: cell, for: message.message, isLast: isLastMessage)
+                return cell
+
+            case .append, .appendAttachment:
+                it_fatalError("Append-type messages should not be in model")
+
+            case .plainText, .markdown, .explanationRequest, .explanationResponse,
+                    .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest,
+                    .renameChat, .commit, .setPermissions, .vectorStoreCreated:
                 let cell = RegularMessageCellView()
                 configure(cell: cell, for: message.message, isLast: isLastMessage)
                 return cell
@@ -727,7 +722,14 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
             return
         }
         model.deleteFrom(index: i)
-        inputTextFieldContainer.stringValue = text
+        inputView.stringValue = text
+    }
+
+    private func configure(cell: MultipartMessageCellView,
+                           for message: Message,
+                           isLast: Bool) {
+        cell.configure(with: rendition(for: message, isLast: isLast),
+                       maxBubbleWidth: max(16, tableView.bounds.width * 0.7))
     }
 
     private func configure(cell: TerminalCommandMessageCellView,
@@ -785,6 +787,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                     }
                 }
             }
+        case .vectorStoreCreated:
+            it_fatalError()
         case .selectSessionRequest(let originalMessage):
             cell.buttonClicked = { [weak self] identifier, messageID in
                 guard let self else {
@@ -811,6 +815,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                                 requestUUID: originalMessage.uniqueID,
                                 message: "The user declined to allow this function call to execute.",
                                 functionCallName: originalMessage.functionCallName ?? "Unknown function call name",
+                                functionCallID: originalMessage.functionCallID,
                                 userNotice: nil)
                         }
                     }
@@ -818,6 +823,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
             }
         case .remoteCommandRequest(let remoteCommand):
             let functionCallName = remoteCommand.llmMessage.function_call?.name ?? "Unknown function call name"
+            let functionCallID = remoteCommand.llmMessage.functionCallID
             cell.buttonClicked = { [client, listModel] identifier, messageID in
                 guard messageID == originalMessageID else {
                     return
@@ -833,6 +839,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                         requestUUID: messageID,
                         message: "The user did not link a terminal session to chat, so the function could not be run.",
                         functionCallName: functionCallName,
+                        functionCallID: functionCallID,
                         userNotice: "AI attempted to perform an action, but no session is linked to this chat so it failed.")
                     return
                 }
@@ -868,11 +875,13 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                         requestUUID: messageID,
                         message: "The user declined to allow function calling. Try to find another way to assist.",
                         functionCallName: functionCallName,
+                        functionCallID: functionCallID,
                         userNotice: nil)
                 }
             }
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
-                .remoteCommandResponse, .renameChat, .append, .commit, .setPermissions:
+                .remoteCommandResponse, .renameChat, .append, .commit, .setPermissions,
+                .appendAttachment, .multipart:
             cell.buttonClicked = nil
 
         case .terminalCommand:
@@ -901,6 +910,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         switch message.content {
         case .plainText:
             editable = message.author == .user
+        case .vectorStoreCreated:
+            it_fatalError()
         case .clientLocal(let clientLocal):
             switch clientLocal.action {
             case .pickingSession:
@@ -932,6 +943,50 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         case .terminalCommand(let cmd):
                 .command(.init(command: cmd.command,
                                url: cmd.url))
+        case .multipart(let subparts, _):
+                .multipart(subparts.map { subpart in
+                    switch subpart {
+                    case .attachment(let attachment):
+                        switch attachment.type {
+                        case .code(let content):
+                            MessageRendition.SubpartContainer(
+                                kind: .codeAttachment,
+                                attributedString: AttributedStringForCode(
+                                    content,
+                                    textColor: message.textColor))
+                        case .statusUpdate(let statusUpdate):
+                            MessageRendition.SubpartContainer(
+                                kind: .statusUpdate,
+                                attributedString: AttributedStringForStatusUpdate(
+                                    statusUpdate,
+                                    textColor: message.textColor))
+                        case .file(let file):
+                            MessageRendition.SubpartContainer(
+                                kind: .fileAttachment(id: attachment.id, name: file.name, file: file),
+                                icon: NSImage.iconImage(filename: file.name,
+                                                        size: .init(width: 16, height: 16)),
+                                attributedString: AttributedStringForFilename(file.name,
+                                                                              textColor: message.textColor))
+                        case .fileID(id: let id, name: let name):
+                            MessageRendition.SubpartContainer(
+                                kind: .fileAttachment(id: id, name: name, file: nil),
+                                icon: NSImage.iconImage(filename: name,
+                                                        size: .init(width: 16, height: 16)),
+                                attributedString: AttributedStringForFilename(name,
+                                                                              textColor: message.textColor))
+                        }
+                    case .plainText(let text):
+                        MessageRendition.SubpartContainer(
+                            kind: .regular,
+                            attributedString: Message.Content.plainText(text).attributedStringValue(
+                                linkColor: message.linkColor, textColor: message.textColor))
+                    case .markdown(let text):
+                        MessageRendition.SubpartContainer(
+                            kind: .regular,
+                            attributedString: Message.Content.markdown(text).attributedStringValue(
+                                linkColor: message.linkColor, textColor: message.textColor))
+                    }
+                })
         default:
                 .regular(.init(attributedString: message.attributedStringValue,
                                buttons: message.buttons,
@@ -946,26 +1001,174 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
     }
 }
 
-extension ChatViewController: NSTextViewDelegate {
-    func textView(_ textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
-        if commandSelector == #selector(NSResponder.insertNewline(_:)) {
-            sendButtonClicked()
-            return true
+extension LLM.Message.Attachment {
+    func localPathCreatingIfNeeded() -> String {
+        if let path = existingLocalPath() {
+            return path
         }
-        return false
-    }
-
-    func textDidChange(_ notification: Notification) {
-        eligibleForAutoPaste = inputTextFieldContainer.stringValue.isEmpty
-    }
-
-    func textViewDidChangeSelection(_ notification: Notification) {
-        DispatchQueue.main.async { [inputTextFieldContainer] in
-            guard let inputTextFieldContainer else {
-                return
+        let path = proposedLocalPath()
+        switch type {
+        case .code(let text):
+            do {
+                try text.write(toFile: path, atomically: false, encoding: .utf8)
+            } catch {
+                DLog("Failed to write to \(path): \(error)")
             }
-            inputTextFieldContainer.textView.scrollRangeToVisible(inputTextFieldContainer.textView.selectedRange())
+        case .statusUpdate:
+            it_fatalError()
+        case .file(let file):
+            do {
+                try file.content.write(to: URL(fileURLWithPath: path))
+            } catch {
+                DLog("Failed to write to \(path): \(error)")
+            }
+        case .fileID:
+            // TODO: Download the file
+            it_fatalError()
         }
+        return path
+    }
+
+    private var basePathForAttachments: String {
+        NSTemporaryDirectory() + "iTerm2ChatAttachments/"
+    }
+
+    private func possibleLocalPaths() -> [String] {
+        switch type {
+        case .code:
+            [basePathForAttachments.appendingPathComponent(id).appendingPathComponent("code.txt")]
+        case .file(let file):
+            [file.localPath,
+             basePathForAttachments.appendingPathComponent(id).appendingPathComponent(file.name.lastPathComponent)].compactMap { $0 }
+        case .statusUpdate:
+            it_fatalError()
+        case .fileID:
+            // TODO: Download the file
+            []
+        }
+    }
+
+    private func existingLocalPath() -> String? {
+        let candidates = possibleLocalPaths()
+        return candidates.first { candidate in
+            FileManager.default.fileExists(atPath: candidate)
+        }
+    }
+
+    private func proposedLocalPath() -> String {
+        let path = possibleLocalPaths()[0]
+        do {
+            try FileManager.default.createDirectory(atPath: path.deletingLastPathComponent,
+                                                    withIntermediateDirectories: true)
+        } catch {
+            DLog("Failed to create \(path): \(error)")
+        }
+        return path
+    }
+}
+
+extension ChatViewController: ChatInputViewDelegate {
+    func textDidChange() {
+        eligibleForAutoPaste = inputView.stringValue.isEmpty
+    }
+
+    func mimeType(_ filename: String) -> String {
+        let ext = filename.pathExtension
+        if let mime = openAIExtensionToMime[ext] {
+            return mime
+        }
+        if #available(macOS 11, *) {
+            let url = URL(fileURLWithPath: filename)
+            if let uti = try? url.resourceValues(forKeys: [.typeIdentifierKey]).typeIdentifier,
+               let mimeType = UTType(uti)?.preferredMIMEType {
+                return mimeType
+            }
+            // Personally, I'd rather use application/octet-stream but OpenAI won't accept it.
+            // Let's take a flying leap and try to interpret this unknown file as text.
+            return "text/plain"
+        } else {
+            let ext = (filename as NSString).pathExtension as CFString
+            guard let uti = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, ext, nil)?.takeRetainedValue(),
+                  let mime = UTTypeCopyPreferredTagWithClass(uti, kUTTagClassMIMEType)?.takeRetainedValue() as String? else {
+                return "text/plain"
+            }
+            return mime
+        }
+    }
+
+    func sendButtonClicked(text: String) {
+        guard !text.isEmpty, let chatID else {
+            return
+        }
+        let attachments = inputView.attachedFiles.flatMap { item -> [Message.Subpart] in
+            switch item {
+            case .regular(let filename):
+                let resolved = FileManager.default.realPath(of: filename)
+                var isDirectory = ObjCBool(false)
+                if FileManager.default.fileExists(atPath: filename, isDirectory: &isDirectory) {
+                    if isDirectory.boolValue {
+                        guard let sequence = FileManager.default.recursiveRegularFileIterator(
+                            at: URL(fileURLWithPath: filename)) else {
+                            return []
+                        }
+                        return sequence.compactMap { childURL -> Message.Subpart? in
+                            guard let data = try? Data(contentsOf: childURL) else {
+                                return nil
+                            }
+                            return Message.Subpart.attachment(.init(
+                                inline: false,
+                                id: UUID().uuidString,
+                                type: .file(.init(name: String(childURL.path.removing(prefix: resolved).removing(prefix: "/")),
+                                                  content: data,
+                                                  mimeType: mimeType(childURL.path)))))
+                            }
+                    } else {
+                        if let data = try? Data(contentsOf: URL(fileURLWithPath: filename)) {
+                            return [
+                                Message.Subpart.attachment(.init(
+                                    inline: false,
+                                    id: UUID().uuidString,
+                                    type: .file(.init(name: filename.lastPathComponent,
+                                                      content: data,
+                                                      mimeType: mimeType(filename)))))]
+                        } else {
+                            return []
+                        }
+                    }
+                } else {
+                    return []
+                }
+            case .placeholder:
+                return []
+            }
+        }
+        let vectorStoreIDs = [listModel.chat(id: chatID)?.vectorStore].compactMap { $0 }
+        let configuration = Message.Configuration(hostedWebSearchEnabled: webSearchEnabled,
+                                                  vectorStoreIDs: vectorStoreIDs)
+        let message = if attachments.isEmpty {
+            Message(chatID: chatID,
+                    author: .user,
+                    content: .plainText(text),
+                    sentDate: Date(),
+                    uniqueID: UUID(),
+                    configuration: configuration)
+        } else {
+            Message(chatID: chatID,
+                    author: .user,
+                    content: .multipart([.plainText(text)] + attachments,
+                                        vectorStoreID: listModel.chat(id: chatID)?.vectorStore),
+                    sentDate: Date(),
+                    uniqueID: UUID(),
+                    configuration: configuration)
+        }
+
+        ChatClient.instance?.publish(
+            message: message,
+            toChatID: chatID,
+            partial: false)
+
+        inputView.clear()
+        eligibleForAutoPaste = true
     }
 }
 
@@ -1018,7 +1221,13 @@ extension ChatViewController {
 }
 
 extension ChatViewController: ChatViewControllerModelDelegate {
+    private func assertMessageTypeAllowed(_ message: Message?) {
+        ChatViewControllerModel.assertMessageTypeAllowed(message)
+    }
     func chatViewControllerModel(didInsertItemAtIndex i: Int) {
+        if let model {
+            assertMessageTypeAllowed(model.items[i].existingMessage?.message)
+        }
         DLog("Insert tableview row at \(i)")
         estimatedCount += 1
         it_assert(i <= estimatedCount)
@@ -1047,6 +1256,11 @@ extension ChatViewController: ChatViewControllerModelDelegate {
     }
 
     func chatViewControllerModel(didModifyItemsAtIndexes indexSet: IndexSet) {
+        if let model {
+            for i in indexSet {
+                assertMessageTypeAllowed(model.items[i].existingMessage?.message)
+            }
+        }
         guard let scrollView = tableView.enclosingScrollView,
               scrollView.documentView != nil else {
             return
@@ -1072,47 +1286,14 @@ fileprivate enum PickSessionButtonIdentifier: String {
     case cancel
 }
 
-extension Message {
-    var linkColor: NSColor {
-        return author == .user ? .white : .linkColor
-    }
-    var textColor: NSColor {
-        return author == .user ? .white : .textColor
-    }
-
-    var buttons: [MessageRendition.Regular.Button] {
-        switch content {
-        case .plainText, .markdown, .explanationRequest, .explanationResponse,
-                .remoteCommandResponse, .renameChat, .append, .commit, .setPermissions,
-                .terminalCommand:
-            []
-        case .clientLocal(let clientLocal):
-            switch clientLocal.action {
-            case .pickingSession, .executingCommand:
-                [.init(title: "Cancel", destructive: true, identifier: "")]
-            case .notice: []
-            case .streamingChanged(let state):
-                switch state {
-                case .active:
-                    [.init(title: "Stop", destructive: true, identifier: "")]
-                case .stopped, .stoppedAutomatically:
-                    []
-                }
-            }
-        case .selectSessionRequest:
-            [.init(title: "Select a Session", destructive: false, identifier: PickSessionButtonIdentifier.pickSession.rawValue),
-             .init(title: "Cancel", destructive: true, identifier: PickSessionButtonIdentifier.cancel.rawValue)]
-        case .remoteCommandRequest:
-            [.init(title: "Allow Once", destructive: false, identifier: RemoteCommandButtonIdentifier.allowOnce.rawValue),
-             .init(title: "Always Allow", destructive: false, identifier: RemoteCommandButtonIdentifier.allowAlways.rawValue),
-             .init(title: "Deny this Time", destructive: true, identifier: RemoteCommandButtonIdentifier.denyOnce.rawValue),
-             .init(title: "Always Deny", destructive: true, identifier: RemoteCommandButtonIdentifier.denyAlways.rawValue)]
-        }
-    }
-
-    var attributedStringValue: NSAttributedString {
-        switch content {
-        case .renameChat, .append, .commit, .setPermissions, .terminalCommand:
+extension Message.Content {
+    func attributedStringValue(linkColor: NSColor,
+                               textColor: NSColor) -> NSAttributedString {
+        switch self {
+        case .multipart:
+            it_fatalError()  // TODO: This will be hit. We need a different cell type for multipart messages.
+        case .renameChat, .append, .commit, .setPermissions, .terminalCommand, .appendAttachment,
+                .vectorStoreCreated:
             it_fatalError()
         case .plainText(let string):
             let paragraphStyle = NSMutableParagraphStyle()
@@ -1152,7 +1333,7 @@ extension Message {
             return AttributedStringForGPTMarkdown(specific + " " + general + "\n\n" + info,
                                                   linkColor: linkColor,
                                                   textColor: textColor) {}
-        case .remoteCommandResponse(let response, _, _):
+        case .remoteCommandResponse(let response, _, _, _):
             switch response {
             case .success(let object):
                 it_fatalError("\(object)")
@@ -1168,7 +1349,7 @@ extension Message {
             case .executingCommand(let command):
                 return AttributedStringForSystemMessageMarkdown(command.markdownDescription) { }
             case .notice(let message):
-                return AttributedStringForSystemMessageMarkdown(message) { }
+                return AttributedStringForSystemMessagePlain(message, textColor: textColor)
             case .streamingChanged(let state):
                 return switch state {
                 case .stopped:
@@ -1179,6 +1360,7 @@ extension Message {
                     AttributedStringForSystemMessageMarkdown("Terminal commands will no longer be sent to AI automatically. Automatic sending always terminates when iTerm2 restarts or the current chat changes.") {}
                 }
             }
+
         case .selectSessionRequest:
             return AttributedStringForGPTMarkdown(
                 "The AI agent needs to run commands in a live terminal session, but none is attached to this chat.",
@@ -1189,3 +1371,46 @@ extension Message {
     }
 }
 
+extension Message {
+    var linkColor: NSColor {
+        return author == .user ? .white : .linkColor
+    }
+    var textColor: NSColor {
+        return author == .user ? .white : .textColor
+    }
+
+    var buttons: [MessageRendition.Regular.Button] {
+        switch content {
+        case .plainText, .markdown, .explanationRequest, .explanationResponse,
+                .remoteCommandResponse, .renameChat, .append, .commit, .setPermissions,
+                .terminalCommand, .appendAttachment, .multipart, .vectorStoreCreated:
+            []
+        case .clientLocal(let clientLocal):
+            switch clientLocal.action {
+            case .pickingSession, .executingCommand:
+                [.init(title: "Cancel", destructive: true, identifier: "")]
+            case .notice: []
+            case .streamingChanged(let state):
+                switch state {
+                case .active:
+                    [.init(title: "Stop", destructive: true, identifier: "")]
+                case .stopped, .stoppedAutomatically:
+                    []
+                }
+            }
+        case .selectSessionRequest:
+            [.init(title: "Select a Session", destructive: false, identifier: PickSessionButtonIdentifier.pickSession.rawValue),
+             .init(title: "Cancel", destructive: true, identifier: PickSessionButtonIdentifier.cancel.rawValue)]
+        case .remoteCommandRequest:
+            [.init(title: "Allow Once", destructive: false, identifier: RemoteCommandButtonIdentifier.allowOnce.rawValue),
+             .init(title: "Always Allow", destructive: false, identifier: RemoteCommandButtonIdentifier.allowAlways.rawValue),
+             .init(title: "Deny this Time", destructive: true, identifier: RemoteCommandButtonIdentifier.denyOnce.rawValue),
+             .init(title: "Always Deny", destructive: true, identifier: RemoteCommandButtonIdentifier.denyAlways.rawValue)]
+        }
+    }
+
+    var attributedStringValue: NSAttributedString {
+        return content.attributedStringValue(linkColor: linkColor,
+                                             textColor: textColor)
+    }
+}

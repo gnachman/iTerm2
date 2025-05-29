@@ -160,3 +160,20 @@ extension Array {
         return result
     }
 }
+
+extension Array {
+    mutating func remove(at indexes: IndexSet) {
+        self = Array(enumerated().reversed().filter { tuple in
+            let (index, _) = tuple
+            return !indexes.contains(index)
+        }.map {
+            $0.element
+        }.reversed())
+    }
+}
+
+extension Array {
+    subscript (indexes: IndexSet) -> [Element] {
+        return indexes.map { self[$0] }
+    }
+}

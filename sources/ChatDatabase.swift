@@ -79,9 +79,32 @@ class ChatDatabase {
         popuplateSessionToChatMap()
     }
 
+    private func listColumns(resultSet: iTermDatabaseResultSet?) -> [String] {
+        guard let resultSet else {
+            return []
+        }
+        var results = [String]()
+        while resultSet.next() {
+            if let name = resultSet.string(forColumn: "name") {
+                results.append(name)
+            }
+        }
+        return results
+    }
+
     private func createTables() -> Bool {
         if !db.executeUpdate(Chat.schema(), withArguments: []) {
             return false
+        }
+        let migrations = Chat.migrations(existingColumns:
+            listColumns(
+                resultSet: db.executeQuery(
+                    Chat.tableInfoQuery(),
+                    withArguments: [])))
+        for migration in migrations {
+            if !db.executeUpdate(migration.query, withArguments: migration.args) {
+                return false
+            }
         }
         if !db.executeUpdate(Message.schema(), withArguments: []) {
             return false
@@ -212,9 +235,14 @@ protocol iTermDatabaseInitializable {
     init?(dbResultSet: iTermDatabaseResultSet)
 }
 
+struct Migration {
+    var query: String
+    var args: [String]
+}
 protocol iTermDatabaseElement: iTermDatabaseInitializable {
     static func schema() -> String
     static func fetchAllQuery() -> String
+    static func tableInfoQuery() -> String
     func appendQuery() -> (String, [Any])
     func updateQuery() -> (String, [Any])
     func removeQuery() -> (String, [Any])

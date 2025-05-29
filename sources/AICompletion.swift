@@ -44,7 +44,7 @@ class AICompletion {
             DLog("Have completion")
             result.handle { updated in
                 DLog("Handle success")
-                guard let content = updated.messages.last?.content else {
+                guard let content = updated.messages.last?.body.content else {
                     DLog("No content")
                     completion(files)
                     return

@@ -332,3 +332,33 @@ extension NSString {
         String(self).trimmingTrailingNulls
     }
 }
+
+extension String {
+    var halved: (String, String) {
+        let middleIndex = index(startIndex, offsetBy: count / 2)
+        let head = String(prefix(upTo: middleIndex))
+        let tail = String(suffix(from: middleIndex))
+        return (head, tail)
+    }
+}
+
+extension String {
+    var lossyData: Data {
+        return Data(utf8)
+    }
+}
+
+extension Optional where Wrapped == String {
+    static func concat(_ lhs: String?, _ rhs: String?) -> String? {
+        switch (lhs, rhs) {
+        case (nil, nil):
+            return nil
+        case let (l?, r?):
+            return l + r
+        case let (l?, nil):
+            return l
+        case let (nil, r?):
+            return r
+        }
+    }
+}

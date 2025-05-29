@@ -97,7 +97,7 @@
 
     BOOL result = [_db executeUpdate:sql values:arguments error:&error];
     if (error) {
-        DLog(@"%@ failed: %@", sql, error);
+        XLog(@"%@ failed: %@", sql, error);
     }
 
     if (gDebugLogging) {

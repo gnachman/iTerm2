@@ -9,12 +9,15 @@
 
 #import "iTermMetalConfig.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 @interface iTermHistogram : NSObject
 
 @property (nonatomic, readonly) NSString *stringValue;
 @property (nonatomic, readonly) NSString *sparklines;
 @property (nonatomic, readonly) int64_t count;
 @property (nonatomic) int reservoirSize;
+@property (nonatomic, readonly) double mean;
 
 - (void)addValue:(double)value;
 - (void)mergeFrom:(iTermHistogram *)other;
@@ -25,3 +28,6 @@
 - (void)clear;
 
 @end
+
+NS_ASSUME_NONNULL_END
+

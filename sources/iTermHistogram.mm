@@ -257,6 +257,14 @@ static double iTermSaneDouble(const double d) {
 }
 #endif
 
+- (double)mean {
+#if ENABLE_STATS
+    return _sum / (double)_count;
+#else
+    return 0;
+#endif
+}
+
 - (NSString *)stringValue {
 #if ENABLE_STATS
     std::vector<int> buckets = _sampler->get_histogram();

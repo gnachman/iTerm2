@@ -127,3 +127,5 @@ void iTermPreciseTimerSaveLog(NSString *identifier, NSString *log) { }
 void iTermPreciseTimerClearLogs(void);
 
 #endif
+
+NSString *iTermEmojiForDuration(double ms);

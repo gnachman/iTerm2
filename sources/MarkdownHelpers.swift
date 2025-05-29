@@ -74,6 +74,68 @@ func AttributedStringForSystemMessageMarkdown(_ unsafeString: String,
     return AttributedStringForMessage(md, didCopy: didCopy)
 }
 
+func AttributedStringForSystemMessagePlain(_ text: String,
+                                           textColor: NSColor) -> NSAttributedString {
+    let textAttributes: [NSAttributedString.Key: Any] = [
+        .font: NSFont.systemFont(ofSize: NSFont.systemFontSize),
+        .foregroundColor: textColor
+    ]
+
+    return NSAttributedString(string: text, attributes: textAttributes)
+}
+
+func AttributedStringForStatusUpdate(_ statusUpdate: LLM.Message.StatusUpdate,
+                                     textColor: NSColor) -> NSAttributedString {
+    let paragraphStyle = NSMutableParagraphStyle()
+    paragraphStyle.lineBreakMode = .byWordWrapping
+    let attributes: [NSAttributedString.Key: Any] = [
+        .foregroundColor: textColor,
+        .paragraphStyle: paragraphStyle,
+        .font: NSFont.systemFont(ofSize: NSFont.systemFontSize)
+    ]
+    let string = statusUpdate.displayString
+    return NSAttributedString(
+        string: string,
+        attributes: attributes
+    )
+}
+
+func AttributedStringForFilename(_ filename: String,
+                                 textColor: NSColor) -> NSAttributedString {
+    // Create the filename text with 11 point system font
+    let textAttributes: [NSAttributedString.Key: Any] = [
+        .font: NSFont.systemFont(ofSize: 11),
+        .foregroundColor: textColor
+    ]
+
+    return NSAttributedString(string: filename, attributes: textAttributes)
+}
+
+extension LLM.Message.StatusUpdate {
+    var displayString: String {
+        switch self {
+        case .webSearchStarted: "Searching the web…"
+        case .webSearchFinished: "Finished searching the web."
+        case .codeInterpreterStarted: "Executing code…"
+        case .codeInterpreterFinished: "Finished executing code"
+        }
+    }
+}
+func AttributedStringForCode(_ string: String,
+                             textColor: NSColor) -> NSAttributedString {
+    let paragraphStyle = NSMutableParagraphStyle()
+    paragraphStyle.lineBreakMode = .byWordWrapping
+    let attributes: [NSAttributedString.Key: Any] = [
+        .foregroundColor: textColor,
+        .paragraphStyle: paragraphStyle,
+        .font: NSFont.userFixedPitchFont(ofSize: NSFont.systemFontSize) ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
+    ]
+    return NSAttributedString(
+        string: string,
+        attributes: attributes
+    )
+}
+
 func AttributedStringForGPTMarkdown(_ unsafeString: String,
                                     linkColor: NSColor,
                                     textColor: NSColor,

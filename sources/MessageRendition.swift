@@ -6,9 +6,21 @@
 //
 
 struct MessageRendition {
+    struct SubpartContainer {
+        enum Kind {
+            case regular
+            case codeAttachment
+            case statusUpdate
+            case fileAttachment(id: String, name: String, file: LLM.Message.Attachment.AttachmentType.File?)
+        }
+        var kind: Kind
+        var icon: NSImage?
+        var attributedString: NSAttributedString
+    }
     enum Flavor {
         case regular(Regular)
         case command(Command)
+        case multipart([SubpartContainer])
     }
     struct Regular {
         struct Button {

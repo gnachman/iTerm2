@@ -561,7 +561,7 @@ extension PTYSession {
                                          atomically: false,
                                          encoding: .utf8)
             NSWorkspace.shared.activateFileViewerSelecting([fileURL])
-            completion("Ok", "Created \(createFile.filename) created and revealed in Finder.")
+            completion("Ok", "Created \(createFile.filename) and revealed in Finder.")
         } catch {
             completion("Error: \(error.localizedDescription)", "Failed to create \(createFile.filename): \(error.localizedDescription)")
         }

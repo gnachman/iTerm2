@@ -193,21 +193,52 @@ extension ChatSearchResultsViewController: NSTableViewDelegate {
 
 class ChatSearchResultCell: RegularMessageCellView {}
 
+extension Message.Content {
+    func indexableString(linkColor: NSColor, textColor: NSColor) -> String? {
+        switch self {
+        case let .plainText(value), let .append(string: value, _):
+            return value
+        case let .appendAttachment(attachment: attachment, uuid: _):
+            return switch attachment.type {
+            case .code(let content):
+                content
+            case .statusUpdate, .file, .fileID:
+                ""
+            }
+        case let .multipart(parts, _):
+            return parts.compactMap { part -> String? in
+                switch part {
+                case .plainText(let text), .markdown(let text): text
+                case .attachment(let attachment):
+                    switch attachment.type {
+                    case .code(let text): text
+                    case .statusUpdate, .file, .fileID: nil
+                    }
+                }
+            }.joined(separator: "\n")
+        case let .markdown(value):
+            return AttributedStringForGPTMarkdown(value,
+                                                  linkColor: linkColor,
+                                                  textColor: textColor,
+                                                  didCopy: nil).string
+        case let .explanationRequest(request):
+            return request.subjectMatter + " " + request.question
+        case let .explanationResponse(_, _, markdown):
+            return markdown
+        case let .remoteCommandResponse(result, _, _, _):
+            return result.successValue
+        case let .terminalCommand(cmd):
+            return cmd.command
+        case  .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat,
+                .commit, .setPermissions, .vectorStoreCreated:
+            return nil
+        }
+    }
+}
+
 extension Message {
     var indexableString: String? {
-        switch content {
-        case let .plainText(value), let .append(string: value, _): value
-        case let .markdown(value): AttributedStringForGPTMarkdown(value,
-                                                                  linkColor: linkColor,
-                                                                  textColor: textColor,
-                                                                  didCopy: nil).string
-        case let .explanationRequest(request): request.subjectMatter + " " + request.question
-        case let .explanationResponse(_, _, markdown): markdown
-        case let .remoteCommandResponse(result, _, _): result.successValue
-        case let .terminalCommand(cmd): cmd.command
-        case  .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat,
-                .commit, .setPermissions: nil
-        }
+        content.indexableString(linkColor: linkColor, textColor: textColor)
     }
 }
 extension ChatSearchResult {

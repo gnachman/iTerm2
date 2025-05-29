@@ -15,11 +15,15 @@ class PluginClient {
     private class HTTPStreamDelegate: NSObject, URLSessionDataDelegate {
         var receivedData = Data()
         let callback: (String, String?) -> Void
+        var streaming = false
 
         init(callback: @escaping (String?, String?) -> Void) {
             self.callback = callback
         }
 
+        deinit {
+            DLog("HTTPStreamDelegate \(it_addressString): Deinit")
+        }
         func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
             // Handle the response here if needed, and decide how to proceed
             completionHandler(.allow) // Allow to continue receiving data
@@ -27,15 +31,20 @@ class PluginClient {
 
         func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
             DLog("HTTP append data")
+            DLog("HTTPStreamDelegate \(it_addressString): append")
+            for line in data.lossyString.components(separatedBy: "\n") {
+                DLog(line)
+            }
+            DLog("---end---")
             receivedData.append(data)
-            if let chunk = String(data: data, encoding: .utf8) {
+            if streaming, let chunk = String(data: data, encoding: .utf8) {
                 // Immediately send the chunk down the pipeline.
                 callback(chunk, nil)
             }
         }
 
         func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-            DLog("HTTP complete")
+            DLog("HTTPStreamDelegate \(it_addressString): complete. error=\(error.d)")
             if let error = error {
                 DLog("URLSession error: \(error)")
                 callback(receivedData.lossyString, "HTTP request failed with \(error.localizedDescription)")
@@ -82,8 +91,13 @@ class PluginClient {
         }
     }
 
-    private func performHTTPRequest(method: String, url: String, headers: [String: String], body: String, callback: @escaping (String?, String?) -> Void) {
-        DLog("performHTTPRequest(\(method), \(url), \(headers), \(body)")
+    private func performHTTPRequest(method: String,
+                                    url: String,
+                                    headers: [String: String],
+                                    body: Data,
+                                    streaming: Bool,
+                                    callback: @escaping (String?, String?) -> Void) {
+        DLog("performHTTPRequest(\(method), \(url), \(headers), \(body.lossyString), \(streaming)")
         guard let url = URL(string: url) else {
             DLog("Invalid url \(url)")
             callback(nil, "Invalid URL")
@@ -97,7 +111,7 @@ class PluginClient {
         }
 
         if !body.isEmpty {
-            let data = body.lossyData
+            let data = body
             request.httpBodyStream = InputStream(data: data)
             request.setValue("\(data.count)", forHTTPHeaderField: "Content-Length")
         }
@@ -105,8 +119,11 @@ class PluginClient {
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 30
         config.timeoutIntervalForResource = 60 * 5
+        let delegate = HTTPStreamDelegate(callback: callback)
+        delegate.streaming = streaming
+        DLog("Request with delegate \(delegate.it_addressString):\n\(body)")
         session = URLSession(configuration: config,
-                             delegate: HTTPStreamDelegate(callback: callback),
+                             delegate: delegate,
                              delegateQueue: nil)
         let task = session?.dataTask(with: request)
         DLog("resume session")
@@ -115,17 +132,31 @@ class PluginClient {
 
     private func registerFunctions(context: JSContext, stream: ((String) -> ())?) {
         DLog("registerFunctions")
-        let performRequest: @convention(block) (String, String, [String: String], String, JSValue) -> Void = { [weak self]
+        let performRequest: @convention(block) (String, String, [String: String], Any, JSValue) -> Void = { [weak self]
             method, url, headers, body, callback in
             guard let self else {
                 let noError: String? = nil
                 callback.call(withArguments: [noError as Any, "Plugin client deallocated"])
                 return
             }
+            let bodyData: Data? = switch body {
+            case let string as String:
+                string.lossyData
+            case let byteArray as [NSNumber]:
+                Data(byteArray.map { UInt8(truncating: $0) })
+            default:
+                nil
+            }
+            guard let bodyData else {
+                let noError: String? = nil
+                callback.call(withArguments: [noError as Any, "Invalid body"])
+                return
+            }
             self.performHTTPRequest(method: method,
-                               url: url,
-                               headers: headers,
-                               body: body) { string, error in
+                                    url: url,
+                                    headers: headers,
+                                    body: bodyData,
+                                    streaming: stream != nil) { string, error in
                 if error == nil, let string, stream != nil {
                     if let streamCallback = context.objectForKeyedSubscript("onStream"), !streamCallback.isUndefined {
                         streamCallback.call(withArguments: [string as Any])
@@ -277,3 +308,14 @@ class PluginClient {
     }
 }
 
+
+extension Optional where Wrapped: Error {
+    var d: String {
+        switch self {
+        case .none:
+            "(nil)"
+        case .some(let error):
+            error.localizedDescription
+        }
+    }
+}

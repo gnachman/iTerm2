@@ -12,6 +12,15 @@ public protocol SSHHostnameFinder: AnyObject {
 }
 
 public class SSHIdentity: NSObject, Codable {
+    static let localhost = SSHIdentity(host: Host.current().localizedName ?? "My Mac",
+                                       hostname: "localhost",
+                                       username: nil,
+                                       port: 0)
+
+    static func ==(lhs: SSHIdentity, rhs: SSHIdentity) -> Bool {
+        return lhs.state == rhs.state
+    }
+
     private struct State: Equatable, Codable, CustomDebugStringConvertible {
         var debugDescription: String {
             let hostport = hostname + ":\(port)"
@@ -33,7 +42,7 @@ public class SSHIdentity: NSObject, Codable {
             }
             return hostport
         }
-        
+
         let host: String
         let hostname: String
         let username: String?
@@ -68,12 +77,20 @@ public class SSHIdentity: NSObject, Codable {
         return state.debugDescription
     }
 
+    var host: String {
+        state.host
+    }
+
     @objc public var hostname: String {
         return state.hostname
     }
 
     @objc public var username: String? {
         return state.username
+    }
+
+    @objc public var port: Int {
+        return state.port
     }
 
     public var stringIdentifier: String {
@@ -116,6 +133,13 @@ public class SSHIdentity: NSObject, Codable {
         state = State(host: host, hostname: hostname, username: username, port: port)
     }
 
+    public override func isEqual(_ object: Any?) -> Bool {
+        guard let other = object as? SSHIdentity else {
+            return false
+        }
+        return other.state == state
+    }
+
     public override func isEqual(to object: Any?) -> Bool {
         guard let other = object as? SSHIdentity else {
             return false
@@ -138,5 +162,61 @@ public class SSHIdentity: NSObject, Codable {
             return true
         }
         return state.username == user
+    }
+
+    override public var hash: Int {
+        var combined = UInt(0)
+        combined = iTermCombineHash(UInt(bitPattern: state.host.hashValue), combined)
+        combined = iTermCombineHash(UInt(bitPattern: state.hostname.hashValue), combined)
+        combined = iTermCombineHash(UInt(bitPattern: state.username.hashValue), combined)
+        combined = iTermCombineHash(UInt(bitPattern: state.port.hashValue), combined)
+        return Int(bitPattern: combined)
+    }
+}
+
+extension SSHIdentity {
+    var displayName: String {
+        let hostport: String
+        if state.port == 22 || state.port == 0 {
+            hostport = state.host
+        } else {
+            hostport = state.host + ":\(state.port)"
+        }
+        if let username = state.username, username != NSUserName() {
+            return username + "@" + hostport
+        }
+        return hostport
+    }
+}
+
+// MARK: - UserDefaults Support
+extension SSHIdentity {
+    /// Convert the SSHIdentity to a dictionary that can be stored in UserDefaults
+    @objc public func toUserDefaultsObject() -> [String: Any] {
+        var dict: [String: Any] = [
+            "host": state.host,
+            "hostname": state.hostname,
+            "port": state.port
+        ]
+
+        if let username = state.username {
+            dict["username"] = username
+        }
+
+        return dict
+    }
+
+    /// Create an SSHIdentity from a UserDefaults object (dictionary)
+    @objc public convenience init?(userDefaultsObject: Any?) {
+        guard let dict = userDefaultsObject as? [String: Any],
+              let host = dict["host"] as? String,
+              let hostname = dict["hostname"] as? String,
+              let port = dict["port"] as? Int else {
+            return nil
+        }
+
+        let username = dict["username"] as? String
+
+        self.init(host: host, hostname: hostname, username: username, port: port)
     }
 }

@@ -895,7 +895,7 @@ class CodeciergeGoalView: NSView, NSTextViewDelegate, NSControlTextEditingDelega
 
     @objc private func startButtonPressed() {
         if !UserDefaults.standard.bool(forKey: codeciergeWarningAcknowledgedUserDefaultsKey) {
-            let option = iTermWarning.show(withTitle: "Everything that happens in your terminal while Codecierge is running will be sent to OpenAI. Don't send them confidential information!",
+            let option = iTermWarning.show(withTitle: "Everything that happens in your terminal while Codecierge is running will be sent to your AI provider. Don't send them confidential information!",
                               actions: [ "OK", "Cancel" ],
                               accessory: nil,
                               identifier: nil,
