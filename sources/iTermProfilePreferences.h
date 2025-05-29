@@ -95,7 +95,8 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
 + (NSArray<NSString *> *)nonDeprecatedKeys;
 
 + (NSFont * _Nullable)fontForKey:(NSString *)key
-                       inProfile:(Profile *)profile;
+                       inProfile:(Profile *)profile
+                ligaturesEnabled:(BOOL)ligaturesEnabled;
 + (id _Nullable)objectForColorKey:(NSString *)key
                              dark:(BOOL)dark
                           profile:(Profile *)profile;

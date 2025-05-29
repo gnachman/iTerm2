@@ -310,7 +310,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 + (NSSize)cellSizeForBookmark:(Profile *)bookmark {
     NSFont *font;
 
-    font = [ITAddressBookMgr fontWithDesc:[bookmark objectForKey:KEY_NORMAL_FONT]];
+    font = [ITAddressBookMgr fontWithDesc:[bookmark objectForKey:KEY_NORMAL_FONT]
+                         ligaturesEnabled:[iTermProfilePreferences boolForKey:KEY_ASCII_LIGATURES
+                                                                    inProfile:bookmark]];
     const CGFloat hspace = [iTermProfilePreferences doubleForKey:KEY_HORIZONTAL_SPACING inProfile:bookmark];
     const CGFloat vspace = [iTermProfilePreferences doubleForKey:KEY_VERTICAL_SPACING inProfile:bookmark];
     return [PTYTextView charSizeForFont:font

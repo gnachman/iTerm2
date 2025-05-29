@@ -172,7 +172,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (BOOL)stringIsUrlLike;
 
 // Fonts are encoded as strings when stored in a profile. This returns the font for such a string.
-- (NSFont *)fontValue;
+// When ligatures are enabled then stylistic alternatives are allowed.
+- (NSFont *)fontValueWithLigaturesEnabled:(BOOL)ligaturesEnabled;
 
 // Returns a 2-hex-chars-per-char encoding of this string.
 - (NSString *)hexEncodedString;

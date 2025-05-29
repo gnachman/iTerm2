@@ -52,7 +52,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSString *name = knobValues[iTermStatusBarSharedFontKey];
     NSFont *font = nil;
     if (name.length > 0) {
-        font = [name fontValue];
+        font = [name fontValueWithLigaturesEnabled:YES];
     }
     if (!font) {
         return self.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];

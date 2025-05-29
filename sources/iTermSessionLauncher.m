@@ -12,6 +12,7 @@
 #import "iTermApplication.h"
 #import "iTermController.h"
 #import "iTermPreferences.h"
+#import "iTermProfilePreferences.h"
 #import "iTermSessionFactory.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
@@ -28,7 +29,9 @@
 }
 
 + (BOOL)profileIsWellFormed:(Profile *)profile {
-    NSFont *font = [ITAddressBookMgr fontWithDesc:[profile objectForKey:KEY_NORMAL_FONT]];
+    NSFont *font = [ITAddressBookMgr fontWithDesc:[profile objectForKey:KEY_NORMAL_FONT]
+                                 ligaturesEnabled:[iTermProfilePreferences boolForKey:KEY_ASCII_LIGATURES
+                                                                            inProfile:profile]];
     if (!font) {
         [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Couldn’t find the specified font “%@” or the fallback standard fixed-pitch font, Menlo. Please ensure at least one of these is installed.", profile[KEY_NORMAL_FONT]]
                                    actions:@[ @"OK" ]

@@ -508,7 +508,7 @@ NSString *iTermPathToSSH(void);
 + (NSString *)shellLauncherCommandWithCustomShell:(NSString *)customShell;
 // Login command that leaves you in your home directory.
 + (NSString *)standardLoginCommand;
-+ (NSFont *)fontWithDesc:(NSString *)fontDesc;
++ (NSFont *)fontWithDesc:(NSString *)fontDesc ligaturesEnabled:(BOOL)ligaturesEnabled;
 
 // This is deprecated in favor of -[NSString fontValue] and -[NSFont stringValue].
 + (NSString *)descFromFont:(NSFont*)font __attribute__((deprecated));

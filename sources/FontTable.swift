@@ -20,70 +20,6 @@ protocol FontProviderProtocol {
     func cloneFontProvider() -> FontProviderProtocol
 }
 
-extension RandomAccessCollection {
-    func binarySearch(predicate: (Element) -> Bool) -> Index {
-        var low = startIndex
-        var high = endIndex
-        while low != high {
-            let mid = index(low, offsetBy: distance(from: low, to: high)/2)
-            if predicate(self[mid]) {
-                low = index(after: mid)
-            } else {
-                high = mid
-            }
-        }
-        return low
-    }
-}
-
-struct RangeMap<Value>: Sequence {
-    struct Entry {
-        var range: Range<Int>
-        var value: Value
-    }
-
-    private var entries: [Entry] = []
-    var first: Entry? { entries.first }
-    var last: Entry? { entries.last }
-
-    var count: Int { entries.count }
-
-    mutating func insert(range: Range<Int>, value: Value) {
-        let newEntry = Entry(range: range, value: value)
-        let insertionIndex = entries.binarySearch { $0.range.lowerBound < range.lowerBound }
-        entries.insert(newEntry, at: insertionIndex)
-    }
-
-    subscript(_ key: Int) -> Entry? {
-        let foundIndex = entries.binarySearch { $0.range.upperBound <= key }
-        guard foundIndex != entries.endIndex, entries[foundIndex].range.contains(key) else {
-            return nil
-        }
-        return entries[foundIndex]
-    }
-
-    func makeIterator() -> AnyIterator<Entry> {
-        return AnyIterator<Entry>(entries.makeIterator())
-    }
-
-    func iterate(from key: Int) -> AnyIterator<Entry> {
-        let start = entries.binarySearch { $0.range.lowerBound < key }
-        return AnyIterator(entries[start...].makeIterator())
-    }
-
-    func reverseIterate(from key: Int) -> AnyIterator<Entry> {
-        let start = entries.binarySearch { $0.range.upperBound <= key }
-        var currentIndex = start
-        return AnyIterator {
-            guard currentIndex >= self.entries.startIndex else {
-                return nil
-            }
-            defer { currentIndex = self.entries.index(before: currentIndex) }
-            return self.entries[currentIndex]
-        }
-    }
-}
-
 // It is very important that this class always remain immutable.
 // It is accessed from the Metal thread and the main thread.
 @objc(iTermFontTable)
@@ -480,7 +416,9 @@ class FontTable: NSObject, FontProviderProtocol {
     @objc(fontTableForProfile:)
     static func fontTable(forProfile profile: [AnyHashable : Any]) -> FontTable {
         let asciiFont = iTermProfilePreferences.font(forKey: KEY_NORMAL_FONT,
-                                                     inProfile: profile) ?? NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
+                                                     inProfile: profile,
+                                                     ligaturesEnabled: iTermProfilePreferences.bool(forKey: KEY_ASCII_LIGATURES,
+                                                                                                    inProfile: profile)) ?? NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
         let useNonASCIIFont = iTermProfilePreferences.bool(forKey: KEY_USE_NONASCII_FONT,
                                                            inProfile: profile)
         if !useNonASCIIFont {
@@ -491,7 +429,9 @@ class FontTable: NSObject, FontProviderProtocol {
         }
 
         let nonASCIIFont = iTermProfilePreferences.font(forKey: KEY_NON_ASCII_FONT,
-                                                        inProfile: profile)
+                                                        inProfile: profile,
+                                                        ligaturesEnabled: iTermProfilePreferences.bool(forKey: KEY_NON_ASCII_LIGATURES,
+                                                                                                       inProfile: profile))
         let config = iTermProfilePreferences.string(forKey: KEY_FONT_CONFIG,
                                                     inProfile: profile)
         return FontTable(

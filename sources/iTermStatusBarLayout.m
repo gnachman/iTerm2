@@ -43,7 +43,7 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
     configuration.backgroundColor = [dict[iTermStatusBarLayoutDictionaryKeyBackgroundColor] colorValue];
     configuration.defaultTextColor = [dict[iTermStatusBarLayoutDictionaryKeyDefaultTextColor] colorValue];
     configuration.layoutAlgorithm = [dict[iTermStatusBarLayoutDictionaryKeyAlgorithm] unsignedIntegerValue];
-    configuration.font = [dict[iTermStatusBarLayoutDictionaryKeyFont] fontValue];
+    configuration.font = [dict[iTermStatusBarLayoutDictionaryKeyFont] fontValueWithLigaturesEnabled:YES];
     configuration.autoRainbowStyle = [dict[iTermStatusBarLayoutDictionaryKeyAutoRainbowStyle] unsignedIntegerValue];
     configuration.removeEmptyComponents = [dict[iTermStatusBarLayoutDictionaryKeyRemoveEmptyComponents] boolValue];
 
@@ -58,7 +58,7 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
         self.defaultTextColor = [[aDecoder decodeObjectOfClass:[NSDictionary class] forKey:iTermStatusBarLayoutDictionaryKeyDefaultTextColor] colorValue];
         self.layoutAlgorithm = [aDecoder decodeIntegerForKey:iTermStatusBarLayoutDictionaryKeyAlgorithm];
         self.removeEmptyComponents = [aDecoder decodeBoolForKey:iTermStatusBarLayoutDictionaryKeyRemoveEmptyComponents];
-        self.font = [[aDecoder decodeObjectOfClass:[NSString class] forKey:iTermStatusBarLayoutDictionaryKeyFont] fontValue];
+        self.font = [[aDecoder decodeObjectOfClass:[NSString class] forKey:iTermStatusBarLayoutDictionaryKeyFont] fontValueWithLigaturesEnabled:YES];
         self.autoRainbowStyle = [aDecoder decodeIntegerForKey:iTermStatusBarLayoutDictionaryKeyAutoRainbowStyle];
     }
     return self;

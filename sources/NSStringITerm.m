@@ -1104,6 +1104,10 @@ int decode_utf8_char(const unsigned char *datap,
 }
 
 - (NSFont *)fontValue {
+    return [self fontValueWithLigaturesEnabled:YES];
+}
+
+- (NSFont *)fontValueWithLigaturesEnabled:(BOOL)ligaturesEnabled {
     if ([self length] == 0) {
         return [NSFont userFixedPitchFontOfSize:0.0] ?: [NSFont systemFontOfSize:[NSFont systemFontSize]];
     }
@@ -1146,6 +1150,19 @@ int decode_utf8_char(const unsigned char *datap,
         NSFontSizeAttribute: @(fontSize),
     } mutableCopy];
     if (featureSettings) {
+        if (!ligaturesEnabled) {
+            featureSettings = [featureSettings filteredArrayUsingBlock:^BOOL(id anObject) {
+                NSDictionary *dict = [NSDictionary castFrom:anObject];
+                if (!dict) {
+                    return YES;
+                }
+                NSNumber *value = [NSNumber castFrom:dict[(__bridge NSString *)kCTFontFeatureTypeIdentifierKey]];
+                if (!value) {
+                    return YES;
+                }
+                return value.integerValue != kStylisticAlternativesType;
+            }];
+        }
         attributes[NSFontFeatureSettingsAttribute] = featureSettings;
     }
     NSFontDescriptor *descriptor = [[NSFontDescriptor alloc] initWithFontAttributes:attributes];

@@ -8271,8 +8271,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         DLog(@"In instant replay");
         return NO;
     }
-    NSFont* asciiFont = [ITAddressBookMgr fontWithDesc:[theBookmark objectForKey:KEY_NORMAL_FONT]];
-    NSFont* nonAsciiFont = [ITAddressBookMgr fontWithDesc:[theBookmark objectForKey:KEY_NON_ASCII_FONT]];
+    NSFont* asciiFont = [ITAddressBookMgr fontWithDesc:[theBookmark objectForKey:KEY_NORMAL_FONT]
+                                      ligaturesEnabled:[iTermProfilePreferences boolForKey:KEY_ASCII_LIGATURES
+                                                                                 inProfile:theBookmark]];
+    NSFont* nonAsciiFont = [ITAddressBookMgr fontWithDesc:[theBookmark objectForKey:KEY_NON_ASCII_FONT]
+                                         ligaturesEnabled:[iTermProfilePreferences boolForKey:KEY_NON_ASCII_LIGATURES
+                                                                                    inProfile:theBookmark]];
     NSSize asciiCharSize = [PTYTextView charSizeForFont:asciiFont
                                       horizontalSpacing:[iTermProfilePreferences doubleForKey:KEY_HORIZONTAL_SPACING inProfile:theBookmark]
                                         verticalSpacing:[iTermProfilePreferences doubleForKey:KEY_VERTICAL_SPACING inProfile:theBookmark]];
@@ -10193,7 +10197,9 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
                                        reason:@"No usable font could be found"
                                      userInfo:nil];
     }
-    NSSize charSize = [PTYTextView charSizeForFont:[ITAddressBookMgr fontWithDesc:[profile objectForKey:KEY_NORMAL_FONT]]
+    NSSize charSize = [PTYTextView charSizeForFont:[ITAddressBookMgr fontWithDesc:[profile objectForKey:KEY_NORMAL_FONT]
+                                                                 ligaturesEnabled:[iTermProfilePreferences boolForKey:KEY_ASCII_LIGATURES
+                                                                                                            inProfile:profile]]
                                  horizontalSpacing:[iTermProfilePreferences doubleForKey:KEY_HORIZONTAL_SPACING inProfile:profile]
                                    verticalSpacing:[iTermProfilePreferences doubleForKey:KEY_VERTICAL_SPACING inProfile:profile]];
 

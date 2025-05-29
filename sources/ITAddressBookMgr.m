@@ -290,8 +290,8 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
     return [NSFont userFixedPitchFontOfSize:0.0] ?: [NSFont systemFontOfSize:[NSFont systemFontSize]];
 }
 
-+ (NSFont *)fontWithDesc:(NSString *)fontDesc {
-    return [fontDesc fontValue] ?: [self defaultFont];
++ (NSFont *)fontWithDesc:(NSString *)fontDesc ligaturesEnabled:(BOOL)ligaturesEnabled {
+    return [fontDesc fontValueWithLigaturesEnabled:ligaturesEnabled] ?: [self defaultFont];
 }
 
 - (void)setBookmarks:(NSArray *)newBookmarksArray defaultGuid:(NSString *)guid {

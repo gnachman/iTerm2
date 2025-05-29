@@ -379,8 +379,8 @@
 
 - (void)updateFontsDescriptionsIncludingSpacing:(BOOL)includingSpacing {
     // Update the fonts.
-    self.normalFont = [[self stringForKey:KEY_NORMAL_FONT] fontValue];
-    self.nonAsciiFont = [[self stringForKey:KEY_NON_ASCII_FONT] fontValue];
+    self.normalFont = [[self stringForKey:KEY_NORMAL_FONT] fontValueWithLigaturesEnabled:YES];
+    self.nonAsciiFont = [[self stringForKey:KEY_NON_ASCII_FONT] fontValueWithLigaturesEnabled:YES];
 
     // Update the controls.
     const double horizontalSpacing = round([self doubleForKey:KEY_HORIZONTAL_SPACING] * 100);
@@ -490,9 +490,9 @@
 - (void)preferenceDidChangeFromOtherPanel:(NSNotification *)notification {
     NSString *key = notification.userInfo[kPreferenceDidChangeFromOtherPanelKeyUserInfoKey];
     if ([key isEqualToString:KEY_NORMAL_FONT]) {
-        _asciiFontPicker.font = [self stringForKey:KEY_NORMAL_FONT].fontValue;
+        _asciiFontPicker.font = [[self stringForKey:KEY_NORMAL_FONT] fontValueWithLigaturesEnabled:YES];
     } else if ([key isEqualToString:KEY_NON_ASCII_FONT]) {
-        _nonASCIIFontPicker.font = [self stringForKey:KEY_NON_ASCII_FONT].fontValue;
+        _nonASCIIFontPicker.font = [[self stringForKey:KEY_NON_ASCII_FONT] fontValueWithLigaturesEnabled:YES];
     }
     [super preferenceDidChangeFromOtherPanel:notification];
 }

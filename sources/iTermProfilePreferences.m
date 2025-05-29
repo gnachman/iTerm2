@@ -700,8 +700,10 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
 }
 
 + (NSFont *)fontForKey:(NSString *)key
-             inProfile:(Profile *)profile {
-    return [ITAddressBookMgr fontWithDesc:[self objectForKey:key inProfile:profile]];
+             inProfile:(Profile *)profile
+      ligaturesEnabled:(BOOL)ligaturesEnabled {
+    return [ITAddressBookMgr fontWithDesc:[self objectForKey:key inProfile:profile]
+                         ligaturesEnabled:ligaturesEnabled];
 }
 
 + (id)objectForColorKey:(NSString *)baseKey

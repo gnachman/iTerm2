@@ -84,7 +84,7 @@ extension StatusBarKnobFontViewController: iTermStatusBarKnobViewController {
     }
 
     func setValue(_ value: Any) {
-        if let stringValue = value as? String, !stringValue.isEmpty, let fontValue = stringValue.fontValue() {
+        if let stringValue = value as? String, !stringValue.isEmpty, let fontValue = stringValue.fontValue(withLigaturesEnabled: true) {
             font = fontValue
             affordance.isHidden = false
             return
