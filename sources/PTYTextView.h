@@ -328,6 +328,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)textViewUserDidClickPathMark:(id<iTermPathMarkReading>)pathMark;
 - (void)textViewCancelSingleClick;
 - (void)textViewRevealChannelWithUID:(NSString *)uid;
+- (BOOL)textViewAlternateMouseScroll:(out BOOL *)verticalOnly;
 @end
 
 @interface iTermHighlightedRow : NSObject

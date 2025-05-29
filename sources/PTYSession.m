@@ -12295,6 +12295,14 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [self swapWithChannelSessionWithUID:uid];
 }
 
+- (BOOL)textViewAlternateMouseScroll:(out BOOL *)verticalOnly {
+    *verticalOnly = [iTermProfilePreferences boolForKey:KEY_RESTRICT_ALTERNATE_MOUSE_SCROLL_TO_VERTICAL
+                                              inProfile:self.profile];
+    return (self.screen.terminalSoftAlternateScreenMode &&
+            [iTermProfilePreferences boolForKey:KEY_AUTOMATICALLY_ENABLE_ALTERNATE_MOUSE_SCROLL
+                                      inProfile:self.profile]);
+}
+
 - (void)textviewToggleTimestampsMode {
     const BOOL alreadyVisible = [self desiredTimestampMode] != iTermTimestampsModeOff;
     const BOOL shouldBeVisible = !alreadyVisible;

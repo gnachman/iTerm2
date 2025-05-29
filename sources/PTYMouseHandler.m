@@ -1450,12 +1450,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"Alt held");
         return NO;
     }
-    const BOOL alternateMouseScroll = [self.mouseDelegate mouseHandlerAlternateScrollModeIsEnabled:self];
+    BOOL verticalOnly = NO;
+    const BOOL alternateMouseScroll = [self.mouseDelegate mouseHandlerAlternateScrollModeIsEnabled:self
+                                                                                      verticalOnly:&verticalOnly];
     NSString *upString = [iTermAdvancedSettingsModel alternateMouseScrollStringForUp];
     NSString *downString = [iTermAdvancedSettingsModel alternateMouseScrollStringForDown];
 
     if (event.it_isVerticalScroll && !alternateMouseScroll) {
         DLog(@"Horizontal scroll without alternateMouseScroll enabled, return NO");
+        return NO;
+    }
+    if (!event.it_isVerticalScroll && verticalOnly) {
+        DLog(@"Horizontal scroll in vertical alternateMouseScroll mode, return NO");
         return NO;
     }
 

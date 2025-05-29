@@ -59,6 +59,9 @@
     IBOutlet NSButton *_terminalGeneratedAlerts;
     IBOutlet NSButton *_dragToScrollInAlternateScreenModeDisabled;
 
+    IBOutlet NSButton *_automaticallyEnableAlternatemouseScroll;
+    IBOutlet NSButton *_restrictAlternateMouseScrollToVertical;
+
     IBOutlet NSButton *_tmuxNewline;
 }
 
@@ -103,6 +106,16 @@
                     key:KEY_DRAG_TO_SCROLL_IN_ALTERNATE_SCREEN_MODE_DISABLED
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_automaticallyEnableAlternatemouseScroll
+                    key:KEY_AUTOMATICALLY_ENABLE_ALTERNATE_MOUSE_SCROLL
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_restrictAlternateMouseScrollToVertical
+                    key:KEY_RESTRICT_ALTERNATE_MOUSE_SCROLL_TO_VERTICAL
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
 
     [self populateEncodings];
     info = [self defineControl:_characterEncoding

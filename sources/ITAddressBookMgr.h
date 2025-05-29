@@ -210,6 +210,8 @@
 #define KEY_SEND_TERMINAL_GENERATED_ALERT     @"Send Terminal Generated Alerts"
 #define KEY_ALLOW_CHANGE_CURSOR_BLINK         @"Allow Change Cursor Blink"
 #define KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY @"Load Shell Integration Automatically"
+#define KEY_AUTOMATICALLY_ENABLE_ALTERNATE_MOUSE_SCROLL @"Automatically Enable Alternate Mouse Scroll"
+#define KEY_RESTRICT_ALTERNATE_MOUSE_SCROLL_TO_VERTICAL @"Restrict Alternate Mouse Scroll to Vertical"
 
 #define KEY_SET_LOCALE_VARS                   @"Set Local Environment Vars"
 #define KEY_CUSTOM_LOCALE                     @"Custom Locale"

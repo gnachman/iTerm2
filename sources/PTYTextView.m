@@ -6856,13 +6856,17 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
                     latin1:(out BOOL *)forceLatin1 {
     const BOOL downOrLeft = !upOrRight;
 
-    if ([self mouseHandlerAlternateScrollModeIsEnabled:mouseHandler]) {
+    BOOL verticalOnly = NO;
+    if ([self mouseHandlerAlternateScrollModeIsEnabled:mouseHandler verticalOnly:&verticalOnly]) {
         *forceLatin1 = YES;
         NSData *data;
         if (vertical) {
             data = downOrLeft ? [_dataSource.terminalOutput keyArrowDown:flags] :
             [_dataSource.terminalOutput keyArrowUp:flags];
         } else {
+            if (verticalOnly) {
+                return nil;
+            }
             data = downOrLeft ? [_dataSource.terminalOutput keyArrowRight:flags] : [_dataSource.terminalOutput keyArrowLeft:flags];
         }
         return [[[NSString alloc] initWithData:data encoding:NSISOLatin1StringEncoding] autorelease];
@@ -6878,9 +6882,14 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
     }
 }
 
-- (BOOL)mouseHandlerAlternateScrollModeIsEnabled:(PTYMouseHandler *)handler {
+- (BOOL)mouseHandlerAlternateScrollModeIsEnabled:(PTYMouseHandler *)handler
+                                    verticalOnly:(out BOOL *)verticalOnly {
     if ([iTermAdvancedSettingsModel alternateMouseScroll]) {
         DLog(@"Alternate mouse scroll on because of advanced setting having a non-default value");
+        *verticalOnly = NO;
+        return YES;
+    }
+    if ([self.delegate textViewAlternateMouseScroll:verticalOnly]) {
         return YES;
     }
     return self.dataSource.terminalAlternateScrollMode;
