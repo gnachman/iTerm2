@@ -151,7 +151,9 @@ class ChatClient {
                               chatID: String,
                               messageUniqueID: UUID) {
         var done = false
-        broker.publishNotice(chatID: chatID, notice: "\(request.markdownDescription)…")
+        if request.shouldPublishNotice {
+            broker.publishNotice(chatID: chatID, notice: "\(request.markdownDescription)…")
+        }
         session.execute(request) { [weak self] response, userNotice in
             done = true
             self?.respondSuccessfullyToRemoteCommandRequest(inChat: chatID,

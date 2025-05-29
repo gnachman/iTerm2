@@ -5410,7 +5410,7 @@ Refer to the manuals for individual applications to see if they support these mo
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="FMp-vf-IvG">
                         <rect key="frame" x="1" y="1" width="551" height="76"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" id="69M-P0-mzb">
                                 <rect key="frame" x="0.0" y="0.0" width="551" height="76"/>
@@ -5587,17 +5587,17 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                 <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5934">
                     <rect key="frame" x="220" y="65" width="186" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" title="Open with default app" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="5937" id="5935">
+                    <popUpButtonCell key="cell" type="push" title="Open with default app" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="5937" id="5935">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="message"/>
                         <menu key="menu" title="OtherViews" id="5936">
                             <items>
-                                <menuItem title="Open with default app" tag="1" id="5937"/>
+                                <menuItem title="Open with default app" state="on" tag="1" id="5937"/>
                                 <menuItem title="Open URL…" tag="2" id="5938"/>
                                 <menuItem title="Open with editor…" tag="3" id="5939"/>
                                 <menuItem title="Run command…" tag="4" id="5940"/>
                                 <menuItem title="Always run command…" tag="5" id="6055"/>
-                                <menuItem title="Run coprocess…" state="on" tag="6" id="6406"/>
+                                <menuItem title="Run coprocess…" tag="6" id="6406"/>
                                 <menuItem title="Send text…" tag="7" id="M6w-4D-SYf"/>
                             </items>
                         </menu>

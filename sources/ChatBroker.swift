@@ -403,6 +403,19 @@ struct RemoteCommand: Codable {
             "The AI Agent would like to create a file named `\(args.filename)`"
         }
     }
+
+    var shouldPublishNotice: Bool {
+        switch content {
+        case .executeCommand:
+            false
+        case .isAtPrompt, .getLastExitStatus, .getCommandHistory, .getLastCommand,
+                .getCommandBeforeCursor, .searchCommandHistory, .getCommandOutput, .getTerminalSize,
+                .getShellType, .detectSSHSession, .getRemoteHostname, .getUserIdentity,
+                .getCurrentDirectory, .setClipboard, .insertTextAtCursor, .deleteCurrentLine,
+                .getManPage, .createFile:
+            true
+        }
+    }
 }
 
 extension RemoteCommand.Content.PermissionCategory {
