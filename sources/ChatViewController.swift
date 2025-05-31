@@ -14,6 +14,8 @@ protocol ChatViewControllerDelegate: AnyObject {
     func chatViewControllerDeleteSession(_ controller: ChatViewController)
 }
 
+@objc class WebSearchButton: NSButton { }
+
 @objc
 class ChatViewController: NSViewController {
     @objc weak var delegate: ChatViewControllerDelegate?
@@ -23,6 +25,7 @@ class ChatViewController: NSViewController {
     private var tableView: NSTableView!
     private var titleLabel = NSTextField()
     private var sessionButton: NSButton!
+    private var webSearchButton: WebSearchButton?
     private var inputTextFieldContainer: ChatInputTextFieldContainer!
     private var sendButton: NSButton!
     private var showTypingIndicator: Bool {
@@ -123,17 +126,41 @@ class ChatViewController: NSViewController {
             sessionButton = NSButton(title: "Chat Info", target: nil, action: nil)
         }
 
-
         sessionButton.bezelStyle = .badge
         sessionButton.isBordered = false
         sessionButton.target = self
         sessionButton.action = #selector(showSessionButtonMenu(_:))
         sessionButton.sizeToFit()
         sessionButton.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-
         sessionButton.translatesAutoresizingMaskIntoConstraints = false
         sessionButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         sessionButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+
+        if #available(macOS 11.0, *) {
+            if AITermController.provider.supportsHostedWebSearch {
+                let webSearchButton = WebSearchButton(image: NSImage.it_image(forSymbolName: "globe",
+                                                                              accessibilityDescription: "Web search image",
+                                                                              fallbackImageName: "globe",
+                                                                              for: Self.self),
+                                                      target: nil,
+                                                      action: nil)
+                webSearchButton.imageScaling = .scaleProportionallyUpOrDown
+                webSearchButton.controlSize = .large
+                webSearchButton.contentTintColor = webSearchEnabled ? .controlAccentColor : nil
+                webSearchButton.isBordered = false
+                webSearchButton.bezelStyle = .badge
+                webSearchButton.isBordered = false
+                webSearchButton.target = self
+                webSearchButton.action = #selector(toggleWebSearch(_:))
+                webSearchButton.sizeToFit()
+                webSearchButton.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
+                webSearchButton.translatesAutoresizingMaskIntoConstraints = false
+                webSearchButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+                webSearchButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+                webSearchButton.toolTip = "Allow AI to perform web search?"
+                self.webSearchButton = webSearchButton
+            }
+        }
 
         // Configure Table View
         tableView = NSTableView()
@@ -207,11 +234,15 @@ class ChatViewController: NSViewController {
         inputStack.translatesAutoresizingMaskIntoConstraints = false
         inputStack.setContentHuggingPriority(.defaultHigh, for: .vertical)
 
+        let headerSpacer = NSView()
+        headerSpacer.setContentHuggingPriority(.init(1), for: .horizontal)
+        headerSpacer.setContentCompressionResistancePriority(.init(1), for: .horizontal)
+
         // Header stack
         class ChatViewControllerHeaderStackView: NSStackView {}
-        let headerStack = ChatViewControllerHeaderStackView(views: [titleLabel, sessionButton])
+        let headerStack = ChatViewControllerHeaderStackView(views: [titleLabel, headerSpacer, webSearchButton, sessionButton].compactMap { $0 })
         headerStack.orientation = .horizontal
-        headerStack.spacing = 4
+        headerStack.spacing = 8
         headerStack.translatesAutoresizingMaskIntoConstraints = false
         headerStack.setContentHuggingPriority(.defaultLow, for: .horizontal)
         headerStack.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
@@ -265,7 +296,6 @@ class ChatViewController: NSViewController {
             divider.bottomAnchor.constraint(equalTo: scrollView.topAnchor),
             divider.heightAnchor.constraint(equalToConstant: 1),
 
-            sessionButton.trailingAnchor.constraint(equalTo: headerStack.trailingAnchor),
             sessionButton.widthAnchor.constraint(equalToConstant: 18),
             sessionButton.topAnchor.constraint(equalTo: titleLabel.topAnchor),
             sessionButton.bottomAnchor.constraint(equalTo: titleLabel.bottomAnchor),
@@ -312,6 +342,13 @@ class ChatViewController: NSViewController {
             inputTextFieldContainer.leadingAnchor.constraint(equalTo: inputStack.leadingAnchor),
             sendButton.trailingAnchor.constraint(equalTo: inputStack.trailingAnchor),
         ])
+        if let webSearchButton {
+            NSLayoutConstraint.activate([
+                webSearchButton.widthAnchor.constraint(equalToConstant: 18),
+                webSearchButton.topAnchor.constraint(equalTo: titleLabel.topAnchor),
+                webSearchButton.bottomAnchor.constraint(equalTo: titleLabel.bottomAnchor),
+            ])
+        }
         view.alphaValue = 0
         self.view = view
     }
@@ -496,6 +533,24 @@ extension ChatViewController {
         }
     }
 
+    private static let webSearchUserDefaultsKey = "AI Web Search Enabled"
+    private var webSearchEnabled: Bool {
+        get {
+            if #available(macOS 11, *) {
+                return UserDefaults.standard.bool(forKey: Self.webSearchUserDefaultsKey)
+            }
+            return false
+        }
+        set {
+            return UserDefaults.standard.set(newValue, forKey: Self.webSearchUserDefaultsKey)
+        }
+    }
+
+    @objc private func toggleWebSearch(_ sender: Any) {
+        webSearchEnabled = !webSearchEnabled
+        webSearchButton?.contentTintColor = webSearchEnabled ? .controlAccentColor : nil
+    }
+
     @objc private func toggleAlwaysAllow(_ sender: Any) {
         if let chatID, let guid = model?.sessionGuid,
             let menuItem = sender as? NSMenuItem,
@@ -635,7 +690,9 @@ extension ChatViewController {
                               author: .user,
                               content: .plainText(text),
                               sentDate: Date(),
-                              uniqueID: UUID())
+                              uniqueID: UUID(),
+                              configuration: .init(hostedWebSearchEnabled: webSearchEnabled))
+
         ChatClient.instance?.publish(
             message: message,
             toChatID: chatID,

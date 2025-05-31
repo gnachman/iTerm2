@@ -296,6 +296,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (int)numberOfLinesForAccessibility;
 + (NSString *)onePasswordAccount;
 + (void)setOnePasswordAccount:(NSString *)value;
++ (BOOL)openAIResponsesAPI;
 + (BOOL)openFileInNewWindows;
 + (BOOL)openFileOverridesSendText;
 + (BOOL)openNewWindowAtStartup;

@@ -97,6 +97,11 @@ struct Message: Codable {
     let sentDate: Date
     let uniqueID: UUID
 
+    struct Configuration: Codable {
+        var hostedWebSearchEnabled = false
+    }
+    var configuration: Configuration?
+
     var shortDescription: String {
         return "<Message from \(author.rawValue), id \(uniqueID.uuidString): \(content.shortDescription)>"
     }

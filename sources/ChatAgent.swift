@@ -6,7 +6,7 @@
 //
 
 fileprivate extension AITermController.Message {
-    static func role(from message: Message) -> LLM.Message.Role {
+    static func role(from message: Message) -> LLM.Role {
         switch message.author {
         case .user: .user
         case .agent: .assistant
@@ -26,7 +26,7 @@ extension Message {
         }
     }
 
-    var functionCall: LLM.Message.FunctionCall? {
+    var functionCall: LLM.FunctionCall? {
         switch content {
         case .remoteCommandRequest(let request):
             return request.llmMessage.function_call
@@ -144,6 +144,7 @@ class ChatAgent {
         self.chatID = chatID
         self.broker = broker
         conversation = AIConversation(registrationProvider: registrationProvider)
+        conversation.hostedTools.codeInterpreter = true
         var permissions = Set<RemoteCommand.Content.PermissionCategory>()
         for message in messages {
             switch message.content {
@@ -190,6 +191,9 @@ class ChatAgent {
         case append(String, UUID)
     }
 
+    var supportsStreaming: Bool {
+        return conversation.supportsStreaming
+    }
     func fetchCompletion(userMessage: Message,
                          streaming: ((StreamingUpdate) -> ())?,
                          completion: @escaping (Message?) -> ()) {
@@ -216,6 +220,9 @@ class ChatAgent {
         }
 
         let needsRenaming = !conversation.messages.anySatisfies({ $0.role == .user})
+        if let configuration = userMessage.configuration {
+            conversation.hostedTools.webSearch = configuration.hostedWebSearchEnabled
+        }
         conversation.add(aiMessage(from: userMessage))
         var uuid: UUID?
         let streamingCallback: ((String) -> ())?

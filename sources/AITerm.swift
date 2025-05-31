@@ -626,6 +626,7 @@ struct JSONSchema: Codable {
     var type = "object"
     var properties: [String: Property] = [:]
     var required: [String] = []
+    var additionalProperties: Bool?  // Required by Responses API but not documented.
 
     struct Property: Codable {
         var type: String  // e.g., "string"
@@ -755,12 +756,16 @@ class AITermController {
         self.registration = registration
     }
 
+    var supportsStreaming: Bool {
+        return llmProvider.supportsStreaming
+    }
+
     func request(query: String, stream: Bool = false) {
         state = .initialized(query: query, stream: stream)
         handle(event: .begin)
     }
 
-    func request(messages: [Message], stream: Bool = false) {
+    func request(messages: [Message], stream: Bool) {
         state = .initializedMessages(messages: messages, stream: stream)
         handle(event: .begin)
     }
@@ -772,6 +777,8 @@ class AITermController {
     func define<T: Codable>(function decl: ChatGPTFunctionDeclaration, arguments: T.Type, implementation: @escaping LLM.Function<T>.Impl) {
         functions.append(LLM.Function(decl: decl, call: implementation, parameterType: arguments))
     }
+
+    var hostedTools = HostedTools()
 
     fileprivate func define(functions: [LLM.AnyFunction]) {
         self.functions.append(contentsOf: functions)
@@ -941,7 +948,8 @@ class AITermController {
         var builder = LLMRequestBuilder(provider: llmProvider,
                                         apiKey: registration.apiKey,
                                         messages: messages,
-                                        functions: functions)
+                                        functions: functions,
+                                        hostedTools: hostedTools)
         builder.stream = stream != nil
         guard llmProvider.urlIsValid else {
             handle(event: .error(AIError("Invalid URL for AI provider of \(iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? "(nil)")")))
@@ -1008,28 +1016,25 @@ class AITermController {
                             DLog("Stream finished")
                             break
                         }
-                        guard let choice = response.choiceMessages.first else {
-#if DEBUG
-                            it_fatalError("Unexpected choiceless message \(firstData.stringOrHex)")
-#endif
-                            continue
-                        }
-                        if let role = choice.role {
-                            accumulatingMessage.role = role
-                        }
-                        if let functionCall = choice.function_call {
-                            drain()
-                            if accumulatingMessage.function_call == nil {
-                                accumulatingMessage.function_call = .init(name: "", arguments: "")
+                        // The Responses API can have choiceless messages, such as type=response.created
+                        if let choice = response.choiceMessages.first {
+                            if let role = choice.role {
+                                accumulatingMessage.role = role
                             }
-                            accumulatingMessage.function_call!.name! += (functionCall.name ?? "")
-                            accumulatingMessage.function_call!.arguments! += (functionCall.arguments ?? "")
-                        }
-                        if let additionalContent = choice.content {
-                            if accumulatingMessage.content == nil {
-                                accumulatingMessage.content = ""
+                            if let functionCall = choice.function_call {
+                                drain()
+                                if accumulatingMessage.function_call == nil {
+                                    accumulatingMessage.function_call = .init(name: "", arguments: "")
+                                }
+                                accumulatingMessage.function_call!.name! += (functionCall.name ?? "")
+                                accumulatingMessage.function_call!.arguments! += (functionCall.arguments ?? "")
                             }
-                            accumulatingMessage.content! += additionalContent
+                            if let additionalContent = choice.content {
+                                if accumulatingMessage.content == nil {
+                                    accumulatingMessage.content = ""
+                                }
+                                accumulatingMessage.content! += additionalContent
+                            }
                         }
                     } catch {
                         drain()
@@ -1076,7 +1081,7 @@ class AITermController {
         }
     }
 
-    private func doFunctionCall(_ message: Message, call functionCall: Message.FunctionCall) {
+    private func doFunctionCall(_ message: Message, call functionCall: LLM.FunctionCall) {
         switch state {
         case .ground, .initialized, .initializedMessages:
             DLog("Unexpected function call in state \(state)")
@@ -1094,12 +1099,13 @@ class AITermController {
                         DLog("Response to function call with arguments \(functionCall.arguments ?? ""): \(response)")
                         amended.append(Message(role: .function,
                                                content: response,
-                                               name: functionCall.name))
+                                               name: functionCall.name,
+                                               functionCallID: message.functionCallID))
                         state = .ground
                         if let truncate {
                             amended = truncate(amended)
                         }
-                        request(messages: amended)
+                        request(messages: amended, stream: llmProvider.supportsStreaming)
                         return
                     case .failure(let error):
                         DLog("Trouble invoking a ChatGPT function: \(error.localizedDescription)")
@@ -1111,7 +1117,7 @@ class AITermController {
             }
             amended.append(Message(role: .user,
                                    content: "There is no registered function by that name. Try again."))
-            request(messages: amended)
+            request(messages: amended, stream: llmProvider.supportsStreaming)
         }
     }
 }
@@ -1342,6 +1348,9 @@ struct AIConversation {
         controller.truncate = { truncate(messages: $0, maxTokens: maxTokens) }
     }
 
+    var supportsStreaming: Bool {
+        return controller.supportsStreaming
+    }
     func removeAllFunctions() {
         controller.removeAllFunctions()
     }
@@ -1350,6 +1359,15 @@ struct AIConversation {
                             arguments: T.Type,
                             implementation: @escaping LLM.Function<T>.Impl) {
         controller.define(function: decl, arguments: arguments, implementation: implementation)
+    }
+
+    var hostedTools: HostedTools {
+        get {
+            controller.hostedTools
+        }
+        set {
+            controller.hostedTools = newValue
+        }
     }
 
     var systemMessage: String? {
@@ -1371,7 +1389,7 @@ struct AIConversation {
         messages.append(aiMessage)
     }
     
-    mutating func add(text: String, role: LLM.Message.Role = .user) {
+    mutating func add(text: String, role: LLM.Role = .user) {
         add(AITermController.Message(role: role, content: text))
     }
 
@@ -1398,7 +1416,7 @@ struct AIConversation {
                 registrationProvider.registrationProviderRequestRegistration() { registration in
                     if let registration {
                         regCompletion(registration)
-                        controller.request(messages: messages)
+                        controller.request(messages: messages, stream: streaming != nil && controller.supportsStreaming)
                     } else {
                         completion(.failure(AIError("You must provide a valid API key to use AI features in iTerm2.")))
                     }

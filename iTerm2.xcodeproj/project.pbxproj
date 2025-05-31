@@ -1915,6 +1915,16 @@
 		A663514A2B659309009B93F7 /* PinnedIndicator.png in Resources */ = {isa = PBXBuildFile; fileRef = A66351452B659309009B93F7 /* PinnedIndicator.png */; };
 		A663514B2B659309009B93F7 /* PinnedIndicator.png in Resources */ = {isa = PBXBuildFile; fileRef = A66351452B659309009B93F7 /* PinnedIndicator.png */; };
 		A66433372DE7E6050099F722 /* RangeMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = A66433362DE7E6020099F722 /* RangeMap.swift */; };
+		A66433392DE8C6FD0099F722 /* ResponsesAPIResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = A66433382DE8C6F90099F722 /* ResponsesAPIResponse.swift */; };
+		A664334E2DE938AD0099F722 /* ResponsesAPIRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A664334D2DE938A90099F722 /* ResponsesAPIRequest.swift */; };
+		A66433512DEA78A60099F722 /* globe@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66433502DEA78A60099F722 /* globe@2x.png */; };
+		A66433522DEA78A60099F722 /* globe.png in Resources */ = {isa = PBXBuildFile; fileRef = A664334F2DEA78A60099F722 /* globe.png */; };
+		A66433532DEA78A60099F722 /* globe@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66433502DEA78A60099F722 /* globe@2x.png */; };
+		A66433542DEA78A60099F722 /* globe.png in Resources */ = {isa = PBXBuildFile; fileRef = A664334F2DEA78A60099F722 /* globe.png */; };
+		A66433552DEA78A60099F722 /* globe@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66433502DEA78A60099F722 /* globe@2x.png */; };
+		A66433562DEA78A60099F722 /* globe.png in Resources */ = {isa = PBXBuildFile; fileRef = A664334F2DEA78A60099F722 /* globe.png */; };
+		A66433582DEA87DA0099F722 /* ResponsesResponseStreamingParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A66433572DEA87D90099F722 /* ResponsesResponseStreamingParser.swift */; };
+		A664335A2DEB695C0099F722 /* LLMModernProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = A66433592DEB694D0099F722 /* LLMModernProtocol.swift */; };
 		A6643F112CA62190004B757B /* coderabbitai.png in Resources */ = {isa = PBXBuildFile; fileRef = A6643F102CA6218F004B757B /* coderabbitai.png */; };
 		A6643F122CA62190004B757B /* coderabbitai.png in Resources */ = {isa = PBXBuildFile; fileRef = A6643F102CA6218F004B757B /* coderabbitai.png */; };
 		A6643F132CA62190004B757B /* coderabbitai.png in Resources */ = {isa = PBXBuildFile; fileRef = A6643F102CA6218F004B757B /* coderabbitai.png */; };
@@ -6614,6 +6624,12 @@
 		A66351442B659309009B93F7 /* PinnedIndicator@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PinnedIndicator@2x.png"; path = "images/PinnedIndicator@2x.png"; sourceTree = "<group>"; };
 		A66351452B659309009B93F7 /* PinnedIndicator.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = PinnedIndicator.png; path = images/PinnedIndicator.png; sourceTree = "<group>"; };
 		A66433362DE7E6020099F722 /* RangeMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangeMap.swift; sourceTree = "<group>"; };
+		A66433382DE8C6F90099F722 /* ResponsesAPIResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponsesAPIResponse.swift; sourceTree = "<group>"; };
+		A664334D2DE938A90099F722 /* ResponsesAPIRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponsesAPIRequest.swift; sourceTree = "<group>"; };
+		A664334F2DEA78A60099F722 /* globe.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = globe.png; path = images/globe.png; sourceTree = "<group>"; };
+		A66433502DEA78A60099F722 /* globe@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "globe@2x.png"; path = "images/globe@2x.png"; sourceTree = "<group>"; };
+		A66433572DEA87D90099F722 /* ResponsesResponseStreamingParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponsesResponseStreamingParser.swift; sourceTree = "<group>"; };
+		A66433592DEB694D0099F722 /* LLMModernProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMModernProtocol.swift; sourceTree = "<group>"; };
 		A6643F102CA6218F004B757B /* coderabbitai.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = coderabbitai.png; path = images/sponsors/coderabbitai.png; sourceTree = "<group>"; };
 		A66444B81DEEA534000AC615 /* iTermDisclosableView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermDisclosableView.h; sourceTree = "<group>"; };
 		A66444B91DEEA534000AC615 /* iTermDisclosableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermDisclosableView.m; sourceTree = "<group>"; };
@@ -9007,6 +9023,8 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A664334F2DEA78A60099F722 /* globe.png */,
+				A66433502DEA78A60099F722 /* globe@2x.png */,
 				A68BE9442DE428D5002DD513 /* flowchart.png */,
 				A68BE9452DE428D5002DD513 /* flowchart@2x.png */,
 				A659C9972DAF235C0036BA52 /* Channel.png */,
@@ -10150,6 +10168,10 @@
 		A6038324294E626400FE11C2 /* AITerm */ = {
 			isa = PBXGroup;
 			children = (
+				A66433592DEB694D0099F722 /* LLMModernProtocol.swift */,
+				A66433572DEA87D90099F722 /* ResponsesResponseStreamingParser.swift */,
+				A664334D2DE938A90099F722 /* ResponsesAPIRequest.swift */,
+				A66433382DE8C6F90099F722 /* ResponsesAPIResponse.swift */,
 				A6631A302D7142E9006C603B /* AICompletion.swift */,
 				A6631A242D6E5034006C603B /* Chat.swift */,
 				A6631A222D6E4FDC006C603B /* DateCellView.swift */,
@@ -14694,6 +14716,8 @@
 				1D8BBA6D1B30F5C30005A852 /* Navigate@2x.png in Resources */,
 				A69C93482121140100531438 /* iTermStatusBarLargeComposerViewController.xib in Resources */,
 				A67F6152214395870093940A /* graphic_less.png in Resources */,
+				A66433512DEA78A60099F722 /* globe@2x.png in Resources */,
+				A66433522DEA78A60099F722 /* globe.png in Resources */,
 				A6F7A74B213CB143004DE961 /* StatusBarIconRAM.png in Resources */,
 				A6F7A71B213CB143004DE961 /* StatusBarIconUser@2x.png in Resources */,
 				530AB7BE20A641E000D2AA08 /* repl_banner.txt in Resources */,
@@ -15132,6 +15156,8 @@
 				A6FE8D08209382C000B5C648 /* download@2x.png in Resources */,
 				A6EEAED628336C2A0039E850 /* framer.py in Resources */,
 				A6E7AE5F214394CA00DE9F3B /* graphic_clojure.png in Resources */,
+				A66433552DEA78A60099F722 /* globe@2x.png in Resources */,
+				A66433562DEA78A60099F722 /* globe.png in Resources */,
 				A6E7AE8D214394DD00DE9F3B /* graphic_composer@2x.png in Resources */,
 				A6F18B362AE2F39C006C08EE /* uniE0C1_flame-thin.pdf in Resources */,
 				A6A64E6A2508C5B50040490B /* OpenQuicklySnippetIcon.png in Resources */,
@@ -15625,6 +15651,8 @@
 				A6F18B562AE2F39C006C08EE /* uniE0B4_right-half-circle-thick.pdf in Resources */,
 				1DC2AF5119521CFF005769D5 /* QuestionMarkSign.png in Resources */,
 				A6DB14642D6D09C800266394 /* AIStreaming.png in Resources */,
+				A66433532DEA78A60099F722 /* globe@2x.png in Resources */,
+				A66433542DEA78A60099F722 /* globe.png in Resources */,
 				1DBBA5DE1B3CB0590026E3B6 /* restore-arrangement.png in Resources */,
 				A67D0D471A2EE12A003A8B35 /* CommandHistoryPopup.xib in Resources */,
 				A6F2F218250757FE00FC227F /* PrefsShortcuts@2x.png in Resources */,
@@ -16764,6 +16792,7 @@
 				A6A64E562508A9E10040490B /* iTermSnippetsMenuController.m in Sources */,
 				A630118420E6A613008114B7 /* iTermStatusBarSetupViewController.m in Sources */,
 				5370678C21C9D2780088D0F3 /* SIGVerificationAlgorithm.m in Sources */,
+				A66433392DE8C6FD0099F722 /* ResponsesAPIResponse.swift in Sources */,
 				A65B1B602D137BF700F5A740 /* PopoverHelpButton.swift in Sources */,
 				A6FF3F2F2435BA3C003CCB03 /* FindView.m in Sources */,
 				A67DAF1D299D61D100AD331A /* iTermTextDrawingHelper.m in Sources */,
@@ -17260,6 +17289,7 @@
 				A667C23A276BD90B006B4DEF /* VT100State.m in Sources */,
 				A6A4866720B6780C00493302 /* iTermAdvancedSettingsModel.m in Sources */,
 				A62841572CE28BA200D0796B /* iTermWordExtractor.m in Sources */,
+				A66433582DEA87DA0099F722 /* ResponsesResponseStreamingParser.swift in Sources */,
 				A6E2B49329F99550002737AD /* CommandParser.swift in Sources */,
 				A60E045A26DD537B00DD162B /* AsyncFilter.swift in Sources */,
 				A6A723A92DC010B400A8115D /* SubArray.swift in Sources */,
@@ -17362,6 +17392,7 @@
 				530AB8BD20B3D3D000D2AA08 /* iTermWindowHacks.m in Sources */,
 				A6DBC0462005DC2B00F1466D /* iTermTuple.m in Sources */,
 				A61F456F22FA52CD00E2054A /* iTermUnreadCountView.m in Sources */,
+				A664334E2DE938AD0099F722 /* ResponsesAPIRequest.swift in Sources */,
 				A618FFCA2245F89900B8FD88 /* iTermStatusBarKnobActionViewController.m in Sources */,
 				A621F0FE26F27EA4001DD3A6 /* LineBlock.mm in Sources */,
 				A6F22ACD2398D3C900C5D1A9 /* iTermLoggingHelper.m in Sources */,
@@ -17475,6 +17506,7 @@
 				A698BF492A5B8DCE0018EA84 /* MoveSessionBuiltInFunction.swift in Sources */,
 				A6CC7F59274ABCBF0060C3C2 /* NSScrollView+iTerm.swift in Sources */,
 				A6EB642B2D5BC1CF00481D33 /* ChatSplitViewController.swift in Sources */,
+				A664335A2DEB695C0099F722 /* LLMModernProtocol.swift in Sources */,
 				A6D463EB2404482D005D073D /* iTermAlphaBlendingHelper.m in Sources */,
 				A68400B01FF861A8008D3EE2 /* iTermFullScreenFlashRenderer.m in Sources */,
 				53E184F21FE32F2800DB78F3 /* iTermMetalBufferPool.m in Sources */,

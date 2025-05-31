@@ -813,6 +813,7 @@ DEFINE_BOOL(aquaSKKBugfixEnabled, NO, SECTION_EXPERIMENTAL @"Enable AquaSKK bugf
 DEFINE_BOOL(channelsEnabled, NO, SECTION_EXPERIMENTAL @"Enable Channels feature?")
 DEFINE_BOOL(rightJustifyRTLLines, YES, SECTION_EXPERIMENTAL @"Right-justify lines in paragraphs with base writing direction of right-to-left?\nRequires BOTH “right-to-left text support” and “auto-detect paragraph writing detection” to be enabled.");
 DEFINE_BOOL(detectParagraphDirection, NO, SECTION_EXPERIMENTAL @"Auto-detect paragraph writing direction based on the first strong directional character?\nRequires right-to-left text support to be enabled.");
+DEFINE_BOOL(openAIResponsesAPI, NO, SECTION_EXPERIMENTAL @"Use OpenAI’s “responses” API?\nStill under development");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "

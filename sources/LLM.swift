@@ -8,34 +8,56 @@
 import Foundation
 
 enum LLM {
+    enum Role: String, Codable {
+        case user
+        case assistant
+        case system
+        case function
+    }
+    struct FunctionCall: Codable, Equatable {
+        // These are optional because they can be omitted when streaming. Otherwise they are always present.
+        var name: String?
+        var arguments: String?
+    }
+
+
     protocol AnyResponse {
         var choiceMessages: [Message] { get }
         var isStreamingResponse: Bool { get }
     }
 
     struct Message: Codable, Equatable {
-        enum Role: String, Codable {
-            case user
-            case assistant
-            case system
-            case function
-        }
         var role: Role? = .user
         var content: String?
 
         // For function calling
-        var name: String?  // in the response only
+        var functionName: String?  // in the response only
+        var functionCallID: String?
         var function_call: FunctionCall?
 
-        struct FunctionCall: Codable, Equatable {
-            // These are optional because they can be omitted when streaming. Otherwise they are always present.
-            var name: String?
-            var arguments: String?
+        // For status updates
+        enum StatusUpdate: Codable {
+            case webSearchStarted
+            case webSearchFinished
+        }
+        var statusUpdate: StatusUpdate?
+
+        init(role: Role? = .user,
+             content: String? = nil,
+             name: String? = nil,
+             functionCallID: String? = nil,
+             function_call: FunctionCall? = nil) {
+            self.role = role
+            self.content = content
+            self.functionName = name
+            self.functionCallID = functionCallID
+            self.function_call = function_call
         }
 
         enum CodingKeys: String, CodingKey {
             case role
-            case name
+            case functionName = "name"
+            case functionCallID
             case content
             case function_call
         }
@@ -45,8 +67,11 @@ enum LLM {
 
             try container.encode(role, forKey: .role)
 
-            if let name {
-                try container.encode(name, forKey: .name)
+            if let functionName {
+                try container.encode(functionName, forKey: .functionName)
+            }
+            if let functionCallID {
+                try container.encode(functionCallID, forKey: .functionCallID)
             }
 
             try container.encode(content, forKey: .content)
@@ -229,7 +254,7 @@ fileprivate struct O1BodyRequestBuilder {
                 temp.role = .user
                 return temp
             }
-        case .completions, .gemini, .legacy:
+        case .completions, .gemini, .legacy, .responses:
             messages
         }
         let body = Body(model: provider.dynamicModelsSupported ? provider.model : nil,
@@ -246,12 +271,22 @@ fileprivate struct O1BodyRequestBuilder {
     }
 }
 
+struct HostedTools {
+    struct FileSearch {
+        var vectorstoreIDs: [String]  // cannot be empty
+    }
+    var fileSearch: FileSearch?
+    var webSearch = false
+    var codeInterpreter = false
+}
+
 struct LLMRequestBuilder {
     var provider: LLMProvider
     var apiKey: String
     var messages: [LLM.Message]
     var functions = [LLM.AnyFunction]()
     var stream = false
+    var hostedTools: HostedTools
 
     var headers: [String: String] {
         switch provider.platform {
@@ -278,6 +313,12 @@ struct LLMRequestBuilder {
                                          provider: provider,
                                          functions: functions,
                                          stream: stream).body()
+        case .responses:
+            try ResponsesBodyRequestBuilder(messages: messages,
+                                            provider: provider,
+                                            functions: functions,
+                                            stream: stream,
+                                            hostedTools: hostedTools).body()
         case .o1:
             try O1BodyRequestBuilder(messages: messages,
                                      provider: provider).body()
@@ -364,6 +405,7 @@ struct LLMProvider {
         case completions
         case gemini
         case o1
+        case responses
     }
 
     var platform = Platform.openAI
@@ -374,6 +416,9 @@ struct LLMProvider {
             return .gemini
         }
         if hostIsOpenAIAPI(url: completionsURL) {
+            if iTermAdvancedSettingsModel.openAIResponsesAPI() {
+                return .responses
+            }
             if model.hasPrefix("o1") {
                 return .o1
             }
@@ -458,7 +503,7 @@ struct LLMProvider {
             switch version {
             case .o1:
                 false
-            case .completions, .legacy:
+            case .completions, .legacy, .responses:
                 true
             case .gemini:
                 it_fatalError()
@@ -472,11 +517,35 @@ struct LLMProvider {
         switch version {
         case .legacy:
             false
-        case .completions:
+        case .completions, .responses:
             true
         case .o1:
             false
         case .gemini:
+            false
+        }
+    }
+
+    var supportsStreaming: Bool {
+        switch version {
+        case .legacy:
+            false
+        case .completions:
+            true
+        case .gemini:
+            false
+        case .o1:
+            false
+        case .responses:
+            true
+        }
+    }
+
+    var supportsHostedWebSearch: Bool {
+        switch version {
+        case .responses:
+            true
+        case .legacy, .completions, .o1, .gemini:
             false
         }
     }
@@ -512,6 +581,12 @@ struct LLMProvider {
             } else {
                 return LLMModernResponseParser()
             }
+        case .responses:
+            if stream {
+                return ResponsesResponseStreamingParser()
+            } else {
+                return ResponsesResponseParser()
+            }
         case .legacy:
             return stream ? LLMLegacyStreamingResponseParser() : LLMLegacyResponseParser()
         case .gemini:
@@ -526,107 +601,37 @@ protocol LLMResponseParser {
     func splitFirstJSONEvent(from rawInput: String) -> (json: String?, remainder: String)
 }
 
-struct LLMModernResponseParser: LLMResponseParser {
-    struct ModernResponse: Codable, LLM.AnyResponse {
-        var isStreamingResponse: Bool { false }
-        var id: String
-        var object: String
-        var created: Int
-        var model: String?
-        var choices: [Choice]
-        var usage: Usage?  // see issue 12134
 
-        struct Choice: Codable {
-            var index: Int
-            var message: LLM.Message
-            var finish_reason: String
-        }
-
-        struct Usage: Codable {
-            var prompt_tokens: Int
-            var completion_tokens: Int?
-            var total_tokens: Int
-        }
-
-        var choiceMessages: [LLM.Message] {
-            return choices.map { $0.message }
-        }
+func SplitServerSentEvents(from rawInput: String) -> (json: String?, remainder: String) {
+    let input = rawInput.trimmingLeadingCharacters(in: .whitespacesAndNewlines)
+    guard let newlineRange = input.range(of: "\n") else {
+        return (nil, String(input))
     }
 
-    var parsedResponse: ModernResponse?
+    // Extract the first line (up to, but not including, the newline)
+    let firstLine = input[..<newlineRange.lowerBound]
+    // Everything after the newline is the remainder.
+    let remainder = input[newlineRange.upperBound...]
 
-    mutating func parse(data: Data) throws -> LLM.AnyResponse? {
-        let decoder = JSONDecoder()
-        let response =  try decoder.decode(ModernResponse.self, from: data)
-        DLog("RESPONSE:\n\(response)")
-        parsedResponse = response
-        return response
+    // Skip all SSE control lines that aren't data
+    if firstLine.hasPrefix("event:") ||
+       firstLine.hasPrefix("id:") ||
+       firstLine.hasPrefix("retry:") ||
+       firstLine.hasPrefix(":") ||  // Comments
+       firstLine.trimmingCharacters(in: .whitespaces).isEmpty {
+        return SplitServerSentEvents(from: String(remainder))
+    }
+    // Ensure the line starts with "data:".
+    let prefix = "data:"
+    guard firstLine.hasPrefix(prefix) else {
+        // If not, we can't extract a valid JSON object.
+        return (nil, String(input))
     }
 
-    func splitFirstJSONEvent(from rawInput: String) -> (json: String?, remainder: String) {
-        return (nil, "")
-    }
-}
+    // Remove the prefix and trim whitespace to get the JSON object.
+    let jsonPart = firstLine.dropFirst(prefix.count).trimmingCharacters(in: .whitespaces)
 
-struct LLMModernStreamingResponseParser: LLMResponseParser {
-    struct ModernStreamingResponse: Codable, LLM.AnyResponse {
-        var isStreamingResponse: Bool { true }
-
-        let id: String?
-        let object: String?
-        let created: TimeInterval?
-        let model: String?
-        let choices: [UpdateChoice]
-
-        struct UpdateChoice: Codable {
-            // The delta holds the incremental text update.
-            let delta: LLM.Message
-            let index: Int
-            // For update chunks, finish_reason is nil.
-            let finish_reason: String?
-        }
-
-        var choiceMessages: [LLM.Message] {
-            return choices.map {
-                LLM.Message(role: .assistant,
-                            content: $0.delta.content ?? "",
-                            function_call: $0.delta.function_call)
-            }
-        }
-    }
-    var parsedResponse: ModernStreamingResponse?
-
-    mutating func parse(data: Data) throws -> LLM.AnyResponse? {
-        let decoder = JSONDecoder()
-        let response =  try decoder.decode(ModernStreamingResponse.self, from: data)
-        DLog("RESPONSE:\n\(response)")
-        parsedResponse = response
-        return response
-    }
-    func splitFirstJSONEvent(from rawInput: String) -> (json: String?, remainder: String) {
-        let input = rawInput.trimmingLeadingCharacters(in: .whitespacesAndNewlines)
-        guard let newlineRange = input.range(of: "\n") else {
-            return (nil, String(input))
-        }
-
-        // Extract the first line (up to, but not including, the newline)
-        let firstLine = input[..<newlineRange.lowerBound]
-        // Everything after the newline is the remainder.
-        let remainder = input[newlineRange.upperBound...]
-
-        // Ensure the line starts with "data:".
-        let prefix = "data:"
-        guard firstLine.hasPrefix(prefix) else {
-            // If not, we can't extract a valid JSON object.
-            return (nil, String(input))
-        }
-
-        // Remove the prefix and trim whitespace to get the JSON object.
-        let jsonPart = firstLine.dropFirst(prefix.count).trimmingCharacters(in: .whitespaces)
-
-        return (String(jsonPart.removing(prefix: "data:")), String(remainder))
-    }
-
+    return (String(jsonPart), String(remainder))
 }
 
 struct LLMLegacyResponseParser: LLMResponseParser {
@@ -654,7 +659,6 @@ struct LLMLegacyResponseParser: LLMResponseParser {
 
         var choiceMessages: [LLM.Message] {
             return choices.map {
-                #warning("TODO: This used to use 'model', not sure why. I changed it to an enum that combines .assistant and .model")
                 return LLM.Message(role: .assistant, content: $0.text)
             }
         }
@@ -731,9 +735,9 @@ struct LLMGeminiResponseParser: LLMResponseParser {
         var choiceMessages: [LLM.Message] {
             candidates.map {
                 let role = if let content = $0.content {
-                    content.role == "model" ? LLM.Message.Role.assistant : LLM.Message.Role.user
+                    content.role == "model" ? LLM.Role.assistant : LLM.Role.user
                 } else {
-                    LLM.Message.Role.assistant  // failed, probably because of safety
+                    LLM.Role.assistant  // failed, probably because of safety
                 }
                 return if let text = $0.content?.parts.first?.text {
                     LLM.Message(role: role, content: text)
