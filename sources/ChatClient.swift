@@ -45,11 +45,14 @@ class ChatClient {
             return processRemoteCommandRequest(chatID: chatID, message: message, request: request)
         case .plainText, .markdown, .explanationRequest, .remoteCommandResponse,
                 .selectSessionRequest, .clientLocal, .renameChat, .setPermissions,
-                .terminalCommand:
+                .terminalCommand, .multipart:
             return message
         case let .append(string: string, uuid: uuid):
             it_assert(partial)
-            return processAppend(appendMessage: message, string: string, uuid: uuid, chatID: chatID)
+            return processAppend(appendMessage: message, stringOrAttachment: .string(string), uuid: uuid, chatID: chatID)
+        case let .appendAttachment(attachment: attachment, uuid: uuid):
+            it_assert(partial)
+            return processAppend(appendMessage: message, stringOrAttachment: .attachment(attachment), uuid: uuid, chatID: chatID)
         case .commit(let uuid):
             return processCommit(finalMessage: message, messageID: uuid, chatID: chatID)
         case .explanationResponse(let response, let update, let markdown):
@@ -112,6 +115,7 @@ class ChatClient {
                 requestUUID: message.uniqueID,
                 message: "The user denied permission to use function calling in this terminal session. Do not try again.",
                 functionCallName: message.functionCallName ?? "Unknown function call name",
+                functionCallID: message.functionCallID,
                 userNotice: "AI will not execute this command.")
             return nil
         case .always:
@@ -160,6 +164,7 @@ class ChatClient {
                                                             requestUUID: messageUniqueID,
                                                             message: response,
                                                             functionCallName: request.llmMessage.function_call?.name ?? "Unknown function call name",
+                                                            functionCallID: request.llmMessage.functionCallID,
                                                             userNotice: userNotice)
         }
         if !done {
@@ -177,6 +182,7 @@ class ChatClient {
                                                    requestUUID: UUID,
                                                    message: String,
                                                    functionCallName: String,
+                                                   functionCallID: LLM.Message.FunctionCallID?,
                                                    userNotice: String?) {
         if let userNotice {
             broker.publishNotice(chatID: chatID, notice: userNotice)
@@ -186,7 +192,8 @@ class ChatClient {
                                         content: .remoteCommandResponse(
                                             .success(message),
                                             requestUUID,
-                                            functionCallName),
+                                            functionCallName,
+                                            functionCallID),
                                         sentDate: Date(),
                                         uniqueID: UUID()),
                        toChatID: chatID,
@@ -230,8 +237,12 @@ class ChatClient {
         chatWindowController.select(chatID: chatID)
     }
 
+    enum StringOrAttachment {
+        case string(String)
+        case attachment(LLM.Message.Attachment)
+    }
     private func processAppend(appendMessage: Message,
-                               string: String,
+                               stringOrAttachment: StringOrAttachment,
                                uuid: UUID,
                                chatID: String) -> Message? {
         guard let messages = model.messages(forChat: chatID, createIfNeeded: false),
@@ -242,7 +253,7 @@ class ChatClient {
         switch original.content {
         case .plainText, .markdown, .explanationRequest, .remoteCommandResponse, .clientLocal,
                 .renameChat, .append, .commit, .remoteCommandRequest, .selectSessionRequest,
-                .setPermissions, .terminalCommand:
+                .setPermissions, .terminalCommand, .appendAttachment, .multipart:
             // These are impossible or just normal streaming messages.
             return appendMessage
 
@@ -251,7 +262,18 @@ class ChatClient {
             // The initial is always empty.
 
             // append() will modify response in place so it is always complete.
-            var update = response.append(string, final: false)
+            var update = switch stringOrAttachment {
+            case .string(let string):
+                response.append(string, final: false)
+            case .attachment(let attachment):
+                switch attachment.type {
+                case .code(let content):
+                    // TODO: It would be better if explanation responses could hold multipart documents
+                    response.append(content, final: false)
+                case .statusUpdate:
+                    response.append("", final: false)
+                }
+            }
             update.messageID = uuid
 
             guard let newMarkdown = markdownForExplanationResponse(response: response,
@@ -279,7 +301,7 @@ class ChatClient {
         switch original.content {
         case .plainText, .markdown, .explanationRequest, .remoteCommandResponse, .clientLocal,
                 .renameChat, .append, .commit, .remoteCommandRequest, .selectSessionRequest,
-                .setPermissions, .terminalCommand:
+                .setPermissions, .terminalCommand, .appendAttachment, .multipart:
             // These are impossible or just normal streaming messages.
             return finalMessage
 

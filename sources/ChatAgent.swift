@@ -19,7 +19,7 @@ extension Message {
         switch content {
         case .remoteCommandRequest(let request):
             return request.llmMessage.function_call?.name
-        case .remoteCommandResponse(_, _, let name):
+        case .remoteCommandResponse(_, _, let name, _):
             return name
         default:
             return nil
@@ -30,6 +30,17 @@ extension Message {
         switch content {
         case .remoteCommandRequest(let request):
             return request.llmMessage.function_call
+        default:
+            return nil
+        }
+    }
+
+    var functionCallID: LLM.Message.FunctionCallID? {
+        switch content {
+        case .remoteCommandRequest(let request):
+            return request.llmMessage.functionCallID
+        case .remoteCommandResponse(_, _, _, let id):
+            return id
         default:
             return nil
         }
@@ -62,8 +73,22 @@ fileprivate struct MessageToPromptStateMachine {
         case .remoteCommandRequest:
             return nil
         case .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .commit, .setPermissions, .terminalCommand:
+                .commit, .setPermissions, .terminalCommand, .appendAttachment:
             it_fatalError()
+        case .multipart(let subparts):
+            return subparts.compactMap {
+                switch $0 {
+                case .attachment(let attachment):
+                    switch attachment.type {
+                    case .code(let code):
+                        code
+                    case .statusUpdate:
+                        nil
+                    }
+                case .markdown(let string), .plainText(let string):
+                    string
+                }
+            }.joined(separator: "\n")
         }
     }
 
@@ -98,9 +123,9 @@ fileprivate struct MessageToPromptStateMachine {
             case .explanationRequest(let request):
                 mode = .initialExplanation
                 return request.prompt()
-            case .explanationResponse, .append:
+            case .explanationResponse, .append, .appendAttachment:
                 it_fatalError()
-            case .remoteCommandResponse(let result, _, _):
+            case .remoteCommandResponse(let result, _, _, _):
                 return result.map { value in
                     value
                 } failure: { error in
@@ -109,7 +134,7 @@ fileprivate struct MessageToPromptStateMachine {
             case .terminalCommand(let cmd):
                 return prompt(terminalCommand: cmd)
             case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat, .commit,
-                    .setPermissions:
+                    .setPermissions, .multipart:
                 it_fatalError()
             }
         case .initialExplanation:
@@ -119,7 +144,7 @@ fileprivate struct MessageToPromptStateMachine {
                 return AIExplanationRequest.conversationalPrompt(userPrompt: value)
             case .explanationResponse, .explanationRequest, .append, .remoteCommandRequest,
                     .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat,
-                    .commit, .setPermissions:
+                    .commit, .setPermissions, .multipart, .appendAttachment:
                 it_fatalError()
             case .terminalCommand(let cmd):
                 return prompt(terminalCommand: cmd)
@@ -149,11 +174,12 @@ class ChatAgent {
         for message in messages {
             switch message.content {
             case .plainText, .markdown, .explanationRequest, .explanationResponse,
-                    .remoteCommandRequest, .remoteCommandResponse, .terminalCommand:
+                    .remoteCommandRequest, .remoteCommandResponse, .terminalCommand,
+                    .multipart:
                 conversation.add(aiMessage(from: message))
                 break
 
-            case .selectSessionRequest, .clientLocal, .renameChat, .append, .commit:
+            case .selectSessionRequest, .clientLocal, .renameChat, .append, .appendAttachment, .commit:
                 break
 
             case .setPermissions(let updated):
@@ -183,12 +209,14 @@ class ChatAgent {
         AITermController.Message(role: AITermController.Message.role(from: message),
                                  content: messageToPrompt.prompt(message: message),
                                  name: message.functionCallName,
+                                 functionCallID: message.functionCallID,
                                  function_call: message.functionCall)
     }
 
     enum StreamingUpdate {
         case begin(Message)
         case append(String, UUID)
+        case appendAttachment(LLM.Message.Attachment, UUID)
     }
 
     var supportsStreaming: Bool {
@@ -204,7 +232,7 @@ class ChatAgent {
             break
         case .renameChat, .append:
             return
-        case .remoteCommandResponse(let result, let messageID, _):
+        case .remoteCommandResponse(let result, let messageID, _, _):
             if let pending = pendingRemoteCommands[messageID] {
                 NSLog("Agent handling remote command response to message \(messageID)")
                 pendingRemoteCommands.removeValue(forKey: messageID)
@@ -217,25 +245,43 @@ class ChatAgent {
             updateSystemMessage(allowedCategories)
             completion(nil)
             return
+        case .appendAttachment:
+            it_fatalError("User-sent attachments not supported")
+        case .multipart(_):
+            it_fatalError("User-sent multipart messages not supported")
         }
 
         let needsRenaming = !conversation.messages.anySatisfies({ $0.role == .user})
         if let configuration = userMessage.configuration {
             conversation.hostedTools.webSearch = configuration.hostedWebSearchEnabled
         }
+#warning("TODO: Make this configurable maybe?")
+        conversation.hostedTools.codeInterpreter = true
         conversation.add(aiMessage(from: userMessage))
         var uuid: UUID?
-        let streamingCallback: ((String) -> ())?
+        let streamingCallback: ((LLM.StreamingUpdate) -> ())?
         if let streaming {
-            streamingCallback = { chunk in
-                if uuid == nil,
-                    let initialMessage = Self.message(completionText: chunk,
-                                                      userMessage: userMessage,
-                                                      streaming: true) {
-                    streaming(.begin(initialMessage))
-                    uuid = initialMessage.uniqueID
-                } else if let uuid {
-                    streaming(.append(chunk, uuid))
+            streamingCallback = { streamingUpdate in
+                switch streamingUpdate {
+                case .appendAttachment(let chunk):
+                    if uuid == nil,
+                       let initialMessage = Self.message(attachment: chunk,
+                                                         userMessage: userMessage) {
+                        streaming(.begin(initialMessage))
+                        uuid = initialMessage.uniqueID
+                    } else if let uuid {
+                        streaming(.appendAttachment(chunk, uuid))
+                    }
+                case .append(let chunk):
+                    if uuid == nil,
+                       let initialMessage = Self.message(completionText: chunk,
+                                                         userMessage: userMessage,
+                                                         streaming: true) {
+                        streaming(.begin(initialMessage))
+                        uuid = initialMessage.uniqueID
+                    } else if let uuid {
+                        streaming(.append(chunk, uuid))
+                    }
                 }
             }
         } else {
@@ -267,7 +313,7 @@ class ChatAgent {
             messages: conversation.messages + [AITermController.Message(role: .user, content: prompt)])
         var failed = false
         renameConversation?.complete { [weak self] (result: Result<AIConversation, Error>) in
-            if let newName = result.successValue?.messages.last?.content {
+            if let newName = result.successValue?.messages.last?.body.content {
                 self?.renameChat(newName)
                 self?.renameConversation = nil
             } else {
@@ -281,7 +327,7 @@ class ChatAgent {
 
     private static func committedMessage(respondingTo userMessage: Message,
                                          fromLastMessageIn conversation: AIConversation) -> Message? {
-        guard let text = conversation.messages.last!.content else {
+        guard let text = conversation.messages.last?.body.content else {
             return nil
         }
         return self.message(completionText: text, userMessage: userMessage, streaming: false)
@@ -326,7 +372,7 @@ class ChatAgent {
                                 userMessage: Message,
                                 streaming: Bool) -> Message? {
         switch userMessage.content {
-        case .plainText, .markdown, .explanationResponse, .terminalCommand:
+        case .plainText, .markdown, .explanationResponse, .terminalCommand, .remoteCommandResponse:
             return Message(chatID: userMessage.chatID,
                            author: .agent,
                            content: .markdown(text),
@@ -345,19 +391,51 @@ class ChatAgent {
                     markdown: ""),  // markdown is added by the client.
                 sentDate: Date(),
                 uniqueID: messageID)
-        case .remoteCommandResponse:
+        case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat, .append,
+                .commit, .setPermissions, .appendAttachment, .multipart:
+            it_fatalError()
+        }
+    }
+
+    // Streaming only
+    private static func message(attachment: LLM.Message.Attachment,
+                                userMessage: Message) -> Message? {
+        switch userMessage.content {
+        case .plainText, .markdown, .explanationResponse, .terminalCommand, .remoteCommandResponse:
             return Message(chatID: userMessage.chatID,
                            author: .agent,
-                           content: .markdown(text),
+                           content: .multipart([.attachment(attachment)]),
                            sentDate: Date(),
                            uniqueID: UUID())
+        case .explanationRequest(let explanationRequest):
+            let messageID = UUID()
+            return Message(
+                chatID: userMessage.chatID,
+                author: .agent,
+                content: .explanationResponse(
+                    // TODO: Support attachments in explanations
+                    ExplanationResponse(text: attachment.contentString,
+                                        request: explanationRequest,
+                                        final: false),
+                    ExplanationResponse.Update(final: false, messageID: messageID),
+                    markdown: ""),  // markdown is added by the client.
+                sentDate: Date(),
+                uniqueID: messageID)
         case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .commit, .setPermissions:
+                .commit, .setPermissions, .appendAttachment, .multipart:
             it_fatalError()
         }
     }
 }
 
+extension LLM.Message.Attachment {
+    var contentString: String {
+        switch type {
+        case .code(let code): code
+        case .statusUpdate(let statusUpdate): statusUpdate.displayString
+        }
+    }
+}
 
 extension Message {
     var isExplanationRequest: Bool {

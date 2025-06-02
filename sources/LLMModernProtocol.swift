@@ -6,31 +6,27 @@
 //
 // This file relates to OpenAI's second API, also called "completions".
 
-struct ModernMessage: Codable, Equatable {
+struct CompletionsMessage: Codable, Equatable {
     var role: LLM.Role? = .user
     var content: String?
 
     // For function calling
     var functionName: String?  // in the response only
-    var functionCallID: String?
     var function_call: LLM.FunctionCall?
 
     init(role: LLM.Role? = .user,
          content: String? = nil,
          name: String? = nil,
-         functionCallID: String? = nil,
          function_call: LLM.FunctionCall? = nil) {
         self.role = role
         self.content = content
         self.functionName = name
-        self.functionCallID = functionCallID
         self.function_call = function_call
     }
 
     enum CodingKeys: String, CodingKey {
         case role
         case functionName = "name"
-        case functionCallID
         case content
         case function_call
     }
@@ -42,9 +38,6 @@ struct ModernMessage: Codable, Equatable {
 
         if let functionName {
             try container.encode(functionName, forKey: .functionName)
-        }
-        if let functionCallID {
-            try container.encode(functionCallID, forKey: .functionCallID)
         }
 
         try container.encode(content, forKey: .content)
@@ -62,6 +55,40 @@ struct ModernMessage: Codable, Equatable {
         }
         return String(content.trimmingLeadingCharacters(in: .whitespacesAndNewlines))
     }
+
+    init?(_ llmMessage: LLM.Message) {
+        role = llmMessage.role
+        switch llmMessage.body {
+        case .text(let text):
+            content = text
+        case .attachment(let attachment):
+            switch attachment.type {
+            case .code(let string):
+                content = string
+            case .statusUpdate(let statusUpdate):
+                content = statusUpdate.displayString
+            }
+        case .functionCall(let call, _):
+            functionName = call.name
+            function_call = call
+            content = nil
+        case .functionOutput(name: let name, output: let output, id: _):
+            functionName = name
+            content = output
+        case .uninitialized:
+            return nil
+        case .multipart:
+            // This is pretty crappy but I don't think it'll happen unless you continue an
+            // existing conversation in an older API.
+            content = llmMessage.body.content
+        }
+    }
+    var llmMessage: LLM.Message {
+        LLM.Message(role: role,
+                    content: content,
+                    name: functionName,
+                    function_call: function_call)
+    }
 }
 
 struct LLMModernResponseParser: LLMResponseParser {
@@ -76,7 +103,7 @@ struct LLMModernResponseParser: LLMResponseParser {
 
         struct Choice: Codable {
             var index: Int
-            var message: ModernMessage
+            var message: CompletionsMessage
             var finish_reason: String
         }
 
@@ -91,7 +118,6 @@ struct LLMModernResponseParser: LLMResponseParser {
                 LLM.Message(role: $0.message.role,
                             content: $0.message.content,
                             name: $0.message.functionName,
-                            functionCallID: $0.message.functionCallID,
                             function_call: $0.message.function_call)
             }
         }
@@ -112,8 +138,9 @@ struct LLMModernResponseParser: LLMResponseParser {
     }
 }
 
-struct LLMModernStreamingResponseParser: LLMResponseParser {
-    struct ModernStreamingResponse: Codable, LLM.AnyResponse {
+struct LLMModernStreamingResponseParser: LLMStreamingResponseParser {
+    struct ModernStreamingResponse: Codable, LLM.AnyStreamingResponse {
+        var ignore: Bool { false }
         var isStreamingResponse: Bool { true }
 
         let id: String?
@@ -124,7 +151,7 @@ struct LLMModernStreamingResponseParser: LLMResponseParser {
 
         struct UpdateChoice: Codable {
             // The delta holds the incremental text update.
-            let delta: ModernMessage
+            let delta: CompletionsMessage
             let index: Int
             // For update chunks, finish_reason is nil.
             let finish_reason: String?
@@ -140,7 +167,7 @@ struct LLMModernStreamingResponseParser: LLMResponseParser {
     }
     var parsedResponse: ModernStreamingResponse?
 
-    mutating func parse(data: Data) throws -> LLM.AnyResponse? {
+    mutating func parse(data: Data) throws -> LLM.AnyStreamingResponse? {
         let decoder = JSONDecoder()
         let response =  try decoder.decode(ModernStreamingResponse.self, from: data)
         DLog("RESPONSE:\n\(response)")

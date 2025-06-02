@@ -29,6 +29,13 @@ struct ClientLocal: Codable {
 struct Message: Codable {
     let chatID: String
     let author: Participant
+
+    enum Subpart: Codable {
+        case plainText(String)
+        case markdown(String)
+        case attachment(LLM.Message.Attachment)
+    }
+
     indirect enum Content: Codable {
         case plainText(String)
         case markdown(String)
@@ -40,14 +47,17 @@ struct Message: Codable {
         // as it sees fit.
         case explanationResponse(ExplanationResponse, ExplanationResponse.Update?, markdown: String)
         case remoteCommandRequest(RemoteCommand)
-        case remoteCommandResponse(Result<String, AIError>, UUID, String)
+        // Output/Error, message unique ID, function name, function call ID (used by Responses API but not older APIs)
+        case remoteCommandResponse(Result<String, AIError>, UUID, String, LLM.Message.FunctionCallID?)
         case selectSessionRequest(Message)  // carries the original message that needs a session
         case clientLocal(ClientLocal)
         case renameChat(String)
         case append(string: String, uuid: UUID)  // for streaming responses
+        case appendAttachment(attachment: LLM.Message.Attachment, uuid: UUID)  // for streaming responses
         case commit(UUID)  // end of streaming response
         case setPermissions(Set<RemoteCommand.Content.PermissionCategory>)
         case terminalCommand(TerminalCommand)
+        case multipart([Subpart])
 
         var shortDescription: String {
             let maxLength = 256
@@ -64,7 +74,7 @@ struct Message: Codable {
                 }
             case .remoteCommandRequest(let rc):
                 return "Run remote command: \(rc.markdownDescription)"
-            case .remoteCommandResponse(let result, _, let name):
+            case .remoteCommandResponse(let result, _, let name, _):
                 return "Response to remote command \(name): " + result.map(success: { $0.truncatedWithTrailingEllipsis(to: maxLength)},
                                                                            failure: { $0.localizedDescription.truncatedWithTrailingEllipsis(to: maxLength)})
             case .selectSessionRequest(let message):
@@ -84,12 +94,62 @@ struct Message: Codable {
                 return "Rename chat to \(name)"
             case let .append(string: chunk, uuid: uuid):
                 return "Append \(chunk) to \(uuid.uuidString)"
+            case let .appendAttachment(attachment: attachment, uuid: uuid):
+                return "Append attachment \(attachment) to \(uuid.uuidString)"
             case .commit(let uuid):
                 return "Commit \(uuid.uuidString)"
             case .setPermissions(let categories):
                 return "Allow \(Array(categories).map { $0.rawValue }.joined(separator: " + "))"
             case .terminalCommand(let command):
                 return "Terminal command \(command.command)"
+            case .multipart:
+                return "Multipart message"
+            }
+        }
+
+        var snippetText: String? {
+            let maxLength = 40
+            switch self {
+            case .plainText(let text): return text.truncatedWithTrailingEllipsis(to: maxLength)
+            case .markdown(let text): return text.truncatedWithTrailingEllipsis(to: maxLength)
+            case .explanationRequest(request: let request): return request.snippetText
+            case .explanationResponse(_, _, let markdown):
+                return markdown.truncatedWithTrailingEllipsis(to: maxLength)
+            case .remoteCommandRequest(let command): return command.markdownDescription
+            case .selectSessionRequest: return "Selecting session…"
+            case .clientLocal(let cl):
+                switch cl.action {
+                case .executingCommand(let command): return command.markdownDescription
+                case .pickingSession: return "Selecting session…"
+                case .notice(let message): return message
+                case .streamingChanged(let state):
+                    return switch state {
+                    case .stopped, .stoppedAutomatically:
+                        "Stopped sending commands to AI"
+                    case .active:
+                        "Sending commands to AI automatically"
+                    }
+                }
+            case .renameChat, .append, .appendAttachment, .commit, .setPermissions: return nil
+            case .remoteCommandResponse:
+                return "Finished executing command"
+            case .terminalCommand(let cmd):
+                return "Ran `\(cmd.command.truncatedWithTrailingEllipsis(to: maxLength - 4))`"
+            case .multipart(let subparts):
+                if let last = subparts.last {
+                    switch last {
+                    case .plainText(let text), .markdown(let text):
+                        return text.truncatedWithTrailingEllipsis(to: maxLength)
+                    case .attachment(let attachment):
+                        switch attachment.type {
+                        case .code(let text):
+                            return text.truncatedWithTrailingEllipsis(to: maxLength)
+                        case .statusUpdate(let statusUpdate):
+                            return statusUpdate.displayString
+                        }
+                    }
+                }
+                return "Empty message"
             }
         }
     }
@@ -110,8 +170,7 @@ struct Message: Codable {
     var hiddenFromClient: Bool {
         switch content {
         case .remoteCommandResponse, .renameChat, .commit, .setPermissions: true
-        case .selectSessionRequest, .remoteCommandRequest, .plainText, .markdown, .explanationResponse, .explanationRequest, .clientLocal, .append,
-                .terminalCommand: false
+        case .selectSessionRequest, .remoteCommandRequest, .plainText, .markdown, .explanationResponse, .explanationRequest, .clientLocal, .append, .terminalCommand, .appendAttachment, .multipart: false
         }
     }
 
@@ -122,52 +181,69 @@ struct Message: Codable {
             true
         case .remoteCommandResponse, .selectSessionRequest, .remoteCommandRequest, .plainText,
                 .markdown, .explanationResponse, .explanationRequest, .renameChat, .append,
-                .commit, .setPermissions, .terminalCommand:
+                .commit, .setPermissions, .terminalCommand, .appendAttachment, .multipart:
             false
         }
     }
 
     // This is the snippet shown in the chat list.
     var snippetText: String? {
-        let maxLength = 40
-        switch content {
-        case .plainText(let text): return text.truncatedWithTrailingEllipsis(to: maxLength)
-        case .markdown(let text): return text.truncatedWithTrailingEllipsis(to: maxLength)
-        case .explanationRequest(request: let request): return request.snippetText
-        case .explanationResponse(_, _, let markdown):
-            return markdown.truncatedWithTrailingEllipsis(to: maxLength)
-        case .remoteCommandRequest(let command): return command.markdownDescription
-        case .selectSessionRequest: return "Selecting session…"
-        case .clientLocal(let cl):
-            switch cl.action {
-            case .executingCommand(let command): return command.markdownDescription
-            case .pickingSession: return "Selecting session…"
-            case .notice(let message): return message
-            case .streamingChanged(let state):
-                return switch state {
-                case .stopped, .stoppedAutomatically:
-                    "Stopped sending commands to AI"
-                case .active:
-                    "Sending commands to AI automatically"
-                }
-            }
-        case .renameChat, .append, .commit, .setPermissions: return nil
-        case .remoteCommandResponse:
-            return "Finished executing command"
-        case .terminalCommand(let cmd):
-            return "Ran `\(cmd.command.truncatedWithTrailingEllipsis(to: maxLength - 4))`"
-        }
+        return content.snippetText
     }
 
-    mutating func append(_ chunk: String) {
+    mutating func append(_ attachment: LLM.Message.Attachment) {
+        switch content {
+        case .plainText(let string):
+            content = .multipart([.plainText(string),
+                                  .attachment(attachment)])
+        case .markdown(let string):
+            content = .multipart([.markdown(string),
+                                  .attachment(attachment)])
+        case .multipart(var subparts):
+            if let lastPart = subparts.last,
+               case let .attachment(existingAttachment) = lastPart,
+               let combined = existingAttachment.appending(attachment) {
+                subparts[subparts.count - 1] = .attachment(combined)
+                content = .multipart(subparts)
+            } else {
+                content = .multipart(subparts + [.attachment(attachment)])
+            }
+            #warning("TODO: Handle attachments in some of these like explanationResponse")
+        case .explanationRequest, .explanationResponse, .remoteCommandRequest,
+                .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat,
+                .append, .appendAttachment, .commit, .setPermissions, .terminalCommand:
+            it_fatalError()
+        }
+    }
+    mutating func append(_ chunk: String, useMarkdownIfAmbiguous: Bool) {
         switch content {
         case .plainText(let string):
             content = .plainText(string + chunk)
         case .markdown(let string):
             content = .markdown(string + chunk)
+        case .multipart(let subparts):
+            if let lastSubpart = subparts.last {
+                switch lastSubpart {
+                case .markdown(let existingMarkdown):
+                    content = .multipart(subparts.dropLast() +
+                                         [.markdown(existingMarkdown + chunk)])
+                    return
+                case .plainText(let existingPlainText):
+                    content = .multipart(subparts.dropLast() +
+                                         [.plainText(existingPlainText + chunk)])
+                    return
+                case .attachment:
+                    break
+                }
+            }
+            if useMarkdownIfAmbiguous {
+                content = .multipart(subparts + [.markdown(chunk)])
+            } else {
+                content = .multipart(subparts + [.plainText(chunk)])
+            }
         case .explanationRequest, .explanationResponse, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .commit, .setPermissions, .terminalCommand:
+                .commit, .setPermissions, .terminalCommand, .appendAttachment:
             it_fatalError()
         }
     }

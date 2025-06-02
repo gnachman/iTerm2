@@ -71,6 +71,14 @@ class ChatService {
                                                               uniqueID: UUID()),
                                              toChatID: chatID,
                                              partial: true)
+                    case .appendAttachment(let attachment, let uuid):
+                        self?.broker.publish(message: Message(chatID: chatID,
+                                                              author: .agent,
+                                                              content: .appendAttachment(attachment: attachment, uuid: uuid),
+                                                              sentDate: Date(),
+                                                              uniqueID: UUID()),
+                                             toChatID: chatID,
+                                             partial: true)
                     }
                 }, completion: { [weak self] replyMessage in
                     stopTyping()

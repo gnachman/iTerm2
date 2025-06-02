@@ -6,6 +6,7 @@ protocol AITermControllerDelegate: AnyObject {
     func aitermController(_ sender: AITermController, offerChoice: String)
     // update will be nil upon completion
     func aitermController(_ sender: AITermController, didStreamUpdate update: String?)
+    func aitermController(_ sender: AITermController, didStreamAttachment: LLM.Message.Attachment)
     func aitermController(_ sender: AITermController, didFailWithError: Error)
     func aitermControllerRequestRegistration(_ sender: AITermController,
                                              completion: @escaping (AITermController.Registration) -> ())
@@ -575,6 +576,10 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         it_fatalError("Streaming not supported in the objective c interface")
     }
 
+    func aitermController(_ sender: AITermController, didStreamAttachment: LLM.Message.Attachment) {
+        it_fatalError("Streaming not supported in the objective C interface")
+    }
+
     func aitermController(_ sender: AITermController, offerChoice choice: String) {
         pleaseWait.stop()
         DispatchQueue.main.async {
@@ -993,61 +998,68 @@ class AITermController {
         }
         DLog("------- parse new stream response of length \(data.count) -------------")
         let string = String(data: parserState.buffer + data, encoding: .utf8) ?? ""
-        var (first, rest) = llmProvider.responseParser(stream: true).splitFirstJSONEvent(from: string)
+        var (first, rest) = llmProvider.streamingResponseParser(stream: true).splitFirstJSONEvent(from: string)
 
         let drain = {
-            if let string = accumulatingMessage.content, !string.isEmpty {
-                DLog("drain with content: \(accumulatingMessage)")
-                self.delegate?.aitermController(self, didStreamUpdate: string)
-                accumulatingMessage.content = nil
+            switch accumulatingMessage.body {
+            case .uninitialized:
+                break
+            case .text(let string):
+                if !string.isEmpty {
+                    DLog("drain with content: \(accumulatingMessage)")
+                    self.delegate?.aitermController(self, didStreamUpdate: string)
+                }
+                accumulatingMessage.body = .uninitialized
+            case .attachment(let attachment):
+                DLog("drain attachment \(attachment)")
+                self.delegate?.aitermController(self, didStreamAttachment: attachment)
+            case .functionCall(let call, _):
+                self.doFunctionCall(accumulatingMessage, call: call)
+                accumulatingMessage.body = .uninitialized
+            case .functionOutput:
+                it_fatalError("Server should not send function output")
+            case .multipart:
+                it_fatalError("Should not accumulate multipart")
             }
+            accumulatingMessage.body = .uninitialized
         }
         do {
-            defer { drain() }
+            defer {
+                switch accumulatingMessage.body {
+                case .uninitialized, .functionCall, .functionOutput, .multipart:
+                    break
+                case .text, .attachment:
+                    drain()
+                }
+            }
             while first != nil {
                 if let first, let firstData = first.data(using: .utf8) {
                     if first == "[DONE]" {
                         break
                     }
                     do {
-                        var parser = llmProvider.responseParser(stream: true)
+                        var parser = llmProvider.streamingResponseParser(stream: true)
                         let response = try parser.parse(data: firstData)
                         guard let response else {
                             DLog("Stream finished")
                             break
                         }
                         // The Responses API can have choiceless messages, such as type=response.created
-                        if let choice = response.choiceMessages.first {
+                        if let choice = response.choiceMessages.first, !response.ignore {
                             if let role = choice.role {
                                 accumulatingMessage.role = role
                             }
-                            if let functionCall = choice.function_call {
+                            if !accumulatingMessage.tryAppend(choice.body) {
                                 drain()
-                                if accumulatingMessage.function_call == nil {
-                                    accumulatingMessage.function_call = .init(name: "", arguments: "")
-                                }
-                                accumulatingMessage.function_call!.name! += (functionCall.name ?? "")
-                                accumulatingMessage.function_call!.arguments! += (functionCall.arguments ?? "")
-                            }
-                            if let additionalContent = choice.content {
-                                if accumulatingMessage.content == nil {
-                                    accumulatingMessage.content = ""
-                                }
-                                accumulatingMessage.content! += additionalContent
+                                accumulatingMessage = LLM.Message(role: choice.role,
+                                                                  body: choice.body)
                             }
                         }
                     } catch {
                         drain()
-                        if let reason = LLMErrorParser.errorReason(data: firstData) {
-                            handle(event: .error(AIError("Could not decode response: " + reason)))
-                            return nil
-                        } else {
-                            handle(event: .error(AIError("Failed to decode API response: \(error). Data is: \(first)")))
-                            return nil
-                        }
                     }
                 }
-                (first, rest) = llmProvider.responseParser(stream: true).splitFirstJSONEvent(from: rest)
+                (first, rest) = llmProvider.streamingResponseParser(stream: true).splitFirstJSONEvent(from: rest)
             }
         }
 
@@ -1294,11 +1306,18 @@ protocol AIRegistrationProvider: AnyObject {
         _ completion: @escaping (AITermController.Registration?) -> ())
 }
 
+extension LLM {
+    enum StreamingUpdate {
+        case append(String)
+        case appendAttachment(LLM.Message.Attachment)
+    }
+}
+
 struct AIConversation {
     private class Delegate: AITermControllerDelegate {
         private(set) var busy = false
         var completion: ((Result<String, Error>) -> ())?
-        var streaming: ((String) -> ())?
+        var streaming: ((LLM.StreamingUpdate) -> ())?
         var registrationNeeded: ((@escaping (AITermController.Registration) -> ()) -> ())?
 
         func aitermControllerWillSendRequest(_ sender: AITermController) {
@@ -1322,10 +1341,14 @@ struct AIConversation {
 
         func aitermController(_ sender: AITermController, didStreamUpdate update: String?) {
             if let update {
-                streaming?(update)
+                streaming?(.append(update))
             } else {
                 completion?(.success(""))
             }
+        }
+
+        func aitermController(_ sender: AITermController, didStreamAttachment attachment: LLM.Message.Attachment) {
+            streaming?(.appendAttachment(attachment))
         }
     }
 
@@ -1397,7 +1420,7 @@ struct AIConversation {
         complete(streaming: nil, completion: completion)
     }
 
-    mutating func complete(streaming: ((String) -> ())?,
+    mutating func complete(streaming: ((LLM.StreamingUpdate) -> ())?,
                            completion: @escaping (Result<AIConversation, Error>) -> ()) {
         precondition(!messages.isEmpty)
 
@@ -1427,10 +1450,15 @@ struct AIConversation {
             }
         }
 
-        var accumulator = ""
+        var accumulator = LLM.Message.Body.uninitialized
         if let streaming {
             delegate.streaming = { update in
-                accumulator += update
+                switch update {
+                case .append(let string):
+                    accumulator.append(.text(string))
+                case .appendAttachment(let attachment):
+                    accumulator.append(.attachment(attachment))
+                }
                 streaming(update)
             }
         }
@@ -1438,8 +1466,11 @@ struct AIConversation {
         delegate.completion = { [weak registrationProvider] result in
             switch result {
             case .success(let text):
+                if !text.isEmpty {
+                    accumulator.append(.text(text))
+                }
                 let message = AITermController.Message(role: .assistant,
-                                                       content: accumulator + text)
+                                                       body: accumulator)
                 let amended = AIConversation(registrationProvider: registrationProvider,
                                              messages: prior + [message])
                 amended.controller.define(functions: controller.functions)
@@ -1480,7 +1511,14 @@ func truncate(messages: [AITermController.Message], maxTokens: Int) -> [AITermCo
                 (head, _) = head.halved
                 (_, tail) = tail.halved
                 tokens -= messagesToSend[j].approximateTokenCount
-                messagesToSend[j].content = head + "…[truncated]…" + tail
+                switch messagesToSend[j].body {
+                case .text, .attachment, .multipart:
+                    messagesToSend[j].body = .text(head + "…[truncated]…" + tail)
+                case .functionOutput(name: let name, output: _, id: let id):
+                    messagesToSend[j].body = .functionOutput(name: name, output: head + "…[truncated]…" + tail, id: id)
+                case .uninitialized, .functionCall:
+                    break
+                }
                 tokens += messagesToSend[j].approximateTokenCount
             }
         } else {

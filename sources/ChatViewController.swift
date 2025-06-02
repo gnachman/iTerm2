@@ -757,7 +757,17 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 let cell = SystemMessageCellView()
                 configure(cell: cell, for: message.message, isLast: isLastMessage)
                 return cell
-            default:
+            case .multipart:
+                let cell = MultipartMessageCellView()
+                configure(cell: cell, for: message.message, isLast: isLastMessage)
+                return cell
+
+            case .append, .appendAttachment:
+                it_fatalError("Append-type messages should not be in model")
+
+            case .plainText, .markdown, .explanationRequest, .explanationResponse,
+                    .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest,
+                    .renameChat, .commit, .setPermissions:
                 let cell = RegularMessageCellView()
                 configure(cell: cell, for: message.message, isLast: isLastMessage)
                 return cell
@@ -785,6 +795,13 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         }
         model.deleteFrom(index: i)
         inputTextFieldContainer.stringValue = text
+    }
+
+    private func configure(cell: MultipartMessageCellView,
+                           for message: Message,
+                           isLast: Bool) {
+        cell.configure(with: rendition(for: message, isLast: isLast),
+                       maxBubbleWidth: tableView.bounds.width)
     }
 
     private func configure(cell: TerminalCommandMessageCellView,
@@ -868,6 +885,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                                 requestUUID: originalMessage.uniqueID,
                                 message: "The user declined to allow this function call to execute.",
                                 functionCallName: originalMessage.functionCallName ?? "Unknown function call name",
+                                functionCallID: originalMessage.functionCallID,
                                 userNotice: nil)
                         }
                     }
@@ -875,6 +893,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
             }
         case .remoteCommandRequest(let remoteCommand):
             let functionCallName = remoteCommand.llmMessage.function_call?.name ?? "Unknown function call name"
+            let functionCallID = remoteCommand.llmMessage.functionCallID
             cell.buttonClicked = { [client, listModel] identifier, messageID in
                 guard messageID == originalMessageID else {
                     return
@@ -890,6 +909,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                         requestUUID: messageID,
                         message: "The user did not link a terminal session to chat, so the function could not be run.",
                         functionCallName: functionCallName,
+                        functionCallID: functionCallID,
                         userNotice: "AI attempted to perform an action, but no session is linked to this chat so it failed.")
                     return
                 }
@@ -925,11 +945,13 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                         requestUUID: messageID,
                         message: "The user declined to allow function calling. Try to find another way to assist.",
                         functionCallName: functionCallName,
+                        functionCallID: functionCallID,
                         userNotice: nil)
                 }
             }
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
-                .remoteCommandResponse, .renameChat, .append, .commit, .setPermissions:
+                .remoteCommandResponse, .renameChat, .append, .commit, .setPermissions,
+                .appendAttachment, .multipart:
             cell.buttonClicked = nil
 
         case .terminalCommand:
@@ -989,6 +1011,36 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         case .terminalCommand(let cmd):
                 .command(.init(command: cmd.command,
                                url: cmd.url))
+        case .multipart(let subparts):
+                .multipart(subparts.map { subpart in
+                    switch subpart {
+                    case .attachment(let attachment):
+                        switch attachment.type {
+                        case .code(let content):
+                            MessageRendition.SubpartContainer(
+                                kind: .codeAttachment,
+                                attributedString: AttributedStringForCode(
+                                    content,
+                                    textColor: message.textColor))
+                        case .statusUpdate(let statusUpdate):
+                            MessageRendition.SubpartContainer(
+                                kind: .statusUpdate,
+                                attributedString: AttributedStringForStatusUpdate(
+                                    statusUpdate,
+                                    textColor: message.textColor))
+                        }
+                    case .plainText(let text):
+                        MessageRendition.SubpartContainer(
+                            kind: .regular,
+                            attributedString: Message.Content.plainText(text).attributedStringValue(
+                                linkColor: message.linkColor, textColor: message.textColor))
+                    case .markdown(let text):
+                        MessageRendition.SubpartContainer(
+                            kind: .regular,
+                            attributedString: Message.Content.markdown(text).attributedStringValue(
+                                linkColor: message.linkColor, textColor: message.textColor))
+                    }
+                })
         default:
                 .regular(.init(attributedString: message.attributedStringValue,
                                buttons: message.buttons,
@@ -1075,7 +1127,13 @@ extension ChatViewController {
 }
 
 extension ChatViewController: ChatViewControllerModelDelegate {
+    private func assertMessageTypeAllowed(_ message: Message?) {
+        ChatViewControllerModel.assertMessageTypeAllowed(message)
+    }
     func chatViewControllerModel(didInsertItemAtIndex i: Int) {
+        if let model {
+            assertMessageTypeAllowed(model.items[i].existingMessage?.message)
+        }
         DLog("Insert tableview row at \(i)")
         estimatedCount += 1
         it_assert(i <= estimatedCount)
@@ -1104,6 +1162,11 @@ extension ChatViewController: ChatViewControllerModelDelegate {
     }
 
     func chatViewControllerModel(didModifyItemsAtIndexes indexSet: IndexSet) {
+        if let model {
+            for i in indexSet {
+                assertMessageTypeAllowed(model.items[i].existingMessage?.message)
+            }
+        }
         guard let scrollView = tableView.enclosingScrollView,
               scrollView.documentView != nil else {
             return
@@ -1129,47 +1192,13 @@ fileprivate enum PickSessionButtonIdentifier: String {
     case cancel
 }
 
-extension Message {
-    var linkColor: NSColor {
-        return author == .user ? .white : .linkColor
-    }
-    var textColor: NSColor {
-        return author == .user ? .white : .textColor
-    }
-
-    var buttons: [MessageRendition.Regular.Button] {
-        switch content {
-        case .plainText, .markdown, .explanationRequest, .explanationResponse,
-                .remoteCommandResponse, .renameChat, .append, .commit, .setPermissions,
-                .terminalCommand:
-            []
-        case .clientLocal(let clientLocal):
-            switch clientLocal.action {
-            case .pickingSession, .executingCommand:
-                [.init(title: "Cancel", destructive: true, identifier: "")]
-            case .notice: []
-            case .streamingChanged(let state):
-                switch state {
-                case .active:
-                    [.init(title: "Stop", destructive: true, identifier: "")]
-                case .stopped, .stoppedAutomatically:
-                    []
-                }
-            }
-        case .selectSessionRequest:
-            [.init(title: "Select a Session", destructive: false, identifier: PickSessionButtonIdentifier.pickSession.rawValue),
-             .init(title: "Cancel", destructive: true, identifier: PickSessionButtonIdentifier.cancel.rawValue)]
-        case .remoteCommandRequest:
-            [.init(title: "Allow Once", destructive: false, identifier: RemoteCommandButtonIdentifier.allowOnce.rawValue),
-             .init(title: "Always Allow", destructive: false, identifier: RemoteCommandButtonIdentifier.allowAlways.rawValue),
-             .init(title: "Deny this Time", destructive: true, identifier: RemoteCommandButtonIdentifier.denyOnce.rawValue),
-             .init(title: "Always Deny", destructive: true, identifier: RemoteCommandButtonIdentifier.denyAlways.rawValue)]
-        }
-    }
-
-    var attributedStringValue: NSAttributedString {
-        switch content {
-        case .renameChat, .append, .commit, .setPermissions, .terminalCommand:
+extension Message.Content {
+    func attributedStringValue(linkColor: NSColor,
+                               textColor: NSColor) -> NSAttributedString {
+        switch self {
+        case .multipart:
+            it_fatalError()  // TODO: This will be hit. We need a different cell type for multipart messages.
+        case .renameChat, .append, .commit, .setPermissions, .terminalCommand, .appendAttachment:
             it_fatalError()
         case .plainText(let string):
             let paragraphStyle = NSMutableParagraphStyle()
@@ -1209,7 +1238,7 @@ extension Message {
             return AttributedStringForGPTMarkdown(specific + " " + general + "\n\n" + info,
                                                   linkColor: linkColor,
                                                   textColor: textColor) {}
-        case .remoteCommandResponse(let response, _, _):
+        case .remoteCommandResponse(let response, _, _, _):
             switch response {
             case .success(let object):
                 it_fatalError("\(object)")
@@ -1236,6 +1265,7 @@ extension Message {
                     AttributedStringForSystemMessageMarkdown("Terminal commands will no longer be sent to AI automatically. Automatic sending always terminates when iTerm2 restarts or the current chat changes.") {}
                 }
             }
+
         case .selectSessionRequest:
             return AttributedStringForGPTMarkdown(
                 "The AI agent needs to run commands in a live terminal session, but none is attached to this chat.",
@@ -1246,3 +1276,46 @@ extension Message {
     }
 }
 
+extension Message {
+    var linkColor: NSColor {
+        return author == .user ? .white : .linkColor
+    }
+    var textColor: NSColor {
+        return author == .user ? .white : .textColor
+    }
+
+    var buttons: [MessageRendition.Regular.Button] {
+        switch content {
+        case .plainText, .markdown, .explanationRequest, .explanationResponse,
+                .remoteCommandResponse, .renameChat, .append, .commit, .setPermissions,
+                .terminalCommand, .appendAttachment, .multipart:
+            []
+        case .clientLocal(let clientLocal):
+            switch clientLocal.action {
+            case .pickingSession, .executingCommand:
+                [.init(title: "Cancel", destructive: true, identifier: "")]
+            case .notice: []
+            case .streamingChanged(let state):
+                switch state {
+                case .active:
+                    [.init(title: "Stop", destructive: true, identifier: "")]
+                case .stopped, .stoppedAutomatically:
+                    []
+                }
+            }
+        case .selectSessionRequest:
+            [.init(title: "Select a Session", destructive: false, identifier: PickSessionButtonIdentifier.pickSession.rawValue),
+             .init(title: "Cancel", destructive: true, identifier: PickSessionButtonIdentifier.cancel.rawValue)]
+        case .remoteCommandRequest:
+            [.init(title: "Allow Once", destructive: false, identifier: RemoteCommandButtonIdentifier.allowOnce.rawValue),
+             .init(title: "Always Allow", destructive: false, identifier: RemoteCommandButtonIdentifier.allowAlways.rawValue),
+             .init(title: "Deny this Time", destructive: true, identifier: RemoteCommandButtonIdentifier.denyOnce.rawValue),
+             .init(title: "Always Deny", destructive: true, identifier: RemoteCommandButtonIdentifier.denyAlways.rawValue)]
+        }
+    }
+
+    var attributedStringValue: NSAttributedString {
+        return content.attributedStringValue(linkColor: linkColor,
+                                             textColor: textColor)
+    }
+}

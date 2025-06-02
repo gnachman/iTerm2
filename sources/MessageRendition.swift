@@ -6,9 +6,19 @@
 //
 
 struct MessageRendition {
+    struct SubpartContainer {
+        enum Kind {
+            case regular
+            case codeAttachment
+            case statusUpdate
+        }
+        var kind: Kind
+        var attributedString: NSAttributedString
+    }
     enum Flavor {
         case regular(Regular)
         case command(Command)
+        case multipart([SubpartContainer])
     }
     struct Regular {
         struct Button {

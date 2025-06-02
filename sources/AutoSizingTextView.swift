@@ -17,7 +17,9 @@ class AutoSizingTextView: ClickableTextView {
         let glyphRange = layoutManager.glyphRange(for: textContainer)
         let bounding = layoutManager.boundingRect(forGlyphRange: glyphRange,
                                                   in: textContainer)
-        let size = NSSize(width: ceil(rect.maxX), height: ceil(bounding.maxY))
+        let size = NSSize(width: ceil(rect.maxX) + textContainerInset.width * 2,
+                          height: ceil(bounding.maxY) + textContainerInset.height * 2)
+
         return size
     }
 }

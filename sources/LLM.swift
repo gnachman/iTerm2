@@ -26,68 +26,230 @@ enum LLM {
         var isStreamingResponse: Bool { get }
     }
 
+    protocol AnyStreamingResponse {
+        // Streaming parsers will sometimes have to parse messages that are just status updates
+        // nobody cares about. Set ignore to true in that case.
+        var ignore: Bool { get }
+        var choiceMessages: [Message] { get }
+        var isStreamingResponse: Bool { get }
+    }
+
+    // This is a platform-independent representation of a message to or from an LLM.
     struct Message: Codable, Equatable {
         var role: Role? = .user
-        var content: String?
 
-        // For function calling
-        var functionName: String?  // in the response only
-        var functionCallID: String?
-        var function_call: FunctionCall?
-
-        // For status updates
-        enum StatusUpdate: Codable {
+        enum StatusUpdate: Codable, Equatable {
             case webSearchStarted
             case webSearchFinished
+            case codeInterpreterStarted
+            case codeInterpreterFinished
         }
-        var statusUpdate: StatusUpdate?
+
+        struct FunctionCallID: Codable, Equatable {
+            var callID: String
+            var itemID: String
+        }
+
+        struct Attachment: Codable, Equatable {
+            enum AttachmentType: Codable, Equatable {
+                case code(String)
+                case statusUpdate(StatusUpdate)
+            }
+            var inline: Bool
+            var id: String //  e.g., ci_xxx for code interpreter
+            var type: AttachmentType
+
+            func appending(_ other: Attachment) -> Attachment? {
+                if other.id != id {
+                    return nil
+                }
+                switch type {
+                case .code(let lhs):
+                    switch other.type {
+                    case .code(let rhs):
+                        return .init(inline: inline, id: id, type: .code(lhs + rhs))
+                    case .statusUpdate:
+                        return nil
+                    }
+                case .statusUpdate:
+                    return nil
+                }
+            }
+        }
+
+        enum Body: Codable, Equatable {
+            case uninitialized
+            case text(String)
+            case functionCall(FunctionCall, id: FunctionCallID?)
+            case functionOutput(name: String, output: String, id: FunctionCallID?)
+            case attachment(Attachment)
+            case multipart([Body])
+
+            var maybeContent: String? {
+                switch self {
+                case .multipart(let bodies):
+                    return bodies.compactMap { $0.maybeContent }.joined(separator: "\n")
+                case .text(let content),
+                        .functionOutput(name: _, output: let content, _):
+                    return content
+                case .attachment(let attachment):
+                    switch attachment.type {
+                    case .code(let string): return string
+                    case .statusUpdate: return nil
+                    }
+                case .functionCall, .uninitialized:
+                    return nil
+                }
+            }
+
+            var content: String {
+                maybeContent ?? ""
+            }
+
+            func appending(_ additionalContent: Body) -> Self {
+                var result = self
+                result.append(additionalContent)
+                return result
+            }
+
+            mutating func append(_ additionalContent: Body) {
+                if tryAppend(additionalContent) {
+                    return
+                }
+                if self == .uninitialized {
+                    self = additionalContent
+                } else {
+                    self = .multipart([self, additionalContent])
+                }
+            }
+
+            // Will never create multipart, but if self is already multipart will always succeed.
+            mutating func tryAppend(_ additionalContent: Body) -> Bool {
+                switch self {
+                case .uninitialized:
+                    return false
+                case .text(let original):
+                    if case let .text(content) = additionalContent {
+                        self = .text(original + content)
+                        return true
+                    }
+                case .functionCall(let original, id: let originalID):
+                    if case let .functionCall(content, id) = additionalContent, id == originalID {
+                        self = .functionCall(.init(name: (original.name ?? "") + (content.name ?? ""),
+                                                   arguments: (original.arguments ?? "") + (content.arguments ?? "")),
+                                             id: originalID)
+                        return true
+                    }
+                case let .functionOutput(name: originalName,
+                                         output: originalOutput,
+                                         id: originalID):
+                    if case let .functionOutput(name: name, output: output, id: id) = additionalContent,
+                       id == originalID {
+                        self = .functionOutput(name: originalName + name,
+                                               output: originalOutput + output,
+                                               id: id)
+                        return true
+                    }
+                case .attachment(let originalAttachment):
+                    if case let .attachment(additionalAttachment) = additionalContent,
+                       let combined = originalAttachment.appending(additionalAttachment) {
+                        self = .attachment(combined)
+                        return true
+                    }
+                case .multipart(let original):
+                    if original.isEmpty {
+                        self = .multipart([additionalContent])
+                    } else {
+                        var last = original.last!
+                        if last.tryAppend(additionalContent) {
+                            self = .multipart(original.dropLast() + [last])
+                        } else {
+                            self = .multipart(original + [additionalContent])
+                        }
+                    }
+                    return true
+                }
+                return false
+            }
+        }
+        var body: Body
+
+        // Backward-compatibility methods
+        var function_call: FunctionCall? {
+            switch body {
+            case .functionCall(let call, _): call
+            default: nil
+            }
+        }
+        var functionCallID: FunctionCallID? {
+            switch body {
+            case .functionCall(_, let id), .functionOutput(_, _, id: let id): id
+            case .text, .uninitialized, .attachment, .multipart: nil
+            }
+        }
+        var content: String? {
+            body.maybeContent
+        }
 
         init(role: Role? = .user,
              content: String? = nil,
              name: String? = nil,
-             functionCallID: String? = nil,
+             functionCallID: FunctionCallID? = nil,
              function_call: FunctionCall? = nil) {
             self.role = role
-            self.content = content
-            self.functionName = name
-            self.functionCallID = functionCallID
-            self.function_call = function_call
+            if let name, let content {
+                body = .functionOutput(name: name, output: content, id: functionCallID)
+            } else if let function_call {
+                body = .functionCall(function_call, id: functionCallID)
+            } else if let content {
+                body = .text(content)
+            } else {
+                body = .uninitialized
+            }
+        }
+
+        init(role: Role?, body: Body) {
+            self.role = role
+            self.body = body
+        }
+
+        var approximateTokenCount: Int { OpenAIMetadata.instance.tokens(in: (body.content)) + 1 }
+
+        var trimmedString: String? {
+            return String(body.content.trimmingLeadingCharacters(in: .whitespacesAndNewlines))
         }
 
         enum CodingKeys: String, CodingKey {
-            case role
-            case functionName = "name"
-            case functionCallID
-            case content
-            case function_call
+            case role, content, function_name, function_call_id, function_call, body
         }
 
-        func encode(to encoder: Encoder) throws {
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            let role = try container.decodeIfPresent(Role.self, forKey: .role)
+            if let body = try container.decodeIfPresent(Body.self, forKey: .body) {
+                self = Message(role: role, body: body)
+            } else {
+                // Legacy code path
+                let content = try container.decodeIfPresent(String.self, forKey: .content)
+                let functionName = try container.decodeIfPresent(String.self, forKey: .function_name)
+                let functionCall = try container.decodeIfPresent(FunctionCall.self, forKey: .function_call)
+
+                self = Message(role: role,
+                               content: content,
+                               name: functionName,
+                               function_call: functionCall)
+            }
+        }
+
+        func encode(to encoder: any Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
 
-            try container.encode(role, forKey: .role)
-
-            if let functionName {
-                try container.encode(functionName, forKey: .functionName)
-            }
-            if let functionCallID {
-                try container.encode(functionCallID, forKey: .functionCallID)
-            }
-
-            try container.encode(content, forKey: .content)
-
-            if let function_call {
-                try container.encode(function_call, forKey: .function_call)
-            }
+            try container.encodeIfPresent(role, forKey: .role)
+            try container.encode(body, forKey: .body)
         }
 
-        var approximateTokenCount: Int { OpenAIMetadata.instance.tokens(in: (content ?? "")) + 1 }
-
-        var trimmedString: String? {
-            guard let content else {
-                return nil
-            }
-            return String(content.trimmingLeadingCharacters(in: .whitespacesAndNewlines))
+        mutating func tryAppend(_ additionalContent: Body) -> Bool {
+            return body.tryAppend(additionalContent)
         }
     }
 
@@ -145,7 +307,7 @@ fileprivate struct LegacyBodyRequestBuilder {
     }
 
     func body() throws -> Data {
-        let query = messages.compactMap { $0.content }.joined(separator: "\n")
+        let query = messages.compactMap { $0.body.content }.joined(separator: "\n")
         let body = LegacyBody(model: provider.dynamicModelsSupported ? provider.model : nil,
                               prompt: query,
                               max_tokens: provider.maxTokens(functions: [], messages: messages),
@@ -172,7 +334,7 @@ fileprivate struct GeminiRequestBuilder: Codable {
     }
 
     init(messages: [LLM.Message]) {
-        self.contents = messages.compactMap { message in
+        self.contents = messages.compactMap { message -> Content? in
             // NOTE: role changed when AI chat was added but I am not able to test it, so if someone complains it's probably a bug here.
             let role: String? = switch message.role {
             case .user: "user"
@@ -184,7 +346,7 @@ fileprivate struct GeminiRequestBuilder: Codable {
                 return nil
             }
             return Content(role: role,
-                           parts: [Content.Part(text: message.content ?? "")])
+                           parts: [Content.Part(text: message.body.content)])
         }
     }
 
@@ -201,7 +363,7 @@ fileprivate struct ModernBodyRequestBuilder {
 
     private struct Body: Codable {
         var model: String?
-        var messages = [LLM.Message]()
+        var messages = [CompletionsMessage]()
         var max_tokens: Int
         var temperature: Int? = 0
         var functions: [ChatGPTFunctionDeclaration]? = nil
@@ -214,7 +376,7 @@ fileprivate struct ModernBodyRequestBuilder {
         // answer the same length as the query.
         let maybeDecls = functions.isEmpty ? nil : functions.map { $0.decl }
         let body = Body(model: provider.dynamicModelsSupported ? provider.model : nil,
-                        messages: messages,
+                        messages: messages.compactMap { CompletionsMessage($0) },
                         max_tokens: provider.maxTokens(functions: functions, messages: messages),
                         temperature: provider.temperatureSupported ? 0 : nil,
                         functions: maybeDecls,
@@ -238,7 +400,7 @@ fileprivate struct O1BodyRequestBuilder {
 
     private struct Body: Codable {
         var model: String?
-        var messages = [LLM.Message]()
+        var messages = [CompletionsMessage]()
         var max_completion_tokens: Int
     }
 
@@ -258,7 +420,7 @@ fileprivate struct O1BodyRequestBuilder {
             messages
         }
         let body = Body(model: provider.dynamicModelsSupported ? provider.model : nil,
-                        messages: modifiedMessages,
+                        messages: modifiedMessages.compactMap { CompletionsMessage($0) },
                         max_completion_tokens: provider.maxTokens(functions: [], messages: messages))
         if body.max_completion_tokens < 2 {
             throw AIError.requestTooLarge
@@ -561,7 +723,7 @@ struct LLMProvider {
             }
             return String(data: data, encoding: .utf8) ?? ""
         }()
-        let query = messages.compactMap { $0.content }.joined(separator: "\n")
+        let query = messages.compactMap { $0.body.content }.joined(separator: "\n")
         let naiveLimit = Int(iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit)) - OpenAIMetadata.instance.tokens(in: query) - OpenAIMetadata.instance.tokens(in: encodedFunctions)
         if let responseLimit = OpenAIMetadata.instance.maxResponseTokens(modelName: model) {
             return min(responseLimit, naiveLimit)
@@ -576,21 +738,30 @@ struct LLMProvider {
     func responseParser(stream: Bool) -> LLMResponseParser {
         switch version {
         case .completions, .o1:
-            if stream {
-                return LLMModernStreamingResponseParser()
-            } else {
-                return LLMModernResponseParser()
-            }
+            return LLMModernResponseParser()
         case .responses:
-            if stream {
-                return ResponsesResponseStreamingParser()
-            } else {
-                return ResponsesResponseParser()
-            }
+            return ResponsesResponseParser()
         case .legacy:
-            return stream ? LLMLegacyStreamingResponseParser() : LLMLegacyResponseParser()
+            return LLMLegacyResponseParser()
         case .gemini:
             return LLMGeminiResponseParser()
+        }
+    }
+
+    func streamingResponseParser(stream: Bool) -> LLMStreamingResponseParser {
+        it_assert(stream)
+        switch version {
+        case .completions, .o1:
+            return LLMModernStreamingResponseParser()
+
+        case .responses:
+            return ResponsesResponseStreamingParser()
+
+        case .legacy:
+            return LLMLegacyStreamingResponseParser()
+
+        case .gemini:
+            it_fatalError()
         }
     }
 }
@@ -598,6 +769,12 @@ struct LLMProvider {
 protocol LLMResponseParser {
     // Throw on error, return nil on EOF (used by streaming parsers where EOF is in the message, not in the metadata like OpenAI's modern API)
     mutating func parse(data: Data) throws -> LLM.AnyResponse?
+    func splitFirstJSONEvent(from rawInput: String) -> (json: String?, remainder: String)
+}
+
+protocol LLMStreamingResponseParser {
+    // Throw on error, return nil on EOF (used by streaming parsers where EOF is in the message, not in the metadata like OpenAI's modern API)
+    mutating func parse(data: Data) throws -> LLM.AnyStreamingResponse?
     func splitFirstJSONEvent(from rawInput: String) -> (json: String?, remainder: String)
 }
 
@@ -677,8 +854,9 @@ struct LLMLegacyResponseParser: LLMResponseParser {
     }
 }
 
-struct LLMLegacyStreamingResponseParser: LLMResponseParser {
-    struct LegacyStreamingResponse: Codable, LLM.AnyResponse {
+struct LLMLegacyStreamingResponseParser: LLMStreamingResponseParser {
+    struct LegacyStreamingResponse: Codable, LLM.AnyStreamingResponse {
+        var ignore: Bool { false }
         var isStreamingResponse: Bool { true }
         var model: String
         var created_at: String
@@ -692,7 +870,7 @@ struct LLMLegacyStreamingResponseParser: LLMResponseParser {
 
     private(set) var parsedResponse: LegacyStreamingResponse?
 
-    mutating func parse(data: Data) throws -> LLM.AnyResponse? {
+    mutating func parse(data: Data) throws -> LLM.AnyStreamingResponse? {
         let decoder = JSONDecoder()
         let response = try decoder.decode(LegacyStreamingResponse.self, from: data)
         if response.done {

@@ -165,12 +165,23 @@ class ChatListModel: ChatListDataSource {
             if let i = index(ofMessageID: uuid, inChat: chatID),
                let messages =  messages(forChat: chatID, createIfNeeded: false) {
                 var existing = messages[i]
-                existing.append(chunk)
+                existing.append(chunk, useMarkdownIfAmbiguous: true)
                 messages[i] = existing
             } else {
                 DLog("Drop append “\(chunk)” of nonexistent message \(uuid)")
             }
             return
+        case let .appendAttachment(attachment: attachment, uuid: uuid):
+            if let i = index(ofMessageID: uuid, inChat: chatID),
+               let messages =  messages(forChat: chatID, createIfNeeded: false) {
+                var existing = messages[i]
+                existing.append(attachment)
+                messages[i] = existing
+            } else {
+                DLog("Drop append “\(attachment)” of nonexistent message \(uuid)")
+            }
+            return
+
         case let .explanationResponse(_, update, _):
             guard let update else {
                 break
@@ -188,14 +199,17 @@ class ChatListModel: ChatListDataSource {
             }
         case .commit:
             return
-        default:
+        case .plainText, .markdown, .explanationRequest, .remoteCommandRequest,
+                .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat,
+                .setPermissions, .terminalCommand, .multipart:
             break
         }
         messages(forChat: chatID, createIfNeeded: true)?.append(message)
         switch message.content {
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
                 .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest, .clientLocal,
-                .append, .commit, .setPermissions, .terminalCommand:
+                .append, .commit, .setPermissions, .terminalCommand, .appendAttachment,
+                .multipart:
             bump(chatID: chatID)
         case .renameChat(let string):
             rename(chatID: chatID, newName: string)

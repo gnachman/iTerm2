@@ -74,6 +74,47 @@ func AttributedStringForSystemMessageMarkdown(_ unsafeString: String,
     return AttributedStringForMessage(md, didCopy: didCopy)
 }
 
+func AttributedStringForStatusUpdate(_ statusUpdate: LLM.Message.StatusUpdate,
+                                     textColor: NSColor) -> NSAttributedString {
+    let paragraphStyle = NSMutableParagraphStyle()
+    paragraphStyle.lineBreakMode = .byWordWrapping
+    let attributes: [NSAttributedString.Key: Any] = [
+        .foregroundColor: textColor,
+        .paragraphStyle: paragraphStyle,
+        .font: NSFont.systemFont(ofSize: NSFont.systemFontSize)
+    ]
+    let string = statusUpdate.displayString
+    return NSAttributedString(
+        string: string,
+        attributes: attributes
+    )
+}
+
+extension LLM.Message.StatusUpdate {
+    var displayString: String {
+        switch self {
+        case .webSearchStarted: "Searching the web…"
+        case .webSearchFinished: "Finished searching the webs."
+        case .codeInterpreterStarted: "Executing code…"
+        case .codeInterpreterFinished: "Finished executing code"
+        }
+    }
+}
+func AttributedStringForCode(_ string: String,
+                             textColor: NSColor) -> NSAttributedString {
+    let paragraphStyle = NSMutableParagraphStyle()
+    paragraphStyle.lineBreakMode = .byWordWrapping
+    let attributes: [NSAttributedString.Key: Any] = [
+        .foregroundColor: textColor,
+        .paragraphStyle: paragraphStyle,
+        .font: NSFont.userFixedPitchFont(ofSize: NSFont.systemFontSize) ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
+    ]
+    return NSAttributedString(
+        string: string,
+        attributes: attributes
+    )
+}
+
 func AttributedStringForGPTMarkdown(_ unsafeString: String,
                                     linkColor: NSColor,
                                     textColor: NSColor,

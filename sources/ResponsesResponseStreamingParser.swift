@@ -5,7 +5,7 @@
 //  Created by George Nachman on 5/30/25.
 //
 
-struct ResponsesResponseStreamingParser: LLMResponseParser {
+struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
     // MARK: - Base Event Protocol
     protocol ResponseEvent: Codable {
         var type: String { get }
@@ -84,6 +84,90 @@ struct ResponsesResponseStreamingParser: LLMResponseParser {
         }
     }
 
+    struct ResponseWebSearchCallInProgressEvent: ResponseEvent {
+        let type = "response.web_search_call.in_progress"
+        let sequenceNumber: Int
+        let outputIndex: Int
+        let itemID: String
+
+        enum CodingKeys: String, CodingKey {
+            case type
+            case sequenceNumber = "sequence_number"
+            case outputIndex = "output_index"
+            case itemID = "item_id"
+        }
+    }
+
+    struct ResponseWebSearchCallCompletedEvent: ResponseEvent {
+        let type = "response.web_search_call.completed"
+        let sequenceNumber: Int
+        let outputIndex: Int
+        let itemID: String
+
+        enum CodingKeys: String, CodingKey {
+            case type
+            case sequenceNumber = "sequence_number"
+            case outputIndex = "output_index"
+            case itemID = "item_id"
+        }
+    }
+
+    struct ResponseCodeInterpreterInProgressEvent: ResponseEvent {
+        let type = "response.code_interpreter_call.in_progress"
+        let sequenceNumber: Int
+        let outputIndex: Int
+        let itemID: String
+
+        enum CodingKeys: String, CodingKey {
+            case type
+            case sequenceNumber = "sequence_number"
+            case outputIndex = "output_index"
+            case itemID = "item_id"
+        }
+    }
+
+    struct ResponseCodeInterpreterDeltaEvent: ResponseEvent {
+        let type = "response.code_interpreter_call_code.delta"
+        let sequenceNumber: Int
+        let outputIndex: Int
+        let itemID: String
+        var delta: String
+        enum CodingKeys: String, CodingKey {
+            case type
+            case sequenceNumber = "sequence_number"
+            case outputIndex = "output_index"
+            case itemID = "item_id"
+            case delta
+        }
+    }
+    struct ResponseCodeInterpeterCallInterpretingEvent: ResponseEvent {
+        let type = "response.code_interpreter_call.interpreting"
+        let sequenceNumber: Int
+        let outputIndex: Int
+        let itemID: String
+
+        enum CodingKeys: String, CodingKey {
+            case type
+            case sequenceNumber = "sequence_number"
+            case outputIndex = "output_index"
+            case itemID = "item_id"
+        }
+    }
+
+    struct ResponseCodeInterpeterCallCompletedEvent: ResponseEvent {
+        let type = "response.code_interpreter_call.completed"
+        let sequenceNumber: Int
+        let outputIndex: Int
+        let itemID: String
+
+        enum CodingKeys: String, CodingKey {
+            case type
+            case sequenceNumber = "sequence_number"
+            case outputIndex = "output_index"
+            case itemID = "item_id"
+        }
+    }
+
     // 2. Output Text Delta
     struct ResponseOutputTextDeltaEvent: ResponseEvent {
         let type: String = "response.output_text.delta"
@@ -94,6 +178,43 @@ struct ResponsesResponseStreamingParser: LLMResponseParser {
             case type
             case sequenceNumber = "sequence_number"
             case delta
+        }
+    }
+
+    struct ResponseOutputItemAddedEvent: ResponseEvent {
+        let type: String = "response.output_item.added"
+        var sequenceNumber: Int
+        let output_index: Int
+        let item: OutputItem
+
+        enum CodingKeys: String, CodingKey {
+            case type, output_index, item
+            case sequenceNumber = "sequence_number"
+        }
+
+        struct OutputItem: Codable {
+            let id: String  // e.g., fc_xxx. Use this when responding.
+            enum OutputItemType: String, Codable {
+                case message
+                case fileSearchCall = "file_search_call"
+                case functionCall = "function_call"
+                case webSearchCall = "web_search_call"
+                case computerCall = "computer_call"
+                case reasoning
+                case imageGenerationCall = "image_generation_call"
+                case codeInterpreterCall = "code_interpreter_call"
+                case localShellCall = "local_shell_call"
+                case mcpCall = "mcp_call"
+                case mcpListTools = "mcp_list_tools"
+                case mcpApprovalRequest = "mcp_approval_request"
+            }
+
+            // There are per-type payloads but I generally don't care about them.
+            let type: OutputItemType
+            let status: String  // in_progress
+            let arguments: String
+            let call_id: String  // e.g., call_xxx. Purpose unclear.
+            let name: String  // function name
         }
     }
 
@@ -112,15 +233,13 @@ struct ResponsesResponseStreamingParser: LLMResponseParser {
     struct ResponseFunctionCallArgumentsDeltaEvent: ResponseEvent {
         let type: String = "response.function_call_arguments.delta"
         let sequenceNumber: Int
-        let name: String
-        let callId: String
+        let itemId: String
         let delta: String
 
         enum CodingKeys: String, CodingKey {
             case type
             case sequenceNumber = "sequence_number"
-            case name
-            case callId = "call_id"
+            case itemId = "item_id"
             case delta
         }
     }
@@ -129,15 +248,15 @@ struct ResponsesResponseStreamingParser: LLMResponseParser {
     struct ResponseFunctionCallArgumentsDoneEvent: ResponseEvent {
         let type: String = "response.function_call_arguments.done"
         let sequenceNumber: Int
-        let name: String
-        let callId: String
+        let itemID: String
+        let outputIndex: Int
         let arguments: String
 
         enum CodingKeys: String, CodingKey {
             case type
             case sequenceNumber = "sequence_number"
-            case name
-            case callId = "call_id"
+            case itemID = "item_id"
+            case outputIndex = "output_index"
             case arguments
         }
     }
@@ -163,7 +282,14 @@ struct ResponsesResponseStreamingParser: LLMResponseParser {
         case outputTextDone = "response.output_text.done"
         case functionCallArgumentsDelta = "response.function_call_arguments.delta"
         case functionCallArgumentsDone = "response.function_call_arguments.done"
+        case outputItemAdded = "response.output_item.added"
         case responseDone = "response.done"
+        case webSearchCallInProgress = "response.web_search_call.in_progress"
+        case webSearchCallCompletedEvent = "response.web_search_call.completed"
+        case codeInterpreterCallInProgress = "response.code_interpreter_call.in_progress"
+        case codeInterpreterCallCompleted = "response.code_interpreter_call.completed"
+        case codeInterpreterCallInterpreting = "response.code_interpreter_call.interpreting"
+        case codeInterpreterDelta = "response.code_interpreter_call_code.delta"
     }
 
     // MARK: - Universal Event Parser
@@ -190,7 +316,22 @@ struct ResponsesResponseStreamingParser: LLMResponseParser {
                 return try JSONDecoder().decode(ResponseFunctionCallArgumentsDoneEvent.self, from: data)
             case .responseDone:
                 return try JSONDecoder().decode(ResponseDoneEvent.self, from: data)
+            case .outputItemAdded:
+                return try JSONDecoder().decode(ResponseOutputItemAddedEvent.self, from: data)
+            case .webSearchCallInProgress:
+                return try JSONDecoder().decode(ResponseWebSearchCallInProgressEvent.self, from: data)
+            case .webSearchCallCompletedEvent:
+                return try JSONDecoder().decode(ResponseWebSearchCallCompletedEvent.self, from: data)
+            case .codeInterpreterCallInProgress:
+                return try JSONDecoder().decode(ResponseCodeInterpreterInProgressEvent.self, from: data)
+            case .codeInterpreterCallInterpreting:
+                return try JSONDecoder().decode(ResponseCodeInterpeterCallInterpretingEvent.self, from: data)
+            case .codeInterpreterCallCompleted:
+                return try JSONDecoder().decode(ResponseCodeInterpeterCallCompletedEvent.self, from: data)
+            case .codeInterpreterDelta:
+                return try JSONDecoder().decode(ResponseCodeInterpreterDeltaEvent.self, from: data)
             case .none:
+                NSLog("%@", "Unrecognized event \(jsonString)")
                 throw ResponseEventError.unknownEventType(typeContainer.type)
             }
         }
@@ -272,18 +413,17 @@ struct ResponsesResponseStreamingParser: LLMResponseParser {
         }
     }
 
-    struct Response: Codable, LLM.AnyResponse {
+    struct Response: LLM.AnyStreamingResponse {
+        var ignore = true
         var isStreamingResponse: Bool { true }
-
         var choiceMessages = [LLM.Message]()
     }
     var parsedResponse: Response?
 
-    mutating func parse(data: Data) throws -> (any LLM.AnyResponse)? {
+    mutating func parse(data: Data) throws -> (any LLM.AnyStreamingResponse)? {
+        parsedResponse = Response()
         do {
-            print("-- BEGIN PARSE --")
-            print(data.lossyString)
-            print("-- END PARSE --")
+            print("RESPONSE:\n\(data.lossyString)")
 
             let jsonString = data.lossyString
             let event = try ResponseEventParser.parseEvent(from: jsonString)
@@ -292,25 +432,106 @@ struct ResponsesResponseStreamingParser: LLMResponseParser {
             case let deltaEvent as ResponseOutputTextDeltaEvent:
                 choiceMessages.append(LLM.Message(role: .assistant,
                                                   content: deltaEvent.delta))
+                parsedResponse?.ignore = false
                 print(deltaEvent.delta, terminator: "")
+
+            case let callEvent as ResponseOutputItemAddedEvent:
+                switch callEvent.item.type {
+                case .functionCall:
+                    choiceMessages.append(LLM.Message(role: .function, body: .functionCall(.init(name: callEvent.item.name,
+                                                                                                 arguments: callEvent.item.arguments),
+                                                                                           id: .init(callID: callEvent.item.call_id,
+                                                                                                     itemID: callEvent.item.id))))
+                    parsedResponse?.ignore = false
+                case .codeInterpreterCall:
+                    choiceMessages.append(
+                        LLM.Message(role: .assistant,
+                                    body: .attachment(.init(
+                                        inline: true,
+                                        id: UUID().uuidString,
+                                        type: .statusUpdate(.codeInterpreterStarted)))))
+                        parsedResponse?.ignore = false
+
+                case .webSearchCall:
+                    choiceMessages.append(
+                        LLM.Message(role: .assistant,
+                                    body: .attachment(.init(
+                                        inline: true,
+                                        id: UUID().uuidString,
+                                        type: .statusUpdate(.webSearchStarted)))))
+                    parsedResponse?.ignore = false
+
+                default:
+                    break
+                }
+                print(callEvent, terminator: "")
+
+            case let argumentsDeltaEvent as ResponseFunctionCallArgumentsDeltaEvent:
+                choiceMessages.append(LLM.Message(role: .function,
+                                                  body: .functionCall(.init(name: nil,
+                                                                            arguments: argumentsDeltaEvent.delta),
+                                                                      id: nil)))
+                parsedResponse?.ignore = false
+                print(argumentsDeltaEvent, terminator: "")
 
             case let createdEvent as ResponseCreatedEvent:
                 print("Response started: \(createdEvent.response.id)")
 
             case let doneEvent as ResponseDoneEvent:
                 print("\nResponse completed. Status: \(doneEvent.response.status)")
+                parsedResponse = nil
 
             case let funcArgsEvent as ResponseFunctionCallArgumentsDoneEvent:
+                print("Function call done: \(funcArgsEvent)")
+
+            case let webSearch as ResponseWebSearchCallInProgressEvent:
+                DLog("\(webSearch)")
+
+            case let webSearch as ResponseWebSearchCallCompletedEvent:
+                DLog("\(webSearch)")
+                choiceMessages.append(
+                    LLM.Message(role: .assistant,
+                                body: .attachment(.init(
+                                    inline: true,
+                                    id: UUID().uuidString,
+                                    type: .statusUpdate(.webSearchFinished)))))
+                parsedResponse?.ignore = false
+
+            case let codeInterpreter as ResponseCodeInterpreterInProgressEvent:
+                DLog("\(codeInterpreter)")
+
+            case let codeInterpreter as ResponseCodeInterpeterCallInterpretingEvent:
+                DLog("\(codeInterpreter)")
+                choiceMessages.append(
+                    LLM.Message(role: .assistant,
+                                body: .attachment(.init(
+                                    inline: true,
+                                    id: UUID().uuidString,
+                                    type: .statusUpdate(.codeInterpreterStarted)))))
+                parsedResponse?.ignore = false
+
+            case let codeInterpreter as ResponseCodeInterpeterCallCompletedEvent:
+                DLog("\(codeInterpreter)")
+                choiceMessages.append(
+                    LLM.Message(role: .assistant,
+                                body: .attachment(.init(
+                                    inline: true,
+                                    id: UUID().uuidString,
+                                    type: .statusUpdate(.codeInterpreterFinished)))))
+                parsedResponse?.ignore = false
+
+            case let deltaEvent as ResponseCodeInterpreterDeltaEvent:
                 choiceMessages.append(LLM.Message(role: .assistant,
-                                                  content: nil,
-                                                  function_call: LLM.FunctionCall(name: funcArgsEvent.name,
-                                                                                  arguments: funcArgsEvent.arguments)))
-                print("Function call: \(funcArgsEvent.name)(\(funcArgsEvent.arguments))")
+                                                  body: .attachment(.init(inline: true,
+                                                                          id: deltaEvent.itemID,
+                                                                          type: .code(deltaEvent.delta)))))
+
+                parsedResponse?.ignore = false
 
             default:
                 print("Other event: \(event.type)")
             }
-            parsedResponse = Response(choiceMessages: choiceMessages)
+            parsedResponse?.choiceMessages = choiceMessages
         } catch {
             print("Failed to parse event: \(error)")
         }
