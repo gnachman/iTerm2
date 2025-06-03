@@ -13,22 +13,22 @@ protocol ChatInputViewDelegate: AnyObject {
 // ChatInputView
 //   NSVisualEffectView
 //   ChatViewControllerInputStackView
+//     AddAttachmentButton
 //     ChatInputTextFieldContainer
 //     SendButton
 @objc
 class ChatInputView: NSView, NSTextFieldDelegate {
-    struct Attachment {
-        var path: String
-    }
-    private class ChatViewControllerInputStackView: NSStackView {}
+    private class ChatInputVerticalStackView: NSStackView {}
+    private class ChatInputHorizontalStackView: NSStackView {}
     private class SendButton: NSButton { }
     private class AddAttachmentButton: NSButton { }
 
     private let vev = NSVisualEffectView()
     private let inputTextFieldContainer = ChatInputTextFieldContainer()
     private var sendButton: SendButton!
-    private var attachments = [Attachment]()
     private var addAttachmentButton: AddAttachmentButton!
+    private let attachmentsView = HorizontalFileListView()
+    private var verticalStack: ChatInputVerticalStackView!
 
     weak var delegate: ChatInputViewDelegate?
 
@@ -80,12 +80,24 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         addAttachmentButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         addAttachmentButton.setContentCompressionResistancePriority(.required, for: .horizontal)
 
-        let inputStack = ChatViewControllerInputStackView(views: [addAttachmentButton, inputTextFieldContainer, sendButton])
-        inputStack.orientation = .horizontal
-        inputStack.spacing = 8
-        inputStack.translatesAutoresizingMaskIntoConstraints = false
-        inputStack.setContentHuggingPriority(.defaultHigh, for: .vertical)
+        attachmentsView.translatesAutoresizingMaskIntoConstraints = false
+        attachmentsView.onItemsWillBeDeleted = { _ in
+            return true
+        }
+        attachmentsView.onDidDeleteItems = { [weak self] in
+            self?.updateAttachmentsView()
+        }
+        let horizontalStack = ChatInputHorizontalStackView(views: [addAttachmentButton, inputTextFieldContainer, sendButton])
+        horizontalStack.orientation = .horizontal
+        horizontalStack.spacing = 8
+        horizontalStack.translatesAutoresizingMaskIntoConstraints = false
+        horizontalStack.setContentHuggingPriority(.defaultHigh, for: .vertical)
 
+        verticalStack = ChatInputVerticalStackView(views: [horizontalStack, attachmentsView])
+        verticalStack.orientation = .vertical
+        verticalStack.spacing = 0
+        verticalStack.translatesAutoresizingMaskIntoConstraints = false
+        
         vev.translatesAutoresizingMaskIntoConstraints = false
         vev.wantsLayer = true
         vev.blendingMode = .withinWindow
@@ -93,26 +105,28 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         vev.state = .active
 
         addSubview(vev)
-        addSubview(inputStack)
+        addSubview(verticalStack)
 
         let inputStackVerticalInset = CGFloat(12)
 
         NSLayoutConstraint.activate([
-            inputStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
-            inputStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
-            inputStack.bottomAnchor.constraint(equalTo: bottomAnchor),
-            inputStack.topAnchor.constraint(equalTo: inputTextFieldContainer.topAnchor,
+            verticalStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
+            verticalStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
+            verticalStack.bottomAnchor.constraint(equalTo: bottomAnchor),
+            verticalStack.topAnchor.constraint(equalTo: inputTextFieldContainer.topAnchor,
                                             constant: -inputStackVerticalInset),
-            inputStack.topAnchor.constraint(equalTo: topAnchor),
+            verticalStack.topAnchor.constraint(equalTo: topAnchor),
 
             sendButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 18),
-            sendButton.trailingAnchor.constraint(equalTo: inputStack.trailingAnchor),
+            sendButton.trailingAnchor.constraint(equalTo: horizontalStack.trailingAnchor),
 
             vev.leftAnchor.constraint(equalTo: leftAnchor),
             vev.rightAnchor.constraint(equalTo: rightAnchor),
             vev.bottomAnchor.constraint(equalTo: bottomAnchor),
             vev.heightAnchor.constraint(equalTo: heightAnchor),
         ])
+
+        updateAttachmentsView()
     }
 
     required init?(coder: NSCoder) {
@@ -137,13 +151,21 @@ class ChatInputView: NSView, NSTextFieldDelegate {
             guard response == .OK, let self else {
                 return
             }
+            var attachments = attachmentsView.files
             for url in openPanel.urls {
                 let path = url.path
-                if !attachments.contains(where: { $0.path == path }) {
-                    attachments.append(Attachment(path: path))
+                if !attachments.contains(path) {
+                    attachments.append(path)
                 }
             }
+            attachmentsView.files = attachments
+            updateAttachmentsView()
         }
+    }
+
+    private func updateAttachmentsView() {
+        verticalStack.setVisibilityPriority(attachmentsView.files.isEmpty ? .notVisible : .mustHold,
+                                            for: attachmentsView)
     }
 
     var isEnabled: Bool {
