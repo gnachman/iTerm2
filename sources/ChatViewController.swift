@@ -21,12 +21,12 @@ class ChatViewController: NSViewController {
     @objc weak var delegate: ChatViewControllerDelegate?
     private(set) var chatID: String? = UUID().uuidString
 
+    private let inputView = ChatInputView()
     private var scrollView: NSScrollView!
     private var tableView: NSTableView!
     private var titleLabel = NSTextField()
     private var sessionButton: NSButton!
     private var webSearchButton: WebSearchButton?
-    private var inputTextFieldContainer: ChatInputTextFieldContainer!
     private var sendButton: NSButton!
     private var showTypingIndicator: Bool {
         get {
@@ -199,40 +199,8 @@ class ChatViewController: NSViewController {
         scrollView.hasVerticalScroller = true
         scrollView.translatesAutoresizingMaskIntoConstraints = false
 
-        // Input Components
-        inputTextFieldContainer = ChatInputTextFieldContainer()
-        inputTextFieldContainer.translatesAutoresizingMaskIntoConstraints = false
-        inputTextFieldContainer.placeholder = "Type a message…"
-        inputTextFieldContainer.textView.delegate = self
-        inputTextFieldContainer.isEnabled = false
-        inputTextFieldContainer.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-        inputTextFieldContainer.setContentHuggingPriority(.defaultLow, for: .horizontal)
-
-        if #available(macOS 11.0, *) {
-            if let image = NSImage(systemSymbolName: "paperplane.fill", accessibilityDescription: "Send") {
-                sendButton = NSButton(image: image, target: self, action: #selector(sendButtonClicked))
-                sendButton.imageScaling = .scaleProportionallyUpOrDown
-                sendButton.imagePosition = .imageOnly
-                sendButton.bezelStyle = .regularSquare
-                sendButton.isBordered = false
-                sendButton.setButtonType(.momentaryPushIn)
-            } else {
-                sendButton = NSButton(title: "Send", target: self, action: #selector(sendButtonClicked))
-            }
-        } else {
-            sendButton = NSButton(title: "Send", target: self, action: #selector(sendButtonClicked))
-        }
-        sendButton.translatesAutoresizingMaskIntoConstraints = false
-        sendButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-        sendButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-
-        // Input Stack
-        class ChatViewControllerInputStackView: NSStackView {}
-        let inputStack = ChatViewControllerInputStackView(views: [inputTextFieldContainer, sendButton])
-        inputStack.orientation = .horizontal
-        inputStack.spacing = 8
-        inputStack.translatesAutoresizingMaskIntoConstraints = false
-        inputStack.setContentHuggingPriority(.defaultHigh, for: .vertical)
+        inputView.delegate = self
+        inputView.translatesAutoresizingMaskIntoConstraints = false
 
         let headerSpacer = NSView()
         headerSpacer.setContentHuggingPriority(.init(1), for: .horizontal)
@@ -247,18 +215,10 @@ class ChatViewController: NSViewController {
         headerStack.setContentHuggingPriority(.defaultLow, for: .horizontal)
         headerStack.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
 
-        let vev = NSVisualEffectView()
-        vev.translatesAutoresizingMaskIntoConstraints = false
-        vev.wantsLayer = true
-        vev.blendingMode = .withinWindow
-        vev.material = .underWindowBackground
-        vev.state = .active
-
         class ChatViewControllerInnerContainer: NSView {}
         let innerContainer = ChatViewControllerInnerContainer()
         innerContainer.addSubview(scrollView)
-        innerContainer.addSubview(vev)
-        innerContainer.addSubview(inputStack)
+        innerContainer.addSubview(inputView)
         innerContainer.translatesAutoresizingMaskIntoConstraints = false
 
         // Main Layout including Title
@@ -269,8 +229,7 @@ class ChatViewController: NSViewController {
         mainStack.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(mainStack)
 
-        let mainStackInsets = NSEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)  // NSEdgeInsets(top: 4, left: 8, bottom: 8, right: 8)
-        let inputStackVerticalInset = CGFloat(12)
+        let mainStackInsets = NSEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
 
         class ChatViewControllerDividerView: GradientView {}
         let divider = ChatViewControllerDividerView(
@@ -305,12 +264,6 @@ class ChatViewController: NSViewController {
             mainStack.topAnchor.constraint(equalTo: view.topAnchor, constant: mainStackInsets.top),
             mainStack.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -mainStackInsets.bottom),
 
-            inputStack.heightAnchor.constraint(equalTo: inputTextFieldContainer.heightAnchor, constant: inputStackVerticalInset * 2),
-            inputStack.leadingAnchor.constraint(equalTo: innerContainer.leadingAnchor, constant: 16),
-            inputStack.trailingAnchor.constraint(equalTo: innerContainer.trailingAnchor, constant: -16),
-
-            sendButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 18),
-
             innerContainer.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             innerContainer.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
             innerContainer.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
@@ -318,7 +271,6 @@ class ChatViewController: NSViewController {
 
             innerContainer.leadingAnchor.constraint(equalTo: mainStack.leadingAnchor),
             innerContainer.trailingAnchor.constraint(equalTo: mainStack.trailingAnchor),
-            innerContainer.bottomAnchor.constraint(equalTo: inputStack.bottomAnchor),
 
             documentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             documentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
@@ -332,15 +284,11 @@ class ChatViewController: NSViewController {
             spacer.leftAnchor.constraint(equalTo: documentView.leftAnchor),
             spacer.rightAnchor.constraint(equalTo: documentView.rightAnchor),
             spacer.bottomAnchor.constraint(equalTo: documentView.bottomAnchor),
-            spacer.heightAnchor.constraint(equalTo: inputStack.heightAnchor),
 
-            vev.leftAnchor.constraint(equalTo: documentView.leftAnchor),
-            vev.rightAnchor.constraint(equalTo: documentView.rightAnchor),
-            vev.bottomAnchor.constraint(equalTo: innerContainer.bottomAnchor),
-            vev.heightAnchor.constraint(equalTo: spacer.heightAnchor),
-
-            inputTextFieldContainer.leadingAnchor.constraint(equalTo: inputStack.leadingAnchor),
-            sendButton.trailingAnchor.constraint(equalTo: inputStack.trailingAnchor),
+            inputView.leftAnchor.constraint(equalTo: documentView.leftAnchor),
+            inputView.rightAnchor.constraint(equalTo: documentView.rightAnchor),
+            inputView.bottomAnchor.constraint(equalTo: innerContainer.bottomAnchor),
+            inputView.heightAnchor.constraint(equalTo: spacer.heightAnchor),
         ])
         if let webSearchButton {
             NSLayoutConstraint.activate([
@@ -384,7 +332,7 @@ extension ChatViewController {
         } else {
             model = nil
         }
-        inputTextFieldContainer.isEnabled = chatID != nil
+        inputView.isEnabled = chatID != nil
         model?.delegate = self
         titleLabel.stringValue = chat?.title ?? ""
         self.chatID = chat?.id
@@ -439,12 +387,12 @@ extension ChatViewController {
             model.lastStreamingState = .stoppedAutomatically
         }
         scrollToBottom(animated: false)
-        view.window?.makeFirstResponder(inputTextFieldContainer.textView)
+        inputView.makeTextViewFirstResponder()
     }
 
     func offerSelectedText(_ text: String) {
         if eligibleForAutoPaste {
-            inputTextFieldContainer.stringValue = text
+            inputView.stringValue = text
         }
     }
 
@@ -681,27 +629,6 @@ extension ChatViewController {
         }
     }
 
-    @objc private func sendButtonClicked() {
-        let text = inputTextFieldContainer.stringValue
-        guard !text.isEmpty, let chatID else {
-            return
-        }
-        let message = Message(chatID: chatID,
-                              author: .user,
-                              content: .plainText(text),
-                              sentDate: Date(),
-                              uniqueID: UUID(),
-                              configuration: .init(hostedWebSearchEnabled: webSearchEnabled))
-
-        ChatClient.instance?.publish(
-            message: message,
-            toChatID: chatID,
-            partial: false)
-
-        inputTextFieldContainer.stringValue = ""
-        eligibleForAutoPaste = true
-    }
-
     private func scrollToBottom(animated: Bool) {
         guard let model else {
             return
@@ -794,7 +721,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
             return
         }
         model.deleteFrom(index: i)
-        inputTextFieldContainer.stringValue = text
+        inputView.stringValue = text
     }
 
     private func configure(cell: MultipartMessageCellView,
@@ -1055,26 +982,29 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
     }
 }
 
-extension ChatViewController: NSTextViewDelegate {
-    func textView(_ textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
-        if commandSelector == #selector(NSResponder.insertNewline(_:)) {
-            sendButtonClicked()
-            return true
-        }
-        return false
+extension ChatViewController: ChatInputViewDelegate {
+    func textDidChange() {
+        eligibleForAutoPaste = inputView.stringValue.isEmpty
     }
 
-    func textDidChange(_ notification: Notification) {
-        eligibleForAutoPaste = inputTextFieldContainer.stringValue.isEmpty
-    }
-
-    func textViewDidChangeSelection(_ notification: Notification) {
-        DispatchQueue.main.async { [inputTextFieldContainer] in
-            guard let inputTextFieldContainer else {
-                return
-            }
-            inputTextFieldContainer.textView.scrollRangeToVisible(inputTextFieldContainer.textView.selectedRange())
+    func sendButtonClicked(text: String) {
+        guard !text.isEmpty, let chatID else {
+            return
         }
+        let message = Message(chatID: chatID,
+                              author: .user,
+                              content: .plainText(text),
+                              sentDate: Date(),
+                              uniqueID: UUID(),
+                              configuration: .init(hostedWebSearchEnabled: webSearchEnabled))
+
+        ChatClient.instance?.publish(
+            message: message,
+            toChatID: chatID,
+            partial: false)
+
+        inputView.stringValue = ""
+        eligibleForAutoPaste = true
     }
 }
 

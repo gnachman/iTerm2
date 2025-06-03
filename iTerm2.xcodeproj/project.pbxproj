@@ -1009,6 +1009,8 @@
 		A6069EB22DEE70B200EE6CC7 /* document.on.document.png in Resources */ = {isa = PBXBuildFile; fileRef = A6069EAD2DEE70B200EE6CC7 /* document.on.document.png */; };
 		A6069EB32DEE70B200EE6CC7 /* document.on.document@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6069EAE2DEE70B200EE6CC7 /* document.on.document@2x.png */; };
 		A6069EB42DEE70B200EE6CC7 /* document.on.document.png in Resources */ = {isa = PBXBuildFile; fileRef = A6069EAD2DEE70B200EE6CC7 /* document.on.document.png */; };
+		A6069EB62DEEBE2700EE6CC7 /* HorizontalFileListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069EB52DEEBE2200EE6CC7 /* HorizontalFileListView.swift */; };
+		A6069EB82DEF596D00EE6CC7 /* ChatInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069EB72DEF596900EE6CC7 /* ChatInputView.swift */; };
 		A606CBF42145AF4800B3A97E /* iTermRootTerminalView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB0BA1B470CBE00F511E6 /* iTermRootTerminalView.m */; };
 		A608A30927BC79C600BA4F1A /* SelectionExtraction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A608A30827BC79C600BA4F1A /* SelectionExtraction.swift */; };
 		A608A58027978076003525F7 /* VT100ScreenMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */; };
@@ -5903,6 +5905,8 @@
 		A6069EAB2DEE35DD00EE6CC7 /* MultipartMessageCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultipartMessageCellView.swift; sourceTree = "<group>"; };
 		A6069EAD2DEE70B200EE6CC7 /* document.on.document.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = document.on.document.png; path = images/document.on.document.png; sourceTree = "<group>"; };
 		A6069EAE2DEE70B200EE6CC7 /* document.on.document@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "document.on.document@2x.png"; path = "images/document.on.document@2x.png"; sourceTree = "<group>"; };
+		A6069EB52DEEBE2200EE6CC7 /* HorizontalFileListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HorizontalFileListView.swift; sourceTree = "<group>"; };
+		A6069EB72DEF596900EE6CC7 /* ChatInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatInputView.swift; sourceTree = "<group>"; };
 		A608A30827BC79C600BA4F1A /* SelectionExtraction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionExtraction.swift; sourceTree = "<group>"; };
 		A608CCF2214DE6E8007A7B87 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/MacOSX.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		A6099B0318D6B0FD00081FA9 /* iTermWarning.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermWarning.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -10180,6 +10184,8 @@
 		A6038324294E626400FE11C2 /* AITerm */ = {
 			isa = PBXGroup;
 			children = (
+				A6069EB72DEF596900EE6CC7 /* ChatInputView.swift */,
+				A6069EB52DEEBE2200EE6CC7 /* HorizontalFileListView.swift */,
 				A6069EAB2DEE35DD00EE6CC7 /* MultipartMessageCellView.swift */,
 				A66433592DEB694D0099F722 /* LLMModernProtocol.swift */,
 				A66433572DEA87D90099F722 /* ResponsesResponseStreamingParser.swift */,
@@ -17305,6 +17311,7 @@
 				A68BE9282DE38802002DD513 /* LinkButton.swift in Sources */,
 				A6E14D7B275AC0E600D0F41C /* PSMProgressIndicator.m in Sources */,
 				5370679F21C9D2780088D0F3 /* SIGCertificate.m in Sources */,
+				A6069EB62DEEBE2700EE6CC7 /* HorizontalFileListView.swift in Sources */,
 				A6A9839927E69B50003319D1 /* OnePasswordDataSource.swift in Sources */,
 				A667C23A276BD90B006B4DEF /* VT100State.m in Sources */,
 				A6A4866720B6780C00493302 /* iTermAdvancedSettingsModel.m in Sources */,
@@ -17374,6 +17381,7 @@
 				A6153D4E21F30A9C002976FC /* iTermJobTreeViewController.m in Sources */,
 				A6F3EB4F2D32EC5B00612173 /* TailFindController.swift in Sources */,
 				A6F1B3B92690EA9700546767 /* iTermOptionallyBordered.m in Sources */,
+				A6069EB82DEF596D00EE6CC7 /* ChatInputView.swift in Sources */,
 				A6EC937F24E85CEF00EEADEF /* PasteboardHistory.m in Sources */,
 				A62A1F771E711BC000363EE9 /* iTermHelpMessageViewController.m in Sources */,
 				A6AB55E52173E18900142244 /* iTermCumulativeSumCache.mm in Sources */,
