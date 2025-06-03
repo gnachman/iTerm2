@@ -801,7 +801,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                            for message: Message,
                            isLast: Bool) {
         cell.configure(with: rendition(for: message, isLast: isLast),
-                       maxBubbleWidth: tableView.bounds.width)
+                       maxBubbleWidth: max(16, tableView.bounds.width * 0.7))
     }
 
     private func configure(cell: TerminalCommandMessageCellView,

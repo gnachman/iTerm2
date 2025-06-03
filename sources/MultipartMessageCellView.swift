@@ -59,6 +59,27 @@ class MultipartMessageCellView: MessageCellView {
                 updateTextViewColors(textView)
             }
         }
+
+        // Update code block header colors
+        updateCodeBlockHeaderColors()
+    }
+
+    private func updateCodeBlockHeaderColors() {
+        // Find all code block headers and update their colors
+        func updateHeadersInView(_ view: NSView) {
+            for subview in view.subviews {
+                // Check if this is a code block container
+                if subview.subviews.count >= 2,
+                   subview.subviews.contains(where: { $0 is CodeAttachmentTextView }) {
+                    // Find the header view (the one that's not the text view)
+                    if let headerView = subview.subviews.first(where: { !($0 is CodeAttachmentTextView) && $0.layer != nil }) {
+                        updateCodeBlockHeaderColors(headerView)
+                    }
+                }
+                updateHeadersInView(subview)
+            }
+        }
+        updateHeadersInView(self)
     }
 
     private func updateBubbleColor() {
@@ -114,8 +135,20 @@ class MultipartMessageCellView: MessageCellView {
 
             case .codeAttachment:
                 let textView = createCodeAttachmentTextView(for: subpart, maxBubbleWidth: maxBubbleWidth, rendition: rendition)
-                let container = createTextContainer(for: textView, isCodeAttachment: true, isStatusUpdate: false)
-                contentStack.addArrangedSubview(container)
+                let container = createCodeBlockContainer(for: textView)
+
+                // Create a wrapper view to handle the 16pt inset outside the container
+                let wrapperView = NSView()
+                wrapperView.translatesAutoresizingMaskIntoConstraints = false
+                wrapperView.addSubview(container)
+
+                // Position container with 16pt left inset within wrapper
+                add(constraint: container.topAnchor.constraint(equalTo: wrapperView.topAnchor))
+                add(constraint: container.leadingAnchor.constraint(equalTo: wrapperView.leadingAnchor, constant: 0))
+                add(constraint: container.trailingAnchor.constraint(equalTo: wrapperView.trailingAnchor))
+                add(constraint: container.bottomAnchor.constraint(equalTo: wrapperView.bottomAnchor))
+
+                contentStack.addArrangedSubview(wrapperView)
                 textViews.append(textView)
             case .statusUpdate:
                 let textView = createStatusUpdateTextView(for: subpart, maxBubbleWidth: maxBubbleWidth, rendition: rendition)
@@ -218,8 +251,13 @@ class MultipartMessageCellView: MessageCellView {
         textView.backgroundColor = NSColor(fromHexString: "#ffffc0")!
         textView.layer?.borderColor = NSColor.gray.cgColor
 
-        // Use the attributed string as-is without modifying the font
-        textView.textStorage?.setAttributedString(subpart.attributedString)
+        // Get the attributed string and modify text color for dark mode
+        let attributedString = NSMutableAttributedString(attributedString: subpart.attributedString)
+        if effectiveAppearance.it_isDark {
+            // Force text color to black in dark mode for status updates
+            attributedString.addAttribute(.foregroundColor, value: NSColor.black, range: NSRange(location: 0, length: attributedString.length))
+        }
+        textView.textStorage?.setAttributedString(attributedString)
 
         return textView
     }
@@ -242,8 +280,8 @@ class MultipartMessageCellView: MessageCellView {
         textView.setContentHuggingPriority(.required, for: .vertical) // Required - hug the content!
         textView.translatesAutoresizingMaskIntoConstraints = false
         textView.wantsLayer = true
-        textView.layer?.cornerRadius = 6
-        textView.layer?.borderWidth = 1.0
+        // Remove corner radius here - it will be set in the container
+        textView.layer?.borderWidth = 0 // Border will be handled by container
 
         // Set code-specific styling
         updateTextViewColors(textView)
@@ -252,6 +290,110 @@ class MultipartMessageCellView: MessageCellView {
         textView.textStorage?.setAttributedString(subpart.attributedString)
 
         return textView
+    }
+
+    private func createCodeBlockHeader() -> NSView {
+        let headerView = NSView()
+        headerView.translatesAutoresizingMaskIntoConstraints = false
+        headerView.wantsLayer = true
+        // Remove corner radius and border from header - container handles it now
+
+        // Set header colors
+        updateCodeBlockHeaderColors(headerView)
+
+        // Create title label
+        let titleLabel = NSTextField(labelWithString: "Code Interpreter")
+        titleLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize, weight: .medium)
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.textColor = effectiveAppearance.it_isDark ? NSColor.white : NSColor.black
+
+        let copyButton = NSButton()
+        copyButton.title = "Copy"
+        copyButton.image = NSImage.it_image(forSymbolName: "document.on.document",
+                                            accessibilityDescription: "Copy",
+                                            fallbackImageName: "document.on.document",
+                                            for: MultipartMessageCellView.self)
+        copyButton.imagePosition = .imageLeading
+        copyButton.bezelStyle = .smallSquare
+        copyButton.isBordered = false
+        copyButton.controlSize = .small
+        copyButton.translatesAutoresizingMaskIntoConstraints = false
+        copyButton.target = self
+        copyButton.action = #selector(copyCodeButtonClicked(_:))
+
+        // Remove background color from Copy button
+        copyButton.wantsLayer = true
+        copyButton.layer?.backgroundColor = NSColor.clear.cgColor
+
+        headerView.addSubview(titleLabel)
+        headerView.addSubview(copyButton)
+
+        // Position title label in the left with padding
+        NSLayoutConstraint.activate([
+            titleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 8),
+            titleLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
+
+            // Position copy button in top-right with padding
+            copyButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -8),
+            copyButton.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 6),
+            copyButton.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -6),
+            headerView.heightAnchor.constraint(equalToConstant: 32)
+        ])
+
+        return headerView
+    }
+
+    @objc private func copyCodeButtonClicked(_ sender: NSButton) {
+        // Find the associated text view by traversing the view hierarchy
+        guard let headerView = sender.superview,
+              let containerView = headerView.superview,
+              let codeTextView = containerView.subviews.first(where: { $0 is CodeAttachmentTextView }) as? NSTextView else {
+            return
+        }
+
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(codeTextView.string, forType: .string)
+    }
+
+    private func createCodeBlockContainer(for textView: NSTextView) -> NSView {
+        let container = NSView()
+        container.translatesAutoresizingMaskIntoConstraints = false
+        container.wantsLayer = true
+        container.layer?.cornerRadius = 6
+        container.layer?.borderWidth = 1.0
+
+        // Create the header with copy button
+        let headerView = createCodeBlockHeader()
+
+        // Add header and text view to container
+        container.addSubview(headerView)
+        container.addSubview(textView)
+
+        // Set container colors and border
+        updateCodeBlockContainerColors(container)
+
+        // Layout constraints - header and text view fill the container completely
+        add(constraint: headerView.topAnchor.constraint(equalTo: container.topAnchor))
+        add(constraint: headerView.leadingAnchor.constraint(equalTo: container.leadingAnchor))
+        add(constraint: headerView.trailingAnchor.constraint(equalTo: container.trailingAnchor))
+
+        add(constraint: textView.topAnchor.constraint(equalTo: headerView.bottomAnchor))
+        add(constraint: textView.leadingAnchor.constraint(equalTo: container.leadingAnchor))
+        add(constraint: textView.trailingAnchor.constraint(equalTo: container.trailingAnchor))
+        add(constraint: textView.bottomAnchor.constraint(equalTo: container.bottomAnchor))
+
+        container.setContentCompressionResistancePriority(.required, for: .vertical)
+
+        return container
+    }
+
+    private func updateCodeBlockContainerColors(_ container: NSView) {
+        if effectiveAppearance.it_isDark {
+            container.layer?.borderColor = NSColor(white: 0.2, alpha: 1.0).cgColor
+        } else {
+            container.layer?.borderColor = NSColor(white: 0.8, alpha: 1.0).cgColor
+        }
     }
 
     private func createTextContainer(for textView: NSTextView, isCodeAttachment: Bool, isStatusUpdate: Bool) -> NSView {
@@ -294,6 +436,15 @@ class MultipartMessageCellView: MessageCellView {
                 textView.backgroundColor = NSColor(white: 0.95, alpha: 1.0)
                 textView.layer?.borderColor = NSColor(white: 0.8, alpha: 1.0).cgColor
             }
+            textView.layer?.borderWidth = 1.0
+        }
+    }
+
+    private func updateCodeBlockHeaderColors(_ headerView: NSView) {
+        if effectiveAppearance.it_isDark {
+            headerView.layer?.backgroundColor = NSColor(white: 0.15, alpha: 1.0).cgColor
+        } else {
+            headerView.layer?.backgroundColor = NSColor(white: 0.85, alpha: 1.0).cgColor
         }
     }
 

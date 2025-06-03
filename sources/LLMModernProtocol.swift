@@ -158,10 +158,18 @@ struct LLMModernStreamingResponseParser: LLMStreamingResponseParser {
         }
 
         var choiceMessages: [LLM.Message] {
-            return choices.map {
-                LLM.Message(role: .assistant,
-                            content: $0.delta.content ?? "",
-                            function_call: $0.delta.function_call)
+            return choices.compactMap {
+                if $0.finish_reason == "function_call" &&
+                    $0.delta.role == nil &&
+                    $0.delta.content == nil &&
+                    $0.delta.functionName == nil &&
+                    $0.delta.function_call == nil {
+                    // Sent at the end of a function call
+                    return nil
+                }
+                return LLM.Message(role: .assistant,
+                                   content: $0.delta.content ?? "",
+                                   function_call: $0.delta.function_call)
             }
         }
     }

@@ -1003,6 +1003,12 @@
 		A605D4B319CF796800D40343 /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A624232519CF70DF00182C08 /* NMSSH.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A605D4B419CF796F00D40343 /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A624232519CF70DF00182C08 /* NMSSH.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A6069EAC2DEE35E000EE6CC7 /* MultipartMessageCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069EAB2DEE35DD00EE6CC7 /* MultipartMessageCellView.swift */; };
+		A6069EAF2DEE70B200EE6CC7 /* document.on.document@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6069EAE2DEE70B200EE6CC7 /* document.on.document@2x.png */; };
+		A6069EB02DEE70B200EE6CC7 /* document.on.document.png in Resources */ = {isa = PBXBuildFile; fileRef = A6069EAD2DEE70B200EE6CC7 /* document.on.document.png */; };
+		A6069EB12DEE70B200EE6CC7 /* document.on.document@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6069EAE2DEE70B200EE6CC7 /* document.on.document@2x.png */; };
+		A6069EB22DEE70B200EE6CC7 /* document.on.document.png in Resources */ = {isa = PBXBuildFile; fileRef = A6069EAD2DEE70B200EE6CC7 /* document.on.document.png */; };
+		A6069EB32DEE70B200EE6CC7 /* document.on.document@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6069EAE2DEE70B200EE6CC7 /* document.on.document@2x.png */; };
+		A6069EB42DEE70B200EE6CC7 /* document.on.document.png in Resources */ = {isa = PBXBuildFile; fileRef = A6069EAD2DEE70B200EE6CC7 /* document.on.document.png */; };
 		A606CBF42145AF4800B3A97E /* iTermRootTerminalView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB0BA1B470CBE00F511E6 /* iTermRootTerminalView.m */; };
 		A608A30927BC79C600BA4F1A /* SelectionExtraction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A608A30827BC79C600BA4F1A /* SelectionExtraction.swift */; };
 		A608A58027978076003525F7 /* VT100ScreenMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */; };
@@ -5895,6 +5901,8 @@
 		A605943C2583305E00CACEE6 /* iTermSharedImageStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSharedImageStore.h; sourceTree = "<group>"; };
 		A605943D2583305E00CACEE6 /* iTermSharedImageStore.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSharedImageStore.m; sourceTree = "<group>"; };
 		A6069EAB2DEE35DD00EE6CC7 /* MultipartMessageCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultipartMessageCellView.swift; sourceTree = "<group>"; };
+		A6069EAD2DEE70B200EE6CC7 /* document.on.document.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = document.on.document.png; path = images/document.on.document.png; sourceTree = "<group>"; };
+		A6069EAE2DEE70B200EE6CC7 /* document.on.document@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "document.on.document@2x.png"; path = "images/document.on.document@2x.png"; sourceTree = "<group>"; };
 		A608A30827BC79C600BA4F1A /* SelectionExtraction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionExtraction.swift; sourceTree = "<group>"; };
 		A608CCF2214DE6E8007A7B87 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/MacOSX.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		A6099B0318D6B0FD00081FA9 /* iTermWarning.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermWarning.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -9025,6 +9033,8 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A6069EAD2DEE70B200EE6CC7 /* document.on.document.png */,
+				A6069EAE2DEE70B200EE6CC7 /* document.on.document@2x.png */,
 				A664334F2DEA78A60099F722 /* globe.png */,
 				A66433502DEA78A60099F722 /* globe@2x.png */,
 				A68BE9442DE428D5002DD513 /* flowchart.png */,
@@ -14974,6 +14984,8 @@
 				A6F2F21D250757FE00FC227F /* PrefsShortcuts.png in Resources */,
 				A6F31A38295BC41700C1A51E /* uniE0C6_PowerlineExtraSymbols.pdf in Resources */,
 				A6B3A7371AC74E02008E8D4E /* FindCursorCell4.png in Resources */,
+				A6069EAF2DEE70B200EE6CC7 /* document.on.document@2x.png in Resources */,
+				A6069EB02DEE70B200EE6CC7 /* document.on.document.png in Resources */,
 				1D6ED9D119AEA20D005A7799 /* TabClose_Front_Pressed@2x.png in Resources */,
 				1D6ED9D219AEA20D005A7799 /* TabClose_Front@2x.png in Resources */,
 				A6F31A29295BC41700C1A51E /* uniE0C9_PowerlineExtraSymbols.pdf in Resources */,
@@ -15357,6 +15369,8 @@
 				A610941B2A4A213D00AC2268 /* key-dark.png in Resources */,
 				A6F18B3F2AE2F39C006C08EE /* uniE0B0_Powerline_normal-left.pdf in Resources */,
 				A665C1FB2440461500F623F0 /* WindowCorner@2x.png in Resources */,
+				A6069EB32DEE70B200EE6CC7 /* document.on.document@2x.png in Resources */,
+				A6069EB42DEE70B200EE6CC7 /* document.on.document.png in Resources */,
 				A62A1F791E711DD000363EE9 /* iTermHelpMessageViewController.xib in Resources */,
 				A67F61A5214395B70093940A /* graphic_python@2x.png in Resources */,
 				A6AC04CA21F0FDBD00CD2774 /* StatusBarComposerExpand.png in Resources */,
@@ -16072,6 +16086,8 @@
 				A6B70FC119830F0D007A4284 /* NewOutput.png in Resources */,
 				1DA76A0B1B30892900CB272A /* iTermTipWindowController.xib in Resources */,
 				A67F61A7214395B70093940A /* graphic_rails.png in Resources */,
+				A6069EB12DEE70B200EE6CC7 /* document.on.document@2x.png in Resources */,
+				A6069EB22DEE70B200EE6CC7 /* document.on.document.png in Resources */,
 				A65DF4A52849C11D00AA29AB /* bash-si-loader in Resources */,
 				A67D0D6B1A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib in Resources */,
 				A6F31A2D295BC41700C1A51E /* uniE0CD_PowerlineExtraSymbols.pdf in Resources */,

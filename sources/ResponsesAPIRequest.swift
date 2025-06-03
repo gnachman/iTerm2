@@ -1627,7 +1627,7 @@ struct ResponsesBodyRequestBuilder {
                let content = message.content {
                 // Function call response
                 return .item(.functionToolCallOutput(.init(callID: callID.callID,
-                                                           id: nil/*callID.itemID*/,
+                                                           id: nil,
                                                            output: content,
                                                            status: nil /*.completed*/)))
             }

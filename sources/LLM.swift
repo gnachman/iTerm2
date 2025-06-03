@@ -134,7 +134,9 @@ enum LLM {
                         return true
                     }
                 case .functionCall(let original, id: let originalID):
-                    if case let .functionCall(content, id) = additionalContent, id == originalID {
+                    // Only compare item IDs because OpenAI doesn't give a call ID for arguments when streaming.
+                    if case let .functionCall(content, id) = additionalContent,
+                       id?.itemID == originalID?.itemID {
                         self = .functionCall(.init(name: (original.name ?? "") + (content.name ?? ""),
                                                    arguments: (original.arguments ?? "") + (content.arguments ?? "")),
                                              id: originalID)

@@ -296,8 +296,8 @@ class ChatAgent {
                 if needsRenaming {
                     self.requestRenaming()
                 }
-            } else {
-                self.conversation.messages.removeLast()
+//            } else {
+//                self.conversation.messages.removeLast()
             }
             let message = Self.committedMessage(forResult: result,
                                                 userMessage: userMessage,

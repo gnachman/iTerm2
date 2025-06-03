@@ -212,9 +212,9 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
             // There are per-type payloads but I generally don't care about them.
             let type: OutputItemType
             let status: String  // in_progress
-            let arguments: String
-            let call_id: String  // e.g., call_xxx. Purpose unclear.
-            let name: String  // function name
+            let arguments: String?
+            let call_id: String?  // e.g., call_xxx. Purpose unclear.
+            let name: String?  // function name
         }
     }
 
@@ -433,25 +433,19 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
                 choiceMessages.append(LLM.Message(role: .assistant,
                                                   content: deltaEvent.delta))
                 parsedResponse?.ignore = false
-                print(deltaEvent.delta, terminator: "")
 
             case let callEvent as ResponseOutputItemAddedEvent:
                 switch callEvent.item.type {
                 case .functionCall:
-                    choiceMessages.append(LLM.Message(role: .function, body: .functionCall(.init(name: callEvent.item.name,
-                                                                                                 arguments: callEvent.item.arguments),
-                                                                                           id: .init(callID: callEvent.item.call_id,
-                                                                                                     itemID: callEvent.item.id))))
+                    choiceMessages.append(LLM.Message(role: .function, body: .functionCall(
+                        .init(
+                            name: callEvent.item.name,
+                            arguments: callEvent.item.arguments),
+                        id: .init(callID: callEvent.item.call_id ?? "",
+                                  itemID: callEvent.item.id))))
                     parsedResponse?.ignore = false
                 case .codeInterpreterCall:
-                    choiceMessages.append(
-                        LLM.Message(role: .assistant,
-                                    body: .attachment(.init(
-                                        inline: true,
-                                        id: UUID().uuidString,
-                                        type: .statusUpdate(.codeInterpreterStarted)))))
-                        parsedResponse?.ignore = false
-
+                    break
                 case .webSearchCall:
                     choiceMessages.append(
                         LLM.Message(role: .assistant,
@@ -464,25 +458,25 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
                 default:
                     break
                 }
-                print(callEvent, terminator: "")
 
             case let argumentsDeltaEvent as ResponseFunctionCallArgumentsDeltaEvent:
-                choiceMessages.append(LLM.Message(role: .function,
-                                                  body: .functionCall(.init(name: nil,
-                                                                            arguments: argumentsDeltaEvent.delta),
-                                                                      id: nil)))
+                choiceMessages.append(LLM.Message(
+                    role: .function,
+                    body: .functionCall(.init(name: nil,
+                                              arguments: argumentsDeltaEvent.delta),
+                                        id: .init(callID: "",
+                                                  itemID: argumentsDeltaEvent.itemId) )))
                 parsedResponse?.ignore = false
-                print(argumentsDeltaEvent, terminator: "")
 
             case let createdEvent as ResponseCreatedEvent:
-                print("Response started: \(createdEvent.response.id)")
+                DLog("Response started: \(createdEvent.response.id)")
 
             case let doneEvent as ResponseDoneEvent:
-                print("\nResponse completed. Status: \(doneEvent.response.status)")
+                DLog("\nResponse completed. Status: \(doneEvent.response.status)")
                 parsedResponse = nil
 
             case let funcArgsEvent as ResponseFunctionCallArgumentsDoneEvent:
-                print("Function call done: \(funcArgsEvent)")
+                DLog("Function call done: \(funcArgsEvent)")
 
             case let webSearch as ResponseWebSearchCallInProgressEvent:
                 DLog("\(webSearch)")
@@ -529,11 +523,11 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
                 parsedResponse?.ignore = false
 
             default:
-                print("Other event: \(event.type)")
+                DLog("Other event: \(event.type)")
             }
             parsedResponse?.choiceMessages = choiceMessages
         } catch {
-            print("Failed to parse event: \(error)")
+            DLog("Failed to parse event: \(error)")
         }
         return parsedResponse
     }

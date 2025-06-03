@@ -94,7 +94,7 @@ extension LLM.Message.StatusUpdate {
     var displayString: String {
         switch self {
         case .webSearchStarted: "Searching the web…"
-        case .webSearchFinished: "Finished searching the webs."
+        case .webSearchFinished: "Finished searching the web."
         case .codeInterpreterStarted: "Executing code…"
         case .codeInterpreterFinished: "Finished executing code"
         }
