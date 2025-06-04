@@ -272,6 +272,9 @@ class ChatClient {
                     response.append(content, final: false)
                 case .statusUpdate:
                     response.append("", final: false)
+                case .file(let file):
+                    // TODO: It would be better if explanation responses could hold multipart documents
+                    response.append(file.content.lossyString, final: false)
                 }
             }
             update.messageID = uuid

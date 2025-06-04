@@ -90,6 +90,17 @@ func AttributedStringForStatusUpdate(_ statusUpdate: LLM.Message.StatusUpdate,
     )
 }
 
+func AttributedStringForFilename(_ filename: String,
+                                 textColor: NSColor) -> NSAttributedString {
+    // Create the filename text with 11 point system font
+    let textAttributes: [NSAttributedString.Key: Any] = [
+        .font: NSFont.systemFont(ofSize: 11),
+        .foregroundColor: textColor
+    ]
+
+    return NSAttributedString(string: filename, attributes: textAttributes)
+}
+
 extension LLM.Message.StatusUpdate {
     var displayString: String {
         switch self {

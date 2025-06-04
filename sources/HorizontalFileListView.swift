@@ -8,6 +8,7 @@
 import Cocoa
 
 fileprivate let filenameLabelWidth = CGFloat(80)
+fileprivate let itemHeight = CGFloat(86)
 
 @objc class HorizontalFileListView: NSView {
     var files: [String] = [] {
@@ -61,10 +62,10 @@ fileprivate let filenameLabelWidth = CGFloat(80)
         // Create flow layout
         flowLayout = NSCollectionViewFlowLayout()
         flowLayout.scrollDirection = .horizontal
-        flowLayout.itemSize = NSSize(width: filenameLabelWidth, height: 100)
-        flowLayout.minimumInteritemSpacing = 10
-        flowLayout.minimumLineSpacing = 10
-        flowLayout.sectionInset = NSEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+        flowLayout.itemSize = NSSize(width: filenameLabelWidth, height: itemHeight)
+        flowLayout.minimumInteritemSpacing = 4
+        flowLayout.minimumLineSpacing = 0
+        flowLayout.sectionInset = NSEdgeInsets(top: 0, left: 0, bottom: 10, right: 0)
 
         // Create collection view
         collectionView = NSCollectionView()
@@ -91,7 +92,7 @@ fileprivate let filenameLabelWidth = CGFloat(80)
         // Create flow layout
         flowLayout = NSCollectionViewFlowLayout()
         flowLayout.scrollDirection = .horizontal
-        flowLayout.itemSize = NSSize(width: filenameLabelWidth, height: 100)
+        flowLayout.itemSize = NSSize(width: filenameLabelWidth, height: itemHeight)
         flowLayout.minimumInteritemSpacing = 10
         flowLayout.minimumLineSpacing = 10
         flowLayout.sectionInset = NSEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)

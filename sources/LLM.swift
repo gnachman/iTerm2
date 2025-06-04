@@ -54,6 +54,14 @@ enum LLM {
             enum AttachmentType: Codable, Equatable {
                 case code(String)
                 case statusUpdate(StatusUpdate)
+
+                struct File: Codable, Equatable {
+                    var name: String
+                    var content: Data
+                    var mimeType: String
+                    var localPath: String?
+                }
+                case file(File)
             }
             var inline: Bool
             var id: String //  e.g., ci_xxx for code interpreter
@@ -68,8 +76,20 @@ enum LLM {
                     switch other.type {
                     case .code(let rhs):
                         return .init(inline: inline, id: id, type: .code(lhs + rhs))
-                    case .statusUpdate:
+                    case .statusUpdate, .file:
                         return nil
+                    }
+                case .file(let lhs):
+                    switch other.type {
+                    case .statusUpdate, .code:
+                        return nil
+                    case .file(let rhs):
+                        return .init(inline: inline,
+                                     id: id,
+                                     type: .file(.init(name: lhs.name + rhs.name,
+                                                       content: lhs.content + rhs.content,
+                                                       mimeType: lhs.mimeType + rhs.mimeType,
+                                                       localPath: String?.concat(lhs.localPath, rhs.localPath))))
                     }
                 case .statusUpdate:
                     return nil
@@ -96,6 +116,7 @@ enum LLM {
                     switch attachment.type {
                     case .code(let string): return string
                     case .statusUpdate: return nil
+                    case .file: return nil
                     }
                 case .functionCall, .uninitialized:
                     return nil
@@ -978,3 +999,17 @@ struct LLMErrorParser {
     }
 }
 
+extension Optional where Wrapped == String {
+    static func concat(_ lhs: String?, _ rhs: String?) -> String? {
+        switch (lhs, rhs) {
+        case (nil, nil):
+            return nil
+        case let (l?, r?):
+            return l + r
+        case let (l?, nil):
+            return l
+        case let (nil, r?):
+            return r
+        }
+    }
+}

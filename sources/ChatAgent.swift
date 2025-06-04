@@ -53,42 +53,47 @@ fileprivate struct MessageToPromptStateMachine {
     }
     private var mode = Mode.regular
 
-    mutating func prompt(message: Message) -> String? {
+    mutating func body(message: Message) -> LLM.Message.Body {
         switch message.author {
         case .agent:
-            prompt(agentMessage: message)
+            body(agentMessage: message)
         case .user:
-            prompt(userMessage: message)
+            body(userMessage: message)
         }
     }
 
-    private mutating func prompt(agentMessage: Message) -> String? {
+    private mutating func body(agentMessage: Message) -> LLM.Message.Body {
         switch agentMessage.content {
         case .plainText(let value), .markdown(let value):
-            return value
+            return .text(value)
         case .explanationResponse(let annotations, _, _):
-            return annotations.rawResponse
-        case .explanationRequest:
-            it_fatalError()
-        case .remoteCommandRequest:
-            return nil
+            return .text(annotations.rawResponse)
+        case .remoteCommandRequest(let request):
+            if let call = request.llmMessage.function_call {
+                return .functionCall(call,
+                                     id: request.llmMessage.functionCallID)
+            } else {
+                return .uninitialized
+            }
         case .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .commit, .setPermissions, .terminalCommand, .appendAttachment:
+                .commit, .setPermissions, .terminalCommand, .appendAttachment, .explanationRequest:
             it_fatalError()
         case .multipart(let subparts):
-            return subparts.compactMap {
-                switch $0 {
+            return .multipart(subparts.compactMap { subpart -> LLM.Message.Body? in
+                switch subpart {
                 case .attachment(let attachment):
                     switch attachment.type {
                     case .code(let code):
-                        code
+                        return .text(code)
                     case .statusUpdate:
-                        nil
+                        return nil
+                    case .file:
+                        return .attachment(attachment)
                     }
                 case .markdown(let string), .plainText(let string):
-                    string
+                    return .text(string)
                 }
-            }.joined(separator: "\n")
+            })
         }
     }
 
@@ -114,41 +119,51 @@ fileprivate struct MessageToPromptStateMachine {
         return lines.joined(separator: "\n")
     }
 
-    private mutating func prompt(userMessage: Message) -> String {
-        switch mode {
-        case .regular:
-            switch userMessage.content {
-            case .plainText(let value), .markdown(let value):
-                return value
-            case .explanationRequest(let request):
-                mode = .initialExplanation
-                return request.prompt()
-            case .explanationResponse, .append, .appendAttachment:
-                it_fatalError()
-            case .remoteCommandResponse(let result, _, _, _):
-                return result.map { value in
-                    value
-                } failure: { error in
-                    "I was unable to complete the function call: " + error.localizedDescription
-                }
-            case .terminalCommand(let cmd):
-                return prompt(terminalCommand: cmd)
-            case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat, .commit,
-                    .setPermissions, .multipart:
-                it_fatalError()
-            }
-        case .initialExplanation:
-            switch userMessage.content {
-            case .plainText(let value), .markdown(let value):
+    private mutating func body(userMessage: Message) -> LLM.Message.Body {
+        switch userMessage.content {
+        case .plainText(let value), .markdown(let value):
+            defer {
                 mode = .regular
-                return AIExplanationRequest.conversationalPrompt(userPrompt: value)
-            case .explanationResponse, .explanationRequest, .append, .remoteCommandRequest,
-                    .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat,
-                    .commit, .setPermissions, .multipart, .appendAttachment:
-                it_fatalError()
-            case .terminalCommand(let cmd):
-                return prompt(terminalCommand: cmd)
             }
+            switch mode {
+            case .regular:
+                return .text(value)
+            case .initialExplanation:
+                return .text(AIExplanationRequest.conversationalPrompt(userPrompt: value))
+            }
+        case .explanationRequest(let request):
+            mode = .initialExplanation
+            return .text(request.prompt())
+        case .multipart(let subparts):
+            return .multipart(subparts.compactMap { subpart -> LLM.Message.Body? in
+                switch subpart {
+                case .attachment(let attachment):
+                    switch attachment.type {
+                    case .code(let code):
+                        return .text(code)
+                    case .statusUpdate:
+                        return nil
+                    case .file:
+                        return .attachment(attachment)
+                    }
+                case .markdown(let string), .plainText(let string):
+                    return .text(string)
+                }
+            })
+        case .remoteCommandResponse(let result, _, let functionName, let functionCallID):
+            let output = result.map { value in
+                value
+            } failure: { error in
+                "I was unable to complete the function call: " + error.localizedDescription
+            }
+            return .functionOutput(name: functionName,
+                                   output: output,
+                                   id: functionCallID)
+        case .terminalCommand(let cmd):
+            return .text(prompt(terminalCommand: cmd))
+        case .explanationResponse, .append, .appendAttachment, .remoteCommandRequest,
+                .selectSessionRequest, .clientLocal, .renameChat, .commit, .setPermissions:
+            it_fatalError()
         }
     }
 }
@@ -206,11 +221,9 @@ class ChatAgent {
     }
 
     private func aiMessage(from message: Message) -> AITermController.Message {
-        AITermController.Message(role: AITermController.Message.role(from: message),
-                                 content: messageToPrompt.prompt(message: message),
-                                 name: message.functionCallName,
-                                 functionCallID: message.functionCallID,
-                                 function_call: message.functionCall)
+        let body = messageToPrompt.body(message: message)
+        return AITermController.Message(role: AITermController.Message.role(from: message),
+                                        body: body)
     }
 
     enum StreamingUpdate {
@@ -228,7 +241,7 @@ class ChatAgent {
         switch userMessage.content {
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
                 .remoteCommandRequest, .selectSessionRequest, .clientLocal, .commit,
-                .terminalCommand:
+                .terminalCommand, .multipart:
             break
         case .renameChat, .append:
             return
@@ -247,8 +260,6 @@ class ChatAgent {
             return
         case .appendAttachment:
             it_fatalError("User-sent attachments not supported")
-        case .multipart(_):
-            it_fatalError("User-sent multipart messages not supported")
         }
 
         let needsRenaming = !conversation.messages.anySatisfies({ $0.role == .user})
@@ -296,8 +307,6 @@ class ChatAgent {
                 if needsRenaming {
                     self.requestRenaming()
                 }
-//            } else {
-//                self.conversation.messages.removeLast()
             }
             let message = Self.committedMessage(forResult: result,
                                                 userMessage: userMessage,
@@ -372,7 +381,7 @@ class ChatAgent {
                                 userMessage: Message,
                                 streaming: Bool) -> Message? {
         switch userMessage.content {
-        case .plainText, .markdown, .explanationResponse, .terminalCommand, .remoteCommandResponse:
+        case .plainText, .markdown, .explanationResponse, .terminalCommand, .remoteCommandResponse, .multipart:
             return Message(chatID: userMessage.chatID,
                            author: .agent,
                            content: .markdown(text),
@@ -392,7 +401,7 @@ class ChatAgent {
                 sentDate: Date(),
                 uniqueID: messageID)
         case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .commit, .setPermissions, .appendAttachment, .multipart:
+                .commit, .setPermissions, .appendAttachment:
             it_fatalError()
         }
     }
@@ -433,6 +442,8 @@ extension LLM.Message.Attachment {
         switch type {
         case .code(let code): code
         case .statusUpdate(let statusUpdate): statusUpdate.displayString
+        case .file(let file):
+            file.content.lossyString
         }
     }
 }

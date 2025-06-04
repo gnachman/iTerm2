@@ -129,7 +129,7 @@ class MultipartMessageCellView: MessageCellView {
             switch subpart.kind {
             case .regular:
                 let textView = createRegularTextView(for: subpart, maxBubbleWidth: maxBubbleWidth, rendition: rendition)
-                let container = createTextContainer(for: textView, isCodeAttachment: false, isStatusUpdate: false)
+                let container = createContainer(for: textView, isCodeAttachment: false, isStatusUpdate: false)
                 contentStack.addArrangedSubview(container)
                 textViews.append(textView)
 
@@ -152,9 +152,18 @@ class MultipartMessageCellView: MessageCellView {
                 textViews.append(textView)
             case .statusUpdate:
                 let textView = createStatusUpdateTextView(for: subpart, maxBubbleWidth: maxBubbleWidth, rendition: rendition)
-                let container = createTextContainer(for: textView, isCodeAttachment: true, isStatusUpdate: true)
+                let container = createContainer(for: textView, isCodeAttachment: true, isStatusUpdate: true)
                 contentStack.addArrangedSubview(container)
                 textViews.append(textView)
+            case .fileAttachment(id: let id, file: let file):
+                let view = FileAttachmentSubpartView(icon: subpart.icon!,
+                                                     filename: subpart.attributedString,
+                                                     id: id,
+                                                     file: file)
+                view.translatesAutoresizingMaskIntoConstraints = false
+                let container = createContainer(for: view, isCodeAttachment: false, isStatusUpdate: false)
+                contentStack.addArrangedSubview(container)
+                break
             }
 
             // Add spacing between subparts (except after the last one)
@@ -202,6 +211,12 @@ class MultipartMessageCellView: MessageCellView {
         // Store message info
         messageUniqueID = rendition.messageUniqueID
         editable = rendition.isEditable
+    }
+
+    private func createFileAttachment(for subpart: MessageRendition.SubpartContainer,
+                                      maxBubbleWidth: CGFloat,
+                                      rendition: MessageRendition) -> AutoSizingTextView {
+        return createRegularTextView(for: subpart, maxBubbleWidth: maxBubbleWidth, rendition: rendition)
     }
 
     private func createRegularTextView(for subpart: MessageRendition.SubpartContainer,
@@ -396,31 +411,31 @@ class MultipartMessageCellView: MessageCellView {
         }
     }
 
-    private func createTextContainer(for textView: NSTextView, isCodeAttachment: Bool, isStatusUpdate: Bool) -> NSView {
+    private func createContainer(for view: NSView, isCodeAttachment: Bool, isStatusUpdate: Bool) -> NSView {
         let container = NSView()
         container.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(textView)
+        container.addSubview(view)
 
         if isStatusUpdate {
             // Center status updates horizontally
-            add(constraint: textView.centerXAnchor.constraint(equalTo: container.centerXAnchor))
-            add(constraint: textView.leadingAnchor.constraint(greaterThanOrEqualTo: container.leadingAnchor, constant: 16))
-            add(constraint: textView.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor, constant: -16))
+            add(constraint: view.centerXAnchor.constraint(equalTo: container.centerXAnchor))
+            add(constraint: view.leadingAnchor.constraint(greaterThanOrEqualTo: container.leadingAnchor, constant: 16))
+            add(constraint: view.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor, constant: -16))
         } else if isCodeAttachment {
             // Indent code attachments
-            add(constraint: textView.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16))
-            add(constraint: textView.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: 0))
+            add(constraint: view.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16))
+            add(constraint: view.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: 0))
         } else {
             // Regular text has no extra indentation and should fill the width
-            add(constraint: textView.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 0))
-            add(constraint: textView.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: 0))
+            add(constraint: view.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 0))
+            add(constraint: view.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: 0))
 
             // For regular text, also add a width constraint to ensure it expands
-            add(constraint: textView.widthAnchor.constraint(equalTo: container.widthAnchor))
+            add(constraint: view.widthAnchor.constraint(equalTo: container.widthAnchor))
         }
 
-        add(constraint: textView.topAnchor.constraint(equalTo: container.topAnchor))
-        add(constraint: textView.bottomAnchor.constraint(equalTo: container.bottomAnchor))
+        add(constraint: view.topAnchor.constraint(equalTo: container.topAnchor))
+        add(constraint: view.bottomAnchor.constraint(equalTo: container.bottomAnchor))
 
         container.setContentCompressionResistancePriority(.required, for: .vertical) // Don't compress containers either
 

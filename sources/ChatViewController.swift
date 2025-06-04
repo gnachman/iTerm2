@@ -7,6 +7,7 @@
 
 import AppKit
 import SwiftyMarkdown
+import UniformTypeIdentifiers
 
 @objc(iTermChatViewControllerDelegate)
 protocol ChatViewControllerDelegate: AnyObject {
@@ -955,6 +956,13 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                                 attributedString: AttributedStringForStatusUpdate(
                                     statusUpdate,
                                     textColor: message.textColor))
+                        case .file(let file):
+                            MessageRendition.SubpartContainer(
+                                kind: .fileAttachment(id: attachment.id, file: file),
+                                icon: NSImage.iconImage(filename: file.name,
+                                                        size: .init(width: 16, height: 16)),
+                                attributedString: AttributedStringForFilename(file.name,
+                                                                              textColor: message.textColor))
                         }
                     case .plainText(let text):
                         MessageRendition.SubpartContainer(
@@ -982,28 +990,132 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
     }
 }
 
+extension LLM.Message.Attachment {
+    func localPathCreatingIfNeeded() -> String {
+        if let path = existingLocalPath() {
+            return path
+        }
+        let path = proposedLocalPath()
+        switch type {
+        case .code(let text):
+            do {
+                try text.write(toFile: path, atomically: false, encoding: .utf8)
+            } catch {
+                DLog("Failed to write to \(path): \(error)")
+            }
+        case .statusUpdate:
+            it_fatalError()
+        case .file(let file):
+            do {
+                try file.content.write(to: URL(fileURLWithPath: path))
+            } catch {
+                DLog("Failed to write to \(path): \(error)")
+            }
+        }
+        return path
+    }
+
+    private var basePathForAttachments: String {
+        NSTemporaryDirectory() + "iTerm2ChatAttachments/"
+    }
+
+    private func possibleLocalPaths() -> [String] {
+        switch type {
+        case .code:
+            [basePathForAttachments.appendingPathComponent(id).appendingPathComponent("code.txt")]
+        case .file(let file):
+            [file.localPath,
+             basePathForAttachments.appendingPathComponent(id).appendingPathComponent(file.name.lastPathComponent)].compactMap { $0 }
+        case .statusUpdate:
+            it_fatalError()
+        }
+    }
+
+    private func existingLocalPath() -> String? {
+        let candidates = possibleLocalPaths()
+        return candidates.first { candidate in
+            FileManager.default.fileExists(atPath: candidate)
+        }
+    }
+
+    private func proposedLocalPath() -> String {
+        let path = possibleLocalPaths()[0]
+        do {
+            try FileManager.default.createDirectory(atPath: path.deletingLastPathComponent,
+                                                    withIntermediateDirectories: true)
+        } catch {
+            DLog("Failed to create \(path): \(error)")
+        }
+        return path
+    }
+}
+
 extension ChatViewController: ChatInputViewDelegate {
     func textDidChange() {
         eligibleForAutoPaste = inputView.stringValue.isEmpty
+    }
+
+    func mimeType(_ filename: String) -> String {
+        let ext = filename.pathExtension
+        if let mime = extensionToMime[ext] {
+            return mime
+        }
+        if #available(macOS 11, *) {
+            let url = URL(fileURLWithPath: filename)
+            if let uti = try? url.resourceValues(forKeys: [.typeIdentifierKey]).typeIdentifier,
+               let mimeType = UTType(uti)?.preferredMIMEType {
+                return mimeType
+            }
+            return "application/octet-stream"
+        } else {
+            let ext = (filename as NSString).pathExtension as CFString
+            guard let uti = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, ext, nil)?.takeRetainedValue(),
+                  let mime = UTTypeCopyPreferredTagWithClass(uti, kUTTagClassMIMEType)?.takeRetainedValue() as String? else {
+                return "application/octet-stream"
+            }
+            return mime
+        }
     }
 
     func sendButtonClicked(text: String) {
         guard !text.isEmpty, let chatID else {
             return
         }
-        let message = Message(chatID: chatID,
-                              author: .user,
-                              content: .plainText(text),
-                              sentDate: Date(),
-                              uniqueID: UUID(),
-                              configuration: .init(hostedWebSearchEnabled: webSearchEnabled))
+        let attachments = inputView.attachedFiles.compactMap { filename in
+            if let data = try? Data(contentsOf: URL(fileURLWithPath: filename)) {
+                Message.Subpart.attachment(.init(
+                    inline: false,
+                    id: UUID().uuidString,
+                    type: .file(.init(name: filename.lastPathComponent,
+                                      content: data,
+                                      mimeType: mimeType(filename)))))
+            } else {
+                nil
+            }
+        }
+        let configuration = Message.Configuration(hostedWebSearchEnabled: webSearchEnabled)
+        let message = if attachments.isEmpty {
+            Message(chatID: chatID,
+                    author: .user,
+                    content: .plainText(text),
+                    sentDate: Date(),
+                    uniqueID: UUID(),
+                    configuration: configuration)
+        } else {
+            Message(chatID: chatID,
+                    author: .user,
+                    content: .multipart([.plainText(text)] + attachments),
+                    sentDate: Date(),
+                    uniqueID: UUID(),
+                    configuration: configuration)
+        }
 
         ChatClient.instance?.publish(
             message: message,
             toChatID: chatID,
             partial: false)
 
-        inputView.stringValue = ""
+        inputView.clear()
         eligibleForAutoPaste = true
     }
 }

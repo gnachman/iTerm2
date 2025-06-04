@@ -202,7 +202,7 @@ extension Message.Content {
             return switch attachment.type {
             case .code(let content):
                 content
-            case .statusUpdate:
+            case .statusUpdate, .file:
                 ""
             }
         case let .multipart(parts):
@@ -212,7 +212,7 @@ extension Message.Content {
                 case .attachment(let attachment):
                     switch attachment.type {
                     case .code(let text): text
-                    case .statusUpdate: nil
+                    case .statusUpdate, .file: nil
                     }
                 }
             }.joined(separator: "\n")

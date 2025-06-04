@@ -67,6 +67,8 @@ struct CompletionsMessage: Codable, Equatable {
                 content = string
             case .statusUpdate(let statusUpdate):
                 content = statusUpdate.displayString
+            case .file(let file):
+                content = file.content.lossyString
             }
         case .functionCall(let call, _):
             functionName = call.name

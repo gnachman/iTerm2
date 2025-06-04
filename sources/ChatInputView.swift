@@ -32,6 +32,10 @@ class ChatInputView: NSView, NSTextFieldDelegate {
 
     weak var delegate: ChatInputViewDelegate?
 
+    var attachedFiles: [String] {
+        attachmentsView.files
+    }
+
     init() {
         super.init(frame: .zero)
 
@@ -61,24 +65,23 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         sendButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         sendButton.setContentCompressionResistancePriority(.required, for: .horizontal)
 
+        var addImage = NSImage.it_image(forSymbolName: "plus", accessibilityDescription: "Attach files", fallbackImageName: "plus", for: ChatInputView.self)!
         if #available(macOS 11.0, *) {
-            if let image = NSImage(systemSymbolName: "plus", accessibilityDescription: "Attach files") {
-                addAttachmentButton = AddAttachmentButton(image: image, target: self, action: #selector(attachmentButtonClicked))
-                addAttachmentButton.imageScaling = .scaleProportionallyUpOrDown
-                addAttachmentButton.imagePosition = .imageOnly
-                addAttachmentButton.bezelStyle = .regularSquare
-                addAttachmentButton.isBordered = false
-                addAttachmentButton.setButtonType(.momentaryPushIn)
-                addAttachmentButton.toolTip = "Attach files"
-            } else {
-                addAttachmentButton = AddAttachmentButton(title: "+", target: self, action: #selector(attachmentButtonClicked))
-            }
-        } else {
-            addAttachmentButton = AddAttachmentButton(title: "+", target: self, action: #selector(attachmentButtonClicked))
+            // Create a larger version of the image
+            let config = NSImage.SymbolConfiguration(pointSize: 16, weight: .medium) // Adjust size as needed
+            addImage = addImage.withSymbolConfiguration(config)!
         }
+        addAttachmentButton = AddAttachmentButton(image: addImage, target: self, action: #selector(attachmentButtonClicked))
+        addAttachmentButton.imageScaling = .scaleNone
+        addAttachmentButton.imagePosition = .imageOnly
+        addAttachmentButton.bezelStyle = .regularSquare
+        addAttachmentButton.isBordered = false
+        addAttachmentButton.setButtonType(.momentaryPushIn)
+        addAttachmentButton.toolTip = "Attach files"
         addAttachmentButton.translatesAutoresizingMaskIntoConstraints = false
         addAttachmentButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         addAttachmentButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        addAttachmentButton.imageScaling = .scaleNone
 
         attachmentsView.translatesAutoresizingMaskIntoConstraints = false
         attachmentsView.onItemsWillBeDeleted = { _ in
@@ -89,7 +92,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         }
         let horizontalStack = ChatInputHorizontalStackView(views: [addAttachmentButton, inputTextFieldContainer, sendButton])
         horizontalStack.orientation = .horizontal
-        horizontalStack.spacing = 8
+        horizontalStack.spacing = 6
         horizontalStack.translatesAutoresizingMaskIntoConstraints = false
         horizontalStack.setContentHuggingPriority(.defaultHigh, for: .vertical)
 
@@ -110,6 +113,9 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         let inputStackVerticalInset = CGFloat(12)
 
         NSLayoutConstraint.activate([
+            addAttachmentButton.widthAnchor.constraint(equalToConstant: 18),
+            addAttachmentButton.heightAnchor.constraint(equalToConstant: 18),
+
             verticalStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
             verticalStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
             verticalStack.bottomAnchor.constraint(equalTo: bottomAnchor),
@@ -131,6 +137,12 @@ class ChatInputView: NSView, NSTextFieldDelegate {
 
     required init?(coder: NSCoder) {
         it_fatalError("init(coder:) has not been implemented")
+    }
+
+    func clear() {
+        stringValue = ""
+        attachmentsView.files.removeAll()
+        updateAttachmentsView()
     }
 
     @objc

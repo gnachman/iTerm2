@@ -146,6 +146,8 @@ struct Message: Codable {
                             return text.truncatedWithTrailingEllipsis(to: maxLength)
                         case .statusUpdate(let statusUpdate):
                             return statusUpdate.displayString
+                        case .file(let file):
+                            return "📄 " + file.name
                         }
                     }
                 }

@@ -8,8 +8,7 @@
 import Foundation
 
 /// A full‐featured request to OpenAI’s Responses API.
-public struct ResponsesRequestBody: Codable
-{
+public struct ResponsesRequestBody: Codable {
     enum InputItemContent: Codable {
         struct InputText: Codable {
             var type = "input_text"
@@ -50,6 +49,44 @@ public struct ResponsesRequestBody: Codable
             }
         }
         case inputFile(InputFile)
+
+        private enum CodingKeys: String, CodingKey {
+            case type
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            let type = try container.decode(String.self, forKey: .type)
+
+            switch type {
+            case "input_text":
+                let inputText = try InputText(from: decoder)
+                self = .inputText(inputText)
+            case "input_image":
+                let inputImage = try InputImage(from: decoder)
+                self = .inputImage(inputImage)
+            case "input_file":
+                let inputFile = try InputFile(from: decoder)
+                self = .inputFile(inputFile)
+            default:
+                throw DecodingError.dataCorruptedError(
+                    forKey: .type,
+                    in: container,
+                    debugDescription: "Unknown InputItemContent type: \(type)"
+                )
+            }
+        }
+
+        func encode(to encoder: Encoder) throws {
+            switch self {
+            case .inputText(let inputText):
+                try inputText.encode(to: encoder)
+            case .inputImage(let inputImage):
+                try inputImage.encode(to: encoder)
+            case .inputFile(let inputFile):
+                try inputFile.encode(to: encoder)
+            }
+        }
     }
 
     /// Text, image, or file inputs to the model, used to generate a response.
@@ -1638,10 +1675,40 @@ struct ResponsesBodyRequestBuilder {
             }
             return .message(.init(content: .text(content), role: .system))
         case .user:
-            guard let content = message.content else {
+            switch message.body {
+            case .uninitialized:
                 return nil
+            case .text(let text):
+                return .message(.init(content: .text(text), role: .user))
+            case .functionCall, .functionOutput, .attachment:
+                DLog("Unexpected user message body \(message.body)")
+                return nil
+            case .multipart(let subparts):
+                let inputItemContents = subparts.compactMap { subpart -> ResponsesRequestBody.InputItemContent? in
+                    switch subpart {
+                    case .uninitialized:
+                        return nil
+                    case .text(let text):
+                        return .inputText(.init(text: text))
+                    case .functionCall, .functionOutput:
+                        return nil
+                    case .attachment(let attachment):
+                        switch attachment.type {
+                        case .code(let code):
+                            return .inputFile(.init(fileData: "data:text/plain;base64," + code.base64Encoded))
+                        case .statusUpdate:
+                            return nil
+                        case .file(let file):
+                            return .inputFile(.init(fileData: "data:\(file.mimeType);base64," +  file.content.base64EncodedString(),
+                                                    filename: file.name))
+                        }
+                    case .multipart(_):
+                        return nil
+                    }
+                }
+                return .message(.init(content: .inputItemContentList(inputItemContents),
+                                      role: .user))
             }
-            return .message(.init(content: .text(content), role: .user))
         case .none:
             return nil
         }
