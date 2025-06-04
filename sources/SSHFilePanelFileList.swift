@@ -7,43 +7,8 @@
 import UniformTypeIdentifiers
 
 @available(macOS 11, *)
-class SSHFilePromiseProvider: NSFilePromiseProvider {
-
-    struct UserInfoKeys {
-        static let node = "node"
-        static let endpoint = "endpoint"
-        static let fullPath = "fullPath"
-        static let tempURL = "tempURL"
-    }
-
-    override func writableTypes(for pasteboard: NSPasteboard) -> [NSPasteboard.PasteboardType] {
-        var types = super.writableTypes(for: pasteboard)
-        types.append(contentsOf: [.fileURL, .string])
-        return types
-    }
-
-    override func pasteboardPropertyList(forType type: NSPasteboard.PasteboardType) -> Any? {
-        guard let userInfoDict = userInfo as? [String: Any] else { return nil }
-
-        switch type {
-        case .fileURL:
-            if let tempURL = userInfoDict[UserInfoKeys.tempURL] as? NSURL {
-                return tempURL.pasteboardPropertyList(forType: type)
-            }
-        case .string:
-            if let tempURL = userInfoDict[UserInfoKeys.tempURL] as? NSURL {
-                return tempURL.path
-            }
-        default:
-            break
-        }
-
-        return super.pasteboardPropertyList(forType: type)
-    }
-
-    override func writingOptions(forType type: NSPasteboard.PasteboardType, pasteboard: NSPasteboard) -> NSPasteboard.WritingOptions {
-        return super.writingOptions(forType: type, pasteboard: pasteboard)
-    }
+protocol SSHFilePanelFileListDelegate: AnyObject {
+    func sshFilePanelList(didSelect file: SSHFilePanelFileList.FileNode)
 }
 
 @available(macOS 11, *)
@@ -129,7 +94,7 @@ class SSHFilePanelFileList: NSScrollView {
     // Tree node to represent files and directories
     class FileNode {
         let file: RemoteFile
-        let path: String
+        let pathToParent: String
         var children: [FileNode]?
         var isLoading = false
         var isExpanded = false
@@ -137,7 +102,7 @@ class SSHFilePanelFileList: NSScrollView {
 
         init(file: RemoteFile, path: String, parent: FileNode? = nil) {
             self.file = file
-            self.path = path
+            self.pathToParent = path
             self.parent = parent
         }
 
@@ -177,6 +142,7 @@ class SSHFilePanelFileList: NSScrollView {
     private var isLoading = false
     private var currentSortColumn: ColumnID = .name
     private var sortAscending = true
+    weak var delegate: SSHFilePanelFileListDelegate?
 
     init() {
         fileOutlineView = SSHFilePanelFileListOutlineView()
@@ -210,6 +176,10 @@ class SSHFilePanelFileList: NSScrollView {
         // Set up outline view
         fileOutlineView.dataSource = self
         fileOutlineView.delegate = self
+
+        // Set up double-click action
+        fileOutlineView.doubleAction = #selector(handleDoubleClick(_:))
+        fileOutlineView.target = self
 
         fileOutlineView.onColumnWidthChange = { [weak self] column in
             self?.columnLiveResize(column)
@@ -255,6 +225,17 @@ class SSHFilePanelFileList: NSScrollView {
             fileOutlineView.reloadData(forRowIndexes: IndexSet(integersIn: visibleRange.lowerBound..<visibleRange.upperBound),
                                       columnIndexes: IndexSet(integersIn: 0..<fileOutlineView.numberOfColumns))
         }
+    }
+
+    @objc private func handleDoubleClick(_ sender: Any?) {
+        let clickedRow = fileOutlineView.clickedRow
+        guard clickedRow >= 0,
+              let node = fileOutlineView.item(atRow: clickedRow) as? FileNode else {
+            return
+        }
+
+        // Notify the delegate that the user double-clicked on a file/folder
+        delegate?.sshFilePanelList(didSelect: node)
     }
 
     private func addTableColumn(columnID: ColumnID) {
@@ -334,7 +315,7 @@ class SSHFilePanelFileList: NSScrollView {
         guard node.isDirectory && node.children == nil && !node.isLoading else { return }
         node.isLoading = true
         do {
-            let childPath = (node.path as NSString).appendingPathComponent(node.file.name)
+            let childPath = (node.pathToParent as NSString).appendingPathComponent(node.file.name)
             let remoteFiles = try await endpoint?.listFiles(childPath, sort: .byName) ?? []
             let childNodes = remoteFiles.map { FileNode(file: $0, path: childPath, parent: node) }
             await MainActor.run {
@@ -409,7 +390,7 @@ class SSHFilePanelFileList: NSScrollView {
         switch file.kind {
         case .folder:
             return NSImage(named: NSImage.folderName)
-        case .file(let info):
+        case .file:
             // Try to get icon based on file extension
             let pathExtension = (file.name as NSString).pathExtension.lowercased()
             if !pathExtension.isEmpty {
@@ -653,6 +634,11 @@ extension SSHFilePanelFileList: NSOutlineViewDelegate {
         return true
     }
 
+    func outlineView(_ outlineView: NSOutlineView, shouldShowCellExpansionFor tableColumn: NSTableColumn?, item: Any) -> Bool {
+        // Allow cell expansion for the name column only
+        return tableColumn?.identifier == NSUserInterfaceItemIdentifier(ColumnID.name.rawValue)
+    }
+
     func outlineView(_ outlineView: NSOutlineView, canDragRowsWith rowIndexes: IndexSet, at mouseDownPoint: NSPoint) -> Bool {
         print("canDragRowsWith called for indexes: \(rowIndexes)")
         // Allow dragging of all items
@@ -741,7 +727,7 @@ extension SSHFilePanelFileList: NSOutlineViewDelegate {
         // Create our custom file promise provider
         let filePromise = SSHFilePromiseProvider(fileType: fileUTI, delegate: self)
 
-        let fullPath = (node.path as NSString).appendingPathComponent(node.file.name)
+        let fullPath = (node.pathToParent as NSString).appendingPathComponent(node.file.name)
 
         // Store all necessary info in userInfo
         filePromise.userInfo = [

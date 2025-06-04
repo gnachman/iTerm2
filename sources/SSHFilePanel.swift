@@ -43,7 +43,6 @@ class SSHFilePanel: NSWindowController {
     private var toolbarView: NSView!
     private var backButton: NSButton!
     private var forwardButton: NSButton!
-    private var arrangeButton: NSPopUpButton!
     private var locationButton: SSHFilePanelLocationButton!
     private var searchField: NSSearchField!
     private var fileList: SSHFilePanelFileList!
@@ -52,6 +51,8 @@ class SSHFilePanel: NSWindowController {
     private var openButton: NSButton!
     private let sidebar = SSHFilePanelSidebar()
     private var completionHandler: ((NSApplication.ModalResponse) -> Void)?
+    private var navigationHistory: [String] = []
+    private var historyIndex: Int = -1
 
     // MARK: - Data Properties
     weak var dataSource: SSHFilePanelDataSource? {
@@ -110,14 +111,14 @@ class SSHFilePanel: NSWindowController {
         if let firstHost = connectedHosts.first {
             currentEndpoint = dataSource.remoteFilePanelSSHEndpoint(for: firstHost)
             currentPath = currentEndpoint?.homeDirectory ?? "/"
-            updateLocationButton()
+            updateViewsForCurrentPath()
         }
 
         sidebar.connectedHosts = connectedHosts
     }
 
     @MainActor
-    private func updateLocationButton() {
+    private func updateViewsForCurrentPath() {
         locationButton.removeAllItems()
         guard let endpoint = currentEndpoint else {
             return
@@ -136,8 +137,7 @@ class SSHFilePanel: NSWindowController {
             // Verify the path exists
             let _ = try await endpoint.stat(path)
             currentPath = path
-            updateLocationButton()
-            // TODO: Update table view in step 2
+            updateViewsForCurrentPath()
         } catch {
             print("Failed to navigate to path \(path): \(error)")
         }
@@ -150,7 +150,6 @@ class SSHFilePanel: NSWindowController {
         setupSplitView(in: contentView)
         setupSidebar()
         setupMainContent()
-        setupConstraints()
 
         // Set sidebar width after UI is set up
         DispatchQueue.main.async {
@@ -198,6 +197,7 @@ class SSHFilePanel: NSWindowController {
             splitView.topAnchor.constraint(equalTo: contentView.topAnchor),
             splitView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
         ])
+        splitView.setHoldingPriority(NSLayoutConstraint.Priority(251), forSubviewAt: 0)
     }
 
     private func setupSidebar() {
@@ -378,6 +378,7 @@ class SSHFilePanel: NSWindowController {
     private func setupFileTable() {
         fileList = SSHFilePanelFileList()
         fileList.translatesAutoresizingMaskIntoConstraints = false
+        fileList.delegate = self
     }
 
     private func setupButtons() {
@@ -420,42 +421,14 @@ class SSHFilePanel: NSWindowController {
         ])
     }
 
-    private func setupConstraints() {
-        // Split view position will be set in windowDidLoad
-        splitView.setHoldingPriority(NSLayoutConstraint.Priority(251), forSubviewAt: 0)
-    }
-
     // MARK: - Actions
-    @objc private func backButtonClicked(_ sender: NSButton) {
-        guard Self.historyIndex > 0 else { return }
-
-        Self.historyIndex -= 1
-        let previousPath = Self.navigationHistory[Self.historyIndex]
-
-        Task {
-            await navigateToPath(previousPath)
-            updateNavigationButtons()
-        }
-    }
-
-    @objc private func forwardButtonClicked(_ sender: NSButton) {
-        guard Self.historyIndex < Self.navigationHistory.count - 1 else { return }
-
-        Self.historyIndex += 1
-        let nextPath = Self.navigationHistory[Self.historyIndex]
-
-        Task {
-            await navigateToPath(nextPath)
-            updateNavigationButtons()
-        }
-    }
 
     @objc private func locationButtonChanged(_ sender: NSPopUpButton) {
         guard let selectedItem = sender.selectedItem,
               let path = selectedItem.representedObject as? String else { return }
 
         Task {
-            await navigateToPath(path)
+            await navigateToPathWithHistory(path)
         }
         locationButton.set(path: path, sshIdentity: locationButton.sshIdentity!)
     }
@@ -643,7 +616,7 @@ extension SSHFilePanel {
         guard let endpoint = currentEndpoint else { return }
         let homePath = endpoint.homeDirectory ?? "/"
         Task {
-            await navigateToPath(homePath)
+            await navigateToPathWithHistory(homePath)
         }
     }
 
@@ -651,7 +624,7 @@ extension SSHFilePanel {
         let parentPath = (currentPath as NSString).deletingLastPathComponent
         if parentPath != currentPath && !parentPath.isEmpty {
             Task {
-                await navigateToPath(parentPath)
+                await navigateToPathWithHistory(parentPath)
             }
         }
     }
@@ -703,7 +676,7 @@ extension SSHFilePanel {
             if !enteredPath.isEmpty {
                 let expandedPath = expandPath(enteredPath)
                 Task {
-                    await navigateToPath(expandedPath)
+                    await navigateToPathWithHistory(expandedPath)
                 }
             }
         }
@@ -807,23 +780,19 @@ extension SSHFilePanel {
 }
 
 // MARK: - Navigation History Support
+
 @available(macOS 11, *)
 extension SSHFilePanel {
 
-    // Add these properties to your main class
-    private static var navigationHistory: [String] = []
-    private static var historyIndex: Int = -1
-
-    // Enhanced navigation methods with history support
     func navigateToPathWithHistory(_ path: String) async {
         // Save current path to history before navigating
-        if Self.historyIndex < Self.navigationHistory.count - 1 {
+        if historyIndex < navigationHistory.count - 1 {
             // Remove forward history if we're navigating to a new path
-            Self.navigationHistory.removeSubrange((Self.historyIndex + 1)...)
+            navigationHistory.removeSubrange((historyIndex + 1)...)
         }
 
-        Self.navigationHistory.append(currentPath)
-        Self.historyIndex = Self.navigationHistory.count - 1
+        navigationHistory.append(currentPath)
+        historyIndex = navigationHistory.count - 1
 
         // Navigate to new path
         await navigateToPath(path)
@@ -833,7 +802,42 @@ extension SSHFilePanel {
     }
 
     private func updateNavigationButtons() {
-        backButton.isEnabled = Self.historyIndex > 0
-        forwardButton.isEnabled = Self.historyIndex < Self.navigationHistory.count - 1
+        backButton.isEnabled = historyIndex > 0
+        forwardButton.isEnabled = historyIndex < navigationHistory.count - 1
+    }
+
+    @objc private func backButtonClicked(_ sender: NSButton) {
+        guard historyIndex > 0 else { return }
+
+        historyIndex -= 1
+        let previousPath = navigationHistory[historyIndex]
+
+        Task {
+            await navigateToPath(previousPath)
+            updateNavigationButtons()
+        }
+    }
+
+    @objc private func forwardButtonClicked(_ sender: NSButton) {
+        guard historyIndex < navigationHistory.count - 1 else { return }
+
+        historyIndex += 1
+        let nextPath = navigationHistory[historyIndex]
+
+        Task {
+            await navigateToPath(nextPath)
+            updateNavigationButtons()
+        }
+    }
+}
+
+@available(macOS 11, *)
+extension SSHFilePanel: SSHFilePanelFileListDelegate {
+    func sshFilePanelList(didSelect file: SSHFilePanelFileList.FileNode) {
+        if file.isDirectory {
+            Task { @MainActor in
+                await navigateToPathWithHistory(file.file.absolutePath)
+            }
+        }
     }
 }
