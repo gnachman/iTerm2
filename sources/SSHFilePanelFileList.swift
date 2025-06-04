@@ -309,7 +309,7 @@ class SSHFilePanelFileList: NSScrollView {
                 self.fileOutlineView.reloadData()
             } catch {
                 // Handle error - could show an alert or log
-                DLog"Error loading files: \(error)")
+                DLog("Error loading files: \(error)")
             }
             self.isLoading = false
         }

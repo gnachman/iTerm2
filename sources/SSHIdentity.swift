@@ -12,6 +12,10 @@ public protocol SSHHostnameFinder: AnyObject {
 }
 
 public class SSHIdentity: NSObject, Codable {
+    static func ==(lhs: SSHIdentity, rhs: SSHIdentity) -> Bool {
+        return lhs.state == rhs.state
+    }
+
     private struct State: Equatable, Codable, CustomDebugStringConvertible {
         var debugDescription: String {
             let hostport = hostname + ":\(port)"
@@ -118,6 +122,13 @@ public class SSHIdentity: NSObject, Codable {
     @objc
     public init(host: String, hostname: String, username: String?, port: Int) {
         state = State(host: host, hostname: hostname, username: username, port: port)
+    }
+
+    public override func isEqual(_ object: Any?) -> Bool {
+        guard let other = object as? SSHIdentity else {
+            return false
+        }
+        return other.state == state
     }
 
     public override func isEqual(to object: Any?) -> Bool {

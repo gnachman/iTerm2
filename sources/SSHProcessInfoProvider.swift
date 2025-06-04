@@ -106,7 +106,7 @@ fileprivate struct PSRow {
 }
 
 class SSHProcessInfoProvider {
-    private let runner: SSHCommandRunning
+    private weak var runner: SSHCommandRunning?
     private var collection: ProcessCollectionProvider?
     private var closures = [() -> ()]()
     private var _needsUpdate = false
@@ -186,7 +186,7 @@ class SSHProcessInfoProvider {
     }
 
     private func reallyUpdate(_ completion: @escaping () -> ()) {
-        runner.poll { [weak self] data in
+        runner?.poll { [weak self] data in
             if let string = String(data: data, encoding: .utf8) {
                 self?.finishUpdate(string)
             }
@@ -374,13 +374,13 @@ extension SSHProcessInfoProvider: ProcessInfoProvider {
     }
 
     func register(trackedPID pid: pid_t) {
-        runner.registerProcess(pid)
+        runner?.registerProcess(pid)
         tracked.insert(pid)
         needsUpdate = true
     }
 
     func unregister(trackedPID pid: pid_t) {
-        runner.deregisterProcess(pid)
+        runner?.deregisterProcess(pid)
         tracked.remove(pid)
     }
 
@@ -389,7 +389,7 @@ extension SSHProcessInfoProvider: ProcessInfoProvider {
     }
 
     func send(signal: Int32, toPID pid: Int32) {
-        runner.runRemoteCommand("kill -\(signal) \(pid)") { _, _ in }
+        runner?.runRemoteCommand("kill -\(signal) \(pid)") { _, _ in }
     }
 }
 

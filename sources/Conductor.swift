@@ -11,7 +11,7 @@ import Foundation
 @available(macOS 11, *)
 fileprivate var sshFilePanel: SSHFilePanel?
 
-protocol SSHCommandRunning {
+protocol SSHCommandRunning: AnyObject {
     func runRemoteCommand(_ commandLine: String,
                           completion: @escaping  (Data, Int32) -> ())
     func registerProcess(_ pid: pid_t)
@@ -153,7 +153,13 @@ class Conductor: NSObject, Codable {
         }
         return nil
     }
-    private(set) var framedPID: Int32? = nil
+    private(set) var framedPID: Int32? = nil {
+        didSet {
+            if framedPID != nil {
+                ConductorRegistry.instance.addConductor(self, for: sshIdentity)
+            }
+        }
+    }
     // If this returns true, route writes through sendKeys(_:).
     @objc var handlesKeystrokes: Bool {
         return framedPID != nil && queueWrites
@@ -933,6 +939,10 @@ class Conductor: NSObject, Codable {
         restored = true
     }
 
+    deinit {
+        ConductorRegistry.instance.removeConductor(for: sshIdentity)
+    }
+
     @objc var jsonValue: String? {
         let encoder = JSONEncoder()
         guard let data = try? encoder.encode(self) else {
@@ -1112,6 +1122,7 @@ class Conductor: NSObject, Codable {
         queue = []
         state = .ground
         send(.quit, .fireAndForget)
+        ConductorRegistry.instance.removeConductor(for: sshIdentity)
         delegate?.conductorQuit()
         delegate?.conductorStateDidChange()
     }
@@ -1563,11 +1574,12 @@ class Conductor: NSObject, Codable {
         delegate?.conductorStopQueueingInput()
 
         #warning("DNS")
-        ConductorRegistry.instance.addConductor(self, for: sshIdentity)
         if #available (macOS 11.0, *) {
             sshFilePanel = SSHFilePanel()
             sshFilePanel?.dataSource = ConductorRegistry.instance
-            sshFilePanel?.window?.makeKeyAndOrderFront(nil)
+            sshFilePanel?.show(completionHandler: { response in
+                sshFilePanel = nil
+            })
             /*
             sshFilePanel?.beginSheetModal(for: NSApp.keyWindow!, completionHandler: { response in
                 print(response)
@@ -1614,6 +1626,7 @@ class Conductor: NSObject, Codable {
             update(executionContext: pending, result: .abort)
         }
         state = .unhooked
+        ConductorRegistry.instance.removeConductor(for: sshIdentity)
     }
 
     @objc func handleCommandBegin(identifier: String, depth: Int32) {
@@ -2035,6 +2048,7 @@ class Conductor: NSObject, Codable {
         DLog("FAIL: \(reason)")
         forceReturnToGroundState()
         // Try to launch the login shell so you're not completely stuck.
+        ConductorRegistry.instance.removeConductor(for: sshIdentity)
         delegate?.conductorWrite(string: Command.execLoginShell([]).stringValue + "\n")
         delegate?.conductorAbort(reason: reason)
     }
