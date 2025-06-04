@@ -1296,7 +1296,7 @@ extension Message.Content {
             case .executingCommand(let command):
                 return AttributedStringForSystemMessageMarkdown(command.markdownDescription) { }
             case .notice(let message):
-                return AttributedStringForSystemMessageMarkdown(message) { }
+                return AttributedStringForSystemMessagePlain(message, textColor: textColor)
             case .streamingChanged(let state):
                 return switch state {
                 case .stopped:

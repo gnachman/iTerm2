@@ -410,7 +410,7 @@ class ChatAgent {
     private static func message(attachment: LLM.Message.Attachment,
                                 userMessage: Message) -> Message? {
         switch userMessage.content {
-        case .plainText, .markdown, .explanationResponse, .terminalCommand, .remoteCommandResponse:
+        case .plainText, .markdown, .explanationResponse, .terminalCommand, .remoteCommandResponse, .multipart:
             return Message(chatID: userMessage.chatID,
                            author: .agent,
                            content: .multipart([.attachment(attachment)]),
@@ -431,7 +431,7 @@ class ChatAgent {
                 sentDate: Date(),
                 uniqueID: messageID)
         case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .commit, .setPermissions, .appendAttachment, .multipart:
+                .commit, .setPermissions, .appendAttachment:
             it_fatalError()
         }
     }

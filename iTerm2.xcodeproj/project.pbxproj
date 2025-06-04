@@ -1014,6 +1014,12 @@
 		A6069EBA2DEFBB8000EE6CC7 /* ExtensionToMime.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069EB92DEFBB7C00EE6CC7 /* ExtensionToMime.swift */; };
 		A6069EBC2DEFC3B400EE6CC7 /* NSImage+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069EBB2DEFC3B000EE6CC7 /* NSImage+iTerm.swift */; };
 		A6069EBE2DEFC59E00EE6CC7 /* FileAttachmentSubpartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069EBD2DEFC59C00EE6CC7 /* FileAttachmentSubpartView.swift */; };
+		A6069EF82DF0142400EE6CC7 /* SSHFilePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069EF72DF0141B00EE6CC7 /* SSHFilePanel.swift */; };
+		A6069EFA2DF015D200EE6CC7 /* SSHEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069EF92DF015D000EE6CC7 /* SSHEndpoint.swift */; };
+		A6069EFC2DF0162700EE6CC7 /* SSHFilePanelSidebarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069EFB2DF0162600EE6CC7 /* SSHFilePanelSidebarItem.swift */; };
+		A6069EFE2DF0204500EE6CC7 /* SSHFilePanelLocationButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069EFD2DF0203F00EE6CC7 /* SSHFilePanelLocationButton.swift */; };
+		A6069F002DF0224800EE6CC7 /* SSHFilePanelSourceList.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069EFF2DF0224300EE6CC7 /* SSHFilePanelSourceList.swift */; };
+		A6069F022DF027CF00EE6CC7 /* SSHFilePanelFileList.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069F012DF027CA00EE6CC7 /* SSHFilePanelFileList.swift */; };
 		A606CBF42145AF4800B3A97E /* iTermRootTerminalView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB0BA1B470CBE00F511E6 /* iTermRootTerminalView.m */; };
 		A608A30927BC79C600BA4F1A /* SelectionExtraction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A608A30827BC79C600BA4F1A /* SelectionExtraction.swift */; };
 		A608A58027978076003525F7 /* VT100ScreenMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */; };
@@ -5913,6 +5919,12 @@
 		A6069EB92DEFBB7C00EE6CC7 /* ExtensionToMime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionToMime.swift; sourceTree = "<group>"; };
 		A6069EBB2DEFC3B000EE6CC7 /* NSImage+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSImage+iTerm.swift"; sourceTree = "<group>"; };
 		A6069EBD2DEFC59C00EE6CC7 /* FileAttachmentSubpartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileAttachmentSubpartView.swift; sourceTree = "<group>"; };
+		A6069EF72DF0141B00EE6CC7 /* SSHFilePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHFilePanel.swift; sourceTree = "<group>"; };
+		A6069EF92DF015D000EE6CC7 /* SSHEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHEndpoint.swift; sourceTree = "<group>"; };
+		A6069EFB2DF0162600EE6CC7 /* SSHFilePanelSidebarItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHFilePanelSidebarItem.swift; sourceTree = "<group>"; };
+		A6069EFD2DF0203F00EE6CC7 /* SSHFilePanelLocationButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHFilePanelLocationButton.swift; sourceTree = "<group>"; };
+		A6069EFF2DF0224300EE6CC7 /* SSHFilePanelSourceList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHFilePanelSourceList.swift; sourceTree = "<group>"; };
+		A6069F012DF027CA00EE6CC7 /* SSHFilePanelFileList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHFilePanelFileList.swift; sourceTree = "<group>"; };
 		A608A30827BC79C600BA4F1A /* SelectionExtraction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionExtraction.swift; sourceTree = "<group>"; };
 		A608CCF2214DE6E8007A7B87 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/MacOSX.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		A6099B0318D6B0FD00081FA9 /* iTermWarning.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermWarning.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -12642,6 +12654,12 @@
 		A6EC807F2828E9E100493544 /* ssh */ = {
 			isa = PBXGroup;
 			children = (
+				A6069F012DF027CA00EE6CC7 /* SSHFilePanelFileList.swift */,
+				A6069EFF2DF0224300EE6CC7 /* SSHFilePanelSourceList.swift */,
+				A6069EFD2DF0203F00EE6CC7 /* SSHFilePanelLocationButton.swift */,
+				A6069EFB2DF0162600EE6CC7 /* SSHFilePanelSidebarItem.swift */,
+				A6069EF92DF015D000EE6CC7 /* SSHEndpoint.swift */,
+				A6069EF72DF0141B00EE6CC7 /* SSHFilePanel.swift */,
 				A6EC80802828E9F600493544 /* Conductor.swift */,
 				A6EC8092282DE42800493544 /* ParsedSSHArguments.swift */,
 				A6EC8094282DE46700493544 /* SSHIdentity.swift */,
@@ -16817,6 +16835,7 @@
 				A6D10E3327F7C2BC0026DB56 /* MultiCursorTextView.swift in Sources */,
 				A6CC49902C08EFC1003484B2 /* CommandURLBuilder.swift in Sources */,
 				535EA4E720D04C2A00FC81E0 /* iTermTip.m in Sources */,
+				A6069EFA2DF015D200EE6CC7 /* SSHEndpoint.swift in Sources */,
 				A6EC937A24E8545500EEADEF /* iTermPasteHelper.m in Sources */,
 				A6F718C22265AF1D0053488E /* iTermPathFinder.m in Sources */,
 				A61ED2A620E99DCD0035BECD /* iTermStatusBarClockComponent.m in Sources */,
@@ -17237,6 +17256,7 @@
 				A66719681DCE3772000CE608 /* iTermWebSocketConnection.m in Sources */,
 				A6E21CF92255CA4A0036C49D /* NSMutableAttributedString+iTerm.m in Sources */,
 				A630116A20E60725008114B7 /* iTermStatusBarLayout.m in Sources */,
+				A6069EFE2DF0204500EE6CC7 /* SSHFilePanelLocationButton.swift in Sources */,
 				A665C1CB243A4DE300F623F0 /* SIGArchiveCommon.m in Sources */,
 				A6A4867120B67A6D00493302 /* KeysPreferencesViewController.m in Sources */,
 				A60D023D2687EF3B00E19362 /* InjectTrigger.swift in Sources */,
@@ -17347,6 +17367,7 @@
 				A6556EAA1FCB42E0000CC89C /* iTermCharacterSource.m in Sources */,
 				A6EB64322D5D2E5700481D33 /* Message.swift in Sources */,
 				A67094512AD9F26B0044DB50 /* SimpleContextMenu.swift in Sources */,
+				A6069F022DF027CF00EE6CC7 /* SSHFilePanelFileList.swift in Sources */,
 				53D0FD4E237DC30F00DAFA8A /* NSIndexSet+iTerm.m in Sources */,
 				A629F59C23AFF4D400C2F16B /* iTermShellIntegrationPanel.m in Sources */,
 				A6A5995B25930F8F0041172E /* TextViewWrapper.m in Sources */,
@@ -17362,6 +17383,7 @@
 				A631FC9920EF04E900EB824F /* iTermStatusBarSetupConfigureComponentWindowController.m in Sources */,
 				A603E9FF283EE9BD0028B648 /* ObjCExceptions.m in Sources */,
 				A62F8FD121D9A603008EA71C /* iTermTermkeyKeyMapper.m in Sources */,
+				A6069EFC2DF0162700EE6CC7 /* SSHFilePanelSidebarItem.swift in Sources */,
 				A630117B20E69C23008114B7 /* iTermStatusBarSwiftyStringComponent.m in Sources */,
 				A629F59323AF49AD00C2F16B /* iTermExpect.m in Sources */,
 				A656E9961F99C60300158128 /* iTermSubpixelModelBuilder.mm in Sources */,
@@ -17432,6 +17454,7 @@
 				A6DBC0462005DC2B00F1466D /* iTermTuple.m in Sources */,
 				A61F456F22FA52CD00E2054A /* iTermUnreadCountView.m in Sources */,
 				A664334E2DE938AD0099F722 /* ResponsesAPIRequest.swift in Sources */,
+				A6069F002DF0224800EE6CC7 /* SSHFilePanelSourceList.swift in Sources */,
 				A618FFCA2245F89900B8FD88 /* iTermStatusBarKnobActionViewController.m in Sources */,
 				A621F0FE26F27EA4001DD3A6 /* LineBlock.mm in Sources */,
 				A6F22ACD2398D3C900C5D1A9 /* iTermLoggingHelper.m in Sources */,
@@ -17439,6 +17462,7 @@
 				A6A4866420B676CA00493302 /* EventMonitorView.m in Sources */,
 				A634479F2A1D381C00805478 /* TransferrableFileMenuItemViewController.m in Sources */,
 				535EA51220D82A9C00FC81E0 /* PTYSplitView.m in Sources */,
+				A6069EF82DF0142400EE6CC7 /* SSHFilePanel.swift in Sources */,
 				A6BC9B1F214A2AE900F50C09 /* iTermVariableReference.m in Sources */,
 				A64B68DB2337314E009DA064 /* ToolCapturedOutputView.m in Sources */,
 				530098512259A44D00A69348 /* iTermSoundPlayer.m in Sources */,

@@ -74,6 +74,16 @@ func AttributedStringForSystemMessageMarkdown(_ unsafeString: String,
     return AttributedStringForMessage(md, didCopy: didCopy)
 }
 
+func AttributedStringForSystemMessagePlain(_ text: String,
+                                           textColor: NSColor) -> NSAttributedString {
+    let textAttributes: [NSAttributedString.Key: Any] = [
+        .font: NSFont.systemFont(ofSize: NSFont.systemFontSize),
+        .foregroundColor: textColor
+    ]
+
+    return NSAttributedString(string: text, attributes: textAttributes)
+}
+
 func AttributedStringForStatusUpdate(_ statusUpdate: LLM.Message.StatusUpdate,
                                      textColor: NSColor) -> NSAttributedString {
     let paragraphStyle = NSMutableParagraphStyle()

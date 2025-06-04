@@ -33,7 +33,7 @@ public class SSHIdentity: NSObject, Codable {
             }
             return hostport
         }
-        
+
         let host: String
         let hostname: String
         let username: String?
@@ -68,6 +68,10 @@ public class SSHIdentity: NSObject, Codable {
         return state.debugDescription
     }
 
+    var host: String {
+        state.host
+    }
+    
     @objc public var hostname: String {
         return state.hostname
     }
@@ -138,5 +142,20 @@ public class SSHIdentity: NSObject, Codable {
             return true
         }
         return state.username == user
+    }
+
+    override public var hash: Int {
+        var combined = UInt(0)
+        combined = iTermCombineHash(UInt(bitPattern: state.host.hashValue), combined)
+        combined = iTermCombineHash(UInt(bitPattern: state.hostname.hashValue), combined)
+        combined = iTermCombineHash(UInt(bitPattern: state.username.hashValue), combined)
+        combined = iTermCombineHash(UInt(bitPattern: state.port.hashValue), combined)
+        return Int(bitPattern: combined)
+    }
+}
+
+extension SSHIdentity {
+    var displayName: String {
+        return compactDescription
     }
 }

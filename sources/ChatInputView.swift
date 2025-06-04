@@ -100,7 +100,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         verticalStack.orientation = .vertical
         verticalStack.spacing = 0
         verticalStack.translatesAutoresizingMaskIntoConstraints = false
-        
+
         vev.translatesAutoresizingMaskIntoConstraints = false
         vev.wantsLayer = true
         vev.blendingMode = .withinWindow
@@ -133,10 +133,15 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         ])
 
         updateAttachmentsView()
+        setupDragAndDrop()
     }
 
     required init?(coder: NSCoder) {
         it_fatalError("init(coder:) has not been implemented")
+    }
+
+    private func setupDragAndDrop() {
+        registerForDraggedTypes([.fileURL])
     }
 
     func clear() {
@@ -180,6 +185,18 @@ class ChatInputView: NSView, NSTextFieldDelegate {
                                             for: attachmentsView)
     }
 
+    private func addFiles(from urls: [URL]) {
+        var attachments = attachmentsView.files
+        for url in urls {
+            let path = url.path
+            if !attachments.contains(path) {
+                attachments.append(path)
+            }
+        }
+        attachmentsView.files = attachments
+        updateAttachmentsView()
+    }
+
     var isEnabled: Bool {
         get {
             inputTextFieldContainer.isEnabled
@@ -204,6 +221,39 @@ class ChatInputView: NSView, NSTextFieldDelegate {
 
     private func revealSelectedRange() {
         inputTextFieldContainer.textView.scrollRangeToVisible(inputTextFieldContainer.textView.selectedRange())
+    }
+}
+
+// MARK: - Drag and Drop Support
+extension ChatInputView {
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        guard sender.draggingPasteboard.canReadObject(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) else {
+            return []
+        }
+        return .copy
+    }
+
+    override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
+        return .copy
+    }
+
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        guard let urls = sender.draggingPasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL] else {
+            return false
+        }
+
+        // Filter to only include files (not directories)
+        let fileURLs = urls.filter { url in
+            var isDirectory: ObjCBool = false
+            return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) && !isDirectory.boolValue
+        }
+
+        guard !fileURLs.isEmpty else {
+            return false
+        }
+
+        addFiles(from: fileURLs)
+        return true
     }
 }
 
