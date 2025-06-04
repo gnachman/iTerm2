@@ -4,9 +4,50 @@
 //
 //  Created by George Nachman on 6/4/25.
 //
+import UniformTypeIdentifiers
+
+@available(macOS 11, *)
+class SSHFilePromiseProvider: NSFilePromiseProvider {
+
+    struct UserInfoKeys {
+        static let node = "node"
+        static let endpoint = "endpoint"
+        static let fullPath = "fullPath"
+        static let tempURL = "tempURL"
+    }
+
+    override func writableTypes(for pasteboard: NSPasteboard) -> [NSPasteboard.PasteboardType] {
+        var types = super.writableTypes(for: pasteboard)
+        types.append(contentsOf: [.fileURL, .string])
+        return types
+    }
+
+    override func pasteboardPropertyList(forType type: NSPasteboard.PasteboardType) -> Any? {
+        guard let userInfoDict = userInfo as? [String: Any] else { return nil }
+
+        switch type {
+        case .fileURL:
+            if let tempURL = userInfoDict[UserInfoKeys.tempURL] as? NSURL {
+                return tempURL.pasteboardPropertyList(forType: type)
+            }
+        case .string:
+            if let tempURL = userInfoDict[UserInfoKeys.tempURL] as? NSURL {
+                return tempURL.path
+            }
+        default:
+            break
+        }
+
+        return super.pasteboardPropertyList(forType: type)
+    }
+
+    override func writingOptions(forType type: NSPasteboard.PasteboardType, pasteboard: NSPasteboard) -> NSPasteboard.WritingOptions {
+        return super.writingOptions(forType: type, pasteboard: pasteboard)
+    }
+}
+
 @available(macOS 11, *)
 class SSHFilePanelFileList: NSScrollView {
-
     // Custom header cell to control text color
     class CustomHeaderCell: NSTableHeaderCell {
         var isActiveSort: Bool = false {
@@ -141,7 +182,7 @@ class SSHFilePanelFileList: NSScrollView {
         fileOutlineView = SSHFilePanelFileListOutlineView()
         fileOutlineView.style = .fullWidth
         fileOutlineView.selectionHighlightStyle = .regular
-        fileOutlineView.allowsMultipleSelection = false
+        fileOutlineView.allowsMultipleSelection = true  // Enable multiple selection for dragging
         fileOutlineView.allowsEmptySelection = true
         fileOutlineView.usesAlternatingRowBackgroundColors = true
         fileOutlineView.gridStyleMask = [.solidHorizontalGridLineMask]
@@ -151,6 +192,10 @@ class SSHFilePanelFileList: NSScrollView {
         fileOutlineView.floatsGroupRows = false
         fileOutlineView.indentationPerLevel = 16
         fileOutlineView.autoresizesOutlineColumn = false
+
+        // Set the dragging source operation mask for external drops
+        fileOutlineView.setDraggingSourceOperationMask(.copy, forLocal: false)
+        fileOutlineView.setDraggingSourceOperationMask(.copy, forLocal: true)
 
         super.init(frame: .zero)
 
@@ -287,21 +332,17 @@ class SSHFilePanelFileList: NSScrollView {
 
     private func loadChildren(for node: FileNode) async {
         guard node.isDirectory && node.children == nil && !node.isLoading else { return }
-
         node.isLoading = true
-
         do {
             let childPath = (node.path as NSString).appendingPathComponent(node.file.name)
             let remoteFiles = try await endpoint?.listFiles(childPath, sort: .byName) ?? []
             let childNodes = remoteFiles.map { FileNode(file: $0, path: childPath, parent: node) }
-
             await MainActor.run {
                 node.children = childNodes
                 node.isLoading = false
                 // Apply current sort to the new children
                 self.applySortComparator(to: node)
                 node.sortChildren()
-
                 // Reload the parent item to show its children
                 let parentIndex = self.fileOutlineView.row(forItem: node)
                 if parentIndex >= 0 {
@@ -612,6 +653,12 @@ extension SSHFilePanelFileList: NSOutlineViewDelegate {
         return true
     }
 
+    func outlineView(_ outlineView: NSOutlineView, canDragRowsWith rowIndexes: IndexSet, at mouseDownPoint: NSPoint) -> Bool {
+        print("canDragRowsWith called for indexes: \(rowIndexes)")
+        // Allow dragging of all items
+        return true
+    }
+
     func outlineViewItemWillExpand(_ notification: Notification) {
         guard let node = notification.userInfo?["NSObject"] as? FileNode else { return }
 
@@ -647,6 +694,193 @@ extension SSHFilePanelFileList: NSOutlineViewDelegate {
             fileOutlineView.reloadData(forRowIndexes: IndexSet(0..<fileOutlineView.numberOfRows),
                                       columnIndexes: IndexSet(integer: columnIndex))
         }
+    }
+
+    // MARK: - Drag Support
+    func outlineView(_ outlineView: NSOutlineView, pasteboardWriterForItem item: Any) -> NSPasteboardWriting? {
+        guard let node = item as? FileNode else {
+            print("pasteboardWriterForItem: item is not a FileNode")
+            return nil
+        }
+
+        print("pasteboardWriterForItem called for: \(node.file.name)")
+
+        // Create a temporary file URL
+        let tempDir = FileManager.default.temporaryDirectory
+        let tempFileURL = tempDir.appendingPathComponent(node.file.name)
+
+        // Create the temporary file/directory
+        do {
+            if node.file.kind == .folder {
+                try FileManager.default.createDirectory(at: tempFileURL, withIntermediateDirectories: true, attributes: nil)
+                print("Created temp directory: \(tempFileURL)")
+            } else {
+                FileManager.default.createFile(atPath: tempFileURL.path, contents: Data(), attributes: nil)
+                print("Created temp file: \(tempFileURL)")
+            }
+        } catch {
+            print("Failed to create temp file: \(error)")
+            return nil
+        }
+
+        // Determine the appropriate UTI for the file
+        let fileUTI: String
+        if node.file.kind == .folder {
+            fileUTI = UTType.folder.identifier
+        } else {
+            let pathExtension = (node.file.name as NSString).pathExtension
+            if let type = UTType(filenameExtension: pathExtension) {
+                fileUTI = type.identifier
+            } else {
+                fileUTI = UTType.data.identifier
+            }
+        }
+
+        print("Using UTI: \(fileUTI)")
+
+        // Create our custom file promise provider
+        let filePromise = SSHFilePromiseProvider(fileType: fileUTI, delegate: self)
+
+        let fullPath = (node.path as NSString).appendingPathComponent(node.file.name)
+
+        // Store all necessary info in userInfo
+        filePromise.userInfo = [
+            SSHFilePromiseProvider.UserInfoKeys.node: node,
+            SSHFilePromiseProvider.UserInfoKeys.endpoint: endpoint as Any,
+            SSHFilePromiseProvider.UserInfoKeys.fullPath: fullPath,
+            SSHFilePromiseProvider.UserInfoKeys.tempURL: tempFileURL as NSURL
+        ]
+
+        print("Created SSHFilePromiseProvider with temp URL: \(tempFileURL)")
+        return filePromise
+    }
+
+    func outlineView(_ outlineView: NSOutlineView, draggingSession session: NSDraggingSession, willBeginAt screenPoint: NSPoint, forItems items: [Any]) {
+        print("draggingSession willBeginAt called with \(items.count) items")
+        // Set up the dragging session
+        session.draggingFormation = .pile
+
+        // The system will automatically generate a drag image based on the selected rows
+        // We don't need to manually set the drag image as NSDraggingSession doesn't expose that property
+    }
+
+    func outlineView(_ outlineView: NSOutlineView, draggingSession session: NSDraggingSession, endedAt screenPoint: NSPoint, operation: NSDragOperation) {
+        print("draggingSession endedAt called with operation: \(operation.rawValue)")
+
+        if operation.contains(.copy) {
+            print("Drag was successful!")
+        } else {
+            print("Drag was rejected or cancelled")
+        }
+    }
+
+    // Specify what drag operations are allowed
+    func outlineView(_ outlineView: NSOutlineView, draggingSession session: NSDraggingSession, sourceOperationMaskFor context: NSDraggingContext) -> NSDragOperation {
+        print("sourceOperationMaskFor context: \(context.rawValue)")
+        switch context {
+        case .outsideApplication:
+            print("Allowing copy operations outside application")
+            // When dragging outside the app, allow copy operations
+            // This enables dragging to Finder, other apps, etc.
+            return [.copy]
+        case .withinApplication:
+            print("Allowing copy operations within application")
+            // Within the app, we could support move operations if we implement drop targets
+            return [.copy]
+        @unknown default:
+            print("Unknown drag context, allowing copy")
+            return [.copy]
+        }
+    }
+}
+
+// MARK: - NSFilePromiseProviderDelegate
+@available(macOS 11, *)
+extension SSHFilePanelFileList: NSFilePromiseProviderDelegate {
+    func filePromiseProvider(_ filePromiseProvider: NSFilePromiseProvider, fileNameForType fileType: String) -> String {
+        print("filePromiseProvider fileNameForType called with: \(fileType)")
+
+        guard let userInfo = filePromiseProvider.userInfo as? [String: Any],
+              let node = userInfo["node"] as? FileNode else {
+            print("Failed to get node from userInfo")
+            return "unknown_file"
+        }
+
+        print("Returning filename: \(node.file.name)")
+        // Return the full filename with extension
+        return node.file.name
+    }
+
+    func filePromiseProvider(_ filePromiseProvider: NSFilePromiseProvider, writePromiseTo url: URL, completionHandler: @escaping (Error?) -> Void) {
+        print("*** filePromiseProvider writePromiseTo called! ***")
+        print("Writing promise to: \(url)")
+
+        guard let userInfo = filePromiseProvider.userInfo as? [String: Any],
+              let node = userInfo["node"] as? FileNode,
+              let endpoint = userInfo["endpoint"] as? SSHEndpoint,
+              let fullPath = userInfo["fullPath"] as? String else {
+            print("Missing file information for promise")
+            let error = NSError(domain: "SSHFilePanelError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Missing file information"])
+            completionHandler(error)
+            return
+        }
+
+        print("Downloading \(fullPath) to \(url)")
+
+        // Download the file from the remote server
+        Task { @MainActor in
+            do {
+                if node.file.kind == .folder {
+                    print("Creating directory: \(url)")
+                    // For directories, create the directory structure
+                    try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true, attributes: nil)
+                    // Optionally, recursively download directory contents
+                    await downloadDirectoryContents(from: fullPath, to: url, using: endpoint)
+                    print("Directory download completed")
+                    completionHandler(nil)
+                } else {
+                    print("Downloading file: \(fullPath)")
+                    // For files, download the file content (download entire file by passing nil chunk)
+                    let data = try await endpoint.download(fullPath, chunk: nil)
+                    try data.write(to: url)
+                    print("File download completed: \(data.count) bytes")
+                    completionHandler(nil)
+                }
+            } catch {
+                print("Download error: \(error)")
+                completionHandler(error)
+            }
+        }
+    }
+
+    private func downloadDirectoryContents(from remotePath: String, to localURL: URL, using endpoint: SSHEndpoint) async {
+        do {
+            let files = try await endpoint.listFiles(remotePath, sort: .byName)
+            for file in files {
+                let remoteFilePath = (remotePath as NSString).appendingPathComponent(file.name)
+                let localFileURL = localURL.appendingPathComponent(file.name)
+
+                if file.kind == .folder {
+                    try FileManager.default.createDirectory(at: localFileURL, withIntermediateDirectories: true, attributes: nil)
+                    await downloadDirectoryContents(from: remoteFilePath, to: localFileURL, using: endpoint)
+                } else {
+                    if let data = try? await endpoint.download(remoteFilePath, chunk: nil) {
+                        try? data.write(to: localFileURL)
+                    }
+                }
+            }
+        } catch {
+            print("Error downloading directory contents: \(error)")
+        }
+    }
+
+    func operationQueue(for filePromiseProvider: NSFilePromiseProvider) -> OperationQueue {
+        print("operationQueue called for file promise provider")
+        // Return a background queue for file operations
+        let queue = OperationQueue()
+        queue.qualityOfService = .userInitiated
+        queue.name = "SSHFilePanel.FilePromise"
+        return queue
     }
 }
 
