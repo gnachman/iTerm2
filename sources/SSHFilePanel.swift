@@ -454,6 +454,14 @@ class SSHFilePanel: NSWindowController {
     }
 
     @objc private func openButtonClicked(_ sender: NSButton) {
+        let selection = fileList.selectedFiles
+        if selection.count == 1 && selection[0].isDirectory {
+            Task { @MainActor in
+                await navigateToPathWithHistory(selection[0].file.absolutePath)
+            }
+            return
+        }
+
         // Sheet presentation
         if let sheetParent = window?.sheetParent {
             sheetParent.endSheet(window!, returnCode: .OK)
@@ -833,6 +841,10 @@ extension SSHFilePanel {
 
 @available(macOS 11, *)
 extension SSHFilePanel: SSHFilePanelFileListDelegate {
+    func sshFilePanelSelectionDidChange() {
+        openButton.isEnabled = !fileList.selectedFiles.isEmpty
+    }
+
     func sshFilePanelList(didSelect file: SSHFilePanelFileList.FileNode) {
         if file.isDirectory {
             Task { @MainActor in

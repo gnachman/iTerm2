@@ -13,6 +13,7 @@ protocol SSHFilePanelFileListDelegate: AnyObject {
                           endpoint: SSHEndpoint,
                           to url: URL,
                           completionHandler: @escaping (Error?) -> Void)
+    func sshFilePanelSelectionDidChange()
 }
 
 @available(macOS 11, *)
@@ -220,6 +221,12 @@ class SSHFilePanelFileList: NSScrollView {
 
     deinit {
         NotificationCenter.default.removeObserver(self)
+    }
+
+    var selectedFiles: [FileNode] {
+        return fileOutlineView.selectedRowIndexes.compactMap {
+            fileOutlineView.item(atRow: $0) as? FileNode
+        }
     }
 
     @objc private func columnDidResize(_ notification: Notification) {
@@ -537,6 +544,10 @@ extension SSHFilePanelFileList: NSOutlineViewDataSource {
 // MARK: - NSOutlineViewDelegate
 @available(macOS 11, *)
 extension SSHFilePanelFileList: NSOutlineViewDelegate {
+    func outlineViewSelectionDidChange(_ notification: Notification) {
+        delegate?.sshFilePanelSelectionDidChange()
+    }
+
     func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {
         guard let node = item as? FileNode else { return nil }
 
