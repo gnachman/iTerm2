@@ -85,24 +85,72 @@ class SSHFilePanelFileList: NSScrollView {
         }
     }
 
-    private var fileTableView: SSHFilePanelFileListTableView!
-    private var path: String?
+    // Tree node to represent files and directories
+    class FileNode {
+        let file: RemoteFile
+        let path: String
+        var children: [FileNode]?
+        var isLoading = false
+        var isExpanded = false
+        weak var parent: FileNode?
+
+        init(file: RemoteFile, path: String, parent: FileNode? = nil) {
+            self.file = file
+            self.path = path
+            self.parent = parent
+        }
+
+        var isDirectory: Bool {
+            return file.kind == .folder
+        }
+
+        var hasChildren: Bool {
+            return isDirectory
+        }
+
+        var sortedChildren: [FileNode] {
+            return children?.sorted(by: currentSortComparator) ?? []
+        }
+
+        private var currentSortComparator: (FileNode, FileNode) -> Bool = { _, _ in true }
+
+        func setSortComparator(_ comparator: @escaping (FileNode, FileNode) -> Bool) {
+            currentSortComparator = comparator
+            // Recursively apply to all loaded children
+            children?.forEach { $0.setSortComparator(comparator) }
+        }
+
+        func sortChildren() {
+            if let children = children {
+                self.children = children.sorted(by: currentSortComparator)
+                // Recursively sort all children
+                children.forEach { $0.sortChildren() }
+            }
+        }
+    }
+
+    private var fileOutlineView: SSHFilePanelFileListOutlineView!
+    private var rootPath: String?
     private var endpoint: SSHEndpoint?
-    private var files: [RemoteFile] = []
+    private var rootNodes: [FileNode] = []
     private var isLoading = false
+    private var currentSortColumn: ColumnID = .name
+    private var sortAscending = true
 
     init() {
-        fileTableView = SSHFilePanelFileListTableView()
-        fileTableView.style = .fullWidth
-        fileTableView.selectionHighlightStyle = .regular
-        fileTableView.allowsMultipleSelection = false
-        fileTableView.allowsEmptySelection = true
-        fileTableView.usesAlternatingRowBackgroundColors = true
-        fileTableView.gridStyleMask = [.solidHorizontalGridLineMask]
-        fileTableView.intercellSpacing = NSSize(width: 0, height: 1)
-        fileTableView.focusRingType = .none
-        fileTableView.rowHeight = 20
-        fileTableView.floatsGroupRows = false
+        fileOutlineView = SSHFilePanelFileListOutlineView()
+        fileOutlineView.style = .fullWidth
+        fileOutlineView.selectionHighlightStyle = .regular
+        fileOutlineView.allowsMultipleSelection = false
+        fileOutlineView.allowsEmptySelection = true
+        fileOutlineView.usesAlternatingRowBackgroundColors = true
+        fileOutlineView.gridStyleMask = [.solidHorizontalGridLineMask]
+        fileOutlineView.intercellSpacing = NSSize(width: 0, height: 1)
+        fileOutlineView.focusRingType = .none
+        fileOutlineView.rowHeight = 20
+        fileOutlineView.floatsGroupRows = false
+        fileOutlineView.indentationPerLevel = 16
+        fileOutlineView.autoresizesOutlineColumn = false
 
         super.init(frame: .zero)
 
@@ -111,16 +159,19 @@ class SSHFilePanelFileList: NSScrollView {
             addTableColumn(columnID: columnID)
         }
 
-        // Set up table view
-        fileTableView.dataSource = self
-        fileTableView.delegate = self
+        // Set the outline column to the name column
+        fileOutlineView.outlineTableColumn = fileOutlineView.tableColumn(withIdentifier: NSUserInterfaceItemIdentifier(ColumnID.name.rawValue))
 
-        fileTableView.onColumnWidthChange = { [weak self] column in
+        // Set up outline view
+        fileOutlineView.dataSource = self
+        fileOutlineView.delegate = self
+
+        fileOutlineView.onColumnWidthChange = { [weak self] column in
             self?.columnLiveResize(column)
         }
 
         // Configure header view colors to match system
-        if let headerView = fileTableView.headerView {
+        if let headerView = fileOutlineView.headerView {
             headerView.wantsLayer = true
             headerView.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
         }
@@ -129,16 +180,16 @@ class SSHFilePanelFileList: NSScrollView {
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(columnDidResize(_:)),
-            name: NSTableView.columnDidResizeNotification,
-            object: fileTableView
+            name: NSOutlineView.columnDidResizeNotification,
+            object: fileOutlineView
         )
 
-        // Call this after setting up the table to ensure headers are colored correctly
+        // Call this after setting up the outline view to ensure headers are colored correctly
         DispatchQueue.main.async {
             self.updateAllColumnHeaders()
         }
 
-        documentView = fileTableView
+        documentView = fileOutlineView
         hasVerticalScroller = true
         hasHorizontalScroller = true
         autohidesScrollers = true
@@ -154,10 +205,10 @@ class SSHFilePanelFileList: NSScrollView {
 
     @objc private func columnDidResize(_ notification: Notification) {
         // Reload visible cells to update date formatting for the resized column
-        let visibleRange = fileTableView.rows(in: fileTableView.visibleRect)
+        let visibleRange = fileOutlineView.rows(in: fileOutlineView.visibleRect)
         if visibleRange.length > 0 {
-            fileTableView.reloadData(forRowIndexes: IndexSet(integersIn: visibleRange.lowerBound..<visibleRange.upperBound),
-                                   columnIndexes: IndexSet(integersIn: 0..<fileTableView.numberOfColumns))
+            fileOutlineView.reloadData(forRowIndexes: IndexSet(integersIn: visibleRange.lowerBound..<visibleRange.upperBound),
+                                      columnIndexes: IndexSet(integersIn: 0..<fileOutlineView.numberOfColumns))
         }
     }
 
@@ -189,48 +240,43 @@ class SSHFilePanelFileList: NSScrollView {
 
         column.headerCell = headerCell
 
-        fileTableView.addTableColumn(column)
+        fileOutlineView.addTableColumn(column)
 
-        headerCell.isActiveSort = (columnID.rawValue == currentSortColumn.identifier.rawValue)
+        headerCell.isActiveSort = (columnID == currentSortColumn)
     }
 
     private func updateAllColumnHeaders() {
-        for column in fileTableView.tableColumns {
+        for column in fileOutlineView.tableColumns {
             if let columnID = ColumnID(rawValue: column.identifier.rawValue),
                let headerCell = column.headerCell as? CustomHeaderCell {
-                // Check if this column is in the current sort descriptors
-                let isActiveSort = if let firstDescriptor = fileTableView.sortDescriptors.first {
-                    firstDescriptor.key == columnID.rawValue
-                } else {
-                    column === fileTableView.tableColumns.first
-                }
-                headerCell.isActiveSort = isActiveSort
+                headerCell.isActiveSort = (columnID == currentSortColumn)
             }
         }
-        fileTableView.headerView?.needsDisplay = true
+        fileOutlineView.headerView?.needsDisplay = true
     }
 
     func clear() {
-        files.removeAll()
-        fileTableView.reloadData()
+        rootNodes.removeAll()
+        fileOutlineView.reloadData()
     }
 
     func set(path: String, endpoint: SSHEndpoint) {
-        self.path = path
+        self.rootPath = path
         self.endpoint = endpoint
-        loadFiles()
+        loadRootFiles()
     }
 
-    private func loadFiles() {
-        guard let path = path, let endpoint = endpoint, !isLoading else { return }
+    private func loadRootFiles() {
+        guard let path = rootPath, let endpoint = endpoint, !isLoading else { return }
 
         isLoading = true
 
         Task { @MainActor in
             do {
                 let remoteFiles = try await endpoint.listFiles(path, sort: .byName)
-                self.files = remoteFiles
-                self.sortAndReloadFiles()
+                self.rootNodes = remoteFiles.map { FileNode(file: $0, path: path) }
+                self.applySortToAllNodes()
+                self.fileOutlineView.reloadData()
             } catch {
                 // Handle error - could show an alert or log
                 print("Error loading files: \(error)")
@@ -239,25 +285,68 @@ class SSHFilePanelFileList: NSScrollView {
         }
     }
 
-    var currentSortColumn: NSTableColumn {
-        let i = if let key = fileTableView.sortDescriptors.first?.key {
-            fileTableView.column(withIdentifier: NSUserInterfaceItemIdentifier(key))
-        } else {
-            fileTableView.column(withIdentifier: NSUserInterfaceItemIdentifier(ColumnID.name.rawValue))
+    private func loadChildren(for node: FileNode) async {
+        guard node.isDirectory && node.children == nil && !node.isLoading else { return }
+
+        node.isLoading = true
+
+        do {
+            let childPath = (node.path as NSString).appendingPathComponent(node.file.name)
+            let remoteFiles = try await endpoint?.listFiles(childPath, sort: .byName) ?? []
+            let childNodes = remoteFiles.map { FileNode(file: $0, path: childPath, parent: node) }
+
+            await MainActor.run {
+                node.children = childNodes
+                node.isLoading = false
+                // Apply current sort to the new children
+                self.applySortComparator(to: node)
+                node.sortChildren()
+
+                // Reload the parent item to show its children
+                let parentIndex = self.fileOutlineView.row(forItem: node)
+                if parentIndex >= 0 {
+                    self.fileOutlineView.reloadItem(node, reloadChildren: true)
+                }
+            }
+        } catch {
+            await MainActor.run {
+                node.isLoading = false
+                print("Error loading children for \(node.file.name): \(error)")
+            }
         }
-        return fileTableView.tableColumns[i]
     }
 
-    var sortAscending: Bool {
-        return fileTableView.sortDescriptors.first?.ascending ?? true
+    private func applySortToAllNodes() {
+        let comparator = makeSortComparator()
+        rootNodes = rootNodes.sorted(by: comparator)
+
+        // Recursively apply to all nodes
+        func applySortRecursively(to nodes: [FileNode]) {
+            for node in nodes {
+                node.setSortComparator(comparator)
+                node.sortChildren()
+                if let children = node.children {
+                    applySortRecursively(to: children)
+                }
+            }
+        }
+        applySortRecursively(to: rootNodes)
     }
 
-    private func sortAndReloadFiles() {
-        DLog("Sort and reload. ascending=\(sortAscending) column=\(currentSortColumn.identifier.rawValue)")
-        files.sort { file1, file2 in
+    private func applySortComparator(to node: FileNode) {
+        node.setSortComparator(makeSortComparator())
+    }
+
+    private func makeSortComparator() -> (FileNode, FileNode) -> Bool {
+        return { [weak self] node1, node2 in
+            guard let self = self else { return true }
+
+            let file1 = node1.file
+            let file2 = node2.file
+
             let result: Bool
-            switch ColumnID(rawValue: currentSortColumn.identifier.rawValue) {
-            case .name, .none:
+            switch self.currentSortColumn {
+            case .name:
                 result = file1.name.localizedCaseInsensitiveCompare(file2.name) == .orderedAscending
             case .dateCreated:
                 let date1 = file1.ctime ?? Date.distantPast
@@ -268,11 +357,10 @@ class SSHFilePanelFileList: NSScrollView {
                 let size2 = file2.size ?? 0
                 result = size1 < size2
             case .kind:
-                result = kindDescription(for: file1).localizedCaseInsensitiveCompare(kindDescription(for: file2)) == .orderedAscending
+                result = self.kindDescription(for: file1).localizedCaseInsensitiveCompare(self.kindDescription(for: file2)) == .orderedAscending
             }
-            return sortAscending ? result : !result
+            return self.sortAscending ? result : !result
         }
-        fileTableView.reloadData()
     }
 
     // Helper method to get icon for file type
@@ -393,24 +481,43 @@ class SSHFilePanelFileList: NSScrollView {
     }
 }
 
-// MARK: - NSTableViewDataSource
+// MARK: - NSOutlineViewDataSource
 @available(macOS 11, *)
-extension SSHFilePanelFileList: NSTableViewDataSource {
-    func numberOfRows(in tableView: NSTableView) -> Int {
-        return files.count
+extension SSHFilePanelFileList: NSOutlineViewDataSource {
+    func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
+        if item == nil {
+            return rootNodes.count
+        } else if let node = item as? FileNode {
+            return node.sortedChildren.count
+        }
+        return 0
+    }
+
+    func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
+        if item == nil {
+            return rootNodes[index]
+        } else if let node = item as? FileNode {
+            return node.sortedChildren[index]
+        }
+        it_fatalError()
+    }
+
+    func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {
+        guard let node = item as? FileNode else { return false }
+        return node.hasChildren
     }
 }
 
-// MARK: - NSTableViewDelegate
+// MARK: - NSOutlineViewDelegate
 @available(macOS 11, *)
-extension SSHFilePanelFileList: NSTableViewDelegate {
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
-        guard row < files.count else { return nil }
+extension SSHFilePanelFileList: NSOutlineViewDelegate {
+    func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {
+        guard let node = item as? FileNode else { return nil }
 
-        let file = files[row]
+        let file = node.file
         let columnID = ColumnID(rawValue: tableColumn?.identifier.rawValue ?? "")
 
-        var cellView = tableView.makeView(withIdentifier: tableColumn?.identifier ?? NSUserInterfaceItemIdentifier(""), owner: self) as? NSTableCellView
+        var cellView = outlineView.makeView(withIdentifier: tableColumn?.identifier ?? NSUserInterfaceItemIdentifier(""), owner: self) as? NSTableCellView
 
         if cellView == nil {
             cellView = NSTableCellView()
@@ -480,7 +587,7 @@ extension SSHFilePanelFileList: NSTableViewDelegate {
             cellView?.textField?.stringValue = file.name
             cellView?.textField?.textColor = .labelColor
         case .dateCreated:
-            let columnWidth = tableView.tableColumn(withIdentifier: tableColumn!.identifier)?.width ?? 160
+            let columnWidth = outlineView.tableColumn(withIdentifier: tableColumn!.identifier)?.width ?? 160
             cellView?.textField?.stringValue = formatDate(file.ctime, columnWidth: columnWidth)
             cellView?.textField?.textColor = .secondaryLabelColor
         case .size:
@@ -496,47 +603,54 @@ extension SSHFilePanelFileList: NSTableViewDelegate {
         return cellView
     }
 
-    func tableView(_ tableView: NSTableView, shouldSelectRow row: Int) -> Bool {
+    func outlineView(_ outlineView: NSOutlineView, shouldExpandItem item: Any) -> Bool {
+        guard let node = item as? FileNode else { return false }
+        return node.hasChildren
+    }
+
+    func outlineView(_ outlineView: NSOutlineView, shouldSelectItem item: Any) -> Bool {
         return true
     }
 
-    func tableView(_ tableView: NSTableView, sortDescriptorsDidChange oldDescriptors: [NSSortDescriptor]) {
-        updateAllColumnHeaders()
-        sortAndReloadFiles()
-    }
-/*
-    func tableView(_ tableView: NSTableView, didClick column: NSTableColumn) {
-        guard let columnID = ColumnID(rawValue: column.identifier.rawValue) else { return }
+    func outlineViewItemWillExpand(_ notification: Notification) {
+        guard let node = notification.userInfo?["NSObject"] as? FileNode else { return }
 
-        var descriptors = tableView.sortDescriptors
-        let i = descriptors.firstIndex { $0.key == column.identifier.rawValue }
-        if let i {
-            let existing = descriptors[i]
-            descriptors.remove(at: i)
-            descriptors.insert(NSSortDescriptor(key: existing.key,
-                                                ascending: !existing.ascending),
-                               at: 0)
-        } else {
-            descriptors.insert(NSSortDescriptor(key: column.identifier.rawValue,
-                                                ascending: true),
-                               at: 0)
+        // Load children if not already loaded
+        if node.children == nil && !node.isLoading {
+            Task {
+                await loadChildren(for: node)
+            }
         }
-        column.sortDescriptorPrototype = descriptors[0]
-        tableView.sortDescriptors = descriptors
-        updateAllColumnHeaders()
-        sortAndReloadFiles()
+        node.isExpanded = true
     }
-*/
+
+    func outlineViewItemWillCollapse(_ notification: Notification) {
+        guard let node = notification.userInfo?["NSObject"] as? FileNode else { return }
+        node.isExpanded = false
+    }
+
+    func outlineView(_ outlineView: NSOutlineView, sortDescriptorsDidChange oldDescriptors: [NSSortDescriptor]) {
+        guard let firstDescriptor = outlineView.sortDescriptors.first,
+              let columnID = ColumnID(rawValue: firstDescriptor.key ?? "") else { return }
+
+        currentSortColumn = columnID
+        sortAscending = firstDescriptor.ascending
+
+        updateAllColumnHeaders()
+        applySortToAllNodes()
+        fileOutlineView.reloadData()
+    }
+
     func columnLiveResize(_ column: NSTableColumn) {
         if column.identifier == NSUserInterfaceItemIdentifier(ColumnID.dateCreated.rawValue),
-           let columnIndex = fileTableView.tableColumns.firstIndex(of: column) {
-            fileTableView.reloadData(forRowIndexes: IndexSet(0..<files.count),
-                                     columnIndexes: IndexSet(integer: columnIndex))
+           let columnIndex = fileOutlineView.tableColumns.firstIndex(of: column) {
+            fileOutlineView.reloadData(forRowIndexes: IndexSet(0..<fileOutlineView.numberOfRows),
+                                      columnIndexes: IndexSet(integer: columnIndex))
         }
     }
 }
 
-class SSHFilePanelFileListTableView: NSTableView {
+class SSHFilePanelFileListOutlineView: NSOutlineView {
     var onColumnWidthChange: ((NSTableColumn) -> Void)?
 
     init() {
