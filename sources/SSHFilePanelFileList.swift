@@ -90,8 +90,6 @@ class SSHFilePanelFileList: NSScrollView {
     private var endpoint: SSHEndpoint?
     private var files: [RemoteFile] = []
     private var isLoading = false
-    private var currentSortColumn: ColumnID = .name
-    private var sortAscending = true
 
     init() {
         fileTableView = SSHFilePanelFileListTableView()
@@ -169,10 +167,13 @@ class SSHFilePanelFileList: NSScrollView {
         column.width = columnID.width
         column.minWidth = columnID.minWidth
 
+        // Create sort descriptor for this column
+        let sortDescriptor = NSSortDescriptor(key: columnID.rawValue, ascending: true)
+        column.sortDescriptorPrototype = sortDescriptor
+
         // Use custom header cell
         let headerCell = CustomHeaderCell()
         headerCell.title = columnID.title
-        headerCell.isActiveSort = (columnID == currentSortColumn)
 
         // Align headers to match content alignment and add padding for Name column
         if columnID == .size {
@@ -189,13 +190,21 @@ class SSHFilePanelFileList: NSScrollView {
         column.headerCell = headerCell
 
         fileTableView.addTableColumn(column)
+
+        headerCell.isActiveSort = (columnID.rawValue == currentSortColumn.identifier.rawValue)
     }
 
     private func updateAllColumnHeaders() {
         for column in fileTableView.tableColumns {
             if let columnID = ColumnID(rawValue: column.identifier.rawValue),
                let headerCell = column.headerCell as? CustomHeaderCell {
-                headerCell.isActiveSort = (columnID == currentSortColumn)
+                // Check if this column is in the current sort descriptors
+                let isActiveSort = if let firstDescriptor = fileTableView.sortDescriptors.first {
+                    firstDescriptor.key == columnID.rawValue
+                } else {
+                    column === fileTableView.tableColumns.first
+                }
+                headerCell.isActiveSort = isActiveSort
             }
         }
         fileTableView.headerView?.needsDisplay = true
@@ -210,13 +219,6 @@ class SSHFilePanelFileList: NSScrollView {
         self.path = path
         self.endpoint = endpoint
         loadFiles()
-    }
-
-    func setSortColumn(_ columnID: ColumnID, ascending: Bool = true) {
-        currentSortColumn = columnID
-        sortAscending = ascending
-        updateAllColumnHeaders()
-        sortAndReloadFiles()
     }
 
     private func loadFiles() {
@@ -237,11 +239,25 @@ class SSHFilePanelFileList: NSScrollView {
         }
     }
 
+    var currentSortColumn: NSTableColumn {
+        let i = if let key = fileTableView.sortDescriptors.first?.key {
+            fileTableView.column(withIdentifier: NSUserInterfaceItemIdentifier(key))
+        } else {
+            fileTableView.column(withIdentifier: NSUserInterfaceItemIdentifier(ColumnID.name.rawValue))
+        }
+        return fileTableView.tableColumns[i]
+    }
+
+    var sortAscending: Bool {
+        return fileTableView.sortDescriptors.first?.ascending ?? true
+    }
+
     private func sortAndReloadFiles() {
+        DLog("Sort and reload. ascending=\(sortAscending) column=\(currentSortColumn.identifier.rawValue)")
         files.sort { file1, file2 in
             let result: Bool
-            switch currentSortColumn {
-            case .name:
+            switch ColumnID(rawValue: currentSortColumn.identifier.rawValue) {
+            case .name, .none:
                 result = file1.name.localizedCaseInsensitiveCompare(file2.name) == .orderedAscending
             case .dateCreated:
                 let date1 = file1.ctime ?? Date.distantPast
@@ -484,6 +500,33 @@ extension SSHFilePanelFileList: NSTableViewDelegate {
         return true
     }
 
+    func tableView(_ tableView: NSTableView, sortDescriptorsDidChange oldDescriptors: [NSSortDescriptor]) {
+        updateAllColumnHeaders()
+        sortAndReloadFiles()
+    }
+/*
+    func tableView(_ tableView: NSTableView, didClick column: NSTableColumn) {
+        guard let columnID = ColumnID(rawValue: column.identifier.rawValue) else { return }
+
+        var descriptors = tableView.sortDescriptors
+        let i = descriptors.firstIndex { $0.key == column.identifier.rawValue }
+        if let i {
+            let existing = descriptors[i]
+            descriptors.remove(at: i)
+            descriptors.insert(NSSortDescriptor(key: existing.key,
+                                                ascending: !existing.ascending),
+                               at: 0)
+        } else {
+            descriptors.insert(NSSortDescriptor(key: column.identifier.rawValue,
+                                                ascending: true),
+                               at: 0)
+        }
+        column.sortDescriptorPrototype = descriptors[0]
+        tableView.sortDescriptors = descriptors
+        updateAllColumnHeaders()
+        sortAndReloadFiles()
+    }
+*/
     func columnLiveResize(_ column: NSTableColumn) {
         if column.identifier == NSUserInterfaceItemIdentifier(ColumnID.dateCreated.rawValue),
            let columnIndex = fileTableView.tableColumns.firstIndex(of: column) {
@@ -510,7 +553,7 @@ class SSHFilePanelFileListTableView: NSTableView {
         super.addTableColumn(tableColumn)
         tableColumn.addObserver(self, forKeyPath: "width", options: [.new, .old], context: nil)
     }
-    
+
     required init?(coder: NSCoder) {
         it_fatalError("init(coder:) has not been implemented")
     }
