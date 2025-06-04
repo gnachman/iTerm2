@@ -193,42 +193,53 @@ class SSHFilePanel: NSWindowController {
         mainContentView.translatesAutoresizingMaskIntoConstraints = false
         mainContentView.wantsLayer = true
         mainContentView.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
-
+        
         // Setup toolbar
         setupToolbar()
-
+        
+        // Create separator line
+        let separatorLine = NSView()
+        separatorLine.translatesAutoresizingMaskIntoConstraints = false
+        separatorLine.wantsLayer = true
+        separatorLine.layer?.backgroundColor = NSColor.separatorColor.cgColor
+        
         // Setup file table
         setupFileTable()
-
+        
         // Setup buttons
         setupButtons()
-
+        
         // Create main vertical stack
-        let mainStackView = NSStackView(views: [toolbarView, fileList, buttonStackView])
+        let mainStackView = NSStackView(views: [toolbarView, separatorLine, fileList, buttonStackView])
         mainStackView.translatesAutoresizingMaskIntoConstraints = false
         mainStackView.orientation = .vertical
         mainStackView.alignment = .leading
         mainStackView.distribution = .fill
         mainStackView.spacing = 0
-
+        
         mainContentView.addSubview(mainStackView)
         splitView.addSubview(mainContentView)
-
+        
         NSLayoutConstraint.activate([
             mainStackView.leadingAnchor.constraint(equalTo: mainContentView.leadingAnchor),
             mainStackView.trailingAnchor.constraint(equalTo: mainContentView.trailingAnchor),
             mainStackView.topAnchor.constraint(equalTo: mainContentView.topAnchor),
             mainStackView.bottomAnchor.constraint(equalTo: mainContentView.bottomAnchor),
-
+            
             // Toolbar height
             toolbarView.heightAnchor.constraint(equalToConstant: 44),
-
+            
+            // Separator line height
+            separatorLine.heightAnchor.constraint(equalToConstant: 1),
+            
             // Button stack height
             buttonStackView.heightAnchor.constraint(equalToConstant: 44),
-
+            
             // Make sure elements stretch to full width
             toolbarView.leadingAnchor.constraint(equalTo: mainStackView.leadingAnchor),
             toolbarView.trailingAnchor.constraint(equalTo: mainStackView.trailingAnchor),
+            separatorLine.leadingAnchor.constraint(equalTo: mainStackView.leadingAnchor),
+            separatorLine.trailingAnchor.constraint(equalTo: mainStackView.trailingAnchor),
             fileList.leadingAnchor.constraint(equalTo: mainStackView.leadingAnchor),
             fileList.trailingAnchor.constraint(equalTo: mainStackView.trailingAnchor),
             buttonStackView.leadingAnchor.constraint(equalTo: mainStackView.leadingAnchor),
