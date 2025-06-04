@@ -1568,6 +1568,11 @@ class Conductor: NSObject, Codable {
             sshFilePanel = SSHFilePanel()
             sshFilePanel?.dataSource = ConductorRegistry.instance
             sshFilePanel?.window?.makeKeyAndOrderFront(nil)
+            /*
+            sshFilePanel?.beginSheetModal(for: NSApp.keyWindow!, completionHandler: { response in
+                print(response)
+            })
+             */
         }
     }
 

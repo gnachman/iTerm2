@@ -20,6 +20,21 @@ protocol SSHFilePanelDataSource: AnyObject {
     func remoteFilePanelConnectedHosts() -> [SSHIdentity]
 }
 
+class SSHFilePanelWindow: NSPanel {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { false }
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if super.performKeyEquivalent(with: event) {
+            return true
+        }
+        if let delegate, let responder = delegate as? NSResponder, responder.performKeyEquivalent(with: event) {
+            return true
+        }
+        return false
+    }
+}
+
 @available(macOS 11, *)
 class SSHFilePanel: NSWindowController {
     // MARK: - UI Components
@@ -36,6 +51,7 @@ class SSHFilePanel: NSWindowController {
     private var cancelButton: NSButton!
     private var openButton: NSButton!
     private let sidebar = SSHFilePanelSidebar()
+    private var completionHandler: ((NSApplication.ModalResponse) -> Void)?
 
     // MARK: - Data Properties
     weak var dataSource: SSHFilePanelDataSource? {
@@ -56,18 +72,22 @@ class SSHFilePanel: NSWindowController {
 
     // MARK: - Initialization
     init() {
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 900, height: 600),
-                             styleMask: [.titled, .closable, .resizable],
-                             backing: .buffered,
-                             defer: false)
+        let window = SSHFilePanelWindow(contentRect: NSRect(x: 0, y: 0, width: 900, height: 600),
+                                        styleMask: [.resizable, .fullSizeContentView],
+                                        backing: .buffered,
+                                        defer: false)
+        window.isFloatingPanel = false
+        window.hidesOnDeactivate = false
+        window.worksWhenModal = true
+        window.becomesKeyOnlyIfNeeded = false
         super.init(window: window)
 
-        // Disable restoration completely for this window
-        window.restorationClass = nil
-        window.identifier = nil
+        window.delegate = self
 
         setupUI()
         setupWindow()
+
+        window.makeFirstResponder(fileList.documentView)
     }
 
     required init?(coder: NSCoder) {
@@ -144,12 +164,10 @@ class SSHFilePanel: NSWindowController {
         window?.isRestorable = false
         window?.delegate = self
 
-        // Additional restoration prevention
-        window?.restorationClass = nil
-        window?.identifier = nil
-
         // Set minimum window size - will be updated dynamically
         updateMinimumWindowSize()
+        setupKeyboardShortcuts()
+        restoreWindowState()
     }
 
     private func updateMinimumWindowSize() {
@@ -202,7 +220,12 @@ class SSHFilePanel: NSWindowController {
         separatorLine.translatesAutoresizingMaskIntoConstraints = false
         separatorLine.wantsLayer = true
         separatorLine.layer?.backgroundColor = NSColor.separatorColor.cgColor
-        
+
+        let separatorLine2 = NSView()
+        separatorLine2.translatesAutoresizingMaskIntoConstraints = false
+        separatorLine2.wantsLayer = true
+        separatorLine2.layer?.backgroundColor = NSColor.separatorColor.cgColor
+
         // Setup file table
         setupFileTable()
         
@@ -210,7 +233,7 @@ class SSHFilePanel: NSWindowController {
         setupButtons()
         
         // Create main vertical stack
-        let mainStackView = NSStackView(views: [toolbarView, separatorLine, fileList, buttonStackView])
+        let mainStackView = NSStackView(views: [toolbarView, separatorLine, fileList, separatorLine2, buttonStackView])
         mainStackView.translatesAutoresizingMaskIntoConstraints = false
         mainStackView.orientation = .vertical
         mainStackView.alignment = .leading
@@ -231,7 +254,8 @@ class SSHFilePanel: NSWindowController {
             
             // Separator line height
             separatorLine.heightAnchor.constraint(equalToConstant: 1),
-            
+            separatorLine2.heightAnchor.constraint(equalToConstant: 1),
+
             // Button stack height
             buttonStackView.heightAnchor.constraint(equalToConstant: 44),
             
@@ -362,8 +386,9 @@ class SSHFilePanel: NSWindowController {
         cancelButton.title = "Cancel"
         cancelButton.bezelStyle = .rounded
         cancelButton.keyEquivalent = "\u{1b}" // Escape
+        cancelButton.keyEquivalentModifierMask = []
         cancelButton.target = self
-        cancelButton.action = #selector(cancelButtonClicked)
+        cancelButton.action = #selector(cancelButtonClicked(_:))
 
         openButton = NSButton()
         openButton.translatesAutoresizingMaskIntoConstraints = false
@@ -402,18 +427,27 @@ class SSHFilePanel: NSWindowController {
 
     // MARK: - Actions
     @objc private func backButtonClicked(_ sender: NSButton) {
-        // TODO: Implement navigation back
-        print("Back button clicked")
+        guard Self.historyIndex > 0 else { return }
+
+        Self.historyIndex -= 1
+        let previousPath = Self.navigationHistory[Self.historyIndex]
+
+        Task {
+            await navigateToPath(previousPath)
+            updateNavigationButtons()
+        }
     }
 
     @objc private func forwardButtonClicked(_ sender: NSButton) {
-        // TODO: Implement navigation forward
-        print("Forward button clicked")
-    }
+        guard Self.historyIndex < Self.navigationHistory.count - 1 else { return }
 
-    @objc private func viewModeChanged(_ sender: NSPopUpButton) {
-        // View mode button removed for now
-        print("View mode changed to: \(sender.selectedItem?.title ?? "")")
+        Self.historyIndex += 1
+        let nextPath = Self.navigationHistory[Self.historyIndex]
+
+        Task {
+            await navigateToPath(nextPath)
+            updateNavigationButtons()
+        }
     }
 
     @objc private func locationButtonChanged(_ sender: NSPopUpButton) {
@@ -431,19 +465,35 @@ class SSHFilePanel: NSWindowController {
         print("Search changed to: \(sender.stringValue)")
     }
 
-    @objc private func cancelButtonClicked(_ sender: NSButton) {
+    @objc private func cancelButtonClicked(_ sender: Any) {
+        // Sheet presentation
         if let sheetParent = window?.sheetParent {
             sheetParent.endSheet(window!, returnCode: .cancel)
-        } else {
+        }
+        // Modal presentation
+        else if NSApp.modalWindow == window {
             NSApp.stopModal(withCode: .cancel)
+        }
+        // Non-modal presentation
+        else {
+            window?.close()
         }
     }
 
     @objc private func openButtonClicked(_ sender: NSButton) {
+        // Sheet presentation
         if let sheetParent = window?.sheetParent {
             sheetParent.endSheet(window!, returnCode: .OK)
-        } else {
+        }
+        // Modal presentation
+        else if NSApp.modalWindow == window {
             NSApp.stopModal(withCode: .OK)
+        }
+        // Non-modal presentation
+        else {
+            completionHandler?(.OK)
+            completionHandler = nil
+            window?.close()
         }
     }
 
@@ -460,9 +510,18 @@ class SSHFilePanel: NSWindowController {
 // MARK: - NSWindowDelegate
 @available(macOS 11, *)
 extension SSHFilePanel: NSWindowDelegate {
+    func show(completionHandler: @escaping (NSApplication.ModalResponse) -> Void) {
+        self.completionHandler = completionHandler
+        window?.makeKeyAndOrderFront(nil)
+    }
+
     func windowWillClose(_ notification: Notification) {
-        if window?.sheetParent == nil {
-            NSApp.stopModal()
+        saveWindowState()
+
+        // Handle non-modal completion
+        if window?.sheetParent == nil && NSApp.modalWindow != window {
+            completionHandler?(.cancel)
+            completionHandler = nil
         }
     }
 
@@ -510,5 +569,271 @@ extension SSHFilePanel: NSSplitViewDelegate {
     func splitViewDidResizeSubviews(_ notification: Notification) {
         // Update minimum window size whenever subviews are resized
         updateMinimumWindowSize()
+    }
+}
+
+// MARK: - Keyboard Shortcuts Extension
+@available(macOS 11, *)
+extension SSHFilePanel {
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if window?.menu?.performKeyEquivalent(with: event) == true {
+            return true
+        }
+        return super.performKeyEquivalent(with: event)
+    }
+
+    // MARK: - Menu Setup
+    func setupKeyboardShortcuts() {
+        // Create a custom menu for the window to handle shortcuts
+        let menu = NSMenu()
+
+        // Go to Folder (Cmd+Shift+G)
+        let goToFolderItem = NSMenuItem(title: "Go to Folder...",
+                                       action: #selector(goToFolder),
+                                       keyEquivalent: "g")
+        goToFolderItem.keyEquivalentModifierMask = [.command, .shift]
+        menu.addItem(goToFolderItem)
+
+        // Go to Home (Cmd+Shift+H)
+        let goToHomeItem = NSMenuItem(title: "Go to Home",
+                                     action: #selector(goToHome),
+                                     keyEquivalent: "h")
+        goToHomeItem.keyEquivalentModifierMask = [.command, .shift]
+        menu.addItem(goToHomeItem)
+
+        // Go Up (Cmd+Up Arrow)
+        let goUpItem = NSMenuItem(title: "Go Up",
+                                 action: #selector(goUp),
+                                 keyEquivalent: String(Character(UnicodeScalar(NSUpArrowFunctionKey)!)))
+        goUpItem.keyEquivalentModifierMask = [.command]
+        menu.addItem(goUpItem)
+
+        // Navigate Back (Cmd+Left Arrow)
+        let backItem = NSMenuItem(title: "Back",
+                                 action: #selector(backButtonClicked),
+                                 keyEquivalent: String(Character(UnicodeScalar(NSLeftArrowFunctionKey)!)))
+        backItem.keyEquivalentModifierMask = [.command]
+        menu.addItem(backItem)
+
+        // Navigate Forward (Cmd+Right Arrow)
+        let forwardItem = NSMenuItem(title: "Forward",
+                                    action: #selector(forwardButtonClicked),
+                                    keyEquivalent: String(Character(UnicodeScalar(NSRightArrowFunctionKey)!)))
+        forwardItem.keyEquivalentModifierMask = [.command]
+        menu.addItem(forwardItem)
+
+        // Refresh (Cmd+R)
+        let refreshItem = NSMenuItem(title: "Refresh",
+                                    action: #selector(refresh),
+                                    keyEquivalent: "r")
+        refreshItem.keyEquivalentModifierMask = [.command]
+        menu.addItem(refreshItem)
+
+        window?.menu = menu
+    }
+
+    // MARK: - Keyboard Action Implementations
+
+    @objc private func goToFolder() {
+        showGoToFolderDialog()
+    }
+
+    @objc private func goToHome() {
+        guard let endpoint = currentEndpoint else { return }
+        let homePath = endpoint.homeDirectory ?? "/"
+        Task {
+            await navigateToPath(homePath)
+        }
+    }
+
+    @objc private func goUp() {
+        let parentPath = (currentPath as NSString).deletingLastPathComponent
+        if parentPath != currentPath && !parentPath.isEmpty {
+            Task {
+                await navigateToPath(parentPath)
+            }
+        }
+    }
+
+    @objc private func refresh() {
+        // Refresh current directory
+        Task {
+            await navigateToPath(currentPath)
+        }
+    }
+
+    // MARK: - Go to Folder Dialog
+
+    private func showGoToFolderDialog() {
+        let alert = NSAlert()
+        alert.messageText = "Go to the folder:"
+        alert.informativeText = "Type a pathname or select from the pop-up menu"
+        alert.addButton(withTitle: "Go")
+        alert.addButton(withTitle: "Cancel")
+
+        let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
+        textField.stringValue = currentPath
+        textField.placeholderString = "Enter path (e.g., /usr/local/bin)"
+
+        // Create container view for text field with proper margins
+        let containerView = NSView(frame: NSRect(x: 0, y: 0, width: 320, height: 44))
+        containerView.addSubview(textField)
+
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            textField.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
+            textField.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
+            textField.widthAnchor.constraint(equalToConstant: 300),
+            textField.heightAnchor.constraint(equalToConstant: 24)
+        ])
+
+        alert.accessoryView = containerView
+
+        // Set the text field as first responder
+        DispatchQueue.main.async {
+            textField.becomeFirstResponder()
+            textField.selectText(nil)
+        }
+
+        let response = alert.runModal()
+
+        if response == .alertFirstButtonReturn {
+            let enteredPath = textField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !enteredPath.isEmpty {
+                let expandedPath = expandPath(enteredPath)
+                Task {
+                    await navigateToPath(expandedPath)
+                }
+            }
+        }
+    }
+
+    private func expandPath(_ path: String) -> String {
+        var expandedPath = path
+
+        // Handle tilde expansion
+        if expandedPath.hasPrefix("~") {
+            if let endpoint = currentEndpoint {
+                let homeDir = endpoint.homeDirectory ?? "/"
+                if expandedPath == "~" {
+                    expandedPath = homeDir
+                } else if expandedPath.hasPrefix("~/") {
+                    expandedPath = homeDir + String(expandedPath.dropFirst(1))
+                }
+            }
+        }
+
+        // Handle relative paths
+        if !expandedPath.hasPrefix("/") {
+            expandedPath = (currentPath as NSString).appendingPathComponent(expandedPath)
+        }
+
+        // Normalize path (handle .. and . components)
+        expandedPath = (expandedPath as NSString).standardizingPath
+
+        return expandedPath
+    }
+}
+
+// MARK: - Window Restoration Extension
+@available(macOS 11, *)
+extension SSHFilePanel {
+
+    // MARK: - Window Restoration State Keys
+    private struct RestorationKeys {
+        static let windowFrame = "SSHFilePanel.windowFrame"
+        static let sidebarWidth = "SSHFilePanel.sidebarWidth"
+        static let currentPath = "SSHFilePanel.currentPath"
+        static let sshIdentity = "SSHFilePanel.sshIdentity"
+    }
+
+    // MARK: - Save State
+    func saveWindowState() {
+        guard let window = window else { return }
+
+        let defaults = UserDefaults.standard
+
+        // Save window frame
+        let frameString = NSStringFromRect(window.frame)
+        defaults.set(frameString, forKey: RestorationKeys.windowFrame)
+
+        // Save sidebar width
+        if splitView.subviews.count > 0 {
+            let sidebarWidth = splitView.subviews[0].frame.width
+            defaults.set(sidebarWidth, forKey: RestorationKeys.sidebarWidth)
+        }
+
+        // Save current path and SSH identity
+        defaults.set(currentPath, forKey: RestorationKeys.currentPath)
+        if let identity = currentEndpoint?.sshIdentity {
+            if let identityData = try? JSONEncoder().encode(identity) {
+                defaults.set(identityData, forKey: RestorationKeys.sshIdentity)
+            }
+        }
+
+        defaults.synchronize()
+    }
+
+    // MARK: - Restore State
+    private func restoreWindowState() {
+        let defaults = UserDefaults.standard
+
+        // Restore window frame
+        if let frameString = defaults.string(forKey: RestorationKeys.windowFrame) {
+            let frame = NSRectFromString(frameString)
+            if !frame.isEmpty {
+                // Ensure frame is on screen
+                let visibleFrame = NSScreen.main?.visibleFrame ?? NSRect.zero
+                if visibleFrame.intersects(frame) {
+                    window?.setFrame(frame, display: false)
+                }
+            }
+        }
+
+        // Restore sidebar width
+        let sidebarWidth = defaults.double(forKey: RestorationKeys.sidebarWidth)
+        if sidebarWidth > 0 {
+            DispatchQueue.main.async {
+                self.splitView.setPosition(sidebarWidth, ofDividerAt: 0)
+            }
+        }
+
+        // Restore current path (will be used when data source is set)
+        if let restoredPath = defaults.string(forKey: RestorationKeys.currentPath) {
+            currentPath = restoredPath
+        }
+    }
+}
+
+// MARK: - Navigation History Support
+@available(macOS 11, *)
+extension SSHFilePanel {
+
+    // Add these properties to your main class
+    private static var navigationHistory: [String] = []
+    private static var historyIndex: Int = -1
+
+    // Enhanced navigation methods with history support
+    func navigateToPathWithHistory(_ path: String) async {
+        // Save current path to history before navigating
+        if Self.historyIndex < Self.navigationHistory.count - 1 {
+            // Remove forward history if we're navigating to a new path
+            Self.navigationHistory.removeSubrange((Self.historyIndex + 1)...)
+        }
+
+        Self.navigationHistory.append(currentPath)
+        Self.historyIndex = Self.navigationHistory.count - 1
+
+        // Navigate to new path
+        await navigateToPath(path)
+
+        // Update button states
+        updateNavigationButtons()
+    }
+
+    private func updateNavigationButtons() {
+        backButton.isEnabled = Self.historyIndex > 0
+        forwardButton.isEnabled = Self.historyIndex < Self.navigationHistory.count - 1
     }
 }
