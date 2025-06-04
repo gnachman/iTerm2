@@ -840,4 +840,56 @@ extension SSHFilePanel: SSHFilePanelFileListDelegate {
             }
         }
     }
+    func sshFilePanelList(write node: SSHFilePanelFileList.FileNode,
+                          endpoint: SSHEndpoint,
+                          to url: URL,
+                          completionHandler: @escaping ((any Error)?) -> Void) {
+        // Download the file from the remote server
+        Task { @MainActor in
+            do {
+                let fullPath = node.file.absolutePath
+                if node.file.kind == .folder {
+                    print("Creating directory: \(url)")
+                    // For directories, create the directory structure
+                    try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true, attributes: nil)
+                    // Optionally, recursively download directory contents
+                    await downloadDirectoryContents(from: fullPath, to: url, using: endpoint)
+                    print("Directory download completed")
+                    completionHandler(nil)
+                } else {
+                    print("Downloading file: \(fullPath)")
+                    // For files, download the file content (download entire file by passing nil chunk)
+                    let data = try await endpoint.download(fullPath, chunk: nil)
+                    try data.write(to: url)
+                    print("File download completed: \(data.count) bytes")
+                    completionHandler(nil)
+                }
+            } catch {
+                print("Download error: \(error)")
+                completionHandler(error)
+            }
+        }
+    }
+
+    private func downloadDirectoryContents(from remotePath: String, to localURL: URL, using endpoint: SSHEndpoint) async {
+        do {
+            let files = try await endpoint.listFiles(remotePath, sort: .byName)
+            for file in files {
+                let remoteFilePath = (remotePath as NSString).appendingPathComponent(file.name)
+                let localFileURL = localURL.appendingPathComponent(file.name)
+
+                if file.kind == .folder {
+                    try FileManager.default.createDirectory(at: localFileURL, withIntermediateDirectories: true, attributes: nil)
+                    await downloadDirectoryContents(from: remoteFilePath, to: localFileURL, using: endpoint)
+                } else {
+                    if let data = try? await endpoint.download(remoteFilePath, chunk: nil) {
+                        try? data.write(to: localFileURL)
+                    }
+                }
+            }
+        } catch {
+            print("Error downloading directory contents: \(error)")
+        }
+    }
+
 }
