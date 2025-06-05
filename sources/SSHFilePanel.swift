@@ -116,8 +116,10 @@ class SSHFilePanel: NSWindowController {
         // Use first available host for now
         if let firstHost = connectedHosts.first {
             currentEndpoint = dataSource.remoteFilePanelSSHEndpoint(for: firstHost)
-            currentPath = currentEndpoint?.homeDirectory ?? "/"
-            updateViewsForCurrentPath()
+            Task { @MainActor in
+                await navigateToPathWithHistory(currentEndpoint?.homeDirectory ?? "/")
+                updateViewsForCurrentPath()
+            }
         }
 
         sidebar.connectedHosts = connectedHosts
@@ -807,14 +809,18 @@ extension SSHFilePanel {
 extension SSHFilePanel {
 
     func navigateToPathWithHistory(_ path: String) async {
+        print("Navigate to \(path)")
         // Save current path to history before navigating
         if historyIndex < navigationHistory.count - 1 {
             // Remove forward history if we're navigating to a new path
             navigationHistory.removeSubrange((historyIndex + 1)...)
         }
 
-        navigationHistory.append(currentPath)
+        navigationHistory.append(path)
         historyIndex = navigationHistory.count - 1
+
+        print("History is now:\n\(navigationHistory)")
+        print("Index is \(historyIndex)")
 
         // Navigate to new path
         await navigateToPath(path)
@@ -833,6 +839,9 @@ extension SSHFilePanel {
 
         historyIndex -= 1
         let previousPath = navigationHistory[historyIndex]
+        print("Back button clicked")
+        print("History is now:\n\(navigationHistory)")
+        print("Index is \(historyIndex)")
 
         Task {
             await navigateToPath(previousPath)
@@ -845,6 +854,9 @@ extension SSHFilePanel {
 
         historyIndex += 1
         let nextPath = navigationHistory[historyIndex]
+        print("Forward button clicked")
+        print("History is now:\n\(navigationHistory)")
+        print("Index is \(historyIndex)")
 
         Task {
             await navigateToPath(nextPath)
