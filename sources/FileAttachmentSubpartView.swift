@@ -139,7 +139,6 @@ class FileAttachmentSubpartView: NSView {
         let event = timer.userInfo as! NSEvent
         // Handle single click for drag initiation
         let dragImage = createDragImage()
-        let dragPoint = NSPoint(x: bounds.width / 2, y: bounds.height / 2)
 
         // Ensure file exists and get its path
         let filePath = attachment.localPathCreatingIfNeeded()

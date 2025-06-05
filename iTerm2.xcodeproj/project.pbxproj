@@ -1018,9 +1018,10 @@
 		A6069EFA2DF015D200EE6CC7 /* SSHEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069EF92DF015D000EE6CC7 /* SSHEndpoint.swift */; };
 		A6069EFC2DF0162700EE6CC7 /* SSHFilePanelSidebarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069EFB2DF0162600EE6CC7 /* SSHFilePanelSidebarItem.swift */; };
 		A6069EFE2DF0204500EE6CC7 /* SSHFilePanelLocationButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069EFD2DF0203F00EE6CC7 /* SSHFilePanelLocationButton.swift */; };
-		A6069F002DF0224800EE6CC7 /* SSHFilePanelSourceList.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069EFF2DF0224300EE6CC7 /* SSHFilePanelSourceList.swift */; };
+		A6069F002DF0224800EE6CC7 /* SSHFilePanelSidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069EFF2DF0224300EE6CC7 /* SSHFilePanelSidebar.swift */; };
 		A6069F022DF027CF00EE6CC7 /* SSHFilePanelFileList.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069F012DF027CA00EE6CC7 /* SSHFilePanelFileList.swift */; };
 		A6069F042DF1073A00EE6CC7 /* SSHFilePromiseProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069F032DF1073900EE6CC7 /* SSHFilePromiseProvider.swift */; };
+		A6069F062DF21DA000EE6CC7 /* LocalhostEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069F052DF21D9D00EE6CC7 /* LocalhostEndpoint.swift */; };
 		A606CBF42145AF4800B3A97E /* iTermRootTerminalView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB0BA1B470CBE00F511E6 /* iTermRootTerminalView.m */; };
 		A608A30927BC79C600BA4F1A /* SelectionExtraction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A608A30827BC79C600BA4F1A /* SelectionExtraction.swift */; };
 		A608A58027978076003525F7 /* VT100ScreenMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */; };
@@ -5924,9 +5925,10 @@
 		A6069EF92DF015D000EE6CC7 /* SSHEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHEndpoint.swift; sourceTree = "<group>"; };
 		A6069EFB2DF0162600EE6CC7 /* SSHFilePanelSidebarItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHFilePanelSidebarItem.swift; sourceTree = "<group>"; };
 		A6069EFD2DF0203F00EE6CC7 /* SSHFilePanelLocationButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHFilePanelLocationButton.swift; sourceTree = "<group>"; };
-		A6069EFF2DF0224300EE6CC7 /* SSHFilePanelSourceList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHFilePanelSourceList.swift; sourceTree = "<group>"; };
+		A6069EFF2DF0224300EE6CC7 /* SSHFilePanelSidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHFilePanelSidebar.swift; sourceTree = "<group>"; };
 		A6069F012DF027CA00EE6CC7 /* SSHFilePanelFileList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHFilePanelFileList.swift; sourceTree = "<group>"; };
 		A6069F032DF1073900EE6CC7 /* SSHFilePromiseProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHFilePromiseProvider.swift; sourceTree = "<group>"; };
+		A6069F052DF21D9D00EE6CC7 /* LocalhostEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalhostEndpoint.swift; sourceTree = "<group>"; };
 		A608A30827BC79C600BA4F1A /* SelectionExtraction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionExtraction.swift; sourceTree = "<group>"; };
 		A608CCF2214DE6E8007A7B87 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/MacOSX.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		A6099B0318D6B0FD00081FA9 /* iTermWarning.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermWarning.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -12656,9 +12658,10 @@
 		A6EC807F2828E9E100493544 /* ssh */ = {
 			isa = PBXGroup;
 			children = (
+				A6069F052DF21D9D00EE6CC7 /* LocalhostEndpoint.swift */,
 				A6069F032DF1073900EE6CC7 /* SSHFilePromiseProvider.swift */,
 				A6069F012DF027CA00EE6CC7 /* SSHFilePanelFileList.swift */,
-				A6069EFF2DF0224300EE6CC7 /* SSHFilePanelSourceList.swift */,
+				A6069EFF2DF0224300EE6CC7 /* SSHFilePanelSidebar.swift */,
 				A6069EFD2DF0203F00EE6CC7 /* SSHFilePanelLocationButton.swift */,
 				A6069EFB2DF0162600EE6CC7 /* SSHFilePanelSidebarItem.swift */,
 				A6069EF92DF015D000EE6CC7 /* SSHEndpoint.swift */,
@@ -17458,7 +17461,7 @@
 				A6DBC0462005DC2B00F1466D /* iTermTuple.m in Sources */,
 				A61F456F22FA52CD00E2054A /* iTermUnreadCountView.m in Sources */,
 				A664334E2DE938AD0099F722 /* ResponsesAPIRequest.swift in Sources */,
-				A6069F002DF0224800EE6CC7 /* SSHFilePanelSourceList.swift in Sources */,
+				A6069F002DF0224800EE6CC7 /* SSHFilePanelSidebar.swift in Sources */,
 				A618FFCA2245F89900B8FD88 /* iTermStatusBarKnobActionViewController.m in Sources */,
 				A621F0FE26F27EA4001DD3A6 /* LineBlock.mm in Sources */,
 				A6F22ACD2398D3C900C5D1A9 /* iTermLoggingHelper.m in Sources */,
@@ -17701,6 +17704,7 @@
 				53FF982B2093C823008688D7 /* iTermSignatureVerifier.m in Sources */,
 				535EA4FD20D0EBD300FC81E0 /* iTermSwiftyStringRecognizer.m in Sources */,
 				534B6C6823DC165D0031FED2 /* PasteContext.m in Sources */,
+				A6069F062DF21DA000EE6CC7 /* LocalhostEndpoint.swift in Sources */,
 				A629F5B323AFF70B00C2F16B /* iTermShellIntegrationFinishedViewController.m in Sources */,
 				A6B50EBA29BE42B1000D243D /* FontTable.swift in Sources */,
 				A6CDC329263D244600616155 /* NSScreen+iTerm.m in Sources */,

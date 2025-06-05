@@ -40,12 +40,14 @@ struct SSHFileDescriptor {
     let sshIdentity: SSHIdentity
 }
 
+class SSHMainContentView: iTermLayerBackedSolidColorView { }
+
 @available(macOS 11, *)
 class SSHFilePanel: NSWindowController {
     static let connectedHostsDidChangeNotification = Notification.Name("SSHFilePanelConnectedHostsDidChange")
 
     private var splitView: NSSplitView!
-    private var mainContentView: NSView!
+    private var mainContentView: SSHMainContentView!
     private var toolbarView: NSView!
     private var backButton: NSButton!
     private var forwardButton: NSButton!
@@ -115,8 +117,13 @@ class SSHFilePanel: NSWindowController {
     }
 
     // MARK: - Notifications
+
+    private func connectedHostsIncludingLocalhost() -> [SSHIdentity] {
+        return (dataSource?.remoteFilePanelConnectedHosts() ?? []) + [SSHIdentity.localhost]
+    }
+
     @objc func connectedHostsDidChange(_ notification: Notification) {
-        let connectedHosts = dataSource?.remoteFilePanelConnectedHosts() ?? []
+        let connectedHosts = connectedHostsIncludingLocalhost()
         if let currentIdentity = currentPath?.sshIdentity, !connectedHosts.contains(currentIdentity) {
             dataSourceDidChange()
         } else {
@@ -128,7 +135,7 @@ class SSHFilePanel: NSWindowController {
     // MARK: - Data Source Updates
     @MainActor
     private func dataSourceDidChange() {
-        let connectedHosts = dataSource?.remoteFilePanelConnectedHosts() ?? []
+        let connectedHosts = connectedHostsIncludingLocalhost()
 
         if let firstHost = connectedHosts.first {
             selectEndpoint(forIdentity: firstHost, initialPath: nil, withHistory: true)
@@ -145,16 +152,14 @@ class SSHFilePanel: NSWindowController {
         if let path = lastPath[sshIdentity] {
             return path
         }
-        let endpoint = dataSource?.remoteFilePanelSSHEndpoint(for: sshIdentity)
+        let endpoint = endpoint(for: sshIdentity)
         return endpoint?.homeDirectory ?? "/"
     }
 
     private func selectEndpoint(forIdentity sshIdentity: SSHIdentity,
                                 initialPath: String?,
                                 withHistory: Bool) {
-        guard let dataSource else { return }
-
-        currentEndpoint = dataSource.remoteFilePanelSSHEndpoint(for: sshIdentity)
+        currentEndpoint = endpoint(for: sshIdentity)
         if currentEndpoint != nil {
             sidebar.selectedIdentity = sshIdentity
             currentPath = SSHFileDescriptor(absolutePath: defaultPath(for: sshIdentity),
@@ -177,7 +182,10 @@ class SSHFilePanel: NSWindowController {
     }
 
     private func endpoint(for identity: SSHIdentity) -> SSHEndpoint? {
-        dataSource?.remoteFilePanelSSHEndpoint(for: identity)
+        if identity == SSHIdentity.localhost {
+            return LocalhostEndpoint.instance
+        }
+        return dataSource?.remoteFilePanelSSHEndpoint(for: identity)
     }
 
     @MainActor
@@ -281,24 +289,24 @@ class SSHFilePanel: NSWindowController {
     }
 
     private func setupMainContent() {
-        mainContentView = NSView()
+        mainContentView = SSHMainContentView()
         mainContentView.translatesAutoresizingMaskIntoConstraints = false
         mainContentView.wantsLayer = true
-        mainContentView.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
-        
+        mainContentView.color = NSColor.controlBackgroundColor
+
         // Setup toolbar
         setupToolbar()
         
         // Create separator line
-        let separatorLine = NSView()
+        let separatorLine = iTermLayerBackedSolidColorView()
         separatorLine.translatesAutoresizingMaskIntoConstraints = false
         separatorLine.wantsLayer = true
-        separatorLine.layer?.backgroundColor = NSColor.separatorColor.cgColor
+        separatorLine.color = NSColor.separatorColor
 
-        let separatorLine2 = NSView()
+        let separatorLine2 = iTermLayerBackedSolidColorView()
         separatorLine2.translatesAutoresizingMaskIntoConstraints = false
         separatorLine2.wantsLayer = true
-        separatorLine2.layer?.backgroundColor = NSColor.separatorColor.cgColor
+        separatorLine2.color = NSColor.separatorColor
 
         // Setup file table
         setupFileTable()
@@ -1066,12 +1074,12 @@ extension SSHFilePanel: SSHFilePanelSidebarDelegate {
             await navigateToPathWithHistory(descriptor)
         }
     }
-    
+
     func sidebarDidSelectFavorite(_ sidebar: SSHFilePanelSidebar, host: SSHIdentity, path: String) {
         if ignoreSidebarChange > 0 {
             return
         }
-        if let endpoint = dataSource?.remoteFilePanelSSHEndpoint(for: host) {
+        if endpoint(for: host) != nil {
             let descriptor = SSHFileDescriptor(absolutePath: path,
                                                sshIdentity: host)
             Task { @MainActor in
@@ -1079,4 +1087,19 @@ extension SSHFilePanel: SSHFilePanelSidebarDelegate {
             }
         }
     }
+
+    func shortPath(sshIdentity: SSHIdentity, absolutePath: String) -> String? {
+        guard let home = endpoint(for: sshIdentity)?.homeDirectory else {
+            return nil
+        }
+        guard absolutePath.hasPrefix(home + "/") else {
+            return nil
+        }
+        return "~" + absolutePath.removingPrefix(home)
+    }
+
+    func sidebarHostIsValid(_ sidebar: SSHFilePanelSidebar, host: SSHIdentity) -> Bool {
+        return endpoint(for: host) != nil
+    }
 }
+

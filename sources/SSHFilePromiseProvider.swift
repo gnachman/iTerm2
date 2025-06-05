@@ -15,6 +15,7 @@ class SSHFilePromiseProvider: NSFilePromiseProvider {
         static let endpoint = "endpoint"
         static let fullPath = "fullPath"
         static let tempURL = "tempURL"
+        static let sshIdentity = "sshIdentity"
     }
 
     override func writableTypes(for pasteboard: NSPasteboard) -> [NSPasteboard.PasteboardType] {

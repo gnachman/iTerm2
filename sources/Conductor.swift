@@ -1582,7 +1582,7 @@ class Conductor: NSObject, Codable {
                     sshFilePanel?.show(completionHandler: { response in
                         sshFilePanel = nil
                     })
-                    
+
                     /*
                      sshFilePanel?.beginSheetModal(for: NSApp.keyWindow!, completionHandler: { response in
                      print(response)

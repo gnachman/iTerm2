@@ -12,6 +12,11 @@ public protocol SSHHostnameFinder: AnyObject {
 }
 
 public class SSHIdentity: NSObject, Codable {
+    static let localhost = SSHIdentity(host: Host.current().localizedName ?? "My Mac",
+                                       hostname: "localhost",
+                                       username: nil,
+                                       port: 0)
+
     static func ==(lhs: SSHIdentity, rhs: SSHIdentity) -> Bool {
         return lhs.state == rhs.state
     }
@@ -82,6 +87,10 @@ public class SSHIdentity: NSObject, Codable {
 
     @objc public var username: String? {
         return state.username
+    }
+
+    @objc public var port: Int {
+        return state.port
     }
 
     public var stringIdentifier: String {
@@ -168,7 +177,7 @@ public class SSHIdentity: NSObject, Codable {
 extension SSHIdentity {
     var displayName: String {
         let hostport: String
-        if state.port == 22 {
+        if state.port == 22 || state.port == 0 {
             hostport = state.host
         } else {
             hostport = state.host + ":\(state.port)"

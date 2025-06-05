@@ -35,7 +35,7 @@ class SSHFilePanelLocationButton: NSPopUpButton {
         // Add path components in reverse order (deepest first, root last)
         // This makes the menu open with current location at top, root at bottom
         for (index, component) in pathComponents.enumerated().reversed() {
-            let displayName = component == "/" ? sshIdentity.hostname : component
+            let displayName = component == "/" ? sshIdentity.host : component
             let fullPath = buildPathFromComponents(upToIndex: index)
 
             addItem(withTitle: displayName)

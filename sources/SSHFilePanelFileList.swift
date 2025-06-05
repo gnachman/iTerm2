@@ -323,6 +323,8 @@ class SSHFilePanelFileList: NSScrollView {
             } catch {
                 // Handle error - could show an alert or log
                 DLog("Error loading files: \(error)")
+                self.rootNodes.removeAll()
+                fileOutlineView.reloadData()
             }
             self.isLoading = false
         }
@@ -714,15 +716,7 @@ extension SSHFilePanelFileList: NSOutlineViewDelegate {
     }
 
     // MARK: - Drag Support
-    func outlineView(_ outlineView: NSOutlineView, pasteboardWriterForItem item: Any) -> NSPasteboardWriting? {
-        guard let node = item as? FileNode else {
-            DLog("pasteboardWriterForItem: item is not a FileNode")
-            return nil
-        }
-
-        DLog("pasteboardWriterForItem called for: \(node.file.name)")
-
-        // Create a temporary file URL
+    private func createTemporaryFile(for node: FileNode) -> URL? {
         let tempDir = FileManager.default.temporaryDirectory
         let tempFileURL = tempDir.appendingPathComponent(node.file.name)
 
@@ -735,50 +729,81 @@ extension SSHFilePanelFileList: NSOutlineViewDelegate {
                 FileManager.default.createFile(atPath: tempFileURL.path, contents: Data(), attributes: nil)
                 DLog("Created temp file: \(tempFileURL)")
             }
+            return tempFileURL
         } catch {
             DLog("Failed to create temp file: \(error)")
             return nil
         }
+    }
 
-        // Determine the appropriate UTI for the file
-        let fileUTI: String
-        if node.file.kind == .folder {
-            fileUTI = UTType.folder.identifier
-        } else {
-            let pathExtension = (node.file.name as NSString).pathExtension
-            if let type = UTType(filenameExtension: pathExtension) {
-                fileUTI = type.identifier
-            } else {
-                fileUTI = UTType.data.identifier
-            }
-        }
+    func outlineView(_ outlineView: NSOutlineView, pasteboardWriterForItem item: Any) -> NSPasteboardWriting? {
+        guard let node = item as? FileNode else { return nil }
 
-        DLog("Using UTI: \(fileUTI)")
-
-        // Create our custom file promise provider
-        let filePromise = SSHFilePromiseProvider(fileType: fileUTI, delegate: self)
+        // For internal drops, we use a simple pasteboard item with our custom type
+        let pasteboardItem = NSPasteboardItem()
 
         let fullPath = (node.pathToParent as NSString).appendingPathComponent(node.file.name)
-
-        // Store all necessary info in userInfo
-        filePromise.userInfo = [
-            SSHFilePromiseProvider.UserInfoKeys.node: node,
-            SSHFilePromiseProvider.UserInfoKeys.endpoint: endpoint as Any,
-            SSHFilePromiseProvider.UserInfoKeys.fullPath: fullPath,
-            SSHFilePromiseProvider.UserInfoKeys.tempURL: tempFileURL as NSURL
+        let nodeInfo: NSDictionary = [
+            "sshIdentity": node.sshIdentity.toUserDefaultsObject(),
+            "fullPath": fullPath,
+            "fileName": node.file.name,
+            "isDirectory": node.isDirectory
         ]
 
-        DLog("Created SSHFilePromiseProvider with temp URL: \(tempFileURL)")
-        return filePromise
+        do {
+            let data = try NSKeyedArchiver.archivedData(withRootObject: nodeInfo, requiringSecureCoding: false)
+            let type = if node.isDirectory {
+                SSHFilePanelSourceList.sshFileNodeDirectoryPasteboardType
+            } else {
+                SSHFilePanelSourceList.sshFileNodePasteboardType
+            }
+            pasteboardItem.setData(data, forType: type)
+
+            // For external apps, you might also want to provide a file URL representation
+            // This is optional and depends on your needs
+            if let tempURL = createTemporaryFile(for: node) {
+                pasteboardItem.setString(tempURL.absoluteString, forType: .fileURL)
+            }
+        } catch {
+            DLog("Failed to prepare pasteboard data: \(error)")
+        }
+
+        return pasteboardItem
     }
 
     func outlineView(_ outlineView: NSOutlineView, draggingSession session: NSDraggingSession, willBeginAt screenPoint: NSPoint, forItems items: [Any]) {
         DLog("draggingSession willBeginAt called with \(items.count) items")
-        // Set up the dragging session
+
+        // Store the dragged nodes in the session for the drop target to access
         session.draggingFormation = .pile
 
-        // The system will automatically generate a drag image based on the selected rows
-        // We don't need to manually set the drag image as NSDraggingSession doesn't expose that property
+        // You can store additional information in the dragging pasteboard here
+        let pasteboard = session.draggingPasteboard
+
+        // Write our custom data for internal drops
+        for item in items {
+            if let node = item as? FileNode {
+                let fullPath = (node.pathToParent as NSString).appendingPathComponent(node.file.name)
+                let nodeInfo: NSDictionary = [
+                    "sshIdentity": node.sshIdentity.toUserDefaultsObject(),
+                    "fullPath": fullPath,
+                    "fileName": node.file.name,
+                    "isDirectory": node.isDirectory
+                ]
+
+                do {
+                    let data = try NSKeyedArchiver.archivedData(withRootObject: nodeInfo, requiringSecureCoding: false)
+                    let type = if node.isDirectory {
+                        SSHFilePanelSourceList.sshFileNodeDirectoryPasteboardType
+                    } else {
+                        SSHFilePanelSourceList.sshFileNodePasteboardType
+                    }
+                    pasteboard.setData(data, forType: type)
+                } catch {
+                    DLog("Failed to archive SSH node data: \(error)")
+                }
+            }
+        }
     }
 
     func outlineView(_ outlineView: NSOutlineView, draggingSession session: NSDraggingSession, endedAt screenPoint: NSPoint, operation: NSDragOperation) {
