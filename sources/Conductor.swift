@@ -937,6 +937,10 @@ class Conductor: NSObject, Codable {
         uname = try? container.decode(String?.self, forKey: .uname)
         _terminalConfiguration = try? container.decode(CodableNSDictionary?.self, forKey: .terminalConfiguration)
         restored = true
+
+        super.init()
+        
+        ConductorRegistry.instance.addConductor(self, for: sshIdentity)
     }
 
     deinit {
@@ -1008,6 +1012,8 @@ class Conductor: NSObject, Codable {
             DebugLogImpl(file, Int32(line), function, "[\(self.it_addressString)@\(depth)] \(message)")
             if superVerbose {
                 NSLog("%@", "[\(self.it_addressString)@\(depth)] \(message)")
+            } else {
+                log(message)
             }
         }
     }
@@ -1999,16 +2005,16 @@ class Conductor: NSObject, Codable {
         _queueWrites = false
         if let parent = parent {
             if let data = (string + end).data(using: .utf8) {
-                DLog("ask parent to send: \(string)")
+                log("ask parent to send: \(string)")
                 parent.sendKeys(data)
             } else {
-                DLog("can't utf-8 encode string to send: \(string)")
+                log("can't utf-8 encode string to send: \(string)")
             }
         } else {
             if delegate == nil {
-                DLog("[can't send - nil delegate]")
+                log("[can't send - nil delegate]")
             }
-            DLog("[to \(framedPID.map { String($0) } ?? "non-framing")] Write: \(string)")
+            log("[to \(framedPID.map { String($0) } ?? "non-framing")] Write: \(string)")
             delegate?.conductorWrite(string: string + end)
         }
         _queueWrites = savedQueueWrites

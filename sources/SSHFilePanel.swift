@@ -249,6 +249,10 @@ class SSHFilePanel: NSWindowController {
         updateMinimumWindowSize()
         setupKeyboardShortcuts()
         restoreWindowState()
+
+        DispatchQueue.main.async { [weak self] in
+            self?.fileList.takeFirstResponder()
+        }
     }
 
     private func updateMinimumWindowSize() {
@@ -995,9 +999,56 @@ extension SSHFilePanel {
 }
 
 @available(macOS 11, *)
+extension SSHFilePanel {
+    private func createFolderForTemporaryFile(name: String) -> URL? {
+        let tempDir = FileManager.default.temporaryDirectory
+
+        // Create the temporary file/directory
+        do {
+            try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true, attributes: nil)
+            DLog("Created temp file: \(tempDir.path)")
+            let tempFileURL = tempDir.appendingPathComponent(name)
+            return tempFileURL
+        } catch {
+            DLog("\(error)")
+            return nil
+        }
+    }
+
+    func fetchSelectedFiles(_ completion: @escaping ([URL]) -> ()) {
+        Task { @MainActor in
+            var result = [URL]()
+            for file in selectedFiles {
+                if file.sshIdentity == SSHIdentity.localhost {
+                    result.append(URL(fileURLWithPath: file.absolutePath))
+                } else if let endpoint = self.endpoint(for: file.sshIdentity),
+                          let tempFile = createFolderForTemporaryFile(name: file.absolutePath.lastPathComponent) {
+                    do {
+                        let data = try await endpoint.download(file.absolutePath, chunk: nil)
+                        try data.write(to: tempFile)
+                        result.append(tempFile)
+                    } catch {
+                        DLog("\(error)")
+                    }
+                }
+            }
+            completion(result)
+        }
+    }
+}
+
+@available(macOS 11, *)
 extension SSHFilePanel: SSHFilePanelFileListDelegate {
     func sshFilePanelSelectionDidChange() {
-        openButton.isEnabled = !fileList.selectedFiles.isEmpty
+        if fileList.selectedFiles.isEmpty {
+            openButton.isEnabled = false
+        } else if fileList.selectedFiles.count == 1 {
+            openButton.isEnabled = true
+        } else {
+            openButton.isEnabled = fileList.selectedFiles.allSatisfy { node in
+                !node.isDirectory
+            }
+        }
     }
 
     func sshFilePanelList(didSelect file: SSHFilePanelFileList.FileNode) {

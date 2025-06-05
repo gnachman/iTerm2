@@ -159,24 +159,43 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         guard let window else {
             return
         }
-        let openPanel = NSOpenPanel()
-        openPanel.allowsMultipleSelection = true
-        openPanel.canChooseDirectories = false
-        openPanel.canChooseFiles = true
-
-        openPanel.beginSheetModal(for: window) { [weak self] response in
-            guard response == .OK, let self else {
-                return
-            }
-            var attachments = attachmentsView.files
-            for url in openPanel.urls {
-                let path = url.path
-                if !attachments.contains(path) {
-                    attachments.append(path)
+        if #available(macOS 11, *) {
+            let sshFilePanel = SSHFilePanel()
+            sshFilePanel.dataSource = ConductorRegistry.instance
+            sshFilePanel.beginSheetModal(for: window) { [weak self] response in
+                guard response == .OK, let self else {
+                    return
+                }
+                var attachments = attachmentsView.files
+                sshFilePanel.fetchSelectedFiles { [weak self] urls in
+                    guard let self else {
+                        return
+                    }
+                    attachments.append(contentsOf: urls.map { $0.path })
+                    attachmentsView.files = attachments
+                    updateAttachmentsView()
                 }
             }
-            attachmentsView.files = attachments
-            updateAttachmentsView()
+        } else {
+            let openPanel = NSOpenPanel()
+            openPanel.allowsMultipleSelection = true
+            openPanel.canChooseDirectories = false
+            openPanel.canChooseFiles = true
+
+            openPanel.beginSheetModal(for: window) { [weak self] response in
+                guard response == .OK, let self else {
+                    return
+                }
+                var attachments = attachmentsView.files
+                for url in openPanel.urls {
+                    let path = url.path
+                    if !attachments.contains(path) {
+                        attachments.append(path)
+                    }
+                }
+                attachmentsView.files = attachments
+                updateAttachmentsView()
+            }
         }
     }
 

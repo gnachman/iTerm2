@@ -155,7 +155,7 @@ class SSHFilePanelFileList: NSScrollView {
         fileOutlineView = SSHFilePanelFileListOutlineView()
         fileOutlineView.style = .fullWidth
         fileOutlineView.selectionHighlightStyle = .regular
-        fileOutlineView.allowsMultipleSelection = true  // Enable multiple selection for dragging
+        fileOutlineView.allowsMultipleSelection = true
         fileOutlineView.allowsEmptySelection = true
         fileOutlineView.usesAlternatingRowBackgroundColors = true
         fileOutlineView.gridStyleMask = [.solidHorizontalGridLineMask]
@@ -249,6 +249,10 @@ class SSHFilePanelFileList: NSScrollView {
 
         // Notify the delegate that the user double-clicked on a file/folder
         delegate?.sshFilePanelList(didSelect: node)
+    }
+
+    func takeFirstResponder() {
+        fileOutlineView.window?.makeFirstResponder(fileOutlineView)
     }
 
     private func addTableColumn(columnID: ColumnID) {
