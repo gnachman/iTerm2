@@ -73,3 +73,14 @@ extension Optional where Wrapped: NSObject {
         }
     }
 }
+
+protocol AnyOptional {
+    static var wrappedType: Any.Type { get }
+}
+
+extension Optional: AnyOptional {
+    static var wrappedType: Any.Type {
+        return Wrapped.self
+    }
+}
+

@@ -1022,6 +1022,15 @@
 		A6069F022DF027CF00EE6CC7 /* SSHFilePanelFileList.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069F012DF027CA00EE6CC7 /* SSHFilePanelFileList.swift */; };
 		A6069F042DF1073A00EE6CC7 /* SSHFilePromiseProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069F032DF1073900EE6CC7 /* SSHFilePromiseProvider.swift */; };
 		A6069F062DF21DA000EE6CC7 /* LocalhostEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069F052DF21D9D00EE6CC7 /* LocalhostEndpoint.swift */; };
+		A6069F082DF25BB800EE6CC7 /* AIConversation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069F072DF25BB600EE6CC7 /* AIConversation.swift */; };
+		A6069F0A2DF25C1A00EE6CC7 /* AIPluginClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069F092DF25C1800EE6CC7 /* AIPluginClient.swift */; };
+		A6069F0C2DF25C9300EE6CC7 /* iTermAITermGatekeeper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069F0B2DF25C9100EE6CC7 /* iTermAITermGatekeeper.swift */; };
+		A6069F0E2DF25CC000EE6CC7 /* AITermControllerRegistrationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069F0D2DF25CBF00EE6CC7 /* AITermControllerRegistrationHelper.swift */; };
+		A6069F102DF25CE600EE6CC7 /* iTermAIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069F0F2DF25CE500EE6CC7 /* iTermAIError.swift */; };
+		A6069F122DF25D0C00EE6CC7 /* Data+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069F112DF25D0900EE6CC7 /* Data+iTerm.swift */; };
+		A6069F142DF25D2F00EE6CC7 /* NSMutableAttributedString+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069F132DF25D2C00EE6CC7 /* NSMutableAttributedString+iTerm.swift */; };
+		A6069F162DF25D5E00EE6CC7 /* JSONSchema.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069F152DF25D5C00EE6CC7 /* JSONSchema.swift */; };
+		A6069F182DF25D8300EE6CC7 /* AITermControllerObjC.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069F172DF25D8100EE6CC7 /* AITermControllerObjC.swift */; };
 		A606CBF42145AF4800B3A97E /* iTermRootTerminalView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB0BA1B470CBE00F511E6 /* iTermRootTerminalView.m */; };
 		A608A30927BC79C600BA4F1A /* SelectionExtraction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A608A30827BC79C600BA4F1A /* SelectionExtraction.swift */; };
 		A608A58027978076003525F7 /* VT100ScreenMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */; };
@@ -5929,6 +5938,15 @@
 		A6069F012DF027CA00EE6CC7 /* SSHFilePanelFileList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHFilePanelFileList.swift; sourceTree = "<group>"; };
 		A6069F032DF1073900EE6CC7 /* SSHFilePromiseProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHFilePromiseProvider.swift; sourceTree = "<group>"; };
 		A6069F052DF21D9D00EE6CC7 /* LocalhostEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalhostEndpoint.swift; sourceTree = "<group>"; };
+		A6069F072DF25BB600EE6CC7 /* AIConversation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIConversation.swift; sourceTree = "<group>"; };
+		A6069F092DF25C1800EE6CC7 /* AIPluginClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPluginClient.swift; sourceTree = "<group>"; };
+		A6069F0B2DF25C9100EE6CC7 /* iTermAITermGatekeeper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermAITermGatekeeper.swift; sourceTree = "<group>"; };
+		A6069F0D2DF25CBF00EE6CC7 /* AITermControllerRegistrationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AITermControllerRegistrationHelper.swift; sourceTree = "<group>"; };
+		A6069F0F2DF25CE500EE6CC7 /* iTermAIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermAIError.swift; sourceTree = "<group>"; };
+		A6069F112DF25D0900EE6CC7 /* Data+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Data+iTerm.swift"; sourceTree = "<group>"; };
+		A6069F132DF25D2C00EE6CC7 /* NSMutableAttributedString+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSMutableAttributedString+iTerm.swift"; sourceTree = "<group>"; };
+		A6069F152DF25D5C00EE6CC7 /* JSONSchema.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONSchema.swift; sourceTree = "<group>"; };
+		A6069F172DF25D8100EE6CC7 /* AITermControllerObjC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AITermControllerObjC.swift; sourceTree = "<group>"; };
 		A608A30827BC79C600BA4F1A /* SelectionExtraction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionExtraction.swift; sourceTree = "<group>"; };
 		A608CCF2214DE6E8007A7B87 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/MacOSX.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		A6099B0318D6B0FD00081FA9 /* iTermWarning.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermWarning.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -9716,6 +9734,8 @@
 		1D9DDE31142E73E300275650 /* Categories */ = {
 			isa = PBXGroup;
 			children = (
+				A6069F132DF25D2C00EE6CC7 /* NSMutableAttributedString+iTerm.swift */,
+				A6069F112DF25D0900EE6CC7 /* Data+iTerm.swift */,
 				A6069EBB2DEFC3B000EE6CC7 /* NSImage+iTerm.swift */,
 				A60EF16B2DE6564D002837B9 /* DateFormatter+iTerm.swift */,
 				A6A723692DBD8DBC00A8115D /* NotificationCenter+iTerm.swift */,
@@ -10207,6 +10227,13 @@
 		A6038324294E626400FE11C2 /* AITerm */ = {
 			isa = PBXGroup;
 			children = (
+				A6069F172DF25D8100EE6CC7 /* AITermControllerObjC.swift */,
+				A6069F152DF25D5C00EE6CC7 /* JSONSchema.swift */,
+				A6069F0F2DF25CE500EE6CC7 /* iTermAIError.swift */,
+				A6069F0D2DF25CBF00EE6CC7 /* AITermControllerRegistrationHelper.swift */,
+				A6069F0B2DF25C9100EE6CC7 /* iTermAITermGatekeeper.swift */,
+				A6069F092DF25C1800EE6CC7 /* AIPluginClient.swift */,
+				A6069F072DF25BB600EE6CC7 /* AIConversation.swift */,
 				A6069EBD2DEFC59C00EE6CC7 /* FileAttachmentSubpartView.swift */,
 				A6069EB92DEFBB7C00EE6CC7 /* ExtensionToMime.swift */,
 				A6069EB72DEF596900EE6CC7 /* ChatInputView.swift */,
@@ -16825,6 +16852,7 @@
 				A6A723572DB7157C00A8115D /* iTermMutableRope.swift in Sources */,
 				A6A723582DB7157C00A8115D /* iTermLegacyStyleString.swift in Sources */,
 				A6A723592DB7157C00A8115D /* DeltaString.swift in Sources */,
+				A6069F082DF25BB800EE6CC7 /* AIConversation.swift in Sources */,
 				A6A7235A2DB7157C00A8115D /* iTermSubString.swift in Sources */,
 				A6566750219EA46E005FE60E /* NSNumber+iTerm.m in Sources */,
 				A65618722D6BDFF90059CD35 /* TerminalCommandMessageCellView.swift in Sources */,
@@ -16845,6 +16873,7 @@
 				A6EC937A24E8545500EEADEF /* iTermPasteHelper.m in Sources */,
 				A6F718C22265AF1D0053488E /* iTermPathFinder.m in Sources */,
 				A61ED2A620E99DCD0035BECD /* iTermStatusBarClockComponent.m in Sources */,
+				A6069F102DF25CE600EE6CC7 /* iTermAIError.swift in Sources */,
 				A6A4866020B6762E00493302 /* AppearancePreferencesViewController.m in Sources */,
 				A6F718B8226583600053488E /* iTermURLActionFactory.m in Sources */,
 				A630119920E70CDA008114B7 /* iTermStatusBarSetupElement.m in Sources */,
@@ -16859,6 +16888,7 @@
 				A6481658228FE6B1008E7E0C /* iTermObject.m in Sources */,
 				A62EED9B20E0104000943DE3 /* iTermScriptArchive.m in Sources */,
 				A635F1DD25075E8D008C3038 /* iTermShortcutsViewController.m in Sources */,
+				A6069F142DF25D2F00EE6CC7 /* NSMutableAttributedString+iTerm.swift in Sources */,
 				A62EED9720DF602F00943DE3 /* iTermCommandRunner.m in Sources */,
 				A63821F5229E644E005D74BE /* iTermStatusIndicatingTextFieldCell.m in Sources */,
 				A667C238276BD5A0006B4DEF /* VT100Grid.m in Sources */,
@@ -16893,6 +16923,7 @@
 				A6EC937D24E856F100EEADEF /* iTermAnnouncementView.m in Sources */,
 				A6667E97277CDDD000152678 /* Mutex.swift in Sources */,
 				A608F22220F08369008E8009 /* VT100DCSParser.m in Sources */,
+				A6069F162DF25D5E00EE6CC7 /* JSONSchema.swift in Sources */,
 				A6EC8083282987FC00493544 /* VT100ConductorParser.swift in Sources */,
 				A6C30060247117A9002BC672 /* iTermLocatedString.m in Sources */,
 				A699507821E33827009916BC /* iTermRawKeyMapper.m in Sources */,
@@ -17173,6 +17204,7 @@
 				A6A64E5A2508AF650040490B /* iTermActionsMenuController.m in Sources */,
 				A6A93F592C49BD2F00F07BAB /* iTermTerminfoHelper.m in Sources */,
 				A66719651DCE3772000CE608 /* iTermHTTPConnection.m in Sources */,
+				A6069F0E2DF25CC000EE6CC7 /* AITermControllerRegistrationHelper.swift in Sources */,
 				A678C50B279B32C600C59927 /* ComplexCharRegistry.swift in Sources */,
 				A65105A229F24A4200657EB0 /* PromptStateMachine.swift in Sources */,
 				A6DCDD212560B410004EA8A1 /* NSAttributedString+PSM.m in Sources */,
@@ -17208,6 +17240,7 @@
 				A6A4B2A72425D18D00184EAC /* iTermKeystroke.m in Sources */,
 				A630119520E70C0A008114B7 /* iTermStatusBarSetupDestinationCollectionViewController.m in Sources */,
 				A6481655228FD511008E7E0C /* iTermVariablesIndex.m in Sources */,
+				A6069F182DF25D8300EE6CC7 /* AITermControllerObjC.swift in Sources */,
 				A616CF0D284143A300EF82D0 /* ConductorRecovery.swift in Sources */,
 				A67DAF1F299D634000AD331A /* OffscreenCommandLine.swift in Sources */,
 				535EA50520D1869800FC81E0 /* iTermSwiftyStringParser.m in Sources */,
@@ -17420,6 +17453,7 @@
 				A634817A24AFC4AF0003C11B /* iTermFocusablePanel.m in Sources */,
 				A6153D4E21F30A9C002976FC /* iTermJobTreeViewController.m in Sources */,
 				A6F3EB4F2D32EC5B00612173 /* TailFindController.swift in Sources */,
+				A6069F122DF25D0C00EE6CC7 /* Data+iTerm.swift in Sources */,
 				A6F1B3B92690EA9700546767 /* iTermOptionallyBordered.m in Sources */,
 				A6069EB82DEF596D00EE6CC7 /* ChatInputView.swift in Sources */,
 				A6EC937F24E85CEF00EEADEF /* PasteboardHistory.m in Sources */,
@@ -17695,6 +17729,7 @@
 				A6B147612133395500D0814F /* iTermStatusBarLayout+tmux.m in Sources */,
 				A6D1A3F52C7E9AD300FECDF2 /* LRUDictionary.swift in Sources */,
 				A68400B91FF97138008D3EE2 /* iTermTimestampDrawHelper.m in Sources */,
+				A6069F0C2DF25C9300EE6CC7 /* iTermAITermGatekeeper.swift in Sources */,
 				A62EED9320DF5B2F00943DE3 /* iTermScriptChooser.m in Sources */,
 				A6A4867B20B67E5D00493302 /* ProfilesTerminalPreferencesViewController.m in Sources */,
 				A68575832800F13C00D8F017 /* OpenPanelBuiltInFunction.swift in Sources */,
@@ -17784,6 +17819,7 @@
 				A653F6B924D291D00062377E /* iTermOrderedDictionary.m in Sources */,
 				A6A7235E2DB7364700A8115D /* iTermLegacyMutableString.swift in Sources */,
 				A693C0BF29D0B1F100AED4E4 /* MemoryAddressHelper.swift in Sources */,
+				A6069F0A2DF25C1A00EE6CC7 /* AIPluginClient.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

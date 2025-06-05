@@ -332,3 +332,19 @@ extension NSString {
         String(self).trimmingTrailingNulls
     }
 }
+
+extension String {
+    var halved: (String, String) {
+        let middleIndex = index(startIndex, offsetBy: count / 2)
+        let head = String(prefix(upTo: middleIndex))
+        let tail = String(suffix(from: middleIndex))
+        return (head, tail)
+    }
+}
+
+extension String {
+    var lossyData: Data {
+        return Data(utf8)
+    }
+}
+
