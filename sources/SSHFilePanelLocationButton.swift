@@ -4,7 +4,6 @@
 //
 //  Created by George Nachman on 6/3/25.
 //
-
 @available(macOS 11, *)
 class SSHFilePanelLocationButton: NSPopUpButton {
     private var pathComponents: [String] = ["/"]
@@ -21,14 +20,15 @@ class SSHFilePanelLocationButton: NSPopUpButton {
             cell.preferredEdge = .minY
         }
     }
-    
+
     required init?(coder: NSCoder) {
         it_fatalError("init(coder:) has not been implemented")
     }
-    
+
     func set(path: String, sshIdentity: SSHIdentity) {
         self.currentPath = path
         self.sshIdentity = sshIdentity
+
         // Build path components from current path
         pathComponents = buildPathComponents(from: path)
 
@@ -40,16 +40,22 @@ class SSHFilePanelLocationButton: NSPopUpButton {
 
             addItem(withTitle: displayName)
             lastItem?.representedObject = fullPath
+
+            // Set the appropriate icon with proper sizing
+            let iconSize = NSSize(width: 16, height: 16)
+
             if index == 0 {
-                lastItem?.image = NSImage.it_image(forSymbolName: "desktopcomputer",
-                                                                  accessibilityDescription: "desktopcomputer",
-                                                                  fallbackImageName: "folder",
-                                                                  for: SSHFilePanel.self)
+                // For the root/computer, use NSComputer icon
+                if let computerImage = NSImage(named: NSImage.computerName) {
+                    computerImage.size = iconSize
+                    lastItem?.image = computerImage
+                }
             } else {
-                lastItem?.image = NSImage.it_image(forSymbolName: "folder",
-                                                                  accessibilityDescription: "Folder",
-                                                                  fallbackImageName: "folder",
-                                                                  for: SSHFilePanel.self)
+                // For folders, use the system's folder icon
+                if let folderImage = NSImage(named: NSImage.folderName) {
+                    folderImage.size = iconSize
+                    lastItem?.image = folderImage
+                }
             }
         }
 
@@ -84,5 +90,4 @@ class SSHFilePanelLocationButton: NSPopUpButton {
         let relevantComponents = Array(pathComponents[1...index])
         return "/" + relevantComponents.joined(separator: "/")
     }
-
 }

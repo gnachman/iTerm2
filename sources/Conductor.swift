@@ -940,7 +940,7 @@ class Conductor: NSObject, Codable {
     }
 
     deinit {
-        ConductorRegistry.instance.removeConductor(for: sshIdentity)
+        ConductorRegistry.instance.remove(conductor: self)
     }
 
     @objc var jsonValue: String? {
@@ -1122,7 +1122,7 @@ class Conductor: NSObject, Codable {
         queue = []
         state = .ground
         send(.quit, .fireAndForget)
-        ConductorRegistry.instance.removeConductor(for: sshIdentity)
+        ConductorRegistry.instance.remove(conductor: self)
         delegate?.conductorQuit()
         delegate?.conductorStateDidChange()
     }
@@ -1575,16 +1575,21 @@ class Conductor: NSObject, Codable {
 
         #warning("DNS")
         if #available (macOS 11.0, *) {
-            sshFilePanel = SSHFilePanel()
-            sshFilePanel?.dataSource = ConductorRegistry.instance
-            sshFilePanel?.show(completionHandler: { response in
-                sshFilePanel = nil
-            })
-            /*
-            sshFilePanel?.beginSheetModal(for: NSApp.keyWindow!, completionHandler: { response in
-                print(response)
-            })
-             */
+            DispatchQueue.main.async {
+                if sshFilePanel == nil {
+                    sshFilePanel = SSHFilePanel()
+                    sshFilePanel?.dataSource = ConductorRegistry.instance
+                    sshFilePanel?.show(completionHandler: { response in
+                        sshFilePanel = nil
+                    })
+                    
+                    /*
+                     sshFilePanel?.beginSheetModal(for: NSApp.keyWindow!, completionHandler: { response in
+                     print(response)
+                     })
+                     */
+                }
+            }
         }
     }
 
@@ -1626,7 +1631,7 @@ class Conductor: NSObject, Codable {
             update(executionContext: pending, result: .abort)
         }
         state = .unhooked
-        ConductorRegistry.instance.removeConductor(for: sshIdentity)
+        ConductorRegistry.instance.remove(conductor: self)
     }
 
     @objc func handleCommandBegin(identifier: String, depth: Int32) {
@@ -2048,7 +2053,7 @@ class Conductor: NSObject, Codable {
         DLog("FAIL: \(reason)")
         forceReturnToGroundState()
         // Try to launch the login shell so you're not completely stuck.
-        ConductorRegistry.instance.removeConductor(for: sshIdentity)
+        ConductorRegistry.instance.remove(conductor: self)
         delegate?.conductorWrite(string: Command.execLoginShell([]).stringValue + "\n")
         delegate?.conductorAbort(reason: reason)
     }
@@ -2884,19 +2889,43 @@ extension RemoteFile {
 
 class ConductorRegistry {
     static let instance = ConductorRegistry()
-    private(set) var conductors: [SSHIdentity: WeakBox<Conductor>] = [:]
+    private(set) var conductors: [SSHIdentity: [WeakBox<Conductor>]] = [:]
 
     func addConductor(_ conductor: Conductor, for identity: SSHIdentity) {
-        conductors[identity] = .init(conductor)
+        // TODO: Store a collection of them in case one goes away and we can use another.
+        let existing = conductors[identity]?.compactMap { $0.value } ?? []
+        if !existing.contains(conductor) {
+            conductors[identity] = existing.map { WeakBox($0) } + [WeakBox(conductor)]
+        }
+        if existing.isEmpty {
+            if #available (macOS 11.0, *) {
+                NotificationCenter.default.post(name: SSHFilePanel.connectedHostsDidChangeNotification,
+                                                object: nil)
+            }
+        }
     }
 
-    func removeConductor(for identity: SSHIdentity) {
-        conductors.removeValue(forKey: identity)
+    func remove(conductor: Conductor) {
+        if conductors[conductor.sshIdentity] != nil {
+            let existing = conductors[conductor.sshIdentity]?.compactMap(\.value) ?? []
+            let updated = existing.filter { $0.sshIdentity != conductor.sshIdentity }
+            if updated.isEmpty {
+                conductors.removeValue(forKey: conductor.sshIdentity)
+            } else {
+                conductors[conductor.sshIdentity] = updated.map { WeakBox($0) }
+            }
+            if #available (macOS 11.0, *) {
+                if updated.count < existing.count {
+                    NotificationCenter.default.post(name: SSHFilePanel.connectedHostsDidChangeNotification,
+                                                    object: nil)
+                }
+            }
+        }
     }
 
     subscript (identity: SSHIdentity) -> Conductor? {
         get {
-            return conductors[identity]?.value
+            return conductors[identity]?.compactMap(\.value).first
         }
     }
 }
@@ -2904,12 +2933,12 @@ class ConductorRegistry {
 @available(macOS 11, *)
 extension ConductorRegistry: SSHFilePanelDataSource {
     func remoteFilePanelSSHEndpoint(for identity: SSHIdentity) -> SSHEndpoint? {
-        return conductors[identity]?.value
+        return self[identity]
     }
 
     func remoteFilePanelConnectedHosts() -> [SSHIdentity] {
         return conductors.keys.filter {
-            conductors[$0]?.value != nil
+            self[$0] != nil
         }
     }
 

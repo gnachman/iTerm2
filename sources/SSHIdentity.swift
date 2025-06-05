@@ -75,7 +75,7 @@ public class SSHIdentity: NSObject, Codable {
     var host: String {
         state.host
     }
-    
+
     @objc public var hostname: String {
         return state.hostname
     }
@@ -167,6 +167,47 @@ public class SSHIdentity: NSObject, Codable {
 
 extension SSHIdentity {
     var displayName: String {
-        return compactDescription
+        let hostport: String
+        if state.port == 22 {
+            hostport = state.host
+        } else {
+            hostport = state.host + ":\(state.port)"
+        }
+        if let username = state.username, username != NSUserName() {
+            return username + "@" + hostport
+        }
+        return hostport
+    }
+}
+
+// MARK: - UserDefaults Support
+extension SSHIdentity {
+    /// Convert the SSHIdentity to a dictionary that can be stored in UserDefaults
+    @objc public func toUserDefaultsObject() -> [String: Any] {
+        var dict: [String: Any] = [
+            "host": state.host,
+            "hostname": state.hostname,
+            "port": state.port
+        ]
+
+        if let username = state.username {
+            dict["username"] = username
+        }
+
+        return dict
+    }
+
+    /// Create an SSHIdentity from a UserDefaults object (dictionary)
+    @objc public convenience init?(userDefaultsObject: Any?) {
+        guard let dict = userDefaultsObject as? [String: Any],
+              let host = dict["host"] as? String,
+              let hostname = dict["hostname"] as? String,
+              let port = dict["port"] as? Int else {
+            return nil
+        }
+
+        let username = dict["username"] as? String
+
+        self.init(host: host, hostname: hostname, username: username, port: port)
     }
 }

@@ -25,14 +25,29 @@ class SSHFilePanelSourceList: NSOutlineView {
     }
 }
 
+// MARK: - SSHFilePanelSidebarDelegate Protocol
+@available(macOS 11, *)
+protocol SSHFilePanelSidebarDelegate: AnyObject {
+    func sidebarDidSelectHost(_ sidebar: SSHFilePanelSidebar, host: SSHIdentity)
+    func sidebarDidSelectFavorite(_ sidebar: SSHFilePanelSidebar, host: SSHIdentity, path: String)
+}
+
 @available(macOS 11, *)
 class SSHFilePanelSidebar: NSView {
     private(set) var sidebarOutlineView: SSHFilePanelSourceList!
     private var sidebarScrollView: NSScrollView!
 
-    var connectedHosts: [SSHIdentity] = [] {
-        didSet {
+    weak var delegate: SSHFilePanelSidebarDelegate?
+
+    private var _connectedHosts: [SSHIdentity] = []
+    var connectedHosts: [SSHIdentity] {
+        get {
+            _connectedHosts
+        }
+        set {
+            _connectedHosts = newValue
             sidebarOutlineView.reloadData()
+            selectedIdentity = self.selectedIdentity
         }
     }
 
@@ -64,6 +79,30 @@ class SSHFilePanelSidebar: NSView {
     @MainActor
     required init?(coder: NSCoder) {
         it_fatalError("init(coder:) has not been implemented")
+    }
+
+    var selectedIdentity: SSHIdentity? {
+        get {
+            guard let selectedItem = sidebarOutlineView.item(atRow: sidebarOutlineView.selectedRow) else {
+                return nil
+            }
+
+            if let favorite = selectedItem as? (host: SSHIdentity, path: String) {
+                return favorite.host
+            } else if let host = selectedItem as? SSHIdentity {
+                return host
+            }
+            return nil
+        }
+        set {
+            if let newValue, let i = _connectedHosts.firstIndex(of: newValue) {
+                sidebarOutlineView.selectRowIndexes(IndexSet(integer: 1 + favorites.count + 1 + i),
+                                                    byExtendingSelection: false)
+            } else {
+                sidebarOutlineView.selectRowIndexes(IndexSet(),
+                                                    byExtendingSelection: false)
+            }
+        }
     }
 
     private func loadFavorites() {
@@ -199,6 +238,9 @@ extension SSHFilePanelSidebar: NSOutlineViewDelegate {
                 textField.backgroundColor = NSColor.clear
                 textField.textColor = NSColor.controlTextColor
                 textField.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize, weight: .medium)
+                textField.lineBreakMode = .byTruncatingTail
+                textField.maximumNumberOfLines = 1
+                textField.allowsDefaultTighteningForTruncation = false
 
                 cell?.addSubview(textField)
                 cell?.textField = textField
@@ -252,6 +294,9 @@ extension SSHFilePanelSidebar: NSOutlineViewDelegate {
             textField.backgroundColor = NSColor.clear
             textField.textColor = NSColor.labelColor
             textField.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+            textField.lineBreakMode = .byTruncatingTail
+            textField.maximumNumberOfLines = 1
+            textField.allowsDefaultTighteningForTruncation = false
 
             cell?.addSubview(imageView)
             cell?.addSubview(textField)
@@ -286,5 +331,17 @@ extension SSHFilePanelSidebar: NSOutlineViewDelegate {
 
     func outlineViewItemDidExpand(_ notification: Notification) {
         // Handle expansion events if needed
+    }
+
+    func outlineViewSelectionDidChange(_ notification: Notification) {
+        guard let selectedItem = sidebarOutlineView.item(atRow: sidebarOutlineView.selectedRow) else {
+            return
+        }
+
+        if let favorite = selectedItem as? (host: SSHIdentity, path: String) {
+            delegate?.sidebarDidSelectFavorite(self, host: favorite.host, path: favorite.path)
+        } else if let host = selectedItem as? SSHIdentity {
+            delegate?.sidebarDidSelectHost(self, host: host)
+        }
     }
 }

@@ -98,6 +98,7 @@ class SSHFilePanelFileList: NSScrollView {
 
     // Tree node to represent files and directories
     class FileNode {
+        let sshIdentity: SSHIdentity
         let file: RemoteFile
         let pathToParent: String
         var children: [FileNode]?
@@ -105,7 +106,8 @@ class SSHFilePanelFileList: NSScrollView {
         var isExpanded = false
         weak var parent: FileNode?
 
-        init(file: RemoteFile, path: String, parent: FileNode? = nil) {
+        init(sshIdentity: SSHIdentity, file: RemoteFile, path: String, parent: FileNode? = nil) {
+            self.sshIdentity = sshIdentity
             self.file = file
             self.pathToParent = path
             self.parent = parent
@@ -311,7 +313,11 @@ class SSHFilePanelFileList: NSScrollView {
         Task { @MainActor in
             do {
                 let remoteFiles = try await endpoint.listFiles(path, sort: .byName)
-                self.rootNodes = remoteFiles.map { FileNode(file: $0, path: path) }
+                self.rootNodes = remoteFiles.map {
+                    FileNode(sshIdentity: endpoint.sshIdentity,
+                             file: $0,
+                             path: path)
+                }
                 self.applySortToAllNodes()
                 self.fileOutlineView.reloadData()
             } catch {
@@ -327,8 +333,18 @@ class SSHFilePanelFileList: NSScrollView {
         node.isLoading = true
         do {
             let childPath = (node.pathToParent as NSString).appendingPathComponent(node.file.name)
-            let remoteFiles = try await endpoint?.listFiles(childPath, sort: .byName) ?? []
-            let childNodes = remoteFiles.map { FileNode(file: $0, path: childPath, parent: node) }
+            let childNodes: [FileNode]
+            if let endpoint {
+                let remoteFiles = try await endpoint.listFiles(childPath, sort: .byName)
+                childNodes = remoteFiles.map {
+                    FileNode(sshIdentity: endpoint.sshIdentity,
+                             file: $0,
+                             path: childPath,
+                             parent: node)
+                }
+            } else {
+                childNodes = []
+            }
             await MainActor.run {
                 node.children = childNodes
                 node.isLoading = false
