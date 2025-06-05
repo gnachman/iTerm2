@@ -54,6 +54,12 @@ class SSHFilePanel: NSWindowController {
     private var navigationHistory: [String] = []
     private var historyIndex: Int = -1
 
+    struct SSHFileDescriptor {
+        let absolutePath: String
+        let sshIdentity: SSHIdentity
+    }
+    private(set) var selectedFiles: [SSHFileDescriptor] = []
+
     // MARK: - Data Properties
     weak var dataSource: SSHFilePanelDataSource? {
         didSet {
@@ -462,6 +468,14 @@ class SSHFilePanel: NSWindowController {
             return
         }
 
+        guard let endpoint = currentEndpoint else {
+            cancelButtonClicked(sender)
+            return
+        }
+        self.selectedFiles = selection.map {
+            SSHFileDescriptor(absolutePath: $0.file.absolutePath,
+                              sshIdentity: endpoint.sshIdentity)
+        }
         // Sheet presentation
         if let sheetParent = window?.sheetParent {
             sheetParent.endSheet(window!, returnCode: .OK)
