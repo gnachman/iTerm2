@@ -142,6 +142,7 @@ struct LLMModernResponseParser: LLMResponseParser {
 
 struct LLMModernStreamingResponseParser: LLMStreamingResponseParser {
     struct ModernStreamingResponse: Codable, LLM.AnyStreamingResponse {
+        var newlyCreatedResponseID: String? { nil }
         var ignore: Bool { false }
         var isStreamingResponse: Bool { true }
 

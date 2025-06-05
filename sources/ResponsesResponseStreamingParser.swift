@@ -43,21 +43,21 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
     // MARK: - Response Object (used in multiple events)
 
     struct ResponseObject: Codable {
-        let id: String
-        let object: String
-        let status: String
-        let background: Bool
-        let error: String?
-        let incompleteDetails: String?
-        let instructions: String?
-        let output: [AnyCodable]
-        let parallelToolCalls: Bool
-        let previousResponseId: String?
-        let reasoning: Reasoning?
-        let text: TextFormat?
-        let toolChoice: String?
-        let tools: [Tool]?
-        let truncation: String?
+        var id: String
+        var object: String
+        var status: String
+        var background: Bool
+        var error: String?
+        var incompleteDetails: String?
+        var instructions: String?
+        var output: [AnyCodable]
+        var parallelToolCalls: Bool
+        var previousResponseId: String?
+        var reasoning: Reasoning?
+        var text: TextFormat?
+        var toolChoice: String?
+        var tools: [Tool]?
+        var truncation: String?
 
         enum CodingKeys: String, CodingKey {
             case id, object, status, background, error, instructions, output, reasoning, text, tools
@@ -74,8 +74,8 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
     // 1. Response Created
     struct ResponseCreatedEvent: ResponseEvent {
         let type: String = "response.created"
-        let sequenceNumber: Int
-        let response: ResponseObject
+        var sequenceNumber: Int
+        var response: ResponseObject
 
         enum CodingKeys: String, CodingKey {
             case type
@@ -415,6 +415,9 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
 
     struct Response: LLM.AnyStreamingResponse {
         var ignore = true
+        // When a response is created, this is set to the response ID. You can use
+        // this in previous_response_id to continue the conversation.
+        var newlyCreatedResponseID: String?
         var isStreamingResponse: Bool { true }
         var choiceMessages = [LLM.Message]()
     }
@@ -470,6 +473,8 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
 
             case let createdEvent as ResponseCreatedEvent:
                 DLog("Response started: \(createdEvent.response.id)")
+                parsedResponse?.newlyCreatedResponseID = createdEvent.response.id
+                parsedResponse?.ignore = false
 
             case let doneEvent as ResponseDoneEvent:
                 DLog("\nResponse completed. Status: \(doneEvent.response.status)")

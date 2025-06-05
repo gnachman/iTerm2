@@ -784,6 +784,7 @@ class AITermController {
     }
 
     var hostedTools = HostedTools()
+    var previousResponseID: String?
 
     fileprivate func define(functions: [LLM.AnyFunction]) {
         self.functions.append(contentsOf: functions)
@@ -954,7 +955,8 @@ class AITermController {
                                         apiKey: registration.apiKey,
                                         messages: messages,
                                         functions: functions,
-                                        hostedTools: hostedTools)
+                                        hostedTools: hostedTools,
+                                        previousResponseID: previousResponseID)
         builder.stream = stream != nil
         guard llmProvider.urlIsValid else {
             handle(event: .error(AIError("Invalid URL for AI provider of \(iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? "(nil)")")))
@@ -1044,15 +1046,20 @@ class AITermController {
                             DLog("Stream finished")
                             break
                         }
-                        // The Responses API can have choiceless messages, such as type=response.created
-                        if let choice = response.choiceMessages.first, !response.ignore {
-                            if let role = choice.role {
-                                accumulatingMessage.role = role
+                        if !response.ignore {
+                            if let id = response.newlyCreatedResponseID {
+                                previousResponseID = id
                             }
-                            if !accumulatingMessage.tryAppend(choice.body) {
-                                drain()
-                                accumulatingMessage = LLM.Message(role: choice.role,
-                                                                  body: choice.body)
+                            // The Responses API can have choiceless messages, such as type=response.created
+                            if let choice = response.choiceMessages.first {
+                                if let role = choice.role {
+                                    accumulatingMessage.role = role
+                                }
+                                if !accumulatingMessage.tryAppend(choice.body) {
+                                    drain()
+                                    accumulatingMessage = LLM.Message(role: choice.role,
+                                                                      body: choice.body)
+                                }
                             }
                         }
                     } catch {
@@ -1361,11 +1368,20 @@ struct AIConversation {
     }
     var busy: Bool { delegate.busy }
 
+    init(_ other: AIConversation) {
+        self.init(registrationProvider: other.registrationProvider,
+                  messages: other.messages,
+                  previousResponseID: other.controller.previousResponseID)
+        controller.define(functions: other.controller.functions)
+    }
+
     init(registrationProvider: AIRegistrationProvider?,
-         messages: [AITermController.Message] = []) {
+         messages: [AITermController.Message] = [],
+         previousResponseID: String? = nil) {
         self.registrationProvider = registrationProvider
         self.messages = messages
         controller = AITermController(registration: AITermControllerRegistrationHelper.instance.registration)
+        controller.previousResponseID = previousResponseID
         controller.delegate = delegate
         let maxTokens = self.maxTokens
         controller.truncate = { truncate(messages: $0, maxTokens: maxTokens) }
@@ -1450,9 +1466,13 @@ struct AIConversation {
             }
         }
 
+        var amended = AIConversation(self)
         var accumulator = LLM.Message.Body.uninitialized
         if let streaming {
-            delegate.streaming = { update in
+            delegate.streaming = { [weak controller] update in
+                if let previousResponseID = controller?.previousResponseID {
+                    amended.controller.previousResponseID = previousResponseID
+                }
                 switch update {
                 case .append(let string):
                     accumulator.append(.text(string))
@@ -1463,17 +1483,18 @@ struct AIConversation {
             }
         }
 
-        delegate.completion = { [weak registrationProvider] result in
+        delegate.completion = { [weak controller] result in
             switch result {
             case .success(let text):
                 if !text.isEmpty {
                     accumulator.append(.text(text))
                 }
+                if let previousResponseID = controller?.previousResponseID {
+                    amended.controller.previousResponseID = previousResponseID
+                }
                 let message = AITermController.Message(role: .assistant,
                                                        body: accumulator)
-                let amended = AIConversation(registrationProvider: registrationProvider,
-                                             messages: prior + [message])
-                amended.controller.define(functions: controller.functions)
+                amended.messages.append(message)
                 completion(.success(amended))
             break
             case .failure(let error):
@@ -1485,6 +1506,9 @@ struct AIConversation {
     }
 
     private var truncatedMessages: [AITermController.Message] {
+        if controller.previousResponseID != nil, let lastMessage = messages.last {
+            return truncate(messages: [lastMessage], maxTokens: maxTokens)
+        }
         return truncate(messages: messages, maxTokens: maxTokens)
     }
 }

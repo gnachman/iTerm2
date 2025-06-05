@@ -1640,6 +1640,7 @@ struct ResponsesBodyRequestBuilder {
     var functions = [LLM.AnyFunction]()
     var stream: Bool
     var hostedTools: HostedTools
+    var previousResponseID: String?
 
     private func transform(message: LLM.Message) -> ResponsesRequestBody.Input.ItemListEntry? {
         switch message.role {
@@ -1745,6 +1746,7 @@ struct ResponsesBodyRequestBuilder {
         let body = ResponsesRequestBody(input: .itemList(itemList),
                                         model: provider.model,
                                         maxOutputTokens: provider.maxTokens(functions: functions, messages: messages),
+                                        previousResponseID: previousResponseID,
                                         stream: stream,
                                         temperature: 0,
                                         toolChoice: tools.isEmpty ? ResponsesRequestBody.ToolChoice.none : .auto,

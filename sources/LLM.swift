@@ -30,6 +30,7 @@ enum LLM {
         // Streaming parsers will sometimes have to parse messages that are just status updates
         // nobody cares about. Set ignore to true in that case.
         var ignore: Bool { get }
+        var newlyCreatedResponseID: String? { get }
         var choiceMessages: [Message] { get }
         var isStreamingResponse: Bool { get }
     }
@@ -472,6 +473,7 @@ struct LLMRequestBuilder {
     var functions = [LLM.AnyFunction]()
     var stream = false
     var hostedTools: HostedTools
+    var previousResponseID: String?
 
     var headers: [String: String] {
         switch provider.platform {
@@ -503,7 +505,8 @@ struct LLMRequestBuilder {
                                             provider: provider,
                                             functions: functions,
                                             stream: stream,
-                                            hostedTools: hostedTools).body()
+                                            hostedTools: hostedTools,
+                                            previousResponseID: previousResponseID).body()
         case .o1:
             try O1BodyRequestBuilder(messages: messages,
                                      provider: provider).body()
@@ -879,6 +882,7 @@ struct LLMLegacyResponseParser: LLMResponseParser {
 
 struct LLMLegacyStreamingResponseParser: LLMStreamingResponseParser {
     struct LegacyStreamingResponse: Codable, LLM.AnyStreamingResponse {
+        var newlyCreatedResponseID: String? { nil }
         var ignore: Bool { false }
         var isStreamingResponse: Bool { true }
         var model: String
