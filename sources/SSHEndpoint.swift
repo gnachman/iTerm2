@@ -18,7 +18,8 @@ protocol SSHEndpoint: AnyObject {
     @MainActor
     func downloadChunked(remoteFile: RemoteFile,
                          progress: Progress?,
-                         cancellation: Cancellation?) async throws -> Data
+                         cancellation: Cancellation?,
+                         destination: URL) async throws -> DownloadType
 
     @available(macOS 11.0, *)
     @MainActor
@@ -63,6 +64,11 @@ protocol SSHEndpoint: AnyObject {
     var sshIdentity: SSHIdentity { get }
 
     var homeDirectory: String? { get }
+}
+
+public enum DownloadType {
+    case file
+    case directory
 }
 
 public struct RemoteFile: Codable, Equatable, CustomDebugStringConvertible {
@@ -220,5 +226,28 @@ public enum FileSorting: Codable {
 struct DownloadChunk: Codable, Equatable {
     var offset: Int
     var size: Int
+
+    var performanceOperationCounter: PerformanceCounter<DownloadOp>.Operations?
+
+    private enum CodingKeys: String, CodingKey {
+        case offset, size
+    }
+    static func ==(lhs: DownloadChunk, rhs: DownloadChunk) -> Bool {
+        return lhs.offset == rhs.offset && lhs.size == rhs.size
+    }
 }
 
+
+
+enum DownloadOp: String, Comparable, CustomStringConvertible {
+    static func < (lhs: DownloadOp, rhs: DownloadOp) -> Bool {
+        lhs.rawValue < rhs.rawValue
+    }
+
+    var description: String { rawValue }
+
+    case queued
+    case sent
+    case transferring
+    case post
+}

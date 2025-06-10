@@ -6,6 +6,7 @@
 //
 
 import Cocoa
+import UniformTypeIdentifiers
 
 fileprivate let filenameLabelWidth = CGFloat(80)
 fileprivate let itemHeight = CGFloat(86)
@@ -22,7 +23,7 @@ fileprivate let itemHeight = CGFloat(86)
             case .regular(let path):
                 return URL(fileURLWithPath: path).lastPathComponent
             case .placeholder(let placeholder):
-                return placeholder.filename
+                return placeholder.filename.lastPathComponent
             }
         }
 
@@ -268,10 +269,12 @@ extension HorizontalFileListView {
     ///   - didCancel: A closure that is called if the placeholder is removed before graduating.
     /// - Returns: A `Placeholder` object that you can use to manage the item.
     @objc func addPlaceholder(filename: String,
+                              isDirectory: Bool,
                               host: SSHIdentity?,
                               progress: Progress,
                               didCancel: @escaping () -> ()) -> Placeholder {
         let placeholder = Placeholder(filename: filename,
+                                      isDirectory: isDirectory,
                                       host: host,
                                       progress: progress,
                                       owner: self,
@@ -283,6 +286,7 @@ extension HorizontalFileListView {
     /// Represents a file that is in the process of being prepared.
     @objc class Placeholder: NSObject {
         let filename: String
+        let isDirectory: Bool
         let host: SSHIdentity?
         let progress: Progress
         private(set) var url: URL?
@@ -291,10 +295,12 @@ extension HorizontalFileListView {
         private var didCancel: (() -> Void)?
 
         fileprivate init(filename: String,
+                         isDirectory: Bool,
                          host: SSHIdentity?,
                          progress: Progress,
                          owner: HorizontalFileListView, didCancel: @escaping () -> Void) {
             self.filename = filename
+            self.isDirectory = isDirectory
             self.host = host
             self.progress = progress
             self.owner = owner
@@ -695,7 +701,15 @@ class FileItemView: NSCollectionViewItem {
         case .placeholder(let placeholder):
             isPlaceholder = true
             // For placeholders, get a generic icon based on the file extension.
-            icon = NSWorkspace.shared.icon(forFileType: (fileName as NSString).pathExtension)
+            if placeholder.isDirectory {
+                if #available(macOS 11, *) {
+                    icon = NSWorkspace.shared.icon(for: UTType.folder)
+                } else {
+                    icon = NSWorkspace.shared.icon(forFile: "/")
+                }
+            } else {
+                icon = NSWorkspace.shared.icon(forFileType: (fileName as NSString).pathExtension)
+            }
             progressIndicator.isHidden = false
 
             // Observe the progress object for UI updates.

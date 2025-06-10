@@ -9,17 +9,20 @@
 class iTermOpenPanelItem: NSObject {
     @objc var urlPromise: iTermRenegablePromise<NSURL>
     @objc var filename: String
+    @objc var isDirectory: Bool
     @objc var host: SSHIdentity
     @objc var progress: Progress
     @objc var cancellation: Cancellation
 
     init(urlPromise: iTermRenegablePromise<NSURL>,
          filename: String,
+         isDirectory: Bool,
          host: SSHIdentity,
          progress: Progress,
          cancellation: Cancellation) {
         self.urlPromise = urlPromise
         self.filename = filename
+        self.isDirectory = isDirectory
         self.host = host
         self.progress = progress
         self.cancellation = cancellation
@@ -50,6 +53,7 @@ class iTermOpenPanel: NSObject {
                     items = sshFilePanel.promiseItems().map { item in
                         iTermOpenPanelItem(urlPromise: item.promise,
                                            filename: item.filename,
+                                           isDirectory: item.isDirectory,
                                            host: item.host,
                                            progress: item.progress,
                                            cancellation: item.cancellation)
@@ -73,8 +77,11 @@ class iTermOpenPanel: NSObject {
                         let promise = iTermRenegablePromise<NSURL> { seal in
                             seal.fulfill(url as NSURL)
                         }
+                        var isDirectory = ObjCBool(false)
+                        _ = FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
                         return iTermOpenPanelItem(urlPromise: promise,
                                                   filename: url.path,
+                                                  isDirectory: isDirectory.boolValue,
                                                   host: SSHIdentity.localhost,
                                                   progress: Progress(),
                                                   cancellation: Cancellation())

@@ -89,21 +89,32 @@ class LocalhostEndpoint: SSHEndpoint {
     func cancelDownload(uniqueID: String) async throws {
     }
 
-    func downloadChunked(remoteFile: RemoteFile, progress: Progress?, cancellation: Cancellation?) async throws -> Data {
+    func downloadChunked(remoteFile: RemoteFile,
+                         progress: Progress?,
+                         cancellation: Cancellation?,
+                         destination: URL) async throws -> DownloadType {
+        if remoteFile.kind.isFolder {
+            try FileManager.default.createDirectory(at: destination,
+                                                    withIntermediateDirectories: true)
+            try FileManager.default.deepCopyContentsOfDirectory(
+                source: URL(fileURLWithPath: remoteFile.absolutePath),
+                to: destination,
+                excluding: Set())
+            return .directory
+        }
         it_assert(remoteFile.kind.isRegularFile, "Only files can be downloaded")
         progress?.fraction = 0
         if let cancellation, cancellation.canceled {
             throw SSHEndpointException.transferCanceled
         }
         let uniqueID = UUID().uuidString
-        let result = try await download(remoteFile.absolutePath,
-                                        chunk: nil,
-                                        uniqueID: uniqueID)
+        try FileManager.default.copyItem(at: URL(fileURLWithPath: remoteFile.absolutePath),
+                                         to: destination)
         progress?.fraction = 1.0
         if let cancellation, cancellation.canceled {
             throw SSHEndpointException.transferCanceled
         }
-        return result
+        return .file
     }
 
     func download(_ path: String, chunk: DownloadChunk?, uniqueID uniqueIdentifier: String?) async throws -> Data {

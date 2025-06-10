@@ -192,13 +192,14 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         }
         let panel = iTermOpenPanel()
         panel.canChooseFiles = true
-        panel.canChooseDirectories = false
+        panel.canChooseDirectories = true
         panel.beginSheetModal(for: window) { [weak self] response in
             guard response == .OK, let self else {
                 return
             }
             for item in panel.items {
                 let placeholder = attachmentsView.addPlaceholder(filename: item.filename,
+                                                                 isDirectory: item.isDirectory,
                                                                  host: item.host,
                                                                  progress: item.progress) {
                     item.urlPromise.renege()

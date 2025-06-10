@@ -37,6 +37,7 @@ class SSHFilePanelWindow: NSPanel {
 
 struct SSHFileDescriptor {
     let absolutePath: String
+    let isDirectory: Bool
     let sshIdentity: SSHIdentity
 }
 
@@ -177,16 +178,21 @@ class SSHFilePanel: NSWindowController {
         if currentEndpoint != nil {
             sidebar.selectedIdentity = sshIdentity
             currentPath = SSHFileDescriptor(absolutePath: defaultPath(for: sshIdentity),
+                                            isDirectory: true,
                                             sshIdentity: sshIdentity)
             defer {
                 updateViewsForCurrentPath()
             }
             if withHistory {
-                return await navigateToPathWithHistory(SSHFileDescriptor(absolutePath: initialPath ?? defaultPath(for: sshIdentity),
-                                                                  sshIdentity: sshIdentity))
+                return await navigateToPathWithHistory(SSHFileDescriptor(
+                    absolutePath: initialPath ?? defaultPath(for: sshIdentity),
+                    isDirectory: true,
+                    sshIdentity: sshIdentity))
             }
-            return await navigateToPath(SSHFileDescriptor(absolutePath: initialPath ?? defaultPath(for: sshIdentity),
-                                                          sshIdentity: sshIdentity))
+            return await navigateToPath(SSHFileDescriptor(
+                absolutePath: initialPath ?? defaultPath(for: sshIdentity),
+                isDirectory: true,
+                sshIdentity: sshIdentity))
         } else {
             sidebar.selectedIdentity = nil
             currentPath = nil
@@ -549,8 +555,10 @@ class SSHFilePanel: NSWindowController {
         }
 
         Task {
-            await navigateToPathWithHistory(SSHFileDescriptor(absolutePath: path,
-                                                              sshIdentity: currentIdentity))
+            await navigateToPathWithHistory(SSHFileDescriptor(
+                absolutePath: path,
+                isDirectory: true,
+                sshIdentity: currentIdentity))
         }
         locationButton.set(path: path, sshIdentity: locationButton.sshIdentity!)
     }
@@ -582,8 +590,10 @@ class SSHFilePanel: NSWindowController {
         let selection = fileList.selectedFiles
         if selection.count == 1 && selection[0].isDirectory && !canChooseDirectories {
             Task { @MainActor in
-                await navigateToPathWithHistory(SSHFileDescriptor(absolutePath: selection[0].file.absolutePath,
-                                                                  sshIdentity: currentIdentity) )
+                await navigateToPathWithHistory(SSHFileDescriptor(
+                    absolutePath: selection[0].file.absolutePath,
+                    isDirectory: true,
+                    sshIdentity: currentIdentity) )
             }
             return
         }
@@ -595,6 +605,7 @@ class SSHFilePanel: NSWindowController {
         saveWindowState()
         self.selectedFiles = selection.map {
             SSHFileDescriptor(absolutePath: $0.file.absolutePath,
+                              isDirectory: $0.isDirectory,
                               sshIdentity: endpoint.sshIdentity)
         }
         // Sheet presentation
@@ -760,8 +771,10 @@ extension SSHFilePanel {
         guard let endpoint = currentEndpoint else { return }
         let homePath = endpoint.homeDirectory ?? "/"
         Task {
-            await navigateToPathWithHistory(SSHFileDescriptor(absolutePath: homePath,
-                                                              sshIdentity: endpoint.sshIdentity))
+            await navigateToPathWithHistory(SSHFileDescriptor(
+                absolutePath: homePath,
+                isDirectory: true,
+                sshIdentity: endpoint.sshIdentity))
         }
     }
 
@@ -770,8 +783,10 @@ extension SSHFilePanel {
         if let identity = currentPath?.sshIdentity,
            parentPath != currentPath?.absolutePath && !parentPath.isEmpty {
             Task {
-                await navigateToPathWithHistory(SSHFileDescriptor(absolutePath: parentPath,
-                                                                  sshIdentity: identity))
+                await navigateToPathWithHistory(SSHFileDescriptor(
+                    absolutePath: parentPath,
+                    isDirectory: true,
+                    sshIdentity: identity))
             }
         }
     }
@@ -831,6 +846,7 @@ extension SSHFilePanel {
                 await self.navigateToPathWithHistory(
                     SSHFileDescriptor(
                         absolutePath: expandedPath,
+                        isDirectory: true,
                         sshIdentity: identity
                     )
                 )
@@ -1128,6 +1144,7 @@ extension SSHFilePanel {
     struct Item {
         var promise: iTermRenegablePromise<NSURL>
         var filename: String
+        var isDirectory: Bool
         var host: SSHIdentity
         var progress: Progress
         var cancellation: Cancellation
@@ -1145,11 +1162,11 @@ extension SSHFilePanel {
                     Task { @MainActor in
                         do {
                             let remoteFile = try await endpoint.stat(file.absolutePath)
-                            let data = try await endpoint.downloadChunked(
+                            _ = try await endpoint.downloadChunked(
                                 remoteFile: remoteFile,
                                 progress: progress,
-                                cancellation: cancellation)
-                            try data.write(to: tempFile)
+                                cancellation: cancellation,
+                                destination: tempFile)
                             seal.fulfill(tempFile as NSURL)
                         } catch {
                             seal.reject(error)
@@ -1163,6 +1180,7 @@ extension SSHFilePanel {
             }
             return Item(promise: promise,
                         filename: file.absolutePath,
+                        isDirectory: file.isDirectory,
                         host: file.sshIdentity,
                         progress: progress,
                         cancellation: cancellation)
@@ -1208,8 +1226,10 @@ extension SSHFilePanel: SSHFilePanelFileListDelegate {
     func sshFilePanelList(didSelect file: SSHFilePanelFileList.FileNode) {
         if file.isDirectory {
             Task { @MainActor in
-                await navigateToPathWithHistory(SSHFileDescriptor(absolutePath: file.file.absolutePath,
-                                                                  sshIdentity: file.sshIdentity))
+                await navigateToPathWithHistory(SSHFileDescriptor(
+                    absolutePath: file.file.absolutePath,
+                    isDirectory: true,
+                    sshIdentity: file.sshIdentity))
             }
         } else if canChooseFiles {
             openButtonClicked(openButton)
@@ -1278,8 +1298,10 @@ extension SSHFilePanel: SSHFilePanelSidebarDelegate {
         let options = defaultPathOptions(for: sshIdentity)
         Task { @MainActor in
             for option in options {
-                let descriptor = SSHFileDescriptor(absolutePath: option,
-                                                   sshIdentity: sshIdentity)
+                let descriptor = SSHFileDescriptor(
+                    absolutePath: option,
+                    isDirectory: true,
+                    sshIdentity: sshIdentity)
                 if await navigateToPathWithHistory(descriptor) {
                     return
                 }
@@ -1292,8 +1314,10 @@ extension SSHFilePanel: SSHFilePanelSidebarDelegate {
             return
         }
         if endpoint(for: host) != nil {
-            let descriptor = SSHFileDescriptor(absolutePath: path,
-                                               sshIdentity: host)
+            let descriptor = SSHFileDescriptor(
+                absolutePath: path,
+                isDirectory: true,
+                sshIdentity: host)
             Task { @MainActor in
                 await navigateToPathWithHistory(descriptor)
             }

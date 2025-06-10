@@ -50,3 +50,56 @@ extension FileManager {
         return false
     }
 }
+
+extension FileManager {
+    struct RecursiveRegularFileIterator: Sequence, IteratorProtocol {
+        private let enumerator: FileManager.DirectoryEnumerator
+        private let resourceKeys: Set<URLResourceKey> = [.isRegularFileKey]
+
+        init?(directoryURL: URL, fileManager: FileManager) {
+            guard let enumerator =
+                    fileManager.enumerator(
+                        at: directoryURL,
+                        includingPropertiesForKeys: Array(resourceKeys),
+                        options: [],
+                        errorHandler: nil
+                    )
+            else {
+                return nil
+            }
+
+            self.enumerator = enumerator
+        }
+
+        mutating func next() -> URL? {
+            while let fileURL = enumerator.nextObject() as? URL {
+                do {
+                    let values = try fileURL.resourceValues(forKeys: resourceKeys)
+                    if values.isRegularFile == true {
+                        return fileURL
+                    }
+                } catch {
+                }
+            }
+
+            return nil
+        }
+    }
+
+    func recursiveRegularFileIterator(at url: URL) -> RecursiveRegularFileIterator? {
+        return RecursiveRegularFileIterator(directoryURL: url, fileManager: self)
+    }
+
+    func realPath(of path: String) -> String {
+        let buf = UnsafeMutablePointer<Int8>.allocate(
+            capacity: Int(PATH_MAX)
+        )
+        defer { buf.deallocate() }
+
+        guard realpath(path, buf) != nil else {
+            return path
+        }
+
+        return String(cString: buf)
+    }
+}

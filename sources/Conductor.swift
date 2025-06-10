@@ -1483,6 +1483,12 @@ class Conductor: NSObject, Codable {
         case .handleFile(let lines, let completion):
             switch result {
             case .line(let line):
+                if case let .framerFile(sub) = executionContext.command,
+                   case let .fetch(_, chunk, _) = sub,
+                   let chunk,
+                   let poc = chunk.performanceOperationCounter {
+                    poc.complete(.sent)
+                }
                 lines.strings.append(line)
             case .abort, .canceled:
                 completion("", -1)
@@ -1950,8 +1956,23 @@ class Conductor: NSObject, Codable {
         }
         state = .willExecutePipeline(contexts)
         for pending in contexts[existing.count...] {
+            willSend(pending)
             let chunked = pending.command.stringValue.components(separatedBy: "\n").map(\.base64Encoded).joined(separator: "\n").chunk(128, continuation: pending.command.isFramer ? "\\" : "").joined(separator: "\n") + "\n"
             write(chunked)
+        }
+    }
+
+    private func willSend(_ pending: ExecutionContext) {
+        switch pending.command {
+        case .framerFile(let sub):
+            switch sub {
+            case .fetch(path: _, chunk: let chunk, uniqueID: _):
+                chunk?.performanceOperationCounter?.complete(.queued)
+            default:
+                return
+            }
+        default:
+            return
         }
     }
 
@@ -2381,8 +2402,9 @@ extension Conductor: SSHEndpoint {
             switch command {
             case .framerFile(let sub):
                 switch sub {
-                case .fetch(path: let path, chunk: _, uniqueID: uniqueID):
+                case .fetch(path: let path, chunk: let chunk, uniqueID: uniqueID):
                     DLog("Canceling fetch of \(path) with unique ID \(uniqueID)")
+                    chunk?.performanceOperationCounter?.complete(.queued)
                     return true
                 default:
                     return false
@@ -2752,7 +2774,8 @@ extension Conductor: ConductorFileTransferDelegate {
     @MainActor
     func downloadChunked(remoteFile: RemoteFile,
                          progress: Progress?,
-                         cancellation: Cancellation?) async throws -> Data {
+                         cancellation: Cancellation?,
+                         destination: URL) async throws -> DownloadType {
         DLog("Download of \(remoteFile.absolutePath) requested")
         await Conductor.downloadSemaphore.wait()
         DLog("Download of \(remoteFile.absolutePath) beginning")
@@ -2762,7 +2785,34 @@ extension Conductor: ConductorFileTransferDelegate {
                 await Conductor.downloadSemaphore.signal()
             }
         }
-        #warning("TODO: Handle directories")
+        if remoteFile.kind.isFolder {
+            let remoteZipPath = try await zip(remoteFile.absolutePath)
+            do {
+                let zipRemoteFile = try await stat(remoteZipPath)
+                let localZipPath = destination.appendingPathExtension("zip")
+                _ = try await downloadChunked(
+                    remoteFile: zipRemoteFile,
+                    progress: progress,
+                    cancellation: cancellation,
+                    destination: localZipPath)
+
+                // The `destination` argument is the current directory in which unzip is run. I give
+                // -d path in args so it will create destination.path if needed and then
+                // unzip therein.
+                try await iTermCommandRunner.unzipURL(
+                    localZipPath,
+                    withArguments: ["-q", "-o", "-d", destination.path],
+                    destination: "/",
+                    callbackQueue: .main)
+                try? await rm(remoteZipPath, recursive: false)
+                try? FileManager.default.removeItem(at: localZipPath)
+            } catch {
+                try? await rm(remoteZipPath, recursive: false)
+                throw error
+            }
+            return .directory
+        }
+
         it_assert(remoteFile.kind.isRegularFile, "Only files can be downloaded")
         var done = false
         var offset = 0
@@ -2777,28 +2827,40 @@ extension Conductor: ConductorFileTransferDelegate {
                 try? await self?.cancelDownload(uniqueID: uniqueID)
             }
         }
+        let counter = PerformanceCounter<DownloadOp>()
         while !done, !(cancellation?.canceled ?? false) {
-            let chunk = DownloadChunk(offset: offset, size: chunkSize)
+            let poc = counter.start([.queued, .sent, .transferring])
+            let chunk = DownloadChunk(offset: offset,
+                                      size: chunkSize,
+                                      performanceOperationCounter: poc)
+
             let data = try await download(remoteFile.absolutePath,
                                           chunk: chunk,
                                           uniqueID: uniqueID)
-            if data.isEmpty {
-                progress?.fraction = 1.0
-                done = true
-            } else {
-                offset += data.count
-                if let size = remoteFile.size {
-                    progress?.fraction = min(1.0, max(0, Double(offset) / Double(size)))
+            poc.complete(.transferring)
+
+            counter.perform(.post) {
+                if data.isEmpty {
+                    progress?.fraction = 1.0
+                    done = true
+                } else {
+                    offset += data.count
+                    if let size = remoteFile.size {
+                        progress?.fraction = min(1.0, max(0, Double(offset) / Double(size)))
+                    }
+                    result.append(data)
                 }
-                result.append(data)
             }
+
+            counter.log()
         }
         if let cancellation, cancellation.canceled {
             DLog("Download of \(remoteFile.absolutePath) throwing")
             throw SSHEndpointException.transferCanceled
         }
         DLog("Download of \(remoteFile.absolutePath) finished normally")
-        return result
+        try result.write(to: destination)
+        return .file
     }
 
     @MainActor

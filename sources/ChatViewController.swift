@@ -1100,21 +1100,46 @@ extension ChatViewController: ChatInputViewDelegate {
         guard !text.isEmpty, let chatID else {
             return
         }
-        let attachments = inputView.attachedFiles.compactMap { item in
+        let attachments = inputView.attachedFiles.flatMap { item -> [Message.Subpart] in
             switch item {
             case .regular(let filename):
-                if let data = try? Data(contentsOf: URL(fileURLWithPath: filename)) {
-                    Message.Subpart.attachment(.init(
-                        inline: false,
-                        id: UUID().uuidString,
-                        type: .file(.init(name: filename.lastPathComponent,
-                                          content: data,
-                                          mimeType: mimeType(filename)))))
+                let resolved = FileManager.default.realPath(of: filename)
+                var isDirectory = ObjCBool(false)
+                if FileManager.default.fileExists(atPath: filename, isDirectory: &isDirectory) {
+                    if isDirectory.boolValue {
+                        guard let sequence = FileManager.default.recursiveRegularFileIterator(
+                            at: URL(fileURLWithPath: filename)) else {
+                            return []
+                        }
+                        return sequence.compactMap { childURL -> Message.Subpart? in
+                            guard let data = try? Data(contentsOf: childURL) else {
+                                return nil
+                            }
+                            return Message.Subpart.attachment(.init(
+                                inline: false,
+                                id: UUID().uuidString,
+                                type: .file(.init(name: String(childURL.path.removing(prefix: resolved).removing(prefix: "/")),
+                                                  content: data,
+                                                  mimeType: mimeType(childURL.path)))))
+                            }
+                    } else {
+                        if let data = try? Data(contentsOf: URL(fileURLWithPath: filename)) {
+                            return [
+                                Message.Subpart.attachment(.init(
+                                    inline: false,
+                                    id: UUID().uuidString,
+                                    type: .file(.init(name: filename.lastPathComponent,
+                                                      content: data,
+                                                      mimeType: mimeType(filename)))))]
+                        } else {
+                            return []
+                        }
+                    }
                 } else {
-                    nil
+                    return []
                 }
             case .placeholder:
-                nil
+                return []
             }
         }
         let vectorStoreIDs = [listModel.chat(id: chatID)?.vectorStore].compactMap { $0 }

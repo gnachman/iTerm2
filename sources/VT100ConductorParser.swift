@@ -599,21 +599,23 @@ private class SSHOutputTokenBuilder {
     }
 }
 
-extension String {
-    func removing(prefix: String) -> Substring {
+extension StringProtocol {
+    func removing(prefix: String) -> SubSequence {
         guard hasPrefix(prefix) else {
-            return Substring(self)
+            return self[...]
         }
         return dropFirst(prefix.count)
     }
 
-    func removing(suffix: String) -> Substring {
+    func removing(suffix: String) -> SubSequence {
         guard hasSuffix(suffix) else {
-            return Substring(self)
+            return self[...]
         }
         return dropLast(suffix.count)
     }
+}
 
+extension String {
     fileprivate static let VT100CC_ST = "\u{1b}\\"
 
     func removingPrefixThatIsLongestSuffix(of phrase: String) -> Substring {
