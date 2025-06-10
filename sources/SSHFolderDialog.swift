@@ -150,7 +150,9 @@ class SSHFolderDialog: NSObject {
             return
         }
 
-        let textFieldFrame = alert.window.convertToScreen(textFieldSuperview.convert(textField.bounds, to: nil))
+        var textFieldFrame = alert.window.convertToScreen(textFieldSuperview.convert(textField.frame, to: nil))
+        // A hack to make text line up.
+        textFieldFrame.origin.x -= 11
 
         // Create or update completions window
         if completionsWindow == nil {
@@ -158,7 +160,7 @@ class SSHFolderDialog: NSObject {
                 parent: alert.window,
                 location: textFieldFrame,
                 mode: .indicator,
-                placeholder: "Loading completions...",
+                placeholder: "Loading completions…",
                 allowKey: false
             )
             textField.onSpecialKey = { [weak completionsWindow, weak self] key in
@@ -177,6 +179,7 @@ class SSHFolderDialog: NSObject {
         }
 
         // Start async task to fetch completions
+        let hostname = self.hostname
         currentCompletionTask = Task { [weak self] in
             let suggestions = await self?.completionsProvider(basePath) ?? []
 
@@ -195,7 +198,6 @@ class SSHFolderDialog: NSObject {
                 if currentText == basePath && self.pendingCompletionText == basePath {
                     // Convert to CompletionsWindow items
                     let items = suggestions.map { path in
-                        let isDirectory = path.hasSuffix("/")
                         let displayPath = path
                         let detail = "Folder on " + hostname
 
@@ -203,7 +205,7 @@ class SSHFolderDialog: NSObject {
                             suggestion: path,
                             attributedString: NSAttributedString(string: displayPath),
                             detail: NSAttributedString(string: detail),
-                            kind: isDirectory ? .folder : .file
+                            kind: .folder
                         )
                     }
 

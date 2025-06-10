@@ -2865,9 +2865,6 @@ extension Conductor: ConductorFileTransferDelegate {
         }
 
         it_assert(remoteFile.kind.isRegularFile, "Only files can be downloaded")
-        var done = false
-        var offset = 0
-        var result = Data()
 
         let chunkSize = 4096
         progress?.fraction = 0
@@ -2884,7 +2881,7 @@ extension Conductor: ConductorFileTransferDelegate {
             throw SSHEndpointException.transferCanceled
         }
         DLog("Download of \(remoteFile.absolutePath) finished normally")
-        try result.write(to: destination)
+        try state.content.write(to: destination)
         return .file
     }
 
