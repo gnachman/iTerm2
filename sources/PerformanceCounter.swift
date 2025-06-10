@@ -75,8 +75,8 @@ class PerformanceCounter<Op: Hashable & Comparable & CustomStringConvertible> {
         let pPadding = String(repeating: " ", count: millisWidth - 3)
 
         print(String(
-            format: "%-20@    %@µ      N  %@p50  %@p75  %@p95 [min  distribution  max]",
-            "Statistic",
+            format: "%@    %@µ      N  %@p50  %@p75  %@p95 [min  distribution  max]",
+            "           Statistic",
             avgPadding,
             pPadding,
             pPadding,
@@ -92,7 +92,7 @@ class PerformanceCounter<Op: Hashable & Comparable & CustomStringConvertible> {
 
         func formatMillis(_ ms: Double) -> String {
             let numeric = String(format: "%.1fms", ms)
-            let padding = String(repeating: " ", count: millisWidth - numeric.count)
+            let padding = String(repeating: " ", count: max(0, millisWidth - numeric.count))
             return padding + numeric
         }
 

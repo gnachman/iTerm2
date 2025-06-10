@@ -682,12 +682,30 @@ class Conductor: NSObject, Codable {
         let handler: Handler
         var canceled = false
 
+        mutating func cancel() {
+            if canceled {
+                return
+            }
+            canceled = true
+            switch handler {
+            case .handleFile(_, let completion):
+                // Cause performFileOperation to throw .connectionclosed
+                completion("", -1)
+            default:
+                break
+            }
+        }
         // Pipelining means many of these can be sent without waiting for the result.
         // It's particularly important for keystrokes to reduce latency when typing quickly.
         var supportsPipelining: Bool {
             switch self.command {
             case .framerSend:
                 return true
+            case .framerFile(let sub):
+                switch sub {
+                case .fetch: return true
+                default: return false
+                }
             default:
                 return false
             }
@@ -701,6 +719,13 @@ class Conductor: NSObject, Codable {
                 // This only needs to be a rough approximation of the size (for example it doesn't
                 // include line breaks or try to account for UTF-8 encoding)
                 return command.stringValue.count * 4 / 3
+            case .framerFile(let sub):
+                switch sub {
+                case .fetch:
+                    return command.stringValue.count * 4 / 3
+                default:
+                    return .max
+                }
             default:
                 return .max
             }
@@ -1129,6 +1154,20 @@ class Conductor: NSObject, Codable {
     }
 
     @objc func quit() {
+        cancelEnqueuedRequests(where: { _ in true })
+        switch state {
+        case .willExecutePipeline(var contexts):
+            for i in 0..<contexts.count {
+                contexts[i].cancel()
+            }
+        case .executingPipeline(var current, var pending):
+            current.cancel()
+            for i in 0..<pending.count {
+                pending[i].cancel()
+            }
+        default:
+            break
+        }
         queue = []
         state = .ground
         send(.quit, .fireAndForget)
@@ -1495,6 +1534,7 @@ class Conductor: NSObject, Codable {
             case .sideChannelLine(line: _, channel: _, pid: _):
                 break
             case .end(let status):
+                DLog("Response from server complete for: \(executionContext.command)")
                 completion(lines.strings.joined(separator: ""), Int32(status))
             }
         case .handlePoll(let output, let completion):
@@ -1694,6 +1734,7 @@ class Conductor: NSObject, Codable {
             } else {
                 DLog("Command ended. Remain in willExecute with remaining commands.")
                 let pending = Array(contexts.dropFirst())
+                it_assert(!pending.isEmpty)
                 state = .willExecutePipeline(pending)
                 amendPipeline(pending)
             }
@@ -1705,8 +1746,10 @@ class Conductor: NSObject, Codable {
                 state = .ground
                 dequeue()
             } else {
+                it_assert(!pending.isEmpty)
                 DLog("Command ended. Return to willExecute with remaining commands.")
-                state = .willExecutePipeline(Array(pending.dropFirst()))
+                state = .willExecutePipeline(Array(pending))
+                amendPipeline(pending)
             }
         }
     }
@@ -1913,6 +1956,7 @@ class Conductor: NSObject, Codable {
                       _ handler: ExecutionContext.Handler) {
         log("append \(command) to queue in state \(state)")
         let context = ExecutionContext(command: command, handler: handler)
+        DLog("Enqueue: \(command)")
         if highPriority {
             queue.insert(context, at: 0)
         } else {
@@ -1933,13 +1977,19 @@ class Conductor: NSObject, Codable {
         for i in indexes {
             if !queue[i].canceled {
                 DLog("cancel \(queue[i])")
-                queue[i].canceled = true
+                queue[i].cancel()
             }
         }
     }
 
     private func dequeue() {
         log("dequeue")
+        switch state {
+        case .ground, .recovery:
+            break
+        default:
+            it_fatalError()
+        }
         amendPipeline([])
     }
 
@@ -1963,6 +2013,7 @@ class Conductor: NSObject, Codable {
     }
 
     private func willSend(_ pending: ExecutionContext) {
+        DLog("Dequeue and send request: \(pending.command)")
         switch pending.command {
         case .framerFile(let sub):
             switch sub {
@@ -2818,41 +2869,15 @@ extension Conductor: ConductorFileTransferDelegate {
         var offset = 0
         var result = Data()
 
-        let chunkSize = 1024
+        let chunkSize = 4096
         progress?.fraction = 0
-        let uniqueID = UUID().uuidString
-        cancellation?.impl = { [weak self] in
-            Task { @MainActor in
-                self?.DLog("Download of \(remoteFile.absolutePath) canceled")
-                try? await self?.cancelDownload(uniqueID: uniqueID)
-            }
-        }
-        let counter = PerformanceCounter<DownloadOp>()
-        while !done, !(cancellation?.canceled ?? false) {
-            let poc = counter.start([.queued, .sent, .transferring])
-            let chunk = DownloadChunk(offset: offset,
-                                      size: chunkSize,
-                                      performanceOperationCounter: poc)
-
-            let data = try await download(remoteFile.absolutePath,
-                                          chunk: chunk,
-                                          uniqueID: uniqueID)
-            poc.complete(.transferring)
-
-            counter.perform(.post) {
-                if data.isEmpty {
-                    progress?.fraction = 1.0
-                    done = true
-                } else {
-                    offset += data.count
-                    if let size = remoteFile.size {
-                        progress?.fraction = min(1.0, max(0, Double(offset) / Double(size)))
-                    }
-                    result.append(data)
-                }
-            }
-
-            counter.log()
+        var state = DownloadState(remoteFile: remoteFile,
+                                  chunkSize: chunkSize,
+                                  cancellation: cancellation,
+                                  progress: progress,
+                                  conductor: self)
+        while state.shouldFetchMore {
+            try await state.addTask(conductor: self)
         }
         if let cancellation, cancellation.canceled {
             DLog("Download of \(remoteFile.absolutePath) throwing")
@@ -2861,6 +2886,115 @@ extension Conductor: ConductorFileTransferDelegate {
         DLog("Download of \(remoteFile.absolutePath) finished normally")
         try result.write(to: destination)
         return .file
+    }
+
+    class DownloadState {
+        var remoteFile: RemoteFile
+        var offset = 0
+        var chunkSize: Int
+        var counter = PerformanceCounter<DownloadOp>()
+        var cancellation: Cancellation?
+        var progress: Progress?
+        var content = Data()
+
+        private struct Pending {
+            var uniqueID: String
+            var offset: Int
+            var task: Task<Data, Error>
+        }
+        private var tasks = [Pending]()
+
+        init(remoteFile: RemoteFile,
+             chunkSize: Int,
+             cancellation: Cancellation?,
+             progress: Progress?,
+             conductor: Conductor) {
+            self.remoteFile = remoteFile
+            self.chunkSize = chunkSize
+            self.cancellation = cancellation
+            self.progress = progress
+
+            cancellation?.impl = { [weak self, weak conductor] in
+                conductor?.DLog("Cancellation requested")
+                Task { @MainActor in
+                    guard let self, let conductor else {
+                        conductor?.DLog("Already dealloced")
+                        return
+                    }
+                    for pending in self.tasks {
+                        try? await conductor.cancelDownload(uniqueID: pending.uniqueID)
+                    }
+                }
+            }
+        }
+
+        var shouldFetchMore: Bool {
+            if cancellation?.canceled == true {
+                return false
+            }
+            return offset < remoteFile.size!
+        }
+
+        func addTask(conductor: Conductor) async throws {
+            let taskOffset = offset
+            offset += chunkSize
+            let uniqueID = UUID().uuidString
+            let pending = Pending(
+                uniqueID: uniqueID,
+                offset: taskOffset,
+                task: Task { @MainActor in
+                    let data = try await conductor.downloadOneChunk(
+                        remoteFile: remoteFile,
+                        offset: taskOffset,
+                        chunkSize: chunkSize,
+                        uniqueID: uniqueID,
+                        counter: counter)
+                    counter.perform(.post) {
+                        if data.isEmpty {
+                            progress?.fraction = 1.0
+                        } else {
+                            progress?.fraction = min(1.0, max(0, Double(offset) / Double(remoteFile.size!)))
+                        }
+                    }
+                    return data
+                })
+            tasks.append(pending)
+            let maxConcurrency = 8
+            while tasks.count >= maxConcurrency || (!tasks.isEmpty && !shouldFetchMore) {
+                if cancellation?.canceled == true {
+                    break
+                }
+                let result = try await tasks.removeFirst().task.value
+                content.append(result)
+                if result.isEmpty && !tasks.isEmpty {
+                    throw ConductorFileTransfer.ConductorFileTransferError(
+                        "Download ended prematurely (received \(content.count) of \(remoteFile.size!) byte\(remoteFile.size! == 1 ? "" : "s")")
+                }
+            }
+        }
+    }
+
+    @MainActor
+    private func downloadOneChunk(remoteFile: RemoteFile,
+                                  offset: Int,
+                                  chunkSize: Int,
+                                  uniqueID: String,
+                                  counter: PerformanceCounter<DownloadOp>) async throws -> Data {
+        var done = false
+        let poc = counter.start([.queued, .sent, .transferring])
+        let chunk = DownloadChunk(offset: offset,
+                                  size: chunkSize,
+                                  performanceOperationCounter: poc)
+
+        DLog("Send request to download from offset \(offset)")
+        let data = try await download(remoteFile.absolutePath,
+                                      chunk: chunk,
+                                      uniqueID: uniqueID)
+        DLog("Finished request to download from offset \(offset)")
+        poc.complete(.transferring)
+
+        // counter.log()
+        return data
     }
 
     @MainActor
