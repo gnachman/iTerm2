@@ -150,6 +150,40 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         DispatchQueue.main.async {
             self.handler?(.failure(error))
         }
+
+    }
+
+    // These aren't used by the non-streaming interfaces. They are only available through AIConversation.
+    func aitermController(_ sender: AITermController, didCreateVectorStore id: String, withName name: String) {
+        it_fatalError()
+    }
+
+    func aitermControllerDidAddFileToVectorStore(_ sender: AITermController) {
+        it_fatalError()
+    }
+
+    func aitermControllerDidFailToAddFileToVectorStore(_ sender: AITermController, error: any Error) {
+        it_fatalError()
+    }
+
+    func aitermController(_ sender: AITermController, didFailToCreateVectorStoreWithError: any Error) {
+        it_fatalError()
+    }
+
+    func aitermController(_ sender: AITermController, didUploadFileWithID id: String) {
+        it_fatalError()
+    }
+
+    func aitermController(_ sender: AITermController, didFailToUploadFileWithError: any Error) {
+        it_fatalError()
+    }
+
+    func aitermControllerDidAddFilesToVectorStore(_ sender: AITermController) {
+        it_fatalError()
+    }
+
+    func aitermControllerDidFailToAddFilesToVectorStore(_ sender: AITermController, error: any Error) {
+        it_fatalError()
     }
 
     func aitermControllerRequestRegistration(_ sender: AITermController,

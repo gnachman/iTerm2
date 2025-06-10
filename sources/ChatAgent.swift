@@ -76,9 +76,10 @@ fileprivate struct MessageToPromptStateMachine {
                 return .uninitialized
             }
         case .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .commit, .setPermissions, .terminalCommand, .appendAttachment, .explanationRequest:
+                .commit, .setPermissions, .vectorStoreCreated, .terminalCommand, .appendAttachment,
+                .explanationRequest:
             it_fatalError()
-        case .multipart(let subparts):
+        case .multipart(let subparts, _):
             return .multipart(subparts.compactMap { subpart -> LLM.Message.Body? in
                 switch subpart {
                 case .attachment(let attachment):
@@ -87,7 +88,7 @@ fileprivate struct MessageToPromptStateMachine {
                         return .text(code)
                     case .statusUpdate:
                         return nil
-                    case .file:
+                    case .file, .fileID:
                         return .attachment(attachment)
                     }
                 case .markdown(let string), .plainText(let string):
@@ -134,7 +135,7 @@ fileprivate struct MessageToPromptStateMachine {
         case .explanationRequest(let request):
             mode = .initialExplanation
             return .text(request.prompt())
-        case .multipart(let subparts):
+        case .multipart(let subparts, _):
             return .multipart(subparts.compactMap { subpart -> LLM.Message.Body? in
                 switch subpart {
                 case .attachment(let attachment):
@@ -143,7 +144,7 @@ fileprivate struct MessageToPromptStateMachine {
                         return .text(code)
                     case .statusUpdate:
                         return nil
-                    case .file:
+                    case .file, .fileID:
                         return .attachment(attachment)
                     }
                 case .markdown(let string), .plainText(let string):
@@ -162,7 +163,8 @@ fileprivate struct MessageToPromptStateMachine {
         case .terminalCommand(let cmd):
             return .text(prompt(terminalCommand: cmd))
         case .explanationResponse, .append, .appendAttachment, .remoteCommandRequest,
-                .selectSessionRequest, .clientLocal, .renameChat, .commit, .setPermissions:
+                .selectSessionRequest, .clientLocal, .renameChat, .commit, .setPermissions,
+                .vectorStoreCreated:
             it_fatalError()
         }
     }
@@ -176,6 +178,22 @@ class ChatAgent {
     private var pendingRemoteCommands = [UUID: (Result<String, Error>) -> ()]()
     private let broker: ChatBroker
     private var renameConversation: AIConversation?
+
+    private enum PipelineResult {
+        case fileUploaded(id: String, name: String)
+        case vectorStoreCreated(id: String)
+        case filesAddedToVectorStore
+        case completed
+
+        var vectorStoreID: String? {
+            if case let .vectorStoreCreated(id) = self {
+                id
+            } else {
+                nil
+            }
+        }
+    }
+    private var pipelineQueue = PipelineQueue<PipelineResult>()
 
     init(_ chatID: String,
          broker: ChatBroker,
@@ -194,7 +212,8 @@ class ChatAgent {
                 conversation.add(aiMessage(from: message))
                 break
 
-            case .selectSessionRequest, .clientLocal, .renameChat, .append, .appendAttachment, .commit:
+            case .selectSessionRequest, .clientLocal, .renameChat, .append, .appendAttachment,
+                    .commit, .vectorStoreCreated:
                 break
 
             case .setPermissions(let updated):
@@ -235,13 +254,274 @@ class ChatAgent {
     var supportsStreaming: Bool {
         return conversation.supportsStreaming
     }
+
+    private func publishNotice(chatID: String, message: String) {
+        broker.publishMessageFromAgent(
+            chatID: chatID,
+            content: .clientLocal(.init(action: .notice(message))))
+    }
+
+    private func ingestableFilesFromSubparts(_ parts: [Message.Subpart]) -> [LLM.Message.Attachment.AttachmentType.File] {
+        return parts.compactMap { subpart -> LLM.Message.Attachment.AttachmentType.File? in
+            switch subpart {
+            case .attachment(let attachment):
+                switch attachment.type {
+                case .code, .statusUpdate:
+                    it_fatalError("Unsupported user-sent attachment type")
+                case .file(let file):
+                    return file
+                case .fileID:
+                    // No need for ingestion
+                    return nil
+                }
+            case .markdown, .plainText:
+                return nil
+            }
+        }
+    }
+
+    private func textFromSubparts(_ parts: [Message.Subpart]) -> String {
+        return parts.compactMap {
+            switch $0 {
+            case .attachment: nil
+            case .markdown(let text), .plainText(let text): text
+            }
+        }.joined(separator: "\n")
+    }
+
+    private func uploadAction(chatID: String,
+                              file: LLM.Message.Attachment.AttachmentType.File) -> Pipeline<PipelineResult>.Action.Closure {
+        return { [weak self] priorValues, completion in
+            self?.conversation.uploadFile(
+                name: file.name,
+                content: file.content) { result in
+                    self?.uploadFinished(chatID: chatID,
+                                         file: file,
+                                         result: result,
+                                         completion: completion)
+                }
+        }
+    }
+
+    // Result here is the result of the upload, while the completion block
+    // is for the pipeline action.
+    private func uploadFinished(chatID: String,
+                                file: LLM.Message.Attachment.AttachmentType.File,
+                                result: Result<String, Error>,
+                                completion: @escaping (Result<PipelineResult, Error>) -> Void) {
+        switch result {
+        case .success(let id):
+            publishNotice(
+                chatID: chatID,
+                message: "Upload of \(file.name.lastPathComponent) finished.")
+            completion(.success(.fileUploaded(id: id, name: file.name)))
+        case .failure(let error):
+            publishNotice(
+                chatID: chatID,
+                message: "Failed to upload \(file.name): \(error.localizedDescription)")
+            completion(.failure(error))
+        }
+    }
+
+    private func createVectorStoreAction(chatID: String) -> Pipeline<PipelineResult>.Action.Closure {
+        return { [weak self] _, completion in
+            guard let self else {
+                completion(.failure(AIError("Chat agent no longer exists")))
+                return
+            }
+            conversation.createVectorStore(
+                name: "iTerm2.\(chatID)") { [broker] result in
+                    result.handle { id in
+                        broker.publish(message: .init(
+                            chatID: chatID,
+                            author: .agent,
+                            content: .vectorStoreCreated(id: id),
+                            sentDate: Date(),
+                            uniqueID: UUID()),
+                                       toChatID: chatID,
+                                       partial: false)
+                        completion(.success(.vectorStoreCreated(id: id)))
+                    } failure: { error in
+                        completion(.failure(error))
+                    }
+                }
+        }
+    }
+
+    private func addFilesToVectorStoreAction(previousResults: [UUID: PipelineResult],
+                                             vectorStoreID: String?,
+                                             completion: @escaping (Result<PipelineResult, Error>) -> ()) {
+        let fileIDs = previousResults.values.compactMap { value -> String? in
+            switch value {
+            case let .fileUploaded(id: fileID, name: _): return fileID
+            default:
+                return nil
+            }
+        }
+        let newVectorStoreID = previousResults.values.compactMap { value -> String? in
+            switch value {
+            case .vectorStoreCreated(id: let id): id
+            default: nil
+            }
+        }.first
+        let justVectorStoreID: String
+        if let vectorStoreID {
+            justVectorStoreID = vectorStoreID
+        } else if let newVectorStoreID {
+            justVectorStoreID = newVectorStoreID
+        } else {
+            completion(.failure(AIError("Missing vector store ID")))
+            return
+        }
+        conversation.addFilesToVectorStore(fileIDs: fileIDs,
+                                           vectorStoreID: justVectorStoreID,
+                                           completion: { [weak self, chatID] error in
+            if let error {
+                self?.publishNotice(
+                    chatID: chatID,
+                    message: "There was a problem adding files to the vector store: \(error.localizedDescription)")
+                completion(.failure(error))
+            } else {
+                completion(.success(.filesAddedToVectorStore))
+            }
+        })
+    }
+
+    private func ingestFiles(files: [LLM.Message.Attachment.AttachmentType.File],
+                             chatID: String,
+                             vectorStoreID: String?,
+                             builder: PipelineBuilder<PipelineResult>) -> PipelineBuilder<PipelineResult> {
+        var currentBuilder = builder
+        if vectorStoreID == nil {
+            print("Need to create a vector store")
+            currentBuilder.add(description: "Create vector store",
+                               actionClosure: createVectorStoreAction(chatID: chatID))
+            currentBuilder = currentBuilder.makeChild()
+        }
+        for file in files {
+            print("Add upload action for \(file.name)")
+            currentBuilder.add(description: "Upload \(file.name)",
+                               actionClosure: uploadAction(
+                chatID: chatID,
+                file: file))
+        }
+        currentBuilder = currentBuilder.makeChild()
+
+        currentBuilder.add(description: "Add files to vector store") { [weak self] previousResults, completion in
+            self?.addFilesToVectorStoreAction(previousResults: previousResults,
+                                              vectorStoreID: vectorStoreID,
+                                              completion: completion)
+        }
+        return currentBuilder.makeChild()
+    }
+
+    private func scheduleMultipartFetch(userMessage: Message,
+                                        parts: [Message.Subpart],
+                                        vectorStoreID: String?,
+                                        streaming: ((StreamingUpdate) -> ())?,
+                                        completion: @escaping (Message?) -> ()) {
+        print("qqq scheduling multipart fetch")
+        let rootBuilder = PipelineBuilder<PipelineResult>()
+        var currentBuilder = rootBuilder
+
+        let files = ingestableFilesFromSubparts(parts)
+        let text = textFromSubparts(parts)
+
+        print("files=\(files.map(\.name).joined(separator: ", "))")
+        print("text=\(text)")
+        if !files.isEmpty {
+            publishNotice(chatID: chatID, message: "Uploading…")
+            currentBuilder = ingestFiles(files: files,
+                                         chatID: userMessage.chatID,
+                                         vectorStoreID: vectorStoreID,
+                                         builder: currentBuilder)
+        }
+        currentBuilder.add(description: "Send message") { [weak self] values, actionCompletion in
+            print("Ready to send the message now that all files are uploaded")
+            let fileIDs = values.values.compactMap {
+                switch $0 {
+                case .fileUploaded(id: let fileID, name: let name): (fileID, name)
+                default: nil
+                }
+            }
+            let attachments = fileIDs.map {
+                Message.Subpart.attachment(LLM.Message.Attachment(inline: false,
+                                                                  id: $0.0,
+                                                                  type: .fileID(id: $0.0, name: $0.1)))
+            }
+            self?.fetchCompletion(
+                userMessage: Message(chatID: userMessage.chatID,
+                                     author: userMessage.author,
+                                     content: .multipart([.plainText(text)] + attachments,
+                                                         vectorStoreID: nil),
+                                     sentDate: userMessage.sentDate,
+                                     uniqueID: userMessage.uniqueID),
+                cancelPendingUploads: false,
+                streaming: streaming,
+                completion: completion)
+        }
+        print("Add to pipeline queue")
+        pipelineQueue.append(rootBuilder.build(maxConcurrentActions: 2) { [chatID] disposition in
+            switch disposition {
+            case .pending:
+                it_fatalError()
+            case .success(_):
+                return
+            case .failure, .canceled:
+                completion(Message(chatID: chatID,
+                                   author: .agent,
+                                   content: .clientLocal(.init(action: .notice(
+                                    "Your message was not sent because of a problem with an attached file."))),
+                                   sentDate: Date(),
+                                   uniqueID: UUID()))
+            }
+        })
+    }
+
     func fetchCompletion(userMessage: Message,
                          streaming: ((StreamingUpdate) -> ())?,
                          completion: @escaping (Message?) -> ()) {
+        fetchCompletion(userMessage: userMessage,
+                        cancelPendingUploads: true,
+                        streaming: streaming,
+                        completion: completion)
+    }
+
+    private func multipartMessageIsSendable(parts: [Message.Subpart]) -> Bool {
+        return parts.allSatisfy({ subpart in
+            switch subpart {
+            case .attachment(let attachment):
+                switch attachment.type {
+                case .fileID: true
+                case .file(let file): file.mimeType != "application/pdf"
+                default: false
+                }
+            case .plainText: true
+            default: false
+            }
+        })
+    }
+
+    func fetchCompletion(userMessage: Message,
+                         cancelPendingUploads: Bool,
+                         streaming: ((StreamingUpdate) -> ())?,
+                         completion: @escaping (Message?) -> ()) {
+        if cancelPendingUploads {
+            pipelineQueue.cancelAll()
+        }
         switch userMessage.content {
+        case .multipart(let parts, let maybeVectorStoreID):
+            if !multipartMessageIsSendable(parts: parts) {
+                scheduleMultipartFetch(userMessage: userMessage,
+                                       parts: parts,
+                                       vectorStoreID: maybeVectorStoreID,
+                                       streaming: streaming,
+                                       completion: completion)
+                return
+            }
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
                 .remoteCommandRequest, .selectSessionRequest, .clientLocal, .commit,
-                .terminalCommand, .multipart:
+                .terminalCommand:
             break
         case .renameChat, .append:
             return
@@ -258,6 +538,8 @@ class ChatAgent {
             updateSystemMessage(allowedCategories)
             completion(nil)
             return
+        case .vectorStoreCreated:
+            it_fatalError("User should not create vector store")
         case .appendAttachment:
             it_fatalError("User-sent attachments not supported")
         }
@@ -268,6 +550,9 @@ class ChatAgent {
         }
 #warning("TODO: Make this configurable maybe?")
         conversation.hostedTools.codeInterpreter = true
+        if let vectorStoreIDs = userMessage.configuration?.vectorStoreIDs, !vectorStoreIDs.isEmpty {
+            conversation.hostedTools.fileSearch = .init(vectorstoreIDs: vectorStoreIDs)
+        }
         conversation.add(aiMessage(from: userMessage))
         var uuid: UUID?
         let streamingCallback: ((LLM.StreamingUpdate) -> ())?
@@ -401,7 +686,7 @@ class ChatAgent {
                 sentDate: Date(),
                 uniqueID: messageID)
         case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .commit, .setPermissions, .appendAttachment:
+                .commit, .setPermissions, .appendAttachment, .vectorStoreCreated:
             it_fatalError()
         }
     }
@@ -413,7 +698,9 @@ class ChatAgent {
         case .plainText, .markdown, .explanationResponse, .terminalCommand, .remoteCommandResponse, .multipart:
             return Message(chatID: userMessage.chatID,
                            author: .agent,
-                           content: .multipart([.attachment(attachment)]),
+                           content: .multipart(
+                            [.attachment(attachment)],
+                            vectorStoreID: nil),
                            sentDate: Date(),
                            uniqueID: UUID())
         case .explanationRequest(let explanationRequest):
@@ -431,7 +718,7 @@ class ChatAgent {
                 sentDate: Date(),
                 uniqueID: messageID)
         case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .commit, .setPermissions, .appendAttachment:
+                .commit, .setPermissions, .appendAttachment, .vectorStoreCreated:
             it_fatalError()
         }
     }
@@ -444,6 +731,7 @@ extension LLM.Message.Attachment {
         case .statusUpdate(let statusUpdate): statusUpdate.displayString
         case .file(let file):
             file.content.lossyString
+        case .fileID: "[Attached file]"
         }
     }
 }

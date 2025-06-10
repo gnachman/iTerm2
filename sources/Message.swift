@@ -56,8 +56,12 @@ struct Message: Codable {
         case appendAttachment(attachment: LLM.Message.Attachment, uuid: UUID)  // for streaming responses
         case commit(UUID)  // end of streaming response
         case setPermissions(Set<RemoteCommand.Content.PermissionCategory>)
+        case vectorStoreCreated(id: String)
         case terminalCommand(TerminalCommand)
-        case multipart([Subpart])
+
+        // The vector store ID here gives the store to save files to. If not specified one will be
+        // created.
+        case multipart([Subpart], vectorStoreID: String?)
 
         var shortDescription: String {
             let maxLength = 256
@@ -100,6 +104,8 @@ struct Message: Codable {
                 return "Commit \(uuid.uuidString)"
             case .setPermissions(let categories):
                 return "Allow \(Array(categories).map { $0.rawValue }.joined(separator: " + "))"
+            case .vectorStoreCreated(id: let id):
+                return "Client-local: vector store created with id \(id)"
             case .terminalCommand(let command):
                 return "Terminal command \(command.command)"
             case .multipart:
@@ -130,12 +136,12 @@ struct Message: Codable {
                         "Sending commands to AI automatically"
                     }
                 }
-            case .renameChat, .append, .appendAttachment, .commit, .setPermissions: return nil
+            case .renameChat, .append, .appendAttachment, .commit, .setPermissions, .vectorStoreCreated: return nil
             case .remoteCommandResponse:
                 return "Finished executing command"
             case .terminalCommand(let cmd):
                 return "Ran `\(cmd.command.truncatedWithTrailingEllipsis(to: maxLength - 4))`"
-            case .multipart(let subparts):
+            case .multipart(let subparts, _):
                 if let last = subparts.last {
                     switch last {
                     case .plainText(let text), .markdown(let text):
@@ -148,6 +154,8 @@ struct Message: Codable {
                             return statusUpdate.displayString
                         case .file(let file):
                             return "📄 " + file.name
+                        case .fileID(_, let name):
+                            return "📄 " + name
                         }
                     }
                 }
@@ -159,8 +167,11 @@ struct Message: Codable {
     let sentDate: Date
     let uniqueID: UUID
 
+    // This is only present in user-sent messages.
     struct Configuration: Codable {
         var hostedWebSearchEnabled = false
+        // Vector stores to search.
+        var vectorStoreIDs: [String]
     }
     var configuration: Configuration?
 
@@ -171,7 +182,7 @@ struct Message: Codable {
     // Not shown as separate messages in chat
     var hiddenFromClient: Bool {
         switch content {
-        case .remoteCommandResponse, .renameChat, .commit, .setPermissions: true
+        case .remoteCommandResponse, .renameChat, .commit, .setPermissions, .vectorStoreCreated: true
         case .selectSessionRequest, .remoteCommandRequest, .plainText, .markdown, .explanationResponse, .explanationRequest, .clientLocal, .append, .terminalCommand, .appendAttachment, .multipart: false
         }
     }
@@ -183,7 +194,8 @@ struct Message: Codable {
             true
         case .remoteCommandResponse, .selectSessionRequest, .remoteCommandRequest, .plainText,
                 .markdown, .explanationResponse, .explanationRequest, .renameChat, .append,
-                .commit, .setPermissions, .terminalCommand, .appendAttachment, .multipart:
+                .commit, .setPermissions, .terminalCommand, .appendAttachment, .multipart,
+                .vectorStoreCreated:
             false
         }
     }
@@ -193,27 +205,30 @@ struct Message: Codable {
         return content.snippetText
     }
 
-    mutating func append(_ attachment: LLM.Message.Attachment) {
+    mutating func append(_ attachment: LLM.Message.Attachment, vectorStoreID: String?) {
         switch content {
         case .plainText(let string):
             content = .multipart([.plainText(string),
-                                  .attachment(attachment)])
+                                  .attachment(attachment)],
+                                 vectorStoreID: vectorStoreID)
         case .markdown(let string):
             content = .multipart([.markdown(string),
-                                  .attachment(attachment)])
-        case .multipart(var subparts):
+                                  .attachment(attachment)],
+                                 vectorStoreID: vectorStoreID)
+        case .multipart(var subparts, let vectorStoreID):
             if let lastPart = subparts.last,
                case let .attachment(existingAttachment) = lastPart,
                let combined = existingAttachment.appending(attachment) {
                 subparts[subparts.count - 1] = .attachment(combined)
-                content = .multipart(subparts)
+                content = .multipart(subparts, vectorStoreID: vectorStoreID)
             } else {
-                content = .multipart(subparts + [.attachment(attachment)])
+                content = .multipart(subparts + [.attachment(attachment)], vectorStoreID: vectorStoreID)
             }
             #warning("TODO: Handle attachments in some of these like explanationResponse")
         case .explanationRequest, .explanationResponse, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat,
-                .append, .appendAttachment, .commit, .setPermissions, .terminalCommand:
+                .append, .appendAttachment, .commit, .setPermissions, .terminalCommand,
+                .vectorStoreCreated:
             it_fatalError()
         }
     }
@@ -223,29 +238,33 @@ struct Message: Codable {
             content = .plainText(string + chunk)
         case .markdown(let string):
             content = .markdown(string + chunk)
-        case .multipart(let subparts):
+        case .multipart(let subparts, vectorStoreID: let vectorStoreID):
             if let lastSubpart = subparts.last {
                 switch lastSubpart {
                 case .markdown(let existingMarkdown):
                     content = .multipart(subparts.dropLast() +
-                                         [.markdown(existingMarkdown + chunk)])
+                                         [.markdown(existingMarkdown + chunk)],
+                                         vectorStoreID: vectorStoreID)
                     return
                 case .plainText(let existingPlainText):
                     content = .multipart(subparts.dropLast() +
-                                         [.plainText(existingPlainText + chunk)])
+                                         [.plainText(existingPlainText + chunk)],
+                                         vectorStoreID: vectorStoreID)
                     return
                 case .attachment:
                     break
                 }
             }
             if useMarkdownIfAmbiguous {
-                content = .multipart(subparts + [.markdown(chunk)])
+                content = .multipart(subparts + [.markdown(chunk)],
+                                     vectorStoreID: vectorStoreID)
             } else {
-                content = .multipart(subparts + [.plainText(chunk)])
+                content = .multipart(subparts + [.plainText(chunk)],
+                                     vectorStoreID: vectorStoreID)
             }
         case .explanationRequest, .explanationResponse, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .commit, .setPermissions, .terminalCommand, .appendAttachment:
+                .commit, .setPermissions, .terminalCommand, .appendAttachment, .vectorStoreCreated:
             it_fatalError()
         }
     }
@@ -277,6 +296,10 @@ extension Message: iTermDatabaseElement {
 
     static func query(forChatID chatID: String) -> (String, [Any]) {
         ("select * from Message where chatID=?", [chatID])
+    }
+
+    static func tableInfoQuery() -> String {
+        "PRAGMA table_info(Message)"
     }
 
     func appendQuery() -> (String, [Any]) {

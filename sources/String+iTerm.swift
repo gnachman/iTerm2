@@ -348,3 +348,17 @@ extension String {
     }
 }
 
+extension Optional where Wrapped == String {
+    static func concat(_ lhs: String?, _ rhs: String?) -> String? {
+        switch (lhs, rhs) {
+        case (nil, nil):
+            return nil
+        case let (l?, r?):
+            return l + r
+        case let (l?, nil):
+            return l
+        case let (nil, r?):
+            return r
+        }
+    }
+}

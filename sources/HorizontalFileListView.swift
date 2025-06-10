@@ -11,8 +11,48 @@ fileprivate let filenameLabelWidth = CGFloat(80)
 fileprivate let itemHeight = CGFloat(86)
 
 @objc class HorizontalFileListView: NSView {
-    var files: [String] = [] {
+    // The model for a file in the list. It can either be a fully resolved file
+    // with a path, or a placeholder for a file that is in the process of being prepared.
+    enum File: Equatable {
+        case regular(String)
+        case placeholder(HorizontalFileListView.Placeholder)
+
+        var filename: String {
+            switch self {
+            case .regular(let path):
+                return URL(fileURLWithPath: path).lastPathComponent
+            case .placeholder(let placeholder):
+                return placeholder.filename
+            }
+        }
+
+        var isPlaceholder: Bool {
+            if case .placeholder(_) = self {
+                return true
+            }
+            return false
+        }
+    }
+
+    // The list of files to display. Now an enum to handle placeholders.
+    var files: [File] = [] {
         didSet {
+            // When the file list is updated, check if any placeholders were removed.
+            // If so, call their cancellation handler.
+            let oldPlaceholders = Set(oldValue.compactMap { file -> Placeholder? in
+                if case .placeholder(let p) = file { return p }
+                return nil
+            })
+            let currentPlaceholders = Set(files.compactMap { file -> Placeholder? in
+                if case .placeholder(let p) = file { return p }
+                return nil
+            })
+
+            let removedPlaceholders = oldPlaceholders.subtracting(currentPlaceholders)
+            for placeholder in removedPlaceholders {
+                placeholder.cancel()
+            }
+
             DispatchQueue.main.async { [weak self] in
                 guard let self else {
                     return
@@ -45,11 +85,11 @@ fileprivate let itemHeight = CGFloat(86)
         }
     }
 
-    // Selection callback
-    var onSelectionChanged: (([String]) -> Void)?
+    // Selection callback - now returns [File] objects
+    var onSelectionChanged: (([File]) -> Void)?
 
-    // Deletion callback - called when items are about to be removed
-    var onItemsWillBeDeleted: (([String]) -> Bool)? // Return true to allow deletion
+    // Deletion callback - now takes [File] objects
+    var onItemsWillBeDeleted: (([File]) -> Bool)? // Return true to allow deletion
     var onDidDeleteItems: (() -> ())?
 
     private let scrollView: NSScrollView
@@ -153,9 +193,11 @@ fileprivate let itemHeight = CGFloat(86)
     private func deleteSelectedItems() {
         guard !collectionView.selectionIndexes.isEmpty else { return }
 
+        let filesToDelete = selectedFileObjects
+
         // Ask for permission to delete if callback is provided
         if let onItemsWillBeDeleted = onItemsWillBeDeleted {
-            if !onItemsWillBeDeleted(selectedFiles) {
+            if !onItemsWillBeDeleted(filesToDelete) {
                 return // Deletion not allowed
             }
         }
@@ -195,26 +237,113 @@ fileprivate let itemHeight = CGFloat(86)
             }
         }
     }
-    private var selectedFiles: [String] {
+
+    /// Returns the full `File` objects for the current selection.
+    private var selectedFileObjects: [File] {
         collectionView.selectionIndexes.compactMap { index in
+            guard index < files.count else { return nil }
             return files[index]
         }
     }
 
     private func notifySelectionChanged() {
-        onSelectionChanged?(selectedFiles)
+        onSelectionChanged?(selectedFileObjects)
         updateSelectionAppearance()
     }
 
     // MARK: - Intrinsic Content Size
     override var intrinsicContentSize: NSSize {
         let height = flowLayout.itemSize.height + flowLayout.sectionInset.top + flowLayout.sectionInset.bottom
-
-        // Return a reasonable default width or NSView.noIntrinsicMetric for width
-        // Since this view is designed to scroll horizontally, it shouldn't dictate its container's width
         return NSSize(width: NSView.noIntrinsicMetric, height: height)
     }
 }
+
+// MARK: - Public API for Placeholders
+extension HorizontalFileListView {
+    /// Adds a placeholder item to the view for a file that is being prepared.
+    /// - Parameters:
+    ///   - filename: The name of the file to display.
+    ///   - host: The SSH identity associated with the file, if any.
+    ///   - progress: A `Progress` object to observe for updates.
+    ///   - didCancel: A closure that is called if the placeholder is removed before graduating.
+    /// - Returns: A `Placeholder` object that you can use to manage the item.
+    @objc func addPlaceholder(filename: String,
+                              host: SSHIdentity?,
+                              progress: Progress,
+                              didCancel: @escaping () -> ()) -> Placeholder {
+        let placeholder = Placeholder(filename: filename,
+                                      host: host,
+                                      progress: progress,
+                                      owner: self,
+                                      didCancel: didCancel)
+        files.append(.placeholder(placeholder))
+        return placeholder
+    }
+
+    /// Represents a file that is in the process of being prepared.
+    @objc class Placeholder: NSObject {
+        let filename: String
+        let host: SSHIdentity?
+        let progress: Progress
+        private(set) var url: URL?
+
+        private weak var owner: HorizontalFileListView?
+        private var didCancel: (() -> Void)?
+
+        fileprivate init(filename: String,
+                         host: SSHIdentity?,
+                         progress: Progress,
+                         owner: HorizontalFileListView, didCancel: @escaping () -> Void) {
+            self.filename = filename
+            self.host = host
+            self.progress = progress
+            self.owner = owner
+            self.didCancel = didCancel
+        }
+
+        /// Transitions the placeholder to a regular file item.
+        /// - Parameter url: The final URL of the file.
+        @objc func graduate(_ url: URL) {
+            guard let owner = self.owner else { return }
+
+            // Find this placeholder in the owner's files and replace it with a regular file.
+            if let index = owner.files.firstIndex(where: {
+                if case .placeholder(let p) = $0 {
+                    return p === self
+                }
+                return false
+            }) {
+                self.url = url
+                // Prevent didCancel from being called on successful graduation.
+                self.didCancel = nil
+
+                // Create a new array to trigger the `didSet` on the `files` property,
+                // which will reload the collection view.
+                var newFiles = owner.files
+                newFiles[index] = .regular(url.path)
+                owner.files = newFiles
+            }
+        }
+
+        /// Cancels the preparation. This is called automatically when the placeholder is removed from the view.
+        @objc func cancel() {
+            // Copy the closure to a local variable and nil out the property
+            // to prevent potential re-entrancy issues if the closure were to
+            // somehow trigger this method again.
+            let closure = didCancel
+            didCancel = nil
+            closure?()
+        }
+
+        override func isEqual(_ object: Any?) -> Bool {
+            guard let other = object as? Placeholder else {
+                return false
+            }
+            return filename == other.filename && host === other.host
+        }
+    }
+}
+
 
 // MARK: - NSCollectionViewDataSource
 
@@ -222,17 +351,17 @@ extension HorizontalFileListView: NSCollectionViewDataSource {
     func collectionView(_ collectionView: NSCollectionView, numberOfItemsInSection section: Int) -> Int {
         return files.count
     }
-    
+
     func collectionView(_ collectionView: NSCollectionView, itemForRepresentedObjectAt indexPath: IndexPath) -> NSCollectionViewItem {
         let item = collectionView.makeItem(withIdentifier: NSUserInterfaceItemIdentifier("FileItem"), for: indexPath) as! FileItemView
-        let filePath = files[indexPath.item]
-        item.configure(with: filePath)
+        let file = files[indexPath.item]
+        item.configure(with: file)
         item.setSelected(collectionView.selectionIndexes.contains(indexPath.item))
 
         item.onDeleteRequested = { [weak self] in
             self?.deleteItem(at: indexPath.item)
         }
-        
+
         return item
     }
 }
@@ -240,7 +369,6 @@ extension HorizontalFileListView: NSCollectionViewDataSource {
 // MARK: - NSCollectionViewDelegate
 
 extension HorizontalFileListView: NSCollectionViewDelegate {
-    // Replace the existing didSelectItemsAt method with this enhanced version:
     func collectionView(_ collectionView: NSCollectionView, didSelectItemsAt indexPaths: Set<IndexPath>) {
         notifySelectionChanged()
     }
@@ -337,7 +465,11 @@ class FileItemView: NSCollectionViewItem {
     private let nameLabel: NameLabel
     private let containerView: FileItemContainerView
     private let iconSelectionOverlay: iTermLayerBackedSolidColorView
-    private let deleteButton: NSButton // NEW
+    private let deleteButton: NSButton
+
+    // Progress Indicator Views
+    private let progressIndicator: NSProgressIndicator
+    private var progressObserver: Progress?
 
     private var isItemSelected: Bool = false
     private var originalFileName: String = "" // Store original filename
@@ -349,7 +481,8 @@ class FileItemView: NSCollectionViewItem {
         nameLabel = NameLabel()
         containerView = FileItemContainerView()
         iconSelectionOverlay = iTermLayerBackedSolidColorView()
-        deleteButton = NSButton() // NEW
+        deleteButton = NSButton()
+        progressIndicator = NSProgressIndicator()
 
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
 
@@ -358,6 +491,23 @@ class FileItemView: NSCollectionViewItem {
 
     required init?(coder: NSCoder) {
         it_fatalError()
+    }
+
+    deinit {
+        // Clean up observer if this item is deallocated.
+        if let progressObserver {
+            progressObserver.removeObservers(for: self)
+        }
+    }
+
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        // Clean up observer before the view is reused for another item.
+        if let progressObserver {
+            progressObserver.removeObservers(for: self)
+            self.progressObserver = nil
+        }
+        progressIndicator.isHidden = true
     }
 
     func refreshTracking() {
@@ -374,7 +524,7 @@ class FileItemView: NSCollectionViewItem {
 
         // Configure icon selection overlay (light gray around just the icon)
         iconSelectionOverlay.color = NSColor.it_dynamicColor(forLightMode: .quaternaryLabelColor,
-                                                             darkMode: .tertiaryLabelColor)
+                                                              darkMode: .tertiaryLabelColor)
         iconSelectionOverlay.layer?.cornerRadius = 3
         iconSelectionOverlay.isHidden = true
         iconSelectionOverlay.translatesAutoresizingMaskIntoConstraints = false
@@ -384,7 +534,7 @@ class FileItemView: NSCollectionViewItem {
         iconImageView.imageAlignment = .alignCenter
         iconImageView.translatesAutoresizingMaskIntoConstraints = false
 
-        // NEW: Configure delete button
+        // Configure delete button
         setupDeleteButton()
 
         // Configure name label for multi-line display
@@ -406,14 +556,25 @@ class FileItemView: NSCollectionViewItem {
         nameLabel.layer?.cornerRadius = 3
         nameLabel.layer?.masksToBounds = true
 
-        // Add subviews (icon selection overlay behind icon, then icon, then delete button, then label)
+        // Configure progress indicator
+        progressIndicator.style = .bar
+        progressIndicator.isIndeterminate = false
+        progressIndicator.minValue = 0.0
+        progressIndicator.maxValue = 1.0
+        progressIndicator.isHidden = true
+        progressIndicator.translatesAutoresizingMaskIntoConstraints = false
+        progressIndicator.wantsLayer = true
+        progressIndicator.layer?.cornerRadius = 2
+
+        // Add subviews
         containerView.addSubview(iconSelectionOverlay)
         containerView.addSubview(iconImageView)
-        containerView.addSubview(deleteButton) // NEW
+        containerView.addSubview(deleteButton)
         containerView.addSubview(nameLabel)
+        containerView.addSubview(progressIndicator)
 
         NSLayoutConstraint.activate([
-            // Icon selection overlay constraints (just around the icon area)
+            // Icon selection overlay constraints
             iconSelectionOverlay.centerXAnchor.constraint(equalTo: iconImageView.centerXAnchor),
             iconSelectionOverlay.centerYAnchor.constraint(equalTo: iconImageView.centerYAnchor),
             iconSelectionOverlay.widthAnchor.constraint(equalTo: iconImageView.widthAnchor, constant: 8),
@@ -425,9 +586,15 @@ class FileItemView: NSCollectionViewItem {
             iconImageView.widthAnchor.constraint(equalToConstant: 48),
             iconImageView.heightAnchor.constraint(equalToConstant: 48),
 
-            // Label constraints - fixed height to accommodate 2 lines
+            // Label constraints
             nameLabel.topAnchor.constraint(equalTo: iconImageView.bottomAnchor, constant: 5),
             nameLabel.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
+
+            // Progress Indicator constraints
+            progressIndicator.leadingAnchor.constraint(equalTo: iconImageView.leadingAnchor, constant: 4),
+            progressIndicator.trailingAnchor.constraint(equalTo: iconImageView.trailingAnchor, constant: -4),
+            progressIndicator.bottomAnchor.constraint(equalTo: iconImageView.bottomAnchor, constant: -4),
+            progressIndicator.heightAnchor.constraint(equalToConstant: 5),
         ])
 
         let nameWidthConstraint = nameLabel.widthAnchor.constraint(equalToConstant: filenameLabelWidth)
@@ -449,7 +616,6 @@ class FileItemView: NSCollectionViewItem {
         )
     }
 
-    // NEW: Setup delete button
     private func setupDeleteButton() {
         deleteButton.wantsLayer = true
         deleteButton.isBordered = false
@@ -472,7 +638,6 @@ class FileItemView: NSCollectionViewItem {
         deleteButton.alphaValue = 0
     }
 
-    // NEW: Create delete button image
     private func createDeleteButtonImage() -> NSImage {
         let diameter = 16
         let image = NSImage(size: NSSize(width: diameter, height: diameter))
@@ -509,18 +674,47 @@ class FileItemView: NSCollectionViewItem {
         deleteButton.animator().alphaValue = 0
     }
 
-    func configure(with filePath: String) {
-        // Get file name without path
-        let fileName = URL(fileURLWithPath: filePath).lastPathComponent
+    /// Configures the view for a given file, which can be a regular file or a placeholder.
+    func configure(with file: HorizontalFileListView.File) {
+        let isPlaceholder: Bool
+        let icon: NSImage
+        let fileName = file.filename
         originalFileName = fileName // Store for later use
+
+        // Clean up any previous observer first to prevent leaks
+        if let progressObserver {
+            progressObserver.removeObservers(for: self)
+            self.progressObserver = nil
+        }
+
+        switch file {
+        case .regular(let filePath):
+            isPlaceholder = false
+            icon = NSWorkspace.shared.icon(forFile: filePath)
+            progressIndicator.isHidden = true
+        case .placeholder(let placeholder):
+            isPlaceholder = true
+            // For placeholders, get a generic icon based on the file extension.
+            icon = NSWorkspace.shared.icon(forFileType: (fileName as NSString).pathExtension)
+            progressIndicator.isHidden = false
+
+            // Observe the progress object for UI updates.
+            let progress = placeholder.progress
+            self.progressObserver = progress // Keep a reference to remove observer later
+            progress.addObserver(owner: self, queue: .main) { [weak self] fraction in
+                self?.progressIndicator.doubleValue = fraction
+            }
+        }
 
         // Configure text with custom Finder-style truncation
         setFinderStyleText(fileName)
-
-        // Get file icon from system
-        let icon = NSWorkspace.shared.icon(forFile: filePath)
         iconImageView.image = icon
         deleteButton.alphaValue = 0
+
+        // Apply a dimmed appearance to placeholders.
+        let alpha = isPlaceholder ? CGFloat(0.5) : CGFloat(1.0)
+        iconImageView.alphaValue = alpha
+        nameLabel.alphaValue = alpha
     }
 
     private func setFinderStyleText(_ text: String) {
@@ -562,9 +756,9 @@ class FileItemView: NSCollectionViewItem {
             return text
         }
 
-        let halfWidth = availableWidth / 2
         var startIndex = text.startIndex
         var endIndex = text.endIndex
+        let halfWidth = availableWidth / 2.0
 
         // Find how much we can keep from the start
         while startIndex < text.endIndex {
@@ -594,7 +788,7 @@ class FileItemView: NSCollectionViewItem {
 
     private func wrapTextForTwoLines(_ words: [SeparatedComponent], font: NSFont, width: CGFloat) -> String {
         let breakpoint = (0..<words.count).firstIndex { i in
-            Array(words[0..<i]).joined().size(withAttributes: [.font: font]).width > width
+            Array(words[0..<(i + 1)]).joined().size(withAttributes: [.font: font]).width > width
         }
         guard let breakpoint else {
             return words.joined()
@@ -637,7 +831,7 @@ class FileItemView: NSCollectionViewItem {
             nameLabel.drawsBackground = false
         }
 
-        // Update text color by reconfiguring with original filename
+        // Update text color by re-applying the style
         setFinderStyleText(originalFileName)
     }
 }

@@ -97,6 +97,15 @@ class ChatListModel: ChatListDataSource {
         }
     }
 
+    private func setVectorStore(chatID: String, vectorStoreID: String) {
+        if let i = chatStorage.firstIndex(where: { $0.id == chatID }) {
+            var temp = chatStorage[i]
+            temp.vectorStore = vectorStoreID
+            chatStorage[i] = temp
+            NotificationCenter.default.post(name: Self.metadataDidChange, object: nil)
+        }
+    }
+
     func messages(forChat chatID: String,
                   createIfNeeded: Bool) -> DatabaseBackedArray<Message>? {
         if let array = messageStorage[chatID] {
@@ -175,7 +184,8 @@ class ChatListModel: ChatListDataSource {
             if let i = index(ofMessageID: uuid, inChat: chatID),
                let messages =  messages(forChat: chatID, createIfNeeded: false) {
                 var existing = messages[i]
-                existing.append(attachment)
+                existing.append(attachment,
+                                vectorStoreID: message.author == .user ? chat(id: chatID)?.vectorStore : nil)
                 messages[i] = existing
             } else {
                 DLog("Drop append “\(attachment)” of nonexistent message \(uuid)")
@@ -201,7 +211,7 @@ class ChatListModel: ChatListDataSource {
             return
         case .plainText, .markdown, .explanationRequest, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat,
-                .setPermissions, .terminalCommand, .multipart:
+                .setPermissions, .terminalCommand, .multipart, .vectorStoreCreated:
             break
         }
         messages(forChat: chatID, createIfNeeded: true)?.append(message)
@@ -213,6 +223,8 @@ class ChatListModel: ChatListDataSource {
             bump(chatID: chatID)
         case .renameChat(let string):
             rename(chatID: chatID, newName: string)
+        case .vectorStoreCreated(let id):
+            setVectorStore(chatID: chatID, vectorStoreID: id)
         }
     }
 

@@ -211,10 +211,11 @@ class ChatInputTextView: PlaceholderTextView {
         if event.modifierFlags.contains(.shift) {
             super.insertNewline(nil)
         } else {
-            _ = delegate?.textView?(self, doCommandBy: #selector(NSResponder.insertNewline(_:)))
-            self.string = ""
-            self.needsDisplay = true
-            invalidateIntrinsicContentSize()
+            if delegate?.textView?(self, doCommandBy: #selector(NSResponder.insertNewline(_:))) ?? false {
+                self.string = ""
+                self.needsDisplay = true
+                invalidateIntrinsicContentSize()
+            }
         }
     }
 

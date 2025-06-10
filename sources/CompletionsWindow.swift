@@ -44,8 +44,8 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
     }
 
     enum Mode {
-        case indicator
-        case completions(items: [Item])
+        case indicator  // show a progress indicator
+        case completions(items: [Item])  // show items
     }
 
     struct Item {
@@ -88,6 +88,18 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
                         _returnPressed?(items[i])
                     }
                 }
+            }
+        }
+    }
+    private var _tabPressed: ((Item?) -> ())?
+    var tabPressed: ((Item?) -> ())? {
+        get {
+            _tabPressed
+        }
+        set {
+            _tabPressed = newValue
+            tableView?.tabPressed = { [weak self] i in
+                self?._tabPressed?(i < 0 ? nil : self?.items[i])
             }
         }
     }
@@ -154,8 +166,22 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
         (contentView as? KeyCatchingContentView)?.canceled ?? false
     }
 
+    var selectedItem: Item? {
+        guard let i = tableView?.selectedRow else {
+            return nil
+        }
+        if i < 0 {
+            return nil
+        } else {
+            return items[i]
+        }
+    }
+
     // MARK: - Initializer
-    init(parent: NSWindow, location: NSRect, mode: Mode, placeholder: String = "Thinking…") {
+
+    // location is in screen coordinates and gives the location of the text field this is attached to.
+    init(parent: NSWindow, location: NSRect, mode: Mode, placeholder: String = "Thinking…", allowKey: Bool = false) {
+        self.allowKeyWindow = allowKey
         self.placeholder = placeholder
         self.mode = mode
         let rect = NSRect(x: 0, y: 0, width: 300, height: 200)
@@ -207,9 +233,9 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
         } else {
             // Place below
             NSRect(x: topLeftPointForBelow.x,
-                          y: topLeftPointForBelow.y - size.height,
-                          width: size.width,
-                          height: size.height)
+                   y: topLeftPointForBelow.y - size.height,
+                   width: size.width,
+                   height: size.height)
         }
 
         return frame.nudgedHorizontally(into: screen.visibleFrame)
@@ -587,16 +613,18 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
         return 0.05
     }
 
+    var allowKeyWindow = true
+
     override var canBecomeKey: Bool {
         switch mode {
         case .indicator:
             return closeOnResign
         case .completions:
-            return true
+            return allowKeyWindow
         }
     }
 
-    override var canBecomeMain: Bool { true }
+    override var canBecomeMain: Bool { allowKeyWindow }
 
     override func makeKeyAndOrderFront(_ sender: Any?) {
         if canceled {
@@ -781,6 +809,7 @@ class CompletionCell: NSTableCellView {
 class CompletionsTableView: NSTableView {
     override var acceptsFirstResponder: Bool { true }
     var returnPressed: ((Int) -> ())?
+    var tabPressed: ((Int) -> ())?
 
     override func becomeFirstResponder() -> Bool {
         super.becomeFirstResponder()
@@ -798,11 +827,17 @@ class CompletionsTableView: NSTableView {
         returnPressed?(-1)
     }
 
+    func invokeTabPressed() {
+        tabPressed?(selectedRow)
+    }
+
     override func keyDown(with event: NSEvent) {
         if event.keyCode == kVK_Escape {
             invokeEscapePressed()
         } else if event.keyCode == kVK_Return || event.keyCode == kVK_ANSI_KeypadEnter {
             invokeReturnPressed()
+        } else if event.keyCode == kVK_Tab {
+            invokeTabPressed()
         } else if !event.modifierFlags.contains(.function) {
             // On any other typing key, show the search field.
             if let window = self.window as? CompletionsWindow,

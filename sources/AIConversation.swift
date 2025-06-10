@@ -11,6 +11,9 @@ struct AIConversation {
         var completion: ((Result<String, Error>) -> ())?
         var streaming: ((LLM.StreamingUpdate) -> ())?
         var registrationNeeded: ((@escaping (AITermController.Registration) -> ()) -> ())?
+        var createVectorStoreCompletion: ((Result<String, Error>) -> ())?
+        var uploadFileCompletion: ((Result<String, Error>) -> ())?
+        var addFilesToVectorStoreCompletion: ((Error?) -> ())?
 
         func aitermControllerWillSendRequest(_ sender: AITermController) {
             busy = true
@@ -42,6 +45,41 @@ struct AIConversation {
         func aitermController(_ sender: AITermController, didStreamAttachment attachment: LLM.Message.Attachment) {
             streaming?(.appendAttachment(attachment))
         }
+
+        func aitermController(_ sender: AITermController,
+                              didCreateVectorStore id: String,
+                              withName name: String) {
+            busy = false
+            createVectorStoreCompletion?(Result.success(id))
+        }
+
+        func aitermController(_ sender: AITermController,
+                              didFailToCreateVectorStoreWithError error: Error) {
+            busy = false
+            createVectorStoreCompletion?(Result.failure(error))
+
+        }
+
+        func aitermController(_ sender: AITermController,
+                              didUploadFileWithID id: String) {
+            busy = false
+            uploadFileCompletion?(Result.success(id))
+        }
+        func aitermController(_ sender: AITermController,
+                              didFailToUploadFileWithError error: Error) {
+            busy = false
+            uploadFileCompletion?(Result.failure(error))
+        }
+        func aitermControllerDidAddFilesToVectorStore(_ sender: AITermController) {
+            busy = false
+            addFilesToVectorStoreCompletion?(nil)
+        }
+
+        func aitermControllerDidFailToAddFilesToVectorStore(_ sender: AITermController, error: Error) {
+            busy = false
+            addFilesToVectorStoreCompletion?(error)
+        }
+
     }
 
     var messages: [AITermController.Message]
@@ -117,6 +155,86 @@ struct AIConversation {
         add(AITermController.Message(role: role, content: text))
     }
 
+    private func cancel() {
+        controller.cancel()
+        delegate.completion = { _ in }
+        delegate.streaming = nil
+        delegate.registrationNeeded = { _ in }
+        delegate.createVectorStoreCompletion = nil
+        delegate.uploadFileCompletion = nil
+        delegate.addFilesToVectorStoreCompletion = nil
+    }
+
+    func prepare(completion: @escaping (Error?) -> ()) {
+        if delegate.busy {
+            cancel()
+        }
+        delegate.registrationNeeded = { [weak registrationProvider] regCompletion in
+            if let registrationProvider {
+                registrationProvider.registrationProviderRequestRegistration() { registration in
+                    if let registration {
+                        regCompletion(registration)
+                        completion(nil)
+                    } else {
+                        completion(AIError("You must provide a valid API key to use AI features in iTerm2."))
+                    }
+                }
+            } else {
+                DLog("No registration provider found")
+                completion(AIError("You must provide a valid API key to use AI features in iTerm2"))
+            }
+        }
+    }
+
+    func createVectorStore(name: String, completion: @escaping (Result<String, Error>) -> ()) {
+        if delegate.busy {
+            cancel()
+        }
+        prepare { error in
+            if let error {
+                completion(.failure(error))
+            } else {
+                controller.request(createVectorStoreNamed: name)
+            }
+        }
+        delegate.createVectorStoreCompletion = completion
+        controller.request(createVectorStoreNamed: name)
+    }
+
+    func uploadFile(name: String,
+                    content: Data,
+                    completion: @escaping (Result<String, Error>) -> ()) {
+        if delegate.busy {
+            cancel()
+        }
+        prepare { error in
+            if let error {
+                completion(.failure(error))
+            } else {
+                controller.request(uploadFileNamed: name, content: content)
+            }
+        }
+        delegate.uploadFileCompletion = completion
+        controller.request(uploadFileNamed: name, content: content)
+    }
+
+    func addFilesToVectorStore(fileIDs: [String],
+                               vectorStoreID: String,
+                               completion: @escaping (Error?) -> ()) {
+        if delegate.busy {
+            cancel()
+        }
+        prepare { error in
+            if let error {
+                completion(error)
+            } else {
+                controller.request(addFiles: fileIDs, toVectorStore: vectorStoreID)
+            }
+        }
+        delegate.addFilesToVectorStoreCompletion = completion
+        controller.request(addFiles: fileIDs, toVectorStore: vectorStoreID)
+    }
+
     mutating func complete(_ completion: @escaping (Result<AIConversation, Error>) -> ()) {
         complete(streaming: nil, completion: completion)
     }
@@ -125,29 +243,15 @@ struct AIConversation {
                            completion: @escaping (Result<AIConversation, Error>) -> ()) {
         precondition(!messages.isEmpty)
 
-        if delegate.busy {
-            controller.cancel()
-            delegate.completion = { _ in }
-            delegate.streaming = nil
-            delegate.registrationNeeded = { _ in }
-        }
-
-        let prior = messages
         let controller = self.controller
         let messages = self.truncatedMessages
-        delegate.registrationNeeded = { [weak registrationProvider] regCompletion in
-            if let registrationProvider {
-                registrationProvider.registrationProviderRequestRegistration() { registration in
-                    if let registration {
-                        regCompletion(registration)
-                        controller.request(messages: messages, stream: streaming != nil && controller.supportsStreaming)
-                    } else {
-                        completion(.failure(AIError("You must provide a valid API key to use AI features in iTerm2.")))
-                    }
-                }
+        prepare { error in
+            if let error {
+                completion(.failure(error))
             } else {
-                DLog("No registration provider found")
-                completion(.failure(AIError("You must provide a valid API key to use AI features in iTerm2")))
+                controller.request(
+                    messages: messages,
+                    stream: streaming != nil && controller.supportsStreaming)
             }
         }
 

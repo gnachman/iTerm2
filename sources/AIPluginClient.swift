@@ -8,14 +8,62 @@
 import CryptoKit
 import JavaScriptCore
 
-struct WebRequest: Codable, CustomDebugStringConvertible {
+struct WebRequest: CustomDebugStringConvertible, Codable {
     var debugDescription: String {
         return "\(method) \(url)\n\(headers.debugDescription)\n\n\(body)"
     }
     var headers: [String: String]
     var method: String
-    var body: String
+    enum Body {
+        case string(String)
+        case bytes([UInt8])
+    }
+    var body: Body
     var url: String
+
+    enum CodingKeys: String, CodingKey {
+        case headers
+        case method
+        case body
+        case url
+    }
+
+    init(headers: [String: String], method: String, body: Body, url: String) {
+        self.headers = headers
+        self.method = method
+        self.body = body
+        self.url = url
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        headers = try container.decode([String: String].self, forKey: .headers)
+        method = try container.decode(String.self, forKey: .method)
+        url = try container.decode(String.self, forKey: .url)
+
+        if let stringValue = try? container.decode(String.self, forKey: .body) {
+            body = .string(stringValue)
+        } else if let byteArray = try? container.decode([UInt8].self, forKey: .body) {
+            body = .bytes(byteArray)
+        } else {
+            throw DecodingError.dataCorruptedError(forKey: .body, in: container, debugDescription: "Expected string or [UInt8] for body")
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(headers, forKey: .headers)
+        try container.encode(method, forKey: .method)
+        try container.encode(url, forKey: .url)
+
+        switch body {
+        case .string(let s):
+            try container.encode(s, forKey: .body)
+        case .bytes(let bytes):
+            try container.encode(bytes, forKey: .body)
+        }
+    }
 }
 
 struct WebResponse: Codable {
@@ -141,55 +189,6 @@ class iTermAIClient {
             return try plugin.version()
         case .failure(let error):
             throw error
-        }
-    }
-
-    // A Cancellation provides a way to cancel an asynchronous operation. The function to implement
-    // cancellation can be provided after creation.
-    // It safe to use concurrently.
-    // It guarantees that the code to perform cancellation is executed exactly once if canceled.
-    class Cancellation {
-        private var lock = Mutex()
-        private var _impl: (() -> ())?
-        private var _canceled = false
-
-        // Set this to a closure that implements cancellation. You can reassign to this as needed.
-        // If this was canceled prior to setting impl for the first time, the setter may run the
-        // closure synchronously.
-        var impl: (() -> ())? {
-            set {
-                lock.sync {
-                    if let f = newValue, _impl == nil, _canceled {
-                        // Canceled before the first impl was set so cancel immediately.
-                        DLog("already canceled")
-                        f()
-                    } else {
-                        _impl = newValue
-                    }
-                }
-            }
-            get {
-                lock.sync { _impl }
-            }
-        }
-
-        // Has cancel() ever been called?
-        var canceled: Bool {
-            lock.sync { _canceled }
-        }
-
-        // Idempotent. Runs the cancellation handler eventually.
-        func cancel() {
-            DLog("cancel")
-            lock.sync {
-                guard !_canceled else {
-                    return
-                }
-                _canceled = true
-                let f = _impl
-                _impl = nil
-                f?()
-            }
         }
     }
 

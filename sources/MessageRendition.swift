@@ -11,7 +11,7 @@ struct MessageRendition {
             case regular
             case codeAttachment
             case statusUpdate
-            case fileAttachment(id: String, file: LLM.Message.Attachment.AttachmentType.File)
+            case fileAttachment(id: String, name: String, file: LLM.Message.Attachment.AttachmentType.File?)
         }
         var kind: Kind
         var icon: NSImage?

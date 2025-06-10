@@ -11,7 +11,8 @@ class FileAttachmentSubpartView: NSView {
     private let icon: NSImage
     private let filename: NSAttributedString
     private let id: String
-    private let file: LLM.Message.Attachment.AttachmentType.File
+    private let file: LLM.Message.Attachment.AttachmentType.File?
+    private let name: String
     private let attachment: LLM.Message.Attachment
     private var timer: Timer?
 
@@ -19,13 +20,17 @@ class FileAttachmentSubpartView: NSView {
     private let filenameLabel = NSTextField()
     private var dragTimer: Timer?
 
-    init(icon: NSImage, filename: NSAttributedString, id: String, file: LLM.Message.Attachment.AttachmentType.File) {
+    init(icon: NSImage, filename: NSAttributedString, id: String, name: String, file: LLM.Message.Attachment.AttachmentType.File?) {
         self.icon = icon
         self.id = id
         self.filename = filename
+        self.name = name
         self.file = file
-        self.attachment = LLM.Message.Attachment(inline: false, id: id, type: .file(file))
-
+        if let file {
+            self.attachment = LLM.Message.Attachment(inline: false, id: id, type: .file(file))
+        } else {
+            self.attachment = LLM.Message.Attachment(inline: false, id: id, type: .fileID(id: id, name: name))
+        }
         super.init(frame: .zero)
 
         setupView()

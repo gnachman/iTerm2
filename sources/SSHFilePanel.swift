@@ -14,7 +14,7 @@ import Cocoa
 @MainActor
 protocol SSHFilePanelDataSource: AnyObject {
     /// Get the SSH endpoint for a connected host. This provides access to the remote file system.
-    func remoteFilePanelSSHEndpoint(for identity: SSHIdentity) -> SSHEndpoint?
+    func remoteFilePanelSSHEndpoints(for identity: SSHIdentity) -> [SSHEndpoint]
 
     /// Gets a list of currently available SSH identities.
     func remoteFilePanelConnectedHosts() -> [SSHIdentity]
@@ -64,6 +64,9 @@ class SSHFilePanel: NSWindowController {
     private var ignoreSidebarChange = 0
     private(set) var selectedFiles: [SSHFileDescriptor] = []
     private var lastPath = [SSHIdentity: String]()
+    var canChooseDirectories = false
+    var canChooseFiles = true
+    private var initialized = false
 
     // MARK: - Data Properties
     weak var dataSource: SSHFilePanelDataSource? {
@@ -116,6 +119,10 @@ class SSHFilePanel: NSWindowController {
         setupWindow()
     }
 
+    func windowDidResize(_ notification: Notification) {
+        saveWindowState()
+    }
+
     // MARK: - Notifications
 
     private func connectedHostsIncludingLocalhost() -> [SSHIdentity] {
@@ -138,7 +145,9 @@ class SSHFilePanel: NSWindowController {
         let connectedHosts = connectedHostsIncludingLocalhost()
 
         if let firstHost = connectedHosts.first {
-            selectEndpoint(forIdentity: firstHost, initialPath: nil, withHistory: true)
+            Task { @MainActor in
+                await selectEndpoint(forIdentity: firstHost, initialPath: nil, withHistory: true)
+            }
         } else {
             currentEndpoint = nil
             currentPath = nil
@@ -146,38 +155,43 @@ class SSHFilePanel: NSWindowController {
         }
 
         sidebar.connectedHosts = connectedHosts
+        initialized = true
+    }
+
+    private func defaultPathOptions(for sshIdentity: SSHIdentity) -> [String] {
+        return [lastPath[sshIdentity],
+                savedPath(for: sshIdentity),
+                endpoint(for: sshIdentity)?.homeDirectory,
+                "/"].compactMap { $0 }
     }
 
     private func defaultPath(for sshIdentity: SSHIdentity) -> String {
-        if let path = lastPath[sshIdentity] {
-            return path
-        }
-        let endpoint = endpoint(for: sshIdentity)
-        return endpoint?.homeDirectory ?? "/"
+        return defaultPathOptions(for: sshIdentity).first!
     }
 
+    @discardableResult
     private func selectEndpoint(forIdentity sshIdentity: SSHIdentity,
                                 initialPath: String?,
-                                withHistory: Bool) {
+                                withHistory: Bool) async -> Bool {
         currentEndpoint = endpoint(for: sshIdentity)
         if currentEndpoint != nil {
             sidebar.selectedIdentity = sshIdentity
             currentPath = SSHFileDescriptor(absolutePath: defaultPath(for: sshIdentity),
                                             sshIdentity: sshIdentity)
-            Task { @MainActor in
-                if withHistory {
-                    await navigateToPathWithHistory(SSHFileDescriptor(absolutePath: initialPath ?? defaultPath(for: sshIdentity),
-                                                                      sshIdentity: sshIdentity))
-                } else {
-                    await navigateToPath(SSHFileDescriptor(absolutePath: initialPath ?? defaultPath(for: sshIdentity),
-                                                           sshIdentity: sshIdentity))
-                }
+            defer {
                 updateViewsForCurrentPath()
             }
+            if withHistory {
+                return await navigateToPathWithHistory(SSHFileDescriptor(absolutePath: initialPath ?? defaultPath(for: sshIdentity),
+                                                                  sshIdentity: sshIdentity))
+            }
+            return await navigateToPath(SSHFileDescriptor(absolutePath: initialPath ?? defaultPath(for: sshIdentity),
+                                                          sshIdentity: sshIdentity))
         } else {
             sidebar.selectedIdentity = nil
             currentPath = nil
             updateViewsForCurrentPath()
+            return true
         }
     }
 
@@ -185,7 +199,7 @@ class SSHFilePanel: NSWindowController {
         if identity == SSHIdentity.localhost {
             return LocalhostEndpoint.instance
         }
-        return dataSource?.remoteFilePanelSSHEndpoint(for: identity)
+        return dataSource?.remoteFilePanelSSHEndpoints(for: identity).first
     }
 
     @MainActor
@@ -201,8 +215,11 @@ class SSHFilePanel: NSWindowController {
     }
 
     @MainActor
-    private func navigateToPath(_ path: SSHFileDescriptor) async {
-        guard let endpoint = self.endpoint(for: path.sshIdentity) else { return }
+    @discardableResult
+    private func navigateToPath(_ path: SSHFileDescriptor) async -> Bool {
+        guard let endpoint = self.endpoint(for: path.sshIdentity) else {
+            return false
+        }
 
         do {
             // Verify the path exists
@@ -213,16 +230,18 @@ class SSHFilePanel: NSWindowController {
                 defer {
                     ignoreSidebarChange -= 1
                 }
-                selectEndpoint(forIdentity: path.sshIdentity,
-                               initialPath: path.absolutePath,
-                               withHistory: false)
+                return await selectEndpoint(forIdentity: path.sshIdentity,
+                                            initialPath: path.absolutePath,
+                                            withHistory: false)
             } else {
                 currentPath = path
                 updateViewsForCurrentPath()
+                return true
             }
         } catch {
             print("Failed to navigate to path \(path): \(error)")
         }
+        return false
     }
 
     // MARK: - UI Setup
@@ -232,11 +251,6 @@ class SSHFilePanel: NSWindowController {
         setupSplitView(in: contentView)
         setupSidebar()
         setupMainContent()
-
-        // Set sidebar width after UI is set up
-        DispatchQueue.main.async {
-            self.splitView.setPosition(200, ofDividerAt: 0)
-        }
     }
 
     private func setupWindow() {
@@ -317,9 +331,18 @@ class SSHFilePanel: NSWindowController {
         
         // Setup buttons
         setupButtons()
-        
+
+        let spacer = NSView()
+        spacer.translatesAutoresizingMaskIntoConstraints = false
+
+        let spacer2 = NSView()
+        spacer2.translatesAutoresizingMaskIntoConstraints = false
+
+        let spacer3 = NSView()
+        spacer3.translatesAutoresizingMaskIntoConstraints = false
+
         // Create main vertical stack
-        let mainStackView = NSStackView(views: [toolbarView, separatorLine, fileList, separatorLine2, buttonStackView])
+        let mainStackView = NSStackView(views: [spacer, toolbarView, separatorLine, fileList, separatorLine2, spacer2, buttonStackView, spacer3])
         mainStackView.translatesAutoresizingMaskIntoConstraints = false
         mainStackView.orientation = .vertical
         mainStackView.alignment = .leading
@@ -330,6 +353,8 @@ class SSHFilePanel: NSWindowController {
         splitView.addSubview(mainContentView)
         
         NSLayoutConstraint.activate([
+            spacer.heightAnchor.constraint(equalToConstant: 9),
+
             mainStackView.leadingAnchor.constraint(equalTo: mainContentView.leadingAnchor),
             mainStackView.trailingAnchor.constraint(equalTo: mainContentView.trailingAnchor),
             mainStackView.topAnchor.constraint(equalTo: mainContentView.topAnchor),
@@ -352,8 +377,13 @@ class SSHFilePanel: NSWindowController {
             separatorLine.trailingAnchor.constraint(equalTo: mainStackView.trailingAnchor),
             fileList.leadingAnchor.constraint(equalTo: mainStackView.leadingAnchor),
             fileList.trailingAnchor.constraint(equalTo: mainStackView.trailingAnchor),
+
+            spacer3.heightAnchor.constraint(equalToConstant: 8),
+
             buttonStackView.leadingAnchor.constraint(equalTo: mainStackView.leadingAnchor),
             buttonStackView.trailingAnchor.constraint(equalTo: mainStackView.trailingAnchor),
+
+            spacer2.heightAnchor.constraint(equalToConstant: 8),
         ])
     }
 
@@ -427,13 +457,13 @@ class SSHFilePanel: NSWindowController {
 
         NSLayoutConstraint.activate([
             // Back button - left aligned with margin
-            backButton.leadingAnchor.constraint(equalTo: toolbarView.leadingAnchor, constant: 12),
+            backButton.leadingAnchor.constraint(equalTo: toolbarView.leadingAnchor, constant: 20),
             backButton.centerYAnchor.constraint(equalTo: toolbarView.centerYAnchor),
             backButton.widthAnchor.constraint(equalToConstant: 24),
             backButton.heightAnchor.constraint(equalToConstant: 20),
 
             // Forward button - next to back button
-            forwardButton.leadingAnchor.constraint(equalTo: backButton.trailingAnchor, constant: 4),
+            forwardButton.leadingAnchor.constraint(equalTo: backButton.trailingAnchor),
             forwardButton.centerYAnchor.constraint(equalTo: toolbarView.centerYAnchor),
             forwardButton.widthAnchor.constraint(equalToConstant: 24),
             forwardButton.heightAnchor.constraint(equalToConstant: 20),
@@ -444,7 +474,7 @@ class SSHFilePanel: NSWindowController {
             locationButton.widthAnchor.constraint(equalToConstant: 208),
 
             // Search field - right aligned with margin
-            searchField.trailingAnchor.constraint(equalTo: toolbarView.trailingAnchor, constant: -12),
+            searchField.trailingAnchor.constraint(equalTo: toolbarView.trailingAnchor, constant: -20),
             searchField.centerYAnchor.constraint(equalTo: toolbarView.centerYAnchor),
             searchFieldMinWidthConstraint,
             searchFieldMaxWidthConstraint,
@@ -463,6 +493,9 @@ class SSHFilePanel: NSWindowController {
     private func setupFileTable() {
         fileList = SSHFilePanelFileList()
         fileList.translatesAutoresizingMaskIntoConstraints = false
+        fileList.canChooseDirectories = canChooseDirectories
+        fileList.canChooseFiles = canChooseFiles
+
         fileList.delegate = self
     }
 
@@ -528,16 +561,15 @@ class SSHFilePanel: NSWindowController {
     }
 
     @objc private func cancelButtonClicked(_ sender: Any) {
-        // Sheet presentation
+        saveWindowState()
         if let sheetParent = window?.sheetParent {
+            // Sheet presentation
             sheetParent.endSheet(window!, returnCode: .cancel)
-        }
-        // Modal presentation
-        else if NSApp.modalWindow == window {
+        } else if NSApp.modalWindow == window {
+            // Modal presentation
             NSApp.stopModal(withCode: .cancel)
-        }
-        // Non-modal presentation
-        else {
+        } else {
+            // Non-modal presentation
             window?.close()
         }
     }
@@ -548,7 +580,7 @@ class SSHFilePanel: NSWindowController {
             return
         }
         let selection = fileList.selectedFiles
-        if selection.count == 1 && selection[0].isDirectory {
+        if selection.count == 1 && selection[0].isDirectory && !canChooseDirectories {
             Task { @MainActor in
                 await navigateToPathWithHistory(SSHFileDescriptor(absolutePath: selection[0].file.absolutePath,
                                                                   sshIdentity: currentIdentity) )
@@ -560,6 +592,7 @@ class SSHFilePanel: NSWindowController {
             cancelButtonClicked(sender)
             return
         }
+        saveWindowState()
         self.selectedFiles = selection.map {
             SSHFileDescriptor(absolutePath: $0.file.absolutePath,
                               sshIdentity: endpoint.sshIdentity)
@@ -652,6 +685,7 @@ extension SSHFilePanel: NSSplitViewDelegate {
     func splitViewDidResizeSubviews(_ notification: Notification) {
         // Update minimum window size whenever subviews are resized
         updateMinimumWindowSize()
+        saveWindowState()
     }
 }
 
@@ -753,48 +787,106 @@ extension SSHFilePanel {
 
     // MARK: - Go to Folder Dialog
 
-    private func showGoToFolderDialog() {
-        let alert = NSAlert()
-        alert.messageText = "Go to the folder:"
-        alert.informativeText = "Type a pathname or select from the pop-up menu"
-        alert.addButton(withTitle: "Go")
-        alert.addButton(withTitle: "Cancel")
+    private class Cache {
+        private var dict = [String: Result<[RemoteFile], Error>]()
+        var sort = FileSorting.byName
 
-        let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
-        textField.stringValue = currentPath?.absolutePath ?? ""
-        textField.placeholderString = "Enter path (e.g., /usr/local/bin)"
-
-        // Create container view for text field with proper margins
-        let containerView = NSView(frame: NSRect(x: 0, y: 0, width: 320, height: 44))
-        containerView.addSubview(textField)
-
-        textField.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            textField.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
-            textField.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            textField.widthAnchor.constraint(equalToConstant: 300),
-            textField.heightAnchor.constraint(equalToConstant: 24)
-        ])
-
-        alert.accessoryView = containerView
-
-        // Set the text field as first responder
-        DispatchQueue.main.async {
-            textField.becomeFirstResponder()
-            textField.selectText(nil)
-        }
-
-        let response = alert.runModal()
-
-        if response == .alertFirstButtonReturn, let identity = currentEndpoint?.sshIdentity {
-            let enteredPath = textField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !enteredPath.isEmpty {
-                let expandedPath = expandPath(enteredPath)
-                Task {
-                    await navigateToPathWithHistory(SSHFileDescriptor(absolutePath: expandedPath,
-                                                                      sshIdentity: identity))
+        func listFiles(path: String, endpoint: SSHEndpoint) async throws -> [RemoteFile] {
+            if let cachedResult = dict[path] {
+                switch cachedResult {
+                    case .success(let files):
+                    return files
+                case .failure(let error):
+                    throw error
                 }
             }
+            do {
+                let result = try await endpoint.listFiles(path, sort: sort)
+                dict[path] = .success(result)
+                return result
+            } catch {
+                dict[path] = .failure(error)
+                throw error
+            }
+        }
+    }
+
+    private func showGoToFolderDialog() {
+        let cache = Cache()
+        let identity = currentEndpoint?.sshIdentity ?? SSHIdentity.localhost
+        let dialog = SSHFolderDialog(currentPath: currentPath?.absolutePath,
+                                     hostname: identity.host,
+                                     completionsProvider: { [weak self] basePath in
+            return await self?.completions(basePath: basePath,
+                                           sshIdentity: identity,
+                                           cache: cache) ?? []
+        },
+                                     onNavigate: { [weak self] enteredPath in
+            guard let self else {
+                return
+            }
+
+            let expandedPath = self.expandPath(enteredPath)
+            Task {
+                await self.navigateToPathWithHistory(
+                    SSHFileDescriptor(
+                        absolutePath: expandedPath,
+                        sshIdentity: identity
+                    )
+                )
+            }
+        })
+
+        dialog.runModal()
+    }
+
+    private func completions(basePath rawBasePath: String,
+                             sshIdentity: SSHIdentity,
+                             cache: SSHFilePanel.Cache) async -> [String]{
+        guard let endpoint = endpoint(for: sshIdentity) else {
+            return []
+        }
+        do {
+            let basePath = expandPath(rawBasePath).lowercased()
+            var listPath: any StringProtocol
+            let requiredPrefix: String
+            let siblings: [String]
+            print("Complete \(basePath)")
+            if basePath != "/", let stat = try? await endpoint.stat(basePath), stat.kind.isFolder {
+                // Base path exists and is a folder. Suggest its children.
+                listPath = basePath.removing(suffix: "/")
+                requiredPrefix = basePath.removing(suffix: "/") + "/"
+
+                let maybeSiblings = try? await cache.listFiles(path: basePath.deletingLastPathComponent, endpoint: endpoint)
+                siblings = (maybeSiblings ?? []).filter { candidate in
+                    return candidate.kind.isFolder && candidate.absolutePath.hasPrefix(basePath)
+                }.map {
+                    $0.absolutePath.lowercased()
+                }
+                print("Base path is a folder.")
+            } else {
+                // Base path does not exist or is not a folder. Suggest only children of the enclosing folder.
+                siblings = []
+                listPath = basePath.deletingLastPathComponent.removing(suffix: "/")
+                requiredPrefix = basePath
+                print("Base path is not a folder.")
+            }
+            if listPath.isEmpty {
+                listPath = "/"
+            }
+            print("listPath=\(listPath), requiredPrefix=\(requiredPrefix), siblings=\(siblings)")
+            let children = try await cache.listFiles(path: String(listPath), endpoint: endpoint).filter { candidate in
+                return candidate.kind.isFolder && candidate.absolutePath.lowercased().hasPrefix(requiredPrefix)
+            }.map {
+                $0.absolutePath.lowercased()
+            }
+            print("children=\(children)")
+            let result = (siblings + children).sorted(by: <)
+            return result
+        } catch {
+            print(error)
+            DLog("\(error)")
+            return []
         }
     }
 
@@ -833,13 +925,14 @@ extension SSHFilePanel {
     private struct RestorationKeys {
         static let windowFrame = "SSHFilePanel.windowFrame"
         static let sidebarWidth = "SSHFilePanel.sidebarWidth"
-        static let currentPath = "SSHFilePanel.currentPath"
-        static let sshIdentity = "SSHFilePanel.sshIdentity"
+        static let currentPathPrefix = "SSHFilePanel.currentPath."  // Append SSHIdentity.stringIdentifier to get a complete key
     }
 
     // MARK: - Save State
     func saveWindowState() {
-        guard let window = window else { return }
+        guard let window, initialized else {
+            return
+        }
 
         let defaults = UserDefaults.standard
 
@@ -854,13 +947,7 @@ extension SSHFilePanel {
         }
 
         // Save current path and SSH identity
-        defaults.set(currentPath?.absolutePath, forKey: RestorationKeys.currentPath)
-
-        if let identity = currentEndpoint?.sshIdentity {
-            defaults.set(identity.toUserDefaultsObject(), forKey: RestorationKeys.sshIdentity)
-        }
-
-        defaults.synchronize()
+        defaults.set(currentPath?.absolutePath, forKey: RestorationKeys.currentPathPrefix + (currentPath?.sshIdentity ?? SSHIdentity.localhost).stringIdentifier)
     }
 
     // MARK: - Restore State
@@ -882,17 +969,15 @@ extension SSHFilePanel {
         // Restore sidebar width
         let sidebarWidth = defaults.double(forKey: RestorationKeys.sidebarWidth)
         if sidebarWidth > 0 {
-            DispatchQueue.main.async {
-                self.splitView.setPosition(sidebarWidth, ofDividerAt: 0)
-            }
+            self.splitView.setPosition(sidebarWidth, ofDividerAt: 0)
+        } else {
+            self.splitView.setPosition(sidebarWidth, ofDividerAt: 200)
         }
+    }
 
-        // Restore current path (will be used when data source is set)
-        if let restoredPath = defaults.string(forKey: RestorationKeys.currentPath),
-           let sshIdentity = SSHIdentity(userDefaultsObject: defaults.object(forKey: RestorationKeys.sshIdentity)),
-           self.endpoint(for: sshIdentity) !=  nil {
-            currentPath = SSHFileDescriptor(absolutePath: restoredPath, sshIdentity: sshIdentity)
-        }
+    private func savedPath(for identity: SSHIdentity) -> String? {
+        let defaults = UserDefaults.standard
+        return defaults.string(forKey: RestorationKeys.currentPathPrefix + identity.stringIdentifier)
     }
 }
 
@@ -901,7 +986,8 @@ extension SSHFilePanel {
 @available(macOS 11, *)
 extension SSHFilePanel {
 
-    func navigateToPathWithHistory(_ path: SSHFileDescriptor) async {
+    @discardableResult
+    func navigateToPathWithHistory(_ path: SSHFileDescriptor) async -> Bool {
         print("Navigate to \(path)")
         // Save current path to history before navigating
         if historyIndex < navigationHistory.count - 1 {
@@ -916,10 +1002,12 @@ extension SSHFilePanel {
         print("Index is \(historyIndex)")
 
         // Navigate to new path
-        await navigateToPath(path)
+        let succeeded = await navigateToPath(path)
 
         // Update button states
         updateNavigationButtons()
+
+        return succeeded
     }
 
     private func updateNavigationButtons() {
@@ -928,7 +1016,6 @@ extension SSHFilePanel {
     }
 
     private func backPath() -> SSHFileDescriptor? {
-        let previousPath: SSHFileDescriptor?
         while historyIndex > 0 {
             historyIndex -= 1
             let candidate = navigationHistory[historyIndex]
@@ -1015,6 +1102,73 @@ extension SSHFilePanel {
         }
     }
 
+    public struct iTermFilePanelError: LocalizedError, CustomStringConvertible, CustomNSError, Codable {
+        public internal(set) var message: String
+
+        public init(_ message: String) {
+            self.message = message
+        }
+
+        public var errorDescription: String? {
+            message
+        }
+
+        public var description: String {
+            message
+        }
+
+        var localizedDescription: String {
+            message
+        }
+
+        public static var errorDomain: String { "com.iterm2.file-panel" }
+        public var errorCode: Int { 1 }
+    }
+
+    struct Item {
+        var promise: iTermRenegablePromise<NSURL>
+        var filename: String
+        var host: SSHIdentity
+        var progress: Progress
+        var cancellation: Cancellation
+    }
+
+    func promiseItems() -> [Item] {
+        return selectedFiles.map { file in
+            let cancellation = Cancellation()
+            let progress = Progress()
+            let promise = iTermRenegablePromise<NSURL> { seal in
+                if file.sshIdentity == SSHIdentity.localhost {
+                    seal.fulfill(URL(fileURLWithPath: file.absolutePath) as NSURL)
+                } else if let endpoint = self.endpoint(for: file.sshIdentity),
+                          let tempFile = createFolderForTemporaryFile(name: file.absolutePath.lastPathComponent) {
+                    Task { @MainActor in
+                        do {
+                            let remoteFile = try await endpoint.stat(file.absolutePath)
+                            let data = try await endpoint.downloadChunked(
+                                remoteFile: remoteFile,
+                                progress: progress,
+                                cancellation: cancellation)
+                            try data.write(to: tempFile)
+                            seal.fulfill(tempFile as NSURL)
+                        } catch {
+                            seal.reject(error)
+                        }
+                    }
+                } else {
+                    seal.reject(iTermFilePanelError("The connection to \(file.sshIdentity.displayName) was lost."))
+                }
+            } renege: {
+                cancellation.cancel()
+            }
+            return Item(promise: promise,
+                        filename: file.absolutePath,
+                        host: file.sshIdentity,
+                        progress: progress,
+                        cancellation: cancellation)
+        }
+    }
+
     func fetchSelectedFiles(_ completion: @escaping ([URL]) -> ()) {
         Task { @MainActor in
             var result = [URL]()
@@ -1024,7 +1178,7 @@ extension SSHFilePanel {
                 } else if let endpoint = self.endpoint(for: file.sshIdentity),
                           let tempFile = createFolderForTemporaryFile(name: file.absolutePath.lastPathComponent) {
                     do {
-                        let data = try await endpoint.download(file.absolutePath, chunk: nil)
+                        let data = try await endpoint.download(file.absolutePath, chunk: nil, uniqueID: nil)
                         try data.write(to: tempFile)
                         result.append(tempFile)
                     } catch {
@@ -1057,6 +1211,8 @@ extension SSHFilePanel: SSHFilePanelFileListDelegate {
                 await navigateToPathWithHistory(SSHFileDescriptor(absolutePath: file.file.absolutePath,
                                                                   sshIdentity: file.sshIdentity))
             }
+        } else if canChooseFiles {
+            openButtonClicked(openButton)
         }
     }
     func sshFilePanelList(write node: SSHFilePanelFileList.FileNode,
@@ -1078,7 +1234,7 @@ extension SSHFilePanel: SSHFilePanelFileListDelegate {
                 } else {
                     print("Downloading file: \(fullPath)")
                     // For files, download the file content (download entire file by passing nil chunk)
-                    let data = try await endpoint.download(fullPath, chunk: nil)
+                    let data = try await endpoint.download(fullPath, chunk: nil, uniqueID: nil)
                     try data.write(to: url)
                     print("File download completed: \(data.count) bytes")
                     completionHandler(nil)
@@ -1101,7 +1257,7 @@ extension SSHFilePanel: SSHFilePanelFileListDelegate {
                     try FileManager.default.createDirectory(at: localFileURL, withIntermediateDirectories: true, attributes: nil)
                     await downloadDirectoryContents(from: remoteFilePath, to: localFileURL, using: endpoint)
                 } else {
-                    if let data = try? await endpoint.download(remoteFilePath, chunk: nil) {
+                    if let data = try? await endpoint.download(remoteFilePath, chunk: nil, uniqueID: nil) {
                         try? data.write(to: localFileURL)
                     }
                 }
@@ -1119,10 +1275,15 @@ extension SSHFilePanel: SSHFilePanelSidebarDelegate {
         if ignoreSidebarChange > 0 {
             return
         }
-        let descriptor = SSHFileDescriptor(absolutePath: defaultPath(for: sshIdentity),
-                                           sshIdentity: sshIdentity)
+        let options = defaultPathOptions(for: sshIdentity)
         Task { @MainActor in
-            await navigateToPathWithHistory(descriptor)
+            for option in options {
+                let descriptor = SSHFileDescriptor(absolutePath: option,
+                                                   sshIdentity: sshIdentity)
+                if await navigateToPathWithHistory(descriptor) {
+                    return
+                }
+            }
         }
     }
 

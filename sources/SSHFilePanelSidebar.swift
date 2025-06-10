@@ -111,7 +111,7 @@ class SSHFilePanelSidebar: NSView {
         }
     }
     private var filteredFavorites: [Favorite] = []
-    private let favoritesKey = "SSHFilePanelFavorites"
+    private let favoritesKey = "NoSyncSSHFilePanelFavorites"
 
     private enum FavoritesKeys: String {
         case sshIdentity
@@ -230,6 +230,41 @@ class SSHFilePanelSidebar: NSView {
             forKey: favoritesKey
         ) as? [[String: Any]] {
             unfilteredFavorites = dicts.compactMap { Favorite($0) }
+        } else {
+            // Import favorites from finder one time.
+            let path = NSHomeDirectory() + "/Library/Application Support/com.apple.sharedfilelist/com.apple.LSSharedFileList.FavoriteItems.sfl3"
+            guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)) else {
+                return
+            }
+
+            let allowedClasses: NSSet = [
+                NSDictionary.self,
+                NSArray.self,
+                NSData.self,
+                NSString.self,
+                NSURL.self
+            ]
+
+            guard let plist = try? NSKeyedUnarchiver.unarchivedObject(ofClasses: allowedClasses as! Set<AnyHashable>, from: data),
+                  let rootDict = plist as? NSDictionary,
+                  let items = rootDict["items"] as? [NSDictionary] else {
+                return
+            }
+
+            for item in items {
+                guard let bookmarkData = item["Bookmark"] as? Data else { continue }
+
+                var isStale = false
+                if let url = try? URL(resolvingBookmarkData: bookmarkData,
+                                      options: [.withoutUI, .withoutMounting],
+                                      relativeTo: nil,
+                                      bookmarkDataIsStale: &isStale) {
+                    unfilteredFavorites.append(Favorite(host: .localhost,
+                                                        path: url.path,
+                                                        shortenedPath: url.path.lastPathComponent))
+                }
+            }
+            saveFavorites()
         }
     }
 
@@ -607,42 +642,59 @@ extension SSHFilePanelSidebar: NSOutlineViewDelegate {
 
             cell?.textField?.stringValue = text
             return cell
-        }
-        else if let favorite = item as? Favorite {
+        } else if let favorite = item as? Favorite {
             identifier = NSUserInterfaceItemIdentifier("FavoriteCell")
             let attributedString = NSMutableAttributedString()
             let paragraphStyle = NSMutableParagraphStyle()
             paragraphStyle.lineBreakMode = .byTruncatingTail
-            let host = NSAttributedString(string: favorite.host.displayName,
-                                          attributes: [ .font: NSFont.systemFont(ofSize: NSFont.systemFontSize),
-                                                        .paragraphStyle: paragraphStyle,
-                                                        .foregroundColor: NSColor.controlTextColor ])
+            let bigFont = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+            let smallFont = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
             let path = NSAttributedString(string: favorite.shortenedPath ?? favorite.path,
-                                          attributes: [ .font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize),
+                                          attributes: [ .font: bigFont,
                                                         .paragraphStyle: paragraphStyle,
                                                         .foregroundColor: NSColor.controlTextColor])
-            attributedString.append(host)
-            attributedString.append(NSAttributedString(string: "\n"))
+            let host = NSAttributedString(string: favorite.host.displayName,
+                                          attributes: [ .font: smallFont,
+                                                        .paragraphStyle: paragraphStyle,
+                                                        .foregroundColor: NSColor.controlTextColor ])
             attributedString.append(path)
+            attributedString.append(NSAttributedString(string: "\n"))
+            attributedString.append(host)
             text = .right(attributedString)
-            image = NSImage.it_image(
-                forSymbolName: "folder",
-                accessibilityDescription: "Folder",
-                fallbackImageName: "folder",
-                for: SSHFilePanel.self
-            )
-        }
-        else if let host = item as? SSHIdentity {
+            if favorite.host == .localhost {
+                if let template = SystemFolderIconProvider.iconForFolder(
+                    at: URL(fileURLWithPath: favorite.path)) {
+                    image = template
+                    image?.isTemplate = true
+                } else {
+                    image = NSImage.it_image(
+                        forSymbolName: "folder",
+                        accessibilityDescription: "Folder",
+                        fallbackImageName: "folder",
+                        for: SSHFilePanelSidebar.self)
+                }
+            } else {
+                image = NSImage.it_image(
+                    forSymbolName: "folder",
+                    accessibilityDescription: "Folder",
+                    fallbackImageName: "folder",
+                    for: SSHFilePanel.self)
+            }
+        } else if let host = item as? SSHIdentity {
             identifier = NSUserInterfaceItemIdentifier("HostCell")
             text = .left(host.displayName)
-            image = NSImage.it_image(
-                forSymbolName: "desktopcomputer",
-                accessibilityDescription: "desktopcomputer",
-                fallbackImageName: "folder",
-                for: SSHFilePanel.self
-            )
-        }
-        else {
+            if let template = SystemFolderIconProvider.iconForUTI("com.apple.imac") {
+                image = template
+                image?.isTemplate = true
+            } else {
+                image = NSImage.it_image(
+                    forSymbolName: "server.rack",
+                    accessibilityDescription: "Server",
+                    fallbackImageName: "rack",
+                    for: SSHFilePanel.self
+                )
+            }
+        } else {
             return nil
         }
 
@@ -677,12 +729,13 @@ extension SSHFilePanelSidebar: NSOutlineViewDelegate {
             cell?.textField = textField
 
             NSLayoutConstraint.activate([
-                imageView.leadingAnchor.constraint(equalTo: cell!.leadingAnchor, constant: 8),
-                imageView.bottomAnchor.constraint(equalTo: textField.firstBaselineAnchor),
-                imageView.widthAnchor.constraint(equalToConstant: 16),
+                imageView.leadingAnchor.constraint(equalTo: cell!.leadingAnchor, constant: 3),
+                imageView.centerYAnchor.constraint(equalTo: textField.centerYAnchor),
+                imageView.heightAnchor.constraint(equalToConstant: 14),
+                imageView.widthAnchor.constraint(equalToConstant: 14),
 
-                textField.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 6),
-                textField.trailingAnchor.constraint(lessThanOrEqualTo: cell!.trailingAnchor, constant: -8),
+                textField.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 7),
+                textField.trailingAnchor.constraint(lessThanOrEqualTo: cell!.trailingAnchor),
                 textField.topAnchor.constraint(equalTo: cell!.topAnchor, constant: 4),
                 textField.bottomAnchor.constraint(equalTo: cell!.bottomAnchor, constant: -4)
             ])

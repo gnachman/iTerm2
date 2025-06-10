@@ -202,17 +202,17 @@ extension Message.Content {
             return switch attachment.type {
             case .code(let content):
                 content
-            case .statusUpdate, .file:
+            case .statusUpdate, .file, .fileID:
                 ""
             }
-        case let .multipart(parts):
+        case let .multipart(parts, _):
             return parts.compactMap { part -> String? in
                 switch part {
                 case .plainText(let text), .markdown(let text): text
                 case .attachment(let attachment):
                     switch attachment.type {
                     case .code(let text): text
-                    case .statusUpdate, .file: nil
+                    case .statusUpdate, .file, .fileID: nil
                     }
                 }
             }.joined(separator: "\n")
@@ -230,7 +230,7 @@ extension Message.Content {
         case let .terminalCommand(cmd):
             return cmd.command
         case  .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat,
-                .commit, .setPermissions:
+                .commit, .setPermissions, .vectorStoreCreated:
             return nil
         }
     }

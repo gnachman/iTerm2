@@ -86,7 +86,27 @@ class LocalhostEndpoint: SSHEndpoint {
         }
     }
 
-    func download(_ path: String, chunk: DownloadChunk?) async throws -> Data {
+    func cancelDownload(uniqueID: String) async throws {
+    }
+
+    func downloadChunked(remoteFile: RemoteFile, progress: Progress?, cancellation: Cancellation?) async throws -> Data {
+        it_assert(remoteFile.kind.isRegularFile, "Only files can be downloaded")
+        progress?.fraction = 0
+        if let cancellation, cancellation.canceled {
+            throw SSHEndpointException.transferCanceled
+        }
+        let uniqueID = UUID().uuidString
+        let result = try await download(remoteFile.absolutePath,
+                                        chunk: nil,
+                                        uniqueID: uniqueID)
+        progress?.fraction = 1.0
+        if let cancellation, cancellation.canceled {
+            throw SSHEndpointException.transferCanceled
+        }
+        return result
+    }
+
+    func download(_ path: String, chunk: DownloadChunk?, uniqueID uniqueIdentifier: String?) async throws -> Data {
         let fileURL = URL(fileURLWithPath: path)
         let handle = try FileHandle(forReadingFrom: fileURL)
         defer {

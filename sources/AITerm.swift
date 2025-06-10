@@ -9,6 +9,18 @@ protocol AITermControllerDelegate: AnyObject {
     func aitermController(_ sender: AITermController, didFailWithError: Error)
     func aitermControllerRequestRegistration(_ sender: AITermController,
                                              completion: @escaping (AITermController.Registration) -> ())
+    func aitermController(_ sender: AITermController,
+                          didCreateVectorStore id: String,
+                          withName name: String)
+    func aitermController(_ sender: AITermController,
+                          didFailToCreateVectorStoreWithError: Error)
+
+    func aitermController(_ sender: AITermController,
+                          didUploadFileWithID id: String)
+    func aitermController(_ sender: AITermController,
+                          didFailToUploadFileWithError: Error)
+    func aitermControllerDidAddFilesToVectorStore(_ sender: AITermController)
+    func aitermControllerDidFailToAddFilesToVectorStore(_ sender: AITermController, error: Error)
 }
 
 struct ChatGPTFunctionDeclaration: Codable {
@@ -37,6 +49,13 @@ class AITermController {
         }
     }
 
+    enum Query: Equatable {
+        case completion(String)
+        case createVectorStore(name: String)
+        case fileUpload(name: String, content: Data)
+        case addFilesToVectorStore(fileIDs: [String], vectorStoreID: String)
+    }
+
     enum State: Equatable, CustomDebugStringConvertible {
         var debugDescription: String {
             switch self {
@@ -44,13 +63,19 @@ class AITermController {
             case .initialized(query: let query, stream: let stream): return "initialized(\(query), stream=\(stream)"
             case .initializedMessages(messages: let messages, stream: let stream): return "initializedMessages(\(messages.count) messages, stream=\(stream)"
             case .querySent: return "querySent"
+            case .creatingVectorStore: return "creatingVectorStore"
+            case .uploadingFile: return "uploadingFile"
+            case .addingFileToVectorStore: return "addingFileToVectorStore"
             }
         }
         case ground
-        case initialized(query: String, stream: Bool)
+        case initialized(query: Query, stream: Bool)
         case initializedMessages(messages: [Message], stream: Bool)
         // streamParserState is nil if streaming is unsupported, otherwise it will be nonnil but perhaps empty
         case querySent(messages: [Message], streamParserState: StreamParserState?)
+        case creatingVectorStore
+        case uploadingFile
+        case addingFileToVectorStore
     }
 
     enum Event: CustomDebugStringConvertible {
@@ -91,12 +116,30 @@ class AITermController {
     }
 
     func request(query: String, stream: Bool = false) {
-        state = .initialized(query: query, stream: stream)
+        state = .initialized(query: .completion(query), stream: stream)
         handle(event: .begin)
     }
 
     func request(messages: [Message], stream: Bool) {
         state = .initializedMessages(messages: messages, stream: stream)
+        handle(event: .begin)
+    }
+
+    func request(createVectorStoreNamed name: String) {
+        state = .initialized(query: .createVectorStore(name: name), stream: false)
+        handle(event: .begin)
+    }
+
+    func request(addFiles fileIDs: [String], toVectorStore vectorStoreID: String) {
+        state = .initialized(
+            query: .addFilesToVectorStore(fileIDs: fileIDs,
+                                          vectorStoreID: vectorStoreID),
+            stream: false)
+        handle(event: .begin)
+    }
+
+    func request(uploadFileNamed name: String, content: Data) {
+        state = .initialized(query: .fileUpload(name: name, content: content), stream: false)
         handle(event: .begin)
     }
 
@@ -128,6 +171,40 @@ class AITermController {
             DLog("Ignore \(event) in ground state.")
             break
 
+        case .creatingVectorStore:
+            switch event {
+            case .begin, .pluginError, .cancel, .word:
+                it_fatalError()
+            case .webResponse:
+                state = .ground
+            case .error(let error):
+                self.delegate?.aitermController(
+                    self,
+                    didFailToCreateVectorStoreWithError: error)
+            }
+
+        case .uploadingFile:
+            switch event {
+            case .begin, .pluginError, .cancel, .word:
+                it_fatalError()
+            case .webResponse:
+                state = .ground
+            case .error(let error):
+                self.delegate?.aitermController(
+                    self,
+                    didFailToUploadFileWithError: error)
+            }
+
+        case .addingFileToVectorStore:
+            switch event {
+            case .begin, .pluginError, .cancel, .word:
+                it_fatalError()
+            case .webResponse:
+                state = .ground
+            case .error(let error):
+                self.delegate?.aitermControllerDidFailToAddFilesToVectorStore(self, error: error)
+            }
+
         case .initialized(query: let query, stream: let stream):
             switch event {
             case .begin:
@@ -136,11 +213,26 @@ class AITermController {
                     return
                 }
                 DispatchQueue.main.async { [self] in
-                    makeAPICall(query: query,
-                                registration: registration,
-                                stream: stream ? { [weak self] word in
-                        self?.handle(event: .word(word))
-                    } : nil)
+                    switch query {
+                    case .completion(let prompt):
+                        requestCompletion(query: prompt,
+                                    registration: registration,
+                                    stream: stream ? { [weak self] word in
+                            self?.handle(event: .word(word))
+                        } : nil)
+
+                    case .createVectorStore(name: let name):
+                        requestCreateVectorStore(name: name,
+                                                 registration: registration)
+                    case let .fileUpload(name: name, content: content):
+                        requestFileUpload(name: name,
+                                          content: content,
+                                          registration: registration)
+                    case let .addFilesToVectorStore(fileIDs: fileIDs, vectorStoreID: vectorStoreID):
+                        requestAddFilesToVectorStore(fileIDs: fileIDs,
+                                                     vectorStoreID: vectorStoreID,
+                                                     registration: registration)
+                    }
                 }
                 delegate?.aitermControllerWillSendRequest(self)
             case .error(let error):
@@ -169,7 +261,7 @@ class AITermController {
                     return
                 }
                 DispatchQueue.main.async { [self] in
-                    makeAPICall(messages: messages,
+                    requestCompletion(messages: messages,
                                 registration: registration,
                                 stream: stream ? { [weak self] word in
                         self?.handle(event: .word(word))
@@ -256,14 +348,14 @@ class AITermController {
         return URL(string: value) ?? URL(string: "about:empty")!
     }
 
-    private func makeAPICall(query: String, registration: Registration, stream: ((String) -> ())?) {
-        makeAPICall(messages: [Message(role: .user, content: query)],
+    private func requestCompletion(query: String, registration: Registration, stream: ((String) -> ())?) {
+        requestCompletion(messages: [Message(role: .user, content: query)],
                     registration: registration,
                     stream: stream)
     }
 
     private let client = iTermAIClient()
-    private var cancellation: iTermAIClient.Cancellation?
+    private var cancellation: Cancellation?
 
     static var provider: LLMProvider {
         let model = LLMMetadata.model()
@@ -275,7 +367,7 @@ class AITermController {
         Self.provider
     }
 
-    private func makeAPICall(messages: [Message], registration: Registration, stream: ((String) -> ())?) {
+    private func requestCompletion(messages: [Message], registration: Registration, stream: ((String) -> ())?) {
         var builder = LLMRequestBuilder(provider: llmProvider,
                                         apiKey: registration.apiKey,
                                         messages: messages,
@@ -305,6 +397,174 @@ class AITermController {
         state = .querySent(messages: messages,
                            streamParserState: stream == nil ? nil : StreamParserState(message: LLM.Message(role: nil),
                                                                                       buffer: Data()))
+    }
+
+    private func requestCreateVectorStore(name: String,
+                                          registration: Registration) {
+        let builder = LLMVectorStoreCreator(name: name,
+                                            provider: llmProvider,
+                                            apiKey: registration.apiKey)
+        let request: WebRequest
+        do {
+            request = try builder.webRequest()
+        } catch {
+            handle(event: .error(error))
+            return
+        }
+        state = .creatingVectorStore
+        _ = client.request(webRequest: request, stream: nil, completion: { [weak self] result in
+            guard let self else { return }
+            do {
+                switch result {
+                case .success(let webResponse):
+                    let id = try builder.idFromResponse(webResponse.data.lossyData)
+                    handle(event: .webResponse(webResponse))
+                    self.delegate?.aitermController(
+                        self,
+                        didCreateVectorStore: id,
+                        withName: name)
+                case .failure(let error):
+                    handle(event: .error(error))
+                }
+            } catch {
+                handle(event: .error(error))
+            }
+        })
+    }
+
+    private func requestAddFilesToVectorStore(fileIDs: [String],
+                                             vectorStoreID: String,
+                                             registration: Registration) {
+        guard let builder = LLMVectorStoreAdder(provider: llmProvider,
+                                                apiKey: registration.apiKey,
+                                                fileIDs: fileIDs,
+                                                vectorStoreID: vectorStoreID) else {
+            handle(event: .error(AIError("Vector stores are not supported with this LLM vendor")))
+            return
+        }
+        let request: WebRequest
+        do {
+            request = try builder.webRequest()
+        } catch {
+            handle(event: .error(error))
+            return
+        }
+        state = .addingFileToVectorStore
+        _ = client.request(webRequest: request, stream: nil, completion: { [weak self] result in
+            guard let self else { return }
+            state = .ground
+            do {
+                switch result {
+                case .success(let webResponse):
+                    let status = try builder.statusFromResponse(webResponse.data.lossyData)
+                    switch status {
+                    case .completed:
+                        delegate?.aitermControllerDidAddFilesToVectorStore(self)
+                    case .inProgress:
+                        scheduleVectorStorePoll(vectorStoreID: vectorStoreID,
+                                                batchID: try builder.batchIDFromResponse(webResponse.data.lossyData),
+                                                registration: registration)
+                    case .cancelled, .failed:
+                        handle(event: .error(AIError("Adding file to vector store failed")))
+                    }
+                case .failure(let error):
+                    handle(event: .error(error))
+                }
+            } catch {
+                handle(event: .error(error))
+            }
+        })
+    }
+
+    private func scheduleVectorStorePoll(vectorStoreID: String, batchID: String, registration: Registration) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: { [weak self] in
+            self?.checkVectorStoreReadiness(vectorStoreID: vectorStoreID,
+                                            batchID: batchID,
+                                            registration: registration)
+        })
+    }
+
+    private func checkVectorStoreReadiness(vectorStoreID: String,
+                                           batchID: String,
+                                           registration: Registration) {
+        guard let builder = LLMVectorStoreBatchStatusChecker(provider: llmProvider,
+                                                             apiKey: registration.apiKey,
+                                                             batchID: batchID,
+                                                             vectorStoreID: vectorStoreID) else {
+            handle(event: .error(AIError("Vector stores are not supported with this LLM vendor")))
+            return
+        }
+        let request: WebRequest
+        do {
+            request = try builder.webRequest()
+        } catch {
+            handle(event: .error(error))
+            return
+        }
+        _ = client.request(webRequest: request, stream: nil) { [weak self] result in
+            guard let self else { return }
+            do {
+                switch result {
+                case .success(let webResponse):
+                    let status = try builder.statusFromResponse(webResponse.data.lossyData)
+                    switch status {
+                    case .cancelled, .failed:
+                        state = .ground
+                        handle(event: .error(AIError("An error ocurred while ingesting files to vector storage")))
+                        delegate?.aitermControllerDidFailToAddFilesToVectorStore(self, error: AIError("The file may not be well formed."))
+                    case .completed:
+                        delegate?.aitermControllerDidAddFilesToVectorStore(self)
+                        state = .ground
+                    case .inProgress:
+                        scheduleVectorStorePoll(vectorStoreID: vectorStoreID, batchID: batchID, registration: registration)
+                    }
+                case .failure(let error):
+                    state = .ground
+                    handle(event: .error(error))
+                    delegate?.aitermControllerDidFailToAddFilesToVectorStore(self, error: error)
+                }
+            } catch {
+                state = .ground
+                handle(event: .error(error))
+                delegate?.aitermControllerDidFailToAddFilesToVectorStore(self, error: error)
+            }
+        }
+    }
+
+    private func requestFileUpload(name: String,
+                                   content: Data,
+                                   registration: Registration) {
+        guard let builder = LLMFileUploader(provider: llmProvider,
+                                            apiKey: registration.apiKey,
+                                            fileName: name,
+                                            content: content) else {
+            handle(event: .error(AIError("File upload not supported with this LLM vendor")))
+            return
+        }
+        let request: WebRequest
+        do {
+            request = try builder.webRequest()
+        } catch {
+            handle(event: .error(error))
+            return
+        }
+        state = .uploadingFile
+        _ = client.request(webRequest: request, stream: nil, completion: { [weak self] result in
+            guard let self else { return }
+            state = .ground
+            do {
+                switch result {
+                case .success(let webResponse):
+                    let id = try builder.idFromResponse(webResponse.data.lossyData)
+                    handle(event: .webResponse(webResponse))
+                    delegate?.aitermController(self, didUploadFileWithID: id)
+                case .failure(let error):
+                    handle(event: .error(error))
+                }
+            } catch {
+                handle(event: .error(error))
+            }
+        })
     }
 
     struct StreamParserState: Equatable {
@@ -427,7 +687,8 @@ class AITermController {
 
     private func doFunctionCall(_ message: Message, call functionCall: LLM.FunctionCall) {
         switch state {
-        case .ground, .initialized, .initializedMessages:
+        case .ground, .initialized, .initializedMessages, .creatingVectorStore,
+                .uploadingFile, .addingFileToVectorStore:
             DLog("Unexpected function call in state \(state)")
             return
         case .querySent(let messages, _):

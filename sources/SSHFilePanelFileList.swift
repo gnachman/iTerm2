@@ -150,6 +150,8 @@ class SSHFilePanelFileList: NSScrollView {
     private var currentSortColumn: ColumnID = .name
     private var sortAscending = true
     weak var delegate: SSHFilePanelFileListDelegate?
+    var canChooseDirectories = false
+    var canChooseFiles = false
 
     init() {
         fileOutlineView = SSHFilePanelFileListOutlineView()
@@ -668,7 +670,56 @@ extension SSHFilePanelFileList: NSOutlineViewDelegate {
     }
 
     func outlineView(_ outlineView: NSOutlineView, shouldSelectItem item: Any) -> Bool {
+        if !canChooseFiles, let node = item as? FileNode, !node.isDirectory {
+            // If you can't choose files then don't allow selecting a file.
+            return false
+        }
         return true
+    }
+
+    func outlineView(_ outlineView: NSOutlineView,
+                     selectionIndexesForProposedSelection proposedSelection: IndexSet) -> IndexSet {
+        var fileIndexes = IndexSet()
+        var dirIndexes  = IndexSet()
+
+        for row in proposedSelection {
+            guard let item = outlineView.item(atRow: row) else {
+                continue
+            }
+
+            if itemIsDirectory(item: item) {
+                dirIndexes.insert(row)
+            } else {
+                fileIndexes.insert(row)
+            }
+        }
+
+        // If any directory is selected, allow exactly one directory. Prefer a newly added one.
+        if let firstProposed = dirIndexes.first {
+            if !fileIndexes.isEmpty {
+                // You selected both files and directories. Keep the files. This way you can
+                // click+shift-click to select a range and just get the files.
+                return fileIndexes
+            }
+            let addedDirectories = Set(proposedSelection).subtracting(Set(outlineView.selectedRowIndexes))
+            return IndexSet(integer: addedDirectories.first ?? firstProposed)
+        }
+
+        // Otherwise allow any number of files (or none)
+        return fileIndexes
+    }
+
+    private func itemIsDirectory(item: Any?) -> Bool {
+        guard let node = item as? FileNode else {
+            return false
+        }
+        return node.isDirectory
+    }
+
+    private var haveSelectedFolder: Bool {
+        return fileOutlineView.selectedRowIndexes.contains { index in
+            return itemIsDirectory(item: fileOutlineView.item(atRow: index))
+        }
     }
 
     func outlineView(_ outlineView: NSOutlineView, shouldShowCellExpansionFor tableColumn: NSTableColumn?, item: Any) -> Bool {

@@ -12,8 +12,18 @@ protocol SSHEndpoint: AnyObject {
 
     @available(macOS 11.0, *)
     @MainActor
-    func download(_ path: String, chunk: DownloadChunk?) async throws -> Data
+    func download(_ path: String, chunk: DownloadChunk?, uniqueID: String?) async throws -> Data
 
+    @available(macOS 11.0, *)
+    @MainActor
+    func downloadChunked(remoteFile: RemoteFile,
+                         progress: Progress?,
+                         cancellation: Cancellation?) async throws -> Data
+
+    @available(macOS 11.0, *)
+    @MainActor
+    func cancelDownload(uniqueID: String) async throws
+    
     @available(macOS 11.0, *)
     @MainActor
     func stat(_ path: String) async throws -> RemoteFile
@@ -98,6 +108,21 @@ public struct RemoteFile: Codable, Equatable, CustomDebugStringConvertible {
                 return "folder"
             case .host:
                 return "host"
+            }
+        }
+
+        var isRegularFile: Bool {
+            if case .file = self {
+                return true
+            } else {
+                return false
+            }
+        }
+        var isFolder: Bool {
+            if case .folder = self {
+                return true
+            } else {
+                return false
             }
         }
     }

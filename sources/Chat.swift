@@ -12,6 +12,7 @@ struct Chat {
     var lastModifiedDate = Date()
     var sessionGuid: String?
     var permissions: String
+    var vectorStore: String?
 }
 
 extension Chat: iTermDatabaseElement {
@@ -22,6 +23,7 @@ extension Chat: iTermDatabaseElement {
         case lastModifiedDate
         case sessionGuid
         case permissions
+        case vectorStore
     }
     static func schema() -> String {
         """
@@ -31,14 +33,26 @@ extension Chat: iTermDatabaseElement {
              \(Columns.creationDate.rawValue) integer not null,
              \(Columns.lastModifiedDate.rawValue) integer not null,
              \(Columns.sessionGuid.rawValue) text,
-             \(Columns.permissions.rawValue) text)
+             \(Columns.permissions.rawValue) text,
+             \(Columns.vectorStore.rawValue) text)
         """
+    }
+    static func migrations(existingColumns: [String]) -> [Migration] {
+        var result = [Migration]()
+        if !existingColumns.contains(Columns.vectorStore.rawValue) {
+            result.append(.init(query: "ALTER TABLE Chat ADD COLUMN \(Columns.vectorStore.rawValue) text", args: []))
+        }
+        return result
     }
 
     static func fetchAllQuery() -> String {
         "select * from Chat order by \(Columns.lastModifiedDate) DESC"
     }
 
+    static func tableInfoQuery() -> String {
+        "PRAGMA table_info(Chat)"
+    }
+    
     func removeQuery() -> (String, [Any]) {
         ("delete from Chat where \(Columns.uuid.rawValue) = ?", [id])
     }
@@ -51,8 +65,9 @@ extension Chat: iTermDatabaseElement {
              \(Columns.creationDate.rawValue), 
              \(Columns.lastModifiedDate.rawValue), 
              \(Columns.sessionGuid.rawValue),
-             \(Columns.permissions.rawValue))
-        values (?, ?, ?, ?, ?, ?)
+             \(Columns.permissions.rawValue),
+             \(Columns.vectorStore.rawValue))
+        values (?, ?, ?, ?, ?, ?, ?)
         """,
          [
             id,
@@ -60,7 +75,8 @@ extension Chat: iTermDatabaseElement {
             creationDate.timeIntervalSince1970,
             lastModifiedDate.timeIntervalSince1970,
             sessionGuid ?? NSNull(),
-            permissions
+            permissions,
+            vectorStore ?? NSNull()
          ])
     }
 
@@ -70,7 +86,8 @@ extension Chat: iTermDatabaseElement {
                         \(Columns.creationDate.rawValue) = ?,
                         \(Columns.lastModifiedDate.rawValue) = ?,
                         \(Columns.sessionGuid.rawValue) = ?,
-                        \(Columns.permissions.rawValue) = ?
+                        \(Columns.permissions.rawValue) = ?,
+                        \(Columns.vectorStore.rawValue) = ?
         where \(Columns.uuid.rawValue) = ?
         """,
         [
@@ -79,6 +96,7 @@ extension Chat: iTermDatabaseElement {
             lastModifiedDate.timeIntervalSince1970,
             sessionGuid ?? NSNull(),
             permissions,
+            vectorStore ?? NSNull(),
 
             // where clause
             id
@@ -99,6 +117,7 @@ extension Chat: iTermDatabaseElement {
         self.lastModifiedDate = lastModifiedDate
         self.sessionGuid = result.string(forColumn: Columns.sessionGuid.rawValue)
         self.permissions = result.string(forColumn: Columns.permissions.rawValue) ?? ""
+        self.vectorStore = result.string(forColumn: Columns.vectorStore.rawValue)
     }
 }
 

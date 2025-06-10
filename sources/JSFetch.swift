@@ -94,10 +94,10 @@ class PluginClient {
     private func performHTTPRequest(method: String,
                                     url: String,
                                     headers: [String: String],
-                                    body: String,
+                                    body: Data,
                                     streaming: Bool,
                                     callback: @escaping (String?, String?) -> Void) {
-        DLog("performHTTPRequest(\(method), \(url), \(headers), \(body), \(streaming)")
+        DLog("performHTTPRequest(\(method), \(url), \(headers), \(body.lossyString), \(streaming)")
         guard let url = URL(string: url) else {
             DLog("Invalid url \(url)")
             callback(nil, "Invalid URL")
@@ -111,7 +111,7 @@ class PluginClient {
         }
 
         if !body.isEmpty {
-            let data = body.lossyData
+            let data = body
             request.httpBodyStream = InputStream(data: data)
             request.setValue("\(data.count)", forHTTPHeaderField: "Content-Length")
         }
@@ -132,17 +132,30 @@ class PluginClient {
 
     private func registerFunctions(context: JSContext, stream: ((String) -> ())?) {
         DLog("registerFunctions")
-        let performRequest: @convention(block) (String, String, [String: String], String, JSValue) -> Void = { [weak self]
+        let performRequest: @convention(block) (String, String, [String: String], Any, JSValue) -> Void = { [weak self]
             method, url, headers, body, callback in
             guard let self else {
                 let noError: String? = nil
                 callback.call(withArguments: [noError as Any, "Plugin client deallocated"])
                 return
             }
+            let bodyData: Data? = switch body {
+            case let string as String:
+                string.lossyData
+            case let byteArray as [NSNumber]:
+                Data(byteArray.map { UInt8(truncating: $0) })
+            default:
+                nil
+            }
+            guard let bodyData else {
+                let noError: String? = nil
+                callback.call(withArguments: [noError as Any, "Invalid body"])
+                return
+            }
             self.performHTTPRequest(method: method,
                                     url: url,
                                     headers: headers,
-                                    body: body,
+                                    body: bodyData,
                                     streaming: stream != nil) { string, error in
                 if error == nil, let string, stream != nil {
                     if let streamCallback = context.objectForKeyedSubscript("onStream"), !streamCallback.isUndefined {

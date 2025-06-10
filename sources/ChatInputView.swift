@@ -32,7 +32,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
 
     weak var delegate: ChatInputViewDelegate?
 
-    var attachedFiles: [String] {
+    var attachedFiles: [HorizontalFileListView.File] {
         attachmentsView.files
     }
 
@@ -89,8 +89,13 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         }
         attachmentsView.onDidDeleteItems = { [weak self] in
             self?.updateAttachmentsView()
+            self?.updateSendButtonEnabled()
         }
-        let horizontalStack = ChatInputHorizontalStackView(views: [addAttachmentButton, inputTextFieldContainer, sendButton])
+        let horizontalStack = if iTermAdvancedSettingsModel.openAIResponsesAPI() {
+            ChatInputHorizontalStackView(views: [addAttachmentButton, inputTextFieldContainer, sendButton])
+        } else {
+            ChatInputHorizontalStackView(views: [inputTextFieldContainer, sendButton])
+        }
         horizontalStack.orientation = .horizontal
         horizontalStack.spacing = 6
         horizontalStack.translatesAutoresizingMaskIntoConstraints = false
@@ -133,6 +138,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         ])
 
         updateAttachmentsView()
+        updateSendButtonEnabled()
         setupDragAndDrop()
     }
 
@@ -148,6 +154,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         stringValue = ""
         attachmentsView.files.removeAll()
         updateAttachmentsView()
+        updateSendButtonEnabled()
     }
 
     @objc
@@ -156,49 +163,63 @@ class ChatInputView: NSView, NSTextFieldDelegate {
     }
 
     @objc private func attachmentButtonClicked() {
+        // Create the menu
+        let menu = NSMenu()
+
+        // Create menu items
+        let attachFileItem = NSMenuItem(title: "Attach File",
+                                        action: #selector(attachFile),
+                                        keyEquivalent: "")
+        let shareFolderItem = NSMenuItem(title: "Add Files or Folders to Project",
+                                         action: #selector(shareFolder),
+                                         keyEquivalent: "")
+
+        // Add items to the menu
+        menu.addItem(attachFileItem)
+        menu.addItem(shareFolderItem)
+
+        // Show the menu
+        NSMenu.popUpContextMenu(menu, with: NSApp.currentEvent!, for: addAttachmentButton)
+    }
+
+    @objc private func shareFolder() {
+
+    }
+
+    @objc private func attachFile() {
         guard let window else {
             return
         }
-        if #available(macOS 11, *) {
-            let sshFilePanel = SSHFilePanel()
-            sshFilePanel.dataSource = ConductorRegistry.instance
-            sshFilePanel.beginSheetModal(for: window) { [weak self] response in
-                guard response == .OK, let self else {
-                    return
+        let panel = iTermOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.beginSheetModal(for: window) { [weak self] response in
+            guard response == .OK, let self else {
+                return
+            }
+            for item in panel.items {
+                let placeholder = attachmentsView.addPlaceholder(filename: item.filename,
+                                                                 host: item.host,
+                                                                 progress: item.progress) {
+                    item.urlPromise.renege()
                 }
-                var attachments = attachmentsView.files
-                sshFilePanel.fetchSelectedFiles { [weak self] urls in
-                    guard let self else {
-                        return
-                    }
-                    attachments.append(contentsOf: urls.map { $0.path })
-                    attachmentsView.files = attachments
+                item.urlPromise.then { [weak self] url in
+                    guard let self else { return }
+                    placeholder.graduate(url as URL)
                     updateAttachmentsView()
+                    updateSendButtonEnabled()
                 }
             }
-        } else {
-            let openPanel = NSOpenPanel()
-            openPanel.allowsMultipleSelection = true
-            openPanel.canChooseDirectories = false
-            openPanel.canChooseFiles = true
-
-            openPanel.beginSheetModal(for: window) { [weak self] response in
-                guard response == .OK, let self else {
-                    return
-                }
-                var attachments = attachmentsView.files
-                for url in openPanel.urls {
-                    let path = url.path
-                    if !attachments.contains(path) {
-                        attachments.append(path)
-                    }
-                }
-                attachmentsView.files = attachments
-                updateAttachmentsView()
-            }
+            updateAttachmentsView()
+            updateSendButtonEnabled()
         }
     }
 
+    private func updateSendButtonEnabled() {
+        let hasPlaceholder = attachmentsView.files.anySatisfies { $0.isPlaceholder }
+        sendButton.isEnabled = !inputTextFieldContainer.stringValue.isEmpty && !hasPlaceholder
+    }
+    
     private func updateAttachmentsView() {
         verticalStack.setVisibilityPriority(attachmentsView.files.isEmpty ? .notVisible : .mustHold,
                                             for: attachmentsView)
@@ -208,12 +229,13 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         var attachments = attachmentsView.files
         for url in urls {
             let path = url.path
-            if !attachments.contains(path) {
-                attachments.append(path)
+            if !attachments.contains(.regular(path)) {
+                attachments.append(.regular(path))
             }
         }
         attachmentsView.files = attachments
         updateAttachmentsView()
+        updateSendButtonEnabled()
     }
 
     var isEnabled: Bool {
@@ -278,7 +300,7 @@ extension ChatInputView {
 
 extension ChatInputView: NSTextViewDelegate {
     func textView(_ textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
-        if commandSelector == #selector(NSResponder.insertNewline(_:)) {
+        if commandSelector == #selector(NSResponder.insertNewline(_:)) && sendButton.isEnabled {
             sendButtonClicked(self)
             return true
         }
@@ -286,6 +308,7 @@ extension ChatInputView: NSTextViewDelegate {
     }
 
     func textDidChange(_ notification: Notification) {
+        updateSendButtonEnabled()
         delegate?.textDidChange()
     }
 

@@ -45,7 +45,7 @@ class ChatClient {
             return processRemoteCommandRequest(chatID: chatID, message: message, request: request)
         case .plainText, .markdown, .explanationRequest, .remoteCommandResponse,
                 .selectSessionRequest, .clientLocal, .renameChat, .setPermissions,
-                .terminalCommand, .multipart:
+                .terminalCommand, .multipart, .vectorStoreCreated:
             return message
         case let .append(string: string, uuid: uuid):
             it_assert(partial)
@@ -253,7 +253,8 @@ class ChatClient {
         switch original.content {
         case .plainText, .markdown, .explanationRequest, .remoteCommandResponse, .clientLocal,
                 .renameChat, .append, .commit, .remoteCommandRequest, .selectSessionRequest,
-                .setPermissions, .terminalCommand, .appendAttachment, .multipart:
+                .setPermissions, .terminalCommand, .appendAttachment, .multipart,
+                .vectorStoreCreated:
             // These are impossible or just normal streaming messages.
             return appendMessage
 
@@ -275,6 +276,8 @@ class ChatClient {
                 case .file(let file):
                     // TODO: It would be better if explanation responses could hold multipart documents
                     response.append(file.content.lossyString, final: false)
+                case .fileID:
+                    it_fatalError()
                 }
             }
             update.messageID = uuid
@@ -304,7 +307,7 @@ class ChatClient {
         switch original.content {
         case .plainText, .markdown, .explanationRequest, .remoteCommandResponse, .clientLocal,
                 .renameChat, .append, .commit, .remoteCommandRequest, .selectSessionRequest,
-                .setPermissions, .terminalCommand, .appendAttachment, .multipart:
+                .setPermissions, .terminalCommand, .appendAttachment, .multipart, .vectorStoreCreated:
             // These are impossible or just normal streaming messages.
             return finalMessage
 

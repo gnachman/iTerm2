@@ -1700,8 +1700,13 @@ struct ResponsesBodyRequestBuilder {
                         case .statusUpdate:
                             return nil
                         case .file(let file):
+                            if mimeTypeIsTextual(file.mimeType) {
+                                return .inputText(.init(text: file.content.lossyString))
+                            }
                             return .inputFile(.init(fileData: "data:\(file.mimeType);base64," +  file.content.base64EncodedString(),
                                                     filename: file.name))
+                        case .fileID(let fileID, _):
+                            return .inputFile(.init(fileID: fileID))
                         }
                     case .multipart(_):
                         return nil
@@ -1713,6 +1718,37 @@ struct ResponsesBodyRequestBuilder {
         case .none:
             return nil
         }
+    }
+
+    private func mimeTypeIsTextual(_ mimeType: String) -> Bool {
+        if mimeType.hasPrefix("text/") {
+            return true
+        }
+        if mimeType == "application/json" {
+            return true
+        }
+        if mimeType == "application/javascript" {
+            return true
+        }
+        if mimeType == "application/ecmascript" {
+            return true
+        }
+        if mimeType.hasSuffix("+xml") {
+            return true
+        }
+        if mimeType == "application/xml" {
+            return true
+        }
+        if mimeType == "message/rfc822" {
+            return true
+        }
+        if mimeType == "application/x-sql" {
+            return true
+        }
+        if mimeType.starts(with: "application/x-tex") {
+            return true
+        }
+        return false
     }
 
     private var transformedHostedTools: [ResponsesRequestBody.Tool] {

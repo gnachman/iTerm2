@@ -69,6 +69,8 @@ struct CompletionsMessage: Codable, Equatable {
                 content = statusUpdate.displayString
             case .file(let file):
                 content = file.content.lossyString
+            case .fileID(_, let name):
+                content = "A file named \(name)"  // If I add file support here then this must be fixed.
             }
         case .functionCall(let call, _):
             functionName = call.name

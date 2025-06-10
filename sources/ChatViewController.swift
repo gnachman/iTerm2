@@ -695,7 +695,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
 
             case .plainText, .markdown, .explanationRequest, .explanationResponse,
                     .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest,
-                    .renameChat, .commit, .setPermissions:
+                    .renameChat, .commit, .setPermissions, .vectorStoreCreated:
                 let cell = RegularMessageCellView()
                 configure(cell: cell, for: message.message, isLast: isLastMessage)
                 return cell
@@ -787,6 +787,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                     }
                 }
             }
+        case .vectorStoreCreated:
+            it_fatalError()
         case .selectSessionRequest(let originalMessage):
             cell.buttonClicked = { [weak self] identifier, messageID in
                 guard let self else {
@@ -908,6 +910,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         switch message.content {
         case .plainText:
             editable = message.author == .user
+        case .vectorStoreCreated:
+            it_fatalError()
         case .clientLocal(let clientLocal):
             switch clientLocal.action {
             case .pickingSession:
@@ -939,7 +943,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         case .terminalCommand(let cmd):
                 .command(.init(command: cmd.command,
                                url: cmd.url))
-        case .multipart(let subparts):
+        case .multipart(let subparts, _):
                 .multipart(subparts.map { subpart in
                     switch subpart {
                     case .attachment(let attachment):
@@ -958,10 +962,17 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                                     textColor: message.textColor))
                         case .file(let file):
                             MessageRendition.SubpartContainer(
-                                kind: .fileAttachment(id: attachment.id, file: file),
+                                kind: .fileAttachment(id: attachment.id, name: file.name, file: file),
                                 icon: NSImage.iconImage(filename: file.name,
                                                         size: .init(width: 16, height: 16)),
                                 attributedString: AttributedStringForFilename(file.name,
+                                                                              textColor: message.textColor))
+                        case .fileID(id: let id, name: let name):
+                            MessageRendition.SubpartContainer(
+                                kind: .fileAttachment(id: id, name: name, file: nil),
+                                icon: NSImage.iconImage(filename: name,
+                                                        size: .init(width: 16, height: 16)),
+                                attributedString: AttributedStringForFilename(name,
                                                                               textColor: message.textColor))
                         }
                     case .plainText(let text):
@@ -1011,6 +1022,9 @@ extension LLM.Message.Attachment {
             } catch {
                 DLog("Failed to write to \(path): \(error)")
             }
+        case .fileID:
+            // TODO: Download the file
+            it_fatalError()
         }
         return path
     }
@@ -1028,6 +1042,9 @@ extension LLM.Message.Attachment {
              basePathForAttachments.appendingPathComponent(id).appendingPathComponent(file.name.lastPathComponent)].compactMap { $0 }
         case .statusUpdate:
             it_fatalError()
+        case .fileID:
+            // TODO: Download the file
+            []
         }
     }
 
@@ -1057,7 +1074,7 @@ extension ChatViewController: ChatInputViewDelegate {
 
     func mimeType(_ filename: String) -> String {
         let ext = filename.pathExtension
-        if let mime = extensionToMime[ext] {
+        if let mime = openAIExtensionToMime[ext] {
             return mime
         }
         if #available(macOS 11, *) {
@@ -1066,12 +1083,14 @@ extension ChatViewController: ChatInputViewDelegate {
                let mimeType = UTType(uti)?.preferredMIMEType {
                 return mimeType
             }
-            return "application/octet-stream"
+            // Personally, I'd rather use application/octet-stream but OpenAI won't accept it.
+            // Let's take a flying leap and try to interpret this unknown file as text.
+            return "text/plain"
         } else {
             let ext = (filename as NSString).pathExtension as CFString
             guard let uti = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, ext, nil)?.takeRetainedValue(),
                   let mime = UTTypeCopyPreferredTagWithClass(uti, kUTTagClassMIMEType)?.takeRetainedValue() as String? else {
-                return "application/octet-stream"
+                return "text/plain"
             }
             return mime
         }
@@ -1081,19 +1100,26 @@ extension ChatViewController: ChatInputViewDelegate {
         guard !text.isEmpty, let chatID else {
             return
         }
-        let attachments = inputView.attachedFiles.compactMap { filename in
-            if let data = try? Data(contentsOf: URL(fileURLWithPath: filename)) {
-                Message.Subpart.attachment(.init(
-                    inline: false,
-                    id: UUID().uuidString,
-                    type: .file(.init(name: filename.lastPathComponent,
-                                      content: data,
-                                      mimeType: mimeType(filename)))))
-            } else {
+        let attachments = inputView.attachedFiles.compactMap { item in
+            switch item {
+            case .regular(let filename):
+                if let data = try? Data(contentsOf: URL(fileURLWithPath: filename)) {
+                    Message.Subpart.attachment(.init(
+                        inline: false,
+                        id: UUID().uuidString,
+                        type: .file(.init(name: filename.lastPathComponent,
+                                          content: data,
+                                          mimeType: mimeType(filename)))))
+                } else {
+                    nil
+                }
+            case .placeholder:
                 nil
             }
         }
-        let configuration = Message.Configuration(hostedWebSearchEnabled: webSearchEnabled)
+        let vectorStoreIDs = [listModel.chat(id: chatID)?.vectorStore].compactMap { $0 }
+        let configuration = Message.Configuration(hostedWebSearchEnabled: webSearchEnabled,
+                                                  vectorStoreIDs: vectorStoreIDs)
         let message = if attachments.isEmpty {
             Message(chatID: chatID,
                     author: .user,
@@ -1104,7 +1130,8 @@ extension ChatViewController: ChatInputViewDelegate {
         } else {
             Message(chatID: chatID,
                     author: .user,
-                    content: .multipart([.plainText(text)] + attachments),
+                    content: .multipart([.plainText(text)] + attachments,
+                                        vectorStoreID: listModel.chat(id: chatID)?.vectorStore),
                     sentDate: Date(),
                     uniqueID: UUID(),
                     configuration: configuration)
@@ -1240,7 +1267,8 @@ extension Message.Content {
         switch self {
         case .multipart:
             it_fatalError()  // TODO: This will be hit. We need a different cell type for multipart messages.
-        case .renameChat, .append, .commit, .setPermissions, .terminalCommand, .appendAttachment:
+        case .renameChat, .append, .commit, .setPermissions, .terminalCommand, .appendAttachment,
+                .vectorStoreCreated:
             it_fatalError()
         case .plainText(let string):
             let paragraphStyle = NSMutableParagraphStyle()
@@ -1330,7 +1358,7 @@ extension Message {
         switch content {
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
                 .remoteCommandResponse, .renameChat, .append, .commit, .setPermissions,
-                .terminalCommand, .appendAttachment, .multipart:
+                .terminalCommand, .appendAttachment, .multipart, .vectorStoreCreated:
             []
         case .clientLocal(let clientLocal):
             switch clientLocal.action {

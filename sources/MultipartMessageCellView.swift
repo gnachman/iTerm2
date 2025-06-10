@@ -155,10 +155,11 @@ class MultipartMessageCellView: MessageCellView {
                 let container = createContainer(for: textView, isCodeAttachment: true, isStatusUpdate: true)
                 contentStack.addArrangedSubview(container)
                 textViews.append(textView)
-            case .fileAttachment(id: let id, file: let file):
+            case .fileAttachment(id: let id, name: let name, file: let file):
                 let view = FileAttachmentSubpartView(icon: subpart.icon!,
                                                      filename: subpart.attributedString,
                                                      id: id,
+                                                     name: name,
                                                      file: file)
                 view.translatesAutoresizingMaskIntoConstraints = false
                 let container = createContainer(for: view, isCodeAttachment: false, isStatusUpdate: false)

@@ -113,7 +113,7 @@ class ChatViewControllerModel {
             case .plainText, .markdown, .explanationRequest, .explanationResponse,
                     .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest,
                     .clientLocal, .renameChat, .commit, .setPermissions, .terminalCommand,
-                    .multipart:
+                    .multipart, .vectorStoreCreated:
                 return
             }
         }
@@ -205,7 +205,7 @@ class ChatViewControllerModel {
             }
         case .plainText, .markdown, .explanationRequest, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .commit,
-                .setPermissions, .terminalCommand, .multipart:
+                .setPermissions, .terminalCommand, .multipart, .vectorStoreCreated:
             break
         }
         let saved = showTypingIndicator

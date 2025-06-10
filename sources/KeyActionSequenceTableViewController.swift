@@ -240,17 +240,6 @@ extension KeyActionSequenceTableViewController: NSTableViewDelegate {
     }
 }
 
-extension Array {
-    mutating func remove(at indexes: IndexSet) {
-        self = Array(enumerated().reversed().filter { tuple in
-            let (index, _) = tuple
-            return !indexes.contains(index)
-        }.map {
-            $0.element
-        }.reversed())
-    }
-}
-
 @objc class BackspaceDeletingTableView: NSTableView {
     var backspace: (() -> ())? = nil
     override func keyDown(with event: NSEvent) {

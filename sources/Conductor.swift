@@ -96,6 +96,10 @@ class Conductor: NSObject, Codable {
     private var myJump: SSHReconnectionInfo?
     private var suggestionCache = SuggestionCache()
     @objc private(set) var environmentVariables = [String: String]()
+    private static var downloadSemaphore = {
+        let maxConcurrentDownloads = 2
+        return AsyncSemaphore(value: maxConcurrentDownloads)
+    }()
 
     @objc
     lazy var fileChecker: FileChecker? = {
@@ -216,7 +220,7 @@ class Conductor: NSObject, Codable {
 
     enum FileSubcommand: Codable, Equatable {
         case ls(path: Data, sorting: FileSorting)
-        case fetch(path: Data, chunk: DownloadChunk?)
+        case fetch(path: Data, chunk: DownloadChunk?, uniqueID: String?)
         case stat(path: Data)
         case fetchSuggestions(request: SuggestionRequest.Inputs)
         case rm(path: Data, recursive: Bool)
@@ -241,7 +245,7 @@ class Conductor: NSObject, Codable {
                 }
                 return "ls\n\(path.nonEmptyBase64EncodedString())\n\(sortString)"
 
-            case .fetch(let path, let chunk):
+            case .fetch(let path, let chunk, _):
                 if let chunk {
                     return "fetch\n\(path.nonEmptyBase64EncodedString())\n\(chunk.offset)\n\(chunk.size)"
                 } else {
@@ -310,7 +314,7 @@ class Conductor: NSObject, Codable {
             switch self {
             case .ls(let path, let sort):
                 return "ls \(path.stringOrHex) \(sort)"
-            case .fetch(let path, let chunk):
+            case .fetch(let path, let chunk, _):
                 if let chunk {
                     return "fetch \(path.stringOrHex) offset=\(chunk.offset) size=\(chunk.size)"
                 } else {
@@ -939,7 +943,7 @@ class Conductor: NSObject, Codable {
         restored = true
 
         super.init()
-        
+
         ConductorRegistry.instance.addConductor(self, for: sshIdentity)
     }
 
@@ -2257,6 +2261,7 @@ enum SSHEndpointException: LocalizedError {
     case connectionClosed
     case fileNotFound
     case internalError  // e.g., non-decodable data from fetch
+    case transferCanceled
 
     var errorDescription: String? {
         get {
@@ -2267,6 +2272,8 @@ enum SSHEndpointException: LocalizedError {
                 return "File not found"
             case .internalError:
                 return "Internal error"
+            case .transferCanceled:
+                return "File transfer canceled"
             }
         }
     }
@@ -2350,18 +2357,39 @@ extension Conductor: SSHEndpoint {
     }
 
     @MainActor
-    func download(_ path: String, chunk: DownloadChunk?) async throws -> Data {
+    func download(_ path: String, chunk: DownloadChunk?, uniqueID: String?) async throws -> Data {
         return try await logging("download \(path) \(String(describing: chunk))") {
             guard let pathData = path.data(using: .utf8) else {
                 throw iTermFileProviderServiceError.notFound(path)
             }
-            log("perform file operation to download \(path)")
-            let b64: String = try await performFileOperation(subcommand: .fetch(path: pathData, chunk: chunk))
+            log("perform file operation to download \(path) with uniqueID \(uniqueID.d)")
+            let b64: String = try await performFileOperation(subcommand: .fetch(path: pathData,
+                                                                                chunk: chunk,
+                                                                                uniqueID: uniqueID))
             log("file operation completed with \(b64.count) characters")
             guard let data = Data(base64Encoded: b64) else {
                 throw iTermFileProviderServiceError.internalError("Server returned garbage")
             }
             return data
+        }
+    }
+
+    @MainActor
+    func cancelDownload(uniqueID: String) async throws {
+        DLog("Want to cancel downloads with unique ID \(uniqueID)")
+        cancelEnqueuedRequests { command in
+            switch command {
+            case .framerFile(let sub):
+                switch sub {
+                case .fetch(path: let path, chunk: _, uniqueID: uniqueID):
+                    DLog("Canceling fetch of \(path) with unique ID \(uniqueID)")
+                    return true
+                default:
+                    return false
+                }
+            default:
+                return false
+            }
         }
     }
 
@@ -2703,7 +2731,7 @@ extension Conductor: ConductorFileTransferDelegate {
                     return
                 }
                 let chunk = DownloadChunk(offset: offset, size: chunkSize)
-                let data = try await download(remotePath, chunk: chunk)
+                let data = try await download(remotePath, chunk: chunk, uniqueID: nil)
                 if data.isEmpty {
                     done = true
                 } else {
@@ -2719,6 +2747,58 @@ extension Conductor: ConductorFileTransferDelegate {
         } catch {
             fileTransfer.fail(reason: error.localizedDescription)
         }
+    }
+
+    @MainActor
+    func downloadChunked(remoteFile: RemoteFile,
+                         progress: Progress?,
+                         cancellation: Cancellation?) async throws -> Data {
+        DLog("Download of \(remoteFile.absolutePath) requested")
+        await Conductor.downloadSemaphore.wait()
+        DLog("Download of \(remoteFile.absolutePath) beginning")
+        defer {
+            Task {
+                DLog("Download of \(remoteFile.absolutePath) completely finished")
+                await Conductor.downloadSemaphore.signal()
+            }
+        }
+        #warning("TODO: Handle directories")
+        it_assert(remoteFile.kind.isRegularFile, "Only files can be downloaded")
+        var done = false
+        var offset = 0
+        var result = Data()
+
+        let chunkSize = 1024
+        progress?.fraction = 0
+        let uniqueID = UUID().uuidString
+        cancellation?.impl = { [weak self] in
+            Task { @MainActor in
+                self?.DLog("Download of \(remoteFile.absolutePath) canceled")
+                try? await self?.cancelDownload(uniqueID: uniqueID)
+            }
+        }
+        while !done, !(cancellation?.canceled ?? false) {
+            let chunk = DownloadChunk(offset: offset, size: chunkSize)
+            let data = try await download(remoteFile.absolutePath,
+                                          chunk: chunk,
+                                          uniqueID: uniqueID)
+            if data.isEmpty {
+                progress?.fraction = 1.0
+                done = true
+            } else {
+                offset += data.count
+                if let size = remoteFile.size {
+                    progress?.fraction = min(1.0, max(0, Double(offset) / Double(size)))
+                }
+                result.append(data)
+            }
+        }
+        if let cancellation, cancellation.canceled {
+            DLog("Download of \(remoteFile.absolutePath) throwing")
+            throw SSHEndpointException.transferCanceled
+        }
+        DLog("Download of \(remoteFile.absolutePath) finished normally")
+        return result
     }
 
     @MainActor
@@ -2929,22 +3009,22 @@ class ConductorRegistry {
         }
     }
 
-    subscript (identity: SSHIdentity) -> Conductor? {
+    subscript (identity: SSHIdentity) -> [Conductor] {
         get {
-            return conductors[identity]?.compactMap(\.value).first
+            return conductors[identity]?.compactMap(\.value) ?? []
         }
     }
 }
 
 @available(macOS 11, *)
 extension ConductorRegistry: SSHFilePanelDataSource {
-    func remoteFilePanelSSHEndpoint(for identity: SSHIdentity) -> SSHEndpoint? {
+    func remoteFilePanelSSHEndpoints(for identity: SSHIdentity) -> [SSHEndpoint] {
         return self[identity]
     }
 
     func remoteFilePanelConnectedHosts() -> [SSHIdentity] {
         return conductors.keys.filter {
-            self[$0] != nil
+            !self[$0].isEmpty
         }
     }
 
