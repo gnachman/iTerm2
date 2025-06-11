@@ -172,9 +172,9 @@ struct CompletionsMessage: Codable, Equatable {
 struct LLMModernResponseParser: LLMResponseParser {
     struct ModernResponse: Codable, LLM.AnyResponse {
         var isStreamingResponse: Bool { false }
-        var id: String
-        var object: String
-        var created: Int
+        var id: String?
+        var object: String?
+        var created: Int?
         var model: String?
         var choices: [Choice]
         var usage: Usage?  // see issue 12134
