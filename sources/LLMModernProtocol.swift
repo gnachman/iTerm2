@@ -97,6 +97,7 @@ struct CompletionsMessage: Codable, Equatable {
                     case .statusUpdate:
                         return nil
                     case .file(let file):
+                        // The only base-64 encoded type OpenAI currently supports is PDF.
                         if file.mimeType == "application/pdf" {
                             let base64Data = file.content.base64EncodedString()
                             return .file(.init(file_data: "data:\(file.mimeType);base64,\(base64Data)",

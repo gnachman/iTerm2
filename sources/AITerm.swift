@@ -115,10 +115,6 @@ class AITermController {
         return llmProvider?.supportsStreaming ?? false
     }
 
-    var supportsUserAttachments: Bool {
-        return llmProvider?.supportsUserAttachments ?? false
-    }
-
     func request(query: String, stream: Bool = false) {
         state = .initialized(query: .completion(query), stream: stream)
         handle(event: .begin)
@@ -248,7 +244,18 @@ class AITermController {
             case .error(let error):
                 DLog("error: \(error)")
                 state = .ground
-                delegate?.aitermController(self, didFailWithError: error)
+                switch query {
+                case .completion(_):
+                    delegate?.aitermController(self, didFailWithError: error)
+                case .createVectorStore:
+                    delegate?.aitermController(self,
+                                               didFailToCreateVectorStoreWithError: error)
+                case .fileUpload:
+                    delegate?.aitermController(self, didFailToUploadFileWithError: error)
+                case .addFilesToVectorStore:
+                    delegate?.aitermControllerDidFailToAddFilesToVectorStore(self,
+                                                                             error: error)
+                }
             case .pluginError(let error):
                 DLog("plugin error: \(error.reason)")
                 state = .ground
@@ -436,6 +443,15 @@ class AITermController {
             do {
                 switch result {
                 case .success(let webResponse):
+                    if let error = webResponse.error, !error.isEmpty {
+                        let provider = llmProvider.displayName
+                        var message = "Error from \(provider): \(error)"
+                        if let reason = LLMErrorParser.errorReason(data: webResponse.data.lossyData), !reason.isEmpty {
+                            message += " " + reason
+                        }
+                        handle(event: .error(AIError(message)))
+                        return
+                    }
                     let id = try builder.idFromResponse(webResponse.data.lossyData)
                     handle(event: .webResponse(webResponse))
                     self.delegate?.aitermController(
@@ -475,15 +491,26 @@ class AITermController {
         state = .addingFileToVectorStore
         _ = client.request(webRequest: request, stream: nil, completion: { [weak self] result in
             guard let self else { return }
-            state = .ground
             do {
                 switch result {
                 case .success(let webResponse):
+                    if let error = webResponse.error, !error.isEmpty {
+                        let provider = llmProvider.displayName
+                        var message = "Error from \(provider): \(error)"
+                        if let reason = LLMErrorParser.errorReason(data: webResponse.data.lossyData), !reason.isEmpty {
+                            message += " " + reason
+                        }
+                        handle(event: .error(AIError(message)))
+                        return
+                    }
+
                     let status = try builder.statusFromResponse(webResponse.data.lossyData)
                     switch status {
                     case .completed:
+                        state = .ground
                         delegate?.aitermControllerDidAddFilesToVectorStore(self)
                     case .inProgress:
+                        state = .ground
                         scheduleVectorStorePoll(vectorStoreID: vectorStoreID,
                                                 batchID: try builder.batchIDFromResponse(webResponse.data.lossyData),
                                                 registration: registration)
@@ -533,6 +560,16 @@ class AITermController {
             do {
                 switch result {
                 case .success(let webResponse):
+                    if let error = webResponse.error, !error.isEmpty {
+                        let provider = llmProvider.displayName
+                        var message = "Error from \(provider): \(error)"
+                        if let reason = LLMErrorParser.errorReason(data: webResponse.data.lossyData), !reason.isEmpty {
+                            message += " " + reason
+                        }
+                        handle(event: .error(AIError(message)))
+                        return
+                    }
+
                     let status = try builder.statusFromResponse(webResponse.data.lossyData)
                     switch status {
                     case .cancelled, .failed:
@@ -582,18 +619,29 @@ class AITermController {
         state = .uploadingFile
         _ = client.request(webRequest: request, stream: nil, completion: { [weak self] result in
             guard let self else { return }
-            state = .ground
             do {
                 switch result {
                 case .success(let webResponse):
+                    if let error = webResponse.error, !error.isEmpty {
+                        let provider = llmProvider.displayName
+                        var message = "Error from \(provider): \(error)"
+                        if let reason = LLMErrorParser.errorReason(data: webResponse.data.lossyData), !reason.isEmpty {
+                            message += " " + reason
+                        }
+                        handle(event: .error(AIError(message)))
+                        return
+                    }
+
                     let id = try builder.idFromResponse(webResponse.data.lossyData)
                     handle(event: .webResponse(webResponse))
                     delegate?.aitermController(self, didUploadFileWithID: id)
                 case .failure(let error):
                     handle(event: .error(error))
+                    state = .ground
                 }
             } catch {
                 handle(event: .error(error))
+                state = .ground
             }
         })
     }

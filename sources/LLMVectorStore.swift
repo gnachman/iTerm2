@@ -174,7 +174,10 @@ struct LLMVectorStoreCreator {
 
     func webRequest() throws -> WebRequest {
         guard let body = try body(), let url = provider.createVectorStoreURL(apiKey: apiKey) else {
-            throw AIError("Vector store support is not implemented for this LLM provider")
+            if LLMMetadata.hostIsOpenAIAPI(url: provider.url(apiKey: apiKey, streaming: false)) {
+                throw AIError("The vector store has not been enabled in settings")
+            }
+            throw AIError("No vector store is available for this LLM provider.")
         }
         return WebRequest(headers: headers,
                           method: method,

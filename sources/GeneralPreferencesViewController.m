@@ -194,6 +194,7 @@ enum {
     IBOutlet NSButton *_aiFeatureHostedWebSearch;
     IBOutlet NSButton *_aiFeatureFunctionCalling;
     IBOutlet NSButton *_aiFeatureStreamingResponses;
+    IBOutlet NSPopUpButton *_vectorStore;
 
     IBOutlet NSTextField *_checkTerminalStateLabel; // Check Terminal State
     IBOutlet NSPopUpButton *_checkTerminalStateButton;
@@ -788,6 +789,12 @@ enum {
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
     [aiFeatureInfos addObject:info];
+    info = [self defineControl:_vectorStore
+                           key:kPreferenceKeyAIVectorStore
+                   relatedView:nil
+                          type:kPreferenceInfoTypePopup];
+    [aiFeatureInfos addObject:info];
+
     PreferenceInfo *apiInfo = [self defineControl:_aiAPI
                            key:kPreferenceKeyAITermAPI
                    relatedView:nil
@@ -920,6 +927,8 @@ enum {
                forKey:kPreferenceKeyAIFeatureFunctionCalling];
         [self setBool:[AIMetadata.instance modelSupportsStreamingResponses:model]
                forKey:kPreferenceKeyAIFeatureStreamingResponses];
+        [self setInteger:[AIMetadata.instance vectorStoreForModel:model]
+                  forKey:kPreferenceKeyAIVectorStore];
         for (PreferenceInfo *info in featureInfos) {
             [self updateValueForInfo:info];
         }

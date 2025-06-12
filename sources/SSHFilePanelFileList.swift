@@ -14,6 +14,7 @@ protocol SSHFilePanelFileListDelegate: AnyObject {
                           to url: URL,
                           completionHandler: @escaping (Error?) -> Void)
     func sshFilePanelSelectionDidChange()
+    func sshFilePanelItemIsSelectable(file: SSHFilePanelFileList.FileNode) -> Bool
 }
 
 @available(macOS 11, *)
@@ -661,6 +662,13 @@ extension SSHFilePanelFileList: NSOutlineViewDelegate {
             cellView?.textField?.stringValue = ""
         }
 
+        if delegate?.sshFilePanelItemIsSelectable(file: node) != false {
+            cellView?.textField?.alphaValue = 1.0
+            cellView?.imageView?.alphaValue = 1.0
+        } else {
+            cellView?.textField?.alphaValue = 0.5
+            cellView?.imageView?.alphaValue = 0.5
+        }
         return cellView
     }
 
@@ -669,44 +677,51 @@ extension SSHFilePanelFileList: NSOutlineViewDelegate {
         return node.hasChildren
     }
 
-    func outlineView(_ outlineView: NSOutlineView, shouldSelectItem item: Any) -> Bool {
-        if !canChooseFiles, let node = item as? FileNode, !node.isDirectory {
-            // If you can't choose files then don't allow selecting a file.
-            return false
-        }
-        return true
-    }
-
     func outlineView(_ outlineView: NSOutlineView,
                      selectionIndexesForProposedSelection proposedSelection: IndexSet) -> IndexSet {
-        var fileIndexes = IndexSet()
-        var dirIndexes  = IndexSet()
+        let filtered = {
+            var fileIndexes = IndexSet()
+            var dirIndexes  = IndexSet()
 
-        for row in proposedSelection {
-            guard let item = outlineView.item(atRow: row) else {
-                continue
+            for row in proposedSelection {
+                guard let item = self.fileOutlineView.item(atRow: row) else {
+                    continue
+                }
+
+                if itemIsDirectory(item: item) {
+                    dirIndexes.insert(row)
+                } else {
+                    fileIndexes.insert(row)
+                }
             }
 
-            if itemIsDirectory(item: item) {
-                dirIndexes.insert(row)
-            } else {
-                fileIndexes.insert(row)
+            // If any directory is selected, allow exactly one directory. Prefer a newly added one.
+            if let firstProposed = dirIndexes.first {
+                if !fileIndexes.isEmpty {
+                    // You selected both files and directories. Keep the files. This way you can
+                    // click+shift-click to select a range and just get the files.
+                    return fileIndexes
+                }
+                let addedDirectories = Set(proposedSelection).subtracting(Set(self.fileOutlineView.selectedRowIndexes))
+                return IndexSet(integer: addedDirectories.first ?? firstProposed)
             }
-        }
 
-        // If any directory is selected, allow exactly one directory. Prefer a newly added one.
-        if let firstProposed = dirIndexes.first {
-            if !fileIndexes.isEmpty {
-                // You selected both files and directories. Keep the files. This way you can
-                // click+shift-click to select a range and just get the files.
-                return fileIndexes
+            // Otherwise allow any number of files (or none)
+            return fileIndexes
+        }()
+        return IndexSet(filtered.filter { row -> Bool in
+            guard let item = self.fileOutlineView.item(atRow: row) else {
+                return false
             }
-            let addedDirectories = Set(proposedSelection).subtracting(Set(outlineView.selectedRowIndexes))
-            return IndexSet(integer: addedDirectories.first ?? firstProposed)
-        }
-
-        // Otherwise allow any number of files (or none)
-        return fileIndexes
+            if !canChooseFiles, let node = item as? FileNode, !node.isDirectory {
+                // If you can't choose files then don't allow selecting a file.
+                return false
+            }
+            if let node = item as? FileNode, let delegate {
+                return delegate.sshFilePanelItemIsSelectable(file: node)
+            }
+            return true
+        })
     }
 
     private func itemIsDirectory(item: Any?) -> Bool {

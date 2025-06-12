@@ -50,18 +50,30 @@ struct LLMProvider {
     }
 
     func createVectorStoreURL(apiKey: String) -> URL? {
-        return model.vectorStoreURL.compactMap { URL(string: $0) }
+        switch model.vectorStoreConfig {
+        case .disabled:
+            return nil
+        case .openAI:
+            return URL(string: "https://api.openai.com/v1/vector_stores")
+        }
     }
 
     func uploadURL() -> URL? {
-        return model.fileUploadURL.compactMap { URL(string: $0) }
+        switch model.vectorStoreConfig {
+        case .disabled:
+            return nil
+        case .openAI:
+            return URL(string: "https://api.openai.com/v1/files")
+        }
     }
 
     func addFileToVectorStoreURL(apiKey: String, vectorStoreID: String) -> URL? {
-        guard let url = model.addToVectorStoreURL?(vectorStoreID) else {
+        switch model.vectorStoreConfig {
+        case .disabled:
             return nil
+        case .openAI:
+            return URL(string: "https://api.openai.com/v1/vector_stores/\(vectorStoreID)/file_batches")
         }
-        return URL(string: url)
     }
 
     var urlIsValid: Bool {
@@ -112,12 +124,42 @@ struct LLMProvider {
         return model.features.contains(.streaming)
     }
 
-    var supportsUserAttachments: Bool {
-        switch model.api {
-        case .responses, .chatCompletions, .llama: true
-        case .completions, .gemini, .earlyO1, .deepSeek: false
-        @unknown default: false
+    func shouldSendAttachmentInline(mimeType: String) -> Bool {
+        return MIMETypeIsTextual(mimeType)
+    }
+
+    func shouldUploadFile(mimeType: String) -> Bool {
+        // File upload is implemented only for OpenAI+Responses, and they only support PDFs
+        // currently.
+        if LLMMetadata.hostIsOpenAIAPI(url: URL(string: model.url)) &&
+            (model.api == .responses) &&
+            model.vectorStoreConfig != .disabled {
+            return mimeType == "application/pdf"
         }
+        return false
+    }
+
+    func fileTypeIsSupported(extension ext: String) -> Bool {
+        if LLMMetadata.hostIsOpenAIAPI(url: URL(string: model.url)) {
+            return openAIExtensionToMime[ext] != nil
+        }
+        guard let mime = extensionToMime[ext] else {
+            return false
+        }
+        return MIMETypeIsTextual(mime)
+    }
+
+    func shouldInlineBase64EncodedFile(mimeType: String) -> Bool {
+        if shouldUploadFile(mimeType: mimeType) {
+            return false
+        }
+        // OpenAI lets you attach a binary PDF, but I don't think anyone else does.
+        if LLMMetadata.hostIsOpenAIAPI(url: URL(string: model.url)) &&
+            (model.api == .responses) &&
+            model.vectorStoreConfig != .disabled {
+            return mimeType == "application/pdf"
+        }
+        return false
     }
 
     var supportsHostedWebSearch: Bool {
@@ -188,3 +230,34 @@ struct LLMProvider {
     }
 }
 
+
+func MIMETypeIsTextual(_ mimeType: String) -> Bool {
+    if mimeType.hasPrefix("text/") {
+        return true
+    }
+    if mimeType == "application/json" {
+        return true
+    }
+    if mimeType == "application/javascript" {
+        return true
+    }
+    if mimeType == "application/ecmascript" {
+        return true
+    }
+    if mimeType.hasSuffix("+xml") {
+        return true
+    }
+    if mimeType == "application/xml" {
+        return true
+    }
+    if mimeType == "message/rfc822" {
+        return true
+    }
+    if mimeType == "application/x-sql" {
+        return true
+    }
+    if mimeType.starts(with: "application/x-tex") {
+        return true
+    }
+    return false
+}

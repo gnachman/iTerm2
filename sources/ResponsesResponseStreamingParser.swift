@@ -331,7 +331,7 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
             case .codeInterpreterDelta:
                 return try JSONDecoder().decode(ResponseCodeInterpreterDeltaEvent.self, from: data)
             case .none:
-                NSLog("%@", "Unrecognized event \(jsonString)")
+                DLog("Unrecognized event \(jsonString)")
                 throw ResponseEventError.unknownEventType(typeContainer.type)
             }
         }

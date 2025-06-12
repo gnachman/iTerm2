@@ -65,9 +65,12 @@ class SSHFilePanel: NSWindowController {
     private var ignoreSidebarChange = 0
     private(set) var selectedFiles: [SSHFileDescriptor] = []
     private var lastPath = [SSHIdentity: String]()
+    private var initialized = false
+
     var canChooseDirectories = false
     var canChooseFiles = true
-    private var initialized = false
+    var isSelectable: ((RemoteFile) -> Bool)?
+
 
     // MARK: - Data Properties
     weak var dataSource: SSHFilePanelDataSource? {
@@ -981,12 +984,17 @@ extension SSHFilePanel {
             }
         }
 
-        // Restore sidebar width
         let sidebarWidth = defaults.double(forKey: RestorationKeys.sidebarWidth)
-        if sidebarWidth > 0 {
-            self.splitView.setPosition(sidebarWidth, ofDividerAt: 0)
+        if sidebarWidth > minimumSidebarWidth {
+            // Only restore if it's a valid width
+            DispatchQueue.main.async { [weak self] in
+                self?.splitView.setPosition(sidebarWidth, ofDividerAt: 0)
+            }
         } else {
-            self.splitView.setPosition(sidebarWidth, ofDividerAt: 200)
+            // Set a reasonable default width
+            DispatchQueue.main.async { [weak self] in
+                self?.splitView.setPosition(200, ofDividerAt: 0)
+            }
         }
     }
 
@@ -1210,6 +1218,13 @@ extension SSHFilePanel {
 
 @available(macOS 11, *)
 extension SSHFilePanel: SSHFilePanelFileListDelegate {
+    func sshFilePanelItemIsSelectable(file: SSHFilePanelFileList.FileNode) -> Bool {
+        if let isSelectable {
+            return isSelectable(file.file)
+        }
+        return true
+    }
+
     func sshFilePanelSelectionDidChange() {
         if fileList.selectedFiles.isEmpty {
             openButton.isEnabled = false

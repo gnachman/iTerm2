@@ -36,6 +36,7 @@ class iTermOpenPanel: NSObject {
     @objc let allowsMultipleSelection = true  // TODO
     @objc private(set) var items: [iTermOpenPanelItem] = []
     static var panels = [iTermOpenPanel]()
+    var isSelectable: ((RemoteFile) -> Bool)?
 
     func beginSheetModal(for window: NSWindow,
                          completionHandler handler: @escaping (NSApplication.ModalResponse) -> Void) {
@@ -46,6 +47,7 @@ class iTermOpenPanel: NSObject {
             sshFilePanel.dataSource = ConductorRegistry.instance
             sshFilePanel.canChooseDirectories = canChooseDirectories
             sshFilePanel.canChooseFiles = canChooseFiles
+            sshFilePanel.isSelectable = isSelectable
 
             sshFilePanel.beginSheetModal(for: window) { [weak self] response in
                 guard let self else { return }

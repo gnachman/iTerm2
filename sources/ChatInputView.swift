@@ -169,11 +169,21 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         let panel = iTermOpenPanel()
         panel.canChooseFiles = true
         panel.canChooseDirectories = true
+        panel.isSelectable = { remoteFile in
+            if remoteFile.kind.isFolder {
+                return true
+            }
+            let ext = remoteFile.name.pathExtension.lowercased()
+            return AITermController.provider?.fileTypeIsSupported(extension: ext) == true
+        }
         panel.beginSheetModal(for: window) { [weak self] response in
             guard response == .OK, let self else {
                 return
             }
             for item in panel.items {
+                guard AITermController.provider?.fileTypeIsSupported(extension: item.filename.pathExtension.lowercased()) == true else {
+                    continue
+                }
                 let placeholder = attachmentsView.addPlaceholder(filename: item.filename,
                                                                  isDirectory: item.isDirectory,
                                                                  host: item.host,
@@ -245,10 +255,22 @@ class ChatInputView: NSView, NSTextFieldDelegate {
 // MARK: - Drag and Drop Support
 extension ChatInputView {
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
-        guard sender.draggingPasteboard.canReadObject(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) else {
+        let pb = sender.draggingPasteboard
+
+        guard let urls = pb.readObjects(forClasses: [NSURL.self],
+                                        options: [.urlReadingFileURLsOnly: true]) as? [URL]
+        else {
             return []
         }
-        return .copy
+
+        for url in urls {
+            let ext = url.pathExtension.lowercased()
+            if AITermController.provider?.fileTypeIsSupported(extension: ext) == true {
+                return .copy
+            }
+        }
+
+        return []
     }
 
     override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {

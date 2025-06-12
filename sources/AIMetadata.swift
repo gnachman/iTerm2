@@ -25,9 +25,12 @@ class AIMetadata: NSObject {
             case hostedWebSearch // Can perform web searches (e.g., via a built-in tool).
         }
         var features: Set<Feature>
-        var vectorStoreURL: String?
-        var fileUploadURL: String?
-        var addToVectorStoreURL: ((String) -> (String))?
+
+        enum VectorStoreConfig: Int {
+            case disabled = 0
+            case openAI = 1
+        }
+        var vectorStoreConfig: VectorStoreConfig = .disabled
     }
 
     private let models: [Model] = [
@@ -38,9 +41,7 @@ class AIMetadata: NSObject {
             url: "https://api.openai.com/v1/responses",
             api: .responses,
             features: [.systemMessage, .functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming],
-            vectorStoreURL: "https://api.openai.com/v1/vector_stores",
-            fileUploadURL: "https://api.openai.com/v1/files",
-            addToVectorStoreURL: {"https://api.openai.com/v1/vector_stores/\($0)/file_batches"}
+            vectorStoreConfig: .openAI
         ),
         Model(
             name: "gpt-4o-mini",
@@ -49,9 +50,7 @@ class AIMetadata: NSObject {
             url: "https://api.openai.com/v1/responses",
             api: .responses,
             features: [.systemMessage, .functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming],
-            vectorStoreURL: "https://api.openai.com/v1/vector_stores",
-            fileUploadURL: "https://api.openai.com/v1/files",
-            addToVectorStoreURL: {"https://api.openai.com/v1/vector_stores/\($0)/file_batches"}
+            vectorStoreConfig: .openAI
         ),
         Model(
             name: "gpt-4.1",
@@ -60,9 +59,7 @@ class AIMetadata: NSObject {
             url: "https://api.openai.com/v1/responses",
             api: .responses,
             features: [.systemMessage, .functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming],
-            vectorStoreURL: "https://api.openai.com/v1/vector_stores",
-            fileUploadURL: "https://api.openai.com/v1/files",
-            addToVectorStoreURL: {"https://api.openai.com/v1/vector_stores/\($0)/file_batches"}
+            vectorStoreConfig: .openAI
         ),
         Model(
             name: "gpt-4.1-mini",
@@ -71,9 +68,7 @@ class AIMetadata: NSObject {
             url: "https://api.openai.com/v1/responses",
             api: .responses,
             features: [.systemMessage, .functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming],
-            vectorStoreURL: "https://api.openai.com/v1/vector_stores",
-            fileUploadURL: "https://api.openai.com/v1/files",
-            addToVectorStoreURL: {"https://api.openai.com/v1/vector_stores/\($0)/file_batches"}
+            vectorStoreConfig: .openAI
         ),
 
         // O-series reasoning models
@@ -84,9 +79,7 @@ class AIMetadata: NSObject {
             url: "https://api.openai.com/v1/responses",
             api: .responses,
             features: [.hostedFileSearch],
-            vectorStoreURL: "https://api.openai.com/v1/vector_stores",
-            fileUploadURL: "https://api.openai.com/v1/files",
-            addToVectorStoreURL: {"https://api.openai.com/v1/vector_stores/\($0)/file_batches"}
+            vectorStoreConfig: .openAI
         ),
         Model(
             name: "o3-pro",
@@ -95,9 +88,7 @@ class AIMetadata: NSObject {
             url: "https://api.openai.com/v1/responses",
             api: .responses,
             features: [.functionCalling],
-            vectorStoreURL: "https://api.openai.com/v1/vector_stores",
-            fileUploadURL: "https://api.openai.com/v1/files",
-            addToVectorStoreURL: {"https://api.openai.com/v1/vector_stores/\($0)/file_batches"}
+            vectorStoreConfig: .openAI
         ),
         Model(
             name: "o4-mini",
@@ -106,9 +97,7 @@ class AIMetadata: NSObject {
             url: "https://api.openai.com/v1/responses",
             api: .responses,
             features: [.hostedFileSearch, .streaming, .functionCalling],
-            vectorStoreURL: "https://api.openai.com/v1/vector_stores",
-            fileUploadURL: "https://api.openai.com/v1/files",
-            addToVectorStoreURL: {"https://api.openai.com/v1/vector_stores/\($0)/file_batches"}
+            vectorStoreConfig: .openAI
         ),
 
         // MARK: - Google Models
@@ -142,7 +131,7 @@ class AIMetadata: NSObject {
 
         Model(
             name: "deepseek-chat",
-            contextWindowTokens: 128_000,
+            contextWindowTokens: 65_536,
             maxResponseTokens: 8_000,
             url: "https://api.deepseek.com/v1/chat/completions",
             api: .deepSeek,
@@ -150,7 +139,7 @@ class AIMetadata: NSObject {
         ),
         Model(
             name: "deepseek-coder",
-            contextWindowTokens: 128_000,
+            contextWindowTokens: 65_536,
             maxResponseTokens: 8_000,
             url: "https://api.deepseek.com/v1/chat/completions",
             api: .deepSeek,
@@ -252,6 +241,14 @@ class AIMetadata: NSObject {
             return false
         }
         return obj.features.contains(.hostedFileSearch)
+    }
+
+    @objc(vectorStoreForModel:)
+    func vectorStore(for model: String) -> Int {
+        guard let obj = models.first(where: { $0.name == model }) else {
+            return Model.VectorStoreConfig.disabled.rawValue
+        }
+        return obj.vectorStoreConfig.rawValue
     }
 
     @objc(modelSupportsHostedWebSearch:)

@@ -1721,34 +1721,7 @@ struct ResponsesBodyRequestBuilder {
     }
 
     private func mimeTypeIsTextual(_ mimeType: String) -> Bool {
-        if mimeType.hasPrefix("text/") {
-            return true
-        }
-        if mimeType == "application/json" {
-            return true
-        }
-        if mimeType == "application/javascript" {
-            return true
-        }
-        if mimeType == "application/ecmascript" {
-            return true
-        }
-        if mimeType.hasSuffix("+xml") {
-            return true
-        }
-        if mimeType == "application/xml" {
-            return true
-        }
-        if mimeType == "message/rfc822" {
-            return true
-        }
-        if mimeType == "application/x-sql" {
-            return true
-        }
-        if mimeType.starts(with: "application/x-tex") {
-            return true
-        }
-        return false
+        return MIMETypeIsTextual(mimeType)
     }
 
     private var transformedHostedTools: [ResponsesRequestBody.Tool] {

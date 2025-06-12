@@ -261,8 +261,11 @@ class ChatAgent {
             content: .clientLocal(.init(action: .notice(message))))
     }
 
-    private func ingestableFilesFromSubparts(_ parts: [Message.Subpart]) -> [LLM.Message.Attachment.AttachmentType.File] {
-        if !conversation.supportsUserAttachments {
+    private func uploadableFilesFromSubparts(_ parts: [Message.Subpart]) -> [LLM.Message.Attachment.AttachmentType.File] {
+        guard let provider = AITermController.provider else {
+            return []
+        }
+        if provider.model.vectorStoreConfig == .disabled {
             return []
         }
         return parts.compactMap { subpart -> LLM.Message.Attachment.AttachmentType.File? in
@@ -272,7 +275,11 @@ class ChatAgent {
                 case .code, .statusUpdate:
                     it_fatalError("Unsupported user-sent attachment type")
                 case .file(let file):
-                    return file
+                    if provider.shouldUploadFile(mimeType: file.mimeType) {
+                        return file
+                    } else {
+                        return nil
+                    }
                 case .fileID:
                     // No need for ingestion
                     return nil
@@ -284,12 +291,47 @@ class ChatAgent {
     }
 
     private func textFromSubparts(_ parts: [Message.Subpart]) -> String {
-        return parts.compactMap {
-            switch $0 {
-            case .attachment: nil
-            case .markdown(let text), .plainText(let text): text
+        return parts.compactMap { part -> String? in
+            switch part {
+            case .attachment(let attachment):
+                switch attachment.type {
+                case .code(let text):
+                    return text
+                case .statusUpdate:
+                    return nil
+                case .file(let file):
+                    if let provider = AITermController.provider,
+                       (provider.shouldInlineBase64EncodedFile(mimeType: file.mimeType) == true ||
+                        provider.shouldUploadFile(mimeType: file.mimeType)) {
+                        return nil
+                    }
+                    return file.content.lossyString
+                case .fileID: return nil
+                }
+            case .plainText(let text), .markdown(let text):
+                return text
             }
         }.joined(separator: "\n")
+    }
+
+    private func inlineFilesFromSubparts(_ parts: [Message.Subpart]) -> [LLM.Message.Attachment.AttachmentType.File] {
+        return parts.compactMap { part -> LLM.Message.Attachment.AttachmentType.File? in
+            switch part {
+            case .attachment(let attachment):
+                switch attachment.type {
+                case .code, .statusUpdate, .fileID:
+                    return nil
+                case .file(let file):
+                    if let provider = AITermController.provider,
+                       provider.shouldInlineBase64EncodedFile(mimeType: file.mimeType) == true {
+                        return file
+                    }
+                    return nil
+                }
+            case .plainText, .markdown:
+                return nil
+            }
+        }
     }
 
     private func uploadAction(chatID: String,
@@ -333,7 +375,7 @@ class ChatAgent {
                 return
             }
             conversation.createVectorStore(
-                name: "iTerm2.\(chatID)") { [broker] result in
+                name: "iTerm2.\(chatID)") { [weak self, broker] result in
                     result.handle { id in
                         broker.publish(message: .init(
                             chatID: chatID,
@@ -345,6 +387,9 @@ class ChatAgent {
                                        partial: false)
                         completion(.success(.vectorStoreCreated(id: id)))
                     } failure: { error in
+                        self?.publishNotice(
+                            chatID: chatID,
+                            message: "There was a problem creating a vector store database: \(error.localizedDescription)")
                         completion(.failure(error))
                     }
                 }
@@ -390,16 +435,20 @@ class ChatAgent {
         })
     }
 
+    // Upload and maybe add to vector store.
     private func ingestFiles(files: [LLM.Message.Attachment.AttachmentType.File],
                              chatID: String,
+                             addToVectorStore: Bool,
                              vectorStoreID: String?,
                              builder: PipelineBuilder<PipelineResult>) -> PipelineBuilder<PipelineResult> {
         var currentBuilder = builder
-        if vectorStoreID == nil {
-            DLog("Need to create a vector store")
-            currentBuilder.add(description: "Create vector store",
-                               actionClosure: createVectorStoreAction(chatID: chatID))
-            currentBuilder = currentBuilder.makeChild()
+        if addToVectorStore {
+            if vectorStoreID == nil {
+                DLog("Need to create a vector store")
+                currentBuilder.add(description: "Create vector store",
+                                   actionClosure: createVectorStoreAction(chatID: chatID))
+                currentBuilder = currentBuilder.makeChild()
+            }
         }
         for file in files {
             DLog("Add upload action for \(file.name)")
@@ -408,17 +457,23 @@ class ChatAgent {
                 chatID: chatID,
                 file: file))
         }
-        currentBuilder = currentBuilder.makeChild()
 
-        currentBuilder.add(description: "Add files to vector store") { [weak self] previousResults, completion in
-            self?.addFilesToVectorStoreAction(previousResults: previousResults,
-                                              vectorStoreID: vectorStoreID,
-                                              completion: completion)
+        if addToVectorStore {
+            currentBuilder = currentBuilder.makeChild()
+            currentBuilder.add(description: "Add files to vector store") { [weak self] previousResults, completion in
+                self?.addFilesToVectorStoreAction(previousResults: previousResults,
+                                                  vectorStoreID: vectorStoreID,
+                                                  completion: completion)
+            }
         }
+
         return currentBuilder.makeChild()
     }
 
-    private func scheduleMultipartFetch(userMessage: Message,
+    private func scheduleMultipartFetch(uploadFiles files: [LLM.Message.Attachment.AttachmentType.File],
+                                        text: String,
+                                        inlineFiles: [LLM.Message.Attachment.AttachmentType.File],
+                                        userMessage: Message,
                                         parts: [Message.Subpart],
                                         vectorStoreID: String?,
                                         streaming: ((StreamingUpdate) -> ())?,
@@ -427,15 +482,13 @@ class ChatAgent {
         let rootBuilder = PipelineBuilder<PipelineResult>()
         var currentBuilder = rootBuilder
 
-        let files = ingestableFilesFromSubparts(parts)
-        let text = textFromSubparts(parts)
-
         DLog("files=\(files.map(\.name).joined(separator: ", "))")
         DLog("text=\(text)")
         if !files.isEmpty {
             publishNotice(chatID: chatID, message: "Uploading…")
             currentBuilder = ingestFiles(files: files,
                                          chatID: userMessage.chatID,
+                                         addToVectorStore: false,
                                          vectorStoreID: vectorStoreID,
                                          builder: currentBuilder)
         }
@@ -451,6 +504,10 @@ class ChatAgent {
                 Message.Subpart.attachment(LLM.Message.Attachment(inline: false,
                                                                   id: $0.0,
                                                                   type: .fileID(id: $0.0, name: $0.1)))
+            } + inlineFiles.map {
+                Message.Subpart.attachment(LLM.Message.Attachment(inline: true,
+                                                                  id: UUID().uuidString,
+                                                                  type: .file($0)))
             }
             self?.fetchCompletion(
                 userMessage: Message(chatID: userMessage.chatID,
@@ -466,18 +523,12 @@ class ChatAgent {
         DLog("Add to pipeline queue")
         pipelineQueue.append(rootBuilder.build(maxConcurrentActions: 2) { [chatID] disposition in
             switch disposition {
-            case .pending:
-                it_fatalError()
-            case .success(_):
-                return
-            case .failure, .canceled:
-                completion(Message(chatID: chatID,
-                                   author: .agent,
-                                   content: .clientLocal(.init(action: .notice(
-                                    "Your message was not sent because of a problem with an attached file."))),
-                                   sentDate: Date(),
-                                   uniqueID: UUID()))
+            case .success:
+                break
+            default:
+                completion(nil)
             }
+            DLog("disposition for \(chatID) is \(disposition)")
         })
     }
 
@@ -490,27 +541,8 @@ class ChatAgent {
                         completion: completion)
     }
 
-    private func multipartMessageIsSendable(parts: [Message.Subpart]) -> Bool {
-        return parts.allSatisfy({ subpart in
-            switch subpart {
-            case .attachment(let attachment):
-                switch attachment.type {
-                case .fileID:
-                    return true
-                case .file(let file): 
-                    if conversation.supportsUserAttachments {
-                        return file.mimeType != "application/pdf"
-                    }
-                    return true
-                default:
-                    return false
-                }
-            case .plainText:
-                return true
-            default:
-                return false
-            }
-        })
+    private func shouldUploadAnyParts(parts: [Message.Subpart]) -> Bool {
+        return !uploadableFilesFromSubparts(parts).isEmpty
     }
 
     func fetchCompletion(userMessage: Message,
@@ -522,8 +554,15 @@ class ChatAgent {
         }
         switch userMessage.content {
         case .multipart(let parts, let maybeVectorStoreID):
-            if !multipartMessageIsSendable(parts: parts) {
-                scheduleMultipartFetch(userMessage: userMessage,
+            let uploads = uploadableFilesFromSubparts(parts)
+
+            if !uploads.isEmpty {
+                let text = textFromSubparts(parts)
+                let inlineFiles = inlineFilesFromSubparts(parts)
+                scheduleMultipartFetch(uploadFiles: uploads,
+                                       text: text,
+                                       inlineFiles: inlineFiles,
+                                       userMessage: userMessage,
                                        parts: parts,
                                        vectorStoreID: maybeVectorStoreID,
                                        streaming: streaming,

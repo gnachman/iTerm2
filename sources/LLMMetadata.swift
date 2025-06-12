@@ -66,6 +66,7 @@ class LLMMetadata: NSObject {
             url: url,
             api: iTermAIAPI(rawValue: iTermPreferences.unsignedInteger(
                 forKey: kPreferenceKeyAITermAPI)) ?? .chatCompletions,
-            features: features)
+            features: features,
+            vectorStoreConfig: .init(rawValue: iTermPreferences.integer(forKey: kPreferenceKeyAIVectorStore)) ?? .disabled)
     }
 }

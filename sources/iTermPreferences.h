@@ -156,6 +156,7 @@ extern NSString *const kPreferenceKeyAIFeatureHostedFileSearch;
 extern NSString *const kPreferenceKeyAIFeatureHostedWebSearch;
 extern NSString *const kPreferenceKeyAIFeatureFunctionCalling;
 extern NSString *const kPreferenceKeyAIFeatureStreamingResponses;
+extern NSString *const kPreferenceKeyAIVectorStore;
 
 extern NSString *const kPreferenceKeyAIPermissionCheckTerminalState;
 extern NSString *const kPreferenceKeyAIPermissionRunCommands;

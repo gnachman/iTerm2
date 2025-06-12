@@ -83,16 +83,13 @@ struct AIConversation {
     }
 
     var messages: [AITermController.Message]
-    private var controller: AITermController
+    private(set) var controller: AITermController
     private var delegate = Delegate()
     private(set) weak var registrationProvider: AIRegistrationProvider?
     var maxTokens: Int {
         return Int(iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit) - iTermAdvancedSettingsModel.aiResponseMaxTokens())
     }
     var busy: Bool { delegate.busy }
-    var supportsUserAttachments: Bool {
-        controller.supportsUserAttachments
-    }
     init(_ other: AIConversation) {
         self.init(registrationProvider: other.registrationProvider,
                   messages: other.messages,
