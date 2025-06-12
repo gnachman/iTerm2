@@ -1777,16 +1777,19 @@ struct ResponsesBodyRequestBuilder {
     func body() throws -> Data {
         // Tokens are about 4 letters each. Allow enough tokens to include both the query and an
         // answer the same length as the query.
-        let itemList = messages.compactMap { transform(message: $0) }
+        var itemList = messages.compactMap { transform(message: $0) }
+        if previousResponseID != nil && !itemList.isEmpty {
+            itemList.removeFirst(itemList.count - 1)
+        }
         let tools = functions.map { transform(function: $0) } + transformedHostedTools
-        let body = ResponsesRequestBody(input: .itemList(itemList),
-                                        model: provider.model,
-                                        maxOutputTokens: provider.maxTokens(functions: functions, messages: messages),
-                                        previousResponseID: previousResponseID,
-                                        stream: stream,
-                                        temperature: 0,
-                                        toolChoice: tools.isEmpty ? ResponsesRequestBody.ToolChoice.none : .auto,
-                                        tools: tools)
+        let body = ResponsesRequestBody(
+            input: .itemList(itemList),
+            model: provider.model.name,
+            maxOutputTokens: provider.maxTokens(functions: functions, messages: messages),
+            previousResponseID: previousResponseID,
+            stream: stream,
+            toolChoice: tools.isEmpty ? ResponsesRequestBody.ToolChoice.none : .auto,
+            tools: tools)
         let bodyEncoder = JSONEncoder()
         let bodyData = try! bodyEncoder.encode(body)
         DLog("REQUEST:\n\(bodyData.lossyString)")

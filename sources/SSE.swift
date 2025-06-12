@@ -7,7 +7,7 @@
 
 func SplitServerSentEvents(from rawInput: String) -> (json: String?, remainder: String) {
     let input = rawInput.trimmingLeadingCharacters(in: .whitespacesAndNewlines)
-    guard let newlineRange = input.range(of: "\n") else {
+    guard let newlineRange = input.range(of: "\r\n") ?? input.range(of: "\n") else {
         return (nil, String(input))
     }
 

@@ -22,41 +22,45 @@ class LLMMetadata: NSObject {
         return url?.host == "api.openai.com"
     }
 
-    @objc(iTermLLMPlatform)
-    enum LLMPlatform: UInt {
-        case openAI
-        case azure
-        case gemini
+    @objc(hostIsOpenGoogleAPIForURL:)
+    static func hostIsGoogleAIAPI(url: URL?) -> Bool {
+        return url?.host == "generativelanguage.googleapis.com"
+    }
 
-        init(_ platform: LLMProvider.Platform) {
-            switch platform {
-            case .openAI:
-                self = .openAI
-            case .azure:
-                self = .azure
-            case .gemini:
-                self = .gemini
-            }
+    @objc(hostIsAzureAPIForURL:)
+    static func hostIsAzureAIAPI(url: URL?) -> Bool {
+        return (url?.host ?? "").hasSuffix(".azure.com")
+    }
+
+    static func model() -> AIMetadata.Model? {
+        var features = Set<AIMetadata.Model.Feature>()
+        if iTermPreferences.bool(forKey: kPreferenceKeyAIFeatureFunctionCalling) {
+            features.insert(.functionCalling)
         }
-    }
-
-    @objc(platform)
-    static func objcPlatform() -> LLMPlatform {
-        LLMPlatform(platform())
-    }
-
-    static func platform() -> LLMProvider.Platform {
-        let urlString = iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? ""
-        if URL(string: urlString)?.host == "generativelanguage.googleapis.com" {
-            return .gemini
-        } else if let platform = LLMProvider.Platform(rawValue: iTermAdvancedSettingsModel.llmPlatform()) {
-            return platform
-        } else {
-            return .openAI
+        if iTermPreferences.bool(forKey: kPreferenceKeyAIFeatureHostedWebSearch) {
+            features.insert(.hostedWebSearch)
         }
-    }
+        if iTermPreferences.bool(forKey: kPreferenceKeyAIFeatureHostedFileSearch) {
+            features.insert(.hostedFileSearch)
+        }
+        if iTermPreferences.bool(forKey: kPreferenceKeyAIFeatureStreamingResponses) {
+            features.insert(.streaming)
+        }
 
-    static func model() -> String {
-        return iTermPreferences.string(forKey: kPreferenceKeyAIModel) ?? "gpt-4o-mini"
+        let url = iTermPreferences.string(forKey: kPreferenceKeyAITermURL)
+        guard let url, !url.isEmpty else {
+            return nil
+        }
+
+        return AIMetadata.Model(
+            name: iTermPreferences.string(forKey: kPreferenceKeyAIModel) ?? "gpt-4o-mini",
+            contextWindowTokens: iTermPreferences.integer(
+                forKey: kPreferenceKeyAITokenLimit),
+            maxResponseTokens: iTermPreferences.integer(
+                forKey: kPreferenceKeyAIResponseTokenLimit),
+            url: url,
+            api: iTermAIAPI(rawValue: iTermPreferences.unsignedInteger(
+                forKey: kPreferenceKeyAITermAPI)) ?? .chatCompletions,
+            features: features)
     }
 }

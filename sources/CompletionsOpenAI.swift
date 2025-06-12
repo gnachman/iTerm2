@@ -25,13 +25,13 @@ struct ModernBodyRequestBuilder {
         // Tokens are about 4 letters each. Allow enough tokens to include both the query and an
         // answer the same length as the query.
         let maybeDecls = functions.isEmpty ? nil : functions.map { $0.decl }
-        let body = Body(model: provider.dynamicModelsSupported ? provider.model : nil,
-                        messages: messages.compactMap { CompletionsMessage($0) },
-                        max_tokens: provider.maxTokens(functions: functions, messages: messages),
-                        temperature: provider.temperatureSupported ? 0 : nil,
-                        functions: maybeDecls,
-                        function_call: functions.isEmpty ? nil : "auto",
-                        stream: stream)
+        let body = Body(
+            model: provider.dynamicModelsSupported ? provider.model.name : nil,
+            messages: messages.compactMap { CompletionsMessage($0) },
+            max_tokens: provider.maxTokens(functions: functions, messages: messages),
+            functions: maybeDecls,
+            function_call: functions.isEmpty ? nil : "auto",
+            stream: stream)
         DLog("REQUEST:\n\(body)")
         if body.max_tokens < 2 {
             throw AIError.requestTooLarge
@@ -42,4 +42,3 @@ struct ModernBodyRequestBuilder {
 
     }
 }
-

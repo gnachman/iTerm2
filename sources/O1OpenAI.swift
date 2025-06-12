@@ -18,20 +18,15 @@ struct O1BodyRequestBuilder {
 
     func body() throws -> Data {
         // O1 doesn't support "system", so replace it with user.
-        let modifiedMessages = switch provider.version {
-        case .o1:
-            messages.map { message in
-                if message.role != .system {
-                    return message
-                }
-                var temp = message
-                temp.role = .user
-                return temp
+        let modifiedMessages = messages.map { message in
+            if message.role != .system {
+                return message
             }
-        case .completions, .gemini, .legacy, .responses:
-            messages
+            var temp = message
+            temp.role = .user
+            return temp
         }
-        let body = Body(model: provider.dynamicModelsSupported ? provider.model : nil,
+        let body = Body(model: provider.model.name,
                         messages: modifiedMessages.compactMap { CompletionsMessage($0) },
                         max_completion_tokens: provider.maxTokens(functions: [], messages: messages))
         if body.max_completion_tokens < 2 {

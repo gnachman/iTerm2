@@ -6,188 +6,117 @@
 //
 
 struct LLMProvider {
-    // If you add new platforms update the advanced setting to give their names.
-    enum Platform: String {
-        case openAI = "OpenAI"
-        case azure = "Azure"
-        case gemini = "Gemini"
-    }
+    var model: AIMetadata.Model
 
-    enum Version {
-        case legacy
-        case completions
-        case gemini
-        case o1
-        case responses
-    }
-
-    var platform = Platform.openAI
-    var model: String
-
-    var version: Version {
-        if hostIsGoogle(url: completionsURL) {
-            return .gemini
-        }
-        if hostIsOpenAIAPI(url: completionsURL) {
-            if iTermAdvancedSettingsModel.openAIResponsesAPI() {
-                return .responses
-            }
-            if model.hasPrefix("o1") {
-                return .o1
-            }
-            return openAIModelIsLegacy(model: model) ? .legacy : .completions
-        }
-        return iTermPreferences.bool(forKey: kPreferenceKeyAITermUseLegacyAPI) ? .legacy : .completions
-    }
-
-    private func openAIModelIsLegacy(model: String) -> Bool {
-        return LLMMetadata.openAIModelIsLegacy(model: model)
-    }
-
-    var usingOpenAI: Bool {
-        return hostIsOpenAIAPI(url: url(apiKey: "placeholder"))
-    }
-
-    // URL assuming the completions API is in use. This may be overridden for the legacy API.
+    // URL assuming the completions API is in use.
     private var completionsURL: URL {
         var value = iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? ""
         if value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            value = iTermPreferences.defaultObject(forKey: kPreferenceKeyAITermURL) as! String
+            value = "https://api.openai.com/v1/completions"
         }
         return URL(string: value) ?? URL(string: "about:empty")!
     }
 
-    func url(apiKey: String) -> URL {
-        switch platform {
-        case .gemini:
-            let url = URL(string: iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? "") ?? URL(string: "about:empty")!
-            var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-            components?.queryItems = [URLQueryItem(name: "key", value: apiKey)]
-            return components?.url ?? URL(string: "about:empty")!
+    // URL assuming the responses API is in use.
+    private var responsesURL: URL {
+        var value = iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? ""
+        if value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            value = "https://api.openai.com/v1/responses"
+        }
+        return URL(string: value) ?? URL(string: "about:empty")!
+    }
 
-        case .openAI, .azure:
-            let completionsURL = self.completionsURL
-            if hostIsOpenAIAPI(url: completionsURL) && version == .completions {
-                // The default value for the setting is the legacy URL, so modernize it if needed.
-                return URL(string: "https://api.openai.com/v1/chat/completions")!
+    func url(apiKey: String, streaming: Bool) -> URL {
+        switch model.api {
+        case .gemini:
+            let url = URL(string: model.url) ?? URL(string: "about:empty")!
+            guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
+                return URL(string: "about:empty")!
             }
-            return completionsURL
+            components.queryItems = [URLQueryItem(name: "key", value: apiKey)]
+            components.path = String(components.path.removing(suffix: ":streamGenerateContent"))
+            components.path = String(components.path.removing(suffix: ":generateContent"))
+            components.path = components.path.replacingOccurrences(of: "{{MODEL}}", with: model.name)
+            if streaming {
+                components.path += ":streamGenerateContent"
+                components.queryItems?.append(URLQueryItem(name: "alt", value: "sse"))
+            } else {
+                components.path += ":generateContent"
+            }
+            return components.url ?? URL(string: "about:empty")!
+        default:
+            return URL(string: model.url) ?? URL(string: "about:empty")!
         }
     }
 
     func createVectorStoreURL(apiKey: String) -> URL? {
-        switch platform {
-        case .gemini, .azure:
-            return nil
-        case .openAI:
-            return URL(string: "https://api.openai.com/v1/vector_stores")!
-        }
+        return model.vectorStoreURL.compactMap { URL(string: $0) }
     }
 
-    func uploadURL(apiKey: String) -> URL? {
-        switch platform {
-        case .gemini, .azure:
-            return nil
-        case .openAI:
-            return URL(string: "https://api.openai.com/v1/files")!
-        }
+    func uploadURL() -> URL? {
+        return model.fileUploadURL.compactMap { URL(string: $0) }
     }
 
     func addFileToVectorStoreURL(apiKey: String, vectorStoreID: String) -> URL? {
-        switch platform {
-        case .gemini, .azure:
+        guard let url = model.addToVectorStoreURL?(vectorStoreID) else {
             return nil
-        case .openAI:
-            return URL(string: "https://api.openai.com/v1/vector_stores/\(vectorStoreID)/file_batches")!
         }
-    }
-
-    private func hostIsGoogle(url: URL?) -> Bool {
-        return url?.host == "generativelanguage.googleapis.com"
-    }
-
-    private func hostIsOpenAIAPI(url: URL?) -> Bool {
-        return LLMMetadata.hostIsOpenAIAPI(url: url)
+        return URL(string: url)
     }
 
     var urlIsValid: Bool {
-        return url(apiKey: "placeholder").scheme != "about"
+        return url(apiKey: "placeholder", streaming: false).scheme != "about"
     }
 
     var displayName: String {
-        if usingOpenAI {
+        if LLMMetadata.hostIsOpenAIAPI(url: url(apiKey: "placeholder",
+                                                streaming: false)) {
             return "OpenAI"
         }
-        switch platform {
-        case .openAI:
-            return "OpenAI"
-        case .azure:
-            return "Microsoft"
-        case .gemini:
+        if LLMMetadata.hostIsGoogleAIAPI(url: url(apiKey: "placeholder",
+                                                  streaming: false)) {
             return "Google"
         }
+        if LLMMetadata.hostIsAzureAIAPI(url: url(apiKey: "placeholder",
+                                                 streaming: false)) {
+            return "Azure"
+        }
+        if model.name.contains("llama") {
+            return "LLaMa"
+        }
+        return "Unknown Platform"
     }
 
     var dynamicModelsSupported: Bool {
-        switch platform {
-        case .openAI:
-            true
-        case .azure, .gemini:
-            false
+        if LLMMetadata.hostIsAzureAIAPI(url: url(apiKey: "placeholder", streaming: false)) {
+            return false
         }
-    }
-
-    var temperatureSupported: Bool {
-        switch platform {
-        case .openAI:
-            switch version {
-            case .o1:
-                false
-            case .completions, .legacy, .responses:
-                true
-            case .gemini:
-                it_fatalError()
-            }
-        case .azure, .gemini:
-            false
+        switch model.api {
+        case .gemini:
+            return false
+        default:
+            return true
         }
     }
 
     var functionsSupported: Bool {
-        switch version {
-        case .legacy:
-            false
-        case .completions, .responses:
-            true
-        case .o1:
-            false
-        case .gemini:
-            false
-        }
+        return model.features.contains(.functionCalling)
     }
 
     var supportsStreaming: Bool {
-        switch version {
-        case .legacy:
-            false
-        case .completions:
-            true
-        case .gemini:
-            false
-        case .o1:
-            false
-        case .responses:
-            true
+        return model.features.contains(.streaming)
+    }
+
+    var supportsUserAttachments: Bool {
+        switch model.api {
+        case .responses, .chatCompletions, .llama: true
+        case .completions, .gemini, .earlyO1: false
+        @unknown default: false
         }
     }
 
     var supportsHostedWebSearch: Bool {
-        switch version {
-        case .responses:
-            true
-        case .legacy, .completions, .o1, .gemini:
-            false
-        }
+        return model.features.contains(.hostedWebSearch)
     }
 
     func maxTokens(functions: [LLM.AnyFunction],
@@ -202,44 +131,51 @@ struct LLMProvider {
             return String(data: data, encoding: .utf8) ?? ""
         }()
         let query = messages.compactMap { $0.body.content }.joined(separator: "\n")
-        let naiveLimit = Int(iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit)) - OpenAIMetadata.instance.tokens(in: query) - OpenAIMetadata.instance.tokens(in: encodedFunctions)
-        if let responseLimit = OpenAIMetadata.instance.maxResponseTokens(modelName: model) {
-            return min(responseLimit, naiveLimit)
-        }
-        return naiveLimit
+        let naiveLimit = Int(iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit)) - AIMetadata.instance.tokens(in: query) - AIMetadata.instance.tokens(in: encodedFunctions)
+        return min(model.maxResponseTokens, naiveLimit)
     }
 
     func requestIsTooLarge(body: String) -> Bool {
-        return OpenAIMetadata.instance.tokens(in: body) >= Int(iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit))
+        return AIMetadata.instance.tokens(in: body) >= Int(iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit))
     }
 
-    func responseParser(stream: Bool) -> LLMResponseParser {
-        switch version {
-        case .completions, .o1:
+    func responseParser() -> LLMResponseParser {
+        switch model.api {
+        case .chatCompletions, .earlyO1:
             return LLMModernResponseParser()
         case .responses:
             return ResponsesResponseParser()
-        case .legacy:
+        case .completions:
             return LLMLegacyResponseParser()
         case .gemini:
             return LLMGeminiResponseParser()
+        case .llama:
+            return LlamaResponseParser()
+        @unknown default:
+            it_fatalError()
         }
     }
 
-    func streamingResponseParser(stream: Bool) -> LLMStreamingResponseParser {
+    func streamingResponseParser(stream: Bool) -> LLMStreamingResponseParser? {
         it_assert(stream)
-        switch version {
-        case .completions, .o1:
+        switch model.api {
+        case .chatCompletions, .earlyO1:
             return LLMModernStreamingResponseParser()
 
         case .responses:
             return ResponsesResponseStreamingParser()
 
-        case .legacy:
+        case .completions:
             return LLMLegacyStreamingResponseParser()
 
+        case .llama:
+            return LlamaStreamingResponseParser()
+
         case .gemini:
-            it_fatalError()
+            return LLMGeminiStreamingResponseParser()
+
+        @unknown default:
+            return nil
         }
     }
 }

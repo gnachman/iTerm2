@@ -23,11 +23,11 @@ struct LLMRequestBuilder {
     var method: String { "POST" }
 
     func body() throws -> Data {
-        switch provider.version {
-        case .legacy:
+        switch provider.model.api {
+        case .completions:
             try LegacyBodyRequestBuilder(messages: messages,
                                          provider: provider).body()
-        case .completions:
+        case .chatCompletions:
             try ModernBodyRequestBuilder(messages: messages,
                                          provider: provider,
                                          functions: functions,
@@ -39,12 +39,22 @@ struct LLMRequestBuilder {
                                             stream: stream,
                                             hostedTools: hostedTools,
                                             previousResponseID: previousResponseID).body()
-        case .o1:
+        case .earlyO1:
             try O1BodyRequestBuilder(messages: messages,
                                      provider: provider).body()
 
         case .gemini:
-            try GeminiRequestBuilder(messages: messages).body()
+            try GeminiRequestBuilder(messages: messages,
+                                     functions: functions,
+                                     hostedTools: hostedTools).body()
+
+        case .llama:
+            try LlamaBodyRequestBuilder(messages: messages,
+                                        provider: provider,
+                                        functions: functions,
+                                        stream: stream).body()
+        @unknown default:
+            it_fatalError()
         }
     }
 
@@ -52,7 +62,8 @@ struct LLMRequestBuilder {
         WebRequest(headers: headers,
                    method: method,
                    body: .string(try body().lossyString),
-                   url: provider.url(apiKey: apiKey).absoluteString)
+                   url: provider.url(apiKey: apiKey,
+                                     streaming: stream).absoluteString)
     }
 }
 

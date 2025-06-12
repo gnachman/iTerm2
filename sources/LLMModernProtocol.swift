@@ -48,7 +48,7 @@ struct CompletionsMessage: Codable, Equatable {
 
     var approximateTokenCount: Int {
         switch content {
-        case .string(let string): return OpenAIMetadata.instance.tokens(in: string) + 1
+        case .string(let string): return AIMetadata.instance.tokens(in: string) + 1
         case .array(let parts): return parts.map { $0.approximateTokenCount }.reduce(0, +) + 1
         case .none: return 0
         }
@@ -310,8 +310,8 @@ extension CompletionsMessage {
 
         var approximateTokenCount: Int {
             switch self {
-            case .text(let content): return OpenAIMetadata.instance.tokens(in: content.text) + 1
-            case .file(let file): return OpenAIMetadata.instance.tokens(in: file.file_data + file.filename) + 1
+            case .text(let content): return AIMetadata.instance.tokens(in: content.text) + 1
+            case .file(let file): return AIMetadata.instance.tokens(in: file.file_data + file.filename) + 1
             }
         }
 

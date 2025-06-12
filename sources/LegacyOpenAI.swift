@@ -13,15 +13,14 @@ struct LegacyBodyRequestBuilder {
         var model: String?
         var prompt: String
         var max_tokens: Int
-        var temperature: Int?
     }
 
     func body() throws -> Data {
         let query = messages.compactMap { $0.body.content }.joined(separator: "\n")
-        let body = LegacyBody(model: provider.dynamicModelsSupported ? provider.model : nil,
-                              prompt: query,
-                              max_tokens: provider.maxTokens(functions: [], messages: messages),
-                              temperature: provider.temperatureSupported ? 0 : nil)
+        let body = LegacyBody(
+            model: provider.dynamicModelsSupported ? provider.model.name : nil,
+            prompt: query,
+            max_tokens: provider.maxTokens(functions: [], messages: messages))
         if body.max_tokens < 2 {
             throw AIError.requestTooLarge
         }
@@ -134,6 +133,19 @@ struct LLMErrorParser {
     mutating func parse(data: Data) -> String? {
         let decoder = JSONDecoder()
         error = try? decoder.decode(LLM.ErrorResponse.self, from: data)
+        if error == nil {
+            struct GoogleError: Codable {
+                var error: ErrorBody
+                struct ErrorBody: Codable {
+                    var message: String
+                }
+            }
+            if let message = try? decoder.decode(GoogleError.self, from: data) {
+                error = LLM.ErrorResponse(
+                    error: LLM.ErrorResponse.Error(
+                        message: message.error.message))
+            }
+        }
         return error?.error.message
     }
 

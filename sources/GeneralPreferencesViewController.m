@@ -176,6 +176,7 @@ enum {
 
     IBOutlet NSComboBox *_aiModel;
     IBOutlet NSTextField *_aiTokenLimit;
+    IBOutlet NSTextField *_aiResponseTokenLimit;
     IBOutlet NSTextField *_aiModelLabel;
     IBOutlet NSTextField *_aiTokenLimitLabel;
     IBOutlet NSButton *_resetAIPrompt;
@@ -187,7 +188,12 @@ enum {
     BOOL _pluginOK;
 
     IBOutlet NSTextField *_customAIEndpoint;
-    IBOutlet NSButton *_useLegacyCompletionsAPI;
+    IBOutlet NSPopUpButton *_aiAPI;
+
+    IBOutlet NSButton *_aiFeatureHostedFileSearch;
+    IBOutlet NSButton *_aiFeatureHostedWebSearch;
+    IBOutlet NSButton *_aiFeatureFunctionCalling;
+    IBOutlet NSButton *_aiFeatureStreamingResponses;
 
     IBOutlet NSTextField *_checkTerminalStateLabel; // Check Terminal State
     IBOutlet NSPopUpButton *_checkTerminalStateButton;
@@ -203,7 +209,6 @@ enum {
     IBOutlet NSPopUpButton *_viewManpagesButton;
     IBOutlet NSTextField *_writeToFilesystemLabel; // View Manpages
     IBOutlet NSPopUpButton *_writeToFilesystemButton;
-    IBOutlet NSButton *_apiWarningButton;
     IBOutlet NSButton *_aiCompletions;
 
     IBOutlet NSButton *_enableRTL;
@@ -704,14 +709,20 @@ enum {
         [weakSelf updateAIPromptWarning];
     };
 
-    [OpenAIMetadata.instance enumerateModels:^(NSString * _Nonnull name, NSInteger context, NSString *url) {
+    [AIMetadata.instance enumerateModels:^(NSString * _Nonnull name, NSInteger context, NSString *url) {
         [_aiModel addItemWithObjectValue:name];
     }];
 
-    PreferenceInfo *tokenLimitInfo = [self defineControl:_aiTokenLimit
-                                                     key:kPreferenceKeyAITokenLimit
-                                             relatedView:_aiTokenLimitLabel
-                                                    type:kPreferenceInfoTypeIntegerTextField];
+    PreferenceInfo *tokenLimitInfo =
+        [self defineControl:_aiTokenLimit
+                        key:kPreferenceKeyAITokenLimit
+                relatedView:_aiTokenLimitLabel
+                       type:kPreferenceInfoTypeIntegerTextField];
+    PreferenceInfo *responseTokenLimitInfo =
+        [self defineControl:_aiResponseTokenLimit
+                        key:kPreferenceKeyAIResponseTokenLimit
+                relatedView:_aiTokenLimitLabel
+                       type:kPreferenceInfoTypeIntegerTextField];
     PreferenceInfo *urlInfo = [self defineControl:_customAIEndpoint
                            key:kPreferenceKeyAITermURL
                    relatedView:nil
@@ -756,13 +767,48 @@ enum {
                    relatedView:_writeToFilesystemLabel
                           type:kPreferenceInfoTypeUnsignedIntegerPopup];
 
+    NSMutableArray<PreferenceInfo *> *aiFeatureInfos = [NSMutableArray array];
+    info = [self defineControl:_aiFeatureHostedFileSearch
+                    key:kPreferenceKeyAIFeatureHostedFileSearch
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [aiFeatureInfos addObject:info];
+    info = [self defineControl:_aiFeatureHostedWebSearch
+                    key:kPreferenceKeyAIFeatureHostedWebSearch
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [aiFeatureInfos addObject:info];
+    info = [self defineControl:_aiFeatureFunctionCalling
+                    key:kPreferenceKeyAIFeatureFunctionCalling
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [aiFeatureInfos addObject:info];
+    info = [self defineControl:_aiFeatureStreamingResponses
+                    key:kPreferenceKeyAIFeatureStreamingResponses
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [aiFeatureInfos addObject:info];
+    PreferenceInfo *apiInfo = [self defineControl:_aiAPI
+                           key:kPreferenceKeyAITermAPI
+                   relatedView:nil
+                          type:kPreferenceInfoTypePopup];
+    apiInfo.shouldBeEnabled = ^BOOL{
+        return [weakSelf canCustomizeAPI];
+    };
+    apiInfo.observer = ^{
+        [weakSelf updateAIEnabled];
+    };
 
     info = [self defineControl:_aiModel
                            key:kPreferenceKeyAIModel
                    relatedView:_aiModelLabel
                           type:kPreferenceInfoTypeStringTextField];
     info.onChange = ^{
-        [weakSelf aiModelDidChange:tokenLimitInfo urlInfo:urlInfo];
+        [weakSelf aiModelDidChange:tokenLimitInfo
+                 responseLimitInfo:responseTokenLimitInfo
+                           urlInfo:urlInfo
+                           apiInfo:apiInfo
+                      featureInfos:aiFeatureInfos];
         [weakSelf updateAIEnabled];
     };
 
@@ -787,16 +833,6 @@ enum {
     };
     PreferenceInfo *enableAIInfo = info;
 
-    info = [self defineControl:_useLegacyCompletionsAPI
-                           key:kPreferenceKeyAITermUseLegacyAPI
-                   relatedView:nil
-                          type:kPreferenceInfoTypeCheckbox];
-    info.shouldBeEnabled = ^BOOL{
-        return ![weakSelf valueOfKeyEqualsDefaultValue:kPreferenceKeyAITermURL] && [[weakSelf stringForKey:kPreferenceKeyAITermURL] length] > 0;
-    };
-    info.observer = ^{
-        [weakSelf updateAIEnabled];
-    };
 
     info = [self defineControl:_aiCompletions
                            key:kPreferenceKeyAICompletion
@@ -835,22 +871,59 @@ enum {
     [self updateAIEnabled];
 }
 
-- (void)aiModelDidChange:(PreferenceInfo *)tokenLimitInfo urlInfo:(PreferenceInfo *)urlInfo {
+- (BOOL)canCustomizeAPI {
+    // Only allow customization for non-default settings.
+    if ([self valueOfKeyEqualsDefaultValue:kPreferenceKeyAITermURL]) {
+        return NO;
+    }
+    if ([[self stringForKey:kPreferenceKeyAITermURL] length] == 0) {
+        return NO;
+    }
+    return YES;
+}
+
+- (void)aiModelDidChange:(PreferenceInfo *)tokenLimitInfo
+       responseLimitInfo:(PreferenceInfo *)responseLimitInfo
+                 urlInfo:(PreferenceInfo *)urlInfo
+                 apiInfo:(PreferenceInfo *)apiInfo
+            featureInfos:(NSArray<PreferenceInfo *> *)featureInfos {
     NSString *model = [self stringForKey:kPreferenceKeyAIModel];
     if (!model) {
         return;
     }
-    NSNumber *tokens = [OpenAIMetadata.instance contextWindowTokensForModelName:model];
-    if (!tokens) {
-        return;
+    const iTermAIAPI api = [AIMetadata.instance apiForModel:model
+                                                   fallback:[self unsignedIntegerForKey:kPreferenceKeyAITermAPI]];
+    [self setObject:@(api) forKey:kPreferenceKeyAITermAPI];
+    [self updateValueForInfo:apiInfo];
+
+    NSNumber *tokens = [AIMetadata.instance contextWindowTokensForModelName:model];
+    if (tokens) {
+        [self setObject:tokens forKey:kPreferenceKeyAITokenLimit];
+        [self updateValueForInfo:tokenLimitInfo];
     }
-    [self setObject:tokens forKey:kPreferenceKeyAITokenLimit];
-    NSString *url = [OpenAIMetadata.instance urlForModelName:model];
+    NSNumber *responseTokens = [AIMetadata.instance responseTokenLimitForModelName:model];
+    if (responseTokens) {
+        [self setObject:responseTokens forKey:kPreferenceKeyAIResponseTokenLimit];
+        [self updateValueForInfo:responseLimitInfo];
+    }
+    NSString *url = [AIMetadata.instance urlForModelName:model];
     if (url) {
         [self setObject:url forKey:kPreferenceKeyAITermURL];
         [self updateValueForInfo:urlInfo];
     }
-    [self updateValueForInfo:tokenLimitInfo];
+    if ([AIMetadata.instance modelHasDefaults:model]) {
+        [self setBool:[AIMetadata.instance modelSupportsHostedFileSearch:model]
+               forKey:kPreferenceKeyAIFeatureHostedFileSearch];
+        [self setBool:[AIMetadata.instance modelSupportsHostedWebSearch:model]
+               forKey:kPreferenceKeyAIFeatureHostedWebSearch];
+        [self setBool:[AIMetadata.instance modelSupportsFunctionCalling:model]
+               forKey:kPreferenceKeyAIFeatureFunctionCalling];
+        [self setBool:[AIMetadata.instance modelSupportsStreamingResponses:model]
+               forKey:kPreferenceKeyAIFeatureStreamingResponses];
+        for (PreferenceInfo *info in featureInfos) {
+            [self updateValueForInfo:info];
+        }
+    }
 }
 
 - (void)validatePlugin {
@@ -889,6 +962,7 @@ enum {
 - (void)viewDidAppear {
     DLog(@"viewDidAppear");
 }
+
 - (void)updateAIEnabled {
     _enableAI.enabled = _pluginOK;
 
@@ -899,28 +973,7 @@ enum {
     _aiTokenLimit.enabled = allowed;
     _resetAIPrompt.enabled = allowed;
     _customAIEndpoint.enabled = allowed;
-    switch ([iTermLLMMetadata platform]) {
-        case iTermLLMPlatformOpenAI:
-            _useLegacyCompletionsAPI.enabled = allowed;
-            break;
-        case iTermLLMPlatformAzure:
-        case iTermLLMPlatformGemini:
-            _useLegacyCompletionsAPI.enabled = NO;
-            break;
-    }
     _enableAI.enabled = [iTermAdvancedSettingsModel generativeAIAllowed];
-
-    const BOOL usingLegacyAPI = [self boolForKey:kPreferenceKeyAITermUseLegacyAPI];
-    _apiWarningButton.hidden = !_useLegacyCompletionsAPI.enabled || !([self modelSupportsModernAPI] && usingLegacyAPI);
-
-}
-
-- (IBAction)legacyAPIButtonClicked:(id)sender {
-    [_apiWarningButton it_showWarningWithMarkdown:
-     @"This setting appears to be a mismatch for the currently selected model.\n\n"
-     @"The legacy API was used by OpenAI with models whose names began with `gpt-` (for example, `gpt-3.5-turbo` and `gpt-4`).\n\n"
-     @"In March of 2024, a new API was introduced that added support for tool use.\n\n"
-     @"You should generally leave this off these days unless you're using a service that only supports the old API."];
 }
 
 - (BOOL)modelSupportsModernAPI {

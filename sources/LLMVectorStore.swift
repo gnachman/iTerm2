@@ -12,14 +12,16 @@ struct LLMVectorStoreBatchStatusChecker {
     var batchID: String
 
     init?(provider: LLMProvider, apiKey: String, batchID: String, vectorStoreID: String) {
-        switch provider.version {
-        case .legacy, .completions, .o1, .gemini:
+        switch provider.model.api {
+        case .chatCompletions, .completions, .earlyO1, .gemini, .llama:
             return nil
         case .responses:
             self.provider = provider
             self.apiKey = apiKey
             self.vectorStoreID = vectorStoreID
             self.batchID = batchID
+        @unknown default:
+            return nil
         }
     }
 
@@ -67,14 +69,16 @@ struct LLMVectorStoreAdder {
     var fileIDs: [String]
 
     init?(provider: LLMProvider, apiKey: String, fileIDs: [String], vectorStoreID: String) {
-        switch provider.version {
-        case .legacy, .completions, .o1, .gemini:
+        switch provider.model.api {
+        case .chatCompletions, .completions, .earlyO1, .gemini, .llama:
             return nil
         case .responses:
             self.provider = provider
             self.apiKey = apiKey
             self.vectorStoreID = vectorStoreID
             self.fileIDs = fileIDs
+        @unknown default:
+            return nil
         }
     }
 
@@ -156,13 +160,15 @@ struct LLMVectorStoreCreator {
     var method: String { "POST" }
 
     func body() throws -> Data? {
-        switch provider.version {
-        case .legacy, .completions, .o1, .gemini:
+        switch provider.model.api {
+        case .chatCompletions, .completions, .earlyO1, .gemini, .llama:
             return nil
         case .responses:
             let payload: [String: String] = ["name": name]
             let jsonData = try JSONEncoder().encode(payload)
             return jsonData
+        @unknown default:
+            return nil
         }
     }
 

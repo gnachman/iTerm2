@@ -796,11 +796,12 @@ class CodeciergeGoalView: NSView, NSTextViewDelegate, NSControlTextEditingDelega
         scrollView.hasVerticalScroller = true
         scrollView.autoresizingMask = [.width, .height]
 
+        let hasFunctionCalling = AITermController.provider?.model.features.contains(.functionCalling) ?? false
         autoButton = NSButton()
         autoButton.setButtonType(.switch)
         autoButton.title = "Run commands automatically"
         autoButton.state = .off
-        autoButton.isEnabled = AITermController.provider.functionsSupported
+        autoButton.isEnabled = hasFunctionCalling
         userDefaultsObserver = iTermUserDefaultsObserver()
         startButton = NSButton(title: "Start", target: nil, action: nil)
         startButton.isEnabled = false
@@ -826,13 +827,13 @@ class CodeciergeGoalView: NSView, NSTextViewDelegate, NSControlTextEditingDelega
         layoutSubviews()
 
         userDefaultsObserver.observeKey(kPreferenceKeyAITermURL) { [weak self] in
-            self?.autoButton.isEnabled = AITermController.provider.functionsSupported
+            self?.autoButton.isEnabled = hasFunctionCalling
         }
         userDefaultsObserver.observeKey(kPreferenceKeyAIModel) { [weak self] in
-            self?.autoButton.isEnabled = AITermController.provider.functionsSupported
+            self?.autoButton.isEnabled = hasFunctionCalling
         }
-        userDefaultsObserver.observeKey(kPreferenceKeyAITermUseLegacyAPI) { [weak self] in
-            self?.autoButton.isEnabled = AITermController.provider.functionsSupported
+        userDefaultsObserver.observeKey(kPreferenceKeyAITermAPI) { [weak self] in
+            self?.autoButton.isEnabled = hasFunctionCalling
         }
     }
 
@@ -1331,89 +1332,3 @@ class DynamicImage {
     }
 }
 
-@objc
-class OpenAIMetadata: NSObject {
-    @objc static let instance = OpenAIMetadata()
-
-    private struct Model {
-        var name: String
-        var contextWindowTokens: Int
-        var maxResponseTokens: Int?
-        var url: String?
-    }
-
-    // This has to be constantly updated from
-    // https://platform.openai.com/docs/models/models
-    private let models = [
-        Model(name: "gpt-4o",
-              contextWindowTokens: 128_000,
-              maxResponseTokens: 4096,
-              url: "https://api.openai.com/v1/completions"),
-        Model(name: "gpt-4o-mini",
-              contextWindowTokens: 128000,
-              maxResponseTokens: 16384,
-              url: "https://api.openai.com/v1/completions"),
-        Model(name: "gpt-4",
-              contextWindowTokens: 8192,
-              url: "https://api.openai.com/v1/completions"),
-        Model(name: "gpt-4-turbo",
-              contextWindowTokens: 128000,
-              maxResponseTokens: 4096,
-              url: "https://api.openai.com/v1/completions"),
-        Model(name: "o1-preview",
-              contextWindowTokens: 128000,
-              maxResponseTokens: 32768,
-              url: "https://api.openai.com/v1/chat/completions"),
-        Model(name: "o1-mini",
-              contextWindowTokens: 128000,
-              maxResponseTokens: 65536,
-              url: "https://api.openai.com/v1/chat/completions"),
-        Model(name: "llama2:latest",
-             contextWindowTokens: 4_096,
-             maxResponseTokens: 4_096,
-              url: "http://localhost:11434/v1/chat/completions"),
-        Model(name: "llama3:latest",
-             contextWindowTokens: 8_192,
-             maxResponseTokens: 8_192,
-              url: "http://localhost:11434/v1/chat/completions"),
-        Model(name: "Gemini 1.5 flash",
-              contextWindowTokens: 1_048_576,
-              maxResponseTokens: 8_192,
-              url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"),
-        Model(name: "deepseek-chat",
-              contextWindowTokens: 8_192,
-              url: "https://api.deepseek.com/chat/completions")
-        ]
-
-    @objc(enumerateModels:) func enumerateModels(_ closure: (String, Int, String?) -> ()) {
-        for model in models {
-            closure(model.name, model.contextWindowTokens, model.url)
-        }
-    }
-
-    @objc(contextWindowTokensForModelName:) func objc_contextWindowTokens(modelName: String) -> NSNumber? {
-        if let model = models.first(where: { $0.name == modelName}) {
-            return NSNumber(value: model.contextWindowTokens)
-        }
-        return nil
-    }
-
-    @objc(urlForModelName:)
-    func objc_url(modelName: String) -> String? {
-        return models.first(where: { $0.name == modelName })?.url
-    }
-
-    func maxResponseTokens(modelName: String) -> Int? {
-        guard let model = models.first(where: { $0.name == modelName}) else {
-            return nil
-        }
-        if let result = model.maxResponseTokens {
-            return result
-        }
-        return model.contextWindowTokens
-    }
-
-    func tokens(in string: String) -> Int {
-        return string.utf8.count / 2
-    }
-}

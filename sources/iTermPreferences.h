@@ -76,6 +76,15 @@ typedef NS_ENUM(NSInteger, iTermPreferenceSavePrefsMode) {
     iTermPreferenceSavePrefsModeAlways = 2
 };
 
+typedef NS_ENUM(NSUInteger, iTermAIAPI) {
+    iTermAIAPICompletions = 0,
+    iTermAIAPIChatCompletions = 1,
+    iTermAIAPIResponses = 2,
+    iTermAIAPIGemini = 3,
+    iTermAIAPIEarlyO1 = 4,
+    iTermAIAPILlama = 5
+};
+
 // General
 extern NSString *const kPreferenceKeyOpenBookmark;
 extern NSString *const kPreferenceKeyOpenArrangementAtStartup;
@@ -98,6 +107,7 @@ extern NSString *const kPreferenceKeyOpenAIAPIKey;
 extern NSString *const kPreferenceKeyAIPrompt;
 extern NSString *const kPreferenceKeyAIModel;
 extern NSString *const kPreferenceKeyAITokenLimit;
+extern NSString *const kPreferenceKeyAIResponseTokenLimit;
 
 // Note: if kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection is false, then use the default value (.never).
 // Otherwise, respect this value.
@@ -137,9 +147,14 @@ extern NSString *const kPreferenceKeySshIntegrationForURLs;
 extern NSString *const kPhonyPreferenceKeyInstallAIPlugin;
 extern NSString *const kPreferenceKeyPhonyAllowSendingClipboardContents;
 extern NSString *const kPreferenceKeyAITermURL;
-extern NSString *const kPreferenceKeyAITermUseLegacyAPI;
+extern NSString *const kPreferenceKeyAITermUseLegacyAPI;  // deprecated
+extern NSString *const kPreferenceKeyAITermAPI;  // NSNumber(iTermAIAPI)
 extern NSString *const kPreferenceKeyIndicateNonDefaultValues;
 extern NSString *const kPreferenceKeyAICompletion;
+extern NSString *const kPreferenceKeyAIFeatureHostedFileSearch;
+extern NSString *const kPreferenceKeyAIFeatureHostedWebSearch;
+extern NSString *const kPreferenceKeyAIFeatureFunctionCalling;
+extern NSString *const kPreferenceKeyAIFeatureStreamingResponses;
 
 extern NSString *const kPreferenceKeyAIPermissionCheckTerminalState;
 extern NSString *const kPreferenceKeyAIPermissionRunCommands;

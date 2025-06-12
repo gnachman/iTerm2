@@ -13,14 +13,17 @@ struct LLMFileUploader {
     init?(provider: LLMProvider, apiKey: String, fileName: String, content: Data) {
         self.provider = provider
         self.apiKey = apiKey
-        switch provider.version {
-        case .legacy, .completions, .o1, .gemini:
-            return nil
+        switch provider.model.api {
+
         case .responses:
             responsesBuilder = ResponsesFileUploadBuilder(provider: provider,
                                                           apiKey: apiKey,
                                                           fileName: fileName,
                                                           content: content)
+        case .completions, .chatCompletions, .gemini, .earlyO1, .llama:
+            return nil
+        @unknown default:
+            return nil
         }
     }
 
@@ -36,7 +39,7 @@ struct LLMFileUploader {
 
     func webRequest() throws -> WebRequest {
         let body = try body()
-        guard let url = provider.uploadURL(apiKey: apiKey) else {
+        guard let url = provider.uploadURL() else {
             throw AIError("File upload is not supported with this LLM provider")
         }
         return WebRequest(headers: headers,

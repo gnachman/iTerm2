@@ -224,7 +224,7 @@ class ChatAgent {
     }
 
     private func updateSystemMessage(_ permissions: Set<RemoteCommand.Content.PermissionCategory>) {
-        if permissions.isEmpty {
+        if permissions.isEmpty || (AITermController.provider?.functionsSupported != true) {
             conversation.systemMessage = "You help the user in a terminal emulator."
         } else if permissions.contains(.runCommands) || permissions.contains(.typeForYou) {
             conversation.systemMessage = "You help the user in a terminal emulator. You have the ability to run commands on their behalf and perform various other operations in terminal sessions. Don't be shy about using them, especially if they are safe to do, because the user must always grant permission for these functions to run. You don't need to request permission: the app will do that for you."
@@ -262,7 +262,7 @@ class ChatAgent {
     }
 
     private func ingestableFilesFromSubparts(_ parts: [Message.Subpart]) -> [LLM.Message.Attachment.AttachmentType.File] {
-        if !iTermAdvancedSettingsModel.openAIResponsesAPI() {
+        if !conversation.supportsUserAttachments {
             return []
         }
         return parts.compactMap { subpart -> LLM.Message.Attachment.AttachmentType.File? in
@@ -498,7 +498,7 @@ class ChatAgent {
                 case .fileID:
                     return true
                 case .file(let file): 
-                    if iTermAdvancedSettingsModel.openAIResponsesAPI() {
+                    if conversation.supportsUserAttachments {
                         return file.mimeType != "application/pdf"
                     }
                     return true

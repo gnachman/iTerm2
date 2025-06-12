@@ -696,7 +696,7 @@ struct ResponsesResponseBody: Codable {
         let summary: [ReasoningSummary]
         let type: String
         let encryptedContent: String?
-        let status: String
+        let status: String?
 
         enum CodingKeys: String, CodingKey {
             case id

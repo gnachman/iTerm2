@@ -204,10 +204,16 @@ NSString *const kPreferenceKeyAIPrompt = @"AI Prompt";
 NSString *const kPreferenceKeyAlertOnMarksInOffscreenSessions = @"Alert On Marks in Offscreen Sessions";
 NSString *const kPreferenceKeyAIModel = @"AiModel";
 NSString *const kPreferenceKeyAITokenLimit = @"AiMaxTokens";
+NSString *const kPreferenceKeyAIResponseTokenLimit = @"AIMaxResponseTokens";
 NSString *const kPreferenceKeyAITermURL = @"AitermURL";
-NSString *const kPreferenceKeyAITermUseLegacyAPI = @"AitermUseLegacyAPI";
+NSString *const kPreferenceKeyAITermUseLegacyAPI = @"AitermUseLegacyAPI";  // deprecated
+NSString *const kPreferenceKeyAITermAPI = @"AITermAPI";
 NSString *const kPreferenceKeyIndicateNonDefaultValues  = @"NoSyncHideDefaultValuedSettings";
 NSString *const kPreferenceKeyAICompletion = @"AICompletion";
+NSString *const kPreferenceKeyAIFeatureHostedFileSearch = @"AIFeatureHostedFileSearch";
+NSString *const kPreferenceKeyAIFeatureHostedWebSearch = @"AIFeatureHostedWebSearch";
+NSString *const kPreferenceKeyAIFeatureFunctionCalling = @"AIFeatureFunctionCalling";
+NSString *const kPreferenceKeyAIFeatureStreamingResponses = @"AIFeatureStreamingResponses";
 
 NSString *const kPreferenceKeyAIPermissionCheckTerminalState = @"AIPermissionCheckTerminalState";
 NSString *const kPreferenceKeyAIPermissionRunCommands = @"AIPermissionRunCommands";
@@ -469,10 +475,16 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyAlertOnMarksInOffscreenSessions: @NO,
                   kPreferenceKeyAIModel: @"gpt-4o-mini",
                   kPreferenceKeyAITokenLimit: @128000,
-                  kPreferenceKeyAITermURL: @"https://api.openai.com/v1/completions",
+                  kPreferenceKeyAIResponseTokenLimit: @8192,
+                  kPreferenceKeyAITermURL: @"",
                   kPreferenceKeyAITermUseLegacyAPI: @NO,
+                  kPreferenceKeyAITermAPI: @(iTermAIAPIResponses),
                   kPreferenceKeyIndicateNonDefaultValues: @NO,
                   kPreferenceKeyAICompletion: @NO,  // ignored - synthetic value
+                  kPreferenceKeyAIFeatureHostedFileSearch: @NO,
+                  kPreferenceKeyAIFeatureHostedWebSearch: @NO,
+                  kPreferenceKeyAIFeatureFunctionCalling: @NO,
+                  kPreferenceKeyAIFeatureStreamingResponses: @NO,
 
                   kPreferenceKeyAIPermissionCheckTerminalState: @(iTermAIPermissionAsk),
                   kPreferenceKeyAIPermissionRunCommands: @(iTermAIPermissionAsk),
@@ -652,6 +664,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyTabsHaveCloseButton: BLOCK(computedTabsHaveCloseButton),
                   kPreferenceKeyLeftControlRemapping: BLOCK(computedLeftControlRemapping),
                   kPreferenceKeyRightControlRemapping: BLOCK(computedRightControlRemapping),
+                  kPreferenceKeyAITermAPI: BLOCK(computedAIAPI)
                   };
     }
     return dict;
@@ -875,6 +888,19 @@ static NSString *sPreviousVersion;
         return @(value.intValue);
     }
     return [self defaultObjectForKey:kPreferenceKeyRightControlRemapping];
+}
+
++ (NSNumber *)computedAIAPI {
+    NSNumber *value;
+    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyAITermAPI];
+    if (value) {
+        return value;
+    }
+    NSNumber *legacy = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyAITermUseLegacyAPI];
+    if (legacy) {
+        return legacy.boolValue ? @(iTermAIAPICompletions) : @(iTermAIAPIResponses);
+    }
+    return [self defaultObjectForKey:kPreferenceKeyAITermAPI];
 }
 
 + (NSNumber *)computedTabsHaveCloseButton {

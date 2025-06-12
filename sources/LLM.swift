@@ -238,7 +238,7 @@ enum LLM {
             self.body = body
         }
 
-        var approximateTokenCount: Int { OpenAIMetadata.instance.tokens(in: (body.content)) + 1 }
+        var approximateTokenCount: Int { AIMetadata.instance.tokens(in: (body.content)) + 1 }
 
         var trimmedString: String? {
             return String(body.content.trimmingLeadingCharacters(in: .whitespacesAndNewlines))
@@ -345,12 +345,16 @@ struct LLMAuthorizationProvider {
     var provider: LLMProvider
     var apiKey: String
     var headers: [String: String] {
-        switch provider.platform {
-        case .openAI:
-            ["Authorization": "Bearer " + apiKey.trimmingCharacters(in: .whitespacesAndNewlines)]
-        case .azure:
-            ["api-key": apiKey.trimmingCharacters(in: .whitespacesAndNewlines) ]
-        case .gemini:
+        switch provider.model.api {
+        case .chatCompletions, .completions, .earlyO1, .responses:
+            if LLMMetadata.hostIsAzureAIAPI(url: URL(string: provider.model.url)) {
+                ["api-key": apiKey.trimmingCharacters(in: .whitespacesAndNewlines) ]
+            } else {
+                ["Authorization": "Bearer " + apiKey.trimmingCharacters(in: .whitespacesAndNewlines)]
+            }
+        case .gemini, .llama:
+            [:]
+        @unknown default:
             [:]
         }
     }

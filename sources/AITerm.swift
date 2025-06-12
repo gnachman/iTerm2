@@ -112,7 +112,11 @@ class AITermController {
     }
 
     var supportsStreaming: Bool {
-        return llmProvider.supportsStreaming
+        return llmProvider?.supportsStreaming ?? false
+    }
+
+    var supportsUserAttachments: Bool {
+        return llmProvider?.supportsUserAttachments ?? false
     }
 
     func request(query: String, stream: Bool = false) {
@@ -148,6 +152,9 @@ class AITermController {
     }
 
     func define<T: Codable>(function decl: ChatGPTFunctionDeclaration, arguments: T.Type, implementation: @escaping LLM.Function<T>.Impl) {
+        if llmProvider?.model.features.contains(.functionCalling) != true {
+            return
+        }
         functions.append(LLM.Function(decl: decl, call: implementation, parameterType: arguments))
     }
 
@@ -155,6 +162,9 @@ class AITermController {
     var previousResponseID: String?
 
     func define(functions: [LLM.AnyFunction]) {
+        if llmProvider?.model.features.contains(.functionCalling) != true {
+            return
+        }
         self.functions.append(contentsOf: functions)
     }
 
@@ -293,7 +303,7 @@ class AITermController {
                 it_fatalError()
             case .webResponse(let response):
                 if let error = response.error, !error.isEmpty {
-                    let provider = llmProvider.displayName
+                    let provider = llmProvider?.displayName ?? "server"
                     var message = "Error from \(provider): \(error)"
                     if let reason = LLMErrorParser.errorReason(data: response.data.lossyData), !reason.isEmpty {
                         message += " " + reason
@@ -357,17 +367,22 @@ class AITermController {
     private let client = iTermAIClient()
     private var cancellation: Cancellation?
 
-    static var provider: LLMProvider {
-        let model = LLMMetadata.model()
-        let platform = LLMMetadata.platform()
-        return LLMProvider(platform: platform, model: model)
+    static var provider: LLMProvider? {
+        if let model = LLMMetadata.model() {
+            return LLMProvider(model: model)
+        }
+        return nil
     }
 
-    private var llmProvider: LLMProvider {
+    private var llmProvider: LLMProvider? {
         Self.provider
     }
 
     private func requestCompletion(messages: [Message], registration: Registration, stream: ((String) -> ())?) {
+        guard let llmProvider else {
+            handle(event: .error(AIError("No AI model configured in settings.")))
+            return
+        }
         var builder = LLMRequestBuilder(provider: llmProvider,
                                         apiKey: registration.apiKey,
                                         messages: messages,
@@ -401,6 +416,10 @@ class AITermController {
 
     private func requestCreateVectorStore(name: String,
                                           registration: Registration) {
+        guard let llmProvider else {
+            handle(event: .error(AIError("No AI model configured in settings.")))
+            return
+        }
         let builder = LLMVectorStoreCreator(name: name,
                                             provider: llmProvider,
                                             apiKey: registration.apiKey)
@@ -435,6 +454,10 @@ class AITermController {
     private func requestAddFilesToVectorStore(fileIDs: [String],
                                              vectorStoreID: String,
                                              registration: Registration) {
+        guard let llmProvider else {
+            handle(event: .error(AIError("No AI model configured in settings.")))
+            return
+        }
         guard let builder = LLMVectorStoreAdder(provider: llmProvider,
                                                 apiKey: registration.apiKey,
                                                 fileIDs: fileIDs,
@@ -487,6 +510,10 @@ class AITermController {
     private func checkVectorStoreReadiness(vectorStoreID: String,
                                            batchID: String,
                                            registration: Registration) {
+        guard let llmProvider else {
+            handle(event: .error(AIError("No AI model configured in settings.")))
+            return
+        }
         guard let builder = LLMVectorStoreBatchStatusChecker(provider: llmProvider,
                                                              apiKey: registration.apiKey,
                                                              batchID: batchID,
@@ -534,6 +561,10 @@ class AITermController {
     private func requestFileUpload(name: String,
                                    content: Data,
                                    registration: Registration) {
+        guard let llmProvider else {
+            handle(event: .error(AIError("No AI model configured in settings.")))
+            return
+        }
         guard let builder = LLMFileUploader(provider: llmProvider,
                                             apiKey: registration.apiKey,
                                             fileName: name,
@@ -573,6 +604,10 @@ class AITermController {
     }
 
     private func parseStreamingResponse(data: Data, final: Bool, parserState: StreamParserState) -> StreamParserState? {
+        guard let llmProvider else {
+            handle(event: .error(AIError("No AI model configured in settings.")))
+            return nil
+        }
         var accumulatingMessage = parserState.message
         if final {
             if let functionCall = accumulatingMessage.function_call {
@@ -585,7 +620,11 @@ class AITermController {
         }
         DLog("------- parse new stream response of length \(data.count) -------------")
         let string = String(data: parserState.buffer + data, encoding: .utf8) ?? ""
-        var (first, rest) = llmProvider.streamingResponseParser(stream: true).splitFirstJSONEvent(from: string)
+        guard let parser = llmProvider.streamingResponseParser(stream: true) else {
+            handle(event: .error(AIError("Streaming is not supported by this language model in iTerm2. You can disable streaming in Settings > General > AI.")))
+            return nil
+        }
+        var (first, rest) = parser.splitFirstJSONEvent(from: string)
 
         let drain = {
             switch accumulatingMessage.body {
@@ -625,7 +664,10 @@ class AITermController {
                         break
                     }
                     do {
-                        var parser = llmProvider.streamingResponseParser(stream: true)
+                        guard var parser = llmProvider.streamingResponseParser(stream: true) else {
+                            handle(event: .error(AIError("Streaming is not supported by this language model in iTerm2. You can disable streaming in Settings > General > AI.")))
+                            return nil
+                        }
                         let response = try parser.parse(data: firstData)
                         guard let response else {
                             DLog("Stream finished")
@@ -651,7 +693,12 @@ class AITermController {
                         drain()
                     }
                 }
-                (first, rest) = llmProvider.streamingResponseParser(stream: true).splitFirstJSONEvent(from: rest)
+                guard let parser = llmProvider.streamingResponseParser(stream: true) else {
+                    handle(event: .error(AIError("Streaming is not supported by this language model in iTerm2. You can disable streaming in Settings > General > AI.")))
+                    return nil
+                }
+
+                (first, rest) = parser.splitFirstJSONEvent(from: rest)
             }
         }
 
@@ -659,8 +706,12 @@ class AITermController {
     }
 
     private func parseNonStreamingResponse(data: Data) {
+        guard let llmProvider else {
+            handle(event: .error(AIError("No AI model configured in settings.")))
+            return
+        }
         do {
-            var parser = llmProvider.responseParser(stream: false)
+            var parser = llmProvider.responseParser()
             guard let response = try parser.parse(data: data) else {
                 delegate?.aitermController(self, didFailWithError: AIError("Unexpected end of file from server"))
                 return
@@ -686,6 +737,10 @@ class AITermController {
     }
 
     private func doFunctionCall(_ message: Message, call functionCall: LLM.FunctionCall) {
+        guard let llmProvider else {
+            handle(event: .error(AIError("No AI model configured in settings.")))
+            return
+        }
         switch state {
         case .ground, .initialized, .initializedMessages, .creatingVectorStore,
                 .uploadingFile, .addingFileToVectorStore:

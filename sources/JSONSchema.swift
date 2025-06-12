@@ -14,7 +14,8 @@ struct JSONSchema: Codable {
     struct Property: Codable {
         var type: String  // e.g., "string"
         var description: String?  // Documentation
-        var `enum`: [String]?
+        var `enum`: [String]?  // ["red", "black"]
+        var items: [String: String]?  // {"type": "string"}
     }
 
     init<T>(for instance: T,

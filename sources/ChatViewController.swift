@@ -138,7 +138,7 @@ class ChatViewController: NSViewController {
         sessionButton.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         if #available(macOS 11.0, *) {
-            if AITermController.provider.supportsHostedWebSearch {
+            if AITermController.provider?.supportsHostedWebSearch ?? false {
                 let webSearchButton = WebSearchButton(image: NSImage.it_image(forSymbolName: "globe",
                                                                               accessibilityDescription: "Web search image",
                                                                               fallbackImageName: "globe",
@@ -485,6 +485,12 @@ extension ChatViewController {
     private static let webSearchUserDefaultsKey = "AI Web Search Enabled"
     private var webSearchEnabled: Bool {
         get {
+            guard let model = LLMMetadata.model() else {
+                return false
+            }
+            if !model.features.contains(.hostedWebSearch) {
+                return false
+            }
             if #available(macOS 11, *) {
                 return UserDefaults.standard.bool(forKey: Self.webSearchUserDefaultsKey)
             }

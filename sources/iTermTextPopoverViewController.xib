@@ -26,7 +26,7 @@
                         <rect key="frame" x="0.0" y="0.0" width="472" height="264"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <textView editable="NO" importsGraphics="NO" richText="NO" verticallyResizable="YES" findStyle="bar" incrementalSearchingEnabled="YES" smartInsertDelete="YES" id="Bpe-se-YPw" customClass="VVSubviewAttachingTextView">
+                            <textView editable="NO" importsGraphics="NO" richText="NO" verticallyResizable="YES" findStyle="bar" incrementalSearchingEnabled="YES" smartInsertDelete="YES" id="Bpe-se-YPw">
                                 <rect key="frame" x="0.0" y="0.0" width="472" height="264"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>

@@ -90,7 +90,9 @@ struct AIConversation {
         return Int(iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit) - iTermAdvancedSettingsModel.aiResponseMaxTokens())
     }
     var busy: Bool { delegate.busy }
-
+    var supportsUserAttachments: Bool {
+        controller.supportsUserAttachments
+    }
     init(_ other: AIConversation) {
         self.init(registrationProvider: other.registrationProvider,
                   messages: other.messages,

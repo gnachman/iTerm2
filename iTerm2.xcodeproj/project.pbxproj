@@ -4151,6 +4151,9 @@
 		A6E2D1002AC49265005C6677 /* iTermBlock.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6E2D0FD2AC49264005C6677 /* iTermBlock.metal */; };
 		A6E2DF872AC4A1FF005C6677 /* TerminalButtonRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E2DF862AC4A1FF005C6677 /* TerminalButtonRenderer.swift */; };
 		A6E304052DF8E11E0029CAB4 /* ConductorRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E304042DF8E11D0029CAB4 /* ConductorRegistry.swift */; };
+		A6E3043F2DFA06B80029CAB4 /* AIMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E3043E2DFA06B30029CAB4 /* AIMetadata.swift */; };
+		A6E304412DFA55B00029CAB4 /* Llama.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E304402DFA55AA0029CAB4 /* Llama.swift */; };
+		A6E304432DFB394E0029CAB4 /* Codable+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E304422DFB394A0029CAB4 /* Codable+iTerm.swift */; };
 		A6E34BD02118097A00F147DD /* iTermBackgroundDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E34BCE2118097A00F147DD /* iTermBackgroundDrawingHelper.h */; };
 		A6E34BD12118097A00F147DD /* iTermBackgroundDrawingHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E34BCF2118097A00F147DD /* iTermBackgroundDrawingHelper.m */; };
 		A6E39FAB2CD18B6B00035787 /* BidiDisplayInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E39FAA2CD18B6300035787 /* BidiDisplayInfo.swift */; };
@@ -7956,6 +7959,9 @@
 		A6E2D0FD2AC49264005C6677 /* iTermBlock.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = iTermBlock.metal; path = Metal/Shaders/iTermBlock.metal; sourceTree = "<group>"; };
 		A6E2DF862AC4A1FF005C6677 /* TerminalButtonRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalButtonRenderer.swift; sourceTree = "<group>"; };
 		A6E304042DF8E11D0029CAB4 /* ConductorRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConductorRegistry.swift; sourceTree = "<group>"; };
+		A6E3043E2DFA06B30029CAB4 /* AIMetadata.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIMetadata.swift; sourceTree = "<group>"; };
+		A6E304402DFA55AA0029CAB4 /* Llama.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Llama.swift; sourceTree = "<group>"; };
+		A6E304422DFB394A0029CAB4 /* Codable+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Codable+iTerm.swift"; sourceTree = "<group>"; };
 		A6E34BCE2118097A00F147DD /* iTermBackgroundDrawingHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBackgroundDrawingHelper.h; sourceTree = "<group>"; };
 		A6E34BCF2118097A00F147DD /* iTermBackgroundDrawingHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBackgroundDrawingHelper.m; sourceTree = "<group>"; };
 		A6E39FAA2CD18B6300035787 /* BidiDisplayInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BidiDisplayInfo.swift; sourceTree = "<group>"; };
@@ -9776,6 +9782,7 @@
 		1D9DDE31142E73E300275650 /* Categories */ = {
 			isa = PBXGroup;
 			children = (
+				A6E304422DFB394A0029CAB4 /* Codable+iTerm.swift */,
 				A61940062DF88E71002ABD3C /* Dictionary+iTerm.swift */,
 				A6069F132DF25D2C00EE6CC7 /* NSMutableAttributedString+iTerm.swift */,
 				A6069F112DF25D0900EE6CC7 /* Data+iTerm.swift */,
@@ -10270,6 +10277,8 @@
 		A6038324294E626400FE11C2 /* AITerm */ = {
 			isa = PBXGroup;
 			children = (
+				A6E304402DFA55AA0029CAB4 /* Llama.swift */,
+				A6E3043E2DFA06B30029CAB4 /* AIMetadata.swift */,
 				A6069F332DF768C100EE6CC7 /* Cancellation.swift */,
 				A6069F2F2DF3ACD700EE6CC7 /* HTTPHelpers.swift */,
 				A6069F2D2DF3AC9F00EE6CC7 /* SSE.swift */,
@@ -16975,6 +16984,7 @@
 				5312269B20CB1D3A004831C6 /* iTermBuiltInFunctions.m in Sources */,
 				A60D023F2687F5D800E19362 /* StatusBarKnobFontViewController.swift in Sources */,
 				A65660D92372A69A00DC6744 /* iTermDoublyLinkedList.m in Sources */,
+				A6E3043F2DFA06B80029CAB4 /* AIMetadata.swift in Sources */,
 				A6352257238CA38A00FED5BC /* iTermMultiServerJobManager.m in Sources */,
 				A6F1B3C52693BC2F00546767 /* iTermNotificationController.m in Sources */,
 				A678C50E279B3C3900C59927 /* charmaps.m in Sources */,
@@ -17074,6 +17084,7 @@
 				A6A453931FF318D8009FD3B7 /* iTermTexturePageCollection.mm in Sources */,
 				A6DBC05220073CBA00F1466D /* NSResponder+iTerm.m in Sources */,
 				A62DBBA820F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.m in Sources */,
+				A6E304412DFA55B00029CAB4 /* Llama.swift in Sources */,
 				A68769562C0E5F2300F7FFEC /* LLM.swift in Sources */,
 				A665396C26B71B880049F375 /* iTermIndicatorsHelper.m in Sources */,
 				A6DBC04220049CB100F1466D /* iTermImage.metal in Sources */,
@@ -17690,6 +17701,7 @@
 				A64511C42380673300EB6ADF /* iTermMonoServerJobManager.m in Sources */,
 				A66F3CF11FEA3D9E00AA2021 /* iTermHistogram.mm in Sources */,
 				A698BF492A5B8DCE0018EA84 /* MoveSessionBuiltInFunction.swift in Sources */,
+				A6E304432DFB394E0029CAB4 /* Codable+iTerm.swift in Sources */,
 				A6CC7F59274ABCBF0060C3C2 /* NSScrollView+iTerm.swift in Sources */,
 				A6EB642B2D5BC1CF00481D33 /* ChatSplitViewController.swift in Sources */,
 				A664335A2DEB695C0099F722 /* LLMModernProtocol.swift in Sources */,
