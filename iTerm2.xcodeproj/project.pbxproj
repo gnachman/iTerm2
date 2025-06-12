@@ -4154,6 +4154,7 @@
 		A6E3043F2DFA06B80029CAB4 /* AIMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E3043E2DFA06B30029CAB4 /* AIMetadata.swift */; };
 		A6E304412DFA55B00029CAB4 /* Llama.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E304402DFA55AA0029CAB4 /* Llama.swift */; };
 		A6E304432DFB394E0029CAB4 /* Codable+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E304422DFB394A0029CAB4 /* Codable+iTerm.swift */; };
+		A6E304452DFB45830029CAB4 /* DeepSeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E304442DFB45810029CAB4 /* DeepSeek.swift */; };
 		A6E34BD02118097A00F147DD /* iTermBackgroundDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E34BCE2118097A00F147DD /* iTermBackgroundDrawingHelper.h */; };
 		A6E34BD12118097A00F147DD /* iTermBackgroundDrawingHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E34BCF2118097A00F147DD /* iTermBackgroundDrawingHelper.m */; };
 		A6E39FAB2CD18B6B00035787 /* BidiDisplayInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E39FAA2CD18B6300035787 /* BidiDisplayInfo.swift */; };
@@ -7962,6 +7963,7 @@
 		A6E3043E2DFA06B30029CAB4 /* AIMetadata.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIMetadata.swift; sourceTree = "<group>"; };
 		A6E304402DFA55AA0029CAB4 /* Llama.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Llama.swift; sourceTree = "<group>"; };
 		A6E304422DFB394A0029CAB4 /* Codable+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Codable+iTerm.swift"; sourceTree = "<group>"; };
+		A6E304442DFB45810029CAB4 /* DeepSeek.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepSeek.swift; sourceTree = "<group>"; };
 		A6E34BCE2118097A00F147DD /* iTermBackgroundDrawingHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBackgroundDrawingHelper.h; sourceTree = "<group>"; };
 		A6E34BCF2118097A00F147DD /* iTermBackgroundDrawingHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBackgroundDrawingHelper.m; sourceTree = "<group>"; };
 		A6E39FAA2CD18B6300035787 /* BidiDisplayInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BidiDisplayInfo.swift; sourceTree = "<group>"; };
@@ -10277,6 +10279,7 @@
 		A6038324294E626400FE11C2 /* AITerm */ = {
 			isa = PBXGroup;
 			children = (
+				A6E304442DFB45810029CAB4 /* DeepSeek.swift */,
 				A6E304402DFA55AA0029CAB4 /* Llama.swift */,
 				A6E3043E2DFA06B30029CAB4 /* AIMetadata.swift */,
 				A6069F332DF768C100EE6CC7 /* Cancellation.swift */,
@@ -17656,6 +17659,7 @@
 				535EA4F220D0CB7A00FC81E0 /* iTermSwiftyString.m in Sources */,
 				A6E2A6252B90148400EC6070 /* AtomicHelpers.m in Sources */,
 				A6631A152D6D59E8006C603B /* NotifyingArray.swift in Sources */,
+				A6E304452DFB45830029CAB4 /* DeepSeek.swift in Sources */,
 				A6B1476521334D3900D0814F /* iTermTmuxStatusBarMonitor.m in Sources */,
 				530AB8A020B08CAF00D2AA08 /* NSJSONSerialization+iTerm.m in Sources */,
 				A6D009602AF6AD1700AA8F49 /* GetProfilePropertyBuiltInFunction.swift in Sources */,

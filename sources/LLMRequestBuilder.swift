@@ -53,6 +53,11 @@ struct LLMRequestBuilder {
                                         provider: provider,
                                         functions: functions,
                                         stream: stream).body()
+        case .deepSeek:
+            try DeepSeekRequestBuilder(messages: messages,
+                                       provider: provider,
+                                       functions: functions,
+                                       stream: stream).body()
         @unknown default:
             it_fatalError()
         }

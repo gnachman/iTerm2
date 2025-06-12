@@ -81,9 +81,14 @@ struct LLMProvider {
                                                  streaming: false)) {
             return "Azure"
         }
+        if LLMMetadata.hostIsDeepSeekAIAPI(url: url(apiKey: "placeholder",
+                                                    streaming: false)) {
+            return "Deep Seek"
+        }
         if model.name.contains("llama") {
             return "LLaMa"
         }
+
         return "Unknown Platform"
     }
 
@@ -110,7 +115,7 @@ struct LLMProvider {
     var supportsUserAttachments: Bool {
         switch model.api {
         case .responses, .chatCompletions, .llama: true
-        case .completions, .gemini, .earlyO1: false
+        case .completions, .gemini, .earlyO1, .deepSeek: false
         @unknown default: false
         }
     }
@@ -149,7 +154,7 @@ struct LLMProvider {
             return LLMLegacyResponseParser()
         case .gemini:
             return LLMGeminiResponseParser()
-        case .llama:
+        case .llama, .deepSeek:
             return LlamaResponseParser()
         @unknown default:
             it_fatalError()
@@ -173,6 +178,9 @@ struct LLMProvider {
 
         case .gemini:
             return LLMGeminiStreamingResponseParser()
+
+        case .deepSeek:
+            return DeepSeekStreamingResponseParser()
 
         @unknown default:
             return nil

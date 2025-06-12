@@ -32,6 +32,11 @@ class LLMMetadata: NSObject {
         return (url?.host ?? "").hasSuffix(".azure.com")
     }
 
+    @objc(hostIsDeepSeekAIAPIForURL:)
+    static func hostIsDeepSeekAIAPI(url: URL?) -> Bool {
+        return (url?.host ?? "").hasSuffix(".deepseek.com")
+    }
+
     static func model() -> AIMetadata.Model? {
         var features = Set<AIMetadata.Model.Feature>()
         if iTermPreferences.bool(forKey: kPreferenceKeyAIFeatureFunctionCalling) {

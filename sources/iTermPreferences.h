@@ -82,7 +82,8 @@ typedef NS_ENUM(NSUInteger, iTermAIAPI) {
     iTermAIAPIResponses = 2,
     iTermAIAPIGemini = 3,
     iTermAIAPIEarlyO1 = 4,
-    iTermAIAPILlama = 5
+    iTermAIAPILlama = 5,
+    iTermAIAPIDeepSeek = 6
 };
 
 // General

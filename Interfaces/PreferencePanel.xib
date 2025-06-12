@@ -6211,6 +6211,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                                         <menuItem title="Completions" state="on" id="94B-eV-j3z"/>
                                                                                         <menuItem title="Chat Completions" tag="1" id="jg5-db-05n"/>
                                                                                         <menuItem title="Chat Completions (Early O1)" tag="4" id="sir-EW-B2Q"/>
+                                                                                        <menuItem title="DeepSeek" tag="6" id="f0W-tr-DW1"/>
                                                                                         <menuItem title="Llama" tag="5" id="IMc-Va-kmz"/>
                                                                                         <menuItem title="Responses" tag="2" id="zSI-kN-4Cj"/>
                                                                                         <menuItem title="Google Gemini" tag="3" id="7q9-th-Jzw"/>
@@ -6416,15 +6417,15 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                     </tabViewItem>
                                                     <tabViewItem label="Prompts" identifier="" id="Zhi-pV-Nge">
                                                         <view key="view" id="mlW-ji-aQJ">
-                                                            <rect key="frame" x="10" y="33" width="651" height="531"/>
+                                                            <rect key="frame" x="10" y="33" width="651" height="459"/>
                                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                             <subviews>
                                                                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="HAE-Wb-88g">
-                                                                    <rect key="frame" x="17" y="17" width="617" height="307"/>
+                                                                    <rect key="frame" x="17" y="17" width="617" height="439"/>
                                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                                                     <subviews>
                                                                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="FXy-Cw-1Lm">
-                                                                            <rect key="frame" x="153" y="2" width="263" height="14"/>
+                                                                            <rect key="frame" x="153" y="1" width="263" height="14"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                             <textFieldCell key="cell" lineBreakMode="clipping" title="Your AI provider may charge for each token used." id="hvf-jg-Y9k">
                                                                                 <font key="font" metaFont="smallSystem"/>
@@ -6433,7 +6434,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                             </textFieldCell>
                                                                         </textField>
                                                                         <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="uwy-pf-9Wz" userLabel="AI Prompt text field">
-                                                                            <rect key="frame" x="155" y="20" width="369" height="287"/>
+                                                                            <rect key="frame" x="155" y="23" width="369" height="416"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                             <string key="toolTip">When you query the AI service, the prompt iTerm2 sends it is built by replacing \(ai.prompt) in this value with the text you entered. It is an interpolated string in the session context.</string>
                                                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" placeholderString="Interpolated string" drawsBackground="YES" id="2G3-pu-wrn">
@@ -6448,7 +6449,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                             </connections>
                                                                         </textField>
                                                                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EDh-lZ-wQE">
-                                                                            <rect key="frame" x="-2" y="289" width="147" height="16"/>
+                                                                            <rect key="frame" x="-2" y="421" width="147" height="16"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Prompt template:" id="Q2U-W0-BJ7">
                                                                                 <font key="font" usesAppearanceFont="YES"/>
@@ -6457,7 +6458,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                             </textFieldCell>
                                                                         </textField>
                                                                         <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="qEC-1B-FMn">
-                                                                            <rect key="frame" x="448" y="-6" width="58" height="27"/>
+                                                                            <rect key="frame" x="448" y="-7" width="58" height="27"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                             <buttonCell key="cell" type="push" title="Reset" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="3bd-rH-r3u">
                                                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -6468,7 +6469,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                             </connections>
                                                                         </button>
                                                                         <button horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="lIb-Jy-R1v">
-                                                                            <rect key="frame" x="507" y="-1" width="18" height="19"/>
+                                                                            <rect key="frame" x="507" y="-2" width="18" height="19"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                             <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="fWO-HA-eH0">
                                                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -6479,7 +6480,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                             </connections>
                                                                         </button>
                                                                         <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="LsQ-19-iaj">
-                                                                            <rect key="frame" x="430" y="2" width="16" height="16"/>
+                                                                            <rect key="frame" x="430" y="1" width="16" height="16"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                             <string key="toolTip">The prompt must contain the substring \(ai.prompt). The query you enter will replace it when speaking to the AI. For example: “Write a unix command to \(ai.prompt).</string>
                                                                             <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="WarningSign" id="E8m-Gx-WjK"/>

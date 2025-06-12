@@ -145,7 +145,7 @@ class AIMetadata: NSObject {
             contextWindowTokens: 128_000,
             maxResponseTokens: 8_000,
             url: "https://api.deepseek.com/v1/chat/completions",
-            api: .chatCompletions,
+            api: .deepSeek,
             features: [.systemMessage, .functionCalling, .streaming]
         ),
         Model(
@@ -153,7 +153,7 @@ class AIMetadata: NSObject {
             contextWindowTokens: 128_000,
             maxResponseTokens: 8_000,
             url: "https://api.deepseek.com/v1/chat/completions",
-            api: .chatCompletions,
+            api: .deepSeek,
             features: [.systemMessage, .functionCalling, .streaming]
         ),
         Model(
@@ -161,7 +161,7 @@ class AIMetadata: NSObject {
             contextWindowTokens: 64_000,
             maxResponseTokens: 8_000,
             url: "https://api.deepseek.com/v1/chat/completions",
-            api: .chatCompletions,
+            api: .deepSeek,
             features: [.systemMessage, .functionCalling, .streaming]
         ),
 

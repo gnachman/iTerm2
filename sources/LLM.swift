@@ -18,6 +18,9 @@ enum LLM {
         // These are optional because they can be omitted when streaming. Otherwise they are always present.
         var name: String?
         var arguments: String?
+
+        // Deep seek uses this, maybe others too?
+        var id: String?
     }
 
 
@@ -157,12 +160,22 @@ enum LLM {
                         return true
                     }
                 case .functionCall(let original, id: let originalID):
-                    // Only compare item IDs because OpenAI doesn't give a call ID for arguments when streaming.
+                    // Only compare item IDs because OpenAI doesn't give a call ID for arguments when streaming. Deep seek does not provide any IDs after the first streaming response for a particular function call.
                     if case let .functionCall(content, id) = additionalContent,
-                       id?.itemID == originalID?.itemID {
-                        self = .functionCall(.init(name: (original.name ?? "") + (content.name ?? ""),
-                                                   arguments: (original.arguments ?? "") + (content.arguments ?? "")),
-                                             id: originalID)
+                       (id?.itemID == originalID?.itemID || id == nil) {
+                        let combinedName = (original.name ?? "") + (content.name ?? "")
+                        let combinedArgs = (original.arguments ?? "") + (content.arguments ?? "")
+                        let combinedID: String? = if original.id != nil || content.id != nil {
+                            (original.id ?? "") + (content.id ?? "")
+                        } else {
+                            nil
+                        }
+                        self = .functionCall(
+                            LLM.FunctionCall(
+                                name: combinedName,
+                                arguments: combinedArgs,
+                                id: combinedID),
+                            id: originalID)
                         return true
                     }
                 case let .functionOutput(name: originalName,
@@ -346,7 +359,7 @@ struct LLMAuthorizationProvider {
     var apiKey: String
     var headers: [String: String] {
         switch provider.model.api {
-        case .chatCompletions, .completions, .earlyO1, .responses:
+        case .chatCompletions, .completions, .earlyO1, .responses, .deepSeek:
             if LLMMetadata.hostIsAzureAIAPI(url: URL(string: provider.model.url)) {
                 ["api-key": apiKey.trimmingCharacters(in: .whitespacesAndNewlines) ]
             } else {
