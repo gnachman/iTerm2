@@ -66,7 +66,9 @@ class LLMMetadata: NSObject {
         if iTermPreferences.bool(forKey: kPreferenceKeyAIFeatureStreamingResponses) {
             features.insert(.streaming)
         }
-
+        if iTermPreferences.bool(forKey: kPreferenceKeyAIFeatureHostedCodeInterpreter) {
+            features.insert(.hostedCodeInterpreter)
+        }
         let url = iTermPreferences.string(forKey: kPreferenceKeyAITermURL)
         guard let url, !url.isEmpty else {
             return nil

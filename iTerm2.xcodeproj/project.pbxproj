@@ -4155,7 +4155,6 @@
 		A6E304412DFA55B00029CAB4 /* Llama.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E304402DFA55AA0029CAB4 /* Llama.swift */; };
 		A6E304432DFB394E0029CAB4 /* Codable+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E304422DFB394A0029CAB4 /* Codable+iTerm.swift */; };
 		A6E304452DFB45830029CAB4 /* DeepSeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E304442DFB45810029CAB4 /* DeepSeek.swift */; };
-		A6E304472DFBF2110029CAB4 /* LLMResponseDeleter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E304462DFBF20F0029CAB4 /* LLMResponseDeleter.swift */; };
 		A6E34BD02118097A00F147DD /* iTermBackgroundDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E34BCE2118097A00F147DD /* iTermBackgroundDrawingHelper.h */; };
 		A6E34BD12118097A00F147DD /* iTermBackgroundDrawingHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E34BCF2118097A00F147DD /* iTermBackgroundDrawingHelper.m */; };
 		A6E39FAB2CD18B6B00035787 /* BidiDisplayInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E39FAA2CD18B6300035787 /* BidiDisplayInfo.swift */; };
@@ -7965,7 +7964,6 @@
 		A6E304402DFA55AA0029CAB4 /* Llama.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Llama.swift; sourceTree = "<group>"; };
 		A6E304422DFB394A0029CAB4 /* Codable+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Codable+iTerm.swift"; sourceTree = "<group>"; };
 		A6E304442DFB45810029CAB4 /* DeepSeek.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepSeek.swift; sourceTree = "<group>"; };
-		A6E304462DFBF20F0029CAB4 /* LLMResponseDeleter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMResponseDeleter.swift; sourceTree = "<group>"; };
 		A6E34BCE2118097A00F147DD /* iTermBackgroundDrawingHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBackgroundDrawingHelper.h; sourceTree = "<group>"; };
 		A6E34BCF2118097A00F147DD /* iTermBackgroundDrawingHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBackgroundDrawingHelper.m; sourceTree = "<group>"; };
 		A6E39FAA2CD18B6300035787 /* BidiDisplayInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BidiDisplayInfo.swift; sourceTree = "<group>"; };
@@ -10281,7 +10279,6 @@
 		A6038324294E626400FE11C2 /* AITerm */ = {
 			isa = PBXGroup;
 			children = (
-				A6E304462DFBF20F0029CAB4 /* LLMResponseDeleter.swift */,
 				A6E304442DFB45810029CAB4 /* DeepSeek.swift */,
 				A6E304402DFA55AA0029CAB4 /* Llama.swift */,
 				A6E3043E2DFA06B30029CAB4 /* AIMetadata.swift */,
@@ -16933,7 +16930,6 @@
 				A6A723592DB7157C00A8115D /* DeltaString.swift in Sources */,
 				A6069F082DF25BB800EE6CC7 /* AIConversation.swift in Sources */,
 				A6A7235A2DB7157C00A8115D /* iTermSubString.swift in Sources */,
-				A6E304472DFBF2110029CAB4 /* LLMResponseDeleter.swift in Sources */,
 				A6069F382DF7B16F00EE6CC7 /* SSHFolderDialog.swift in Sources */,
 				A6566750219EA46E005FE60E /* NSNumber+iTerm.m in Sources */,
 				A65618722D6BDFF90059CD35 /* TerminalCommandMessageCellView.swift in Sources */,

@@ -407,6 +407,10 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
     return mappings != nil;
 }
 
+// 3.5.14 and earlier had a lot fewer settings. This code is meant to migrate
+// them to the modern equivalent. It should be idempotent because once user
+// defaults has values for these settings they will not be changed by this
+// function.
 + (void)migrateAISettings {
     if ([iTermSecureUserDefaults.instance enableAI]) {
         // A default configuration has no model or URL set.
@@ -424,7 +428,7 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
                                             url:originalURL
                                          legacy:originalLegacy];
         }
-        if ([ud objectForKey:kPreferenceKeyAITermAPI] == nil){
+        if ([ud objectForKey:kPreferenceKeyAITermAPI] == nil) {
             if (originalLegacy) {
                 [ud setInteger:iTermAIAPICompletions
                         forKey:kPreferenceKeyAITermAPI];
@@ -448,6 +452,10 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
         if ([ud objectForKey:kPreferenceKeyAIFeatureHostedFileSearch] == nil) {
             [ud setBool:model.hostedFileSearchFeatureEnabled
                  forKey:kPreferenceKeyAIFeatureHostedFileSearch];
+        }
+        if ([ud objectForKey:kPreferenceKeyAIFeatureHostedCodeInterpreter] == nil) {
+            [ud setBool:model.hostedCodeInterpreterFeatureEnabled
+                 forKey:kPreferenceKeyAIFeatureHostedCodeInterpreter];
         }
         if ([ud objectForKey:kPreferenceKeyAIFeatureStreamingResponses] == nil) {
             [ud setBool:model.streamingFeatureEnabled

@@ -17,15 +17,15 @@ class AIModel: NSObject {
         if modelName.contains("gemini") {
             urlGuess = "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}"
             apiGuess = .gemini
-            featuresGuess = [.systemMessage, .functionCalling, .streaming]
+            featuresGuess = [.functionCalling, .streaming]
         } else if modelName.contains("deepseek") {
             urlGuess = "https://api.deepseek.com/v1/chat/completions"
             apiGuess = .deepSeek
-            featuresGuess = [.systemMessage, .functionCalling, .streaming]
+            featuresGuess = [.functionCalling, .streaming]
         } else if modelName.contains("llama") {
             urlGuess = "http://localhost:11434/api/chat"
             apiGuess = .llama
-            featuresGuess = [.systemMessage, .streaming, .functionCalling]
+            featuresGuess = [.streaming, .functionCalling]
         } else if modelName.contains("gpt") || modelName.hasPrefix("o") {
             if legacy {
                 urlGuess = "https://api.openai.com/v1/completions"
@@ -34,7 +34,7 @@ class AIModel: NSObject {
             } else {
                 urlGuess = "https://api.openai.com/v1/chat/completions"
                 apiGuess = .chatCompletions
-                featuresGuess = [.systemMessage, .functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming]
+                featuresGuess = [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter]
             }
         } else {
             apiGuess = .chatCompletions
@@ -63,12 +63,11 @@ class AIModel: NSObject {
     @objc var maxResponseTokens: Int { model.maxResponseTokens }
     @objc var url: String { model.url }
     @objc var api: iTermAIAPI { model.api }
-#warning("TODO: Remove system message feature. It's just o-series models")
-    @objc var systemMessageFeatureEnabled: Bool { model.features.contains(.systemMessage) }
     @objc var functionCallingFeatureEnabled: Bool { model.features.contains(.functionCalling) }
     @objc var streamingFeatureEnabled: Bool { model.features.contains(.streaming) }
     @objc var hostedFileSearchFeatureEnabled: Bool { model.features.contains(.hostedFileSearch) }
     @objc var hostedWebSearchFeatureEnabled: Bool { model.features.contains(.hostedWebSearch) }
+    @objc var hostedCodeInterpreterFeatureEnabled: Bool { model.features.contains(.hostedCodeInterpreter) }
 
     @objc var vectorStoreConfig: AIMetadata.Model.VectorStoreConfig { model.vectorStoreConfig }
 }
@@ -85,11 +84,11 @@ class AIMetadata: NSObject {
         var url: String
         var api: iTermAIAPI
         enum Feature: Hashable, Equatable {
-            case systemMessage // Supports a separate system prompt.
             case functionCalling // Supports tool/function calling.
             case streaming // Can stream response tokens.
             case hostedFileSearch // Can search over files provided to the API (e.g., OpenAI Assistants).
             case hostedWebSearch // Can perform web searches (e.g., via a built-in tool).
+            case hostedCodeInterpreter
         }
         var features: Set<Feature>
 
@@ -122,7 +121,7 @@ class AIMetadata: NSObject {
         maxResponseTokens: 32_768,
         url: "https://api.openai.com/v1/responses",
         api: .responses,
-        features: [.systemMessage, .functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming],
+        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
         vectorStoreConfig: .openAI
     )
     private static let deepseek_chat = Model(
@@ -131,7 +130,7 @@ class AIMetadata: NSObject {
         maxResponseTokens: 8_000,
         url: "https://api.deepseek.com/v1/chat/completions",
         api: .deepSeek,
-        features: [.systemMessage, .functionCalling, .streaming]
+        features: [.functionCalling, .streaming]
     )
     private static let gemini_2_0_flash = Model(
         name: "gemini-2.0-flash",
@@ -139,7 +138,7 @@ class AIMetadata: NSObject {
         maxResponseTokens: 8_192,
         url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
         api: .gemini,
-        features: [.systemMessage, .functionCalling, .streaming]
+        features: [.functionCalling, .streaming]
     )
     static private let llama_3_3_latest = Model(
         name: "llama3.3:latest",
@@ -147,7 +146,7 @@ class AIMetadata: NSObject {
         maxResponseTokens: 131_072,
         url: "http://localhost:11434/api/chat",
         api: .llama,
-        features: [.systemMessage, .streaming, .functionCalling]
+        features: [.streaming, .functionCalling]
     )
 
     private let models: [Model] = [
@@ -159,7 +158,7 @@ class AIMetadata: NSObject {
             maxResponseTokens: 16_384,
             url: "https://api.openai.com/v1/responses",
             api: .responses,
-            features: [.systemMessage, .functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming],
+            features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
             vectorStoreConfig: .openAI
         ),
         Model(
@@ -168,7 +167,7 @@ class AIMetadata: NSObject {
             maxResponseTokens: 16_384,
             url: "https://api.openai.com/v1/responses",
             api: .responses,
-            features: [.systemMessage, .functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming],
+            features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
             vectorStoreConfig: .openAI
         ),
         Model(
@@ -177,7 +176,7 @@ class AIMetadata: NSObject {
             maxResponseTokens: 16_384,
             url: "https://api.openai.com/v1/responses",
             api: .responses,
-            features: [.systemMessage, .functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming],
+            features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
             vectorStoreConfig: .openAI
         ),
 
@@ -188,7 +187,7 @@ class AIMetadata: NSObject {
             maxResponseTokens: 100_000,
             url: "https://api.openai.com/v1/responses",
             api: .responses,
-            features: [.hostedFileSearch],
+            features: [.hostedFileSearch, .hostedCodeInterpreter],
             vectorStoreConfig: .openAI
         ),
         Model(
@@ -197,7 +196,7 @@ class AIMetadata: NSObject {
             maxResponseTokens: 100_000,
             url: "https://api.openai.com/v1/responses",
             api: .responses,
-            features: [.functionCalling],
+            features: [.functionCalling, .hostedCodeInterpreter],
             vectorStoreConfig: .openAI
         ),
         Model(
@@ -206,7 +205,7 @@ class AIMetadata: NSObject {
             maxResponseTokens: 100_000,
             url: "https://api.openai.com/v1/responses",
             api: .responses,
-            features: [.hostedFileSearch, .streaming, .functionCalling],
+            features: [.hostedFileSearch, .streaming, .functionCalling, .hostedCodeInterpreter],
             vectorStoreConfig: .openAI
         ),
 
@@ -218,7 +217,7 @@ class AIMetadata: NSObject {
             maxResponseTokens: 8_192,
             url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
             api: .gemini,
-            features: [.systemMessage, .functionCalling, .streaming]
+            features: [.functionCalling, .streaming]
         ),
         AIMetadata.gemini_2_0_flash,
         Model(
@@ -227,7 +226,7 @@ class AIMetadata: NSObject {
             maxResponseTokens: 8_192,
             url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
             api: .gemini,
-            features: [.systemMessage, .functionCalling, .streaming]
+            features: [.functionCalling, .streaming]
         ),
 
         // MARK: - DeepSeek Models
@@ -239,7 +238,7 @@ class AIMetadata: NSObject {
             maxResponseTokens: 8_000,
             url: "https://api.deepseek.com/v1/chat/completions",
             api: .deepSeek,
-            features: [.systemMessage, .functionCalling, .streaming]
+            features: [.functionCalling, .streaming]
         ),
         Model(
             name: "deepseek-reasoner",
@@ -247,13 +246,16 @@ class AIMetadata: NSObject {
             maxResponseTokens: 8_000,
             url: "https://api.deepseek.com/v1/chat/completions",
             api: .deepSeek,
-            features: [.systemMessage, .functionCalling, .streaming]
+            features: [.functionCalling, .streaming]
         ),
 
         // MARK: - Local Models (via Ollama)
 
         // Llama models
-        // Llama supports function calling only without streaming. I dont want to expose a "streamingFunctionCalling" feature and add that to the UI. Some day this restriction may go away. For now, we'll have to silently offer no tools whwn streaming is on :(
+        // Llama supports function calling only without streaming. I dont want
+        // to expose a "streamingFunctionCalling" feature and add that to the
+        // UI. Some day this restriction may go away. For now, we'll have to
+        // silently offer no tools whwn streaming is on :(
         // Per https://ollama.readthedocs.io/en/api/#generate-a-chat-completion:
         //   "tools: tools for the model to use if supported. Requires stream to be set
         //    to false"
@@ -324,6 +326,14 @@ class AIMetadata: NSObject {
             $0.name == model
         }
     }
+    @objc(modelSupportsHostedCodeInterpreter:)
+    func modelSupportsHostedCodeInterpreter(_ model: String) -> Bool {
+        guard let obj = models.first(where: { $0.name == model }) else {
+            return false
+        }
+        return obj.features.contains(.hostedCodeInterpreter)
+    }
+
     @objc(modelSupportsHostedFileSearch:)
     func modelSupportsHostedFileSearch(_ model: String) -> Bool {
         guard let obj = models.first(where: { $0.name == model }) else {

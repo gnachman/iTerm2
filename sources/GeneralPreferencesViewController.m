@@ -190,6 +190,7 @@ enum {
     IBOutlet NSTextField *_customAIEndpoint;
     IBOutlet NSPopUpButton *_aiAPI;
 
+    IBOutlet NSButton *_aiFeatureHostedCodeInterpeter;
     IBOutlet NSButton *_aiFeatureHostedFileSearch;
     IBOutlet NSButton *_aiFeatureHostedWebSearch;
     IBOutlet NSButton *_aiFeatureFunctionCalling;
@@ -777,6 +778,11 @@ enum {
                           type:kPreferenceInfoTypeUnsignedIntegerPopup];
 
     NSMutableArray<PreferenceInfo *> *aiFeatureInfos = [NSMutableArray array];
+    info = [self defineControl:_aiFeatureHostedCodeInterpeter
+                    key:kPreferenceKeyAIFeatureHostedCodeInterpreter
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [aiFeatureInfos addObject:info];
     info = [self defineControl:_aiFeatureHostedFileSearch
                     key:kPreferenceKeyAIFeatureHostedFileSearch
             relatedView:nil
@@ -950,6 +956,8 @@ enum {
         [self updateValueForInfo:urlInfo];
     }
     if ([AIMetadata.instance modelHasDefaults:model]) {
+        [self setBool:[AIMetadata.instance modelSupportsHostedCodeInterpreter:model]
+               forKey:kPreferenceKeyAIFeatureHostedCodeInterpreter];
         [self setBool:[AIMetadata.instance modelSupportsHostedFileSearch:model]
                forKey:kPreferenceKeyAIFeatureHostedFileSearch];
         [self setBool:[AIMetadata.instance modelSupportsHostedWebSearch:model]
@@ -1018,6 +1026,7 @@ enum {
     _aiModelLabel.enabled = allowed;
     _aiTokenLimitLabel.enabled = allowed;
     _aiAPI.enabled = allowed;
+    _aiFeatureHostedCodeInterpeter.enabled = allowed;
     _aiFeatureHostedFileSearch.enabled = allowed;
     _aiFeatureHostedWebSearch.enabled = allowed;
     _aiFeatureFunctionCalling.enabled = allowed;

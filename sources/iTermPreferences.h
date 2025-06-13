@@ -159,6 +159,7 @@ extern NSString *const kPreferenceKeyAITermUseLegacyAPI;  // deprecated
 extern NSString *const kPreferenceKeyAITermAPI;  // NSNumber(iTermAIAPI)
 extern NSString *const kPreferenceKeyIndicateNonDefaultValues;
 extern NSString *const kPreferenceKeyAICompletion;
+extern NSString *const kPreferenceKeyAIFeatureHostedCodeInterpreter;
 extern NSString *const kPreferenceKeyAIFeatureHostedFileSearch;
 extern NSString *const kPreferenceKeyAIFeatureHostedWebSearch;
 extern NSString *const kPreferenceKeyAIFeatureFunctionCalling;

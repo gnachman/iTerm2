@@ -71,11 +71,16 @@ class ChatViewController: NSViewController {
         }
     }
     var sessionGuid: String? { model?.sessionGuid }
+    private let userDefaultsObserver = iTermUserDefaultsObserver()
 
     init(listModel: ChatListModel, client: ChatClient) {
         self.listModel = listModel
         self.client = client
         super.init(nibName: nil, bundle: nil)
+
+        userDefaultsObserver.observeKey(kPreferenceKeyAIFeatureHostedWebSearch) { [weak self] in
+            self?.webSearchButton?.isEnabled = (AITermController.provider?.supportsHostedWebSearch == true)
+        }
     }
     
     required init?(coder: NSCoder) {
@@ -138,30 +143,29 @@ class ChatViewController: NSViewController {
         sessionButton.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         if #available(macOS 11.0, *) {
-            if AITermController.provider?.supportsHostedWebSearch ?? false {
-                let webSearchButton = WebSearchButton(image: NSImage.it_image(forSymbolName: "globe",
-                                                                              accessibilityDescription: "Web search image",
-                                                                              fallbackImageName: "globe",
-                                                                              for: Self.self),
-                                                      target: nil,
-                                                      action: nil)
-                webSearchButton.imageScaling = .scaleProportionallyUpOrDown
-                webSearchButton.controlSize = .large
-                webSearchButton.contentTintColor = webSearchEnabled ? .controlAccentColor : nil
-                webSearchButton.isBordered = false
-                webSearchButton.bezelStyle = .badge
-                webSearchButton.isBordered = false
-                webSearchButton.target = self
-                webSearchButton.action = #selector(toggleWebSearch(_:))
-                webSearchButton.sizeToFit()
-                webSearchButton.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-                webSearchButton.translatesAutoresizingMaskIntoConstraints = false
-                webSearchButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-                webSearchButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-                webSearchButton.toolTip = "Allow AI to perform web search?"
-                self.webSearchButton = webSearchButton
-            }
+            let webSearchButton = WebSearchButton(image: NSImage.it_image(forSymbolName: "globe",
+                                                                          accessibilityDescription: "Web search image",
+                                                                          fallbackImageName: "globe",
+                                                                          for: Self.self),
+                                                  target: nil,
+                                                  action: nil)
+            webSearchButton.imageScaling = .scaleProportionallyUpOrDown
+            webSearchButton.controlSize = .large
+            webSearchButton.contentTintColor = webSearchEnabled ? .controlAccentColor : nil
+            webSearchButton.isBordered = false
+            webSearchButton.bezelStyle = .badge
+            webSearchButton.isBordered = false
+            webSearchButton.target = self
+            webSearchButton.action = #selector(toggleWebSearch(_:))
+            webSearchButton.sizeToFit()
+            webSearchButton.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
+            webSearchButton.translatesAutoresizingMaskIntoConstraints = false
+            webSearchButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+            webSearchButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+            webSearchButton.toolTip = "Allow AI to perform web search?"
+            self.webSearchButton = webSearchButton
         }
+        webSearchButton?.isEnabled = (AITermController.provider?.supportsHostedWebSearch == true)
 
         // Configure Table View
         tableView = NSTableView()

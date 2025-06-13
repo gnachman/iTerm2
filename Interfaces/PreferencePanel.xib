@@ -1215,6 +1215,7 @@ DQ
                 <outlet property="_aiAPI" destination="kbZ-hI-Nk6" id="Zng-eM-6yk"/>
                 <outlet property="_aiCompletions" destination="ont-f3-jdH" id="GsL-FZ-Ddx"/>
                 <outlet property="_aiFeatureFunctionCalling" destination="l3L-Hs-u1z" id="Sdk-FY-sdx"/>
+                <outlet property="_aiFeatureHostedCodeInterpeter" destination="36J-zJ-CLT" id="SVh-PW-ZlQ"/>
                 <outlet property="_aiFeatureHostedFileSearch" destination="VZa-XN-uW4" id="0rR-Nt-shY"/>
                 <outlet property="_aiFeatureHostedWebSearch" destination="MCS-Bt-6lD" id="Iho-vf-eeE"/>
                 <outlet property="_aiFeatureStreamingResponses" destination="YS9-fE-xko" id="aBq-O8-kJy"/>
@@ -6148,7 +6149,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                             </connections>
                                                                         </button>
                                                                         <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Xrd-YE-9w7" customClass="iTermSettingsSecureTextField">
-                                                                            <rect key="frame" x="155" y="17" width="369" height="21"/>
+                                                                            <rect key="frame" x="155" y="17" width="474" height="21"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                             <string key="toolTip">Go register for an account with openai and create an API key. Place the secret here. It probably will cost you money to use AI features.</string>
                                                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" placeholderString="••••••••" drawsBackground="YES" id="euY-7d-vSJ">
@@ -6232,9 +6233,9 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                     </subviews>
                                                                 </customView>
                                                                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jzk-uC-wnt">
-                                                                    <rect key="frame" x="167" y="59" width="249" height="18"/>
+                                                                    <rect key="frame" x="167" y="59" width="284" height="18"/>
                                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                    <buttonCell key="cell" type="check" title="Always use the recommended model" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="KN9-Ao-an5">
+                                                                    <buttonCell key="cell" type="check" title="Always use the recommended model from:" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="KN9-Ao-an5">
                                                                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                                         <font key="font" metaFont="system"/>
                                                                     </buttonCell>
@@ -6252,7 +6253,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                     </textFieldCell>
                                                                 </textField>
                                                                 <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="K1Q-f3-Cx1">
-                                                                    <rect key="frame" x="429" y="54" width="215" height="25"/>
+                                                                    <rect key="frame" x="456" y="54" width="188" height="25"/>
                                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                     <popUpButtonCell key="cell" type="push" title="DeepSeek" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="2Sk-3h-LFn" id="Vgf-23-6eY">
                                                                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -6271,9 +6272,9 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                     </connections>
                                                                 </popUpButton>
                                                                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hgA-kj-jox">
-                                                                    <rect key="frame" x="162" y="23" width="175" height="32"/>
+                                                                    <rect key="frame" x="162" y="23" width="218" height="32"/>
                                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                    <buttonCell key="cell" type="push" title="Manual Configuration…" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="RW0-Ia-ly9">
+                                                                    <buttonCell key="cell" type="push" title="Configure AI Model Manually…" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="RW0-Ia-ly9">
                                                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                                         <font key="font" metaFont="system"/>
                                                                     </buttonCell>
@@ -9496,15 +9497,15 @@ instead of the system keyboard.</string>
         <viewController id="NZL-jc-nXF" userLabel="Global Actions Editing View Controller" customClass="iTermActionsEditingViewController"/>
         <viewController id="wEw-Xc-e6F" userLabel="Global Snippets Editing View Controller" customClass="iTermSnippetsEditingViewController"/>
         <customView id="6Ho-lz-UzJ" userLabel="Advanced AI Settings">
-            <rect key="frame" x="0.0" y="0.0" width="629" height="293"/>
+            <rect key="frame" x="0.0" y="0.0" width="629" height="317"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
                 <visualEffectView fixedFrame="YES" blendingMode="behindWindow" material="appearanceBased" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="hsQ-SE-Bcy">
-                    <rect key="frame" x="0.0" y="0.0" width="629" height="293"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <rect key="frame" x="0.0" y="0.0" width="629" height="317"/>
+                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     <subviews>
                         <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="uMS-aB-7f8">
-                            <rect key="frame" x="172" y="16" width="376" height="25"/>
+                            <rect key="frame" x="172" y="17" width="376" height="25"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <popUpButtonCell key="cell" type="push" title="No File Uploading or Vector Store" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="RE7-Aw-j5S" id="yqb-7h-Is8">
                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -9521,7 +9522,7 @@ instead of the system keyboard.</string>
                             </connections>
                         </popUpButton>
                         <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4Zj-Qm-rlc">
-                            <rect key="frame" x="175" y="192" width="96" height="21"/>
+                            <rect key="frame" x="175" y="216" width="96" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="74t-Bf-IMu">
                                 <numberFormatter key="formatter" formatterBehavior="default10_4" numberStyle="decimal" formatWidth="-1" minimumIntegerDigits="1" maximumIntegerDigits="2000000000" maximumFractionDigits="3" id="U0K-cJ-H7x" customClass="iTermSaneNumberFormatter"/>
@@ -9534,7 +9535,7 @@ instead of the system keyboard.</string>
                             </connections>
                         </textField>
                         <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="l3L-Hs-u1z">
-                            <rect key="frame" x="173" y="69" width="124" height="18"/>
+                            <rect key="frame" x="173" y="93" width="124" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Function Calling" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="kz2-kq-iLy">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -9545,7 +9546,7 @@ instead of the system keyboard.</string>
                             </connections>
                         </button>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rXb-Va-7SO">
-                            <rect key="frame" x="277" y="226" width="52" height="16"/>
+                            <rect key="frame" x="277" y="250" width="52" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" lineBreakMode="clipping" title="Context" id="6Nw-qJ-haT">
                                 <font key="font" metaFont="system"/>
@@ -9554,7 +9555,7 @@ instead of the system keyboard.</string>
                             </textFieldCell>
                         </textField>
                         <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YS9-fE-xko">
-                            <rect key="frame" x="173" y="47" width="158" height="18"/>
+                            <rect key="frame" x="173" y="71" width="158" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Streaming Responses" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="jcb-qx-RXO">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -9564,8 +9565,19 @@ instead of the system keyboard.</string>
                                 <action selector="settingChanged:" target="9Se-ld-UJa" id="arD-gW-zax"/>
                             </connections>
                         </button>
+                        <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="36J-zJ-CLT">
+                            <rect key="frame" x="173" y="49" width="127" height="18"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="check" title="Code Interpreter" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="1un-El-eBx">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="settingChanged:" target="9Se-ld-UJa" id="GED-ZP-3Tn"/>
+                            </connections>
+                        </button>
                         <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kbZ-hI-Nk6">
-                            <rect key="frame" x="172" y="131" width="376" height="25"/>
+                            <rect key="frame" x="172" y="155" width="376" height="25"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <popUpButtonCell key="cell" type="push" title="Completions" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="94B-eV-j3z" id="z0o-aY-l7K">
                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -9587,7 +9599,7 @@ instead of the system keyboard.</string>
                             </connections>
                         </popUpButton>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oxM-Uz-8LP">
-                            <rect key="frame" x="18" y="138" width="144" height="16"/>
+                            <rect key="frame" x="18" y="162" width="144" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="API:" id="L3h-V8-SK3">
                                 <font key="font" usesAppearanceFont="YES"/>
@@ -9596,7 +9608,7 @@ instead of the system keyboard.</string>
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="FDX-ME-J7a">
-                            <rect key="frame" x="277" y="195" width="64" height="16"/>
+                            <rect key="frame" x="277" y="219" width="64" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" lineBreakMode="clipping" title="Response" id="3If-Tn-La6">
                                 <font key="font" metaFont="system"/>
@@ -9605,7 +9617,7 @@ instead of the system keyboard.</string>
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="LoW-Oy-QZ4">
-                            <rect key="frame" x="175" y="223" width="96" height="21"/>
+                            <rect key="frame" x="175" y="247" width="96" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="0io-pq-fwm">
                                 <numberFormatter key="formatter" formatterBehavior="default10_4" numberStyle="decimal" formatWidth="-1" minimumIntegerDigits="1" maximumIntegerDigits="2000000000" maximumFractionDigits="3" id="ogi-t7-LVi" customClass="iTermSaneNumberFormatter"/>
@@ -9618,7 +9630,7 @@ instead of the system keyboard.</string>
                             </connections>
                         </textField>
                         <comboBox focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mTj-eb-v1b">
-                            <rect key="frame" x="174" y="251" width="373" height="23"/>
+                            <rect key="frame" x="174" y="275" width="373" height="23"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <comboBoxCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" completes="NO" numberOfVisibleItems="5" id="AWG-OL-PtP">
                                 <font key="font" metaFont="system"/>
@@ -9631,7 +9643,7 @@ instead of the system keyboard.</string>
                             </connections>
                         </comboBox>
                         <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VZa-XN-uW4">
-                            <rect key="frame" x="173" y="113" width="140" height="18"/>
+                            <rect key="frame" x="173" y="137" width="140" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Hosted File Search" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="ktC-gx-aSW">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -9642,7 +9654,7 @@ instead of the system keyboard.</string>
                             </connections>
                         </button>
                         <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="MCS-Bt-6lD">
-                            <rect key="frame" x="173" y="91" width="147" height="18"/>
+                            <rect key="frame" x="173" y="115" width="147" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Hosted Web Search" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="jMH-4z-ANd">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -9653,7 +9665,7 @@ instead of the system keyboard.</string>
                             </connections>
                         </button>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="AD5-k6-5SK">
-                            <rect key="frame" x="21" y="114" width="144" height="16"/>
+                            <rect key="frame" x="21" y="138" width="144" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Features:" id="Isn-uv-Qku">
                                 <font key="font" usesAppearanceFont="YES"/>
@@ -9662,7 +9674,7 @@ instead of the system keyboard.</string>
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="P9E-Ju-OfU">
-                            <rect key="frame" x="18" y="255" width="147" height="16"/>
+                            <rect key="frame" x="18" y="279" width="147" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Model:" id="jNc-ho-tDq">
                                 <font key="font" usesAppearanceFont="YES"/>
@@ -9671,7 +9683,7 @@ instead of the system keyboard.</string>
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1ex-YA-kns">
-                            <rect key="frame" x="175" y="163" width="369" height="21"/>
+                            <rect key="frame" x="175" y="187" width="369" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" placeholderString="AI Server URL" drawsBackground="YES" id="la8-b2-QoV">
                                 <font key="font" metaFont="system"/>
@@ -9683,7 +9695,7 @@ instead of the system keyboard.</string>
                             </connections>
                         </textField>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6Tv-Yf-ULK">
-                            <rect key="frame" x="18" y="166" width="144" height="16"/>
+                            <rect key="frame" x="18" y="190" width="144" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="URL:" id="qE5-4Z-I6F">
                                 <font key="font" usesAppearanceFont="YES"/>
@@ -9692,7 +9704,7 @@ instead of the system keyboard.</string>
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fmU-E4-OGJ">
-                            <rect key="frame" x="18" y="226" width="147" height="16"/>
+                            <rect key="frame" x="18" y="250" width="147" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Token Limit:" id="pss-P2-pda">
                                 <font key="font" usesAppearanceFont="YES"/>
@@ -9703,7 +9715,7 @@ instead of the system keyboard.</string>
                     </subviews>
                 </visualEffectView>
             </subviews>
-            <point key="canvasLocation" x="1910.5" y="-470.5"/>
+            <point key="canvasLocation" x="1910.5" y="-537.5"/>
         </customView>
     </objects>
     <resources>

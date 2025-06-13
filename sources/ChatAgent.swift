@@ -701,13 +701,23 @@ class ChatAgent {
         cancelPendingCommands()
 
         let needsRenaming = !conversation.messages.anySatisfies({ $0.role == .user})
-        if let configuration = userMessage.configuration {
+        if LLMMetadata.model()?.features.contains(.hostedWebSearch) == true,
+           let configuration = userMessage.configuration {
             conversation.hostedTools.webSearch = configuration.hostedWebSearchEnabled
+        } else {
+            conversation.hostedTools.webSearch = false
         }
-        conversation.hostedTools.codeInterpreter = true
-        if let vectorStoreIDs = userMessage.configuration?.vectorStoreIDs, !vectorStoreIDs.isEmpty {
+
+        let useCodeInterpeter = (LLMMetadata.model()?.features.contains(.hostedCodeInterpreter) == true)
+        conversation.hostedTools.codeInterpreter = useCodeInterpeter
+
+        if LLMMetadata.model()?.features.contains(.hostedFileSearch) == true,
+           let vectorStoreIDs = userMessage.configuration?.vectorStoreIDs, !vectorStoreIDs.isEmpty {
             conversation.hostedTools.fileSearch = .init(vectorstoreIDs: vectorStoreIDs)
+        } else {
+            conversation.hostedTools.fileSearch = nil
         }
+
         conversation.add(aiMessage(from: userMessage))
         var uuid: UUID?
         let streamingCallback: ((LLM.StreamingUpdate) -> ())?

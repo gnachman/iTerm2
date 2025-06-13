@@ -210,6 +210,7 @@ NSString *const kPreferenceKeyAITermUseLegacyAPI = @"AitermUseLegacyAPI";  // de
 NSString *const kPreferenceKeyAITermAPI = @"AITermAPI";
 NSString *const kPreferenceKeyIndicateNonDefaultValues  = @"NoSyncHideDefaultValuedSettings";
 NSString *const kPreferenceKeyAICompletion = @"AICompletion";
+NSString *const kPreferenceKeyAIFeatureHostedCodeInterpreter = @"AIFeatureHostedCodeInterpeter";
 NSString *const kPreferenceKeyAIFeatureHostedFileSearch = @"AIFeatureHostedFileSearch";
 NSString *const kPreferenceKeyAIFeatureHostedWebSearch = @"AIFeatureHostedWebSearch";
 NSString *const kPreferenceKeyAIFeatureFunctionCalling = @"AIFeatureFunctionCalling";
@@ -485,6 +486,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyIndicateNonDefaultValues: @NO,
                   kPreferenceKeyAICompletion: @NO,  // ignored - synthetic value
                   kPreferenceKeyAIFeatureHostedFileSearch: @NO,
+                  kPreferenceKeyAIFeatureHostedCodeInterpreter: @NO,
                   kPreferenceKeyAIFeatureHostedWebSearch: @NO,
                   kPreferenceKeyAIFeatureFunctionCalling: @NO,
                   kPreferenceKeyAIFeatureStreamingResponses: @NO,
