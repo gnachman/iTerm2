@@ -65,9 +65,11 @@
 }
 
 - (void)reallySetStringValueUnconditionally:(NSString *)stringValue {
-    NSPasteboard *pasteboard = [NSPasteboard pasteboardWithName:NSPasteboardNameFind];
-    [pasteboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
-    [pasteboard setString:stringValue ?: @"" forType:NSPasteboardTypeString];
+    if ([iTermAdvancedSettingsModel synchronizeQueryWithFindPasteboard]) {
+        NSPasteboard *pasteboard = [NSPasteboard pasteboardWithName:NSPasteboardNameFind];
+        [pasteboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
+        [pasteboard setString:stringValue ?: @"" forType:NSPasteboardTypeString];
+    }
 }
 
 - (NSString *)stringValue {
