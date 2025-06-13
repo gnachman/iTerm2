@@ -117,22 +117,26 @@ struct CompletionsMessage: Codable, Equatable {
     }
     var llmMessage: LLM.Message {
         if let functionName, let content, case let .string(string) = content {
-            return LLM.Message(role: role,
+            return LLM.Message(responseID: nil,
+                               role: role,
                                body: .functionOutput(name: functionName,
                                                      output: string,
                                                      id: nil))
         }
         if let function_call {
-            return LLM.Message(role: role,
+            return LLM.Message(responseID: nil,
+                               role: role,
                                body: .functionCall(function_call, id: nil))
         }
         if let content {
             switch content {
             case .string(let string):
-                return LLM.Message(role: role,
+                return LLM.Message(responseID: nil,
+                                   role: role,
                                    body: .text(string))
             case .array(let array):
-                return LLM.Message(role: role,
+                return LLM.Message(responseID: nil,
+                                   role: role,
                                    body: .multipart(array.compactMap { part in
                     switch part {
                     case .text(let text):
@@ -147,7 +151,7 @@ struct CompletionsMessage: Codable, Equatable {
                 }))
             }
         }
-        return LLM.Message(role: role, body: .uninitialized)
+        return LLM.Message(responseID: nil, role: role, body: .uninitialized)
     }
 
     var coercedContentString: String {

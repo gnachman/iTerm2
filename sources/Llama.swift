@@ -87,8 +87,9 @@ extension LlamaResponse: LLM.AnyResponse {
         } else {
             LLM.Message.Body.text(message.content)
         }
-        return [LLM.Message(role: .assistant,
-                           body: body)]
+        return [LLM.Message(responseID: nil,
+                            role: .assistant,
+                            body: body)]
     }
     var isStreamingResponse: Bool {
         Streaming.streaming

@@ -62,11 +62,12 @@ struct ResponsesFileUploadBuilder {
 
     /// Constructs the Data to use as `httpBody` for a file‐upload `URLRequest`.
     func body() throws -> Data {
+        let ext = fileName.pathExtension.lowercased()
         return try createMultipartBody(
             fileData: content,
             fieldName: "file",
             fileName: fileName,
-            mimeType: extensionToMime[fileName.pathExtension] ?? "application/octet-stream",
+            mimeType: openAIExtensionToMime[ext] ?? "application/octet-stream",
             parameters: ["purpose": "assistants"],
             boundary: boundary)
     }

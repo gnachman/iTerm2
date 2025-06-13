@@ -170,11 +170,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         panel.canChooseFiles = true
         panel.canChooseDirectories = true
         panel.isSelectable = { remoteFile in
-            if remoteFile.kind.isFolder {
-                return true
-            }
-            let ext = remoteFile.name.pathExtension.lowercased()
-            return AITermController.provider?.fileTypeIsSupported(extension: ext) == true
+            return true
         }
         panel.beginSheetModal(for: window) { [weak self] response in
             guard response == .OK, let self else {

@@ -182,6 +182,7 @@ struct LLMGeminiResponseParser: LLMResponseParser {
                     LLM.Message(role: role, content: text)
                 } else if let functionCall = $0.content?.parts.first?.functionCall {
                     LLM.Message(
+                        responseID: nil,
                         role: role,
                         body: .functionCall(
                             LLM.FunctionCall(

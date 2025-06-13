@@ -23,6 +23,8 @@ protocol AITermControllerDelegate: AnyObject {
     func aitermControllerDidFailToAddFilesToVectorStore(_ sender: AITermController, error: Error)
 }
 
+struct PendingCommandCanceled: Error {}
+
 struct ChatGPTFunctionDeclaration: Codable {
     var name: String
     var description: String
@@ -330,7 +332,7 @@ class AITermController {
             case .error(let error):
                 DLog("error: \(error)")
                 state = .ground
-                if streamParserState != nil {
+                if streamParserState != nil && !(error is PendingCommandCanceled) {
                     delegate?.aitermController(self, didStreamUpdate: "An error ocurred: \(error.localizedDescription)")
                 }
                 delegate?.aitermController(self, didFailWithError: error)
@@ -732,8 +734,10 @@ class AITermController {
                                 }
                                 if !accumulatingMessage.tryAppend(choice.body) {
                                     drain()
-                                    accumulatingMessage = LLM.Message(role: choice.role,
-                                                                      body: choice.body)
+                                    accumulatingMessage = LLM.Message(
+                                        responseID: previousResponseID,
+                                        role: choice.role,
+                                        body: choice.body)
                                 }
                             }
                         }

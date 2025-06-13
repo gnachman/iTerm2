@@ -40,6 +40,7 @@ enum LLM {
 
     // This is a platform-independent representation of a message to or from an LLM.
     struct Message: Codable, Equatable {
+        var responseID: String?
         var role: Role? = .user
 
         enum StatusUpdate: Codable, Equatable {
@@ -229,11 +230,13 @@ enum LLM {
             body.maybeContent
         }
 
-        init(role: Role? = .user,
+        init(responseID: String? = nil,
+             role: Role? = .user,
              content: String? = nil,
              name: String? = nil,
              functionCallID: FunctionCallID? = nil,
              function_call: FunctionCall? = nil) {
+            self.responseID = responseID
             self.role = role
             if let name, let content {
                 body = .functionOutput(name: name, output: content, id: functionCallID)
@@ -246,7 +249,8 @@ enum LLM {
             }
         }
 
-        init(role: Role?, body: Body) {
+        init(responseID: String?, role: Role?, body: Body) {
+            self.responseID = responseID
             self.role = role
             self.body = body
         }
@@ -258,14 +262,15 @@ enum LLM {
         }
 
         enum CodingKeys: String, CodingKey {
-            case role, content, function_name, function_call_id, function_call, body
+            case role, content, function_name, function_call_id, function_call, body, responseID
         }
 
         init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
+            let responseID = try container.decodeIfPresent(String.self, forKey: .responseID)
             let role = try container.decodeIfPresent(Role.self, forKey: .role)
             if let body = try container.decodeIfPresent(Body.self, forKey: .body) {
-                self = Message(role: role, body: body)
+                self = Message(responseID: responseID, role: role, body: body)
             } else {
                 // Legacy code path
                 let content = try container.decodeIfPresent(String.self, forKey: .content)

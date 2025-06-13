@@ -53,7 +53,7 @@ struct DeepSeekRequestBuilder {
                 content = text
             case .functionCall(let call, id: let id):
                 tool_calls = [ToolCall(id: id?.callID, function: call)]
-            case .functionOutput(name: let name, output: let output, id: let id):
+            case .functionOutput(name: _, output: let output, id: let id):
                 tool_call_id = id?.callID
                 content = output
             case .attachment:
@@ -78,7 +78,7 @@ struct DeepSeekRequestBuilder {
                             value += file.content.lossyString
                             value += "\n</iterm2:attachment>"
                             return value
-                        case .fileID(id: let id, name: let name):
+                        case .fileID(id: _, name: let name):
                             return "A file named \(name) (content unavailable)"
                         }
                     case .multipart(_):

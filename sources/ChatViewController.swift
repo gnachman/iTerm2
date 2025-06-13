@@ -1089,9 +1089,8 @@ extension ChatViewController: ChatInputViewDelegate {
                let mimeType = UTType(uti)?.preferredMIMEType {
                 return mimeType
             }
-            // Personally, I'd rather use application/octet-stream but OpenAI won't accept it.
-            // Let's take a flying leap and try to interpret this unknown file as text.
-            return "text/plain"
+            // This is OK for file search but not if inlining.
+            return "application/octet-stream"
         } else {
             let ext = (filename as NSString).pathExtension as CFString
             guard let uti = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, ext, nil)?.takeRetainedValue(),

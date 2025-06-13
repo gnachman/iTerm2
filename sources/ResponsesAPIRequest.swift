@@ -1706,7 +1706,11 @@ struct ResponsesBodyRequestBuilder {
                             return .inputFile(.init(fileData: "data:\(file.mimeType);base64," +  file.content.base64EncodedString(),
                                                     filename: file.name))
                         case .fileID(let fileID, _):
-                            return .inputFile(.init(fileID: fileID))
+                            if hostedTools.codeInterpreter {
+                                return nil
+                            } else {
+                                return .inputFile(.init(fileID: fileID))
+                            }
                         }
                     case .multipart(_):
                         return nil
@@ -1724,6 +1728,26 @@ struct ResponsesBodyRequestBuilder {
         return MIMETypeIsTextual(mimeType)
     }
 
+    private func fileIDsForCodeInterpreter() -> [String] {
+        return switch messages.last?.body {
+        case .multipart(let parts):
+            parts.compactMap { part in
+                switch part {
+                case .attachment(let attachment):
+                    switch attachment.type {
+                    case .fileID(id: let id, _):
+                        return id
+                    default:
+                        return nil
+                    }
+                default:
+                    return nil
+                }
+            }
+        default:
+            []
+        }
+    }
     private var transformedHostedTools: [ResponsesRequestBody.Tool] {
         var result = [ResponsesRequestBody.Tool]()
         if let fileSearch = hostedTools.fileSearch {
@@ -1735,7 +1759,8 @@ struct ResponsesBodyRequestBuilder {
                                                   userLocation: .init())))
         }
         if hostedTools.codeInterpreter {
-            result.append(.codeInterpreter(.init(container: .auto(.init()))))
+            let fileIDs = fileIDsForCodeInterpreter()
+            result.append(.codeInterpreter(.init(container: .auto(.init(fileIDs: fileIDs)))))
         }
         return result
     }

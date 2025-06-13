@@ -50,7 +50,10 @@ class PipelineQueue<T> {
     func append(_ pipeline: Pipeline<T>) {
         dispatchPrecondition(condition: .onQueue(.main))
         let originalCompletion = pipeline.completion
+        var completed = false
         pipeline.completion = { [weak self] disposition in
+            it_assert(!completed)
+            completed = true
             originalCompletion?(disposition)
             self?.pipelineDidComplete()
         }
@@ -63,6 +66,9 @@ class PipelineQueue<T> {
 
     private func pipelineDidComplete() {
         DLog("Pipeline completed. Run next if available")
+        if pipelines.isEmpty {
+            return
+        }
         pipelines.removeFirst()
         pipelines.first?.begin()
     }

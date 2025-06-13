@@ -440,18 +440,22 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
             case let callEvent as ResponseOutputItemAddedEvent:
                 switch callEvent.item.type {
                 case .functionCall:
-                    choiceMessages.append(LLM.Message(role: .function, body: .functionCall(
-                        .init(
-                            name: callEvent.item.name,
-                            arguments: callEvent.item.arguments),
-                        id: .init(callID: callEvent.item.call_id ?? "",
-                                  itemID: callEvent.item.id))))
+                    choiceMessages.append(LLM.Message(
+                        responseID: nil,
+                        role: .function,
+                        body: .functionCall(
+                            .init(
+                                name: callEvent.item.name,
+                                arguments: callEvent.item.arguments),
+                            id: .init(callID: callEvent.item.call_id ?? "",
+                                      itemID: callEvent.item.id))))
                     parsedResponse?.ignore = false
                 case .codeInterpreterCall:
                     break
                 case .webSearchCall:
                     choiceMessages.append(
-                        LLM.Message(role: .assistant,
+                        LLM.Message(responseID: nil,
+                                    role: .assistant,
                                     body: .attachment(.init(
                                         inline: true,
                                         id: UUID().uuidString,
@@ -464,6 +468,7 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
 
             case let argumentsDeltaEvent as ResponseFunctionCallArgumentsDeltaEvent:
                 choiceMessages.append(LLM.Message(
+                    responseID: nil,
                     role: .function,
                     body: .functionCall(.init(name: nil,
                                               arguments: argumentsDeltaEvent.delta),
@@ -489,7 +494,8 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
             case let webSearch as ResponseWebSearchCallCompletedEvent:
                 DLog("\(webSearch)")
                 choiceMessages.append(
-                    LLM.Message(role: .assistant,
+                    LLM.Message(responseID: nil,
+                                role: .assistant,
                                 body: .attachment(.init(
                                     inline: true,
                                     id: UUID().uuidString,
@@ -502,7 +508,8 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
             case let codeInterpreter as ResponseCodeInterpeterCallInterpretingEvent:
                 DLog("\(codeInterpreter)")
                 choiceMessages.append(
-                    LLM.Message(role: .assistant,
+                    LLM.Message(responseID: nil,
+                                role: .assistant,
                                 body: .attachment(.init(
                                     inline: true,
                                     id: UUID().uuidString,
@@ -512,7 +519,8 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
             case let codeInterpreter as ResponseCodeInterpeterCallCompletedEvent:
                 DLog("\(codeInterpreter)")
                 choiceMessages.append(
-                    LLM.Message(role: .assistant,
+                    LLM.Message(responseID: nil,
+                                role: .assistant,
                                 body: .attachment(.init(
                                     inline: true,
                                     id: UUID().uuidString,
@@ -520,7 +528,8 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
                 parsedResponse?.ignore = false
 
             case let deltaEvent as ResponseCodeInterpreterDeltaEvent:
-                choiceMessages.append(LLM.Message(role: .assistant,
+                choiceMessages.append(LLM.Message(responseID: nil,
+                                                  role: .assistant,
                                                   body: .attachment(.init(inline: true,
                                                                           id: deltaEvent.itemID,
                                                                           type: .code(deltaEvent.delta)))))

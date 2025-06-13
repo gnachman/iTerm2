@@ -79,7 +79,6 @@ struct AIConversation {
             busy = false
             addFilesToVectorStoreCompletion?(error)
         }
-
     }
 
     var messages: [AITermController.Message]
@@ -152,6 +151,15 @@ struct AIConversation {
 
     mutating func add(text: String, role: LLM.Role = .user) {
         add(AITermController.Message(role: role, content: text))
+    }
+
+    mutating func deleteResponse(_ id: String, completion: @escaping (Error?) -> ()) {
+        if id == controller.previousResponseID {
+            controller.previousResponseID = messages.last {
+                $0.responseID != nil && $0.responseID != id
+            }?.responseID
+        }
+        messages.removeAll { $0.responseID == id }
     }
 
     private func cancel() {
@@ -280,8 +288,10 @@ struct AIConversation {
                 if let previousResponseID = controller?.previousResponseID {
                     amended.controller.previousResponseID = previousResponseID
                 }
-                let message = AITermController.Message(role: .assistant,
-                                                       body: accumulator)
+                let message = AITermController.Message(
+                    responseID: controller?.previousResponseID,
+                    role: .assistant,
+                    body: accumulator)
                 amended.messages.append(message)
                 completion(.success(amended))
             break

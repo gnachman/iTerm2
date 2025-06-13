@@ -129,19 +129,20 @@ struct LLMProvider {
     }
 
     func shouldUploadFile(mimeType: String) -> Bool {
-        // File upload is implemented only for OpenAI+Responses, and they only support PDFs
-        // currently.
+        if MIMETypeIsTextual(mimeType) {
+            return false
+        }
         if LLMMetadata.hostIsOpenAIAPI(url: URL(string: model.url)) &&
             (model.api == .responses) &&
             model.vectorStoreConfig != .disabled {
-            return mimeType == "application/pdf"
+            return true
         }
         return false
     }
 
     func fileTypeIsSupported(extension ext: String) -> Bool {
         if LLMMetadata.hostIsOpenAIAPI(url: URL(string: model.url)) {
-            return openAIExtensionToMime[ext] != nil
+            return true
         }
         guard let mime = extensionToMime[ext] else {
             return false
