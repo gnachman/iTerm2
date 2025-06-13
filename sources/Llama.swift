@@ -137,15 +137,52 @@ struct LlamaBodyRequestBuilder {
         var stream: Bool
     }
 
+    // Llama doesn't like multiple text parts.
+    
+    private func joinText(_ message: CompletionsMessage) -> CompletionsMessage {
+        switch message.content {
+        case .string, .none:
+            return message
+        case .array(let parts):
+            var temp = message
+            var combined = Array<CompletionsMessage.ContentPart>()
+            for part in parts {
+                switch part {
+                case .text(let textContent):
+                    switch combined.last {
+                    case .none, .file:
+                        combined.append(part)
+                    case .text(let existingTextContent):
+                        combined[combined.count - 1] = .text(.init(text: existingTextContent.text + "\n" + textContent.text))
+                    }
+                case .file(let file):
+                    combined.append(part)
+                }
+            }
+            if combined.count == 1, case .text(let text) = combined[0] {
+                temp.content = .string(text.text)
+            } else {
+                temp.content = .array(combined)
+            }
+            return temp
+        }
+    }
+
     func body() throws -> Data {
         // Tokens are about 4 letters each. Allow enough tokens to include both the query and an
         // answer the same length as the query.
         let maybeDecls = functions.isEmpty ? nil : functions.map { LlamaFunctionDeclaration($0.decl) }
 
+        let llamaMessages = messages.compactMap {
+            CompletionsMessage($0)
+        }.map {
+            joinText($0)
+        }
         // See the note about streaming function calling in Llama in AIMetadata.swift
+        // #llama-streaming-functions
         let body = Body(
             model: provider.dynamicModelsSupported ? provider.model.name : nil,
-            messages: messages.compactMap { CompletionsMessage($0) },
+            messages: llamaMessages,
             max_tokens: provider.maxTokens(functions: functions, messages: messages),
             tools: stream ? nil : maybeDecls,
             function_call: functions.isEmpty ? nil : "auto",

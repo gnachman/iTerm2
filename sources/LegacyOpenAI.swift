@@ -140,10 +140,18 @@ struct LLMErrorParser {
                     var message: String
                 }
             }
+            struct LlamaError: Codable {
+                var error: String
+            }
             if let message = try? decoder.decode(GoogleError.self, from: data) {
                 error = LLM.ErrorResponse(
                     error: LLM.ErrorResponse.Error(
                         message: message.error.message))
+            }
+            if let message = try? decoder.decode(LlamaError.self, from: data) {
+                error = LLM.ErrorResponse(
+                    error: LLM.ErrorResponse.Error(
+                        message: message.error))
             }
         }
         return error?.error.message

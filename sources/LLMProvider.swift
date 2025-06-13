@@ -98,7 +98,7 @@ struct LLMProvider {
             return "Deep Seek"
         }
         if model.name.contains("llama") {
-            return "LLaMa"
+            return "Llama"
         }
 
         return "Unknown Platform"
@@ -117,6 +117,10 @@ struct LLMProvider {
     }
 
     var functionsSupported: Bool {
+        // #llama-streaming-functions
+        if model.api == .llama && model.features.contains(.streaming) {
+            return false
+        }
         return model.features.contains(.functionCalling)
     }
 

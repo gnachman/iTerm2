@@ -241,7 +241,7 @@ class ChatAgent {
             }
             parts.append("Don't be shy about using it because the user must always grant permission for functions to run. You don't need to request permission: the app will do that for you.")
         }
-        parts.append("When a zip file is provided, you should extract it and analyze the contents in the context of the accompanying messages")
+        parts.append("If a zip file is provided (this is rare), you should extract it and analyze the contents in the context of the accompanying messages.")
 
         conversation.systemMessage = parts.joined(separator: " ")
         defineFunctions(in: &conversation, allowedCategories: permissions)

@@ -169,8 +169,9 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         let panel = iTermOpenPanel()
         panel.canChooseFiles = true
         panel.canChooseDirectories = true
+        let provider = AITermController.provider
         panel.isSelectable = { remoteFile in
-            return true
+            return provider?.fileTypeIsSupported(extension: remoteFile.name.pathExtension.lowercased()) == true
         }
         panel.beginSheetModal(for: window) { [weak self] response in
             guard response == .OK, let self else {

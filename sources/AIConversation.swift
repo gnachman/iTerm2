@@ -85,8 +85,15 @@ struct AIConversation {
     private(set) var controller: AITermController
     private var delegate = Delegate()
     private(set) weak var registrationProvider: AIRegistrationProvider?
+    var maxTotalTokens: Int {
+        Int(iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit))
+    }
+    var maxResponseTokens: Int {
+        return min(maxTotalTokens / 2,
+                   Int(iTermPreferences.int(forKey: kPreferenceKeyAIResponseTokenLimit)))
+    }
     var maxTokens: Int {
-        return Int(iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit) - iTermPreferences.int(forKey: kPreferenceKeyAIResponseTokenLimit))
+        return Int(maxTotalTokens - maxResponseTokens)
     }
     var busy: Bool { delegate.busy }
     init(_ other: AIConversation) {

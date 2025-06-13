@@ -58,6 +58,14 @@ class AIModel: NSObject {
         self.model = model
     }
 
+    @objc
+    static func modelFromSettings() -> AIModel? {
+        guard let model = LLMMetadata.model() else {
+            return nil
+        }
+        return AIModel(model)
+    }
+
     @objc var name: String { model.name }
     @objc var contextWindowTokens: Int { model.contextWindowTokens }
     @objc var maxResponseTokens: Int { model.maxResponseTokens }
@@ -259,6 +267,8 @@ class AIMetadata: NSObject {
         // Per https://ollama.readthedocs.io/en/api/#generate-a-chat-completion:
         //   "tools: tools for the model to use if supported. Requires stream to be set
         //    to false"
+        // To find places where you need to make changes to adjust this logic search for
+        // #llama-streaming-functions
         AIMetadata.llama_3_3_latest,
     ]
 

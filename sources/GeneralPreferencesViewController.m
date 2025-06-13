@@ -838,13 +838,26 @@ enum {
                            key:kPreferenceKeyAIVendor
                    relatedView:nil
                           type:kPreferenceInfoTypePopup];
-
+    info.onChange = ^{
+        [weakSelf updateAIModelFromVendor];
+        [weakSelf aiModelDidChange:tokenLimitInfo
+                 responseLimitInfo:responseTokenLimitInfo
+                           urlInfo:urlInfo
+                           apiInfo:apiInfo
+                      featureInfos:aiFeatureInfos];
+    };
     info = [self defineControl:_useRecommendedModel
                            key:kPreferenceKeyUseRecommendedAIModel
                    relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^{
-        [weakSelf updateCoraseAIModelSettingsEnabled];
+        [weakSelf updateAIModelFromVendor];
+        [weakSelf updateCoarseAIModelSettingsEnabled];
+        [weakSelf aiModelDidChange:tokenLimitInfo
+                 responseLimitInfo:responseTokenLimitInfo
+                           urlInfo:urlInfo
+                           apiInfo:apiInfo
+                      featureInfos:aiFeatureInfos];
     };
     [self addViewToSearchIndex:_aiPluginLabel
                    displayName:@"Install AI Plugin"
@@ -916,10 +929,17 @@ enum {
     return YES;
 }
 
-- (void)updateCoraseAIModelSettingsEnabled {
+- (void)updateCoarseAIModelSettingsEnabled {
     const BOOL automatic = [self boolForKey:kPreferenceKeyUseRecommendedAIModel];
     _manualAIConfiguration.enabled = !automatic;
     _aiVendor.enabled = automatic;
+}
+
+- (void)updateAIModelFromVendor {
+    iTermAIModel *model = [iTermAIModel modelFromSettings];
+    if (model) {
+        [self setString:model.name forKey:kPreferenceKeyAIModel];
+    }
 }
 
 - (void)aiModelDidChange:(PreferenceInfo *)tokenLimitInfo
