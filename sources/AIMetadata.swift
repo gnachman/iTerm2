@@ -5,9 +5,78 @@
 //  Created by George Nachman on 6/11/25.
 //
 
+@objc(iTermAIModel)
+class AIModel: NSObject {
+    private var model: AIMetadata.Model
+
+    @objc(initWithModelName:url:legacy:)
+    convenience init(modelName: String, url: String?, legacy: Bool) {
+        let urlGuess: String
+        let apiGuess: iTermAIAPI
+        let featuresGuess: Set<AIMetadata.Model.Feature>
+        if modelName.contains("gemini") {
+            urlGuess = "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}"
+            apiGuess = .gemini
+            featuresGuess = [.systemMessage, .functionCalling, .streaming]
+        } else if modelName.contains("deepseek") {
+            urlGuess = "https://api.deepseek.com/v1/chat/completions"
+            apiGuess = .deepSeek
+            featuresGuess = [.systemMessage, .functionCalling, .streaming]
+        } else if modelName.contains("llama") {
+            urlGuess = "http://localhost:11434/api/chat"
+            apiGuess = .llama
+            featuresGuess = [.systemMessage, .streaming, .functionCalling]
+        } else if modelName.contains("gpt") || modelName.hasPrefix("o") {
+            if legacy {
+                urlGuess = "https://api.openai.com/v1/completions"
+                apiGuess = .completions
+                featuresGuess = []
+            } else {
+                urlGuess = "https://api.openai.com/v1/chat/completions"
+                apiGuess = .chatCompletions
+                featuresGuess = [.systemMessage, .functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming]
+            }
+        } else {
+            apiGuess = .chatCompletions
+            urlGuess = "about:empty"
+            featuresGuess = []
+        }
+        let justURL = if let url, !url.isEmpty {
+            url
+        } else {
+            urlGuess
+        }
+        self.init(AIMetadata.Model(name: modelName,
+                                   contextWindowTokens: 8_192,
+                                   maxResponseTokens: 8_192,
+                                   url: justURL,
+                                   api: apiGuess,
+                                   features: featuresGuess))
+    }
+
+    init(_ model: AIMetadata.Model) {
+        self.model = model
+    }
+
+    @objc var name: String { model.name }
+    @objc var contextWindowTokens: Int { model.contextWindowTokens }
+    @objc var maxResponseTokens: Int { model.maxResponseTokens }
+    @objc var url: String { model.url }
+    @objc var api: iTermAIAPI { model.api }
+#warning("TODO: Remove system message feature. It's just o-series models")
+    @objc var systemMessageFeatureEnabled: Bool { model.features.contains(.systemMessage) }
+    @objc var functionCallingFeatureEnabled: Bool { model.features.contains(.functionCalling) }
+    @objc var streamingFeatureEnabled: Bool { model.features.contains(.streaming) }
+    @objc var hostedFileSearchFeatureEnabled: Bool { model.features.contains(.hostedFileSearch) }
+    @objc var hostedWebSearchFeatureEnabled: Bool { model.features.contains(.hostedWebSearch) }
+
+    @objc var vectorStoreConfig: AIMetadata.Model.VectorStoreConfig { model.vectorStoreConfig }
+}
+
 @objc
 class AIMetadata: NSObject {
     @objc static let instance = AIMetadata()
+    @objc static var defaultModel: AIModel { AIModel(instance.models[0]) }
 
     struct Model {
         var name: String
@@ -19,14 +88,12 @@ class AIMetadata: NSObject {
             case systemMessage // Supports a separate system prompt.
             case functionCalling // Supports tool/function calling.
             case streaming // Can stream response tokens.
-            case jsonMode // Can be constrained to output valid JSON.
-            case imageInput // Can process and understand images (multimodal).
             case hostedFileSearch // Can search over files provided to the API (e.g., OpenAI Assistants).
             case hostedWebSearch // Can perform web searches (e.g., via a built-in tool).
         }
         var features: Set<Feature>
 
-        enum VectorStoreConfig: Int {
+        @objc enum VectorStoreConfig: Int {
             case disabled = 0
             case openAI = 1
         }
@@ -34,6 +101,16 @@ class AIMetadata: NSObject {
     }
 
     private let models: [Model] = [
+        // The first model will be the default.
+        Model(
+            name: "gpt-4.1",
+            contextWindowTokens: 1_000_000,
+            maxResponseTokens: 32_768,
+            url: "https://api.openai.com/v1/responses",
+            api: .responses,
+            features: [.systemMessage, .functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming],
+            vectorStoreConfig: .openAI
+        ),
         Model(
             name: "gpt-4o",
             contextWindowTokens: 128_000,
@@ -47,15 +124,6 @@ class AIMetadata: NSObject {
             name: "gpt-4o-mini",
             contextWindowTokens: 128_000,
             maxResponseTokens: 16_384,
-            url: "https://api.openai.com/v1/responses",
-            api: .responses,
-            features: [.systemMessage, .functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming],
-            vectorStoreConfig: .openAI
-        ),
-        Model(
-            name: "gpt-4.1",
-            contextWindowTokens: 1_000_000,
-            maxResponseTokens: 32_768,
             url: "https://api.openai.com/v1/responses",
             api: .responses,
             features: [.systemMessage, .functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming],

@@ -983,6 +983,16 @@ enum {
     _resetAIPrompt.enabled = allowed;
     _customAIEndpoint.enabled = allowed;
     _enableAI.enabled = [iTermAdvancedSettingsModel generativeAIAllowed];
+    _aiResponseTokenLimit.enabled = allowed;
+    _aiModelLabel.enabled = allowed;
+    _aiTokenLimitLabel.enabled = allowed;
+    _aiAPI.enabled = allowed;
+    _aiFeatureHostedFileSearch.enabled = allowed;
+    _aiFeatureHostedWebSearch.enabled = allowed;
+    _aiFeatureFunctionCalling.enabled = allowed;
+    _aiFeatureStreamingResponses.enabled = allowed;
+    _vectorStore.enabled = allowed;
+
 }
 
 - (BOOL)modelSupportsModernAPI {

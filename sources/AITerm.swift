@@ -109,6 +109,7 @@ class AITermController {
     weak var delegate: AITermControllerDelegate?
 
     init(registration: Registration?) {
+        iTermMigrationHelper.migrateAISettings()
         state = .ground
         self.registration = registration
     }

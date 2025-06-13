@@ -36,6 +36,7 @@
 #import "iTermLogoGenerator.h"
 #import "iTermMetalBufferPool.h"
 #import "iTermMetalCellRenderer.h"
+#import "iTermMigrationHelper.h"
 #import "iTermPreciseTimer.h"
 #import "iTermProcess.h"
 #import "iTermPromise.h"

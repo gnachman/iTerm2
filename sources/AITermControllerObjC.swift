@@ -195,7 +195,7 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
             if let registration {
                 completion(registration)
             } else {
-                handler?(.failure(AIError("You must provide a valid API key to use AI features in iTerm2.")))
+                handler?(.failure(AIError("AI features are not enabled or the API key is missing.")))
             }
         }
     }

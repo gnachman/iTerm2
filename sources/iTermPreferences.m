@@ -204,7 +204,7 @@ NSString *const kPreferenceKeyAIPrompt = @"AI Prompt";
 NSString *const kPreferenceKeyAlertOnMarksInOffscreenSessions = @"Alert On Marks in Offscreen Sessions";
 NSString *const kPreferenceKeyAIModel = @"AiModel";
 NSString *const kPreferenceKeyAITokenLimit = @"AiMaxTokens";
-NSString *const kPreferenceKeyAIResponseTokenLimit = @"AIMaxResponseTokens";
+NSString *const kPreferenceKeyAIResponseTokenLimit = @"AiResponseMaxTokens";
 NSString *const kPreferenceKeyAITermURL = @"AitermURL";
 NSString *const kPreferenceKeyAITermUseLegacyAPI = @"AitermUseLegacyAPI";  // deprecated
 NSString *const kPreferenceKeyAITermAPI = @"AITermAPI";
@@ -666,7 +666,6 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyTabsHaveCloseButton: BLOCK(computedTabsHaveCloseButton),
                   kPreferenceKeyLeftControlRemapping: BLOCK(computedLeftControlRemapping),
                   kPreferenceKeyRightControlRemapping: BLOCK(computedRightControlRemapping),
-                  kPreferenceKeyAITermAPI: BLOCK(computedAIAPI)
                   };
     }
     return dict;
@@ -891,20 +890,6 @@ static NSString *sPreviousVersion;
     }
     return [self defaultObjectForKey:kPreferenceKeyRightControlRemapping];
 }
-
-+ (NSNumber *)computedAIAPI {
-    NSNumber *value;
-    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyAITermAPI];
-    if (value) {
-        return value;
-    }
-    NSNumber *legacy = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyAITermUseLegacyAPI];
-    if (legacy) {
-        return legacy.boolValue ? @(iTermAIAPICompletions) : @(iTermAIAPIResponses);
-    }
-    return [self defaultObjectForKey:kPreferenceKeyAITermAPI];
-}
-
 + (NSNumber *)computedTabsHaveCloseButton {
     NSNumber *value;
     value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyTabsHaveCloseButton];

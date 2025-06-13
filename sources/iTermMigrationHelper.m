@@ -407,5 +407,62 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
     return mappings != nil;
 }
 
++ (void)migrateAISettings {
+    if ([iTermSecureUserDefaults.instance enableAI]) {
+        // A default configuration has no model or URL set.
+        iTermAIModel *model;
+        NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+        NSString *originalModelName = [ud stringForKey:kPreferenceKeyAIModel];
+        NSString *originalURL = [iTermPreferences stringForKey:kPreferenceKeyAITermURL];
+        const BOOL originalLegacy = [ud boolForKey:kPreferenceKeyAITermUseLegacyAPI];
+        if (originalModelName == nil) {
+            model = [AIMetadata defaultModel];
+            [ud setObject:model.name
+                   forKey:kPreferenceKeyAIModel];
+        } else {
+            model = [[iTermAIModel alloc] initWithModelName:originalModelName
+                                            url:originalURL
+                                         legacy:originalLegacy];
+        }
+        if ([ud objectForKey:kPreferenceKeyAITermAPI] == nil){
+            if (originalLegacy) {
+                [ud setInteger:iTermAIAPICompletions
+                        forKey:kPreferenceKeyAITermAPI];
+            } else {
+                [ud setInteger:model.api
+                        forKey:kPreferenceKeyAITermAPI];
+            }
+        }
+        if (originalURL.length == 0) {
+            [ud setObject:model.url
+                   forKey:kPreferenceKeyAITermURL];
+        }
+        if ([ud objectForKey:kPreferenceKeyAIFeatureFunctionCalling] == nil) {
+            [ud setBool:model.functionCallingFeatureEnabled
+                 forKey:kPreferenceKeyAIFeatureFunctionCalling];
+        }
+        if ([ud objectForKey:kPreferenceKeyAIFeatureHostedWebSearch] == nil) {
+            [ud setBool:model.hostedWebSearchFeatureEnabled
+                 forKey:kPreferenceKeyAIFeatureHostedWebSearch];
+        }
+        if ([ud objectForKey:kPreferenceKeyAIFeatureHostedFileSearch] == nil) {
+            [ud setBool:model.hostedFileSearchFeatureEnabled
+                 forKey:kPreferenceKeyAIFeatureHostedFileSearch];
+        }
+        if ([ud objectForKey:kPreferenceKeyAIFeatureStreamingResponses] == nil) {
+            [ud setBool:model.streamingFeatureEnabled
+                 forKey:kPreferenceKeyAIFeatureStreamingResponses];
+        }
+        if ([ud objectForKey:kPreferenceKeyAITokenLimit] == nil) {
+            [ud setInteger:model.contextWindowTokens
+                    forKey:kPreferenceKeyAITokenLimit];
+        }
+        if ([ud objectForKey:kPreferenceKeyAIResponseTokenLimit] == nil) {
+            [ud setInteger:model.maxResponseTokens
+                    forKey:kPreferenceKeyAIResponseTokenLimit];
+        }
+    }
+}
+
 @end
 

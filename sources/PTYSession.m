@@ -16856,7 +16856,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (query.length == 0) {
         return [self requestNaturalLanguageQuery:@"" reason:nil bypassable:NO];
     }
-    NSInteger maxLength = [iTermAdvancedSettingsModel aiResponseMaxTokens] / 8;
+    NSInteger maxLength = [iTermPreferences integerForKey:kPreferenceKeyAIResponseTokenLimit] / 8;
     if (query.length >= maxLength) {
         return [self requestNaturalLanguageQuery:[query substringFromIndex:query.length - maxLength]
                                           reason:@"⚠️ The selected text was rather long."
