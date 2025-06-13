@@ -100,17 +100,59 @@ class AIMetadata: NSObject {
         var vectorStoreConfig: VectorStoreConfig = .disabled
     }
 
+    static var recommendedOpenAIModel: Model {
+        return AIMetadata.gpt4_1
+    }
+
+    static var recommendedDeepSeekModel: Model {
+        return AIMetadata.deepseek_chat
+    }
+
+    static var recommendedGeminiModel: Model {
+        return AIMetadata.gemini_2_0_flash
+    }
+
+    static var recommendedLlamaModel: Model {
+        return AIMetadata.llama_3_3_latest
+    }
+
+    private static let gpt4_1 = Model(
+        name: "gpt-4.1",
+        contextWindowTokens: 1_000_000,
+        maxResponseTokens: 32_768,
+        url: "https://api.openai.com/v1/responses",
+        api: .responses,
+        features: [.systemMessage, .functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming],
+        vectorStoreConfig: .openAI
+    )
+    private static let deepseek_chat = Model(
+        name: "deepseek-chat",
+        contextWindowTokens: 65_536,
+        maxResponseTokens: 8_000,
+        url: "https://api.deepseek.com/v1/chat/completions",
+        api: .deepSeek,
+        features: [.systemMessage, .functionCalling, .streaming]
+    )
+    private static let gemini_2_0_flash = Model(
+        name: "gemini-2.0-flash",
+        contextWindowTokens: 1_048_576,
+        maxResponseTokens: 8_192,
+        url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+        api: .gemini,
+        features: [.systemMessage, .functionCalling, .streaming]
+    )
+    static private let llama_3_3_latest = Model(
+        name: "llama3.3:latest",
+        contextWindowTokens: 131_072,
+        maxResponseTokens: 131_072,
+        url: "http://localhost:11434/api/chat",
+        api: .llama,
+        features: [.systemMessage, .streaming, .functionCalling]
+    )
+
     private let models: [Model] = [
         // The first model will be the default.
-        Model(
-            name: "gpt-4.1",
-            contextWindowTokens: 1_000_000,
-            maxResponseTokens: 32_768,
-            url: "https://api.openai.com/v1/responses",
-            api: .responses,
-            features: [.systemMessage, .functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming],
-            vectorStoreConfig: .openAI
-        ),
+        AIMetadata.gpt4_1,
         Model(
             name: "gpt-4o",
             contextWindowTokens: 128_000,
@@ -178,14 +220,7 @@ class AIMetadata: NSObject {
             api: .gemini,
             features: [.systemMessage, .functionCalling, .streaming]
         ),
-        Model(
-            name: "gemini-2.0-flash",
-            contextWindowTokens: 1_048_576,
-            maxResponseTokens: 8_192,
-            url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
-            api: .gemini,
-            features: [.systemMessage, .functionCalling, .streaming]
-        ),
+        AIMetadata.gemini_2_0_flash,
         Model(
             name: "gemini-1.5-pro",
             contextWindowTokens: 1_048_576,
@@ -197,14 +232,7 @@ class AIMetadata: NSObject {
 
         // MARK: - DeepSeek Models
 
-        Model(
-            name: "deepseek-chat",
-            contextWindowTokens: 65_536,
-            maxResponseTokens: 8_000,
-            url: "https://api.deepseek.com/v1/chat/completions",
-            api: .deepSeek,
-            features: [.systemMessage, .functionCalling, .streaming]
-        ),
+        AIMetadata.deepseek_chat,
         Model(
             name: "deepseek-coder",
             contextWindowTokens: 65_536,
@@ -229,14 +257,7 @@ class AIMetadata: NSObject {
         // Per https://ollama.readthedocs.io/en/api/#generate-a-chat-completion:
         //   "tools: tools for the model to use if supported. Requires stream to be set
         //    to false"
-        Model(
-            name: "llama3.3:latest",
-            contextWindowTokens: 131_072,
-            maxResponseTokens: 131_072,
-            url: "http://localhost:11434/api/chat",
-            api: .llama,
-            features: [.systemMessage, .streaming, .functionCalling]
-        ),
+        AIMetadata.llama_3_3_latest,
     ]
 
     @objc(enumerateModels:) func enumerateModels(_ closure: (String, Int, String?) -> ()) {

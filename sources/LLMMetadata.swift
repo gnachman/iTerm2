@@ -38,6 +38,21 @@ class LLMMetadata: NSObject {
     }
 
     static func model() -> AIMetadata.Model? {
+        if iTermPreferences.bool(forKey: kPreferenceKeyUseRecommendedAIModel),
+           let vendor = iTermAIVendor(rawValue: iTermPreferences.unsignedInteger(forKey: kPreferenceKeyAIVendor)) {
+            switch vendor {
+            case .openAI:
+                return AIMetadata.recommendedOpenAIModel
+            case .deepSeek:
+                return AIMetadata.recommendedDeepSeekModel
+            case .gemini:
+                return AIMetadata.recommendedGeminiModel
+            case .llama:
+                return AIMetadata.recommendedLlamaModel
+            @unknown default:
+                return nil
+            }
+        }
         var features = Set<AIMetadata.Model.Feature>()
         if iTermPreferences.bool(forKey: kPreferenceKeyAIFeatureFunctionCalling) {
             features.insert(.functionCalling)

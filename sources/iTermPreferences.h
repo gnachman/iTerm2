@@ -86,6 +86,13 @@ typedef NS_ENUM(NSUInteger, iTermAIAPI) {
     iTermAIAPIDeepSeek = 6
 };
 
+typedef NS_ENUM(NSUInteger, iTermAIVendor) {
+    iTermAIVendorDeepSeek = 0,
+    iTermAIVendorGemini = 1,
+    iTermAIVendorOpenAI = 2,
+    iTermAIVendorLlama = 3,
+};
+
 // General
 extern NSString *const kPreferenceKeyOpenBookmark;
 extern NSString *const kPreferenceKeyOpenArrangementAtStartup;
@@ -157,6 +164,8 @@ extern NSString *const kPreferenceKeyAIFeatureHostedWebSearch;
 extern NSString *const kPreferenceKeyAIFeatureFunctionCalling;
 extern NSString *const kPreferenceKeyAIFeatureStreamingResponses;
 extern NSString *const kPreferenceKeyAIVectorStore;
+extern NSString *const kPreferenceKeyUseRecommendedAIModel;
+extern NSString *const kPreferenceKeyAIVendor;  // iTermAIVendor
 
 extern NSString *const kPreferenceKeyAIPermissionCheckTerminalState;
 extern NSString *const kPreferenceKeyAIPermissionRunCommands;

@@ -196,6 +196,12 @@ enum {
     IBOutlet NSButton *_aiFeatureStreamingResponses;
     IBOutlet NSPopUpButton *_vectorStore;
 
+    IBOutlet NSButton *_useRecommendedModel;
+    IBOutlet NSView *_manualAISettings;
+    NSPopover *_popover;
+    IBOutlet NSButton *_manualAIConfiguration;
+    IBOutlet NSPopUpButton *_aiVendor;
+
     IBOutlet NSTextField *_checkTerminalStateLabel; // Check Terminal State
     IBOutlet NSPopUpButton *_checkTerminalStateButton;
     IBOutlet NSTextField *_runCommandsLabel; // Run Commands
@@ -214,6 +220,8 @@ enum {
 
     IBOutlet NSButton *_enableRTL;
     IBOutlet NSButton *_sshIntegrationForURLs;
+
+    NSString *_lastModel;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -806,6 +814,7 @@ enum {
         [weakSelf updateAIEnabled];
     };
 
+    _lastModel = [self stringForKey:kPreferenceKeyAIModel];
     info = [self defineControl:_aiModel
                            key:kPreferenceKeyAIModel
                    relatedView:_aiModelLabel
@@ -819,6 +828,18 @@ enum {
         [weakSelf updateAIEnabled];
     };
 
+    info = [self defineControl:_aiVendor
+                           key:kPreferenceKeyAIVendor
+                   relatedView:nil
+                          type:kPreferenceInfoTypePopup];
+
+    info = [self defineControl:_useRecommendedModel
+                           key:kPreferenceKeyUseRecommendedAIModel
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{
+        [weakSelf updateCoraseAIModelSettingsEnabled];
+    };
     [self addViewToSearchIndex:_aiPluginLabel
                    displayName:@"Install AI Plugin"
                        phrases:@[ @"AI Plugin" ]
@@ -889,15 +910,25 @@ enum {
     return YES;
 }
 
+- (void)updateCoraseAIModelSettingsEnabled {
+    const BOOL automatic = [self boolForKey:kPreferenceKeyUseRecommendedAIModel];
+    _manualAIConfiguration.enabled = !automatic;
+    _aiVendor.enabled = automatic;
+}
+
 - (void)aiModelDidChange:(PreferenceInfo *)tokenLimitInfo
        responseLimitInfo:(PreferenceInfo *)responseLimitInfo
                  urlInfo:(PreferenceInfo *)urlInfo
                  apiInfo:(PreferenceInfo *)apiInfo
             featureInfos:(NSArray<PreferenceInfo *> *)featureInfos {
     NSString *model = [self stringForKey:kPreferenceKeyAIModel];
-    if (!model) {
+    // Ignore it if it doesn't change because this is called when the view is closed.
+    if (!model || [model isEqualToString:_lastModel]) {
         return;
     }
+
+    _lastModel = [self stringForKey:kPreferenceKeyAIModel];
+
     const iTermAIAPI api = [AIMetadata.instance apiForModel:model
                                                    fallback:[self unsignedIntegerForKey:kPreferenceKeyAITermAPI]];
     [self setObject:@(api) forKey:kPreferenceKeyAITermAPI];
@@ -1108,6 +1139,23 @@ enum {
 }
 
 #pragma mark - Actions
+
+- (IBAction)showManualAIConfigurationPanel:(NSButton *)button {
+    NSViewController *vc = [[NSViewController alloc] init];
+    vc.view = _manualAISettings;
+
+    NSPopover *popover = [[NSPopover alloc] init];
+    [popover setContentSize:_manualAISettings.frame.size];
+    [popover setBehavior:NSPopoverBehaviorTransient];
+    [popover setAnimates:YES];
+    [popover setContentViewController:vc];
+
+    // Show popover
+    [popover showRelativeToRect:button.bounds
+                         ofView:button
+                  preferredEdge:NSMinYEdge];
+    _popover = popover;
+}
 
 - (IBAction)reloadPlugin:(id)sender {
     __weak __typeof(self) weakSelf = self;

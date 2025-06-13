@@ -215,6 +215,8 @@ NSString *const kPreferenceKeyAIFeatureHostedWebSearch = @"AIFeatureHostedWebSea
 NSString *const kPreferenceKeyAIFeatureFunctionCalling = @"AIFeatureFunctionCalling";
 NSString *const kPreferenceKeyAIFeatureStreamingResponses = @"AIFeatureStreamingResponses";
 NSString *const kPreferenceKeyAIVectorStore = @"AIVectorStore";
+NSString *const kPreferenceKeyUseRecommendedAIModel = @"UseRecommendedAIModel";
+NSString *const kPreferenceKeyAIVendor = @"AIVendor";
 
 NSString *const kPreferenceKeyAIPermissionCheckTerminalState = @"AIPermissionCheckTerminalState";
 NSString *const kPreferenceKeyAIPermissionRunCommands = @"AIPermissionRunCommands";
@@ -486,7 +488,9 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyAIFeatureHostedWebSearch: @NO,
                   kPreferenceKeyAIFeatureFunctionCalling: @NO,
                   kPreferenceKeyAIFeatureStreamingResponses: @NO,
+                  kPreferenceKeyUseRecommendedAIModel: @YES,
                   kPreferenceKeyAIVectorStore: @0,
+                  kPreferenceKeyAIVendor: @(iTermAIVendorOpenAI),
 
                   kPreferenceKeyAIPermissionCheckTerminalState: @(iTermAIPermissionAsk),
                   kPreferenceKeyAIPermissionRunCommands: @(iTermAIPermissionAsk),
