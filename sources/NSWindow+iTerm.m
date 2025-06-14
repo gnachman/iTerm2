@@ -9,6 +9,7 @@
 #import "NSWindow+iTerm.h"
 
 #import "iTermApplication.h"
+#import "DebugLogging.h"
 #import "NSObject+iTerm.h"
 #import "PTYWindow.h"
 #import <Quartz/Quartz.h>
@@ -23,19 +24,24 @@ void *const iTermDeclineFirstResponderAssociatedObjectKey = (void *)"iTermDeclin
 @implementation NSWindow(iTerm)
 
 - (void)it_titleBarDoubleClick {
+    DLog(@"begin");
     NSString *doubleClickAction = [[NSUserDefaults standardUserDefaults] objectForKey:@"AppleActionOnDoubleClick"];
     if ([doubleClickAction isEqualToString:@"Minimize"]) {
+        DLog(@"Minimize");
         [self performMiniaturize:nil];
         return;
     }
     if (doubleClickAction == nil || [doubleClickAction isEqualToString:@"Maximize"]) {
+        DLog(@"Maximize");
         [self performZoom:nil];
         return;
     }
     if ([doubleClickAction isEqualToString:@"Fill"] && [self respondsToSelector:@selector(_zoomFill:)]) {
+        DLog(@"Fill");
         [self _zoomFill:self.contentView.superview];
         return;
     }
+    DLog(@"Unknown action %@", doubleClickAction);
 }
 
 - (BOOL)isFullScreen {
