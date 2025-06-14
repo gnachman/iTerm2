@@ -1585,7 +1585,11 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
         tState.backgroundColor = frameData.perFrameState.timestampsBackgroundColor;
         tState.textColor = frameData.perFrameState.timestampsTextColor;
         tState.font = frameData.perFrameState.timestampFont;
-        tState.obscured = frameData.cellSize.height / frameData.scale + iTermOffscreenCommandLineVerticalPadding * 2;
+        if (frameData.perFrameState.haveOffscreenCommandLine) {
+            tState.obscured = frameData.cellSize.height / frameData.scale + iTermOffscreenCommandLineVerticalPadding * 2;
+        } else {
+            tState.obscured = 0;
+        }
         tState.timestampBaseline = frameData.perFrameState.timestampBaseline;
         tState.timestamps = [frameData.rows mapWithBlock:^id(iTermMetalRowData *row) {
             return row.date;
