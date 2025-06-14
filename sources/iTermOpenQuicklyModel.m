@@ -82,7 +82,8 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     static NSArray<Class> *commands;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        commands = @[ [iTermOpenQuicklyWindowArrangementCommand class],
+        commands = @[ [iTermOpenQuicklyInTabsWindowArrangementCommand class],
+                      [iTermOpenQuicklyWindowArrangementCommand class],
                       [iTermOpenQuicklySearchSessionsCommand class],
                       [iTermOpenQuicklySwitchProfileCommand class],
                       [iTermOpenQuicklySearchWindowsCommand class],
@@ -109,7 +110,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         NSString *text = [[queryString substringFromIndex:2] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
         Class commandClass = [self commandTypeWithAbbreviation:command];
         if (commandClass) {
-            id<iTermOpenQuicklyCommand> theCommand= [[commandClass alloc] init];
+            id<iTermOpenQuicklyCommand> theCommand = [[commandClass alloc] init];
             theCommand.text = text;
             return theCommand;
         }
@@ -644,12 +645,15 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
 }
 
 - (void)addOpenArrangementToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
+                         tabsOnly:(BOOL)tabsOnly
                       withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
     for (NSString *arrangementName in [WindowArrangements allNames]) {
         iTermOpenQuicklyArrangementItem *item;
-        item = [self arrangementItemWithName:arrangementName matcher:matcher inTabs:NO];
-        if (item) {
-            [items addObject:item];
+        if (!tabsOnly) {
+            item = [self arrangementItemWithName:arrangementName matcher:matcher inTabs:NO];
+            if (item) {
+                [items addObject:item];
+            }
         }
         item = [self arrangementItemWithName:arrangementName matcher:matcher inTabs:YES];
         if (item) {
@@ -677,8 +681,10 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
 }
 
 - (void)updateWithQuery:(NSString *)queryString {
-    id<iTermOpenQuicklyCommand> command = [self commandForQuery:[queryString lowercaseString]];
-
+    id<iTermOpenQuicklyCommand> command = [self commandForQuery:queryString];
+    if (!command) {
+        command = [self commandForQuery:queryString.lowercaseString];
+    }
     iTermMinimumSubsequenceMatcher *matcher =
         [[iTermMinimumSubsequenceMatcher alloc] initWithQuery:command.text];
 
@@ -701,11 +707,10 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     if ([command supportsChangeProfile] && haveCurrentWindow) {
         [self addChangeProfileToItems:items withMatcher:matcher];
     }
-
-    if ([command supportsOpenArrangement]) {
-        [self addOpenArrangementToItems:items withMatcher:matcher];
+    BOOL tabsOnly = NO;
+    if ([command supportsOpenArrangement:&tabsOnly]) {
+        [self addOpenArrangementToItems:items tabsOnly:tabsOnly withMatcher:matcher];
     }
-
     if ([command supportsScript]) {
         [self addScriptToItems:items withMatcher:matcher];
     }

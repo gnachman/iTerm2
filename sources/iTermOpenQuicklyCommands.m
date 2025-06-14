@@ -49,7 +49,7 @@
     return NO;
 }
 
-- (BOOL)supportsOpenArrangement {
+- (BOOL)supportsOpenArrangement:(out BOOL *)tabsOnlyPtr {
     return NO;
 }
 
@@ -79,6 +79,23 @@
 
 @end
 
+@implementation iTermOpenQuicklyInTabsWindowArrangementCommand
+
++ (NSString *)restrictionDescription {
+    return @"window arrangements that open in tabs";
+}
+
++ (NSString *)command {
+    return @"A";
+}
+
+- (BOOL)supportsOpenArrangement:(out BOOL *)tabsOnlyPtr {
+    *tabsOnlyPtr = YES;
+    return YES;
+}
+
+@end
+
 @implementation iTermOpenQuicklyWindowArrangementCommand
 
 + (NSString *)restrictionDescription {
@@ -89,7 +106,8 @@
     return @"a";
 }
 
-- (BOOL)supportsOpenArrangement {
+- (BOOL)supportsOpenArrangement:(out BOOL *)tabsOnlyPtr {
+    *tabsOnlyPtr = NO;
     return YES;
 }
 
@@ -205,7 +223,7 @@
     return YES;
 }
 
-- (BOOL)supportsOpenArrangement {
+- (BOOL):(out BOOL *)tabsOnlyPtr {
     return YES;
 }
 

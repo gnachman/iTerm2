@@ -18,7 +18,7 @@
 - (BOOL)supportsWindowLocation;
 - (BOOL)supportsCreateNewTab;
 - (BOOL)supportsChangeProfile;
-- (BOOL)supportsOpenArrangement;
+- (BOOL)supportsOpenArrangement:(out BOOL *)tabsOnlyPtr;
 - (BOOL)supportsScript;
 - (BOOL)supportsColorPreset;
 - (BOOL)supportsAction;
@@ -29,6 +29,9 @@
 
 @interface iTermOpenQuicklyCommand : NSObject<iTermOpenQuicklyCommand>
 + (NSString *)restrictionDescription;
+@end
+
+@interface iTermOpenQuicklyInTabsWindowArrangementCommand : iTermOpenQuicklyCommand
 @end
 
 @interface iTermOpenQuicklyWindowArrangementCommand : iTermOpenQuicklyCommand
