@@ -178,6 +178,7 @@ class TextClipDrawing: NSObject {
         colorMap.setColor(yellow, forKey: kColorMapSelection)
         colorMap.setColor(black, forKey: kColorMapCursorText)
         colorMap.setColor(yellow, forKey: kColorMapCursor)
+        colorMap.setColor(black, forKey: kColorMapBackground)  // needed to compute processed bg color correctly
 
         drawingHelper.showStripes = false
         drawingHelper.cursorBlinking = false
