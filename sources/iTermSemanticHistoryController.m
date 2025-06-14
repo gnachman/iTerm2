@@ -360,6 +360,19 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     [self launchTaskWithPath:zed arguments:@[ [parts componentsJoinedByString:@":"] ] completion:nil];
 }
 
+- (void)openDocumentInWindsurf:(NSString *)path line:(NSString *)line column:(NSString *)column {
+    NSURLComponents *components = [[NSURLComponents alloc] init];
+    components.scheme = @"windsurf";
+    components.host = @"file";
+    NSArray<NSString *> *parts = [@[ path,
+                                     line ?: [NSNull null],
+                                     (line != nil && column != nil) ? column : [NSNull null] ] arrayByRemovingNulls];
+    components.path = [parts componentsJoinedByString:@":"];
+
+    [self openURL:components.URL editorIdentifier:kWindsurfIdentifier];
+
+}
+
 - (NSString *)absolutePathForAppBundleWithIdentifier:(NSString *)bundleId {
     return [[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundleId];
 }
@@ -435,6 +448,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
               kIntelliJIDEAIdentifierCE,
               kIntelliJIDEAIdentifierUE,
               kWebStormIdentifier,
+              kWindsurfIdentifier,
               kRiderIdentifier,
               kNovaAppIdentifier,
               kXcodeAppIdentifier,
@@ -525,6 +539,10 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     }
     if ([identifier isEqualToString:kZedAppIdentifier]) {
         [self openDocumentInZed:path line:lineNumber column:columnNumber];
+        return;
+    }
+    if ([identifier isEqualToString:kWindsurfIdentifier]) {
+        [self openDocumentInWindsurf:path line:lineNumber column:columnNumber];
         return;
     }
     // WebStorm doesn't actually support --line, but it's harmless to try.

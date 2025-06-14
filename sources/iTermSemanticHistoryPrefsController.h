@@ -28,6 +28,7 @@ extern NSString *kEmacsAppIdentifier;
 extern NSString *kIntelliJIDEAIdentifierCE;
 extern NSString *kIntelliJIDEAIdentifierUE;
 extern NSString *kWebStormIdentifier;
+extern NSString *kWindsurfIdentifier;
 extern NSString *kRiderIdentifier;
 extern NSString *kNovaAppIdentifier;
 extern NSString *kXcodeAppIdentifier;
