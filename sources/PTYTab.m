@@ -866,7 +866,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self.delegate tab:self
         setBackgroundImage:self.activeSession.backgroundImage
                       mode:self.activeSession.backgroundImageMode
-           backgroundColor:self.activeSession.processedBackgroundColor];
+           backgroundColor:self.activeSession.effectiveProcessedBackgroundColor];
     }
 
     [[self realParentWindow] updateTabColors];

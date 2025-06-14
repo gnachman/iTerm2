@@ -4749,6 +4749,19 @@ ITERM_WEAKLY_REFERENCEABLE
                                                         inProfile:aDict]];
 }
 
+- (NSColor *)effectiveUnprocessedBackgroundColor {
+    NSColor *color = _textview.colorForMargins;
+    if (color) {
+        return color;
+    }
+    return [self.screen.colorMap colorForKey:kColorMapBackground];
+}
+
+- (NSColor *)effectiveProcessedBackgroundColor {
+    NSColor *unprocessed = self.effectiveUnprocessedBackgroundColor;
+    return [_screen.colorMap processedBackgroundColorForBackgroundColor:unprocessed];
+}
+
 - (NSDictionary<NSNumber *, NSString *> *)colorTableForProfile:(Profile *)profile darkMode:(BOOL)dark {
     NSString *(^k)(NSString *) = ^NSString *(NSString *baseKey) {
         return iTermAmendedColorKey(baseKey, profile, dark);
@@ -5564,7 +5577,7 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"Update per-pane background image");
         self.view.image = _backgroundImage;
         [self.view setImageMode:_backgroundImageMode];
-        [self.view setTerminalBackgroundColor:[self processedBackgroundColor]];
+        [self.view setTerminalBackgroundColor:[self effectiveProcessedBackgroundColor]];
         return;
     }
     self.view.image = nil;
@@ -11756,7 +11769,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 - (void)updateAppearanceForMinimalTheme {
     const BOOL minimal = [iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL;
     if (minimal) {
-        NSAppearance *appearance = [_screen.colorMap colorForKey:kColorMapBackground].isDark ? [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua] : [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+        NSAppearance *appearance = self.effectiveUnprocessedBackgroundColor.isDark ? [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua] : [NSAppearance appearanceNamed:NSAppearanceNameAqua];
         _view.appearance = appearance;
         self.statusBarViewController.view.appearance = appearance;
     } else {
@@ -15880,6 +15893,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)screenSoftAlternateScreenModeDidChangeTo:(BOOL)enabled
                                 showingAltScreen:(BOOL)showing {
+    _textview.marginColorAllowed = showing;
     [self.processInfoProvider setNeedsUpdate:YES];
     [self.tmuxForegroundJobMonitor updateOnce];
     [self.variablesScope setValue:@(showing)
@@ -16781,7 +16795,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (NSColor *)sessionViewBackgroundColor {
-    return [_screen.colorMap colorForKey:kColorMapBackground];
+    return [self effectiveUnprocessedBackgroundColor];
 }
 
 - (BOOL)textViewOrComposerIsFirstResponder {
@@ -17491,6 +17505,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (_screen.terminalSoftAlternateScreenMode) {
         [_view smearCursorFrom:from to:to color:color];
     }
+}
+
+- (void)textViewMarginColorDidChange {
+    [self backgroundColorDidChangeJigglingIfNeeded:NO];
 }
 
 - (void)removeSelectedCommandRange {
@@ -18336,6 +18354,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (NSColor *)textColorForStatusBar {
     return [[iTermTheme sharedInstance] statusBarTextColorForEffectiveAppearance:_view.effectiveAppearance
+                                                                     marginColor:_textview.colorForMargins
                                                                         colorMap:_screen.colorMap
                                                                         tabStyle:[self.view.window.ptyWindow it_tabStyle]
                                                                    mainAndActive:(self.view.window.isMainWindow && NSApp.isActive)];
@@ -18420,7 +18439,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (NSColor *)statusBarTerminalBackgroundColor {
-    return [self processedBackgroundColor];
+    return [self effectiveProcessedBackgroundColor];
 }
 
 - (id<ProcessInfoProvider>)statusBarProcessInfoProvider {

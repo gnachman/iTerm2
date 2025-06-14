@@ -329,6 +329,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)textViewCancelSingleClick;
 - (void)textViewRevealChannelWithUID:(NSString *)uid;
 - (BOOL)textViewAlternateMouseScroll:(out BOOL *)verticalOnly;
+- (void)textViewMarginColorDidChange;
 @end
 
 @interface iTermHighlightedRow : NSObject
@@ -517,6 +518,18 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 @property (nonatomic, readonly) BOOL canCopy;
 @property (nonatomic) BOOL animateMovement;
 @property (nonatomic) NSTimeInterval timestampBaseline;
+
+
+// If there is a dominant color around the sides of the view and we are allowed
+// to extend that color into the margins, this will have that color. Its
+// enabled property will be true if a dominant color was found.
+@property (nonatomic) VT100MarginColor marginColor;
+
+// Should the dominant edge color be extended into the margins?
+@property (nonatomic) BOOL marginColorAllowed;
+
+// nil if no color is extended into the margins, otherwise the color.
+@property (nonatomic, readonly) NSColor *colorForMargins;
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
@@ -772,6 +785,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (iTermSelection *)selectionForCommandAndOutputOfMark:(id<VT100ScreenMarkReading>)mark;
 - (void)smearCursorIfNeededWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper;
 - (void)didFoldOrUnfold;
+- (BOOL)updateMarginColor;
 
 #pragma mark - Testing only
 

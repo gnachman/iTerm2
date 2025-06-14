@@ -751,6 +751,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     }
 
     [self updateBorderViews];
+    [self updateTextColors];
 }
 
 - (void)updateBorderViews NS_AVAILABLE_MAC(10_14) {
@@ -1025,14 +1026,17 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         [_divisionView removeFromSuperview];
         _divisionView = nil;
     }
-
-    _windowNumberLabel.textColor = [self.delegate rootTerminalViewTabBarTextColorForWindowNumber];
-    _windowTitleLabel.textColor = [self.delegate rootTerminalViewTabBarTextColorForTitle];
+    [self updateTextColors];
     if (_windowTitleLabel.windowIcon) {
         [self setWindowTitleLabelToString:_windowTitleLabel.windowTitle
                                  subtitle:_windowTitleLabel.subtitle
                                      icon:_windowTitleLabel.windowIcon];
     }
+}
+
+- (void)updateTextColors {
+    _windowNumberLabel.textColor = [self.delegate rootTerminalViewTabBarTextColorForWindowNumber];
+    _windowTitleLabel.textColor = [self.delegate rootTerminalViewTabBarTextColorForTitle];
 }
 
 #pragma mark - Toolbelt
@@ -1497,8 +1501,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 }
 
 - (void)layoutWindowPaneDecorations {
-    _windowNumberLabel.textColor = [_delegate rootTerminalViewTabBarTextColorForWindowNumber];
-    _windowTitleLabel.textColor = [self.delegate rootTerminalViewTabBarTextColorForTitle];
+    [self updateTextColors];
     if (_windowTitleLabel.windowIcon) {
         [self setWindowTitleLabelToString:_windowTitleLabel.windowTitle
                                  subtitle:_windowTitleLabel.subtitle

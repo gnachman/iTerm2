@@ -170,6 +170,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)excludeBackgroundColorsFromCopiedStyle;
 + (BOOL)excludeUtunFromNetworkUtilization;
 + (BOOL)experimentalKeyHandling;
++ (BOOL)extendBackgroundColorIntoMargins;
 + (double)extraSpaceBeforeCompactTopTabBar;
 + (double)fakeNotchHeight;
 + (NSString *)fallbackLCCType;

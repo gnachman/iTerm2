@@ -102,6 +102,7 @@
     if (notification.object != self.superview) {
         return;
     }
+    [child_ updateMarginColor];
     [self setNeedsDisplay:YES];
 }
 

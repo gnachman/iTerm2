@@ -151,11 +151,13 @@
 #pragma mark Status Bar Text Color
 
 - (NSColor *)statusBarTextColorForEffectiveAppearance:(NSAppearance *)effectiveAppearance
+                                          marginColor:(NSColor *)marginColor
                                              colorMap:(iTermColorMap *)colorMap
                                              tabStyle:(id<PSMTabStyle>)tabStyle
                                         mainAndActive:(BOOL)mainAndActive {
     if (self.useMinimalStyle) {
-        NSColor *color = [self terminalWindowDecorationTextColorForBackgroundColor:[colorMap processedBackgroundColorForBackgroundColor:[colorMap colorForKey:kColorMapBackground]]
+        NSColor *bgColor = marginColor ?: [colorMap processedBackgroundColorForBackgroundColor:[colorMap colorForKey:kColorMapBackground]];
+        NSColor *color = [self terminalWindowDecorationTextColorForBackgroundColor:bgColor
                                                                effectiveAppearance:effectiveAppearance
                                                                           tabStyle:tabStyle
                                                                      mainAndActive:mainAndActive];

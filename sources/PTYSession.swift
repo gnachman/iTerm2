@@ -923,3 +923,17 @@ extension PTYSession {
         }
     }
 }
+
+extension PTYSession {
+    @objc
+    var minimalThemeTextColor: NSColor {
+        if let color = textview.colorForMargins {
+            if color.isDark {
+                return NSColor(displayP3Red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
+            } else {
+                return NSColor(displayP3Red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
+            }
+        }
+        return textview.colorMap.color(forKey: kColorMapForeground)
+    }
+}

@@ -617,6 +617,10 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, copy) NSString *channelUID;
 @property(nonatomic, copy) NSString *channelParentGuid;
 
+// Autodetected dominant color, otherwise configured bg color
+@property(nonatomic, readonly) NSColor *effectiveUnprocessedBackgroundColor;
+@property(nonatomic, readonly) NSColor *effectiveProcessedBackgroundColor;
+
 #pragma mark - methods
 
 + (BOOL)arrangement:(NSDictionary *)arrangement

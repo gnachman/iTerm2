@@ -128,3 +128,20 @@ void VT100GraphicRenditionUpdateForeground(const VT100GraphicRendition *renditio
 // Updates the background attributes of c
 void VT100GraphicRenditionUpdateBackground(const VT100GraphicRendition *rendition, BOOL applyReverse, screen_char_t *c);
 
+typedef struct VT100MarginColor {
+    BOOL enabled;
+    int bgColorCode;
+    int bgGreen;
+    int bgBlue;
+    ColorMode bgColorMode;
+} VT100MarginColor;
+
+NS_INLINE BOOL VT100MarginColorsEqual(const VT100MarginColor *a,
+                                      const VT100MarginColor *b) {
+    return a->enabled     == b->enabled &&
+           a->bgColorCode == b->bgColorCode &&
+           a->bgGreen     == b->bgGreen &&
+           a->bgBlue      == b->bgBlue &&
+           a->bgColorMode == b->bgColorMode;
+}
+

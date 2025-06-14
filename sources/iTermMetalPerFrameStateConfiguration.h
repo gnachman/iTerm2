@@ -35,6 +35,8 @@ NS_ASSUME_NONNULL_BEGIN
     iTermColorMap *_colorMap;
     vector_float4 _fullScreenFlashColor;
     NSColor *_processedDefaultBackgroundColor;  // dimmed, etc.
+    BOOL _marginColorEnabled;
+    vector_float4 _processedMarginColor;
     NSColor *_processedDefaultTextColor;
     NSColor *_blockHoverColor;
     NSColor *_defaultTextColor;

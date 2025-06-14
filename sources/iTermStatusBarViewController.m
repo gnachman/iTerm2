@@ -330,7 +330,7 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
 }
 
 - (void)statusBarComponentKnobsDidChange:(id<iTermStatusBarComponent>)component updatedKeys:(NSSet<NSString *> *)updatedKeys {
-    // Shouldn't happen since this is not the setup UI
+    [self updateColors];
 }
 
 - (id<ProcessInfoProvider> _Nullable)statusBarComponentProcessInfoProvider {

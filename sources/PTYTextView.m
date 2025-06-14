@@ -191,6 +191,9 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     NSRect _previousCursorFrame;
     BOOL _ignoreMomentumScroll;
     BOOL _haveTooltips;
+
+    NSMutableData *_marginColorWidthBuffer;
+    NSMutableData *_marginColorTwiceHeightBuffer;
 }
 
 
@@ -417,6 +420,8 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     [_buttons release];
     [_selectCommandTimer invalidate];
     [_selectCommandTimer release];
+    [_marginColorWidthBuffer release];
+    [_marginColorTwiceHeightBuffer release];
 
     [super dealloc];
 }
@@ -1683,6 +1688,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     _drawingHelper.rightExtra = self.delegate.textViewRightExtra;
     _drawingHelper.highlightedBlockLineRange = _hoverBlockFoldButton ? [self relativeRangeFromAbsLineRange:_hoverBlockFoldButton.absLineRange] : NSMakeRange(NSNotFound, 0);
     _drawingHelper.timestampBaseline = _timestampBaseline;
+    _drawingHelper.marginColor = _marginColor;
 
     [_drawingHelper updateCachedMetrics];
     if (@available(macOS 11, *)) {
@@ -2386,6 +2392,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
     // Remove results from dirty lines and mark parts of the view as needing display.
     NSMutableIndexSet *cleanLines = [NSMutableIndexSet indexSet];
+    const BOOL marginColorChanged = [self updateMarginColor];
     if (allDirty) {
         foundDirty = YES;
         DLog(@"allDirty=YES");
@@ -2410,6 +2417,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
             } else if (!haveScrolled) {
                 [cleanLines addIndex:y - lineStart];
             }
+        }
+        if (marginColorChanged) {
+            [self requestDelegateRedraw];
         }
     }
 
@@ -2443,7 +2453,6 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     // If you're viewing the scrollback area and it contains an animated gif it will need
     // to be redrawn periodically. The set of animated lines is added to while drawing and then
     // reset here.
-    // TODO: Limit this to the columns that need to be redrawn.
     NSIndexSet *animatedLines = [_dataSource animatedLines];
     [animatedLines enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
         [self setNeedsDisplayOnLine:idx];
@@ -2454,6 +2463,121 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         *foundDirtyPtr = foundDirty;
     }
     return _blinkAllowed && anythingIsBlinking;
+}
+
+- (NSColor *)colorForMargins {
+    if (!_marginColor.enabled) {
+        return nil;
+    }
+    NSColor *unprocessed = [self colorForCode:_marginColor.bgColorCode
+                                        green:_marginColor.bgGreen
+                                         blue:_marginColor.bgBlue
+                                    colorMode:_marginColor.bgColorMode
+                                         bold:NO
+                                        faint:NO
+                                 isBackground:YES];
+    return [_colorMap processedBackgroundColorForBackgroundColor:unprocessed];
+}
+
+- (BOOL)updateMarginColor {
+    const BOOL enabledInSettings = [iTermAdvancedSettingsModel extendBackgroundColorIntoMargins];
+    const VT100MarginColor before = _marginColor;
+    if (!_marginColorAllowed || !enabledInSettings) {
+        _marginColor.enabled = NO;
+    } else {
+        _marginColor = [self desiredMarginColor];
+    }
+    if (!VT100MarginColorsEqual(&before, &_marginColor)) {
+        [self.delegate textViewMarginColorDidChange];
+        return YES;
+    } else {
+        return NO;
+    }
+}
+
+// Unconditionally set _marginColor to the currently correct value.
+- (VT100MarginColor)desiredMarginColor {
+    const int width = _dataSource.width;
+    const int height = _dataSource.height;
+
+    if (!_marginColorWidthBuffer) {
+        _marginColorWidthBuffer = [[NSMutableData alloc] init];
+    }
+    if (!_marginColorTwiceHeightBuffer) {
+        _marginColorTwiceHeightBuffer = [[NSMutableData alloc] init];
+    }
+    _marginColorWidthBuffer.length = sizeof(screen_char_t) * width;
+    _marginColorTwiceHeightBuffer.length = sizeof(screen_char_t) * height * 2;
+
+    // Collect the colors of the leftmost and rightmost cells on each row into values buffer.
+    screen_char_t *buffer = (screen_char_t *)_marginColorWidthBuffer.mutableBytes;
+    screen_char_t *values = (screen_char_t *)_marginColorTwiceHeightBuffer.mutableBytes;
+    const NSRange visibleLines = [self visibleRelativeRange];
+    int numValues = 0;
+    for (NSInteger i = 0; i < visibleLines.length; i++) {
+        const int line = i + visibleLines.location;
+        const screen_char_t *chars = [_dataSource getLineAtIndex:line withBuffer:buffer];
+        values[numValues++] = chars[0];
+        values[numValues++] = chars[width - 1];
+    }
+
+    // Is any given background color at least 90% prevalent?
+    screen_char_t dominant = { 0 };
+    if ([self findDominantBackgroundColorInCharacters:values count:numValues threshold:0.8 dominantColor:&dominant]) {
+        // Yes! Set the margin color.
+        return (VT100MarginColor){
+            .enabled = YES,
+            .bgColorCode = dominant.backgroundColor,
+            .bgGreen = dominant.bgGreen,
+            .bgBlue = dominant.bgBlue,
+            .bgColorMode = dominant.backgroundColorMode
+        };
+    }
+    // No. Do not change the margin color.
+    return (VT100MarginColor){
+        .enabled = NO
+    };
+}
+
+- (BOOL)findDominantBackgroundColorInCharacters:(const screen_char_t *)values
+                                          count:(int)numValues
+                                      threshold:(double)minFraction
+                                  dominantColor:(out screen_char_t *)dominantColor {
+    if (numValues == 0) {
+        return false;
+    }
+
+    // Boyer-Moore majority vote: quickly determine if some value occurs at least 50% of the time.
+    screen_char_t candidate = {0};
+    int counter = 0;
+
+    for (int i = 0; i < numValues; i += 1) {
+        if (counter == 0) {
+            candidate = values[i];
+            counter = 1;
+            continue;
+        }
+        if (BackgroundColorsEqual(candidate, values[i])) {
+            ++counter;
+        } else {
+            --counter;
+        }
+    }
+
+    /* 2nd pass: confirm required fraction dominance */
+    int freq = 0;
+    for (size_t i = 0; i < numValues; ++i) {
+        if (BackgroundColorsEqual(candidate, values[i])) {
+            ++freq;
+        }
+    }
+
+    const int threshold = ceil(numValues * minFraction);
+    if (freq >= threshold) {
+        *dominantColor = candidate;
+        return YES;
+    }
+    return NO;
 }
 
 - (void)searchForVisibleBlocks {

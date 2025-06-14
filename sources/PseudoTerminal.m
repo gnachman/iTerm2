@@ -1598,7 +1598,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (NSColor *)terminalWindowDecorationBackgroundColor {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (self.shouldUseMinimalStyle) {
-        return [self.currentSession.screen.colorMap colorForKey:kColorMapBackground];
+        return [self minimalTabStyleBackgroundColor];
     } else {
         CGFloat whiteLevel = 0;
         switch ([self.window.effectiveAppearance it_tabStyle:preferredStyle]) {
@@ -1636,7 +1636,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 if (session == currentSession) {
                     return nil;
                 }
-                return [session processedBackgroundColor];
+                return [session effectiveProcessedBackgroundColor];
             }] uniq];
             if (candidates.count == 1) {
                 return candidates[0];
@@ -6251,7 +6251,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSInteger darkCount = 0;
     NSInteger lightCount = 0;
     for (PTYSession *session in tab.sessions) {
-        if ([[session.screen.colorMap colorForKey:kColorMapBackground] perceivedBrightness] < 0.5) {
+        if ([[session effectiveUnprocessedBackgroundColor] perceivedBrightness] < 0.5) {
             darkCount++;
         } else {
             lightCount++;
@@ -7453,7 +7453,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     } else if ([option isEqualToString:PSMTabBarControlOptionMinimalNonSelectedColoredTabAlpha]) {
         return @([iTermAdvancedSettingsModel minimalDeslectedColoredTabAlpha]);
     } else if ([option isEqualToString:PSMTabBarControlOptionTextColor]) {
-        return [self.currentSession.textview.colorMap colorForKey:kColorMapForeground];
+        return self.currentSession.minimalThemeTextColor;
     } else if ([option isEqualToString:PSMTabBarControlOptionLightModeInactiveTabDarkness]) {
         return @([iTermAdvancedSettingsModel lightModeInactiveTabDarkness]);
     } else if ([option isEqualToString:PSMTabBarControlOptionDarkModeInactiveTabDarkness]) {
@@ -11816,6 +11816,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     if (preferredStyle == TAB_STYLE_MINIMAL) {
         [self.contentView setNeedsDisplay:YES];
         [_contentView.tabBarControl backgroundColorWillChange];
+        [self updateTabColors];
     }
     [self updateToolbeltAppearance];
     [self updateForTransparency:self.ptyWindow];
@@ -12168,7 +12169,7 @@ backgroundColor:(NSColor *)backgroundColor {
 
 - (NSColor *)minimalTabStyleBackgroundColor {
     DLog(@"Getting bg color for session %@, colormap %@", self.currentSession, self.currentSession.screen.colorMap);
-    return [self.currentSession.screen.colorMap colorForKey:kColorMapBackground];
+    return self.currentSession.effectiveUnprocessedBackgroundColor;
 }
 
 #pragma mark - iTermBroadcastInputHelperDelegate

@@ -767,6 +767,13 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                             alpha);
 }
 
+- (vector_float4)colorForMargins {
+    if (!_configuration->_marginColorEnabled) {
+        return [self processedDefaultBackgroundColor];
+    }
+    return _configuration->_processedMarginColor;
+}
+
 - (const vector_float4 *)selectedCommandOutlineColors {
     return _configuration->_selectedCommandOutlineColors;
 }

@@ -1614,8 +1614,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
 
 - (void)populateMarginRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     iTermMarginRendererTransientState *tState = [frameData transientStateForRenderer:_marginRenderer];
-    vector_float4 color = frameData.perFrameState.processedDefaultBackgroundColor;
-    tState.regularColor = color;
+    tState.regularColor = frameData.perFrameState.colorForMargins;
     tState.suppressedTopHeight = [self offscreenCommandLineHeight:frameData];
 }
 

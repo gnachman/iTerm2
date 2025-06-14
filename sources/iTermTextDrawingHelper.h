@@ -13,6 +13,7 @@
 #import "iTermTextDrawingHelperDelegate.h"
 #import "iTermTimestampDrawHelper.h"
 #import "ScreenChar.h"
+#import "VT100GraphicRendition.h"
 #import "VT100GridTypes.h"
 
 @class iTermAttributedStringBuilder;
@@ -358,6 +359,8 @@ extern const int iTermTextDrawingHelperLineStyleMarkRightInsetCells;
 @property (nonatomic, readonly) iTermAttributedStringBuilder *attributedStringBuilder;
 @property (nonatomic) CGFloat rightExtra;
 @property (nonatomic) NSRange highlightedBlockLineRange;
+@property (nonatomic) VT100MarginColor marginColor;
+@property (nonatomic, readonly) NSColor *colorForMargins;
 
 + (NSColor *)colorForMarkType:(iTermMarkIndicatorType)type;
 + (NSColor *)colorForLineStyleMark:(iTermMarkIndicatorType)type backgroundColor:(NSColor *)bgColor;

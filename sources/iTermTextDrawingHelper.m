@@ -834,7 +834,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 - (void)drawExcessWithVirtualOffset:(CGFloat)virtualOffset {
     NSRect excessRect = [self excessRect];
 
-    NSColor *color = [self marginColor];
+    NSColor *color = [self colorForMargins];
     const BOOL enableBlending = !iTermTextIsMonochrome() || [NSView iterm_takingSnapshot];
 
     [self drawBackgroundColor:color inRect:excessRect enableBlending:enableBlending virtualOffset:virtualOffset];
@@ -861,7 +861,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
     topMarginRect.size.height = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
 
-    NSColor *color = [self marginColor];
+    NSColor *color = [self colorForMargins];
     const BOOL enableBlending = !iTermTextIsMonochrome() || [NSView iterm_takingSnapshot];
 
     [self drawBackgroundColor:color inRect:topMarginRect enableBlending:enableBlending virtualOffset:virtualOffset];
@@ -871,9 +871,15 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     }
 }
 
-- (NSColor *)marginColor {
-    const BOOL enableBlending = !iTermTextIsMonochrome() || [NSView iterm_takingSnapshot];
+- (NSColor *)colorForMargins {
     iTermBackgroundColorRun run = { 0 };
+    if (_marginColor.enabled) {
+        run.bgColor = _marginColor.bgColorCode;
+        run.bgBlue = _marginColor.bgBlue;
+        run.bgGreen = _marginColor.bgGreen;
+        run.bgColorMode = _marginColor.bgColorMode;
+    }
+    const BOOL enableBlending = !iTermTextIsMonochrome() || [NSView iterm_takingSnapshot];
     NSColor *color = [self unprocessedColorForBackgroundRun:&run
                                              enableBlending:enableBlending];
     color = [_colorMap processedBackgroundColorForBackgroundColor:color];
@@ -896,7 +902,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     rightMargin.size.height = _cellSize.height;
 
     // Draw background in margins
-    NSColor *color = [self marginColor];
+    NSColor *color = [self colorForMargins];
     const BOOL enableBlending = !iTermTextIsMonochrome() || [NSView iterm_takingSnapshot];
 
     [self drawBackgroundColor:color inRect:leftMargin enableBlending:enableBlending virtualOffset:virtualOffset];
