@@ -2469,6 +2469,16 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     if (!_marginColor.enabled) {
         return nil;
     }
+    const VT100MarginColor defaultBg = {
+        .enabled = YES,
+        .bgColorCode = 0,
+        .bgGreen = 0,
+        .bgBlue = 0,
+        .bgColorMode = ColorModeAlternate,
+    };
+    if (VT100MarginColorsEqual(&defaultBg, &_marginColor)) {
+        return nil;
+    }
     NSColor *unprocessed = [self colorForCode:_marginColor.bgColorCode
                                         green:_marginColor.bgGreen
                                          blue:_marginColor.bgBlue
