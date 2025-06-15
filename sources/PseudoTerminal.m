@@ -5993,6 +5993,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)sessionInitiatedResize:(PTYSession *)session width:(int)width height:(int)height {
+    DLog(@"sessionInitiatedResize: %dx%d\n%@", width, height, [NSThread callStackSymbols]);
     __block BOOL result;
     [session resetMode];
     [session.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
@@ -10263,12 +10264,11 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 
 // Push a size change to a session (and on to its shell) but clamps the size to
 // reasonable minimum and maximum limits.
-- (void)safelySetSessionSize:(PTYSession*)aSession rows:(int)rows columns:(int)columns
-{
+- (void)safelySetSessionSize:(PTYSession*)aSession rows:(int)rows columns:(int)columns {
     if ([aSession exited]) {
         return;
     }
-    PtyLog(@"safelySetSessionSize");
+    PtyLog(@"safelySetSessionSize %dx%d\n%@", columns, rows, [NSThread callStackSymbols]);
     BOOL hasScrollbar = [self scrollbarShouldBeVisible];
     if (![self anyFullScreen]) {
         int width = columns;

@@ -13053,6 +13053,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenSetSize:(VT100GridSize)proposedSize {
+    DLog(@"screenSetSize:%@\n%@", VT100GridSizeDescription(proposedSize), [NSThread callStackSymbols]);
     if ([[_delegate parentWindow] anyFullScreen]) {
         return;
     }
@@ -13071,6 +13072,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)reallySetCellSize:(VT100GridSize)proposedSize {
+    DLog(@"reallySetCellSize:%@\n%@", VT100GridSizeDescription(proposedSize), [NSThread callStackSymbols]);
     int rows = proposedSize.width;
     const VT100GridSize windowSize = [self windowSizeInCells];
     if (rows == -1) {

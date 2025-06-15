@@ -163,7 +163,7 @@ class WinSizeController: NSObject {
 
     @discardableResult
     private func set(_ request: Request) -> Bool {
-        DLog("set \(request)")
+        DLog("set \(request)\n\(Thread.callStackSymbols)")
         guard delegate?.winSizeControllerIsReady() ?? false else {
             DLog("delegate unready")
             return false
