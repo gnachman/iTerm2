@@ -66,7 +66,10 @@
     }
 }
 
-- (BOOL)addNextParsedTokensToVector:(CVector *)vector {
+- (BOOL)addNextParsedTokensToVector:(CVector *)vector
+                  nonSignalingCount:(out int *)nonSignalingCountPtr {
+    *nonSignalingCountPtr = 0;
+
     VT100Token *token = [VT100Token token];
     token.string = nil;
     // get our current position in the stream
@@ -87,6 +90,8 @@
 
     VT100ByteStreamCursor position = { 0 };
     int length = 0;
+    const int initialOffset = _byteStream.offset;
+    BOOL isSignaling = NO;
     if (VT100ByteStreamCursorGetSize(&cursor) == 0) {
         DLog(@"datalen is 0");
         token->type = VT100CC_NULL;
@@ -132,6 +137,7 @@
                         break;
 
                     case SSH_TERMINATE: {
+                        isSignaling = YES;
                         // TODO: Make sure we don't leak sshparsers when connections end
                         const int pid = token.csi->p[0];
                         DLog(@"Remove ssh parser for pid %@", @(pid));
@@ -144,10 +150,12 @@
                     }
 
                     case SSH_UNHOOK:
+                        isSignaling = YES;
                         [_sshParsers removeAllObjects];
                         break;
 
                     case SSH_OUTPUT: {
+                        isSignaling = YES;
                         const int pid = token.csi->p[0];
                         DLog(@"%@: handling SSH_OUTPUT", self);
                         VT100Parser *sshParser = _sshParsers[@(pid)];
@@ -211,6 +219,13 @@
                                         // depth. The extra parser just decoded the output that belongs
                                         // to us.
                                         token.sshInfo = myInfo;
+                                        if (myInfo.valid && myInfo.channel < 0) {
+                                            // Since we found a regular token in here, count the entire buffer
+                                            // as non-inband-signaling. This will overestimate the number of
+                                            // bytes of non-signaling input. That's ok because currently the
+                                            // consumer only cares if it is zero or not.
+                                            isSignaling = NO;
+                                        }
                                         break;
                                 }
                             } else {
@@ -228,6 +243,7 @@
                     }
 
                     case DCS_TMUX_CODE_WRAP: {
+                        isSignaling = YES;
                         VT100Parser *tempParser = [[[VT100Parser alloc] init] autorelease];
                         tempParser.encoding = encoding;
                         NSData *data = [token.string dataUsingEncoding:encoding];
@@ -236,6 +252,21 @@
                         [tempParser addParsedTokensToVector:vector];
                         break;
                     }
+
+                    case TMUX_EXIT:
+                    case TMUX_LINE:
+                        isSignaling = YES;
+                        break;
+
+                    case DCS_SSH_HOOK:
+                    case SSH_INIT:
+                    case SSH_LINE:
+                    case SSH_BEGIN:
+                    case SSH_END:
+                    case SSH_RECOVERY_BOUNDARY:
+                    case SSH_SIDE_CHANNEL:
+                        isSignaling = YES;
+                        break;
 
                     case ISO2022_SELECT_LATIN_1:
                         _encoding = NSISOLatin1StringEncoding;
@@ -317,6 +348,9 @@
             [token retain];
             CVectorAppend(vector, token);
         }
+        if (!isSignaling) {
+            *nonSignalingCountPtr += (_byteStream.offset - initialOffset);
+        }
         return YES;
     } else {
         DLog(@"unable to parse. Resulting token was %@", token);
@@ -352,11 +386,14 @@
     }
 }
 
-- (void)addParsedTokensToVector:(CVector *)vector {
+- (int)addParsedTokensToVector:(CVector *)vector {
     @synchronized(self) {
-        while ([self addNextParsedTokensToVector:vector]) {
-            // Nothing to do.
+        int sum = 0;
+        int nsc = 0;
+        while ([self addNextParsedTokensToVector:vector nonSignalingCount:&nsc]) {
+            sum += nsc;
         }
+        return sum;
     }
 }
 

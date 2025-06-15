@@ -50,7 +50,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
 @property (nonatomic, readonly) BOOL dirty;
 @property (nonatomic, readwrite) NSInteger estimatedThroughput;
 
-- (void)addBytesExecuted:(NSInteger)size;
+- (void)addBytesExecutedTotal:(NSInteger)total excludingInBandSignaling:(NSInteger)excludingInBandSignaling;
 - (void)didHandleInput;
 
 // Returns a copy and resets self.
@@ -4380,21 +4380,30 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     // Parse the input stream into an array of tokens.
     CVector vector;
     CVectorCreate(&vector, 100);
-    [self.terminal.parser addParsedTokensToVector:&vector];
+    int nonSignalingLength = [self.terminal.parser addParsedTokensToVector:&vector];
 
     if (CVectorCount(&vector) == 0) {
         CVectorDestroy(&vector);
         return;
     }
 
-    [self addTokens:vector length:length highPriority:NO];
+    [self addTokens:vector
+        lengthTotal:length
+lengthExcludingInBandSignaling:nonSignalingLength
+       highPriority:NO];
 }
 
 // WARNING: This is called on PTYTask's thread.
 // This blocks when the queue of tokens gets too large.
-- (void)addTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority {
+- (void)addTokens:(CVector)vector
+      lengthTotal:(int)lengthTotal
+lengthExcludingInBandSignaling:(int)lengthExcludingInBandSignaling
+     highPriority:(BOOL)highPriority {
     [_echoProbe updateEchoProbeStateWithTokenCVector:&vector];
-    [_tokenExecutor addTokens:vector length:length highPriority:highPriority];
+    [_tokenExecutor addTokens:vector
+                  lengthTotal:lengthTotal
+           lengthExcludingInBandSignaling:lengthExcludingInBandSignaling
+                 highPriority:highPriority];
 }
 
 - (void)scheduleTokenExecution {
@@ -6234,8 +6243,11 @@ launchCoprocessWithCommand:(NSString *)command
     return NO;
 }
 
-- (void)tokenExecutorDidExecuteWithLength:(NSInteger)length throughput:(NSInteger)throughput {
-    [_executorUpdate addBytesExecuted:length];
+- (void)tokenExecutorDidExecuteWithLengthTotal:(NSInteger)lengthTotal
+                            lengthExcludingInBandSignaling:(NSInteger)lengthExcludingInBandSignaling
+                                    throughput:(NSInteger)throughput {
+    [_executorUpdate addBytesExecutedTotal:lengthTotal
+                              excludingInBandSignaling:lengthExcludingInBandSignaling];
     _executorUpdate.estimatedThroughput = throughput;
     [_executorUpdateScheduler markNeedsUpdate];
 }
@@ -6428,20 +6440,28 @@ launchCoprocessWithCommand:(NSString *)command
 
 
 @implementation VT100ScreenTokenExecutorUpdate {
-    NSInteger _numberOfBytesExecuted;
+    NSInteger _numberOfBytesExecutedTotal;
+    NSInteger _numberOfBytesExecutedExcludingInBandSignaling;
     BOOL _inputHandled;
 }
 
-- (void)addBytesExecuted:(NSInteger)size {
+- (void)addBytesExecutedTotal:(NSInteger)total excludingInBandSignaling:(NSInteger)excludingInBandSignaling {
     @synchronized (self) {
         _dirty = YES;
-        _numberOfBytesExecuted += size;
+        _numberOfBytesExecutedTotal += total;
+        _numberOfBytesExecutedExcludingInBandSignaling += excludingInBandSignaling;
     }
 }
 
-- (NSInteger)numberOfBytesExecuted {
+- (NSInteger)numberOfBytesExecutedTotal {
     @synchronized (self) {
-        return _numberOfBytesExecuted;
+        return _numberOfBytesExecutedTotal;
+    }
+}
+
+- (NSInteger)numberOfBytesExecutedExcludingInBandSignaling {
+    @synchronized (self) {
+        return _numberOfBytesExecutedExcludingInBandSignaling;
     }
 }
 
@@ -6461,7 +6481,8 @@ launchCoprocessWithCommand:(NSString *)command
 - (VT100ScreenTokenExecutorUpdate *)fork {
     @synchronized (self) {
         VT100ScreenTokenExecutorUpdate *copy = [self copyWithZone:nil];
-        _numberOfBytesExecuted = 0;
+        _numberOfBytesExecutedTotal = 0;
+        _numberOfBytesExecutedExcludingInBandSignaling = 0;
         _inputHandled = NO;
         return copy;
     }
@@ -6470,7 +6491,8 @@ launchCoprocessWithCommand:(NSString *)command
 - (id)copyWithZone:(NSZone *)zone {
     @synchronized (self) {
         VT100ScreenTokenExecutorUpdate *copy = [[VT100ScreenTokenExecutorUpdate alloc] init];
-        [copy addBytesExecuted:_numberOfBytesExecuted];
+        [copy addBytesExecutedTotal:_numberOfBytesExecutedTotal
+                       excludingInBandSignaling:_numberOfBytesExecutedExcludingInBandSignaling];
         if (_inputHandled) {
             [copy didHandleInput];
         }

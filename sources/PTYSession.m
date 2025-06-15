@@ -16216,7 +16216,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     _estimatedThroughput = update.estimatedThroughput;
     DLog(@"estimated throughput: %@", @(_estimatedThroughput));
 
-    if (update.numberOfBytesExecuted > 0) {
+    if (update.numberOfBytesExecutedExcludingInBandSignaling > 0) {
         DLog(@"Session %@ (%@) is processing", self, _nameController.presentationSessionTitle);
         if (![self haveResizedRecently]) {
             _lastOutputIgnoringOutputAfterResizing = [NSDate timeIntervalSinceReferenceDate];

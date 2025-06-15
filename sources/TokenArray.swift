@@ -16,7 +16,8 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
     }
 
     typealias Element = VT100Token
-    let length: Int
+    let lengthTotal: Int
+    let lengthExcludingInBandSignaling: Int
     private var cvector: CVector
     private var nextIndex = Int32(0)
     let count: Int32
@@ -53,10 +54,14 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
     }
 
     // length is byte length ofinputs
-    init(_ cvector: CVector, length: Int, semaphore: DispatchSemaphore?) {
-        precondition(length > 0)
+    init(_ cvector: CVector,
+         lengthTotal: Int,
+         lengthExcludingInBandSignaling: Int,
+         semaphore: DispatchSemaphore?) {
+        precondition(lengthTotal > 0 && lengthExcludingInBandSignaling >= 0)
         self.cvector = cvector
-        self.length = length
+        self.lengthTotal = lengthTotal
+        self.lengthExcludingInBandSignaling = lengthExcludingInBandSignaling
         self.semaphore = semaphore
         count = CVectorCount(&self.cvector)
     }

@@ -9,15 +9,17 @@
 // TokenArray which is not coalescable.
 class TokenArrayGroup {
     let arrays: [TokenArray]
-    let length: Int
+    let lengthTotal: Int
+    let lengthExcludingInBandSignaling: Int
     var isEmpty: Bool {
         return arrays.isEmpty
     }
     let coalescable: Bool
-    init(_ arrays: [TokenArray], coalescable: Bool, length: Int) {
+    init(_ arrays: [TokenArray], coalescable: Bool, lengthTotal: Int, lengthExcludingInBandSignaling: Int) {
         self.arrays = arrays
         self.coalescable = coalescable
-        self.length = length
+        self.lengthTotal = lengthTotal
+        self.lengthExcludingInBandSignaling = lengthExcludingInBandSignaling
     }
     private var gang: VT100Token {
         it_assert(coalescable)
@@ -154,23 +156,31 @@ fileprivate class Queue: CustomDebugStringConvertible {
     }
 
     var firstGroup: TokenArrayGroup? {
-        return mutex.sync {
+        return mutex.sync { () -> TokenArrayGroup? in
             guard let firstArray = arrays.first else {
                 return nil
             }
             var result = [TokenArray]()
-            var length = 0
+            var lengthTotal = 0
+            var lengthExcludingInBandSignaling = 0
             for i in 0..<arrays.count {
                 if !arrays[i].canCoalesce(withNext: arrays[safe: i + 1]?.peek) {
                     break
                 }
                 result.append(arrays[i])
-                length += arrays[i].length
+                lengthTotal += arrays[i].lengthTotal
+                lengthExcludingInBandSignaling += arrays[i].lengthExcludingInBandSignaling
             }
             return if result.isEmpty {
-                TokenArrayGroup([firstArray], coalescable: false, length: firstArray.length)
+                TokenArrayGroup([firstArray],
+                                coalescable: false,
+                                lengthTotal: firstArray.lengthTotal,
+                                lengthExcludingInBandSignaling: firstArray.lengthExcludingInBandSignaling)
             } else {
-                TokenArrayGroup(result, coalescable: true, length: length)
+                TokenArrayGroup(result,
+                                coalescable: true,
+                                lengthTotal: lengthTotal,
+                                lengthExcludingInBandSignaling: lengthExcludingInBandSignaling)
             }
         }
     }

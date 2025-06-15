@@ -26,7 +26,8 @@
 @interface VT100ScreenTokenExecutorUpdate: NSObject
 
 @property (nonatomic, readonly) NSInteger estimatedThroughput;
-@property (nonatomic, readonly) NSInteger numberOfBytesExecuted;
+@property (nonatomic, readonly) NSInteger numberOfBytesExecutedTotal;
+@property (nonatomic, readonly) NSInteger numberOfBytesExecutedExcludingInBandSignaling;
 @property (nonatomic, readonly) BOOL inputHandled;
 
 @end

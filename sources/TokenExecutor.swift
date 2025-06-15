@@ -26,7 +26,9 @@ protocol TokenExecutorDelegate: AnyObject {
 
     // Called only when tokens are actually executed. `length` gives the number of bytes of input
     // that were executed.
-    func tokenExecutorDidExecute(length: Int, throughput: Int)
+    func tokenExecutorDidExecute(lengthTotal: Int,
+                                 lengthExcludingInBandSignaling: Int,
+                                 throughput: Int)
 
     // Remove this eventually
     func tokenExecutorCursorCoordString() -> NSString
@@ -126,8 +128,13 @@ class TokenExecutor: NSObject {
     // This takes ownership of vector.
     // You can call this on any queue.
     @objc
-    func addTokens(_ vector: CVector, length: Int) {
-        addTokens(vector, length: length, highPriority: false)
+    func addTokens(_ vector: CVector,
+                   lengthTotal: Int,
+                   lengthExcludingInBandSignaling: Int) {
+        addTokens(vector,
+                  lengthTotal: lengthTotal,
+                  lengthExcludingInBandSignaling: lengthExcludingInBandSignaling,
+                  highPriority: false)
     }
 
     private static let addTokensTimingStats: TimingStats = {
@@ -142,9 +149,12 @@ class TokenExecutor: NSObject {
     // If high priority, then you must be on the main queue or have joined the main & mutation queue.
     // This blocks when the queue of tokens gets too large.
     @objc
-    func addTokens(_ vector: CVector, length: Int, highPriority: Bool) {
-        if gDebugLogging.boolValue { DLog("Add tokens with length \(length) highpri=\(highPriority)") }
-        if length == 0 {
+    func addTokens(_ vector: CVector,
+                   lengthTotal: Int,
+                   lengthExcludingInBandSignaling: Int,
+                   highPriority: Bool) {
+        if gDebugLogging.boolValue { DLog("Add tokens with length \(lengthTotal) (excluding OOB: \(lengthExcludingInBandSignaling)), highpri=\(highPriority)") }
+        if lengthTotal == 0 {
             return
         }
         if highPriority {
@@ -153,7 +163,11 @@ class TokenExecutor: NSObject {
 #endif
             // Re-entrant code path so that the Inject trigger can do its job synchronously
             // (before other triggers run).
-            reallyAddTokens(vector, length: length, highPriority: highPriority, semaphore: nil)
+            reallyAddTokens(vector,
+                            lengthTotal: lengthTotal,
+                            lengthExcludingInBandSignaling: lengthExcludingInBandSignaling,
+                            highPriority: highPriority,
+                            semaphore: nil)
             return
         }
         // Normal code path for tokens from PTY. Use the semaphore to give backpressure to reading.
@@ -165,7 +179,11 @@ class TokenExecutor: NSObject {
         if enableTimingStats {
             TokenExecutor.addTokensTimingStats.recordStart()
         }
-        reallyAddTokens(vector, length: length, highPriority: highPriority, semaphore: semaphore)
+        reallyAddTokens(vector,
+                        lengthTotal: lengthTotal,
+                        lengthExcludingInBandSignaling: lengthExcludingInBandSignaling,
+                        highPriority: highPriority,
+                        semaphore: semaphore)
         queue.async { [weak self] in
             self?.impl.didAddTokens()
         }
@@ -213,10 +231,14 @@ class TokenExecutor: NSObject {
     // This takes ownership of vector.
     // You can call this on any queue
     private func reallyAddTokens(_ vector: CVector,
-                                 length: Int,
+                                 lengthTotal: Int,
+                                 lengthExcludingInBandSignaling: Int,
                                  highPriority: Bool,
                                  semaphore: DispatchSemaphore?) {
-        let tokenArray = TokenArray(vector, length: length, semaphore: semaphore)
+        let tokenArray = TokenArray(vector,
+                                    lengthTotal: lengthTotal,
+                                    lengthExcludingInBandSignaling: lengthExcludingInBandSignaling,
+                                    semaphore: semaphore)
         self.impl.addTokens(tokenArray, highPriority: highPriority)
     }
 
@@ -350,7 +372,7 @@ private class TokenExecutorImpl {
 
     // You can call this on any queue
     func addTokens(_ tokenArray: TokenArray, highPriority: Bool) {
-        throughputEstimator.addByteCount(tokenArray.length)
+        throughputEstimator.addByteCount(tokenArray.lengthTotal)
         tokenQueue.addTokens(tokenArray, highPriority: highPriority)
     }
 
@@ -478,6 +500,11 @@ private class TokenExecutorImpl {
     }
 #endif
 
+    private struct ByteExecutionStats {
+        var total = 0
+        var excludingInBandSignaling = 0
+    }
+
     private func execute() {
         DLog("execute()")
 #if DEBUG
@@ -499,7 +526,7 @@ private class TokenExecutorImpl {
             return
         }
         let hadTokens = !tokenQueue.isEmpty
-        var accumulatedLength = 0
+        var accumulatedLength = ByteExecutionStats()
         if !delegate.tokenExecutorShouldQueueTokens() {
             slownessDetector.measure(event: PTYSessionSlownessEventExecute) {
                 var first = true
@@ -527,15 +554,16 @@ private class TokenExecutorImpl {
                 if gDebugLogging.boolValue { DLog("Finished enumerating token arrays") }
             }
         }
-        if accumulatedLength > 0 || hadTokens {
-            delegate.tokenExecutorDidExecute(length: accumulatedLength,
+        if accumulatedLength.total > 0 || hadTokens {
+            delegate.tokenExecutorDidExecute(lengthTotal: accumulatedLength.total,
+                                             lengthExcludingInBandSignaling: accumulatedLength.excludingInBandSignaling,
                                              throughput: throughputEstimator.estimatedThroughput)
         }
     }
 
     private func executeTokenGroups(_ group: TokenArrayGroup,
                                     priority: Int,
-                                    accumulatedLength: inout Int,
+                                    accumulatedLength: inout ByteExecutionStats,
                                     delegate: TokenExecutorDelegate) -> Bool {
         if gDebugLogging.boolValue { DLog("Begin for \(delegate)") }
         defer {
@@ -556,7 +584,6 @@ private class TokenExecutorImpl {
                 var consume = true
                 if execute(token: token,
                            priority: priority,
-                           accumulatedLength: &accumulatedLength,
                            delegate: delegate) {
                     if gDebugLogging.boolValue {
                         DLog("quit early")
@@ -585,7 +612,8 @@ private class TokenExecutorImpl {
             return false
         }
         if gDebugLogging.boolValue { DLog("normal termination") }
-        accumulatedLength += group.length
+        accumulatedLength.total += group.lengthTotal
+        accumulatedLength.excludingInBandSignaling += group.lengthExcludingInBandSignaling
         return true
     }
 
@@ -602,7 +630,6 @@ private class TokenExecutorImpl {
     // vector).
     private func execute(token: VT100Token,
                          priority: Int,
-                         accumulatedLength: inout Int,
                          delegate: TokenExecutorDelegate) -> Bool {
         if gDebugLogging.boolValue { DLog("Execute token \(token) cursor=\(delegate.tokenExecutorCursorCoordString())") }
 
