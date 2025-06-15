@@ -400,6 +400,9 @@ typedef enum {
 iTermWindowType iTermWindowDefaultType(void);
 iTermWindowType iTermThemedWindowType(iTermWindowType windowType);
 
+// Maps a window type back to a value that is a tag in the popup button in settings for window type.
+iTermWindowType iTermUnthemedWindowType(iTermWindowType windowType);
+
 typedef NS_ENUM(NSInteger, iTermObjectType) {
   iTermWindowObject,
   iTermTabObject,

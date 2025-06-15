@@ -203,11 +203,17 @@ CGFloat iTermMaxBlurRadius(void) {
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
-    [self defineControl:_windowStyle
-                    key:KEY_WINDOW_TYPE
-            displayName:@"Window style for new windows"
-                   type:kPreferenceInfoTypePopup];
-
+    info = [self defineControl:_windowStyle
+                           key:KEY_WINDOW_TYPE
+                   displayName:@"Window style for new windows"
+                          type:kPreferenceInfoTypePopup];
+    info.onUpdate = ^BOOL{
+        // Reading KEY_WINDOW_TYPE can give a value for which the popup has no tag because when
+        // the theme is compact some window types are rewritten to compact-specific values by
+        // iTermThemedWindowType(). Therefore we must modify the value in user defaults to properly
+        // select an item in the popup.
+        return [weakSelf updateWindowTypeControlFromSettings];
+    };
     [self defineControl:_screen
                     key:KEY_SCREEN
             displayName:@"Initial screen for new windows"
@@ -294,6 +300,15 @@ CGFloat iTermMaxBlurRadius(void) {
                    displayName:@"Background image enabled"
                        phrases:@[]
                            key:nil];
+}
+
+- (BOOL)updateWindowTypeControlFromSettings {
+    PreferenceInfo *info = [self infoForControl:_windowStyle];
+    [_windowStyle selectItemWithTag:iTermUnthemedWindowType([self intForKey:info.key])];
+    if (info.observer) {
+        info.observer();
+    }
+    return YES;
 }
 
 - (void)backgroundImageTextFieldDidChange {
