@@ -57,8 +57,9 @@ static vector_float4 VectorForColor(NSColor *color) {
     _showBroadcastStripes = drawingHelper.showStripes;
     NSColorSpace *colorSpace = textView.window.screen.colorSpace ?: [NSColorSpace it_defaultColorSpace];
     _processedDefaultBackgroundColor = [[drawingHelper defaultBackgroundColor] colorUsingColorSpace:colorSpace];
-    _marginColorEnabled = drawingHelper.marginColor.enabled;
-    _processedMarginColor = [drawingHelper.colorForMargins colorUsingColorSpace:colorSpace].vector;
+    NSColor *colorForMargins = textView.colorForMargins;
+    _marginColorEnabled = colorForMargins != nil;
+    _processedMarginColor = [colorForMargins colorUsingColorSpace:colorSpace].vector;
     _forceRegularBottomMargin = drawingHelper.forceRegularBottomMargin;
     _processedDefaultTextColor = [[drawingHelper defaultTextColor] colorUsingColorSpace:colorSpace];
     _blockHoverColor = [[drawingHelper blockHoverColor] colorUsingColorSpace:colorSpace];
