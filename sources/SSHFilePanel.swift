@@ -1237,34 +1237,40 @@ extension SSHFilePanel {
         var cancellation: Cancellation
     }
 
+    private func promise(file: SSHFileDescriptor,
+                         progress: Progress?,
+                         cancellation: Cancellation?) -> iTermRenegablePromise<NSURL> {
+        return iTermRenegablePromise<NSURL> { seal in
+            if file.sshIdentity == SSHIdentity.localhost {
+                seal.fulfill(URL(fileURLWithPath: file.absolutePath) as NSURL)
+            } else if let endpoint = self.endpoint(for: file.sshIdentity),
+                      let tempFile = createFolderForTemporaryFile(name: file.absolutePath.lastPathComponent) {
+                Task { @MainActor in
+                    do {
+                        let remoteFile = try await endpoint.stat(file.absolutePath)
+                        _ = try await endpoint.downloadChunked(
+                            remoteFile: remoteFile,
+                            progress: progress,
+                            cancellation: cancellation,
+                            destination: tempFile)
+                        seal.fulfill(tempFile as NSURL)
+                    } catch {
+                        seal.reject(error)
+                    }
+                }
+            } else {
+                seal.reject(iTermFilePanelError("The connection to \(file.sshIdentity.displayName) was lost."))
+            }
+        } renege: {
+            cancellation?.cancel()
+        }
+    }
+
     func promiseItems() -> [Item] {
         return selectedFiles.map { file in
             let cancellation = Cancellation()
             let progress = Progress()
-            let promise = iTermRenegablePromise<NSURL> { seal in
-                if file.sshIdentity == SSHIdentity.localhost {
-                    seal.fulfill(URL(fileURLWithPath: file.absolutePath) as NSURL)
-                } else if let endpoint = self.endpoint(for: file.sshIdentity),
-                          let tempFile = createFolderForTemporaryFile(name: file.absolutePath.lastPathComponent) {
-                    Task { @MainActor in
-                        do {
-                            let remoteFile = try await endpoint.stat(file.absolutePath)
-                            _ = try await endpoint.downloadChunked(
-                                remoteFile: remoteFile,
-                                progress: progress,
-                                cancellation: cancellation,
-                                destination: tempFile)
-                            seal.fulfill(tempFile as NSURL)
-                        } catch {
-                            seal.reject(error)
-                        }
-                    }
-                } else {
-                    seal.reject(iTermFilePanelError("The connection to \(file.sshIdentity.displayName) was lost."))
-                }
-            } renege: {
-                cancellation.cancel()
-            }
+            let promise = self.promise(file: file, progress: progress, cancellation: cancellation)
             return Item(promise: promise,
                         filename: file.absolutePath,
                         isDirectory: file.isDirectory,
@@ -1298,6 +1304,17 @@ extension SSHFilePanel {
 
 @available(macOS 11, *)
 extension SSHFilePanel: SSHFilePanelFileListDelegate {
+    func sshFilePanelListURLPromise(for remoteFile: RemoteFile) -> iTermRenegablePromise<NSURL>? {
+        guard let currentEndpoint else {
+            return nil
+        }
+        return promise(file: SSHFileDescriptor(absolutePath: remoteFile.absolutePath,
+                                               isDirectory: remoteFile.kind.isFolder,
+                                               sshIdentity: currentEndpoint.sshIdentity),
+                       progress: nil,
+                       cancellation: nil)
+    }
+    
     func sshFilePanelItemIsSelectable(file: SSHFilePanelFileList.FileNode) -> Bool {
         if let isSelectable {
             return isSelectable(file.file)

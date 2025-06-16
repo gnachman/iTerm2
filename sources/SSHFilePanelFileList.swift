@@ -15,6 +15,7 @@ protocol SSHFilePanelFileListDelegate: AnyObject {
                           completionHandler: @escaping (Error?) -> Void)
     func sshFilePanelSelectionDidChange()
     func sshFilePanelItemIsSelectable(file: SSHFilePanelFileList.FileNode) -> Bool
+    func sshFilePanelListURLPromise(for remoteFile: RemoteFile) -> iTermRenegablePromise<NSURL>?
 }
 
 @available(macOS 11, *)
@@ -153,6 +154,7 @@ class SSHFilePanelFileList: NSScrollView {
     weak var delegate: SSHFilePanelFileListDelegate?
     var canChooseDirectories = false
     var canChooseFiles = false
+    private var pendingQuickViewPromises = [iTermRenegablePromise<NSURL>]()
 
     init() {
         fileOutlineView = SSHFilePanelFileListOutlineView()
@@ -226,6 +228,9 @@ class SSHFilePanelFileList: NSScrollView {
 
     deinit {
         NotificationCenter.default.removeObserver(self)
+        for promise in pendingQuickViewPromises {
+            promise.renege()
+        }
     }
 
     var selectedFiles: [FileNode] {
@@ -252,6 +257,41 @@ class SSHFilePanelFileList: NSScrollView {
 
         // Notify the delegate that the user double-clicked on a file/folder
         delegate?.sshFilePanelList(didSelect: node)
+    }
+
+    private func showQuickLook() -> Bool {
+        let promises = fileOutlineView.selectedRowIndexes.compactMap { i -> iTermRenegablePromise<NSURL>? in
+            guard let node = fileOutlineView.item(atRow: i) as? FileNode else {
+                return nil
+            }
+            guard node.isDirectory == false else {
+                return nil
+            }
+            return delegate?.sshFilePanelListURLPromise(for: node.file)
+        }
+        if promises.isEmpty {
+            return false
+        }
+        pendingQuickViewPromises.append(contentsOf: promises)
+        var remaining = promises.count
+        var urls = Array<URL?>(repeating: nil, count: promises.count)
+        for (i, promise) in promises.enumerated() {
+            promise.then { [weak self, weak promise] url in
+                if let promise {
+                    self?.pendingQuickViewPromises.remove(object: promise)
+                }
+                urls[i] = url as URL
+                remaining -= 1
+                if remaining == 0, let self {
+                    let helper = QuickLookHelper()
+                    var sourceRect = helper.sourceFrameOnScreen(for: self.fileOutlineView)
+                    sourceRect.size.width = sourceRect.size.height
+                    helper.showQuickLook(for: urls.compactMap { $0 },
+                                         from: sourceRect)
+                }
+            }
+        }
+        return true
     }
 
     func takeFirstResponder() {
@@ -576,6 +616,15 @@ extension SSHFilePanelFileList: NSOutlineViewDataSource {
 // MARK: - NSOutlineViewDelegate
 @available(macOS 11, *)
 extension SSHFilePanelFileList: NSOutlineViewDelegate {
+    func outlineView(_ outlineView: NSOutlineView,
+                     shouldTypeSelectFor event: NSEvent,
+                     withCurrentSearch searchString: String?) -> Bool {
+        if event.characters == " " && searchString == nil {
+            return !showQuickLook()
+        }
+        return true
+    }
+
     func outlineViewSelectionDidChange(_ notification: Notification) {
         delegate?.sshFilePanelSelectionDidChange()
     }
