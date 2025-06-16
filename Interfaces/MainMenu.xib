@@ -337,7 +337,7 @@ DQ
                                                 <action selector="sshDisconnect:" target="-1" id="ccH-a0-Ijh"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Download Files…" identifier="ssh.Disconnect" id="TeM-om-H0z">
+                                        <menuItem title="Download Files…" identifier="ssh.Download Files" id="TeM-om-H0z">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="downloadFiles:" target="-1" id="T2e-RW-XQ6"/>
