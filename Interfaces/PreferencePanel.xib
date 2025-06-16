@@ -6263,7 +6263,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                                 <menuItem title="DeepSeek" id="2Sk-3h-LFn"/>
                                                                                 <menuItem title="Gemini" tag="1" id="cS0-Ky-dJK"/>
                                                                                 <menuItem title="OpenAI" state="on" tag="2" id="yOB-bP-Cn8"/>
-                                                                                <menuItem title="Llama" tag="3" id="o4c-ta-j5S"/>
+                                                                                <menuItem title="Llama (Local)" tag="3" id="o4c-ta-j5S"/>
                                                                             </items>
                                                                         </menu>
                                                                     </popUpButtonCell>

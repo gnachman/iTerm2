@@ -33,10 +33,10 @@ struct LegacyBodyRequestBuilder {
 struct LLMLegacyResponseParser: LLMResponseParser {
     struct LegacyResponse: Codable, LLM.AnyResponse {
         var isStreamingResponse: Bool { false }
-        var id: String
-        var object: String
-        var created: Int
-        var model: String
+        var id: String?
+        var object: String?
+        var created: Int?
+        var model: String?
         var choices: [Choice]
         var usage: Usage?
 
