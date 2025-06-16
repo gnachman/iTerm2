@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import asyncio
 import base64
+import contextlib
 import errno
 import fcntl
 import json
@@ -17,9 +18,11 @@ import subprocess
 import sys
 import tempfile
 import termios
+import threading
 import time
 import traceback
 import zipfile
+from concurrent.futures import ThreadPoolExecutor
 
 # pid -> Process
 PROCESSES = {}
@@ -43,6 +46,7 @@ READSTATE=0
 #{SUB}
 BASEID=str(random.randint(0, 1048576)) + str(os.getpid()) + str(int(time.time() * 1000000))
 IDCOUNT=0
+SEARCH_TASK = None
 
 def squash(i):
     a = list(map(chr, list(range(48,58))+list(range(65,91))+list(range(97,123))))
@@ -129,10 +133,10 @@ class Process:
     async def run_tty_proc(proc, master, descr):
         pipe = open(master, 'wb', 0)
         writer = await Process._writer(pipe)
-        reader, _ = await Process._reader(pipe)
-        process = Process(proc, writer, reader, None, master=master, descr=descr)
-        # No need to close reader's transport because it's the same file descriptor as master.
-        return process
+        reader, read_transport = await Process._reader(open(master, 'rb', 0))
+        p = Process(proc, writer, reader, None, master=master, descr=descr)
+        p.add_cleanup(read_transport.close)
+        return p
 
     @staticmethod
     async def writer(fd):
@@ -768,6 +772,12 @@ async def handle_file(identifier, args):
                               identifier,
                               make_path(args[1]))
         return
+    if sub == "search":
+        await handle_file_search(q,
+                                 identifier,
+                                 args[1:])
+        return
+
     log(f'unrecognized subcommand {sub}')
     end(q, identifier, 1)
 
@@ -846,12 +856,14 @@ async def handle_file_ls(q, identifier, path, sorting):
     except Exception as e:
         file_error(q, identifier, e, path)
 
-def send_remote_file(q, path):
+def remote_file_json(path):
     pp = permissions(os.path.abspath(os.path.join(path, os.pardir)))
     s = os.stat(path, follow_symlinks=False)
     obj = remotefile(pp, path, s)
-    j = json.dumps(obj)
-    send_esc(q, j)
+    return json.dumps(obj)
+
+def send_remote_file(q, path):
+    send_esc(q, remote_file_json(path))
 
 async def handle_file_stat(q, identifier, path):
     log(f'handle_file_stat {identifier} {path}')
@@ -981,6 +993,111 @@ async def handle_file_zip(q, identifier, path):
         log('send tempfile name')
         send_esc(q, temp_file.name)
         end(q, identifier, 0)
+
+class Search:
+    def __init__(self, query: str, basedir: str):
+        self.query = query
+        self.basedir = basedir
+        self.id = makeid()
+        self.canceled = False
+
+        # allow up to `window_size` in-flight notifications
+        self.window_size = 16
+        self.sema = threading.BoundedSemaphore(self.window_size)
+
+        self._executor = ThreadPoolExecutor(
+            max_workers=1,
+            thread_name_prefix=f"Search-{self.id}"
+        )
+        self.task = asyncio.create_task(self.mainloop())
+        self.loop: asyncio.AbstractEventLoop
+
+    def emit(self, json: str) -> None:
+        q = lock()
+        send_esc(q, f'%notif search {self.id} {json}')
+        unlock(q)
+
+    def ack(self, count: int) -> None:
+        # release up to `count` permits (never exceed window_size)
+        for _ in range(count):
+            try:
+                self.sema.release()
+            except ValueError:
+                break
+
+    def cancel(self) -> None:
+        self.canceled = True
+        # ensure any blocked acquire unblocks
+        try:
+            self.sema.release()
+        except ValueError:
+            pass
+
+    async def mainloop(self) -> None:
+        self.loop = asyncio.get_running_loop()
+        try:
+            await self.loop.run_in_executor(self._executor, self._scan_sync)
+        except Exception as e:
+            log(f"[Search {self.id}] error: {e!r}")
+        finally:
+            self._executor.shutdown(wait=False)
+
+    def _scan_sync(self) -> None:
+        stack = [self.basedir]
+        while stack and not self.canceled:
+            path = stack.pop()
+            try:
+                log(f"Scan {path} for {self.query}")
+                with os.scandir(path) as it:
+                    for entry in it:
+                        if self.canceled:
+                            return
+                        try:
+                            if entry.is_dir(follow_symlinks=False):
+                                stack.append(entry.path)
+                            elif entry.is_file(follow_symlinks=False) and self.query in entry.name:
+                                # block here if we've hit window_size
+                                self.sema.acquire()
+                                if self.canceled:
+                                    return
+                                log(f"Found match: {entry.name} for {self.query}")
+                                json = remote_file_json(entry.path)
+                                self.loop.call_soon_threadsafe(self.emit, json)
+                        except OSError:
+                            continue
+            except OSError:
+                continue
+
+async def handle_file_search(q, identifier, args):
+    """Operate on searches, which run in the background.
+
+    search start <query> <base dir>
+    search ack <id> <count>
+    search stop <id>
+    """
+    log(f'handle_file_search {identifier} {args}')
+    operation = args[0]
+    global SEARCH_TASK
+    if operation == "start":
+        query = args[1]
+        basedir = make_path(args[2])
+        if SEARCH_TASK:
+            SEARCH_TASK.cancel()
+            SEARCH_TASK = None
+        SEARCH_TASK = Search(base64.b64decode(query).decode('utf-8'), basedir)
+        send_esc(q, SEARCH_TASK.id)
+    elif operation == "ack":
+        id = args[1]
+        count = int(args[2])
+        if SEARCH_TASK and SEARCH_TASK.id == id:
+            SEARCH_TASK.ack(count)
+    elif operation == "stop":
+        id = args[1]
+        if SEARCH_TASK and SEARCH_TASK.id == id:
+            if SEARCH_TASK:
+                SEARCH_TASK.cancel()
+                SEARCH_TASK = None
+    end(q, identifier, 0)
 
 async def handle_file_fetch(q, identifier, path, offset, size):
     log(f'handle_file_fetch {identifier} {path}')

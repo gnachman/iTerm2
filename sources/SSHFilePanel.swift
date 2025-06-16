@@ -66,7 +66,21 @@ class SSHFilePanel: NSWindowController {
     private(set) var selectedFiles: [SSHFileDescriptor] = []
     private var lastPath = [SSHIdentity: String]()
     private var initialized = false
-
+    private enum Mode {
+        case regular
+        case search(Int, Cancellation)
+    }
+    private var mode = Mode.regular {
+        didSet {
+            switch (oldValue, mode) {
+            case (.regular, .regular): return
+            case (.search, .search): return
+            case (.regular, .search): didEnterSearchMode()
+            case (.search(_, let cancellation), .regular): didExitSearchMode(cancellation)
+            }
+        }
+    }
+    private var nextSearchGeneration = 0
     var canChooseDirectories = false
     var canChooseFiles = true
     var isSelectable: ((RemoteFile) -> Bool)?
@@ -229,7 +243,7 @@ class SSHFilePanel: NSWindowController {
         guard let endpoint = self.endpoint(for: path.sshIdentity) else {
             return false
         }
-
+        mode = .regular
         do {
             // Verify the path exists
             let _ = try await endpoint.stat(path.absolutePath)
@@ -566,13 +580,71 @@ class SSHFilePanel: NSWindowController {
         locationButton.set(path: path, sshIdentity: locationButton.sshIdentity!)
     }
 
+    private func didEnterSearchMode() {
+        fileList.clear()
+    }
+    
+    private func didExitSearchMode(_ cancellation: Cancellation) {
+        cancellation.cancel()
+        searchField.stringValue = ""
+        fileList.clear()
+        fileList.loadRootFiles()
+        updateViewsForCurrentPath()
+    }
+    
+    private func cancelCurrentSearch() {
+        if case .search(_, let cancellation) = mode {
+            cancellation.cancel()
+        }
+    }
+
     @objc private func searchFieldChanged(_ sender: NSSearchField) {
-        // TODO: Implement search functionality
         DLog("Search changed to: \(sender.stringValue)")
+        cancelCurrentSearch()
+        if sender.stringValue.isEmpty {
+            mode = .regular
+            return
+        }
+        let generation = nextSearchGeneration
+        nextSearchGeneration += 1
+        let cancellation = Cancellation()
+        DLog("Begin search generation \(generation) for \(sender.stringValue)")
+        mode = .search(generation, cancellation)
+        fileList.clear()
+        if let currentPath, let currentEndpoint {
+            let baseDir = currentPath.absolutePath
+            let sshIdentity = currentEndpoint.sshIdentity
+            Task { @MainActor [weak self] in
+                do {
+                    let stream =  try await currentEndpoint.search(baseDir,
+                                                                   query: sender.stringValue,
+                                                                   cancellation: cancellation)
+                    for try await remoteFile in stream {
+                        self?.addSearchResult(sshIdentity, remoteFile: remoteFile, generation: generation)
+                    }
+                } catch {
+                    DLog("\(error)")
+                }
+            }
+        }
+    }
+
+    private func addSearchResult(_ sshIdentity: SSHIdentity, remoteFile: RemoteFile, generation: Int) {
+        if generation + 1 != nextSearchGeneration {
+            DLog("Discard out-of-date result \(remoteFile) for generation \(generation)")
+            return
+        }
+        DLog("Add item \(remoteFile) for current generation \(generation)")
+        fileList.addItem(sshIdentity: sshIdentity, file: remoteFile)
+    }
+
+    private func willClose() {
+        saveWindowState()
+        cancelCurrentSearch()
     }
 
     @objc private func cancelButtonClicked(_ sender: Any) {
-        saveWindowState()
+        willClose()
         if let sheetParent = window?.sheetParent {
             // Sheet presentation
             sheetParent.endSheet(window!, returnCode: .cancel)
@@ -605,7 +677,7 @@ class SSHFilePanel: NSWindowController {
             cancelButtonClicked(sender)
             return
         }
-        saveWindowState()
+        willClose()
         self.selectedFiles = selection.map {
             SSHFileDescriptor(absolutePath: $0.file.absolutePath,
                               isDirectory: $0.isDirectory,

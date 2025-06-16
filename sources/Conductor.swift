@@ -96,6 +96,23 @@ class Conductor: NSObject, Codable {
         let maxConcurrentDownloads = 2
         return AsyncSemaphore(value: maxConcurrentDownloads)
     }()
+    private class Search {
+        var id: String
+        var continuation: AsyncThrowingStream<RemoteFile, any Error>.Continuation
+        var cancellation: Cancellation
+        var query: String
+        init(id: String,
+             query: String,
+             continuation: AsyncThrowingStream<RemoteFile, any Error>.Continuation,
+             cancellation: Cancellation) {
+            self.id = id
+            self.query = query
+            self.continuation = continuation
+            self.cancellation = cancellation
+        }
+    }
+
+    private var currentSearch: Search?
 
     @objc
     lazy var fileChecker: FileChecker? = {
@@ -228,6 +245,13 @@ class Conductor: NSObject, Codable {
         case utime(path: Data, date: Date)
         case chmod(path: Data, r: Bool, w: Bool, x: Bool)
         case zip(path: Data)
+        case search(SearchSubCommand)
+
+        enum SearchSubCommand: Codable, Equatable {
+            case start(query: Data, baseDirectory: Data)
+            case ack(id: String, count: Int)
+            case stop(id: String)
+        }
 
         var stringValue: String {
             switch self {
@@ -303,6 +327,30 @@ class Conductor: NSObject, Codable {
                     path.nonEmptyBase64EncodedString(),
                     (r ? "r" : "-") + (w ? "w" : "-") + (x ? "x" : "-")
                 ].joined(separator: "\n")
+            case .search(let subcommand):
+                let parts: [String] = switch subcommand {
+                case .start(let query, let baseDirectory):
+                    [
+                        "search",
+                        "start",
+                        query.nonEmptyBase64EncodedString(),
+                        baseDirectory.nonEmptyBase64EncodedString()
+                    ]
+                case .ack(let id, let count):
+                    [
+                        "search",
+                        "ack",
+                        id,
+                        "\(count)"
+                    ]
+                case .stop(let id):
+                    [
+                        "search",
+                        "stop",
+                        id
+                    ]
+                }
+                return parts.joined(separator: "\n")
             }
         }
 
@@ -338,6 +386,15 @@ class Conductor: NSObject, Codable {
                 return "utime \(path.stringOrHex) \(date)"
             case .chmod(path: let path, r: let r, w: let w, x: let x):
                 return "chmod \(path.stringOrHex) r=\(r) w=\(w) x=\(x)"
+            case .search(let subcommand):
+                switch subcommand {
+                case .start(query: let query, baseDirectory: let baseDirectory):
+                    return "search start \(query.lossyString) \(baseDirectory.lossyString)"
+                case .ack(id: let id, count: let count):
+                    return "search ack \(id) \(count)"
+                case .stop(id: let id):
+                    return "search stop \(id)"
+                }
             }
         }
     }
@@ -1803,6 +1860,11 @@ class Conductor: NSObject, Codable {
         if message.hasPrefix(notifTTY) {
             handleTTYNotif(String(message.dropFirst(notifTTY.count)))
         }
+
+        let notifSearch = "%notif search "
+        if message.hasPrefix(notifSearch) {
+            handleSearchNotif(String(message.dropFirst(notifSearch.count)))
+        }
     }
 
     private func handleTTYNotif(_ message: String) {
@@ -1833,6 +1895,27 @@ class Conductor: NSObject, Codable {
         }
         if let value = flags["icanon"] {
             ttyState.icanon = value
+        }
+    }
+
+    private func handleSearchNotif(_ message: String) {
+        if #available(macOS 11.0, *) {
+            DLog("handleSearchNotif: \(message)")
+            guard let space = message.firstIndex(of: " ") else {
+                DLog("Malformed message lacks space")
+                return
+            }
+            let id = message[..<space]
+            if let currentSearch, currentSearch.id == id {
+                let json = String(message[message.index(space, offsetBy: 1)...])
+                if let remoteFile = try? remoteFile(json) {
+                    DLog("Yielding \(remoteFile) for search \(currentSearch.id), query \(currentSearch.query)")
+                    currentSearch.continuation.yield(remoteFile)
+                }
+            }
+            Task {
+                try? await performFileOperation(subcommand: .search(.ack(id: String(id), count: 1)))
+            }
         }
     }
 
@@ -1939,6 +2022,8 @@ class Conductor: NSObject, Codable {
         if highPriority {
             queue.insert(context, at: 0)
         } else {
+            // A possible optimization is to merge search acks here. Rather than appending a new
+            // ack to the queue, just increment the count.
             queue.append(context)
         }
         switch state {
@@ -2607,7 +2692,7 @@ extension Conductor: SSHEndpoint {
         }
     }
 
-    
+
     func create(file: String, content: Data, completion: @escaping (Error?) -> ()) {
         Task {
             do {
@@ -2690,6 +2775,30 @@ extension Conductor: SSHEndpoint {
             let result = try remoteFile(json)
             log("finished")
             return result
+        }
+    }
+
+    @available(macOS 11.0, *)
+    @MainActor
+    func search(_ basedir: String,
+                query: String,
+                cancellation: Cancellation) async throws -> AsyncThrowingStream<RemoteFile, Error> {
+        currentSearch?.cancellation.cancel()
+        return try await logging("search \(basedir) \(query)") {
+            let id = try await performFileOperation(subcommand: .search(.start(query: query.lossyData,
+                                                                               baseDirectory: basedir.lossyData)))
+            cancellation.impl = { [weak self] in
+                Task { @MainActor in
+                    try? await self?.performFileOperation(subcommand: .search(.stop(id: id)))
+                }
+            }
+            return AsyncThrowingStream<RemoteFile, Error> { continuation in
+                DLog("Begin new search with id \(id) and query \(query)")
+                currentSearch = Search(id: id,
+                                       query: query,
+                                       continuation: continuation,
+                                       cancellation: cancellation)
+            }
         }
     }
 }

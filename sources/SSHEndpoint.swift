@@ -61,6 +61,12 @@ protocol SSHEndpoint: AnyObject {
     @MainActor
     func chmod(_ file: String, permissions: RemoteFile.Permissions) async throws -> RemoteFile
 
+    @available(macOS 11.0, *)
+    @MainActor
+    func search(_ basedir: String,
+                query: String,
+                cancellation: Cancellation) async throws -> AsyncThrowingStream<RemoteFile, Error>
+
     var sshIdentity: SSHIdentity { get }
 
     var homeDirectory: String? { get }

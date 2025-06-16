@@ -65,14 +65,14 @@ class SSHFilePanelFileList: NSScrollView {
 
     enum ColumnID: String, CaseIterable {
         case name = "NameColumn"
-        case dateCreated = "DateColumn"
+        case dateModified = "DateColumn"
         case size = "SizeColumn"
         case kind = "KindColumn"
 
         var title: String {
             switch self {
             case .name: return "Name"
-            case .dateCreated: return "Date Created"
+            case .dateModified: return "Date Created"
             case .size: return "Size"
             case .kind: return "Kind"
             }
@@ -81,7 +81,7 @@ class SSHFilePanelFileList: NSScrollView {
         var width: CGFloat {
             switch self {
             case .name: return 300
-            case .dateCreated: return 160
+            case .dateModified: return 160
             case .size: return 100
             case .kind: return 120
             }
@@ -90,7 +90,7 @@ class SSHFilePanelFileList: NSScrollView {
         var minWidth: CGFloat {
             switch self {
             case .name: return 245
-            case .dateCreated: return 75
+            case .dateModified: return 75
             case .size: return 80
             case .kind: return 100
             }
@@ -312,7 +312,14 @@ class SSHFilePanelFileList: NSScrollView {
         loadRootFiles()
     }
 
-    private func loadRootFiles() {
+    func addItem(sshIdentity: SSHIdentity, file: RemoteFile) {
+        rootNodes.append(FileNode(sshIdentity: sshIdentity,
+                                  file: file,
+                                  path: file.absolutePath.deletingLastPathComponent))
+        fileOutlineView.insertItems(at: IndexSet(integer: rootNodes.count - 1), inParent: nil)
+    }
+
+    func loadRootFiles() {
         guard let path = rootPath, let endpoint = endpoint, !isLoading else { return }
 
         isLoading = true
@@ -406,7 +413,7 @@ class SSHFilePanelFileList: NSScrollView {
             switch self.currentSortColumn {
             case .name:
                 result = file1.name.localizedCaseInsensitiveCompare(file2.name) == .orderedAscending
-            case .dateCreated:
+            case .dateModified:
                 let date1 = file1.ctime ?? Date.distantPast
                 let date2 = file2.ctime ?? Date.distantPast
                 result = date1 < date2
@@ -648,9 +655,9 @@ extension SSHFilePanelFileList: NSOutlineViewDelegate {
         case .name:
             cellView?.textField?.stringValue = file.name
             cellView?.textField?.textColor = .labelColor
-        case .dateCreated:
+        case .dateModified:
             let columnWidth = outlineView.tableColumn(withIdentifier: tableColumn!.identifier)?.width ?? 160
-            cellView?.textField?.stringValue = formatDate(file.ctime, columnWidth: columnWidth)
+            cellView?.textField?.stringValue = formatDate(file.mtime, columnWidth: columnWidth)
             cellView?.textField?.textColor = .secondaryLabelColor
         case .size:
             cellView?.textField?.stringValue = formatFileSize(file.size)
@@ -778,7 +785,7 @@ extension SSHFilePanelFileList: NSOutlineViewDelegate {
     }
 
     func columnLiveResize(_ column: NSTableColumn) {
-        if column.identifier == NSUserInterfaceItemIdentifier(ColumnID.dateCreated.rawValue),
+        if column.identifier == NSUserInterfaceItemIdentifier(ColumnID.dateModified.rawValue),
            let columnIndex = fileOutlineView.tableColumns.firstIndex(of: column) {
             fileOutlineView.reloadData(forRowIndexes: IndexSet(0..<fileOutlineView.numberOfRows),
                                       columnIndexes: IndexSet(integer: columnIndex))

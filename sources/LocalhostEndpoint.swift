@@ -255,4 +255,36 @@ class LocalhostEndpoint: SSHEndpoint {
         try fileManager.setAttributes([.posixPermissions: NSNumber(value: rawMode)], ofItemAtPath: file)
         return try await stat(file)
     }
+
+    func search(_ basedir: String,
+                query: String,
+                cancellation: Cancellation) -> AsyncThrowingStream<RemoteFile, Error> {
+        AsyncThrowingStream { continuation in
+            Task {
+                var stack = [basedir]
+
+                while let dir = stack.popLast() {
+                    if cancellation.canceled {
+                        continuation.finish(throwing: CancellationError())
+                        return
+                    }
+
+                    let entries = await iTermSlowOperationGateway.sharedInstance().fetchDirectoryListing(ofPath: dir)
+                    for entry in entries {
+                        guard entry.isReadable else {
+                            continue
+                        }
+                        let fullPath = (dir as NSString).appendingPathComponent(entry.name)
+                        if entry.isDirectory {
+                            stack.append(fullPath)
+                        } else if entry.name.contains(query), let remoteFile = try? await stat(fullPath) {
+                            continuation.yield(remoteFile)
+                        }
+                    }
+                }
+
+                continuation.finish()
+            }
+        }
+    }
 }

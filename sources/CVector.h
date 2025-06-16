@@ -100,7 +100,7 @@ typedef struct { \
 do { \
   __typeof(__vector) __v = __vector; \
   \
-  __v->capacity = __capacity; \
+  __v->capacity = (__capacity < 1 ? 1 : __capacity); \
   __v->elements = (__typeof(__v->elements))iTermMalloc(__v->capacity * sizeof(*__v->elements)); \
   __v->count = 0; \
 } while(0)
@@ -115,6 +115,7 @@ do { \
   while (__v->count + 1 >= __v->capacity) { \
     assert(__v->capacity >= 0 && __v->capacity < (1 << 27)); \
     __v->capacity *= 2; \
+    __v->capacity += 1; \
     __v->elements = iTermRealloc(__v->elements, __v->capacity, sizeof(*__v->elements)); \
   } \
   __v->elements[__v->count++] = (__value); \
