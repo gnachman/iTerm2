@@ -1777,7 +1777,8 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         } else if (token->type != SSH_SIDE_CHANNEL &&
                    token->type != SSH_BEGIN &&
                    token->type != SSH_END &&
-                   token->type != SSH_LINE) {
+                   token->type != SSH_LINE &&
+                   token->type != SSH_OUTPUT) {
             DLog(@"Unexpected field receipt end");
             [_delegate terminalFileReceiptEndedUnexpectedly];
             receivingFile_ = NO;
