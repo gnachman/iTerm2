@@ -850,9 +850,6 @@ extension PTYTextView {
     }
 
     @IBAction func downloadFiles(_ sender: Any) {
-        guard let window else {
-            return
-        }
         let panel = iTermOpenPanel()
         panel.includeLocalhost = false
         panel.canChooseFiles = true
@@ -861,7 +858,7 @@ extension PTYTextView {
         panel.isSelectable = { remoteFile in
             return provider?.fileTypeIsSupported(extension: remoteFile.name.pathExtension.lowercased()) == true
         }
-        panel.beginSheetModal(for: window) { response in
+        panel.begin { response in
             guard response == .OK else {
                 return
             }

@@ -87,6 +87,7 @@ class SSHFilePanel: NSWindowController {
     var includeLocalhost = true
 
     // MARK: - Data Properties
+
     private var prepared = false
     weak var dataSource: SSHFilePanelDataSource? {
         didSet {
@@ -107,10 +108,13 @@ class SSHFilePanel: NSWindowController {
     // MARK: - Initialization
     init() {
         let window = SSHFilePanelWindow(contentRect: NSRect(x: 0, y: 0, width: 900, height: 600),
-                                        styleMask: [.resizable, .fullSizeContentView],
+                                        styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                                         backing: .buffered,
                                         defer: false)
-        window.isFloatingPanel = false
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
+        window.isFloatingPanel = true
+        window.isMovableByWindowBackground = true
         window.hidesOnDeactivate = false
         window.worksWhenModal = true
         window.becomesKeyOnlyIfNeeded = false
@@ -714,6 +718,11 @@ class SSHFilePanel: NSWindowController {
 
     func beginSheetModal(for parentWindow: NSWindow, completionHandler handler: @escaping (NSApplication.ModalResponse) -> Void) {
         parentWindow.beginSheet(window!, completionHandler: handler)
+    }
+
+    func begin(_ completion: @escaping ((NSApplication.ModalResponse) -> Void)) {
+        self.completionHandler = completion
+        window?.makeKeyAndOrderFront(nil)
     }
 }
 
