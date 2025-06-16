@@ -10,6 +10,10 @@ class ConductorRegistry {
     static let instance = ConductorRegistry()
     private(set) var conductors: [SSHIdentity: [WeakBox<Conductor>]] = [:]
 
+    var isEmpty: Bool {
+        return conductors.isEmpty
+    }
+
     func addConductor(_ conductor: Conductor, for identity: SSHIdentity) {
         let existing = conductors[identity]?.compactMap { $0.value } ?? []
         if !existing.contains(conductor) {

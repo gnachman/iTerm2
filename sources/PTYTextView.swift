@@ -835,3 +835,46 @@ extension PTYTextView: NSViewContentSelectionInfo {
         return .null
      }
 }
+
+extension PTYTextView {
+    @objc(swiftValidateMenuItem:)
+    func swiftValidate(menuItem item: NSMenuItem) -> Bool {
+        if item.action == #selector(downloadFiles(_:)) {
+            return !ConductorRegistry.instance.isEmpty
+        }
+        return false
+    }
+
+    @IBAction func downloadFiles(_ sender: Any) {
+        guard let window else {
+            return
+        }
+        let panel = iTermOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = true
+        let provider = AITermController.provider
+        panel.isSelectable = { remoteFile in
+            return provider?.fileTypeIsSupported(extension: remoteFile.name.pathExtension.lowercased()) == true
+        }
+        panel.beginSheetModal(for: window) { response in
+            guard response == .OK else {
+                return
+            }
+            for item in panel.items {
+                let scpPath = SCPPath()
+                scpPath.username = item.host.username
+                scpPath.hostname = item.host.host
+                scpPath.path = item.filename
+                if #available(macOS 11, *) {
+                    if let conductor = ConductorRegistry.instance[item.host].first {
+                        conductor.download(path: scpPath)
+                    }
+                } else {
+                    let scpFile = SCPFile()
+                    scpFile.path = scpPath
+                    scpFile.download()
+                }
+            }
+        }
+    }
+}

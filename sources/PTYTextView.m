@@ -561,7 +561,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     if ([NSStringFromSelector(theSel) hasPrefix:@"contextMenuAction"]) {
         return YES;
     }
-    return [self arcValidateMenuItem:item];
+    return [self arcValidateMenuItem:item] || [self swiftValidateMenuItem:item];
 }
 
 - (BOOL)it_isTerminalResponder {

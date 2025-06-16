@@ -49,6 +49,7 @@
 @class PTYTask;
 @class PTYTextView;
 @class SCPPath;
+@class SSHIdentity;
 @class SearchResult;
 @class SmartMatch;
 @class ThreeFingerTapGestureRecognizer;
