@@ -33,6 +33,7 @@ class iTermOpenPanelItem: NSObject {
 class iTermOpenPanel: NSObject {
     @objc var canChooseDirectories = true
     @objc var canChooseFiles = true
+    @objc var includeLocalhost = true
     @objc let allowsMultipleSelection = true  // TODO
     @objc private(set) var items: [iTermOpenPanelItem] = []
     static var panels = [iTermOpenPanel]()
@@ -44,11 +45,11 @@ class iTermOpenPanel: NSObject {
 
         if #available(macOS 11, *) {
             let sshFilePanel = SSHFilePanel()
-            sshFilePanel.dataSource = ConductorRegistry.instance
             sshFilePanel.canChooseDirectories = canChooseDirectories
             sshFilePanel.canChooseFiles = canChooseFiles
             sshFilePanel.isSelectable = isSelectable
-
+            sshFilePanel.includeLocalhost = includeLocalhost
+            sshFilePanel.dataSource = ConductorRegistry.instance
             sshFilePanel.beginSheetModal(for: window) { [weak self] response in
                 guard let self else { return }
                 if response == .OK {

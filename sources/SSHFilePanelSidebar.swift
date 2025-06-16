@@ -55,7 +55,7 @@ protocol SSHFilePanelSidebarDelegate: AnyObject {
 class SSHFilePanelSidebar: NSView {
     private(set) var sidebarOutlineView: SSHFilePanelSourceList!
     private var sidebarScrollView: NSScrollView!
-
+    let includeLocalhost: Bool
     weak var delegate: SSHFilePanelSidebarDelegate?
 
     private var _connectedHosts: [SSHIdentity] = []
@@ -153,7 +153,8 @@ class SSHFilePanelSidebar: NSView {
         }
     }
 
-    init() {
+    init(includeLocalhost: Bool) {
+        self.includeLocalhost = includeLocalhost
         super.init(frame: .zero)
         setupOutlineView()
         loadFavorites()
@@ -219,8 +220,19 @@ class SSHFilePanelSidebar: NSView {
     }
 
     private func filter() {
+        guard let delegate else {
+            filteredFavorites = []
+            sidebarOutlineView.reloadData()
+            return
+        }
         filteredFavorites = unfilteredFavorites.filter {
-            (delegate?.sidebarHostIsValid(self, host: $0.host)) ?? false
+            if !delegate.sidebarHostIsValid(self, host: $0.host) {
+                return false
+            }
+            if !includeLocalhost && $0.host == SSHIdentity.localhost {
+                return false
+            }
+            return true
         }
         sidebarOutlineView.reloadData()
     }

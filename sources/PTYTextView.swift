@@ -840,7 +840,11 @@ extension PTYTextView {
     @objc(swiftValidateMenuItem:)
     func swiftValidate(menuItem item: NSMenuItem) -> Bool {
         if item.action == #selector(downloadFiles(_:)) {
-            return !ConductorRegistry.instance.isEmpty
+            if #available(macOS 11, *) {
+                return !ConductorRegistry.instance.isEmpty
+            } else {
+                return false
+            }
         }
         return false
     }
@@ -850,6 +854,7 @@ extension PTYTextView {
             return
         }
         let panel = iTermOpenPanel()
+        panel.includeLocalhost = false
         panel.canChooseFiles = true
         panel.canChooseDirectories = true
         let provider = AITermController.provider

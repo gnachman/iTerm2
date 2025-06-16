@@ -58,7 +58,7 @@ class SSHFilePanel: NSWindowController {
     private var buttonStackView: NSStackView!
     private var cancelButton: NSButton!
     private var openButton: NSButton!
-    private let sidebar = SSHFilePanelSidebar()
+    private var sidebar: SSHFilePanelSidebar!
     private var completionHandler: ((NSApplication.ModalResponse) -> Void)?
     private var navigationHistory: [SSHFileDescriptor] = []
     private var historyIndex: Int = -1
@@ -84,9 +84,10 @@ class SSHFilePanel: NSWindowController {
     var canChooseDirectories = false
     var canChooseFiles = true
     var isSelectable: ((RemoteFile) -> Bool)?
-
+    var includeLocalhost = true
 
     // MARK: - Data Properties
+    private var prepared = false
     weak var dataSource: SSHFilePanelDataSource? {
         didSet {
             if dataSource != nil {
@@ -116,11 +117,13 @@ class SSHFilePanel: NSWindowController {
         super.init(window: window)
 
         window.delegate = self
+    }
 
+    private func prepareToShow() {
         setupUI()
         setupWindow()
 
-        window.makeFirstResponder(fileList.documentView)
+        self.window?.makeFirstResponder(fileList.documentView)
 
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(connectedHostsDidChange(_:)),
@@ -144,7 +147,7 @@ class SSHFilePanel: NSWindowController {
     // MARK: - Notifications
 
     private func connectedHostsIncludingLocalhost() -> [SSHIdentity] {
-        return (dataSource?.remoteFilePanelConnectedHosts() ?? []) + [SSHIdentity.localhost]
+        return (dataSource?.remoteFilePanelConnectedHosts() ?? []) + (includeLocalhost ? [SSHIdentity.localhost] : [])
     }
 
     @objc func connectedHostsDidChange(_ notification: Notification) {
@@ -160,6 +163,10 @@ class SSHFilePanel: NSWindowController {
     // MARK: - Data Source Updates
     @MainActor
     private func dataSourceDidChange() {
+        if !prepared {
+            prepared = true
+            prepareToShow()
+        }
         let connectedHosts = connectedHostsIncludingLocalhost()
 
         if let firstHost = connectedHosts.first {
@@ -324,6 +331,7 @@ class SSHFilePanel: NSWindowController {
     }
 
     private func setupSidebar() {
+        sidebar = SSHFilePanelSidebar(includeLocalhost: includeLocalhost)
         sidebar.translatesAutoresizingMaskIntoConstraints = false
         splitView.addSubview(sidebar)
         sidebar.delegate = self
