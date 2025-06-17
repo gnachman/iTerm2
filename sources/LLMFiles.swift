@@ -14,13 +14,12 @@ struct LLMFileUploader {
         self.provider = provider
         self.apiKey = apiKey
         switch provider.model.api {
-
         case .responses:
             responsesBuilder = ResponsesFileUploadBuilder(provider: provider,
                                                           apiKey: apiKey,
                                                           fileName: fileName,
                                                           content: content)
-        case .completions, .chatCompletions, .gemini, .earlyO1, .llama, .deepSeek:
+        case .completions, .chatCompletions, .gemini, .earlyO1, .llama, .deepSeek, .anthropic:
             return nil
         @unknown default:
             return nil

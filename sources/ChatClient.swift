@@ -8,6 +8,8 @@
 // High level interface for AI chat clients.
 class ChatClient {
     private static var _instance: ChatClient?
+    private var rewriteMessageID = [UUID: UUID]()
+
     static var instance: ChatClient? {
         if _instance == nil {
             _instance = ChatClient()
@@ -243,15 +245,57 @@ class ChatClient {
     }
     private func processAppend(appendMessage: Message,
                                stringOrAttachment: StringOrAttachment,
-                               uuid: UUID,
+                               uuid upstreamUUID: UUID,
                                chatID: String) -> Message? {
+        let uuid = rewriteMessageID[upstreamUUID] ?? upstreamUUID
         guard let messages = model.messages(forChat: chatID, createIfNeeded: false),
               let i = model.index(ofMessageID: uuid, inChat: chatID) else {
             return appendMessage
         }
         let original = messages[i]
         switch original.content {
-        case .plainText, .markdown, .explanationRequest, .remoteCommandResponse, .clientLocal,
+        case .plainText, .markdown:
+            if let messages = model.messages(forChat: chatID, createIfNeeded: false),
+               i < messages.count - 1 {
+                // Appending to a message that isn't the most recent. We'll create a new message
+                // instead. Any future updates will get their message ID rewritten to this new ID.
+                // Once the message is committed we can forget about this rewriting rule. This
+                // also makes it easier to reconstruct a thread to put in a request.
+                var temp = appendMessage
+                temp.uniqueID = UUID()
+                rewriteMessageID[upstreamUUID] = temp.uniqueID
+                temp.content = switch stringOrAttachment {
+                case .string(let string):
+                    switch original.content {
+                    case .plainText:
+                            .plainText(string)
+                    case .markdown:
+                            .markdown(string)
+                    case .explanationRequest, .explanationResponse, .remoteCommandRequest,
+                            .remoteCommandResponse, .selectSessionRequest, .clientLocal,
+                            .renameChat, .append, .appendAttachment, .commit, .setPermissions,
+                            .vectorStoreCreated, .terminalCommand, .multipart:
+                        it_fatalError("You can't append \(stringOrAttachment)")
+                    }
+                case .attachment:
+                    it_fatalError("Server-sent attachments are not yet supported")
+                }
+                return temp;
+            } else if uuid != upstreamUUID {
+                // Append to last message with a rewritten UUID
+                var temp = appendMessage
+                switch stringOrAttachment {
+                case .string(let string):
+                    temp.content = .append(string: string, uuid: uuid)
+                case .attachment(let attachment):
+                    temp.content = .appendAttachment(attachment: attachment, uuid: uuid)
+                }
+                return temp
+            } else {
+                // Append to last message without rewriting the UUID
+                return appendMessage
+            }
+        case .explanationRequest, .remoteCommandResponse, .clientLocal,
                 .renameChat, .append, .commit, .remoteCommandRequest, .selectSessionRequest,
                 .setPermissions, .terminalCommand, .appendAttachment, .multipart,
                 .vectorStoreCreated:
@@ -298,7 +342,9 @@ class ChatClient {
         }
     }
 
-    private func processCommit(finalMessage: Message, messageID: UUID, chatID: String) -> Message? {
+    private func processCommit(finalMessage: Message, messageID upstreamUUID: UUID, chatID: String) -> Message? {
+        let messageID = rewriteMessageID[upstreamUUID] ?? upstreamUUID
+        rewriteMessageID.removeValue(forKey: upstreamUUID)
         guard let messages = model.messages(forChat: chatID, createIfNeeded: false),
               let i = model.index(ofMessageID: messageID, inChat: chatID) else {
             return finalMessage

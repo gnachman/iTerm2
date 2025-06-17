@@ -162,22 +162,35 @@ enum LLM {
                     }
                 case .functionCall(let original, id: let originalID):
                     // Only compare item IDs because OpenAI doesn't give a call ID for arguments when streaming. Deep seek does not provide any IDs after the first streaming response for a particular function call.
-                    if case let .functionCall(content, id) = additionalContent,
-                       (id?.itemID == originalID?.itemID || id == nil) {
-                        let combinedName = (original.name ?? "") + (content.name ?? "")
-                        let combinedArgs = (original.arguments ?? "") + (content.arguments ?? "")
-                        let combinedID: String? = if original.id != nil || content.id != nil {
-                            (original.id ?? "") + (content.id ?? "")
-                        } else {
-                            nil
+                    switch additionalContent {
+                    case let .functionCall(content, id):
+                        if (id?.itemID == originalID?.itemID || id == nil) {
+                            let combinedName = (original.name ?? "") + (content.name ?? "")
+                            let combinedArgs = (original.arguments ?? "") + (content.arguments ?? "")
+                            let combinedID: String? = if original.id != nil || content.id != nil {
+                                (original.id ?? "") + (content.id ?? "")
+                            } else {
+                                nil
+                            }
+                            self = .functionCall(
+                                LLM.FunctionCall(
+                                    name: combinedName,
+                                    arguments: combinedArgs,
+                                    id: combinedID),
+                                id: originalID)
+                            return true
                         }
+                    case let .text(string):
+                        // Anthropic does this
                         self = .functionCall(
                             LLM.FunctionCall(
-                                name: combinedName,
-                                arguments: combinedArgs,
-                                id: combinedID),
+                                name: original.name ?? "",
+                                arguments: (original.arguments ?? "") + (string),
+                                id: original.id),
                             id: originalID)
                         return true
+                    case .uninitialized, .functionOutput, .attachment, .multipart:
+                        break
                     }
                 case let .functionOutput(name: originalName,
                                          output: originalOutput,
@@ -326,7 +339,12 @@ enum LLM {
                     json: Data,
                     completion: @escaping (Result<String, Error>) -> ()) {
             do {
-                let value = try JSONSerialization.parseTruncatedJSON(json.lossyString, as: parameterType)
+                var jsonString = json.lossyString
+                if jsonString.isEmpty {
+                    // Anthropic does this
+                    jsonString = "{}"
+                }
+                let value = try JSONSerialization.parseTruncatedJSON(jsonString, as: parameterType)
                 call(message, value, completion)
             } catch {
                 DLog("\(error.localizedDescription)")
@@ -370,6 +388,9 @@ struct LLMAuthorizationProvider {
             } else {
                 ["Authorization": "Bearer " + apiKey.trimmingCharacters(in: .whitespacesAndNewlines)]
             }
+        case .anthropic:
+            ["x-api-key": apiKey.trimmingCharacters(in: .whitespacesAndNewlines),
+             "anthropic-version": "2023-06-01"]
         case .gemini, .llama:
             [:]
         @unknown default:

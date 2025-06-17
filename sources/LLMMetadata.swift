@@ -37,6 +37,11 @@ class LLMMetadata: NSObject {
         return (url?.host ?? "").hasSuffix(".deepseek.com")
     }
 
+    @objc(hostIsAnthropicAIAPIForURL:)
+    static func hostIsAnthropicAIAPI(url: URL?) -> Bool {
+        return (url?.host ?? "").hasSuffix(".anthropic.com")
+    }
+
     static func model() -> AIMetadata.Model? {
         if iTermPreferences.bool(forKey: kPreferenceKeyUseRecommendedAIModel),
            let vendor = iTermAIVendor(rawValue: iTermPreferences.unsignedInteger(forKey: kPreferenceKeyAIVendor)) {
@@ -49,6 +54,8 @@ class LLMMetadata: NSObject {
                 return AIMetadata.recommendedGeminiModel
             case .llama:
                 return AIMetadata.recommendedLlamaModel
+            case .anthropic:
+                return AIMetadata.recommendedAnthropicModel
             @unknown default:
                 return nil
             }

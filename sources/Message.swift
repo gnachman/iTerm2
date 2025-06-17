@@ -165,7 +165,7 @@ struct Message: Codable {
     }
     var content: Content
     let sentDate: Date
-    let uniqueID: UUID
+    var uniqueID: UUID
 
     // This is only present in user-sent messages.
     struct Configuration: Codable {

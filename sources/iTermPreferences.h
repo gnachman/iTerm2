@@ -83,7 +83,8 @@ typedef NS_ENUM(NSUInteger, iTermAIAPI) {
     iTermAIAPIGemini = 3,
     iTermAIAPIEarlyO1 = 4,
     iTermAIAPILlama = 5,
-    iTermAIAPIDeepSeek = 6
+    iTermAIAPIDeepSeek = 6,
+    iTermAIAPIAnthropic = 7
 };
 
 typedef NS_ENUM(NSUInteger, iTermAIVendor) {
@@ -91,6 +92,7 @@ typedef NS_ENUM(NSUInteger, iTermAIVendor) {
     iTermAIVendorGemini = 1,
     iTermAIVendorOpenAI = 2,
     iTermAIVendorLlama = 3,
+    iTermAIVendorAnthropic = 4
 };
 
 // General

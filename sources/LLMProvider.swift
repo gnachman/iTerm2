@@ -97,6 +97,10 @@ struct LLMProvider {
                                                     streaming: false)) {
             return "Deep Seek"
         }
+        if LLMMetadata.hostIsAnthropicAIAPI(url: url(apiKey: "placeholder",
+                                                     streaming: false)) {
+            return "Anthropic"
+        }
         if model.name.contains("llama") {
             return "Llama"
         }
@@ -203,6 +207,8 @@ struct LLMProvider {
             return LLMGeminiResponseParser()
         case .llama, .deepSeek:
             return LlamaResponseParser()
+        case .anthropic:
+            return AnthropicResponseParser()
         @unknown default:
             it_fatalError()
         }
@@ -228,6 +234,9 @@ struct LLMProvider {
 
         case .deepSeek:
             return DeepSeekStreamingResponseParser()
+
+        case .anthropic:
+            return AnthropicStreamingResponseParser()
 
         @unknown default:
             return nil

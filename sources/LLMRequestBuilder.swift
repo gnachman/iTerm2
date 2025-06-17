@@ -24,6 +24,11 @@ struct LLMRequestBuilder {
 
     func body() throws -> Data {
         switch provider.model.api {
+        case .anthropic:
+            try AnthropicRequestBuilder(messages: messages,
+                                        provider: provider,
+                                        functions: functions,
+                                        stream: stream).body()
         case .completions:
             try LegacyBodyRequestBuilder(messages: messages,
                                          provider: provider).body()

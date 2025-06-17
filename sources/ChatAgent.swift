@@ -171,7 +171,7 @@ fileprivate struct MessageToPromptStateMachine {
 }
 
 class ChatAgent {
-    private var conversation: AIConversation
+    private var conversation: AIConversation!
     private let chatID: String
     private var brokerSubscription: ChatBroker.Subscription?
     private var messageToPrompt = MessageToPromptStateMachine()
@@ -200,32 +200,40 @@ class ChatAgent {
         }
     }
     private var pipelineQueue = PipelineQueue<PipelineResult>()
-    private var permissions: Set<RemoteCommand.Content.PermissionCategory>
+    private var permissions: Set<RemoteCommand.Content.PermissionCategory>!
+    private let registrationProvider: AIRegistrationProvider
+
     init(_ chatID: String,
          broker: ChatBroker,
          registrationProvider: AIRegistrationProvider,
          messages: [Message]) {
         self.chatID = chatID
         self.broker = broker
+        self.registrationProvider = registrationProvider
+        permissions = Set<RemoteCommand.Content.PermissionCategory>()
         conversation = AIConversation(registrationProvider: registrationProvider)
         conversation.hostedTools.codeInterpreter = true
-        permissions = Set<RemoteCommand.Content.PermissionCategory>()
-        for message in messages {
+        load(messages: messages)
+    }
+
+    private func load(messages: [Message]) {
+        let aiMessages = messages.compactMap { message in
             switch message.content {
             case .plainText, .markdown, .explanationRequest, .explanationResponse,
                     .remoteCommandRequest, .remoteCommandResponse, .terminalCommand,
                     .multipart:
-                conversation.add(aiMessage(from: message))
-                break
-
+                return aiMessage(from: message)
+                
             case .selectSessionRequest, .clientLocal, .renameChat, .append, .appendAttachment,
                     .commit, .vectorStoreCreated:
-                break
-
+                return nil
+                
             case .setPermissions(let updated):
                 permissions = updated
+                return nil
             }
         }
+        conversation.messages = aiMessages
         updateSystemMessage(permissions)
     }
 
@@ -563,6 +571,7 @@ class ChatAgent {
                                         text: String,
                                         inlineFiles: [LLM.Message.Attachment.AttachmentType.File],
                                         userMessage: Message,
+                                        history: [Message],
                                         parts: [Message.Subpart],
                                         vectorStoreID: String?,
                                         streaming: ((StreamingUpdate) -> ())?,
@@ -605,6 +614,7 @@ class ChatAgent {
                                                          vectorStoreID: nil),
                                      sentDate: userMessage.sentDate,
                                      uniqueID: userMessage.uniqueID),
+                history: history,
                 cancelPendingUploads: false,
                 streaming: streaming,
                 completion: completion)
@@ -622,9 +632,11 @@ class ChatAgent {
     }
 
     func fetchCompletion(userMessage: Message,
+                         history: [Message],
                          streaming: ((StreamingUpdate) -> ())?,
                          completion: @escaping (Message?) -> ()) {
         fetchCompletion(userMessage: userMessage,
+                        history: history,
                         cancelPendingUploads: true,
                         streaming: streaming,
                         completion: completion)
@@ -650,9 +662,11 @@ class ChatAgent {
     }
 
     func fetchCompletion(userMessage: Message,
+                         history: [Message],
                          cancelPendingUploads: Bool,
                          streaming: ((StreamingUpdate) -> ())?,
                          completion: @escaping (Message?) -> ()) {
+        load(messages: history)
         if cancelPendingUploads {
             pipelineQueue.cancelAll()
         }
@@ -667,6 +681,7 @@ class ChatAgent {
                                        text: text,
                                        inlineFiles: inlineFiles,
                                        userMessage: userMessage,
+                                       history: history,
                                        parts: parts,
                                        vectorStoreID: maybeVectorStoreID,
                                        streaming: streaming,
@@ -743,10 +758,15 @@ class ChatAgent {
                     } else if let uuid {
                         streaming(.append(chunk, uuid))
                     }
+                case .willInvoke(_):
+                    break
                 }
             }
         } else {
             streamingCallback = nil
+        }
+        if conversation.busy {
+            conversation.cancelOutstandingOperation()
         }
         conversation.complete(streaming: streamingCallback) { [weak self] result in
             guard let self else {
@@ -1041,7 +1061,7 @@ extension RemoteCommand.Content {
         case .getManPage(_):
             "Returns the content of a command's man page."
         case .createFile:
-            "Creates a file containing a specified string."
+            "Creates a file containing a specified string on the user's computer and then reveals it in Finder."
         }
     }
 }
@@ -1306,7 +1326,7 @@ extension ChatAgent {
         }
     }
 
-    // MARK: - Function Calling Ingra
+    // MARK: - Function Calling Infra
 
     private func renameChat(_ newName: String) {
         broker.publish(message: .init(chatID: chatID,

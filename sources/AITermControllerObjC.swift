@@ -186,6 +186,13 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         it_fatalError()
     }
 
+    func aitermController(_ sender: AITermController, willInvokeFunction function: any LLM.AnyFunction) {
+    }
+
+    func aitermControllerDidCancelOutstandingRequest(_ sender: AITermController) {
+    }
+
+
     func aitermControllerRequestRegistration(_ sender: AITermController,
                                              completion: @escaping (AITermController.Registration) -> ()) {
         AITermControllerRegistrationHelper.instance.requestRegistration(in: ownerWindow) { [weak self] registration in

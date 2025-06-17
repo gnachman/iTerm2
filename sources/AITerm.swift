@@ -21,6 +21,9 @@ protocol AITermControllerDelegate: AnyObject {
                           didFailToUploadFileWithError: Error)
     func aitermControllerDidAddFilesToVectorStore(_ sender: AITermController)
     func aitermControllerDidFailToAddFilesToVectorStore(_ sender: AITermController, error: Error)
+    func aitermController(_ sender: AITermController,
+                          willInvokeFunction function: LLM.AnyFunction)
+    func aitermControllerDidCancelOutstandingRequest(_ sender: AITermController)
 }
 
 struct PendingCommandCanceled: Error {}
@@ -64,7 +67,7 @@ class AITermController {
             case .ground: return "ground"
             case .initialized(query: let query, stream: let stream): return "initialized(\(query), stream=\(stream)"
             case .initializedMessages(messages: let messages, stream: let stream): return "initializedMessages(\(messages.count) messages, stream=\(stream)"
-            case .querySent: return "querySent"
+            case .querySent(_, let sps): return "querySent \(String(describing: sps?.message))"
             case .creatingVectorStore: return "creatingVectorStore"
             case .uploadingFile: return "uploadingFile"
             case .addingFileToVectorStore: return "addingFileToVectorStore"
@@ -101,7 +104,7 @@ class AITermController {
 
     private var state: State {
         didSet {
-            DLog("\(oldValue) -> \(self)")
+            DLog("\(oldValue) -> \(state)")
         }
     }
 
@@ -171,6 +174,10 @@ class AITermController {
         cancellation?.cancel()
         cancellation = nil
         state = .ground
+    }
+
+    func cancelOutstandingOperation() {
+        handle(event: .cancel)
     }
 
     private func handle(event: Event) {
@@ -329,6 +336,7 @@ class AITermController {
             case .pluginError(let error):
                 handle(event: .error(error))
             case .cancel:
+                delegate?.aitermControllerDidCancelOutstandingRequest(self)
                 state = .ground
             case .error(let error):
                 DLog("error: \(error)")
@@ -683,14 +691,16 @@ class AITermController {
                 break
             case .text(let string):
                 if !string.isEmpty {
-                    DLog("drain with content: \(accumulatingMessage)")
+                    DLog("drain sending \(string). Accumulating message is: \(accumulatingMessage)")
                     self.delegate?.aitermController(self, didStreamUpdate: string)
                 }
+                DLog("Reset accumulating message to uninitialized")
                 accumulatingMessage.body = .uninitialized
             case .attachment(let attachment):
                 DLog("drain attachment \(attachment)")
                 self.delegate?.aitermController(self, didStreamAttachment: attachment)
             case .functionCall(let call, _):
+                DLog("calling doFunctionCall")
                 self.doFunctionCall(accumulatingMessage, call: call)
                 accumulatingMessage.body = .uninitialized
             case .functionOutput:
@@ -734,11 +744,15 @@ class AITermController {
                                     accumulatingMessage.role = role
                                 }
                                 if !accumulatingMessage.tryAppend(choice.body) {
+                                    DLog("Failed to append \(choice.body) to \(accumulatingMessage). Drain and start a new message.")
                                     drain()
                                     accumulatingMessage = LLM.Message(
                                         responseID: previousResponseID,
                                         role: choice.role,
                                         body: choice.body)
+                                    DLog("accumulating message is now\n\(accumulatingMessage)")
+                                } else {
+                                    DLog("Appended \(choice.body). accumulating message is now\n\(accumulatingMessage)")
                                 }
                             }
                         }
@@ -755,6 +769,7 @@ class AITermController {
             }
         }
 
+        DLog("parseStreamingResponse will return updated state with accumulating message:\n\(accumulatingMessage)")
         return StreamParserState(message: accumulatingMessage, buffer: rest.data(using: .utf8)!)
     }
 
@@ -804,9 +819,14 @@ class AITermController {
             amended.append(message)
             if let impl = functions.first(where: { $0.decl.name == functionCall.name }) {
                 DLog("Invoke function with arguments \(functionCall.arguments ?? "")")
+                delegate?.aitermController(self, willInvokeFunction: impl)
                 impl.invoke(message: message,
                             json: (functionCall.arguments ?? "").data(using: .utf8)!) { [weak self] result in
-                    guard let self else { return }
+                    DLog("result of function call is \(result)")
+                    guard let self else {
+                        DLog("I have been released")
+                        return
+                    }
                     switch result {
                     case .success(let response):
                         DLog("Response to function call with arguments \(functionCall.arguments ?? ""): \(response)")
@@ -814,10 +834,14 @@ class AITermController {
                                                content: response,
                                                name: functionCall.name,
                                                functionCallID: message.functionCallID))
-                        state = .ground
+                        DLog("Set state to querySent with accumulting message:\n\(message)")
+                        state = .querySent(
+                            messages: amended,
+                            streamParserState: StreamParserState(message: message, buffer: Data()))
                         if let truncate {
                             amended = truncate(amended)
                         }
+                        DLog("Will send request with function call output")
                         request(messages: amended, stream: llmProvider.supportsStreaming)
                         return
                     case .failure(let error):
@@ -839,6 +863,7 @@ extension LLM {
     enum StreamingUpdate {
         case append(String)
         case appendAttachment(LLM.Message.Attachment)
+        case willInvoke(LLM.AnyFunction)
     }
 }
 

@@ -808,7 +808,22 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                     return
                 }
                 switch PickSessionButtonIdentifier(rawValue: identifier) {
-                case .cancel, .none:
+                case .cancel:
+                    if let pickSessionPromise {
+                        SessionSelector.cancel(pickSessionPromise)
+                        self.pickSessionPromise = nil
+                    }
+                    if let chatID {
+                        self.client.respondSuccessfullyToRemoteCommandRequest(
+                            inChat: chatID,
+                            requestUUID: originalMessage.uniqueID,
+                            message: "The user declined to allow this function call to execute.",
+                            functionCallName: originalMessage.functionCallName ?? "Unknown function call name",
+                            functionCallID: originalMessage.functionCallID,
+                            userNotice: nil)
+                    }
+                    return
+                case  .none:
                     return
                 case .pickSession:
                     break

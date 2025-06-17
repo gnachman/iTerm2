@@ -15,6 +15,14 @@ struct AIConversation {
         var uploadFileCompletion: ((Result<String, Error>) -> ())?
         var addFilesToVectorStoreCompletion: ((Error?) -> ())?
 
+        func aitermControllerDidCancelOutstandingRequest(_ sender: AITermController) {
+            guard busy else {
+                return
+            }
+            busy = false
+            completion?(Result.failure(PendingCommandCanceled()))
+        }
+
         func aitermControllerWillSendRequest(_ sender: AITermController) {
             busy = true
         }
@@ -78,6 +86,10 @@ struct AIConversation {
         func aitermControllerDidFailToAddFilesToVectorStore(_ sender: AITermController, error: Error) {
             busy = false
             addFilesToVectorStoreCompletion?(error)
+        }
+
+        func aitermController(_ sender: AITermController, willInvokeFunction function: any LLM.AnyFunction) {
+            streaming?(.willInvoke(function))
         }
     }
 
@@ -169,6 +181,9 @@ struct AIConversation {
         messages.removeAll { $0.responseID == id }
     }
 
+    func cancelOutstandingOperation() {
+        controller.cancelOutstandingOperation()
+    }
     private func cancel() {
         controller.cancel()
         delegate.completion = { _ in }
@@ -281,6 +296,8 @@ struct AIConversation {
                     accumulator.append(.text(string))
                 case .appendAttachment(let attachment):
                     accumulator.append(.attachment(attachment))
+                case .willInvoke:
+                    break
                 }
                 streaming(update)
             }
@@ -301,7 +318,7 @@ struct AIConversation {
                     body: accumulator)
                 amended.messages.append(message)
                 completion(.success(amended))
-            break
+                break
             case .failure(let error):
                 completion(.failure(error))
             break

@@ -59,6 +59,7 @@ class ChatService {
             }
             if agent.supportsStreaming {
                 agent.fetchCompletion(userMessage: message,
+                                      history: messages(chatID: chatID).dropLast(),
                                       streaming: { [weak self] update in
                     switch update {
                     case .begin(let message):
@@ -87,7 +88,9 @@ class ChatService {
                     }
                 })
             } else {
-                agent.fetchCompletion(userMessage: message, streaming: nil) { [weak self] replyMessage in
+                agent.fetchCompletion(userMessage: message,
+                                      history: messages(chatID: chatID).dropLast(),
+                                      streaming: nil) { [weak self] replyMessage in
                     stopTyping()
                     if let replyMessage {
                         self?.broker.publish(message: replyMessage, toChatID: chatID, partial: false)

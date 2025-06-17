@@ -176,10 +176,11 @@ class ChatListModel: ChatListDataSource {
                 var existing = messages[i]
                 existing.append(chunk, useMarkdownIfAmbiguous: true)
                 messages[i] = existing
+                return
             } else {
                 DLog("Drop append “\(chunk)” of nonexistent message \(uuid)")
+                return
             }
-            return
         case let .appendAttachment(attachment: attachment, uuid: uuid):
             if let i = index(ofMessageID: uuid, inChat: chatID),
                let messages =  messages(forChat: chatID, createIfNeeded: false) {

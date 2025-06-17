@@ -26,6 +26,10 @@ class AIModel: NSObject {
             urlGuess = "http://localhost:11434/api/chat"
             apiGuess = .llama
             featuresGuess = [.streaming, .functionCalling]
+        } else if modelName.contains("claude") {
+            urlGuess = "https://api.anthropic.com/v1/messages"
+            apiGuess = .anthropic
+            featuresGuess = [.streaming, .functionCalling]
         } else if modelName.contains("gpt") || modelName.hasPrefix("o") {
             if legacy {
                 urlGuess = "https://api.openai.com/v1/completions"
@@ -123,6 +127,10 @@ class AIMetadata: NSObject {
         return AIMetadata.llama_3_3_latest
     }
 
+    static var recommendedAnthropicModel: Model {
+        return AIMetadata.claude_4_sonnet
+    }
+
     private static let gpt4_1 = Model(
         name: "gpt-4.1",
         contextWindowTokens: 1_000_000,
@@ -157,6 +165,24 @@ class AIMetadata: NSObject {
         features: [.streaming, .functionCalling]
     )
 
+    // Latest Claude 4 models with official aliases
+    private static let claude_4_sonnet = Model(
+        name: "claude-sonnet-4-0",
+        contextWindowTokens: 200_000,
+        maxResponseTokens: 64_000,
+        url: "https://api.anthropic.com/v1/messages",
+        api: .anthropic,
+        features: [.functionCalling, .streaming]
+    )
+
+    private static let claude_4_opus = Model(
+        name: "claude-opus-4-0",
+        contextWindowTokens: 200_000,
+        maxResponseTokens: 32_000,
+        url: "https://api.anthropic.com/v1/messages",
+        api: .anthropic,
+        features: [.functionCalling, .streaming]
+    )
     private let models: [Model] = [
         // The first model will be the default.
         AIMetadata.gpt4_1,
@@ -257,6 +283,11 @@ class AIMetadata: NSObject {
             features: [.functionCalling, .streaming]
         ),
 
+        // MARK: - Anthropic Models
+
+        AIMetadata.claude_4_sonnet,
+        AIMetadata.claude_4_opus,
+
         // MARK: - Local Models (via Ollama)
 
         // Llama models
@@ -309,6 +340,9 @@ class AIMetadata: NSObject {
         }
         if model.contains("llama") {
             return .completions
+        }
+        if model.contains("claude") {
+            return .anthropic
         }
         return fallback
     }

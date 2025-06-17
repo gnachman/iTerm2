@@ -155,7 +155,7 @@ struct LlamaBodyRequestBuilder {
                     case .text(let existingTextContent):
                         combined[combined.count - 1] = .text(.init(text: existingTextContent.text + "\n" + textContent.text))
                     }
-                case .file(let file):
+                case .file:
                     combined.append(part)
                 }
             }
