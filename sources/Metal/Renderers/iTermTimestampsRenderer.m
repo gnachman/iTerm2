@@ -88,6 +88,7 @@
                                                                          retina:self.configuration.scale > 1
                                                                            font:self.font
                                                                        obscured:self.obscured];
+        self->_drawHelper.timestampBaseline = self.timestampBaseline;
         [_timestamps enumerateObjectsUsingBlock:^(NSDate * _Nonnull date, NSUInteger idx, BOOL * _Nonnull stop) {
             [self->_drawHelper setDate:date forLine:idx];
         }];
@@ -108,7 +109,6 @@
     const NSEdgeInsets margins = self.margins;
     // The right gutter includes the scrollbar if legacy scrollbars are on.
     const CGFloat rightGutterWidth = self.configuration.viewportSize.x - margins.left - margins.right - gridWidth - self.configuration.rightExtraPixels;
-
     [_timestamps enumerateObjectsUsingBlock:^(NSDate * _Nonnull date, NSUInteger idx, BOOL * _Nonnull stop) {
         iTermTimestampKey *key = [[iTermTimestampKey alloc] init];
         key.width = visibleWidth;
