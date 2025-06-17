@@ -49,6 +49,10 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
 }
 
 - (void)startWithSession:(PTYSession *)session move:(BOOL)move {
+    if (session_) {
+        DLog(@"Decline because we already have a session %@", session_);
+        return;
+    }
     DLog(@"startWithSession:%@ move:%@\n%@", session, @(move), [NSThread callStackSymbols]);
     isMove_ = move;
     session_ = [session liveSession];
