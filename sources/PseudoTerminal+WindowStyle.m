@@ -864,6 +864,14 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     [self updateForTransparency:self.ptyWindow];
     [self didFinishFullScreenTransitionSuccessfully:YES];
     [self updateVariables];
+    [self fulfillFullScreenPromise];
+}
+
+- (void)fulfillFullScreenPromise {
+    DLog(@"%@", self.fullScreenEnteredSeal);
+    [self.fullScreenEnteredSeal fulfill:[NSNull null]];
+    self.fullScreenEnteredSeal = nil;
+    self.fullScreenPromise = nil;
 }
 
 - (void)didFinishFullScreenTransitionSuccessfully:(BOOL)success {
@@ -895,6 +903,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         _fullScreenRetryCount = 0;
         [self.contentView didChangeCompactness];
         [self.contentView layoutSubviews];
+        [self fulfillFullScreenPromise];
     }
     [self updateVariables];
 }

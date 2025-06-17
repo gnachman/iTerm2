@@ -1090,7 +1090,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [_swipeIdentifier release];
     [_fieldEditor release];
     [_rightExtraJoiner release];
-
+    [_fullScreenEnteredSeal rejectWithDefaultError];
+    [_fullScreenPromise release];
+    [_fullScreenEnteredSeal release];
     [super dealloc];
 }
 

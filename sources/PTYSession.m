@@ -3018,7 +3018,18 @@ ITERM_WEAKLY_REFERENCEABLE
                       maybeScaleFactor:_textview.window.backingScaleFactor
                                 isUTF8:isUTF8
                             completion:^{
-                    [self sendInitialText];
+                    id<iTermWindowController> pty = self.delegate.realParentWindow;
+                    if (pty.fullScreenPromise) {
+                        DLog(@"Wait for window to enter full screen before sending initial text");
+                        __weak __typeof(self) weakSelf = self;
+                        [pty.fullScreenPromise then:^(id  _Nonnull value) {
+                            DLog(@"Fullscreen promise fulfilled");
+                            [weakSelf sendInitialText];
+                        }];
+                    } else {
+                        DLog(@"Sending initial text immediately");
+                        [self sendInitialText];
+                    }
                     if (completion) {
                         completion(YES);
                     }

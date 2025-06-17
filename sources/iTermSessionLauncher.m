@@ -123,6 +123,11 @@
     BOOL toggle = NO;
     PseudoTerminal *windowController = [self possiblyNewWindowControllerForProfile:profile
                                                          toggleFullScreen:&toggle];
+    if (toggle) {
+        windowController.fullScreenPromise = [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
+            windowController.fullScreenEnteredSeal = seal;
+        }];
+    }
     __weak __typeof(self) weakSelf = self;
     [self makeSessionWithProfile:profile
                 windowController:windowController

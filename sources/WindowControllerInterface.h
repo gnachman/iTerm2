@@ -16,6 +16,8 @@
 @class PTYTabView;
 @class TmuxController;
 @protocol VT100RemoteHostReading;
+@class iTermPromise;
+@protocol iTermPromiseSeal;
 
 @class iTermRestorableSession;
 
@@ -105,6 +107,8 @@
 @property(nonatomic, readonly) NSArray *tabs;
 @property(nonatomic, readonly) BOOL windowIsResizing;
 @property(nonatomic, readonly) BOOL closing;
+@property(nonatomic, strong) iTermPromise *fullScreenPromise;
+@property(nonatomic, strong) id<iTermPromiseSeal> fullScreenEnteredSeal;
 
 #pragma mark - Basics
 

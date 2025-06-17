@@ -102,6 +102,8 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 @property(nonatomic, readonly) NSWindowCollectionBehavior desiredWindowCollectionBehavior;
 @property(nonatomic, readonly) BOOL isReplacingWindow;
 @property(nonatomic, readonly) BOOL closing;
+@property(nonatomic, strong) iTermPromise *fullScreenPromise;
+@property(nonatomic, strong) id<iTermPromiseSeal> fullScreenEnteredSeal;
 
 // Draws a mock-up of a window arrangement into the current graphics context.
 // |frames| gives an array of NSValue's having NSRect values for each screen,
