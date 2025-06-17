@@ -9,7 +9,7 @@
 	url = https://github.com/gnachman/Sparkle.git
 [submodule "submodules/libsixel"]
 	path = submodules/libsixel
-	url = //github.com/gnachman/libsixel
+	url = https://github.com/gnachman/libsixel
 [submodule "submodules/openssl"]
 	path = submodules/openssl
 	url = https://github.com/gnachman/openssl
