@@ -789,8 +789,13 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
 }
 
 - (PreferenceInfo *)infoForControl:(NSControl *)control {
-    PreferenceInfo *info = [_keyMap objectForKey:control];
+    PreferenceInfo *info = [self safeInfoForControl:control];
     assert(info);
+    return info;
+}
+
+- (PreferenceInfo *)safeInfoForControl:(NSControl *)control {
+    PreferenceInfo *info = [_keyMap objectForKey:control];
     return info;
 }
 

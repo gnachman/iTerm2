@@ -116,6 +116,7 @@ extern NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues;
 
 // Returns PreferenceInfo for a control bound with defineControl:key:type:.
 - (PreferenceInfo *)infoForControl:(NSControl *)control;
+- (PreferenceInfo *)safeInfoForControl:(NSControl *)control;
 
 - (void)postRefreshNotification;
 

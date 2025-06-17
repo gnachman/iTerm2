@@ -304,7 +304,7 @@ static PreferencePanel *gSessionsPreferencePanel;
     if (!vc) {
         return nil;
     }
-    PreferenceInfo *info = [vc infoForControl:textField];
+    PreferenceInfo *info = [vc safeInfoForControl:textField];
     if (!info) {
         return nil;
     }
