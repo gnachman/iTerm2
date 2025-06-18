@@ -44,7 +44,8 @@ typedef NS_ENUM(NSInteger, iTermGeneralProfilePreferenceCustomCommandTag) {
     iTermGeneralProfilePreferenceCustomCommandTagCustom = 0,
     iTermGeneralProfilePreferenceCustomCommandTagLoginShell = 1,
     iTermGeneralProfilePreferenceCustomCommandTagCustomShell = 2,
-    iTermGeneralProfilePreferenceCustomCommandTagSSH = 3
+    iTermGeneralProfilePreferenceCustomCommandTagSSH = 3,
+    iTermGeneralProfilePreferenceCustomCommandTagBrowser = 4
 };
 
 // Tags for _initialDirectoryType
@@ -244,6 +245,10 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
          settingChanged:^(id sender) { [weakSelf commandTypeDidChange]; }
                  update:^BOOL { [weakSelf updateCommandType]; return YES; }];
 
+    if ([iTermAdvancedSettingsModel browserProfiles]) {
+        [_commandType.menu addItemWithTitle:@"Browser" action:nil keyEquivalent:@""];
+        _commandType.menu.itemArray.lastObject.tag = iTermGeneralProfilePreferenceCustomCommandTagBrowser;
+    }
     _customCommand.cell.usesSingleLineMode = YES;
     _customCommand.hidden = YES;
 
@@ -710,6 +715,10 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         case iTermGeneralProfilePreferenceCustomCommandTagSSH:
             *reasonOut = @"This will only work if the remote shell is compatible.";
             return YES;
+
+        case iTermGeneralProfilePreferenceCustomCommandTagBrowser:
+            *reasonOut = @"Not available with browser tabs";
+            return NO;
     }
     return NO;
 }
@@ -718,7 +727,8 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     [super updateEnabledState];
     if ([[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomValue] ||
         [[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomShellValue] ||
-        [[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeSSHValue]) {
+        [[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeSSHValue] ||
+        [[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue]) {
         _customCommand.hidden = NO;
         _customCommand.enabled = YES;
         _customCommand.stringValue = [self stringForKey:KEY_COMMAND_LINE];
@@ -1044,6 +1054,10 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
             _customCommand.delegate = _commandDelegate;
             [self setString:@"" forKey:KEY_COMMAND_LINE];
             _customCommand.stringValue = @"";
+        case iTermGeneralProfilePreferenceCustomCommandTagBrowser:
+            value = kProfilePreferenceCommandTypeBrowserValue;
+            _customCommand.delegate = _commandDelegate;
+            [self setString:@"" forKey:KEY_COMMAND_LINE];
             break;
     }
     [self setString:value forKey:KEY_CUSTOM_COMMAND];
@@ -1063,6 +1077,9 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     } else if ([value isEqualToString:kProfilePreferenceCommandTypeSSHValue]) {
         [_commandType selectItemWithTag:iTermGeneralProfilePreferenceCustomCommandTagSSH];
         _customCommand.placeholderString = @"Arguments to ssh";
+    } else if ([value isEqualToString:kProfilePreferenceCommandTypeBrowserValue]) {
+        [_commandType selectItemWithTag:iTermGeneralProfilePreferenceCustomCommandTagBrowser];
+        _customCommand.placeholderString = @"URL";
     } else {
         [_commandType selectItemWithTag:iTermGeneralProfilePreferenceCustomCommandTagLoginShell];
     }

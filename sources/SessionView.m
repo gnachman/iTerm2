@@ -304,6 +304,56 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return self;
 }
 
+- (void)becomeBrowser {
+    _browserViewController = [[iTermBrowserViewController alloc] init];
+    
+    // Set initial frame to avoid constraint conflicts
+    CGFloat titleHeight = _showTitle ? _title.frame.size.height : 0;
+    CGFloat reservedSpaceOnBottom = _showBottomStatusBar ? iTermGetStatusBarHeight() : 0;
+    NSRect initialFrame = NSMakeRect(0,
+                                     reservedSpaceOnBottom,
+                                     self.frame.size.width,
+                                     self.frame.size.height - titleHeight - reservedSpaceOnBottom);
+    _browserViewController.view.frame = initialFrame;
+    
+    [self insertSubview:_browserViewController.view atIndex:_contentViewIndex + 1];
+    
+    // Hide terminal views when in browser mode
+    [self setTerminalViewsHidden:YES];
+    
+    [self updateLayout];
+}
+
+- (BOOL)isBrowser {
+    return _browserViewController != nil;
+}
+
+- (void)setTerminalViewsHidden:(BOOL)hidden {
+    _scrollview.hidden = hidden;
+    if (_metalView) {
+        _metalView.hidden = hidden;
+    }
+    if (_legacyView) {
+        _legacyView.hidden = hidden;
+    }
+    _imageView.hidden = hidden;
+    if (_legacyScrollerBackgroundView) {
+        _legacyScrollerBackgroundView.hidden = hidden;
+    }
+    if (_backgroundColorView) {
+        _backgroundColorView.hidden = hidden;
+    }
+    if (_smearView) {
+        _smearView.hidden = hidden;
+    }
+    if (_searchResultsMinimap) {
+        _searchResultsMinimap.hidden = hidden;
+    }
+    if (_marksMinimap) {
+        _marksMinimap.hidden = hidden;
+    }
+}
+
 - (void)setImage:(iTermImageWrapper *)image {
     _imageView.image = image;
     [self updateImageAndBackgroundViewVisibility];
@@ -662,7 +712,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
         iTermMetalClipView *metalClipView = (iTermMetalClipView *)_scrollview.contentView;
         metalClipView.useMetal = useMetal;
-        _legacyView.hidden = !useMetal;
+        // In browser mode, always keep legacy view hidden
+        _legacyView.hidden = !useMetal || self.isBrowser;
         
         [self updateLayout];
         [self setNeedsDisplay:YES];
@@ -782,7 +833,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     // first frame. Until then it's just a solid gray rectangle.
     _metalView.paused = YES;
     _metalView.enableSetNeedsDisplay = NO;
-    _metalView.hidden = NO;
+    // In browser mode, keep metal view hidden
+    _metalView.hidden = self.isBrowser;
     _metalView.alphaValue = 0;
 
     // Start the metal driver going. It will receive delegate calls from iTermMTKView that kick off
@@ -826,6 +878,11 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)updateImageAndBackgroundViewVisibility {
+    // In browser mode, keep terminal views hidden
+    if (self.isBrowser) {
+        return;
+    }
+    
     [CATransaction begin];
     [CATransaction setDisableActions:YES];
     if (_metalView.alphaValue == 0) {
@@ -974,6 +1031,9 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         }
         if (self.composerHeight > 0) {
             [self.delegate sessionViewUpdateComposerFrame];
+        }
+        if (_browserViewController) {
+            [self updateBrowserViewFrame];
         }
     } else {
         DLog(@"Keep everything top aligned.");
@@ -1653,7 +1713,8 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 }
 
 - (void)setSuppressLegacyDrawing:(BOOL)suppressLegacyDrawing {
-    _legacyView.hidden = suppressLegacyDrawing;
+    // In browser mode, always keep legacy view hidden
+    _legacyView.hidden = suppressLegacyDrawing || self.isBrowser;
 }
 
 - (void)smearCursorFrom:(NSRect)from to:(NSRect)to color:(NSColor *)color {
@@ -1983,8 +2044,29 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     DLog(@"Returning");
 }
 
+- (void)updateBrowserViewFrame {
+    if (!_browserViewController) {
+        return;
+    }
+    
+    // Browser view should cover the entire content area, similar to how scrollview is positioned
+    CGFloat titleHeight = _showTitle ? _title.frame.size.height : 0;
+    CGFloat reservedSpaceOnBottom = _showBottomStatusBar ? iTermGetStatusBarHeight() : 0;
+    
+    NSRect browserFrame = NSMakeRect(0,
+                                     reservedSpaceOnBottom,
+                                     self.frame.size.width,
+                                     self.frame.size.height - titleHeight - reservedSpaceOnBottom);
+    
+    _browserViewController.view.frame = browserFrame;
+}
+
 - (void)updateMinimapFrameAnimated:(BOOL)animated {
     if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
+        return;
+    }
+    // In browser mode, minimaps should stay hidden
+    if (self.isBrowser) {
         return;
     }
     NSRect frame = [self convertRect:_scrollview.verticalScroller.bounds

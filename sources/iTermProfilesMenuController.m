@@ -199,7 +199,8 @@ static id gAltOpenAllRepresentedObject;
     [item setRepresentedObject:[guid copy]];
     [item setTag:tag];
     if ([[NSString castFrom:b[KEY_CUSTOM_COMMAND]] isEqualToString:kProfilePreferenceCommandTypeCustomValue] ||
-        [[NSString castFrom:b[KEY_CUSTOM_COMMAND]] isEqualToString:kProfilePreferenceCommandTypeSSHValue]) {
+        [[NSString castFrom:b[KEY_CUSTOM_COMMAND]] isEqualToString:kProfilePreferenceCommandTypeSSHValue] ||
+        [[NSString castFrom:b[KEY_CUSTOM_COMMAND]] isEqualToString:kProfilePreferenceCommandTypeBrowserValue]) {
         item.toolTip = [NSString castFrom:b[KEY_COMMAND_LINE]] ?: @"";
     }
     [menu insertItem:item atIndex:pos];

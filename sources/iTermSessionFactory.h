@@ -39,6 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, copy) NSString *arrangementName;
 @property (nonatomic, strong) id<iTermPartialAttachment> partialAttachment;
 @property (nonatomic) BOOL fromArrangement;
+@property (nonatomic) BOOL browser;
 
 + (instancetype)launchRequestWithSession:(PTYSession *)aSession
                                canPrompt:(BOOL)canPrompt

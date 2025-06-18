@@ -2951,6 +2951,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)startProgram:(NSString *)command
                  ssh:(BOOL)ssh
+             browser:(BOOL)browser
          environment:(NSDictionary *)environment
          customShell:(NSString *)customShell
               isUTF8:(BOOL)isUTF8
@@ -2958,9 +2959,10 @@ ITERM_WEAKLY_REFERENCEABLE
          arrangement:(NSString *)arrangementName
      fromArrangement:(BOOL)fromArrangement
           completion:(void (^)(BOOL))completion {
-    DLog(@"startProgram:%@ ssh:%@ environment:%@ customShell:%@ isUTF8:%@ substitutions:%@ arrangementName:%@ fromArrangement:%@, self=%@",
+    DLog(@"startProgram:%@ ssh:%@ browser:%@ environment:%@ customShell:%@ isUTF8:%@ substitutions:%@ arrangementName:%@ fromArrangement:%@, self=%@",
          command,
          @(ssh),
+         @(browser),
          environment,
          customShell,
          @(isUTF8),
@@ -2975,6 +2977,12 @@ ITERM_WEAKLY_REFERENCEABLE
     self.isUTF8 = isUTF8;
     self.substitutions = substitutions ?: @{};
     _sshState = ssh ? iTermSSHStateProfile : iTermSSHStateNone;
+    if (@available(macOS 11, *)) {
+        if (browser) {
+            [_view becomeBrowser];
+            return;
+        }
+    }
     [self computeArgvForCommand:command substitutions:substitutions completion:^(NSArray<NSString *> *argv) {
         DLog(@"argv=%@", argv);
         NSDictionary *env = [self environmentForNewJobFromEnvironment:environment ?: @{}
@@ -4059,6 +4067,7 @@ ITERM_WEAKLY_REFERENCEABLE
     __weak __typeof(self) weakSelf = self;
     [self startProgram:_program
                    ssh:_sshState == iTermSSHStateProfile
+               browser:_view.isBrowser
            environment:_environment
            customShell:_customShell
                 isUTF8:_isUTF8
