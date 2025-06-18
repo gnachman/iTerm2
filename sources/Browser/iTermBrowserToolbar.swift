@@ -12,6 +12,7 @@
     func browserToolbarDidTapReload()
     func browserToolbarDidTapStop()
     func browserToolbarDidSubmitURL(_ url: String)
+    func browserToolbarDidTapSettings()
 }
 
 @available(macOS 11.0, *)
@@ -23,6 +24,7 @@ class iTermBrowserToolbar: NSView {
     private var reloadButton: NSButton!
     private var stopButton: NSButton!
     private var urlField: NSTextField!
+    private var settingsButton: NSButton!
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -72,6 +74,13 @@ class iTermBrowserToolbar: NSView {
         urlField.action = #selector(urlFieldSubmitted)
         urlField.translatesAutoresizingMaskIntoConstraints = false
         addSubview(urlField)
+        
+        settingsButton = NSButton()
+        settingsButton.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: "Settings")
+        settingsButton.target = self
+        settingsButton.action = #selector(settingsTapped)
+        settingsButton.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(settingsButton)
     }
 
     private func setupConstraints() {
@@ -99,8 +108,13 @@ class iTermBrowserToolbar: NSView {
             
             urlField.leadingAnchor.constraint(equalTo: reloadButton.trailingAnchor, constant: 12),
             urlField.centerYAnchor.constraint(equalTo: centerYAnchor),
-            urlField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
-            urlField.heightAnchor.constraint(equalToConstant: 24)
+            urlField.trailingAnchor.constraint(equalTo: settingsButton.leadingAnchor, constant: -12),
+            urlField.heightAnchor.constraint(equalToConstant: 24),
+            
+            settingsButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
+            settingsButton.centerYAnchor.constraint(equalTo: centerYAnchor),
+            settingsButton.widthAnchor.constraint(equalToConstant: 32),
+            settingsButton.heightAnchor.constraint(equalToConstant: 32)
         ])
     }
 
@@ -125,6 +139,10 @@ class iTermBrowserToolbar: NSView {
         if !urlString.isEmpty {
             delegate?.browserToolbarDidSubmitURL(urlString)
         }
+    }
+    
+    @objc private func settingsTapped() {
+        delegate?.browserToolbarDidTapSettings()
     }
     
     // MARK: - Public Interface

@@ -26,8 +26,8 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler {
     private var lastRequestedURL: URL?
     private var lastFailedURL: URL?
     private var errorHandler = iTermBrowserErrorHandler()
+    private var settingsHandler = iTermBrowserSettingsHandler()
     private var navigationToURL: [WKNavigation: URL] = [:]
-    private static let errorURL = URL(string: "iterm2-about:error")!
 
     override init() {
         super.init()
@@ -91,7 +91,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler {
         errorHandler.setPendingErrorHTML(errorHTML)
         
         // Navigate to iterm2-about:error which our custom URL scheme handler will serve
-        webView.load(URLRequest(url: Self.errorURL))
+        webView.load(URLRequest(url: iTermBrowserErrorHandler.errorURL))
     }
     
     // MARK: - Private Helpers
@@ -100,7 +100,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler {
         let trimmed = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
         
         // If it already has a scheme, use as-is
-        if trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://") {
+        if trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://") || trimmed.hasPrefix("iterm2-about:") {
             return URL(string: trimmed)
         }
         
@@ -148,7 +148,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler {
         if input.range(of: hostPattern, options: .regularExpression) != nil {
             return true
         }
-        
+
         return false
     }
     
@@ -170,10 +170,12 @@ extension iTermBrowserManager {
             return
         }
         
-        if url == Self.errorURL {
+        switch url.absoluteString {
+        case iTermBrowserErrorHandler.errorURL.absoluteString:
             errorHandler.start(urlSchemeTask: urlSchemeTask, url: url)
-        } else {
-            // Handle other iterm2-about: URLs if needed
+        case iTermBrowserSettingsHandler.settingsURL.absoluteString:
+            settingsHandler.start(urlSchemeTask: urlSchemeTask, url: url)
+        default:
             urlSchemeTask.didFailWithError(NSError(domain: "iTermBrowserManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unknown iterm2-about: URL"]))
         }
     }
@@ -198,7 +200,7 @@ extension iTermBrowserManager: WKNavigationDelegate {
     
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         // Clear failed URL on successful navigation to a real page (not error pages)
-        if webView.url != Self.errorURL {
+        if webView.url != iTermBrowserErrorHandler.errorURL {
             lastFailedURL = nil
         }
         
@@ -233,7 +235,7 @@ extension iTermBrowserManager: WKNavigationDelegate {
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         // Store the target URL for this navigation so we can use it in error handlers
         // But don't overwrite if this is our error page navigation
-        if let targetURL = navigationAction.request.url, targetURL != Self.errorURL {
+        if let targetURL = navigationAction.request.url, targetURL != iTermBrowserErrorHandler.errorURL {
             lastRequestedURL = targetURL
         }
         
