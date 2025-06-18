@@ -712,6 +712,7 @@ backgroundColor:(NSColor *)backgroundColor;
 
 - (void)startProgram:(NSString *)program
                  ssh:(BOOL)ssh
+             browser:(BOOL)browser
          environment:(NSDictionary *)prog_env
          customShell:(NSString *)customShell
               isUTF8:(BOOL)isUTF8

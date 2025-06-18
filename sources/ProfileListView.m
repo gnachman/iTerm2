@@ -783,6 +783,8 @@ const CGFloat kDefaultTagsWidth = 80;
             theString = [NSString stringWithFormat:@"ssh %@", bookmark[KEY_COMMAND_LINE]];
         } else if ([customCommand isEqualToString:kProfilePreferenceCommandTypeLoginShellValue]) {
             theString = @"Login shell";
+        } else if ([customCommand isEqualToString:kProfilePreferenceCommandTypeBrowserValue]) {
+            theString = @"URL";
         }
         return [self attributedStringForCommand:theString
                                        selected:[[tableView_ selectedRowIndexes] containsIndex:rowIndex]

@@ -41,6 +41,7 @@
     [aCommand suspendExecution];
     [self startProgram:args[@"command"]
                    ssh:NO
+               browser:NO
            environment:@{}
            customShell:nil
                 isUTF8:[args[@"isUTF8"] boolValue]

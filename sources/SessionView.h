@@ -35,6 +35,7 @@
 #import "SplitSelectionView.h"
 
 @class iTermAnnouncementViewController;
+@class iTermBrowserViewController;
 @class iTermFindDriver;
 @class iTermImageWrapper;
 @class iTermIncrementalMinimapView;
@@ -208,6 +209,10 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 // bar or bottom per-pane status bar.
 @property(nonatomic, readonly) NSEdgeInsets extraMargins;
 @property (nonatomic) CGFloat actualRightExtra;
+@property (nonatomic, readonly) BOOL isBrowser;
+@property (nonatomic, readonly) iTermBrowserViewController *browserViewController NS_AVAILABLE_MAC(11);
+
+- (void)becomeBrowser NS_AVAILABLE_MAC(11);
 
 - (void)setTerminalBackgroundColor:(NSColor *)color;
 
