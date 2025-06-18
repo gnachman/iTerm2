@@ -96,6 +96,10 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
         browserManager.loadURL(url)
     }
     
+    func browserToolbarDidTapSettings() {
+        browserManager.loadURL(iTermBrowserSettingsHandler.settingsURL.absoluteString)
+    }
+    
     // MARK: - iTermBrowserManagerDelegate
     
     func browserManager(_ manager: iTermBrowserManager, didUpdateURL url: String?) {
