@@ -104,14 +104,52 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler {
             return URL(string: trimmed)
         }
         
-        // If it looks like a domain, add https://
-        if trimmed.contains(".") && !trimmed.contains(" ") {
+        // If it looks like a domain/IP, add https://
+        if isValidDomainOrIP(trimmed) {
             return URL(string: "https://\(trimmed)")
         }
         
-        // Otherwise, treat as search query (could add search engine later)
-        // For now, just try to make it a valid URL
-        return URL(string: "https://\(trimmed)")
+        // Otherwise, treat as search query and send to search.
+        let searchQuery = trimmed.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? trimmed
+        return URL(string: iTermAdvancedSettingsModel.searchCommand().replacingOccurrences(of: "%@", with: searchQuery))
+    }
+    
+    private func isValidDomainOrIP(_ input: String) -> Bool {
+        // Check if it contains spaces (definitely not a URL)
+        if input.contains(" ") {
+            return false
+        }
+        
+        // Check for IPv4 address pattern
+        let ipv4Pattern = #"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$"#
+        if input.range(of: ipv4Pattern, options: .regularExpression) != nil {
+            return true
+        }
+        
+        // Check for IPv6 address pattern (basic check)
+        if input.hasPrefix("[") && input.hasSuffix("]") {
+            return true
+        }
+        
+        // Check for localhost or local addresses
+        if input.hasPrefix("localhost") || input.hasPrefix("127.0.0.1") {
+            return true
+        }
+        
+        // Check if it looks like a domain (contains a dot and no spaces)
+        if input.contains(".") && !input.contains(" ") {
+            // Additional validation: must have at least one character before and after the dot
+            let components = input.split(separator: ".")
+            return components.count >= 2 && components.allSatisfy { !$0.isEmpty }
+        }
+        
+        // Check for intranet-style hostnames (single word, possibly with port)
+        let hostPattern = #"^[a-zA-Z0-9-]+(:\d+)?$"#
+        if input.range(of: hostPattern, options: .regularExpression) != nil {
+            return true
+        }
+        
+        return false
     }
     
     private func notifyDelegateOfUpdates() {
