@@ -10,6 +10,7 @@
     func browserToolbarDidTapBack()
     func browserToolbarDidTapForward()
     func browserToolbarDidTapReload()
+    func browserToolbarDidTapStop()
     func browserToolbarDidSubmitURL(_ url: String)
 }
 
@@ -20,6 +21,7 @@ class iTermBrowserToolbar: NSView {
     private var backButton: NSButton!
     private var forwardButton: NSButton!
     private var reloadButton: NSButton!
+    private var stopButton: NSButton!
     private var urlField: NSTextField!
 
     override init(frame frameRect: NSRect) {
@@ -56,6 +58,14 @@ class iTermBrowserToolbar: NSView {
         reloadButton.translatesAutoresizingMaskIntoConstraints = false
         addSubview(reloadButton)
         
+        stopButton = NSButton()
+        stopButton.image = NSImage(systemSymbolName: "xmark", accessibilityDescription: "Stop")
+        stopButton.target = self
+        stopButton.action = #selector(stopTapped)
+        stopButton.translatesAutoresizingMaskIntoConstraints = false
+        stopButton.isHidden = true  // Initially hidden, shown during loading
+        addSubview(stopButton)
+        
         urlField = NSTextField()
         urlField.placeholderString = "Enter URL"
         urlField.target = self
@@ -81,6 +91,12 @@ class iTermBrowserToolbar: NSView {
             reloadButton.widthAnchor.constraint(equalToConstant: 32),
             reloadButton.heightAnchor.constraint(equalToConstant: 32),
             
+            // Stop button shares same position as reload button
+            stopButton.leadingAnchor.constraint(equalTo: forwardButton.trailingAnchor, constant: 8),
+            stopButton.centerYAnchor.constraint(equalTo: centerYAnchor),
+            stopButton.widthAnchor.constraint(equalToConstant: 32),
+            stopButton.heightAnchor.constraint(equalToConstant: 32),
+            
             urlField.leadingAnchor.constraint(equalTo: reloadButton.trailingAnchor, constant: 12),
             urlField.centerYAnchor.constraint(equalTo: centerYAnchor),
             urlField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
@@ -100,6 +116,10 @@ class iTermBrowserToolbar: NSView {
         delegate?.browserToolbarDidTapReload()
     }
     
+    @objc private func stopTapped() {
+        delegate?.browserToolbarDidTapStop()
+    }
+    
     @objc private func urlFieldSubmitted() {
         let urlString = urlField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         if !urlString.isEmpty {
@@ -111,6 +131,11 @@ class iTermBrowserToolbar: NSView {
     
     func updateURL(_ url: String?) {
         urlField.stringValue = url ?? ""
+    }
+    
+    func setLoading(_ loading: Bool) {
+        reloadButton.isHidden = loading
+        stopButton.isHidden = !loading
     }
 }
 

@@ -88,6 +88,10 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
         browserManager.reload()
     }
     
+    func browserToolbarDidTapStop() {
+        browserManager.stop()
+    }
+    
     func browserToolbarDidSubmitURL(_ url: String) {
         browserManager.loadURL(url)
     }
@@ -111,15 +115,15 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
     }
     
     func browserManager(_ manager: iTermBrowserManager, didStartNavigation navigation: WKNavigation?) {
-        // Could show loading indicator
+        toolbar.setLoading(true)
     }
     
     func browserManager(_ manager: iTermBrowserManager, didFinishNavigation navigation: WKNavigation?) {
-        // Could hide loading indicator
+        toolbar.setLoading(false)
     }
     
     func browserManager(_ manager: iTermBrowserManager, didFailNavigation navigation: WKNavigation?, withError error: Error) {
-        // Could show error message
+        toolbar.setLoading(false)
     }
 }
 
