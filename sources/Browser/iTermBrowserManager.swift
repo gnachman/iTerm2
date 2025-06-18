@@ -20,7 +20,7 @@
 
 @available(macOS 11.0, *)
 @objc(iTermBrowserManager)
-class iTermBrowserManager: NSObject, WKURLSchemeHandler {
+class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler {
     weak var delegate: iTermBrowserManagerDelegate?
     private(set) var webView: WKWebView!
     private var lastRequestedURL: URL?
@@ -28,6 +28,9 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler {
     private var errorHandler = iTermBrowserErrorHandler()
     private var settingsHandler = iTermBrowserSettingsHandler()
     private var navigationToURL: [WKNavigation: URL] = [:]
+    private var currentPageURL: URL?
+    private var hasSettingsMessageHandler = false
+    private static let settingsMessageHandlerName = "iterm2BrowserSettings"
 
     override init() {
         super.init()
@@ -158,6 +161,46 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler {
         delegate?.browserManager(self, didUpdateCanGoBack: webView.canGoBack)
         delegate?.browserManager(self, didUpdateCanGoForward: webView.canGoForward)
     }
+    
+    private func injectMessageHandlersIfNeeded() {
+        guard let currentURL = webView.url?.absoluteString else { return }
+        
+        if currentURL == iTermBrowserSettingsHandler.settingsURL.absoluteString {
+            // Add message handler for settings only if not already added
+            if !hasSettingsMessageHandler {
+                webView.configuration.userContentController.add(self, name: Self.settingsMessageHandlerName)
+                hasSettingsMessageHandler = true
+            }
+            settingsHandler.injectSettingsJavaScript(into: webView)
+        } else {
+            // Remove message handler when not on settings page
+            if hasSettingsMessageHandler {
+                webView.configuration.userContentController.removeScriptMessageHandler(forName: Self.settingsMessageHandlerName)
+                hasSettingsMessageHandler = false
+            }
+        }
+    }
+    
+}
+
+// MARK: - WKScriptMessageHandler
+
+@available(macOS 11.0, *)
+extension iTermBrowserManager {
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        guard message.name == Self.settingsMessageHandlerName,
+              let action = message.body as? String else {
+            return
+        }
+        
+        // Verify the message is coming from our settings page
+        guard let currentURL = currentPageURL,
+              currentURL.absoluteString == iTermBrowserSettingsHandler.settingsURL.absoluteString else {
+            return
+        }
+        
+        settingsHandler.handleSettingsAction(action, webView: webView)
+    }
 }
 
 // MARK: - WKURLSchemeHandler
@@ -203,6 +246,14 @@ extension iTermBrowserManager: WKNavigationDelegate {
         if webView.url != iTermBrowserErrorHandler.errorURL {
             lastFailedURL = nil
         }
+        
+        // Track the current page URL for security checks
+        if let url = webView.url {
+            currentPageURL = url
+        }
+        
+        // Conditionally inject message handlers for our about: pages
+        injectMessageHandlersIfNeeded()
         
         notifyDelegateOfUpdates()
         delegate?.browserManager(self, didFinishNavigation: navigation)
