@@ -125,6 +125,12 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
     func browserManager(_ manager: iTermBrowserManager, didFailNavigation navigation: WKNavigation?, withError error: Error) {
         toolbar.setLoading(false)
     }
+    
+    // MARK: - Public Interface
+    
+    @objc func loadURL(_ urlString: String) {
+        browserManager.loadURL(urlString)
+    }
 }
 
 @available(macOS 11.0, *)

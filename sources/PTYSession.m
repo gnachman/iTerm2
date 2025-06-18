@@ -2979,7 +2979,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _sshState = ssh ? iTermSSHStateProfile : iTermSSHStateNone;
     if (@available(macOS 11, *)) {
         if (browser) {
-            [_view becomeBrowser];
+            [_view becomeBrowser:self.profile[KEY_COMMAND_LINE]];
             return;
         }
     }

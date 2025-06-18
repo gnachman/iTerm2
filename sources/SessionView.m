@@ -304,7 +304,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return self;
 }
 
-- (void)becomeBrowser {
+- (void)becomeBrowser:(NSString *)initialURL {
     _browserViewController = [[iTermBrowserViewController alloc] init];
     
     // Set initial frame to avoid constraint conflicts
@@ -322,6 +322,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [self setTerminalViewsHidden:YES];
     
     [self updateLayout];
+
+    [_browserViewController loadURL:initialURL];
 }
 
 - (BOOL)isBrowser {
