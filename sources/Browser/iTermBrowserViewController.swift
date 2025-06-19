@@ -168,22 +168,92 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
     func browserToolbarDidSelectHistoryItem(steps: Int) {
         browserManager.navigateHistory(steps: steps)
     }
-    
+
+    private func searchQueryFromURL(_ url: String) -> String? {
+        guard let actualComponents = URLComponents(string: url),
+              let searchEngineComponents = URLComponents(string: iTermAdvancedSettingsModel.searchCommand()) else {
+            return nil
+        }
+        
+        // Helper function to normalize host by removing common prefixes
+        func normalizeHost(_ host: String?) -> String? {
+            guard let host = host?.lowercased() else { return nil }
+            let prefixesToRemove = ["www.", "m.", "mobile."]
+            for prefix in prefixesToRemove {
+                if host.hasPrefix(prefix) {
+                    return String(host.dropFirst(prefix.count))
+                }
+            }
+            return host
+        }
+        
+        // Check if hosts match (ignoring common prefixes)
+        let normalizedActualHost = normalizeHost(actualComponents.host)
+        let normalizedSearchHost = normalizeHost(searchEngineComponents.host)
+        guard normalizedActualHost == normalizedSearchHost else {
+            return nil
+        }
+        
+        // Check if paths match
+        guard actualComponents.path == searchEngineComponents.path else {
+            return nil
+        }
+        
+        // Extract query parameters from both URLs
+        guard let actualQueryItems = actualComponents.queryItems,
+              let searchQueryItems = searchEngineComponents.queryItems else {
+            return nil
+        }
+        
+        // Find the query parameter that contains "%@" in the search template
+        var targetQueryParam: String?
+        for item in searchQueryItems {
+            if let value = item.value, value.contains("%@") {
+                targetQueryParam = item.name
+                break
+            }
+        }
+        
+        guard let queryParamName = targetQueryParam else {
+            return nil
+        }
+        
+        // Find the corresponding parameter in the actual URL
+        for item in actualQueryItems {
+            if item.name == queryParamName, let value = item.value {
+                // Return the decoded query value
+                return value.removingPercentEncoding ?? value
+            }
+        }
+        
+        return nil
+    }
+
     func browserToolbarDidRequestSuggestions(_ query: String) async -> [URLSuggestion] {
         // TODO: Implement URL suggestions based on history, bookmarks, search
         // For now, return basic search suggestion with simulated network delay
 
         var results = [URLSuggestion]()
         let attributes = CompletionsWindow.regularAttributes(font: nil)
+        var searchScore = 0
+
         if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-            let searchQuery = trimmed.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? trimmed
-            let url = iTermAdvancedSettingsModel.searchCommand().replacingOccurrences(of: "%@", with: searchQuery)
+            let actualQuery: String
+            if let search = searchQueryFromURL(query) {
+                searchScore = 3
+                actualQuery = search
+            } else {
+                searchScore = 1
+                actualQuery = query
+            }
+            let trimmed = actualQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+            let queryParameterValue = trimmed.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? trimmed
+            let url = iTermAdvancedSettingsModel.searchCommand().replacingOccurrences(of: "%@", with: queryParameterValue)
             results.append(URLSuggestion(
-                text: query,
+                text: actualQuery,
                 url: url,
-                displayText: NSAttributedString(string: "Search for \"\(query)\"", attributes: attributes),
-                detail: "Google Search",
+                displayText: NSAttributedString(string: "Search for \"\(actualQuery)\"", attributes: attributes),
+                detail: "Web Search",
                 type: .webSearch
             ))
         }
@@ -196,7 +266,13 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
                 detail: "URL",
                 type: .navigation
             )
+            let urlScore: Int
             if browserManager.stringIsStronglyURLLike(query) {
+                urlScore = 2
+            } else {
+                urlScore = 0
+            }
+            if urlScore > searchScore {
                 results.insert(suggestion, at: 0)
             } else {
                 results.append(suggestion)
@@ -205,7 +281,8 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
         return results
     }
     
-    func browserToolbarDidBeginEditingURL() {
+    func browserToolbarDidBeginEditingURL(string: String) -> String? {
+        return searchQueryFromURL(string)
     }
     
     func browserToolbarUserDidSubmitNavigationRequest() {
