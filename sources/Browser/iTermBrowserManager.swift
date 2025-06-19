@@ -22,13 +22,14 @@
 
 @available(macOS 11.0, *)
 @objc(iTermBrowserManager)
-class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler {
+class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler, iTermBrowserWebViewDelegate {
     weak var delegate: iTermBrowserManagerDelegate?
-    private(set) var webView: WKWebView!
+    private(set) var webView: iTermBrowserWebView!
     private var lastRequestedURL: URL?
     private var lastFailedURL: URL?
     private var errorHandler = iTermBrowserErrorHandler()
     private var settingsHandler = iTermBrowserSettingsHandler()
+    private var sourceHandler = iTermBrowserSourceHandler()
     private var navigationToURL: [WKNavigation: URL] = [:]
     private var currentPageURL: URL?
     private var hasSettingsMessageHandler = false
@@ -58,9 +59,10 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         }
 
 
-        webView = WKWebView(frame: .zero, configuration: configuration)
+        webView = iTermBrowserWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = self
         webView.uiDelegate = self
+        webView.browserDelegate = self
         
         // Enable back/forward navigation
         webView.allowsBackForwardNavigationGestures = true
@@ -434,6 +436,8 @@ extension iTermBrowserManager {
             errorHandler.start(urlSchemeTask: urlSchemeTask, url: url)
         case iTermBrowserSettingsHandler.settingsURL.absoluteString:
             settingsHandler.start(urlSchemeTask: urlSchemeTask, url: url)
+        case iTermBrowserSourceHandler.sourceURL.absoluteString:
+            sourceHandler.start(urlSchemeTask: urlSchemeTask, url: url)
         default:
             urlSchemeTask.didFailWithError(NSError(domain: "iTermBrowserManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unknown iterm2-about: URL"]))
         }
@@ -547,12 +551,12 @@ extension iTermBrowserManager: WKNavigationDelegate {
                 return
             case .other:
                 // Automatic popup (JavaScript without user interaction) - block it
-                print("Blocked automatic popup to: \(targetURL)")
+                DLog("Blocked automatic popup to: \(targetURL)")
                 decisionHandler(.cancel)
                 return
             default:
                 // Block other popup types for safety
-                print("Blocked popup navigation type \(navigationAction.navigationType.rawValue) to: \(targetURL)")
+                DLog("Blocked popup navigation type \(navigationAction.navigationType.rawValue) to: \(targetURL)")
                 decisionHandler(.cancel)
                 return
             }
@@ -735,5 +739,43 @@ extension iTermBrowserManager: WKUIDelegate {
                 }
             }
         }
+    }
+
+    // MARK: - iTermBrowserWebViewDelegate
+    
+    func webViewDidRequestViewSource(_ webView: iTermBrowserWebView) {
+        viewPageSource()
+    }
+    
+    @objc private func viewPageSource() {
+        // Get the current page's HTML source
+        webView.evaluateJavaScript("document.documentElement.outerHTML") { [weak self] result, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                DLog("Error getting page source: \(error)")
+                return
+            }
+            
+            guard let htmlSource = result as? String else {
+                DLog("Failed to get HTML source")
+                return
+            }
+            
+            DispatchQueue.main.async {
+                self.showSourceInBrowser(htmlSource: htmlSource)
+            }
+        }
+    }
+    
+    private func showSourceInBrowser(htmlSource: String) {
+        // Generate the formatted source page HTML
+        let sourceHTML = sourceHandler.generateSourcePageHTML(for: htmlSource)
+        
+        // Store the source HTML to serve when iterm2-about:source is requested
+        sourceHandler.setPendingSourceHTML(sourceHTML)
+        
+        // Navigate to iterm2-about:source which our custom URL scheme handler will serve
+        webView.load(URLRequest(url: iTermBrowserSourceHandler.sourceURL))
     }
 }
