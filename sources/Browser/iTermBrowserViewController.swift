@@ -184,11 +184,11 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
     }
     
     func browserManager(_ manager: iTermBrowserManager, didUpdateCanGoBack canGoBack: Bool) {
-        // Could enable/disable back button
+        toolbar.updateNavigationButtons(canGoBack: canGoBack, canGoForward: manager.webView.canGoForward)
     }
     
     func browserManager(_ manager: iTermBrowserManager, didUpdateCanGoForward canGoForward: Bool) {
-        // Could enable/disable forward button
+        toolbar.updateNavigationButtons(canGoBack: manager.webView.canGoBack, canGoForward: canGoForward)
     }
     
     func browserManager(_ manager: iTermBrowserManager, didStartNavigation navigation: WKNavigation?) {

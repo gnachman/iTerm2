@@ -173,6 +173,11 @@ class iTermBrowserToolbar: NSView {
         stopButton.isHidden = !loading
     }
     
+    func updateNavigationButtons(canGoBack: Bool, canGoForward: Bool) {
+        backButton.isEnabled = canGoBack
+        forwardButton.isEnabled = canGoForward
+    }
+    
     // MARK: - Long Press History
     
     private func setupLongPressForButton(_ button: NSButton, action: Selector) {
