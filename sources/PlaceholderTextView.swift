@@ -10,8 +10,6 @@ import Cocoa
 
 @objc(iTermPlaceholderTextView)
 class PlaceholderTextView: NSTextView {
-    @objc var shiftEnterPressed: (() -> ())?
-
     // Placeholder string that will be displayed when the text view is empty.
     //
     // Did you know that NSTextView actually implements placeholders privately? Do
@@ -54,6 +52,11 @@ class PlaceholderTextView: NSTextView {
             placeholder.draw(in: rect, withAttributes: attrs)
         }
     }
+}
+
+@objc(iTermShiftEnterTextView)
+class ShiftEnterTextView: PlaceholderTextView {
+    @objc var shiftEnterPressed: (() -> ())?
 
     override func insertNewline(_ sender: Any?) {
         if iTermApplication.shared().it_modifierFlags.contains(.shift) {

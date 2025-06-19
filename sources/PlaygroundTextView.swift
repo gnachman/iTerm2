@@ -11,7 +11,7 @@ protocol PlaygroundTextViewDelegate: AnyObject {
 }
 
 @objc(iTermPlaygroundTextView)
-class PlaygroundTextView: PlaceholderTextView {
+class PlaygroundTextView: ShiftEnterTextView {
     @objc weak var playgroundDelegate: PlaygroundTextViewDelegate?
     @objc var lastCoord = VT100GridCoord(x: -1, y: -1)
 

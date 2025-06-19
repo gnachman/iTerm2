@@ -20,7 +20,7 @@ class iTermBrowserHistoryItem: NSObject {
 }
 
 @available(macOS 11.0, *)
-@objc protocol iTermBrowserToolbarDelegate {
+protocol iTermBrowserToolbarDelegate: AnyObject {
     func browserToolbarDidTapReload()
     func browserToolbarDidTapStop()
     func browserToolbarDidSubmitURL(_ url: String)
@@ -28,6 +28,9 @@ class iTermBrowserHistoryItem: NSObject {
     func browserToolbarBackHistoryItems() -> [iTermBrowserHistoryItem]
     func browserToolbarForwardHistoryItems() -> [iTermBrowserHistoryItem]
     func browserToolbarDidSelectHistoryItem(steps: Int)
+    func browserToolbarDidRequestSuggestions(_ query: String) async -> [URLSuggestion]
+    func browserToolbarDidBeginEditingURL()
+    func browserToolbarUserDidSubmitNavigationRequest()
 }
 
 @available(macOS 11.0, *)
@@ -38,7 +41,7 @@ class iTermBrowserToolbar: NSView {
     private var forwardButton: NSButton!
     private var reloadButton: NSButton!
     private var stopButton: NSButton!
-    private var urlField: NSTextField!
+    private var urlBar: iTermURLBar!
     private var settingsButton: NSButton!
 
     override init(frame frameRect: NSRect) {
@@ -85,12 +88,10 @@ class iTermBrowserToolbar: NSView {
         stopButton.isHidden = true  // Initially hidden, shown during loading
         addSubview(stopButton)
         
-        urlField = NSTextField()
-        urlField.placeholderString = "Enter URL"
-        urlField.target = self
-        urlField.action = #selector(urlFieldSubmitted)
-        urlField.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(urlField)
+        urlBar = iTermURLBar()
+        urlBar.delegate = self
+        urlBar.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(urlBar)
         
         settingsButton = NSButton()
         settingsButton.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: "Settings")
@@ -123,10 +124,10 @@ class iTermBrowserToolbar: NSView {
             stopButton.widthAnchor.constraint(equalToConstant: 32),
             stopButton.heightAnchor.constraint(equalToConstant: 32),
             
-            urlField.leadingAnchor.constraint(equalTo: reloadButton.trailingAnchor, constant: 12),
-            urlField.centerYAnchor.constraint(equalTo: centerYAnchor),
-            urlField.trailingAnchor.constraint(equalTo: settingsButton.leadingAnchor, constant: -12),
-            urlField.heightAnchor.constraint(equalToConstant: 24),
+            urlBar.leadingAnchor.constraint(equalTo: reloadButton.trailingAnchor, constant: 12),
+            urlBar.centerYAnchor.constraint(equalTo: centerYAnchor),
+            urlBar.trailingAnchor.constraint(equalTo: settingsButton.leadingAnchor, constant: -12),
+            urlBar.heightAnchor.constraint(equalToConstant: 28),
             
             settingsButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
             settingsButton.centerYAnchor.constraint(equalTo: centerYAnchor),
@@ -151,12 +152,7 @@ class iTermBrowserToolbar: NSView {
         delegate?.browserToolbarDidTapStop()
     }
     
-    @objc private func urlFieldSubmitted() {
-        let urlString = urlField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !urlString.isEmpty {
-            delegate?.browserToolbarDidSubmitURL(urlString)
-        }
-    }
+    // URL submission is now handled by iTermURLBar delegate
     
     @objc private func settingsTapped() {
         delegate?.browserToolbarDidTapSettings()
@@ -165,12 +161,18 @@ class iTermBrowserToolbar: NSView {
     // MARK: - Public Interface
     
     func updateURL(_ url: String?) {
-        urlField.stringValue = url ?? ""
+        urlBar.currentURL = url
+    }
+    
+    
+    func updateFavicon(_ favicon: NSImage?) {
+        urlBar.favicon = favicon
     }
     
     func setLoading(_ loading: Bool) {
         reloadButton.isHidden = loading
         stopButton.isHidden = !loading
+        urlBar.isLoading = loading
     }
     
     func updateNavigationButtons(canGoBack: Bool, canGoForward: Bool) {
@@ -223,6 +225,27 @@ class iTermBrowserToolbar: NSView {
     @objc private func historyItemSelected(_ menuItem: NSMenuItem) {
         guard let historyItem = menuItem.representedObject as? iTermBrowserHistoryItem else { return }
         delegate?.browserToolbarDidSelectHistoryItem(steps: historyItem.steps)
+    }
+}
+
+// MARK: - iTermURLBarDelegate
+
+@available(macOS 11.0, *)
+extension iTermBrowserToolbar: iTermURLBarDelegate {
+    func urlBar(_ urlBar: iTermURLBar, didSubmitURL url: String) {
+        delegate?.browserToolbarDidSubmitURL(url)
+    }
+    
+    func urlBar(_ urlBar: iTermURLBar, didRequestSuggestions query: String) async -> [URLSuggestion] {
+        return await delegate?.browserToolbarDidRequestSuggestions(query) ?? []
+    }
+    
+    func urlBarDidBeginEditing(_ urlBar: iTermURLBar) {
+        delegate?.browserToolbarDidBeginEditingURL()
+    }
+    
+    func urlBarDidEndEditing(_ urlBar: iTermURLBar) {
+        delegate?.browserToolbarUserDidSubmitNavigationRequest()
     }
 }
 

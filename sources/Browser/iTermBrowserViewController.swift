@@ -169,6 +169,50 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
         browserManager.navigateHistory(steps: steps)
     }
     
+    func browserToolbarDidRequestSuggestions(_ query: String) async -> [URLSuggestion] {
+        // TODO: Implement URL suggestions based on history, bookmarks, search
+        // For now, return basic search suggestion with simulated network delay
+
+        var results = [URLSuggestion]()
+        let attributes = CompletionsWindow.regularAttributes(font: nil)
+        if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+            let searchQuery = trimmed.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? trimmed
+            let url = iTermAdvancedSettingsModel.searchCommand().replacingOccurrences(of: "%@", with: searchQuery)
+            results.append(URLSuggestion(
+                text: query,
+                url: url,
+                displayText: NSAttributedString(string: "Search for \"\(query)\"", attributes: attributes),
+                detail: "Google Search",
+                type: .webSearch
+            ))
+        }
+        if let normal = browserManager.normalizeURL(query) {
+            let suggestion = URLSuggestion(
+                text: query,
+                url: normal.absoluteString,
+                displayText: NSAttributedString(string: "Navigate to \"\(normal.absoluteString)\"",
+                                                attributes: attributes),
+                detail: "URL",
+                type: .navigation
+            )
+            if browserManager.stringIsStronglyURLLike(query) {
+                results.insert(suggestion, at: 0)
+            } else {
+                results.append(suggestion)
+            }
+        }
+        return results
+    }
+    
+    func browserToolbarDidBeginEditingURL() {
+    }
+    
+    func browserToolbarUserDidSubmitNavigationRequest() {
+        // When the user presses enter in the URL bar, the URL bar must lose first responder.
+        browserManager.webView.window?.makeFirstResponder(browserManager.webView)
+    }
+    
     // MARK: - iTermBrowserManagerDelegate
     
     func browserManager(_ manager: iTermBrowserManager, didUpdateURL url: String?) {
@@ -180,6 +224,7 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
     }
     
     func browserManager(_ manager: iTermBrowserManager, didUpdateFavicon favicon: NSImage?) {
+        toolbar.updateFavicon(favicon)
         delegate?.browserViewController(self, didUpdateFavicon: favicon)
     }
     
