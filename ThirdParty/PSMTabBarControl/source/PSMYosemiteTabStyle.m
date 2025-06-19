@@ -1059,9 +1059,9 @@
                               image:(NSImage *)image
                               alpha:(CGFloat)alpha {
     NSRect rect = NSMakeRect(NSMinX(cellFrame) + 6,
-                             NSMinY(cellFrame) + (NSHeight(cellFrame) - image.size.height) / 2.0,
-                             image.size.width,
-                             image.size.height);
+                             NSMinY(cellFrame) + (NSHeight(cellFrame) - kPSMTabBarIconWidth) / 2.0,
+                             kPSMTabBarIconWidth,
+                             kPSMTabBarIconWidth);
     [image drawInRect:rect fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:alpha respectFlipped:YES hints:nil];
     return NSWidth(rect) + kPSMTabBarCellPadding + 2;
 }
