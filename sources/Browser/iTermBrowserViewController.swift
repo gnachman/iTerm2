@@ -114,14 +114,6 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
     
     // MARK: - iTermBrowserToolbarDelegate
     
-    func browserToolbarDidTapBack() {
-        browserManager.goBack()
-    }
-    
-    func browserToolbarDidTapForward() {
-        browserManager.goForward()
-    }
-    
     func browserToolbarDidTapReload() {
         browserManager.reload()
     }
@@ -136,6 +128,18 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
     
     func browserToolbarDidTapSettings() {
         browserManager.loadURL(iTermBrowserSettingsHandler.settingsURL.absoluteString)
+    }
+    
+    func browserToolbarBackHistoryItems() -> [iTermBrowserHistoryItem] {
+        return browserManager.getBackHistoryItems()
+    }
+    
+    func browserToolbarForwardHistoryItems() -> [iTermBrowserHistoryItem] {
+        return browserManager.getForwardHistoryItems()
+    }
+    
+    func browserToolbarDidSelectHistoryItem(steps: Int) {
+        browserManager.navigateHistory(steps: steps)
     }
     
     // MARK: - iTermBrowserManagerDelegate

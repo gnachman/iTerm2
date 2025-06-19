@@ -104,6 +104,73 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         webView.stopLoading()
     }
     
+    func getBackHistoryItems() -> [iTermBrowserHistoryItem] {
+        var items: [iTermBrowserHistoryItem] = []
+        let backList = webView.backForwardList.backList
+        
+        for (index, item) in backList.enumerated().reversed() {
+            let steps = -(backList.count - index)  // Most recent back item = -1, next = -2, etc.
+            let historyItem = iTermBrowserHistoryItem(
+                title: item.title ?? "",
+                url: item.url.absoluteString,
+                steps: steps
+            )
+            items.append(historyItem)
+        }
+        
+        return items
+    }
+    
+    func getForwardHistoryItems() -> [iTermBrowserHistoryItem] {
+        var items: [iTermBrowserHistoryItem] = []
+        let forwardList = webView.backForwardList.forwardList
+        
+        for (index, item) in forwardList.enumerated() {
+            let steps = index + 1  // Positive steps for going forward
+            let historyItem = iTermBrowserHistoryItem(
+                title: item.title ?? "",
+                url: item.url.absoluteString,
+                steps: steps
+            )
+            items.append(historyItem)
+        }
+        
+        return items
+    }
+    
+    func navigateHistory(steps: Int) {
+        if steps == -1 && webView.canGoBack {
+            webView.goBack()
+        } else if steps == 1 && webView.canGoForward {
+            webView.goForward()
+        } else if steps != 0 {
+            // For multi-step navigation, use go(to:)
+            let backForwardList = webView.backForwardList
+            var targetItem: WKBackForwardListItem?
+            
+            if steps < 0 {
+                // Going back
+                let backList = backForwardList.backList
+                let index = abs(steps) - 1
+                if index < backList.count {
+                    targetItem = backList[backList.count - 1 - index]
+                }
+            } else {
+                // Going forward
+                let forwardList = backForwardList.forwardList
+                let index = steps - 1
+                if index < forwardList.count {
+                    targetItem = forwardList[index]
+                }
+            }
+            
+            if let targetItem = targetItem {
+                favicon = nil  // Clear favicon when navigating
+                webView.go(to: targetItem)
+            }
+        }
+    }
+    
     private func showErrorPage(for error: Error, failedURL: URL?) {
         let errorHTML = errorHandler.generateErrorPageHTML(for: error, failedURL: failedURL)
         
