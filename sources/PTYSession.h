@@ -814,7 +814,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)popWindowTitle;
 - (void)pushIconTitle;
 - (void)popIconTitle;
-
+- (void)setUntrustedIconName:(NSString *)theName;
 
 - (void)clearBuffer;
 - (void)clearScrollbackBuffer;

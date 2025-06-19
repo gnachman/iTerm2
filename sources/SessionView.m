@@ -304,9 +304,11 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return self;
 }
 
-- (void)becomeBrowser:(NSString *)initialURL {
+- (void)becomeBrowser:(NSString *)initialURL delegate:(id<iTermBrowserViewControllerDelegate>)delegate {
     _browserViewController = [[iTermBrowserViewController alloc] init];
     
+    _browserViewController.delegate = delegate;
+
     // Set initial frame to avoid constraint conflicts
     CGFloat titleHeight = _showTitle ? _title.frame.size.height : 0;
     CGFloat reservedSpaceOnBottom = _showBottomStatusBar ? iTermGetStatusBarHeight() : 0;
