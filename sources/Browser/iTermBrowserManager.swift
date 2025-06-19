@@ -540,7 +540,9 @@ extension iTermBrowserManager: WKNavigationDelegate {
             switch navigationAction.navigationType {
             case .linkActivated:
                 // User clicked a link - request new window from delegate
-                delegate?.browserManager(self, requestNewWindowForURL: targetURL, configuration: webView.configuration.copy() as! WKWebViewConfiguration)
+                let _ = delegate?.browserManager(self,
+                                                 requestNewWindowForURL: targetURL,
+                                                 configuration: webView.configuration.copy() as! WKWebViewConfiguration)
                 decisionHandler(.cancel)
                 return
             case .other:
@@ -693,5 +695,45 @@ extension iTermBrowserManager: WKUIDelegate {
         alert.addButton(withTitle: "Cancel")
         let response = alert.runModal()
         completionHandler(response == .alertFirstButtonReturn)
+    }
+    
+    func webView(_ webView: WKWebView, runOpenPanelWith parameters: WKOpenPanelParameters, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping ([URL]?) -> Void) {
+        // Handle file input elements (e.g., <input type="file">)
+        guard let window = webView.window else {
+            completionHandler(nil)
+            return
+        }
+        
+        let panel = iTermOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = parameters.allowsDirectories
+        
+        panel.beginSheetModal(for: window) { response in
+            guard response == .OK else {
+                completionHandler(nil)
+                return
+            }
+            
+            // Convert iTermOpenPanelItems to URLs
+            var selectedURLs: [URL] = []
+            let group = DispatchGroup()
+            
+            for item in panel.items {
+                group.enter()
+                item.urlPromise.then { url in
+                    selectedURLs.append(url as URL)
+                    group.leave()
+                }
+            }
+            
+            group.notify(queue: .main) {
+                // Respect multiple selection setting
+                if parameters.allowsMultipleSelection {
+                    completionHandler(selectedURLs)
+                } else {
+                    completionHandler(selectedURLs.isEmpty ? nil : [selectedURLs.first!])
+                }
+            }
+        }
     }
 }
