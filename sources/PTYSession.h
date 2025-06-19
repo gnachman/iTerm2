@@ -856,6 +856,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (void)findWithSelection;
 
 // Show the find view
+- (void)userInitiatedShowFindPanel;
 - (void)showFindPanel;
 - (void)showFilter;
 - (void)stopFiltering;

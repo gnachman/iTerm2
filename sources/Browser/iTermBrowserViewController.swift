@@ -16,6 +16,7 @@ import WebKit
     func browserViewController(_ controller: iTermBrowserViewController,
                                requestNewWindowForURL url: URL,
                                configuration: WKWebViewConfiguration) -> WKWebView?
+    func browserViewControllerShowFindPanel(_ controller: iTermBrowserViewController)
 }
 
 @available(macOS 11.0, *)
@@ -51,6 +52,32 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
 
     @objc var webView: WKWebView {
         return browserManager.webView
+    }
+
+    var activeSearchTerm: String? {
+        if #available (macOS 13.0, *) {
+            browserManager.browserFindManager?.activeSearchTerm
+        } else {
+            nil
+        }
+    }
+
+    func startFind(_ string: String, caseSensitive: Bool) {
+        if #available (macOS 13.0, *) {
+            browserManager.browserFindManager?.startFind(string, caseSensitive: caseSensitive)
+        }
+    }
+
+    func findNext() {
+        if #available (macOS 13.0, *) {
+            browserManager.browserFindManager?.findNext()
+        }
+    }
+
+    func findPrevious() {
+        if #available (macOS 13.0, *) {
+            browserManager.browserFindManager?.findPrevious()
+        }
     }
 
     override func loadView() {
@@ -186,6 +213,41 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
     
     @objc func loadURL(_ urlString: String) {
         browserManager.loadURL(urlString)
+    }
+    
+    // MARK: - Find Support
+    
+    @objc func performFindPanelAction(_ sender: Any?) {
+        guard let menuItem = sender as? NSMenuItem else { return }
+        
+        switch NSFindPanelAction(rawValue: UInt(menuItem.tag)) {
+        case .showFindPanel:
+            delegate?.browserViewControllerShowFindPanel(self)
+        case .setFindString:
+            // TODO: Implement setting find string from selection if needed
+            break
+        default:
+            // Other actions are handled by the dedicated methods below
+            break
+        }
+    }
+    
+    @objc func findNext(_ sender: Any?) {
+        if #available(macOS 13.0, *) {
+            browserManager.browserFindManager?.findNext()
+        }
+    }
+    
+    @objc func findPrevious(_ sender: Any?) {
+        if #available(macOS 13.0, *) {
+            browserManager.browserFindManager?.findPrevious()
+        }
+    }
+    
+    @objc func clearFindString(_ sender: Any?) {
+        if #available(macOS 13.0, *) {
+            browserManager.browserFindManager?.clearFind()
+        }
     }
 }
 

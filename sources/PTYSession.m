@@ -7081,6 +7081,20 @@ DLog(args); \
 scrollToFirstResult:(BOOL)scrollToFirstResult
              force:(BOOL)force {
     DLog(@"self=%@ aString=%@", self, aString);
+    
+    // Check if we're in browser mode
+    if ([_view isBrowser]) {
+        if (@available(macOS 13.0, *)) {
+            [self browserFindString:aString
+                   forwardDirection:direction
+                               mode:mode
+                         withOffset:offset
+                scrollToFirstResult:scrollToFirstResult
+                              force:force];
+        }
+        return;
+    }
+    
     [_textview findString:aString
          forwardDirection:direction
                      mode:mode
@@ -16846,6 +16860,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)textViewShowFindPanel {
+    [self userInitiatedShowFindPanel];
+}
+
+- (void)userInitiatedShowFindPanel {
     const BOOL findPanelWasOpen = self.view.findDriver.viewController.searchIsVisible;
     [self showFindPanel];
     if (!findPanelWasOpen) {
