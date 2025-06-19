@@ -6,13 +6,28 @@
 //
 
 @available(macOS 11.0, *)
+@objc(iTermBrowserHistoryItem)
+class iTermBrowserHistoryItem: NSObject {
+    @objc let title: String
+    @objc let url: String
+    @objc let steps: Int  // Number of steps back/forward from current position
+    
+    @objc init(title: String, url: String, steps: Int) {
+        self.title = title
+        self.url = url
+        self.steps = steps
+    }
+}
+
+@available(macOS 11.0, *)
 @objc protocol iTermBrowserToolbarDelegate {
-    func browserToolbarDidTapBack()
-    func browserToolbarDidTapForward()
     func browserToolbarDidTapReload()
     func browserToolbarDidTapStop()
     func browserToolbarDidSubmitURL(_ url: String)
     func browserToolbarDidTapSettings()
+    func browserToolbarBackHistoryItems() -> [iTermBrowserHistoryItem]
+    func browserToolbarForwardHistoryItems() -> [iTermBrowserHistoryItem]
+    func browserToolbarDidSelectHistoryItem(steps: Int)
 }
 
 @available(macOS 11.0, *)
@@ -44,6 +59,7 @@ class iTermBrowserToolbar: NSView {
         backButton.target = self
         backButton.action = #selector(backTapped)
         backButton.translatesAutoresizingMaskIntoConstraints = false
+        setupLongPressForButton(backButton, action: #selector(showBackHistory))
         addSubview(backButton)
 
         forwardButton = NSButton()
@@ -51,6 +67,7 @@ class iTermBrowserToolbar: NSView {
         forwardButton.target = self
         forwardButton.action = #selector(forwardTapped)
         forwardButton.translatesAutoresizingMaskIntoConstraints = false
+        setupLongPressForButton(forwardButton, action: #selector(showForwardHistory))
         addSubview(forwardButton)
 
         reloadButton = NSButton()
@@ -119,11 +136,11 @@ class iTermBrowserToolbar: NSView {
     }
 
     @objc private func backTapped() {
-        delegate?.browserToolbarDidTapBack()
+        delegate?.browserToolbarDidSelectHistoryItem(steps: -1)
     }
 
     @objc private func forwardTapped() {
-        delegate?.browserToolbarDidTapForward()
+        delegate?.browserToolbarDidSelectHistoryItem(steps: 1)
     }
 
     @objc private func reloadTapped() {
@@ -154,6 +171,53 @@ class iTermBrowserToolbar: NSView {
     func setLoading(_ loading: Bool) {
         reloadButton.isHidden = loading
         stopButton.isHidden = !loading
+    }
+    
+    // MARK: - Long Press History
+    
+    private func setupLongPressForButton(_ button: NSButton, action: Selector) {
+        let longPressGesture = NSPressGestureRecognizer(target: self, action: action)
+        longPressGesture.minimumPressDuration = 0.5
+        longPressGesture.allowableMovement = 10
+        button.addGestureRecognizer(longPressGesture)
+    }
+    
+    @objc private func showBackHistory(_ gesture: NSPressGestureRecognizer) {
+        guard gesture.state == .began else { return }
+        guard let delegate = delegate else { return }
+        let historyItems = delegate.browserToolbarBackHistoryItems()
+        showHistoryMenu(for: backButton, items: historyItems)
+    }
+    
+    @objc private func showForwardHistory(_ gesture: NSPressGestureRecognizer) {
+        guard gesture.state == .began else { return }
+        guard let delegate = delegate else { return }
+        let historyItems = delegate.browserToolbarForwardHistoryItems()
+        showHistoryMenu(for: forwardButton, items: historyItems)
+    }
+    
+    private func showHistoryMenu(for button: NSButton, items: [iTermBrowserHistoryItem]) {
+        guard !items.isEmpty else { return }
+        
+        let menu = NSMenu()
+        
+        for item in items {
+            let menuItem = NSMenuItem(title: item.title.isEmpty ? item.url : item.title, action: #selector(historyItemSelected(_:)), keyEquivalent: "")
+            menuItem.target = self
+            menuItem.representedObject = item
+            menuItem.toolTip = item.url
+            menu.addItem(menuItem)
+        }
+        
+        // Position menu below the button
+        let buttonFrame = button.frame
+        let menuLocation = NSPoint(x: buttonFrame.minX, y: buttonFrame.minY)
+        menu.popUp(positioning: nil, at: menuLocation, in: self)
+    }
+    
+    @objc private func historyItemSelected(_ menuItem: NSMenuItem) {
+        guard let historyItem = menuItem.representedObject as? iTermBrowserHistoryItem else { return }
+        delegate?.browserToolbarDidSelectHistoryItem(steps: historyItem.steps)
     }
 }
 
