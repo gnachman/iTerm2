@@ -29,7 +29,7 @@ protocol iTermBrowserToolbarDelegate: AnyObject {
     func browserToolbarForwardHistoryItems() -> [iTermBrowserHistoryItem]
     func browserToolbarDidSelectHistoryItem(steps: Int)
     func browserToolbarDidRequestSuggestions(_ query: String) async -> [URLSuggestion]
-    func browserToolbarDidBeginEditingURL()
+    func browserToolbarDidBeginEditingURL(string: String) -> String?
     func browserToolbarUserDidSubmitNavigationRequest()
 }
 
@@ -240,8 +240,8 @@ extension iTermBrowserToolbar: iTermURLBarDelegate {
         return await delegate?.browserToolbarDidRequestSuggestions(query) ?? []
     }
     
-    func urlBarDidBeginEditing(_ urlBar: iTermURLBar) {
-        delegate?.browserToolbarDidBeginEditingURL()
+    func urlBarDidBeginEditing(_ urlBar: iTermURLBar, string: String) -> String? {
+        return delegate?.browserToolbarDidBeginEditingURL(string: string)
     }
     
     func urlBarDidEndEditing(_ urlBar: iTermURLBar) {
