@@ -74,6 +74,17 @@ NS_ASSUME_NONNULL_BEGIN
         didMakeSession:(void (^ _Nullable)(PTYSession *))didMakeSession
             completion:(void (^ _Nullable)(PTYSession *, BOOL))completion;
 
++ (PTYSession *)synchronouslyLaunchProfile:(nullable NSDictionary *)bookmarkData
+                                inTerminal:(nullable PseudoTerminal *)theTerm
+                                   withURL:(nullable NSString *)url
+                          hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
+                                   makeKey:(BOOL)makeKey
+                               canActivate:(BOOL)canActivate
+                        respectTabbingMode:(BOOL)respectTabbingMode
+                                     index:(NSNumber * _Nullable)index
+                                   command:(nullable NSString *)command
+                               makeSession:(PTYSession *(^)(Profile *profile, PseudoTerminal *windowController))makeSession;
+
 + (void)launchBookmark:(nullable NSDictionary *)bookmarkData
             inTerminal:(nullable PseudoTerminal *)theTerm
     respectTabbingMode:(BOOL)respectTabbingMode

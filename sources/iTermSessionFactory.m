@@ -423,6 +423,7 @@ NS_ASSUME_NONNULL_BEGIN
                     substitutions:request.substitutions
                       arrangement:request.arrangementName
                   fromArrangement:request.fromArrangement
+             webViewConfiguration:request.webViewConfiguration
                        completion:^(BOOL ok) {
         [request.windowController setWindowTitle];
         if (completion) {

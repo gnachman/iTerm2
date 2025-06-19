@@ -90,6 +90,27 @@
     [launcher launchWithCompletion:completion];
 }
 
++ (PTYSession *)synchronouslyLaunchProfile:(nullable NSDictionary *)bookmarkData
+                                inTerminal:(nullable PseudoTerminal *)theTerm
+                                   withURL:(nullable NSString *)url
+                          hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
+                                   makeKey:(BOOL)makeKey
+                               canActivate:(BOOL)canActivate
+                        respectTabbingMode:(BOOL)respectTabbingMode
+                                     index:(NSNumber * _Nullable)index
+                                   command:(nullable NSString *)command
+                               makeSession:(PTYSession *(^)(Profile *profile, PseudoTerminal *windowController))makeSession {
+    iTermSessionLauncher *launcher = [[iTermSessionLauncher alloc] initWithProfile:bookmarkData windowController:theTerm];
+    launcher.url = url;
+    launcher.hotkeyWindowType = hotkeyWindowType;
+    launcher.makeKey = makeKey;
+    launcher.canActivate = canActivate;
+    launcher.respectTabbingMode = respectTabbingMode;
+    launcher.command = command;
+    launcher.index = index;
+    return [launcher launchSynchronously:makeSession];
+}
+
 
 - (instancetype)initWithProfile:(nullable Profile *)profile
                windowController:(nullable PseudoTerminal *)windowController {
@@ -106,9 +127,6 @@
 }
 
 - (void)launchWithCompletion:(void (^ _Nullable)(PTYSession *session, BOOL ok))completion {
-    assert(!_launched);
-    _launched = YES;
-
     _completion = [completion copy];
     [self prepareToLaunch];
 
@@ -157,6 +175,46 @@
      }];
 }
 
+- (PTYSession *)launchSynchronously:(PTYSession *(^)(Profile *profile, PseudoTerminal *windowController))makeSession  {
+    [self prepareToLaunch];
+
+    Profile *profile = [self modifiedProfile];
+    if (!profile) {
+        DLog(@"No profile");
+        [self setFinishedWithSuccess:NO];
+        self.session = nil;
+        return nil;
+    }
+
+    BOOL toggle = NO;
+    PseudoTerminal *windowController = [self possiblyNewWindowControllerForProfile:profile
+                                                         toggleFullScreen:&toggle];
+    if (toggle) {
+        windowController.fullScreenPromise = [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
+            windowController.fullScreenEnteredSeal = seal;
+        }];
+    }
+    PTYSession *session = makeSession(profile, windowController);
+    if (!session && windowController.numberOfTabs == 0) {
+        DLog(@"abort");
+        [[windowController window] close];
+        [self setFinishedWithSuccess:NO];
+        self.session = nil;
+        return nil;
+    }
+    [self setSession:session withSideEffects:NO];
+    if (toggle) {
+        DLog(@"toggle");
+        [windowController delayedEnterFullscreen];
+    }
+    [self makeKeyAndActivateIfNeeded:windowController];
+
+    [self setFinishedWithSuccess:YES];
+    [self setSession:session withSideEffects:YES];
+
+    return session;
+}
+
 - (void)prepareToLaunch {
     DLog(@"Preparing to launch a session.");
     DLog(@"Profile:\n%@", _profile);
@@ -165,6 +223,8 @@
     DLog(@"makeKey: %@", @(_makeKey));
     DLog(@"canActivate: %@", @(_canActivate));
     DLog(@"command: %@", _command);
+    assert(!_launched);
+    _launched = YES;
     _keepAlive = self;
 }
 

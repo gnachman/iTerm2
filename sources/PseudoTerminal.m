@@ -11380,17 +11380,21 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 
     // On Lion, a window that can join all spaces can't go fullscreen.
     if ([self numberOfTabs] == 1) {
-        _spaceSetting = [profile[KEY_SPACE] intValue];
-        switch (_spaceSetting) {
-            case iTermProfileJoinsAllSpaces:
-                self.window.collectionBehavior = [self desiredWindowCollectionBehavior];
-            case iTermProfileOpenInCurrentSpace:
-            default:
-                break;
-        }
+        [self customizeCollectionBehaviorForProfile:profile];
     }
 
     return aSession;
+}
+
+- (void)customizeCollectionBehaviorForProfile:(Profile *)profile {
+    _spaceSetting = [profile[KEY_SPACE] intValue];
+    switch (_spaceSetting) {
+        case iTermProfileJoinsAllSpaces:
+            self.window.collectionBehavior = [self desiredWindowCollectionBehavior];
+        case iTermProfileOpenInCurrentSpace:
+        default:
+            break;
+    }
 }
 
 - (void)restoreState:(PseudoTerminalState *)state {

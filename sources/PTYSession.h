@@ -94,6 +94,7 @@ extern NSString *const PTYCommandDidExitUserInfoKeyURL;
 @protocol iTermSessionScope;
 @class SessionView;
 @class TmuxHistory;
+@class WKWebViewConfiguration;
 
 typedef NS_ENUM(NSInteger, SplitSelectionMode) {
     kSplitSelectionModeOn,
@@ -719,6 +720,7 @@ backgroundColor:(NSColor *)backgroundColor;
        substitutions:(NSDictionary *)substitutions
          arrangement:(NSString *)arrangement
      fromArrangement:(BOOL)fromArrangement
+webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
           completion:(void (^)(BOOL))completion;
 
 // This is an alternative to runCommandWithOldCwd and startProgram. It attaches

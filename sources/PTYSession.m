@@ -2958,6 +2958,7 @@ ITERM_WEAKLY_REFERENCEABLE
        substitutions:(NSDictionary *)substitutions
          arrangement:(NSString *)arrangementName
      fromArrangement:(BOOL)fromArrangement
+webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
           completion:(void (^)(BOOL))completion {
     DLog(@"startProgram:%@ ssh:%@ browser:%@ environment:%@ customShell:%@ isUTF8:%@ substitutions:%@ arrangementName:%@ fromArrangement:%@, self=%@",
          command,
@@ -2979,9 +2980,16 @@ ITERM_WEAKLY_REFERENCEABLE
     _sshState = ssh ? iTermSSHStateProfile : iTermSSHStateNone;
     if (@available(macOS 11, *)) {
         if (browser) {
-            [_view becomeBrowser:self.profile[KEY_COMMAND_LINE] delegate:self];
+            [_view becomeBrowser:self.profile[KEY_COMMAND_LINE]
+                   configuration:webViewConfiguration
+                        delegate:self];
+            completion(YES);
             return;
         }
+    }
+    if (browser) {
+        completion(NO);
+        return;
     }
     [self computeArgvForCommand:command substitutions:substitutions completion:^(NSArray<NSString *> *argv) {
         DLog(@"argv=%@", argv);
@@ -4074,6 +4082,7 @@ ITERM_WEAKLY_REFERENCEABLE
          substitutions:_substitutions
            arrangement:nil
        fromArrangement:NO
+  webViewConfiguration:nil
             completion:^(BOOL ok) {
         [weakSelf.delegate sessionDidRestart:self];
     }];

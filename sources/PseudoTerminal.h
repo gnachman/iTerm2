@@ -339,6 +339,16 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
                    didMakeSession:(void (^)(PTYSession *session))didMakeSession
                        completion:(void (^)(PTYSession *newSession, BOOL ok))completion;
 
+- (PTYSession *)createTabWithProfile:(Profile *)profile
+                         withCommand:(NSString *)command
+                         environment:(NSDictionary *)environment
+                            tabIndex:(NSNumber *)tabIndex
+                   previousDirectory:(NSString *)previousDirectory
+                              parent:(PTYSession *)parent
+                          completion:(void (^)(PTYSession *, BOOL ok))completion;
+- (void)addSession:(PTYSession *)session inTabAtIndex:(NSNumber *)tabIndex;
+- (void)customizeCollectionBehaviorForProfile:(Profile *)profile;
+
 - (IBAction)newTmuxWindow:(id)sender;
 - (IBAction)newTmuxTab:(id)sender;
 - (void)newTmuxTabAtIndex:(NSNumber *)index;

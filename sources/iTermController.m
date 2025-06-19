@@ -1665,6 +1665,103 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                               completion:completion];
 }
 
+- (WKWebView *)openSingleUserBrowserWindowWithURL:(NSURL *)url
+                                    configuration:(WKWebViewConfiguration *)configuration
+                                          options:(iTermSingleUseWindowOptions)options
+                                       completion:(void (^)(void))completion {
+    MutableProfile *windowProfile = [[[self defaultBookmark] mutableCopy] autorelease];
+    if ([windowProfile[KEY_WINDOW_TYPE] integerValue] == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
+        [windowProfile[KEY_WINDOW_TYPE] integerValue] == WINDOW_TYPE_LION_FULL_SCREEN) {
+        windowProfile[KEY_WINDOW_TYPE] = @(iTermWindowDefaultType());
+    }
+    const BOOL bury = !!(options & iTermSingleUseWindowOptionsInitiallyBuried);
+    const BOOL shortLived = !!(options & iTermSingleUseWindowOptionsShortLived);
+
+    PseudoTerminal *term = nil;
+    term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
+                                             windowType:WINDOW_TYPE_ACCESSORY
+                                        savedWindowType:WINDOW_TYPE_ACCESSORY
+                                                 screen:-1
+                                       hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                                profile:windowProfile] autorelease];
+    [self addTerminalWindow:term];
+
+    DLog(@"Open single-use browser window with url: %@", url);
+    PTYSession *(^makeSession)(Profile *, PseudoTerminal *) =
+    ^PTYSession *(Profile *profile, PseudoTerminal *term) {
+        profile = [profile dictionaryBySettingObject:kProfilePreferenceCommandTypeBrowserValue
+                                              forKey:KEY_CUSTOM_COMMAND];
+        profile = [profile dictionaryBySettingObject:url.absoluteString
+                                              forKey:KEY_COMMAND_LINE];
+        term.window.collectionBehavior = NSWindowCollectionBehaviorFullScreenNone;
+        if (shortLived) {
+            profile = [profile dictionaryBySettingObject:@0 forKey:KEY_UNDO_TIMEOUT];
+        }
+
+        PTYSession *aSession = [term.sessionFactory newSessionWithProfile:profile
+                                                                   parent:nil];
+        [term addSession:aSession inTabAtIndex:nil];
+        iTermSessionAttachOrLaunchRequest *launchRequest =
+        [iTermSessionAttachOrLaunchRequest launchRequestWithSession:aSession
+                                                          canPrompt:YES
+                                                         objectType:iTermWindowObject
+                                                   hasServerConnection:NO
+                                                      serverConnection:(iTermGeneralServerConnection){}
+                                                          urlString:nil
+                                                       allowURLSubs:NO
+                                                        environment:nil
+                                                        customShell:nil
+                                                             oldCWD:nil
+                                                     forceUseOldCWD:NO
+                                                            command:nil
+                                                             isUTF8:nil
+                                                      substitutions:nil
+                                                   windowController:term
+                                                              ready:nil
+                                                         completion:^(PTYSession *session, BOOL ok) {
+            if (!ok) {
+                return;
+            }
+            if (shortLived) {
+                session.shortLivedSingleUse = YES;
+            }
+            session.isSingleUseSession = YES;
+            if (completion) {
+                __block BOOL completionBlockRun = NO;
+                [[NSNotificationCenter defaultCenter] addObserverForName:PTYSessionTerminatedNotification
+                                                                  object:session
+                                                                   queue:nil
+                                                              usingBlock:^(NSNotification * _Nonnull note) {
+                    if (completionBlockRun) {
+                        return;
+                    }
+                    completionBlockRun = YES;
+                    completion();
+                }];
+            }
+        }];
+        launchRequest.webViewConfiguration = configuration;
+        [term.sessionFactory attachOrLaunchWithRequest:launchRequest];
+        [term customizeCollectionBehaviorForProfile:profile];
+        return aSession;
+    };
+    PTYSession *theSession = [iTermSessionLauncher synchronouslyLaunchProfile:windowProfile
+                                          inTerminal:term
+                                             withURL:nil
+                                    hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                             makeKey:YES
+                                         canActivate:YES
+                                  respectTabbingMode:NO
+                                               index:nil
+                                             command:url.absoluteString
+                                         makeSession:makeSession];
+
+    if (bury) {
+        [theSession bury];
+    }
+    return theSession.view.browserViewController.webView;
+}
+
 - (void)openSingleUseWindowWithCommand:(NSString *)rawCommand
                              arguments:(NSArray<NSString *> *)arguments
                                 inject:(NSData *)injection

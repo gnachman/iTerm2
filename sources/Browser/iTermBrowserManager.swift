@@ -17,6 +17,7 @@
     func browserManager(_ manager: iTermBrowserManager, didStartNavigation navigation: WKNavigation?)
     func browserManager(_ manager: iTermBrowserManager, didFinishNavigation navigation: WKNavigation?)
     func browserManager(_ manager: iTermBrowserManager, didFailNavigation navigation: WKNavigation?, withError error: Error)
+    func browserManager(_ manager: iTermBrowserManager, requestNewWindowForURL url: URL, configuration: WKWebViewConfiguration) -> WKWebView?
 }
 
 @available(macOS 11.0, *)
@@ -34,17 +35,28 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private static let settingsMessageHandlerName = "iterm2BrowserSettings"
     private(set) var favicon: NSImage?
 
-    override init() {
+    init(configuration: WKWebViewConfiguration?) {
         super.init()
-        setupWebView()
+        setupWebView(configuration: configuration)
     }
     
-    private func setupWebView() {
-        let configuration = WKWebViewConfiguration()
-        
-        // Register custom URL scheme handler for iterm2-about: URLs
-        configuration.setURLSchemeHandler(self, forURLScheme: "iterm2-about")
-        
+    private func setupWebView(configuration preferredConfiguration: WKWebViewConfiguration?) {
+        let configuration: WKWebViewConfiguration
+        if let preferredConfiguration {
+            configuration = preferredConfiguration
+        } else {
+            let prefs = WKPreferences()
+
+            // block JS-only popups
+            prefs.javaScriptCanOpenWindowsAutomatically = false
+            configuration = WKWebViewConfiguration()
+            configuration.preferences = prefs
+
+            // Register custom URL scheme handler for iterm2-about: URLs
+            configuration.setURLSchemeHandler(self, forURLScheme: "iterm2-about")
+        }
+
+
         webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = self
         webView.uiDelegate = self
@@ -108,7 +120,11 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         let trimmed = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
         
         // If it already has a scheme, use as-is
-        if trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://") || trimmed.hasPrefix("iterm2-about:") {
+        if trimmed.hasPrefix("http://") ||
+            trimmed.hasPrefix("https://") ||
+            trimmed.hasPrefix("iterm2-about:") ||
+            trimmed.hasPrefix("about:") ||
+            trimmed.hasPrefix("file://") {
             return URL(string: trimmed)
         }
         
@@ -384,8 +400,41 @@ extension iTermBrowserManager: WKNavigationDelegate {
             lastRequestedURL = targetURL
         }
         
-        // For now, allow all navigation
-        // TODO: Add security policies, popup blocking, etc.
+        // Popup blocking logic
+        guard let targetURL = navigationAction.request.url else {
+            decisionHandler(.cancel)
+            return
+        }
+        
+        // Always allow our internal pages
+        if targetURL.absoluteString.hasPrefix("iterm2-about:") {
+            decisionHandler(.allow)
+            return
+        }
+        
+        // Check for popup behavior
+        if navigationAction.targetFrame == nil {
+            // This is a popup (no target frame = new window/tab)
+            switch navigationAction.navigationType {
+            case .linkActivated:
+                // User clicked a link - request new window from delegate
+                delegate?.browserManager(self, requestNewWindowForURL: targetURL, configuration: webView.configuration.copy() as! WKWebViewConfiguration)
+                decisionHandler(.cancel)
+                return
+            case .other:
+                // Automatic popup (JavaScript without user interaction) - block it
+                print("Blocked automatic popup to: \(targetURL)")
+                decisionHandler(.cancel)
+                return
+            default:
+                // Block other popup types for safety
+                print("Blocked popup navigation type \(navigationAction.navigationType.rawValue) to: \(targetURL)")
+                decisionHandler(.cancel)
+                return
+            }
+        }
+        
+        // Regular navigation in same frame - allow
         decisionHandler(.allow)
     }
 }
@@ -394,12 +443,16 @@ extension iTermBrowserManager: WKNavigationDelegate {
 
 @available(macOS 11.0, *)
 extension iTermBrowserManager: WKUIDelegate {
-    func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
-        // Handle popup windows - for now, just load in current view
-        if let url = navigationAction.request.url {
-            webView.load(URLRequest(url: url))
+    func webView(_ webView: WKWebView,
+                 createWebViewWith configuration: WKWebViewConfiguration,
+                 for navigationAction: WKNavigationAction,
+                 windowFeatures: WKWindowFeatures) -> WKWebView? {
+        guard navigationAction.targetFrame == nil, let url = navigationAction.request.url else {
+            return nil
         }
-        return nil
+        return delegate?.browserManager(self,
+                                        requestNewWindowForURL: url,
+                                        configuration: configuration)
     }
     
     func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
