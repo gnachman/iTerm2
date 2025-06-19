@@ -48,6 +48,7 @@
          substitutions:nil
            arrangement:nil
        fromArrangement:NO
+  webViewConfiguration:nil
             completion:^(BOOL ok) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [aCommand resumeExecutionWithResult:nil];

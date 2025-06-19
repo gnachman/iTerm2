@@ -16,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class PTYSession;
 @class Profile;
 @class PseudoTerminal;
+@class WKWebViewConfiguration;
 
 @interface iTermSessionAttachOrLaunchRequest: NSObject
 @property (nonatomic, strong) PTYSession *session;
@@ -40,6 +41,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) id<iTermPartialAttachment> partialAttachment;
 @property (nonatomic) BOOL fromArrangement;
 @property (nonatomic) BOOL browser;
+@property (nonatomic, nullable, strong) WKWebViewConfiguration *webViewConfiguration;
 
 + (instancetype)launchRequestWithSession:(PTYSession *)aSession
                                canPrompt:(BOOL)canPrompt

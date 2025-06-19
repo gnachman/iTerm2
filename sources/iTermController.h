@@ -48,6 +48,8 @@ extern NSString *const iTermSnippetsTagsDidChange;
 @class PTYTab;
 @class PTYTextView;
 @class TmuxController;
+@class WKWebView;
+@class WKWebViewConfiguration;
 
 @interface iTermController : NSObject
 
@@ -220,6 +222,11 @@ typedef NS_OPTIONS(NSUInteger, iTermSingleUseWindowOptions) {
                         didMakeSession:(void (^)(PTYSession *session))didMakeSession
                             completion:(void (^)(void))completion;
 - (NSWindow *)openSingleUseLoginWindowAndWrite:(NSData *)data completion:(void (^)(PTYSession *session))completion;
+
+- (WKWebView *)openSingleUserBrowserWindowWithURL:(NSURL *)url
+                                    configuration:(WKWebViewConfiguration *)configuration
+                                          options:(iTermSingleUseWindowOptions)options
+                                       completion:(void (^)(void))completion NS_AVAILABLE_MAC(11);
 
 - (NSWindow *)openWindow:(BOOL)makeWindow
                  command:(NSString *)command

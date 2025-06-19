@@ -13,19 +13,32 @@ import WebKit
                                didUpdateTitle title: String?)
     func browserViewController(_ controller: iTermBrowserViewController,
                                didUpdateFavicon favicon: NSImage?)
+    func browserViewController(_ controller: iTermBrowserViewController,
+                               requestNewWindowForURL url: URL,
+                               configuration: WKWebViewConfiguration) -> WKWebView?
 }
 
 @available(macOS 11.0, *)
 @objc(iTermBrowserViewController)
 class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate, iTermBrowserManagerDelegate {
     @objc weak var delegate: iTermBrowserViewControllerDelegate?
-    private var browserManager: iTermBrowserManager!
+    private let browserManager: iTermBrowserManager
     private var toolbar: iTermBrowserToolbar!
     private var backgroundView: NSVisualEffectView!
+
+    @objc(initWithConfiguration:)
+    init(configuration: WKWebViewConfiguration?)  {
+        browserManager = iTermBrowserManager(configuration: configuration)
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        it_fatalError("init(coder:) has not been implemented")
+    }
     
     @objc override var title: String? {
         get {
-            return browserManager?.webView.title
+            return browserManager.webView.title
         }
         set {
             super.title = newValue
@@ -33,9 +46,13 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
     }
     
     @objc var favicon: NSImage? {
-        return browserManager?.favicon
+        return browserManager.favicon
     }
-    
+
+    @objc var webView: WKWebView {
+        return browserManager.webView
+    }
+
     override func loadView() {
         view = iTermBrowserView()
     }
@@ -58,7 +75,6 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
     }
     
     private func setupBrowserManager() {
-        browserManager = iTermBrowserManager()
         browserManager.delegate = self
     }
     
@@ -154,6 +170,12 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
     
     func browserManager(_ manager: iTermBrowserManager, didFailNavigation navigation: WKNavigation?, withError error: Error) {
         toolbar.setLoading(false)
+    }
+    
+    func browserManager(_ manager: iTermBrowserManager, requestNewWindowForURL url: URL, configuration: WKWebViewConfiguration) -> WKWebView? {
+        return delegate?.browserViewController(self,
+                                               requestNewWindowForURL: url,
+                                               configuration: configuration)
     }
     
     // MARK: - Public Interface

@@ -304,9 +304,11 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return self;
 }
 
-- (void)becomeBrowser:(NSString *)initialURL delegate:(id<iTermBrowserViewControllerDelegate>)delegate {
-    _browserViewController = [[iTermBrowserViewController alloc] init];
-    
+- (void)becomeBrowser:(NSString *)initialURL
+        configuration:(WKWebViewConfiguration *)configuration
+             delegate:(id<iTermBrowserViewControllerDelegate>)delegate {
+    _browserViewController = [[iTermBrowserViewController alloc] initWithConfiguration:configuration];
+
     _browserViewController.delegate = delegate;
 
     // Set initial frame to avoid constraint conflicts
