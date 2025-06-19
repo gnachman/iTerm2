@@ -2979,7 +2979,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _sshState = ssh ? iTermSSHStateProfile : iTermSSHStateNone;
     if (@available(macOS 11, *)) {
         if (browser) {
-            [_view becomeBrowser:self.profile[KEY_COMMAND_LINE]];
+            [_view becomeBrowser:self.profile[KEY_COMMAND_LINE] delegate:self];
             return;
         }
     }
@@ -5379,6 +5379,11 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSImage *)tabGraphicForProfile:(Profile *)profile {
+    if (@available(macOS 11, *)) {
+        if (_view.isBrowser) {
+            return _view.browserViewController.favicon;
+        }
+    }
     const iTermProfileIcon icon = [iTermProfilePreferences unsignedIntegerForKey:KEY_ICON inProfile:profile];
     switch (icon) {
         case iTermProfileIconNone:
@@ -13256,7 +13261,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return [self.variablesScope valueForVariableName:iTermVariableKeySessionIconName] ?: [self.variablesScope valueForVariableName:iTermVariableKeySessionName];
 }
 
-- (void)screenSetIconName:(NSString *)theName {
+- (void)setUntrustedIconName:(NSString *)theName {
     DLog(@"screenSetIconName:%@", theName);
     // Put a zero-width space in between \ and ( to avoid interpolated strings coming from the server.
     theName = [theName stringByReplacingOccurrencesOfString:@"\\(" withString:@"\\\u200B("];
@@ -13267,6 +13272,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         DLog(@"Deferred enableSessionNameTitleComponentIfPossible");
         [weakSelf enableSessionNameTitleComponentIfPossible];
     });
+}
+
+- (void)screenSetIconName:(NSString *)theName {
+    [self setUntrustedIconName:theName];
 }
 
 - (void)screenSetSubtitle:(NSString *)subtitle {

@@ -8,11 +8,33 @@
 import WebKit
 
 @available(macOS 11.0, *)
+@objc protocol iTermBrowserViewControllerDelegate: AnyObject {
+    func browserViewController(_ controller: iTermBrowserViewController,
+                               didUpdateTitle title: String?)
+    func browserViewController(_ controller: iTermBrowserViewController,
+                               didUpdateFavicon favicon: NSImage?)
+}
+
+@available(macOS 11.0, *)
 @objc(iTermBrowserViewController)
 class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate, iTermBrowserManagerDelegate {
+    @objc weak var delegate: iTermBrowserViewControllerDelegate?
     private var browserManager: iTermBrowserManager!
     private var toolbar: iTermBrowserToolbar!
     private var backgroundView: NSVisualEffectView!
+    
+    @objc override var title: String? {
+        get {
+            return browserManager?.webView.title
+        }
+        set {
+            super.title = newValue
+        }
+    }
+    
+    @objc var favicon: NSImage? {
+        return browserManager?.favicon
+    }
     
     override func loadView() {
         view = iTermBrowserView()
@@ -107,7 +129,11 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
     }
     
     func browserManager(_ manager: iTermBrowserManager, didUpdateTitle title: String?) {
-        // Could update window title or other UI
+        delegate?.browserViewController(self, didUpdateTitle: title)
+    }
+    
+    func browserManager(_ manager: iTermBrowserManager, didUpdateFavicon favicon: NSImage?) {
+        delegate?.browserViewController(self, didUpdateFavicon: favicon)
     }
     
     func browserManager(_ manager: iTermBrowserManager, didUpdateCanGoBack canGoBack: Bool) {
