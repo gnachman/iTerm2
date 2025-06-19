@@ -34,6 +34,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private var hasSettingsMessageHandler = false
     private static let settingsMessageHandlerName = "iterm2BrowserSettings"
     private(set) var favicon: NSImage?
+    private var _findManager: Any?
 
     init(configuration: WKWebViewConfiguration?) {
         super.init()
@@ -63,6 +64,11 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         
         // Enable back/forward navigation
         webView.allowsBackForwardNavigationGestures = true
+        
+        // Initialize find manager for macOS 13+
+        if #available(macOS 13.0, *) {
+            _findManager = iTermBrowserFindManager(webView: webView)
+        }
     }
     
     // MARK: - Public Interface
@@ -169,6 +175,20 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                 webView.go(to: targetItem)
             }
         }
+    }
+    
+    // MARK: - Find Support
+    
+    @available(macOS 13.0, *)
+    @objc var browserFindManager: iTermBrowserFindManager? {
+        return _findManager as? iTermBrowserFindManager
+    }
+    
+    @objc var supportsFinding: Bool {
+        if #available(macOS 13.0, *) {
+            return _findManager != nil
+        }
+        return false
     }
     
     private func showErrorPage(for error: Error, failedURL: URL?) {

@@ -4678,6 +4678,7 @@
 		A6F7D4CC2E037EA80065D09C /* settings-page.html in Resources */ = {isa = PBXBuildFile; fileRef = A6F7D4CA2E037EA80065D09C /* settings-page.html */; };
 		A6F7D4CD2E037EA80065D09C /* settings-page.html in Resources */ = {isa = PBXBuildFile; fileRef = A6F7D4CA2E037EA80065D09C /* settings-page.html */; };
 		A6F7D4CF2E038B540065D09C /* PTYSession+Browser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4CE2E038B540065D09C /* PTYSession+Browser.swift */; };
+		A6F7D4D12E03BE3A0065D09C /* iTermBrowserFindManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4D02E03BE3A0065D09C /* iTermBrowserFindManager.swift */; };
 		A6F7F8072763F47B005E433E /* VT100ScreenState.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F7F8052763F47B005E433E /* VT100ScreenState.m */; };
 		A6F981CC1C13783C00EE0B80 /* iTermCPS.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F981CB1C13783C00EE0B80 /* iTermCPS.h */; };
 		A6F9821F2CA775E200229070 /* RoundedRectView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F9D16F137D900B7FCE9 /* RoundedRectView.m */; };
@@ -8304,6 +8305,7 @@
 		A6F7D4C62E037E780065D09C /* error-page.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "error-page.html"; sourceTree = "<group>"; };
 		A6F7D4CA2E037EA80065D09C /* settings-page.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "settings-page.html"; sourceTree = "<group>"; };
 		A6F7D4CE2E038B540065D09C /* PTYSession+Browser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PTYSession+Browser.swift"; sourceTree = "<group>"; };
+		A6F7D4D02E03BE3A0065D09C /* iTermBrowserFindManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserFindManager.swift; sourceTree = "<group>"; };
 		A6F7F8042763F47B005E433E /* VT100ScreenState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VT100ScreenState.h; sourceTree = "<group>"; };
 		A6F7F8052763F47B005E433E /* VT100ScreenState.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenState.m; sourceTree = "<group>"; };
 		A6F981CB1C13783C00EE0B80 /* iTermCPS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCPS.h; sourceTree = "<group>"; };
@@ -12860,6 +12862,7 @@
 				A6F7D4CA2E037EA80065D09C /* settings-page.html */,
 				A6F7D4C22E037BC80065D09C /* iTermBrowserCSSLoader.swift */,
 				A6F7D4BA2E0373110065D09C /* iTermBrowserErrorHandler.swift */,
+				A6F7D4D02E03BE3A0065D09C /* iTermBrowserFindManager.swift */,
 				A6F7D4B82E034E2B0065D09C /* iTermBrowserManager.swift */,
 				A6F7D4BC2E037B4B0065D09C /* iTermBrowserSettingsHandler.swift */,
 				A6F7D4C42E037E520065D09C /* iTermBrowserTemplateLoader.swift */,
@@ -17376,6 +17379,7 @@
 				A63493E923E945BA0047C31B /* iTermGlobalScopeController.m in Sources */,
 				A65618702D6BA5EE0059CD35 /* RegularMessageCellView.swift in Sources */,
 				5370ECDB20F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.m in Sources */,
+				A6F7D4D12E03BE3A0065D09C /* iTermBrowserFindManager.swift in Sources */,
 				A6AFE93123FCFF8C00D489C7 /* iTermRestorableStateController.m in Sources */,
 				A631FCA220EF0BCC00EB824F /* iTermStatusBarKnobColorViewController.m in Sources */,
 				A6153D5D21F4EF6F002976FC /* iTermStatusBarBaseLayoutAlgorithm.m in Sources */,
