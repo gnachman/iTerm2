@@ -758,7 +758,7 @@ class CodeciergeGoalView: NSView, NSTextViewDelegate, NSControlTextEditingDelega
     private let startCallback: (String, Bool) -> ()
     private let label: NSTextField
     private let scrollView: NSScrollView
-    private let textView: PlaceholderTextView
+    private let textView: ShiftEnterTextView
     private let startButton: NSButton
     private let autoButton: NSButton
     var goalDidChange: ((String) -> ())?
@@ -779,7 +779,7 @@ class CodeciergeGoalView: NSView, NSTextViewDelegate, NSControlTextEditingDelega
         label.lineBreakMode = .byWordWrapping
         label.usesSingleLineMode = false
 
-        textView = PlaceholderTextView(frame: NSRect(x: 0, y: 0, width: 1, height: 1))
+        textView = ShiftEnterTextView(frame: NSRect(x: 0, y: 0, width: 1, height: 1))
         textView.it_placeholderString = "I want to…"
         textView.font = NSFont.userFixedPitchFont(ofSize: NSFont.systemFontSize)
         textView.isEditable = true

@@ -227,16 +227,19 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
     }
     
     // MARK: - Private Helpers
-    
-    private func normalizeURL(_ urlString: String) -> URL? {
+
+    private func stringHasValidScheme(_ urlString: String) -> Bool {
+        return urlString.hasPrefix("http://") ||
+        urlString.hasPrefix("https://") ||
+        urlString.hasPrefix("iterm2-about:") ||
+        urlString.hasPrefix("about:") ||
+        urlString.hasPrefix("file://")
+    }
+    func normalizeURL(_ urlString: String) -> URL? {
         let trimmed = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
         
         // If it already has a scheme, use as-is
-        if trimmed.hasPrefix("http://") ||
-            trimmed.hasPrefix("https://") ||
-            trimmed.hasPrefix("iterm2-about:") ||
-            trimmed.hasPrefix("about:") ||
-            trimmed.hasPrefix("file://") {
+        if stringHasValidScheme(trimmed) {
             return URL(string: trimmed)
         }
         
@@ -244,12 +247,20 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
         if isValidDomainOrIP(trimmed) {
             return URL(string: "https://\(trimmed)")
         }
-        
-        // Otherwise, treat as search query and send to search.
-        let searchQuery = trimmed.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? trimmed
-        return URL(string: iTermAdvancedSettingsModel.searchCommand().replacingOccurrences(of: "%@", with: searchQuery))
+        return nil
     }
-    
+
+    func stringIsStronglyURLLike(_ urlString: String) -> Bool {
+        let trimmed = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
+        if stringHasValidScheme(trimmed) {
+            return true
+        }
+        if isValidDomainOrIP(trimmed) && trimmed.contains(".") {
+            return true
+        }
+        return false
+    }
+
     private func isValidDomainOrIP(_ input: String) -> Bool {
         // Check if it contains spaces (definitely not a URL)
         if input.contains(" ") {

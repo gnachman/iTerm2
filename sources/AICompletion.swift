@@ -173,6 +173,8 @@ class CompletionItem: NSObject {
         case history
         case command
         case folder
+        case webSearch
+        case navigation
     }
 
     @objc(initWithValue:detail:kind:)

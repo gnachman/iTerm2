@@ -199,7 +199,7 @@ class ChatInputTextFieldContainer: NSView {
     }
 }
 
-class ChatInputTextView: PlaceholderTextView {
+class ChatInputTextView: ShiftEnterTextView {
     var sendAction: Selector?
     weak var sendTarget: AnyObject?
 

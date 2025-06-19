@@ -63,6 +63,8 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
         }
     }
 
+    var maxWidth: CGFloat = 500
+
     // MARK: - Mode and Subviews
     private var mode: Mode  // changed from let to var
 
@@ -466,7 +468,6 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
         let desiredHeight = detailContainerHeight + searchFieldHeight + tableHeight + scrollView.contentInsets.bottom
         let finalHeight = min(maxHeight, desiredHeight)
 
-        let maxWidth: CGFloat = 500
         var requiredWidth: CGFloat = 300 // Default width
 
         // Determine the required width dynamically
@@ -475,7 +476,7 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
             .max() ?? requiredWidth
 
         if let column = completionsTableView.tableColumns.first, tableView != nil {
-            let columnPadding: CGFloat = 28
+            let columnPadding: CGFloat = 36
             let iconWidth = CompletionCell.imageWidth + CGFloat(CompletionCell.imageToTextMargin)
             requiredWidth = min(maxWidth, max(requiredWidth, textWidth + columnPadding + iconWidth))
             let columnWidth = requiredWidth - 32
@@ -566,6 +567,16 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
             return NSImage.it_image(forSymbolName: "folder",
                                     accessibilityDescription: "Folder",
                                     fallbackImageName: "folder",
+                                    for: CompletionsWindow.self)
+        case .webSearch:
+            return NSImage.it_image(forSymbolName: "magnifyingglass",
+                                    accessibilityDescription: "Web Search",
+                                    fallbackImageName: "magnifyingglass",
+                                    for: CompletionsWindow.self)
+        case .navigation:
+            return NSImage.it_image(forSymbolName: "safari",
+                                    accessibilityDescription: "Navigate",
+                                    fallbackImageName: "safari",
                                     for: CompletionsWindow.self)
         }
     }
