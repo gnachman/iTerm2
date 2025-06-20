@@ -69,7 +69,7 @@ class iTermAdblockTests: XCTestCase {
                 ifDomain: nil),
             action: TestWebKitAction(type: "block", selector: nil))]
 
-        XCTAssertEqual(actual, expected)
+        XCTAssertEqual(actual, expected, "For input:\n\(input)\nActual:\n\(actual)\nExpected:\n\(expected)\n")
 
         XCTAssertNoThrow(try NSRegularExpression(pattern: actual[0].trigger.urlFilter))
     }
@@ -103,7 +103,7 @@ class iTermAdblockTests: XCTestCase {
                 ifDomain: nil),
             action: TestWebKitAction(type: "block", selector: nil))]
 
-        XCTAssertEqual(actual, expected)
+        XCTAssertEqual(actual, expected, "For input:\n\(input)\nActual:\n\(actual)\nExpected:\n\(expected)\n")
         XCTAssertNoThrow(try NSRegularExpression(pattern: actual[0].trigger.urlFilter))
     }
 
@@ -135,7 +135,7 @@ class iTermAdblockTests: XCTestCase {
                 ifDomain: nil),
             action: TestWebKitAction(type: "block", selector: nil))]
 
-        XCTAssertEqual(actual, expected)
+        XCTAssertEqual(actual, expected, "For input:\n\(input)\nActual:\n\(actual)\nExpected:\n\(expected)\n")
         XCTAssertNoThrow(try NSRegularExpression(pattern: actual[0].trigger.urlFilter))
     }
 
@@ -225,7 +225,7 @@ class iTermAdblockTests: XCTestCase {
             )
         )]
 
-        XCTAssertEqual(actual, expected)
+        XCTAssertEqual(actual, expected, "For input:\n\(input)\nActual:\n\(actual)\nExpected:\n\(expected)\n")
     }
 
     func testExceptionRules() {
@@ -256,7 +256,7 @@ class iTermAdblockTests: XCTestCase {
                 ifDomain: nil),
             action: TestWebKitAction(type: "ignore-previous-rules", selector: nil))]
 
-        XCTAssertEqual(actual, expected)
+        XCTAssertEqual(actual, expected, "For input:\n\(input)\nActual:\n\(actual)\nExpected:\n\(expected)\n")
         XCTAssertNoThrow(try NSRegularExpression(pattern: actual[0].trigger.urlFilter))
     }
 
@@ -288,7 +288,7 @@ class iTermAdblockTests: XCTestCase {
                 ifDomain: nil),
             action: TestWebKitAction(type: "block", selector: nil))]
 
-        XCTAssertEqual(actual, expected)
+        XCTAssertEqual(actual, expected, "For input:\n\(input)\nActual:\n\(actual)\nExpected:\n\(expected)\n")
         XCTAssertNoThrow(try NSRegularExpression(pattern: actual[0].trigger.urlFilter))
     }
 
@@ -320,7 +320,7 @@ class iTermAdblockTests: XCTestCase {
                 ifDomain: nil),
             action: TestWebKitAction(type: "block", selector: nil))]
 
-        XCTAssertEqual(actual, expected)
+        XCTAssertEqual(actual, expected, "For input:\n\(input)\nActual:\n\(actual)\nExpected:\n\(expected)\n")
         XCTAssertNoThrow(try NSRegularExpression(pattern: actual[0].trigger.urlFilter))
     }
 
@@ -344,7 +344,7 @@ class iTermAdblockTests: XCTestCase {
                 ifDomain: nil),
             action: TestWebKitAction(type: "block", selector: nil))]
 
-        XCTAssertEqual(actual, expected)
+        XCTAssertEqual(actual, expected, "For input:\n\(input)\nActual:\n\(actual)\nExpected:\n\(expected)\n")
         XCTAssertNoThrow(try NSRegularExpression(pattern: actual[0].trigger.urlFilter))
     }
 
@@ -483,7 +483,7 @@ class iTermAdblockTests: XCTestCase {
                 ifDomain: nil),
             action: TestWebKitAction(type: "block", selector: nil))]
 
-        XCTAssertEqual(actual, expected)
+        XCTAssertEqual(actual, expected, "For input:\n\(input)\nActual:\n\(actual)\nExpected:\n\(expected)\n")
         XCTAssertNoThrow(try NSRegularExpression(pattern: actual[0].trigger.urlFilter))
     }
 
@@ -515,7 +515,7 @@ class iTermAdblockTests: XCTestCase {
                 ifDomain: ["site1.com", "site2.com"]),
             action: TestWebKitAction(type: "block", selector: nil))]
 
-        XCTAssertEqual(actual, expected)
+        XCTAssertEqual(actual, expected, "For input:\n\(input)\nActual:\n\(actual)\nExpected:\n\(expected)\n")
         XCTAssertNoThrow(try NSRegularExpression(pattern: actual[0].trigger.urlFilter))
     }
 
@@ -547,7 +547,7 @@ class iTermAdblockTests: XCTestCase {
                 ifDomain: nil),
             action: TestWebKitAction(type: "block", selector: nil))]
 
-        XCTAssertEqual(actual, expected)
+        XCTAssertEqual(actual, expected, "For input:\n\(input)\nActual:\n\(actual)\nExpected:\n\(expected)\n")
         XCTAssertNoThrow(try NSRegularExpression(pattern: actual[0].trigger.urlFilter))
     }
 
@@ -579,7 +579,7 @@ class iTermAdblockTests: XCTestCase {
                 ifDomain: nil),
             action: TestWebKitAction(type: "block", selector: nil))]
 
-        XCTAssertEqual(actual, expected)
+        XCTAssertEqual(actual, expected, "For input:\n\(input)\nActual:\n\(actual)\nExpected:\n\(expected)\n")
         XCTAssertNoThrow(try NSRegularExpression(pattern: actual[0].trigger.urlFilter))
     }
 
@@ -608,39 +608,14 @@ class iTermAdblockTests: XCTestCase {
             )
         )]
 
-        XCTAssertEqual(actual, expected)
+        XCTAssertEqual(actual, expected, "For input:\n\(input)\nActual:\n\(actual)\nExpected:\n\(expected)\n")
     }
 
     func testRegexRule() {
         let input = "/ads\\.(gif|jpg)$/"
         let result = iTermAdblockParser.parseAdblockList(input)
 
-        XCTAssertNotNil(result)
-
-        // Decode JSON
-        guard let jsonData = result!.data(using: .utf8),
-              let actual = try? JSONDecoder().decode([TestWebKitContentRule].self, from: jsonData) else {
-            XCTFail("Failed to decode JSON")
-            return
-        }
-
-        let expected = [TestWebKitContentRule(
-            trigger: TestWebKitTrigger(
-                urlFilter: "ads\\.(gif|jpg)$",
-                resourceType: [
-                    "document",
-                    "image",
-                    "style-sheet",
-                    "script",
-                    "font",
-                    "raw",
-                    "svg-document",
-                ],
-                ifDomain: nil),
-            action: TestWebKitAction(type: "block", selector: nil))]
-
-        XCTAssertEqual(actual, expected)
-        XCTAssertNoThrow(try NSRegularExpression(pattern: actual[0].trigger.urlFilter))
+        XCTAssertNil(result)
     }
 
     func testCombinedOptions() {
@@ -663,7 +638,7 @@ class iTermAdblockTests: XCTestCase {
                 ifDomain: ["site1.com", "site2.com"]),
             action: TestWebKitAction(type: "block", selector: nil))]
 
-        XCTAssertEqual(actual, expected)
+        XCTAssertEqual(actual, expected, "For input:\n\(input)\nActual:\n\(actual)\nExpected:\n\(expected)\n")
         XCTAssertNoThrow(try NSRegularExpression(pattern: actual[0].trigger.urlFilter))
     }
 
@@ -694,7 +669,7 @@ class iTermAdblockTests: XCTestCase {
             )
         )]
 
-        XCTAssertEqual(actual, expected)
+        XCTAssertEqual(actual, expected, "For input:\n\(input)\nActual:\n\(actual)\nExpected:\n\(expected)\n")
     }
 
     func testNetworkRuleWithMatchCaseOption() {
@@ -725,7 +700,7 @@ class iTermAdblockTests: XCTestCase {
                 ifDomain: nil),
             action: TestWebKitAction(type: "block", selector: nil))]
 
-        XCTAssertEqual(actual, expected)
+        XCTAssertEqual(actual, expected, "For input:\n\(input)\nActual:\n\(actual)\nExpected:\n\(expected)\n")
         XCTAssertNoThrow(try NSRegularExpression(pattern: actual[0].trigger.urlFilter))
     }
 
@@ -733,7 +708,7 @@ class iTermAdblockTests: XCTestCase {
         let input = "/ad[sS]$/$third-party,domain=foo.com"
         let result = iTermAdblockParser.parseAdblockList(input)
         // [sS] not supported
-        XCTAssertNotNil(result)
+        XCTAssertNil(result)
     }
 
     func testNetworkExceptionWithOptions() {
@@ -756,7 +731,7 @@ class iTermAdblockTests: XCTestCase {
                 ifDomain: nil),
             action: TestWebKitAction(type: "ignore-previous-rules", selector: nil))]
 
-        XCTAssertEqual(actual, expected)
+        XCTAssertEqual(actual, expected, "For input:\n\(input)\nActual:\n\(actual)\nExpected:\n\(expected)\n")
         XCTAssertNoThrow(try NSRegularExpression(pattern: actual[0].trigger.urlFilter))
     }
 
@@ -818,7 +793,7 @@ class iTermAdblockTests: XCTestCase {
             )
         ]
 
-        XCTAssertEqual(actual, expected)
+        XCTAssertEqual(actual, expected, "For input:\n\(input)\nActual:\n\(actual)\nExpected:\n\(expected)\n")
         XCTAssertNoThrow(try NSRegularExpression(pattern: actual[0].trigger.urlFilter))
     }
 
@@ -838,7 +813,7 @@ class iTermAdblockTests: XCTestCase {
             TestWebKitContentRule(
                 trigger: TestWebKitTrigger(
                     // No trailing '$'—the '^' becomes '[/?#]?'
-                    urlFilter: #"\/waWQiOjE.*=eyJ\.js[/?#]?"#,
+                    urlFilter: #"\/waWQiOjE.*=eyJ\.js[/?#]?$"#,
                     resourceType: [
                         "document",
                         "image",
@@ -854,7 +829,75 @@ class iTermAdblockTests: XCTestCase {
             )
         ]
 
-        XCTAssertEqual(actual, expected)
+        XCTAssertEqual(actual, expected, "For input:\n\(input)\nActual:\n\(actual)\nExpected:\n\(expected)\n")
+        XCTAssertNoThrow(try NSRegularExpression(pattern: actual[0].trigger.urlFilter))
+    }
+
+    func testCaretInMiddle() {
+        let input = #"||net.geo.opera.com^*utm_source=OFT$document"#
+
+        let result = iTermAdblockParser.parseAdblockList(input)
+        XCTAssertNotNil(result)
+
+        // Decode JSON
+        guard let data = result!.data(using: .utf8),
+              let actual = try? JSONDecoder().decode([TestWebKitContentRule].self, from: data) else {
+            XCTFail("Failed to decode JSON")
+            return
+        }
+
+        let expected = [
+            TestWebKitContentRule(
+                trigger: TestWebKitTrigger(
+                    urlFilter: #"^[^:/?#]*://(([^./]+\.)*)net\.geo\.opera\.com[/?#]?.*utm_source=OFT"#,
+                    resourceType: [
+                        "document",
+                    ],
+                    ifDomain: nil),
+                action: TestWebKitAction(type: "block", selector: nil))]
+        XCTAssertEqual(actual, expected, "For input:\n\(input)\nActual:\n\(actual)\nExpected:\n\(expected)\n")
+        XCTAssertNoThrow(try NSRegularExpression(pattern: actual[0].trigger.urlFilter))
+    }
+
+    func testTwoCarets() {
+        let input = #"||dev.to^*/bb/post_body_bottom^"#
+        let result = iTermAdblockParser.parseAdblockList(input)
+        XCTAssertNotNil(result)
+
+        // Decode JSON
+        guard let data = result!.data(using: .utf8),
+              let actual = try? JSONDecoder().decode([TestWebKitContentRule].self, from: data) else {
+            XCTFail("Failed to decode JSON")
+            return
+        }
+
+        let expected = [
+            TestWebKitContentRule(
+                trigger: TestWebKitTrigger(
+                    urlFilter: #"^[^:/?#]*://(([^./]+\.)*)dev\.to[/?#]?.*\/bb\/post_body_bottom[/?#]?$"#,
+                    resourceType: [
+                        "document",
+                        "image",
+                        "style-sheet",
+                        "script",
+                        "font",
+                        "raw",
+                        "svg-document",
+                    ],
+                    ifDomain: nil
+                ),
+                action: TestWebKitAction(type: "block", selector: nil)
+            )
+        ]
+
+        XCTAssertEqual(actual, expected, """
+            For input:
+            \(input)
+            Actual:
+            \(actual)
+            Expected:
+            \(expected)
+            """)
         XCTAssertNoThrow(try NSRegularExpression(pattern: actual[0].trigger.urlFilter))
     }
 }
