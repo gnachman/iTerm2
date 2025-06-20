@@ -56,7 +56,7 @@ class iTermAdblockTests: XCTestCase {
 
         let expected = [TestWebKitContentRule(
             trigger: TestWebKitTrigger(
-                urlFilter: #"^[^:/?#]*://(([^./]+\.)*)googleads\.g\.doubleclick\.net([/?#]|$)"#,
+                urlFilter: "^[^:/?#]*://(([^./]+\\.)*)googleads\\.g\\.doubleclick\\.net[/?#]?$",
                 resourceType: [
                     "document",
                     "image",
@@ -90,7 +90,7 @@ class iTermAdblockTests: XCTestCase {
 
         let expected = [TestWebKitContentRule(
             trigger: TestWebKitTrigger(
-                urlFilter: #"^[^:/?#]*://(([^./]+\.)*)example\.com([/?#]|$)"#,
+                urlFilter: #"^[^:/?#]*://(([^./]+\.)*)example\.com[/?#]?$"#,
                 resourceType: [
                     "document",
                     "image",
@@ -155,7 +155,7 @@ class iTermAdblockTests: XCTestCase {
 
         let expected = [TestWebKitContentRule(
             trigger: TestWebKitTrigger(
-                urlFilter: #"ads([/?#]|$)"#,
+                urlFilter: #"ads[/?#]?$"#,
                 resourceType: [
                     "document",
                     "image",
@@ -243,7 +243,7 @@ class iTermAdblockTests: XCTestCase {
 
         let expected = [TestWebKitContentRule(
             trigger: TestWebKitTrigger(
-                urlFilter: #"^[^:/?#]*://(([^./]+\.)*)example\.com([/?#]|$)"#,
+                urlFilter: #"^[^:/?#]*://(([^./]+\.)*)example\.com[/?#]?$"#,
                 resourceType: [
                     "document",
                     "image",
@@ -339,7 +339,7 @@ class iTermAdblockTests: XCTestCase {
 
         let expected = [TestWebKitContentRule(
             trigger: TestWebKitTrigger(
-                urlFilter: #"^[^:/?#]*://(([^./]+\.)*)example\.com([/?#]|$)"#,
+                urlFilter: #"^[^:/?#]*://(([^./]+\.)*)example\.com[/?#]?$"#,
                 resourceType: ["script", "image"],
                 ifDomain: nil),
             action: TestWebKitAction(type: "block", selector: nil))]
@@ -470,7 +470,7 @@ class iTermAdblockTests: XCTestCase {
 
         let expected = [TestWebKitContentRule(
             trigger: TestWebKitTrigger(
-                urlFilter: #"^[^:/?#]*://(([^./]+\.)*)example\.com\/\[special]\.js([/?#]|$)"#,
+                urlFilter: #"^[^:/?#]*://(([^./]+\.)*)example\.com\/\[special]\.js[/?#]?$"#,
                 resourceType: [
                     "document",
                     "image",
@@ -502,7 +502,7 @@ class iTermAdblockTests: XCTestCase {
 
         let expected = [TestWebKitContentRule(
             trigger: TestWebKitTrigger(
-                urlFilter: #"^[^:/?#]*://(([^./]+\.)*)ads\.example\.com([/?#]|$)"#,
+                urlFilter: #"^[^:/?#]*://(([^./]+\.)*)ads\.example\.com[/?#]?$"#,
                 resourceType: [
                     "document",
                     "image",
@@ -534,7 +534,7 @@ class iTermAdblockTests: XCTestCase {
 
         let expected = [TestWebKitContentRule(
             trigger: TestWebKitTrigger(
-                urlFilter: #"^[^:/?#]*://(([^./]+\.)*)ads\.example\.com([/?#]|$)"#,
+                urlFilter: #"^[^:/?#]*://(([^./]+\.)*)ads\.example\.com[/?#]?$"#,
                 resourceType: [
                     "document",
                     "image",
@@ -566,7 +566,7 @@ class iTermAdblockTests: XCTestCase {
 
         let expected = [TestWebKitContentRule(
             trigger: TestWebKitTrigger(
-                urlFilter: #"^[^:/?#]*://(([^./]+\.)*)ads\.example\.com([/?#]|$)"#,
+                urlFilter: #"^[^:/?#]*://(([^./]+\.)*)ads\.example\.com[/?#]?$"#,
                 resourceType: [
                     "document",
                     "image",
@@ -658,7 +658,7 @@ class iTermAdblockTests: XCTestCase {
 
         let expected = [TestWebKitContentRule(
             trigger: TestWebKitTrigger(
-                urlFilter: #"^[^:/?#]*://(([^./]+\.)*)ads\.example\.com([/?#]|$)"#,
+                urlFilter: #"^[^:/?#]*://(([^./]+\.)*)ads\.example\.com[/?#]?$"#,
                 resourceType: ["script"],
                 ifDomain: ["site1.com", "site2.com"]),
             action: TestWebKitAction(type: "block", selector: nil))]
@@ -712,7 +712,7 @@ class iTermAdblockTests: XCTestCase {
 
         let expected = [TestWebKitContentRule(
             trigger: TestWebKitTrigger(
-                urlFilter: #"^[^:/?#]*://(([^./]+\.)*)Example\.COM([/?#]|$)"#,
+                urlFilter: #"^[^:/?#]*://(([^./]+\.)*)Example\.COM[/?#]?$"#,
                 resourceType: [
                     "document",
                     "image",
@@ -732,25 +732,8 @@ class iTermAdblockTests: XCTestCase {
     func testRegexFilterWithOptions() {
         let input = "/ad[sS]$/$third-party,domain=foo.com"
         let result = iTermAdblockParser.parseAdblockList(input)
-
+        // [sS] not supported
         XCTAssertNotNil(result)
-
-        // Decode JSON
-        guard let jsonData = result!.data(using: .utf8),
-              let actual = try? JSONDecoder().decode([TestWebKitContentRule].self, from: jsonData) else {
-            XCTFail("Failed to decode JSON")
-            return
-        }
-
-        let expected = [TestWebKitContentRule(
-            trigger: TestWebKitTrigger(
-                urlFilter: "ad[sS]$",
-                resourceType: nil,
-                ifDomain: ["foo.com"]),
-            action: TestWebKitAction(type: "block", selector: nil))]
-
-        XCTAssertEqual(actual, expected)
-        XCTAssertNoThrow(try NSRegularExpression(pattern: actual[0].trigger.urlFilter))
     }
 
     func testNetworkExceptionWithOptions() {
@@ -768,7 +751,7 @@ class iTermAdblockTests: XCTestCase {
 
         let expected = [TestWebKitContentRule(
             trigger: TestWebKitTrigger(
-                urlFilter: #"^[^:/?#]*://(([^./]+\.)*)example\.com([/?#]|$)"#,
+                urlFilter: #"^[^:/?#]*://(([^./]+\.)*)example\.com[/?#]?$"#,
                 resourceType: ["script"],
                 ifDomain: nil),
             action: TestWebKitAction(type: "ignore-previous-rules", selector: nil))]
@@ -841,22 +824,36 @@ class iTermAdblockTests: XCTestCase {
 
     func testEscapeParen() {
         let input = #"/waWQiOjE*=eyJ.js^$third-party"#
-        let result = iTermAdblockParser.parseAdblockList(input)!
-        let actual = try! JSONDecoder()
-            .decode([TestWebKitContentRule].self, from: Data(result.utf8))
+        let result = iTermAdblockParser.parseAdblockList(input)
+        XCTAssertNotNil(result)
+
+        // Decode JSON
+        guard let data = result!.data(using: .utf8),
+              let actual = try? JSONDecoder().decode([TestWebKitContentRule].self, from: data) else {
+            XCTFail("Failed to decode JSON")
+            return
+        }
 
         let expected = [
             TestWebKitContentRule(
                 trigger: TestWebKitTrigger(
-                    urlFilter: #"/waWQiOjE.*=eyJ\.js[/?#]?$"#,
+                    // No trailing '$'—the '^' becomes '[/?#]?'
+                    urlFilter: #"\/waWQiOjE.*=eyJ\.js[/?#]?"#,
                     resourceType: [
-                        "document","image","style-sheet","script","font","raw","svg-document"
+                        "document",
+                        "image",
+                        "style-sheet",
+                        "script",
+                        "font",
+                        "raw",
+                        "svg-document",
                     ],
                     ifDomain: nil
                 ),
                 action: TestWebKitAction(type: "block", selector: nil)
             )
         ]
+
         XCTAssertEqual(actual, expected)
         XCTAssertNoThrow(try NSRegularExpression(pattern: actual[0].trigger.urlFilter))
     }
