@@ -61,9 +61,9 @@ extension PTYSession {
         } else {
             // Continue existing search (move to next/previous result)
             if direction {
-                vc.findNext()
+                vc.findNext(nil)
             } else {
-                vc.findPrevious()
+                vc.findPrevious(nil)
             }
         }
     }

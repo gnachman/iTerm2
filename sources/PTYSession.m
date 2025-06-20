@@ -7856,6 +7856,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 }
 
 - (void)enterPassword:(NSString *)password {
+    if (@available(macOS 11, *)) {
+        if (_view.isBrowser) {
+            if (@available(macOS 12, *)) {
+                [_view.browserViewController enterPassword:password];
+            }
+            return;
+        }
+    }
     [self incrementDisableFocusReporting:1];
     [_screen beginEchoProbeWithBackspace:[self backspaceData] password:password delegate:self];
 }
