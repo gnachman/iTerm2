@@ -399,7 +399,7 @@ backgroundColor:(NSColor *)backgroundColor;
 // The view that contains all the visible text in this session and that does most input handling.
 // This is the one and only subview of the document view of -scrollview.
 @property(nonatomic, retain) PTYTextView *textview;
-
+@property(nonatomic, readonly) NSResponder *mainResponder;  // textView or browser vc depending on mode
 @property(nonatomic, readonly) NSStringEncoding encoding;
 
 // Send a character periodically.

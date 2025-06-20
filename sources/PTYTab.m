@@ -58,6 +58,7 @@
 
 NSString *const iTermTabDidChangeWindowNotification = @"iTermTabDidChangeWindowNotification";
 NSString *const iTermSessionBecameKey = @"iTermSessionBecameKey";
+NSString *const iTermCurrentSessionDidChange = @"iTermCurrentSessionDidChange";
 
 // No user output/idle alerts for a few seconds after a window is resized because there will be bogus bg activity
 const int POST_WINDOW_RESIZE_SILENCE_SEC = 5;
@@ -832,7 +833,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             // -[PTYTextView respondsToSelector:] on a deallocated instance of the
             // first responder. This kind of hacky workaround keeps us from making
             // a invisible textview the first responder.
-            [[realParentWindow_ window] makeFirstResponder:[session textview]];
+            [[realParentWindow_ window] makeFirstResponder:[session mainResponder]];
         }
         [realParentWindow_ setDimmingForSessions];
     }
@@ -877,6 +878,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self setState:0 reset:kPTYTabDeadState];
     }
     [self updateTabTitle];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermCurrentSessionDidChange
+                                                        object:activeSession_
+                                                      userInfo:nil];
 }
 
 - (void)sessionActivate:(PTYSession *)session {

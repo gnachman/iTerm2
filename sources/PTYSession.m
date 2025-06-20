@@ -4414,6 +4414,13 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [self writeLatin1EncodedData:[NSData dataWithBytes:&p length:1] broadcastAllowed:YES reporting:NO];
 }
 
+- (NSResponder *)mainResponder {
+    if (_view.isBrowser) {
+        return _view.browserViewController;
+    }
+    return _textview;
+}
+
 - (PTYScroller *)textViewVerticalScroller {
     return (PTYScroller *)[_view.scrollview verticalScroller];
 }
