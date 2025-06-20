@@ -136,7 +136,9 @@ class iTermAdblockParser {
                         bs += 1
                         if bidx > line.startIndex {
                             bidx = line.index(before: bidx)
-                        } else { break }
+                        } else {
+                            break
+                        }
                     }
                     if bs % 2 == 0 {
                         closing = idx
@@ -149,8 +151,8 @@ class iTermAdblockParser {
                 let inner = String(line[line.index(after: line.startIndex)..<close])
                 let remainder = String(line[line.index(after: close)...])
 
-                // Reject unsupported regex syntax
-                let badTokens = ["[", "]", "{", "}", "\\w", "\\d", "\\p", "(?"]
+                // Reject unsupported regex syntax (character classes, quantifiers, grouping/alternation)
+                let badTokens = ["[", "]", "{", "}", "\\w", "\\d", "\\p", "(?", "(", "|"]
                 if badTokens.contains(where: inner.contains) {
                     return nil
                 }
@@ -197,7 +199,7 @@ class iTermAdblockParser {
             ruleText.removeFirst(2)
         }
 
-        // 2c) ASCII‐only
+        // 2c) ASCII-only
         guard ruleText.allSatisfy({ $0.isASCII }) else {
             return nil
         }
@@ -218,6 +220,7 @@ class iTermAdblockParser {
             originalString: line
         )
     }
+
 
     /// Helper to split out `domain=…` options
     private func splitDomainFromOptions(_ options: [String]) -> (domains: [String], filtered: [String]) {
