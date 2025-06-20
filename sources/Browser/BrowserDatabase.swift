@@ -7,46 +7,28 @@
 
 import Foundation
 
-@objc(iTermBrowserDatabase)
-class ObjCBrowserDatabase: NSObject {
-    @objc static func recordVisit(url: String, title: String?, sessionGuid: String?, transitionType: Int) {
-        BrowserDatabase.instance?.recordVisit(
-            url: url,
-            title: title,
-            sessionGuid: sessionGuid,
-            transitionType: BrowserTransitionType(rawValue: transitionType) ?? .other
-        )
-    }
-    
-    @objc static func updateTitle(_ title: String, forUrl url: String) {
-        BrowserDatabase.instance?.updateTitle(title, forUrl: url)
-    }
-    
-    @objc static func urlSuggestions(forPrefix prefix: String, limit: Int) -> [String] {
-        return BrowserDatabase.instance?.urlSuggestions(forPrefix: prefix, limit: limit) ?? []
-    }
-}
-
-class BrowserDatabase {
+actor BrowserDatabase {
     private static var _instance: BrowserDatabase?
     static var instanceIfExists: BrowserDatabase? { _instance }
     static var instance: BrowserDatabase? {
-        if let _instance {
+        get async {
+            if let _instance {
+                return _instance
+            }
+            let appDefaults = FileManager.default.applicationSupportDirectory()
+            guard let appDefaults else {
+                return nil
+            }
+            var url = URL(fileURLWithPath: appDefaults)
+            url.appendPathComponent("browserdb.sqlite")
+            _instance = await BrowserDatabase(url: url)
             return _instance
         }
-        let appDefaults = FileManager.default.applicationSupportDirectory()
-        guard let appDefaults else {
-            return nil
-        }
-        var url = URL(fileURLWithPath: appDefaults)
-        url.appendPathComponent("browserdb.sqlite")
-        _instance = BrowserDatabase(url: url)
-        return _instance
     }
 
     let db: iTermDatabase
     
-    init?(url: URL) {
+    init?(url: URL) async {
         db = iTermSqliteDatabaseImpl(url: url)
         if !db.lock() {
             return nil
@@ -113,9 +95,11 @@ class BrowserDatabase {
     
     // MARK: - Recording Visits
     
-    func recordVisit(url: String, title: String? = nil, sessionGuid: String? = nil, referrerUrl: String? = nil, transitionType: BrowserTransitionType = .other) {
-        let normalizedUrl = BrowserVisits.normalizeUrl(url)
-        
+    func recordVisit(url: String,
+                     title: String? = nil,
+                     sessionGuid: String? = nil,
+                     referrerUrl: String? = nil,
+                     transitionType: BrowserTransitionType = .other) async {
         // Record in BrowserHistory
         let historyEntry = BrowserHistory(
             id: UUID().uuidString,
@@ -218,6 +202,22 @@ class BrowserDatabase {
         while resultSet.next() {
             if let visit = BrowserVisits(dbResultSet: resultSet) {
                 results.append(visit.fullUrl)
+            }
+        }
+        resultSet.close()
+        return results
+    }
+    
+    func getVisitSuggestions(forPrefix prefix: String, limit: Int = 10) -> [BrowserVisits] {
+        let (query, args) = BrowserVisits.suggestionsQuery(prefix: prefix, limit: limit)
+        guard let resultSet = db.executeQuery(query, withArguments: args) else {
+            return []
+        }
+        
+        var results: [BrowserVisits] = []
+        while resultSet.next() {
+            if let visit = BrowserVisits(dbResultSet: resultSet) {
+                results.append(visit)
             }
         }
         resultSet.close()
