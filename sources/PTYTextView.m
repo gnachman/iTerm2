@@ -457,6 +457,9 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 #pragma mark - NSResponder
 
 - (BOOL)validateMenuItem:(NSMenuItem *)item {
+    if (self.enclosingScrollView.isHidden) {
+        return NO;
+    }
     if ([item action] == @selector(paste:)) {
         NSPasteboard *pboard = [NSPasteboard generalPasteboard];
         // Check if there is a string type on the pasteboard

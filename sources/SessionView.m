@@ -336,6 +336,9 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     } else {
         [_browserViewController loadURL:initialURL];
     }
+    NSResponder *prev = self.nextResponder;
+    [self setNextResponder:_browserViewController];
+    _browserViewController.nextResponder = prev;
 }
 
 - (BOOL)isBrowser {
