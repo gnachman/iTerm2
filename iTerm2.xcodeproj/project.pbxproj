@@ -4699,6 +4699,10 @@
 		A6F7D4FA2E05BE860065D09C /* iTermBrowserSuggestionsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4F92E05BE7F0065D09C /* iTermBrowserSuggestionsController.swift */; };
 		A6F7D4FC2E05BF100065D09C /* iTermURLHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4FB2E05BF0C0065D09C /* iTermURLHelpers.swift */; };
 		A6F7D4FE2E05C4890065D09C /* iTermBrowserNavigationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4FD2E05C4850065D09C /* iTermBrowserNavigationState.swift */; };
+		A6F7D5022E05C5C70065D09C /* iTermBrowserFavicon.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D5012E05C5C40065D09C /* iTermBrowserFavicon.swift */; };
+		A6F7D5042E05C8650065D09C /* detect-favicon.js in Resources */ = {isa = PBXBuildFile; fileRef = A6F7D5032E05C7D60065D09C /* detect-favicon.js */; };
+		A6F7D5052E05C8650065D09C /* detect-favicon.js in Resources */ = {isa = PBXBuildFile; fileRef = A6F7D5032E05C7D60065D09C /* detect-favicon.js */; };
+		A6F7D5062E05C8650065D09C /* detect-favicon.js in Resources */ = {isa = PBXBuildFile; fileRef = A6F7D5032E05C7D60065D09C /* detect-favicon.js */; };
 		A6F7F8072763F47B005E433E /* VT100ScreenState.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F7F8052763F47B005E433E /* VT100ScreenState.m */; };
 		A6F981CC1C13783C00EE0B80 /* iTermCPS.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F981CB1C13783C00EE0B80 /* iTermCPS.h */; };
 		A6F9821F2CA775E200229070 /* RoundedRectView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F9D16F137D900B7FCE9 /* RoundedRectView.m */; };
@@ -8344,6 +8348,8 @@
 		A6F7D4F92E05BE7F0065D09C /* iTermBrowserSuggestionsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserSuggestionsController.swift; sourceTree = "<group>"; };
 		A6F7D4FB2E05BF0C0065D09C /* iTermURLHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermURLHelpers.swift; sourceTree = "<group>"; };
 		A6F7D4FD2E05C4850065D09C /* iTermBrowserNavigationState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserNavigationState.swift; sourceTree = "<group>"; };
+		A6F7D5012E05C5C40065D09C /* iTermBrowserFavicon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserFavicon.swift; sourceTree = "<group>"; };
+		A6F7D5032E05C7D60065D09C /* detect-favicon.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "detect-favicon.js"; sourceTree = "<group>"; };
 		A6F7F8042763F47B005E433E /* VT100ScreenState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VT100ScreenState.h; sourceTree = "<group>"; };
 		A6F7F8052763F47B005E433E /* VT100ScreenState.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenState.m; sourceTree = "<group>"; };
 		A6F981CB1C13783C00EE0B80 /* iTermCPS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCPS.h; sourceTree = "<group>"; };
@@ -12897,7 +12903,7 @@
 		A6F7D4B32E0340A30065D09C /* Browser */ = {
 			isa = PBXGroup;
 			children = (
-				A6F7D4FD2E05C4850065D09C /* iTermBrowserNavigationState.swift */,
+				A6F7D5032E05C7D60065D09C /* detect-favicon.js */,
 				A6F7D4BE2E037BB20065D09C /* iterm-browser-common.css */,
 				A6F7D4C62E037E780065D09C /* error-page.html */,
 				A6F7D4CA2E037EA80065D09C /* settings-page.html */,
@@ -12910,9 +12916,11 @@
 				A6F7D4C22E037BC80065D09C /* iTermBrowserCSSLoader.swift */,
 				A6F7D4D22E03D0A00065D09C /* iTermBrowserDownload.swift */,
 				A6F7D4BA2E0373110065D09C /* iTermBrowserErrorHandler.swift */,
+				A6F7D5012E05C5C40065D09C /* iTermBrowserFavicon.swift */,
 				A6F7D4D02E03BE3A0065D09C /* iTermBrowserFindManager.swift */,
 				A6F7D4F72E05BDC10065D09C /* iTermBrowserHistoryController.swift */,
 				A6F7D4B82E034E2B0065D09C /* iTermBrowserManager.swift */,
+				A6F7D4FD2E05C4850065D09C /* iTermBrowserNavigationState.swift */,
 				A6F7D4BC2E037B4B0065D09C /* iTermBrowserSettingsHandler.swift */,
 				A6F7D4DA2E03DBEA0065D09C /* iTermBrowserSourceHandler.swift */,
 				A6F7D4F92E05BE7F0065D09C /* iTermBrowserSuggestionsController.swift */,
@@ -14996,6 +15004,7 @@
 				A6F18B552AE2F39C006C08EE /* uniE0D1_lego_block_sideways.pdf in Resources */,
 				1D6ED99519AEA20D005A7799 /* BrokenPipeDivider.png in Resources */,
 				1D6ED99619AEA20D005A7799 /* PrefsAdvanced@2x.png in Resources */,
+				A6F7D5062E05C8650065D09C /* detect-favicon.js in Resources */,
 				A69C933B2121101D00531438 /* iTermsStatusBarComposerViewController.xib in Resources */,
 				A6E7AEB1214394F600DE9F3B /* graphic_git@2x.png in Resources */,
 				A629F58123AF2DE600C2F16B /* iterm2_shell_integration.tcsh in Resources */,
@@ -15705,6 +15714,7 @@
 				A6971F3620D8D3CB0075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib in Resources */,
 				A6E7AE62214394CA00DE9F3B /* graphic_atom@2x.png in Resources */,
 				A697CDE22D975C540031583F /* SnippetsTip.jpg in Resources */,
+				A6F7D5052E05C8650065D09C /* detect-favicon.js in Resources */,
 				A697CDE32D975C540031583F /* SnippetsTip@2x.jpg in Resources */,
 				A6F7A747213CB143004DE961 /* StatusBarIconPaste@2x.png in Resources */,
 				53FF981D20927F1E008688D7 /* template_pyenv_simple.py in Resources */,
@@ -16178,6 +16188,7 @@
 				A66A882B24DFCCC30043728B /* graphic_postgres.png in Resources */,
 				A6CB24A62C68149100005824 /* it2setcolor in Resources */,
 				A66A882824DFCCC30043728B /* graphic_erlang@2x.png in Resources */,
+				A6F7D5042E05C8650065D09C /* detect-favicon.js in Resources */,
 				A69D721B264716FC009D6EAC /* UnselectedTabShadow.png in Resources */,
 				A6F7A746213CB143004DE961 /* StatusBarIconPaste@2x.png in Resources */,
 				1D44CCDC1CC6A1DE00BE5630 /* Loupe@2x.png in Resources */,
@@ -17188,6 +17199,7 @@
 				A65429A020BE71E400CE71B1 /* iTermOpenQuicklyModel.m in Sources */,
 				A6AAD5F422F7EB61002DD12C /* iTermWindowSizeView.m in Sources */,
 				A688AA59298AFEE7007F4603 /* DoubleTapHotkeyStateMachine.swift in Sources */,
+				A6F7D5022E05C5C70065D09C /* iTermBrowserFavicon.swift in Sources */,
 				5370678D21C9D2780088D0F3 /* SIGArchiveVerifier.m in Sources */,
 				A61D2A4927555CD000E539F3 /* MenuItemPopupView.swift in Sources */,
 				A616CF112841AA1600EF82D0 /* WinSizeController.swift in Sources */,

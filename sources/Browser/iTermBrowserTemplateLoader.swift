@@ -11,10 +11,12 @@ import Foundation
 @objc(iTermBrowserTemplateLoader)
 class iTermBrowserTemplateLoader: NSObject {
     
-    static func loadTemplate(named templateName: String, substitutions: [String: String] = [:]) -> String {
-        guard let path = Bundle.main.path(forResource: templateName, ofType: "html"),
+    static func loadTemplate(named templateName: String,
+                             type: String,
+                             substitutions: [String: String] = [:]) -> String {
+        guard let path = Bundle.main.path(forResource: templateName, ofType: type),
               let template = try? String(contentsOfFile: path) else {
-            return generateFallbackHTML(templateName: templateName)
+            it_fatalError(templateName)
         }
         
         return performSubstitutions(template: template, substitutions: substitutions)
@@ -36,22 +38,5 @@ class iTermBrowserTemplateLoader: NSObject {
         }
         
         return result
-    }
-    
-    private static func generateFallbackHTML(templateName: String) -> String {
-        return """
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Error</title>
-        </head>
-        <body>
-            <h1>Template Error</h1>
-            <p>Could not load template: \(templateName).html</p>
-        </body>
-        </html>
-        """
     }
 }

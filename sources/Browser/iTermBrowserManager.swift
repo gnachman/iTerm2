@@ -254,70 +254,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
         delegate?.browserManager(self, didUpdateFavicon: favicon)
     }
     
-    private func detectFavicon() {
-        guard let currentURL = webView.url else { return }
-        
-        // For internal pages, use the main app icon
-        if currentURL.absoluteString.hasPrefix("iterm2-about:") {
-            favicon = NSApp.applicationIconImage
-            notifyDelegateOfFaviconUpdate()
-            return
-        }
-        
-        // JavaScript to find favicon links in the page
-        let script = """
-            (function() {
-              function getFaviconUrl() {
-                var links = document.querySelectorAll('link[rel]');
-                var icons = [];
-                
-                Array.prototype.forEach.call(links, function(link) {
-                  var rels = link.getAttribute('rel').toLowerCase().split(/\\s+/);
-                  
-                  if (rels.indexOf('icon') !== -1 || rels.indexOf('mask-icon') !== -1) {
-                    icons.push(link);
-                  }
-                });
-                
-                if (icons.length) {
-                  icons.sort(function(a, b) {
-                    return sizeValue(b) - sizeValue(a);
-                  });
-                  
-                  return new URL(icons[0].getAttribute('href'), document.baseURI).href;
-                }
-                
-                return new URL('/favicon.ico', location.origin).href;
-              }
-              
-              function sizeValue(link) {
-                var sz = link.getAttribute('sizes');
-                if (!sz) {
-                  return 0;
-                }
-                
-                var parts = sz.split('x').map(function(n) {
-                  return parseInt(n, 10) || 0;
-                });
-                
-                return (parts[0] * parts[1]) || 0;
-              }
-              
-              return getFaviconUrl();
-            })();
-        """
 
-        webView.evaluateJavaScript(script) { [weak self] result, error in
-            guard let self = self,
-                  let faviconURLString = result as? String,
-                  let faviconURL = URL(string: faviconURLString) else {
-                return
-            }
-            
-            self.loadFavicon(from: faviconURL)
-        }
-    }
-    
     private func loadFavicon(from url: URL) {
         // Use URLSession to download favicon
         URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
@@ -440,8 +377,19 @@ extension iTermBrowserManager: WKNavigationDelegate {
         notifyDelegateOfUpdates()
 
         // Try to detect and load favicon
-        detectFavicon()
-
+        Task {
+            do {
+                switch try await detectFavicon(webView: webView) {
+                case .left(let image):
+                    self.favicon = image
+                    notifyDelegateOfFaviconUpdate()
+                case .right(let url):
+                    loadFavicon(from: url)
+                }
+            } catch {
+                DLog("Failed to detect favicon: \(error)")
+            }
+        }
         // Update title in browser history if available
         historyController.titleDidChange(for: webView.url, title: webView.title)
 

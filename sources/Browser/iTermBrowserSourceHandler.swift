@@ -22,6 +22,7 @@ class iTermBrowserSourceHandler: NSObject {
         
         // Load template and substitute source
         return iTermBrowserTemplateLoader.loadTemplate(named: "view-source",
+                                                       type: "html",
                                                       substitutions: ["SOURCE": escapedSource])
     }
     
@@ -45,7 +46,8 @@ class iTermBrowserSourceHandler: NSObject {
             pendingSourceHTML = nil // Clear after use
         } else {
             // Fallback content if no source is pending
-            htmlContent = iTermBrowserTemplateLoader.loadTemplate(named: "view-source", 
+            htmlContent = iTermBrowserTemplateLoader.loadTemplate(named: "view-source",
+                                                                  type: "html",
                                                                   substitutions: ["SOURCE": "No source available"])
         }
         
