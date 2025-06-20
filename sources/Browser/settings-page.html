@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Settings</title>
+    <style>
+        {{COMMON_CSS}}
+        
+        .container {
+            max-width: 700px;
+        }
+        
+        .header {
+            margin-bottom: 48px;
+        }
+        
+        .header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-color), #5ac8fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+        
+        .header p {
+            font-size: 18px;
+            opacity: 0.8;
+        }
+        
+        .section {
+            box-shadow: 0 4px 20px var(--shadow);
+            margin-bottom: 32px;
+            overflow: hidden;
+        }
+        
+        .section h2 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section h2::before {
+            content: "";
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(135deg, var(--accent-color), #5ac8fa);
+            border-radius: 2px;
+        }
+        
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 0;
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+        
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+        
+        .setting-item:hover {
+            padding-left: 8px;
+            background: linear-gradient(90deg, var(--accent-color)08, transparent);
+            border-radius: 8px;
+            margin: 0 -8px;
+            padding-right: 8px;
+        }
+        
+        .setting-info {
+            flex: 1;
+        }
+        
+        .setting-info h3 {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-color);
+        }
+        
+        .setting-info p {
+            color: var(--secondary-text);
+            font-size: 15px;
+            line-height: 1.4;
+            opacity: 0.9;
+        }
+        
+        .button.small {
+            padding: 10px 18px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px var(--shadow);
+            transition: all 0.3s ease;
+            min-width: 100px;
+        }
+        
+        .button.small:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--shadow);
+        }
+        
+        .button.danger {
+            background: linear-gradient(135deg, #ff3b30, #ff6b6b);
+        }
+        
+        .button.danger:hover {
+            background: linear-gradient(135deg, #d70015, #ff3b30);
+        }
+        
+        .stats {
+            text-align: center;
+            color: var(--secondary-text);
+            font-size: 15px;
+            margin-top: 48px;
+            padding: 24px;
+            background: var(--section-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .stats strong {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+        
+        /* Privacy section specific styling */
+        .privacy-section .section h2::before {
+            background: linear-gradient(135deg, #ff3b30, #ff6b6b);
+        }
+        
+        /* Search section specific styling */
+        .search-section .section h2::before {
+            background: linear-gradient(135deg, #34c759, #5ac8fa);
+        }
+        
+        /* Adblock section specific styling */
+        .adblock-section .section h2::before {
+            background: linear-gradient(135deg, #ff9500, #ffcc02);
+        }
+        
+        /* Toggle switch */
+        .toggle {
+            position: relative;
+            display: inline-block;
+            width: 52px;
+            height: 28px;
+        }
+        
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-color);
+            transition: .3s;
+            border-radius: 28px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        input:checked + .slider {
+            background: linear-gradient(135deg, var(--accent-color), #5ac8fa);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+        
+        /* Input group */
+        .input-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            min-width: 300px;
+        }
+        
+        .input-group input[type="url"] {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--section-bg);
+            color: var(--text-color);
+            font-size: 14px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            transition: all 0.2s ease;
+        }
+        
+        .input-group input[type="url"]:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px var(--accent-color)20;
+        }
+        
+        /* Status message */
+        .status-message {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        
+        .status-message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .status-message.success {
+            background: linear-gradient(135deg, #34c759, #30d158);
+            color: white;
+        }
+        
+        .status-message.info {
+            background: linear-gradient(135deg, #007aff, #5ac8fa);
+            color: white;
+        }
+        
+        .status-message.warning {
+            background: linear-gradient(135deg, #ff9500, #ffcc02);
+            color: white;
+        }
+        
+        .status-message.error {
+            background: linear-gradient(135deg, #ff3b30, #ff6b6b);
+            color: white;
+        }
+        
+        /* Subtle animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .section {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .section:nth-child(2) { animation-delay: 0.1s; }
+        .section:nth-child(3) { animation-delay: 0.2s; }
+        .stats { animation: fadeInUp 0.6s ease-out 0.3s both; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Browser Settings</h1>
+            <p>Manage your iTerm2 browser data and preferences</p>
+        </div>
+        
+        <div class="privacy-section">
+            <div class="section">
+                <h2>Privacy & Data</h2>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3>Clear All Cookies</h3>
+                        <p>Remove all stored cookies from websites</p>
+                    </div>
+                    <button class="button small danger" onclick="clearCookies()">Clear Cookies</button>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3>Clear Website Data</h3>
+                        <p>Remove cookies, cache, and local storage</p>
+                    </div>
+                    <button class="button small danger" onclick="clearAllData()">Clear All Data</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="adblock-section">
+            <div class="section">
+                <h2>Ad Blocking</h2>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3>Enable Ad Blocking</h3>
+                        <p>Block ads and trackers using filter lists</p>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" id="adblockEnabled" {{ADBLOCK_ENABLED}} onchange="toggleAdblock(this.checked)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3>Filter List URL</h3>
+                        <p>URL for downloading ad blocking rules (updates daily)</p>
+                    </div>
+                    <div class="input-group">
+                        <input type="url" id="adblockURL" value="{{ADBLOCK_URL}}" placeholder="https://easylist.to/easylist/easylist.txt" onchange="updateAdblockURL(this.value)">
+                        <button class="button small" onclick="forceAdblockUpdate()">Update Now</button>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <div class="status-message" id="adblockStatus" style="display: none;">
+                        <span class="status-text"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <script>
+        function clearCookies() {
+            if (confirm('This will remove all cookies. Continue?')) {
+                window.webkit.messageHandlers.iterm2BrowserSettings.postMessage({
+                    action: 'clearCookies'
+                });
+            }
+        }
+        
+        function clearAllData() {
+            if (confirm('This will remove all browsing data including cookies, cache, and local storage. Continue?')) {
+                window.webkit.messageHandlers.iterm2BrowserSettings.postMessage({
+                    action: 'clearAllData'
+                });
+            }
+        }
+        
+        function toggleAdblock(enabled) {
+            window.webkit.messageHandlers.iterm2BrowserSettings.postMessage({
+                action: 'setAdblockEnabled',
+                value: enabled
+            });
+        }
+        
+        function updateAdblockURL(url) {
+            if (url && url.trim()) {
+                window.webkit.messageHandlers.iterm2BrowserSettings.postMessage({
+                    action: 'setAdblockURL',
+                    value: url.trim()
+                });
+            }
+        }
+        
+        function forceAdblockUpdate() {
+            showStatus('Updating ad block rules...', 'info');
+            window.webkit.messageHandlers.iterm2BrowserSettings.postMessage({
+                action: 'forceAdblockUpdate'
+            });
+        }
+        
+        // Status message functions
+        function showStatus(message, type = 'info', duration = 3000) {
+            const statusElement = document.getElementById('adblockStatus');
+            const textElement = statusElement.querySelector('.status-text');
+            
+            // Update content and show
+            textElement.textContent = message;
+            statusElement.className = `status-message ${type} show`;
+            statusElement.style.display = 'block';
+            
+            // Auto-hide after duration (unless it's an error)
+            if (type !== 'error' && duration > 0) {
+                setTimeout(() => {
+                    hideStatus();
+                }, duration);
+            }
+        }
+        
+        function hideStatus() {
+            const statusElement = document.getElementById('adblockStatus');
+            statusElement.classList.remove('show');
+            setTimeout(() => {
+                statusElement.style.display = 'none';
+            }, 300);
+        }
+        
+        // Initialize settings on page load
+        window.addEventListener('load', function() {
+            window.webkit.messageHandlers.iterm2BrowserSettings.postMessage({
+                action: 'getAdblockSettings'
+            });
+        });
+        
+        // Function to update UI with current settings (called from Swift)
+        function updateAdblockUI(settings) {
+            document.getElementById('adblockEnabled').checked = settings.enabled;
+            document.getElementById('adblockURL').value = settings.url;
+        }
+    </script>
+</body>
+</html>
