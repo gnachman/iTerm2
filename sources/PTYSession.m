@@ -2989,7 +2989,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             [_view becomeBrowser:self.profile[KEY_COMMAND_LINE]
                    configuration:webViewConfiguration
                         delegate:self
-                interactionState:_savedBrowserState];
+                interactionState:_savedBrowserState
+                     sessionGuid:_guid];
             [_savedBrowserState release];
             _savedBrowserState = nil;
             completion(YES);

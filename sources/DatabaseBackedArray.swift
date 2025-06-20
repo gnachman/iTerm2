@@ -22,8 +22,8 @@ class DatabaseBackedArray<Element> where Element: iTermDatabaseElement {
     }
     var isEmpty: Bool { count == 0 }
 
-    convenience init(db: iTermDatabase) {
-        self.init(db: db, query: Element.fetchAllQuery(), args: [])
+    convenience init(db: iTermDatabase, query: String) {
+        self.init(db: db, query: query, args: [])
     }
 
     init(db: iTermDatabase, query: String, args: [Any]) {

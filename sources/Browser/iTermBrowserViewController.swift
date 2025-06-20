@@ -27,9 +27,9 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
     private var toolbar: iTermBrowserToolbar!
     private var backgroundView: NSVisualEffectView!
 
-    @objc(initWithConfiguration:)
-    init(configuration: WKWebViewConfiguration?)  {
-        browserManager = iTermBrowserManager(configuration: configuration)
+    @objc(initWithConfiguration:sessionGuid:)
+    init(configuration: WKWebViewConfiguration?, sessionGuid: String)  {
+        browserManager = iTermBrowserManager(configuration: configuration, sessionGuid: sessionGuid)
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -37,7 +37,7 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
         it_fatalError("init(coder:) has not been implemented")
     }
 
-    @objc var interactionState: Any? {
+    @objc var interactionState: NSObject? {
         get {
             if #available(macOS 12, *) {
                 return browserManager.webView.interactionState as? NSData

@@ -4692,6 +4692,9 @@
 		A6F7D4E52E04AE7D0065D09C /* iTermAdblockManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4E42E04AE7D0065D09C /* iTermAdblockManager.swift */; };
 		A6F7D4EE2E0532B40065D09C /* Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4ED2E0532B00065D09C /* Database.swift */; };
 		A6F7D4F02E0532C90065D09C /* DatabaseBackedArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4EF2E0532C60065D09C /* DatabaseBackedArray.swift */; };
+		A6F7D4F22E0536530065D09C /* BrowserHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4F12E0536530065D09C /* BrowserHistory.swift */; };
+		A6F7D4F52E0537710065D09C /* BrowserVisits.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4F42E0537710065D09C /* BrowserVisits.swift */; };
+		A6F7D4F62E0537710065D09C /* BrowserDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4F32E0537710065D09C /* BrowserDatabase.swift */; };
 		A6F7F8072763F47B005E433E /* VT100ScreenState.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F7F8052763F47B005E433E /* VT100ScreenState.m */; };
 		A6F981CC1C13783C00EE0B80 /* iTermCPS.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F981CB1C13783C00EE0B80 /* iTermCPS.h */; };
 		A6F9821F2CA775E200229070 /* RoundedRectView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F9D16F137D900B7FCE9 /* RoundedRectView.m */; };
@@ -8330,6 +8333,9 @@
 		A6F7D4E42E04AE7D0065D09C /* iTermAdblockManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermAdblockManager.swift; sourceTree = "<group>"; };
 		A6F7D4ED2E0532B00065D09C /* Database.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Database.swift; sourceTree = "<group>"; };
 		A6F7D4EF2E0532C60065D09C /* DatabaseBackedArray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseBackedArray.swift; sourceTree = "<group>"; };
+		A6F7D4F12E0536530065D09C /* BrowserHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserHistory.swift; sourceTree = "<group>"; };
+		A6F7D4F32E0537710065D09C /* BrowserDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserDatabase.swift; sourceTree = "<group>"; };
+		A6F7D4F42E0537710065D09C /* BrowserVisits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserVisits.swift; sourceTree = "<group>"; };
 		A6F7F8042763F47B005E433E /* VT100ScreenState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VT100ScreenState.h; sourceTree = "<group>"; };
 		A6F7F8052763F47B005E433E /* VT100ScreenState.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenState.m; sourceTree = "<group>"; };
 		A6F981CB1C13783C00EE0B80 /* iTermCPS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCPS.h; sourceTree = "<group>"; };
@@ -12887,6 +12893,9 @@
 				A6F7D4C62E037E780065D09C /* error-page.html */,
 				A6F7D4CA2E037EA80065D09C /* settings-page.html */,
 				A6F7D4D42E03D99F0065D09C /* view-source.html */,
+				A6F7D4F32E0537710065D09C /* BrowserDatabase.swift */,
+				A6F7D4F12E0536530065D09C /* BrowserHistory.swift */,
+				A6F7D4F42E0537710065D09C /* BrowserVisits.swift */,
 				A6F7D4E42E04AE7D0065D09C /* iTermAdblockManager.swift */,
 				A6F7D4E22E04AD3A0065D09C /* iTermAdblockParser.swift */,
 				A6F7D4C22E037BC80065D09C /* iTermBrowserCSSLoader.swift */,
@@ -17426,6 +17435,7 @@
 				A6AFE93123FCFF8C00D489C7 /* iTermRestorableStateController.m in Sources */,
 				A631FCA220EF0BCC00EB824F /* iTermStatusBarKnobColorViewController.m in Sources */,
 				A6153D5D21F4EF6F002976FC /* iTermStatusBarBaseLayoutAlgorithm.m in Sources */,
+				A6F7D4F22E0536530065D09C /* BrowserHistory.swift in Sources */,
 				A655E69A207153CB00DC21B9 /* NSSavePanel+iTerm.m in Sources */,
 				A6A4866E20B67A0300493302 /* iTermRemotePreferences.m in Sources */,
 				A6F3DA8C24540A20001D50C9 /* iTermUntitledWindowStateMachine.m in Sources */,
@@ -17676,6 +17686,8 @@
 				A65B1B5C2D1252E300F5A740 /* iTermShortcutInputView.m in Sources */,
 				A6FE8D04209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m in Sources */,
 				A65EC0301F31800300AC0A6B /* iTermUpdateCadenceController.m in Sources */,
+				A6F7D4F52E0537710065D09C /* BrowserVisits.swift in Sources */,
+				A6F7D4F62E0537710065D09C /* BrowserDatabase.swift in Sources */,
 				53197E7F220528E40000D95D /* iTermNotificationCenter.m in Sources */,
 				A6D10E3627F7C2BC0026DB56 /* Logging.swift in Sources */,
 				A618FFC22243E91900B8FD88 /* iTermToolActions.m in Sources */,
