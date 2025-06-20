@@ -8,28 +8,37 @@
 import Foundation
 
 struct BrowserVisits {
-    var normalizedUrl: String
+    var hostname: String
+    var path: String
     var visitCount: Int = 1
     var lastVisitDate = Date()
     var firstVisitDate = Date()
     
-    init(normalizedUrl: String) {
-        self.normalizedUrl = normalizedUrl
+    init(hostname: String, path: String = "") {
+        self.hostname = hostname
+        self.path = path
         self.firstVisitDate = Date()
         self.lastVisitDate = firstVisitDate
     }
     
-    init(normalizedUrl: String, visitCount: Int, lastVisitDate: Date, firstVisitDate: Date) {
-        self.normalizedUrl = normalizedUrl
+    init(hostname: String, path: String, visitCount: Int, lastVisitDate: Date, firstVisitDate: Date) {
+        self.hostname = hostname
+        self.path = path
         self.visitCount = visitCount
         self.lastVisitDate = lastVisitDate
         self.firstVisitDate = firstVisitDate
+    }
+    
+    var fullUrl: String {
+        let cleanHostname = hostname.hasPrefix(".") ? String(hostname.dropFirst()) : hostname
+        return path.isEmpty ? cleanHostname : "\(cleanHostname)\(path)"
     }
 }
 
 extension BrowserVisits: iTermDatabaseElement {
     enum Columns: String {
-        case normalizedUrl
+        case hostname
+        case path
         case visitCount
         case lastVisitDate
         case firstVisitDate
@@ -38,12 +47,15 @@ extension BrowserVisits: iTermDatabaseElement {
     static func schema() -> String {
         """
         create table if not exists BrowserVisits
-            (\(Columns.normalizedUrl.rawValue) text primary key,
+            (\(Columns.hostname.rawValue) text not null,
+             \(Columns.path.rawValue) text not null,
              \(Columns.visitCount.rawValue) integer not null,
              \(Columns.lastVisitDate.rawValue) integer not null,
-             \(Columns.firstVisitDate.rawValue) integer not null);
+             \(Columns.firstVisitDate.rawValue) integer not null,
+             PRIMARY KEY (\(Columns.hostname.rawValue), \(Columns.path.rawValue)));
         
-        CREATE INDEX IF NOT EXISTS idx_browser_visits_normalized_url ON BrowserVisits(\(Columns.normalizedUrl.rawValue));
+        CREATE INDEX IF NOT EXISTS idx_browser_visits_hostname ON BrowserVisits(\(Columns.hostname.rawValue));
+        CREATE INDEX IF NOT EXISTS idx_browser_visits_path ON BrowserVisits(\(Columns.path.rawValue));
         CREATE INDEX IF NOT EXISTS idx_browser_visits_count ON BrowserVisits(\(Columns.visitCount.rawValue) DESC);
         """
     }
@@ -58,20 +70,22 @@ extension BrowserVisits: iTermDatabaseElement {
     }
     
     func removeQuery() -> (String, [Any]) {
-        ("delete from BrowserVisits where \(Columns.normalizedUrl.rawValue) = ?", [normalizedUrl])
+        ("delete from BrowserVisits where \(Columns.hostname.rawValue) = ? AND \(Columns.path.rawValue) = ?", [hostname, path])
     }
 
     func appendQuery() -> (String, [Any]) {
         ("""
         insert into BrowserVisits 
-            (\(Columns.normalizedUrl.rawValue),
+            (\(Columns.hostname.rawValue),
+             \(Columns.path.rawValue),
              \(Columns.visitCount.rawValue), 
              \(Columns.lastVisitDate.rawValue), 
              \(Columns.firstVisitDate.rawValue))
-        values (?, ?, ?, ?)
+        values (?, ?, ?, ?, ?)
         """,
          [
-            normalizedUrl,
+            hostname,
+            path,
             visitCount,
             lastVisitDate.timeIntervalSince1970,
             firstVisitDate.timeIntervalSince1970
@@ -83,7 +97,7 @@ extension BrowserVisits: iTermDatabaseElement {
         update BrowserVisits set \(Columns.visitCount.rawValue) = ?,
                                  \(Columns.lastVisitDate.rawValue) = ?,
                                  \(Columns.firstVisitDate.rawValue) = ?
-        where \(Columns.normalizedUrl.rawValue) = ?
+        where \(Columns.hostname.rawValue) = ? AND \(Columns.path.rawValue) = ?
         """,
         [
             visitCount,
@@ -91,19 +105,22 @@ extension BrowserVisits: iTermDatabaseElement {
             firstVisitDate.timeIntervalSince1970,
             
             // where clause
-            normalizedUrl
+            hostname,
+            path
         ])
     }
 
     init?(dbResultSet result: iTermDatabaseResultSet) {
-        guard let normalizedUrl = result.string(forColumn: Columns.normalizedUrl.rawValue),
+        guard let hostname = result.string(forColumn: Columns.hostname.rawValue),
+              let path = result.string(forColumn: Columns.path.rawValue),
               let lastVisitDate = result.date(forColumn: Columns.lastVisitDate.rawValue),
               let firstVisitDate = result.date(forColumn: Columns.firstVisitDate.rawValue)
         else {
             return nil
         }
         
-        self.normalizedUrl = normalizedUrl
+        self.hostname = hostname
+        self.path = path
         self.visitCount = Int(result.longLongInt(forColumn: Columns.visitCount.rawValue))
         self.lastVisitDate = lastVisitDate
         self.firstVisitDate = firstVisitDate
@@ -113,9 +130,9 @@ extension BrowserVisits: iTermDatabaseElement {
 // MARK: - URL Normalization
 
 extension BrowserVisits {
-    static func normalizeUrl(_ url: String) -> String {
+    static func parseUrl(_ url: String) -> (hostname: String, path: String) {
         guard let parsedUrl = URL(string: url) else {
-            return url
+            return (hostname: url, path: "")
         }
         
         var components = URLComponents(url: parsedUrl, resolvingAgainstBaseURL: false)
@@ -133,18 +150,48 @@ extension BrowserVisits {
             components?.queryItems = queryItems.isEmpty ? nil : queryItems
         }
         
-        return components?.url?.absoluteString ?? url
+        // Extract hostname (without scheme) and prepend period for domain component matching
+        let hostname = "." + (components?.host ?? "")
+        
+        // Extract path (including query if present)
+        var path = components?.path ?? ""
+        if let query = components?.query, !query.isEmpty {
+            path += "?" + query
+        }
+        
+        return (hostname: hostname, path: path)
+    }
+    
+    // Legacy method for compatibility
+    static func normalizeUrl(_ url: String) -> String {
+        let (hostname, path) = parseUrl(url)
+        return path.isEmpty ? hostname : "\(hostname)\(path)"
     }
     
     // MARK: - URL Bar Suggestion Queries
     
     static func suggestionsQuery(prefix: String, limit: Int = 10) -> (String, [Any]) {
-        ("""
-        SELECT * FROM BrowserVisits 
-        WHERE \(Columns.normalizedUrl.rawValue) LIKE ? 
-        ORDER BY \(Columns.visitCount.rawValue) DESC, \(Columns.lastVisitDate.rawValue) DESC 
-        LIMIT ?
-        """, ["\(prefix)%", limit])
+        // Parse the query to determine if it has a path component
+        let (queryHostname, queryPath) = parseUrl(prefix.contains("://") ? prefix : "//\(prefix)")
+        
+        if queryPath.isEmpty {
+            // Just hostname query - search for hostnames with domain component starting with prefix
+            return ("""
+            SELECT * FROM BrowserVisits 
+            WHERE \(Columns.hostname.rawValue) LIKE ? 
+            ORDER BY \(Columns.visitCount.rawValue) DESC, \(Columns.lastVisitDate.rawValue) DESC 
+            LIMIT ?
+            """, ["%\(queryHostname)%", limit])
+        } else {
+            // Query has path - match hostname suffix and path prefix
+            return ("""
+            SELECT * FROM BrowserVisits 
+            WHERE \(Columns.hostname.rawValue) LIKE ? 
+              AND \(Columns.path.rawValue) LIKE ? 
+            ORDER BY \(Columns.visitCount.rawValue) DESC, \(Columns.lastVisitDate.rawValue) DESC 
+            LIMIT ?
+            """, ["%\(queryHostname)", "\(queryPath)%", limit])
+        }
     }
     
     static func topVisitedQuery(limit: Int = 20) -> (String, [Any]) {
