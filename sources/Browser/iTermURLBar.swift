@@ -185,6 +185,7 @@ class iTermURLBar: NSView {
             textField.centerYAnchor.constraint(equalTo: textFieldBackground.centerYAnchor,
                                                constant: 2),
             textField.heightAnchor.constraint(equalToConstant: 22),
+            widthAnchor.constraint(greaterThanOrEqualToConstant: 200)
         ])
 
         // Make the textField grow along with the text view until it can't
