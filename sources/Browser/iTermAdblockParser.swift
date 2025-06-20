@@ -246,46 +246,51 @@ class iTermAdblockParser {
         var prefix = ""
         var suffix = ""
 
-        // 1) Strip off AdBlock anchors
+        // 1) Anchors
         if text.hasPrefix("||") {
             text.removeFirst(2)
             prefix = #"^[^:/?#]*://(([^./]+\.)*)"#
-            suffix = "$"                    // enforce end-of-string
         }
         else if text.hasPrefix("|") {
             text.removeFirst(1)
             prefix = "^"
         }
         if text.hasSuffix("|") {
-            text.removeLast(1)
+            text.removeLast()
             suffix = "$"
         }
 
-        // 2) Replace literal '^' and '*' with placeholders
-        let sepPlaceholder  = "__SEP__"
-        let starPlaceholder = "__STAR__"
+        // 2) Placeholders
+        let SEP  = "__SEP__"
+        let STAR = "__STAR__"
         text = text
-            .replacingOccurrences(of: "^", with: sepPlaceholder)
-            .replacingOccurrences(of: "*", with: starPlaceholder)
+            .replacingOccurrences(of: "^", with: SEP)
+            .replacingOccurrences(of: "*", with: STAR)
 
-        // 3) Escape everything else
+        // 3) Did we have one at the very end?
+        let hadTrailingSep = text.hasSuffix(SEP)
+
+        // 4) Escape all literal text
         let escaped = NSRegularExpression.escapedPattern(for: text)
 
-        // 4) Restore wildcards and separator **without** any grouping
-        //    - "__STAR__" → ".*"
-        //    - "__SEP__"  → "[/?#]?"  (zero or one of /, ? or #)
-        let withStars = escaped.replacingOccurrences(of: starPlaceholder, with: ".*")
-        let body      = withStars.replacingOccurrences(of: sepPlaceholder,  with: "[/?#]?")
+        // 5) Wildcards back
+        let withStars = escaped.replacingOccurrences(of: STAR, with: ".*")
 
-        // 5) Assemble final regex
+        // 6) Separator back everywhere
+        let withSep = withStars.replacingOccurrences(of: SEP, with: "[/?#]?")
+
+        // 7) If trailing, append single '$'
+        let body = hadTrailingSep ? withSep + "$" : withSep
+
+        // 8) Assemble + sanity check
         let regex = prefix + body + suffix
-
-        // 6) Sanity-check
-        if (try? NSRegularExpression(pattern: regex)) != nil {
-            return regex
+        guard !regex.contains("|"),
+              (try? NSRegularExpression(pattern: regex)) != nil else {
+            return nil
         }
-        return nil
+        return regex
     }
+
 
     private func escapeForRegex(_ pattern: String) -> String {
         return pattern
