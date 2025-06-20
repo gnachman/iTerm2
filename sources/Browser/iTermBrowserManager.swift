@@ -55,16 +55,6 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
             // block JS-only popups
             prefs.javaScriptCanOpenWindowsAutomatically = false
             configuration = WKWebViewConfiguration()
-
-            // Black magic from
-            // https://stackoverflow.com/questions/74203942/wkwebview-is-not-responding-in-ios-16-1-live-application-is-not-loading-the-con
-            // Hopefully fixes a problem where the browser just stops working and logs stuff like:
-            // 2025-06-19 23:43:52.093224-0700 iTerm2[84303:14204538] [assertion] Error acquiring assertion: <Error Domain=RBSServiceErrorDomain Code=1 "(target is not running or doesn't have entitlement com.apple.runningboard.assertions.webkit AND originator doesn't have entitlement com.apple.runningboard.assertions.webkit)" UserInfo={NSLocalizedFailureReason=(target is not running or doesn't have entitlement com.apple.runningboard.assertions.webkit AND originator doesn't have entitlement com.apple.runningboard.assertions.webkit)}>
-            // 2025-06-19 23:43:52.093257-0700 iTerm2[84303:14204538] [ProcessSuspension] 0x608000ce9220 - ProcessAssertion::acquireSync Failed to acquire RBS assertion 'XPCConnectionTerminationWatchdog' for process with PID=84614, error: Error Domain=RBSServiceErrorDomain Code=1 "(target is not running or doesn't have entitlement com.apple.runningboard.assertions.webkit AND originator doesn't have entitlement com.apple.runningboard.assertions.webkit)" UserInfo={NSLocalizedFailureReason=(target is not running or doesn't have entitlement com.apple.runningboard.assertions.webkit AND originator doesn't have entitlement com.apple.runningboard.assertions.webkit)}
-
-            let dropSharedWorkersScript = WKUserScript(source: "delete window.SharedWorker;", injectionTime: WKUserScriptInjectionTime.atDocumentStart, forMainFrameOnly: false)
-            configuration.userContentController.addUserScript(dropSharedWorkersScript)
-
             configuration.preferences = prefs
 
             // Register custom URL scheme handler for iterm2-about: URLs
@@ -497,12 +487,14 @@ extension iTermBrowserManager: WKNavigationDelegate {
         // Record visit in browser history
         if let url = webView.url?.absoluteString,
            !url.hasPrefix("iterm2-about:") {
-            BrowserDatabase.instance?.recordVisit(
-                url: url,
-                title: webView.title,
-                sessionGuid: sessionGuid,
-                transitionType: lastTransitionType
-            )
+            Task {
+                await BrowserDatabase.instance?.recordVisit(
+                    url: url,
+                    title: webView.title,
+                    sessionGuid: sessionGuid,
+                    transitionType: lastTransitionType
+                )
+            }
         }
     }
 
@@ -530,7 +522,9 @@ extension iTermBrowserManager: WKNavigationDelegate {
            let title = webView.title,
            !url.hasPrefix("iterm2-about:"),
            !title.isEmpty {
-            BrowserDatabase.instance?.updateTitle(title, forUrl: url)
+            Task {
+                await BrowserDatabase.instance?.updateTitle(title, forUrl: url)
+            }
         }
 
         delegate?.browserManager(self, didFinishNavigation: navigation)

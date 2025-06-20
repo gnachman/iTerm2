@@ -162,12 +162,6 @@ extension BrowserVisits {
         return (hostname: hostname, path: path)
     }
     
-    // Legacy method for compatibility
-    static func normalizeUrl(_ url: String) -> String {
-        let (hostname, path) = parseUrl(url)
-        return path.isEmpty ? hostname : "\(hostname)\(path)"
-    }
-    
     // MARK: - URL Bar Suggestion Queries
     
     static func suggestionsQuery(prefix: String, limit: Int = 10) -> (String, [Any]) {

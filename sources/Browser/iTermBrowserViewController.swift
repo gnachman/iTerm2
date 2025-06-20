@@ -255,7 +255,7 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
         
         // Get history suggestions
         if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            let historySuggestions = getHistorySuggestions(for: query)
+            let historySuggestions = await getHistorySuggestions(for: query)
             scoredResults.append(contentsOf: historySuggestions)
         }
         
@@ -310,22 +310,16 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
             .map { $0.suggestion }
     }
     
-    private func getHistorySuggestions(for query: String) -> [ScoredSuggestion] {
-        guard let database = BrowserDatabase.instance else {
+    private func getHistorySuggestions(for query: String) async -> [ScoredSuggestion] {
+        guard let database = await BrowserDatabase.instance else {
             return []
         }
         
-        let (dbQuery, args) = BrowserVisits.suggestionsQuery(prefix: query, limit: 10)
-        guard let resultSet = database.db.executeQuery(dbQuery, withArguments: args) else {
-            return []
-        }
-        
+        let visits = await database.getVisitSuggestions(forPrefix: query, limit: 10)
         var suggestions: [ScoredSuggestion] = []
         let attributes = CompletionsWindow.regularAttributes(font: nil)
         
-        while resultSet.next() {
-            guard let visit = BrowserVisits(dbResultSet: resultSet) else { continue }
-            
+        for visit in visits {
             // Reconstruct full URL for display (add https:// if needed)
             let displayUrl = visit.fullUrl.hasPrefix("http") ? visit.fullUrl : "https://\(visit.fullUrl)"
             
@@ -340,7 +334,6 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
             suggestions.append(ScoredSuggestion(suggestion: suggestion, score: visit.visitCount))
         }
         
-        resultSet.close()
         return suggestions
     }
     
