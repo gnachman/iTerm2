@@ -138,7 +138,7 @@ extension BrowserHistory: iTermDatabaseElement {
 // MARK: - Search functionality
 
 extension BrowserHistory {
-    static func searchQuery(terms: String) -> (String, [Any]) {
+    static func basicSearchQuery(terms: String) -> (String, [Any]) {
         let tokens = terms
             .components(separatedBy: .whitespacesAndNewlines)
             .filter { !$0.isEmpty }
@@ -159,5 +159,38 @@ extension BrowserHistory {
     
     static func historyForSession(_ sessionGuid: String) -> (String, [Any]) {
         ("SELECT * FROM BrowserHistory WHERE \(Columns.sessionGuid.rawValue) = ? ORDER BY \(Columns.visitDate.rawValue) DESC", [sessionGuid])
+    }
+    
+    static func recentHistoryQuery(offset: Int = 0, limit: Int = 50) -> (String, [Any]) {
+        let query = """
+        SELECT * FROM BrowserHistory 
+        ORDER BY \(Columns.visitDate.rawValue) DESC 
+        LIMIT ? OFFSET ?
+        """
+        return (query, [limit, offset])
+    }
+    
+    static func searchQuery(terms: String, offset: Int = 0, limit: Int = 50) -> (String, [Any]) {
+        let tokens = terms
+            .components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+        
+        let urlConditions = tokens.map { _ in "\(Columns.url.rawValue) LIKE ?" }
+        let titleConditions = tokens.map { _ in "\(Columns.title.rawValue) LIKE ?" }
+        let allConditions = urlConditions + titleConditions
+        
+        let whereClause = "WHERE " + allConditions.joined(separator: " OR ")
+        let orderBy = "ORDER BY \(Columns.visitDate.rawValue) DESC"
+        let limitClause = "LIMIT ? OFFSET ?"
+        
+        let urlArgs = tokens.map { "%\($0)%" }
+        let titleArgs = tokens.map { "%\($0)%" }
+        let allArgs = urlArgs + titleArgs + [limit, offset]
+        
+        return ("SELECT * FROM BrowserHistory \(whereClause) \(orderBy) \(limitClause)", allArgs)
+    }
+    
+    static func deleteEntryQuery(id: String) -> (String, [Any]) {
+        ("DELETE FROM BrowserHistory WHERE \(Columns.id.rawValue) = ?", [id])
     }
 }

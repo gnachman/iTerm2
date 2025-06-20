@@ -182,6 +182,10 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
         browserManager.loadURL(iTermBrowserSettingsHandler.settingsURL.absoluteString)
     }
     
+    func browserToolbarDidTapHistory() {
+        browserManager.loadURL(iTermBrowserHistoryViewHandler.historyURL.absoluteString)
+    }
+    
     func browserToolbarBackHistoryItems() -> [iTermBrowserHistoryItem] {
         return browserManager.getBackHistoryItems()
     }
