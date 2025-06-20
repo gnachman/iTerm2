@@ -186,6 +186,8 @@ private struct ImportExportConfig {
                                exclude: Set(["????????-????-????-????-????????????",
                                              "*.secureSetting",
                                              "Scripts",
+                                             "adblock.txt",
+                                             "adblock-compiled.json",
                                              "disable-automation-auth",
                                              "iTermServer-*",
                                              "iterm2-daemon-*",

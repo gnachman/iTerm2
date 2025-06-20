@@ -739,6 +739,13 @@ DEFINE_FLOAT(badgeMaxHeightFraction, 0.2, SECTION_BADGE @"Maximum height of the 
 DEFINE_INT(badgeRightMargin, 10, SECTION_BADGE @"Default value for right margin for the badge\nHow much space to leave between the right edge of the badge and the right edge of the terminal. Can be overridden by a profile setting. This is the default value if a profile does not have a setting.");
 DEFINE_INT(badgeTopMargin, 10, SECTION_BADGE @"Default value for the top margin for the badge\nHow much space to leave between the top edge of the badge and the top edge of the terminal. Can be overridden by a profile setting. This is the default value if a profile does not have a setting.");
 
+#pragma mark - Web Browser
+
+#define SECTION_WEB_BROWSER @"Web Browser: "
+
+DEFINE_SETTABLE_BOOL(adblockEnabled, AdblockEnabled, NO, SECTION_WEB_BROWSER @"Enable ad blocking in the web browser?\nWhen enabled, downloads and applies ad blocking rules from the configured URL.");
+DEFINE_SETTABLE_STRING(adblockListURL, AdblockListURL, @"https://easylist.to/easylist/easylist.txt", SECTION_WEB_BROWSER @"URL for ad blocking filter list\nThis should be a text file in Adblock Plus format. The list is downloaded automatically every 24 hours.");
+
 #pragma mark - Experimental Features
 
 #define SECTION_EXPERIMENTAL @"Experimental Features: "
