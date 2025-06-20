@@ -36,6 +36,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
     private static let settingsMessageHandlerName = "iterm2BrowserSettings"
     private(set) var favicon: NSImage?
     private var _findManager: Any?
+    private var adblockManager: iTermAdblockManager?
 
     init(configuration: WKWebViewConfiguration?) {
         super.init()
@@ -71,6 +72,12 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
         if #available(macOS 13.0, *) {
             _findManager = iTermBrowserFindManager(webView: webView)
         }
+        
+        // Setup adblocking
+        setupAdblocking()
+        
+        // Setup settings delegate
+        setupSettingsDelegate()
     }
     
     // MARK: - Public Interface
@@ -417,8 +424,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
 @available(macOS 11.0, *)
 extension iTermBrowserManager {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard message.name == Self.settingsMessageHandlerName,
-              let action = message.body as? String else {
+        guard message.name == Self.settingsMessageHandlerName else {
             return
         }
         
@@ -428,7 +434,12 @@ extension iTermBrowserManager {
             return
         }
         
-        settingsHandler.handleSettingsAction(action, webView: webView)
+        // Handle settings messages
+        guard let messageDict = message.body as? [String: Any] else {
+            return
+        }
+        
+        settingsHandler.handleSettingsMessage(messageDict, webView: webView)
     }
 }
 
@@ -788,5 +799,115 @@ extension iTermBrowserManager: WKUIDelegate {
         
         // Navigate to iterm2-about:source which our custom URL scheme handler will serve
         webView.load(URLRequest(url: iTermBrowserSourceHandler.sourceURL))
+    }
+}
+
+@available(macOS 11.0, *)
+extension iTermBrowserManager: iTermBrowserSettingsHandlerDelegate {
+
+    // MARK: - iTermBrowserSettingsHandlerDelegate
+
+    func settingsHandlerDidUpdateAdblockSettings(_ handler: iTermBrowserSettingsHandler) {
+        // Update adblock rules when settings change
+        updateAdblockSettings()
+    }
+
+    func settingsHandlerDidRequestAdblockUpdate(_ handler: iTermBrowserSettingsHandler) {
+        // Force update of adblock rules
+        forceAdblockUpdate()
+    }
+
+    // MARK: - Settings Integration
+
+    @objc func setupSettingsDelegate() {
+        settingsHandler.delegate = self
+    }
+
+    @objc func notifySettingsPageOfAdblockUpdate(success: Bool, error: String? = nil) {
+        // Find the settings page webview and update its status
+        if webView.url == iTermBrowserSettingsHandler.settingsURL {
+            if success {
+                settingsHandler.showAdblockUpdateSuccess(in: webView)
+            } else if let error = error {
+                settingsHandler.showAdblockUpdateError(error, in: webView)
+            }
+        }
+    }
+}
+
+@available(macOS 11.0, *)
+extension iTermBrowserManager {
+
+    // MARK: - Adblock Integration
+
+    @objc func setupAdblocking() {
+        // Use shared adblock manager
+        adblockManager = iTermAdblockManager.shared
+        
+        // Listen for adblock notifications
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(adblockRulesDidUpdate),
+            name: iTermAdblockManager.didUpdateRulesNotification,
+            object: iTermAdblockManager.shared
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(adblockDidFail(_:)),
+            name: iTermAdblockManager.didFailWithErrorNotification,
+            object: iTermAdblockManager.shared
+        )
+        
+        // Start updates if needed
+        adblockManager?.updateRulesIfNeeded()
+    }
+
+    @objc func updateAdblockSettings() {
+        // Called when settings change
+        adblockManager?.updateRulesIfNeeded()
+    }
+
+    @objc func forceAdblockUpdate() {
+        // Force update of adblock rules
+        adblockManager?.forceUpdate()
+    }
+
+    // MARK: - Adblock Notification Handlers
+    
+    @objc private func adblockRulesDidUpdate() {
+        // Apply or remove rules based on settings
+        updateWebViewContentRules()
+
+        // Notify settings page if it's open
+        notifySettingsPageOfAdblockUpdate(success: true)
+    }
+    
+    @objc private func adblockDidFail(_ notification: Notification) {
+        guard let error = notification.userInfo?[iTermAdblockManager.errorKey] as? Error else {
+            return
+        }
+        
+        // Forward to delegate for user notification
+        // For now, just log the error
+        print("Adblock error: \(error.localizedDescription)")
+
+        // Notify settings page if it's open
+        notifySettingsPageOfAdblockUpdate(success: false, error: error.localizedDescription)
+    }
+
+    // MARK: - Private Implementation
+
+    private func updateWebViewContentRules() {
+        let userContentController = webView.configuration.userContentController
+
+        // Remove existing adblock rules
+        userContentController.removeAllContentRuleLists()
+
+        // Add new rules if adblock is enabled
+        if iTermAdvancedSettingsModel.adblockEnabled(),
+           let ruleList = adblockManager?.getRuleList() {
+            userContentController.add(ruleList)
+        }
     }
 }

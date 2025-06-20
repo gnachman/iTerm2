@@ -4688,6 +4688,8 @@
 		A6F7D4DD2E03E03B0065D09C /* iTermURLTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4DC2E03E03B0065D09C /* iTermURLTextField.swift */; };
 		A6F7D4DF2E03E06E0065D09C /* iTermURLBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4DE2E03E06E0065D09C /* iTermURLBar.swift */; };
 		A6F7D4E12E04847E0065D09C /* iTermBrowserURLTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4E02E0484790065D09C /* iTermBrowserURLTextView.swift */; };
+		A6F7D4E32E04AD3A0065D09C /* iTermAdblockParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4E22E04AD3A0065D09C /* iTermAdblockParser.swift */; };
+		A6F7D4E52E04AE7D0065D09C /* iTermAdblockManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4E42E04AE7D0065D09C /* iTermAdblockManager.swift */; };
 		A6F7F8072763F47B005E433E /* VT100ScreenState.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F7F8052763F47B005E433E /* VT100ScreenState.m */; };
 		A6F981CC1C13783C00EE0B80 /* iTermCPS.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F981CB1C13783C00EE0B80 /* iTermCPS.h */; };
 		A6F9821F2CA775E200229070 /* RoundedRectView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F9D16F137D900B7FCE9 /* RoundedRectView.m */; };
@@ -8322,6 +8324,8 @@
 		A6F7D4DC2E03E03B0065D09C /* iTermURLTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermURLTextField.swift; sourceTree = "<group>"; };
 		A6F7D4DE2E03E06E0065D09C /* iTermURLBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermURLBar.swift; sourceTree = "<group>"; };
 		A6F7D4E02E0484790065D09C /* iTermBrowserURLTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserURLTextView.swift; sourceTree = "<group>"; };
+		A6F7D4E22E04AD3A0065D09C /* iTermAdblockParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermAdblockParser.swift; sourceTree = "<group>"; };
+		A6F7D4E42E04AE7D0065D09C /* iTermAdblockManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermAdblockManager.swift; sourceTree = "<group>"; };
 		A6F7F8042763F47B005E433E /* VT100ScreenState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VT100ScreenState.h; sourceTree = "<group>"; };
 		A6F7F8052763F47B005E433E /* VT100ScreenState.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenState.m; sourceTree = "<group>"; };
 		A6F981CB1C13783C00EE0B80 /* iTermCPS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCPS.h; sourceTree = "<group>"; };
@@ -12877,6 +12881,8 @@
 				A6F7D4C62E037E780065D09C /* error-page.html */,
 				A6F7D4CA2E037EA80065D09C /* settings-page.html */,
 				A6F7D4D42E03D99F0065D09C /* view-source.html */,
+				A6F7D4E42E04AE7D0065D09C /* iTermAdblockManager.swift */,
+				A6F7D4E22E04AD3A0065D09C /* iTermAdblockParser.swift */,
 				A6F7D4C22E037BC80065D09C /* iTermBrowserCSSLoader.swift */,
 				A6F7D4D22E03D0A00065D09C /* iTermBrowserDownload.swift */,
 				A6F7D4BA2E0373110065D09C /* iTermBrowserErrorHandler.swift */,
@@ -17130,6 +17136,7 @@
 				A6E1524C27613BF100D0F41C /* LineBuffer.m in Sources */,
 				A6D7E0722C1B6AF5007D0A37 /* iTermProfileSearchToken.m in Sources */,
 				5370679021C9D2780088D0F3 /* SIGArchiveChunk.m in Sources */,
+				A6F7D4E32E04AD3A0065D09C /* iTermAdblockParser.swift in Sources */,
 				A62EE251274473C700D57B54 /* iTermProfilePreferencesTabViewWrapperView.m in Sources */,
 				A665C1D2243D962C00F623F0 /* TerminalFile.m in Sources */,
 				A65DF4B2284ACC3A00AA29AB /* Bundle+ShellIntegration.swift in Sources */,
@@ -17754,6 +17761,7 @@
 				A6A7235C2DB7362D00A8115D /* iTermMutableStringProtocol.swift in Sources */,
 				A6EC937024E787BA00EEADEF /* iTermSnippetsModel.m in Sources */,
 				A629F5A223AFF53F00C2F16B /* iTermShellIntegrationFirstPageViewController.m in Sources */,
+				A6F7D4E52E04AE7D0065D09C /* iTermAdblockManager.swift in Sources */,
 				A6F699292730998B00C4A3A6 /* iTermBadgeLabel.m in Sources */,
 				A6069F2C2DF3AC2A00EE6CC7 /* LLMMetadata.swift in Sources */,
 				A6E5D20C1FA3C55700EDD002 /* iTermMetalRowData.m in Sources */,
