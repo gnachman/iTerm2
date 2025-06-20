@@ -68,6 +68,9 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
             configuration = WKWebViewConfiguration()
             configuration.preferences = prefs
 
+            // Trick google into thinking we're a real browser. Who knows what this might break.
+            configuration.applicationNameForUserAgent = "Safari/16.4"
+
             // Register custom URL scheme handler for iterm2-about: URLs
             configuration.setURLSchemeHandler(self, forURLScheme: "iterm2-about")
         }
