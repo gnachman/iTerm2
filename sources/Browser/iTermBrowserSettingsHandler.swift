@@ -26,7 +26,9 @@ class iTermBrowserSettingsHandler: NSObject {
         let substitutions = ["ADBLOCK_ENABLED": iTermAdvancedSettingsModel.adblockEnabled() ? "checked" : "",
                              "ADBLOCK_URL": iTermAdvancedSettingsModel.adblockListURL().replacingOccurrences(of: "&", with: "&amp;").replacingOccurrences(of: "\"", with: "&quot;")]
 
-        return iTermBrowserTemplateLoader.loadTemplate(named: "settings-page", substitutions: substitutions)
+        return iTermBrowserTemplateLoader.loadTemplate(named: "settings-page",
+                                                       type: "html",
+                                                       substitutions: substitutions)
     }
     
     func start(urlSchemeTask: WKURLSchemeTask, url: URL) {

@@ -71,7 +71,9 @@ class iTermBrowserErrorHandler: NSObject {
             "ORIGINAL_URL": originalURL ?? ""
         ]
         
-        return iTermBrowserTemplateLoader.loadTemplate(named: "error-page", substitutions: substitutions)
+        return iTermBrowserTemplateLoader.loadTemplate(named: "error-page",
+                                                       type: "html",
+                                                       substitutions: substitutions)
     }
     
     private func errorTitleAndMessage(for error: Error) -> (title: String, message: String) {
