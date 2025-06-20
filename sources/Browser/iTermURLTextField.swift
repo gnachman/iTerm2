@@ -100,6 +100,7 @@ class iTermURLTextField: NSScrollView {
         
         // Create custom text view
         textView = iTermBrowserURLTextView(frame: bounds, textContainer: textContainer)
+        textView.translatesAutoresizingMaskIntoConstraints = false
         textView.delegate = self
         textView.isVerticallyResizable = false
         textView.isHorizontallyResizable = true
