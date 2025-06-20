@@ -39,7 +39,8 @@ typedef NS_ENUM(NSUInteger, iTermMetalUnavailableReason) {
     iTermMetalUnavailableReasonSwipingBetweenTabs,
     iTermMetalUnavailableReasonSplitPaneBeingDragged,
     iTermMetalUnavailableReasonWindowObscured,
-    iTermMetalUnavailableReasonLowerPowerMode
+    iTermMetalUnavailableReasonLowerPowerMode,
+    iTermMetalUnavailableReasonNotATerminal
 };
 
 NSString *iTermMetalUnavailableReasonDescription(iTermMetalUnavailableReason reason);

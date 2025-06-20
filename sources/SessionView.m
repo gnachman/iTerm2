@@ -347,6 +347,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
 - (void)setTerminalViewsHidden:(BOOL)hidden {
     _scrollview.hidden = hidden;
+    _scrollview.documentView.hidden = YES;
     if (_metalView) {
         _metalView.hidden = hidden;
     }

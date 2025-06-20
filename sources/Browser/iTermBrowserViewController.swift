@@ -29,9 +29,11 @@ class iTermBrowserViewController: NSViewController {
     private let historyController: iTermBrowserHistoryController
     private let suggestionsController: iTermBrowserSuggestionsController
     private let navigationState = iTermBrowserNavigationState()
+    @objc let sessionGuid: String
 
     @objc(initWithConfiguration:sessionGuid:)
     init(configuration: WKWebViewConfiguration?, sessionGuid: String)  {
+        self.sessionGuid = sessionGuid
         historyController = iTermBrowserHistoryController(sessionGuid: sessionGuid,
                                                           navigationState: navigationState)
         browserManager = iTermBrowserManager(configuration: configuration,
@@ -311,6 +313,38 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
         return delegate?.browserViewController(self,
                                                requestNewWindowForURL: url,
                                                configuration: configuration)
+    }
+}
+
+// MARK: - Actions
+@available(macOS 11.0, *)
+extension iTermBrowserViewController {
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        return true
+    }
+
+    @objc
+    @IBAction
+    func browserOpenLocation(_ sender: Any) {
+        toolbar.focusURLBar()
+    }
+
+    @objc
+    @IBAction
+    func browserBack(_ sender: Any) {
+        toolbar.backTapped()
+    }
+
+    @objc
+    @IBAction
+    func browserForward(_ sender: Any) {
+        toolbar.forwardTapped()
+    }
+
+    @objc
+    @IBAction
+    func browserReload(_ sender: Any) {
+        toolbar.reloadTapped()
     }
 }
 
