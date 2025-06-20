@@ -4690,6 +4690,8 @@
 		A6F7D4E12E04847E0065D09C /* iTermBrowserURLTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4E02E0484790065D09C /* iTermBrowserURLTextView.swift */; };
 		A6F7D4E32E04AD3A0065D09C /* iTermAdblockParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4E22E04AD3A0065D09C /* iTermAdblockParser.swift */; };
 		A6F7D4E52E04AE7D0065D09C /* iTermAdblockManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4E42E04AE7D0065D09C /* iTermAdblockManager.swift */; };
+		A6F7D4EE2E0532B40065D09C /* Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4ED2E0532B00065D09C /* Database.swift */; };
+		A6F7D4F02E0532C90065D09C /* DatabaseBackedArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4EF2E0532C60065D09C /* DatabaseBackedArray.swift */; };
 		A6F7F8072763F47B005E433E /* VT100ScreenState.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F7F8052763F47B005E433E /* VT100ScreenState.m */; };
 		A6F981CC1C13783C00EE0B80 /* iTermCPS.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F981CB1C13783C00EE0B80 /* iTermCPS.h */; };
 		A6F9821F2CA775E200229070 /* RoundedRectView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F9D16F137D900B7FCE9 /* RoundedRectView.m */; };
@@ -8326,6 +8328,8 @@
 		A6F7D4E02E0484790065D09C /* iTermBrowserURLTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserURLTextView.swift; sourceTree = "<group>"; };
 		A6F7D4E22E04AD3A0065D09C /* iTermAdblockParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermAdblockParser.swift; sourceTree = "<group>"; };
 		A6F7D4E42E04AE7D0065D09C /* iTermAdblockManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermAdblockManager.swift; sourceTree = "<group>"; };
+		A6F7D4ED2E0532B00065D09C /* Database.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Database.swift; sourceTree = "<group>"; };
+		A6F7D4EF2E0532C60065D09C /* DatabaseBackedArray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseBackedArray.swift; sourceTree = "<group>"; };
 		A6F7F8042763F47B005E433E /* VT100ScreenState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VT100ScreenState.h; sourceTree = "<group>"; };
 		A6F7F8052763F47B005E433E /* VT100ScreenState.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenState.m; sourceTree = "<group>"; };
 		A6F981CB1C13783C00EE0B80 /* iTermCPS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCPS.h; sourceTree = "<group>"; };
@@ -11636,6 +11640,8 @@
 		A68A30C9186D101C007F550F /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				A6F7D4EF2E0532C60065D09C /* DatabaseBackedArray.swift */,
+				A6F7D4ED2E0532B00065D09C /* Database.swift */,
 				A6069F3D2DF88C7100EE6CC7 /* PerformanceCounter.swift */,
 				A6069F3B2DF7ED3700EE6CC7 /* AsyncSemaphore.swift */,
 				A66433362DE7E6020099F722 /* RangeMap.swift */,
@@ -17215,6 +17221,7 @@
 				A666D5F1221A1EF100D6184A /* iTermVariableScope+Window.m in Sources */,
 				A60E045626DC978000DD162B /* FilterTextField.swift in Sources */,
 				A6D10E3727F7C2BC0026DB56 /* NSRect+MultiCursor.swift in Sources */,
+				A6F7D4F02E0532C90065D09C /* DatabaseBackedArray.swift in Sources */,
 				A619DC402CD593F1004B8996 /* Bijection.swift in Sources */,
 				A6069EBC2DEFC3B400EE6CC7 /* NSImage+iTerm.swift in Sources */,
 				A6A4867220B67AB800493302 /* PointerPreferencesViewController.m in Sources */,
@@ -18035,6 +18042,7 @@
 				A653F6B924D291D00062377E /* iTermOrderedDictionary.m in Sources */,
 				A6A7235E2DB7364700A8115D /* iTermLegacyMutableString.swift in Sources */,
 				A693C0BF29D0B1F100AED4E4 /* MemoryAddressHelper.swift in Sources */,
+				A6F7D4EE2E0532B40065D09C /* Database.swift in Sources */,
 				A6069F0A2DF25C1A00EE6CC7 /* AIPluginClient.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
