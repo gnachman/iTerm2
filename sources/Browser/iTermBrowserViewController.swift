@@ -26,10 +26,20 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
     private let browserManager: iTermBrowserManager
     private var toolbar: iTermBrowserToolbar!
     private var backgroundView: NSVisualEffectView!
+    private let historyController: iTermBrowserHistoryController
+    private let suggestionsController: iTermBrowserSuggestionsController
+    private let navigationState = iTermBrowserNavigationState()
 
     @objc(initWithConfiguration:sessionGuid:)
     init(configuration: WKWebViewConfiguration?, sessionGuid: String)  {
-        browserManager = iTermBrowserManager(configuration: configuration, sessionGuid: sessionGuid)
+        historyController = iTermBrowserHistoryController(sessionGuid: sessionGuid,
+                                                          navigationState: navigationState)
+        browserManager = iTermBrowserManager(configuration: configuration,
+                                             sessionGuid: sessionGuid,
+                                             historyController: historyController,
+                                             navigationState: navigationState)
+        suggestionsController = iTermBrowserSuggestionsController(historyController: historyController,
+                                                                  attributes: CompletionsWindow.regularAttributes(font: nil))
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -184,161 +194,12 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
         browserManager.navigateHistory(steps: steps)
     }
 
-    private func searchQueryFromURL(_ url: String) -> String? {
-        guard let actualComponents = URLComponents(string: url),
-              let searchEngineComponents = URLComponents(string: iTermAdvancedSettingsModel.searchCommand()) else {
-            return nil
-        }
-        
-        // Helper function to normalize host by removing common prefixes
-        func normalizeHost(_ host: String?) -> String? {
-            guard let host = host?.lowercased() else { return nil }
-            let prefixesToRemove = ["www.", "m.", "mobile."]
-            for prefix in prefixesToRemove {
-                if host.hasPrefix(prefix) {
-                    return String(host.dropFirst(prefix.count))
-                }
-            }
-            return host
-        }
-        
-        // Check if hosts match (ignoring common prefixes)
-        let normalizedActualHost = normalizeHost(actualComponents.host)
-        let normalizedSearchHost = normalizeHost(searchEngineComponents.host)
-        guard normalizedActualHost == normalizedSearchHost else {
-            return nil
-        }
-        
-        // Check if paths match
-        guard actualComponents.path == searchEngineComponents.path else {
-            return nil
-        }
-        
-        // Extract query parameters from both URLs
-        guard let actualQueryItems = actualComponents.queryItems,
-              let searchQueryItems = searchEngineComponents.queryItems else {
-            return nil
-        }
-        
-        // Find the query parameter that contains "%@" in the search template
-        var targetQueryParam: String?
-        for item in searchQueryItems {
-            if let value = item.value, value.contains("%@") {
-                targetQueryParam = item.name
-                break
-            }
-        }
-        
-        guard let queryParamName = targetQueryParam else {
-            return nil
-        }
-        
-        // Find the corresponding parameter in the actual URL
-        for item in actualQueryItems {
-            if item.name == queryParamName, let value = item.value {
-                // Return the decoded query value
-                return value.removingPercentEncoding ?? value
-            }
-        }
-        
-        return nil
-    }
-
-    private struct ScoredSuggestion {
-        let suggestion: URLSuggestion
-        let score: Int
-    }
-    
     func browserToolbarDidRequestSuggestions(_ query: String) async -> [URLSuggestion] {
-        var scoredResults = [ScoredSuggestion]()
-        let attributes = CompletionsWindow.regularAttributes(font: nil)
-        
-        // Get history suggestions
-        if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            let historySuggestions = await getHistorySuggestions(for: query)
-            scoredResults.append(contentsOf: historySuggestions)
-        }
-        
-        var searchScore = 0
-        
-        if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            let actualQuery: String
-            if let search = searchQueryFromURL(query) {
-                searchScore = Int.max
-                actualQuery = search
-            } else {
-                searchScore = 99999
-                actualQuery = query
-            }
-            let trimmed = actualQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-            let queryParameterValue = trimmed.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? trimmed
-            let url = iTermAdvancedSettingsModel.searchCommand().replacingOccurrences(of: "%@", with: queryParameterValue)
-            
-            let searchSuggestion = URLSuggestion(
-                text: actualQuery,
-                url: url,
-                displayText: NSAttributedString(string: "Search for \"\(actualQuery)\"", attributes: attributes),
-                detail: "Web Search",
-                type: .webSearch
-            )
-            
-            scoredResults.append(ScoredSuggestion(suggestion: searchSuggestion, score: searchScore))
-        }
-        
-        if let normal = browserManager.normalizeURL(query) {
-            let suggestion = URLSuggestion(
-                text: query,
-                url: normal.absoluteString,
-                displayText: NSAttributedString(string: "Navigate to \"\(normal.absoluteString)\"",
-                                                attributes: attributes),
-                detail: "URL",
-                type: .navigation
-            )
-            let urlScore: Int
-            if browserManager.stringIsStronglyURLLike(query) {
-                urlScore = 100000
-            } else {
-                urlScore = 99998
-            }
-            
-            scoredResults.append(ScoredSuggestion(suggestion: suggestion, score: urlScore))
-        }
-        
-        // Sort by score (highest first) and return suggestions
-        return scoredResults
-            .sorted { $0.score > $1.score }
-            .map { $0.suggestion }
-    }
-    
-    private func getHistorySuggestions(for query: String) async -> [ScoredSuggestion] {
-        guard let database = await BrowserDatabase.instance else {
-            return []
-        }
-        
-        let visits = await database.getVisitSuggestions(forPrefix: query, limit: 10)
-        var suggestions: [ScoredSuggestion] = []
-        let attributes = CompletionsWindow.regularAttributes(font: nil)
-        
-        for visit in visits {
-            // Reconstruct full URL for display (add https:// if needed)
-            let displayUrl = visit.fullUrl.hasPrefix("http") ? visit.fullUrl : "https://\(visit.fullUrl)"
-            
-            let suggestion = URLSuggestion(
-                text: displayUrl,
-                url: displayUrl,
-                displayText: NSAttributedString(string: displayUrl, attributes: attributes),
-                detail: "Visited \(visit.visitCount) time\(visit.visitCount == 1 ? "" : "s")",
-                type: .history
-            )
-            
-            suggestions.append(ScoredSuggestion(suggestion: suggestion, score: visit.visitCount))
-        }
-        
-        return suggestions
+        return await suggestionsController.suggestions(forQuery: query)
     }
     
     func browserToolbarDidBeginEditingURL(string: String) -> String? {
-        return searchQueryFromURL(string)
+        return suggestionsController.searchQueryFromURL(string)
     }
     
     func browserToolbarUserDidSubmitNavigationRequest() {

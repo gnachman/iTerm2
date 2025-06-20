@@ -25,12 +25,10 @@
 class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler, iTermBrowserWebViewDelegate {
     weak var delegate: iTermBrowserManagerDelegate?
     private(set) var webView: iTermBrowserWebView!
-    private var lastRequestedURL: URL?
     private var lastFailedURL: URL?
     private var errorHandler = iTermBrowserErrorHandler()
     private var settingsHandler = iTermBrowserSettingsHandler()
     private var sourceHandler = iTermBrowserSourceHandler()
-    private var lastTransitionType: BrowserTransitionType = .other
     private var currentPageURL: URL?
     private var hasSettingsMessageHandler = false
     private static let settingsMessageHandlerName = "iterm2BrowserSettings"
@@ -38,10 +36,18 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
     private var _findManager: Any?
     private var adblockManager: iTermAdblockManager?
     let sessionGuid: String
+    let historyController: iTermBrowserHistoryController
+    private let navigationState: iTermBrowserNavigationState
 
-    init(configuration: WKWebViewConfiguration?, sessionGuid: String) {
+    init(configuration: WKWebViewConfiguration?,
+         sessionGuid: String,
+         historyController: iTermBrowserHistoryController,
+         navigationState: iTermBrowserNavigationState) {
         self.sessionGuid = sessionGuid
+        self.historyController = historyController
+        self.navigationState = navigationState
         super.init()
+
         setupWebView(configuration: configuration)
     }
     
@@ -90,7 +96,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
             return
         }
         
-        lastRequestedURL = url
+        navigationState.willLoadURL(url)
         errorHandler.clearPendingError()
         lastFailedURL = nil  // Reset failed URL when loading new URL
         favicon = nil  // Clear favicon when loading new URL
@@ -237,77 +243,6 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
     
     // MARK: - Private Helpers
 
-    private func stringHasValidScheme(_ urlString: String) -> Bool {
-        return urlString.hasPrefix("http://") ||
-        urlString.hasPrefix("https://") ||
-        urlString.hasPrefix("iterm2-about:") ||
-        urlString.hasPrefix("about:") ||
-        urlString.hasPrefix("file://")
-    }
-    func normalizeURL(_ urlString: String) -> URL? {
-        let trimmed = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        // If it already has a scheme, use as-is
-        if stringHasValidScheme(trimmed) {
-            return URL(string: trimmed)
-        }
-        
-        // If it looks like a domain/IP, add https://
-        if isValidDomainOrIP(trimmed) {
-            return URL(string: "https://\(trimmed)")
-        }
-        return nil
-    }
-
-    func stringIsStronglyURLLike(_ urlString: String) -> Bool {
-        let trimmed = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
-        if stringHasValidScheme(trimmed) {
-            return true
-        }
-        if isValidDomainOrIP(trimmed) && trimmed.contains(".") {
-            return true
-        }
-        return false
-    }
-
-    private func isValidDomainOrIP(_ input: String) -> Bool {
-        // Check if it contains spaces (definitely not a URL)
-        if input.contains(" ") {
-            return false
-        }
-        
-        // Check for IPv4 address pattern
-        let ipv4Pattern = #"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$"#
-        if input.range(of: ipv4Pattern, options: .regularExpression) != nil {
-            return true
-        }
-        
-        // Check for IPv6 address pattern (basic check)
-        if input.hasPrefix("[") && input.hasSuffix("]") {
-            return true
-        }
-        
-        // Check for localhost or local addresses
-        if input.hasPrefix("localhost") || input.hasPrefix("127.0.0.1") {
-            return true
-        }
-        
-        // Check if it looks like a domain (contains a dot and no spaces)
-        if input.contains(".") && !input.contains(" ") {
-            // Additional validation: must have at least one character before and after the dot
-            let components = input.split(separator: ".")
-            return components.count >= 2 && components.allSatisfy { !$0.isEmpty }
-        }
-        
-        // Check for intranet-style hostnames (single word, possibly with port)
-        let hostPattern = #"^[a-zA-Z0-9-]+(:\d+)?$"#
-        if input.range(of: hostPattern, options: .regularExpression) != nil {
-            return true
-        }
-
-        return false
-    }
-    
     private func notifyDelegateOfUpdates() {
         delegate?.browserManager(self, didUpdateURL: webView.url?.absoluteString)
         delegate?.browserManager(self, didUpdateTitle: webView.title)
@@ -483,18 +418,8 @@ extension iTermBrowserManager: WKNavigationDelegate {
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
         // URL is now committed, update UI
         notifyDelegateOfUpdates()
-
-        // Record visit in browser history
-        if let url = webView.url?.absoluteString,
-           !url.hasPrefix("iterm2-about:") {
-            Task {
-                await BrowserDatabase.instance?.recordVisit(
-                    url: url,
-                    title: webView.title,
-                    sessionGuid: sessionGuid,
-                    transitionType: lastTransitionType
-                )
-            }
+        Task {
+            await historyController.recordVisit(for: webView.url, title: webView.title)
         }
     }
 
@@ -518,20 +443,13 @@ extension iTermBrowserManager: WKNavigationDelegate {
         detectFavicon()
 
         // Update title in browser history if available
-        if let url = webView.url?.absoluteString,
-           let title = webView.title,
-           !url.hasPrefix("iterm2-about:"),
-           !title.isEmpty {
-            Task {
-                await BrowserDatabase.instance?.updateTitle(title, forUrl: url)
-            }
-        }
+        historyController.titleDidChange(for: webView.url, title: webView.title)
 
         delegate?.browserManager(self, didFinishNavigation: navigation)
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-        let failedURL = lastRequestedURL
+        let failedURL = navigationState.lastRequestedURL
 
         // Don't show error page for download-related cancellations
         if isDownloadRelatedError(error) {
@@ -549,7 +467,7 @@ extension iTermBrowserManager: WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-        let failedURL = lastRequestedURL
+        let failedURL = navigationState.lastRequestedURL
 
         // Don't show error page for download-related cancellations
         if isDownloadRelatedError(error) {
@@ -570,35 +488,11 @@ extension iTermBrowserManager: WKNavigationDelegate {
         // Store the target URL for this navigation so we can use it in error handlers
         // But don't overwrite if this is our error page navigation
         if let targetURL = navigationAction.request.url, targetURL != iTermBrowserErrorHandler.errorURL {
-            lastRequestedURL = targetURL
-        }
-
-        // Determine transition type based on navigation type
-        let transitionType: BrowserTransitionType
-        switch navigationAction.navigationType {
-        case .linkActivated:
-            transitionType = .link
-        case .formSubmitted:
-            transitionType = .formSubmit
-        case .backForward:
-            transitionType = .backForward
-        case .reload:
-            transitionType = .reload
-        case .formResubmitted:
-            transitionType = .formSubmit
-        case .other:
-            // Check if this looks like a typed URL (from loadURL method)
-            if navigationAction.request.url == lastRequestedURL {
-                transitionType = .typed
-            } else {
-                transitionType = .other
-            }
-        @unknown default:
-            transitionType = .other
+            navigationState.willLoadURL(targetURL)
         }
 
         // Store the transition type for the upcoming navigation
-        lastTransitionType = transitionType
+        navigationState.willNavigate(action: navigationAction)
 
         // Popup blocking logic
         guard let targetURL = navigationAction.request.url else {
