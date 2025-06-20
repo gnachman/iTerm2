@@ -23,6 +23,7 @@
 
 extern NSString *const iTermTabDidChangeWindowNotification;
 extern NSString *const iTermSessionBecameKey;
+extern NSString *const iTermCurrentSessionDidChange;
 extern NSString *const PTYTabVariableTitleOverride;
 
 // This implements NSSplitViewDelegate but it was an informal protocol in 10.5. If 10.5 support

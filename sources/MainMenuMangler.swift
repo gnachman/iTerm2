@@ -13,7 +13,7 @@ class MainMenuMangler: NSObject {
     @objc static let instance = MainMenuMangler()
     private weak var observedWindow: NSWindow?
     private var web: NSMenuItem?
-    
+
     // Store original key equivalents for web menu items
     private var originalWebKeyEquivalents: [(String, NSEvent.ModifierFlags)] = []
     
@@ -36,6 +36,11 @@ class MainMenuMangler: NSObject {
             selector: #selector(currentTerminalDidChange(_:)),
             name: Notification.Name("iTermWindowBecameKey"),
             object: nil)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(currentSessionDidChange(_:)),
+            name: Notification.Name(rawValue: iTermCurrentSessionDidChange),
+            object: nil)
         update()
     }
 
@@ -47,6 +52,10 @@ class MainMenuMangler: NSObject {
 
     @objc private func currentTerminalDidChange(_ note: Notification) {
         update()
+    }
+
+    @objc private func currentSessionDidChange(_ note: Notification) {
+        updateMainMenu()
     }
 
     private func update() {
