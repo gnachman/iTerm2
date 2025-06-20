@@ -708,6 +708,8 @@ backgroundColor:(NSColor *)backgroundColor;
 
 - (void)textViewFontDidChange;
 
+- (void)notifyActive;
+
 // Set rows, columns from arrangement.
 - (void)resizeFromArrangement:(NSDictionary *)arrangement;
 

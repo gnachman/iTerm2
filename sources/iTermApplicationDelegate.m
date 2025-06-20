@@ -211,6 +211,7 @@ static BOOL hasBecomeActive = NO;
     IBOutlet NSMenuItem *_captureGPUFrameMenuItem;
     IBOutlet NSMenuItem *_namedMarksMenuItem;
     IBOutlet NSMenuItem *_toolbeltMenuItem;
+    IBOutlet NSMenuItem *_webMenuItem;
     // If set, skip performing launch actions.
     BOOL quiet_;
     NSDate* launchTime_;
@@ -353,6 +354,7 @@ static BOOL hasBecomeActive = NO;
     [[iTermBuriedSessions sharedInstance] setMenus:[NSArray arrayWithObjects:_buriedSessions, _statusIconBuriedSessions, nil]];
     _triggers.submenu.delegate = self;
     _namedMarksMenuItem.submenu.delegate = self;
+    [[iTermMainMenuMangler instance] startWithWeb:_webMenuItem];
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {

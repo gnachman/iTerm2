@@ -64,6 +64,12 @@
     return self;
 }
 
+// Make sure the text view is hidden so it doesn't become first responder in a non-terminal session.
+- (void)setHidden:(BOOL)hidden {
+    [super setHidden:hidden];
+    child_.hidden = hidden;
+}
+
 - (CGFloat)desiredAlphaValue {
     if ([PTYNoteViewController anyNoteVisible] || child_.contentNavigationShortcuts.count > 0) {
         return 1;

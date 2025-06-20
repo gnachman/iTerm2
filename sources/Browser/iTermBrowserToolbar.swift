@@ -142,15 +142,19 @@ class iTermBrowserToolbar: NSView {
         NSLayoutConstraint.activate([widthConstraint])
     }
 
-    @objc private func backTapped() {
+    func focusURLBar() {
+        urlBar.focus()
+    }
+
+    @objc func backTapped() {
         delegate?.browserToolbarDidSelectHistoryItem(steps: -1)
     }
 
-    @objc private func forwardTapped() {
+    @objc func forwardTapped() {
         delegate?.browserToolbarDidSelectHistoryItem(steps: 1)
     }
 
-    @objc private func reloadTapped() {
+    @objc func reloadTapped() {
         delegate?.browserToolbarDidTapReload()
     }
     

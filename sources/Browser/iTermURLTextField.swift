@@ -49,6 +49,7 @@ class iTermURLTextField: NSScrollView {
             if window?.firstResponder == textView {
                 notifyTextDidChange()
             }
+            textView.invalidateIntrinsicContentSize()
         }
     }
     
@@ -118,7 +119,9 @@ class iTermURLTextField: NSScrollView {
                 return
             }
             self.urlTextFieldDelegate?.urlTextFieldDidBecomeFirstResponder(self)
-
+            textView.selectAll(nil)
+            textView.scrollRangeToVisible(NSRange(location: textView?.textStorage?.length ?? 0,
+                                                  length: 0))
             // Send NSTextField-compatible notification
             let notification = Notification(name: NSControl.textDidBeginEditingNotification, object: self)
             self.delegate?.controlTextDidBeginEditing?(notification)

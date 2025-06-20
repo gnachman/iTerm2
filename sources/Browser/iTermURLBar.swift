@@ -42,7 +42,7 @@ class iTermURLBar: NSView {
     weak var delegate: iTermURLBarDelegate?
     
     // UI Components
-    private var textField: iTermURLTextField!
+    private(set) var textField: iTermURLTextField!
     private var textFieldBackground: NSView!
     private var faviconView: NSImageView?
     private var progressIndicator: NSProgressIndicator?
@@ -102,7 +102,7 @@ class iTermURLBar: NSView {
         super.init(coder: coder)
         setupUI()
     }
-    
+
     // MARK: - Setup
     
     private func setupUI() {
@@ -213,10 +213,6 @@ class iTermURLBar: NSView {
     
     @objc func focus() {
         textField.focus()
-        // When focused via keyboard (like Cmd+L), always select all
-        DispatchQueue.main.async { [weak self] in
-            self?.textField.selectText(nil)
-        }
     }
     
     func showSuggestions(_ suggestions: [URLSuggestion]) {

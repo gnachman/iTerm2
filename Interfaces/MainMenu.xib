@@ -1845,6 +1845,9 @@ DQ
                         </items>
                     </menu>
                 </menuItem>
+                <menuItem title="Item" id="Prz-DV-2Me">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                </menuItem>
                 <menuItem title="Help" id="103">
                     <menu key="submenu" title="Help" id="106">
                         <items>
@@ -1897,6 +1900,7 @@ DQ
                 <outlet property="_splitVerticallyWithCurrentProfile" destination="1200" id="TXu-qW-aIJ"/>
                 <outlet property="_toolbeltMenuItem" destination="1297" id="QkM-ZJ-lT3"/>
                 <outlet property="_triggers" destination="DB9-tf-hPg" id="gAA-pF-wPx"/>
+                <outlet property="_webMenuItem" destination="Dn5-OV-QtF" id="pmG-vt-lNW"/>
                 <outlet property="bookmarkMenu" destination="592" id="874"/>
                 <outlet property="irPrev" destination="976" id="980"/>
                 <outlet property="maximizePane" destination="1233" id="1237"/>
@@ -1926,6 +1930,38 @@ DQ
             <connections>
                 <action selector="replaceSelectionWithPrettyPrintedJSON:" target="-1" id="WCB-eW-ma7"/>
             </connections>
+        </menuItem>
+        <menuItem title="Item" id="7NG-s1-th2">
+            <modifierMask key="keyEquivalentModifierMask"/>
+        </menuItem>
+        <menuItem title="Web" identifier="Web" id="Dn5-OV-QtF">
+            <modifierMask key="keyEquivalentModifierMask"/>
+            <menu key="submenu" title="Web" id="xDC-cp-ZMt">
+                <items>
+                    <menuItem title="Open Location…" keyEquivalent="l" id="1jY-S7-DWS">
+                        <connections>
+                            <action selector="browserOpenLocation:" target="-1" id="V5p-pF-of0"/>
+                        </connections>
+                    </menuItem>
+                    <menuItem isSeparatorItem="YES" id="zEv-7q-xMR"/>
+                    <menuItem title="Back" keyEquivalent="[" id="WKv-50-M5a">
+                        <connections>
+                            <action selector="browserBack:" target="-1" id="zYG-rd-RSi"/>
+                        </connections>
+                    </menuItem>
+                    <menuItem title="Forward" keyEquivalent="]" id="Osn-cN-dXN">
+                        <connections>
+                            <action selector="browserForward:" target="-1" id="6WV-XI-3KY"/>
+                        </connections>
+                    </menuItem>
+                    <menuItem isSeparatorItem="YES" id="OHv-d7-unG"/>
+                    <menuItem title="Reload Page" keyEquivalent="r" id="hJc-IO-faA">
+                        <connections>
+                            <action selector="browserReload:" target="-1" id="s7j-3A-Eu6"/>
+                        </connections>
+                    </menuItem>
+                </items>
+            </menu>
         </menuItem>
     </objects>
 </document>

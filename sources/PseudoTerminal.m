@@ -2421,6 +2421,30 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (PTYTextView *)checkFirstResponder {
+    if (@available(macOS 11, *)) {
+        NSResponder *responder = self.window.firstResponder;
+        while (responder &&
+               ![responder isKindOfClass:[PTYTextView class]] &&
+               ![responder isKindOfClass:[iTermBrowserViewController class]]) {
+            responder = responder.nextResponder;
+        }
+        if ([responder isKindOfClass:[iTermBrowserViewController class]]) {
+            iTermBrowserViewController *vc = (iTermBrowserViewController *)responder;
+            NSString *guid = [vc sessionGuid];
+            PTYSession *session = [self.allSessions objectPassingTest:^BOOL(PTYSession *candidate, NSUInteger index, BOOL *stop) {
+                return [candidate.guid isEqualToString:guid];
+            }];
+            if (session != self.currentSession) {
+                [session notifyActive];
+            }
+        } else if ([responder isKindOfClass:[PTYTextView class]]) {
+            return (PTYTextView *)responder;
+        }
+    }
+    return nil;
+}
+
 - (PTYSession *)currentSession {
     return [[[_contentView.tabView selectedTabViewItem] identifier] activeSession];
 }
@@ -4070,7 +4094,13 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([self currentSession]) {
         PtyLog(@"makeCurrentSessionFirstResponder. New first responder will be %@. The current first responder is %@",
                [[self currentSession] textview], [[self window] firstResponder]);
-        [[self window] makeFirstResponder:[[self currentSession] textview]];
+        if (self.currentSession.view.isBrowser) {
+            if (@available(macOS 11, *)) {
+                [self.window makeFirstResponder:self.currentSession.view.browserViewController];
+            }
+        } else {
+            [[self window] makeFirstResponder:[[self currentSession] textview]];
+        }
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBecameKey
                                                             object:[self currentSession]
                                                           userInfo:nil];
@@ -10779,6 +10809,8 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         return ![[self currentSession] liveSession] && self.currentSession.screen.dvr.canClear;
     } else if (item.action == @selector(compose:)) {
         return self.currentSession != nil && !self.currentSession.shouldShowAutoComposer;
+    } else if (item.action == @selector(reset:)) {
+        return self.currentSession != nil && !self.currentSession.view.isBrowser;
     }
 
     return result;

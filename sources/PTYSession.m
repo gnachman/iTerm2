@@ -1128,8 +1128,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSString *)description {
     NSString *synthetic = _synthetic ? @" Synthetic" : @"";
-    return [NSString stringWithFormat:@"<%@: %p %dx%d metal=%@ id=%@%@>",
-            [self class], self, [_screen width], [_screen height], @(self.useMetal), _guid, synthetic];
+    return [NSString stringWithFormat:@"<%@: %p %dx%d metal=%@ id=%@%@%@>",
+            [self class], self, [_screen width], [_screen height], @(self.useMetal), _guid, synthetic, _view.isBrowser ? @" WebBrowser" : @""];
 }
 
 - (void)didFinishInitialization {
@@ -7453,6 +7453,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         }
         return NO;
     }
+    if (_view.isBrowser) {
+        if (reason) {
+            *reason = iTermMetalUnavailableReasonNotATerminal;
+        }
+        return NO;
+    }
     if (![iTermPreferences boolForKey:kPreferenceKeyUseMetal]) {
         if (reason) {
             *reason = iTermMetalUnavailableReasonDisabled;
@@ -11232,6 +11238,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)textViewDidBecomeFirstResponder {
     DLog(@"textViewDidBecomeFirstResponder for %@", self);
+    [self notifyActive];
+}
+
+- (void)notifyActive {
+    DLog(@"notifyActive for %@", self);
     [_delegate setActiveSession:self];
     [_view setNeedsDisplay:YES];
     [_view.findDriver owningViewDidBecomeFirstResponder];

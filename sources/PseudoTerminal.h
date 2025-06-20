@@ -414,6 +414,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (void)ensureSaneFrame;
 
 - (NSArray<NSString *> *)currentSnippetTags;
+- (PTYTextView *)checkFirstResponder;
 
 @end
 
