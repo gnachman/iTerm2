@@ -16,6 +16,15 @@ import WebKit
 class iTermBrowserWebView: WKWebView {
     weak var browserDelegate: iTermBrowserWebViewDelegate?
 
+    override init(frame: CGRect, configuration: WKWebViewConfiguration) {
+        super.init(frame: frame, configuration: configuration)
+        allowsMagnification = true
+    }
+
+    required init?(coder: NSCoder) {
+        it_fatalError("init(coder:) has not been implemented")
+    }
+
     override func willOpenMenu(_ menu: NSMenu, with event: NSEvent) {
         super.willOpenMenu(menu, with: event)
 
