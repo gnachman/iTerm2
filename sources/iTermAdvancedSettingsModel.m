@@ -744,7 +744,7 @@ DEFINE_INT(badgeTopMargin, 10, SECTION_BADGE @"Default value for the top margin 
 #define SECTION_WEB_BROWSER @"Web Browser: "
 
 DEFINE_SETTABLE_BOOL(adblockEnabled, AdblockEnabled, NO, SECTION_WEB_BROWSER @"Enable ad blocking in the web browser?\nWhen enabled, downloads and applies ad blocking rules from the configured URL.");
-DEFINE_SETTABLE_STRING(adblockListURL, AdblockListURL, @"https://easylist.to/easylist/easylist.txt", SECTION_WEB_BROWSER @"URL for ad blocking filter list\nThis should be a text file in Adblock Plus format. The list is downloaded automatically every 24 hours.");
+DEFINE_SETTABLE_STRING(adblockListURL, AdblockListURL, @"https://easylist-downloads.adblockplus.org/easylist_content_blocker.json", SECTION_WEB_BROWSER @"URL for ad blocking filter list\nThis should be a JSON file in WebKit content blocker format. The list is downloaded automatically every 24 hours.");
 
 #pragma mark - Experimental Features
 

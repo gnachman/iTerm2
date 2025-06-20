@@ -30,11 +30,6 @@ class iTermAdblockManager: NSObject {
     private let maxFailureDays = 7
     
     // File paths
-    private var adblockFilePath: String {
-        let appSupport = FileManager.default.applicationSupportDirectory()!
-        return "\(appSupport)/adblock.txt"
-    }
-    
     private var compiledRulesPath: String {
         let appSupport = FileManager.default.applicationSupportDirectory()!
         return "\(appSupport)/adblock-compiled.json"
@@ -115,7 +110,7 @@ class iTermAdblockManager: NSObject {
         }
         
         // Check if no rules exist at all
-        if !FileManager.default.fileExists(atPath: adblockFilePath) {
+        if !FileManager.default.fileExists(atPath: compiledRulesPath) {
             return true
         }
         
@@ -155,18 +150,11 @@ class iTermAdblockManager: NSObject {
     }
     
     private func processDownloadedContent(_ content: String) {
-        // Save raw content to disk
-        do {
-            try content.write(toFile: adblockFilePath, atomically: true, encoding: .utf8)
-        } catch {
-            handleFailure(error)
-            return
-        }
-        
-        // Parse to WebKit JSON
-        guard let jsonString = iTermAdblockParser.parseAdblockList(content) else {
+        // Validate JSON format
+        guard let jsonData = content.data(using: .utf8),
+              let _ = try? JSONSerialization.jsonObject(with: jsonData, options: []) as? [[String: Any]] else {
             let error = NSError(domain: "iTermAdblockManager", code: 3, userInfo: [
-                NSLocalizedDescriptionKey: "Failed to parse adblock list content"
+                NSLocalizedDescriptionKey: "Downloaded content is not valid JSON format"
             ])
             handleFailure(error)
             return
@@ -174,14 +162,14 @@ class iTermAdblockManager: NSObject {
         
         // Save compiled JSON
         do {
-            try jsonString.write(toFile: compiledRulesPath, atomically: true, encoding: .utf8)
+            try content.write(toFile: compiledRulesPath, atomically: true, encoding: .utf8)
         } catch {
             handleFailure(error)
             return
         }
         
         // Compile rules for WebKit
-        compileRules(from: jsonString)
+        compileRules(from: content)
     }
     
     private func loadExistingRules() {

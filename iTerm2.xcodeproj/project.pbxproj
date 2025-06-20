@@ -4688,7 +4688,6 @@
 		A6F7D4DD2E03E03B0065D09C /* iTermURLTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4DC2E03E03B0065D09C /* iTermURLTextField.swift */; };
 		A6F7D4DF2E03E06E0065D09C /* iTermURLBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4DE2E03E06E0065D09C /* iTermURLBar.swift */; };
 		A6F7D4E12E04847E0065D09C /* iTermBrowserURLTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4E02E0484790065D09C /* iTermBrowserURLTextView.swift */; };
-		A6F7D4E32E04AD3A0065D09C /* iTermAdblockParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4E22E04AD3A0065D09C /* iTermAdblockParser.swift */; };
 		A6F7D4E52E04AE7D0065D09C /* iTermAdblockManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4E42E04AE7D0065D09C /* iTermAdblockManager.swift */; };
 		A6F7D4EE2E0532B40065D09C /* Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4ED2E0532B00065D09C /* Database.swift */; };
 		A6F7D4F02E0532C90065D09C /* DatabaseBackedArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4EF2E0532C60065D09C /* DatabaseBackedArray.swift */; };
@@ -8337,7 +8336,6 @@
 		A6F7D4DC2E03E03B0065D09C /* iTermURLTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermURLTextField.swift; sourceTree = "<group>"; };
 		A6F7D4DE2E03E06E0065D09C /* iTermURLBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermURLBar.swift; sourceTree = "<group>"; };
 		A6F7D4E02E0484790065D09C /* iTermBrowserURLTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserURLTextView.swift; sourceTree = "<group>"; };
-		A6F7D4E22E04AD3A0065D09C /* iTermAdblockParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermAdblockParser.swift; sourceTree = "<group>"; };
 		A6F7D4E42E04AE7D0065D09C /* iTermAdblockManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermAdblockManager.swift; sourceTree = "<group>"; };
 		A6F7D4ED2E0532B00065D09C /* Database.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Database.swift; sourceTree = "<group>"; };
 		A6F7D4EF2E0532C60065D09C /* DatabaseBackedArray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseBackedArray.swift; sourceTree = "<group>"; };
@@ -12912,7 +12910,6 @@
 				A6F7D4F12E0536530065D09C /* BrowserHistory.swift */,
 				A6F7D4F42E0537710065D09C /* BrowserVisits.swift */,
 				A6F7D4E42E04AE7D0065D09C /* iTermAdblockManager.swift */,
-				A6F7D4E22E04AD3A0065D09C /* iTermAdblockParser.swift */,
 				A6F7D4C22E037BC80065D09C /* iTermBrowserCSSLoader.swift */,
 				A6F7D4D22E03D0A00065D09C /* iTermBrowserDownload.swift */,
 				A6F7D4BA2E0373110065D09C /* iTermBrowserErrorHandler.swift */,
@@ -17174,7 +17171,6 @@
 				A6E1524C27613BF100D0F41C /* LineBuffer.m in Sources */,
 				A6D7E0722C1B6AF5007D0A37 /* iTermProfileSearchToken.m in Sources */,
 				5370679021C9D2780088D0F3 /* SIGArchiveChunk.m in Sources */,
-				A6F7D4E32E04AD3A0065D09C /* iTermAdblockParser.swift in Sources */,
 				A62EE251274473C700D57B54 /* iTermProfilePreferencesTabViewWrapperView.m in Sources */,
 				A665C1D2243D962C00F623F0 /* TerminalFile.m in Sources */,
 				A65DF4B2284ACC3A00AA29AB /* Bundle+ShellIntegration.swift in Sources */,
