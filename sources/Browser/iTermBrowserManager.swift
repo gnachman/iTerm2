@@ -29,9 +29,12 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
     private var errorHandler = iTermBrowserErrorHandler()
     private var settingsHandler = iTermBrowserSettingsHandler()
     private var sourceHandler = iTermBrowserSourceHandler()
+    private var historyViewHandler: iTermBrowserHistoryViewHandler
     private var currentPageURL: URL?
     private var hasSettingsMessageHandler = false
+    private var hasHistoryMessageHandler = false
     private static let settingsMessageHandlerName = "iterm2BrowserSettings"
+    private static let historyMessageHandlerName = "iterm2BrowserHistory"
     private(set) var favicon: NSImage?
     private var _findManager: Any?
     private var adblockManager: iTermAdblockManager?
@@ -46,8 +49,10 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
         self.sessionGuid = sessionGuid
         self.historyController = historyController
         self.navigationState = navigationState
+        self.historyViewHandler = iTermBrowserHistoryViewHandler(historyController: historyController)
         super.init()
 
+        historyViewHandler.delegate = self
         setupWebView(configuration: configuration)
     }
     
@@ -275,6 +280,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
     private func injectMessageHandlersIfNeeded() {
         guard let currentURL = webView.url?.absoluteString else { return }
         
+        // Handle settings page
         if currentURL == iTermBrowserSettingsHandler.settingsURL.absoluteString {
             // Add message handler for settings only if not already added
             if !hasSettingsMessageHandler {
@@ -289,6 +295,41 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
                 hasSettingsMessageHandler = false
             }
         }
+        
+        // Handle history page
+        if currentURL == iTermBrowserHistoryViewHandler.historyURL.absoluteString {
+            // Add message handler for history only if not already added
+            if !hasHistoryMessageHandler {
+                DLog("Adding history message handler for URL: \(currentURL)")
+                webView.configuration.userContentController.add(self, name: Self.historyMessageHandlerName)
+                hasHistoryMessageHandler = true
+            }
+        } else {
+            // Remove message handler when not on history page
+            if hasHistoryMessageHandler {
+                DLog("Removing history message handler, current URL: \(currentURL)")
+                webView.configuration.userContentController.removeScriptMessageHandler(forName: Self.historyMessageHandlerName)
+                hasHistoryMessageHandler = false
+            }
+        }
+    }
+    
+    private func cleanupMessageHandlersForFailedNavigation() {
+        // If navigation fails, clean up any message handlers that shouldn't be there
+        // We'll re-register them properly if needed when navigation succeeds
+        let currentURL = webView.url?.absoluteString ?? ""
+        
+        if hasHistoryMessageHandler && currentURL != iTermBrowserHistoryViewHandler.historyURL.absoluteString {
+            DLog("Cleaning up history message handler after failed navigation")
+            webView.configuration.userContentController.removeScriptMessageHandler(forName: Self.historyMessageHandlerName)
+            hasHistoryMessageHandler = false
+        }
+        
+        if hasSettingsMessageHandler && currentURL != iTermBrowserSettingsHandler.settingsURL.absoluteString {
+            DLog("Cleaning up settings message handler after failed navigation")
+            webView.configuration.userContentController.removeScriptMessageHandler(forName: Self.settingsMessageHandlerName)
+            hasSettingsMessageHandler = false
+        }
     }
     
 }
@@ -298,22 +339,33 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
 @available(macOS 11.0, *)
 extension iTermBrowserManager {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard message.name == Self.settingsMessageHandlerName else {
+        guard let messageDict = message.body as? [String: Any],
+              let currentURL = currentPageURL else {
             return
         }
         
-        // Verify the message is coming from our settings page
-        guard let currentURL = currentPageURL,
-              currentURL.absoluteString == iTermBrowserSettingsHandler.settingsURL.absoluteString else {
-            return
+        if message.name == Self.settingsMessageHandlerName {
+            // Verify the message is coming from our settings page
+            guard currentURL.absoluteString == iTermBrowserSettingsHandler.settingsURL.absoluteString else {
+                return
+            }
+            settingsHandler.handleSettingsMessage(messageDict, webView: webView)
+            
+        } else if message.name == Self.historyMessageHandlerName {
+            // Double-verify the message is coming from our history page
+            guard let webViewURL = webView.url?.absoluteString,
+                  webViewURL == iTermBrowserHistoryViewHandler.historyURL.absoluteString,
+                  currentURL.absoluteString == iTermBrowserHistoryViewHandler.historyURL.absoluteString else {
+                DLog("History message from wrong URL: webView=\(webView.url?.absoluteString ?? "nil"), currentURL=\(currentURL.absoluteString)")
+                return
+            }
+            DLog("Received history message, forwarding to handler")
+            if let webView = message.webView {
+                Task { @MainActor in
+                    await historyViewHandler.handleHistoryMessage(messageDict, webView: webView)
+                }
+            }
         }
-        
-        // Handle settings messages
-        guard let messageDict = message.body as? [String: Any] else {
-            return
-        }
-        
-        settingsHandler.handleSettingsMessage(messageDict, webView: webView)
     }
 }
 
@@ -334,6 +386,8 @@ extension iTermBrowserManager {
             settingsHandler.start(urlSchemeTask: urlSchemeTask, url: url)
         case iTermBrowserSourceHandler.sourceURL.absoluteString:
             sourceHandler.start(urlSchemeTask: urlSchemeTask, url: url)
+        case iTermBrowserHistoryViewHandler.historyURL.absoluteString:
+            historyViewHandler.start(urlSchemeTask: urlSchemeTask, url: url)
         default:
             urlSchemeTask.didFailWithError(NSError(domain: "iTermBrowserManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unknown iterm2-about: URL"]))
         }
@@ -355,6 +409,15 @@ extension iTermBrowserManager: WKNavigationDelegate {
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
         // URL is now committed, update UI
         notifyDelegateOfUpdates()
+        
+        // Track the current page URL for security checks
+        if let url = webView.url {
+            currentPageURL = url
+        }
+        
+        // Setup message handlers early for our about: pages
+        injectMessageHandlersIfNeeded()
+        
         Task {
             await historyController.recordVisit(for: webView.url, title: webView.title)
         }
@@ -399,6 +462,9 @@ extension iTermBrowserManager: WKNavigationDelegate {
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
         let failedURL = navigationState.lastRequestedURL
 
+        // Clean up any pre-registered message handlers for failed navigation
+        cleanupMessageHandlersForFailedNavigation()
+
         // Don't show error page for download-related cancellations
         if isDownloadRelatedError(error) {
             delegate?.browserManager(self, didFailNavigation: navigation, withError: error)
@@ -416,6 +482,9 @@ extension iTermBrowserManager: WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
         let failedURL = navigationState.lastRequestedURL
+
+        // Clean up any pre-registered message handlers for failed navigation
+        cleanupMessageHandlersForFailedNavigation()
 
         // Don't show error page for download-related cancellations
         if isDownloadRelatedError(error) {
@@ -448,8 +517,21 @@ extension iTermBrowserManager: WKNavigationDelegate {
             return
         }
 
-        // Always allow our internal pages
+        // Always allow our internal pages and prepare message handlers early
         if targetURL.absoluteString.hasPrefix("iterm2-about:") {
+            // Pre-register message handlers for our internal pages
+            if targetURL.absoluteString == iTermBrowserHistoryViewHandler.historyURL.absoluteString {
+                if !hasHistoryMessageHandler {
+                    DLog("Pre-registering history message handler for navigation to: \(targetURL.absoluteString)")
+                    webView.configuration.userContentController.add(self, name: Self.historyMessageHandlerName)
+                    hasHistoryMessageHandler = true
+                }
+            } else if targetURL.absoluteString == iTermBrowserSettingsHandler.settingsURL.absoluteString {
+                if !hasSettingsMessageHandler {
+                    webView.configuration.userContentController.add(self, name: Self.settingsMessageHandlerName)
+                    hasSettingsMessageHandler = true
+                }
+            }
             decisionHandler(.allow)
             return
         }
@@ -726,6 +808,14 @@ extension iTermBrowserManager: iTermBrowserSettingsHandlerDelegate {
                 settingsHandler.showAdblockUpdateError(error, in: webView)
             }
         }
+    }
+}
+
+@available(macOS 11.0, *)
+extension iTermBrowserManager: iTermBrowserHistoryViewHandlerDelegate {
+    func historyViewHandlerDidNavigateToURL(_ handler: iTermBrowserHistoryViewHandler, url: String) {
+        // Navigate to the URL in the current browser
+        loadURL(url)
     }
 }
 

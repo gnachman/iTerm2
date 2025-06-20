@@ -161,35 +161,13 @@ actor BrowserDatabase {
     // MARK: - Search and Suggestions
     
     func searchHistory(terms: String) -> [BrowserHistory] {
-        let (query, args) = BrowserHistory.searchQuery(terms: terms)
-        guard let resultSet = db.executeQuery(query, withArguments: args) else {
-            return []
-        }
-        
-        var results: [BrowserHistory] = []
-        while resultSet.next() {
-            if let history = BrowserHistory(dbResultSet: resultSet) {
-                results.append(history)
-            }
-        }
-        resultSet.close()
-        return results
+        let (query, args) = BrowserHistory.basicSearchQuery(terms: terms)
+        return executeHistoryQuery(query: query, args: args)
     }
     
     func historyForSession(_ sessionGuid: String) -> [BrowserHistory] {
         let (query, args) = BrowserHistory.historyForSession(sessionGuid)
-        guard let resultSet = db.executeQuery(query, withArguments: args) else {
-            return []
-        }
-        
-        var results: [BrowserHistory] = []
-        while resultSet.next() {
-            if let history = BrowserHistory(dbResultSet: resultSet) {
-                results.append(history)
-            }
-        }
-        resultSet.close()
-        return results
+        return executeHistoryQuery(query: query, args: args)
     }
     
     func urlSuggestions(forPrefix prefix: String, limit: Int = 10) -> [String] {
@@ -258,8 +236,40 @@ actor BrowserDatabase {
         _ = db.executeUpdate(cleanupVisitsQuery, withArguments: [date.timeIntervalSince1970])
     }
     
-    func deleteAllHistory() {
+    func deleteAllHistory() async {
         _ = db.executeUpdate("DELETE FROM BrowserHistory", withArguments: [])
         _ = db.executeUpdate("DELETE FROM BrowserVisits", withArguments: [])
+    }
+    
+    func deleteHistoryEntry(id: String) async {
+        let (query, args) = BrowserHistory.deleteEntryQuery(id: id)
+        _ = db.executeUpdate(query, withArguments: args)
+    }
+    
+    func getRecentHistory(offset: Int = 0, limit: Int = 50) async -> [BrowserHistory] {
+        let (query, args) = BrowserHistory.recentHistoryQuery(offset: offset, limit: limit)
+        return executeHistoryQuery(query: query, args: args)
+    }
+    
+    func searchHistory(terms: String, offset: Int = 0, limit: Int = 50) async -> [BrowserHistory] {
+        let (query, args) = BrowserHistory.searchQuery(terms: terms, offset: offset, limit: limit)
+        return executeHistoryQuery(query: query, args: args)
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func executeHistoryQuery(query: String, args: [Any]) -> [BrowserHistory] {
+        guard let resultSet = db.executeQuery(query, withArguments: args) else {
+            return []
+        }
+        
+        var results: [BrowserHistory] = []
+        while resultSet.next() {
+            if let history = BrowserHistory(dbResultSet: resultSet) {
+                results.append(history)
+            }
+        }
+        resultSet.close()
+        return results
     }
 }

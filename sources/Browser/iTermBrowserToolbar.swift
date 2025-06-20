@@ -25,6 +25,7 @@ protocol iTermBrowserToolbarDelegate: AnyObject {
     func browserToolbarDidTapStop()
     func browserToolbarDidSubmitURL(_ url: String)
     func browserToolbarDidTapSettings()
+    func browserToolbarDidTapHistory()
     func browserToolbarBackHistoryItems() -> [iTermBrowserHistoryItem]
     func browserToolbarForwardHistoryItems() -> [iTermBrowserHistoryItem]
     func browserToolbarDidSelectHistoryItem(steps: Int)
@@ -42,7 +43,7 @@ class iTermBrowserToolbar: NSView {
     private var reloadButton: NSButton!
     private var stopButton: NSButton!
     private var urlBar: iTermURLBar!
-    private var settingsButton: NSButton!
+    private var menuButton: NSButton!
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -93,12 +94,12 @@ class iTermBrowserToolbar: NSView {
         urlBar.translatesAutoresizingMaskIntoConstraints = false
         addSubview(urlBar)
         
-        settingsButton = NSButton()
-        settingsButton.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: "Settings")
-        settingsButton.target = self
-        settingsButton.action = #selector(settingsTapped)
-        settingsButton.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(settingsButton)
+        menuButton = NSButton()
+        menuButton.image = NSImage(systemSymbolName: "line.3.horizontal", accessibilityDescription: "Menu")
+        menuButton.target = self
+        menuButton.action = #selector(menuTapped)
+        menuButton.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(menuButton)
     }
 
     private func setupConstraints() {
@@ -126,13 +127,13 @@ class iTermBrowserToolbar: NSView {
             
             urlBar.leadingAnchor.constraint(equalTo: reloadButton.trailingAnchor, constant: 12),
             urlBar.centerYAnchor.constraint(equalTo: centerYAnchor),
-            urlBar.trailingAnchor.constraint(equalTo: settingsButton.leadingAnchor, constant: -12),
+            urlBar.trailingAnchor.constraint(equalTo: menuButton.leadingAnchor, constant: -12),
             urlBar.heightAnchor.constraint(equalToConstant: 28),
             
-            settingsButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
-            settingsButton.centerYAnchor.constraint(equalTo: centerYAnchor),
-            settingsButton.widthAnchor.constraint(equalToConstant: 32),
-            settingsButton.heightAnchor.constraint(equalToConstant: 32)
+            menuButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
+            menuButton.centerYAnchor.constraint(equalTo: centerYAnchor),
+            menuButton.widthAnchor.constraint(equalToConstant: 32),
+            menuButton.heightAnchor.constraint(equalToConstant: 32)
         ])
     }
 
@@ -154,8 +155,37 @@ class iTermBrowserToolbar: NSView {
     
     // URL submission is now handled by iTermURLBar delegate
     
-    @objc private func settingsTapped() {
+    @objc private func menuTapped() {
+        showMainMenu()
+    }
+    
+    private func showMainMenu() {
+        let menu = NSMenu()
+        
+        // Settings menu item
+        let settingsItem = NSMenuItem(title: "Settings", action: #selector(settingsMenuItemSelected), keyEquivalent: "")
+        settingsItem.target = self
+        settingsItem.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: nil)
+        menu.addItem(settingsItem)
+        
+        // History menu item
+        let historyItem = NSMenuItem(title: "History", action: #selector(historyMenuItemSelected), keyEquivalent: "")
+        historyItem.target = self
+        historyItem.image = NSImage(systemSymbolName: "clock", accessibilityDescription: nil)
+        menu.addItem(historyItem)
+        
+        // Position menu below the button
+        let buttonFrame = menuButton.frame
+        let menuLocation = NSPoint(x: buttonFrame.minX, y: buttonFrame.minY)
+        menu.popUp(positioning: nil, at: menuLocation, in: self)
+    }
+    
+    @objc private func settingsMenuItemSelected() {
         delegate?.browserToolbarDidTapSettings()
+    }
+    
+    @objc private func historyMenuItemSelected() {
+        delegate?.browserToolbarDidTapHistory()
     }
     
     // MARK: - Public Interface

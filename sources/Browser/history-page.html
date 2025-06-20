@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browsing History</title>
+    <style>
+        {{COMMON_CSS}}
+        
+        .container {
+            max-width: 900px;
+        }
+        
+        .header {
+            margin-bottom: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        
+        .header-content h1 {
+            font-size: 36px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-color), #5ac8fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+        
+        .header-content p {
+            font-size: 17px;
+            opacity: 0.8;
+            color: var(--secondary-text);
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .search-container {
+            background: var(--section-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px var(--shadow);
+        }
+        
+        .search-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 14px 20px 14px 50px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px var(--accent-color)20;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 18px;
+            font-size: 18px;
+            color: var(--secondary-text);
+            pointer-events: none;
+        }
+        
+        .clear-button {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: var(--secondary-text);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .clear-button:hover {
+            background: var(--border-color);
+            color: var(--text-color);
+        }
+        
+        .history-container {
+            min-height: 400px;
+        }
+        
+        .date-section {
+            margin-bottom: 32px;
+        }
+        
+        .date-header {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .date-header::before {
+            content: "";
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(135deg, var(--accent-color), #5ac8fa);
+            border-radius: 2px;
+        }
+        
+        .entries-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .history-entry {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: var(--section-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+        
+        .history-entry:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--shadow);
+            border-color: var(--accent-color)40;
+        }
+        
+        .entry-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .entry-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+        
+        .entry-time {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 13px;
+            color: var(--secondary-text);
+            background: var(--border-color);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        
+        .entry-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-color);
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        
+        .entry-url {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 14px;
+            color: var(--accent-color);
+            cursor: pointer;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+        
+        .entry-url:hover {
+            color: #5ac8fa;
+            text-decoration: underline;
+        }
+        
+        .entry-actions {
+            margin-left: 16px;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .delete-button {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: linear-gradient(135deg, #ff3b30, #ff6b6b);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .delete-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px #ff3b3040;
+            background: linear-gradient(135deg, #d70015, #ff3b30);
+        }
+        
+        .delete-icon {
+            line-height: 1;
+        }
+        
+        .load-more-container {
+            text-align: center;
+            margin: 32px 0;
+        }
+        
+        .load-more-button {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border: 2px solid var(--accent-color);
+            background: transparent;
+            color: var(--accent-color);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .load-more-button:hover {
+            background: var(--accent-color);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--accent-color)30;
+        }
+        
+        .loading-indicator {
+            text-align: center;
+            padding: 20px;
+            color: var(--secondary-text);
+            display: none;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            border-top-color: var(--accent-color);
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--secondary-text);
+        }
+        
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        .empty-state h3 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-color);
+        }
+        
+        .empty-state p {
+            font-size: 16px;
+            opacity: 0.8;
+        }
+        
+        .status-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        
+        .status-message.show {
+            transform: translateX(0);
+        }
+        
+        .status-message.success {
+            background: linear-gradient(135deg, #34c759, #30d158);
+            color: white;
+        }
+        
+        .status-message.info {
+            background: linear-gradient(135deg, #007aff, #5ac8fa);
+            color: white;
+        }
+        
+        .status-message.error {
+            background: linear-gradient(135deg, #ff3b30, #ff6b6b);
+            color: white;
+        }
+        
+        .button.small {
+            padding: 10px 18px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px var(--shadow);
+            transition: all 0.3s ease;
+            min-width: 120px;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .button.small:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--shadow);
+        }
+        
+        .button.danger {
+            background: linear-gradient(135deg, #ff3b30, #ff6b6b);
+            color: white;
+        }
+        
+        .button.danger:hover {
+            background: linear-gradient(135deg, #d70015, #ff3b30);
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .header-actions {
+                justify-content: flex-end;
+            }
+            
+            .history-entry {
+                padding: 12px 16px;
+            }
+            
+            .entry-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+            }
+            
+            .entry-actions {
+                margin-left: 8px;
+            }
+        }
+        
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .date-section {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .history-entry {
+            animation: fadeInUp 0.4s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <h1>Browsing History</h1>
+                <p>View and manage your browsing history</p>
+            </div>
+            <div class="header-actions">
+                <button class="button small danger" onclick="clearAllHistory()">Clear All History</button>
+            </div>
+        </div>
+        
+        <div class="search-container">
+            <div class="search-input-wrapper">
+                <div class="search-icon">🔍</div>
+                <input type="text" 
+                       id="searchInput" 
+                       class="search-input" 
+                       placeholder="Search your browsing history..." 
+                       autocomplete="off">
+                <button class="clear-button" onclick="clearSearch()" title="Clear search">×</button>
+            </div>
+        </div>
+        
+        <div id="historyContainer" class="history-container">
+            <!-- History entries will be populated here -->
+        </div>
+        
+        <div class="loading-indicator" id="loadingIndicator">
+            <div class="loading-spinner"></div>
+            Loading history...
+        </div>
+        
+        <div class="load-more-container">
+            <button id="loadMoreButton" class="load-more-button" onclick="loadMore()" style="display: none;">
+                Load More
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        {{HISTORY_SCRIPT}}
+    </script>
+</body>
+</html>
