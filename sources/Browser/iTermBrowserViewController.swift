@@ -244,34 +244,47 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
         return nil
     }
 
+    private struct ScoredSuggestion {
+        let suggestion: URLSuggestion
+        let score: Int
+    }
+    
     func browserToolbarDidRequestSuggestions(_ query: String) async -> [URLSuggestion] {
-        // TODO: Implement URL suggestions based on history, bookmarks, search
-        // For now, return basic search suggestion with simulated network delay
-
-        var results = [URLSuggestion]()
+        var scoredResults = [ScoredSuggestion]()
         let attributes = CompletionsWindow.regularAttributes(font: nil)
+        
+        // Get history suggestions
+        if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let historySuggestions = getHistorySuggestions(for: query)
+            scoredResults.append(contentsOf: historySuggestions)
+        }
+        
         var searchScore = 0
-
+        
         if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             let actualQuery: String
             if let search = searchQueryFromURL(query) {
-                searchScore = 3
+                searchScore = Int.max
                 actualQuery = search
             } else {
-                searchScore = 1
+                searchScore = 99999
                 actualQuery = query
             }
             let trimmed = actualQuery.trimmingCharacters(in: .whitespacesAndNewlines)
             let queryParameterValue = trimmed.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? trimmed
             let url = iTermAdvancedSettingsModel.searchCommand().replacingOccurrences(of: "%@", with: queryParameterValue)
-            results.append(URLSuggestion(
+            
+            let searchSuggestion = URLSuggestion(
                 text: actualQuery,
                 url: url,
                 displayText: NSAttributedString(string: "Search for \"\(actualQuery)\"", attributes: attributes),
                 detail: "Web Search",
                 type: .webSearch
-            ))
+            )
+            
+            scoredResults.append(ScoredSuggestion(suggestion: searchSuggestion, score: searchScore))
         }
+        
         if let normal = browserManager.normalizeURL(query) {
             let suggestion = URLSuggestion(
                 text: query,
@@ -283,17 +296,52 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
             )
             let urlScore: Int
             if browserManager.stringIsStronglyURLLike(query) {
-                urlScore = 2
+                urlScore = 100000
             } else {
-                urlScore = 0
+                urlScore = 99998
             }
-            if urlScore > searchScore {
-                results.insert(suggestion, at: 0)
-            } else {
-                results.append(suggestion)
-            }
+            
+            scoredResults.append(ScoredSuggestion(suggestion: suggestion, score: urlScore))
         }
-        return results
+        
+        // Sort by score (highest first) and return suggestions
+        return scoredResults
+            .sorted { $0.score > $1.score }
+            .map { $0.suggestion }
+    }
+    
+    private func getHistorySuggestions(for query: String) -> [ScoredSuggestion] {
+        guard let database = BrowserDatabase.instance else {
+            return []
+        }
+        
+        let (dbQuery, args) = BrowserVisits.suggestionsQuery(prefix: query, limit: 10)
+        guard let resultSet = database.db.executeQuery(dbQuery, withArguments: args) else {
+            return []
+        }
+        
+        var suggestions: [ScoredSuggestion] = []
+        let attributes = CompletionsWindow.regularAttributes(font: nil)
+        
+        while resultSet.next() {
+            guard let visit = BrowserVisits(dbResultSet: resultSet) else { continue }
+            
+            // Reconstruct full URL for display (add https:// if needed)
+            let displayUrl = visit.fullUrl.hasPrefix("http") ? visit.fullUrl : "https://\(visit.fullUrl)"
+            
+            let suggestion = URLSuggestion(
+                text: displayUrl,
+                url: displayUrl,
+                displayText: NSAttributedString(string: displayUrl, attributes: attributes),
+                detail: "Visited \(visit.visitCount) time\(visit.visitCount == 1 ? "" : "s")",
+                type: .history
+            )
+            
+            suggestions.append(ScoredSuggestion(suggestion: suggestion, score: visit.visitCount))
+        }
+        
+        resultSet.close()
+        return suggestions
     }
     
     func browserToolbarDidBeginEditingURL(string: String) -> String? {

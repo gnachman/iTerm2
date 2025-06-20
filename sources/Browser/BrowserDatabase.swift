@@ -131,13 +131,15 @@ class BrowserDatabase {
         _ = db.executeUpdate(historyQuery, withArguments: historyArgs)
         
         // Update or create entry in BrowserVisits
-        updateVisitCount(normalizedUrl: normalizedUrl)
+        updateVisitCount(url: url)
     }
     
-    private func updateVisitCount(normalizedUrl: String) {
+    private func updateVisitCount(url: String) {
+        let (hostname, path) = BrowserVisits.parseUrl(url)
+        
         // Try to get existing visit record
-        let selectQuery = "SELECT * FROM BrowserVisits WHERE normalizedUrl = ?"
-        guard let resultSet = db.executeQuery(selectQuery, withArguments: [normalizedUrl]) else {
+        let selectQuery = "SELECT * FROM BrowserVisits WHERE hostname = ? AND path = ?"
+        guard let resultSet = db.executeQuery(selectQuery, withArguments: [hostname, path]) else {
             return
         }
         
@@ -153,7 +155,7 @@ class BrowserDatabase {
             }
         } else {
             // Create new record
-            let newVisit = BrowserVisits(normalizedUrl: normalizedUrl)
+            let newVisit = BrowserVisits(hostname: hostname, path: path)
             let (insertQuery, insertArgs) = newVisit.appendQuery()
             _ = db.executeUpdate(insertQuery, withArguments: insertArgs)
         }
@@ -215,7 +217,7 @@ class BrowserDatabase {
         var results: [String] = []
         while resultSet.next() {
             if let visit = BrowserVisits(dbResultSet: resultSet) {
-                results.append(visit.normalizedUrl)
+                results.append(visit.fullUrl)
             }
         }
         resultSet.close()

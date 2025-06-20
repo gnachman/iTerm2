@@ -489,11 +489,11 @@ extension iTermBrowserManager: WKNavigationDelegate {
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         delegate?.browserManager(self, didStartNavigation: navigation)
     }
-    
+
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
         // URL is now committed, update UI
         notifyDelegateOfUpdates()
-        
+
         // Record visit in browser history
         if let url = webView.url?.absoluteString,
            !url.hasPrefix("iterm2-about:") {
@@ -505,26 +505,26 @@ extension iTermBrowserManager: WKNavigationDelegate {
             )
         }
     }
-    
+
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         // Clear failed URL on successful navigation to a real page (not error pages)
         if webView.url != iTermBrowserErrorHandler.errorURL {
             lastFailedURL = nil
         }
-        
+
         // Track the current page URL for security checks
         if let url = webView.url {
             currentPageURL = url
         }
-        
+
         // Conditionally inject message handlers for our about: pages
         injectMessageHandlersIfNeeded()
-        
+
         notifyDelegateOfUpdates()
-        
+
         // Try to detect and load favicon
         detectFavicon()
-        
+
         // Update title in browser history if available
         if let url = webView.url?.absoluteString,
            let title = webView.title,
@@ -532,53 +532,53 @@ extension iTermBrowserManager: WKNavigationDelegate {
            !title.isEmpty {
             BrowserDatabase.instance?.updateTitle(title, forUrl: url)
         }
-        
+
         delegate?.browserManager(self, didFinishNavigation: navigation)
     }
-    
+
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
         let failedURL = lastRequestedURL
-        
+
         // Don't show error page for download-related cancellations
         if isDownloadRelatedError(error) {
             delegate?.browserManager(self, didFailNavigation: navigation, withError: error)
             return
         }
-        
+
         // Only show error page if this isn't the same URL that already failed
         if failedURL != lastFailedURL && failedURL != nil {
             showErrorPage(for: error, failedURL: failedURL)
             lastFailedURL = failedURL
         }
-        
+
         delegate?.browserManager(self, didFailNavigation: navigation, withError: error)
     }
-    
+
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
         let failedURL = lastRequestedURL
-        
+
         // Don't show error page for download-related cancellations
         if isDownloadRelatedError(error) {
             delegate?.browserManager(self, didFailNavigation: navigation, withError: error)
             return
         }
-        
+
         // Only show error page if this isn't the same URL that already failed
         if failedURL != lastFailedURL && failedURL != nil {
             showErrorPage(for: error, failedURL: failedURL)
             lastFailedURL = failedURL
         }
-        
+
         delegate?.browserManager(self, didFailNavigation: navigation, withError: error)
     }
-    
+
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         // Store the target URL for this navigation so we can use it in error handlers
         // But don't overwrite if this is our error page navigation
         if let targetURL = navigationAction.request.url, targetURL != iTermBrowserErrorHandler.errorURL {
             lastRequestedURL = targetURL
         }
-        
+
         // Determine transition type based on navigation type
         let transitionType: BrowserTransitionType
         switch navigationAction.navigationType {
@@ -602,22 +602,22 @@ extension iTermBrowserManager: WKNavigationDelegate {
         @unknown default:
             transitionType = .other
         }
-        
+
         // Store the transition type for the upcoming navigation
         lastTransitionType = transitionType
-        
+
         // Popup blocking logic
         guard let targetURL = navigationAction.request.url else {
             decisionHandler(.cancel)
             return
         }
-        
+
         // Always allow our internal pages
         if targetURL.absoluteString.hasPrefix("iterm2-about:") {
             decisionHandler(.allow)
             return
         }
-        
+
         // Check for popup behavior
         if navigationAction.targetFrame == nil {
             // This is a popup (no target frame = new window/tab)
@@ -641,32 +641,32 @@ extension iTermBrowserManager: WKNavigationDelegate {
                 return
             }
         }
-        
+
         // Regular navigation in same frame - allow
         decisionHandler(.allow)
     }
-    
+
     @available(macOS 11, *)
     func webView(_ webView: WKWebView,
-                 decidePolicyFor navigationResponse: WKNavigationResponse, 
+                 decidePolicyFor navigationResponse: WKNavigationResponse,
                  decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
-        
+
         // Check if this should be downloaded instead of displayed
         guard let response = navigationResponse.response as? HTTPURLResponse else {
             decisionHandler(.allow)
             return
         }
-        
+
         // Check content disposition and content type for download triggers
         let contentDisposition = response.allHeaderFields["Content-Disposition"] as? String ?? ""
         let contentType = response.mimeType ?? ""
-        
+
         // Download if:
         // 1. Content-Disposition header indicates attachment
         // 2. Content type is not something WKWebView can display well
         if #available(macOS 11.3, *) {
             if contentDisposition.lowercased().contains("attachment") ||
-               !canWebViewDisplay(contentType: contentType) {
+                !canWebViewDisplay(contentType: contentType) {
                 decisionHandler(.download)
                 return
             }
@@ -674,29 +674,29 @@ extension iTermBrowserManager: WKNavigationDelegate {
 
         decisionHandler(.allow)
     }
-    
+
     @available(macOS 11.3, *)
-    func webView(_ webView: WKWebView, 
-                 navigationAction: WKNavigationAction, 
+    func webView(_ webView: WKWebView,
+                 navigationAction: WKNavigationAction,
                  didBecome download: WKDownload) {
         handleDownload(download, sourceURL: navigationAction.request.url)
     }
-    
+
     @available(macOS 11.3, *)
-    func webView(_ webView: WKWebView, 
-                 navigationResponse: WKNavigationResponse, 
+    func webView(_ webView: WKWebView,
+                 navigationResponse: WKNavigationResponse,
                  didBecome download: WKDownload) {
         handleDownload(download, sourceURL: navigationResponse.response.url)
     }
-    
+
     @available(macOS 11.3, *)
     private func canWebViewDisplay(contentType: String) -> Bool {
         let lowerContentType = contentType.lowercased()
-        
+
         // Content types that WKWebView can display well
         let displayableTypes = [
             "text/html",
-            "text/plain", 
+            "text/plain",
             "text/css",
             "text/javascript",
             "application/javascript",
@@ -704,7 +704,7 @@ extension iTermBrowserManager: WKNavigationDelegate {
             "application/xml",
             "text/xml",
             "image/png",
-            "image/jpeg", 
+            "image/jpeg",
             "image/jpg",
             "image/gif",
             "image/svg+xml",
@@ -717,28 +717,28 @@ extension iTermBrowserManager: WKNavigationDelegate {
             "audio/wav",
             "audio/webm"
         ]
-        
+
         // If no content type specified, assume it can be displayed (let WKWebView decide)
         if lowerContentType.isEmpty {
             return true
         }
-        
+
         return displayableTypes.contains { lowerContentType.hasPrefix($0) }
     }
-    
+
     @available(macOS 11.3, *)
     private func handleDownload(_ download: WKDownload, sourceURL: URL?) {
         guard let sourceURL = sourceURL else { return }
-        
-        let suggestedFilename = sourceURL.lastPathComponent.isEmpty ? 
-            "download" : sourceURL.lastPathComponent
-        
+
+        let suggestedFilename = sourceURL.lastPathComponent.isEmpty ?
+        "download" : sourceURL.lastPathComponent
+
         let browserDownload = iTermBrowserDownload(
-            wkDownload: download, 
-            sourceURL: sourceURL, 
+            wkDownload: download,
+            sourceURL: sourceURL,
             suggestedFilename: suggestedFilename
         )
-        
+
         // Start the download (adds to FileTransferManager)
         browserDownload.download()
     }
