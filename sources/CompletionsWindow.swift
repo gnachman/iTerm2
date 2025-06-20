@@ -186,15 +186,9 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
         self.allowKeyWindow = allowKey
         self.placeholder = placeholder
         self.mode = mode
-        let rect = NSRect(x: 0, y: 0, width: 300, height: 200)
-        var adjustedLocation = location.minXminY
-        adjustedLocation.x -= 24
-        topLeftPointForBelow = adjustedLocation
 
-        adjustedLocation = location.minXmaxY
-        adjustedLocation.x -= 24
-        adjustedLocation.y += 2
-        bottomLeftPointForAbove = adjustedLocation
+        let rect = NSRect(x: 0, y: 0, width: 300, height: 200)
+        (topLeftPointForBelow, bottomLeftPointForAbove) = Self.points(location: location, in: rect)
 
         super.init(contentRect: rect, styleMask: .borderless, backing: .buffered, defer: true)
 
@@ -214,8 +208,25 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
         // Configure mode-specific UI.
         configure(for: mode, animated: false)
 
-        DLog("In init, set top left to \(adjustedLocation)")
+        DLog("In init, set top left to \(topLeftPointForBelow)")
         updateFrameOrigin()
+    }
+
+    private static func points(location: NSRect, in rect: NSRect) -> (NSPoint, NSPoint) {
+        var adjustedLocation = location.minXminY
+        adjustedLocation.x -= 24
+        let topLeft = adjustedLocation
+
+        adjustedLocation = location.minXmaxY
+        adjustedLocation.x -= 24
+        adjustedLocation.y += 2
+        let bottomLeft = adjustedLocation
+        return  (topLeft, bottomLeft)
+    }
+
+    func updateOrigin(location:  NSRect) {
+        let rect = NSRect(x: 0, y: 0, width: 300, height: 200)
+        (topLeftPointForBelow, bottomLeftPointForAbove) = Self.points(location: location, in: rect)
     }
 
     private func updateFrameOrigin() {

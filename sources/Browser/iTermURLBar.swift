@@ -114,7 +114,8 @@ class iTermURLBar: NSView {
     }
     
     private func setupTextFieldBackground() {
-        textFieldBackground = NSView()
+        class URLBarTextFieldBackground: NSView { }
+        textFieldBackground = URLBarTextFieldBackground()
         textFieldBackground.translatesAutoresizingMaskIntoConstraints = false
         textFieldBackground.wantsLayer = true
         textFieldBackground.layer?.cornerRadius = 8
@@ -153,34 +154,51 @@ class iTermURLBar: NSView {
     private func setupConstraints() {
         guard let faviconView = faviconView,
               let progressIndicator = progressIndicator else { return }
-        
+        let inset = 8.0
         NSLayoutConstraint.activate([
             // Favicon view (left side)
             faviconView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
             faviconView.centerYAnchor.constraint(equalTo: centerYAnchor),
             faviconView.widthAnchor.constraint(equalToConstant: 16),
             faviconView.heightAnchor.constraint(equalToConstant: 16),
-            
+
             // Progress indicator (right side)
             progressIndicator.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
             progressIndicator.centerYAnchor.constraint(equalTo: centerYAnchor),
             progressIndicator.widthAnchor.constraint(equalToConstant: 16),
             progressIndicator.heightAnchor.constraint(equalToConstant: 16),
-            
+
             // Text field background (center, with margins for icons)
             textFieldBackground.leadingAnchor.constraint(equalTo: faviconView.trailingAnchor, constant: 8),
             textFieldBackground.trailingAnchor.constraint(equalTo: progressIndicator.leadingAnchor, constant: -8),
             textFieldBackground.centerYAnchor.constraint(equalTo: centerYAnchor),
             textFieldBackground.heightAnchor.constraint(equalToConstant: 28),
-            
-            // Text field (inside background with padding)
-            textField.leadingAnchor.constraint(equalTo: textFieldBackground.leadingAnchor, constant: 8),
-            textField.trailingAnchor.constraint(equalTo: textFieldBackground.trailingAnchor, constant: -8),
-            textField.centerYAnchor.constraint(equalTo: textFieldBackground.centerYAnchor, constant: 3),
-            textField.heightAnchor.constraint(equalToConstant: 22)
+
+            textField.leadingAnchor.constraint(
+                equalTo: textFieldBackground.leadingAnchor,
+                constant: inset
+            ),
+            textField.trailingAnchor.constraint(
+                equalTo: textFieldBackground.trailingAnchor,
+                constant: -inset
+            ),
+            textField.centerYAnchor.constraint(equalTo: textFieldBackground.centerYAnchor,
+                                               constant: 2),
+            textField.heightAnchor.constraint(equalToConstant: 22),
         ])
+
+        // Make the textField grow along with the text view until it can't
+        let textWidthConstraint = textField.widthAnchor.constraint(
+            equalTo: textField.textView.widthAnchor,
+            constant: textField.textView.textContainerInset.width * 2
+        )
+        textWidthConstraint.priority = .defaultLow
+        textWidthConstraint.isActive = true
+
+        textField.setContentHuggingPriority(.required, for: .horizontal)
+        textField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
     }
-    
+
     private func setupTextFieldDelegate() {
         textField.delegate = self
         textField.target = self
@@ -231,6 +249,9 @@ class iTermURLBar: NSView {
             createCompletionsWindow()
         }
         completionsWindow?.maxWidth = textField.bounds.width + fudge
+        if window != nil {
+            completionsWindow?.updateOrigin(location: locationForCompletionsWindow)
+        }
         completionsWindow?.switchMode(to: .completions(items: items))
     }
     
@@ -306,18 +327,21 @@ class iTermURLBar: NSView {
             delegate?.urlBar(self, didSubmitURL: selectedItem.suggestion)
         }
     }
-    
+
+    private var locationForCompletionsWindow: NSRect {
+        // Get text field position in screen coordinates
+        var location = window!.convertToScreen(textField.convert(textField.bounds, to: nil))
+        location.origin.x += fudge
+        location.size.width -= fudge
+        return location
+    }
+
     private func createCompletionsWindow() {
         guard let window = self.window else { return }
         
-        // Get text field position in screen coordinates
-        var location = window.convertToScreen(textField.convert(textField.bounds, to: nil))
-        location.origin.x += fudge
-        location.size.width -= fudge
-
         completionsWindow = CompletionsWindow(
             parent: window,
-            location: location,
+            location: locationForCompletionsWindow,
             mode: .indicator,
             placeholder: "Loading suggestions…",
             allowKey: false

@@ -11,6 +11,23 @@ class iTermBrowserURLTextView: PlaceholderTextView {
     var willResignFirstResponder: (() -> ())?
     var shouldSelectAllOnMouseDown = true
 
+    init(frame: NSRect, textContainer: NSTextContainer) {
+        super.init(frame: frame, textContainer: textContainer)
+
+        // allow width to grow and report its own size
+        isHorizontallyResizable = true
+        isVerticallyResizable = false
+        textContainer.widthTracksTextView = false
+        textContainer.containerSize = NSSize(
+            width: CGFloat.greatestFiniteMagnitude,
+            height: CGFloat.greatestFiniteMagnitude
+        )
+    }
+
+    @MainActor required init?(coder: NSCoder) {
+        it_fatalError("init(coder:) has not been implemented")
+    }
+    
     override func becomeFirstResponder() -> Bool {
         let result = super.becomeFirstResponder()
         guard result && window?.firstResponder == self else {
@@ -43,15 +60,39 @@ class iTermBrowserURLTextView: PlaceholderTextView {
         super.mouseDown(with: event)
 
         if select {
-            self.selectAll(nil)
+            selectAll(nil)
         }
     }
-/*
-    override func drawInsertionPoint(in rect: NSRect, color: NSColor, turnedOn flag: Bool) {
-        // only draw the caret when we're actually first responder
-        if window?.firstResponder == self {
-            super.drawInsertionPoint(in: rect, color: color, turnedOn: flag)
-        }
+
+    // Invalidate when text changes
+    override func didChangeText() {
+        super.didChangeText()
+        invalidateIntrinsicContentSize()
     }
- */
+
+    override var intrinsicContentSize: NSSize {
+        guard let textContainer = self.textContainer, let layoutManager = self.layoutManager else {
+            return super.intrinsicContentSize
+        }
+
+        // Ensure text container width matches view bounds
+        if bounds.width > 0 && abs(textContainer.size.width - bounds.width) > 1.0 {
+            textContainer.size = NSSize(width: CGFloat.greatestFiniteMagnitude,
+                                        height: CGFloat.greatestFiniteMagnitude)
+            layoutManager.invalidateLayout(forCharacterRange: NSRange(location: 0, length: textStorage?.length ?? 0),
+                                           actualCharacterRange: nil)
+        }
+
+        layoutManager.ensureLayout(for: textContainer)
+
+        let rect = layoutManager.usedRect(for: textContainer)
+        let glyphRange = layoutManager.glyphRange(for: textContainer)
+        let bounding = layoutManager.boundingRect(forGlyphRange: glyphRange, in: textContainer)
+
+        let size = NSSize(width: ceil(rect.maxX) + textContainerInset.width * 2,
+                          height: ceil(bounding.maxY) + textContainerInset.height * 2)
+
+
+        return size
+    }
 }
