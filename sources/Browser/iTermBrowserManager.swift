@@ -30,15 +30,17 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
     private var errorHandler = iTermBrowserErrorHandler()
     private var settingsHandler = iTermBrowserSettingsHandler()
     private var sourceHandler = iTermBrowserSourceHandler()
-    private var navigationToURL: [WKNavigation: URL] = [:]
+    private var lastTransitionType: BrowserTransitionType = .other
     private var currentPageURL: URL?
     private var hasSettingsMessageHandler = false
     private static let settingsMessageHandlerName = "iterm2BrowserSettings"
     private(set) var favicon: NSImage?
     private var _findManager: Any?
     private var adblockManager: iTermAdblockManager?
+    let sessionGuid: String
 
-    init(configuration: WKWebViewConfiguration?) {
+    init(configuration: WKWebViewConfiguration?, sessionGuid: String) {
+        self.sessionGuid = sessionGuid
         super.init()
         setupWebView(configuration: configuration)
     }
@@ -53,6 +55,16 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
             // block JS-only popups
             prefs.javaScriptCanOpenWindowsAutomatically = false
             configuration = WKWebViewConfiguration()
+
+            // Black magic from
+            // https://stackoverflow.com/questions/74203942/wkwebview-is-not-responding-in-ios-16-1-live-application-is-not-loading-the-con
+            // Hopefully fixes a problem where the browser just stops working and logs stuff like:
+            // 2025-06-19 23:43:52.093224-0700 iTerm2[84303:14204538] [assertion] Error acquiring assertion: <Error Domain=RBSServiceErrorDomain Code=1 "(target is not running or doesn't have entitlement com.apple.runningboard.assertions.webkit AND originator doesn't have entitlement com.apple.runningboard.assertions.webkit)" UserInfo={NSLocalizedFailureReason=(target is not running or doesn't have entitlement com.apple.runningboard.assertions.webkit AND originator doesn't have entitlement com.apple.runningboard.assertions.webkit)}>
+            // 2025-06-19 23:43:52.093257-0700 iTerm2[84303:14204538] [ProcessSuspension] 0x608000ce9220 - ProcessAssertion::acquireSync Failed to acquire RBS assertion 'XPCConnectionTerminationWatchdog' for process with PID=84614, error: Error Domain=RBSServiceErrorDomain Code=1 "(target is not running or doesn't have entitlement com.apple.runningboard.assertions.webkit AND originator doesn't have entitlement com.apple.runningboard.assertions.webkit)" UserInfo={NSLocalizedFailureReason=(target is not running or doesn't have entitlement com.apple.runningboard.assertions.webkit AND originator doesn't have entitlement com.apple.runningboard.assertions.webkit)}
+
+            let dropSharedWorkersScript = WKUserScript(source: "delete window.SharedWorker;", injectionTime: WKUserScriptInjectionTime.atDocumentStart, forMainFrameOnly: false)
+            configuration.userContentController.addUserScript(dropSharedWorkersScript)
+
             configuration.preferences = prefs
 
             // Register custom URL scheme handler for iterm2-about: URLs
@@ -481,6 +493,17 @@ extension iTermBrowserManager: WKNavigationDelegate {
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
         // URL is now committed, update UI
         notifyDelegateOfUpdates()
+        
+        // Record visit in browser history
+        if let url = webView.url?.absoluteString,
+           !url.hasPrefix("iterm2-about:") {
+            BrowserDatabase.instance?.recordVisit(
+                url: url,
+                title: webView.title,
+                sessionGuid: sessionGuid,
+                transitionType: lastTransitionType
+            )
+        }
     }
     
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
@@ -501,6 +524,14 @@ extension iTermBrowserManager: WKNavigationDelegate {
         
         // Try to detect and load favicon
         detectFavicon()
+        
+        // Update title in browser history if available
+        if let url = webView.url?.absoluteString,
+           let title = webView.title,
+           !url.hasPrefix("iterm2-about:"),
+           !title.isEmpty {
+            BrowserDatabase.instance?.updateTitle(title, forUrl: url)
+        }
         
         delegate?.browserManager(self, didFinishNavigation: navigation)
     }
@@ -547,6 +578,33 @@ extension iTermBrowserManager: WKNavigationDelegate {
         if let targetURL = navigationAction.request.url, targetURL != iTermBrowserErrorHandler.errorURL {
             lastRequestedURL = targetURL
         }
+        
+        // Determine transition type based on navigation type
+        let transitionType: BrowserTransitionType
+        switch navigationAction.navigationType {
+        case .linkActivated:
+            transitionType = .link
+        case .formSubmitted:
+            transitionType = .formSubmit
+        case .backForward:
+            transitionType = .backForward
+        case .reload:
+            transitionType = .reload
+        case .formResubmitted:
+            transitionType = .formSubmit
+        case .other:
+            // Check if this looks like a typed URL (from loadURL method)
+            if navigationAction.request.url == lastRequestedURL {
+                transitionType = .typed
+            } else {
+                transitionType = .other
+            }
+        @unknown default:
+            transitionType = .other
+        }
+        
+        // Store the transition type for the upcoming navigation
+        lastTransitionType = transitionType
         
         // Popup blocking logic
         guard let targetURL = navigationAction.request.url else {

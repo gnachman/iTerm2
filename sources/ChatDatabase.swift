@@ -138,7 +138,7 @@ class ChatDatabase {
     private var _chats: DatabaseBackedArray<Chat>?
     var chats: DatabaseBackedArray<Chat>? {
         if _chats == nil {
-            let dba = DatabaseBackedArray<Chat>(db: db)
+            let dba = DatabaseBackedArray<Chat>(db: db, query: Chat.fetchAllQuery())
             dba.delegate = self
             _chats = dba
         }

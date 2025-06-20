@@ -16,7 +16,6 @@ struct Migration {
 
 protocol iTermDatabaseElement: iTermDatabaseInitializable {
     static func schema() -> String
-    static func fetchAllQuery() -> String
     static func tableInfoQuery() -> String
     func appendQuery() -> (String, [Any])
     func updateQuery() -> (String, [Any])
