@@ -1,0 +1,154 @@
+//
+//  iTermBrowserSuggestionsController.swift
+//  iTerm2
+//
+//  Created by George Nachman on 6/20/25.
+//
+
+@available(macOS 11.0, *)
+class iTermBrowserSuggestionsController {
+    let attributes: [NSAttributedString.Key: Any]
+    let historyController: iTermBrowserHistoryController
+    struct ScoredSuggestion {
+        let suggestion: URLSuggestion
+        let score: Int
+    }
+
+    enum Score: Int {
+        case strongSearch = 1_000_001
+        case strongURL = 1_000_000
+        case weakSearch = 999_999
+        case weakURL = 999_998
+        case history = 0  // visit count gets added to this.
+    }
+
+    init(historyController: iTermBrowserHistoryController,
+         attributes: [NSAttributedString.Key: Any]) {
+        self.attributes = attributes
+        self.historyController = historyController
+    }
+
+    func suggestions(forQuery query: String) async -> [URLSuggestion] {
+        var scoredResults = [ScoredSuggestion]()
+
+        // Get history suggestions
+        if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let historySuggestions = await historyController.getHistorySuggestions(for: query,
+                                                                                   attributes: attributes)
+            scoredResults.append(contentsOf: historySuggestions)
+        }
+
+        var searchScore: Score
+
+        if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let actualQuery: String
+            if let search = searchQueryFromURL(query) {
+                searchScore = .strongSearch
+                actualQuery = search
+            } else {
+                searchScore = .weakSearch
+                actualQuery = query
+            }
+            let trimmed = actualQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+            let queryParameterValue = trimmed.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? trimmed
+            let url = iTermAdvancedSettingsModel.searchCommand().replacingOccurrences(of: "%@", with: queryParameterValue)
+
+            let searchSuggestion = URLSuggestion(
+                text: actualQuery,
+                url: url,
+                displayText: NSAttributedString(string: "Search for \"\(actualQuery)\"", attributes: attributes),
+                detail: "Web Search",
+                type: .webSearch
+            )
+
+            scoredResults.append(.init(suggestion: searchSuggestion, score: searchScore.rawValue))
+        }
+
+        if let normal = normalizeURL(query) {
+            let suggestion = URLSuggestion(
+                text: query,
+                url: normal.absoluteString,
+                displayText: NSAttributedString(string: "Navigate to \"\(normal.absoluteString)\"",
+                                                attributes: attributes),
+                detail: "URL",
+                type: .navigation
+            )
+            let urlScore: iTermBrowserSuggestionsController.Score
+            if stringIsStronglyURLLike(query) {
+                urlScore = .strongURL
+            } else {
+                urlScore = .weakURL
+            }
+
+            scoredResults.append(.init(suggestion: suggestion, score: urlScore.rawValue))
+        }
+
+        // Sort by score (highest first) and return suggestions
+        return scoredResults
+            .sorted { $0.score > $1.score }
+            .map { $0.suggestion }
+    }
+
+
+    func searchQueryFromURL(_ url: String) -> String? {
+        guard let actualComponents = URLComponents(string: url),
+              let searchEngineComponents = URLComponents(string: iTermAdvancedSettingsModel.searchCommand()) else {
+            return nil
+        }
+
+        // Helper function to normalize host by removing common prefixes
+        func normalizeHost(_ host: String?) -> String? {
+            guard let host = host?.lowercased() else { return nil }
+            let prefixesToRemove = ["www.", "m.", "mobile."]
+            for prefix in prefixesToRemove {
+                if host.hasPrefix(prefix) {
+                    return String(host.dropFirst(prefix.count))
+                }
+            }
+            return host
+        }
+
+        // Check if hosts match (ignoring common prefixes)
+        let normalizedActualHost = normalizeHost(actualComponents.host)
+        let normalizedSearchHost = normalizeHost(searchEngineComponents.host)
+        guard normalizedActualHost == normalizedSearchHost else {
+            return nil
+        }
+
+        // Check if paths match
+        guard actualComponents.path == searchEngineComponents.path else {
+            return nil
+        }
+
+        // Extract query parameters from both URLs
+        guard let actualQueryItems = actualComponents.queryItems,
+              let searchQueryItems = searchEngineComponents.queryItems else {
+            return nil
+        }
+
+        // Find the query parameter that contains "%@" in the search template
+        var targetQueryParam: String?
+        for item in searchQueryItems {
+            if let value = item.value, value.contains("%@") {
+                targetQueryParam = item.name
+                break
+            }
+        }
+
+        guard let queryParamName = targetQueryParam else {
+            return nil
+        }
+
+        // Find the corresponding parameter in the actual URL
+        for item in actualQueryItems {
+            if item.name == queryParamName, let value = item.value {
+                // Return the decoded query value
+                return value.removingPercentEncoding ?? value
+            }
+        }
+
+        return nil
+    }
+
+
+}
