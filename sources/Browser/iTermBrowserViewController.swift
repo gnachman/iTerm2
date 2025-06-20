@@ -36,7 +36,22 @@ class iTermBrowserViewController: NSViewController, iTermBrowserToolbarDelegate,
     required init?(coder: NSCoder) {
         it_fatalError("init(coder:) has not been implemented")
     }
-    
+
+    @objc var interactionState: Any? {
+        get {
+            if #available(macOS 12, *) {
+                return browserManager.webView.interactionState as? NSData
+            } else {
+                return nil
+            }
+        }
+        set {
+            if #available(macOS 12, *) {
+                browserManager.webView.interactionState = newValue
+            }
+        }
+    }
+
     @objc override var title: String? {
         get {
             return browserManager.webView.title

@@ -306,7 +306,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
 - (void)becomeBrowser:(NSString *)initialURL
         configuration:(WKWebViewConfiguration *)configuration
-             delegate:(id<iTermBrowserViewControllerDelegate>)delegate {
+             delegate:(id<iTermBrowserViewControllerDelegate>)delegate
+     interactionState:(NSData *)interactionState {
     _browserViewController = [[iTermBrowserViewController alloc] initWithConfiguration:configuration];
 
     _browserViewController.delegate = delegate;
@@ -327,7 +328,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     
     [self updateLayout];
 
-    [_browserViewController loadURL:initialURL];
+    if (interactionState) {
+        // Restore interaction state instead of loading URL
+        [_browserViewController setInteractionState:interactionState];
+    } else {
+        [_browserViewController loadURL:initialURL];
+    }
 }
 
 - (BOOL)isBrowser {

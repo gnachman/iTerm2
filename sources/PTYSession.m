@@ -318,6 +318,7 @@ static NSString *const SESSION_ARRANGEMENT_REUSABLE_COOKIE = @"Reusable Cookie";
 static NSString *const SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS = @"Overridden Fields";  // NSArray<NSString *>
 static NSString *const SESSION_ARRANGEMENT_FILTER = @"Filter";  // NSString
 static NSString *const SESSION_ARRANGEMENT_SSH_STATE = @"SSH State";  // NSNumber
+static NSString *const SESSION_ARRANGEMENT_BROWSER_STATE = @"Browser State";  // NSData
 static NSString *const SESSION_ARRANGEMENT_CONDUCTOR = @"Conductor";  // NSString (json)
 static NSString *const SESSION_ARRANGEMENT_PENDING_JUMPS = @"Pending Jumps";  // NSArray<NSString *>, optional.
 static NSString *const SESSION_ARRANGEMENT_CHANNEL_ID = @"Channel ID";  // NSString
@@ -625,6 +626,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     NSInteger _estimatedThroughput;
     iTermPasteboardReporter *_pasteboardReporter;
     iTermSSHState _sshState;
+    // Stored browser interaction state for restoration
+    NSData *_savedBrowserState;
     // (unique ID, hostname)
     NSMutableData *_sshWriteQueue;
     BOOL _jiggleUponAttach;
@@ -1094,6 +1097,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_pasteboardReporter release];
     [_conductor release];
     [_sshWriteQueue release];
+    [_savedBrowserState release];
     [_lastNonFocusReportingWrite release];
     [_lastFocusReportDate release];
     [_aiterm release];
@@ -1988,6 +1992,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                  includeRestorationBanner:runCommand
                                                reattached:attachedToServer];
             // NOTE: THE SCREEN SIZE IS NOW OUT OF SYNC WITH THE VIEW SIZE. IT MUST BE FIXED!
+            // Store browser state for restoration in startProgram:
+            aSession->_savedBrowserState = [[NSData castFrom:arrangement[SESSION_ARRANGEMENT_BROWSER_STATE]] retain];
         }
         if (arrangement[SESSION_ARRANGEMENT_KEYLABELS]) {
             // restoreKeyLabels wants the cursor position to be set so do it after restoring contents.
@@ -2982,7 +2988,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         if (browser) {
             [_view becomeBrowser:self.profile[KEY_COMMAND_LINE]
                    configuration:webViewConfiguration
-                        delegate:self];
+                        delegate:self
+                interactionState:_savedBrowserState];
+            [_savedBrowserState release];
+            _savedBrowserState = nil;
             completion(YES);
             return;
         }
@@ -6008,6 +6017,15 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                     totalScrollbackOverflow:_screen.totalScrollbackOverflow];
         result[SESSION_ARRANGEMENT_APS] = [_automaticProfileSwitcher savedState];
         result[SESSION_ARRANGEMENT_SSH_STATE] = @(_sshState);
+        if (@available(macOS 11, *)) {
+            if (_view.isBrowser && _view.browserViewController) {
+                id interactionState = _view.browserViewController.interactionState;
+                NSData *browserStateData = [NSData castFrom:interactionState];
+                if (browserStateData) {
+                    result[SESSION_ARRANGEMENT_BROWSER_STATE] = browserStateData;
+                }
+            }
+        }
         if (_conductor) {
             NSString *json = _conductor.jsonValue;
             if (json) {
