@@ -138,8 +138,8 @@ static const CGFloat kMargin = 4;
 
 - (void)openInAdvancedPaste:(id)sender {
     [self copySelection:nil];
-    PTYTextView *textView = [[iTermController sharedInstance] frontTextView];
-    [textView.window makeFirstResponder:textView];
+    NSResponder *responder = [[iTermController sharedInstance] frontMainResponder];
+    [[[iTermController sharedInstance] frontTextView].window makeFirstResponder:responder];
     [NSApp sendAction:@selector(pasteOptions:) to:nil from:nil];
 }
 
@@ -274,9 +274,12 @@ static const CGFloat kMargin = 4;
     NSPasteboard* thePasteboard = [NSPasteboard generalPasteboard];
     [thePasteboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
     [thePasteboard setString:[entry mainValue] forType:NSPasteboardTypeString];
-    PTYTextView *textView = [[iTermController sharedInstance] frontTextView];
-    [textView paste:nil];
-    [textView.window makeFirstResponder:textView];
+    NSResponder *responder = [[iTermController sharedInstance] frontMainResponder];
+    if ([responder respondsToSelector:@selector(paste:)]) {
+        // TODO: Figure out how this should even work with non-terminal sessions. The first responder was lost! Maybe the main responder can remember the last first responder, implement paste, and route it appropriately if the "real" target still exists.
+        [responder performSelector:@selector(paste:) withObject:nil];
+    }
+    [[[iTermController sharedInstance] frontTextView].window makeFirstResponder:responder];
 }
 
 - (void)clear:(id)sender {

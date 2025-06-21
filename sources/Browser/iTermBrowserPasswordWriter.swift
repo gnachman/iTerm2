@@ -33,10 +33,8 @@ final class iTermBrowserPasswordWriter {
     }
 
     private func stringified(password: String) -> String {
-        let pwLiteral: String
-        if
-            let data = try? JSONSerialization.data(withJSONObject: password, options: [.fragmentsAllowed]),
-            let str = String(data: data, encoding: .utf8) {
+        if let data = try? JSONSerialization.data(withJSONObject: password, options: [.fragmentsAllowed]),
+           let str = String(data: data, encoding: .utf8) {
             return str
         } else {
             return "\"\""

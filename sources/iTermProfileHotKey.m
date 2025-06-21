@@ -1029,7 +1029,7 @@ static NSString *const kArrangement = @"Arrangement";
     if (self.windowController.window) {
         [[iTermApplication sharedApplication] it_makeWindowKey:self.windowController.window];
     }
-    [self.windowController.window makeFirstResponder:self.windowController.currentSession.textview];
+    [self.windowController.window makeFirstResponder:self.windowController.currentSession.mainResponder];
     [[self.windowController currentTab] recheckBlur];
     self.windowController.window.collectionBehavior = self.windowController.desiredWindowCollectionBehavior;
     [[iTermPresentationController sharedInstance] update];
@@ -1119,7 +1119,7 @@ static NSString *const kArrangement = @"Arrangement";
     if (![self switchToVisibleHotKeyWindowIfPossible]) {
         DLog(@"Make window key, make textview first responder.");
         [self.windowController.window makeKeyAndOrderFront:nil];
-        [self.windowController.window makeFirstResponder:self.windowController.currentSession.textview];
+        [self.windowController.window makeFirstResponder:self.windowController.currentSession.mainResponder];
     }
 }
 

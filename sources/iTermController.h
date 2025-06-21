@@ -146,6 +146,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                                       respectTabbingMode:(BOOL)respectTabbingMode;
 
 - (PTYTextView*)frontTextView;
+- (NSResponder *)frontMainResponder;
 - (PseudoTerminal*)terminalAtIndex:(int)i;
 - (PseudoTerminal *)terminalForWindow:(NSWindow *)window;
 - (void)irAdvance:(int)dir;

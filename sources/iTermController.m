@@ -1194,6 +1194,10 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 #endif
 }
 
+- (NSResponder *)frontMainResponder {
+    return ([[_frontTerminalWindowController currentSession] mainResponder]);
+}
+
 - (PTYTextView *)frontTextView {
     return ([[_frontTerminalWindowController currentSession] textview]);
 }

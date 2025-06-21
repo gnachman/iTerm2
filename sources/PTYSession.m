@@ -7138,7 +7138,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 }
 
 - (void)takeFocus {
-    [[[_delegate realParentWindow] window] makeFirstResponder:_textview];
+    [[[_delegate realParentWindow] window] makeFirstResponder:self.mainResponder];
 }
 
 - (void)findViewControllerMakeDocumentFirstResponder {
@@ -9635,7 +9635,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)applyAction:(iTermAction *)action {
-    [self.textview.window makeFirstResponder:self.textview];
+    [self.textview.window makeFirstResponder:self.mainResponder];
     [self performKeyBindingAction:[iTermKeyBindingAction withAction:action.action
                                                           parameter:action.parameter
                                                            escaping:action.escaping
@@ -17669,7 +17669,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)sessionViewBecomeFirstResponder {
-    [self.textview.window makeFirstResponder:self.textview];
+    [self.textview.window makeFirstResponder:self.mainResponder];
 }
 
 - (void)sessionViewDidChangeWindow {
@@ -18624,7 +18624,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         _statusBarViewController.temporaryRightComponent = nil;
     }
     [self.delegate session:self setFilter:nil];
-    [_textview.window makeFirstResponder:_textview];
+    [_textview.window makeFirstResponder:self.mainResponder];
 }
 
 - (ProfileModel *)profileModel {
@@ -18655,7 +18655,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)statusBarResignFirstResponder {
-    [_textview.window makeFirstResponder:_textview];
+    [_textview.window makeFirstResponder:self.mainResponder];
 }
 
 - (void)statusBarReportScriptingError:(NSError *)error
@@ -18956,7 +18956,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [_textview requestDelegateRedraw];
     const BOOL enabled = handler.enabled;
     if (enabled) {
-        [_textview.window makeFirstResponder:_textview];
+        [_textview.window makeFirstResponder:self.mainResponder];
     } else {
         if (self.haveAutoComposer) {
             [_composerManager makeDropDownComposerFirstResponder];
@@ -18987,7 +18987,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         VT100GridAbsCoordRangeTryMakeRelative(sub.absRange.coordRange,
                                               _screen.totalScrollbackOverflow,
                                               ^(VT100GridCoordRange range) {
-            [_textview.window makeFirstResponder:_textview];
+            [_textview.window makeFirstResponder:self.mainResponder];
             state.selecting = YES;
             state.start = range.start;
             state.coord = range.end;
@@ -19681,7 +19681,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)composerManagerDidRemoveTemporaryStatusBarComponent:(iTermComposerManager *)composerManager {
     [_pasteHelper temporaryRightStatusBarComponentDidBecomeAvailable];
-    [_textview.window makeFirstResponder:_textview];
+    [_textview.window makeFirstResponder:self.mainResponder];
 }
 
 - (void)composerManager:(iTermComposerManager *)composerManager enqueueCommand:(NSString *)command {
@@ -19946,7 +19946,7 @@ preferredOffsetFromTopDidChange:(CGFloat)offset {
 }
 
 - (void)composerManagerWillDismissMinimalView:(iTermComposerManager *)composerManager {
-    [_textview.window makeFirstResponder:_textview];
+    [_textview.window makeFirstResponder:self.mainResponder];
     _composerManager.isSeparatorVisible = NO;
 }
 

@@ -4094,13 +4094,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([self currentSession]) {
         PtyLog(@"makeCurrentSessionFirstResponder. New first responder will be %@. The current first responder is %@",
                [[self currentSession] textview], [[self window] firstResponder]);
-        if (self.currentSession.view.isBrowser) {
-            if (@available(macOS 11, *)) {
-                [self.window makeFirstResponder:self.currentSession.view.browserViewController];
-            }
-        } else {
-            [[self window] makeFirstResponder:[[self currentSession] textview]];
-        }
+        [[self window] makeFirstResponder:[[self currentSession] mainResponder]];
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBecameKey
                                                             object:[self currentSession]
                                                           userInfo:nil];
@@ -4719,7 +4713,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)ptyWindowMakeCurrentSessionFirstResponder {
-    [self.window makeFirstResponder:self.currentSession.textview];
+    [self.window makeFirstResponder:self.currentSession.mainResponder];
 }
 
 - (BOOL)toggleFullScreenShouldUseLionFullScreen {
@@ -6254,7 +6248,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self setWindowTitle];
     }
 
-    [[self window] makeFirstResponder:[[[tabViewItem identifier] activeSession] textview]];
+    [[self window] makeFirstResponder:[[[tabViewItem identifier] activeSession] mainResponder]];
     if ([tab blur]) {
         [self enableBlur:[tab blurRadius]];
     } else {
@@ -7742,7 +7736,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (void)instantReplayStep:(int)direction {
     [self irAdvance:direction];
-    [[self window] makeFirstResponder:[[self currentSession] textview]];
+    [[self window] makeFirstResponder:[[self currentSession] mainResponder]];
 }
 
 - (void)irAdvance:(int)dir {
@@ -7797,7 +7791,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [_instantReplayWindowController.window orderFront:nil];
         [_instantReplayWindowController updateInstantReplayView];
     }
-    [[self window] makeFirstResponder:[[self currentSession] textview]];
+    [[self window] makeFirstResponder:[[self currentSession] mainResponder]];
 }
 
 - (BOOL)closeInstantReplay:(id)sender orTerminateSession:(BOOL)orTerminateSession {
@@ -7958,7 +7952,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [syntheticSession softTerminate];
     [syntheticSession release];
     [theTab setParentWindow:self];
-    [[self window] makeFirstResponder:[[theTab activeSession] textview]];
+    [[self window] makeFirstResponder:[[theTab activeSession] mainResponder]];
 }
 
 - (void)windowSetFrameTopLeftPoint:(NSPoint)point
@@ -8005,14 +7999,14 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (IBAction)irPrev:(id)sender
 {
     [self irAdvance:-1];
-    [[self window] makeFirstResponder:[[self currentSession] textview]];
+    [[self window] makeFirstResponder:[[self currentSession] mainResponder]];
     [_instantReplayWindowController updateInstantReplayView];
 }
 
 - (IBAction)irNext:(id)sender
 {
     [self irAdvance:1];
-    [[self window] makeFirstResponder:[[self currentSession] textview]];
+    [[self window] makeFirstResponder:[[self currentSession] mainResponder]];
     [_instantReplayWindowController updateInstantReplayView];
 }
 
@@ -12086,7 +12080,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (void)toolbeltMakeCurrentSessionFirstResponder {
-    [[self window] makeFirstResponder:[[self currentSession] textview]];
+    [[self window] makeFirstResponder:[[self currentSession] mainResponder]];
     [[self currentTab] recheckBlur];
 }
 
@@ -12418,7 +12412,7 @@ backgroundColor:(NSColor *)backgroundColor {
     } else if (self.tabs.count) {
         [self.tabView selectLastTabViewItem:nil];
     }
-    [[self window] makeFirstResponder:[[self currentSession] textview]];
+    [[self window] makeFirstResponder:[[self currentSession] mainResponder]];
     [[self currentTab] recheckBlur];
 }
 

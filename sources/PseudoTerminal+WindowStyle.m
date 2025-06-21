@@ -600,7 +600,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     }
 
     // The toolbelt may try to become the first responder.
-    [[self window] makeFirstResponder:[[self currentSession] textview]];
+    [[self window] makeFirstResponder:[[self currentSession] mainResponder]];
 
     if (!_fullScreen) {
         // Find the largest possible session size for the existing window frame
@@ -656,7 +656,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     }
 
     [self performSelector:@selector(makeWindowKeyAndOrderFront) withObject:nil afterDelay:0];
-    [self.window makeFirstResponder:[[self currentSession] textview]];
+    [self.window makeFirstResponder:[[self currentSession] mainResponder]];
     if (iTermWindowTypeIsCompact(self.savedWindowType) ||
         iTermWindowTypeIsCompact(self.windowType)) {
         [self didChangeCompactness];
@@ -853,7 +853,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         [aTab notifyWindowChanged];
     }
     [self saveTmuxWindowOrigins];
-    [self.window makeFirstResponder:self.currentSession.textview];
+    [self.window makeFirstResponder:self.currentSession.mainResponder];
     if (self.didEnterLionFullscreen) {
         self.didEnterLionFullscreen(self);
         self.didEnterLionFullscreen = nil;
@@ -961,7 +961,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     [self.currentTab recheckBlur];
     [self notifyTmuxOfWindowResize];
     [self saveTmuxWindowOrigins];
-    [self.window makeFirstResponder:self.currentSession.textview];
+    [self.window makeFirstResponder:self.currentSession.mainResponder];
     [self updateTouchBarIfNeeded:NO];
     [self updateUseMetalInAllTabs];
     [self.contentView didChangeCompactness];
