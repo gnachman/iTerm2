@@ -274,6 +274,9 @@
 - (void)willReloadProfile {
 }
 
+- (void)updateBrowserSpecific {
+}
+
 - (void)reloadProfile {
     for (NSControl *control in self.keyMap) {
         PreferenceInfo *info = [self infoForControl:control];
