@@ -92,17 +92,25 @@ window.onHistoryCleared = function() {
 function renderHistoryEntries(entries) {
     const container = document.getElementById('historyContainer');
     let currentDateSection = null;
-    let lastDate = null;
+    let lastFormattedDate = null;
     
     entries.forEach(entry => {
         const entryDate = new Date(entry.visitDate * 1000);
         const dateString = entryDate.toLocaleDateString();
+        const formattedDateHeader = formatDateHeader(dateString);
         
         // Create new date section if needed
-        if (dateString !== lastDate) {
-            currentDateSection = createDateSection(dateString);
-            container.appendChild(currentDateSection);
-            lastDate = dateString;
+        if (formattedDateHeader !== lastFormattedDate) {
+            // First check if a section for this date already exists in the DOM
+            const existingSection = findExistingDateSection(formattedDateHeader);
+            
+            if (existingSection) {
+                currentDateSection = existingSection;
+            } else {
+                currentDateSection = createDateSection(dateString);
+                container.appendChild(currentDateSection);
+            }
+            lastFormattedDate = formattedDateHeader;
         }
         
         // Create and append entry
@@ -131,6 +139,19 @@ function createDateSection(dateString) {
     section.appendChild(entriesList);
     
     return section;
+}
+
+function findExistingDateSection(formattedDateHeader) {
+    const container = document.getElementById('historyContainer');
+    const existingHeaders = container.querySelectorAll('.date-header');
+    
+    for (const header of existingHeaders) {
+        if (header.textContent === formattedDateHeader) {
+            return header.closest('.date-section');
+        }
+    }
+    
+    return null;
 }
 
 function createHistoryEntryElement(entry, date) {

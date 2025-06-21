@@ -1960,6 +1960,11 @@ DQ
                             <action selector="browserReload:" target="-1" id="s7j-3A-Eu6"/>
                         </connections>
                     </menuItem>
+                    <menuItem title="History" keyEquivalent="y" id="uSW-pP-LFB">
+                        <connections>
+                            <action selector="browserHistory:" target="-1" id="3HV-iw-snb"/>
+                        </connections>
+                    </menuItem>
                 </items>
             </menu>
         </menuItem>
