@@ -415,6 +415,11 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 
 - (NSArray<NSString *> *)currentSnippetTags;
 - (PTYTextView *)checkFirstResponder;
+- (void)openTabWithURL:(NSURL *)url baseProfile:(Profile *)profile nearSessionGuid:(NSString *)sessionGuid;
+- (void)openSplitPaneWithURL:(NSURL *)url
+                 baseProfile:(Profile *)base
+             nearSessionGuid:(NSString *)sessionGuid
+                    vertical:(BOOL)vertical;
 
 @end
 

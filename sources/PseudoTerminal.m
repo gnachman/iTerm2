@@ -11309,6 +11309,46 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     return currentSession;
 }
 
+- (void)openSplitPaneWithURL:(NSURL *)url
+                 baseProfile:(Profile *)base
+             nearSessionGuid:(NSString *)sessionGuid
+                    vertical:(BOOL)vertical {
+    PTYSession *target = [[iTermController sharedInstance] sessionWithGUID:sessionGuid];
+    if (!target) {
+        return;
+    }
+    MutableProfile *profile = [[base mutableCopy] autorelease];
+    profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeBrowserValue;
+    profile[KEY_COMMAND_LINE] = url.absoluteString;
+
+    [self asyncSplitVertically:vertical
+                        before:NO
+                       profile:profile
+                 targetSession:target
+                    completion:nil
+                         ready:nil];
+}
+
+- (void)openTabWithURL:(NSURL *)url baseProfile:(Profile *)base nearSessionGuid:(NSString *)sessionGuid {
+    MutableProfile *profile = [[base mutableCopy] autorelease];
+    profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeBrowserValue;
+    profile[KEY_COMMAND_LINE] = url.absoluteString;
+
+    NSNumber *tabIndex = nil;
+    for (NSInteger i = 0; i < self.tabs.count; i++) {
+        if ([[self.tabs[i].sessions mapWithBlock:^id _Nullable(PTYSession *s) { return s.guid; }] containsObject:sessionGuid]) {
+            tabIndex = @(i + 1);
+            break;
+        }
+    }
+    [self asyncCreateTabWithProfile:profile
+                        withCommand:nil
+                        environment:nil
+                           tabIndex:tabIndex
+                     didMakeSession:nil
+                         completion:nil];
+}
+
 - (void)asyncCreateTabWithProfile:(Profile *)profile
                       withCommand:(NSString *)command
                       environment:(NSDictionary *)environment

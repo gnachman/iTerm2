@@ -30,7 +30,25 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
                                                                             options: [],
                                                                             completion: {})
     }
-    
+
+    func browserViewController(_ controller: iTermBrowserViewController,
+                               openNewTabForURL url: URL) {
+        let term = (delegate?.realParentWindow() as? PseudoTerminal)
+        term?.openTab(with: url,
+                      baseProfile: profile,
+                      nearSessionGuid: guid)
+    }
+
+    func browserViewController(_ controller: iTermBrowserViewController,
+                               openNewSplitPaneForURL url: URL,
+                               vertical: Bool) {
+        let term = (delegate?.realParentWindow() as? PseudoTerminal)
+        term?.openSplitPane(with: url,
+                            baseProfile: profile,
+                            nearSessionGuid: guid,
+                            vertical: vertical)
+    }
+
     func browserViewControllerShowFindPanel(_ controller: iTermBrowserViewController) {
         // Route to SessionView's find infrastructure
         userInitiatedShowFindPanel()
