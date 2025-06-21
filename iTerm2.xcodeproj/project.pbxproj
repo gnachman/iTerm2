@@ -3222,6 +3222,15 @@
 		A6AE1ECF191FFA1C00780C19 /* iTermMouseCursor.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1ECE191FFA1C00780C19 /* iTermMouseCursor.h */; };
 		A6AE1ED81926F89B00780C19 /* iTermAnnouncementViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1ED61926F89B00780C19 /* iTermAnnouncementViewController.h */; };
 		A6AE1EDD192723F700780C19 /* iTermAnnouncementView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1EDB192723F700780C19 /* iTermAnnouncementView.h */; };
+		A6AF79C62E06586A008D77BA /* BrowserBookmarks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79C52E06586A008D77BA /* BrowserBookmarks.swift */; };
+		A6AF79CA2E06593C008D77BA /* BrowserBookmarkTags.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79C92E06593C008D77BA /* BrowserBookmarkTags.swift */; };
+		A6AF79CC2E065AA5008D77BA /* bookmarks-page.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AF79CB2E065AA5008D77BA /* bookmarks-page.html */; };
+		A6AF79CD2E065AA5008D77BA /* bookmarks-page.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AF79CB2E065AA5008D77BA /* bookmarks-page.html */; };
+		A6AF79CE2E065AA5008D77BA /* bookmarks-page.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AF79CB2E065AA5008D77BA /* bookmarks-page.html */; };
+		A6AF79D12E065C93008D77BA /* iTermBrowserBookmarkViewHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79D02E065C93008D77BA /* iTermBrowserBookmarkViewHandler.swift */; };
+		A6AF79D22E065C99008D77BA /* bookmarks-page.js in Resources */ = {isa = PBXBuildFile; fileRef = A6AF79CF2E065C93008D77BA /* bookmarks-page.js */; };
+		A6AF79D32E065C99008D77BA /* bookmarks-page.js in Resources */ = {isa = PBXBuildFile; fileRef = A6AF79CF2E065C93008D77BA /* bookmarks-page.js */; };
+		A6AF79D42E065C99008D77BA /* bookmarks-page.js in Resources */ = {isa = PBXBuildFile; fileRef = A6AF79CF2E065C93008D77BA /* bookmarks-page.js */; };
 		A6AFCDD52D91F46E002F36AE /* TwoTextFieldCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AFCDD42D91F468002F36AE /* TwoTextFieldCell.swift */; };
 		A6AFD68424496EC2007D0660 /* iTermMultiServerMessage.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AFD68224496EC2007D0660 /* iTermMultiServerMessage.h */; };
 		A6AFD68524496EC2007D0660 /* iTermMultiServerMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AFD68324496EC2007D0660 /* iTermMultiServerMessage.m */; };
@@ -7627,6 +7636,11 @@
 		A6AE1ED71926F89B00780C19 /* iTermAnnouncementViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAnnouncementViewController.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6AE1EDB192723F700780C19 /* iTermAnnouncementView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermAnnouncementView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6AE1EDC192723F700780C19 /* iTermAnnouncementView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAnnouncementView.m; sourceTree = "<group>"; tabWidth = 4; };
+		A6AF79C52E06586A008D77BA /* BrowserBookmarks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserBookmarks.swift; sourceTree = "<group>"; };
+		A6AF79C92E06593C008D77BA /* BrowserBookmarkTags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserBookmarkTags.swift; sourceTree = "<group>"; };
+		A6AF79CB2E065AA5008D77BA /* bookmarks-page.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "bookmarks-page.html"; sourceTree = "<group>"; };
+		A6AF79CF2E065C93008D77BA /* bookmarks-page.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "bookmarks-page.js"; sourceTree = "<group>"; };
+		A6AF79D02E065C93008D77BA /* iTermBrowserBookmarkViewHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserBookmarkViewHandler.swift; sourceTree = "<group>"; };
 		A6AFCDD42D91F468002F36AE /* TwoTextFieldCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TwoTextFieldCell.swift; sourceTree = "<group>"; };
 		A6AFD68224496EC2007D0660 /* iTermMultiServerMessage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMultiServerMessage.h; sourceTree = "<group>"; };
 		A6AFD68324496EC2007D0660 /* iTermMultiServerMessage.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMultiServerMessage.m; sourceTree = "<group>"; };
@@ -12924,20 +12938,25 @@
 		A6F7D4B32E0340A30065D09C /* Browser */ = {
 			isa = PBXGroup;
 			children = (
-				A6F7D5142E05F38F0065D09C /* probe-password.js */,
-				A6F7D5132E05F1F40065D09C /* write-password.js */,
+				A6AF79CB2E065AA5008D77BA /* bookmarks-page.html */,
+				A6AF79CF2E065C93008D77BA /* bookmarks-page.js */,
 				A6F7D5032E05C7D60065D09C /* detect-favicon.js */,
 				A6F7D4C62E037E780065D09C /* error-page.html */,
 				A6F7D50D2E05CEDA0065D09C /* history-page.html */,
 				A6F7D5072E05CEBA0065D09C /* history-page.js */,
 				A6F7D4BE2E037BB20065D09C /* iterm-browser-common.css */,
+				A6F7D5142E05F38F0065D09C /* probe-password.js */,
 				A6F7D4CA2E037EA80065D09C /* settings-page.html */,
 				A6F7D4D42E03D99F0065D09C /* view-source.html */,
+				A6F7D5132E05F1F40065D09C /* write-password.js */,
+				A6AF79C92E06593C008D77BA /* BrowserBookmarkTags.swift */,
+				A6AF79C52E06586A008D77BA /* BrowserBookmarks.swift */,
 				A6F7D4F32E0537710065D09C /* BrowserDatabase.swift */,
 				A6F7D4F12E0536530065D09C /* BrowserHistory.swift */,
 				A6F7D4F42E0537710065D09C /* BrowserVisits.swift */,
 				A6F7D4E42E04AE7D0065D09C /* iTermAdblockManager.swift */,
 				A6F7D4C22E037BC80065D09C /* iTermBrowserCSSLoader.swift */,
+				A6AF79D02E065C93008D77BA /* iTermBrowserBookmarkViewHandler.swift */,
 				A6F7D4D22E03D0A00065D09C /* iTermBrowserDownload.swift */,
 				A6F7D4BA2E0373110065D09C /* iTermBrowserErrorHandler.swift */,
 				A6F7D5012E05C5C40065D09C /* iTermBrowserFavicon.swift */,
@@ -14947,6 +14966,7 @@
 				A66A882A24DFCCC30043728B /* graphic_erlang@2x.png in Resources */,
 				A6F7A748213CB143004DE961 /* StatusBarIconPaste@2x.png in Resources */,
 				A6F7A742213CB143004DE961 /* StatusBarIconHost@2x.png in Resources */,
+				A6AF79CE2E065AA5008D77BA /* bookmarks-page.html in Resources */,
 				A6E7AEAB214394F600DE9F3B /* graphic_docker@2x.png in Resources */,
 				A6F7A71E213CB143004DE961 /* StatusBarIconFolder.png in Resources */,
 				1D6ED98019AEA20D005A7799 /* QuestionMarkSign@2x.png in Resources */,
@@ -14989,6 +15009,7 @@
 				537A1FBE22169B2200FBEE5A /* MinimalPasteView.xib in Resources */,
 				1DA76A261B308AD000CB272A /* iTermTipCardViewController.xib in Resources */,
 				A60E046326DEEE5E00DD162B /* MiniFilterViewController.xib in Resources */,
+				A6AF79D42E065C99008D77BA /* bookmarks-page.js in Resources */,
 				A6E16C6C24A866F300C6DB06 /* WindowCorner_BigSur@2x.png in Resources */,
 				A629F5B823B081DD00C2F16B /* MouseReportingCursorOverlay@1x.png in Resources */,
 				A67D0D911A2EE12A003A8B35 /* TmuxDashboard.xib in Resources */,
@@ -15867,6 +15888,7 @@
 				A6B3A7391AC74E02008E8D4E /* FindCursorCell3.png in Resources */,
 				A6F7D50B2E05CEC10065D09C /* history-page.js in Resources */,
 				A665C1FE2440461500F623F0 /* WindowCorner.png in Resources */,
+				A6AF79CD2E065AA5008D77BA /* bookmarks-page.html in Resources */,
 				A66F52C52106F6F100571168 /* gitdown.png in Resources */,
 				A6643F122CA62190004B757B /* coderabbitai.png in Resources */,
 				A6C4352221D1C64800346910 /* iterm2Invoke.js in Resources */,
@@ -15886,6 +15908,7 @@
 				A65DF4A22849601A00AA29AB /* .zshenv in Resources */,
 				A66F52C82106F6F100571168 /* gitdirty.png in Resources */,
 				A6F1B3AF268FD0F300546767 /* StatusBarIconTriggers@2x.png in Resources */,
+				A6AF79D32E065C99008D77BA /* bookmarks-page.js in Resources */,
 				A6109B692B9832E900D8E4E9 /* Onboarding-Filtering.png in Resources */,
 				1D99C8E81BD59C37001EE1FC /* SearchCursor@2x.png in Resources */,
 				A6F18B4B2AE2F39C006C08EE /* uniE0B6_left-half-circle-thick.pdf in Resources */,
@@ -16110,6 +16133,7 @@
 				1DCF3EC61224D03D00AD56F1 /* DefaultBookmark.plist in Resources */,
 				1D8BBA731B30F7FB0005A852 /* Dismiss.png in Resources */,
 				A6F1B3BF2693B82C00546767 /* DebugLogging@2x.png in Resources */,
+				A6AF79CC2E065AA5008D77BA /* bookmarks-page.html in Resources */,
 				1DCF3F001224EEBD00AD56F1 /* MigrationMap.plist in Resources */,
 				A6FD85341B768B7800EB9DCE /* BigArrow.png in Resources */,
 				1D53A6AF1232DA3B00B7767B /* DefaultGlobalKeyMap.plist in Resources */,
@@ -16410,6 +16434,7 @@
 				A67F618A214395A70093940A /* graphic_nginx@2x.png in Resources */,
 				1D4BAFEE1BFE77E4004FF52B /* iTermPrintAccessoryViewController.xib in Resources */,
 				A6F7A716213CB143004DE961 /* StatusBarIconRAM@2x.png in Resources */,
+				A6AF79D22E065C99008D77BA /* bookmarks-page.js in Resources */,
 				A65E6F582547F1D5008A4866 /* WindowCornerFull_Square.png in Resources */,
 				A6CB24A02C68149100005824 /* it2dl in Resources */,
 				A6C1FD4E1FC2A65E006B9A69 /* Licenses.txt in Resources */,
@@ -17345,6 +17370,7 @@
 				A6BA7D25247637B700407C4D /* VT100InlineImageHelper.m in Sources */,
 				A6E5110F24C576B300D6552D /* iTermAnimatedImageInfo.m in Sources */,
 				A68227412805E5C8005DF0B4 /* LineBufferSorting.mm in Sources */,
+				A6AF79CA2E06593C008D77BA /* BrowserBookmarkTags.swift in Sources */,
 				A6BEE48026E8187C009C0C2C /* iTermOpenQuicklyWindowController.m in Sources */,
 				A6EC8055281C852200493544 /* NSAttributedString+iTerm.swift in Sources */,
 				530AB89720AFDF5000D2AA08 /* iTermScriptFunctionCall.m in Sources */,
@@ -17512,6 +17538,7 @@
 				A6F7D5092E05CEBA0065D09C /* iTermBrowserHistoryViewHandler.swift in Sources */,
 				A6A4B2A72425D18D00184EAC /* iTermKeystroke.m in Sources */,
 				A630119520E70C0A008114B7 /* iTermStatusBarSetupDestinationCollectionViewController.m in Sources */,
+				A6AF79D12E065C93008D77BA /* iTermBrowserBookmarkViewHandler.swift in Sources */,
 				A6481655228FD511008E7E0C /* iTermVariablesIndex.m in Sources */,
 				A6069F182DF25D8300EE6CC7 /* AITermControllerObjC.swift in Sources */,
 				A616CF0D284143A300EF82D0 /* ConductorRecovery.swift in Sources */,
@@ -17939,6 +17966,7 @@
 				A6EC8099282EBFC900493544 /* NSDictionary+Conductor.swift in Sources */,
 				A60C03682089897400FE2F1F /* iTermScriptConsole.m in Sources */,
 				A66719601DCE3772000CE608 /* iTermAPIServer.m in Sources */,
+				A6AF79C62E06586A008D77BA /* BrowserBookmarks.swift in Sources */,
 				A6D3205529C29EE30088BBE1 /* NerdFontInstaller.swift in Sources */,
 				5308BF8A22828268004BECAC /* iTermStatusBarBatteryComponent.m in Sources */,
 				537BFDCA20FFB2590098C91F /* iTermProcessCache.m in Sources */,

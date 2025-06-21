@@ -304,6 +304,8 @@ function loadMore() {
 
 // Initialize page when loaded
 window.addEventListener('load', function() {
+    // Set document title explicitly for custom URL scheme
+    document.title = 'Browsing History';
     // Setup search input
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {

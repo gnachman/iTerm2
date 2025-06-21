@@ -30,11 +30,14 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
     private var settingsHandler = iTermBrowserSettingsHandler()
     private var sourceHandler = iTermBrowserSourceHandler()
     private var historyViewHandler: iTermBrowserHistoryViewHandler
+    private var bookmarkViewHandler: iTermBrowserBookmarkViewHandler
     private var currentPageURL: URL?
     private var hasSettingsMessageHandler = false
     private var hasHistoryMessageHandler = false
+    private var hasBookmarkMessageHandler = false
     private static let settingsMessageHandlerName = "iterm2BrowserSettings"
     private static let historyMessageHandlerName = "iterm2BrowserHistory"
+    private static let bookmarkMessageHandlerName = "iterm2BrowserBookmarks"
     private(set) var favicon: NSImage?
     private var _findManager: Any?
     private var adblockManager: iTermAdblockManager?
@@ -50,10 +53,17 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
         self.historyController = historyController
         self.navigationState = navigationState
         self.historyViewHandler = iTermBrowserHistoryViewHandler(historyController: historyController)
+        self.bookmarkViewHandler = iTermBrowserBookmarkViewHandler()
         super.init()
 
         historyViewHandler.delegate = self
+        bookmarkViewHandler.delegate = self
         setupWebView(configuration: configuration)
+    }
+    
+    deinit {
+        // Remove KVO observer to prevent crashes
+        webView?.removeObserver(self, forKeyPath: "title")
     }
     
     private func setupWebView(configuration preferredConfiguration: WKWebViewConfiguration?) {
@@ -67,6 +77,25 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
             prefs.javaScriptCanOpenWindowsAutomatically = false
             configuration = WKWebViewConfiguration()
             configuration.preferences = prefs
+
+            let js = """
+            (function() {
+                let oldLog = console.log;
+                console.log = function() {
+                    oldLog.apply(console, arguments);
+                    window.webkit.messageHandlers.iTerm2ConsoleLog.postMessage(
+                        Array.from(arguments).join(" ")
+                    );
+                };
+            })();
+            """
+            let script = WKUserScript(
+                source: js,
+                injectionTime: .atDocumentStart,
+                forMainFrameOnly: false
+            )
+            configuration.userContentController.add(self, name: "iTerm2ConsoleLog")
+            configuration.userContentController.addUserScript(script)
 
             // Trick google into thinking we're a real browser. Who knows what this might break.
             configuration.applicationNameForUserAgent = "Safari/16.4"
@@ -83,6 +112,9 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
         
         // Enable back/forward navigation
         webView.allowsBackForwardNavigationGestures = true
+        
+        // Observe title changes
+        webView.addObserver(self, forKeyPath: "title", options: [.new], context: nil)
         
         // Initialize find manager for macOS 13+
         if #available(macOS 13.0, *) {
@@ -315,6 +347,23 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
                 hasHistoryMessageHandler = false
             }
         }
+        
+        // Handle bookmark page
+        if currentURL == iTermBrowserBookmarkViewHandler.bookmarksURL.absoluteString {
+            // Add message handler for bookmarks only if not already added
+            if !hasBookmarkMessageHandler {
+                DLog("Adding bookmark message handler for URL: \(currentURL)")
+                webView.configuration.userContentController.add(self, name: Self.bookmarkMessageHandlerName)
+                hasBookmarkMessageHandler = true
+            }
+        } else {
+            // Remove message handler when not on bookmark page
+            if hasBookmarkMessageHandler {
+                DLog("Removing bookmark message handler, current URL: \(currentURL)")
+                webView.configuration.userContentController.removeScriptMessageHandler(forName: Self.bookmarkMessageHandlerName)
+                hasBookmarkMessageHandler = false
+            }
+        }
     }
     
     private func cleanupMessageHandlersForFailedNavigation() {
@@ -333,6 +382,12 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
             webView.configuration.userContentController.removeScriptMessageHandler(forName: Self.settingsMessageHandlerName)
             hasSettingsMessageHandler = false
         }
+        
+        if hasBookmarkMessageHandler && currentURL != iTermBrowserBookmarkViewHandler.bookmarksURL.absoluteString {
+            DLog("Cleaning up bookmark message handler after failed navigation")
+            webView.configuration.userContentController.removeScriptMessageHandler(forName: Self.bookmarkMessageHandlerName)
+            hasBookmarkMessageHandler = false
+        }
     }
     
 }
@@ -342,6 +397,18 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
 @available(macOS 11.0, *)
 extension iTermBrowserManager {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        // Handle console.log messages separately since they come as String
+        if message.name == "iTerm2ConsoleLog" {
+            if let logMessage = message.body as? String {
+                NSLog("%@", "JavaScript Console: \(logMessage)")
+            } else {
+                NSLog("%@", "JavaScript Console: \(message.body)")
+            }
+            return
+        }
+        NSLog("%@", message.name)
+
+        // For other messages, require dictionary format and current URL
         guard let messageDict = message.body as? [String: Any],
               let currentURL = currentPageURL else {
             return
@@ -368,6 +435,21 @@ extension iTermBrowserManager {
                     await historyViewHandler.handleHistoryMessage(messageDict, webView: webView)
                 }
             }
+            
+        } else if message.name == Self.bookmarkMessageHandlerName {
+            // Double-verify the message is coming from our bookmarks page
+            guard let webViewURL = webView.url?.absoluteString,
+                  webViewURL == iTermBrowserBookmarkViewHandler.bookmarksURL.absoluteString,
+                  currentURL.absoluteString == iTermBrowserBookmarkViewHandler.bookmarksURL.absoluteString else {
+                DLog("Bookmark message from wrong URL: webView=\(webView.url?.absoluteString ?? "nil"), currentURL=\(currentURL.absoluteString)")
+                return
+            }
+            DLog("Received bookmark message, forwarding to handler")
+            if let webView = message.webView {
+                Task { @MainActor in
+                    await bookmarkViewHandler.handleBookmarkMessage(messageDict, webView: webView)
+                }
+            }
         }
     }
 }
@@ -391,6 +473,8 @@ extension iTermBrowserManager {
             sourceHandler.start(urlSchemeTask: urlSchemeTask, url: url)
         case iTermBrowserHistoryViewHandler.historyURL.absoluteString:
             historyViewHandler.start(urlSchemeTask: urlSchemeTask, url: url)
+        case iTermBrowserBookmarkViewHandler.bookmarksURL.absoluteString:
+            bookmarkViewHandler.start(urlSchemeTask: urlSchemeTask, url: url)
         default:
             urlSchemeTask.didFailWithError(NSError(domain: "iTermBrowserManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unknown iterm2-about: URL"]))
         }
@@ -750,6 +834,9 @@ extension iTermBrowserManager: WKUIDelegate {
     
     @objc private func viewPageSource() {
         // Get the current page's HTML source
+        guard let url = webView.url else {
+            return
+        }
         webView.evaluateJavaScript("document.documentElement.outerHTML") { [weak self] result, error in
             guard let self = self else { return }
             
@@ -764,14 +851,14 @@ extension iTermBrowserManager: WKUIDelegate {
             }
             
             DispatchQueue.main.async {
-                self.showSourceInBrowser(htmlSource: htmlSource)
+                self.showSourceInBrowser(htmlSource: htmlSource, url: url)
             }
         }
     }
     
-    private func showSourceInBrowser(htmlSource: String) {
+    private func showSourceInBrowser(htmlSource: String, url: URL) {
         // Generate the formatted source page HTML
-        let sourceHTML = sourceHandler.generateSourcePageHTML(for: htmlSource)
+        let sourceHTML = sourceHandler.generateSourcePageHTML(for: htmlSource, url: url)
         
         // Store the source HTML to serve when iterm2-about:source is requested
         sourceHandler.setPendingSourceHTML(sourceHTML)
@@ -823,7 +910,31 @@ extension iTermBrowserManager: iTermBrowserHistoryViewHandlerDelegate {
 }
 
 @available(macOS 11.0, *)
+extension iTermBrowserManager: iTermBrowserBookmarkViewHandlerDelegate {
+    func bookmarkViewHandlerDidNavigateToURL(_ handler: iTermBrowserBookmarkViewHandler, url: String) {
+        // Navigate to the URL in the current browser
+        loadURL(url)
+    }
+}
+
+@available(macOS 11.0, *)
 extension iTermBrowserManager {
+
+    // MARK: - Key-Value Observing
+    
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+        if keyPath == "title", let webView = object as? WKWebView, webView == self.webView {
+            // Title changed - notify delegate
+            notifyDelegateOfUpdates()
+            
+            // Update history with new title if we have a current URL
+            if let url = webView.url {
+                historyController.titleDidChange(for: url, title: webView.title)
+            }
+        } else {
+            super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
+        }
+    }
 
     // MARK: - Adblock Integration
 

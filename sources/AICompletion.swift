@@ -175,6 +175,7 @@ class CompletionItem: NSObject {
         case folder
         case webSearch
         case navigation
+        case bookmark
     }
 
     @objc(initWithValue:detail:kind:)

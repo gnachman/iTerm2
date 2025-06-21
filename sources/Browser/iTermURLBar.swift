@@ -227,7 +227,7 @@ class iTermURLBar: NSView {
                 switch suggestion.type {
                 case .history: return .history
                 case .search: return .command
-                case .bookmark: return .file
+                case .bookmark: return .bookmark
                 case .completion: return .aiSuggestion
                 case .webSearch: return .webSearch
                 case .navigation: return .navigation

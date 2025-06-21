@@ -13,7 +13,7 @@ class iTermBrowserSourceHandler: NSObject {
     
     private var pendingSourceHTML: String?
     
-    func generateSourcePageHTML(for rawSource: String) -> String {
+    func generateSourcePageHTML(for rawSource: String, url: URL) -> String {
         // Escape HTML entities for display
         let escapedSource = rawSource
             .replacingOccurrences(of: "&", with: "&amp;")
@@ -23,7 +23,8 @@ class iTermBrowserSourceHandler: NSObject {
         // Load template and substitute source
         return iTermBrowserTemplateLoader.loadTemplate(named: "view-source",
                                                        type: "html",
-                                                      substitutions: ["SOURCE": escapedSource])
+                                                      substitutions: ["SOURCE": escapedSource,
+                                                                      "URL": url.absoluteString.escapedForHTML])
     }
     
     func setPendingSourceHTML(_ html: String) {

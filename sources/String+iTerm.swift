@@ -362,3 +362,15 @@ extension Optional where Wrapped == String {
         }
     }
 }
+
+extension String {
+    var escapedForHTML: String {
+        var result = self
+        result = result.replacingOccurrences(of: "&",  with: "&amp;")
+        result = result.replacingOccurrences(of: "<",  with: "&lt;")
+        result = result.replacingOccurrences(of: ">",  with: "&gt;")
+        result = result.replacingOccurrences(of: "\"", with: "&quot;")
+        result = result.replacingOccurrences(of: "'",  with: "&#39;")
+        return result
+    }
+}
