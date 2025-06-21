@@ -346,6 +346,12 @@ extension iTermBrowserViewController {
     func browserReload(_ sender: Any) {
         toolbar.reloadTapped()
     }
+
+    @objc
+    @IBAction
+    func browserHistory(_ sender: Any) {
+        browserManager.loadURL(iTermBrowserHistoryViewHandler.historyURL.absoluteString)
+    }
 }
 
 @available(macOS 11.0, *)
