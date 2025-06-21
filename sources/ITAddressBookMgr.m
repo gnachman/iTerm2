@@ -48,6 +48,7 @@
 
 NSString *const iTermUnicodeVersionDidChangeNotification = @"iTermUnicodeVersionDidChangeNotification";
 
+// Values for KEY_CUSTOM_COMMAND
 NSString *const kProfilePreferenceCommandTypeCustomValue = @"Yes";
 NSString *const kProfilePreferenceCommandTypeLoginShellValue = @"No";
 NSString *const kProfilePreferenceCommandTypeCustomShellValue = @"Custom Shell";
