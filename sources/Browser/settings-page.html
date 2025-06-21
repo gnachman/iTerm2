@@ -212,43 +212,6 @@
             box-shadow: 0 0 0 3px var(--accent-color)20;
         }
         
-        /* Status message */
-        .status-message {
-            width: 100%;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            opacity: 0;
-            transform: translateY(-10px);
-        }
-        
-        .status-message.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        
-        .status-message.success {
-            background: linear-gradient(135deg, #34c759, #30d158);
-            color: white;
-        }
-        
-        .status-message.info {
-            background: linear-gradient(135deg, #007aff, #5ac8fa);
-            color: white;
-        }
-        
-        .status-message.warning {
-            background: linear-gradient(135deg, #ff9500, #ffcc02);
-            color: white;
-        }
-        
-        .status-message.error {
-            background: linear-gradient(135deg, #ff3b30, #ff6b6b);
-            color: white;
-        }
-        
         /* Subtle animations */
         @keyframes fadeInUp {
             from {
@@ -273,8 +236,9 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Browser Settings</h1>
-            <p>Manage your iTerm2 browser data and preferences</p>
+            <div class="header-content">
+                <h1>Browser Settings</h1>
+            </div>
         </div>
         
         <div class="privacy-section">
