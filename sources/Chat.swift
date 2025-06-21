@@ -53,11 +53,11 @@ extension Chat: iTermDatabaseElement {
         "PRAGMA table_info(Chat)"
     }
     
-    func removeQuery() -> (String, [Any]) {
+    func removeQuery() -> (String, [Any?]) {
         ("delete from Chat where \(Columns.uuid.rawValue) = ?", [id])
     }
 
-    func appendQuery() -> (String, [Any]) {
+    func appendQuery() -> (String, [Any?]) {
         ("""
         insert into Chat 
             (\(Columns.uuid.rawValue),
@@ -80,7 +80,7 @@ extension Chat: iTermDatabaseElement {
          ])
     }
 
-    func updateQuery() -> (String, [Any]) {
+    func updateQuery() -> (String, [Any?]) {
         ("""
         update Chat set \(Columns.title.rawValue) = ?,
                         \(Columns.creationDate.rawValue) = ?,

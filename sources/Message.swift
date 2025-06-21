@@ -294,7 +294,7 @@ extension Message: iTermDatabaseElement {
         "select * from Message"
     }
 
-    static func query(forChatID chatID: String) -> (String, [Any]) {
+    static func query(forChatID chatID: String) -> (String, [Any?]) {
         ("select * from Message where chatID=?", [chatID])
     }
 
@@ -302,7 +302,7 @@ extension Message: iTermDatabaseElement {
         "PRAGMA table_info(Message)"
     }
 
-    func appendQuery() -> (String, [Any]) {
+    func appendQuery() -> (String, [Any?]) {
         let jsonData = try! JSONEncoder().encode(content)
         let jsonString = String(data: jsonData, encoding: .utf8)!
         return (
@@ -325,12 +325,12 @@ extension Message: iTermDatabaseElement {
         )
     }
 
-    func removeQuery() -> (String, [Any]) {
+    func removeQuery() -> (String, [Any?]) {
         ("remove from Message where \(Columns.uniqueID.rawValue) = ?",
          [uniqueID.uuidString])
     }
 
-    func updateQuery() -> (String, [Any]) {
+    func updateQuery() -> (String, [Any?]) {
         let jsonData = try! JSONEncoder().encode(content)
         let jsonString = String(data: jsonData, encoding: .utf8)!
         return (

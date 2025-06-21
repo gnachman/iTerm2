@@ -7,83 +7,13 @@
     <style>
         {{COMMON_CSS}}
         
+        /* Bookmarks-specific overrides and styles */
         .container {
             max-width: 900px;
         }
         
-        .header {
-            margin-bottom: 32px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-        
-        .header-content h1 {
-            font-size: 36px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-        
-        .header-content h1 .title-text {
-            background: linear-gradient(135deg, var(--accent-color), #5ac8fa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .header-content p {
-            font-size: 17px;
-            opacity: 0.8;
-            color: var(--secondary-text);
-        }
-        
-        .header-actions {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-        
-        .search-container {
-            background: var(--section-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 24px;
-            box-shadow: 0 2px 12px var(--shadow);
-        }
-        
         .search-input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
             margin-bottom: 16px;
-        }
-        
-        .search-input {
-            flex: 1;
-            padding: 14px 20px 14px 50px;
-            border: 2px solid var(--border-color);
-            border-radius: 10px;
-            background: var(--bg-color);
-            color: var(--text-color);
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
-        
-        .search-input:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px var(--accent-color)20;
-        }
-        
-        .search-icon {
-            position: absolute;
-            left: 18px;
-            font-size: 18px;
-            color: var(--secondary-text);
-            pointer-events: none;
         }
         
         .controls-row {
@@ -155,61 +85,6 @@
             gap: 8px;
         }
         
-        .bookmark-entry {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px 20px;
-            background: var(--section-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px var(--shadow);
-            margin-bottom: 8px;
-        }
-        
-        .bookmark-entry:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px var(--shadow);
-            border-color: var(--accent-color)40;
-        }
-        
-        .entry-content {
-            flex: 1;
-            min-width: 0;
-        }
-        
-        .entry-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 6px;
-        }
-        
-        .entry-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-color);
-            text-overflow: ellipsis;
-            overflow: hidden;
-            white-space: nowrap;
-        }
-        
-        .entry-url {
-            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
-            font-size: 14px;
-            color: var(--accent-color);
-            cursor: pointer;
-            text-overflow: ellipsis;
-            overflow: hidden;
-            white-space: nowrap;
-            transition: all 0.2s ease;
-        }
-        
-        .entry-url:hover {
-            color: #5ac8fa;
-            text-decoration: underline;
-        }
         
         .bookmark-meta {
             display: flex;
@@ -218,16 +93,6 @@
             margin-top: 8px;
             font-size: 13px;
             color: var(--secondary-text);
-        }
-        
-        .entry-date {
-            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
-            font-size: 13px;
-            color: var(--secondary-text);
-            background: var(--border-color);
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-weight: 500;
         }
         
         .bookmark-tags {
@@ -243,77 +108,6 @@
             font-size: 12px;
             color: var(--secondary-text);
             border: 1px solid var(--border-color);
-        }
-        
-        .entry-actions {
-            margin-left: 16px;
-            display: flex;
-            gap: 8px;
-        }
-        
-        .delete-button {
-            width: 32px;
-            height: 32px;
-            border: none;
-            background: linear-gradient(135deg, #ff3b30, #ff6b6b);
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            font-size: 18px;
-            font-weight: bold;
-        }
-        
-        .delete-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px #ff3b3040;
-            background: linear-gradient(135deg, #d70015, #ff3b30);
-        }
-        
-        .delete-icon {
-            line-height: 1;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--secondary-text);
-        }
-        
-        .empty-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-        }
-        
-        .empty-state h3 {
-            font-size: 18px;
-            margin-bottom: 8px;
-            color: var(--text-color);
-        }
-        
-        .loading-indicator {
-            text-align: center;
-            padding: 40px;
-            display: none;
-            color: var(--secondary-text);
-        }
-        
-        .loading-spinner {
-            border: 3px solid var(--border-color);
-            border-top: 3px solid var(--accent-color);
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 16px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
         
         .load-more-container {
@@ -339,41 +133,6 @@
         .load-more-button:disabled {
             background: var(--border-color);
             cursor: not-allowed;
-        }
-        
-        .status-message {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            transform: translateY(-100px);
-            opacity: 0;
-            transition: all 0.3s ease;
-            z-index: 1000;
-            box-shadow: 0 4px 12px var(--shadow);
-        }
-        
-        .status-message.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
-        
-        .status-message.success {
-            background: #34C759;
-            color: white;
-        }
-        
-        .status-message.error {
-            background: #FF3B30;
-            color: white;
-        }
-        
-        .status-message.info {
-            background: var(--accent-color);
-            color: white;
         }
     </style>
 </head>

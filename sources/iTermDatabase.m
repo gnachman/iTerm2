@@ -92,7 +92,7 @@
     return result;
 }
 
-- (BOOL)executeUpdate:(NSString *)sql withArguments:(NSArray *)arguments {
+- (BOOL)executeUpdate:(NSString *)sql withNonOptionalArguments:(NSArray *)arguments {
     NSError *error = nil;
 
     BOOL result = [_db executeUpdate:sql values:arguments error:&error];
@@ -191,7 +191,7 @@
     return result;
 }
 
-- (id<iTermDatabaseResultSet> _Nullable)executeQuery:(NSString*)sql withArguments:(NSArray *)arguments {
+- (id<iTermDatabaseResultSet> _Nullable)executeQuery:(NSString*)sql withNonOptionalArguments:(NSArray *)arguments {
     FMResultSet * _Nullable result = [_db executeQuery:sql withArgumentsInArray:arguments];
 
     if (gDebugLogging) {

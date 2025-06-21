@@ -52,11 +52,11 @@ extension BrowserBookmarks: iTermDatabaseElement {
         "PRAGMA table_info(BrowserBookmarks)"
     }
     
-    func removeQuery() -> (String, [Any]) {
+    func removeQuery() -> (String, [Any?]) {
         ("delete from BrowserBookmarks where \(Columns.url.rawValue) = ?", [url])
     }
 
-    func appendQuery() -> (String, [Any]) {
+    func appendQuery() -> (String, [Any?]) {
         ("""
         insert into BrowserBookmarks 
             (\(Columns.url.rawValue),
@@ -71,7 +71,7 @@ extension BrowserBookmarks: iTermDatabaseElement {
          ])
     }
 
-    func updateQuery() -> (String, [Any]) {
+    func updateQuery() -> (String, [Any?]) {
         ("""
         update BrowserBookmarks set \(Columns.title.rawValue) = ?,
                                     \(Columns.dateAdded.rawValue) = ?
@@ -102,7 +102,7 @@ extension BrowserBookmarks: iTermDatabaseElement {
 // MARK: - Search and Query functionality
 
 extension BrowserBookmarks {
-    static func searchQuery(terms: String, offset: Int = 0, limit: Int = 50) -> (String, [Any]) {
+    static func searchQuery(terms: String, offset: Int = 0, limit: Int = 50) -> (String, [Any?]) {
         let tokens = terms
             .components(separatedBy: .whitespacesAndNewlines)
             .filter { !$0.isEmpty }
@@ -122,7 +122,7 @@ extension BrowserBookmarks {
         return ("SELECT * FROM BrowserBookmarks \(whereClause) \(orderBy) \(limitClause)", allArgs)
     }
     
-    static func getAllBookmarksQuery(sortBy: BookmarkSortOption = .dateAdded, offset: Int = 0, limit: Int = 50) -> (String, [Any]) {
+    static func getAllBookmarksQuery(sortBy: BookmarkSortOption = .dateAdded, offset: Int = 0, limit: Int = 50) -> (String, [Any?]) {
         let sortColumn: String
         switch sortBy {
         case .dateAdded:
@@ -141,15 +141,15 @@ extension BrowserBookmarks {
         return (query, [limit, offset])
     }
     
-    static func getBookmarkQuery(url: String) -> (String, [Any]) {
+    static func getBookmarkQuery(url: String) -> (String, [Any?]) {
         ("SELECT * FROM BrowserBookmarks WHERE \(Columns.url.rawValue) = ?", [url])
     }
     
-    static func deleteBookmarkQuery(url: String) -> (String, [Any]) {
+    static func deleteBookmarkQuery(url: String) -> (String, [Any?]) {
         ("DELETE FROM BrowserBookmarks WHERE \(Columns.url.rawValue) = ?", [url])
     }
     
-    static func bookmarkSuggestionsQuery(prefix: String, limit: Int = 10) -> (String, [Any]) {
+    static func bookmarkSuggestionsQuery(prefix: String, limit: Int = 10) -> (String, [Any?]) {
         let query = """
         SELECT * FROM BrowserBookmarks 
         WHERE \(Columns.url.rawValue) LIKE ? OR \(Columns.title.rawValue) LIKE ?

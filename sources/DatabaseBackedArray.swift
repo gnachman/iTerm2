@@ -26,7 +26,7 @@ class DatabaseBackedArray<Element> where Element: iTermDatabaseElement {
         self.init(db: db, query: query, args: [])
     }
 
-    init(db: iTermDatabase, query: String, args: [Any]) {
+    init(db: iTermDatabase, query: String, args: [Any?]) {
         self.db = db
         if let resultSet = db.executeQuery(query, withArguments: args) {
             while resultSet.next() {
