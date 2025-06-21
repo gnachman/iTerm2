@@ -139,52 +139,6 @@
             background: linear-gradient(135deg, #ff9500, #ffcc02);
         }
         
-        /* Toggle switch */
-        .toggle {
-            position: relative;
-            display: inline-block;
-            width: 52px;
-            height: 28px;
-        }
-        
-        .toggle input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: var(--border-color);
-            transition: .3s;
-            border-radius: 28px;
-        }
-        
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 20px;
-            width: 20px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .3s;
-            border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        
-        input:checked + .slider {
-            background: linear-gradient(135deg, var(--accent-color), #5ac8fa);
-        }
-        
-        input:checked + .slider:before {
-            transform: translateX(24px);
-        }
         
         /* Input group */
         .input-group {
@@ -212,17 +166,6 @@
             box-shadow: 0 0 0 3px var(--accent-color)20;
         }
         
-        /* Subtle animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
         
         .section {
             animation: fadeInUp 0.6s ease-out;
