@@ -1663,7 +1663,6 @@ DQ
         <customObject id="TG6-06-mq9" userLabel="Prefs&gt;Profiles&gt;Session View Controller" customClass="ProfilesSessionPreferencesViewController">
             <connections>
                 <outlet property="_addJob" destination="5667" id="zOi-em-htI"/>
-                <outlet property="_alwaysWarn" destination="jr3-cM-gDJ" id="eda-kC-gu8"/>
                 <outlet property="_autoLog" destination="5685" id="27x-QK-Uur"/>
                 <outlet property="_changeLogDir" destination="5687" id="mMH-ci-Pff"/>
                 <outlet property="_configureStatusBar" destination="crL-dF-Ixm" id="Wa6-tm-Sfr"/>
@@ -1674,9 +1673,9 @@ DQ
                 <outlet property="_logDirWarning" destination="5688" id="LwF-JR-iDw"/>
                 <outlet property="_logFilenameFormat" destination="XBK-8v-aud" id="Blm-cv-aD9"/>
                 <outlet property="_loggingStyle" destination="3CY-jo-bCe" id="R9C-BQ-uXI"/>
-                <outlet property="_neverWarn" destination="S85-6e-Wc9" id="6nd-Pt-QYC"/>
                 <outlet property="_onEndAction" destination="P7Z-yJ-1GX" id="I5b-mZ-OFg"/>
                 <outlet property="_openPasswordManagerAutomatically" destination="7G9-14-8aW" id="MSX-1s-nGv"/>
+                <outlet property="_promptBeforeClosing" destination="igT-3q-b00" id="BdL-9t-UWq"/>
                 <outlet property="_reduceFlicker" destination="Flt-We-Y3i" id="gLN-is-gOD"/>
                 <outlet property="_removeJob" destination="5669" id="YFO-c0-Vq2"/>
                 <outlet property="_sendCodeWhenIdle" destination="5697" id="dJR-J9-XOR"/>
@@ -1686,8 +1685,6 @@ DQ
                 <outlet property="_timestampsEnabled" destination="yTV-fG-vVx" id="uJb-pH-FsM"/>
                 <outlet property="_undoTimeout" destination="ksA-qB-n6W" id="YVr-dx-p2r"/>
                 <outlet property="_warnAboutShortLivedSessions" destination="CRE-cb-4lA" id="SUm-Ig-Zjw"/>
-                <outlet property="_warnContainer" destination="9hB-rM-RqL" id="XZB-xl-v3a"/>
-                <outlet property="_warnIfJobsBesides" destination="EUn-gf-bpP" id="5Bb-fl-Kpv"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="ctD-Hw-Es8"/>
                 <outlet property="view" destination="ayN-Cl-pQs" id="xvI-1B-ZWf"/>
             </connections>
@@ -4705,54 +4702,6 @@ DQ
                         </textField>
                     </subviews>
                 </customView>
-                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YAa-fh-c4L">
-                    <rect key="frame" x="154" y="491" width="145" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Prompt before closing?" id="iZE-xA-Mxl">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9hB-rM-RqL" userLabel="Warn Container">
-                    <rect key="frame" x="303" y="490" width="337" height="17"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <subviews>
-                        <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jr3-cM-gDJ">
-                            <rect key="frame" x="0.0" y="0.0" width="62" height="18"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <buttonCell key="cell" type="radio" title="Never" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="mid-B6-wD6">
-                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                            <connections>
-                                <action selector="settingChanged:" target="TG6-06-mq9" id="pZn-Sy-iV4"/>
-                            </connections>
-                        </button>
-                        <button tag="1" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="S85-6e-Wc9">
-                            <rect key="frame" x="78" y="0.0" width="69" height="18"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <buttonCell key="cell" type="radio" title="Always" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="Jb1-Ea-cfz">
-                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                            <connections>
-                                <action selector="settingChanged:" target="TG6-06-mq9" id="2Oz-tn-Z1c"/>
-                            </connections>
-                        </button>
-                        <button tag="2" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EUn-gf-bpP">
-                            <rect key="frame" x="159" y="0.0" width="176" height="18"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <buttonCell key="cell" type="radio" title="If there are jobs besides:" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="ZdW-Jh-WLi">
-                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                            <connections>
-                                <action selector="settingChanged:" target="TG6-06-mq9" id="033-vy-Fru"/>
-                            </connections>
-                        </button>
-                    </subviews>
-                </customView>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="crL-dF-Ixm">
                     <rect key="frame" x="149" y="75" width="166" height="28"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -4768,6 +4717,35 @@ DQ
                     <rect key="frame" x="156" y="490" width="486" height="95"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <subviews>
+                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YAa-fh-c4L">
+                            <rect key="frame" x="0.0" y="0.0" width="145" height="16"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Prompt before closing?" id="iZE-xA-Mxl">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="igT-3q-b00" userLabel="Prompt Before Closing Popup">
+                            <rect key="frame" x="152" y="-5" width="338" height="25"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <popUpButtonCell key="cell" type="push" title="Never" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="ZUC-DO-GoS" id="cxj-5G-eDy">
+                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="menu"/>
+                                <menu key="menu" id="33G-qy-1DB">
+                                    <items>
+                                        <menuItem title="Never" state="on" id="ZUC-DO-GoS">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                        </menuItem>
+                                        <menuItem title="Always" tag="1" id="RYT-Kl-28i"/>
+                                        <menuItem title="If there are jobs besides:" tag="2" id="fxv-W6-20A"/>
+                                    </items>
+                                </menu>
+                            </popUpButtonCell>
+                            <connections>
+                                <action selector="settingChanged:" target="TG6-06-mq9" id="2bT-lZ-CEu"/>
+                            </connections>
+                        </popUpButton>
                         <button toolTip="If a session ends immediately after starting and this setting is enabled, keep it open so you can see what went wrong." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CRE-cb-4lA">
                             <rect key="frame" x="-2" y="78" width="222" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -4792,9 +4770,9 @@ DQ
                             </connections>
                         </textField>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Xcd-dg-Jah">
-                            <rect key="frame" x="-2" y="27" width="131" height="16"/>
+                            <rect key="frame" x="-2" y="27" width="147" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" lineBreakMode="clipping" title="After a session ends:" id="s5V-Jn-CdV">
+                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="After a session ends:" id="s5V-Jn-CdV">
                                 <font key="font" usesAppearanceFont="YES"/>
                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -4819,7 +4797,7 @@ DQ
                             </textFieldCell>
                         </textField>
                         <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="P7Z-yJ-1GX">
-                            <rect key="frame" x="132" y="21" width="140" height="25"/>
+                            <rect key="frame" x="152" y="21" width="338" height="25"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <popUpButtonCell key="cell" type="push" title="No Action" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="2UH-A6-PHv" id="sAi-EY-JC7">
                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>

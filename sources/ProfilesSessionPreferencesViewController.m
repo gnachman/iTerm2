@@ -73,10 +73,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     IBOutlet NSTextField *_undoTimeout;
     IBOutlet NSButton *_reduceFlicker;
 
-    IBOutlet NSView *_warnContainer;
-    IBOutlet NSButton *_alwaysWarn;
-    IBOutlet NSButton *_neverWarn;
-    IBOutlet NSButton *_warnIfJobsBesides;
+    IBOutlet NSPopUpButton *_promptBeforeClosing;
 
     IBOutlet NSButton *_statusBarEnabled;
     IBOutlet NSButton *_configureStatusBar;
@@ -143,41 +140,18 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
         return NO;
     };
     
-    [self defineControl:_alwaysWarn
-                    key:KEY_PROMPT_CLOSE
-            relatedView:nil
-            displayName:nil
-                   type:kPreferenceInfoTypeRadioButton
-         settingChanged:^(id sender) { [self promptBeforeClosingDidChange]; }
-                 update:^BOOL { [self updatePromptBeforeClosing]; return YES; }
-             searchable:NO];
-
-    [self defineControl:_neverWarn
-                    key:KEY_PROMPT_CLOSE
-            relatedView:nil
-            displayName:nil
-                   type:kPreferenceInfoTypeRadioButton
-         settingChanged:^(id sender) { [self promptBeforeClosingDidChange]; }
-                 update:^BOOL { [self updatePromptBeforeClosing]; return YES; }
-             searchable:NO];
-
-    info = [self defineControl:_warnIfJobsBesides
+    info = [self defineControl:_promptBeforeClosing
                            key:KEY_PROMPT_CLOSE
                    relatedView:nil
                    displayName:nil
-                          type:kPreferenceInfoTypeRadioButton
-                settingChanged:^(id sender) { [self promptBeforeClosingDidChange]; }
-                        update:^BOOL { [self updatePromptBeforeClosing]; return YES; }
-                    searchable:NO];
+                          type:kPreferenceInfoTypePopup
+                settingChanged:^(id obj) { [weakSelf promptBeforeClosingDidChange]; }
+                        update:^BOOL{ [weakSelf updatePromptBeforeClosing]; return YES; }
+                    searchable:YES];
     info.observer = ^{
         [weakSelf updateJobsUIEnabled];
     };
-    [self addViewToSearchIndex:_warnContainer
-                   displayName:@"Prompt before closing profile"
-                       phrases:@[ @"Always prompt before closing profile",
-                                  @"Never prompt before closing profile",
-                                  @"Prompt before closing profile if running jobs"]
-                           key:nil];
+
     [self defineControl:_undoTimeout
                     key:KEY_UNDO_TIMEOUT
             displayName:@"Undo close session timeout"
@@ -539,20 +513,14 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
 #pragma mark - Prompt before closing
 
 - (void)promptBeforeClosingDidChange {
-    int tag = 0;
-    for (NSButton *button in @[_alwaysWarn, _neverWarn, _warnIfJobsBesides]) {
-        if (button.state == NSControlStateValueOn) {
-            tag = button.tag;
-            break;
-        }
-    }
+    int tag = [_promptBeforeClosing selectedTag];
     [self setInt:tag forKey:KEY_PROMPT_CLOSE];
     [self updateEnabledState];
     [self updateJobsUIEnabled];
 }
 
 - (void)updateJobsUIEnabled {
-    const BOOL enableTable = ([self intForKey:KEY_PROMPT_CLOSE] == _warnIfJobsBesides.tag);
+    const BOOL enableTable = ([self intForKey:KEY_PROMPT_CLOSE] == PROMPT_EX_JOBS);
     _jobsTable.enabled = enableTable;
     _addJob.enabled = enableTable;
     _removeJob.enabled = enableTable &&  ([_jobsTable selectedRow] != -1);
@@ -560,13 +528,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
 
 - (void)updatePromptBeforeClosing {
     int tag = [self intForKey:KEY_PROMPT_CLOSE];
-    for (NSButton *button in @[_alwaysWarn, _neverWarn, _warnIfJobsBesides]) {
-        if (button.tag == tag) {
-            button.state = NSControlStateValueOn;
-        } else {
-            button.state = NSControlStateValueOff;
-        }
-    }
+    [_promptBeforeClosing selectItemWithTag:tag];
 }
 
 #pragma mark - Jobs
