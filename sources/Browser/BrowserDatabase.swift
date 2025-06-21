@@ -128,9 +128,9 @@ actor BrowserDatabase {
     // MARK: - Recording Visits
     
     func recordVisit(url: String,
-                     title: String? = nil,
-                     sessionGuid: String? = nil,
-                     referrerUrl: String? = nil,
+                     title: String?,
+                     sessionGuid: String?,
+                     referrerUrl: String?,
                      transitionType: BrowserTransitionType = .other) async {
         // Record in BrowserHistory
         let historyEntry = BrowserHistory(
@@ -147,10 +147,10 @@ actor BrowserDatabase {
         _ = db.executeUpdate(historyQuery, withArguments: historyArgs)
         
         // Update or create entry in BrowserVisits
-        updateVisitCount(url: url)
+        updateVisitCount(url: url, title: title)
     }
     
-    private func updateVisitCount(url: String) {
+    private func updateVisitCount(url: String, title: String?) {
         let (hostname, path) = BrowserVisits.parseUrl(url)
         
         // Try to get existing visit record
@@ -165,13 +165,15 @@ actor BrowserDatabase {
                 var updatedVisit = existingVisit
                 updatedVisit.visitCount += 1
                 updatedVisit.lastVisitDate = Date()
-                
+                if let title, !title.isEmpty {
+                    updatedVisit.title = title
+                }
                 let (updateQuery, updateArgs) = updatedVisit.updateQuery()
                 _ = db.executeUpdate(updateQuery, withArguments: updateArgs)
             }
         } else {
             // Create new record
-            let newVisit = BrowserVisits(hostname: hostname, path: path)
+            let newVisit = BrowserVisits(hostname: hostname, path: path, title: title == "" ? nil : title)
             let (insertQuery, insertArgs) = newVisit.appendQuery()
             _ = db.executeUpdate(insertQuery, withArguments: insertArgs)
         }
@@ -182,12 +184,14 @@ actor BrowserDatabase {
     // MARK: - Updating Titles
     
     func updateTitle(_ title: String, forUrl url: String) {
-        let updateQuery = """
-        UPDATE BrowserHistory 
-        SET title = ? 
-        WHERE url = ? AND (title IS NULL OR title = '')
-        """
-        _ = db.executeUpdate(updateQuery, withArguments: [title, url])
+        do {
+            let (sql, args) = BrowserHistory.updateTitleQuery(title, forUrl: url)
+            _ = db.executeUpdate(sql, withArguments: args)
+        }
+        do {
+            let (sql, args) = BrowserVisits.updateTitleQuery(title, forUrl: url)
+            _ = db.executeUpdate(sql, withArguments: args)
+        }
     }
     
     // MARK: - Search and Suggestions

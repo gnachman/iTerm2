@@ -193,4 +193,13 @@ extension BrowserHistory {
     static func deleteEntryQuery(id: String) -> (String, [Any?]) {
         ("DELETE FROM BrowserHistory WHERE \(Columns.id.rawValue) = ?", [id])
     }
+
+    static func updateTitleQuery(_ title: String, forUrl url: String) -> (String, [Any?]) {
+        let updateQuery = """
+        UPDATE BrowserHistory 
+        SET title = ? 
+        WHERE url = ?
+        """
+        return (updateQuery, [title, url])
+    }
 }

@@ -69,7 +69,6 @@ class iTermBrowserSuggestionsController {
             let url = iTermAdvancedSettingsModel.searchCommand().replacingOccurrences(of: "%@", with: queryParameterValue)
 
             let searchSuggestion = URLSuggestion(
-                text: actualQuery,
                 url: url,
                 displayText: NSAttributedString(string: "Search for \"\(actualQuery)\"", attributes: attributes),
                 detail: "Web Search",
@@ -81,7 +80,6 @@ class iTermBrowserSuggestionsController {
 
         if let normal = normalizeURL(query) {
             let suggestion = URLSuggestion(
-                text: query,
                 url: normal.absoluteString,
                 displayText: NSAttributedString(string: "Navigate to \"\(normal.absoluteString)\"",
                                                 attributes: attributes),
@@ -181,7 +179,6 @@ class iTermBrowserSuggestionsController {
             let displayText = NSAttributedString(string: title, attributes: attributes)
             
             let suggestion = URLSuggestion(
-                text: bookmark.url,
                 url: bookmark.url,
                 displayText: displayText,
                 detail: "Bookmark",
