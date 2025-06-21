@@ -181,7 +181,7 @@ extension iTermProfilePreferencesBaseViewController {
         
         // Recursively check subviews
         for subview in view.subviews {
-            if hasVisibleControls(in: subview) {
+            if !subview.isHidden && hasVisibleControls(in: subview) {
                 return true
             }
         }
