@@ -9,10 +9,16 @@ import Cocoa
 
 @available(macOS 11.0, *)
 struct URLSuggestion {
-    let text: String
+    // When accepted, this value goes in the URL bar.
     let url: String
+
+    // Display string in table view
     let displayText: NSAttributedString
+
+    // Shown in footer of completions window when this suggestion is highlighted
     let detail: String
+
+    // Determines the icon
     let type: SuggestionType
     
     enum SuggestionType {

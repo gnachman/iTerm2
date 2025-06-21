@@ -15,9 +15,10 @@ struct BrowserVisits {
     var firstVisitDate = Date()
     var title: String?
 
-    init(hostname: String, path: String = "") {
+    init(hostname: String, path: String, title: String?) {
         self.hostname = hostname
         self.path = path
+        self.title = title
         self.firstVisitDate = Date()
         self.lastVisitDate = firstVisitDate
     }
@@ -84,9 +85,9 @@ extension BrowserVisits: iTermDatabaseElement {
              \(Columns.path.rawValue),
              \(Columns.visitCount.rawValue), 
              \(Columns.lastVisitDate.rawValue), 
-             \(Columns.firstVisitDate.rawValue),)
-             \(Columns.title.rawValue)
-        values (?, ?, ?, ?, ?)
+             \(Columns.firstVisitDate.rawValue),
+             \(Columns.title.rawValue))
+        values (?, ?, ?, ?, ?, ?)
         """,
          [
             hostname,
@@ -103,18 +104,18 @@ extension BrowserVisits: iTermDatabaseElement {
         update BrowserVisits set \(Columns.visitCount.rawValue) = ?,
                                  \(Columns.lastVisitDate.rawValue) = ?,
                                  \(Columns.firstVisitDate.rawValue) = ?,
-                                 \(Columns.title.rawValue) = ?,
+                                 \(Columns.title.rawValue) = ?
         where \(Columns.hostname.rawValue) = ? AND \(Columns.path.rawValue) = ?
         """,
         [
             visitCount,
             lastVisitDate.timeIntervalSince1970,
             firstVisitDate.timeIntervalSince1970,
-            
+            title,
+
             // where clause
             hostname,
             path,
-            title
         ])
     }
 
@@ -143,12 +144,12 @@ extension BrowserVisits {
         guard let parsedUrl = URL(string: url) else {
             return (hostname: url, path: "")
         }
-        
+
         var components = URLComponents(url: parsedUrl, resolvingAgainstBaseURL: false)
-        
+
         // Remove fragment (anchor) for normalization
         components?.fragment = nil
-        
+
         // Remove common tracking parameters
         if var queryItems = components?.queryItems {
             queryItems = queryItems.filter { item in
@@ -158,25 +159,25 @@ extension BrowserVisits {
             }
             components?.queryItems = queryItems.isEmpty ? nil : queryItems
         }
-        
+
         // Extract hostname (without scheme) and prepend period for domain component matching
         let hostname = "." + (components?.host ?? "")
-        
+
         // Extract path (including query if present)
         var path = components?.path ?? ""
         if let query = components?.query, !query.isEmpty {
             path += "?" + query
         }
-        
+
         return (hostname: hostname, path: path)
     }
-    
+
     // MARK: - URL Bar Suggestion Queries
-    
+
     static func suggestionsQuery(prefix: String, limit: Int = 10) -> (String, [Any?]) {
         // Parse the query to determine if it has a path component
         let (queryHostname, queryPath) = parseUrl(prefix.contains("://") ? prefix : "//\(prefix)")
-        
+
         if queryPath.isEmpty {
             // Just hostname query - search for hostnames with domain component starting with prefix
             return ("""
@@ -196,12 +197,22 @@ extension BrowserVisits {
             """, ["%\(queryHostname)", "\(queryPath)%", limit])
         }
     }
-    
+
     static func topVisitedQuery(limit: Int = 20) -> (String, [Any?]) {
         ("""
         SELECT * FROM BrowserVisits 
         ORDER BY \(Columns.visitCount.rawValue) DESC, \(Columns.lastVisitDate.rawValue) DESC 
         LIMIT ?
         """, [limit])
+    }
+
+    static func updateTitleQuery(_ title: String, forUrl url: String) -> (String, [Any?]) {
+        let (hostname, path)  = parseUrl(url)
+        let updateQuery = """
+        UPDATE BrowserVisits 
+        SET title = ? 
+        WHERE hostname = ? AND path = ?
+        """
+        return (updateQuery, [title, hostname, path])
     }
 }

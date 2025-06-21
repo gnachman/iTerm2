@@ -30,13 +30,19 @@ class iTermBrowserHistoryController {
             // Reconstruct full URL for display (add https:// if needed)
             let displayUrl = visit.fullUrl.hasPrefix("http") ? visit.fullUrl : "https://\(visit.fullUrl)"
 
-            let suggestion = URLSuggestion(
-                text: displayUrl,
-                url: displayUrl,
-                displayText: NSAttributedString(string: displayUrl, attributes: attributes),
-                detail: "Visited \(visit.visitCount) time\(visit.visitCount == 1 ? "" : "s")",
-                type: .history
-            )
+            let suggestion = if let title = visit.title, !title.isEmpty {
+                URLSuggestion(
+                    url: displayUrl,
+                    displayText: NSAttributedString(string: title, attributes: attributes),
+                    detail: displayUrl,
+                    type: .history)
+            } else {
+                URLSuggestion(
+                    url: displayUrl,
+                    displayText: NSAttributedString(string: displayUrl, attributes: attributes),
+                    detail: "Visited \(visit.visitCount) time\(visit.visitCount == 1 ? "" : "s")",
+                    type: .history)
+            }
 
             suggestions.append(.init(suggestion: suggestion,
                                      score: iTermBrowserSuggestionsController.Score.history.rawValue + visit.visitCount))
@@ -53,6 +59,7 @@ class iTermBrowserHistoryController {
                     url: url.absoluteString,
                     title: title,
                     sessionGuid: sessionGuid,
+                    referrerUrl: nil,
                     transitionType: navigationState.lastTransitionType
                 )
             }
