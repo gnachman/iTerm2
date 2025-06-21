@@ -65,11 +65,11 @@ extension BrowserHistory: iTermDatabaseElement {
         "PRAGMA table_info(BrowserHistory)"
     }
     
-    func removeQuery() -> (String, [Any]) {
+    func removeQuery() -> (String, [Any?]) {
         ("delete from BrowserHistory where \(Columns.id.rawValue) = ?", [id])
     }
 
-    func appendQuery() -> (String, [Any]) {
+    func appendQuery() -> (String, [Any?]) {
         ("""
         insert into BrowserHistory 
             (\(Columns.id.rawValue),
@@ -92,7 +92,7 @@ extension BrowserHistory: iTermDatabaseElement {
          ])
     }
 
-    func updateQuery() -> (String, [Any]) {
+    func updateQuery() -> (String, [Any?]) {
         ("""
         update BrowserHistory set \(Columns.url.rawValue) = ?,
                                   \(Columns.title.rawValue) = ?,
@@ -138,7 +138,7 @@ extension BrowserHistory: iTermDatabaseElement {
 // MARK: - Search functionality
 
 extension BrowserHistory {
-    static func basicSearchQuery(terms: String) -> (String, [Any]) {
+    static func basicSearchQuery(terms: String) -> (String, [Any?]) {
         let tokens = terms
             .components(separatedBy: .whitespacesAndNewlines)
             .filter { !$0.isEmpty }
@@ -157,11 +157,11 @@ extension BrowserHistory {
         return ("SELECT * FROM BrowserHistory \(whereClause) \(orderBy)", allArgs)
     }
     
-    static func historyForSession(_ sessionGuid: String) -> (String, [Any]) {
+    static func historyForSession(_ sessionGuid: String) -> (String, [Any?]) {
         ("SELECT * FROM BrowserHistory WHERE \(Columns.sessionGuid.rawValue) = ? ORDER BY \(Columns.visitDate.rawValue) DESC", [sessionGuid])
     }
     
-    static func recentHistoryQuery(offset: Int = 0, limit: Int = 50) -> (String, [Any]) {
+    static func recentHistoryQuery(offset: Int = 0, limit: Int = 50) -> (String, [Any?]) {
         let query = """
         SELECT * FROM BrowserHistory 
         ORDER BY \(Columns.visitDate.rawValue) DESC 
@@ -170,7 +170,7 @@ extension BrowserHistory {
         return (query, [limit, offset])
     }
     
-    static func searchQuery(terms: String, offset: Int = 0, limit: Int = 50) -> (String, [Any]) {
+    static func searchQuery(terms: String, offset: Int = 0, limit: Int = 50) -> (String, [Any?]) {
         let tokens = terms
             .components(separatedBy: .whitespacesAndNewlines)
             .filter { !$0.isEmpty }
@@ -190,7 +190,7 @@ extension BrowserHistory {
         return ("SELECT * FROM BrowserHistory \(whereClause) \(orderBy) \(limitClause)", allArgs)
     }
     
-    static func deleteEntryQuery(id: String) -> (String, [Any]) {
+    static func deleteEntryQuery(id: String) -> (String, [Any?]) {
         ("DELETE FROM BrowserHistory WHERE \(Columns.id.rawValue) = ?", [id])
     }
 }

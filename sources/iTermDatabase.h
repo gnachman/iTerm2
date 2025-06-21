@@ -22,10 +22,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol iTermDatabase<NSObject>
 - (BOOL)executeUpdate:(NSString*)sql, ...;
-- (BOOL)executeUpdate:(NSString *)sql withArguments:(NSArray *)arguments;  // for swift
+- (BOOL)executeUpdate:(NSString *)sql withNonOptionalArguments:(NSArray *)arguments;  // for swift
 - (NSNumber * _Nullable)lastInsertRowId;
 - (id<iTermDatabaseResultSet> _Nullable)executeQuery:(NSString*)sql, ...;
-- (id<iTermDatabaseResultSet> _Nullable)executeQuery:(NSString*)sql withArguments:(NSArray *)arguments;  // for swift
+- (id<iTermDatabaseResultSet> _Nullable)executeQuery:(NSString*)sql withNonOptionalArguments:(NSArray *)arguments;  // for swift
 - (BOOL)open;
 - (BOOL)close;
 - (BOOL)lock;

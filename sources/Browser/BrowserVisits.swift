@@ -13,7 +13,8 @@ struct BrowserVisits {
     var visitCount: Int = 1
     var lastVisitDate = Date()
     var firstVisitDate = Date()
-    
+    var title: String?
+
     init(hostname: String, path: String = "") {
         self.hostname = hostname
         self.path = path
@@ -21,12 +22,13 @@ struct BrowserVisits {
         self.lastVisitDate = firstVisitDate
     }
     
-    init(hostname: String, path: String, visitCount: Int, lastVisitDate: Date, firstVisitDate: Date) {
+    init(hostname: String, path: String, visitCount: Int, lastVisitDate: Date, firstVisitDate: Date, title: String?) {
         self.hostname = hostname
         self.path = path
         self.visitCount = visitCount
         self.lastVisitDate = lastVisitDate
         self.firstVisitDate = firstVisitDate
+        self.title = title
     }
     
     var fullUrl: String {
@@ -42,6 +44,7 @@ extension BrowserVisits: iTermDatabaseElement {
         case visitCount
         case lastVisitDate
         case firstVisitDate
+        case title
     }
     
     static func schema() -> String {
@@ -52,6 +55,7 @@ extension BrowserVisits: iTermDatabaseElement {
              \(Columns.visitCount.rawValue) integer not null,
              \(Columns.lastVisitDate.rawValue) integer not null,
              \(Columns.firstVisitDate.rawValue) integer not null,
+             \(Columns.title.rawValue) text,
              PRIMARY KEY (\(Columns.hostname.rawValue), \(Columns.path.rawValue)));
         
         CREATE INDEX IF NOT EXISTS idx_browser_visits_hostname ON BrowserVisits(\(Columns.hostname.rawValue));
@@ -69,18 +73,19 @@ extension BrowserVisits: iTermDatabaseElement {
         "PRAGMA table_info(BrowserVisits)"
     }
     
-    func removeQuery() -> (String, [Any]) {
+    func removeQuery() -> (String, [Any?]) {
         ("delete from BrowserVisits where \(Columns.hostname.rawValue) = ? AND \(Columns.path.rawValue) = ?", [hostname, path])
     }
 
-    func appendQuery() -> (String, [Any]) {
+    func appendQuery() -> (String, [Any?]) {
         ("""
         insert into BrowserVisits 
             (\(Columns.hostname.rawValue),
              \(Columns.path.rawValue),
              \(Columns.visitCount.rawValue), 
              \(Columns.lastVisitDate.rawValue), 
-             \(Columns.firstVisitDate.rawValue))
+             \(Columns.firstVisitDate.rawValue),)
+             \(Columns.title.rawValue)
         values (?, ?, ?, ?, ?)
         """,
          [
@@ -88,15 +93,17 @@ extension BrowserVisits: iTermDatabaseElement {
             path,
             visitCount,
             lastVisitDate.timeIntervalSince1970,
-            firstVisitDate.timeIntervalSince1970
+            firstVisitDate.timeIntervalSince1970,
+            title
          ])
     }
 
-    func updateQuery() -> (String, [Any]) {
+    func updateQuery() -> (String, [Any?]) {
         ("""
         update BrowserVisits set \(Columns.visitCount.rawValue) = ?,
                                  \(Columns.lastVisitDate.rawValue) = ?,
-                                 \(Columns.firstVisitDate.rawValue) = ?
+                                 \(Columns.firstVisitDate.rawValue) = ?,
+                                 \(Columns.title.rawValue) = ?,
         where \(Columns.hostname.rawValue) = ? AND \(Columns.path.rawValue) = ?
         """,
         [
@@ -106,7 +113,8 @@ extension BrowserVisits: iTermDatabaseElement {
             
             // where clause
             hostname,
-            path
+            path,
+            title
         ])
     }
 
@@ -124,6 +132,7 @@ extension BrowserVisits: iTermDatabaseElement {
         self.visitCount = Int(result.longLongInt(forColumn: Columns.visitCount.rawValue))
         self.lastVisitDate = lastVisitDate
         self.firstVisitDate = firstVisitDate
+        self.title = result.string(forColumn: Columns.title.rawValue)
     }
 }
 
@@ -164,7 +173,7 @@ extension BrowserVisits {
     
     // MARK: - URL Bar Suggestion Queries
     
-    static func suggestionsQuery(prefix: String, limit: Int = 10) -> (String, [Any]) {
+    static func suggestionsQuery(prefix: String, limit: Int = 10) -> (String, [Any?]) {
         // Parse the query to determine if it has a path component
         let (queryHostname, queryPath) = parseUrl(prefix.contains("://") ? prefix : "//\(prefix)")
         
@@ -188,7 +197,7 @@ extension BrowserVisits {
         }
     }
     
-    static func topVisitedQuery(limit: Int = 20) -> (String, [Any]) {
+    static func topVisitedQuery(limit: Int = 20) -> (String, [Any?]) {
         ("""
         SELECT * FROM BrowserVisits 
         ORDER BY \(Columns.visitCount.rawValue) DESC, \(Columns.lastVisitDate.rawValue) DESC 

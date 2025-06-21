@@ -45,11 +45,11 @@ extension BrowserBookmarkTags: iTermDatabaseElement {
         "PRAGMA table_info(BrowserBookmarkTags)"
     }
     
-    func removeQuery() -> (String, [Any]) {
+    func removeQuery() -> (String, [Any?]) {
         ("delete from BrowserBookmarkTags where \(Columns.bookmarkRowId.rawValue) = ? AND \(Columns.tag.rawValue) = ?", [bookmarkRowId, tag])
     }
 
-    func appendQuery() -> (String, [Any]) {
+    func appendQuery() -> (String, [Any?]) {
         ("""
         insert into BrowserBookmarkTags 
             (\(Columns.bookmarkRowId.rawValue),
@@ -59,7 +59,7 @@ extension BrowserBookmarkTags: iTermDatabaseElement {
          [bookmarkRowId, tag])
     }
 
-    func updateQuery() -> (String, [Any]) {
+    func updateQuery() -> (String, [Any?]) {
         // Tags don't need updating - they're either added or removed
         return removeQuery()
     }
@@ -77,7 +77,7 @@ extension BrowserBookmarkTags: iTermDatabaseElement {
 // MARK: - Tag management functionality
 
 extension BrowserBookmarkTags {
-    static func getTagsForBookmarkQuery(bookmarkRowId: Int64) -> (String, [Any]) {
+    static func getTagsForBookmarkQuery(bookmarkRowId: Int64) -> (String, [Any?]) {
         let query = """
         SELECT * FROM BrowserBookmarkTags 
         WHERE \(Columns.bookmarkRowId.rawValue) = ?
@@ -86,7 +86,7 @@ extension BrowserBookmarkTags {
         return (query, [bookmarkRowId])
     }
     
-    static func getAllTagsQuery() -> (String, [Any]) {
+    static func getAllTagsQuery() -> (String, [Any?]) {
         let query = """
         SELECT DISTINCT \(Columns.tag.rawValue) FROM BrowserBookmarkTags 
         ORDER BY \(Columns.tag.rawValue) ASC
@@ -94,11 +94,11 @@ extension BrowserBookmarkTags {
         return (query, [])
     }
     
-    static func deleteAllTagsForBookmarkQuery(bookmarkRowId: Int64) -> (String, [Any]) {
+    static func deleteAllTagsForBookmarkQuery(bookmarkRowId: Int64) -> (String, [Any?]) {
         ("DELETE FROM BrowserBookmarkTags WHERE \(Columns.bookmarkRowId.rawValue) = ?", [bookmarkRowId])
     }
     
-    static func getBookmarksWithTagQuery(tag: String) -> (String, [Any]) {
+    static func getBookmarksWithTagQuery(tag: String) -> (String, [Any?]) {
         let query = """
         SELECT b.* FROM BrowserBookmarks b
         INNER JOIN BrowserBookmarkTags t ON b.rowid = t.\(Columns.bookmarkRowId.rawValue)
@@ -108,9 +108,9 @@ extension BrowserBookmarkTags {
         return (query, [tag])
     }
     
-    static func searchBookmarksWithTagsQuery(searchTerms: String, tags: [String], offset: Int = 0, limit: Int = 50) -> (String, [Any]) {
+    static func searchBookmarksWithTagsQuery(searchTerms: String, tags: [String], offset: Int = 0, limit: Int = 50) -> (String, [Any?]) {
         var conditions: [String] = []
-        var args: [Any] = []
+        var args: [Any?] = []
         
         // Add search term conditions
         if !searchTerms.isEmpty {

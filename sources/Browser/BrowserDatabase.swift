@@ -290,7 +290,7 @@ actor BrowserDatabase {
     
     // MARK: - Helper Methods
     
-    private func executeHistoryQuery(query: String, args: [Any]) -> [BrowserHistory] {
+    private func executeHistoryQuery(query: String, args: [Any?]) -> [BrowserHistory] {
         guard let resultSet = db.executeQuery(query, withArguments: args) else {
             return []
         }
@@ -428,7 +428,7 @@ actor BrowserDatabase {
     
     // MARK: - Helper Methods
     
-    private func executeBookmarkQuery(query: String, args: [Any]) -> [BrowserBookmarks] {
+    private func executeBookmarkQuery(query: String, args: [Any?]) -> [BrowserBookmarks] {
         guard let resultSet = db.executeQuery(query, withArguments: args) else {
             return []
         }
