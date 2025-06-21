@@ -247,6 +247,9 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 
     [self updateSubviewsForProfile:profile];
     [self reloadData];
+    for (iTermProfilePreferencesBaseViewController *vc in self.tabViewControllers) {
+        [vc updateBrowserSpecific];
+    }
     [[NSNotificationCenter defaultCenter] postNotificationName:kPreferencePanelDidUpdateProfileFields
                                                         object:nil
                                                       userInfo:nil];
@@ -432,7 +435,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     }
 }
 
-- (NSArray *)tabViewControllers {
+- (NSArray<iTermProfilePreferencesBaseViewController *> *)tabViewControllers {
     return @[ _generalViewController,
               _colorsViewController,
               _textViewController,
@@ -1056,6 +1059,10 @@ andEditComponentWithIdentifier:(NSString *)identifier
 }
 
 #pragma mark - iTermProfilesPreferencesBaseViewControllerDelegate
+
+- (void)profilePreferencesSessionTypeDidChange {
+    [self refresh];
+}
 
 - (BOOL)profilePreferencesRevealViewController:(iTermProfilePreferencesBaseViewController *)viewController {
     for (NSArray *tuple in [self tabViewTuples]) {

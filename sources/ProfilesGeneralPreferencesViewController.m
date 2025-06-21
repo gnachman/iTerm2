@@ -576,6 +576,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 }
 
 - (void)updateBrowserSpecific {
+    [super updateBrowserSpecific];
     NSMenuItem *item = [_icon.menu itemWithTag:iTermProfileIconAutomatic];
     if ([[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue]) {
         item.title = @"Favicon";
@@ -1065,15 +1066,21 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
             _customCommand.delegate = _commandDelegate;
             [self setString:@"" forKey:KEY_COMMAND_LINE];
             _customCommand.stringValue = @"";
+            break;
         case iTermGeneralProfilePreferenceCustomCommandTagBrowser:
             value = kProfilePreferenceCommandTypeBrowserValue;
             _customCommand.delegate = _commandDelegate;
             [self setString:@"" forKey:KEY_COMMAND_LINE];
             break;
     }
+    NSString *before = [self stringForKey:KEY_CUSTOM_COMMAND];
     [self setString:value forKey:KEY_CUSTOM_COMMAND];
     [self updateEnabledState];
     [self updateCommandWarningImageView];
+    if ([before isEqual:kProfilePreferenceCommandTypeBrowserValue] ||
+        [value isEqual:kProfilePreferenceCommandTypeBrowserValue]) {
+        [self.delegate profilePreferencesSessionTypeDidChange];
+    }
 }
 
 - (void)updateCommandType {
@@ -1090,7 +1097,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         _customCommand.placeholderString = @"Arguments to ssh";
     } else if ([value isEqualToString:kProfilePreferenceCommandTypeBrowserValue]) {
         [_commandType selectItemWithTag:iTermGeneralProfilePreferenceCustomCommandTagBrowser];
-        _customCommand.placeholderString = @"URL";
+        _customCommand.placeholderString = @"Initial URL";
     } else {
         [_commandType selectItemWithTag:iTermGeneralProfilePreferenceCustomCommandTagLoginShell];
     }
