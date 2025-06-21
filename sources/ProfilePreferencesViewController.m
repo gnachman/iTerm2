@@ -124,6 +124,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     BulkCopyProfilePreferencesWindowController *_bulkCopyController;
     NSRect _desiredFrame;
     BOOL _needsWarning;
+    BOOL _browserMode;
 }
 
 - (instancetype)init {
@@ -461,6 +462,78 @@ andEditComponentWithIdentifier:(NSString *)identifier
     }
     _tabView.hidden = !profile;
     _otherActionsPopup.enabled = (profile != nil);
+    const BOOL browserMode = [profile[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue];
+    if (browserMode != _browserMode) {
+        _browserMode = browserMode;
+        [self moveSubviewsForBrowserMode:browserMode];
+    }
+}
+
+- (void)moveSubviewsForBrowserMode:(BOOL)browserMode {
+    // Define all tabs in their original order
+    NSArray *allTabs = @[_generalTab, _colorsTab, _textTab, _windowTab, _terminalTab, _sessionTab, _keysTab, _advancedTab];
+    NSArray *viewControllers = @[_generalViewController, _colorsViewController, _textViewController, _windowViewController, _terminalViewController, _sessionViewController, _keysViewController, _advancedViewController];
+    
+    NSTabViewItem *selectedTab = _tabView.selectedTabViewItem;
+    NSTabViewItem *fallbackTab = _generalTab;
+    BOOL selectedTabWillBeRemoved = NO;
+    NSMutableArray *tabsToRemove = [NSMutableArray array];
+    
+    // Call moveSubviewsForBrowserMode on all view controllers and determine which tabs to show/hide
+    for (NSInteger i = 0; i < viewControllers.count; i++) {
+        iTermProfilePreferencesBaseViewController *viewController = viewControllers[i];
+        NSTabViewItem *tab = allTabs[i];
+        
+        BOOL hasVisibleControls = [viewController moveSubviewsForBrowserMode:browserMode];
+        
+        if (browserMode) {
+            if (hasVisibleControls) {
+                fallbackTab = tab; // Update fallback to a visible tab
+            } else {
+                // Mark tab for removal
+                [tabsToRemove addObject:tab];
+                if (tab == selectedTab) {
+                    selectedTabWillBeRemoved = YES;
+                }
+            }
+        }
+    }
+    
+    if (browserMode) {
+        // Remove tabs that have no visible controls
+        for (NSTabViewItem *tab in tabsToRemove) {
+            if ([_tabView.tabViewItems containsObject:tab]) {
+                [_tabView removeTabViewItem:tab];
+            }
+        }
+    } else {
+        // In terminal mode, ensure all tabs are present in their original order
+        for (NSTabViewItem *tab in allTabs) {
+            if (![_tabView.tabViewItems containsObject:tab]) {
+                // Find the correct insertion point to maintain order
+                NSInteger insertIndex = 0;
+                NSInteger tabIndex = [allTabs indexOfObject:tab];
+                
+                for (NSInteger i = 0; i < tabIndex; i++) {
+                    NSTabViewItem *previousTab = allTabs[i];
+                    if ([_tabView.tabViewItems containsObject:previousTab]) {
+                        insertIndex = [_tabView.tabViewItems indexOfObject:previousTab] + 1;
+                    }
+                }
+                
+                [_tabView insertTabViewItem:tab atIndex:insertIndex];
+            }
+        }
+    }
+    
+    // If the selected tab was removed, select the fallback tab
+    if (selectedTabWillBeRemoved && _tabView.tabViewItems.count > 0) {
+        if ([_tabView.tabViewItems containsObject:fallbackTab]) {
+            [_tabView selectTabViewItem:fallbackTab];
+        } else {
+            [_tabView selectTabViewItem:_tabView.tabViewItems.firstObject];
+        }
+    }
 }
 
 - (void)reloadData {
