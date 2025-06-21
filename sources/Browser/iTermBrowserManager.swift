@@ -18,6 +18,8 @@
     func browserManager(_ manager: iTermBrowserManager, didFinishNavigation navigation: WKNavigation?)
     func browserManager(_ manager: iTermBrowserManager, didFailNavigation navigation: WKNavigation?, withError error: Error)
     func browserManager(_ manager: iTermBrowserManager, requestNewWindowForURL url: URL, configuration: WKWebViewConfiguration) -> WKWebView?
+    func browserManager(_ manager: iTermBrowserManager, openNewTabForURL url: URL)
+    func browserManager(_ manager: iTermBrowserManager, openNewSplitPaneForURL url: URL, vertical: Bool)
 }
 
 @available(macOS 11.0, *)
@@ -589,6 +591,25 @@ extension iTermBrowserManager: WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        if navigationAction.navigationType == .linkActivated {
+            if navigationAction.modifierFlags.contains(.command),
+               let url = navigationAction.request.url {
+                if navigationAction.modifierFlags.contains(.option) {
+                    if navigationAction.modifierFlags.contains(.shift) {
+                        delegate?.browserManager(self, openNewSplitPaneForURL: url, vertical: false)
+                        decisionHandler(.cancel)
+                    } else {
+                        delegate?.browserManager(self, openNewSplitPaneForURL: url, vertical: true)
+                        decisionHandler(.cancel)
+                    }
+                } else {
+                    delegate?.browserManager(self, openNewTabForURL: url)
+                    decisionHandler(.cancel)
+                }
+                return
+            }
+        }
+
         // Store the target URL for this navigation so we can use it in error handlers
         // But don't overwrite if this is our error page navigation
         if let targetURL = navigationAction.request.url, targetURL != iTermBrowserErrorHandler.errorURL {

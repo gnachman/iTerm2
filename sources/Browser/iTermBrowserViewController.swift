@@ -17,6 +17,11 @@ import WebKit
                                requestNewWindowForURL url: URL,
                                configuration: WKWebViewConfiguration) -> WKWebView?
     func browserViewControllerShowFindPanel(_ controller: iTermBrowserViewController)
+    func browserViewController(_ controller: iTermBrowserViewController,
+                               openNewTabForURL url: URL)
+    func browserViewController(_ controller: iTermBrowserViewController,
+                               openNewSplitPaneForURL url: URL,
+                               vertical: Bool)
 }
 
 @available(macOS 11.0, *)
@@ -358,6 +363,15 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
                                                requestNewWindowForURL: url,
                                                configuration: configuration)
     }
+
+    func browserManager(_ manager: iTermBrowserManager, openNewTabForURL url: URL) {
+        delegate?.browserViewController(self, openNewTabForURL: url)
+    }
+
+    func browserManager(_ manager: iTermBrowserManager, openNewSplitPaneForURL url: URL, vertical: Bool) {
+        delegate?.browserViewController(self, openNewSplitPaneForURL: url, vertical: vertical)
+    }
+
 }
 
 // MARK: - Actions
