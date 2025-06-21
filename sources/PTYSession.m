@@ -5407,17 +5407,17 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (NSImage *)tabGraphicForProfile:(Profile *)profile {
-    if (@available(macOS 11, *)) {
-        if (_view.isBrowser) {
-            return _view.browserViewController.favicon;
-        }
-    }
     const iTermProfileIcon icon = [iTermProfilePreferences unsignedIntegerForKey:KEY_ICON inProfile:profile];
     switch (icon) {
         case iTermProfileIconNone:
             return nil;
 
         case iTermProfileIconAutomatic:
+            if (@available(macOS 11, *)) {
+                if (_view.isBrowser) {
+                    return _view.browserViewController.favicon;
+                }
+            }
             if (self.isTmuxClient) {
                 [_graphicSource updateImageForJobName:self.tmuxForegroundJobMonitor.lastValue
                                               enabled:[self shouldShowTabGraphicForProfile:profile]];

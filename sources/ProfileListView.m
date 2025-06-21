@@ -637,6 +637,7 @@ const CGFloat kDefaultTagsWidth = 80;
                                            tags:(NSArray *)tags
                                        selected:(BOOL)selected
                                       isDefault:(BOOL)isDefault
+                                      isBrowser:(BOOL)isBrowser
                                          filter:(NSString *)filter {
     NSColor *highlightedBackgroundColor = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:0.4];
 
@@ -678,7 +679,23 @@ const CGFloat kDefaultTagsWidth = 80;
                                                                     attributes:plainAttributes] autorelease];
         [theAttributedString insertAttributedString:star atIndex:0];
     }
-
+    if (isBrowser) {
+        NSAttributedString *browserIcon;
+        if (@available(macOS 11.0, *)) {
+            NSTextAttachment *attachment = [[[NSTextAttachment alloc] init] autorelease];
+            NSImage *image = [NSImage imageWithSystemSymbolName:@"safari" accessibilityDescription:nil];
+            image.size = NSMakeSize(16, 16);
+            attachment.image = image;
+            NSAttributedString *safari = [NSAttributedString attributedStringWithAttachment:attachment];
+            NSAttributedString *space = [[[NSAttributedString alloc] initWithString:@" "
+                                                           attributes:plainAttributes] autorelease];
+            browserIcon = [safari attributedStringByAppendingAttributedString:space];
+        } else {
+            browserIcon = [[[NSAttributedString alloc] initWithString:@"🕸️ "
+                                                           attributes:plainAttributes] autorelease];
+        }
+        [theAttributedString insertAttributedString:browserIcon atIndex:0];
+    }
     if (tags.count) {
         NSAttributedString *newline = [[[NSAttributedString alloc] initWithString:@"\n"
                                                                        attributes:plainAttributes] autorelease];
@@ -772,6 +789,7 @@ const CGFloat kDefaultTagsWidth = 80;
                                         tags:bookmark[KEY_TAGS]
                                     selected:[[tableView_ selectedRowIndexes] containsIndex:rowIndex]
                                    isDefault:[bookmark[KEY_GUID] isEqualToString:defaultProfile[KEY_GUID]]
+                                   isBrowser:[bookmark[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue]
                                       filter:[searchField_ stringValue]];
     } else if (aTableColumn == commandColumn_) {
         NSString *theString = nil;

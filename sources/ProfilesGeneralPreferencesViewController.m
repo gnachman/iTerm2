@@ -223,6 +223,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     info.observer = ^{
         [weakSelf updateImageWell];
     };
+    [self updateBrowserSpecific];
     [self updateImageWell];
     [self updateImageWellHidden];
 
@@ -574,6 +575,15 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     return [self.profileDelegate profilesGeneralPreferencesScope];
 }
 
+- (void)updateBrowserSpecific {
+    NSMenuItem *item = [_icon.menu itemWithTag:iTermProfileIconAutomatic];
+    if ([[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue]) {
+        item.title = @"Favicon";
+    } else {
+        item.title = @"Built-in Icon for Current App";
+    }
+}
+
 - (void)reloadProfile {
     [super reloadProfile];
     [self populateBookmarkUrlSchemesFromProfile:[self.delegate profilePreferencesCurrentProfile]];
@@ -588,6 +598,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         _windowTitle.stringValue = scope.tab.window.windowTitleOverrideFormat ?: @"";
         [self updateTmuxTabTitle];
     }
+    [self updateBrowserSpecific];
 }
 
 - (NSString *)selectedGuid {
