@@ -402,13 +402,13 @@ extension iTermBrowserManager {
         // Handle console.log messages separately since they come as String
         if message.name == "iTerm2ConsoleLog" {
             if let logMessage = message.body as? String {
-                NSLog("%@", "JavaScript Console: \(logMessage)")
+                XLog("%@", "JavaScript Console: \(logMessage)")
             } else {
-                NSLog("%@", "JavaScript Console: \(message.body)")
+                XLog("%@", "JavaScript Console: \(message.body)")
             }
             return
         }
-        NSLog("%@", message.name)
+        DLog("%@", message.name)
 
         // For other messages, require dictionary format and current URL
         guard let messageDict = message.body as? [String: Any],
