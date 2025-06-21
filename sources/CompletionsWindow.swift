@@ -589,6 +589,11 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
                                     accessibilityDescription: "Navigate",
                                     fallbackImageName: "safari",
                                     for: CompletionsWindow.self)
+        case .bookmark:
+            return NSImage.it_image(forSymbolName: "bookmark",
+                                    accessibilityDescription: "Bookmark",
+                                    fallbackImageName: "bookmark",
+                                    for: CompletionsWindow.self)
         }
     }
 

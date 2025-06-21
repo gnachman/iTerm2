@@ -270,6 +270,50 @@ extension iTermBrowserViewController: iTermBrowserToolbarDelegate {
         // When the user presses enter in the URL bar, the URL bar must lose first responder.
         browserManager.webView.window?.makeFirstResponder(browserManager.webView)
     }
+    
+    func browserToolbarDidTapAddBookmark() async {
+        guard let currentURL = browserManager.webView.url?.absoluteString else {
+            return
+        }
+        
+        guard let database = await BrowserDatabase.instance else {
+            return
+        }
+        
+        let isBookmarked = await database.isBookmarked(url: currentURL)
+        
+        if isBookmarked {
+            // Remove bookmark
+            let success = await database.removeBookmark(url: currentURL)
+            if success {
+                ToastWindowController.showToast(withMessage: "Bookmark Removed")
+            }
+        } else {
+            // Add bookmark
+            let title = browserManager.webView.title
+            let success = await database.addBookmark(url: currentURL, title: title)
+            if success {
+                ToastWindowController.showToast(withMessage: "Bookmark Added")
+            }
+        }
+    }
+    
+    func browserToolbarDidTapManageBookmarks() {
+        browserManager.loadURL(iTermBrowserBookmarkViewHandler.bookmarksURL.absoluteString)
+    }
+    
+    func browserToolbarCurrentURL() -> String? {
+        return browserManager.webView.url?.absoluteString
+    }
+    
+    func browserToolbarIsCurrentURLBookmarked() async -> Bool {
+        guard let currentURL = browserManager.webView.url?.absoluteString,
+              let database = await BrowserDatabase.instance else {
+            return false
+        }
+        
+        return await database.isBookmarked(url: currentURL)
+    }
 }
 
 // MARK: - iTermBrowserManagerDelegate

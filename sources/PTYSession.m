@@ -4415,8 +4415,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (NSResponder *)mainResponder {
-    if (_view.isBrowser) {
-        return _view.browserViewController;
+    if (@available(macOS 11, *)) {
+        if (_view.isBrowser) {
+            return _view.browserViewController;
+        }
     }
     return _textview;
 }

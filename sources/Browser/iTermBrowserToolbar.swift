@@ -26,12 +26,16 @@ protocol iTermBrowserToolbarDelegate: AnyObject {
     func browserToolbarDidSubmitURL(_ url: String)
     func browserToolbarDidTapSettings()
     func browserToolbarDidTapHistory()
+    func browserToolbarDidTapAddBookmark() async
+    func browserToolbarDidTapManageBookmarks()
     func browserToolbarBackHistoryItems() -> [iTermBrowserHistoryItem]
     func browserToolbarForwardHistoryItems() -> [iTermBrowserHistoryItem]
     func browserToolbarDidSelectHistoryItem(steps: Int)
     func browserToolbarDidRequestSuggestions(_ query: String) async -> [URLSuggestion]
     func browserToolbarDidBeginEditingURL(string: String) -> String?
     func browserToolbarUserDidSubmitNavigationRequest()
+    func browserToolbarCurrentURL() -> String?
+    func browserToolbarIsCurrentURLBookmarked() async -> Bool
 }
 
 @available(macOS 11.0, *)
@@ -136,9 +140,9 @@ class iTermBrowserToolbar: NSView {
             menuButton.widthAnchor.constraint(equalToConstant: 32),
             menuButton.heightAnchor.constraint(equalToConstant: 32)
         ])
-        urlBar.setContentHuggingPriority(.required, for: .horizontal)
-        let widthConstraint = urlBar.widthAnchor.constraint(greaterThanOrEqualToConstant: 300)
-        widthConstraint.priority = .defaultLow
+        urlBar.setContentHuggingPriority(NSLayoutConstraint.Priority(rawValue: 500), for: .horizontal)
+        let widthConstraint = urlBar.widthAnchor.constraint(greaterThanOrEqualToConstant: 360)
+        widthConstraint.priority = NSLayoutConstraint.Priority(rawValue: 600)
         NSLayoutConstraint.activate([widthConstraint])
     }
 
@@ -171,22 +175,59 @@ class iTermBrowserToolbar: NSView {
     private func showMainMenu() {
         let menu = NSMenu()
         
-        // Settings menu item
-        let settingsItem = NSMenuItem(title: "Settings", action: #selector(settingsMenuItemSelected), keyEquivalent: "")
-        settingsItem.target = self
-        settingsItem.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: nil)
-        menu.addItem(settingsItem)
-        
-        // History menu item
-        let historyItem = NSMenuItem(title: "History", action: #selector(historyMenuItemSelected), keyEquivalent: "")
-        historyItem.target = self
-        historyItem.image = NSImage(systemSymbolName: "clock", accessibilityDescription: nil)
-        menu.addItem(historyItem)
-        
-        // Position menu below the button
-        let buttonFrame = menuButton.frame
-        let menuLocation = NSPoint(x: buttonFrame.minX, y: buttonFrame.minY)
-        menu.popUp(positioning: nil, at: menuLocation, in: self)
+        // Add/Remove Bookmark menu item
+        Task {
+            let currentURL = delegate?.browserToolbarCurrentURL()
+            let isBookmarked = await delegate?.browserToolbarIsCurrentURLBookmarked() ?? false
+            
+            await MainActor.run {
+                let bookmarkTitle = isBookmarked ? "Remove Bookmark" : "Add Bookmark"
+                let bookmarkIcon = isBookmarked ? "bookmark.fill" : "bookmark"
+                let bookmarkItem = NSMenuItem(title: bookmarkTitle, action: #selector(bookmarkMenuItemSelected), keyEquivalent: "")
+                bookmarkItem.target = self
+                bookmarkItem.image = NSImage(systemSymbolName: bookmarkIcon, accessibilityDescription: nil)
+                bookmarkItem.isEnabled = currentURL != nil
+                menu.addItem(bookmarkItem)
+                
+                menu.addItem(NSMenuItem.separator())
+
+                // Manage Bookmarks menu item
+                let manageBookmarksItem = NSMenuItem(title: "Manage Bookmarks", action: #selector(manageBookmarksMenuItemSelected), keyEquivalent: "")
+                manageBookmarksItem.target = self
+                manageBookmarksItem.image = NSImage(systemSymbolName: "book", accessibilityDescription: nil)
+                menu.addItem(manageBookmarksItem)
+
+                // History menu item
+                let historyItem = NSMenuItem(title: "History", action: #selector(historyMenuItemSelected), keyEquivalent: "")
+                historyItem.target = self
+                historyItem.image = NSImage(systemSymbolName: "clock", accessibilityDescription: nil)
+                menu.addItem(historyItem)
+
+                menu.addItem(NSMenuItem.separator())
+
+                // Settings menu item
+                let settingsItem = NSMenuItem(title: "Settings", action: #selector(settingsMenuItemSelected), keyEquivalent: "")
+                settingsItem.target = self
+                settingsItem.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: nil)
+                menu.addItem(settingsItem)
+
+
+                // Position menu below the button
+                let buttonFrame = menuButton.frame
+                let menuLocation = NSPoint(x: buttonFrame.minX, y: buttonFrame.minY)
+                menu.popUp(positioning: nil, at: menuLocation, in: self)
+            }
+        }
+    }
+    
+    @objc private func bookmarkMenuItemSelected() {
+        Task {
+            await delegate?.browserToolbarDidTapAddBookmark()
+        }
+    }
+    
+    @objc private func manageBookmarksMenuItemSelected() {
+        delegate?.browserToolbarDidTapManageBookmarks()
     }
     
     @objc private func settingsMenuItemSelected() {

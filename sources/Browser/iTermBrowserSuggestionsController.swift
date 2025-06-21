@@ -19,6 +19,7 @@ class iTermBrowserSuggestionsController {
         case strongURL = 1_000_000
         case weakSearch = 999_999
         case weakURL = 999_998
+        case bookmarks = 500_000  // visit count gets added to this, and bookmarks take priority over history
         case history = 0  // visit count gets added to this.
     }
 
@@ -30,12 +31,26 @@ class iTermBrowserSuggestionsController {
 
     func suggestions(forQuery query: String) async -> [URLSuggestion] {
         var scoredResults = [ScoredSuggestion]()
+        var seenURLs = Set<String>()
 
-        // Get history suggestions
+        // Get bookmark suggestions first (they have higher priority)
+        if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let bookmarkSuggestions = await getBookmarkSuggestions(for: query)
+            for suggestion in bookmarkSuggestions {
+                scoredResults.append(suggestion)
+                seenURLs.insert(suggestion.suggestion.url)
+            }
+        }
+
+        // Get history suggestions, excluding URLs already covered by bookmarks
         if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             let historySuggestions = await historyController.getHistorySuggestions(for: query,
                                                                                    attributes: attributes)
-            scoredResults.append(contentsOf: historySuggestions)
+            for suggestion in historySuggestions {
+                if !seenURLs.contains(suggestion.suggestion.url) {
+                    scoredResults.append(suggestion)
+                }
+            }
         }
 
         var searchScore: Score
@@ -148,6 +163,52 @@ class iTermBrowserSuggestionsController {
         }
 
         return nil
+    }
+
+    private func getBookmarkSuggestions(for query: String) async -> [ScoredSuggestion] {
+        guard let database = await BrowserDatabase.instance else {
+            return []
+        }
+        
+        let bookmarks = await database.getBookmarkSuggestions(forPrefix: query, limit: 10)
+        var suggestions: [ScoredSuggestion] = []
+        
+        for bookmark in bookmarks {
+            // Get exact visit count for this URL
+            let visitCount = await getVisitCount(for: bookmark.url, database: database)
+            
+            let title = bookmark.title?.isEmpty == false ? bookmark.title! : bookmark.url
+            let displayText = NSAttributedString(string: title, attributes: attributes)
+            
+            let suggestion = URLSuggestion(
+                text: bookmark.url,
+                url: bookmark.url,
+                displayText: displayText,
+                detail: "Bookmark",
+                type: .bookmark
+            )
+            
+            let score = Score.bookmarks.rawValue + visitCount
+            suggestions.append(ScoredSuggestion(suggestion: suggestion, score: score))
+        }
+        
+        return suggestions
+    }
+    
+    private func getVisitCount(for url: String, database: BrowserDatabase) async -> Int {
+        let (hostname, path) = BrowserVisits.parseUrl(url)
+        let query = "SELECT visitCount FROM BrowserVisits WHERE hostname = ? AND path = ?"
+        
+        guard let resultSet = await database.db.executeQuery(query, withArguments: [hostname, path]) else {
+            return 0
+        }
+        
+        var visitCount = 0
+        if resultSet.next() {
+            visitCount = Int(resultSet.longLongInt(forColumn: "visitCount"))
+        }
+        resultSet.close()
+        return visitCount
     }
 
 

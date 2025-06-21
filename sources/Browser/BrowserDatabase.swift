@@ -89,6 +89,38 @@ actor BrowserDatabase {
                 return false
             }
         }
+        
+        // Create BrowserBookmarks table
+        if !db.executeUpdate(BrowserBookmarks.schema(), withArguments: []) {
+            return false
+        }
+        
+        let bookmarksMigrations = BrowserBookmarks.migrations(existingColumns:
+            listColumns(
+                resultSet: db.executeQuery(
+                    BrowserBookmarks.tableInfoQuery(),
+                    withArguments: [])))
+        for migration in bookmarksMigrations {
+            if !db.executeUpdate(migration.query, withArguments: migration.args) {
+                return false
+            }
+        }
+        
+        // Create BrowserBookmarkTags table
+        if !db.executeUpdate(BrowserBookmarkTags.schema(), withArguments: []) {
+            return false
+        }
+        
+        let tagsMigrations = BrowserBookmarkTags.migrations(existingColumns:
+            listColumns(
+                resultSet: db.executeQuery(
+                    BrowserBookmarkTags.tableInfoQuery(),
+                    withArguments: [])))
+        for migration in tagsMigrations {
+            if !db.executeUpdate(migration.query, withArguments: migration.args) {
+                return false
+            }
+        }
 
         return true
     }
@@ -271,5 +303,157 @@ actor BrowserDatabase {
         }
         resultSet.close()
         return results
+    }
+    
+    // MARK: - Bookmark Management
+    
+    func addBookmark(url: String, title: String? = nil) async -> Bool {
+        let bookmark = BrowserBookmarks(url: url, title: title)
+        let (query, args) = bookmark.appendQuery()
+        return db.executeUpdate(query, withArguments: args)
+    }
+    
+    func removeBookmark(url: String) async -> Bool {
+        let (query, args) = BrowserBookmarks.deleteBookmarkQuery(url: url)
+        return db.executeUpdate(query, withArguments: args)
+    }
+    
+    func isBookmarked(url: String) async -> Bool {
+        let (query, args) = BrowserBookmarks.getBookmarkQuery(url: url)
+        guard let resultSet = db.executeQuery(query, withArguments: args) else {
+            return false
+        }
+        let exists = resultSet.next()
+        resultSet.close()
+        return exists
+    }
+    
+    func getBookmark(url: String) async -> BrowserBookmarks? {
+        let (query, args) = BrowserBookmarks.getBookmarkQuery(url: url)
+        guard let resultSet = db.executeQuery(query, withArguments: args) else {
+            return nil
+        }
+        
+        var bookmark: BrowserBookmarks?
+        if resultSet.next() {
+            bookmark = BrowserBookmarks(dbResultSet: resultSet)
+        }
+        resultSet.close()
+        return bookmark
+    }
+    
+    func getAllBookmarks(sortBy: BookmarkSortOption = .dateAdded, offset: Int = 0, limit: Int = 50) async -> [BrowserBookmarks] {
+        let (query, args) = BrowserBookmarks.getAllBookmarksQuery(sortBy: sortBy, offset: offset, limit: limit)
+        return executeBookmarkQuery(query: query, args: args)
+    }
+    
+    func searchBookmarks(terms: String, offset: Int = 0, limit: Int = 50) async -> [BrowserBookmarks] {
+        let (query, args) = BrowserBookmarks.searchQuery(terms: terms, offset: offset, limit: limit)
+        return executeBookmarkQuery(query: query, args: args)
+    }
+    
+    func getBookmarkSuggestions(forPrefix prefix: String, limit: Int = 10) -> [BrowserBookmarks] {
+        let (query, args) = BrowserBookmarks.bookmarkSuggestionsQuery(prefix: prefix, limit: limit)
+        return executeBookmarkQuery(query: query, args: args)
+    }
+    
+    // MARK: - Bookmark Tags Management
+    
+    func addTagToBookmark(url: String, tag: String) async -> Bool {
+        // First get the bookmark's rowid
+        guard let rowId = await getBookmarkRowId(url: url) else {
+            return false
+        }
+        
+        let bookmarkTag = BrowserBookmarkTags(bookmarkRowId: rowId, tag: tag)
+        let (query, args) = bookmarkTag.appendQuery()
+        return db.executeUpdate(query, withArguments: args)
+    }
+    
+    func removeTagFromBookmark(url: String, tag: String) async -> Bool {
+        guard let rowId = await getBookmarkRowId(url: url) else {
+            return false
+        }
+        
+        let bookmarkTag = BrowserBookmarkTags(bookmarkRowId: rowId, tag: tag)
+        let (query, args) = bookmarkTag.removeQuery()
+        return db.executeUpdate(query, withArguments: args)
+    }
+    
+    func getTagsForBookmark(url: String) async -> [String] {
+        guard let rowId = await getBookmarkRowId(url: url) else {
+            return []
+        }
+        
+        let (query, args) = BrowserBookmarkTags.getTagsForBookmarkQuery(bookmarkRowId: rowId)
+        guard let resultSet = db.executeQuery(query, withArguments: args) else {
+            return []
+        }
+        
+        var tags: [String] = []
+        while resultSet.next() {
+            if let tag = BrowserBookmarkTags(dbResultSet: resultSet) {
+                tags.append(tag.tag)
+            }
+        }
+        resultSet.close()
+        return tags
+    }
+    
+    func getAllTags() async -> [String] {
+        let (query, args) = BrowserBookmarkTags.getAllTagsQuery()
+        guard let resultSet = db.executeQuery(query, withArguments: args) else {
+            return []
+        }
+        
+        var tags: [String] = []
+        while resultSet.next() {
+            if let tagName = resultSet.string(forColumn: "tag") {
+                tags.append(tagName)
+            }
+        }
+        resultSet.close()
+        return tags
+    }
+    
+    func searchBookmarksWithTags(searchTerms: String, tags: [String], offset: Int = 0, limit: Int = 50) async -> [BrowserBookmarks] {
+        let (query, args) = BrowserBookmarkTags.searchBookmarksWithTagsQuery(searchTerms: searchTerms, tags: tags, offset: offset, limit: limit)
+        return executeBookmarkQuery(query: query, args: args)
+    }
+    
+    func deleteAllBookmarks() async {
+        _ = db.executeUpdate("DELETE FROM BrowserBookmarks", withArguments: [])
+        _ = db.executeUpdate("DELETE FROM BrowserBookmarkTags", withArguments: [])
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func executeBookmarkQuery(query: String, args: [Any]) -> [BrowserBookmarks] {
+        guard let resultSet = db.executeQuery(query, withArguments: args) else {
+            return []
+        }
+        
+        var results: [BrowserBookmarks] = []
+        while resultSet.next() {
+            if let bookmark = BrowserBookmarks(dbResultSet: resultSet) {
+                results.append(bookmark)
+            }
+        }
+        resultSet.close()
+        return results
+    }
+    
+    private func getBookmarkRowId(url: String) async -> Int64? {
+        let query = "SELECT rowid FROM BrowserBookmarks WHERE url = ?"
+        guard let resultSet = db.executeQuery(query, withArguments: [url]) else {
+            return nil
+        }
+        
+        var rowId: Int64?
+        if resultSet.next() {
+            rowId = resultSet.longLongInt(forColumn: "rowid")
+        }
+        resultSet.close()
+        return rowId
     }
 }
