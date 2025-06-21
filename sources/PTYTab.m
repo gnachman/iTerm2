@@ -1525,7 +1525,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     synthetic.liveSession = live;
     [self setFakeParentWindow:[[FakeWindow alloc] initFromRealWindow:realParentWindow_
                                                              session:live]];
-    [realParentWindow_.window makeFirstResponder:synthetic.textview];
+    [realParentWindow_.window makeFirstResponder:synthetic.mainResponder];
     [self.viewToSessionMap setObject:live forKey:live.view];
 }
 
@@ -1592,7 +1592,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     // This starts the new session's update timer
     [newSession updateDisplayBecause:@"replacing active session with synthetic"];
-    [realParentWindow_.window makeFirstResponder:newSession.textview];
+    [realParentWindow_.window makeFirstResponder:newSession.mainResponder];
 
     // Keep the live session in self.viewToSessionMap so it doesn't get released.
     [self.viewToSessionMap setObject:newSession forKey:newSession.view];
@@ -3873,7 +3873,7 @@ typedef struct {
         [self maximizeAfterApplyingTmuxParseTree:visibleParseTree_ ?: parseTree_
                                   tmuxController:self.tmuxController];
     }
-    [[root_ window] makeFirstResponder:[[self activeSession] textview]];
+    [[root_ window] makeFirstResponder:[[self activeSession] mainResponder]];
 }
 
 + (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree
@@ -4925,7 +4925,7 @@ typedef struct {
         shouldZoom = NO;
     }
     [self updateFlexibleViewColors];
-    [[root_ window] makeFirstResponder:[[self activeSession] textview]];
+    [[root_ window] makeFirstResponder:[[self activeSession] mainResponder]];
     parseTree_ = parseTree;
     visibleParseTree_ = visibleParseTree;
 
@@ -5043,7 +5043,7 @@ typedef struct {
     [temp removeFromSuperview];
     [root_ addSubview:temp];
 
-    [[root_ window] makeFirstResponder:[activeSession_ textview]];
+    [[root_ window] makeFirstResponder:[activeSession_ mainResponder]];
     [realParentWindow_ invalidateRestorableState];
 
     if ([self isTmuxTab]) {
@@ -5111,7 +5111,7 @@ typedef struct {
     savedArrangement_ = nil;
     isMaximized_ = NO;
 
-    [[root_ window] makeFirstResponder:[activeSession_ textview]];
+    [[root_ window] makeFirstResponder:[activeSession_ mainResponder]];
     [realParentWindow_ invalidateRestorableState];
 
     for (SessionView *sessionView in self.sessionViews) {
