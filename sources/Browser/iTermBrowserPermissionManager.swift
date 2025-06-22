@@ -26,7 +26,9 @@ class iTermBrowserPermissionManager: NSObject {
         switch permissionType {
         case .notification:
             decision = await handleNotificationPermissionRequest(origin: origin)
-        case .geolocation, .camera, .microphone, .cameraAndMicrophone:
+        case .geolocation:
+            decision = await handleGeolocationPermissionRequest(origin: origin)
+        case .camera, .microphone, .cameraAndMicrophone:
             // For now, deny these permissions but with logging for future implementation
             DLog("Permission request for \(permissionType.rawValue) from \(origin) - currently not supported, denying")
             decision = .denied
@@ -113,8 +115,29 @@ class iTermBrowserPermissionManager: NSObject {
         }
     }
     
+    // MARK: - Geolocation-Specific Implementation
+
+    private func handleGeolocationPermissionRequest(origin: String) async -> BrowserPermissionDecision {
+        guard let handler = iTermBrowserGeolocationHandler.instance else {
+            return .denied
+        }
+        switch handler.systemAuthorizationStatus {
+        case .denied:
+            return .denied
+        case .notDetermined:
+            let granted = await handler.requestAuthorization(for: origin)
+            if !granted {
+                return .denied
+            }
+        case .systemAuthorized:
+            break
+        }
+        // Show website permission dialog
+        return await showPermissionDialog(for: .geolocation, origin: origin)
+    }
+
     // MARK: - Notification-Specific Implementation
-    
+
     private func handleNotificationPermissionRequest(origin: String) async -> BrowserPermissionDecision {
         // First check if system notifications are available
         let center = UNUserNotificationCenter.current()

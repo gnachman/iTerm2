@@ -3602,6 +3602,13 @@
 		A6CBB7B02E087DBF00B2CCCB /* notification-bridge.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB7AD2E087DBF00B2CCCB /* notification-bridge.js */; };
 		A6CBB7B22E087F8A00B2CCCB /* iTermBrowserNotificationHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CBB7B12E087F8A00B2CCCB /* iTermBrowserNotificationHandler.swift */; };
 		A6CBB7B42E088E5C00B2CCCB /* notifications-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB7B32E088E1000B2CCCB /* notifications-demo.html */; };
+		A6CBB7B62E0899A600B2CCCB /* iTermBrowserGeolocationHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CBB7B52E08999E00B2CCCB /* iTermBrowserGeolocationHandler.swift */; };
+		A6CBB7B82E08B64100B2CCCB /* geolocation-bridge.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB7B72E08B64100B2CCCB /* geolocation-bridge.js */; };
+		A6CBB7B92E08B64100B2CCCB /* geolocation-bridge.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB7B72E08B64100B2CCCB /* geolocation-bridge.js */; };
+		A6CBB7BA2E08B64100B2CCCB /* geolocation-bridge.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB7B72E08B64100B2CCCB /* geolocation-bridge.js */; };
+		A6CBB7BC2E08BDD600B2CCCB /* geolocation-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB7BB2E08BD9300B2CCCB /* geolocation-demo.html */; };
+		A6CBB7BD2E08BDD600B2CCCB /* geolocation-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB7BB2E08BD9300B2CCCB /* geolocation-demo.html */; };
+		A6CBB7BE2E08BDD600B2CCCB /* geolocation-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB7BB2E08BD9300B2CCCB /* geolocation-demo.html */; };
 		A6CC16541CF012E300E8C148 /* iTermCarbonHotKeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */; };
 		A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */; };
 		A6CC49882C06E173003484B2 /* iTermPermissionsHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */; };
@@ -7825,6 +7832,9 @@
 		A6CBB7AD2E087DBF00B2CCCB /* notification-bridge.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "notification-bridge.js"; sourceTree = "<group>"; };
 		A6CBB7B12E087F8A00B2CCCB /* iTermBrowserNotificationHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserNotificationHandler.swift; sourceTree = "<group>"; };
 		A6CBB7B32E088E1000B2CCCB /* notifications-demo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "notifications-demo.html"; sourceTree = "<group>"; };
+		A6CBB7B52E08999E00B2CCCB /* iTermBrowserGeolocationHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserGeolocationHandler.swift; sourceTree = "<group>"; };
+		A6CBB7B72E08B64100B2CCCB /* geolocation-bridge.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "geolocation-bridge.js"; sourceTree = "<group>"; };
+		A6CBB7BB2E08BD9300B2CCCB /* geolocation-demo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "geolocation-demo.html"; sourceTree = "<group>"; };
 		A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCarbonHotKeyController.h; sourceTree = "<group>"; };
 		A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCarbonHotKeyController.m; sourceTree = "<group>"; };
 		A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermPermissionsHelper.swift; sourceTree = "<group>"; };
@@ -12967,15 +12977,17 @@
 		A6F7D4B32E0340A30065D09C /* Browser */ = {
 			isa = PBXGroup;
 			children = (
-				A6CBB7B32E088E1000B2CCCB /* notifications-demo.html */,
 				A6AF79CB2E065AA5008D77BA /* bookmarks-page.html */,
 				A6AF79CF2E065C93008D77BA /* bookmarks-page.js */,
 				A6F7D5032E05C7D60065D09C /* detect-favicon.js */,
 				A6F7D4C62E037E780065D09C /* error-page.html */,
+				A6CBB7B72E08B64100B2CCCB /* geolocation-bridge.js */,
+				A6CBB7BB2E08BD9300B2CCCB /* geolocation-demo.html */,
 				A6F7D50D2E05CEDA0065D09C /* history-page.html */,
 				A6F7D5072E05CEBA0065D09C /* history-page.js */,
 				A6F7D4BE2E037BB20065D09C /* iterm-browser-common.css */,
 				A6CBB7AD2E087DBF00B2CCCB /* notification-bridge.js */,
+				A6CBB7B32E088E1000B2CCCB /* notifications-demo.html */,
 				A6F7D5142E05F38F0065D09C /* probe-password.js */,
 				A6F7D4CA2E037EA80065D09C /* settings-page.html */,
 				A6F7D4D42E03D99F0065D09C /* view-source.html */,
@@ -12990,6 +13002,7 @@
 				A6F7D4E42E04AE7D0065D09C /* iTermAdblockManager.swift */,
 				A6F7D4C22E037BC80065D09C /* iTermBrowserCSSLoader.swift */,
 				A6AF79D02E065C93008D77BA /* iTermBrowserBookmarkViewHandler.swift */,
+				A6CBB7B52E08999E00B2CCCB /* iTermBrowserGeolocationHandler.swift */,
 				A6F7D4D22E03D0A00065D09C /* iTermBrowserDownload.swift */,
 				A6F7D4BA2E0373110065D09C /* iTermBrowserErrorHandler.swift */,
 				A6F7D5012E05C5C40065D09C /* iTermBrowserFavicon.swift */,
@@ -15160,6 +15173,7 @@
 				1D6ED9A619AEA20D005A7799 /* DefaultGlobalKeyMap.plist in Resources */,
 				A6643F132CA62190004B757B /* coderabbitai.png in Resources */,
 				53AA764B237E35A50094D75A /* OpenQuicklyActionIcon.png in Resources */,
+				A6CBB7BA2E08B64100B2CCCB /* geolocation-bridge.js in Resources */,
 				1D6ED9A719AEA20D005A7799 /* EncodingsWithLowerCase.plist in Resources */,
 				A67F61AF214395B70093940A /* graphic_psql.png in Resources */,
 				A6BEE47C26E0A624009C0C2C /* FilterIndicator.png in Resources */,
@@ -15343,6 +15357,7 @@
 				A697CE392D976BB00031583F /* ComposerMenuTip.png in Resources */,
 				A635F1E525076203008C3038 /* iTermActionsEditingViewController.xib in Resources */,
 				A6CBB7AE2E087DBF00B2CCCB /* notification-bridge.js in Resources */,
+				A6CBB7BE2E08BDD600B2CCCB /* geolocation-demo.html in Resources */,
 				A6109B662B969B4100D8E4E9 /* graphic_neovim@2x.png in Resources */,
 				A6C838B22CB9ACF90062BE68 /* success-sound.mp3 in Resources */,
 				A6C838B32CB9ACF90062BE68 /* error-sound.mp3 in Resources */,
@@ -15803,6 +15818,7 @@
 				1DBBA5DF1B3CB0590026E3B6 /* restore-arrangement.png in Resources */,
 				A697CE922D97C88B0031583F /* PasswordManagerMenuTip.png in Resources */,
 				A697CE932D97C88B0031583F /* PasswordManagerMenuTip@2x.png in Resources */,
+				A6CBB7B82E08B64100B2CCCB /* geolocation-bridge.js in Resources */,
 				A65B72561B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
 				A69C93472121140100531438 /* iTermStatusBarLargeComposerViewController.xib in Resources */,
 				A6024B84254D17C00036D6CF /* iTermAddTriggerViewController.xib in Resources */,
@@ -15829,6 +15845,7 @@
 				A6F7D4CB2E037EA80065D09C /* settings-page.html in Resources */,
 				53B93E0021F640BB001EC59C /* iTermBadgeConfigurationWindowController.xib in Resources */,
 				A6EC937724E78A5900EEADEF /* iTermEditSnippetWindowController.xib in Resources */,
+				A6CBB7BD2E08BDD600B2CCCB /* geolocation-demo.html in Resources */,
 				A67D0D7B1A2EE12A003A8B35 /* PasteView.xib in Resources */,
 				1DBBA5E21B3CB0590026E3B6 /* restore-arrangement@2x.png in Resources */,
 				A67D0D6C1A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib in Resources */,
@@ -16064,6 +16081,7 @@
 				A6F18B352AE2F39C006C08EE /* uniE0C1_flame-thin.pdf in Resources */,
 				A67D0D4A1A2EE12A003A8B35 /* configPanel.strings in Resources */,
 				A6CB24A32C68149100005824 /* it2tip in Resources */,
+				A6CBB7B92E08B64100B2CCCB /* geolocation-bridge.js in Resources */,
 				A66F52D32106F6F100571168 /* gitdown@2x.png in Resources */,
 				A61BB46421CA2D5A0027F47D /* iTerm2Script.icns in Resources */,
 				A6CB24A22C68149100005824 /* it2attention in Resources */,
@@ -16091,6 +16109,7 @@
 				A62DBB9F20F47CFA008B63D1 /* GoForward@2x.png in Resources */,
 				A6E7AE8F214394DD00DE9F3B /* graphic_composer.png in Resources */,
 				A67F61D0214395C60093940A /* graphic_ruby.png in Resources */,
+				A6CBB7BC2E08BDD600B2CCCB /* geolocation-demo.html in Resources */,
 				53FF980B20918D23008688D7 /* template_basic_simple.py in Resources */,
 				A62DBB9C20F47CFA008B63D1 /* GoForward.png in Resources */,
 				A653F03523AB32F800D7979A /* iTermShellIntegrationWindowController.xib in Resources */,
@@ -17482,6 +17501,7 @@
 				A648DAC72427E8E900C2FF02 /* iTermSearchQueryDidChangeNotification.m in Sources */,
 				A667C23B276BD931006B4DEF /* VT100StateTransition.m in Sources */,
 				A61A85AA24F23C9B00B03880 /* iTermGlobalSearchOutlineView.m in Sources */,
+				A6CBB7B62E0899A600B2CCCB /* iTermBrowserGeolocationHandler.swift in Sources */,
 				A6B836132D38802400B5993C /* NonDefaultIndicator.swift in Sources */,
 				A662B2472D937C6D00C3D79A /* NSTableView+iTerm.swift in Sources */,
 				A6A4B2A32418977300184EAC /* iTermDynamicProfileManager.m in Sources */,

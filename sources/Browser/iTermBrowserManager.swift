@@ -122,6 +122,17 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
                 configuration.userContentController.addUserScript(notificationScript)
             }
 
+            let geolocationHandler = iTermBrowserGeolocationHandler.instance
+            if let geolocationHandler {
+                let geolocationScript = WKUserScript(
+                    source: geolocationHandler.javascript,
+                    injectionTime: .atDocumentStart,
+                    forMainFrameOnly: false
+                )
+                configuration.userContentController.add(self, name: iTermBrowserGeolocationHandler.messageHandlerName)
+                configuration.userContentController.addUserScript(geolocationScript)
+            }
+
             // Trick google into thinking we're a real browser. Who knows what this might break.
             configuration.applicationNameForUserAgent = "Safari/16.4"
 
@@ -376,6 +387,12 @@ extension iTermBrowserManager {
             return
         }
         
+        // Handle geolocation messages
+        if message.name == iTermBrowserGeolocationHandler.messageHandlerName {
+            iTermBrowserGeolocationHandler.instance?.handleMessage(webView: webView, message: message)
+            return
+        }
+        
         DLog(message.name)
 
         // For other messages, require dictionary format and current URL
@@ -448,6 +465,16 @@ extension iTermBrowserManager: WKNavigationDelegate {
         injectMessageHandlersIfNeeded()
 
         notifyDelegateOfUpdates()
+        
+        // Update permission states for geolocation
+        if let url = webView.url {
+            let originString = iTermBrowserPermissionManager.normalizeOrigin(from: url)
+            Task {
+                await iTermBrowserGeolocationHandler.instance?.updatePermissionState(
+                    for: originString,
+                    webView: webView)
+            }
+        }
 
         // Try to detect and load favicon
         Task {
