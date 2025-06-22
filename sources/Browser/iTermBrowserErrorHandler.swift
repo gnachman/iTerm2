@@ -13,7 +13,7 @@ import Foundation
 class iTermBrowserErrorHandler: NSObject, iTermBrowserPageHandler {
     private var pendingErrorHTML: String?
     
-    static let errorURL = URL(string: "iterm2-about:error")!
+    static let errorURL = URL(string: "\(iTermBrowserSchemes.about):error")!
     
     // MARK: - Public Interface
     

@@ -17,7 +17,7 @@ import Foundation
 @objc(iTermBrowserHistoryViewHandler)
 @MainActor
 class iTermBrowserHistoryViewHandler: NSObject, iTermBrowserPageHandler {
-    static let historyURL = URL(string: "iterm2-about:history")!
+    static let historyURL = URL(string: "\(iTermBrowserSchemes.about):history")!
     
     weak var delegate: iTermBrowserHistoryViewHandlerDelegate?
     private let historyController: iTermBrowserHistoryController

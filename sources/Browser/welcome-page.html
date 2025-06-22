@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to the iTerm2 Browser!</title>
+    <style>
+        {{COMMON_CSS}}
+        
+        .welcome-container {
+            max-width: 800px;
+            text-align: center;
+        }
+        
+        .welcome-header {
+            margin-bottom: 48px;
+        }
+        
+        .welcome-header h1 {
+            font-size: 3.5em;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--accent-color, #007aff), var(--secondary-accent, #5856d6));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .welcome-header .subtitle {
+            font-size: 1.3em;
+            opacity: 0.8;
+            margin-bottom: 32px;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+            margin: 48px 0;
+        }
+        
+        .feature-card {
+            background: var(--card-bg, rgba(255, 255, 255, 0.1));
+            border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2));
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 32px var(--shadow-color, rgba(0, 0, 0, 0.1));
+        }
+        
+        .feature-card .icon {
+            font-size: 2.5em;
+            margin-bottom: 16px;
+            display: block;
+        }
+        
+        .feature-card h3 {
+            font-size: 1.2em;
+            margin-bottom: 12px;
+            color: var(--text-color);
+        }
+        
+        .feature-card p {
+            font-size: 0.95em;
+            opacity: 0.8;
+            line-height: 1.5;
+        }
+        
+        .cta-section {
+            margin-top: 48px;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: var(--button-bg, #007aff);
+            color: var(--button-text, white);
+            text-decoration: none;
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .cta-button:hover {
+            background: var(--button-hover-bg, #0056b3);
+            transform: translateY(-2px);
+        }
+        
+        .links-section {
+            margin-top: 32px;
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        
+        .quick-link {
+            color: var(--link-color, #007aff);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+        
+        .quick-link:hover {
+            background: var(--link-hover-bg, rgba(0, 122, 255, 0.1));
+        }
+        
+        @media (max-width: 600px) {
+            .welcome-header h1 {
+                font-size: 2.5em;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .links-section {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container welcome-container">
+        <div class="welcome-header">
+            <h1>Welcome to iTerm2</h1>
+            <p class="subtitle">Where terminal meets web browser. The ultimate development environment for macOS: the trowser.</p>
+        </div>
+        
+        <div class="features-grid">
+            <div class="feature-card">
+                <span class="icon">🌐</span>
+                <h3>Hotkey Browser Windows</h3>
+                <p>Instantly summon a browser window with a global hotkey. Perfect for quick web lookups while coding in any app.</p>
+            </div>
+            
+            <div class="feature-card">
+                <span class="icon">⚡</span>
+                <h3>Terminal + Browser Side-by-Side</h3>
+                <p>Split panes let you run commands and view results in your browser simultaneously. Lightning-fast web development workflow.</p>
+            </div>
+            
+            <div class="feature-card">
+                <span class="icon">⌨️</span>
+                <h3>Full iTerm2 Navigation</h3>
+                <p>Use all your familiar iTerm2 shortcuts and key bindings in the browser. Switch windows, navigate tabs, and control everything from the keyboard.</p>
+            </div>
+            
+            <div class="feature-card">
+                <span class="icon">🎨</span>
+                <h3>Deep Customization</h3>
+                <p>Apply your iTerm2 themes, bind custom keystrokes, and integrate the browser seamlessly into your terminal workflow.</p>
+            </div>
+        </div>
+        
+        <div class="cta-section">
+            <a href="iterm2-about:settings" class="cta-button">Configure iTerm2</a>
+        </div>
+        
+        <div class="links-section">
+            <a href="iterm2-about:history" class="quick-link">Browse History</a>
+            <a href="iterm2-about:bookmarks" class="quick-link">Manage Bookmarks</a>
+            <a href="https://iterm2.com/documentation.html" class="quick-link">Documentation</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -17,7 +17,7 @@ func detectFavicon(webView: WKWebView) async throws -> Either<NSImage, URL> {
     }
 
     // For internal pages, use the main app icon
-    if currentURL.absoluteString.hasPrefix("iterm2-about:") {
+    if currentURL.absoluteString.hasPrefix(iTermBrowserSchemes.about) {
         return .left(NSApp.applicationIconImage)
     }
 
