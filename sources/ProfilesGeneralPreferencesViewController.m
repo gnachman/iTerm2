@@ -278,16 +278,6 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         [self commandTypeDidChangeFrom:before to:value];
     };
 
-    if (![iTermAdvancedSettingsModel browserProfiles]) {
-        NSRect frame = _profileTypeContainer.frame;
-        [_profileTypeContainer removeFromSuperview];
-        _profileTypeContainer = nil;
-
-        const CGFloat height = frame.size.height;
-        frame = _afterProfileType.frame;
-        frame.origin.y += height;
-        _afterProfileType.frame = frame;
-    }
     _customCommand.cell.usesSingleLineMode = YES;
     _customCommand.hidden = YES;
 

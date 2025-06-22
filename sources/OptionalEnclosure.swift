@@ -13,3 +13,6 @@ class TerminalModeEnclosure: ModalEnclosure {}
 
 @objc(iTermBrowserModeEnclosure)
 class BrowserModeEnclosure: ModalEnclosure {}
+
+@objc(iTermHiddenModeEnclosure)
+class HiddenModeEnclosure: ModalEnclosure {}

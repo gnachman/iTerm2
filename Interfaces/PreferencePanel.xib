@@ -1803,11 +1803,11 @@ DQ
             </connections>
         </customObject>
         <customView id="xGo-ez-mEe" userLabel="Prefs - Profiles - General" customClass="iTermPrefsProfilesGeneralView">
-            <rect key="frame" x="0.0" y="0.0" width="686" height="566"/>
+            <rect key="frame" x="0.0" y="0.0" width="686" height="494"/>
             <autoresizingMask key="autoresizingMask"/>
             <subviews>
                 <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2133" userLabel="Name text field">
-                    <rect key="frame" x="146" y="525" width="520" height="21"/>
+                    <rect key="frame" x="146" y="453" width="520" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="2136">
                         <font key="font" metaFont="system"/>
@@ -1820,7 +1820,7 @@ DQ
                     </connections>
                 </textField>
                 <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2134" userLabel="Name label">
-                    <rect key="frame" x="19" y="528" width="118" height="16"/>
+                    <rect key="frame" x="19" y="456" width="118" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Name:" id="2135">
                         <font key="font" metaFont="system"/>
@@ -1829,7 +1829,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="o8r-qZ-dn4" customClass="iTermBrowserModeEnclosure">
-                    <rect key="frame" x="20" y="461" width="645" height="30"/>
+                    <rect key="frame" x="20" y="389" width="645" height="30"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="m4L-Ud-eRe" userLabel="Initial URL Label">
@@ -1856,12 +1856,12 @@ DQ
                         </textField>
                     </subviews>
                 </customView>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Mbz-sF-N6i" userLabel="Profile Type Container">
-                    <rect key="frame" x="21" y="496" width="645" height="24"/>
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Mbz-sF-N6i" userLabel="Profile Type Container" customClass="iTermHiddenModeEnclosure">
+                    <rect key="frame" x="21" y="418" width="645" height="30"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jtn-iS-uQ0" userLabel="Name label">
-                            <rect key="frame" x="-2" y="5" width="118" height="16"/>
+                            <rect key="frame" x="-2" y="11" width="118" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Profile Type:" id="6KX-JG-Yon">
                                 <font key="font" metaFont="system"/>
@@ -1870,7 +1870,7 @@ DQ
                             </textFieldCell>
                         </textField>
                         <segmentedControl verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VI8-Qb-i2z">
-                            <rect key="frame" x="123" y="0.0" width="269" height="24"/>
+                            <rect key="frame" x="123" y="6" width="269" height="24"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <segmentedCell key="cell" borderStyle="border" alignment="left" style="rounded" trackingMode="selectOne" id="Tbo-Nq-0gg">
                                 <font key="font" metaFont="system"/>
@@ -1885,12 +1885,12 @@ DQ
                         </segmentedControl>
                     </subviews>
                 </customView>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jFD-jQ-u7E" userLabel="After profile type container">
-                    <rect key="frame" x="16" y="74" width="650" height="387"/>
+                <customView identifier="AfterProfileTypeContainer" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jFD-jQ-u7E" userLabel="After profile type container">
+                    <rect key="frame" x="16" y="0.0" width="650" height="389"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2141" userLabel="Shortcut key label">
-                            <rect key="frame" x="31" y="370" width="90" height="16"/>
+                            <rect key="frame" x="31" y="371" width="90" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Shortcut key:      " id="2182">
                                 <font key="font" metaFont="system"/>
@@ -1899,7 +1899,7 @@ DQ
                             </textFieldCell>
                         </textField>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="yEs-Em-Hdp" customClass="iTermTerminalModeEnclosure">
-                            <rect key="frame" x="0.0" y="168" width="650" height="30"/>
+                            <rect key="frame" x="0.0" y="167" width="650" height="30"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             <subviews>
                                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VCV-s2-py0">
@@ -1958,7 +1958,7 @@ DQ
                             </subviews>
                         </customView>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gZ1-Kt-xEF">
-                            <rect key="frame" x="130" y="233" width="520" height="27"/>
+                            <rect key="frame" x="130" y="234" width="520" height="27"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <subviews>
                                 <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="flV-bs-rIS">
@@ -1984,7 +1984,7 @@ DQ
                             </subviews>
                         </customView>
                         <tokenField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3245" userLabel="Tags token Field">
-                            <rect key="frame" x="130" y="341" width="520" height="21"/>
+                            <rect key="frame" x="130" y="342" width="520" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <string key="toolTip">Tags with slashes create a hierarchy which you can navigate in the Profiles menu or in the tags list adjacent to lists of profiles.</string>
                             <tokenFieldCell key="cell" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="left" placeholderString="Example: linux, dark bg, tag/subtag/subsubtag" drawsBackground="YES" allowsEditingTextAttributes="YES" id="3246">
@@ -2001,7 +2001,7 @@ DQ
                             </connections>
                         </tokenField>
                         <textField toolTip="In the Minimal theme, tabs can show a subtitle as a second line of text." focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UWv-op-rJa" userLabel="Subtitle text field">
-                            <rect key="frame" x="130" y="236" width="520" height="21"/>
+                            <rect key="frame" x="130" y="237" width="520" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Interpolated string" drawsBackground="YES" id="dMl-Zb-Sed">
                                 <font key="font" metaFont="system"/>
@@ -2014,7 +2014,7 @@ DQ
                             </connections>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5035" userLabel="Schemes handled label">
-                            <rect key="frame" x="3" y="3" width="118" height="16"/>
+                            <rect key="frame" x="3" y="4" width="118" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="URL schemes:" id="5036">
                                 <font key="font" metaFont="system"/>
@@ -2023,7 +2023,7 @@ DQ
                             </textFieldCell>
                         </textField>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="815-r4-Z3I">
-                            <rect key="frame" x="0.0" y="206" width="650" height="22"/>
+                            <rect key="frame" x="0.0" y="207" width="650" height="22"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <subviews>
                                 <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Xzz-Fo-TWV" userLabel="Name label">
@@ -2064,7 +2064,7 @@ DQ
                             </subviews>
                         </customView>
                         <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2142" userLabel="Shortcut selection popup button">
-                            <rect key="frame" x="127" y="363" width="527" height="25"/>
+                            <rect key="frame" x="127" y="364" width="527" height="25"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <popUpButtonCell key="cell" type="push" title="⌃⌘A" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" state="on" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="2163" id="2143">
                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -2121,7 +2121,7 @@ DQ
                             </connections>
                         </popUpButton>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3243" userLabel="Tags label">
-                            <rect key="frame" x="84" y="344" width="37" height="16"/>
+                            <rect key="frame" x="84" y="345" width="37" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Tags:" id="3244">
                                 <font key="font" metaFont="system"/>
@@ -2130,7 +2130,7 @@ DQ
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1Lq-Jr-ede" userLabel="Name label">
-                            <rect key="frame" x="70" y="240" width="51" height="16"/>
+                            <rect key="frame" x="70" y="241" width="51" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Subtitle" id="Z3d-96-Mba">
                                 <font key="font" metaFont="system"/>
@@ -2139,7 +2139,7 @@ DQ
                             </textFieldCell>
                         </textField>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0Gk-SE-iET" customClass="iTermTerminalModeEnclosure">
-                            <rect key="frame" x="0.0" y="19" width="650" height="151"/>
+                            <rect key="frame" x="0.0" y="20" width="650" height="151"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <subviews>
                                 <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="G1r-AP-exF">
@@ -2263,7 +2263,7 @@ DQ
                             </subviews>
                         </customView>
                         <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5037" userLabel="URL Schemes popup button">
-                            <rect key="frame" x="127" y="-4" width="527" height="26"/>
+                            <rect key="frame" x="127" y="-3" width="527" height="26"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" id="5038">
                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -2276,7 +2276,7 @@ DQ
                             </connections>
                         </popUpButton>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NSI-ew-7Hx" customClass="iTermTerminalModeEnclosure">
-                            <rect key="frame" x="76" y="258" width="574" height="78"/>
+                            <rect key="frame" x="76" y="259" width="574" height="78"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <subviews>
                                 <button horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kFr-1J-iPo">
@@ -2383,7 +2383,7 @@ DQ
                 </customView>
             </subviews>
             <accessibility identifier="prefsProfilesGeneral"/>
-            <point key="canvasLocation" x="1041" y="-779"/>
+            <point key="canvasLocation" x="1041" y="-815"/>
         </customView>
         <customView id="SCN-fS-hNB" userLabel="Prefs - Profiles - Colors" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="560" height="894"/>
@@ -5494,7 +5494,7 @@ Refer to the manuals for individual applications to see if they support these mo
             <subviews>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8NQ-pZ-Wxy" customClass="iTermTerminalModeEnclosure">
                     <rect key="frame" x="16" y="1" width="764" height="375"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5778">
                             <rect key="frame" x="-2" y="358" width="175" height="16"/>
