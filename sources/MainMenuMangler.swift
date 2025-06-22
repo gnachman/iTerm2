@@ -22,7 +22,9 @@ class MainMenuMangler: NSObject {
 
     @objc func start(web: NSMenuItem) {
         if !iTermAdvancedSettingsModel.browserProfiles() {
-            NSApp.mainMenu?.removeItem(web)
+            if NSApp.mainMenu?.items.contains(web) ?? false {
+                NSApp.mainMenu?.removeItem(web)
+            }
             return
         }
         self.web = web

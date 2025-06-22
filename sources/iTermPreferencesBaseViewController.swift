@@ -7,38 +7,66 @@
 
 fileprivate let terminalModeKey = "terminal mode"
 fileprivate let browserModeKey = "browser mode"
+fileprivate let hiddenModeKey = "hidden mode"
 
 @objc
 extension iTermPreferencesBaseViewController {
+    @objc(enterBrowserModeForTabViewItem:)
+    func enterBrowserMode(tabViewItem: NSTabViewItem) -> Bool {
+        return moveSubviews(removeKey: terminalModeKey,
+                            revealKey: browserModeKey,
+                            tabViewItem: tabViewItem)
+    }
 
-    @objc(moveSubviewsForBrowserMode:tabViewItem:)
-    func moveSubviews(browserMode: Bool, tabViewItem: NSTabViewItem) -> Bool {
-        let contentView = view
+    @objc(enterTerminalModeForTabViewItem:)
+    func enterTerminalMode(tabViewItem: NSTabViewItem) -> Bool {
+        return moveSubviews(removeKey: browserModeKey,
+                            revealKey: terminalModeKey,
+                            tabViewItem: tabViewItem)
+    }
 
-        let needsReveal: Bool
+    @objc(enterHiddenModeForTabViewItem:)
+    func enterHiddenMode(tabViewItem: NSTabViewItem) -> Bool {
+        let a = moveSubviews(removeKey: browserModeKey,
+                             revealKey: "",
+                             tabViewItem: tabViewItem)
+        let b = moveSubviews(removeKey: hiddenModeKey,
+                             revealKey: "",
+                             tabViewItem: tabViewItem)
+        return a && b
+    }
+
+    private func initializeIfNeeded(contentView: NSView,
+                                    tabViewItem: NSTabViewItem) -> Bool {
         if internalState.count == 0 {
-            needsReveal = false
             let terminalEnclosures: [TerminalModeEnclosure] = findEnclosures(in: contentView).sorted { $0.frame.origin.y > $1.frame.origin.y }
             let browserEnclosures: [BrowserModeEnclosure] = findEnclosures(in: contentView).sorted { $0.frame.origin.y > $1.frame.origin.y }
+            let hiddenEnclosures: [HiddenModeEnclosure] = findEnclosures(in: contentView).sorted { $0.frame.origin.y > $1.frame.origin.y }
             initialize(terminalEnclosures: terminalEnclosures,
                        browserEnclosures: browserEnclosures,
+                       hiddenEnclosures: hiddenEnclosures,
                        tabViewItem: tabViewItem)
+            return false
         } else {
-            needsReveal = true
+            return true
         }
-        if browserMode {
-            DLog("Setting browser mode on. Remove terminal views.")
-            self.remove(internalState: internalState[terminalModeKey] as! InternalState)
-            if needsReveal {
-                DLog("Still setting browser mode on. Reveal browser views.")
-                self.reveal(internalState: internalState[browserModeKey] as! InternalState)
-            }
-        } else {
-            DLog("Setting terminal mode on. Remove brwoser views.")
-            self.remove(internalState: internalState[browserModeKey] as! InternalState)
-            if needsReveal {
-                DLog("Still setting terminal mode on. Reveal terminal views.")
-                self.reveal(internalState: internalState[terminalModeKey] as! InternalState)
+    }
+
+    private func moveSubviews(removeKey: String,
+                              revealKey: String,
+                              tabViewItem: NSTabViewItem) -> Bool {
+        DLog("START MOVE SUBVIEWS: removeKey: \(removeKey), revealKey: \(revealKey)")
+        let contentView = view
+
+        let needsReveal = initializeIfNeeded(contentView: contentView,
+                                             tabViewItem: tabViewItem)
+        if let state = internalState[removeKey] as? InternalState {
+            self.remove(internalState: state)
+        }
+        if needsReveal {
+            DLog("Still setting browser mode on. Reveal browser views.")
+            if let state = internalState[revealKey] as? InternalState {
+                self.reveal(internalState: state)
             }
         }
         return hasVisibleControls(in: view)
@@ -92,11 +120,14 @@ extension iTermPreferencesBaseViewController {
 extension iTermPreferencesBaseViewController {
     private func initialize(terminalEnclosures: [TerminalModeEnclosure],
                             browserEnclosures: [BrowserModeEnclosure],
+                            hiddenEnclosures: [HiddenModeEnclosure],
                             tabViewItem: NSTabViewItem) {
         internalState[terminalModeKey] = makeInternalState(terminalEnclosures,
                                                            viewController: self)
         internalState[browserModeKey] = makeInternalState(browserEnclosures,
                                                           viewController: self)
+        internalState[hiddenModeKey] = makeInternalState(hiddenEnclosures,
+                                                         viewController: self)
     }
 
     private func makeInternalState<T: ModalEnclosure>(
@@ -131,8 +162,8 @@ extension iTermPreferencesBaseViewController {
             }
             var heightAdjustments = [NSView: CGFloat]()
             for (view, height) in heightAdjustmentTuples {
-                print("Adjustment for \(view) is \(height). Initial frame is \(view.frame)")
                 heightAdjustments[view, default: 0] += height
+                DLog("Increment adjust for \(view.it_description) by \(height) to \(heightAdjustments[view]!). Initial frame is \(view.frame)")
             }
 
             let removedTabs = findTabsToRemove(afterRemovingEnclosures: enclosures)
@@ -165,7 +196,7 @@ extension iTermPreferencesBaseViewController {
         var flippedFrame = flippedView.frame
         flippedFrame.size.height += totalHeightReduction * sign
         flippedView.frame = flippedFrame
-        print("For \(self) adjust flipped view height by \(totalHeightReduction * sign)")
+        DLog("For \(self) adjust flipped view height by \(totalHeightReduction * sign)")
     }
 
 
@@ -180,7 +211,7 @@ extension iTermPreferencesBaseViewController {
             var frame = view.frame
             frame.origin.y += adjustment
             view.frame = frame
-            DLog("Move \(view) by +\(adjustment). New frame is \(view.frame)")
+            DLog("Move \(view.it_description) by +\(adjustment). New frame is \(view.frame)")
         }
         DLog("End remove")
         // Handle nested tab views - remove tabs that have no visible controls
@@ -206,7 +237,7 @@ extension iTermPreferencesBaseViewController {
             var frame = view.frame
             frame.origin.y -= adjustment
             view.frame = frame
-            DLog("Move \(view) by -\(adjustment). New frame is \(view.frame)")
+            DLog("Move \(view.it_description) by -\(adjustment). New frame is \(view.frame)")
         }
         DLog("End reveal")
         // Handle nested tab views - remove tabs that have no visible controls

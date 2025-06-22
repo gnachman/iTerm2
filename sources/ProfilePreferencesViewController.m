@@ -39,6 +39,13 @@
 #import "ProfilesWindowPreferencesViewController.h"
 #import "ProfilesSessionPreferencesViewController.h"
 
+typedef NS_ENUM(NSUInteger, BrowserMode) {
+    BrowserModeUninitialized,
+    BrowserModeOff,
+    BrowserModeOn,
+    BrowserModeHidden
+};
+
 @interface NSWindow(LazyHacks)
 - (void)safeMakeFirstResponder:(id)view;
 @end
@@ -126,12 +133,13 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     NSRect _desiredFrame;
     BOOL _needsWarning;
     BOOL _initialized;
-    BOOL _browserMode;
+    BrowserMode _browserMode;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
+        _browserMode = BrowserModeUninitialized;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(reloadProfiles)
                                                      name:kReloadAllProfiles
@@ -492,15 +500,33 @@ andEditComponentWithIdentifier:(NSString *)identifier
 }
 
 - (void)updateBrowserMode:(Profile *)profile {
-    const BOOL browserMode = [profile[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue];
-    if (browserMode != _browserMode) {
-        _browserMode = browserMode;
-        _initialized = YES;
+    BrowserMode desiredMode;
+    if (![iTermAdvancedSettingsModel browserProfiles]) {
+        desiredMode = BrowserModeHidden;
+    } else {
+        const BOOL profileWantsBrowserMode = [profile[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue];
+        desiredMode = profileWantsBrowserMode ? BrowserModeOn : BrowserModeOff;
+    }
+    if (desiredMode != _browserMode) {
+        _browserMode = desiredMode;
         NSInteger i = 0;
         for (NSArray *tuple in [self tabViewControllerTuples]) {
             NSTabViewItem *tabViewItem = tuple[0];
             iTermProfilePreferencesBaseViewController *vc = tuple[1];
-            const BOOL wantTab = [vc moveSubviewsForBrowserMode:browserMode tabViewItem:tabViewItem];
+            BOOL wantTab = YES;
+            switch (desiredMode) {
+                case BrowserModeOn:
+                    wantTab = [vc enterBrowserModeForTabViewItem:tabViewItem];
+                    break;
+                case BrowserModeOff:
+                    wantTab = [vc enterTerminalModeForTabViewItem:tabViewItem];
+                    break;
+                case BrowserModeHidden:
+                    wantTab = [vc enterHiddenModeForTabViewItem:tabViewItem];
+                    break;
+                case BrowserModeUninitialized:
+                    assert(NO);
+            }
             const BOOL haveTab = [_tabView.tabViewItems containsObject:tabViewItem];
             if (wantTab) {
                 if (!haveTab) {
