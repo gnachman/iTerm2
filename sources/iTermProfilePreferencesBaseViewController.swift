@@ -8,7 +8,7 @@
 @objc
 extension iTermProfilePreferencesBaseViewController {
     private static var originalFramesKey = "iTermOriginalFrames"
-    private static var optionalEnclosuresKey = "iTermOptionalEnclosures"
+    private static var TerminalModeEnclosuresKey = "iTermTerminalModeEnclosures"
     private static var removedTabsKey = "iTermRemovedTabs"
 
     @objc(moveSubviewsForBrowserMode:)
@@ -16,8 +16,8 @@ extension iTermProfilePreferencesBaseViewController {
         let contentView = view
 
         if browserMode {
-            // Find all OptionalEnclosure views and record original frames
-            let enclosures = findOptionalEnclosures(in: contentView)
+            // Find all TerminalModeEnclosure views and record original frames
+            let enclosures = findTerminalModeEnclosures(in: contentView)
             enterBrowserMode(enclosures: enclosures)
 
             // Check if there are any visible controls remaining
@@ -32,28 +32,28 @@ extension iTermProfilePreferencesBaseViewController {
 
     // MARK: - Private Methods
 extension iTermProfilePreferencesBaseViewController {
-    private func findOptionalEnclosures(in view: NSView) -> [OptionalEnclosure] {
-        var enclosures: [OptionalEnclosure] = []
+    private func findTerminalModeEnclosures(in view: NSView) -> [TerminalModeEnclosure] {
+        var enclosures: [TerminalModeEnclosure] = []
 
         // If this is an NSTabView, search all tab views (not just the active one)
         if let tabView = view as? NSTabView {
             for tabViewItem in tabView.tabViewItems {
                 if let tabView = tabViewItem.view {
-                    enclosures.append(contentsOf: findOptionalEnclosures(in: tabView))
+                    enclosures.append(contentsOf: findTerminalModeEnclosures(in: tabView))
                 }
             }
-        } else if let enclosure = view as? OptionalEnclosure {
+        } else if let enclosure = view as? TerminalModeEnclosure {
             enclosures.append(enclosure)
         } else {
             for subview in view.subviews {
-                enclosures.append(contentsOf: findOptionalEnclosures(in: subview))
+                enclosures.append(contentsOf: findTerminalModeEnclosures(in: subview))
             }
         }
 
         return enclosures
     }
     
-    private func enterBrowserMode(enclosures: [OptionalEnclosure]) {
+    private func enterBrowserMode(enclosures: [TerminalModeEnclosure]) {
         var originalFrames: [NSView: NSRect] = [:]
         var viewAdjustments: [NSView: CGFloat] = [:]
         
@@ -87,8 +87,8 @@ extension iTermProfilePreferencesBaseViewController {
             // Find all sibling views that are below this enclosure
             if let superview = enclosure.superview {
                 for subview in superview.subviews {
-                    // Skip OptionalEnclosure views
-                    if subview is OptionalEnclosure {
+                    // Skip TerminalModeEnclosure views
+                    if subview is TerminalModeEnclosure {
                         continue
                     }
                     
@@ -124,14 +124,14 @@ extension iTermProfilePreferencesBaseViewController {
         // Store original frames, enclosures, and removed tabs for restoration
         if internalState[Self.originalFramesKey] == nil {
             internalState[Self.originalFramesKey] = originalFrames
-            internalState[Self.optionalEnclosuresKey] = enclosures
+            internalState[Self.TerminalModeEnclosuresKey] = enclosures
             internalState[Self.removedTabsKey] = removedTabs
         }
     }
     
     private func exitBrowserMode() {
         guard let originalFrames = internalState[Self.originalFramesKey] as? [NSView: NSRect],
-              let enclosures = internalState[Self.optionalEnclosuresKey] as? [OptionalEnclosure] else {
+              let enclosures = internalState[Self.TerminalModeEnclosuresKey] as? [TerminalModeEnclosure] else {
             return
         }
         
@@ -155,13 +155,13 @@ extension iTermProfilePreferencesBaseViewController {
         
         // Clean up stored data
         internalState.removeObject(forKey: Self.originalFramesKey)
-        internalState.removeObject(forKey: Self.optionalEnclosuresKey)
+        internalState.removeObject(forKey: Self.TerminalModeEnclosuresKey)
         internalState.removeObject(forKey: Self.removedTabsKey)
     }
     
     private func hasVisibleControls(in view: NSView) -> Bool {
-        // If this view is an OptionalEnclosure and it's hidden, skip it
-        if let enclosure = view as? OptionalEnclosure, enclosure.isHidden {
+        // If this view is an TerminalModeEnclosure and it's hidden, skip it
+        if let enclosure = view as? TerminalModeEnclosure, enclosure.isHidden {
             return false
         }
         
@@ -189,7 +189,7 @@ extension iTermProfilePreferencesBaseViewController {
         return false
     }
     
-    private func adjustFlippedViewHeight(for enclosures: [OptionalEnclosure]) {
+    private func adjustFlippedViewHeight(for enclosures: [TerminalModeEnclosure]) {
         guard let flippedView = findFlippedView() else { return }
         
         // Calculate total height reduction from hidden enclosures

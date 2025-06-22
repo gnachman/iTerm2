@@ -2986,7 +2986,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     _sshState = ssh ? iTermSSHStateProfile : iTermSSHStateNone;
     if (@available(macOS 11, *)) {
         if (browser) {
-            [_view becomeBrowser:self.profile[KEY_COMMAND_LINE]
+            [_view becomeBrowser:[iTermProfilePreferences stringForKey:KEY_INITIAL_URL
+                                                             inProfile:self.profile]
                    configuration:webViewConfiguration
                         delegate:self
                 interactionState:_savedBrowserState
