@@ -34,6 +34,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
     private(set) var favicon: NSImage?
     private var _findManager: Any?
     private var adblockManager: iTermAdblockManager?
+    private var notificationHandler: iTermBrowserNotificationHandler?
     let sessionGuid: String
     let historyController: iTermBrowserHistoryController
     private let navigationState: iTermBrowserNavigationState
@@ -58,6 +59,9 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
     }
     
     private func setupWebView(configuration preferredConfiguration: WKWebViewConfiguration?) {
+        let notificationHandler = iTermBrowserNotificationHandler()
+        self.notificationHandler = notificationHandler
+
         let configuration: WKWebViewConfiguration
         if let preferredConfiguration {
             configuration = preferredConfiguration
@@ -69,8 +73,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
             configuration = WKWebViewConfiguration()
             configuration.preferences = prefs
 
-            let js = """
-            (function() {
+            var js = """
                 let oldLog = console.log;
                 console.log = function() {
                     oldLog.apply(console, arguments);
@@ -78,21 +81,52 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
                         Array.from(arguments).join(" ")
                     );
                 };
-            })();
             """
+
+            #if DEBUG
+            js.append("""
+              window.addEventListener('error', function(event) {
+                console.log(
+                  '[Injected JS Error]',
+                  'message:', event.message,
+                  'source:', event.filename + ':' + event.lineno + ':' + event.colno,
+                  'error object:', event.error,
+                  'stack:', event.error && event.error.stack
+                );
+              });
+
+              window.addEventListener('unhandledrejection', function(event) {
+                console.log(
+                  '[Unhandled Promise Rejection]',
+                  'reason:', event.reason,
+                  'stack:', event.reason && event.reason.stack
+                );
+              });
+            """)
+            #endif
             let script = WKUserScript(
-                source: js,
+                source: "(function() {" + js + "})();",
                 injectionTime: .atDocumentStart,
                 forMainFrameOnly: false
             )
             configuration.userContentController.add(self, name: "iTerm2ConsoleLog")
             configuration.userContentController.addUserScript(script)
+            
+            if let notificationHandler {
+                let notificationScript = WKUserScript(
+                    source: notificationHandler.javascript,
+                    injectionTime: .atDocumentStart,
+                    forMainFrameOnly: false
+                )
+                configuration.userContentController.add(self, name: iTermBrowserNotificationHandler.messageHandlerName)
+                configuration.userContentController.addUserScript(notificationScript)
+            }
 
             // Trick google into thinking we're a real browser. Who knows what this might break.
             configuration.applicationNameForUserAgent = "Safari/16.4"
 
             // Register custom URL scheme handler for iterm2-about: URLs
-            configuration.setURLSchemeHandler(self, forURLScheme: "iterm2-about")
+            configuration.setURLSchemeHandler(self, forURLScheme: iTermBrowserSchemes.about)
         }
 
 
@@ -100,7 +134,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
         webView.navigationDelegate = self
         webView.uiDelegate = self
         webView.browserDelegate = self
-        
+
         // Enable back/forward navigation
         webView.allowsBackForwardNavigationGestures = true
         
@@ -324,13 +358,24 @@ extension iTermBrowserManager {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         // Handle console.log messages separately since they come as String
         if message.name == "iTerm2ConsoleLog" {
-            if let logMessage = message.body as? String {
-                XLog("JavaScript Console: \(logMessage)")
+            let string = if let logMessage = message.body as? String {
+                logMessage
             } else {
-                XLog("JavaScript Console: \(message.body)")
+                message.body
             }
+            #if DEBUG
+            NSLog("Javascript Console: \(string)")
+            #else
+            XLog("Javascript Console: \(string)")
+            #endif
+        }
+        
+        // Handle notification messages
+        if message.name == iTermBrowserNotificationHandler.messageHandlerName {
+            notificationHandler?.handleMessage(webView: webView, message: message)
             return
         }
+        
         DLog(message.name)
 
         // For other messages, require dictionary format and current URL
@@ -502,7 +547,7 @@ extension iTermBrowserManager: WKNavigationDelegate {
         }
 
         // Always allow our internal pages and prepare message handlers early
-        if targetURL.absoluteString.hasPrefix("iterm2-about:") {
+        if targetURL.absoluteString.hasPrefix(iTermBrowserSchemes.about) {
             let urlString = targetURL.absoluteString
             localPageManager.prepareForNavigation(to: targetURL)
             
@@ -752,6 +797,21 @@ extension iTermBrowserManager: WKUIDelegate {
     
     private func showSourceInBrowser(htmlSource: String, url: URL) {
         localPageManager.showSourcePage(htmlSource: htmlSource, url: url, webView: webView)
+    }
+    
+    // MARK: - Media Capture Permissions
+    
+    @available(macOS 12.0, *)
+    func webView(_ webView: WKWebView,
+                 decideMediaCapturePermissionsFor origin: WKSecurityOrigin,
+                 initiatedBy frame: WKFrameInfo,
+                 type: WKMediaCaptureType) async -> WKPermissionDecision {
+        return await iTermBrowserPermissionManager.shared.handleMediaCapturePermissionRequest(
+            from: webView,
+            origin: origin,
+            frame: frame,
+            type: type
+        )
     }
 }
 

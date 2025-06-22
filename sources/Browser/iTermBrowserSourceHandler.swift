@@ -9,8 +9,8 @@ import WebKit
 
 @available(macOS 11.0, *)
 class iTermBrowserSourceHandler: NSObject, iTermBrowserPageHandler {
-    static let sourceURL = URL(string: "iterm2-about:source")!
-    
+    static let sourceURL = URL(string: "\(iTermBrowserSchemes.about):source")!
+
     private var pendingSourceHTML: String?
     
     func generateSourcePageHTML(for rawSource: String, url: URL) -> String {

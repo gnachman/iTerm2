@@ -17,7 +17,7 @@ import Foundation
 @objc(iTermBrowserBookmarkViewHandler)
 @MainActor
 class iTermBrowserBookmarkViewHandler: NSObject, iTermBrowserPageHandler {
-    static let bookmarksURL = URL(string: "iterm2-about:bookmarks")!
+    static let bookmarksURL = URL(string: "\(iTermBrowserSchemes.about):bookmarks")!
     
     weak var delegate: iTermBrowserBookmarkViewHandlerDelegate?
     

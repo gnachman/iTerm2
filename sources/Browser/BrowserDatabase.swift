@@ -157,6 +157,22 @@ actor BrowserDatabase {
                 return false
             }
         }
+        
+        // Create BrowserPermissions table
+        if !db.executeUpdate(BrowserPermissions.schema(), withArguments: []) {
+            return false
+        }
+        
+        let permissionsMigrations = BrowserPermissions.migrations(existingColumns:
+            listColumns(
+                resultSet: db.executeQuery(
+                    BrowserPermissions.tableInfoQuery(),
+                    withArguments: [])))
+        for migration in permissionsMigrations {
+            if !db.executeUpdate(migration.query, withArguments: migration.args) {
+                return false
+            }
+        }
 
         return true
     }
@@ -563,5 +579,100 @@ actor BrowserDatabase {
             resultSet.close()
             return visitCount
         }
+    }
+    
+    // MARK: - Permission Management
+    
+    func savePermission(origin: String, permissionType: BrowserPermissionType, decision: BrowserPermissionDecision) async -> Bool {
+        return await withDatabase { db in
+            var permission = BrowserPermissions(origin: origin, permissionType: permissionType, decision: decision)
+            
+            // Check if permission already exists
+            let (checkQuery, checkArgs) = BrowserPermissions.getPermissionQuery(origin: origin, permissionType: permissionType)
+            if let resultSet = db.executeQuery(checkQuery, withArguments: checkArgs), resultSet.next() {
+                // Update existing permission
+                permission.updatedAt = Date()
+                let (updateQuery, updateArgs) = permission.updateQuery()
+                resultSet.close()
+                return db.executeUpdate(updateQuery, withArguments: updateArgs)
+            } else {
+                // Insert new permission
+                let (insertQuery, insertArgs) = permission.appendQuery()
+                return db.executeUpdate(insertQuery, withArguments: insertArgs)
+            }
+        }
+    }
+    
+    func getPermission(origin: String, permissionType: BrowserPermissionType) async -> BrowserPermissions? {
+        return await withDatabase { db in
+            let (query, args) = BrowserPermissions.getPermissionQuery(origin: origin, permissionType: permissionType)
+            guard let resultSet = db.executeQuery(query, withArguments: args) else {
+                return nil
+            }
+            
+            var permission: BrowserPermissions?
+            if resultSet.next() {
+                permission = BrowserPermissions(dbResultSet: resultSet)
+            }
+            resultSet.close()
+            return permission
+        }
+    }
+    
+    func getPermissions(for origin: String) async -> [BrowserPermissions] {
+        return await withDatabase { db in
+            let (query, args) = BrowserPermissions.getPermissionsForOriginQuery(origin: origin)
+            return self.executePermissionQuery(db: db, query: query, args: args)
+        }
+    }
+    
+    func getPermissions(for permissionType: BrowserPermissionType) async -> [BrowserPermissions] {
+        return await withDatabase { db in
+            let (query, args) = BrowserPermissions.getPermissionsByTypeQuery(permissionType: permissionType)
+            return self.executePermissionQuery(db: db, query: query, args: args)
+        }
+    }
+    
+    func getGrantedPermissions(for permissionType: BrowserPermissionType) async -> [BrowserPermissions] {
+        return await withDatabase { db in
+            let (query, args) = BrowserPermissions.getGrantedPermissionsQuery(permissionType: permissionType)
+            return self.executePermissionQuery(db: db, query: query, args: args)
+        }
+    }
+    
+    func getAllPermissions() async -> [BrowserPermissions] {
+        return await withDatabase { db in
+            let (query, args) = BrowserPermissions.getAllPermissionsQuery()
+            return self.executePermissionQuery(db: db, query: query, args: args)
+        }
+    }
+    
+    func revokePermission(origin: String, permissionType: BrowserPermissionType) async -> Bool {
+        return await withDatabase { db in
+            let (query, args) = BrowserPermissions.deletePermissionQuery(origin: origin, permissionType: permissionType)
+            return db.executeUpdate(query, withArguments: args)
+        }
+    }
+    
+    func revokeAllPermissions(for origin: String) async -> Bool {
+        return await withDatabase { db in
+            let (query, args) = BrowserPermissions.deleteAllPermissionsForOriginQuery(origin: origin)
+            return db.executeUpdate(query, withArguments: args)
+        }
+    }
+    
+    private func executePermissionQuery(db: iTermDatabase, query: String, args: [Any?]) -> [BrowserPermissions] {
+        guard let resultSet = db.executeQuery(query, withArguments: args) else {
+            return []
+        }
+        
+        var results: [BrowserPermissions] = []
+        while resultSet.next() {
+            if let permission = BrowserPermissions(dbResultSet: resultSet) {
+                results.append(permission)
+            }
+        }
+        resultSet.close()
+        return results
     }
 }

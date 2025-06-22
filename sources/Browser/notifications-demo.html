@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Notification Shim Test</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2em;
+    }
+    button {
+      margin: 0.5em 0.5em 0.5em 0;
+      padding: 0.5em 1em;
+      font-size: 1em;
+    }
+    #log {
+      margin-top: 1em;
+      padding: 1em;
+      background: #f5f5f5;
+      border: 1px solid #ccc;
+      white-space: pre-wrap;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Notification Shim Tester</h1>
+  <button id="btnRequest">Request Permission</button>
+  <button id="btnSend">Send Notification</button>
+  <button id="btnClose">Close Notification</button>
+
+  <div id="log"></div>
+
+  <script>
+    let testNotification = null;
+    const logEl = document.getElementById('log');
+
+    function log(msg) {
+      const time = new Date().toLocaleTimeString();
+      logEl.textContent += `[${time}] ${msg}\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    document.getElementById('btnRequest').addEventListener('click', () => {
+      log('Requesting permission…');
+      Notification.requestPermission().then(permission => {
+        log('Permission: ' + permission);
+      }).catch(err => {
+        log('Error requesting permission: ' + err);
+      });
+    });
+
+    document.getElementById('btnSend').addEventListener('click', () => {
+      if (Notification.permission !== 'granted') {
+        log('Cannot send: permission is ' + Notification.permission);
+        return;
+      }
+      log('Sending notification…');
+      testNotification = new Notification('Hello!', {
+        body: 'This is a test notification.',
+        tag: 'test-tag'
+      });
+      testNotification.onclick = () => log('Notification clicked');
+      testNotification.onshow  = () => log('Notification shown');
+      testNotification.onclose = () => log('Notification closed');
+      testNotification.onerror = () => log('Notification error');
+    });
+
+    document.getElementById('btnClose').addEventListener('click', () => {
+      if (!testNotification) {
+        log('No notification to close');
+        return;
+      }
+      log('Closing notification…');
+      testNotification.close();
+      testNotification = null;
+    });
+
+    // display initial permission state
+    log('Current permission: ' + Notification.permission);
+  </script>
+</body>
+</html>

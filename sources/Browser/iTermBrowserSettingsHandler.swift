@@ -18,7 +18,7 @@ import Foundation
 @objc(iTermBrowserSettingsHandler)
 @MainActor
 class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
-    static let settingsURL = URL(string: "iterm2-about:settings")!
+    static let settingsURL = URL(string: "\(iTermBrowserSchemes.about):settings")!
     weak var delegate: iTermBrowserSettingsHandlerDelegate?
 
     // MARK: - Public Interface
@@ -51,13 +51,13 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         // Direct functions that call Swift
         window.clearCookies = function() {
             if (confirm('This will remove all cookies from all websites. Continue?')) {
-                window.webkit.messageHandlers['iterm2-about:settings'].postMessage({action: 'clearCookies'});
+                window.webkit.messageHandlers['\(iTermBrowserSchemes.about):settings'].postMessage({action: 'clearCookies'});
             }
         };
         
         window.clearAllData = function() {
             if (confirm('This will remove all browsing data including cookies, cache, and local storage. Continue?')) {
-                window.webkit.messageHandlers['iterm2-about:settings'].postMessage({action: 'clearAllData'});
+                window.webkit.messageHandlers['\(iTermBrowserSchemes.about):settings'].postMessage({action: 'clearAllData'});
             }
         };
         
