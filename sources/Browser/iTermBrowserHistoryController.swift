@@ -53,7 +53,7 @@ class iTermBrowserHistoryController {
 
     func recordVisit(for url: URL?, title: String?) async {
         // Record visit in browser history
-        if let url, !url.absoluteString.hasPrefix(iTermBrowserSchemes.about) {
+        if let url, !url.absoluteString.hasPrefix(iTermBrowserSchemes.about + ":") {
             Task {
                 await BrowserDatabase.instance?.recordVisit(
                     url: url.absoluteString,
@@ -69,7 +69,7 @@ class iTermBrowserHistoryController {
     func titleDidChange(for url: URL?, title: String?) {
         if let url = url?.absoluteString,
            let title,
-           !url.hasPrefix(iTermBrowserSchemes.about),
+           !url.hasPrefix(iTermBrowserSchemes.about + ":"),
            !title.isEmpty {
             Task {
                 await BrowserDatabase.instance?.updateTitle(title, forUrl: url)

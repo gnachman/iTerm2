@@ -44,7 +44,7 @@ protocol iTermBrowserLocalPageManagerDelegate: AnyObject {
 // MARK: - Local Page Manager
 
 struct iTermBrowserSchemes {
-    static let about = "iterm2-about:"
+    static let about = "iterm2-about"
 }
 
 @available(macOS 11.0, *)
@@ -64,7 +64,7 @@ class iTermBrowserLocalPageManager: NSObject {
     /// Prepare page context for navigation to a local page
     func prepareForNavigation(to url: URL) {
         let urlString = url.absoluteString
-        guard urlString.hasPrefix(iTermBrowserSchemes.about) else { return }
+        guard urlString.hasPrefix(iTermBrowserSchemes.about + ":") else { return }
 
         setupPageContext(for: urlString)
     }
@@ -72,7 +72,7 @@ class iTermBrowserLocalPageManager: NSObject {
     /// Handle URL scheme task for local pages
     func handleURLSchemeTask(_ urlSchemeTask: WKURLSchemeTask, url: URL) -> Bool {
         let urlString = url.absoluteString
-        guard urlString.hasPrefix(iTermBrowserSchemes.about) else { return false }
+        guard urlString.hasPrefix(iTermBrowserSchemes.about + ":") else { return false }
 
         setupPageContext(for: urlString)
         
