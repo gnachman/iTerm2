@@ -334,8 +334,7 @@ extension iTermBrowserManager {
         DLog(message.name)
 
         // For other messages, require dictionary format and current URL
-        guard let messageDict = message.body as? [String: Any],
-              let currentURL = currentPageURL else {
+        guard let currentURL = currentPageURL else {
             return
         }
         
