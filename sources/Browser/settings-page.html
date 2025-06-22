@@ -240,7 +240,7 @@
     <script>
         function clearCookies() {
             if (confirm('This will remove all cookies. Continue?')) {
-                window.webkit.messageHandlers.iterm2BrowserSettings.postMessage({
+                window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
                     action: 'clearCookies'
                 });
             }
@@ -248,14 +248,14 @@
         
         function clearAllData() {
             if (confirm('This will remove all browsing data including cookies, cache, and local storage. Continue?')) {
-                window.webkit.messageHandlers.iterm2BrowserSettings.postMessage({
+                window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
                     action: 'clearAllData'
                 });
             }
         }
         
         function toggleAdblock(enabled) {
-            window.webkit.messageHandlers.iterm2BrowserSettings.postMessage({
+            window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
                 action: 'setAdblockEnabled',
                 value: enabled
             });
@@ -263,7 +263,7 @@
         
         function updateAdblockURL(url) {
             if (url && url.trim()) {
-                window.webkit.messageHandlers.iterm2BrowserSettings.postMessage({
+                window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
                     action: 'setAdblockURL',
                     value: url.trim()
                 });
@@ -272,7 +272,7 @@
         
         function forceAdblockUpdate() {
             showStatus('Updating ad block rules...', 'info');
-            window.webkit.messageHandlers.iterm2BrowserSettings.postMessage({
+            window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
                 action: 'forceAdblockUpdate'
             });
         }
@@ -305,7 +305,7 @@
         
         // Initialize settings on page load
         window.addEventListener('load', function() {
-            window.webkit.messageHandlers.iterm2BrowserSettings.postMessage({
+            window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
                 action: 'getAdblockSettings'
             });
         });

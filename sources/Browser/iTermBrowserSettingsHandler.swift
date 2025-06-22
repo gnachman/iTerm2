@@ -10,13 +10,14 @@ import Foundation
 
 @available(macOS 11.0, *)
 @objc protocol iTermBrowserSettingsHandlerDelegate: AnyObject {
-    func settingsHandlerDidUpdateAdblockSettings(_ handler: iTermBrowserSettingsHandler)
-    func settingsHandlerDidRequestAdblockUpdate(_ handler: iTermBrowserSettingsHandler)
+    @MainActor func settingsHandlerDidUpdateAdblockSettings(_ handler: iTermBrowserSettingsHandler)
+    @MainActor func settingsHandlerDidRequestAdblockUpdate(_ handler: iTermBrowserSettingsHandler)
 }
 
 @available(macOS 11.0, *)
 @objc(iTermBrowserSettingsHandler)
-class iTermBrowserSettingsHandler: NSObject {
+@MainActor
+class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     static let settingsURL = URL(string: "iterm2-about:settings")!
     weak var delegate: iTermBrowserSettingsHandlerDelegate?
 
@@ -50,13 +51,13 @@ class iTermBrowserSettingsHandler: NSObject {
         // Direct functions that call Swift
         window.clearCookies = function() {
             if (confirm('This will remove all cookies from all websites. Continue?')) {
-                window.webkit.messageHandlers.iterm2BrowserSettings.postMessage('clearCookies');
+                window.webkit.messageHandlers['iterm2-about:settings'].postMessage({action: 'clearCookies'});
             }
         };
         
         window.clearAllData = function() {
             if (confirm('This will remove all browsing data including cookies, cache, and local storage. Continue?')) {
-                window.webkit.messageHandlers.iterm2BrowserSettings.postMessage('clearAllData');
+                window.webkit.messageHandlers['iterm2-about:settings'].postMessage({action: 'clearAllData'});
             }
         };
         
@@ -174,5 +175,15 @@ class iTermBrowserSettingsHandler: NSObject {
     
     @objc func showAdblockUpdateError(_ error: String, in webView: WKWebView) {
         showStatusMessage("Failed to update ad block rules: \(error)", type: "error", in: webView)
+    }
+    
+    // MARK: - iTermBrowserPageHandler Protocol
+    
+    func injectJavaScript(into webView: WKWebView) {
+        injectSettingsJavaScript(into: webView)
+    }
+    
+    func resetState() {
+        // Settings handler doesn't maintain state that needs resetting
     }
 }

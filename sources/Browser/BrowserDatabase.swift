@@ -8,6 +8,9 @@
 import Foundation
 
 actor BrowserDatabase {
+    // Serial queue to ensure all SQLite operations happen on the same thread
+    private let databaseQueue = DispatchQueue(label: "BrowserDatabase.sqlite", qos: .utility)
+    
     private static var _instance: BrowserDatabase?
     static var instanceIfExists: BrowserDatabase? { _instance }
     static var instance: BrowserDatabase? {
@@ -26,20 +29,53 @@ actor BrowserDatabase {
         }
     }
 
-    let db: iTermDatabase
+    private let _db: iTermDatabase
+    
+    // Helper methods to run database operations on the same thread
+    private func withDatabase<T>(_ operation: @escaping (iTermDatabase) throws -> T) async throws -> T {
+        let db = _db
+        return try await withCheckedThrowingContinuation { continuation in
+            databaseQueue.async {
+                do {
+                    let result = try operation(db)
+                    continuation.resume(returning: result)
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+    
+    private func withDatabase<T>(_ operation: @escaping (iTermDatabase) -> T) async -> T {
+        let db = _db
+        return await withCheckedContinuation { continuation in
+            databaseQueue.async {
+                let result = operation(db)
+                continuation.resume(returning: result)
+            }
+        }
+    }
     
     init?(url: URL) async {
-        db = iTermSqliteDatabaseImpl(url: url)
-        if !db.lock() {
-            return nil
+        _db = iTermSqliteDatabaseImpl(url: url)
+        
+        // Ensure database initialization happens on the same thread as all operations
+        let initResult = await withDatabase { db in
+            if !db.lock() {
+                return false
+            }
+            if !db.open() {
+                return false
+            }
+            if !self.createTables(db: db) {
+                DLog("FAILED TO CREATE BROWSER TABLES, CLOSING BROWSER DB")
+                db.close()
+                return false
+            }
+            return true
         }
-        if !db.open() {
-            return nil
-        }
-
-        if !createTables() {
-            DLog("FAILED TO CREATE BROWSER TABLES, CLOSING BROWSER DB")
-            db.close()
+        
+        if !initResult {
             return nil
         }
     }
@@ -57,7 +93,7 @@ actor BrowserDatabase {
         return results
     }
 
-    private func createTables() -> Bool {
+    private func createTables(db: iTermDatabase) -> Bool {
         // Create BrowserHistory table
         if !db.executeUpdate(BrowserHistory.schema(), withArguments: []) {
             return false
@@ -132,25 +168,27 @@ actor BrowserDatabase {
                      sessionGuid: String?,
                      referrerUrl: String?,
                      transitionType: BrowserTransitionType = .other) async {
-        // Record in BrowserHistory
-        let historyEntry = BrowserHistory(
-            id: UUID().uuidString,
-            url: url,
-            title: title,
-            visitDate: Date(),
-            sessionGuid: sessionGuid,
-            referrerUrl: referrerUrl,
-            transitionType: transitionType
-        )
-        
-        let (historyQuery, historyArgs) = historyEntry.appendQuery()
-        _ = db.executeUpdate(historyQuery, withArguments: historyArgs)
-        
-        // Update or create entry in BrowserVisits
-        updateVisitCount(url: url, title: title)
+        await withDatabase { db in
+            // Record in BrowserHistory
+            let historyEntry = BrowserHistory(
+                id: UUID().uuidString,
+                url: url,
+                title: title,
+                visitDate: Date(),
+                sessionGuid: sessionGuid,
+                referrerUrl: referrerUrl,
+                transitionType: transitionType
+            )
+            
+            let (historyQuery, historyArgs) = historyEntry.appendQuery()
+            _ = db.executeUpdate(historyQuery, withArguments: historyArgs)
+            
+            // Update or create entry in BrowserVisits
+            self.updateVisitCount(db: db, url: url, title: title)
+        }
     }
     
-    private func updateVisitCount(url: String, title: String?) {
+    private func updateVisitCount(db: iTermDatabase, url: String, title: String?) {
         let (hostname, path) = BrowserVisits.parseUrl(url)
         
         // Try to get existing visit record
@@ -183,118 +221,140 @@ actor BrowserDatabase {
     
     // MARK: - Updating Titles
     
-    func updateTitle(_ title: String, forUrl url: String) {
-        do {
-            let (sql, args) = BrowserHistory.updateTitleQuery(title, forUrl: url)
-            _ = db.executeUpdate(sql, withArguments: args)
-        }
-        do {
-            let (sql, args) = BrowserVisits.updateTitleQuery(title, forUrl: url)
-            _ = db.executeUpdate(sql, withArguments: args)
+    func updateTitle(_ title: String, forUrl url: String) async {
+        await withDatabase { db in
+            do {
+                let (sql, args) = BrowserHistory.updateTitleQuery(title, forUrl: url)
+                _ = db.executeUpdate(sql, withArguments: args)
+            }
+            do {
+                let (sql, args) = BrowserVisits.updateTitleQuery(title, forUrl: url)
+                _ = db.executeUpdate(sql, withArguments: args)
+            }
         }
     }
     
     // MARK: - Search and Suggestions
     
-    func searchHistory(terms: String) -> [BrowserHistory] {
-        let (query, args) = BrowserHistory.basicSearchQuery(terms: terms)
-        return executeHistoryQuery(query: query, args: args)
-    }
-    
-    func historyForSession(_ sessionGuid: String) -> [BrowserHistory] {
-        let (query, args) = BrowserHistory.historyForSession(sessionGuid)
-        return executeHistoryQuery(query: query, args: args)
-    }
-    
-    func urlSuggestions(forPrefix prefix: String, limit: Int = 10) -> [String] {
-        let (query, args) = BrowserVisits.suggestionsQuery(prefix: prefix, limit: limit)
-        guard let resultSet = db.executeQuery(query, withArguments: args) else {
-            return []
+    func searchHistory(terms: String) async -> [BrowserHistory] {
+        return await withDatabase { db in
+            let (query, args) = BrowserHistory.basicSearchQuery(terms: terms)
+            return self.executeHistoryQuery(db: db, query: query, args: args)
         }
-        
-        var results: [String] = []
-        while resultSet.next() {
-            if let visit = BrowserVisits(dbResultSet: resultSet) {
-                results.append(visit.fullUrl)
+    }
+    
+    func historyForSession(_ sessionGuid: String) async -> [BrowserHistory] {
+        return await withDatabase { db in
+            let (query, args) = BrowserHistory.historyForSession(sessionGuid)
+            return self.executeHistoryQuery(db: db, query: query, args: args)
+        }
+    }
+    
+    func urlSuggestions(forPrefix prefix: String, limit: Int = 10) async -> [String] {
+        return await withDatabase { db in
+            let (query, args) = BrowserVisits.suggestionsQuery(prefix: prefix, limit: limit)
+            guard let resultSet = db.executeQuery(query, withArguments: args) else {
+                return []
             }
+            
+            var results: [String] = []
+            while resultSet.next() {
+                if let visit = BrowserVisits(dbResultSet: resultSet) {
+                    results.append(visit.fullUrl)
+                }
+            }
+            resultSet.close()
+            return results
         }
-        resultSet.close()
-        return results
     }
     
-    func getVisitSuggestions(forPrefix prefix: String, limit: Int = 10) -> [BrowserVisits] {
-        let (query, args) = BrowserVisits.suggestionsQuery(prefix: prefix, limit: limit)
-        guard let resultSet = db.executeQuery(query, withArguments: args) else {
-            return []
-        }
-        
-        var results: [BrowserVisits] = []
-        while resultSet.next() {
-            if let visit = BrowserVisits(dbResultSet: resultSet) {
-                results.append(visit)
+    func getVisitSuggestions(forPrefix prefix: String, limit: Int = 10) async -> [BrowserVisits] {
+        return await withDatabase { db in
+            let (query, args) = BrowserVisits.suggestionsQuery(prefix: prefix, limit: limit)
+            guard let resultSet = db.executeQuery(query, withArguments: args) else {
+                return []
             }
+            
+            var results: [BrowserVisits] = []
+            while resultSet.next() {
+                if let visit = BrowserVisits(dbResultSet: resultSet) {
+                    results.append(visit)
+                }
+            }
+            resultSet.close()
+            return results
         }
-        resultSet.close()
-        return results
     }
     
-    func topVisitedUrls(limit: Int = 20) -> [BrowserVisits] {
-        let (query, args) = BrowserVisits.topVisitedQuery(limit: limit)
-        guard let resultSet = db.executeQuery(query, withArguments: args) else {
-            return []
-        }
-        
-        var results: [BrowserVisits] = []
-        while resultSet.next() {
-            if let visit = BrowserVisits(dbResultSet: resultSet) {
-                results.append(visit)
+    func topVisitedUrls(limit: Int = 20) async -> [BrowserVisits] {
+        return await withDatabase { db in
+            let (query, args) = BrowserVisits.topVisitedQuery(limit: limit)
+            guard let resultSet = db.executeQuery(query, withArguments: args) else {
+                return []
             }
+            
+            var results: [BrowserVisits] = []
+            while resultSet.next() {
+                if let visit = BrowserVisits(dbResultSet: resultSet) {
+                    results.append(visit)
+                }
+            }
+            resultSet.close()
+            return results
         }
-        resultSet.close()
-        return results
     }
     
     // MARK: - Maintenance
     
-    func deleteHistoryBefore(date: Date) {
-        let deleteHistoryQuery = "DELETE FROM BrowserHistory WHERE visitDate < ?"
-        _ = db.executeUpdate(deleteHistoryQuery, withArguments: [date.timeIntervalSince1970])
-        
-        // Clean up orphaned visits (visits with no recent history)
-        let cleanupVisitsQuery = """
-        DELETE FROM BrowserVisits 
-        WHERE normalizedUrl NOT IN (
-            SELECT DISTINCT BrowserVisits.normalizeUrl(url) 
-            FROM BrowserHistory 
-            WHERE visitDate >= ?
-        )
-        """
-        _ = db.executeUpdate(cleanupVisitsQuery, withArguments: [date.timeIntervalSince1970])
+    func deleteHistoryBefore(date: Date) async {
+        await withDatabase { db in
+            let deleteHistoryQuery = "DELETE FROM BrowserHistory WHERE visitDate < ?"
+            _ = db.executeUpdate(deleteHistoryQuery, withArguments: [date.timeIntervalSince1970])
+            
+            // Clean up orphaned visits (visits with no recent history)
+            let cleanupVisitsQuery = """
+            DELETE FROM BrowserVisits 
+            WHERE normalizedUrl NOT IN (
+                SELECT DISTINCT BrowserVisits.normalizeUrl(url) 
+                FROM BrowserHistory 
+                WHERE visitDate >= ?
+            )
+            """
+            _ = db.executeUpdate(cleanupVisitsQuery, withArguments: [date.timeIntervalSince1970])
+        }
     }
     
     func deleteAllHistory() async {
-        _ = db.executeUpdate("DELETE FROM BrowserHistory", withArguments: [])
-        _ = db.executeUpdate("DELETE FROM BrowserVisits", withArguments: [])
+        await withDatabase { db in
+            _ = db.executeUpdate("DELETE FROM BrowserHistory", withArguments: [])
+            _ = db.executeUpdate("DELETE FROM BrowserVisits", withArguments: [])
+        }
     }
     
     func deleteHistoryEntry(id: String) async {
-        let (query, args) = BrowserHistory.deleteEntryQuery(id: id)
-        _ = db.executeUpdate(query, withArguments: args)
+        await withDatabase { db in
+            let (query, args) = BrowserHistory.deleteEntryQuery(id: id)
+            _ = db.executeUpdate(query, withArguments: args)
+        }
     }
     
     func getRecentHistory(offset: Int = 0, limit: Int = 50) async -> [BrowserHistory] {
-        let (query, args) = BrowserHistory.recentHistoryQuery(offset: offset, limit: limit)
-        return executeHistoryQuery(query: query, args: args)
+        return await withDatabase { db in
+            let (query, args) = BrowserHistory.recentHistoryQuery(offset: offset, limit: limit)
+            return self.executeHistoryQuery(db: db, query: query, args: args)
+        }
     }
     
     func searchHistory(terms: String, offset: Int = 0, limit: Int = 50) async -> [BrowserHistory] {
-        let (query, args) = BrowserHistory.searchQuery(terms: terms, offset: offset, limit: limit)
-        return executeHistoryQuery(query: query, args: args)
+        return await withDatabase { db in
+            let (query, args) = BrowserHistory.searchQuery(terms: terms, offset: offset, limit: limit)
+            return self.executeHistoryQuery(db: db, query: query, args: args)
+        }
     }
     
     // MARK: - Helper Methods
     
-    private func executeHistoryQuery(query: String, args: [Any?]) -> [BrowserHistory] {
+    private func executeHistoryQuery(db: iTermDatabase, query: String, args: [Any?]) -> [BrowserHistory] {
         guard let resultSet = db.executeQuery(query, withArguments: args) else {
             return []
         }
@@ -312,127 +372,153 @@ actor BrowserDatabase {
     // MARK: - Bookmark Management
     
     func addBookmark(url: String, title: String? = nil) async -> Bool {
-        let bookmark = BrowserBookmarks(url: url, title: title)
-        let (query, args) = bookmark.appendQuery()
-        return db.executeUpdate(query, withArguments: args)
+        return await withDatabase { db in
+            let bookmark = BrowserBookmarks(url: url, title: title)
+            let (query, args) = bookmark.appendQuery()
+            return db.executeUpdate(query, withArguments: args)
+        }
     }
     
     func removeBookmark(url: String) async -> Bool {
-        let (query, args) = BrowserBookmarks.deleteBookmarkQuery(url: url)
-        return db.executeUpdate(query, withArguments: args)
+        return await withDatabase { db in
+            let (query, args) = BrowserBookmarks.deleteBookmarkQuery(url: url)
+            return db.executeUpdate(query, withArguments: args)
+        }
     }
     
     func isBookmarked(url: String) async -> Bool {
-        let (query, args) = BrowserBookmarks.getBookmarkQuery(url: url)
-        guard let resultSet = db.executeQuery(query, withArguments: args) else {
-            return false
+        return await withDatabase { db in
+            let (query, args) = BrowserBookmarks.getBookmarkQuery(url: url)
+            guard let resultSet = db.executeQuery(query, withArguments: args) else {
+                return false
+            }
+            let exists = resultSet.next()
+            resultSet.close()
+            return exists
         }
-        let exists = resultSet.next()
-        resultSet.close()
-        return exists
     }
     
     func getBookmark(url: String) async -> BrowserBookmarks? {
-        let (query, args) = BrowserBookmarks.getBookmarkQuery(url: url)
-        guard let resultSet = db.executeQuery(query, withArguments: args) else {
-            return nil
+        return await withDatabase { db in
+            let (query, args) = BrowserBookmarks.getBookmarkQuery(url: url)
+            guard let resultSet = db.executeQuery(query, withArguments: args) else {
+                return nil
+            }
+            
+            var bookmark: BrowserBookmarks?
+            if resultSet.next() {
+                bookmark = BrowserBookmarks(dbResultSet: resultSet)
+            }
+            resultSet.close()
+            return bookmark
         }
-        
-        var bookmark: BrowserBookmarks?
-        if resultSet.next() {
-            bookmark = BrowserBookmarks(dbResultSet: resultSet)
-        }
-        resultSet.close()
-        return bookmark
     }
     
     func getAllBookmarks(sortBy: BookmarkSortOption = .dateAdded, offset: Int = 0, limit: Int = 50) async -> [BrowserBookmarks] {
-        let (query, args) = BrowserBookmarks.getAllBookmarksQuery(sortBy: sortBy, offset: offset, limit: limit)
-        return executeBookmarkQuery(query: query, args: args)
+        return await withDatabase { db in
+            let (query, args) = BrowserBookmarks.getAllBookmarksQuery(sortBy: sortBy, offset: offset, limit: limit)
+            return self.executeBookmarkQuery(db: db, query: query, args: args)
+        }
     }
     
     func searchBookmarks(terms: String, offset: Int = 0, limit: Int = 50) async -> [BrowserBookmarks] {
-        let (query, args) = BrowserBookmarks.searchQuery(terms: terms, offset: offset, limit: limit)
-        return executeBookmarkQuery(query: query, args: args)
+        return await withDatabase { db in
+            let (query, args) = BrowserBookmarks.searchQuery(terms: terms, offset: offset, limit: limit)
+            return self.executeBookmarkQuery(db: db, query: query, args: args)
+        }
     }
     
-    func getBookmarkSuggestions(forPrefix prefix: String, limit: Int = 10) -> [BrowserBookmarks] {
-        let (query, args) = BrowserBookmarks.bookmarkSuggestionsQuery(prefix: prefix, limit: limit)
-        return executeBookmarkQuery(query: query, args: args)
+    func getBookmarkSuggestions(forPrefix prefix: String, limit: Int = 10) async -> [BrowserBookmarks] {
+        return await withDatabase { db in
+            let (query, args) = BrowserBookmarks.bookmarkSuggestionsQuery(prefix: prefix, limit: limit)
+            return self.executeBookmarkQuery(db: db, query: query, args: args)
+        }
     }
     
     // MARK: - Bookmark Tags Management
     
     func addTagToBookmark(url: String, tag: String) async -> Bool {
-        // First get the bookmark's rowid
-        guard let rowId = await getBookmarkRowId(url: url) else {
-            return false
+        return await withDatabase { db in
+            // First get the bookmark's rowid
+            guard let rowId = self.getBookmarkRowId(db: db, url: url) else {
+                return false
+            }
+            
+            let bookmarkTag = BrowserBookmarkTags(bookmarkRowId: rowId, tag: tag)
+            let (query, args) = bookmarkTag.appendQuery()
+            return db.executeUpdate(query, withArguments: args)
         }
-        
-        let bookmarkTag = BrowserBookmarkTags(bookmarkRowId: rowId, tag: tag)
-        let (query, args) = bookmarkTag.appendQuery()
-        return db.executeUpdate(query, withArguments: args)
     }
     
     func removeTagFromBookmark(url: String, tag: String) async -> Bool {
-        guard let rowId = await getBookmarkRowId(url: url) else {
-            return false
+        return await withDatabase { db in
+            guard let rowId = self.getBookmarkRowId(db: db, url: url) else {
+                return false
+            }
+            
+            let bookmarkTag = BrowserBookmarkTags(bookmarkRowId: rowId, tag: tag)
+            let (query, args) = bookmarkTag.removeQuery()
+            return db.executeUpdate(query, withArguments: args)
         }
-        
-        let bookmarkTag = BrowserBookmarkTags(bookmarkRowId: rowId, tag: tag)
-        let (query, args) = bookmarkTag.removeQuery()
-        return db.executeUpdate(query, withArguments: args)
     }
     
     func getTagsForBookmark(url: String) async -> [String] {
-        guard let rowId = await getBookmarkRowId(url: url) else {
-            return []
-        }
-        
-        let (query, args) = BrowserBookmarkTags.getTagsForBookmarkQuery(bookmarkRowId: rowId)
-        guard let resultSet = db.executeQuery(query, withArguments: args) else {
-            return []
-        }
-        
-        var tags: [String] = []
-        while resultSet.next() {
-            if let tag = BrowserBookmarkTags(dbResultSet: resultSet) {
-                tags.append(tag.tag)
+        return await withDatabase { db in
+            guard let rowId = self.getBookmarkRowId(db: db, url: url) else {
+                return []
             }
+            
+            let (query, args) = BrowserBookmarkTags.getTagsForBookmarkQuery(bookmarkRowId: rowId)
+            guard let resultSet = db.executeQuery(query, withArguments: args) else {
+                return []
+            }
+            
+            var tags: [String] = []
+            while resultSet.next() {
+                if let tag = BrowserBookmarkTags(dbResultSet: resultSet) {
+                    tags.append(tag.tag)
+                }
+            }
+            resultSet.close()
+            return tags
         }
-        resultSet.close()
-        return tags
     }
     
     func getAllTags() async -> [String] {
-        let (query, args) = BrowserBookmarkTags.getAllTagsQuery()
-        guard let resultSet = db.executeQuery(query, withArguments: args) else {
-            return []
-        }
-        
-        var tags: [String] = []
-        while resultSet.next() {
-            if let tagName = resultSet.string(forColumn: "tag") {
-                tags.append(tagName)
+        return await withDatabase { db in
+            let (query, args) = BrowserBookmarkTags.getAllTagsQuery()
+            guard let resultSet = db.executeQuery(query, withArguments: args) else {
+                return []
             }
+            
+            var tags: [String] = []
+            while resultSet.next() {
+                if let tagName = resultSet.string(forColumn: "tag") {
+                    tags.append(tagName)
+                }
+            }
+            resultSet.close()
+            return tags
         }
-        resultSet.close()
-        return tags
     }
     
     func searchBookmarksWithTags(searchTerms: String, tags: [String], offset: Int = 0, limit: Int = 50) async -> [BrowserBookmarks] {
-        let (query, args) = BrowserBookmarkTags.searchBookmarksWithTagsQuery(searchTerms: searchTerms, tags: tags, offset: offset, limit: limit)
-        return executeBookmarkQuery(query: query, args: args)
+        return await withDatabase { db in
+            let (query, args) = BrowserBookmarkTags.searchBookmarksWithTagsQuery(searchTerms: searchTerms, tags: tags, offset: offset, limit: limit)
+            return self.executeBookmarkQuery(db: db, query: query, args: args)
+        }
     }
     
     func deleteAllBookmarks() async {
-        _ = db.executeUpdate("DELETE FROM BrowserBookmarks", withArguments: [])
-        _ = db.executeUpdate("DELETE FROM BrowserBookmarkTags", withArguments: [])
+        await withDatabase { db in
+            _ = db.executeUpdate("DELETE FROM BrowserBookmarks", withArguments: [])
+            _ = db.executeUpdate("DELETE FROM BrowserBookmarkTags", withArguments: [])
+        }
     }
     
     // MARK: - Helper Methods
     
-    private func executeBookmarkQuery(query: String, args: [Any?]) -> [BrowserBookmarks] {
+    private func executeBookmarkQuery(db: iTermDatabase, query: String, args: [Any?]) -> [BrowserBookmarks] {
         guard let resultSet = db.executeQuery(query, withArguments: args) else {
             return []
         }
@@ -447,7 +533,7 @@ actor BrowserDatabase {
         return results
     }
     
-    private func getBookmarkRowId(url: String) async -> Int64? {
+    private func getBookmarkRowId(db: iTermDatabase, url: String) -> Int64? {
         let query = "SELECT rowid FROM BrowserBookmarks WHERE url = ?"
         guard let resultSet = db.executeQuery(query, withArguments: [url]) else {
             return nil
@@ -459,5 +545,23 @@ actor BrowserDatabase {
         }
         resultSet.close()
         return rowId
+    }
+    
+    func getVisitCount(for url: String) async -> Int {
+        return await withDatabase { db in
+            let (hostname, path) = BrowserVisits.parseUrl(url)
+            let query = "SELECT visitCount FROM BrowserVisits WHERE hostname = ? AND path = ?"
+            
+            guard let resultSet = db.executeQuery(query, withArguments: [hostname, path]) else {
+                return 0
+            }
+            
+            var visitCount = 0
+            if resultSet.next() {
+                visitCount = Int(resultSet.longLongInt(forColumn: "visitCount"))
+            }
+            resultSet.close()
+            return visitCount
+        }
     }
 }

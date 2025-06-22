@@ -18,8 +18,8 @@ window.loadBookmarks = function(offset = 0, limit = 50, searchQuery = '', sortBy
     showLoadingIndicator();
     
     // Check if message handler is available, retry if not
-    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.iterm2BrowserBookmarks) {
-        window.webkit.messageHandlers.iterm2BrowserBookmarks.postMessage({
+    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers['iterm2-about:bookmarks']) {
+        window.webkit.messageHandlers['iterm2-about:bookmarks'].postMessage({
             action: 'loadBookmarks',
             offset: offset,
             limit: limit,
@@ -38,7 +38,7 @@ window.loadBookmarks = function(offset = 0, limit = 50, searchQuery = '', sortBy
 
 window.deleteBookmark = function(url) {
     if (confirm('Delete this bookmark?')) {
-        window.webkit.messageHandlers.iterm2BrowserBookmarks.postMessage({
+        window.webkit.messageHandlers['iterm2-about:bookmarks'].postMessage({
             action: 'deleteBookmark',
             url: url
         });
@@ -46,7 +46,7 @@ window.deleteBookmark = function(url) {
 };
 
 window.navigateToURL = function(url) {
-    window.webkit.messageHandlers.iterm2BrowserBookmarks.postMessage({
+    window.webkit.messageHandlers['iterm2-about:bookmarks'].postMessage({
         action: 'navigateToURL',
         url: url
     });
@@ -54,7 +54,7 @@ window.navigateToURL = function(url) {
 
 window.clearAllBookmarks = function() {
     if (confirm('This will delete all bookmarks. This action cannot be undone. Continue?')) {
-        window.webkit.messageHandlers.iterm2BrowserBookmarks.postMessage({
+        window.webkit.messageHandlers['iterm2-about:bookmarks'].postMessage({
             action: 'clearAllBookmarks'
         });
     }
@@ -62,8 +62,8 @@ window.clearAllBookmarks = function() {
 
 window.loadTags = function() {
     // Check if message handler is available, retry if not
-    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.iterm2BrowserBookmarks) {
-        window.webkit.messageHandlers.iterm2BrowserBookmarks.postMessage({
+    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers['iterm2-about:bookmarks']) {
+        window.webkit.messageHandlers['iterm2-about:bookmarks'].postMessage({
             action: 'loadTags'
         });
     } else {

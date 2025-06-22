@@ -12,7 +12,7 @@ window.loadHistoryEntries = function(offset = 0, limit = 50, searchQuery = '') {
     isLoading = true;
     showLoadingIndicator();
     
-    window.webkit.messageHandlers.iterm2BrowserHistory.postMessage({
+    window.webkit.messageHandlers['iterm2-about:history'].postMessage({
         action: 'loadEntries',
         offset: offset,
         limit: limit,
@@ -22,7 +22,7 @@ window.loadHistoryEntries = function(offset = 0, limit = 50, searchQuery = '') {
 
 window.deleteHistoryEntry = function(entryId) {
     if (confirm('Delete this history entry?')) {
-        window.webkit.messageHandlers.iterm2BrowserHistory.postMessage({
+        window.webkit.messageHandlers['iterm2-about:history'].postMessage({
             action: 'deleteEntry',
             entryId: entryId
         });
@@ -30,7 +30,7 @@ window.deleteHistoryEntry = function(entryId) {
 };
 
 window.navigateToURL = function(url) {
-    window.webkit.messageHandlers.iterm2BrowserHistory.postMessage({
+    window.webkit.messageHandlers['iterm2-about:history'].postMessage({
         action: 'navigateToURL',
         url: url
     });
@@ -38,7 +38,7 @@ window.navigateToURL = function(url) {
 
 window.clearAllHistory = function() {
     if (confirm('This will delete all browsing history. This action cannot be undone. Continue?')) {
-        window.webkit.messageHandlers.iterm2BrowserHistory.postMessage({
+        window.webkit.messageHandlers['iterm2-about:history'].postMessage({
             action: 'clearAllHistory'
         });
     }
