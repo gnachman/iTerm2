@@ -33,6 +33,7 @@ extern NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues;
 @property(nonatomic, readonly) NSArray<NSString *> *keysForBulkCopy;
 
 @property(nonatomic, weak) NSWindowController<iTermPreferencePanelSizing> *preferencePanel;
+@property(nonatomic, readonly) NSMutableDictionary *internalState;
 
 #pragma mark - Core Methods
 

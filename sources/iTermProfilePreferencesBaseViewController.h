@@ -27,7 +27,6 @@
 @interface iTermProfilePreferencesBaseViewController : iTermPreferencesBaseViewController
 
 @property(nonatomic, weak) IBOutlet id<iTermProfilePreferencesBaseViewControllerDelegate> delegate;
-@property(nonatomic, readonly) NSMutableDictionary *internalState;
 
 - (void)setObject:(NSObject *)value forKey:(NSString *)key withSideEffects:(BOOL)sideEffects;
 

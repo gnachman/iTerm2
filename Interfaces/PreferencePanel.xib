@@ -1803,11 +1803,11 @@ DQ
             </connections>
         </customObject>
         <customView id="xGo-ez-mEe" userLabel="Prefs - Profiles - General" customClass="iTermPrefsProfilesGeneralView">
-            <rect key="frame" x="0.0" y="0.0" width="686" height="554"/>
+            <rect key="frame" x="0.0" y="0.0" width="686" height="566"/>
             <autoresizingMask key="autoresizingMask"/>
             <subviews>
                 <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2133" userLabel="Name text field">
-                    <rect key="frame" x="146" y="513" width="520" height="21"/>
+                    <rect key="frame" x="146" y="525" width="520" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="2136">
                         <font key="font" metaFont="system"/>
@@ -1820,7 +1820,7 @@ DQ
                     </connections>
                 </textField>
                 <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2134" userLabel="Name label">
-                    <rect key="frame" x="19" y="516" width="118" height="16"/>
+                    <rect key="frame" x="19" y="528" width="118" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Name:" id="2135">
                         <font key="font" metaFont="system"/>
@@ -1828,40 +1828,40 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Mbz-sF-N6i" userLabel="Profile Type Container">
-                    <rect key="frame" x="21" y="454" width="645" height="55"/>
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="o8r-qZ-dn4" customClass="iTermBrowserModeEnclosure">
+                    <rect key="frame" x="20" y="461" width="645" height="30"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
-                        <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="o8r-qZ-dn4" customClass="iTermBrowserModeEnclosure">
-                            <rect key="frame" x="0.0" y="0.0" width="645" height="30"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                            <subviews>
-                                <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="m4L-Ud-eRe" userLabel="Initial URL Label">
-                                    <rect key="frame" x="-2" y="12" width="118" height="16"/>
-                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                    <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Initial URL:" id="2qo-h9-UBD">
-                                        <font key="font" metaFont="system"/>
-                                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                    </textFieldCell>
-                                </textField>
-                                <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="yb0-Wq-WSQ" userLabel="Initial URL text field">
-                                    <rect key="frame" x="125" y="9" width="520" height="21"/>
-                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="cZn-Yn-TLz">
-                                        <font key="font" metaFont="system"/>
-                                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                    </textFieldCell>
-                                    <connections>
-                                        <outlet property="delegate" destination="dVg-Ac-SiZ" id="9H1-TL-tfz"/>
-                                        <outlet property="nextKeyView" destination="2142" id="7qL-hk-cFD"/>
-                                    </connections>
-                                </textField>
-                            </subviews>
-                        </customView>
+                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="m4L-Ud-eRe" userLabel="Initial URL Label">
+                            <rect key="frame" x="-2" y="12" width="118" height="16"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Initial URL:" id="2qo-h9-UBD">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="yb0-Wq-WSQ" userLabel="Initial URL text field">
+                            <rect key="frame" x="125" y="9" width="520" height="21"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="cZn-Yn-TLz">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                            <connections>
+                                <outlet property="delegate" destination="dVg-Ac-SiZ" id="9H1-TL-tfz"/>
+                                <outlet property="nextKeyView" destination="2142" id="7qL-hk-cFD"/>
+                            </connections>
+                        </textField>
+                    </subviews>
+                </customView>
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Mbz-sF-N6i" userLabel="Profile Type Container">
+                    <rect key="frame" x="21" y="496" width="645" height="24"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <subviews>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jtn-iS-uQ0" userLabel="Name label">
-                            <rect key="frame" x="-2" y="38" width="118" height="16"/>
+                            <rect key="frame" x="-2" y="5" width="118" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Profile Type:" id="6KX-JG-Yon">
                                 <font key="font" metaFont="system"/>
@@ -1870,13 +1870,13 @@ DQ
                             </textFieldCell>
                         </textField>
                         <segmentedControl verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VI8-Qb-i2z">
-                            <rect key="frame" x="123" y="33" width="204" height="24"/>
+                            <rect key="frame" x="123" y="0.0" width="269" height="24"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <segmentedCell key="cell" borderStyle="border" alignment="left" style="rounded" trackingMode="selectOne" id="Tbo-Nq-0gg">
                                 <font key="font" metaFont="system"/>
                                 <segments>
-                                    <segment label="Terminal" width="98"/>
-                                    <segment label="Web Browser" width="97" selected="YES" tag="1"/>
+                                    <segment label="🖥️ Terminal" width="130"/>
+                                    <segment label="🌎 Web Browser" width="130" selected="YES" tag="1"/>
                                 </segments>
                             </segmentedCell>
                             <connections>
@@ -1886,7 +1886,7 @@ DQ
                     </subviews>
                 </customView>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jFD-jQ-u7E" userLabel="After profile type container">
-                    <rect key="frame" x="16" y="69" width="650" height="387"/>
+                    <rect key="frame" x="16" y="74" width="650" height="387"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2141" userLabel="Shortcut key label">
@@ -2383,7 +2383,7 @@ DQ
                 </customView>
             </subviews>
             <accessibility identifier="prefsProfilesGeneral"/>
-            <point key="canvasLocation" x="1041" y="-785"/>
+            <point key="canvasLocation" x="1041" y="-779"/>
         </customView>
         <customView id="SCN-fS-hNB" userLabel="Prefs - Profiles - Colors" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="560" height="894"/>
