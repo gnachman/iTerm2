@@ -3233,7 +3233,7 @@
 		A6AF79D42E065C99008D77BA /* bookmarks-page.js in Resources */ = {isa = PBXBuildFile; fileRef = A6AF79CF2E065C93008D77BA /* bookmarks-page.js */; };
 		A6AF79D62E06776C008D77BA /* iTermDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79D52E067769008D77BA /* iTermDatabase.swift */; };
 		A6AF79D82E072196008D77BA /* OptionalEnclosure.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79D72E072187008D77BA /* OptionalEnclosure.swift */; };
-		A6AF79DA2E072C17008D77BA /* iTermProfilePreferencesBaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79D92E072C15008D77BA /* iTermProfilePreferencesBaseViewController.swift */; };
+		A6AF79DA2E072C17008D77BA /* iTermPreferencesBaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79D92E072C15008D77BA /* iTermPreferencesBaseViewController.swift */; };
 		A6AFCDD52D91F46E002F36AE /* TwoTextFieldCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AFCDD42D91F468002F36AE /* TwoTextFieldCell.swift */; };
 		A6AFD68424496EC2007D0660 /* iTermMultiServerMessage.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AFD68224496EC2007D0660 /* iTermMultiServerMessage.h */; };
 		A6AFD68524496EC2007D0660 /* iTermMultiServerMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AFD68324496EC2007D0660 /* iTermMultiServerMessage.m */; };
@@ -7646,7 +7646,7 @@
 		A6AF79D02E065C93008D77BA /* iTermBrowserBookmarkViewHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserBookmarkViewHandler.swift; sourceTree = "<group>"; };
 		A6AF79D52E067769008D77BA /* iTermDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermDatabase.swift; sourceTree = "<group>"; };
 		A6AF79D72E072187008D77BA /* OptionalEnclosure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptionalEnclosure.swift; sourceTree = "<group>"; };
-		A6AF79D92E072C15008D77BA /* iTermProfilePreferencesBaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermProfilePreferencesBaseViewController.swift; sourceTree = "<group>"; };
+		A6AF79D92E072C15008D77BA /* iTermPreferencesBaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermPreferencesBaseViewController.swift; sourceTree = "<group>"; };
 		A6AFCDD42D91F468002F36AE /* TwoTextFieldCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TwoTextFieldCell.swift; sourceTree = "<group>"; };
 		A6AFD68224496EC2007D0660 /* iTermMultiServerMessage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMultiServerMessage.h; sourceTree = "<group>"; };
 		A6AFD68324496EC2007D0660 /* iTermMultiServerMessage.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMultiServerMessage.m; sourceTree = "<group>"; };
@@ -9568,7 +9568,7 @@
 		1D24C37714303E00006B246F /* Preferences */ = {
 			isa = PBXGroup;
 			children = (
-				A6AF79D92E072C15008D77BA /* iTermProfilePreferencesBaseViewController.swift */,
+				A6AF79D92E072C15008D77BA /* iTermPreferencesBaseViewController.swift */,
 				A6AF79D72E072187008D77BA /* OptionalEnclosure.swift */,
 				A6E713B118FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.m */,
 				A6E7138D18F26A91008D94DD /* AppearancePreferencesViewController.m */,
@@ -17267,7 +17267,7 @@
 				A6A4867C20B67EFB00493302 /* ProfilesTextPreferencesViewController.m in Sources */,
 				A66433372DE7E6050099F722 /* RangeMap.swift in Sources */,
 				A6DBC03D2003479400F1466D /* iTermImageRenderer.m in Sources */,
-				A6AF79DA2E072C17008D77BA /* iTermProfilePreferencesBaseViewController.swift in Sources */,
+				A6AF79DA2E072C17008D77BA /* iTermPreferencesBaseViewController.swift in Sources */,
 				A60EF16C2DE65651002837B9 /* DateFormatter+iTerm.swift in Sources */,
 				A60D20EF2597FCFA004AC979 /* iTermImage+ImageWithData.m in Sources */,
 				A65429A020BE71E400CE71B1 /* iTermOpenQuicklyModel.m in Sources */,

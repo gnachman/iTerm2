@@ -5,8 +5,11 @@
 //  Created by George Nachman on 6/21/25.
 //
 
+@objc(iTermModalEnclosure)
+class ModalEnclosure: NSView {}
+
 @objc(iTermTerminalModeEnclosure)
-class TerminalModeEnclosure: NSView {}
+class TerminalModeEnclosure: ModalEnclosure {}
 
 @objc(iTermBrowserModeEnclosure)
-class BrowserModeEnclosure: NSView {}
+class BrowserModeEnclosure: ModalEnclosure {}

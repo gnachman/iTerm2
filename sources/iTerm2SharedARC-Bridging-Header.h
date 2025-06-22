@@ -137,6 +137,7 @@
 #import "NSView+RecursiveDescription.h"
 #import "NSView+iTerm.h"
 #import "NSWorkspace+iTerm.h"
+#import "ProfilePreferencesViewController.h"
 #import "PSMTabBarControl.h"
 #import "PTYScrollView.h"
 #import "PTYSession.h"

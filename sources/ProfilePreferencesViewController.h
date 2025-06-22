@@ -9,6 +9,7 @@
 #import "iTermPreferencesBaseViewController.h"
 #import "ProfileModel.h"
 
+@class iTermProfilePreferencesBaseViewController;
 @protocol iTermSessionScope;
 @class iTermVariableScope;
 @class ProfileModel;
@@ -66,7 +67,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
 - (void)resizeWindowForCurrentTabAnimated:(BOOL)animated;
 - (void)invalidateSavedSize;
 
-- (BOOL)hasViewController:(NSViewController *)viewController;
+- (BOOL)hasViewController:(iTermProfilePreferencesBaseViewController *)viewController;
 - (id<iTermSearchableViewController>)viewControllerWithOwnerIdentifier:(NSString *)ownerIdentifier;
 
 @end

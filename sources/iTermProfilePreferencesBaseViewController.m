@@ -14,15 +14,6 @@
 
 @implementation iTermProfilePreferencesBaseViewController
 
-- (instancetype)initWithNibName:(NSNibName)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
-    self = [super initWithNibName:nibNameOrNil
-                           bundle:nibBundleOrNil];
-    if (self) {
-        _internalState = [NSMutableDictionary dictionary];
-    }
-    return self;
-}
-
 - (void)setObjectsFromDictionary:(NSDictionary *)dictionary {
     for (NSString *key in dictionary.allKeys) {
         [self.delegate profilePreferencesViewController:self willSetObjectWithKey:key];
