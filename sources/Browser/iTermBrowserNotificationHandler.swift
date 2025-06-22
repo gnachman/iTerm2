@@ -15,21 +15,8 @@ class iTermBrowserNotificationHandler {
     static let messageHandlerName = "iTermNotification"
     private let secret: String
 
-    private static func makeSecureHexString(byteCount: Int = 16) -> String? {
-        var bytes = [UInt8](repeating: 0, count: byteCount)
-        let status = bytes.withUnsafeMutableBytes {
-            SecRandomCopyBytes(kSecRandomDefault,
-                               byteCount,
-                               $0.baseAddress!)
-        }
-        guard status == errSecSuccess else {
-            return nil
-        }
-        return bytes.map { String(format: "%02x", $0) }.joined()
-    }
-
     init?() {
-        guard let secret = Self.makeSecureHexString() else {
+        guard let secret = String.makeSecureHexString() else {
             return nil
         }
         self.secret = secret
@@ -47,12 +34,11 @@ class iTermBrowserNotificationHandler {
         guard let messageDict = message.body as? [String: Any],
               let type = messageDict["type"] as? String,
               let sessionSecret = messageDict["sessionSecret"] as? String,
-              sessionSecret == secret,
-              let origin = message.frameInfo.request.url else {
+              sessionSecret == secret else {
             DLog("Invalid notification message format")
             return
         }
-
+        let origin = message.frameInfo.securityOrigin
         Task {
             let originString = iTermBrowserPermissionManager.normalizeOrigin(from: origin)
             switch type {

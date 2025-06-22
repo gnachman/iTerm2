@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Security
 
 extension String {
     func containsCaseInsensitive(_ substring: String) -> Bool {
@@ -372,5 +373,18 @@ extension String {
         result = result.replacingOccurrences(of: "\"", with: "&quot;")
         result = result.replacingOccurrences(of: "'",  with: "&#39;")
         return result
+    }
+    
+    static func makeSecureHexString(byteCount: Int = 16) -> String? {
+        var bytes = [UInt8](repeating: 0, count: byteCount)
+        let status = bytes.withUnsafeMutableBytes {
+            SecRandomCopyBytes(kSecRandomDefault,
+                               byteCount,
+                               $0.baseAddress!)
+        }
+        guard status == errSecSuccess else {
+            return nil
+        }
+        return bytes.map { String(format: "%02x", $0) }.joined()
     }
 }

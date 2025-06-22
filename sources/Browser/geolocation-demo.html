@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Geolocation Bridge Tester</title>
+  <style>
+    body { font-family: sans-serif; padding: 1em; }
+    button { margin: 0.3em; padding: 0.5em 1em; }
+    #log { margin-top:1em; padding:1em; background:#f9f9f9; border:1px solid #ccc; height:200px; overflow:auto; white-space:pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Geolocation Bridge Tester</h1>
+  <div>
+    <button id="btnQueryPerm">Query Permission</button>
+    <button id="btnGet1">Get Current Position (once)</button>
+    <button id="btnGet2">Get Current Position (cache test)</button>
+    <button id="btnWatch">Start Watch</button>
+    <button id="btnClearWatch">Clear Watch</button>
+    <button id="btnTestError">Test Error (bad cb)</button>
+    <button id="btnInstanceOf">Test PositionError instanceof</button>
+  </div>
+  <div id="log"></div>
+
+  <script>
+    // helper
+    const logEl = document.getElementById('log');
+    function log(...args) {
+      logEl.textContent += args.map(a => String(a)).join(' ') + '\n';
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // Track watchId
+    let currentWatchId = null;
+    // Track cached test
+    let step = 0;
+
+    // Query Permissions API
+    document.getElementById('btnQueryPerm').onclick = async () => {
+      log('Querying navigator.permissions.query({name:"geolocation"})…');
+      try {
+        const status = await navigator.permissions.query({name: 'geolocation'});
+        log('  state:', status.state);
+        status.onchange = () => log('  onchange fired, new state:', status.state);
+      } catch (e) {
+        log('  error querying permissions:', e);
+      }
+    };
+
+    // Get Current Position once
+    document.getElementById('btnGet1').onclick = () => {
+      log('Calling getCurrentPosition()…');
+      navigator.geolocation.getCurrentPosition(pos => {
+        log('  Success:',
+          'lat=', pos.coords.latitude.toFixed(5),
+          'lng=', pos.coords.longitude.toFixed(5),
+          'time=', new Date(pos.timestamp).toLocaleTimeString()
+        );
+      }, err => {
+        log('  Error code', err.code, 'message:', err.message);
+      }, { maximumAge: 30000, timeout: 5000 });
+    };
+
+    // Get Current Position again (cache test)
+    document.getElementById('btnGet2').onclick = () => {
+      log('Calling getCurrentPosition() for cache test… (step ' + (++step) + ')');
+      navigator.geolocation.getCurrentPosition(pos => {
+        log('  Cached Success:',
+          'lat=', pos.coords.latitude.toFixed(5),
+          'lng=', pos.coords.longitude.toFixed(5),
+          'time=', new Date(pos.timestamp).toLocaleTimeString()
+        );
+      }, err => {
+        log('  Cached Error code', err.code, 'message:', err.message);
+      }, { maximumAge: 30000 });
+    };
+
+    // Start watchPosition
+    document.getElementById('btnWatch').onclick = () => {
+      if (currentWatchId != null) {
+        log('Watch already running with id', currentWatchId);
+        return;
+      }
+      log('Starting watchPosition()…');
+      currentWatchId = navigator.geolocation.watchPosition(pos => {
+        log('  Watch update:',
+          'lat=', pos.coords.latitude.toFixed(5),
+          'lng=', pos.coords.longitude.toFixed(5),
+          'time=', new Date(pos.timestamp).toLocaleTimeString()
+        );
+      }, err => {
+        log('  Watch error code', err.code, 'message:', err.message);
+      }, { enableHighAccuracy: true, timeout: 10000 });
+      log('  Received watchId =', currentWatchId);
+    };
+
+    // Clear watchPosition
+    document.getElementById('btnClearWatch').onclick = () => {
+      if (currentWatchId == null) {
+        log('No watch to clear');
+        return;
+      }
+      log('Clearing watchId', currentWatchId);
+      navigator.geolocation.clearWatch(currentWatchId);
+      currentWatchId = null;
+    };
+
+    // Test error: pass invalid callbacks
+    document.getElementById('btnTestError').onclick = () => {
+      log('Testing invalid callback handling…');
+      try {
+        // missing successCallback
+        navigator.geolocation.getCurrentPosition();
+      } catch (e) {
+        log('  Threw as expected:', e.name, e.message);
+      }
+      try {
+        // invalid errorCallback type
+        navigator.geolocation.getCurrentPosition(() => {}, 123);
+      } catch (e) {
+        log('  Threw as expected:', e.name, e.message);
+      }
+    };
+
+    // Test PositionError instanceof
+    document.getElementById('btnInstanceOf').onclick = () => {
+      const err = new PositionError(PermissionError => {});
+      // Wrong: we want to simulate a denial
+      const pe = new PositionError(1, 'Denied');
+      log('PositionError instance:', pe instanceof PositionError,
+          'code matches static:', pe.code === PositionError.PERMISSION_DENIED);
+    };
+
+    // Initial log
+    log('navigator.geolocation:', typeof navigator.geolocation);
+    log('navigator.permissions:', typeof navigator.permissions);
+    log('PositionError constructor:', typeof PositionError);
+  </script>
+</body>
+</html>
