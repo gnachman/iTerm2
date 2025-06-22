@@ -46,6 +46,8 @@
 #define KEY_DESCRIPTION                 @"Description"  // Deprecated
 #define KEY_CUSTOM_COMMAND              @"Custom Command"
 #define KEY_COMMAND_LINE                @"Command"
+#define KEY_PROFILE_TYPE_PHONY          @"Profile Type (Phony)"  // Not actually stored - has a synthetic getter and setter
+#define KEY_INITIAL_URL                 @"Initial URL"  // string
 #define KEY_INITIAL_TEXT                @"Initial Text"  // String. Evaluated as a swifty string.
 #define KEY_CUSTOM_DIRECTORY            @"Custom Directory"  // values are Yes, No, Recycle, Advanced
 #define KEY_WORKING_DIRECTORY           @"Working Directory"

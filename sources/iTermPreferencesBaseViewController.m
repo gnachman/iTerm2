@@ -350,6 +350,10 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
                 [self setInt:[sender selectedTag] forKey:info.key];
                 break;
 
+            case kPreferenceInfoTypeSegmentedControl:
+                [self setInt:[sender selectedSegment] forKey:info.key];
+                break;
+
             case kPreferenceInfoTypeStringPopup:
                 [self setObject:[[sender selectedItem] representedObject] forKey:info.key];
                 break;
@@ -615,6 +619,12 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
         case kPreferenceInfoTypePasswordTextField:
             break;
 
+        case kPreferenceInfoTypeSegmentedControl:
+            for (NSInteger i = 0; i < [(NSSegmentedControl *)control segmentCount]; i++) {
+                [phrases addObject:[(NSSegmentedControl *)control labelForSegment:i]];
+            }
+            break;
+
         case kPreferenceInfoTypeRadioButton: {
             for (NSView *subview in control.subviews) {
                 NSButton *button = [NSButton castFrom:subview];
@@ -713,6 +723,12 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
             break;
         }
 
+        case kPreferenceInfoTypeSegmentedControl: {
+            assert([info.control isKindOfClass:[NSSegmentedControl class]]);
+            NSSegmentedControl *control = (NSSegmentedControl *)info.control;
+            [control selectSegmentWithTag:[self intForKey:info.key]];
+            break;
+        }
         case kPreferenceInfoTypeStringPopup: {
             assert([info.control isKindOfClass:[NSPopUpButton class]]);
             NSPopUpButton *popup = (NSPopUpButton *)info.control;
@@ -863,6 +879,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
                 case kPreferenceInfoTypeStringTextField:
                 case kPreferenceInfoTypePasswordTextField:
                 case kPreferenceInfoTypePopup:
+                case kPreferenceInfoTypeSegmentedControl:
                 case kPreferenceInfoTypeStringPopup:
                 case kPreferenceInfoTypeUnsignedIntegerPopup:
                 case kPreferenceInfoTypeSlider:
@@ -950,6 +967,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
             case kPreferenceInfoTypeMatrix:
             case kPreferenceInfoTypeRadioButton:
             case kPreferenceInfoTypePopup:
+            case kPreferenceInfoTypeSegmentedControl:
             case kPreferenceInfoTypeStringPopup:
             case kPreferenceInfoTypeSlider:
             case kPreferenceInfoTypeStringTextField:

@@ -1461,6 +1461,7 @@ DQ
         <customObject id="dVg-Ac-SiZ" userLabel="Prefs&gt;Profiles&gt;General View Controller" customClass="ProfilesGeneralPreferencesViewController">
             <connections>
                 <outlet property="_advancedWorkingDirWindowController" destination="Cct-nR-QI7" id="BT2-8e-6Md"/>
+                <outlet property="_afterProfileType" destination="jFD-jQ-u7E" id="hEn-wH-bWg"/>
                 <outlet property="_allowTitleSetting" destination="q57-nJ-Jbz" id="FIJ-aB-riV"/>
                 <outlet property="_badgeLabel" destination="nUa-Y1-jO4" id="86p-e0-92K"/>
                 <outlet property="_badgeText" destination="sa9-oD-SMc" id="MvW-wP-hbS"/>
@@ -1484,6 +1485,7 @@ DQ
                 <outlet property="_iconLabel" destination="Xzz-Fo-TWV" id="JMy-Cp-2Y2"/>
                 <outlet property="_imageWell" destination="CNi-xf-qcd" id="ta5-Ti-xEy"/>
                 <outlet property="_initialDirectoryType" destination="2190" id="LYF-0C-gAo"/>
+                <outlet property="_initialURL" destination="yb0-Wq-WSQ" id="onp-UG-jVD"/>
                 <outlet property="_loadShellIntegrationAutomatically" destination="iWk-HJ-EKg" id="YGt-lQ-NrZ"/>
                 <outlet property="_locked" destination="imM-Ma-mjV" id="Oy4-Ab-2k5"/>
                 <outlet property="_preventAutomaticProfileSwitching" destination="N23-uy-3RA" id="cRM-BE-TkQ"/>
@@ -1491,6 +1493,8 @@ DQ
                 <outlet property="_profileNameFieldForEditCurrentSession" destination="12133" id="5Kd-KE-2zg"/>
                 <outlet property="_profileNameFieldLabel" destination="2134" id="egs-WO-Ucn"/>
                 <outlet property="_profileShortcut" destination="2142" id="vtI-vU-bua"/>
+                <outlet property="_profileType" destination="VI8-Qb-i2z" id="3UM-99-Ph9"/>
+                <outlet property="_profileTypeContainer" destination="Mbz-sF-N6i" id="g1z-v3-Tvk"/>
                 <outlet property="_profiles" destination="15766" id="mhp-qy-IXj"/>
                 <outlet property="_reasonShellIntegrationDisabledLabel" destination="3BE-IU-euZ" id="Jkt-at-t9a"/>
                 <outlet property="_schemesLabel" destination="5035" id="zeB-oy-niN"/>
@@ -1799,34 +1803,11 @@ DQ
             </connections>
         </customObject>
         <customView id="xGo-ez-mEe" userLabel="Prefs - Profiles - General" customClass="iTermPrefsProfilesGeneralView">
-            <rect key="frame" x="0.0" y="0.0" width="686" height="453"/>
+            <rect key="frame" x="0.0" y="0.0" width="686" height="554"/>
             <autoresizingMask key="autoresizingMask"/>
             <subviews>
-                <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2131" userLabel="Command text field" customClass="iTermExpandingTextField">
-                    <rect key="frame" x="275" y="197" width="391" height="21"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Command for new sessions (interpolated string)" drawsBackground="YES" id="2138" customClass="iTermStatusIndicatingTextFieldCell">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                    <connections>
-                        <action selector="settingChanged:" target="dVg-Ac-SiZ" id="XfN-eY-WXr"/>
-                        <outlet property="delegate" destination="dVg-Ac-SiZ" id="Sqw-g4-7yA"/>
-                        <outlet property="nextKeyView" destination="5410" id="5738"/>
-                    </connections>
-                </textField>
-                <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2132" userLabel="Command label">
-                    <rect key="frame" x="14" y="200" width="124" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Command:" id="2137">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
                 <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2133" userLabel="Name text field">
-                    <rect key="frame" x="146" y="412" width="520" height="21"/>
+                    <rect key="frame" x="146" y="513" width="520" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="2136">
                         <font key="font" metaFont="system"/>
@@ -1839,7 +1820,7 @@ DQ
                     </connections>
                 </textField>
                 <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2134" userLabel="Name label">
-                    <rect key="frame" x="93" y="415" width="44" height="16"/>
+                    <rect key="frame" x="19" y="516" width="118" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Name:" id="2135">
                         <font key="font" metaFont="system"/>
@@ -1847,476 +1828,568 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3243" userLabel="Tags label">
-                    <rect key="frame" x="100" y="364" width="37" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Tags:" id="3244">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2141" userLabel="Shortcut key label">
-                    <rect key="frame" x="47" y="390" width="90" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Shortcut key:      " id="2182">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2142" userLabel="Shortcut selection popup button">
-                    <rect key="frame" x="143" y="383" width="527" height="25"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" title="⌃⌘A" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" state="on" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="2163" id="2143">
-                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="message"/>
-                        <menu key="menu" title="OtherViews" id="2144">
-                            <items>
-                                <menuItem tag="-1" id="2159"/>
-                                <menuItem title="⌃⌘A" state="on" id="2163">
-                                    <modifierMask key="keyEquivalentModifierMask"/>
-                                </menuItem>
-                                <menuItem title="⌃⌘B" tag="1" id="2165">
-                                    <modifierMask key="keyEquivalentModifierMask"/>
-                                </menuItem>
-                                <menuItem title="⌃⌘C" tag="2" id="2167"/>
-                                <menuItem title="⌃⌘D" tag="3" id="2169"/>
-                                <menuItem title="⌃⌘E" tag="4" id="2172"/>
-                                <menuItem title="⌃⌘F" tag="5" id="2173"/>
-                                <menuItem title="⌃⌘G" tag="6" id="2175"/>
-                                <menuItem title="⌃⌘H" tag="7" id="2178"/>
-                                <menuItem title="⌃⌘I" tag="8" id="2180"/>
-                                <menuItem title="⌃⌘J" tag="9" id="2146"/>
-                                <menuItem title="⌃⌘K" tag="10" id="2148"/>
-                                <menuItem title="⌃⌘L" tag="11" id="2151"/>
-                                <menuItem title="⌃⌘M" tag="12" id="2152"/>
-                                <menuItem title="⌃⌘N" tag="13" id="2153"/>
-                                <menuItem title="⌃⌘O" tag="14" id="2154"/>
-                                <menuItem title="⌃⌘P" tag="15" id="2171"/>
-                                <menuItem title="⌃⌘Q" tag="16" id="2174"/>
-                                <menuItem title="⌃⌘R" tag="17" id="2176"/>
-                                <menuItem title="⌃⌘S" tag="18" id="2177"/>
-                                <menuItem title="⌃⌘T" tag="19" id="2179"/>
-                                <menuItem title="⌃⌘U" tag="20" id="2145"/>
-                                <menuItem title="⌃⌘V" tag="21" id="2147"/>
-                                <menuItem title="⌃⌘W" tag="22" id="2150"/>
-                                <menuItem title="⌃⌘X" tag="23" id="2161"/>
-                                <menuItem title="⌃⌘Y" tag="24" id="2162"/>
-                                <menuItem title="⌃⌘Z" tag="25" id="2164"/>
-                                <menuItem title="0" tag="100" id="2166"/>
-                                <menuItem title="1" tag="101" id="2168"/>
-                                <menuItem title="2" tag="102" id="2181"/>
-                                <menuItem title="3" tag="103" id="2149"/>
-                                <menuItem title="4" tag="104" id="2170"/>
-                                <menuItem title="5" tag="105" id="2155"/>
-                                <menuItem title="6" tag="106" id="2156"/>
-                                <menuItem title="7" tag="107" id="2157"/>
-                                <menuItem title="8" tag="108" id="2158"/>
-                                <menuItem title="9" tag="109" id="2160"/>
-                            </items>
-                        </menu>
-                    </popUpButtonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="dVg-Ac-SiZ" id="Xst-bE-CUr"/>
-                        <outlet property="nextKeyView" destination="3245" id="5212"/>
-                    </connections>
-                </popUpButton>
-                <tokenField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3245" userLabel="Tags token Field">
-                    <rect key="frame" x="146" y="361" width="520" height="21"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <string key="toolTip">Tags with slashes create a hierarchy which you can navigate in the Profiles menu or in the tags list adjacent to lists of profiles.</string>
-                    <tokenFieldCell key="cell" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="left" placeholderString="Example: linux, dark bg, tag/subtag/subsubtag" drawsBackground="YES" allowsEditingTextAttributes="YES" id="3246">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                        <connections>
-                            <action selector="settingChanged:" target="dVg-Ac-SiZ" id="xwe-c8-jx0"/>
-                            <outlet property="delegate" destination="dVg-Ac-SiZ" id="1Po-MW-s3m"/>
-                        </connections>
-                    </tokenFieldCell>
-                    <connections>
-                        <outlet property="delegate" destination="dVg-Ac-SiZ" id="aoc-g6-369"/>
-                    </connections>
-                </tokenField>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NSI-ew-7Hx" customClass="iTermOptionalEnclosure">
-                    <rect key="frame" x="92" y="278" width="574" height="78"/>
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Mbz-sF-N6i" userLabel="Profile Type Container">
+                    <rect key="frame" x="21" y="454" width="645" height="55"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
-                        <button horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kFr-1J-iPo">
-                            <rect key="frame" x="551" y="26" width="25" height="25"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="inb-QV-C1Z">
-                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                            <connections>
-                                <action selector="titleHelp:" target="dVg-Ac-SiZ" id="r0q-o3-3rA"/>
-                            </connections>
-                        </button>
-                        <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="q57-nJ-Jbz">
-                            <rect key="frame" x="52" y="6" width="295" height="18"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <string key="toolTip">Can the session title be changed by control sequence? Note that this is only enabled if Session or Profile &amp; Session are selected in the title menu above.</string>
-                            <buttonCell key="cell" type="check" title="Applications in terminal may change the title" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="yFQ-IJ-IID">
-                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                            <connections>
-                                <action selector="settingChanged:" target="dVg-Ac-SiZ" id="CZ7-Uk-XCW"/>
-                            </connections>
-                        </button>
-                        <textField toolTip="The badge is text that appears in the top right of a session." focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="sa9-oD-SMc" userLabel="Name text field">
-                            <rect key="frame" x="54" y="57" width="458" height="21"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Enter badge text (interpolated string)" drawsBackground="YES" id="M2Y-uM-p2q">
-                                <font key="font" metaFont="system"/>
-                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                            </textFieldCell>
-                            <connections>
-                                <outlet property="delegate" destination="dVg-Ac-SiZ" id="luj-Lu-cdv"/>
-                                <outlet property="nextKeyView" destination="2142" id="hLk-ll-fLY"/>
-                            </connections>
-                        </textField>
-                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="iet-o6-fEv" userLabel="Name label">
-                            <rect key="frame" x="10" y="34" width="35" height="16"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Title:" id="cKG-uJ-P2E">
-                                <font key="font" metaFont="system"/>
-                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                            </textFieldCell>
-                        </textField>
-                        <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kmy-bS-CYF" userLabel="Edit advanced configuration push button">
-                            <rect key="frame" x="513" y="52" width="68" height="28"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <buttonCell key="cell" type="push" title="Edit…" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="9iq-xC-84R">
-                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                            <connections>
-                                <action selector="configureBadge:" target="dVg-Ac-SiZ" id="7dS-4S-7fF"/>
-                            </connections>
-                        </button>
-                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="nUa-Y1-jO4" userLabel="Name label">
-                            <rect key="frame" x="-2" y="60" width="47" height="16"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Badge:" id="7Oa-B2-O5u">
-                                <font key="font" metaFont="system"/>
-                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                            </textFieldCell>
-                        </textField>
-                        <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2VF-JO-c2O" userLabel="Title Components Popup">
-                            <rect key="frame" x="51" y="27" width="496" height="25"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <popUpButtonCell key="cell" type="push" title="Components" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" autoenablesItems="NO" id="Xgh-er-la0" userLabel="Title Popup Button Cell">
-                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                <font key="font" metaFont="message"/>
-                                <menu key="menu" autoenablesItems="NO" id="Odx-9x-W67">
-                                    <items>
-                                        <menuItem title="Components" hidden="YES" id="JWB-xg-ElI"/>
-                                        <menuItem title="Name" enabled="NO" id="2Po-6U-Apz"/>
-                                        <menuItem title="Session Name" tag="1" indentationLevel="1" id="lG4-94-9cF"/>
-                                        <menuItem title="Profile Name" tag="32" indentationLevel="1" id="RQC-te-ZZE"/>
-                                        <menuItem title="Profile &amp; Session Name" tag="64" indentationLevel="1" id="6na-wb-F2g"/>
-                                        <menuItem isSeparatorItem="YES" id="ldD-Ci-QQX"/>
-                                        <menuItem title="Foreground Job" enabled="NO" id="YEF-Tv-Hqs"/>
-                                        <menuItem title="Job Name" tag="2" indentationLevel="1" id="cne-Bh-bAC"/>
-                                        <menuItem title="Job Name with Arguments" tag="512" indentationLevel="1" id="9nS-ja-6km"/>
-                                        <menuItem isSeparatorItem="YES" id="Hts-WQ-j82"/>
-                                        <menuItem title="Columns × Rows" tag="1024" id="ogQ-h8-deW"/>
-                                        <menuItem title="Host" tag="256" id="w6i-sK-DQu"/>
-                                        <menuItem title="User" tag="128" id="ZT3-m8-pr9"/>
-                                        <menuItem title="PWD" tag="4" id="xPf-Vv-eGl"/>
-                                        <menuItem title="TTY" tag="8" id="xEH-Wz-NWS"/>
-                                    </items>
+                        <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="o8r-qZ-dn4" customClass="iTermBrowserModeEnclosure">
+                            <rect key="frame" x="0.0" y="0.0" width="645" height="30"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            <subviews>
+                                <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="m4L-Ud-eRe" userLabel="Initial URL Label">
+                                    <rect key="frame" x="-2" y="12" width="118" height="16"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Initial URL:" id="2qo-h9-UBD">
+                                        <font key="font" metaFont="system"/>
+                                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                    </textFieldCell>
+                                </textField>
+                                <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="yb0-Wq-WSQ" userLabel="Initial URL text field">
+                                    <rect key="frame" x="125" y="9" width="520" height="21"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="cZn-Yn-TLz">
+                                        <font key="font" metaFont="system"/>
+                                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                    </textFieldCell>
                                     <connections>
-                                        <outlet property="delegate" destination="dVg-Ac-SiZ" id="SIN-HQ-Rw9"/>
+                                        <outlet property="delegate" destination="dVg-Ac-SiZ" id="9H1-TL-tfz"/>
+                                        <outlet property="nextKeyView" destination="2142" id="7qL-hk-cFD"/>
                                     </connections>
-                                </menu>
-                            </popUpButtonCell>
-                            <connections>
-                                <action selector="settingChanged:" target="dVg-Ac-SiZ" id="fYT-yW-O0V"/>
-                            </connections>
-                        </popUpButton>
-                    </subviews>
-                </customView>
-                <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="nxn-F2-gY6">
-                    <rect key="frame" x="143" y="193" width="127" height="25"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" title="Login Shell" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="KVK-Yx-UwL" id="Rq6-lu-Csd">
-                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="message"/>
-                        <menu key="menu" id="cL8-MC-tZN">
-                            <items>
-                                <menuItem title="Login Shell" state="on" tag="1" id="KVK-Yx-UwL"/>
-                                <menuItem title="Command" id="uua-tF-2uE"/>
-                                <menuItem title="Custom Shell" tag="2" id="e7Q-Nz-XFN"/>
-                                <menuItem title="SSH" tag="3" id="lh1-TY-qbn"/>
-                            </items>
-                        </menu>
-                    </popUpButtonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="dVg-Ac-SiZ" id="Tcz-lr-Dsw"/>
-                    </connections>
-                </popUpButton>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="815-r4-Z3I">
-                    <rect key="frame" x="16" y="226" width="650" height="22"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <subviews>
-                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Xzz-Fo-TWV" userLabel="Name label">
-                            <rect key="frame" x="87" y="4" width="34" height="16"/>
+                                </textField>
+                            </subviews>
+                        </customView>
+                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jtn-iS-uQ0" userLabel="Name label">
+                            <rect key="frame" x="-2" y="38" width="118" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Icon:" id="Bp6-8q-9J8">
+                            <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Profile Type:" id="6KX-JG-Yon">
                                 <font key="font" metaFont="system"/>
                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
-                        <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="PFt-ce-pWw">
-                            <rect key="frame" x="127" y="-3" width="501" height="26"/>
+                        <segmentedControl verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VI8-Qb-i2z">
+                            <rect key="frame" x="123" y="33" width="204" height="24"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <popUpButtonCell key="cell" type="push" title="No Icon" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="9aT-V8-QXb" id="rEM-cS-sAI">
+                            <segmentedCell key="cell" borderStyle="border" alignment="left" style="rounded" trackingMode="selectOne" id="Tbo-Nq-0gg">
+                                <font key="font" metaFont="system"/>
+                                <segments>
+                                    <segment label="Terminal" width="98"/>
+                                    <segment label="Web Browser" width="97" selected="YES" tag="1"/>
+                                </segments>
+                            </segmentedCell>
+                            <connections>
+                                <action selector="settingChanged:" target="dVg-Ac-SiZ" id="2xi-lu-ZGn"/>
+                            </connections>
+                        </segmentedControl>
+                    </subviews>
+                </customView>
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jFD-jQ-u7E" userLabel="After profile type container">
+                    <rect key="frame" x="16" y="69" width="650" height="387"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <subviews>
+                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2141" userLabel="Shortcut key label">
+                            <rect key="frame" x="31" y="370" width="90" height="16"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Shortcut key:      " id="2182">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="yEs-Em-Hdp" customClass="iTermTerminalModeEnclosure">
+                            <rect key="frame" x="0.0" y="168" width="650" height="30"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            <subviews>
+                                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VCV-s2-py0">
+                                    <rect key="frame" x="553" y="3" width="104" height="32"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <buttonCell key="cell" type="push" title="Configure…" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="tEq-8C-H4O">
+                                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                        <font key="font" metaFont="system"/>
+                                    </buttonCell>
+                                    <connections>
+                                        <action selector="configureSSH:" target="dVg-Ac-SiZ" id="lD6-nl-UCA"/>
+                                    </connections>
+                                </button>
+                                <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2132" userLabel="Command label">
+                                    <rect key="frame" x="-2" y="12" width="124" height="16"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Command:" id="2137">
+                                        <font key="font" metaFont="system"/>
+                                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                    </textFieldCell>
+                                </textField>
+                                <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="nxn-F2-gY6">
+                                    <rect key="frame" x="127" y="5" width="127" height="25"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <popUpButtonCell key="cell" type="push" title="Login Shell" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="KVK-Yx-UwL" id="Rq6-lu-Csd">
+                                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                        <font key="font" metaFont="message"/>
+                                        <menu key="menu" id="cL8-MC-tZN">
+                                            <items>
+                                                <menuItem title="Login Shell" state="on" tag="1" id="KVK-Yx-UwL"/>
+                                                <menuItem title="Command" id="uua-tF-2uE"/>
+                                                <menuItem title="Custom Shell" tag="2" id="e7Q-Nz-XFN"/>
+                                                <menuItem title="SSH" tag="3" id="lh1-TY-qbn"/>
+                                            </items>
+                                        </menu>
+                                    </popUpButtonCell>
+                                    <connections>
+                                        <action selector="settingChanged:" target="dVg-Ac-SiZ" id="Tcz-lr-Dsw"/>
+                                    </connections>
+                                </popUpButton>
+                                <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2131" userLabel="Command text field" customClass="iTermExpandingTextField">
+                                    <rect key="frame" x="259" y="9" width="391" height="21"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Command for new sessions (interpolated string)" drawsBackground="YES" id="2138" customClass="iTermStatusIndicatingTextFieldCell">
+                                        <font key="font" metaFont="system"/>
+                                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                    </textFieldCell>
+                                    <connections>
+                                        <action selector="settingChanged:" target="dVg-Ac-SiZ" id="XfN-eY-WXr"/>
+                                        <outlet property="delegate" destination="dVg-Ac-SiZ" id="Sqw-g4-7yA"/>
+                                        <outlet property="nextKeyView" destination="5410" id="5738"/>
+                                    </connections>
+                                </textField>
+                            </subviews>
+                        </customView>
+                        <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gZ1-Kt-xEF">
+                            <rect key="frame" x="130" y="233" width="520" height="27"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <subviews>
+                                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="flV-bs-rIS">
+                                    <rect key="frame" x="-2" y="7" width="249" height="14"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <textFieldCell key="cell" controlSize="small" lineBreakMode="clipping" title="Subtitle support requires a taller tab bar." id="CnH-GW-eh7">
+                                        <font key="font" metaFont="smallSystem"/>
+                                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                    </textFieldCell>
+                                </textField>
+                                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hQs-xB-tfZ">
+                                    <rect key="frame" x="212" y="-1" width="128" height="27"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <buttonCell key="cell" type="push" title="Enable Tall Tab Bar" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="sHg-rp-Tp0">
+                                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                        <font key="font" metaFont="smallSystem"/>
+                                    </buttonCell>
+                                    <connections>
+                                        <action selector="enableTallTabBar:" target="dVg-Ac-SiZ" id="kgB-Ri-DuM"/>
+                                    </connections>
+                                </button>
+                            </subviews>
+                        </customView>
+                        <tokenField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3245" userLabel="Tags token Field">
+                            <rect key="frame" x="130" y="341" width="520" height="21"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <string key="toolTip">Tags with slashes create a hierarchy which you can navigate in the Profiles menu or in the tags list adjacent to lists of profiles.</string>
+                            <tokenFieldCell key="cell" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="left" placeholderString="Example: linux, dark bg, tag/subtag/subsubtag" drawsBackground="YES" allowsEditingTextAttributes="YES" id="3246">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                <connections>
+                                    <action selector="settingChanged:" target="dVg-Ac-SiZ" id="xwe-c8-jx0"/>
+                                    <outlet property="delegate" destination="dVg-Ac-SiZ" id="1Po-MW-s3m"/>
+                                </connections>
+                            </tokenFieldCell>
+                            <connections>
+                                <outlet property="delegate" destination="dVg-Ac-SiZ" id="aoc-g6-369"/>
+                            </connections>
+                        </tokenField>
+                        <textField toolTip="In the Minimal theme, tabs can show a subtitle as a second line of text." focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UWv-op-rJa" userLabel="Subtitle text field">
+                            <rect key="frame" x="130" y="236" width="520" height="21"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Interpolated string" drawsBackground="YES" id="dMl-Zb-Sed">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                            <connections>
+                                <outlet property="delegate" destination="dVg-Ac-SiZ" id="W6y-yB-3S8"/>
+                                <outlet property="nextKeyView" destination="2142" id="ClU-OH-AwJ"/>
+                            </connections>
+                        </textField>
+                        <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5035" userLabel="Schemes handled label">
+                            <rect key="frame" x="3" y="3" width="118" height="16"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="URL schemes:" id="5036">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="815-r4-Z3I">
+                            <rect key="frame" x="0.0" y="206" width="650" height="22"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <subviews>
+                                <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Xzz-Fo-TWV" userLabel="Name label">
+                                    <rect key="frame" x="87" y="4" width="34" height="16"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Icon:" id="Bp6-8q-9J8">
+                                        <font key="font" metaFont="system"/>
+                                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                    </textFieldCell>
+                                </textField>
+                                <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="PFt-ce-pWw">
+                                    <rect key="frame" x="127" y="-3" width="501" height="26"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <popUpButtonCell key="cell" type="push" title="No Icon" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="9aT-V8-QXb" id="rEM-cS-sAI">
+                                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                        <font key="font" metaFont="message"/>
+                                        <menu key="menu" id="JaN-Qa-zX5">
+                                            <items>
+                                                <menuItem title="No Icon" state="on" id="9aT-V8-QXb"/>
+                                                <menuItem title="Built-in Icon for Current App" tag="1" id="BmX-zj-6vo"/>
+                                                <menuItem title="Custom" tag="2" id="eat-RV-XIJ"/>
+                                            </items>
+                                        </menu>
+                                    </popUpButtonCell>
+                                    <connections>
+                                        <action selector="settingChanged:" target="dVg-Ac-SiZ" id="9o5-WX-hwu"/>
+                                    </connections>
+                                </popUpButton>
+                                <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CNi-xf-qcd" customClass="iTermImageWell">
+                                    <rect key="frame" x="630" y="0.0" width="23" height="23"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" imageFrameStyle="photo" id="pKz-Ch-jE2"/>
+                                    <connections>
+                                        <outlet property="delegate" destination="dVg-Ac-SiZ" id="eoD-2Y-HxJ"/>
+                                    </connections>
+                                </imageView>
+                            </subviews>
+                        </customView>
+                        <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2142" userLabel="Shortcut selection popup button">
+                            <rect key="frame" x="127" y="363" width="527" height="25"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <popUpButtonCell key="cell" type="push" title="⌃⌘A" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" state="on" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="2163" id="2143">
                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                 <font key="font" metaFont="message"/>
-                                <menu key="menu" id="JaN-Qa-zX5">
+                                <menu key="menu" title="OtherViews" id="2144">
                                     <items>
-                                        <menuItem title="No Icon" state="on" id="9aT-V8-QXb"/>
-                                        <menuItem title="Built-in Icon for Current App" tag="1" id="BmX-zj-6vo"/>
-                                        <menuItem title="Custom" tag="2" id="eat-RV-XIJ"/>
+                                        <menuItem tag="-1" id="2159"/>
+                                        <menuItem title="⌃⌘A" state="on" id="2163">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                        </menuItem>
+                                        <menuItem title="⌃⌘B" tag="1" id="2165">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                        </menuItem>
+                                        <menuItem title="⌃⌘C" tag="2" id="2167"/>
+                                        <menuItem title="⌃⌘D" tag="3" id="2169"/>
+                                        <menuItem title="⌃⌘E" tag="4" id="2172"/>
+                                        <menuItem title="⌃⌘F" tag="5" id="2173"/>
+                                        <menuItem title="⌃⌘G" tag="6" id="2175"/>
+                                        <menuItem title="⌃⌘H" tag="7" id="2178"/>
+                                        <menuItem title="⌃⌘I" tag="8" id="2180"/>
+                                        <menuItem title="⌃⌘J" tag="9" id="2146"/>
+                                        <menuItem title="⌃⌘K" tag="10" id="2148"/>
+                                        <menuItem title="⌃⌘L" tag="11" id="2151"/>
+                                        <menuItem title="⌃⌘M" tag="12" id="2152"/>
+                                        <menuItem title="⌃⌘N" tag="13" id="2153"/>
+                                        <menuItem title="⌃⌘O" tag="14" id="2154"/>
+                                        <menuItem title="⌃⌘P" tag="15" id="2171"/>
+                                        <menuItem title="⌃⌘Q" tag="16" id="2174"/>
+                                        <menuItem title="⌃⌘R" tag="17" id="2176"/>
+                                        <menuItem title="⌃⌘S" tag="18" id="2177"/>
+                                        <menuItem title="⌃⌘T" tag="19" id="2179"/>
+                                        <menuItem title="⌃⌘U" tag="20" id="2145"/>
+                                        <menuItem title="⌃⌘V" tag="21" id="2147"/>
+                                        <menuItem title="⌃⌘W" tag="22" id="2150"/>
+                                        <menuItem title="⌃⌘X" tag="23" id="2161"/>
+                                        <menuItem title="⌃⌘Y" tag="24" id="2162"/>
+                                        <menuItem title="⌃⌘Z" tag="25" id="2164"/>
+                                        <menuItem title="0" tag="100" id="2166"/>
+                                        <menuItem title="1" tag="101" id="2168"/>
+                                        <menuItem title="2" tag="102" id="2181"/>
+                                        <menuItem title="3" tag="103" id="2149"/>
+                                        <menuItem title="4" tag="104" id="2170"/>
+                                        <menuItem title="5" tag="105" id="2155"/>
+                                        <menuItem title="6" tag="106" id="2156"/>
+                                        <menuItem title="7" tag="107" id="2157"/>
+                                        <menuItem title="8" tag="108" id="2158"/>
+                                        <menuItem title="9" tag="109" id="2160"/>
                                     </items>
                                 </menu>
                             </popUpButtonCell>
                             <connections>
-                                <action selector="settingChanged:" target="dVg-Ac-SiZ" id="9o5-WX-hwu"/>
+                                <action selector="settingChanged:" target="dVg-Ac-SiZ" id="Xst-bE-CUr"/>
+                                <outlet property="nextKeyView" destination="3245" id="5212"/>
                             </connections>
                         </popUpButton>
-                        <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CNi-xf-qcd" customClass="iTermImageWell">
-                            <rect key="frame" x="630" y="0.0" width="23" height="23"/>
+                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3243" userLabel="Tags label">
+                            <rect key="frame" x="84" y="344" width="37" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" imageFrameStyle="photo" id="pKz-Ch-jE2"/>
-                            <connections>
-                                <outlet property="delegate" destination="dVg-Ac-SiZ" id="eoD-2Y-HxJ"/>
-                            </connections>
-                        </imageView>
-                    </subviews>
-                </customView>
-                <textField toolTip="In the Minimal theme, tabs can show a subtitle as a second line of text." focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UWv-op-rJa" userLabel="Subtitle text field">
-                    <rect key="frame" x="146" y="256" width="520" height="21"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Interpolated string" drawsBackground="YES" id="dMl-Zb-Sed">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                    <connections>
-                        <outlet property="delegate" destination="dVg-Ac-SiZ" id="W6y-yB-3S8"/>
-                        <outlet property="nextKeyView" destination="2142" id="ClU-OH-AwJ"/>
-                    </connections>
-                </textField>
-                <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1Lq-Jr-ede" userLabel="Name label">
-                    <rect key="frame" x="86" y="260" width="51" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Subtitle" id="Z3d-96-Mba">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gZ1-Kt-xEF">
-                    <rect key="frame" x="146" y="253" width="520" height="27"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <subviews>
-                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="flV-bs-rIS">
-                            <rect key="frame" x="-2" y="7" width="249" height="14"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" controlSize="small" lineBreakMode="clipping" title="Subtitle support requires a taller tab bar." id="CnH-GW-eh7">
-                                <font key="font" metaFont="smallSystem"/>
-                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                            </textFieldCell>
-                        </textField>
-                        <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hQs-xB-tfZ">
-                            <rect key="frame" x="212" y="-1" width="128" height="27"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <buttonCell key="cell" type="push" title="Enable Tall Tab Bar" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="sHg-rp-Tp0">
-                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                <font key="font" metaFont="smallSystem"/>
-                            </buttonCell>
-                            <connections>
-                                <action selector="enableTallTabBar:" target="dVg-Ac-SiZ" id="kgB-Ri-DuM"/>
-                            </connections>
-                        </button>
-                    </subviews>
-                </customView>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VCV-s2-py0">
-                    <rect key="frame" x="569" y="191" width="104" height="32"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="push" title="Configure…" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="tEq-8C-H4O">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="configureSSH:" target="dVg-Ac-SiZ" id="lD6-nl-UCA"/>
-                    </connections>
-                </button>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0Gk-SE-iET" customClass="iTermOptionalEnclosure">
-                    <rect key="frame" x="16" y="43" width="650" height="147"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <subviews>
-                        <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="G1r-AP-exF">
-                            <rect key="frame" x="372" y="131" width="16" height="16"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="WarningSign" id="vst-Zn-2a1"/>
-                        </imageView>
-                        <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5410" userLabel="Send text at start text field" customClass="iTermExpandingTextField">
-                            <rect key="frame" x="130" y="102" width="520" height="21"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Enter text to send at start (interpolated string)" drawsBackground="YES" id="5411">
-                                <font key="font" metaFont="system"/>
-                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                            </textFieldCell>
-                            <connections>
-                                <action selector="settingChanged:" target="dVg-Ac-SiZ" id="erY-Gq-EOG"/>
-                                <outlet property="delegate" destination="dVg-Ac-SiZ" id="4bw-lH-KA5"/>
-                                <outlet property="nextKeyView" destination="2190" id="5413"/>
-                            </connections>
-                        </textField>
-                        <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2189" userLabel="Directory text field">
-                            <rect key="frame" x="226" y="35" width="424" height="21"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Enter initial directory (interpolated string)" drawsBackground="YES" id="2194">
-                                <font key="font" metaFont="system"/>
-                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                            </textFieldCell>
-                            <connections>
-                                <action selector="settingChanged:" target="dVg-Ac-SiZ" id="RDm-Kk-mCP"/>
-                                <outlet property="delegate" destination="dVg-Ac-SiZ" id="sRK-ps-yva"/>
-                                <outlet property="nextKeyView" destination="5037" id="5217"/>
-                            </connections>
-                        </textField>
-                        <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5408" userLabel="Send text at start: label">
-                            <rect key="frame" x="-2" y="105" width="124" height="16"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Send text at start:" id="5409">
+                            <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Tags:" id="3244">
                                 <font key="font" metaFont="system"/>
                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
-                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3BE-IU-euZ">
-                            <rect key="frame" x="394" y="131" width="258" height="14"/>
+                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1Lq-Jr-ede" userLabel="Name label">
+                            <rect key="frame" x="70" y="240" width="51" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" controlSize="small" lineBreakMode="truncatingTail" title="Reason this is diabled goes here" id="imk-Sy-j9X">
-                                <font key="font" metaFont="smallSystem"/>
-                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                            </textFieldCell>
-                        </textField>
-                        <matrix verticalHuggingPriority="750" fixedFrame="YES" allowsEmptySelection="NO" translatesAutoresizingMaskIntoConstraints="NO" id="2190" userLabel="Working Directory Radio Buttons">
-                            <rect key="frame" x="127" y="16" width="240" height="78"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                            <size key="cellSize" width="240" height="18"/>
-                            <size key="intercellSpacing" width="4" height="2"/>
-                            <buttonCell key="prototype" type="radio" title="Radio" imagePosition="left" alignment="left" inset="2" id="2191">
-                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                            <cells>
-                                <column>
-                                    <buttonCell type="radio" title="Home directory" imagePosition="left" alignment="left" state="on" tag="1" inset="2" id="2193">
-                                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                        <font key="font" metaFont="system"/>
-                                    </buttonCell>
-                                    <buttonCell type="radio" title="Reuse previous session's directory" imagePosition="left" alignment="left" tag="2" inset="2" id="2192">
-                                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                        <font key="font" metaFont="system"/>
-                                    </buttonCell>
-                                    <buttonCell type="radio" title="Directory:" imagePosition="left" alignment="left" inset="2" id="3472">
-                                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                        <font key="font" metaFont="system"/>
-                                    </buttonCell>
-                                    <buttonCell type="radio" title="Advanced Configuration" imagePosition="left" alignment="left" tag="3" inset="2" id="5974">
-                                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                        <font key="font" metaFont="system"/>
-                                    </buttonCell>
-                                </column>
-                            </cells>
-                            <connections>
-                                <action selector="settingChanged:" target="dVg-Ac-SiZ" id="EvS-uC-TVU"/>
-                                <outlet property="nextKeyView" destination="2189" id="5216"/>
-                            </connections>
-                        </matrix>
-                        <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5975" userLabel="Edit advanced configuration push button">
-                            <rect key="frame" x="306" y="9" width="58" height="28"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <buttonCell key="cell" type="push" title="Edit…" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5976">
-                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                <font key="font" metaFont="menu" size="11"/>
-                            </buttonCell>
-                            <connections>
-                                <action selector="showAdvancedWorkingDirConfigPanel:" target="dVg-Ac-SiZ" id="hr1-VG-5jr"/>
-                            </connections>
-                        </button>
-                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2129" userLabel="Working Directory Label">
-                            <rect key="frame" x="-2" y="78" width="123" height="16"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Initial directory:" id="2140">
+                            <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Subtitle" id="Z3d-96-Mba">
                                 <font key="font" metaFont="system"/>
                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
-                        <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="iWk-HJ-EKg">
-                            <rect key="frame" x="128" y="129" width="241" height="18"/>
+                        <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0Gk-SE-iET" customClass="iTermTerminalModeEnclosure">
+                            <rect key="frame" x="0.0" y="19" width="650" height="151"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <string key="toolTip">Available for zsh, fish, and bash. This is an alternative to installing shell integration via other methods (such as the iTerm2 &gt; Install Shell Integration menu item).</string>
-                            <buttonCell key="cell" type="check" title="Load shell integration automatically" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="jcT-vU-VZU">
-                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
+                            <subviews>
+                                <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="G1r-AP-exF">
+                                    <rect key="frame" x="372" y="135" width="16" height="16"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="WarningSign" id="vst-Zn-2a1"/>
+                                </imageView>
+                                <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5410" userLabel="Send text at start text field" customClass="iTermExpandingTextField">
+                                    <rect key="frame" x="130" y="106" width="520" height="21"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Enter text to send at start (interpolated string)" drawsBackground="YES" id="5411">
+                                        <font key="font" metaFont="system"/>
+                                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                    </textFieldCell>
+                                    <connections>
+                                        <action selector="settingChanged:" target="dVg-Ac-SiZ" id="erY-Gq-EOG"/>
+                                        <outlet property="delegate" destination="dVg-Ac-SiZ" id="4bw-lH-KA5"/>
+                                        <outlet property="nextKeyView" destination="2190" id="5413"/>
+                                    </connections>
+                                </textField>
+                                <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2189" userLabel="Directory text field">
+                                    <rect key="frame" x="226" y="39" width="424" height="21"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Enter initial directory (interpolated string)" drawsBackground="YES" id="2194">
+                                        <font key="font" metaFont="system"/>
+                                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                    </textFieldCell>
+                                    <connections>
+                                        <action selector="settingChanged:" target="dVg-Ac-SiZ" id="RDm-Kk-mCP"/>
+                                        <outlet property="delegate" destination="dVg-Ac-SiZ" id="sRK-ps-yva"/>
+                                        <outlet property="nextKeyView" destination="5037" id="5217"/>
+                                    </connections>
+                                </textField>
+                                <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5408" userLabel="Send text at start: label">
+                                    <rect key="frame" x="-2" y="109" width="124" height="16"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Send text at start:" id="5409">
+                                        <font key="font" metaFont="system"/>
+                                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                    </textFieldCell>
+                                </textField>
+                                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3BE-IU-euZ">
+                                    <rect key="frame" x="394" y="135" width="258" height="14"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <textFieldCell key="cell" controlSize="small" lineBreakMode="truncatingTail" title="Reason this is diabled goes here" id="imk-Sy-j9X">
+                                        <font key="font" metaFont="smallSystem"/>
+                                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                    </textFieldCell>
+                                </textField>
+                                <matrix verticalHuggingPriority="750" fixedFrame="YES" allowsEmptySelection="NO" translatesAutoresizingMaskIntoConstraints="NO" id="2190" userLabel="Working Directory Radio Buttons">
+                                    <rect key="frame" x="127" y="20" width="240" height="78"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                    <size key="cellSize" width="240" height="18"/>
+                                    <size key="intercellSpacing" width="4" height="2"/>
+                                    <buttonCell key="prototype" type="radio" title="Radio" imagePosition="left" alignment="left" inset="2" id="2191">
+                                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                        <font key="font" metaFont="system"/>
+                                    </buttonCell>
+                                    <cells>
+                                        <column>
+                                            <buttonCell type="radio" title="Home directory" imagePosition="left" alignment="left" state="on" tag="1" inset="2" id="2193">
+                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                            <buttonCell type="radio" title="Reuse previous session's directory" imagePosition="left" alignment="left" tag="2" inset="2" id="2192">
+                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                            <buttonCell type="radio" title="Directory:" imagePosition="left" alignment="left" inset="2" id="3472">
+                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                            <buttonCell type="radio" title="Advanced Configuration" imagePosition="left" alignment="left" tag="3" inset="2" id="5974">
+                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                        </column>
+                                    </cells>
+                                    <connections>
+                                        <action selector="settingChanged:" target="dVg-Ac-SiZ" id="EvS-uC-TVU"/>
+                                        <outlet property="nextKeyView" destination="2189" id="5216"/>
+                                    </connections>
+                                </matrix>
+                                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5975" userLabel="Edit advanced configuration push button">
+                                    <rect key="frame" x="306" y="13" width="58" height="28"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <buttonCell key="cell" type="push" title="Edit…" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5976">
+                                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                        <font key="font" metaFont="menu" size="11"/>
+                                    </buttonCell>
+                                    <connections>
+                                        <action selector="showAdvancedWorkingDirConfigPanel:" target="dVg-Ac-SiZ" id="hr1-VG-5jr"/>
+                                    </connections>
+                                </button>
+                                <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2129" userLabel="Working Directory Label">
+                                    <rect key="frame" x="-2" y="82" width="123" height="16"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Initial directory:" id="2140">
+                                        <font key="font" metaFont="system"/>
+                                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                    </textFieldCell>
+                                </textField>
+                                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="iWk-HJ-EKg">
+                                    <rect key="frame" x="128" y="133" width="241" height="18"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <string key="toolTip">Available for zsh, fish, and bash. This is an alternative to installing shell integration via other methods (such as the iTerm2 &gt; Install Shell Integration menu item).</string>
+                                    <buttonCell key="cell" type="check" title="Load shell integration automatically" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="jcT-vU-VZU">
+                                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                        <font key="font" metaFont="system"/>
+                                    </buttonCell>
+                                    <connections>
+                                        <action selector="settingChanged:" target="dVg-Ac-SiZ" id="srb-k2-P02"/>
+                                    </connections>
+                                </button>
+                            </subviews>
+                        </customView>
+                        <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5037" userLabel="URL Schemes popup button">
+                            <rect key="frame" x="127" y="-4" width="527" height="26"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" id="5038">
+                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="message"/>
+                                <menu key="menu" title="OtherViews" id="5039"/>
+                            </popUpButtonCell>
                             <connections>
-                                <action selector="settingChanged:" target="dVg-Ac-SiZ" id="srb-k2-P02"/>
+                                <action selector="urlSchemeHandlerDidChange:" target="dVg-Ac-SiZ" id="Q9h-nh-qaE"/>
+                                <outlet property="nextKeyView" destination="2100" id="5218"/>
                             </connections>
-                        </button>
+                        </popUpButton>
+                        <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NSI-ew-7Hx" customClass="iTermTerminalModeEnclosure">
+                            <rect key="frame" x="76" y="258" width="574" height="78"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <subviews>
+                                <button horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kFr-1J-iPo">
+                                    <rect key="frame" x="551" y="26" width="25" height="25"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="inb-QV-C1Z">
+                                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                        <font key="font" metaFont="system"/>
+                                    </buttonCell>
+                                    <connections>
+                                        <action selector="titleHelp:" target="dVg-Ac-SiZ" id="r0q-o3-3rA"/>
+                                    </connections>
+                                </button>
+                                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="q57-nJ-Jbz">
+                                    <rect key="frame" x="52" y="6" width="295" height="18"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <string key="toolTip">Can the session title be changed by control sequence? Note that this is only enabled if Session or Profile &amp; Session are selected in the title menu above.</string>
+                                    <buttonCell key="cell" type="check" title="Applications in terminal may change the title" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="yFQ-IJ-IID">
+                                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                        <font key="font" metaFont="system"/>
+                                    </buttonCell>
+                                    <connections>
+                                        <action selector="settingChanged:" target="dVg-Ac-SiZ" id="CZ7-Uk-XCW"/>
+                                    </connections>
+                                </button>
+                                <textField toolTip="The badge is text that appears in the top right of a session." focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="sa9-oD-SMc" userLabel="Name text field">
+                                    <rect key="frame" x="54" y="57" width="458" height="21"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Enter badge text (interpolated string)" drawsBackground="YES" id="M2Y-uM-p2q">
+                                        <font key="font" metaFont="system"/>
+                                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                    </textFieldCell>
+                                    <connections>
+                                        <outlet property="delegate" destination="dVg-Ac-SiZ" id="luj-Lu-cdv"/>
+                                        <outlet property="nextKeyView" destination="2142" id="hLk-ll-fLY"/>
+                                    </connections>
+                                </textField>
+                                <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="iet-o6-fEv" userLabel="Name label">
+                                    <rect key="frame" x="10" y="34" width="35" height="16"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Title:" id="cKG-uJ-P2E">
+                                        <font key="font" metaFont="system"/>
+                                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                    </textFieldCell>
+                                </textField>
+                                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kmy-bS-CYF" userLabel="Edit advanced configuration push button">
+                                    <rect key="frame" x="513" y="52" width="68" height="28"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <buttonCell key="cell" type="push" title="Edit…" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="9iq-xC-84R">
+                                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                        <font key="font" metaFont="system"/>
+                                    </buttonCell>
+                                    <connections>
+                                        <action selector="configureBadge:" target="dVg-Ac-SiZ" id="7dS-4S-7fF"/>
+                                    </connections>
+                                </button>
+                                <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="nUa-Y1-jO4" userLabel="Name label">
+                                    <rect key="frame" x="-2" y="60" width="47" height="16"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Badge:" id="7Oa-B2-O5u">
+                                        <font key="font" metaFont="system"/>
+                                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                    </textFieldCell>
+                                </textField>
+                                <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2VF-JO-c2O" userLabel="Title Components Popup">
+                                    <rect key="frame" x="51" y="27" width="496" height="25"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <popUpButtonCell key="cell" type="push" title="Components" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" autoenablesItems="NO" id="Xgh-er-la0" userLabel="Title Popup Button Cell">
+                                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                        <font key="font" metaFont="message"/>
+                                        <menu key="menu" autoenablesItems="NO" id="Odx-9x-W67">
+                                            <items>
+                                                <menuItem title="Components" hidden="YES" id="JWB-xg-ElI"/>
+                                                <menuItem title="Name" enabled="NO" id="2Po-6U-Apz"/>
+                                                <menuItem title="Session Name" tag="1" indentationLevel="1" id="lG4-94-9cF"/>
+                                                <menuItem title="Profile Name" tag="32" indentationLevel="1" id="RQC-te-ZZE"/>
+                                                <menuItem title="Profile &amp; Session Name" tag="64" indentationLevel="1" id="6na-wb-F2g"/>
+                                                <menuItem isSeparatorItem="YES" id="ldD-Ci-QQX"/>
+                                                <menuItem title="Foreground Job" enabled="NO" id="YEF-Tv-Hqs"/>
+                                                <menuItem title="Job Name" tag="2" indentationLevel="1" id="cne-Bh-bAC"/>
+                                                <menuItem title="Job Name with Arguments" tag="512" indentationLevel="1" id="9nS-ja-6km"/>
+                                                <menuItem isSeparatorItem="YES" id="Hts-WQ-j82"/>
+                                                <menuItem title="Columns × Rows" tag="1024" id="ogQ-h8-deW"/>
+                                                <menuItem title="Host" tag="256" id="w6i-sK-DQu"/>
+                                                <menuItem title="User" tag="128" id="ZT3-m8-pr9"/>
+                                                <menuItem title="PWD" tag="4" id="xPf-Vv-eGl"/>
+                                                <menuItem title="TTY" tag="8" id="xEH-Wz-NWS"/>
+                                            </items>
+                                            <connections>
+                                                <outlet property="delegate" destination="dVg-Ac-SiZ" id="SIN-HQ-Rw9"/>
+                                            </connections>
+                                        </menu>
+                                    </popUpButtonCell>
+                                    <connections>
+                                        <action selector="settingChanged:" target="dVg-Ac-SiZ" id="fYT-yW-O0V"/>
+                                    </connections>
+                                </popUpButton>
+                            </subviews>
+                        </customView>
                     </subviews>
                 </customView>
-                <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5035" userLabel="Schemes handled label">
-                    <rect key="frame" x="19" y="23" width="118" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="URL schemes:" id="5036">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5037" userLabel="URL Schemes popup button">
-                    <rect key="frame" x="143" y="16" width="527" height="26"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" id="5038">
-                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="message"/>
-                        <menu key="menu" title="OtherViews" id="5039"/>
-                    </popUpButtonCell>
-                    <connections>
-                        <action selector="urlSchemeHandlerDidChange:" target="dVg-Ac-SiZ" id="Q9h-nh-qaE"/>
-                        <outlet property="nextKeyView" destination="2100" id="5218"/>
-                    </connections>
-                </popUpButton>
             </subviews>
             <accessibility identifier="prefsProfilesGeneral"/>
-            <point key="canvasLocation" x="1041" y="-835.5"/>
+            <point key="canvasLocation" x="1041" y="-785"/>
         </customView>
         <customView id="SCN-fS-hNB" userLabel="Prefs - Profiles - Colors" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="560" height="894"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ngh-on-CNe" customClass="iTermOptionalEnclosure">
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ngh-on-CNe" customClass="iTermTerminalModeEnclosure">
                     <rect key="frame" x="18" y="36" width="522" height="838"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
@@ -2994,7 +3067,7 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="53d-LP-nEB" customClass="iTermOptionalEnclosure">
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="53d-LP-nEB" customClass="iTermTerminalModeEnclosure">
                     <rect key="frame" x="15" y="20" width="659" height="184"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
@@ -3114,7 +3187,7 @@ DQ
                         </button>
                     </subviews>
                 </customView>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0rW-sK-lVO" customClass="iTermOptionalEnclosure">
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0rW-sK-lVO" customClass="iTermTerminalModeEnclosure">
                     <rect key="frame" x="15" y="247" width="414" height="350"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
@@ -3644,7 +3717,7 @@ DQ
                         </textField>
                     </subviews>
                 </customView>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wQn-p2-Dys" customClass="iTermOptionalEnclosure">
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wQn-p2-Dys" customClass="iTermTerminalModeEnclosure">
                     <rect key="frame" x="17" y="323" width="534" height="258"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
@@ -3894,7 +3967,7 @@ DQ
             <rect key="frame" x="0.0" y="0.0" width="596" height="834"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Rzi-HT-kR4" customClass="iTermOptionalEnclosure">
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Rzi-HT-kR4" customClass="iTermTerminalModeEnclosure">
                     <rect key="frame" x="17" y="20" width="559" height="794"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <subviews>
@@ -4466,7 +4539,7 @@ DQ
             <rect key="frame" x="0.0" y="0.0" width="660" height="605"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ii9-tP-UaN" customClass="iTermOptionalEnclosure">
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ii9-tP-UaN" customClass="iTermTerminalModeEnclosure">
                     <rect key="frame" x="16" y="221" width="617" height="117"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
@@ -4628,7 +4701,7 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="uwh-Rt-Qhd" customClass="iTermOptionalEnclosure">
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="uwh-Rt-Qhd" customClass="iTermTerminalModeEnclosure">
                     <rect key="frame" x="16" y="0.0" width="589" height="61"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
@@ -4739,7 +4812,7 @@ DQ
                         <action selector="settingChanged:" target="TG6-06-mq9" id="2bT-lZ-CEu"/>
                     </connections>
                 </popUpButton>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UBh-ad-3dY" userLabel="Closing" customClass="iTermOptionalEnclosure">
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UBh-ad-3dY" userLabel="Closing" customClass="iTermTerminalModeEnclosure">
                     <rect key="frame" x="156" y="509" width="486" height="76"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
@@ -4813,7 +4886,7 @@ DQ
                         </popUpButton>
                     </subviews>
                 </customView>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3a9-hN-YGU" customClass="iTermOptionalEnclosure">
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3a9-hN-YGU" customClass="iTermTerminalModeEnclosure">
                     <rect key="frame" x="16" y="123" width="483" height="72"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
@@ -4857,7 +4930,7 @@ DQ
                         </popUpButton>
                     </subviews>
                 </customView>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CaX-oE-1bI" customClass="iTermOptionalEnclosure">
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CaX-oE-1bI" customClass="iTermTerminalModeEnclosure">
                     <rect key="frame" x="156" y="336" width="452" height="146"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
@@ -4959,7 +5032,7 @@ DQ
                                         <rect key="frame" x="149" y="-10" width="633" height="425"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
-                                            <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UjW-nQ-Q9Q" customClass="iTermOptionalEnclosure">
+                                            <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UjW-nQ-Q9Q" customClass="iTermTerminalModeEnclosure">
                                                 <rect key="frame" x="20" y="65" width="598" height="340"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <subviews>
@@ -5386,7 +5459,7 @@ Refer to the manuals for individual applications to see if they support these mo
                                                 <rect key="frame" x="0.0" y="44" width="820" height="376"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                             </customView>
-                                            <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wIT-ZI-N5h" customClass="iTermOptionalEnclosure">
+                                            <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wIT-ZI-N5h" customClass="iTermTerminalModeEnclosure">
                                                 <rect key="frame" x="341" y="9" width="149" height="27"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <subviews>
@@ -5419,7 +5492,7 @@ Refer to the manuals for individual applications to see if they support these mo
             <rect key="frame" x="0.0" y="0.0" width="800" height="396"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8NQ-pZ-Wxy" customClass="iTermOptionalEnclosure">
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8NQ-pZ-Wxy" customClass="iTermTerminalModeEnclosure">
                     <rect key="frame" x="16" y="1" width="764" height="375"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <subviews>
@@ -9303,7 +9376,7 @@ instead of the system keyboard.</string>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="TeY-77-4i8" customClass="iTermOptionalEnclosure">
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="TeY-77-4i8" customClass="iTermTerminalModeEnclosure">
                     <rect key="frame" x="77" y="408" width="468" height="29"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <subviews>
@@ -9458,7 +9531,7 @@ instead of the system keyboard.</string>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7gi-8Z-4hB" customClass="iTermOptionalEnclosure">
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7gi-8Z-4hB" customClass="iTermTerminalModeEnclosure">
                     <rect key="frame" x="57" y="12" width="459" height="23"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <subviews>

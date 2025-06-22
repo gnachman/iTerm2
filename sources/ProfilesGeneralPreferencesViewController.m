@@ -70,6 +70,11 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSTextField *_schemesHeaderLabel;
     IBOutlet NSTextField *_schemesLabel;
 
+    IBOutlet NSView *_profileTypeContainer;
+    IBOutlet NSView *_afterProfileType;
+    IBOutlet NSSegmentedControl *_profileType;
+    IBOutlet NSTextField *_initialURL;
+
     // Controls
     IBOutlet NSTextField *_profileNameField;
     IBOutlet NSTextField *_profileNameFieldLabel;
@@ -246,9 +251,42 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
          settingChanged:^(id sender) { [weakSelf commandTypeDidChange]; }
                  update:^BOOL { [weakSelf updateCommandType]; return YES; }];
 
-    if ([iTermAdvancedSettingsModel browserProfiles]) {
-        [_commandType.menu addItemWithTitle:@"Browser" action:nil keyEquivalent:@""];
-        _commandType.menu.itemArray.lastObject.tag = iTermGeneralProfilePreferenceCustomCommandTagBrowser;
+    [self defineControl:_initialURL
+                    key:KEY_INITIAL_URL
+            displayName:@"Initial URL for Browser mode"
+                   type:kPreferenceInfoTypeStringTextField];
+
+    info = [self defineControl:_profileType
+                           key:KEY_PROFILE_TYPE_PHONY
+                   relatedView:nil
+                          type:kPreferenceInfoTypeSegmentedControl];
+    info.syntheticGetter = ^id{
+        if ([[weakSelf stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue]) {
+            return @1;
+        }
+        return @0;
+    };
+    info.syntheticSetter = ^(id newValue) {
+        NSString *before = [self stringForKey:KEY_CUSTOM_COMMAND];
+        if ([NSNumber castFrom:newValue].integerValue == 0) {
+            [self setString:kProfilePreferenceCommandTypeLoginShellValue forKey:KEY_CUSTOM_COMMAND];
+            [self setCommandTypeToTag:iTermGeneralProfilePreferenceCustomCommandTagLoginShell];
+        } else {
+            [self setString:kProfilePreferenceCommandTypeBrowserValue forKey:KEY_CUSTOM_COMMAND];
+        }
+        NSString *value = [self stringForKey:KEY_CUSTOM_COMMAND];
+        [self commandTypeDidChangeFrom:before to:value];
+    };
+
+    if (![iTermAdvancedSettingsModel browserProfiles]) {
+        NSRect frame = _profileTypeContainer.frame;
+        [_profileTypeContainer removeFromSuperview];
+        _profileTypeContainer = nil;
+
+        const CGFloat height = frame.size.height;
+        frame = _afterProfileType.frame;
+        frame.origin.y += height;
+        _afterProfileType.frame = frame;
     }
     _customCommand.cell.usesSingleLineMode = YES;
     _customCommand.hidden = YES;
@@ -426,6 +464,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     [self updateEditAdvancedConfigButton];
     [self updateCommandWarningImageView];
     [_commandWarningImageView addGestureRecognizer:[[NSClickGestureRecognizer alloc] initWithTarget:self action:@selector(handleCommandWarningClick:)]];
+    [self commitControls];
 }
 
 - (void)updateSubtitlesAllowed {
@@ -1047,7 +1086,14 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
 - (void)commandTypeDidChange {
     NSInteger tag = _commandType.selectedTag;
-    NSString *value;
+    NSString *value = [self setCommandTypeToTag:tag];
+    NSString *before = [self stringForKey:KEY_CUSTOM_COMMAND];
+    [self setString:value forKey:KEY_CUSTOM_COMMAND];
+    [self commandTypeDidChangeFrom:before to:value];
+}
+
+- (NSString *)setCommandTypeToTag:(NSInteger)tag {
+    NSString *value = nil;
     switch (tag) {
         case iTermGeneralProfilePreferenceCustomCommandTagCustom:
             value = kProfilePreferenceCommandTypeCustomValue;
@@ -1073,8 +1119,10 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
             [self setString:@"" forKey:KEY_COMMAND_LINE];
             break;
     }
-    NSString *before = [self stringForKey:KEY_CUSTOM_COMMAND];
-    [self setString:value forKey:KEY_CUSTOM_COMMAND];
+    return value;
+}
+
+- (void)commandTypeDidChangeFrom:(NSString *)before to:(NSString *)value {
     [self updateEnabledState];
     [self updateCommandWarningImageView];
     if ([before isEqual:kProfilePreferenceCommandTypeBrowserValue] ||

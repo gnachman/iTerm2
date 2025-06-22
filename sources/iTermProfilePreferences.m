@@ -122,6 +122,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
         case kPreferenceInfoTypeIntegerTextField:
         case kPreferenceInfoTypeDoubleTextField:
         case kPreferenceInfoTypePopup:
+        case kPreferenceInfoTypeSegmentedControl:
             return ([defaultValue isKindOfClass:[NSNumber class]] &&
                     [defaultValue doubleValue] == ceil([defaultValue doubleValue]));
         case kPreferenceInfoTypeUnsignedIntegerTextField:
@@ -200,7 +201,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_BACKGROUND_IMAGE_LOCATION, KEY_DYNAMIC_PROFILE_PARENT_NAME,
                              KEY_DYNAMIC_PROFILE_PARENT_GUID,
                              KEY_DYNAMIC_PROFILE_FILENAME, KEY_TMUX_PANE_TITLE,
-                             KEY_SUBTITLE, KEY_CUSTOM_LOCALE];
+                             KEY_SUBTITLE, KEY_CUSTOM_LOCALE, KEY_INITIAL_URL];
 
         NSArray *color = @[ KEY_FOREGROUND_COLOR, KEY_BACKGROUND_COLOR, KEY_BOLD_COLOR,
                             KEY_LINK_COLOR, KEY_MATCH_COLOR, KEY_SELECTION_COLOR, KEY_SELECTED_TEXT_COLOR,
@@ -313,7 +314,9 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_RIGHT_CONTROL,
                              KEY_LEFT_COMMAND,
                              KEY_RIGHT_COMMAND,
-                             KEY_FUNCTION ];
+                             KEY_FUNCTION,
+
+                             KEY_PROFILE_TYPE_PHONY];
         NSArray *stringArrays = @[ KEY_TAGS, KEY_JOBS, KEY_BOUND_HOSTS, KEY_SNIPPETS_FILTER ];
         NSArray *dictArrays = @[ KEY_HOTKEY_ALTERNATE_SHORTCUTS, KEY_TRIGGERS, KEY_SMART_SELECTION_RULES,
                                  ];
@@ -385,12 +388,14 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_ICON_PATH: @"",
                   KEY_TAGS: [NSNull null],
                   KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeLoginShellValue,
+                  KEY_PROFILE_TYPE_PHONY: @0,
                   KEY_COMMAND_LINE: @"",
                   KEY_INITIAL_TEXT: @"",
                   KEY_CUSTOM_DIRECTORY: kProfilePreferenceInitialDirectoryHomeValue,
                   KEY_WORKING_DIRECTORY: @"",
                   KEY_BADGE_FORMAT: @"",
                   KEY_SUBTITLE: @"",
+                  KEY_INITIAL_URL: @"iterm2-about:welcome",
                   KEY_SSH_CONFIG: @{},
 
                   // Note: these defaults aren't used, except for link color, cursor guide color, and match color, because they are always specified.
