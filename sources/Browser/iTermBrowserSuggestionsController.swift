@@ -193,20 +193,6 @@ class iTermBrowserSuggestionsController {
     }
     
     private func getVisitCount(for url: String, database: BrowserDatabase) async -> Int {
-        let (hostname, path) = BrowserVisits.parseUrl(url)
-        let query = "SELECT visitCount FROM BrowserVisits WHERE hostname = ? AND path = ?"
-        
-        guard let resultSet = await database.db.executeQuery(query, withArguments: [hostname, path]) else {
-            return 0
-        }
-        
-        var visitCount = 0
-        if resultSet.next() {
-            visitCount = Int(resultSet.longLongInt(forColumn: "visitCount"))
-        }
-        resultSet.close()
-        return visitCount
+        return await database.getVisitCount(for: url)
     }
-
-
 }

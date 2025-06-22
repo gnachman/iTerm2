@@ -8,7 +8,7 @@
 import WebKit
 
 @available(macOS 11.0, *)
-class iTermBrowserSourceHandler: NSObject {
+class iTermBrowserSourceHandler: NSObject, iTermBrowserPageHandler {
     static let sourceURL = URL(string: "iterm2-about:source")!
     
     private var pendingSourceHTML: String?
@@ -58,5 +58,15 @@ class iTermBrowserSourceHandler: NSObject {
         urlSchemeTask.didReceive(response)
         urlSchemeTask.didReceive(data)
         urlSchemeTask.didFinish()
+    }
+    
+    // MARK: - iTermBrowserPageHandler Protocol
+    
+    func injectJavaScript(into webView: WKWebView) {
+        // Source pages don't need JavaScript injection
+    }
+    
+    func resetState() {
+        clearPendingSource()
     }
 }

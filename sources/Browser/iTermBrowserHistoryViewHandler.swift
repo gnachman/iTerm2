@@ -16,7 +16,7 @@ import Foundation
 @available(macOS 11.0, *)
 @objc(iTermBrowserHistoryViewHandler)
 @MainActor
-class iTermBrowserHistoryViewHandler: NSObject {
+class iTermBrowserHistoryViewHandler: NSObject, iTermBrowserPageHandler {
     static let historyURL = URL(string: "iterm2-about:history")!
     
     weak var delegate: iTermBrowserHistoryViewHandlerDelegate?
@@ -190,5 +190,15 @@ class iTermBrowserHistoryViewHandler: NSObject {
         } catch {
             DLog("Failed to execute JavaScript: \(error)")
         }
+    }
+    
+    // MARK: - iTermBrowserPageHandler Protocol
+    
+    func injectJavaScript(into webView: WKWebView) {
+        // History pages don't need JavaScript injection beyond what's in the HTML
+    }
+    
+    func resetState() {
+        // History handler doesn't maintain state that needs resetting
     }
 }

@@ -3234,6 +3234,7 @@
 		A6AF79D62E06776C008D77BA /* iTermDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79D52E067769008D77BA /* iTermDatabase.swift */; };
 		A6AF79D82E072196008D77BA /* OptionalEnclosure.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79D72E072187008D77BA /* OptionalEnclosure.swift */; };
 		A6AF79DA2E072C17008D77BA /* iTermPreferencesBaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79D92E072C15008D77BA /* iTermPreferencesBaseViewController.swift */; };
+		A6AF79FA2E07E27D008D77BA /* iTermBrowserLocalPageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79F92E07E27D008D77BA /* iTermBrowserLocalPageManager.swift */; };
 		A6AFCDD52D91F46E002F36AE /* TwoTextFieldCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AFCDD42D91F468002F36AE /* TwoTextFieldCell.swift */; };
 		A6AFD68424496EC2007D0660 /* iTermMultiServerMessage.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AFD68224496EC2007D0660 /* iTermMultiServerMessage.h */; };
 		A6AFD68524496EC2007D0660 /* iTermMultiServerMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AFD68324496EC2007D0660 /* iTermMultiServerMessage.m */; };
@@ -7647,6 +7648,7 @@
 		A6AF79D52E067769008D77BA /* iTermDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermDatabase.swift; sourceTree = "<group>"; };
 		A6AF79D72E072187008D77BA /* OptionalEnclosure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptionalEnclosure.swift; sourceTree = "<group>"; };
 		A6AF79D92E072C15008D77BA /* iTermPreferencesBaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermPreferencesBaseViewController.swift; sourceTree = "<group>"; };
+		A6AF79F92E07E27D008D77BA /* iTermBrowserLocalPageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserLocalPageManager.swift; sourceTree = "<group>"; };
 		A6AFCDD42D91F468002F36AE /* TwoTextFieldCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TwoTextFieldCell.swift; sourceTree = "<group>"; };
 		A6AFD68224496EC2007D0660 /* iTermMultiServerMessage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMultiServerMessage.h; sourceTree = "<group>"; };
 		A6AFD68324496EC2007D0660 /* iTermMultiServerMessage.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMultiServerMessage.m; sourceTree = "<group>"; };
@@ -12972,6 +12974,7 @@
 				A6F7D4D02E03BE3A0065D09C /* iTermBrowserFindManager.swift */,
 				A6F7D4F72E05BDC10065D09C /* iTermBrowserHistoryController.swift */,
 				A6F7D5082E05CEBA0065D09C /* iTermBrowserHistoryViewHandler.swift */,
+				A6AF79F92E07E27D008D77BA /* iTermBrowserLocalPageManager.swift */,
 				A6F7D4B82E034E2B0065D09C /* iTermBrowserManager.swift */,
 				A6F7D4FD2E05C4850065D09C /* iTermBrowserNavigationState.swift */,
 				A6F7D5112E05F1750065D09C /* iTermBrowserPasswordWriter.swift */,
@@ -17164,6 +17167,7 @@
 				A630119920E70CDA008114B7 /* iTermStatusBarSetupElement.m in Sources */,
 				A6A64E562508A9E10040490B /* iTermSnippetsMenuController.m in Sources */,
 				A630118420E6A613008114B7 /* iTermStatusBarSetupViewController.m in Sources */,
+				A6AF79FA2E07E27D008D77BA /* iTermBrowserLocalPageManager.swift in Sources */,
 				5370678C21C9D2780088D0F3 /* SIGVerificationAlgorithm.m in Sources */,
 				A66433392DE8C6FD0099F722 /* ResponsesAPIResponse.swift in Sources */,
 				A65B1B602D137BF700F5A740 /* PopoverHelpButton.swift in Sources */,

@@ -10,7 +10,7 @@ import Foundation
 
 @available(macOS 11.0, *)
 @objc(iTermBrowserErrorHandler)
-class iTermBrowserErrorHandler: NSObject {
+class iTermBrowserErrorHandler: NSObject, iTermBrowserPageHandler {
     private var pendingErrorHTML: String?
     
     static let errorURL = URL(string: "iterm2-about:error")!
@@ -38,6 +38,16 @@ class iTermBrowserErrorHandler: NSObject {
     
     func clearPendingError() {
         pendingErrorHTML = nil
+    }
+    
+    // MARK: - iTermBrowserPageHandler Protocol
+    
+    func injectJavaScript(into webView: WKWebView) {
+        // Error pages don't need JavaScript injection
+    }
+    
+    func resetState() {
+        clearPendingError()
     }
 
     func start(urlSchemeTask: WKURLSchemeTask, url: URL) {
