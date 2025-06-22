@@ -547,7 +547,7 @@ extension iTermBrowserManager: WKNavigationDelegate {
         }
 
         // Always allow our internal pages and prepare message handlers early
-        if targetURL.absoluteString.hasPrefix(iTermBrowserSchemes.about) {
+        if targetURL.absoluteString.hasPrefix(iTermBrowserSchemes.about + ":") {
             let urlString = targetURL.absoluteString
             localPageManager.prepareForNavigation(to: targetURL)
             
