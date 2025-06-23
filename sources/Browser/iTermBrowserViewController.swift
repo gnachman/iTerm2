@@ -22,6 +22,8 @@ import WebKit
     func browserViewController(_ controller: iTermBrowserViewController,
                                openNewSplitPaneForURL url: URL,
                                vertical: Bool)
+    func browserViewController(_ controller: iTermBrowserViewController,
+                               openPasswordManagerForHost host: String?)
 }
 
 @available(macOS 11.0, *)
@@ -372,6 +374,11 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
         delegate?.browserViewController(self, openNewSplitPaneForURL: url, vertical: vertical)
     }
 
+    func browserManager(_ manager: iTermBrowserManager,
+                        openPasswordManagerForHost host: String?) {
+        delegate?.browserViewController(self,
+                                        openPasswordManagerForHost: host)
+    }
 }
 
 // MARK: - Actions

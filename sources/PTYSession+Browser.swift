@@ -53,6 +53,13 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
         // Route to SessionView's find infrastructure
         userInitiatedShowFindPanel()
     }
+
+    func browserViewController(_ controller: iTermBrowserViewController,
+                               openPasswordManagerForHost host: String?) {
+        if let itad = NSApp.delegate as? iTermApplicationDelegate{
+            itad.openPasswordManager(toAccountName: host, in: self)
+        }
+    }
 }
 
 // MARK: - Browser Find Support
