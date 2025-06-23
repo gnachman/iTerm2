@@ -199,6 +199,21 @@ class iTermBrowserPermissionManager: NSObject {
         return response == .alertFirstButtonReturn ? .granted : .denied
     }
     
+    // MARK: - Tab Reloading for Permission Revocation
+    
+    static let permissionRevokedNotification = NSNotification.Name("iTermBrowserPermissionRevoked")
+    static let permissionRevokedOriginKey = "origin"
+    
+    static func notifyPermissionRevoked(for origin: String) {
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(
+                name: permissionRevokedNotification,
+                object: nil,
+                userInfo: [permissionRevokedOriginKey: origin]
+            )
+        }
+    }
+    
     // MARK: - Origin Utilities
     
     static func normalizeOrigin(from url: URL) -> String {

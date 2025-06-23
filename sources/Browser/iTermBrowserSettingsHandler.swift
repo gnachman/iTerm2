@@ -113,11 +113,22 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     private func clearAllWebsiteData(webView: WKWebView) {
         let websiteDataStore = webView.configuration.websiteDataStore
         let dataTypes = WKWebsiteDataStore.allWebsiteDataTypes()
-        
+
         websiteDataStore.removeData(ofTypes: dataTypes, modifiedSince: Date(timeIntervalSince1970: 0)) {
-            DispatchQueue.main.async {
-                // Show confirmation alert
-                webView.evaluateJavaScript("alert('All website data has been cleared successfully!');", completionHandler: nil)
+            Task {
+                let message: String
+                if await BrowserDatabase.instance?.erase() == true {
+                    message = "All website data has been cleared successfully!"
+                } else {
+                    if let url = BrowserDatabase.url {
+                        message = "The browser database could not be deleted. It is in \(url.path)"
+                    } else {
+                        message = "The browser database could not be deleted. Your application support folder could not be found."
+                    }
+                }
+                DispatchQueue.main.async {
+                    webView.evaluateJavaScript("alert('\(message)');", completionHandler: nil)
+                }
             }
         }
     }

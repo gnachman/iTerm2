@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Permissions</title>
+    <style>
+        {{COMMON_CSS}}
+        
+        .container {
+            max-width: 900px;
+        }
+        
+        .clear-button {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: var(--secondary-text);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .clear-button:hover {
+            background: var(--border-color);
+            color: var(--text-color);
+        }
+        
+        .permissions-container {
+            min-height: 400px;
+        }
+        
+        .origin-section {
+            margin-bottom: 24px;
+        }
+        
+        .origin-header {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .origin-header::before {
+            content: "🌐";
+            font-size: 16px;
+        }
+        
+        .permissions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .permission-entry {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: var(--section-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+        
+        .permission-entry:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--shadow);
+            border-color: var(--accent-color)40;
+        }
+        
+        .permission-content {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .permission-icon {
+            font-size: 20px;
+            min-width: 24px;
+        }
+        
+        .permission-details {
+            flex: 1;
+        }
+        
+        .permission-type {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 4px;
+        }
+        
+        .permission-status {
+            font-size: 14px;
+            color: var(--secondary-text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .permission-granted {
+            color: #34c759;
+            font-weight: 500;
+        }
+        
+        .permission-denied {
+            color: #ff3b30;
+            font-weight: 500;
+        }
+        
+        .permission-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .revoke-button {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: linear-gradient(135deg, #ff3b30, #ff6b6b);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .revoke-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px #ff3b3040;
+            background: linear-gradient(135deg, #d70015, #ff3b30);
+        }
+        
+        .filter-controls {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+        
+        .permission-metadata {
+            font-size: 12px;
+            color: var(--secondary-text);
+            margin-top: 4px;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <h1>🔒 <span class="title-text">Site Permissions</span></h1>
+                <p>Manage permissions granted to websites</p>
+            </div>
+            <div class="header-actions">
+                <button class="button small danger" onclick="clearAllPermissions()">Clear All Permissions</button>
+            </div>
+        </div>
+        
+        <div class="search-container">
+            <div class="search-input-wrapper">
+                <div class="search-icon">🔍</div>
+                <input type="text" 
+                       id="searchInput" 
+                       class="search-input" 
+                       placeholder="Search by website or permission type..." 
+                       autocomplete="off">
+                <button class="clear-button" onclick="clearSearch()" title="Clear search">×</button>
+            </div>
+            <div class="filter-controls">
+                <div>
+                    <label for="permissionTypeFilter">Filter by type:</label>
+                    <select id="permissionTypeFilter" class="filter-select">
+                        <option value="">All Types</option>
+                        <option value="notification">Notifications</option>
+                        <option value="camera">Camera</option>
+                        <option value="microphone">Microphone</option>
+                        <option value="cameraAndMicrophone">Camera & Microphone</option>
+                        <option value="geolocation">Location</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="statusFilter">Filter by status:</label>
+                    <select id="statusFilter" class="filter-select">
+                        <option value="">All Statuses</option>
+                        <option value="granted">Allowed</option>
+                        <option value="denied">Blocked</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div id="permissionsContainer" class="permissions-container">
+            <!-- Permissions will be populated here -->
+        </div>
+        
+        <div class="loading-indicator" id="loadingIndicator">
+            <div class="loading-spinner"></div>
+            Loading permissions...
+        </div>
+        
+        <div class="load-more-container" id="loadMoreContainer">
+            <button id="loadMoreButton" class="load-more-button" onclick="loadMore()" style="display: none;">
+                Load More
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        {{PERMISSIONS_SCRIPT}}
+    </script>
+</body>
+</html>
