@@ -7583,6 +7583,16 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (void)openPasswordManagerToAccountName:(NSString *)name
                                inSession:(PTYSession *)session {
+    [self openPasswordManagerToAccountName:name
+                                 inSession:session
+                                   forUser:NO
+                           didSendUserName:nil];
+}
+
+- (void)openPasswordManagerToAccountName:(NSString *)name
+                               inSession:(PTYSession *)session
+                                 forUser:(BOOL)forUser
+                         didSendUserName:(void (^)(void))didSendUserName {
     DLog(@"openPasswordManagerToAccountName:%@ inSession:%@", name, session);
     if (session && !session.canOpenPasswordManager) {
         DLog(@"Can't open password manager right now");
@@ -7599,6 +7609,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         _passwordManagerWindowController.delegate = nil;
         [_passwordManagerWindowController autorelease];
         _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];
+        _passwordManagerWindowController.sendUserByDefault = forUser;
+        _passwordManagerWindowController.didSendUserName = didSendUserName;
         _passwordManagerWindowController.delegate = self;
 
         [self.window beginSheet:[_passwordManagerWindowController window] completionHandler:^(NSModalResponse returnCode) {
@@ -11832,9 +11844,13 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (void)iTermPasswordManagerEnterUserName:(NSString *)username broadcast:(BOOL)broadcast {
-    [[self currentSession] performBlockWithoutFocusReporting:^{
-        [[self currentSession] writeTask:[username stringByAppendingString:@"\n"]];
-    }];
+    if (broadcast) {
+        for (PTYSession *session in self.broadcastSessions) {
+            [session enterUsername:username];
+        }
+    } else {
+        [[self currentSession] enterUsername:username];
+    }
 }
 
 

@@ -28,6 +28,14 @@ extern NSString *const iTermPasswordManagerDidLoadAccounts;
 
 @property(nonatomic, assign) id<iTermPasswordManagerDelegate> delegate;
 
+@property(nonatomic) BOOL sendUserByDefault;
+
+// If set, the didSendUserName block is called after sending the username when
+// the user chooses to send both username and password. You can use it to focus
+// the password field. This also causes the default button to become "Enter
+// User Name and Password".
+@property(nonatomic, copy) void (^didSendUserName)(void);
+
 + (NSArray<NSString *> *)cachedCombinedAccountNames;
 
 // Re-check if the password can be entered.

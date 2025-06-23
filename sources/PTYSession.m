@@ -3582,6 +3582,20 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     return nil;
 }
 
+- (void)enterUsername:(NSString *)username {
+    if (@available(macOS 11, *)) {
+        if (_view.isBrowser) {
+            if (@available(macOS 12, *)) {
+                [_view.browserViewController enterUsername:username];
+            }
+            return;
+        }
+    }
+    [self performBlockWithoutFocusReporting:^{
+        [self writeTask:[username stringByAppendingString:@"\n"]];
+    }];
+}
+
 - (void)writeTaskNoBroadcast:(NSString *)string {
     [self writeTaskNoBroadcast:string encoding:_screen.terminalEncoding forceEncoding:NO reporting:NO];
 }

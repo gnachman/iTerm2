@@ -16,7 +16,9 @@ class iTermBrowserPasswordManagerHandler {
     private let secret: String
 
     enum Action {
-        case openPasswordManager
+        case openPasswordManagerForPassword
+        case openPasswordManagerForUser
+        case openPasswordManagerForBoth(passwordID: String)
     }
 
     init?() {
@@ -43,8 +45,13 @@ class iTermBrowserPasswordManagerHandler {
             return nil
         }
         switch type {
-        case "open":
-            return .openPasswordManager
+        case "openPassword":
+            return .openPasswordManagerForPassword
+        case "openUser":
+            if let passwordID = messageDict["nextPasswordFieldId"] as? String {
+                return .openPasswordManagerForBoth(passwordID: passwordID)
+            }
+            return .openPasswordManagerForUser
         default:
             DLog("Unknown type \(type)")
             return nil

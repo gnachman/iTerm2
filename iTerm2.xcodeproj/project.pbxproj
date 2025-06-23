@@ -3626,6 +3626,12 @@
 		A6CBB8052E09208C00B2CCCB /* password-button.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8012E091CBF00B2CCCB /* password-button.js */; };
 		A6CBB8062E09208C00B2CCCB /* password-button.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8012E091CBF00B2CCCB /* password-button.js */; };
 		A6CBB8072E09208C00B2CCCB /* password-button.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8012E091CBF00B2CCCB /* password-button.js */; };
+		A6CBB8092E09E35400B2CCCB /* focus-password.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8082E09E34500B2CCCB /* focus-password.js */; };
+		A6CBB80A2E09E35400B2CCCB /* focus-password.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8082E09E34500B2CCCB /* focus-password.js */; };
+		A6CBB80B2E09E35400B2CCCB /* focus-password.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8082E09E34500B2CCCB /* focus-password.js */; };
+		A6CBB80E2E0A023A00B2CCCB /* password-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB80D2E0A023700B2CCCB /* password-demo.html */; };
+		A6CBB80F2E0A023A00B2CCCB /* password-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB80D2E0A023700B2CCCB /* password-demo.html */; };
+		A6CBB8102E0A023A00B2CCCB /* password-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB80D2E0A023700B2CCCB /* password-demo.html */; };
 		A6CC16541CF012E300E8C148 /* iTermCarbonHotKeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */; };
 		A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */; };
 		A6CC49882C06E173003484B2 /* iTermPermissionsHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */; };
@@ -7859,6 +7865,8 @@
 		A6CBB7FD2E09163A00B2CCCB /* check-iframe-origins.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "check-iframe-origins.js"; sourceTree = "<group>"; };
 		A6CBB8012E091CBF00B2CCCB /* password-button.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "password-button.js"; sourceTree = "<group>"; };
 		A6CBB8032E091DDF00B2CCCB /* iTermBrowserPasswordManagerHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserPasswordManagerHandler.swift; sourceTree = "<group>"; };
+		A6CBB8082E09E34500B2CCCB /* focus-password.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "focus-password.js"; sourceTree = "<group>"; };
+		A6CBB80D2E0A023700B2CCCB /* password-demo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "password-demo.html"; sourceTree = "<group>"; };
 		A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCarbonHotKeyController.h; sourceTree = "<group>"; };
 		A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCarbonHotKeyController.m; sourceTree = "<group>"; };
 		A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermPermissionsHelper.swift; sourceTree = "<group>"; };
@@ -12729,6 +12737,19 @@
 			name = Utilities;
 			sourceTree = "<group>";
 		};
+		A6CBB80C2E09E4A700B2CCCB /* Password Manager */ = {
+			isa = PBXGroup;
+			children = (
+				A6CBB80D2E0A023700B2CCCB /* password-demo.html */,
+				A6CBB8032E091DDF00B2CCCB /* iTermBrowserPasswordManagerHandler.swift */,
+				A6F7D5112E05F1750065D09C /* iTermBrowserPasswordWriter.swift */,
+				A6CBB8012E091CBF00B2CCCB /* password-button.js */,
+				A6F7D5132E05F1F40065D09C /* write-password.js */,
+				A6CBB8082E09E34500B2CCCB /* focus-password.js */,
+			);
+			path = "Password Manager";
+			sourceTree = "<group>";
+		};
 		A6CEBF5F1DCE7DF3009F4FD2 /* Proto */ = {
 			isa = PBXGroup;
 			children = (
@@ -13001,6 +13022,7 @@
 		A6F7D4B32E0340A30065D09C /* Browser */ = {
 			isa = PBXGroup;
 			children = (
+				A6CBB80C2E09E4A700B2CCCB /* Password Manager */,
 				A6AF79CB2E065AA5008D77BA /* bookmarks-page.html */,
 				A6AF79CF2E065C93008D77BA /* bookmarks-page.js */,
 				A6CBB7FD2E09163A00B2CCCB /* check-iframe-origins.js */,
@@ -13014,14 +13036,12 @@
 				A6CBB7EF2E090E9200B2CCCB /* media-demo.html */,
 				A6CBB7AD2E087DBF00B2CCCB /* notification-bridge.js */,
 				A6CBB7B32E088E1000B2CCCB /* notifications-demo.html */,
-				A6CBB8012E091CBF00B2CCCB /* password-button.js */,
 				A6CBB7F32E09124800B2CCCB /* permissions-page.html */,
 				A6CBB7F92E09149000B2CCCB /* permissions-page.js */,
 				A6F7D5142E05F38F0065D09C /* probe-password.js */,
 				A6F7D4CA2E037EA80065D09C /* settings-page.html */,
 				A6F7D4D42E03D99F0065D09C /* view-source.html */,
 				A6D16EB42E07EC910099139D /* welcome-page.html */,
-				A6F7D5132E05F1F40065D09C /* write-password.js */,
 				A6AF79C92E06593C008D77BA /* BrowserBookmarkTags.swift */,
 				A6AF79C52E06586A008D77BA /* BrowserBookmarks.swift */,
 				A6F7D4F32E0537710065D09C /* BrowserDatabase.swift */,
@@ -13042,8 +13062,6 @@
 				A6F7D4B82E034E2B0065D09C /* iTermBrowserManager.swift */,
 				A6F7D4FD2E05C4850065D09C /* iTermBrowserNavigationState.swift */,
 				A6CBB7B12E087F8A00B2CCCB /* iTermBrowserNotificationHandler.swift */,
-				A6CBB8032E091DDF00B2CCCB /* iTermBrowserPasswordManagerHandler.swift */,
-				A6F7D5112E05F1750065D09C /* iTermBrowserPasswordWriter.swift */,
 				A6D16EBA2E087A640099139D /* iTermBrowserPermissionManager.swift */,
 				A6CBB7F72E0912A100B2CCCB /* iTermBrowserPermissionsViewHandler.swift */,
 				A6F7D4BC2E037B4B0065D09C /* iTermBrowserSettingsHandler.swift */,
@@ -15020,6 +15038,7 @@
 				1D6ED97719AEA20D005A7799 /* config.png in Resources */,
 				A629F58323AF2DE900C2F16B /* iterm2_shell_integration.zsh in Resources */,
 				1DB40A431B1FDC80005B83C7 /* NoColor@2x.png in Resources */,
+				A6CBB80E2E0A023A00B2CCCB /* password-demo.html in Resources */,
 				A663010A19CFCE74004AF81C /* SuppressAllOutput.png in Resources */,
 				A67D0D731A2EE12A003A8B35 /* MainMenu.xib in Resources */,
 				A6B4833229D73DA10055E24A /* text.redaction.png in Resources */,
@@ -15459,6 +15478,7 @@
 				1D6ED9E119AEA20D005A7799 /* broken_image.png in Resources */,
 				A602AAE82B0BCDB100E6C965 /* whitebox_logo.png in Resources */,
 				A67F61B2214395B70093940A /* graphic_php.png in Resources */,
+				A6CBB80B2E09E35400B2CCCB /* focus-password.js in Resources */,
 				A6E7AE85214394DD00DE9F3B /* graphic_code@2x.png in Resources */,
 				1D6ED9E219AEA20D005A7799 /* PrefsAppearance@2x.png in Resources */,
 				A6F7D50E2E05CEDA0065D09C /* history-page.html in Resources */,
@@ -15821,6 +15841,7 @@
 				A67A50E226CCD3E300281693 /* xterm-new in Resources */,
 				A6E7AEA4214394F600DE9F3B /* graphic_git.png in Resources */,
 				A66E804C27544E61003ABDF9 /* SecureKeyboardEntry@2x.png in Resources */,
+				A6CBB80A2E09E35400B2CCCB /* focus-password.js in Resources */,
 				1DE922EB1AC370DC00965876 /* BackgroundStripes@2x.png in Resources */,
 				A6FE8D0B209382C000B5C648 /* download.png in Resources */,
 				A6F31A3F295BC61F00C1A51E /* uniE0D0_PowerlineExtraSymbols.pdf in Resources */,
@@ -15991,6 +16012,7 @@
 				A66F52C52106F6F100571168 /* gitdown.png in Resources */,
 				A6643F122CA62190004B757B /* coderabbitai.png in Resources */,
 				A6C4352221D1C64800346910 /* iterm2Invoke.js in Resources */,
+				A6CBB80F2E0A023A00B2CCCB /* password-demo.html in Resources */,
 				A67D0D5A1A2EE12A003A8B35 /* iTerm.strings in Resources */,
 				A66A1FAF1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */,
 				53BBA0F9214236AC0074D061 /* iterm2_git_poll.sh in Resources */,
@@ -16370,6 +16392,7 @@
 				A697101218DFA7D5007E901D /* closebutton@2x.png in Resources */,
 				A697CE6C2D97C2720031583F /* CoprocessMenuTip.png in Resources */,
 				A697CE6D2D97C2720031583F /* CoprocessMenuTip@2x.png in Resources */,
+				A6CBB8102E0A023A00B2CCCB /* password-demo.html in Resources */,
 				A6F7A725213CB143004DE961 /* StatusBarIconHost.png in Resources */,
 				A6350298229B5F620042B779 /* YosemiteAddTab.png in Resources */,
 				53C5650821B8CDF5002B3167 /* PowerlineSolidLeftArrow.pdf in Resources */,
@@ -16598,6 +16621,7 @@
 				A6E7AEA6214394F600DE9F3B /* graphic_docker.png in Resources */,
 				A6FE8D15209541BC00B5C648 /* rsa_pub.pem in Resources */,
 				A67F6167214395990093940A /* graphic_nano.png in Resources */,
+				A6CBB8092E09E35400B2CCCB /* focus-password.js in Resources */,
 				A6E7AE7D214394DD00DE9F3B /* graphic_compile@2x.png in Resources */,
 				A6DC98A428A82608009D21C0 /* Window.png in Resources */,
 				A66A882E24DFCCC30043728B /* graphic_postgres@2x.png in Resources */,

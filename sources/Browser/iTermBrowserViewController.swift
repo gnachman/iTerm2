@@ -23,7 +23,9 @@ import WebKit
                                openNewSplitPaneForURL url: URL,
                                vertical: Bool)
     func browserViewController(_ controller: iTermBrowserViewController,
-                               openPasswordManagerForHost host: String?)
+                               openPasswordManagerForHost host: String?,
+                               forUser: Bool,
+                               didSendUserName: (() -> ())?)
 }
 
 @available(macOS 11.0, *)
@@ -136,10 +138,25 @@ extension iTermBrowserViewController {
     @available(macOS 12, *)
     @objc(enterPassword:)
     func enter(password: String) {
-        let writer = iTermBrowserPasswordWriter(webView: browserManager.webView,
-                                                password: password)
+        guard let webView = browserManager.webView else {
+            return
+        }
+        let writer = browserManager.passwordWriter
         Task {
-            try? await writer.fillPassword()
+            try? await writer.fillPassword(webView: webView,
+                                           password: password)
+        }
+    }
+
+    @available(macOS 12, *)
+    @objc(enterUsername:)
+    func enter(username: String) {
+        guard let webView = browserManager.webView else {
+            return
+        }
+        let writer = browserManager.passwordWriter
+        Task {
+            try? await writer.fillUsername(webView: webView, username: username)
         }
     }
 }
@@ -375,9 +392,13 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
     }
 
     func browserManager(_ manager: iTermBrowserManager,
-                        openPasswordManagerForHost host: String?) {
+                        openPasswordManagerForHost host: String?,
+                        forUser: Bool,
+                        didSendUserName: (() -> ())?) {
         delegate?.browserViewController(self,
-                                        openPasswordManagerForHost: host)
+                                        openPasswordManagerForHost: host,
+                                        forUser: forUser,
+                                        didSendUserName: didSendUserName)
     }
 }
 

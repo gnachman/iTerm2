@@ -757,6 +757,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
 // Writes output as though a key was pressed. Broadcast allowed. Supports tmux integration properly.
 - (void)writeTask:(NSString *)string;
+- (void)enterUsername:(NSString *)username;
 
 // Writes output as though a key was pressed. Does not broadcast. Supports tmux integration properly.
 - (void)writeTaskNoBroadcast:(NSString *)string;
