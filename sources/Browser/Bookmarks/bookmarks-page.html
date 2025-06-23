@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookmarks</title>
+    <style>
+        {{COMMON_CSS}}
+        
+        /* Bookmarks-specific overrides and styles */
+        .container {
+            max-width: 900px;
+        }
+        
+        .search-input-wrapper {
+            margin-bottom: 16px;
+        }
+        
+        .controls-row {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .sort-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .sort-select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+        
+        .tags-container {
+            margin-top: 16px;
+        }
+        
+        .tags-label {
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-color);
+        }
+        
+        .tags-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .tag-filter {
+            padding: 6px 12px;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-color);
+        }
+        
+        .tag-filter:hover {
+            background: var(--section-bg);
+        }
+        
+        .tag-filter.active {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+        
+        .content {
+            min-height: 400px;
+        }
+        
+        .bookmarks-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        
+        .bookmark-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 8px;
+            font-size: 13px;
+            color: var(--secondary-text);
+        }
+        
+        .bookmark-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        
+        .bookmark-tag {
+            background: var(--section-bg);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: var(--secondary-text);
+            border: 1px solid var(--border-color);
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <h1>📑 <span class="title-text">Bookmarks</span></h1>
+                <p>Manage and organize your saved websites</p>
+            </div>
+            <div class="header-actions">
+                <button id="clearAllButton" class="button danger small">Clear All</button>
+            </div>
+        </div>
+
+        <div class="search-container">
+            <div class="search-input-wrapper">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search bookmarks...">
+            </div>
+            <div class="controls-row">
+                <div class="sort-container">
+                    <label for="sortSelect">Sort by:</label>
+                    <select id="sortSelect" class="sort-select">
+                        <option value="dateAdded">Date Added</option>
+                        <option value="title">Title</option>
+                        <option value="url">URL</option>
+                    </select>
+                </div>
+            </div>
+            <div class="tags-container">
+                <div class="tags-label">Filter by tags:</div>
+                <div id="tagsList" class="tags-list">
+                    <!-- Tags will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <div id="loadingIndicator" class="loading-indicator">
+            <div class="loading-spinner"></div>
+            <div>Loading bookmarks...</div>
+        </div>
+
+        <div id="bookmarksContainer" class="content">
+            <!-- Bookmarks will be populated here -->
+        </div>
+
+        <div id="loadMoreContainer" class="load-more-container" style="display: none;">
+            <button id="loadMoreButton" class="load-more-button">Load More</button>
+        </div>
+    </div>
+
+    <script>
+        {{BOOKMARKS_SCRIPT}}
+    </script>
+</body>
+</html>

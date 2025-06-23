@@ -16,6 +16,13 @@ extension String {
         return range(of: substring, options: .caseInsensitive, range: nil, locale:nil) != nil
     }
 
+    func localizedCaseInsensitiveHasPrefix(_ prefix: String) -> Bool {
+        if prefix.isEmpty {
+            return true
+        }
+        return range(of: prefix, options: [.caseInsensitive, .diacriticInsensitive, .anchored], range: nil, locale: nil) != nil
+    }
+
     func substring(nsrange: NSRange) -> String {
         return (self as NSString).substring(with: nsrange)
     }
