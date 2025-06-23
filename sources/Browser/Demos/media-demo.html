@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Media Permissions Test (Separate)</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #222;
+      color: #fff;
+      font-family: sans-serif;
+      margin: 0;
+      padding: 1rem;
+    }
+    #video {
+      margin-top: 1rem;
+      max-width: 100%;
+      border: 2px solid #444;
+      border-radius: 4px;
+      display: none;
+    }
+    #meter {
+      margin-top: 1rem;
+      width: 300px;
+      height: 20px;
+      background: #444;
+      border-radius: 4px;
+      overflow: hidden;
+      display: none;
+    }
+    #meter .bar {
+      height: 100%;
+      background: #0f0;
+      width: 0%;
+    }
+    button {
+      margin: 0.5rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <button data-video data-audio>Camera + Microphone</button>
+    <button data-video>Camera Only</button>
+    <button data-audio>Microphone Only</button>
+  </div>
+
+  <video id="video" autoplay playsinline muted></video>
+  <div id="meter"><div class="bar"></div></div>
+
+  <script>
+    const videoEl   = document.getElementById('video');
+    const meter     = document.getElementById('meter');
+    const meterBar  = meter.querySelector('.bar');
+
+    async function startCapture({ video, audio }) {
+      // Reset UI
+      videoEl.style.display = video ? 'block' : 'none';
+      meter.style.display   = audio ? 'block' : 'none';
+      videoEl.srcObject     = null;
+      meterBar.style.width  = '0%';
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video, audio });
+        // Video preview
+        if (video) {
+          videoEl.srcObject = stream;
+        }
+        // Audio VU-meter
+        if (audio) {
+          const ctx      = new AudioContext();
+          const source   = ctx.createMediaStreamSource(stream);
+          const analyser = ctx.createAnalyser();
+          analyser.fftSize = 256;
+          source.connect(analyser);
+          const data     = new Float32Array(analyser.fftSize);
+          ;(function draw() {
+            analyser.getFloatTimeDomainData(data);
+            let sum = 0;
+            for (const x of data) sum += x * x;
+            const rms = Math.sqrt(sum / data.length);
+            meterBar.style.width = Math.min(1, rms * 2) * 100 + '%';
+            requestAnimationFrame(draw);
+          })();
+        }
+        // Stop tracks on unload
+        window.addEventListener('beforeunload', () => {
+          stream.getTracks().forEach(t => t.stop());
+        });
+      } catch (err) {
+        alert('Error: ' + err.name + ' — ' + err.message);
+      }
+    }
+
+    // Wire up buttons
+    document.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        startCapture({
+          video: btn.hasAttribute('data-video'),
+          audio: btn.hasAttribute('data-audio')
+        });
+      });
+    });
+  </script>
+</body>
+</html>

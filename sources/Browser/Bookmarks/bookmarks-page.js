@@ -6,12 +6,13 @@ let hasMore = true;
 let currentSearchQuery = '';
 let currentSortBy = 'dateAdded';
 let activeTags = [];
+let previousActiveTags = [];
 let allTags = [];
 
 console.log("Bookmarks page loading");
 
 // Initialize bookmarks page
-window.loadBookmarks = function(offset = 0, limit = 50, searchQuery = '', sortBy = 'dateAdded', tags = []) {
+window.loadBookmarks = function(offset = 0, limit = 50, searchQuery = '', sortBy = 'dateAdded', tags = [], retryCount = 0) {
     if (isLoading) return;
     
     isLoading = true;
@@ -27,11 +28,20 @@ window.loadBookmarks = function(offset = 0, limit = 50, searchQuery = '', sortBy
             sortBy: sortBy,
             tags: tags
         });
+        
+        // Set a timeout to retry if no response after 2 seconds
+        setTimeout(() => {
+            if (isLoading && retryCount < 3) {
+                console.log(`Bookmarks request timed out, retrying (attempt ${retryCount + 1}/3)...`);
+                isLoading = false;
+                loadBookmarks(offset, limit, searchQuery, sortBy, tags, retryCount + 1);
+            }
+        }, 2000);
     } else {
         console.log('Message handler not ready, retrying in 50ms...');
         setTimeout(() => {
             isLoading = false;
-            loadBookmarks(offset, limit, searchQuery, sortBy, tags);
+            loadBookmarks(offset, limit, searchQuery, sortBy, tags, retryCount);
         }, 50);
     }
 };
@@ -60,16 +70,24 @@ window.clearAllBookmarks = function() {
     }
 };
 
-window.loadTags = function() {
+window.loadTags = function(retryCount = 0) {
     // Check if message handler is available, retry if not
     if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers['iterm2-about:bookmarks']) {
         window.webkit.messageHandlers['iterm2-about:bookmarks'].postMessage({
             action: 'loadTags'
         });
+        
+        // Set a timeout to retry if no response after 1 second
+        setTimeout(() => {
+            if (allTags.length === 0 && retryCount < 5) {
+                console.log(`Tags not loaded after 1s, retrying (attempt ${retryCount + 1}/5)...`);
+                loadTags(retryCount + 1);
+            }
+        }, 1000);
     } else {
         console.log('Message handler not ready for tags, retrying in 50ms...');
         setTimeout(() => {
-            loadTags();
+            loadTags(retryCount);
         }, 50);
     }
 };
@@ -259,11 +277,16 @@ function performSearch() {
     const query = searchInput.value.trim();
     const sortBy = sortSelect.value;
     
-    if (query !== currentSearchQuery || sortBy !== currentSortBy || activeTags.length > 0) {
+    // Check if tags have changed by comparing arrays
+    const tagsChanged = JSON.stringify([...activeTags].sort()) !== JSON.stringify([...previousActiveTags].sort());
+    
+    if (query !== currentSearchQuery || sortBy !== currentSortBy || tagsChanged) {
         currentSearchQuery = query;
         currentSortBy = sortBy;
+        previousActiveTags = [...activeTags]; // Update the previous tags state
         currentOffset = 0;
         hasMore = true;
+        clearBookmarksContainer();
         loadBookmarks(0, 50, query, sortBy, activeTags);
     }
 }
@@ -273,9 +296,11 @@ function clearSearch() {
     searchInput.value = '';
     currentSearchQuery = '';
     activeTags = [];
+    previousActiveTags = [];
     updateTagFilters();
     currentOffset = 0;
     hasMore = true;
+    clearBookmarksContainer();
     loadBookmarks(0, 50, '', currentSortBy, []);
 }
 
@@ -330,6 +355,7 @@ window.onBookmarksCleared = function() {
     currentOffset = 0;
     hasMore = true;
     activeTags = [];
+    previousActiveTags = [];
     updateTagFilters();
     showStatus('All bookmarks cleared', 'success');
     showEmptyState();
@@ -377,10 +403,21 @@ window.addEventListener('load', function() {
         }
     });
     
-    // Load initial data
-    loadTags();
-    loadBookmarks(0, 50, '', 'dateAdded', []);
+    // Load initial data with proper sequencing
+    initializeBookmarksPage();
 });
+
+// Robust initialization function
+function initializeBookmarksPage() {
+    // Wait a bit for the backend to fully initialize
+    setTimeout(() => {
+        loadTags();
+        // Load bookmarks after a short delay to ensure tags are loaded first
+        setTimeout(() => {
+            loadBookmarks(0, 50, '', 'dateAdded', []);
+        }, 100);
+    }, 100);
+}
 
 // Utility function for debouncing search
 function debounce(func, wait) {

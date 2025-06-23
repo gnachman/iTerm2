@@ -39,6 +39,7 @@ class iTermBrowserViewController: NSViewController {
     private let suggestionsController: iTermBrowserSuggestionsController
     private let navigationState = iTermBrowserNavigationState()
     @objc let sessionGuid: String
+    private var bookmarkTagEditor: iTermBookmarkTagEditorWindowController?
 
     @objc(initWithConfiguration:sessionGuid:)
     init(configuration: WKWebViewConfiguration?, sessionGuid: String)  {
@@ -313,11 +314,13 @@ extension iTermBrowserViewController: iTermBrowserToolbarDelegate {
                 ToastWindowController.showToast(withMessage: "Bookmark Removed")
             }
         } else {
-            // Add bookmark
+            // Add bookmark first, then show tag editor
             let title = browserManager.webView.title
             let success = await database.addBookmark(url: currentURL, title: title)
             if success {
-                ToastWindowController.showToast(withMessage: "Bookmark Added")
+                await MainActor.run {
+                    self.showBookmarkTagEditor(url: currentURL, title: title)
+                }
             }
         }
     }
@@ -345,6 +348,10 @@ extension iTermBrowserViewController: iTermBrowserToolbarDelegate {
 @available(macOS 11.0, *)
 extension iTermBrowserViewController: iTermBrowserManagerDelegate {
     func browserManager(_ manager: iTermBrowserManager, didUpdateURL url: String?) {
+        // Close bookmark tag editor when navigating to a different URL
+        bookmarkTagEditor?.closeFromNavigation()
+        bookmarkTagEditor = nil
+        
         toolbar.updateURL(url)
     }
 
@@ -437,6 +444,36 @@ extension iTermBrowserViewController {
     @IBAction
     func browserHistory(_ sender: Any) {
         browserManager.loadURL(iTermBrowserHistoryViewHandler.historyURL.absoluteString)
+    }
+}
+
+// MARK: - Bookmark Management
+@available(macOS 11.0, *)
+extension iTermBrowserViewController: iTermBookmarkTagEditorDelegate {
+    private func showBookmarkTagEditor(url: String, title: String?) {
+        // Close existing editor if open
+        bookmarkTagEditor?.close()
+        
+        // Create and show new editor
+        let editor = iTermBookmarkTagEditorWindowController(url: url, title: title, delegate: self)
+        bookmarkTagEditor = editor
+        editor.showWindow(self)
+        
+        // Position relative to browser window
+        if let browserWindow = view.window,
+           let editorWindow = editor.window {
+            let browserFrame = browserWindow.frame
+            let editorSize = editorWindow.frame.size
+            let x = browserFrame.midX - editorSize.width / 2
+            let y = browserFrame.midY - editorSize.height / 2
+            editorWindow.setFrameOrigin(NSPoint(x: x, y: y))
+        }
+    }
+    
+    // MARK: - iTermBookmarkTagEditorDelegate
+    
+    func bookmarkTagEditorWillClose(_ controller: iTermBookmarkTagEditorWindowController) {
+        bookmarkTagEditor = nil
     }
 }
 
