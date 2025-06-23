@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{TITLE}}</title>
+    <style>
+        {{COMMON_CSS}}
+        
+        body {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .error-container {
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        .error-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 32px;
+            background: linear-gradient(135deg, #ff6b6b, #ffa500);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 25px var(--shadow);
+        }
+        
+        .error-icon::before {
+            content: "⚠";
+            font-size: 36px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .error-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-color);
+        }
+        
+        .error-message {
+            font-size: 16px;
+            color: var(--secondary-text);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+        
+        .error-url {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 14px;
+            color: var(--secondary-text);
+            background: var(--border-color);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+            word-break: break-all;
+            border: 1px solid var(--border-color);
+        }
+        
+        .details {
+            margin-top: 32px;
+            font-size: 14px;
+            color: var(--secondary-text);
+        }
+        
+        .retry-button {
+            margin-top: 16px;
+        }
+        
+        @media (max-width: 480px) {
+            .error-title {
+                font-size: 24px;
+            }
+            
+            .error-message {
+                font-size: 15px;
+            }
+            
+            .error-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-icon"></div>
+        <h1 class="error-title">{{TITLE}}</h1>
+        <p class="error-message">{{MESSAGE}}</p>
+        {{URL_DISPLAY}}
+        <button class="button retry-button" onclick="retryLoad()">Try Again</button>
+        <div class="details">
+            Check your internet connection and try reloading the page.
+        </div>
+    </div>
+    
+    <script>
+        function retryLoad() {
+            const originalURL = '{{ORIGINAL_URL}}';
+            if (originalURL) {
+                window.location.href = originalURL;
+            } else {
+                window.location.reload();
+            }
+        }
+        
+        // Add keyboard support
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                retryLoad();
+            }
+        });
+    </script>
+</body>
+</html>
