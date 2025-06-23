@@ -515,7 +515,10 @@ static BOOL hasBecomeActive = NO;
     userHasInteractedWithAnySession_ = YES;
 }
 
-- (void)openPasswordManagerToAccountName:(NSString *)name inSession:(PTYSession *)session {
+- (void)openPasswordManagerToAccountName:(NSString *)name
+                               inSession:(PTYSession *)session
+                                 forUser:(BOOL)forUser
+                         didSendUserName:(void (^)(void))didSendUserName {
     id<iTermWindowController> term = [[iTermController sharedInstance] currentTerminal];
     if (session) {
         [session reveal];  // Unbury if needed. Otherwise there is no parent window. Issue 9734
@@ -523,16 +526,28 @@ static BOOL hasBecomeActive = NO;
     }
     if (term) {
         DLog(@"Open password manager as sheet in terminal %@", term);
-        return [term openPasswordManagerToAccountName:name inSession:session];
+        return [term openPasswordManagerToAccountName:name
+                                            inSession:session
+                                              forUser:forUser
+                                      didSendUserName:didSendUserName];
     } else {
         DLog(@"Open password manager as standalone window");
         if (!_passwordManagerWindowController) {
             _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];
             _passwordManagerWindowController.delegate = self;
         }
+        _passwordManagerWindowController.sendUserByDefault = forUser;
+        _passwordManagerWindowController.didSendUserName = didSendUserName;
         [[_passwordManagerWindowController window] makeKeyAndOrderFront:nil];
         [_passwordManagerWindowController selectAccountName:name];
     }
+}
+
+- (void)openPasswordManagerToAccountName:(NSString *)name inSession:(PTYSession *)session {
+    [self openPasswordManagerToAccountName:name
+                                 inSession:session
+                                   forUser:NO
+                           didSendUserName:nil];
 }
 
 - (BOOL)warnBeforeMultiLinePaste {

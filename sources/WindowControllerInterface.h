@@ -301,6 +301,10 @@
 - (void)toggleUseTransparency:(id)sender;
 
 - (void)openPasswordManagerToAccountName:(NSString *)name inSession:(PTYSession *)session;
+- (void)openPasswordManagerToAccountName:(NSString *)name
+                               inSession:(PTYSession *)session
+                                 forUser:(BOOL)forUser
+                         didSendUserName:(void (^)(void))didSendUserName;
 
 - (void)tabDidClearScrollbackBufferInSession:(PTYSession *)session;
 - (void)rightExtraDidChange;

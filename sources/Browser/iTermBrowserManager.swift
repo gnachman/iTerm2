@@ -20,7 +20,7 @@
     func browserManager(_ manager: iTermBrowserManager, requestNewWindowForURL url: URL, configuration: WKWebViewConfiguration) -> WKWebView?
     func browserManager(_ manager: iTermBrowserManager, openNewTabForURL url: URL)
     func browserManager(_ manager: iTermBrowserManager, openNewSplitPaneForURL url: URL, vertical: Bool)
-    func browserManager(_ manager: iTermBrowserManager, openPasswordManagerForHost host: String?)
+    func browserManager(_ manager: iTermBrowserManager, openPasswordManagerForHost host: String?, forUser: Bool, didSendUserName: (() -> ())?)
 }
 
 
@@ -36,9 +36,11 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
     private var _findManager: Any?
     private var adblockManager: iTermAdblockManager?
     private var notificationHandler: iTermBrowserNotificationHandler?
+    let passwordWriter = iTermBrowserPasswordWriter()
     let sessionGuid: String
     let historyController: iTermBrowserHistoryController
     private let navigationState: iTermBrowserNavigationState
+    private var navigationCount = 0
 
     init(configuration: WKWebViewConfiguration?,
          sessionGuid: String,
@@ -465,8 +467,35 @@ extension iTermBrowserManager {
                 message: message) {
             case .none:
                 break
-            case .openPasswordManager:
-                delegate?.browserManager(self, openPasswordManagerForHost: webView.url?.host)
+            case .openPasswordManagerForUser:
+                delegate?.browserManager(
+                    self,
+                    openPasswordManagerForHost: webView.url?.host,
+                    forUser: true,
+                    didSendUserName: nil)
+            case .openPasswordManagerForPassword:
+                delegate?.browserManager(
+                    self,
+                    openPasswordManagerForHost: webView.url?.host,
+                    forUser: false,
+                    didSendUserName: nil)
+            case .openPasswordManagerForBoth(passwordID: let passwordID):
+                let count = navigationCount
+                delegate?.browserManager(
+                    self,
+                    openPasswordManagerForHost: webView.url?.host,
+                    forUser: true) { [weak self] in
+                        guard let self,
+                              navigationCount == count,
+                              let webView else {
+                            return
+                        }
+                        let passwordWriter = self.passwordWriter
+                        Task {
+                            _ = await passwordWriter.focus(webView: webView,
+                                                           id: passwordID)
+                        }
+                    }
             }
 
         default:
@@ -508,6 +537,7 @@ extension iTermBrowserManager {
 @available(macOS 11.0, *)
 extension iTermBrowserManager: WKNavigationDelegate {
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        navigationCount += 1
         delegate?.browserManager(self, didStartNavigation: navigation)
     }
 

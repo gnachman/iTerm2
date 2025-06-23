@@ -37,3 +37,19 @@ actor AsyncSemaphore {
         }
     }
 }
+
+actor AsyncMutex {
+    private let sema = AsyncSemaphore(value: 1)
+
+    func sync<T>(_ block: () async throws -> T) async rethrows -> T{
+        await sema.wait()
+        do {
+            let result = try await block()
+            await sema.signal()
+            return result
+        } catch {
+            await sema.signal()
+            throw error
+        }
+    }
+}

@@ -55,9 +55,15 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
     }
 
     func browserViewController(_ controller: iTermBrowserViewController,
-                               openPasswordManagerForHost host: String?) {
+                               openPasswordManagerForHost host: String?,
+                               forUser: Bool,
+                               didSendUserName: (() -> ())?) {
         if let itad = NSApp.delegate as? iTermApplicationDelegate{
-            itad.openPasswordManager(toAccountName: host, in: self)
+            itad.openPasswordManager(
+                toAccountName: host,
+                in: self,
+                forUser: forUser,
+                didSendUserName: didSendUserName)
         }
     }
 }
