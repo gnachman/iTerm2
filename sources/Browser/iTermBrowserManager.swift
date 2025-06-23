@@ -20,6 +20,7 @@
     func browserManager(_ manager: iTermBrowserManager, requestNewWindowForURL url: URL, configuration: WKWebViewConfiguration) -> WKWebView?
     func browserManager(_ manager: iTermBrowserManager, openNewTabForURL url: URL)
     func browserManager(_ manager: iTermBrowserManager, openNewSplitPaneForURL url: URL, vertical: Bool)
+    func browserManager(_ manager: iTermBrowserManager, openPasswordManagerForHost host: String?)
 }
 
 
@@ -132,6 +133,14 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
                 )
                 configuration.userContentController.add(self, name: iTermBrowserGeolocationHandler.messageHandlerName)
                 configuration.userContentController.addUserScript(geolocationScript)
+            }
+
+            if let passwordManagerHandler = iTermBrowserPasswordManagerHandler.instance {
+                let userScript = WKUserScript(source: passwordManagerHandler.javascript,
+                                              injectionTime: .atDocumentEnd,
+                                              forMainFrameOnly: false)
+                configuration.userContentController.add(self, name: iTermBrowserPasswordManagerHandler.messageHandlerName)
+                configuration.userContentController.addUserScript(userScript)
             }
 
             // Trick google into thinking we're a real browser. Who knows what this might break.
@@ -430,40 +439,47 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
 extension iTermBrowserManager {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         // Handle console.log messages separately since they come as String
-        if message.name == "iTerm2ConsoleLog" {
+        switch message.name {
+        case "iTerm2ConsoleLog":
             let string = if let logMessage = message.body as? String {
                 logMessage
             } else {
                 message.body
             }
-            #if DEBUG
+#if DEBUG
             NSLog("Javascript Console: \(string)")
-            #else
+#else
             XLog("Javascript Console: \(string)")
-            #endif
-        }
-        
-        // Handle notification messages
-        if message.name == iTermBrowserNotificationHandler.messageHandlerName {
-            notificationHandler?.handleMessage(webView: webView, message: message)
-            return
-        }
-        
-        // Handle geolocation messages
-        if message.name == iTermBrowserGeolocationHandler.messageHandlerName {
-            iTermBrowserGeolocationHandler.instance?.handleMessage(webView: webView, message: message)
-            return
-        }
-        
-        DLog(message.name)
+#endif
 
-        // For other messages, require dictionary format and current URL
-        guard let currentURL = currentPageURL else {
-            return
+
+        case iTermBrowserNotificationHandler.messageHandlerName:
+            notificationHandler?.handleMessage(webView: webView, message: message)
+
+        case iTermBrowserGeolocationHandler.messageHandlerName:
+            iTermBrowserGeolocationHandler.instance?.handleMessage(webView: webView, message: message)
+
+        case iTermBrowserPasswordManagerHandler.messageHandlerName:
+            switch iTermBrowserPasswordManagerHandler.instance?.handleMessage(
+                webView: webView,
+                message: message) {
+            case .none:
+                break
+            case .openPasswordManager:
+                delegate?.browserManager(self, openPasswordManagerForHost: webView.url?.host)
+            }
+
+        default:
+            DLog(message.name)
+
+            // For other messages, require dictionary format and current URL
+            guard let currentURL = currentPageURL else {
+                return
+            }
+
+            // Let the local page manager handle the message
+            let _ = localPageManager.handleMessage(message, webView: webView, currentURL: currentURL)
         }
-        
-        // Let the local page manager handle the message
-        let _ = localPageManager.handleMessage(message, webView: webView, currentURL: currentURL)
     }
 }
 
