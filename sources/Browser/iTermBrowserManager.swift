@@ -51,6 +51,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
 
         localPageManager.delegate = self
         setupWebView(configuration: configuration)
+        setupPermissionNotificationObserver()
     }
     
     deinit {
@@ -162,6 +163,67 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
         
         // Setup settings delegate
         setupSettingsDelegate()
+    }
+    
+    private func setupPermissionNotificationObserver() {
+        NotificationCenter.default.addObserver(
+            forName: iTermBrowserPermissionManager.permissionRevokedNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self = self,
+                  let origin = notification.userInfo?[iTermBrowserPermissionManager.permissionRevokedOriginKey] as? String else {
+                return
+            }
+            
+            Task {
+                await self.handlePermissionRevoked(for: origin)
+            }
+        }
+    }
+    
+    @MainActor
+    private func handlePermissionRevoked(for origin: String) async {
+        // Check if this WebView contains content from the revoked origin
+        let containsOrigin = await checkWebViewContainsOrigin(origin)
+        
+        if containsOrigin {
+            DLog("Reloading browser session \(sessionGuid) due to revoked permission for origin: \(origin)")
+            reload()
+        }
+    }
+    
+    @MainActor
+    private func checkWebViewContainsOrigin(_ origin: String) async -> Bool {
+        // Check main frame origin
+        if let mainURL = webView.url {
+            let mainOrigin = iTermBrowserPermissionManager.normalizeOrigin(from: mainURL)
+            if mainOrigin == origin {
+                return true
+            }
+        }
+        
+        // Check iframe origins using JavaScript loaded from template
+        let checkIframesScript = iTermBrowserTemplateLoader.loadTemplate(named: "check-iframe-origins",
+                                                                          type: "js",
+                                                                          substitutions: [:])
+        
+        do {
+            let result = try await webView.evaluateJavaScript(checkIframesScript)
+            if let origins = result as? [String] {
+                return origins.contains(origin)
+            }
+        } catch {
+            DLog("Failed to check iframe origins: \(error)")
+            // If JavaScript fails, be conservative and assume it might contain the origin
+            // if the main frame is the same origin (safer to reload than miss permission revocation)
+            if let mainURL = webView.url {
+                let mainOrigin = iTermBrowserPermissionManager.normalizeOrigin(from: mainURL)
+                return mainOrigin == origin
+            }
+        }
+        
+        return false
     }
     
     // MARK: - Public Interface

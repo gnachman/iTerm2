@@ -18,15 +18,21 @@ actor BrowserDatabase {
             if let _instance {
                 return _instance
             }
-            let appDefaults = FileManager.default.applicationSupportDirectory()
-            guard let appDefaults else {
+            guard let url else {
                 return nil
             }
-            var url = URL(fileURLWithPath: appDefaults)
-            url.appendPathComponent("browserdb.sqlite")
             _instance = await BrowserDatabase(url: url)
             return _instance
         }
+    }
+    static var url: URL? {
+        let appDefaults = FileManager.default.applicationSupportDirectory()
+        guard let appDefaults else {
+            return nil
+        }
+        var url = URL(fileURLWithPath: appDefaults)
+        url.appendPathComponent("browserdb.sqlite")
+        return url
     }
 
     private let _db: iTermDatabase
@@ -77,6 +83,28 @@ actor BrowserDatabase {
         
         if !initResult {
             return nil
+        }
+    }
+
+    func erase() async -> Bool {
+        return await withDatabase { db in
+            db.unlock()
+            db.close()
+            db.unlink()
+            if !db.lock() {
+                DLog("LOCK FAILED")
+                return false
+            }
+            if !db.open() {
+                DLog("OPEN FAILED")
+                return false
+            }
+            if !self.createTables(db: db) {
+                DLog("FAILED TO CREATE BROWSER TABLES, CLOSING BROWSER DB")
+                db.close()
+                return false
+            }
+            return true
         }
     }
 

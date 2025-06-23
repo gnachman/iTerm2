@@ -129,6 +129,11 @@
             background: linear-gradient(135deg, #ff3b30, #ff6b6b);
         }
         
+        /* Permissions section specific styling */
+        .permissions-section .section h2::before {
+            background: linear-gradient(135deg, #007aff, #5ac8fa);
+        }
+        
         /* Search section specific styling */
         .search-section .section h2::before {
             background: linear-gradient(135deg, #34c759, #5ac8fa);
@@ -166,14 +171,6 @@
             box-shadow: 0 0 0 3px var(--accent-color)20;
         }
         
-        
-        .section {
-            animation: fadeInUp 0.6s ease-out;
-        }
-        
-        .section:nth-child(2) { animation-delay: 0.1s; }
-        .section:nth-child(3) { animation-delay: 0.2s; }
-        .stats { animation: fadeInUp 0.6s ease-out 0.3s both; }
     </style>
 </head>
 <body>
@@ -200,6 +197,19 @@
                         <p>Remove cookies, cache, and local storage</p>
                     </div>
                     <button class="button small danger" onclick="clearAllData()">Clear All Data</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="permissions-section">
+            <div class="section">
+                <h2>Site Permissions</h2>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3>Manage Site Permissions</h3>
+                        <p>View and revoke permissions granted to websites (camera, microphone, location, notifications)</p>
+                    </div>
+                    <button class="button small" onclick="openPermissions()">Manage Permissions</button>
                 </div>
             </div>
         </div>
@@ -275,6 +285,10 @@
             window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
                 action: 'forceAdblockUpdate'
             });
+        }
+        
+        function openPermissions() {
+            window.location.href = 'iterm2-about:permissions';
         }
         
         // Status message functions

@@ -249,6 +249,11 @@ private extension iTermBrowserLocalPageManager {
             handler.delegate = self
             context = iTermBrowserPageContext(handler: handler, requiresMessageHandler: true)
             
+        case iTermBrowserPermissionsViewHandler.permissionsURL.absoluteString:
+            let handler = iTermBrowserPermissionsViewHandler()
+            handler.delegate = self
+            context = iTermBrowserPageContext(handler: handler, requiresMessageHandler: true)
+            
         case iTermBrowserErrorHandler.errorURL.absoluteString:
             context = iTermBrowserPageContext(handler: iTermBrowserErrorHandler(), requiresMessageHandler: false)
             
@@ -314,6 +319,16 @@ private extension iTermBrowserLocalPageManager {
                 return true
             }
             
+        case iTermBrowserPermissionsViewHandler.permissionsURL.absoluteString:
+            if let permissionsHandler = context.handler as? iTermBrowserPermissionsViewHandler,
+               let webView = message.webView {
+                DLog("Received permissions message, forwarding to handler")
+                Task { @MainActor in
+                    await permissionsHandler.handlePermissionMessage(messageDict, webView: webView)
+                }
+                return true
+            }
+            
         default:
             DLog("Unknown message URL: \(messageURL)")
         }
@@ -347,5 +362,14 @@ extension iTermBrowserLocalPageManager: iTermBrowserHistoryViewHandlerDelegate {
 extension iTermBrowserLocalPageManager: iTermBrowserBookmarkViewHandlerDelegate {
     func bookmarkViewHandlerDidNavigateToURL(_ handler: iTermBrowserBookmarkViewHandler, url: String) {
         delegate?.localPageManagerDidNavigateToURL(self, url: url)
+    }
+}
+
+@available(macOS 11.0, *)
+extension iTermBrowserLocalPageManager: iTermBrowserPermissionsViewHandlerDelegate {
+    func permissionsViewHandlerDidRevokeAllPermissions(_ handler: iTermBrowserPermissionsViewHandler, for origin: String) {
+        // Notify the browser controller that permissions have been revoked
+        // This allows the browser to update any cached permission state
+        DLog("All permissions revoked for origin: \(origin)")
     }
 }
