@@ -28,10 +28,12 @@ class iTermBrowserPermissionManager: NSObject {
             decision = await handleNotificationPermissionRequest(origin: origin)
         case .geolocation:
             decision = await handleGeolocationPermissionRequest(origin: origin)
-        case .camera, .microphone, .cameraAndMicrophone:
-            // For now, deny these permissions but with logging for future implementation
-            DLog("Permission request for \(permissionType.rawValue) from \(origin) - currently not supported, denying")
-            decision = .denied
+        case .camera:
+            decision = await handleMediaPermissionRequest(camera: true, microphone: false, origin: origin)
+        case .microphone:
+            decision = await handleMediaPermissionRequest(camera: false, microphone: true, origin: origin)
+        case .cameraAndMicrophone:
+            decision = await handleMediaPermissionRequest(camera: true, microphone: true, origin: origin)
         }
         
         await savePermissionDecision(origin: origin, permissionType: permissionType, decision: decision)
@@ -116,6 +118,18 @@ class iTermBrowserPermissionManager: NSObject {
     }
     
     // MARK: - Geolocation-Specific Implementation
+
+    private func handleMediaPermissionRequest(camera: Bool, microphone: Bool, origin: String) async -> BrowserPermissionDecision {
+        if camera && !microphone {
+            return await showPermissionDialog(for: .camera, origin: origin)
+        } else if microphone && !camera {
+            return await showPermissionDialog(for: .microphone, origin: origin)
+        } else if camera && microphone {
+            return await showPermissionDialog(for: .cameraAndMicrophone, origin: origin)
+        } else {
+            it_fatalError()
+        }
+    }
 
     private func handleGeolocationPermissionRequest(origin: String) async -> BrowserPermissionDecision {
         guard let handler = iTermBrowserGeolocationHandler.instance else {

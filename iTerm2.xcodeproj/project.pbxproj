@@ -3609,6 +3609,9 @@
 		A6CBB7BC2E08BDD600B2CCCB /* geolocation-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB7BB2E08BD9300B2CCCB /* geolocation-demo.html */; };
 		A6CBB7BD2E08BDD600B2CCCB /* geolocation-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB7BB2E08BD9300B2CCCB /* geolocation-demo.html */; };
 		A6CBB7BE2E08BDD600B2CCCB /* geolocation-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB7BB2E08BD9300B2CCCB /* geolocation-demo.html */; };
+		A6CBB7F02E090ED400B2CCCB /* media-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB7EF2E090E9200B2CCCB /* media-demo.html */; };
+		A6CBB7F12E090ED400B2CCCB /* media-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB7EF2E090E9200B2CCCB /* media-demo.html */; };
+		A6CBB7F22E090ED400B2CCCB /* media-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB7EF2E090E9200B2CCCB /* media-demo.html */; };
 		A6CC16541CF012E300E8C148 /* iTermCarbonHotKeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */; };
 		A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */; };
 		A6CC49882C06E173003484B2 /* iTermPermissionsHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */; };
@@ -7835,6 +7838,7 @@
 		A6CBB7B52E08999E00B2CCCB /* iTermBrowserGeolocationHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserGeolocationHandler.swift; sourceTree = "<group>"; };
 		A6CBB7B72E08B64100B2CCCB /* geolocation-bridge.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "geolocation-bridge.js"; sourceTree = "<group>"; };
 		A6CBB7BB2E08BD9300B2CCCB /* geolocation-demo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "geolocation-demo.html"; sourceTree = "<group>"; };
+		A6CBB7EF2E090E9200B2CCCB /* media-demo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "media-demo.html"; sourceTree = "<group>"; };
 		A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCarbonHotKeyController.h; sourceTree = "<group>"; };
 		A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCarbonHotKeyController.m; sourceTree = "<group>"; };
 		A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermPermissionsHelper.swift; sourceTree = "<group>"; };
@@ -12986,6 +12990,7 @@
 				A6F7D50D2E05CEDA0065D09C /* history-page.html */,
 				A6F7D5072E05CEBA0065D09C /* history-page.js */,
 				A6F7D4BE2E037BB20065D09C /* iterm-browser-common.css */,
+				A6CBB7EF2E090E9200B2CCCB /* media-demo.html */,
 				A6CBB7AD2E087DBF00B2CCCB /* notification-bridge.js */,
 				A6CBB7B32E088E1000B2CCCB /* notifications-demo.html */,
 				A6F7D5142E05F38F0065D09C /* probe-password.js */,
@@ -15413,6 +15418,7 @@
 				A65B72541B1A5D7500F947A7 /* WarningSign.png in Resources */,
 				A631FCA520EF0DFB00EB824F /* iTermStatusBarKnobColorViewController.xib in Resources */,
 				A6F31A2F295BC41700C1A51E /* uniE0CD_PowerlineExtraSymbols.pdf in Resources */,
+				A6CBB7F22E090ED400B2CCCB /* media-demo.html in Resources */,
 				A64F32162B853CEE008EFDC9 /* dice.png in Resources */,
 				A697CE082D9763480031583F /* FoldMenuTip@2x.png in Resources */,
 				A697CE092D9763480031583F /* FoldMenuTip.png in Resources */,
@@ -15915,6 +15921,7 @@
 				1DB8FBD119468A40006BAF5C /* TabClose_Front_Rollover.png in Resources */,
 				A697101518DFA7FC007E901D /* closebutton.png in Resources */,
 				A67D0D8A1A2EE12A003A8B35 /* PseudoTerminal.xib in Resources */,
+				A6CBB7F12E090ED400B2CCCB /* media-demo.html in Resources */,
 				A6EC808A282A28CE00493544 /* SSHConfigurationWindow.xib in Resources */,
 				A67D0D6F1A2EE12A003A8B35 /* MainMenu.strings in Resources */,
 				A67F6145214395870093940A /* graphic_java.png in Resources */,
@@ -16071,6 +16078,7 @@
 				A6CB24AC2C68149100005824 /* it2universion in Resources */,
 				A6CEDA5F19988A7300BB57EC /* LogoFrame.png in Resources */,
 				A6F7D4BF2E037BB20065D09C /* iterm-browser-common.css in Resources */,
+				A6CBB7F02E090ED400B2CCCB /* media-demo.html in Resources */,
 				A697CEB12D9862AF0031583F /* AdvancedPaste.png in Resources */,
 				A67D0D441A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib in Resources */,
 				A6CB24A82C68149100005824 /* imgls in Resources */,
