@@ -171,6 +171,7 @@ class iTermBrowserStaticPageRegistry {
         #if DEBUG
         registerStaticPage(urlPath: "notifications-demo", templateName: "notifications-demo", substitutions: [:])
         registerStaticPage(urlPath: "geolocation-demo", templateName: "geolocation-demo", substitutions: [:])
+        registerStaticPage(urlPath: "media-demo", templateName: "media-demo", substitutions: [:])
         #endif
         
         // Add more static pages here as needed:
