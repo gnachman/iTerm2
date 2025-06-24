@@ -79,7 +79,7 @@ extension iTermBrowserViewController {
             if #available(macOS 12, *) {
                 // Check if we should defer setting interaction state during restoration
                 if shouldDeferLoading() {
-                    deferredInteractionState = newValue as? NSObject
+                    deferredInteractionState = newValue
                     return
                 }
                 
@@ -398,6 +398,14 @@ extension iTermBrowserViewController: iTermBrowserToolbarDelegate {
         browserManager.loadURL(iTermBrowserBookmarkViewHandler.bookmarksURL.absoluteString)
     }
     
+    func browserToolbarDidTapReaderMode() {
+        browserManager.toggleReaderMode()
+    }
+    
+    func browserToolbarIsReaderModeActive() -> Bool {
+        return browserManager.isReaderModeActive
+    }
+    
     func browserToolbarCurrentURL() -> String? {
         return browserManager.webView.url?.absoluteString
     }
@@ -483,6 +491,10 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
     
     func browserManagerDidRequestCopyPageTitle(_ manager: iTermBrowserManager) {
         contextMenuHandler.copyPageTitle()
+    }
+    
+    func browserManager(_ manager: iTermBrowserManager, didChangeReaderModeState isActive: Bool) {
+        // No additional action needed - toolbar will update based on state
     }
 }
 

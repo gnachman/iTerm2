@@ -3646,6 +3646,28 @@
 		A6CBB8302E0A284100B2CCCB /* add-saved-attributes.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB82D2E0A283B00B2CCCB /* add-saved-attributes.js */; };
 		A6CBB8382E0A647000B2CCCB /* iTermSessionRestorationStatusProtocol.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CBB8362E0A647000B2CCCB /* iTermSessionRestorationStatusProtocol.h */; };
 		A6CBB8392E0A647000B2CCCB /* iTermSessionRestorationStatusProtocol.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CBB8372E0A647000B2CCCB /* iTermSessionRestorationStatusProtocol.m */; };
+		A6CBB8BF2E0A695D00B2CCCB /* iTermBrowserReaderModeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CBB8BB2E0A695D00B2CCCB /* iTermBrowserReaderModeManager.swift */; };
+		A6CBB8C12E0A696C00B2CCCB /* Readability.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8BC2E0A695D00B2CCCB /* Readability.js */; };
+		A6CBB8C22E0A696C00B2CCCB /* Readability.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8BC2E0A695D00B2CCCB /* Readability.js */; };
+		A6CBB8C42E0A696C00B2CCCB /* Readability.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8BC2E0A695D00B2CCCB /* Readability.js */; };
+		A6CBB8E72E0A6C5000B2CCCB /* enter-reader-mode.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8E62E0A6C5000B2CCCB /* enter-reader-mode.js */; };
+		A6CBB8E82E0A6C5000B2CCCB /* enter-reader-mode.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8E62E0A6C5000B2CCCB /* enter-reader-mode.js */; };
+		A6CBB8E92E0A6C5000B2CCCB /* enter-reader-mode.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8E62E0A6C5000B2CCCB /* enter-reader-mode.js */; };
+		A6CBB8EB2E0A6C5D00B2CCCB /* exit-reader-mode.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8EA2E0A6C5D00B2CCCB /* exit-reader-mode.js */; };
+		A6CBB8EC2E0A6C5D00B2CCCB /* exit-reader-mode.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8EA2E0A6C5D00B2CCCB /* exit-reader-mode.js */; };
+		A6CBB8ED2E0A6C5D00B2CCCB /* exit-reader-mode.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8EA2E0A6C5D00B2CCCB /* exit-reader-mode.js */; };
+		A6CBB8EF2E0A6C9F00B2CCCB /* load-readability.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8EE2E0A6C9F00B2CCCB /* load-readability.js */; };
+		A6CBB8F02E0A6C9F00B2CCCB /* load-readability.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8EE2E0A6C9F00B2CCCB /* load-readability.js */; };
+		A6CBB8F12E0A6C9F00B2CCCB /* load-readability.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8EE2E0A6C9F00B2CCCB /* load-readability.js */; };
+		A6CBB8F32E0A6CAE00B2CCCB /* load-reader-mode.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8F22E0A6CAE00B2CCCB /* load-reader-mode.js */; };
+		A6CBB8F42E0A6CAE00B2CCCB /* load-reader-mode.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8F22E0A6CAE00B2CCCB /* load-reader-mode.js */; };
+		A6CBB8F52E0A6CAE00B2CCCB /* load-reader-mode.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8F22E0A6CAE00B2CCCB /* load-reader-mode.js */; };
+		A6CBB8F72E0A6FC800B2CCCB /* reader-mode.css in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8F62E0A6FC800B2CCCB /* reader-mode.css */; };
+		A6CBB8F82E0A6FC800B2CCCB /* reader-mode.css in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8F62E0A6FC800B2CCCB /* reader-mode.css */; };
+		A6CBB8F92E0A6FC800B2CCCB /* reader-mode.css in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8F62E0A6FC800B2CCCB /* reader-mode.css */; };
+		A6CBB8FB2E0A700400B2CCCB /* reader-mode-with-styles.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8FA2E0A700400B2CCCB /* reader-mode-with-styles.js */; };
+		A6CBB8FC2E0A700400B2CCCB /* reader-mode-with-styles.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8FA2E0A700400B2CCCB /* reader-mode-with-styles.js */; };
+		A6CBB8FD2E0A700400B2CCCB /* reader-mode-with-styles.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8FA2E0A700400B2CCCB /* reader-mode-with-styles.js */; };
 		A6CC16541CF012E300E8C148 /* iTermCarbonHotKeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */; };
 		A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */; };
 		A6CC49882C06E173003484B2 /* iTermPermissionsHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */; };
@@ -7889,6 +7911,14 @@
 		A6CBB82D2E0A283B00B2CCCB /* add-saved-attributes.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "add-saved-attributes.js"; sourceTree = "<group>"; };
 		A6CBB8362E0A647000B2CCCB /* iTermSessionRestorationStatusProtocol.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSessionRestorationStatusProtocol.h; sourceTree = "<group>"; };
 		A6CBB8372E0A647000B2CCCB /* iTermSessionRestorationStatusProtocol.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSessionRestorationStatusProtocol.m; sourceTree = "<group>"; };
+		A6CBB8BB2E0A695D00B2CCCB /* iTermBrowserReaderModeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserReaderModeManager.swift; sourceTree = "<group>"; };
+		A6CBB8BC2E0A695D00B2CCCB /* Readability.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = Readability.js; sourceTree = "<group>"; };
+		A6CBB8E62E0A6C5000B2CCCB /* enter-reader-mode.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "enter-reader-mode.js"; sourceTree = "<group>"; };
+		A6CBB8EA2E0A6C5D00B2CCCB /* exit-reader-mode.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "exit-reader-mode.js"; sourceTree = "<group>"; };
+		A6CBB8EE2E0A6C9F00B2CCCB /* load-readability.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "load-readability.js"; sourceTree = "<group>"; };
+		A6CBB8F22E0A6CAE00B2CCCB /* load-reader-mode.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "load-reader-mode.js"; sourceTree = "<group>"; };
+		A6CBB8F62E0A6FC800B2CCCB /* reader-mode.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = "reader-mode.css"; sourceTree = "<group>"; };
+		A6CBB8FA2E0A700400B2CCCB /* reader-mode-with-styles.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "reader-mode-with-styles.js"; sourceTree = "<group>"; };
 		A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCarbonHotKeyController.h; sourceTree = "<group>"; };
 		A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCarbonHotKeyController.m; sourceTree = "<group>"; };
 		A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermPermissionsHelper.swift; sourceTree = "<group>"; };
@@ -12924,6 +12954,21 @@
 			path = "Page Saver";
 			sourceTree = "<group>";
 		};
+		A6CBB8BE2E0A695D00B2CCCB /* Reader Mode */ = {
+			isa = PBXGroup;
+			children = (
+				A6CBB8F62E0A6FC800B2CCCB /* reader-mode.css */,
+				A6CBB8E62E0A6C5000B2CCCB /* enter-reader-mode.js */,
+				A6CBB8EA2E0A6C5D00B2CCCB /* exit-reader-mode.js */,
+				A6CBB8EE2E0A6C9F00B2CCCB /* load-readability.js */,
+				A6CBB8F22E0A6CAE00B2CCCB /* load-reader-mode.js */,
+				A6CBB8FA2E0A700400B2CCCB /* reader-mode-with-styles.js */,
+				A6CBB8BC2E0A695D00B2CCCB /* Readability.js */,
+				A6CBB8BB2E0A695D00B2CCCB /* iTermBrowserReaderModeManager.swift */,
+			);
+			path = "Reader Mode";
+			sourceTree = "<group>";
+		};
 		A6CEBF5F1DCE7DF3009F4FD2 /* Proto */ = {
 			isa = PBXGroup;
 			children = (
@@ -13196,7 +13241,6 @@
 		A6F7D4B32E0340A30065D09C /* Browser */ = {
 			isa = PBXGroup;
 			children = (
-				A6CBB8352E0A3B1000B2CCCB /* Page Saver */,
 				A6CBB8132E0A16AA00B2CCCB /* Bookmarks */,
 				A6CBB8202E0A1CE000B2CCCB /* Core */,
 				A6CBB8142E0A16CB00B2CCCB /* Database */,
@@ -13204,9 +13248,11 @@
 				A6CBB81F2E0A1CC200B2CCCB /* Favicon */,
 				A6CBB8172E0A1BBE00B2CCCB /* History */,
 				A6CBB8162E0A1B7400B2CCCB /* Local Pages */,
+				A6CBB8352E0A3B1000B2CCCB /* Page Saver */,
 				A6CBB80C2E09E4A700B2CCCB /* Password Manager */,
 				A6CBB8182E0A1BE800B2CCCB /* Permissions */,
 				A6CBB81D2E0A1C7200B2CCCB /* Polyfills */,
+				A6CBB8BE2E0A695D00B2CCCB /* Reader Mode */,
 				A6CBB81A2E0A1C1700B2CCCB /* Settings */,
 				A6CBB81C2E0A1C5500B2CCCB /* UI */,
 				A6CBB81B2E0A1C2900B2CCCB /* View Source */,
@@ -15183,6 +15229,7 @@
 				A67F6136214395570093940A /* graphic_gulp.png in Resources */,
 				1D6ED97919AEA20D005A7799 /* important.png in Resources */,
 				1D6ED97B19AEA20D005A7799 /* newwin.png in Resources */,
+				A6CBB8ED2E0A6C5D00B2CCCB /* exit-reader-mode.js in Resources */,
 				A68615602D78D37500E9CCC2 /* clock.png in Resources */,
 				1DBBA5E01B3CB0590026E3B6 /* restore-arrangement.png in Resources */,
 				A6F18B432AE2F39C006C08EE /* uniE0B8_lower-left-triangle.pdf in Resources */,
@@ -15215,6 +15262,7 @@
 				A697CDE82D975E680031583F /* ActionsMenuTip.jpg in Resources */,
 				A697CDE92D975E680031583F /* ActionsMenuTip@2x.jpg in Resources */,
 				A6E7AE7F214394DD00DE9F3B /* graphic_compile@2x.png in Resources */,
+				A6CBB8EF2E0A6C9F00B2CCCB /* load-readability.js in Resources */,
 				1D6ED98A19AEA20D005A7799 /* LogoFrame.png in Resources */,
 				A65E6F5A2547F1D5008A4866 /* WindowCornerFull_Square.png in Resources */,
 				A6B4833829D73DA10055E24A /* square.and.pencil.png in Resources */,
@@ -15322,6 +15370,7 @@
 				A6B3A73A1AC74E02008E8D4E /* FindCursorCell3.png in Resources */,
 				537A1FBA22168DF800FBEE5A /* MinimalFindView.xib in Resources */,
 				A6EFF2341D2049A400806EEF /* Erase@2x.png in Resources */,
+				A6CBB8F92E0A6FC800B2CCCB /* reader-mode.css in Resources */,
 				A65B72AE1B3285A300F947A7 /* DisableTips@2x.png in Resources */,
 				A635F1F22507621A008C3038 /* iTermSnippetsEditingViewController.xib in Resources */,
 				A67F61C6214395C60093940A /* graphic_search@2x.png in Resources */,
@@ -15407,6 +15456,7 @@
 				1D6ED9B819AEA20D005A7799 /* wrap_to_bottom.png in Resources */,
 				A62CD06727E9124F00215E92 /* askpass.sh in Resources */,
 				A6E7AE66214394CA00DE9F3B /* graphic_clojure@2x.png in Resources */,
+				A6CBB8FC2E0A700400B2CCCB /* reader-mode-with-styles.js in Resources */,
 				A6BEE47926E0A624009C0C2C /* FilterIndicator@2x.png in Resources */,
 				A67F61C0214395C60093940A /* graphic_ruby@2x.png in Resources */,
 				A67F6183214395A70093940A /* graphic_nginx.png in Resources */,
@@ -15502,6 +15552,7 @@
 				A629F5BB23B081DD00C2F16B /* MouseReportingCursorOverlay@2x.png in Resources */,
 				A6F31A3C295BC58C00C1A51E /* uniE0D2_PowerlineExtraSymbols.pdf in Resources */,
 				A65E6F572547F1D5008A4866 /* WindowCorner_Square@2x.png in Resources */,
+				A6CBB8E72E0A6C5000B2CCCB /* enter-reader-mode.js in Resources */,
 				1D8BBA871B31DC160005A852 /* ChevronDown@2x.png in Resources */,
 				A6F18B522AE2F39C006C08EE /* uniE0B2_Powerline_normal-right.pdf in Resources */,
 				A6E7AEA8214394F600DE9F3B /* graphic_docker.png in Resources */,
@@ -15563,6 +15614,7 @@
 				A697CE352D976AFE0031583F /* AnnotationsMenuTip@2x.png in Resources */,
 				A6B4832C29D73DA10055E24A /* placeholdertext.fill.png in Resources */,
 				1D6ED9D419AEA20D005A7799 /* TabClose_Front_Rollover.png in Resources */,
+				A6CBB8F52E0A6CAE00B2CCCB /* load-reader-mode.js in Resources */,
 				A6F7A72A213CB143004DE961 /* StatusBarIconComposer.png in Resources */,
 				A6F7D4C02E037BB20065D09C /* iterm-browser-common.css in Resources */,
 				A6EC804C281B3AF300493544 /* TextViewPortholeRenderer-light.css in Resources */,
@@ -15656,6 +15708,7 @@
 				A6E7AE60214394CA00DE9F3B /* graphic_clojure.png in Resources */,
 				A66E805427545CBC003ABDF9 /* SecureKeyboardEntry.png in Resources */,
 				A66F52D52106F6F100571168 /* gitdown@2x.png in Resources */,
+				A6CBB8C42E0A696C00B2CCCB /* Readability.js in Resources */,
 				A65D97C124B19D2600DF45F9 /* iTermMinimalComposerViewController.xib in Resources */,
 				A6971F3720D8D3CE0075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib in Resources */,
 				A6E16C7124A8696D00C6DB06 /* WindowCornerFull_BigSur.png in Resources */,
@@ -15736,6 +15789,7 @@
 				A67D0D751A2EE12A003A8B35 /* NumberOfSpacesAccessoryView.xib in Resources */,
 				A6FE8D08209382C000B5C648 /* download@2x.png in Resources */,
 				A6EEAED628336C2A0039E850 /* framer.py in Resources */,
+				A6CBB8C22E0A696C00B2CCCB /* Readability.js in Resources */,
 				A6E7AE5F214394CA00DE9F3B /* graphic_clojure.png in Resources */,
 				A6F7D5162E05F39D0065D09C /* probe-password.js in Resources */,
 				A66433552DEA78A60099F722 /* globe@2x.png in Resources */,
@@ -15744,6 +15798,7 @@
 				A6F18B362AE2F39C006C08EE /* uniE0C1_flame-thin.pdf in Resources */,
 				A6A64E6A2508C5B50040490B /* OpenQuicklySnippetIcon.png in Resources */,
 				A64F32152B853CEE008EFDC9 /* dice.png in Resources */,
+				A6CBB8F82E0A6FC800B2CCCB /* reader-mode.css in Resources */,
 				A6B9662325F95DAD00D45CBD /* iTermTriggersPanel.xib in Resources */,
 				A67F118318D82B9500B23C7B /* PrefsAdvanced@2x.png in Resources */,
 				A67F615C214395990093940A /* graphic_micro.png in Resources */,
@@ -15907,6 +15962,7 @@
 				A659C99D2DAF235C0036BA52 /* Channel@2x.png in Resources */,
 				A659C99E2DAF235C0036BA52 /* Channel.png in Resources */,
 				1DE922E71AC3709200965876 /* BackgroundStripes.png in Resources */,
+				A6CBB8F42E0A6CAE00B2CCCB /* load-reader-mode.js in Resources */,
 				A67F61BC214395C60093940A /* graphic_shell@2x.png in Resources */,
 				A686A1171C86A6DD0024C2DE /* NewOutputForDarkTheme.png in Resources */,
 				A6DC98A228A82608009D21C0 /* Window@2x.png in Resources */,
@@ -15927,6 +15983,7 @@
 				A67F614E214395870093940A /* graphic_java@2x.png in Resources */,
 				A6F1B3C02693B82C00546767 /* DebugLogging@2x.png in Resources */,
 				A67F614B214395870093940A /* graphic_http.png in Resources */,
+				A6CBB8E92E0A6C5000B2CCCB /* enter-reader-mode.js in Resources */,
 				A6B70FC419830F0D007A4284 /* NewOutput@2x.png in Resources */,
 				A67F6188214395A70093940A /* graphic_perl@2x.png in Resources */,
 				A66A882624DFCCC30043728B /* graphic_erlang.png in Resources */,
@@ -16002,6 +16059,7 @@
 				A66A883224DFCCC30043728B /* graphic_elixir@2x.png in Resources */,
 				A61A85A424F1CCB900B03880 /* iTermGlobalSearch.xib in Resources */,
 				A6A30ED22950EA540050F01A /* aiterm@2x.png in Resources */,
+				A6CBB8EB2E0A6C5D00B2CCCB /* exit-reader-mode.js in Resources */,
 				A6CEDA6219988A7300BB57EC /* LogoShadow.png in Resources */,
 				A67D0D781A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */,
 				A65B725E1B1A630100F947A7 /* CheckMark@2x.png in Resources */,
@@ -16145,6 +16203,7 @@
 				A697CEB92D987C5A0031583F /* OpenQuicklyNamedMark@2x.png in Resources */,
 				A6F7A732213CB143004DE961 /* StatusBarIconGitBranch.png in Resources */,
 				A67F61C8214395C60093940A /* graphic_search.png in Resources */,
+				A6CBB8FB2E0A700400B2CCCB /* reader-mode-with-styles.js in Resources */,
 				A6B3A7391AC74E02008E8D4E /* FindCursorCell3.png in Resources */,
 				A6F7D50B2E05CEC10065D09C /* history-page.js in Resources */,
 				A6CBB8062E09208C00B2CCCB /* password-button.js in Resources */,
@@ -16156,6 +16215,7 @@
 				A6CBB80F2E0A023A00B2CCCB /* password-demo.html in Resources */,
 				A67D0D5A1A2EE12A003A8B35 /* iTerm.strings in Resources */,
 				A66A1FAF1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */,
+				A6CBB8F12E0A6C9F00B2CCCB /* load-readability.js in Resources */,
 				53BBA0F9214236AC0074D061 /* iterm2_git_poll.sh in Resources */,
 				A67D0D511A2EE12A003A8B35 /* FindView.xib in Resources */,
 				A67F6185214395A70093940A /* graphic_npm@2x.png in Resources */,
@@ -16347,6 +16407,7 @@
 				A659C9992DAF235C0036BA52 /* Channel@2x.png in Resources */,
 				A659C99A2DAF235C0036BA52 /* Channel.png in Resources */,
 				A60C0351208964FD00FE2F1F /* it2_api_wrapper.sh in Resources */,
+				A6CBB8FD2E0A700400B2CCCB /* reader-mode-with-styles.js in Resources */,
 				A686A11D1C86AA930024C2DE /* DeadForDarkTheme.png in Resources */,
 				A6F370752DAB193900A0A59E /* folder.png in Resources */,
 				A6F370762DAB193900A0A59E /* folder@2x.png in Resources */,
@@ -16410,6 +16471,7 @@
 				A68BADFB1E0DD52F00E4BB7B /* Touch Bar Function Keys.png in Resources */,
 				A67F6147214395870093940A /* graphic_less@2x.png in Resources */,
 				1D8BBA701B30F7FB0005A852 /* Dismiss@2x.png in Resources */,
+				A6CBB8E82E0A6C5000B2CCCB /* enter-reader-mode.js in Resources */,
 				A68E33361DE746F5003F1D8E /* Next Mark Touch Bar Icon@2x.png in Resources */,
 				A67F6181214395A70093940A /* graphic_nginx.png in Resources */,
 				1D8BBA781B30FD230005A852 /* Later.png in Resources */,
@@ -16489,6 +16551,7 @@
 				A68E33341DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png in Resources */,
 				A67D0D6E1A2EE12A003A8B35 /* MainMenu.strings in Resources */,
 				A697CE9A2D97C8E90031583F /* AIChatMenuTip.png in Resources */,
+				A6CBB8F72E0A6FC800B2CCCB /* reader-mode.css in Resources */,
 				A697CE9B2D97C8E90031583F /* AIChatMenuTip@2x.png in Resources */,
 				A67D0D771A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */,
 				A6CB24A52C68149100005824 /* it2copy in Resources */,
@@ -16522,6 +16585,7 @@
 				A6F7A746213CB143004DE961 /* StatusBarIconPaste@2x.png in Resources */,
 				1D44CCDC1CC6A1DE00BE5630 /* Loupe@2x.png in Resources */,
 				A67D0D501A2EE12A003A8B35 /* FindView.xib in Resources */,
+				A6CBB8C12E0A696C00B2CCCB /* Readability.js in Resources */,
 				5346902A1C94FF0000B7E4E9 /* overflowImagePressed@2x.png in Resources */,
 				A6F18B4A2AE2F39C006C08EE /* uniE0B6_left-half-circle-thick.pdf in Resources */,
 				A66A1FAE1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */,
@@ -16554,6 +16618,7 @@
 				A6F18B472AE2F39C006C08EE /* uniE0C0_flame-thick.pdf in Resources */,
 				A63821EF229E50CD005D74BE /* Warning@2x.png in Resources */,
 				A690F7011B424C55009F76D8 /* Media.xcassets in Resources */,
+				A6CBB8EC2E0A6C5D00B2CCCB /* exit-reader-mode.js in Resources */,
 				A6F2F21B250757FE00FC227F /* PrefsShortcuts.png in Resources */,
 				A67F61C1214395C60093940A /* graphic_read.png in Resources */,
 				A697CEBA2D987C5A0031583F /* OpenQuicklyNamedMark.png in Resources */,
@@ -16654,6 +16719,7 @@
 				A697CDDA2D975AE20031583F /* AIExplainTip.jpg in Resources */,
 				A697CDDB2D975AE20031583F /* RenderNatively.png in Resources */,
 				A697CDDC2D975AE20031583F /* TmuxDashboard@2x.png in Resources */,
+				A6CBB8F02E0A6C9F00B2CCCB /* load-readability.js in Resources */,
 				A697CDDD2D975AE20031583F /* AIWatching@2x.png in Resources */,
 				1D48B286165F362B000046EE /* TabClose_Front@2x.png in Resources */,
 				A697CDE02D975C540031583F /* SnippetsTip.jpg in Resources */,
@@ -16785,6 +16851,7 @@
 				9DB3D6EC176CC47E0071CCF8 /* PrefsMouse.png in Resources */,
 				5308BF9522828A28004BECAC /* StatusBarIconCharging.png in Resources */,
 				A66A883124DFCCC30043728B /* graphic_elixir@2x.png in Resources */,
+				A6CBB8F32E0A6CAE00B2CCCB /* load-reader-mode.js in Resources */,
 				A6E16C6724A866F300C6DB06 /* WindowCornerFull_BigSur@2x.png in Resources */,
 				53B93DE121F25E79001EC59C /* iterm2_git_wrapper.sh in Resources */,
 				A665C1FD2440461500F623F0 /* WindowCorner.png in Resources */,
@@ -18055,6 +18122,7 @@
 				A6F3EB4F2D32EC5B00612173 /* TailFindController.swift in Sources */,
 				A6069F122DF25D0C00EE6CC7 /* Data+iTerm.swift in Sources */,
 				A6F1B3B92690EA9700546767 /* iTermOptionallyBordered.m in Sources */,
+				A6CBB8BF2E0A695D00B2CCCB /* iTermBrowserReaderModeManager.swift in Sources */,
 				A6069EB82DEF596D00EE6CC7 /* ChatInputView.swift in Sources */,
 				A6EC937F24E85CEF00EEADEF /* PasteboardHistory.m in Sources */,
 				A62A1F771E711BC000363EE9 /* iTermHelpMessageViewController.m in Sources */,

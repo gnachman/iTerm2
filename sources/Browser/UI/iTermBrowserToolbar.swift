@@ -28,6 +28,8 @@ protocol iTermBrowserToolbarDelegate: AnyObject {
     func browserToolbarDidTapHistory()
     func browserToolbarDidTapAddBookmark() async
     func browserToolbarDidTapManageBookmarks()
+    func browserToolbarDidTapReaderMode()
+    func browserToolbarIsReaderModeActive() -> Bool
     func browserToolbarBackHistoryItems() -> [iTermBrowserHistoryItem]
     func browserToolbarForwardHistoryItems() -> [iTermBrowserHistoryItem]
     func browserToolbarDidSelectHistoryItem(steps: Int)
@@ -181,6 +183,16 @@ class iTermBrowserToolbar: NSView {
             let isBookmarked = await delegate?.browserToolbarIsCurrentURLBookmarked() ?? false
             
             await MainActor.run {
+                // Reader Mode menu item
+                let isReaderModeActive = delegate?.browserToolbarIsReaderModeActive() ?? false
+                let readerModeTitle = isReaderModeActive ? "Exit Reader Mode" : "Reader Mode"
+                let readerModeIcon = isReaderModeActive ? "doc.text.fill" : "doc.text"
+                let readerModeItem = NSMenuItem(title: readerModeTitle, action: #selector(readerModeMenuItemSelected), keyEquivalent: "")
+                readerModeItem.target = self
+                readerModeItem.image = NSImage(systemSymbolName: readerModeIcon, accessibilityDescription: nil)
+                readerModeItem.isEnabled = currentURL != nil
+                menu.addItem(readerModeItem)
+                
                 let bookmarkTitle = isBookmarked ? "Remove Bookmark" : "Add Bookmark"
                 let bookmarkIcon = isBookmarked ? "bookmark.fill" : "bookmark"
                 let bookmarkItem = NSMenuItem(title: bookmarkTitle, action: #selector(bookmarkMenuItemSelected), keyEquivalent: "")
@@ -218,6 +230,10 @@ class iTermBrowserToolbar: NSView {
                 menu.popUp(positioning: nil, at: menuLocation, in: self)
             }
         }
+    }
+    
+    @objc private func readerModeMenuItemSelected() {
+        delegate?.browserToolbarDidTapReaderMode()
     }
     
     @objc private func bookmarkMenuItemSelected() {
