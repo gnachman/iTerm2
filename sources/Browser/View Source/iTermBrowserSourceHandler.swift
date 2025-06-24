@@ -14,11 +14,16 @@ class iTermBrowserSourceHandler: NSObject, iTermBrowserPageHandler {
     private var pendingSourceHTML: String?
     
     func generateSourcePageHTML(for rawSource: String, url: URL) -> String {
-        // Escape HTML entities for display
+        // Escape HTML entities for safe display but preserve whitespace characters
         let escapedSource = rawSource
             .replacingOccurrences(of: "&", with: "&amp;")
             .replacingOccurrences(of: "<", with: "&lt;")
             .replacingOccurrences(of: ">", with: "&gt;")
+            .replacingOccurrences(of: "\"", with: "&quot;")
+            .replacingOccurrences(of: "'", with: "&#39;")
+            .replacingOccurrences(of: "\n", with: "<br/>")
+            .replacingOccurrences(of: "  ", with: "&nbsp;&nbsp;")
+            // Keep tabs as tabs - CSS will handle the display with tab-size
         
         // Load template and substitute source
         return iTermBrowserTemplateLoader.loadTemplate(named: "view-source",

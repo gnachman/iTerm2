@@ -4,26 +4,401 @@
     <title>View Source</title>
     <style>
         {{COMMON_CSS}}
-        pre {
+        
+        /* Override any constraining styles */
+        body {
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        }
+        
+        .header {
+            padding: 20px 30px 15px 30px;
+            border-bottom: 1px solid;
+            margin-bottom: 0;
+        }
+        
+        @media (prefers-color-scheme: light) {
+            .header {
+                background: #ffffff;
+                border-color: #e1e4e8;
+            }
+            
+            .header h1 {
+                color: #24292e;
+                margin: 0 0 8px 0;
+                font-size: 24px;
+                font-weight: 600;
+            }
+            
+            .header .url {
+                color: #586069;
+                margin: 0;
+                font-size: 14px;
+                word-break: break-all;
+            }
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .header {
+                background: #0d1117;
+                border-color: #30363d;
+            }
+            
+            .header h1 {
+                color: #f0f6fc;
+                margin: 0 0 8px 0;
+                font-size: 24px;
+                font-weight: 600;
+            }
+            
+            .header .url {
+                color: #8b949e;
+                margin: 0;
+                font-size: 14px;
+                word-break: break-all;
+            }
+        }
+        
+        .source-content {
+            padding: 0;
+            margin: 0;
+            flex: 1;
+            min-height: calc(100vh - 120px);
+        }
+        
+        /* Base syntax highlighting styles */
+        code.source-code {
+            display: block;
             white-space: pre-wrap;
             word-wrap: break-word;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 30px;
+            border-radius: 0;
+            font-size: 14px;
+            line-height: 1.6;
+            min-height: calc(100vh - 120px);
+            overflow: auto;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            margin: 0;
+            border: none !important;
+            tab-size: 4;
+            -moz-tab-size: 4;
+            -o-tab-size: 4;
+        }
+        
+        /* Light mode syntax highlighting */
+        @media (prefers-color-scheme: light) {
+            code.source-code {
+                background: #f8f9fa;
+                border: 1px solid #e9ecef;
+                color: #212529;
+            }
+            
+            .token.tag {
+                color: #d73a49;
+            }
+            
+            .token.attr-name {
+                color: #6f42c1;
+            }
+            
+            .token.attr-value {
+                color: #032f62;
+            }
+            
+            .token.punctuation {
+                color: #6a737d;
+            }
+            
+            .token.comment {
+                color: #6a737d;
+                font-style: italic;
+            }
+            
+            .token.doctype {
+                color: #6a737d;
+                font-weight: bold;
+            }
+            
+            .token.string {
+                color: #032f62;
+            }
+            
+            .token.keyword {
+                color: #d73a49;
+            }
+            
+            .token.operator {
+                color: #d73a49;
+            }
+            
+            .token.entity {
+                color: #22863a;
+            }
+            
+            .token.prolog {
+                color: #6a737d;
+            }
+            
+            .token.cdata {
+                color: #6a737d;
+                font-weight: bold;
+            }
+        }
+        
+        /* Dark mode syntax highlighting */
+        @media (prefers-color-scheme: dark) {
+            code.source-code {
+                background: #0d1117;
+                border: 1px solid #30363d;
+                color: #c9d1d9;
+            }
+            
+            .token.tag {
+                color: #7ee787;
+            }
+            
+            .token.attr-name {
+                color: #79c0ff;
+            }
+            
+            .token.attr-value {
+                color: #a5d6ff;
+            }
+            
+            .token.punctuation {
+                color: #8b949e;
+            }
+            
+            .token.comment {
+                color: #8b949e;
+                font-style: italic;
+            }
+            
+            .token.doctype {
+                color: #8b949e;
+                font-weight: bold;
+            }
+            
+            .token.string {
+                color: #a5d6ff;
+            }
+            
+            .token.keyword {
+                color: #ff7b72;
+            }
+            
+            .token.operator {
+                color: #ff7b72;
+            }
+            
+            .token.entity {
+                color: #7ee787;
+            }
+            
+            .token.prolog {
+                color: #8b949e;
+            }
+            
+            .token.cdata {
+                color: #8b949e;
+                font-weight: bold;
+            }
+        }
+        
+        /* Additional styling for better readability */
+        .token.boolean,
+        .token.number {
+            color: inherit;
+        }
+        
+        /* Clickable link styles */
+        .source-link {
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        
+        @media (prefers-color-scheme: light) {
+            .source-link {
+                color: #0366d6;
+            }
+            
+            .source-link:hover {
+                color: #0256cc;
+            }
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .source-link {
+                color: #58a6ff;
+            }
+            
+            .source-link:hover {
+                color: #79c0ff;
+            }
+        }
+        
+        /* Selection highlighting */
+        code.source-code::selection,
+        code.source-code *::selection {
+            background-color: rgba(0, 122, 255, 0.3);
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            code.source-code::selection,
+            code.source-code *::selection {
+                background-color: rgba(255, 255, 255, 0.2);
+            }
+        }
+        
+        /* Custom scrollbar for webkit browsers */
+        code.source-code::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        @media (prefers-color-scheme: light) {
+            code.source-code::-webkit-scrollbar-track {
+                background: #f1f3f4;
+                border-radius: 4px;
+            }
+            
+            code.source-code::-webkit-scrollbar-thumb {
+                background: #dadce0;
+                border-radius: 4px;
+            }
+            
+            code.source-code::-webkit-scrollbar-thumb:hover {
+                background: #bdc1c6;
+            }
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            code.source-code::-webkit-scrollbar-track {
+                background: #21262d;
+                border-radius: 4px;
+            }
+            
+            code.source-code::-webkit-scrollbar-thumb {
+                background: #484f58;
+                border-radius: 4px;
+            }
+            
+            code.source-code::-webkit-scrollbar-thumb:hover {
+                background: #656c76;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="header-content">
-                <h1>💻 <span class="title-text">Page Source</span></h1>
-                <p>{{URL}}</p>
-            </div>
-        </div>
+    <div class="header">
+        <h1>💻 Page Source</h1>
+        <p class="url">{{URL}}</p>
+    </div>
 
-        <div id="bookmarksContainer" class="content">
-            <pre>{{SOURCE}}</pre>
-        </div>
+    <div class="source-content">
+        <code class="language-html source-code">{{SOURCE}}</code>
+    </div>
+    
+    <script>
+        // Simple HTML syntax highlighter - no external dependencies
+        document.addEventListener('DOMContentLoaded', function() {
+            makeUrlsClickable(); // First make URLs clickable
+            applySyntaxHighlighting(); // Then apply syntax highlighting
+        });
+        
+        function applySyntaxHighlighting() {
+            const codeElement = document.querySelector('.source-code');
+            if (!codeElement) return;
+            
+            let html = codeElement.innerHTML;
+            
+            // Highlight comments first (to avoid interfering with tag highlighting)
+            html = html.replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="token comment">$1</span>');
+            
+            // Highlight DOCTYPE
+            html = html.replace(/(&lt;!DOCTYPE[^&]*&gt;)/gi, '<span class="token doctype">$1</span>');
+            
+            // Highlight CDATA sections
+            html = html.replace(/(&lt;!\[CDATA\[[\s\S]*?\]\]&gt;)/g, '<span class="token cdata">$1</span>');
+            
+            // Highlight complete HTML tags in one pass
+            html = html.replace(/(&lt;\/?)([a-zA-Z][a-zA-Z0-9]*)((?:\s[^&]*?)?)\s*(&gt;)/g, function(match, openBracket, tagName, attributes, closeBracket) {
+                let result = '<span class="token tag">' + openBracket + tagName + '</span>';
+                
+                if (attributes) {
+                    // Highlight attributes within the tag
+                    let processedAttrs = attributes.replace(/\s([a-zA-Z][a-zA-Z0-9-]*)(=)(&quot;[^&]*&quot;|&#39;[^&]*&#39;)/g, 
+                        ' <span class="token attr-name">$1</span><span class="token punctuation">$2</span><span class="token attr-value">$3</span>');
+                    result += processedAttrs;
+                }
+                
+                result += '<span class="token tag">' + closeBracket + '</span>';
+                return result;
+            });
+            
+            // Highlight entities
+            html = html.replace(/(&[a-zA-Z][a-zA-Z0-9]*;|&#[0-9]+;|&#x[0-9a-fA-F]+;)/g, '<span class="token entity">$1</span>');
+            
+            codeElement.innerHTML = html;
+        }
+        
+        function makeUrlsClickable() {
+            const codeElement = document.querySelector('.source-code');
+            if (!codeElement) return;
+            
+            // Get the current page URL to resolve relative URLs
+            const currentURL = '{{URL}}';
+            let html = codeElement.innerHTML;
+            
+            // Helper function to resolve relative URLs
+            function resolveURL(url) {
+                try {
+                    return new URL(url, currentURL).href;
+                } catch (e) {
+                    return url;
+                }
+            }
+            
+            // Simple approach: find URL-like patterns in the displayed text and make them clickable
+            // This preserves the exact HTML structure while making URLs clickable
+            
+            // Handle escaped quotes: attr=&quot;url&quot;
+            html = html.replace(/(\s(?:src|href|action|data|poster|background)=&quot;)([^&"]+?)(&quot;)/gi, 
+                (match, before, url, after) => {
+                    if (!url || url.trim() === '' || url === '#' || url.startsWith('javascript:') || url.startsWith('data:')) {
+                        return match;
+                    }
+                    
+                    const linkURL = url.startsWith('http') ? url : resolveURL(url);
+                    return `${before}<a href="${linkURL}" target="_blank" rel="noopener noreferrer" class="source-link">${url}</a>${after}`;
+                });
+            
+            // Handle regular quotes: attr="url"
+            html = html.replace(/(\s(?:src|href|action|data|poster|background)=")([^"]+?)(")/gi, 
+                (match, before, url, after) => {
+                    if (!url || url.trim() === '' || url === '#' || url.startsWith('javascript:') || url.startsWith('data:')) {
+                        return match;
+                    }
+                    
+                    const linkURL = url.startsWith('http') ? url : resolveURL(url);
+                    return `${before}<a href="${linkURL}" target="_blank" rel="noopener noreferrer" class="source-link">${url}</a>${after}`;
+                });
+            
+            // Handle CSS url() patterns
+            html = html.replace(/(url\()(&quot;|&#39;|")([^&'"]+?)(\2)(\))/gi, 
+                (match, before, quote1, url, quote2, after) => {
+                    if (!url || url.trim() === '') {
+                        return match;
+                    }
+                    
+                    const linkURL = url.startsWith('http') ? url : resolveURL(url);
+                    return `${before}${quote1}<a href="${linkURL}" target="_blank" rel="noopener noreferrer" class="source-link">${url}</a>${quote2}${after}`;
+                });
+            
+            codeElement.innerHTML = html;
+        }
+    </script>
 </body>
 </html>
