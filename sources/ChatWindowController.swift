@@ -341,6 +341,19 @@ extension ChatWindowController: NSToolbarDelegate {
         }
     }
 
+    func createChat(name: String,
+                    inject: String?) {
+        let chatID = client.create(chatWithTitle: name,
+                                   sessionGuid: nil)
+        chatViewController.load(chatID: chatID)
+        chatListViewController.select(chatID: chatID)
+        if let inject {
+            chatViewController.attach(filename: name + ".txt",
+                                      content: inject.lossyData,
+                                      mimeType: "text/plain")
+        }
+    }
+
     // MARK: - Actions
 
     @objc func toggleChatList() {

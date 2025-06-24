@@ -119,7 +119,7 @@
 }
 
 + (void)unlinkDatabaseAtURL:(NSURL *)url {
-    [[[iTermSqliteDatabaseImpl alloc] initWithURL:url] unlink];
+    [[[iTermSqliteDatabaseImpl alloc] initWithURL:url lockName:@"lock"] unlink];
 }
 
 - (instancetype)initWithURL:(NSURL *)url erase:(BOOL)erase {
@@ -138,7 +138,8 @@
     if (_db) {
         return;
     }
-    iTermSqliteDatabaseImpl *sqliteDb = [[iTermSqliteDatabaseImpl alloc] initWithURL:_url];
+    iTermSqliteDatabaseImpl *sqliteDb = [[iTermSqliteDatabaseImpl alloc] initWithURL:_url
+                                                                            lockName:@"lock"];
     sqliteDb.timeoutHandler = ^BOOL {
         __block BOOL result = NO;
         dispatch_sync(dispatch_get_main_queue(), ^{

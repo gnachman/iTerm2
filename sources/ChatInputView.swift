@@ -199,6 +199,16 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         }
     }
 
+    func attach(filename: String,
+                content: Data,
+                mimeType: String) {
+        attachmentsView.files.append(.inMemory(filename: filename,
+                                               content: content,
+                                               mimeType: mimeType))
+        updateAttachmentsView()
+        updateSendButtonEnabled()
+    }
+
     private func updateSendButtonEnabled() {
         let hasPlaceholder = attachmentsView.files.anySatisfies { $0.isPlaceholder }
         sendButton.isEnabled = !inputTextFieldContainer.stringValue.isEmpty && !hasPlaceholder

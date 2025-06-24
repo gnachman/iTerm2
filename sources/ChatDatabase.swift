@@ -63,7 +63,7 @@ class ChatDatabase {
     fileprivate var sessionToChatMap = [String: Set<String>]()
 
     init?(url: URL){
-        db = iTermSqliteDatabaseImpl(url: url)
+        db = iTermSqliteDatabaseImpl(url: url, lockName: "chatdb-lock")
         if !db.lock() {
             return nil
         }

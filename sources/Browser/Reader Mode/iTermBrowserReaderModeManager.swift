@@ -19,7 +19,8 @@ class iTermBrowserReaderModeManager: NSObject {
     private weak var webView: WKWebView?
     private var isReaderModeActive = false
     private var scriptsInjected = false
-    
+    private var cached: String?
+
     init(webView: WKWebView) {
         self.webView = webView
         super.init()
@@ -42,7 +43,35 @@ class iTermBrowserReaderModeManager: NSObject {
             await toggleReaderMode()
         }
     }
-    
+
+    func plainTextContent() async -> String? {
+        if let cached {
+            return cached
+        }
+        // Ensure Readability.js is loaded first
+        guard await ensureScriptsInjected() else {
+            return nil
+        }
+
+        do {
+            let script = iTermBrowserTemplateLoader.loadTemplate(named: "extract-plain-text",
+                                                               type: "js",
+                                                               substitutions: [:])
+            let result = try await webView?.evaluateJavaScript(script)
+            if let string = result as? String, !string.isEmpty {
+                cached = string
+                return string
+            } else {
+                cached = ""
+                return nil
+            }
+        } catch {
+            DLog("Error extracting plain text content: \(error)")
+            cached = ""
+            return nil
+        }
+    }
+
     private func toggleReaderMode() async {
         if isReaderModeActive {
             await exitReaderMode()
@@ -124,6 +153,7 @@ class iTermBrowserReaderModeManager: NSObject {
     
     // Called when navigation occurs to reset state
     @objc func resetForNavigation() {
+        cached = nil
         isReaderModeActive = false
         scriptsInjected = false
     }

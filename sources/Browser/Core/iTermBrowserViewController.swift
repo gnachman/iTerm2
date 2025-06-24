@@ -26,6 +26,9 @@ import WebKit
                                openPasswordManagerForHost host: String?,
                                forUser: Bool,
                                didSendUserName: (() -> ())?)
+    func browserViewControllerDidSelectAskAI(_ controller: iTermBrowserViewController,
+                                             title: String,
+                                             content: String)
 }
 
 @available(macOS 11.0, *)
@@ -417,6 +420,22 @@ extension iTermBrowserViewController: iTermBrowserToolbarDelegate {
         }
         
         return await database.isBookmarked(url: currentURL)
+    }
+
+    func browserToolbarDidTapAskAI() {
+        Task {
+            if let pageContent = await browserManager.pageContent() {
+                delegate?.browserViewControllerDidSelectAskAI(self,
+                                                              title: pageContent.title,
+                                                              content: pageContent.content)
+            } else {
+                DLog("Shouldn't be possible but no page content for \((browserManager.webView?.url).d)")
+            }
+        }
+    }
+
+    func browserToolbarShouldOfferReaderMode() async -> Bool {
+        return await (browserManager.pageContent()?.content ?? "").count > 10
     }
 }
 

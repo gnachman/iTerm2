@@ -16,7 +16,8 @@
 
 @interface iTermSqliteDatabaseImpl()
 + (NSArray<NSURL *> *)allURLsForDatabaseAt:(NSURL *)url;
-- (instancetype)initWithDatabase:(FMDatabase *)db NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithDatabase:(FMDatabase *)db
+                        lockName:(NSString *)lockName NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 @end
 
@@ -24,6 +25,7 @@
     FMDatabase *_db;
     NSURL *_url;
     NSFileHandle *_advisoryLock;
+    NSString *_lockName;
 }
 
 @synthesize timeoutHandler;
@@ -47,16 +49,21 @@
 }
 
 - (instancetype)initWithURL:(NSURL *)url {
+    return [self initWithURL:url lockName:@"lock"];
+}
+
+- (instancetype)initWithURL:(NSURL *)url lockName:(NSString *)lockName {
     for (NSURL *fileURL in [iTermSqliteDatabaseImpl allURLsForDatabaseAt:url]) {
         [iTermSqliteDatabaseImpl touchWithPrivateUnixPermissions:fileURL];
     }
     FMDatabase *db = [FMDatabase databaseWithPath:url.path];
-    return [self initWithDatabase:db];
+    return [self initWithDatabase:db lockName:lockName];
 }
 
-- (instancetype)initWithDatabase:(FMDatabase *)db {
+- (instancetype)initWithDatabase:(FMDatabase *)db lockName:(NSString *)lockName {
     self = [super init];
     if (self) {
+        _lockName = [lockName copy];
         _url = db.databaseURL;
         _db = db;
     }
@@ -319,7 +326,7 @@ typedef enum {
 }
 
 - (NSString *)advisoryLockPath {
-    NSURL *url = [_db.databaseURL.URLByDeletingLastPathComponent URLByAppendingPathComponent:@"lock"];
+    NSURL *url = [_db.databaseURL.URLByDeletingLastPathComponent URLByAppendingPathComponent:_lockName];
     return url.path;
 }
 

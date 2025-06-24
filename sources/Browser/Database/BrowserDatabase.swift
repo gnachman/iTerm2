@@ -63,7 +63,7 @@ actor BrowserDatabase {
     }
     
     init?(url: URL) async {
-        _db = iTermSqliteDatabaseImpl(url: url)
+        _db = iTermSqliteDatabaseImpl(url: url, lockName: "browserdb-lock")
         
         // Ensure database initialization happens on the same thread as all operations
         let initResult = await withDatabase { db in

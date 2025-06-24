@@ -252,7 +252,22 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
     }
     
     // MARK: - Public Interface
-    
+
+    struct PageContent {
+        var title: String
+        var content: String
+    }
+
+    func pageContent() async -> PageContent? {
+        guard let title = webView.title ?? webView.url?.absoluteString else {
+            return nil
+        }
+        guard let content = await readerModeManager.plainTextContent() else {
+            return nil
+        }
+        return .init(title: title, content: content)
+    }
+
     func toggleReaderMode() {
         readerModeManager.toggle()
     }

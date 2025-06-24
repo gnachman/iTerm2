@@ -17,3 +17,9 @@ extension Dictionary {
         return newValue
     }
 }
+
+extension Dictionary where Key == Value {
+    var lossilyInverted: [Key: Value] {
+        return Dictionary(self.map { ($1, $0) }) { $1 }
+    }
+}

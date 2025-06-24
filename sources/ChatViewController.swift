@@ -319,6 +319,7 @@ extension Message {
         }
     }
 }
+
 extension ChatViewController {
     func load(chatID: String?) {
         if streaming {
@@ -392,6 +393,13 @@ extension ChatViewController {
             model.lastStreamingState = .stoppedAutomatically
         }
         scrollToBottom(animated: false)
+        inputView.makeTextViewFirstResponder()
+    }
+
+    func attach(filename: String,
+                content: Data,
+                mimeType: String) {
+        inputView.attach(filename: filename, content: content, mimeType: mimeType)
         inputView.makeTextViewFirstResponder()
     }
 
@@ -1126,6 +1134,15 @@ extension ChatViewController: ChatInputViewDelegate {
         }
         let attachments = inputView.attachedFiles.flatMap { item -> [Message.Subpart] in
             switch item {
+            case let .inMemory(filename: filename, content: data, mimeType: mimeType):
+                return [
+                    Message.Subpart.attachment(.init(
+                        inline: false,
+                        id: UUID().uuidString,
+                        type: .file(.init(name: filename.lastPathComponent,
+                                          content: data,
+                                          mimeType: mimeType))))]
+
             case .regular(let filename):
                 let resolved = FileManager.default.realPath(of: filename)
                 var isDirectory = ObjCBool(false)

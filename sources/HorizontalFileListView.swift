@@ -17,9 +17,12 @@ fileprivate let itemHeight = CGFloat(86)
     enum File: Equatable {
         case regular(String)
         case placeholder(HorizontalFileListView.Placeholder)
+        case inMemory(filename: String, content: Data, mimeType: String)
 
         var filename: String {
             switch self {
+            case .inMemory(filename: let filename, content: _, mimeType: _):
+                return filename
             case .regular(let path):
                 return URL(fileURLWithPath: path).lastPathComponent
             case .placeholder(let placeholder):
@@ -694,6 +697,12 @@ class FileItemView: NSCollectionViewItem {
         }
 
         switch file {
+        case let .inMemory(filename: _, content: _, mimeType: mimeType):
+            isPlaceholder = false
+            let mimeToExtension = extensionToMime.lossilyInverted
+            let ext = mimeToExtension[mimeType] ?? "txt"
+            icon = NSWorkspace.shared.icon(forFileType: ext)
+            progressIndicator.isHidden = true
         case .regular(let filePath):
             isPlaceholder = false
             icon = NSWorkspace.shared.icon(forFile: filePath)
