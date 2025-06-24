@@ -921,23 +921,79 @@ extension iTermBrowserManager: WKUIDelegate {
         guard let url = webView.url else {
             return
         }
-        webView.evaluateJavaScript("document.documentElement.outerHTML") { [weak self] result, error in
+        
+        // Try to fetch the original source from the network first
+        fetchOriginalSource(url: url) { [weak self] originalSource in
             guard let self = self else { return }
             
-            if let error = error {
-                DLog("Error getting page source: \(error)")
-                return
-            }
-            
-            guard let htmlSource = result as? String else {
-                DLog("Failed to get HTML source")
-                return
-            }
-            
-            DispatchQueue.main.async {
-                self.showSourceInBrowser(htmlSource: htmlSource, url: url)
+            if let originalSource = originalSource {
+                // Got original source from network
+                DispatchQueue.main.async {
+                    self.showSourceInBrowser(htmlSource: originalSource, url: url)
+                }
+            } else {
+                // Fallback to DOM source if network fetch fails
+                self.webView.evaluateJavaScript("document.documentElement.outerHTML") { [weak self] result, error in
+                    guard let self = self else { return }
+                    
+                    if let error = error {
+                        DLog("Error getting page source: \(error)")
+                        return
+                    }
+                    
+                    guard let htmlSource = result as? String else {
+                        DLog("Failed to get HTML source")
+                        return
+                    }
+                    
+                    DispatchQueue.main.async {
+                        self.showSourceInBrowser(htmlSource: htmlSource, url: url)
+                    }
+                }
             }
         }
+    }
+    
+    private func fetchOriginalSource(url: URL, completion: @escaping (String?) -> Void) {
+        // Skip non-HTTP URLs
+        guard url.scheme == "http" || url.scheme == "https" else {
+            completion(nil)
+            return
+        }
+        
+        let task = URLSession.shared.dataTask(with: url) { data, response, error in
+            if let error = error {
+                DLog("Failed to fetch original source: \(error)")
+                completion(nil)
+                return
+            }
+            
+            guard let data = data,
+                  let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200 else {
+                DLog("Invalid response when fetching original source")
+                completion(nil)
+                return
+            }
+            
+            // Try to determine encoding from response headers
+            var encoding = String.Encoding.utf8
+            if let textEncodingName = httpResponse.textEncodingName {
+                let cfEncoding = CFStringConvertIANACharSetNameToEncoding(textEncodingName as CFString)
+                if cfEncoding != kCFStringEncodingInvalidId {
+                    encoding = String.Encoding(rawValue: CFStringConvertEncodingToNSStringEncoding(cfEncoding))
+                }
+            }
+            
+            if let htmlSource = String(data: data, encoding: encoding) {
+                completion(htmlSource)
+            } else {
+                // Try UTF-8 as fallback
+                completion(String(data: data, encoding: .utf8))
+            }
+        }
+        
+        task.resume()
     }
     
     private func showSourceInBrowser(htmlSource: String, url: URL) {
