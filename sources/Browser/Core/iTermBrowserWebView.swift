@@ -34,12 +34,12 @@ class iTermBrowserWebView: WKWebView {
         menu.addItem(NSMenuItem.separator())
         
         // Add Save Page As menu item
-        let savePageItem = NSMenuItem(title: "Save Page As...", action: #selector(savePageAsMenuClicked), keyEquivalent: "")
+        let savePageItem = NSMenuItem(title: "Save Page As…", action: #selector(savePageAsMenuClicked), keyEquivalent: "")
         savePageItem.target = self
         menu.addItem(savePageItem)
         
         // Add Print Page menu item
-        let printPageItem = NSMenuItem(title: "Print Page", action: #selector(printView(_:)), keyEquivalent: "")
+        let printPageItem = NSMenuItem(title: "Print…", action: #selector(printView(_:)), keyEquivalent: "")
         printPageItem.target = self
         menu.addItem(printPageItem)
         
@@ -47,11 +47,8 @@ class iTermBrowserWebView: WKWebView {
         let copyTitleItem = NSMenuItem(title: "Copy Page Title", action: #selector(copyPageTitleMenuClicked), keyEquivalent: "")
         copyTitleItem.target = self
         menu.addItem(copyTitleItem)
-        
-        // Add Reload Page menu item
-        let reloadPageItem = NSMenuItem(title: "Reload Page", action: #selector(reload(_:)), keyEquivalent: "")
-        reloadPageItem.target = self
-        menu.addItem(reloadPageItem)
+
+        menu.addItem(NSMenuItem.separator())
 
         // Add View Source menu item
         let viewSourceItem = NSMenuItem(title: "View Source", action: #selector(viewSourceMenuClicked), keyEquivalent: "")

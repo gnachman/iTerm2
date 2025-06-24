@@ -91,6 +91,49 @@ class iTermBrowserPageSaverTests: XCTestCase {
         print("✅ Local resource references test passed")
     }
     
+    func testOriginalPageRemainsIntact() async throws {
+        try await testHelper.loadTestPage()
+        
+        // Get the original functional content before saving
+        let originalImageSrc = try await testHelper.getImageSrc()
+        let originalTitle = try await testHelper.getPageTitle()
+        let originalCSSLinks = try await testHelper.getCSSLinkCount()
+        
+        // Verify we have the expected original content
+        XCTAssertTrue(originalImageSrc.contains("test-image.png"), "Original image src should be present")
+        XCTAssertFalse(originalImageSrc.contains("resources/"), "Original should not have local paths")
+        XCTAssertEqual(originalTitle, "Test Page", "Original title should be present")
+        XCTAssertGreaterThan(originalCSSLinks, 0, "Should have CSS links")
+        
+        // Save the page
+        let (_, savedHTML, _) = try await testHelper.savePageAndVerify()
+        
+        // Get the functional content after saving
+        let imageSrcAfterSaving = try await testHelper.getImageSrc()
+        let titleAfterSaving = try await testHelper.getPageTitle()
+        let cssLinksAfterSaving = try await testHelper.getCSSLinkCount()
+        
+        // Verify the functional aspects of the original page are unchanged
+        XCTAssertEqual(originalImageSrc, imageSrcAfterSaving, "Original image src should be unchanged after saving")
+        XCTAssertEqual(originalTitle, titleAfterSaving, "Original title should be unchanged after saving")
+        XCTAssertEqual(originalCSSLinks, cssLinksAfterSaving, "CSS links should remain in original page")
+        
+        // Verify the saved HTML is different and has local references
+        XCTAssertTrue(savedHTML.contains("src=\"resources/"), "Saved HTML should have local resource references")
+        XCTAssertTrue(savedHTML.contains("<style>"), "Saved HTML should have inlined CSS")
+        XCTAssertFalse(savedHTML.contains("http://localhost"), "Saved HTML should not contain original server URLs")
+        
+        // Verify data-saved-* attributes were added but don't break the page functionality
+        let pageHasDataAttributes = try await testHelper.pageHasDataSavedAttributes()
+        XCTAssertTrue(pageHasDataAttributes, "Page should have data-saved-* attributes after saving")
+        
+        // Verify the image is still visible and functional in the original page
+        let imageIsVisible = try await testHelper.isImageVisible()
+        XCTAssertTrue(imageIsVisible, "Image should still be visible in original page after saving")
+        
+        print("✅ Original page remains functionally intact test passed")
+    }
+    
     // MARK: - Edge Case Tests
     
     func testEmptyPage() async throws {
