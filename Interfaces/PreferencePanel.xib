@@ -3966,18 +3966,24 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <button toolTip="Enable this to make non-default background colors always opaque. This is useful when using Powerline in a translucent window." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fwj-4Y-nja">
-                    <rect key="frame" x="156" y="681" width="222" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Keep background colors opaque" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="sBm-XA-tIi">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="BMA-OA-Kzc" id="sGR-E1-876"/>
-                        <outlet property="nextKeyView" destination="4978" id="Tpo-gX-6bI"/>
-                    </connections>
-                </button>
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="nMy-71-ZLL" customClass="iTermTerminalModeEnclosure">
+                    <rect key="frame" x="158" y="662" width="220" height="36"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <subviews>
+                        <button toolTip="Enable this to make non-default background colors always opaque. This is useful when using Powerline in a translucent window." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fwj-4Y-nja">
+                            <rect key="frame" x="-2" y="19" width="222" height="18"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="check" title="Keep background colors opaque" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="sBm-XA-tIi">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="settingChanged:" target="BMA-OA-Kzc" id="sGR-E1-876"/>
+                                <outlet property="nextKeyView" destination="4978" id="Tpo-gX-6bI"/>
+                            </connections>
+                        </button>
+                    </subviews>
+                </customView>
                 <textField hidden="YES" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="F89-Ng-LFn">
                     <rect key="frame" x="374" y="624" width="179" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
