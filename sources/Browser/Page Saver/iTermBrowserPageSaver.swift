@@ -90,56 +90,59 @@ class iTermBrowserPageSaver {
     
     @MainActor
     private func getHTMLWithSavedAttributes() async -> String? {
-        // Apply all saved attributes to the actual DOM attributes, then get the HTML
-        let applyScript = """
+        // Get HTML by cloning the DOM and applying changes to the clone, not the live DOM
+        let cloneAndProcessScript = """
         (function() {
-            // Apply saved src attributes
-            document.querySelectorAll('[data-saved-src]').forEach(el => {
+            // Clone the entire document
+            const clonedDoc = document.cloneNode(true);
+            
+            // Apply saved src attributes in the clone
+            clonedDoc.querySelectorAll('[data-saved-src]').forEach(el => {
                 el.setAttribute('src', el.getAttribute('data-saved-src'));
                 el.removeAttribute('data-saved-src');
             });
             
-            // Replace CSS link tags with style tags containing the CSS content
-            document.querySelectorAll('link[rel="stylesheet"][data-saved-css-content]').forEach(link => {
+            // Replace CSS link tags with style tags in the clone
+            clonedDoc.querySelectorAll('link[rel="stylesheet"][data-saved-css-content]').forEach(link => {
                 const cssContent = link.getAttribute('data-saved-css-content');
-                const styleEl = document.createElement('style');
+                const styleEl = clonedDoc.createElement('style');
                 styleEl.textContent = cssContent;
                 link.parentNode.replaceChild(styleEl, link);
             });
             
-            // Apply saved href attributes for non-CSS links
-            document.querySelectorAll('[data-saved-href]').forEach(el => {
+            // Apply saved href attributes for non-CSS links in the clone
+            clonedDoc.querySelectorAll('[data-saved-href]').forEach(el => {
                 el.setAttribute('href', el.getAttribute('data-saved-href'));
                 el.removeAttribute('data-saved-href');
             });
             
-            // Apply saved data attributes
-            document.querySelectorAll('[data-saved-data]').forEach(el => {
+            // Apply saved data attributes in the clone
+            clonedDoc.querySelectorAll('[data-saved-data]').forEach(el => {
                 el.setAttribute('data', el.getAttribute('data-saved-data'));
                 el.removeAttribute('data-saved-data');
             });
             
-            // Apply saved styles
-            document.querySelectorAll('[data-saved-style]').forEach(el => {
+            // Apply saved styles in the clone
+            clonedDoc.querySelectorAll('[data-saved-style]').forEach(el => {
                 el.setAttribute('style', el.getAttribute('data-saved-style'));
                 el.removeAttribute('data-saved-style');
             });
             
-            // Apply saved content to style tags
-            document.querySelectorAll('style[data-saved-content]').forEach(styleEl => {
+            // Apply saved content to style tags in the clone
+            clonedDoc.querySelectorAll('style[data-saved-content]').forEach(styleEl => {
                 styleEl.textContent = styleEl.getAttribute('data-saved-content');
                 styleEl.removeAttribute('data-saved-content');
             });
             
-            // Get the full document including DOCTYPE
+            // Get the full document including DOCTYPE from the clone
             const doctype = document.doctype ? 
                 '<!DOCTYPE ' + document.doctype.name + '>' : '';
-            return doctype + document.documentElement.outerHTML;
+            return doctype + clonedDoc.documentElement.outerHTML;
         })();
         """
         
         do {
-            let result = try await webView.evaluateJavaScript(applyScript)
+            let result = try await webView.evaluateJavaScript(cloneAndProcessScript)
             return result as? String
         } catch {
             DLog("Error getting HTML with saved attributes: \(error)")

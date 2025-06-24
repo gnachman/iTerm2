@@ -262,6 +262,109 @@ class iTermBrowserPageSaverTestHelper {
         }
     }
     
+    // MARK: - Page Integrity Testing Methods
+    
+    @MainActor
+    func getOriginalPageHTML() async throws -> String {
+        return try await getPageHTML()
+    }
+    
+    @MainActor
+    func getImageSrc() async throws -> String {
+        return try await withCheckedThrowingContinuation { continuation in
+            webView.evaluateJavaScript("document.getElementById('test-image').src") { result, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                } else if let src = result as? String {
+                    continuation.resume(returning: src)
+                } else {
+                    continuation.resume(throwing: NSError(domain: "TestError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to get image src"]))
+                }
+            }
+        }
+    }
+    
+    @MainActor
+    func pageHasDataSavedAttributes() async throws -> Bool {
+        return try await withCheckedThrowingContinuation { continuation in
+            let script = """
+            (function() {
+                const elementsWithDataSaved = document.querySelectorAll('[data-saved-src], [data-saved-href], [data-saved-css-content]');
+                return elementsWithDataSaved.length > 0;
+            })();
+            """
+            
+            webView.evaluateJavaScript(script) { result, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                } else if let hasAttributes = result as? Bool {
+                    continuation.resume(returning: hasAttributes)
+                } else {
+                    continuation.resume(returning: false)
+                }
+            }
+        }
+    }
+    
+    @MainActor
+    func getPageTitle() async throws -> String {
+        return try await withCheckedThrowingContinuation { continuation in
+            webView.evaluateJavaScript("document.title") { result, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                } else if let title = result as? String {
+                    continuation.resume(returning: title)
+                } else {
+                    continuation.resume(returning: "")
+                }
+            }
+        }
+    }
+    
+    @MainActor
+    func getCSSLinkCount() async throws -> Int {
+        return try await withCheckedThrowingContinuation { continuation in
+            let script = """
+            document.querySelectorAll('link[rel="stylesheet"]').length
+            """
+            
+            webView.evaluateJavaScript(script) { result, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                } else if let count = result as? Int {
+                    continuation.resume(returning: count)
+                } else {
+                    continuation.resume(returning: 0)
+                }
+            }
+        }
+    }
+    
+    @MainActor
+    func isImageVisible() async throws -> Bool {
+        return try await withCheckedThrowingContinuation { continuation in
+            let script = """
+            (function() {
+                const img = document.getElementById('test-image');
+                if (!img) return false;
+                
+                // Check if image has valid src and is not broken
+                return img.src && img.src.length > 0 && !img.src.includes('resources/');
+            })();
+            """
+            
+            webView.evaluateJavaScript(script) { result, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                } else if let isVisible = result as? Bool {
+                    continuation.resume(returning: isVisible)
+                } else {
+                    continuation.resume(returning: false)
+                }
+            }
+        }
+    }
+    
     @MainActor
     private func loadPageWithRequest(_ request: URLRequest) async throws {
         return try await withCheckedThrowingContinuation { continuation in
