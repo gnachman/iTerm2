@@ -135,10 +135,9 @@ class iTermBrowserToolbar: NSView {
             stopButton.widthAnchor.constraint(equalToConstant: 32),
             stopButton.heightAnchor.constraint(equalToConstant: 32),
             
-            urlBar.leadingAnchor.constraint(greaterThanOrEqualTo: reloadButton.trailingAnchor, constant: 12),
+            urlBar.leadingAnchor.constraint(equalTo: reloadButton.trailingAnchor, constant: 12),
             urlBar.centerYAnchor.constraint(equalTo: centerYAnchor),
-            urlBar.centerXAnchor.constraint(equalTo: centerXAnchor),
-            urlBar.trailingAnchor.constraint(lessThanOrEqualTo: menuButton.leadingAnchor, constant: -12),
+            urlBar.trailingAnchor.constraint(equalTo: menuButton.leadingAnchor, constant: -12),
             urlBar.heightAnchor.constraint(equalToConstant: 28),
             
             menuButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
@@ -146,10 +145,6 @@ class iTermBrowserToolbar: NSView {
             menuButton.widthAnchor.constraint(equalToConstant: 32),
             menuButton.heightAnchor.constraint(equalToConstant: 32)
         ])
-        urlBar.setContentHuggingPriority(NSLayoutConstraint.Priority(rawValue: 500), for: .horizontal)
-        let widthConstraint = urlBar.widthAnchor.constraint(greaterThanOrEqualToConstant: 360)
-        widthConstraint.priority = NSLayoutConstraint.Priority(rawValue: 600)
-        NSLayoutConstraint.activate([widthConstraint])
     }
 
     func focusURLBar() {
