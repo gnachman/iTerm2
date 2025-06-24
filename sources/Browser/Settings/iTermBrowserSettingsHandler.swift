@@ -101,6 +101,10 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             if let url = message["value"] as? String {
                 setSearchCommand(url, webView: webView)
             }
+        case "setSearchSuggestURL":
+            if let url = message["value"] as? String {
+                setSearchSuggestURL(url, webView: webView)
+            }
         case "forceAdblockUpdate":
             forceAdblockUpdate(webView: webView)
         case "getAdblockSettings":
@@ -177,14 +181,20 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         let enabled = iTermAdvancedSettingsModel.adblockEnabled()
         let url = iTermAdvancedSettingsModel.adblockListURL() ?? ""
         
-        let script = """
-        updateAdblockUI({
-            enabled: \(enabled),
-            url: '\(url.replacingOccurrences(of: "'", with: "\\'"))'
-        });
-        """
+        let settings = [
+            "enabled": enabled,
+            "url": url
+        ] as [String: Any]
         
-        webView.evaluateJavaScript(script, completionHandler: nil)
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: settings)
+            let jsonString = String(data: jsonData, encoding: .utf8)!
+            
+            let script = "updateAdblockUI(\(jsonString));"
+            webView.evaluateJavaScript(script, completionHandler: nil)
+        } catch {
+            DLog("Failed to encode adblock settings: \(error)")
+        }
     }
     
     private func showStatusMessage(_ message: String, type: String, in webView: WKWebView) {
@@ -214,16 +224,39 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         showStatusMessage("Search engine updated", type: "success", in: webView)
     }
     
+    private func setSearchSuggestURL(_ url: String, webView: WKWebView) {
+        if !url.isEmpty && !url.contains("%@") {
+            showStatusMessage("Invalid suggestion URL: must contain %@ placeholder", type: "error", in: webView)
+            return
+        }
+        
+        iTermAdvancedSettingsModel.setSearchSuggestURL(url)
+        DLog("Search suggestion URL updated to: \(url.isEmpty ? "disabled" : url)")
+        if url.isEmpty {
+            showStatusMessage("Search suggestions disabled", type: "success", in: webView)
+        } else {
+            showStatusMessage("Search suggestions updated", type: "success", in: webView)
+        }
+    }
+    
     private func sendSearchSettings(to webView: WKWebView) {
         let searchCommand = iTermAdvancedSettingsModel.searchCommand()!
-
-        let script = """
-        updateSearchEngineUI({
-            searchCommand: '\(searchCommand.replacingOccurrences(of: "'", with: "\\'"))'
-        });
-        """
+        let searchSuggestURL = iTermAdvancedSettingsModel.searchSuggestURL()!
         
-        webView.evaluateJavaScript(script, completionHandler: nil)
+        let settings = [
+            "searchCommand": searchCommand,
+            "searchSuggestURL": searchSuggestURL
+        ]
+        
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: settings)
+            let jsonString = String(data: jsonData, encoding: .utf8)!
+            
+            let script = "updateSearchEngineUI(\(jsonString));"
+            webView.evaluateJavaScript(script, completionHandler: nil)
+        } catch {
+            DLog("Failed to encode search settings: \(error)")
+        }
     }
     
     // MARK: - iTermBrowserPageHandler Protocol
