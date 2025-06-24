@@ -173,20 +173,49 @@
         
         /* Search engine selector */
         .search-engine-selector select {
-            padding: 10px 14px;
-            border: 1px solid var(--border-color);
+            padding: 10px 18px;
+            border: none;
             border-radius: 8px;
-            background: var(--section-bg);
-            color: var(--text-color);
+            background: var(--button-bg);
+            color: var(--button-text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
             font-size: 15px;
             min-width: 160px;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 16px;
+            padding-right: 40px;
+            box-shadow: 0 2px 12px var(--shadow);
+            cursor: pointer;
         }
         
         .search-engine-selector select:focus {
             outline: none;
             border-color: var(--accent-color);
             box-shadow: 0 0 0 3px var(--accent-color)20;
+        }
+        
+        .search-engine-selector select:hover {
+            background: var(--button-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--shadow);
+        }
+        
+        .search-engine-selector select option {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
+            font-weight: normal !important;
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+        
+        .search-engine-selector select, 
+        .search-engine-selector select * {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
         }
         
     </style>
@@ -257,6 +286,15 @@
                     </div>
                     <div class="input-group">
                         <input type="url" id="customSearchURL" value="" placeholder="https://example.com/search?q=%@" onchange="updateCustomSearchURL(this.value)">
+                    </div>
+                </div>
+                <div class="setting-item" id="customSuggestURLItem" style="display: none;">
+                    <div class="setting-info">
+                        <h3>Custom Search Suggestions URL</h3>
+                        <p>Optional: Enter a URL template for search suggestions (OpenSearch format). Use %@ where the search query should be inserted.</p>
+                    </div>
+                    <div class="input-group">
+                        <input type="url" id="customSuggestURL" value="" placeholder="https://example.com/suggest?q=%@" onchange="updateCustomSuggestURL(this.value)">
                     </div>
                 </div>
             </div>
@@ -372,27 +410,47 @@
         
         // Search engine functionality
         const sessionSecret = "{{SECRET}}";
-        const searchEngineURLs = {
-            google: 'https://google.com/search?q=%@',
-            duckduckgo: 'https://duckduckgo.com/?q=%@',
-            bing: 'https://www.bing.com/search?q=%@',
-            kagi: 'https://kagi.com/search?q=%@'
+        const searchEngineConfigs = {
+            google: {
+                searchURL: 'https://google.com/search?q=%@',
+                suggestURL: 'https://suggestqueries.google.com/complete/search?client=firefox&q=%@'
+            },
+            duckduckgo: {
+                searchURL: 'https://duckduckgo.com/?q=%@',
+                suggestURL: 'https://duckduckgo.com/ac/?q=%@&type=list'
+            },
+            bing: {
+                searchURL: 'https://www.bing.com/search?q=%@',
+                suggestURL: 'https://www.bing.com/osjson.aspx?query=%@'
+            },
+            kagi: {
+                searchURL: 'https://kagi.com/search?q=%@',
+                suggestURL: 'https://kagi.com/api/autosuggest?q=%@'
+            }
         };
         
         function updateSearchEngine() {
             const select = document.getElementById('searchEngineSelect');
-            const customItem = document.getElementById('customSearchURLItem');
+            const customSearchItem = document.getElementById('customSearchURLItem');
+            const customSuggestItem = document.getElementById('customSuggestURLItem');
             const selectedEngine = select.value;
             
             if (selectedEngine === 'custom') {
-                customItem.style.display = 'flex';
+                customSearchItem.style.display = 'flex';
+                customSuggestItem.style.display = 'flex';
             } else {
-                customItem.style.display = 'none';
-                const url = searchEngineURLs[selectedEngine];
-                if (url) {
+                customSearchItem.style.display = 'none';
+                customSuggestItem.style.display = 'none';
+                const config = searchEngineConfigs[selectedEngine];
+                if (config) {
                     window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
                         action: 'setSearchCommand',
-                        value: url,
+                        value: config.searchURL,
+                        sessionSecret: sessionSecret
+                    });
+                    window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                        action: 'setSearchSuggestURL',
+                        value: config.suggestURL,
                         sessionSecret: sessionSecret
                     });
                 }
@@ -409,9 +467,28 @@
             }
         }
         
+        function updateCustomSuggestURL(url) {
+            if (url && url.trim()) {
+                if (url.includes('%@')) {
+                    window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                        action: 'setSearchSuggestURL',
+                        value: url.trim(),
+                        sessionSecret: sessionSecret
+                    });
+                }
+            } else {
+                // Empty URL - clear the suggestion URL
+                window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                    action: 'setSearchSuggestURL',
+                    value: '',
+                    sessionSecret: sessionSecret
+                });
+            }
+        }
+        
         function detectCurrentSearchEngine(currentURL) {
-            for (const [engine, url] of Object.entries(searchEngineURLs)) {
-                if (url === currentURL) {
+            for (const [engine, config] of Object.entries(searchEngineConfigs)) {
+                if (config.searchURL === currentURL) {
                     return engine;
                 }
             }
@@ -439,16 +516,21 @@
         function updateSearchEngineUI(settings) {
             const currentEngine = detectCurrentSearchEngine(settings.searchCommand);
             const select = document.getElementById('searchEngineSelect');
-            const customItem = document.getElementById('customSearchURLItem');
-            const customInput = document.getElementById('customSearchURL');
+            const customSearchItem = document.getElementById('customSearchURLItem');
+            const customSuggestItem = document.getElementById('customSuggestURLItem');
+            const customSearchInput = document.getElementById('customSearchURL');
+            const customSuggestInput = document.getElementById('customSuggestURL');
             
             select.value = currentEngine;
             
             if (currentEngine === 'custom') {
-                customItem.style.display = 'flex';
-                customInput.value = settings.searchCommand;
+                customSearchItem.style.display = 'flex';
+                customSuggestItem.style.display = 'flex';
+                customSearchInput.value = settings.searchCommand;
+                customSuggestInput.value = settings.searchSuggestURL || '';
             } else {
-                customItem.style.display = 'none';
+                customSearchItem.style.display = 'none';
+                customSuggestItem.style.display = 'none';
             }
         }
     </script>
