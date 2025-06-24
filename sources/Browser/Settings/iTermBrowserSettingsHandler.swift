@@ -20,12 +20,22 @@ import Foundation
 class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     static let settingsURL = URL(string: "\(iTermBrowserSchemes.about):settings")!
     weak var delegate: iTermBrowserSettingsHandlerDelegate?
+    private let secret: String
+    
+    override init() {
+        guard let secret = String.makeSecureHexString() else {
+            it_fatalError("Failed to generate secure hex string for settings handler")
+        }
+        self.secret = secret
+        super.init()
+    }
 
     // MARK: - Public Interface
     
     func generateSettingsHTML() -> String {
         let substitutions = ["ADBLOCK_ENABLED": iTermAdvancedSettingsModel.adblockEnabled() ? "checked" : "",
-                             "ADBLOCK_URL": iTermAdvancedSettingsModel.adblockListURL().replacingOccurrences(of: "&", with: "&amp;").replacingOccurrences(of: "\"", with: "&quot;")]
+                             "ADBLOCK_URL": iTermAdvancedSettingsModel.adblockListURL().replacingOccurrences(of: "&", with: "&amp;").replacingOccurrences(of: "\"", with: "&quot;"),
+                             "SECRET": secret]
 
         return iTermBrowserTemplateLoader.loadTemplate(named: "settings-page",
                                                        type: "html",
@@ -67,7 +77,12 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     }
     
     func handleSettingsMessage(_ message: [String: Any], webView: WKWebView) {
-        guard let action = message["action"] as? String else { return }
+        guard let action = message["action"] as? String,
+              let sessionSecret = message["sessionSecret"] as? String,
+              sessionSecret == secret else {
+            DLog("Invalid or missing session secret for settings action")
+            return
+        }
         
         switch action {
         case "clearCookies":
@@ -82,10 +97,16 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             if let url = message["value"] as? String {
                 setAdblockURL(url, webView: webView)
             }
+        case "setSearchCommand":
+            if let url = message["value"] as? String {
+                setSearchCommand(url, webView: webView)
+            }
         case "forceAdblockUpdate":
             forceAdblockUpdate(webView: webView)
         case "getAdblockSettings":
             sendAdblockSettings(to: webView)
+        case "getSearchSettings":
+            sendSearchSettings(to: webView)
         default:
             break
         }
@@ -178,6 +199,31 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     
     @objc func showAdblockUpdateError(_ error: String, in webView: WKWebView) {
         showStatusMessage("Failed to update ad block rules: \(error)", type: "error", in: webView)
+    }
+    
+    // MARK: - Search Settings
+    
+    private func setSearchCommand(_ url: String, webView: WKWebView) {
+        guard !url.isEmpty, url.contains("%@") else {
+            showStatusMessage("Invalid search URL: must contain %@ placeholder", type: "error", in: webView)
+            return
+        }
+        
+        iTermAdvancedSettingsModel.setSearchCommand(url)
+        DLog("Search command updated to: \(url)")
+        showStatusMessage("Search engine updated", type: "success", in: webView)
+    }
+    
+    private func sendSearchSettings(to webView: WKWebView) {
+        let searchCommand = iTermAdvancedSettingsModel.searchCommand()!
+
+        let script = """
+        updateSearchEngineUI({
+            searchCommand: '\(searchCommand.replacingOccurrences(of: "'", with: "\\'"))'
+        });
+        """
+        
+        webView.evaluateJavaScript(script, completionHandler: nil)
     }
     
     // MARK: - iTermBrowserPageHandler Protocol

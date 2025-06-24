@@ -171,6 +171,24 @@
             box-shadow: 0 0 0 3px var(--accent-color)20;
         }
         
+        /* Search engine selector */
+        .search-engine-selector select {
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--section-bg);
+            color: var(--text-color);
+            font-size: 15px;
+            min-width: 160px;
+            transition: all 0.2s ease;
+        }
+        
+        .search-engine-selector select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px var(--accent-color)20;
+        }
+        
     </style>
 </head>
 <body>
@@ -214,6 +232,36 @@
             </div>
         </div>
         
+        <div class="search-section">
+            <div class="section">
+                <h2>Search Engine</h2>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3>Default Search Engine</h3>
+                        <p>Choose your preferred search engine for web searches</p>
+                    </div>
+                    <div class="search-engine-selector">
+                        <select id="searchEngineSelect" onchange="updateSearchEngine()">
+                            <option value="google">Google</option>
+                            <option value="duckduckgo">DuckDuckGo</option>
+                            <option value="bing">Bing</option>
+                            <option value="kagi">Kagi</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="setting-item" id="customSearchURLItem" style="display: none;">
+                    <div class="setting-info">
+                        <h3>Custom Search URL</h3>
+                        <p>Enter a custom search URL template. Use %@ where the search query should be inserted.</p>
+                    </div>
+                    <div class="input-group">
+                        <input type="url" id="customSearchURL" value="" placeholder="https://example.com/search?q=%@" onchange="updateCustomSearchURL(this.value)">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <div class="adblock-section">
             <div class="section">
                 <h2>Ad Blocking</h2>
@@ -251,7 +299,8 @@
         function clearCookies() {
             if (confirm('This will remove all cookies. Continue?')) {
                 window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
-                    action: 'clearCookies'
+                    action: 'clearCookies',
+                    sessionSecret: sessionSecret
                 });
             }
         }
@@ -259,7 +308,8 @@
         function clearAllData() {
             if (confirm('This will remove all browsing data including cookies, cache, and local storage. Continue?')) {
                 window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
-                    action: 'clearAllData'
+                    action: 'clearAllData',
+                    sessionSecret: sessionSecret
                 });
             }
         }
@@ -267,7 +317,8 @@
         function toggleAdblock(enabled) {
             window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
                 action: 'setAdblockEnabled',
-                value: enabled
+                value: enabled,
+                sessionSecret: sessionSecret
             });
         }
         
@@ -275,7 +326,8 @@
             if (url && url.trim()) {
                 window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
                     action: 'setAdblockURL',
-                    value: url.trim()
+                    value: url.trim(),
+                    sessionSecret: sessionSecret
                 });
             }
         }
@@ -283,7 +335,8 @@
         function forceAdblockUpdate() {
             showStatus('Updating ad block rules...', 'info');
             window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
-                action: 'forceAdblockUpdate'
+                action: 'forceAdblockUpdate',
+                sessionSecret: sessionSecret
             });
         }
         
@@ -317,10 +370,63 @@
             }, 300);
         }
         
+        // Search engine functionality
+        const sessionSecret = "{{SECRET}}";
+        const searchEngineURLs = {
+            google: 'https://google.com/search?q=%@',
+            duckduckgo: 'https://duckduckgo.com/?q=%@',
+            bing: 'https://www.bing.com/search?q=%@',
+            kagi: 'https://kagi.com/search?q=%@'
+        };
+        
+        function updateSearchEngine() {
+            const select = document.getElementById('searchEngineSelect');
+            const customItem = document.getElementById('customSearchURLItem');
+            const selectedEngine = select.value;
+            
+            if (selectedEngine === 'custom') {
+                customItem.style.display = 'flex';
+            } else {
+                customItem.style.display = 'none';
+                const url = searchEngineURLs[selectedEngine];
+                if (url) {
+                    window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                        action: 'setSearchCommand',
+                        value: url,
+                        sessionSecret: sessionSecret
+                    });
+                }
+            }
+        }
+        
+        function updateCustomSearchURL(url) {
+            if (url && url.trim() && url.includes('%@')) {
+                window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                    action: 'setSearchCommand',
+                    value: url.trim(),
+                    sessionSecret: sessionSecret
+                });
+            }
+        }
+        
+        function detectCurrentSearchEngine(currentURL) {
+            for (const [engine, url] of Object.entries(searchEngineURLs)) {
+                if (url === currentURL) {
+                    return engine;
+                }
+            }
+            return 'custom';
+        }
+        
         // Initialize settings on page load
         window.addEventListener('load', function() {
             window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
-                action: 'getAdblockSettings'
+                action: 'getAdblockSettings',
+                sessionSecret: sessionSecret
+            });
+            window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                action: 'getSearchSettings',
+                sessionSecret: sessionSecret
             });
         });
         
@@ -328,6 +434,22 @@
         function updateAdblockUI(settings) {
             document.getElementById('adblockEnabled').checked = settings.enabled;
             document.getElementById('adblockURL').value = settings.url;
+        }
+        
+        function updateSearchEngineUI(settings) {
+            const currentEngine = detectCurrentSearchEngine(settings.searchCommand);
+            const select = document.getElementById('searchEngineSelect');
+            const customItem = document.getElementById('customSearchURLItem');
+            const customInput = document.getElementById('customSearchURL');
+            
+            select.value = currentEngine;
+            
+            if (currentEngine === 'custom') {
+                customItem.style.display = 'flex';
+                customInput.value = settings.searchCommand;
+            } else {
+                customItem.style.display = 'none';
+            }
         }
     </script>
 </body>
