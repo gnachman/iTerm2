@@ -27,6 +27,7 @@
     func browserManager(_ manager: iTermBrowserManager, didChangeDistractionRemovalState isActive: Bool)
 }
 
+typealias Profile = [AnyHashable: Any]
 
 @available(macOS 11.0, *)
 @objc(iTermBrowserManager)
@@ -50,7 +51,8 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
     init(configuration: WKWebViewConfiguration?,
          sessionGuid: String,
          historyController: iTermBrowserHistoryController,
-         navigationState: iTermBrowserNavigationState) {
+         navigationState: iTermBrowserNavigationState,
+         profile: Profile) {
         self.sessionGuid = sessionGuid
         self.historyController = historyController
         self.navigationState = navigationState
@@ -58,7 +60,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
         super.init()
 
         localPageManager.delegate = self
-        setupWebView(configuration: configuration)
+        setupWebView(configuration: configuration, profile: profile)
         setupPermissionNotificationObserver()
     }
     
@@ -67,7 +69,8 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
         webView?.removeObserver(self, forKeyPath: "title")
     }
     
-    private func setupWebView(configuration preferredConfiguration: WKWebViewConfiguration?) {
+    private func setupWebView(configuration preferredConfiguration: WKWebViewConfiguration?,
+                              profile: Profile) {
         let notificationHandler = iTermBrowserNotificationHandler()
         self.notificationHandler = notificationHandler
 
@@ -168,6 +171,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
         webView = iTermBrowserWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = self
         webView.uiDelegate = self
+        webView.pageZoom = iTermProfilePreferences.double(forKey: KEY_BROWSER_ZOOM, inProfile: profile) / 100.0
         webView.browserDelegate = self
 
         // Enable back/forward navigation

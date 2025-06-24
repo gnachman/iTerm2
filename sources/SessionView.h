@@ -218,7 +218,8 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
         configuration:(WKWebViewConfiguration *)configuration
              delegate:(id<iTermBrowserViewControllerDelegate>)delegate
      interactionState:(NSData *)interactionState
-          sessionGuid:(NSString *)sessionGuid NS_AVAILABLE_MAC(11);
+          sessionGuid:(NSString *)sessionGuid
+              profile:(Profile *)profile NS_AVAILABLE_MAC(11);
 
 - (void)setTerminalBackgroundColor:(NSColor *)color;
 

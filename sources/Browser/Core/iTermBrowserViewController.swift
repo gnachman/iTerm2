@@ -47,15 +47,25 @@ class iTermBrowserViewController: NSViewController {
     private var deferredURL: String?
     private var deferredInteractionState: NSObject?
 
-    @objc(initWithConfiguration:sessionGuid:)
-    init(configuration: WKWebViewConfiguration?, sessionGuid: String)  {
+    @objc var zoom: CGFloat {
+        get {
+            round(browserManager.webView!.pageZoom * 100.0)
+        }
+        set {
+            browserManager.webView!.pageZoom = newValue / 100.0
+        }
+    }
+
+    @objc(initWithConfiguration:sessionGuid:profile:)
+    init(configuration: WKWebViewConfiguration?, sessionGuid: String, profile: Profile)  {
         self.sessionGuid = sessionGuid
         historyController = iTermBrowserHistoryController(sessionGuid: sessionGuid,
                                                           navigationState: navigationState)
         browserManager = iTermBrowserManager(configuration: configuration,
                                              sessionGuid: sessionGuid,
                                              historyController: historyController,
-                                             navigationState: navigationState)
+                                             navigationState: navigationState,
+                                             profile: profile)
         suggestionsController = iTermBrowserSuggestionsController(historyController: historyController,
                                                                   attributes: CompletionsWindow.regularAttributes(font: nil))
         super.init(nibName: nil, bundle: nil)

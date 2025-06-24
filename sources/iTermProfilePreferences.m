@@ -316,6 +316,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_RIGHT_COMMAND,
                              KEY_FUNCTION,
 
+                             KEY_BROWSER_ZOOM,
+
                              KEY_PROFILE_TYPE_PHONY];
         NSArray *stringArrays = @[ KEY_TAGS, KEY_JOBS, KEY_BOUND_HOSTS, KEY_SNIPPETS_FILTER ];
         NSArray *dictArrays = @[ KEY_HOTKEY_ALTERNATE_SHORTCUTS, KEY_TRIGGERS, KEY_SMART_SELECTION_RULES,
@@ -672,6 +674,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_TIMESTAMPS_VISIBLE: [[NSUserDefaults standardUserDefaults] objectForKey:@"ShowTimestampsByDefault"] ?: @NO,
                   KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE: @NO,
                   KEY_SNIPPETS_FILTER: @[],
+
+                  KEY_BROWSER_ZOOM: @100,
 
                   // NOTES:
                   //   * Remove deprecated values from this list.

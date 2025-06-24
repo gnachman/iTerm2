@@ -308,9 +308,11 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         configuration:(WKWebViewConfiguration *)configuration
              delegate:(id<iTermBrowserViewControllerDelegate>)delegate
      interactionState:(NSData *)interactionState
-          sessionGuid:(NSString *)sessionGuid {
+          sessionGuid:(NSString *)sessionGuid
+              profile:(Profile *)profile {
     _browserViewController = [[iTermBrowserViewController alloc] initWithConfiguration:configuration
-                                                                           sessionGuid:sessionGuid];
+                                                                           sessionGuid:sessionGuid
+                                                                               profile:profile];
 
     _browserViewController.delegate = delegate;
 

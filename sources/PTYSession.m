@@ -2243,6 +2243,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setFontTable:[iTermFontTable fontTableForProfile:_profile]
           horizontalSpacing:[iTermProfilePreferences doubleForKey:KEY_HORIZONTAL_SPACING inProfile:_profile]
             verticalSpacing:[iTermProfilePreferences doubleForKey:KEY_VERTICAL_SPACING inProfile:_profile]];
+    if (@available(macOS 11, *)) {
+        _view.browserViewController.zoom = [iTermProfilePreferences doubleForKey:KEY_BROWSER_ZOOM inProfile:_profile];
+    }
     [self setTransparency:[[_profile objectForKey:KEY_TRANSPARENCY] floatValue]];
     [self setTransparencyAffectsOnlyDefaultBackgroundColor:[[_profile objectForKey:KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR] boolValue]];
 
@@ -2991,7 +2994,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                    configuration:webViewConfiguration
                         delegate:self
                 interactionState:_savedBrowserState
-                     sessionGuid:_guid];
+                     sessionGuid:_guid
+                         profile:self.profile];
             [_savedBrowserState release];
             _savedBrowserState = nil;
             completion(YES);
@@ -6474,8 +6478,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_textview setFontTable:newFontTable
           horizontalSpacing:horizontalSpacing
             verticalSpacing:verticalSpacing];
+    if (@available(macOS 11, *)) {
+        _view.browserViewController.zoom = newFontTable.browserZoom;
+    }
     DLog(@"Line height is now %f", [_textview lineHeight]);
-    [_delegate sessionDidChangeFontSize:self adjustWindow:!_windowAdjustmentDisabled];
+    [_delegate sessionDidChangeFontSize:self adjustWindow:!_windowAdjustmentDisabled && !_view.isBrowser];
     [_composerManager updateFont];
     DLog(@"After:\n%@", [window.contentView iterm_recursiveDescription]);
     DLog(@"Window frame: %@", window);
@@ -6721,6 +6728,9 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
             [_textview setFontTable:fontTable
                   horizontalSpacing:[hSpacing doubleValue]
                     verticalSpacing:[vSpacing doubleValue]];
+            if (@available(macOS 11, *)) {
+                _view.browserViewController.zoom = fontTable.browserZoom;
+            }
         }
     }
 }
@@ -6773,7 +6783,8 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
         [self setSessionSpecificProfileValues:@{
             KEY_NORMAL_FONT: [newFontTable.asciiFont.font stringValue],
             KEY_NON_ASCII_FONT: [newFontTable.defaultNonASCIIFont.font stringValue] ?: [NSNull null],
-            KEY_FONT_CONFIG: newFontTable.configString ?: [NSNull null]
+            KEY_FONT_CONFIG: newFontTable.configString ?: [NSNull null],
+            KEY_BROWSER_ZOOM: @(newFontTable.browserZoom)
         }];
 
         // Update the model's copy of the bookmark.
