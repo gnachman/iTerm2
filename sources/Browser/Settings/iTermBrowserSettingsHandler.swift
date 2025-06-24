@@ -94,18 +94,10 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     private func clearCookies(webView: WKWebView) {
         let cookieStore = webView.configuration.websiteDataStore.httpCookieStore
         cookieStore.getAllCookies { cookies in
-            let group = DispatchGroup()
-            
             for cookie in cookies {
-                group.enter()
                 cookieStore.delete(cookie) {
-                    group.leave()
+                    DLog("Cookie deleted")
                 }
-            }
-            
-            group.notify(queue: .main) {
-                // Show confirmation alert
-                webView.evaluateJavaScript("alert('All cookies have been cleared successfully!');", completionHandler: nil)
             }
         }
     }

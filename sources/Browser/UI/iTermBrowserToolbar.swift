@@ -30,6 +30,8 @@ protocol iTermBrowserToolbarDelegate: AnyObject {
     func browserToolbarDidTapManageBookmarks()
     func browserToolbarDidTapReaderMode()
     func browserToolbarIsReaderModeActive() -> Bool
+    func browserToolbarDidTapDistractionRemoval()
+    func browserToolbarIsDistractionRemovalActive() -> Bool
     func browserToolbarBackHistoryItems() -> [iTermBrowserHistoryItem]
     func browserToolbarForwardHistoryItems() -> [iTermBrowserHistoryItem]
     func browserToolbarDidSelectHistoryItem(steps: Int)
@@ -200,6 +202,16 @@ class iTermBrowserToolbar: NSView {
                     readerModeItem.image = NSImage(systemSymbolName: readerModeIcon, accessibilityDescription: nil)
                     readerModeItem.isEnabled = currentURL != nil
                     menu.addItem(readerModeItem)
+                    
+                    // Distraction Removal menu item
+                    let isDistractionRemovalActive = delegate?.browserToolbarIsDistractionRemovalActive() ?? false
+                    let distractionRemovalTitle = isDistractionRemovalActive ? "Exit Distraction Removal" : "Remove Distractions"
+                    let distractionRemovalIcon = isDistractionRemovalActive ? "target.fill" : "target"
+                    let distractionRemovalItem = NSMenuItem(title: distractionRemovalTitle, action: #selector(distractionRemovalMenuItemSelected), keyEquivalent: "")
+                    distractionRemovalItem.target = self
+                    distractionRemovalItem.image = NSImage(systemSymbolName: distractionRemovalIcon, accessibilityDescription: nil)
+                    distractionRemovalItem.isEnabled = currentURL != nil
+                    menu.addItem(distractionRemovalItem)
                 }
 
                 let bookmarkTitle = isBookmarked ? "Remove Bookmark" : "Add Bookmark"
@@ -247,6 +259,10 @@ class iTermBrowserToolbar: NSView {
 
     @objc private func readerModeMenuItemSelected() {
         delegate?.browserToolbarDidTapReaderMode()
+    }
+    
+    @objc private func distractionRemovalMenuItemSelected() {
+        delegate?.browserToolbarDidTapDistractionRemoval()
     }
     
     @objc private func bookmarkMenuItemSelected() {

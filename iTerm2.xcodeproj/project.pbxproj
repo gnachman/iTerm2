@@ -3671,6 +3671,15 @@
 		A6CBB8FF2E0A754900B2CCCB /* extract-plain-text.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8FE2E0A754900B2CCCB /* extract-plain-text.js */; };
 		A6CBB9002E0A754900B2CCCB /* extract-plain-text.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8FE2E0A754900B2CCCB /* extract-plain-text.js */; };
 		A6CBB9012E0A754900B2CCCB /* extract-plain-text.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8FE2E0A754900B2CCCB /* extract-plain-text.js */; };
+		A6CBB9042E0A823D00B2CCCB /* enter-distraction-removal.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9022E0A823D00B2CCCB /* enter-distraction-removal.js */; };
+		A6CBB9052E0A823D00B2CCCB /* exit-distraction-removal.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9032E0A823D00B2CCCB /* exit-distraction-removal.js */; };
+		A6CBB9062E0A823D00B2CCCB /* enter-distraction-removal.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9022E0A823D00B2CCCB /* enter-distraction-removal.js */; };
+		A6CBB9072E0A823D00B2CCCB /* exit-distraction-removal.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9032E0A823D00B2CCCB /* exit-distraction-removal.js */; };
+		A6CBB9082E0A823D00B2CCCB /* enter-distraction-removal.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9022E0A823D00B2CCCB /* enter-distraction-removal.js */; };
+		A6CBB9092E0A823D00B2CCCB /* exit-distraction-removal.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9032E0A823D00B2CCCB /* exit-distraction-removal.js */; };
+		A6CBB90B2E0A832C00B2CCCB /* distraction-removal.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB90A2E0A832B00B2CCCB /* distraction-removal.js */; };
+		A6CBB90C2E0A832C00B2CCCB /* distraction-removal.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB90A2E0A832B00B2CCCB /* distraction-removal.js */; };
+		A6CBB90D2E0A832C00B2CCCB /* distraction-removal.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB90A2E0A832B00B2CCCB /* distraction-removal.js */; };
 		A6CC16541CF012E300E8C148 /* iTermCarbonHotKeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */; };
 		A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */; };
 		A6CC49882C06E173003484B2 /* iTermPermissionsHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */; };
@@ -7923,6 +7932,9 @@
 		A6CBB8F62E0A6FC800B2CCCB /* reader-mode.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = "reader-mode.css"; sourceTree = "<group>"; };
 		A6CBB8FA2E0A700400B2CCCB /* reader-mode-with-styles.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "reader-mode-with-styles.js"; sourceTree = "<group>"; };
 		A6CBB8FE2E0A754900B2CCCB /* extract-plain-text.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "extract-plain-text.js"; sourceTree = "<group>"; };
+		A6CBB9022E0A823D00B2CCCB /* enter-distraction-removal.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "enter-distraction-removal.js"; sourceTree = "<group>"; };
+		A6CBB9032E0A823D00B2CCCB /* exit-distraction-removal.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "exit-distraction-removal.js"; sourceTree = "<group>"; };
+		A6CBB90A2E0A832B00B2CCCB /* distraction-removal.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "distraction-removal.js"; sourceTree = "<group>"; };
 		A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCarbonHotKeyController.h; sourceTree = "<group>"; };
 		A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCarbonHotKeyController.m; sourceTree = "<group>"; };
 		A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermPermissionsHelper.swift; sourceTree = "<group>"; };
@@ -12961,6 +12973,9 @@
 		A6CBB8BE2E0A695D00B2CCCB /* Reader Mode */ = {
 			isa = PBXGroup;
 			children = (
+				A6CBB90A2E0A832B00B2CCCB /* distraction-removal.js */,
+				A6CBB9022E0A823D00B2CCCB /* enter-distraction-removal.js */,
+				A6CBB9032E0A823D00B2CCCB /* exit-distraction-removal.js */,
 				A6CBB8F62E0A6FC800B2CCCB /* reader-mode.css */,
 				A6CBB8E62E0A6C5000B2CCCB /* enter-reader-mode.js */,
 				A6CBB8EA2E0A6C5D00B2CCCB /* exit-reader-mode.js */,
@@ -15567,6 +15582,8 @@
 				A6E16C6424A85D5F00C6DB06 /* BigSurAddTab.png in Resources */,
 				A6F18B402AE2F39C006C08EE /* uniE0B0_Powerline_normal-left.pdf in Resources */,
 				A60BB3881EB54BD300D76C09 /* CopyMode.png in Resources */,
+				A6CBB9042E0A823D00B2CCCB /* enter-distraction-removal.js in Resources */,
+				A6CBB9052E0A823D00B2CCCB /* exit-distraction-removal.js in Resources */,
 				A67F6166214395990093940A /* graphic_monitor.png in Resources */,
 				A697CE622D9773CE0031583F /* InstantReplayMenuTip.png in Resources */,
 				A697CE632D9773CE0031583F /* InstantReplayMenuTip@2x.png in Resources */,
@@ -15744,6 +15761,7 @@
 				1D6ED9EB19AEA20D005A7799 /* PrefsArrangements.png in Resources */,
 				A67F617D214395A70093940A /* graphic_nodejs.png in Resources */,
 				A6E7AE6C214394CA00DE9F3B /* graphic_bower.png in Resources */,
+				A6CBB90B2E0A832C00B2CCCB /* distraction-removal.js in Resources */,
 				1D6ED9EC19AEA20D005A7799 /* PrefsArrangements@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -15845,6 +15863,8 @@
 				A68BE9492DE428D5002DD513 /* flowchart.png in Resources */,
 				A697CE102D9764E00031583F /* CapturedOutputMenuTip@2x.png in Resources */,
 				A697CE112D9764E00031583F /* CapturedOutputMenuTip.png in Resources */,
+				A6CBB9062E0A823D00B2CCCB /* enter-distraction-removal.js in Resources */,
+				A6CBB9072E0A823D00B2CCCB /* exit-distraction-removal.js in Resources */,
 				A697CDF82D9760F00031583F /* FilterMenuTip@2x.jpg in Resources */,
 				A697CE5C2D9773360031583F /* OpenQuicklyMenuTip.jpg in Resources */,
 				A697CE5D2D9773360031583F /* OpenQuicklyMenuTip@2x.jpg in Resources */,
@@ -16116,6 +16136,7 @@
 				A67D0D6C1A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib in Resources */,
 				53FF9825209283D2008688D7 /* template_pyenv_daemon.py in Resources */,
 				A67F617F214395A70093940A /* graphic_perl.png in Resources */,
+				A6CBB90C2E0A832C00B2CCCB /* distraction-removal.js in Resources */,
 				A67F6168214395990093940A /* graphic_nano.png in Resources */,
 				536EF5B923F6684D00B81875 /* it2run in Resources */,
 				A6F2F21C250757FE00FC227F /* PrefsShortcuts.png in Resources */,
@@ -16349,6 +16370,8 @@
 				A6CBB7FC2E09149000B2CCCB /* permissions-page.js in Resources */,
 				A6B3A73E1AC74E02008E8D4E /* FindCursorCell1.png in Resources */,
 				A6F7D4CD2E037EA80065D09C /* settings-page.html in Resources */,
+				A6CBB9082E0A823D00B2CCCB /* enter-distraction-removal.js in Resources */,
+				A6CBB9092E0A823D00B2CCCB /* exit-distraction-removal.js in Resources */,
 				5308BF5B227C02DE004BECAC /* InternetAccessPolicy.plist in Resources */,
 				A67F61CA214395C60093940A /* graphic_shell.png in Resources */,
 				A6F18B352AE2F39C006C08EE /* uniE0C1_flame-thin.pdf in Resources */,
@@ -16644,6 +16667,7 @@
 				A65429A420BE7ECA00CE71B1 /* ScriptIcon@2x.png in Resources */,
 				A6CB24AA2C68149100005824 /* it2check in Resources */,
 				A6E7AE80214394DD00DE9F3B /* graphic_curl@2x.png in Resources */,
+				A6CBB90D2E0A832C00B2CCCB /* distraction-removal.js in Resources */,
 				A6F18B442AE2F39C006C08EE /* uniE0A3_column-number.pdf in Resources */,
 				A6F18B502AE2F39C006C08EE /* uniE0B2_Powerline_normal-right.pdf in Resources */,
 				A67F6164214395990093940A /* graphic_monitor.png in Resources */,
