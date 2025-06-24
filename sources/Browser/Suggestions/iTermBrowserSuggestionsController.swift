@@ -10,14 +10,16 @@ class iTermBrowserSuggestionsController {
     private let tailTruncatingAttributes: [NSAttributedString.Key: Any]
     private let midTruncatingAttributes: [NSAttributedString.Key: Any]
     let historyController: iTermBrowserHistoryController
+    private let openSearchSuggestions: iTermBrowserOpenSearchSuggestions
     struct ScoredSuggestion {
         let suggestion: URLSuggestion
         let score: Int
     }
 
     enum Score: Int {
-        case strongSearch = 1_000_001
-        case strongURL = 1_000_000
+        case strongSearch = 3_000_001
+        case strongURL = 3_000_000
+        case openSearch = 2_000_000  // index gets subtracted from this
         case weakSearch = 999_999
         case weakURL = 999_998
         case bookmarks = 500_000  // visit count gets added to this, and bookmarks take priority over history
@@ -33,6 +35,8 @@ class iTermBrowserSuggestionsController {
             $0.lineBreakMode = .byTruncatingMiddle
         }
         self.historyController = historyController
+        self.openSearchSuggestions = iTermBrowserOpenSearchSuggestions(attributes: attributes,
+                                                                       maxResults: 5)
     }
 
     func suggestions(forQuery query: String) async -> [URLSuggestion] {
@@ -57,6 +61,12 @@ class iTermBrowserSuggestionsController {
                     scoredResults.append(suggestion)
                 }
             }
+        }
+
+        // Get OpenSearch suggestions
+        if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let openSearchSuggestions = await openSearchSuggestions.getSuggestions(for: query)
+            scoredResults.append(contentsOf: openSearchSuggestions)
         }
 
         var searchScore: Score

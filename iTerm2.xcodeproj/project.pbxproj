@@ -3680,6 +3680,7 @@
 		A6CBB90B2E0A832C00B2CCCB /* distraction-removal.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB90A2E0A832B00B2CCCB /* distraction-removal.js */; };
 		A6CBB90C2E0A832C00B2CCCB /* distraction-removal.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB90A2E0A832B00B2CCCB /* distraction-removal.js */; };
 		A6CBB90D2E0A832C00B2CCCB /* distraction-removal.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB90A2E0A832B00B2CCCB /* distraction-removal.js */; };
+		A6CBB9742E0B18D400B2CCCB /* iTermBrowserOpenSearchSuggestions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CBB9722E0B18D400B2CCCB /* iTermBrowserOpenSearchSuggestions.swift */; };
 		A6CC16541CF012E300E8C148 /* iTermCarbonHotKeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */; };
 		A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */; };
 		A6CC49882C06E173003484B2 /* iTermPermissionsHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */; };
@@ -7935,6 +7936,7 @@
 		A6CBB9022E0A823D00B2CCCB /* enter-distraction-removal.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "enter-distraction-removal.js"; sourceTree = "<group>"; };
 		A6CBB9032E0A823D00B2CCCB /* exit-distraction-removal.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "exit-distraction-removal.js"; sourceTree = "<group>"; };
 		A6CBB90A2E0A832B00B2CCCB /* distraction-removal.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "distraction-removal.js"; sourceTree = "<group>"; };
+		A6CBB9722E0B18D400B2CCCB /* iTermBrowserOpenSearchSuggestions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserOpenSearchSuggestions.swift; sourceTree = "<group>"; };
 		A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCarbonHotKeyController.h; sourceTree = "<group>"; };
 		A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCarbonHotKeyController.m; sourceTree = "<group>"; };
 		A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermPermissionsHelper.swift; sourceTree = "<group>"; };
@@ -12953,7 +12955,6 @@
 				A6F7D4D02E03BE3A0065D09C /* iTermBrowserFindManager.swift */,
 				A6F7D4B82E034E2B0065D09C /* iTermBrowserManager.swift */,
 				A6F7D4FD2E05C4850065D09C /* iTermBrowserNavigationState.swift */,
-				A6F7D4F92E05BE7F0065D09C /* iTermBrowserSuggestionsController.swift */,
 				A6F7D4B42E0340A80065D09C /* iTermBrowserViewController.swift */,
 				A6F7D4D82E03DB420065D09C /* iTermBrowserWebView.swift */,
 			);
@@ -12987,6 +12988,15 @@
 				A6CBB8BB2E0A695D00B2CCCB /* iTermBrowserReaderModeManager.swift */,
 			);
 			path = "Reader Mode";
+			sourceTree = "<group>";
+		};
+		A6CBB9732E0B18D400B2CCCB /* Suggestions */ = {
+			isa = PBXGroup;
+			children = (
+				A6CBB9722E0B18D400B2CCCB /* iTermBrowserOpenSearchSuggestions.swift */,
+				A6F7D4F92E05BE7F0065D09C /* iTermBrowserSuggestionsController.swift */,
+			);
+			path = Suggestions;
 			sourceTree = "<group>";
 		};
 		A6CEBF5F1DCE7DF3009F4FD2 /* Proto */ = {
@@ -13273,6 +13283,7 @@
 				A6CBB8182E0A1BE800B2CCCB /* Permissions */,
 				A6CBB81D2E0A1C7200B2CCCB /* Polyfills */,
 				A6CBB8BE2E0A695D00B2CCCB /* Reader Mode */,
+				A6CBB9732E0B18D400B2CCCB /* Suggestions */,
 				A6CBB81A2E0A1C1700B2CCCB /* Settings */,
 				A6CBB81C2E0A1C5500B2CCCB /* UI */,
 				A6CBB81B2E0A1C2900B2CCCB /* View Source */,
@@ -18527,6 +18538,7 @@
 				53D68F812283EE7C0018710D /* iTermTmuxLayoutBuilder.m in Sources */,
 				A6FCAF66250D4D6500B89EB0 /* iTermModifyOtherKeysMapper.m in Sources */,
 				A63011A520E7ECC2008114B7 /* iTermStatusBarSetupKnobsViewController.m in Sources */,
+				A6CBB9742E0B18D400B2CCCB /* iTermBrowserOpenSearchSuggestions.swift in Sources */,
 				A6A9839527E5C45E003319D1 /* String+iTerm.swift in Sources */,
 				A6FF3F2D242C6D3B003CCB03 /* ColorsMenuItemView.m in Sources */,
 				A667C23D276C7859006B4DEF /* PSMTabBarCell.m in Sources */,
