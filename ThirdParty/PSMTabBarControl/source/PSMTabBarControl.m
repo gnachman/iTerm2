@@ -2365,7 +2365,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
         if ([cell representedObject] == tabViewItem) {
             if ([cell tabColor] != aColor) {
                 updated = YES;
-                [cell setTabColor: aColor];
+                [cell setTabColor:aColor];
             }
         }
     }

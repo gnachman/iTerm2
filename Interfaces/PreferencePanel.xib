@@ -2391,11 +2391,11 @@ DQ
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ngh-on-CNe" customClass="iTermTerminalModeEnclosure">
-                    <rect key="frame" x="18" y="36" width="522" height="838"/>
+                    <rect key="frame" x="18" y="40" width="522" height="778"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NXm-yR-tAj" userLabel="Regular">
-                            <rect key="frame" x="0.0" y="13" width="522" height="719"/>
+                            <rect key="frame" x="0.0" y="20" width="522" height="719"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <subviews>
                                 <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4889">
@@ -2943,7 +2943,7 @@ DQ
                             </subviews>
                         </customView>
                         <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3213">
-                            <rect key="frame" x="140" y="746" width="323" height="26"/>
+                            <rect key="frame" x="140" y="753" width="323" height="26"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <popUpButtonCell key="cell" type="push" title="Color Presets…" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" id="3214">
                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -2959,7 +2959,7 @@ DQ
                             </connections>
                         </popUpButton>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="21Z-ka-NoA">
-                            <rect key="frame" x="32" y="753" width="100" height="16"/>
+                            <rect key="frame" x="32" y="760" width="100" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Color Preset:" id="dcx-HG-VgG">
                                 <font key="font" metaFont="system"/>
@@ -2967,65 +2967,65 @@ DQ
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
-                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RVN-iv-hsG">
-                            <rect key="frame" x="32" y="819" width="100" height="16"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Modes:" id="zwF-JP-GLA">
-                                <font key="font" metaFont="system"/>
-                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                            </textFieldCell>
-                        </textField>
-                        <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3x1-gZ-174">
-                            <rect key="frame" x="140" y="787" width="161" height="25"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <popUpButtonCell key="cell" type="push" title="Light Mode" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="xFU-tm-alS" id="jfH-m9-DvC">
-                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                <font key="font" metaFont="message"/>
-                                <menu key="menu" id="o4r-7t-DXA">
-                                    <items>
-                                        <menuItem title="Light Mode" state="on" id="xFU-tm-alS"/>
-                                        <menuItem title="Dark Mode" tag="1" id="QbW-Ha-d7O"/>
-                                    </items>
-                                </menu>
-                            </popUpButtonCell>
-                            <connections>
-                                <action selector="modeDidChange:" target="p8i-eM-oBc" id="4iD-p2-DsL"/>
-                            </connections>
-                        </popUpButton>
-                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ZNy-wl-Zrf">
-                            <rect key="frame" x="32" y="795" width="100" height="16"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Editing:" id="O5b-oW-Jw9">
-                                <font key="font" metaFont="system"/>
-                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                            </textFieldCell>
-                        </textField>
-                        <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2Zz-se-prd">
-                            <rect key="frame" x="141" y="818" width="292" height="18"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <buttonCell key="cell" type="check" title="Use separate colors for light and dark mode" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="ZF1-Nv-83x">
-                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                            <connections>
-                                <action selector="settingChanged:" target="p8i-eM-oBc" id="Ddt-XA-Gcn"/>
-                            </connections>
-                        </button>
-                        <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="57d-0i-P0T">
-                            <rect key="frame" x="432" y="815" width="27" height="23"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <buttonCell key="cell" type="square" title="⚠️" bezelStyle="shadowlessSquare" alignment="center" imageScaling="proportionallyDown" inset="2" id="VRh-tL-KgN">
-                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                            <connections>
-                                <action selector="showModeWarning:" target="p8i-eM-oBc" id="NQS-RU-aPL"/>
-                            </connections>
-                        </button>
                     </subviews>
                 </customView>
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RVN-iv-hsG">
+                    <rect key="frame" x="18" y="855" width="132" height="16"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Modes:" id="zwF-JP-GLA">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3x1-gZ-174">
+                    <rect key="frame" x="158" y="823" width="161" height="25"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <popUpButtonCell key="cell" type="push" title="Light Mode" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="xFU-tm-alS" id="jfH-m9-DvC">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="message"/>
+                        <menu key="menu" id="o4r-7t-DXA">
+                            <items>
+                                <menuItem title="Light Mode" state="on" id="xFU-tm-alS"/>
+                                <menuItem title="Dark Mode" tag="1" id="QbW-Ha-d7O"/>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                    <connections>
+                        <action selector="modeDidChange:" target="p8i-eM-oBc" id="4iD-p2-DsL"/>
+                    </connections>
+                </popUpButton>
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ZNy-wl-Zrf">
+                    <rect key="frame" x="18" y="831" width="132" height="16"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Editing:" id="O5b-oW-Jw9">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2Zz-se-prd">
+                    <rect key="frame" x="159" y="854" width="292" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Use separate colors for light and dark mode" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="ZF1-Nv-83x">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="p8i-eM-oBc" id="Ddt-XA-Gcn"/>
+                    </connections>
+                </button>
+                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="57d-0i-P0T">
+                    <rect key="frame" x="448" y="852" width="27" height="23"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="square" title="⚠️" bezelStyle="shadowlessSquare" alignment="center" imageScaling="proportionallyDown" inset="2" id="VRh-tL-KgN">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="showModeWarning:" target="p8i-eM-oBc" id="NQS-RU-aPL"/>
+                    </connections>
+                </button>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Wzz-9B-zqB" customClass="CPKColorWell">
                     <rect key="frame" x="323" y="20" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
