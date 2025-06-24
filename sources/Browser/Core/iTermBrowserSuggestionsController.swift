@@ -7,7 +7,8 @@
 
 @available(macOS 11.0, *)
 class iTermBrowserSuggestionsController {
-    let attributes: [NSAttributedString.Key: Any]
+    private let tailTruncatingAttributes: [NSAttributedString.Key: Any]
+    private let midTruncatingAttributes: [NSAttributedString.Key: Any]
     let historyController: iTermBrowserHistoryController
     struct ScoredSuggestion {
         let suggestion: URLSuggestion
@@ -25,7 +26,12 @@ class iTermBrowserSuggestionsController {
 
     init(historyController: iTermBrowserHistoryController,
          attributes: [NSAttributedString.Key: Any]) {
-        self.attributes = attributes
+        tailTruncatingAttributes = attributes.modifyingParagraphStyle {
+            $0.lineBreakMode = .byTruncatingTail
+        }
+        midTruncatingAttributes = attributes.modifyingParagraphStyle {
+            $0.lineBreakMode = .byTruncatingMiddle
+        }
         self.historyController = historyController
     }
 
@@ -45,7 +51,7 @@ class iTermBrowserSuggestionsController {
         // Get history suggestions, excluding URLs already covered by bookmarks
         if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             let historySuggestions = await historyController.getHistorySuggestions(for: query,
-                                                                                   attributes: attributes)
+                                                                                   attributes: tailTruncatingAttributes)
             for suggestion in historySuggestions {
                 if !seenURLs.contains(suggestion.suggestion.url) {
                     scoredResults.append(suggestion)
@@ -70,7 +76,7 @@ class iTermBrowserSuggestionsController {
 
             let searchSuggestion = URLSuggestion(
                 url: url,
-                displayText: NSAttributedString(string: "Search for \"\(actualQuery)\"", attributes: attributes),
+                displayText: NSAttributedString(string: "Search for \"\(actualQuery)\"", attributes: midTruncatingAttributes),
                 detail: "Web Search",
                 type: .webSearch
             )
@@ -82,7 +88,7 @@ class iTermBrowserSuggestionsController {
             let suggestion = URLSuggestion(
                 url: normal.absoluteString,
                 displayText: NSAttributedString(string: "Navigate to \"\(normal.absoluteString)\"",
-                                                attributes: attributes),
+                                                attributes: midTruncatingAttributes),
                 detail: "URL",
                 type: .navigation
             )
@@ -176,8 +182,8 @@ class iTermBrowserSuggestionsController {
             let visitCount = await getVisitCount(for: bookmark.url, database: database)
             
             let title = bookmark.title?.isEmpty == false ? bookmark.title! : bookmark.url
-            let displayText = NSAttributedString(string: title, attributes: attributes)
-            
+            let displayText = NSAttributedString(string: title, attributes: tailTruncatingAttributes)
+
             let suggestion = URLSuggestion(
                 url: bookmark.url,
                 displayText: displayText,
@@ -194,5 +200,20 @@ class iTermBrowserSuggestionsController {
     
     private func getVisitCount(for url: String, database: BrowserDatabase) async -> Int {
         return await database.getVisitCount(for: url)
+    }
+}
+
+extension Dictionary where Key == NSAttributedString.Key, Value == Any {
+    func modifyingParagraphStyle(_ closure: (NSMutableParagraphStyle) -> ()) -> Self {
+        var result = self
+
+        let mps = if let existing = self[.paragraphStyle] as? NSParagraphStyle {
+            existing.mutableCopy() as! NSMutableParagraphStyle
+        } else {
+            NSMutableParagraphStyle()
+        }
+        closure(mps)
+        result[.paragraphStyle] = mps
+        return result
     }
 }
