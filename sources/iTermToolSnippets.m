@@ -785,6 +785,10 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     return [self regularCellViewForItem:item];
 }
 
+- (void)outlineViewSelectionDidChange:(NSNotification *)notification {
+    [self updateEnabled];
+}
+
 - (NSView *)regularCellViewForItem:(id)item {
     static NSString *const identifier = @"iTermToolSnippetsOutlineNoTags";
     iTermSnippet *snippet = [[iTermSnippetItem castFrom:item] snippet];
