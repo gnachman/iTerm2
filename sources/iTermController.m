@@ -1696,7 +1696,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         profile = [profile dictionaryBySettingObject:kProfilePreferenceCommandTypeBrowserValue
                                               forKey:KEY_CUSTOM_COMMAND];
         profile = [profile dictionaryBySettingObject:url.absoluteString
-                                              forKey:KEY_COMMAND_LINE];
+                                              forKey:KEY_INITIAL_URL];
         term.window.collectionBehavior = NSWindowCollectionBehaviorFullScreenNone;
         if (shortLived) {
             profile = [profile dictionaryBySettingObject:@0 forKey:KEY_UNDO_TIMEOUT];
