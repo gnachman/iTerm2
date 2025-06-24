@@ -430,6 +430,7 @@ DEFINE_BOOL(showPinnedIndicator, NO, SECTION_HOTKEY @"Show indicator for pinned 
 #define SECTION_GENERAL @"General: "
 
 DEFINE_STRING(searchCommand, @"https://google.com/search?q=%@", SECTION_GENERAL @"Template for URL of search engine.\niTerm2 replaces the string “%@” with the text to search for. Query parameter percent escaping is used.");
+DEFINE_STRING(searchSuggestURL, @"https://suggestqueries.google.com/complete/search?client=firefox&q=%@", SECTION_GENERAL @"Tempate of URL for typeahead search suggestions.\niTerm replaces the string “%@” with the text to search for. Query prameter percent escaping is used.");
 DEFINE_INT(autocompleteMaxOptions, 20, SECTION_GENERAL @"Number of autocomplete options to present.\nA value less than 100 is recommended.");
 DEFINE_FLOAT(minRunningTime, 10, SECTION_GENERAL @"Grace period for automatic quitting after the last window is closed.\nIf iTerm2 is configured to quit automatically when the last window is closed, this setting gives a grace period (in seconds) after startup where that feature is disabled. Set to 0 to have no grace period.");
 DEFINE_FLOAT(updateScreenParamsDelay, 1, SECTION_GENERAL @"Delay after changing number of screens/resolution until refresh (seconds).\nThis works around OS bugs where it takes some time after a screen change before it is safe to resize windows.");
