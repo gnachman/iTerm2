@@ -23,6 +23,7 @@
     func browserManager(_ manager: iTermBrowserManager, openPasswordManagerForHost host: String?, forUser: Bool, didSendUserName: (() -> ())?)
     func browserManagerDidRequestSavePageAs(_ manager: iTermBrowserManager)
     func browserManagerDidRequestCopyPageTitle(_ manager: iTermBrowserManager)
+    func browserManager(_ manager: iTermBrowserManager, didChangeReaderModeState isActive: Bool)
 }
 
 
@@ -43,6 +44,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
     let historyController: iTermBrowserHistoryController
     private let navigationState: iTermBrowserNavigationState
     private var navigationCount = 0
+    private lazy var readerModeManager = iTermBrowserReaderModeManager(webView: webView)
 
     init(configuration: WKWebViewConfiguration?,
          sessionGuid: String,
@@ -81,8 +83,15 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
 
             var js = """
                 let oldLog = console.log;
+                let oldError = console.error;
                 console.log = function() {
                     oldLog.apply(console, arguments);
+                    window.webkit.messageHandlers.iTerm2ConsoleLog.postMessage(
+                        Array.from(arguments).join(" ")
+                    );
+                };
+                console.error = function() {
+                    oldError.apply(console, arguments);
                     window.webkit.messageHandlers.iTerm2ConsoleLog.postMessage(
                         Array.from(arguments).join(" ")
                     );
@@ -176,6 +185,9 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
         
         // Setup settings delegate
         setupSettingsDelegate()
+        
+        // Setup reader mode
+        readerModeManager.delegate = self
     }
     
     private func setupPermissionNotificationObserver() {
@@ -240,6 +252,14 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
     }
     
     // MARK: - Public Interface
+    
+    func toggleReaderMode() {
+        readerModeManager.toggle()
+    }
+    
+    var isReaderModeActive: Bool {
+        return readerModeManager.isActive
+    }
     
     func loadURL(_ urlString: String) {
         guard let url = normalizeURL(urlString) else {
@@ -540,6 +560,7 @@ extension iTermBrowserManager {
 extension iTermBrowserManager: WKNavigationDelegate {
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         navigationCount += 1
+        readerModeManager.resetForNavigation()
         delegate?.browserManager(self, didStartNavigation: navigation)
     }
 
@@ -1148,5 +1169,14 @@ extension iTermBrowserManager {
            let ruleList = adblockManager?.getRuleList() {
             userContentController.add(ruleList)
         }
+    }
+}
+
+// MARK: - iTermBrowserReaderModeManagerDelegate
+
+@available(macOS 11.0, *)
+extension iTermBrowserManager: iTermBrowserReaderModeManagerDelegate {
+    func readerModeManager(_ manager: iTermBrowserReaderModeManager, didChangeActiveState isActive: Bool) {
+        delegate?.browserManager(self, didChangeReaderModeState: isActive)
     }
 }
