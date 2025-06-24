@@ -24,6 +24,7 @@
     func browserManagerDidRequestSavePageAs(_ manager: iTermBrowserManager)
     func browserManagerDidRequestCopyPageTitle(_ manager: iTermBrowserManager)
     func browserManager(_ manager: iTermBrowserManager, didChangeReaderModeState isActive: Bool)
+    func browserManager(_ manager: iTermBrowserManager, didChangeDistractionRemovalState isActive: Bool)
 }
 
 
@@ -274,6 +275,16 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
     
     var isReaderModeActive: Bool {
         return readerModeManager.isActive
+    }
+    
+    func toggleDistractionRemoval() {
+        Task {
+            await readerModeManager.toggleDistractionRemovalMode()
+        }
+    }
+    
+    var isDistractionRemovalActive: Bool {
+        return readerModeManager.isDistractionRemovalActive
     }
     
     func loadURL(_ urlString: String) {
@@ -1193,5 +1204,9 @@ extension iTermBrowserManager {
 extension iTermBrowserManager: iTermBrowserReaderModeManagerDelegate {
     func readerModeManager(_ manager: iTermBrowserReaderModeManager, didChangeActiveState isActive: Bool) {
         delegate?.browserManager(self, didChangeReaderModeState: isActive)
+    }
+    
+    func readerModeManager(_ manager: iTermBrowserReaderModeManager, didChangeDistractionRemovalState isActive: Bool) {
+        delegate?.browserManager(self, didChangeDistractionRemovalState: isActive)
     }
 }

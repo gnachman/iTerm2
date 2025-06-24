@@ -409,6 +409,14 @@ extension iTermBrowserViewController: iTermBrowserToolbarDelegate {
         return browserManager.isReaderModeActive
     }
     
+    func browserToolbarDidTapDistractionRemoval() {
+        browserManager.toggleDistractionRemoval()
+    }
+    
+    func browserToolbarIsDistractionRemovalActive() -> Bool {
+        return browserManager.isDistractionRemovalActive
+    }
+    
     func browserToolbarCurrentURL() -> String? {
         return browserManager.webView.url?.absoluteString
     }
@@ -513,6 +521,10 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
     }
     
     func browserManager(_ manager: iTermBrowserManager, didChangeReaderModeState isActive: Bool) {
+        // No additional action needed - toolbar will update based on state
+    }
+    
+    func browserManager(_ manager: iTermBrowserManager, didChangeDistractionRemovalState isActive: Bool) {
         // No additional action needed - toolbar will update based on state
     }
 }

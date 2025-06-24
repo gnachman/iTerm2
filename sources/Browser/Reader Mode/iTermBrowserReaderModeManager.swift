@@ -10,6 +10,7 @@ import WebKit
 @available(macOS 11.0, *)
 @objc protocol iTermBrowserReaderModeManagerDelegate: AnyObject {
     func readerModeManager(_ manager: iTermBrowserReaderModeManager, didChangeActiveState isActive: Bool)
+    func readerModeManager(_ manager: iTermBrowserReaderModeManager, didChangeDistractionRemovalState isActive: Bool)
 }
 
 @available(macOS 11.0, *)
@@ -18,6 +19,7 @@ class iTermBrowserReaderModeManager: NSObject {
     weak var delegate: iTermBrowserReaderModeManagerDelegate?
     private weak var webView: WKWebView?
     private var isReaderModeActive = false
+    private(set) var isDistractionRemovalActive = false
     private var scriptsInjected = false
     private var cached: String?
 
@@ -92,7 +94,7 @@ class iTermBrowserReaderModeManager: NSObject {
                 await updateReaderModeState(true)
             }
         } catch {
-            print("Error entering reader mode: \(error)")
+            DLog("Error entering reader mode: \(error)")
         }
     }
     
@@ -104,7 +106,50 @@ class iTermBrowserReaderModeManager: NSObject {
             try await webView?.evaluateJavaScript(script)
             await updateReaderModeState(false)
         } catch {
-            print("Error exiting reader mode: \(error)")
+            DLog("Error exiting reader mode: \(error)")
+        }
+    }
+    
+    func toggleDistractionRemovalMode() async {
+        if isDistractionRemovalActive {
+            await exitDistractionRemovalMode()
+        } else {
+            await enterDistractionRemovalMode()
+        }
+    }
+    
+    private func enterDistractionRemovalMode() async {
+        guard await ensureScriptsInjected() else { return }
+        
+        do {
+            // First inject the distraction removal functionality
+            let distractionRemovalJS = iTermBrowserTemplateLoader.loadTemplate(named: "distraction-removal",
+                                                                             type: "js",
+                                                                             substitutions: [:])
+            try await webView?.evaluateJavaScript(distractionRemovalJS)
+            
+            // Then enter distraction removal mode
+            let script = iTermBrowserTemplateLoader.loadTemplate(named: "enter-distraction-removal",
+                                                               type: "js",
+                                                               substitutions: [:])
+            if let result = try await webView?.evaluateJavaScript(script) as? Bool,
+               result {
+                await updateDistractionRemovalState(true)
+            }
+        } catch {
+            DLog("Error entering distraction removal mode: \(error)")
+        }
+    }
+    
+    private func exitDistractionRemovalMode() async {
+        do {
+            let script = iTermBrowserTemplateLoader.loadTemplate(named: "exit-distraction-removal",
+                                                               type: "js",
+                                                               substitutions: [:])
+            try await webView?.evaluateJavaScript(script)
+            await updateDistractionRemovalState(false)
+        } catch {
+            DLog("Error exiting distraction removal mode: \(error)")
         }
     }
     
@@ -140,7 +185,7 @@ class iTermBrowserReaderModeManager: NSObject {
             scriptsInjected = true
             return true
         } catch {
-            print("Error injecting reader mode scripts: \(error)")
+            DLog("Error injecting reader mode scripts: \(error)")
             return false
         }
     }
@@ -151,10 +196,17 @@ class iTermBrowserReaderModeManager: NSObject {
         delegate?.readerModeManager(self, didChangeActiveState: isActive)
     }
     
+    @MainActor
+    private func updateDistractionRemovalState(_ isActive: Bool) {
+        isDistractionRemovalActive = isActive
+        delegate?.readerModeManager(self, didChangeDistractionRemovalState: isActive)
+    }
+    
     // Called when navigation occurs to reset state
     @objc func resetForNavigation() {
         cached = nil
         isReaderModeActive = false
+        isDistractionRemovalActive = false
         scriptsInjected = false
     }
 }
@@ -176,6 +228,10 @@ extension iTermBrowserReaderModeManager: WKScriptMessageHandler {
                 updateReaderModeState(true)
             case "exited":
                 updateReaderModeState(false)
+            case "distractionRemovalEntered":
+                updateDistractionRemovalState(true)
+            case "distractionRemovalExited":
+                updateDistractionRemovalState(false)
             default:
                 break
             }
