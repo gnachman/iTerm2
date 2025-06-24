@@ -11,6 +11,8 @@ import Foundation
 class iTermBrowserOpenSearchSuggestions {
     private let attributes: [NSAttributedString.Key: Any]
     private let maxResults: Int
+    private var cache: [String: [iTermBrowserSuggestionsController.ScoredSuggestion]] = [:]
+    private var currentTask: Task<[iTermBrowserSuggestionsController.ScoredSuggestion], Never>?
 
     init(attributes: [NSAttributedString.Key: Any],
          maxResults: Int) {
@@ -27,6 +29,7 @@ class iTermBrowserOpenSearchSuggestions {
         if trimmedQuery.hasPrefix("https://") {
             return []
         }
+        
         guard let escapedQuery = trimmedQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else {
             return []
         }
@@ -38,10 +41,34 @@ class iTermBrowserOpenSearchSuggestions {
             return []
         }
         
+        // Cancel any existing task
+        currentTask?.cancel()
+        
+        // Start background task that will continue even if we timeout
+        currentTask = Task<[iTermBrowserSuggestionsController.ScoredSuggestion], Never> {
+            do {
+                let (data, _) = try await URLSession.shared.data(from: url)
+                let suggestions = await parseSuggestions(data: data, originalQuery: trimmedQuery)
+                cache[trimmedQuery] = suggestions
+                return suggestions
+            } catch {
+                return []
+            }
+        }
+        
+        // Race the network request against timeout
         do {
-            let (data, _) = try await URLSession.shared.data(from: url)
-            return await parseSuggestions(data: data, originalQuery: trimmedQuery)
+            let result = try await withTimeout(seconds: 0.05) {
+                try await URLSession.shared.data(from: url)
+            }
+            let suggestions = await parseSuggestions(data: result.0, originalQuery: trimmedQuery)
+            cache[trimmedQuery] = suggestions
+            return suggestions
         } catch {
+            // Timeout occurred - return cached results if available, but let background task continue
+            if let prefixResults = findCachedPrefix(for: trimmedQuery).flatMap({ cache[$0] }) {
+                return filterAndRescoreSuggestions(prefixResults, for: trimmedQuery)
+            }
             return []
         }
     }
@@ -90,5 +117,52 @@ class iTermBrowserOpenSearchSuggestions {
         }
         
         return results
+    }
+    
+    private func withTimeout<T>(seconds: TimeInterval, operation: @escaping () async throws -> T) async throws -> T {
+        return try await withThrowingTaskGroup(of: T.self) { group in
+            group.addTask {
+                try await operation()
+            }
+            
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                throw URLError(.timedOut)
+            }
+            
+            let result = try await group.next()!
+            group.cancelAll()
+            return result
+        }
+    }
+    
+    private func findCachedPrefix(for query: String) -> String? {
+        var bestMatch: String?
+        var bestLength = 0
+        
+        for cachedQuery in cache.keys {
+            if query.hasPrefix(cachedQuery) && cachedQuery.count > bestLength {
+                bestMatch = cachedQuery
+                bestLength = cachedQuery.count
+            }
+        }
+        
+        return bestMatch
+    }
+    
+    private func filterAndRescoreSuggestions(_ suggestions: [iTermBrowserSuggestionsController.ScoredSuggestion], for query: String) -> [iTermBrowserSuggestionsController.ScoredSuggestion] {
+        let filtered = suggestions.filter { suggestion in
+            let urlSuggestion = suggestion.suggestion
+            return urlSuggestion.displayText.string.localizedCaseInsensitiveHasPrefix(query)
+        }
+        
+        // Re-score based on relevance to the new query
+        return filtered.enumerated().map { index, suggestion in
+            let newScore = iTermBrowserSuggestionsController.Score.openSearch.rawValue - index - 10 // Lower score for cached results
+            return iTermBrowserSuggestionsController.ScoredSuggestion(
+                suggestion: suggestion.suggestion,
+                score: newScore
+            )
+        }
     }
 }
