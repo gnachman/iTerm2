@@ -38,6 +38,8 @@ protocol iTermBrowserToolbarDelegate: AnyObject {
     func browserToolbarUserDidSubmitNavigationRequest()
     func browserToolbarCurrentURL() -> String?
     func browserToolbarIsCurrentURLBookmarked() async -> Bool
+    func browserToolbarDidTapAskAI()
+    func browserToolbarShouldOfferReaderMode() async -> Bool
 }
 
 @available(macOS 11.0, *)
@@ -181,18 +183,25 @@ class iTermBrowserToolbar: NSView {
         Task {
             let currentURL = delegate?.browserToolbarCurrentURL()
             let isBookmarked = await delegate?.browserToolbarIsCurrentURLBookmarked() ?? false
-            
+            let readerAvailable = (await delegate?.browserToolbarShouldOfferReaderMode() == true)
             await MainActor.run {
-                // Reader Mode menu item
-                let isReaderModeActive = delegate?.browserToolbarIsReaderModeActive() ?? false
-                let readerModeTitle = isReaderModeActive ? "Exit Reader Mode" : "Reader Mode"
-                let readerModeIcon = isReaderModeActive ? "doc.text.fill" : "doc.text"
-                let readerModeItem = NSMenuItem(title: readerModeTitle, action: #selector(readerModeMenuItemSelected), keyEquivalent: "")
-                readerModeItem.target = self
-                readerModeItem.image = NSImage(systemSymbolName: readerModeIcon, accessibilityDescription: nil)
-                readerModeItem.isEnabled = currentURL != nil
-                menu.addItem(readerModeItem)
-                
+                if readerAvailable {
+                    let askAIItem = NSMenuItem(title: "Ask AI…", action: #selector(askAIMenuItemSelected), keyEquivalent: "")
+                    askAIItem.target = self
+                    askAIItem.image = NSImage(systemSymbolName: "sparkles", accessibilityDescription: nil)
+                    menu.addItem(askAIItem)
+
+                    // Reader Mode menu item
+                    let isReaderModeActive = delegate?.browserToolbarIsReaderModeActive() ?? false
+                    let readerModeTitle = isReaderModeActive ? "Exit Reader Mode" : "Reader Mode"
+                    let readerModeIcon = isReaderModeActive ? "doc.text.fill" : "doc.text"
+                    let readerModeItem = NSMenuItem(title: readerModeTitle, action: #selector(readerModeMenuItemSelected), keyEquivalent: "")
+                    readerModeItem.target = self
+                    readerModeItem.image = NSImage(systemSymbolName: readerModeIcon, accessibilityDescription: nil)
+                    readerModeItem.isEnabled = currentURL != nil
+                    menu.addItem(readerModeItem)
+                }
+
                 let bookmarkTitle = isBookmarked ? "Remove Bookmark" : "Add Bookmark"
                 let bookmarkIcon = isBookmarked ? "bookmark.fill" : "bookmark"
                 let bookmarkItem = NSMenuItem(title: bookmarkTitle, action: #selector(bookmarkMenuItemSelected), keyEquivalent: "")
@@ -231,7 +240,11 @@ class iTermBrowserToolbar: NSView {
             }
         }
     }
-    
+
+    @objc private func askAIMenuItemSelected() {
+        delegate?.browserToolbarDidTapAskAI()
+    }
+
     @objc private func readerModeMenuItemSelected() {
         delegate?.browserToolbarDidTapReaderMode()
     }

@@ -3668,6 +3668,9 @@
 		A6CBB8FB2E0A700400B2CCCB /* reader-mode-with-styles.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8FA2E0A700400B2CCCB /* reader-mode-with-styles.js */; };
 		A6CBB8FC2E0A700400B2CCCB /* reader-mode-with-styles.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8FA2E0A700400B2CCCB /* reader-mode-with-styles.js */; };
 		A6CBB8FD2E0A700400B2CCCB /* reader-mode-with-styles.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8FA2E0A700400B2CCCB /* reader-mode-with-styles.js */; };
+		A6CBB8FF2E0A754900B2CCCB /* extract-plain-text.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8FE2E0A754900B2CCCB /* extract-plain-text.js */; };
+		A6CBB9002E0A754900B2CCCB /* extract-plain-text.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8FE2E0A754900B2CCCB /* extract-plain-text.js */; };
+		A6CBB9012E0A754900B2CCCB /* extract-plain-text.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8FE2E0A754900B2CCCB /* extract-plain-text.js */; };
 		A6CC16541CF012E300E8C148 /* iTermCarbonHotKeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */; };
 		A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */; };
 		A6CC49882C06E173003484B2 /* iTermPermissionsHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */; };
@@ -7919,6 +7922,7 @@
 		A6CBB8F22E0A6CAE00B2CCCB /* load-reader-mode.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "load-reader-mode.js"; sourceTree = "<group>"; };
 		A6CBB8F62E0A6FC800B2CCCB /* reader-mode.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = "reader-mode.css"; sourceTree = "<group>"; };
 		A6CBB8FA2E0A700400B2CCCB /* reader-mode-with-styles.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "reader-mode-with-styles.js"; sourceTree = "<group>"; };
+		A6CBB8FE2E0A754900B2CCCB /* extract-plain-text.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "extract-plain-text.js"; sourceTree = "<group>"; };
 		A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCarbonHotKeyController.h; sourceTree = "<group>"; };
 		A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCarbonHotKeyController.m; sourceTree = "<group>"; };
 		A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermPermissionsHelper.swift; sourceTree = "<group>"; };
@@ -12960,6 +12964,7 @@
 				A6CBB8F62E0A6FC800B2CCCB /* reader-mode.css */,
 				A6CBB8E62E0A6C5000B2CCCB /* enter-reader-mode.js */,
 				A6CBB8EA2E0A6C5D00B2CCCB /* exit-reader-mode.js */,
+				A6CBB8FE2E0A754900B2CCCB /* extract-plain-text.js */,
 				A6CBB8EE2E0A6C9F00B2CCCB /* load-readability.js */,
 				A6CBB8F22E0A6CAE00B2CCCB /* load-reader-mode.js */,
 				A6CBB8FA2E0A700400B2CCCB /* reader-mode-with-styles.js */,
@@ -15360,6 +15365,7 @@
 				A65429A820BE7ECE00CE71B1 /* ScriptIcon@2x.png in Resources */,
 				A6F18B582AE2F39C006C08EE /* uniE0B4_right-half-circle-thick.pdf in Resources */,
 				A630119120E6B723008114B7 /* iTermStatusBarSetupCollectionViewItem.xib in Resources */,
+				A6CBB9002E0A754900B2CCCB /* extract-plain-text.js in Resources */,
 				A6F31A40295BC61F00C1A51E /* uniE0D0_PowerlineExtraSymbols.pdf in Resources */,
 				A65429A720BE7ECE00CE71B1 /* ScriptIcon.png in Resources */,
 				A6EA848827223B02009D14AB /* graphic_emacs@2x.png in Resources */,
@@ -15834,6 +15840,7 @@
 				A6F18B4E2AE2F39C006C08EE /* uniE0B7_left-half-circle-thin.pdf in Resources */,
 				A67F61B1214395B70093940A /* graphic_php.png in Resources */,
 				A6FE8D0E2093893700B5C648 /* iTermOptionalComponentDownloadWindowController.xib in Resources */,
+				A6CBB8FF2E0A754900B2CCCB /* extract-plain-text.js in Resources */,
 				A68BE9482DE428D5002DD513 /* flowchart@2x.png in Resources */,
 				A68BE9492DE428D5002DD513 /* flowchart.png in Resources */,
 				A697CE102D9764E00031583F /* CapturedOutputMenuTip@2x.png in Resources */,
@@ -16768,6 +16775,7 @@
 				A65DF4A52849C11D00AA29AB /* bash-si-loader in Resources */,
 				A67D0D6B1A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib in Resources */,
 				A6F31A2D295BC41700C1A51E /* uniE0CD_PowerlineExtraSymbols.pdf in Resources */,
+				A6CBB9012E0A754900B2CCCB /* extract-plain-text.js in Resources */,
 				A6CB24A72C68149100005824 /* it2getvar in Resources */,
 				A68BADFC1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png in Resources */,
 				A602AAE62B0BCDB100E6C965 /* whitebox_logo.png in Resources */,

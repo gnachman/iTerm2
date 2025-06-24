@@ -234,7 +234,7 @@ class iTermBrowserPageSaver {
     
     private func extensionForMimeType(_ mimeType: String) -> String {
         // Create reverse mapping from the comprehensive extensionToMime dictionary
-        let mimeToExtension = Dictionary(uniqueKeysWithValues: extensionToMime.map { ($1, $0) })
+        let mimeToExtension = extensionToMime.lossilyInverted
         
         // Try exact match first
         if let fileExtension = mimeToExtension[mimeType.lowercased()] {

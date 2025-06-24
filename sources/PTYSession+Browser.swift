@@ -76,6 +76,16 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
                 didSendUserName: didSendUserName)
         }
     }
+
+    func browserViewControllerDidSelectAskAI(_ controller: iTermBrowserViewController,
+                                             title: String,
+                                             content: String) {
+        guard let windowController = ChatWindowController.instance(showErrors: true) else {
+            return
+        }
+        windowController.showChatWindow()
+        windowController.createChat(name: title, inject: content)
+    }
 }
 
 // MARK: - Browser Find Support

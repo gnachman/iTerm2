@@ -84,3 +84,13 @@ extension Optional: AnyOptional {
     }
 }
 
+extension Optional where Wrapped == URL {
+    var d: String {
+        switch self {
+        case .none:
+            return "(nil)"
+        case .some(let value):
+            return value.absoluteString
+        }
+    }
+}
