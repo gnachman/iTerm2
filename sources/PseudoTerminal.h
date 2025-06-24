@@ -29,6 +29,7 @@
 @class iTermController;
 @class PseudoTerminalState;
 @class TmuxController;
+@class WKWebViewConfiguration;
 
 // Posted when a new window controller is created. It's not ready to use at this point, though.
 extern NSString *const kTerminalWindowControllerWasCreatedNotification;
@@ -415,7 +416,14 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 
 - (NSArray<NSString *> *)currentSnippetTags;
 - (PTYTextView *)checkFirstResponder;
-- (void)openTabWithURL:(NSURL *)url baseProfile:(Profile *)profile nearSessionGuid:(NSString *)sessionGuid;
+
+#pragma mark - Web
+
+- (WKWebView *)openTabWithURL:(NSURL *)url
+                  baseProfile:(Profile *)base
+              nearSessionGuid:(NSString *)sessionGuid
+                configuration:(WKWebViewConfiguration *)configuration NS_AVAILABLE_MAC(11_0);
+
 - (void)openSplitPaneWithURL:(NSURL *)url
                  baseProfile:(Profile *)base
              nearSessionGuid:(NSString *)sessionGuid

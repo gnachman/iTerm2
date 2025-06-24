@@ -11341,10 +11341,13 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                          ready:nil];
 }
 
-- (void)openTabWithURL:(NSURL *)url baseProfile:(Profile *)base nearSessionGuid:(NSString *)sessionGuid {
+- (WKWebView *)openTabWithURL:(NSURL *)url
+                  baseProfile:(Profile *)base
+              nearSessionGuid:(NSString *)sessionGuid
+                configuration:(WKWebViewConfiguration *)configuration NS_AVAILABLE_MAC(11_0) {
     MutableProfile *profile = [[base mutableCopy] autorelease];
     profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeBrowserValue;
-    profile[KEY_COMMAND_LINE] = url.absoluteString;
+    profile[KEY_INITIAL_URL] = url.absoluteString;
 
     NSNumber *tabIndex = nil;
     for (NSInteger i = 0; i < self.tabs.count; i++) {
@@ -11353,12 +11356,55 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
             break;
         }
     }
-    [self asyncCreateTabWithProfile:profile
-                        withCommand:nil
-                        environment:nil
-                           tabIndex:tabIndex
-                     didMakeSession:nil
-                         completion:nil];
+    PTYSession *(^makeSession)(Profile *, PseudoTerminal *) =
+    ^PTYSession *(Profile *profile, PseudoTerminal *term) {
+        profile = [profile dictionaryBySettingObject:kProfilePreferenceCommandTypeBrowserValue
+                                              forKey:KEY_CUSTOM_COMMAND];
+        profile = [profile dictionaryBySettingObject:url.absoluteString
+                                              forKey:KEY_INITIAL_URL];
+
+        PTYSession *aSession = [term.sessionFactory newSessionWithProfile:profile
+                                                                   parent:nil];
+        [term addSession:aSession inTabAtIndex:tabIndex];
+        iTermSessionAttachOrLaunchRequest *launchRequest =
+        [iTermSessionAttachOrLaunchRequest launchRequestWithSession:aSession
+                                                          canPrompt:YES
+                                                         objectType:iTermWindowObject
+                                                hasServerConnection:NO
+                                                   serverConnection:(iTermGeneralServerConnection){}
+                                                          urlString:nil
+                                                       allowURLSubs:NO
+                                                        environment:nil
+                                                        customShell:nil
+                                                             oldCWD:nil
+                                                     forceUseOldCWD:NO
+                                                            command:nil
+                                                             isUTF8:nil
+                                                      substitutions:nil
+                                                   windowController:term
+                                                              ready:nil
+                                                         completion:^(PTYSession *session, BOOL ok) {
+            if (!ok) {
+                return;
+            }
+        }];
+        launchRequest.webViewConfiguration = configuration;
+        [term.sessionFactory attachOrLaunchWithRequest:launchRequest];
+        [term customizeCollectionBehaviorForProfile:profile];
+        return aSession;
+    };
+    PTYSession *theSession = [iTermSessionLauncher synchronouslyLaunchProfile:profile
+                                                                   inTerminal:self
+                                                                      withURL:nil
+                                                             hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                                                      makeKey:YES
+                                                                  canActivate:YES
+                                                           respectTabbingMode:NO
+                                                                        index:nil
+                                                                      command:url.absoluteString
+                                                                  makeSession:makeSession];
+
+    return theSession.view.browserViewController.webView;
 }
 
 - (void)asyncCreateTabWithProfile:(Profile *)profile

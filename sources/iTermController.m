@@ -1750,15 +1750,15 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         return aSession;
     };
     PTYSession *theSession = [iTermSessionLauncher synchronouslyLaunchProfile:windowProfile
-                                          inTerminal:term
-                                             withURL:nil
-                                    hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                             makeKey:YES
-                                         canActivate:YES
-                                  respectTabbingMode:NO
-                                               index:nil
-                                             command:url.absoluteString
-                                         makeSession:makeSession];
+                                                                   inTerminal:term
+                                                                      withURL:nil
+                                                             hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                                                      makeKey:YES
+                                                                  canActivate:YES
+                                                           respectTabbingMode:NO
+                                                                        index:nil
+                                                                      command:url.absoluteString
+                                                                  makeSession:makeSession];
 
     if (bury) {
         [theSession bury];

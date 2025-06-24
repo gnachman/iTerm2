@@ -25,10 +25,19 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
     func browserViewController(_ controller: iTermBrowserViewController,
                                requestNewWindowForURL url: URL,
                                configuration: WKWebViewConfiguration) -> WKWebView? {
-        return iTermController.sharedInstance().openSingleUserBrowserWindow(with: url,
-                                                                            configuration: configuration,
-                                                                            options: [],
-                                                                            completion: {})
+        let openTargetBlankInWindow = false
+        if openTargetBlankInWindow {
+            return iTermController.sharedInstance().openSingleUserBrowserWindow(with: url,
+                                                                                configuration: configuration,
+                                                                                options: [],
+                                                                                completion: {})
+        } else {
+            let term = (delegate?.realParentWindow() as? PseudoTerminal)
+            return term?.openTab(with: url,
+                                 baseProfile: profile,
+                                 nearSessionGuid: guid,
+                                 configuration: configuration)
+        }
     }
 
     func browserViewController(_ controller: iTermBrowserViewController,
@@ -36,7 +45,8 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
         let term = (delegate?.realParentWindow() as? PseudoTerminal)
         term?.openTab(with: url,
                       baseProfile: profile,
-                      nearSessionGuid: guid)
+                      nearSessionGuid: guid,
+                      configuration: nil)
     }
 
     func browserViewController(_ controller: iTermBrowserViewController,
