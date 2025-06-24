@@ -21,6 +21,8 @@
     func browserManager(_ manager: iTermBrowserManager, openNewTabForURL url: URL)
     func browserManager(_ manager: iTermBrowserManager, openNewSplitPaneForURL url: URL, vertical: Bool)
     func browserManager(_ manager: iTermBrowserManager, openPasswordManagerForHost host: String?, forUser: Bool, didSendUserName: (() -> ())?)
+    func browserManagerDidRequestSavePageAs(_ manager: iTermBrowserManager)
+    func browserManagerDidRequestCopyPageTitle(_ manager: iTermBrowserManager)
 }
 
 
@@ -906,6 +908,14 @@ extension iTermBrowserManager: WKUIDelegate {
         viewPageSource()
     }
     
+    func webViewDidRequestSavePageAs(_ webView: iTermBrowserWebView) {
+        savePageAs()
+    }
+    
+    func webViewDidRequestCopyPageTitle(_ webView: iTermBrowserWebView) {
+        copyPageTitle()
+    }
+    
     @objc private func viewPageSource() {
         // Get the current page's HTML source
         guard let url = webView.url else {
@@ -932,6 +942,14 @@ extension iTermBrowserManager: WKUIDelegate {
     
     private func showSourceInBrowser(htmlSource: String, url: URL) {
         localPageManager.showSourcePage(htmlSource: htmlSource, url: url, webView: webView)
+    }
+    
+    @objc private func savePageAs() {
+        delegate?.browserManagerDidRequestSavePageAs(self)
+    }
+    
+    @objc private func copyPageTitle() {
+        delegate?.browserManagerDidRequestCopyPageTitle(self)
     }
     
     // MARK: - Media Capture Permissions

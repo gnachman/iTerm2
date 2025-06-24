@@ -40,6 +40,7 @@ class iTermBrowserViewController: NSViewController {
     private let navigationState = iTermBrowserNavigationState()
     @objc let sessionGuid: String
     private var bookmarkTagEditor: iTermBookmarkTagEditorWindowController?
+    private lazy var contextMenuHandler = iTermBrowserContextMenuHandler(webView: browserManager.webView, parentWindow: view.window)
 
     @objc(initWithConfiguration:sessionGuid:)
     init(configuration: WKWebViewConfiguration?, sessionGuid: String)  {
@@ -406,6 +407,14 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
                                         openPasswordManagerForHost: host,
                                         forUser: forUser,
                                         didSendUserName: didSendUserName)
+    }
+    
+    func browserManagerDidRequestSavePageAs(_ manager: iTermBrowserManager) {
+        contextMenuHandler.savePageAs()
+    }
+    
+    func browserManagerDidRequestCopyPageTitle(_ manager: iTermBrowserManager) {
+        contextMenuHandler.copyPageTitle()
     }
 }
 
