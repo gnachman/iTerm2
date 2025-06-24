@@ -17,6 +17,7 @@
 #import "PTYTabView.h"
 #import "PTYWindow.h"
 #import "WindowControllerInterface.h"
+#import "iTermSessionRestorationStatusProtocol.h"
 
 #include "iTermFileDescriptorClient.h"
 

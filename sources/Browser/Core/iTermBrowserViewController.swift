@@ -41,6 +41,8 @@ class iTermBrowserViewController: NSViewController {
     @objc let sessionGuid: String
     private var bookmarkTagEditor: iTermBookmarkTagEditorWindowController?
     private lazy var contextMenuHandler = iTermBrowserContextMenuHandler(webView: browserManager.webView, parentWindow: view.window)
+    private var deferredURL: String?
+    private var deferredInteractionState: NSObject?
 
     @objc(initWithConfiguration:sessionGuid:)
     init(configuration: WKWebViewConfiguration?, sessionGuid: String)  {
@@ -75,6 +77,12 @@ extension iTermBrowserViewController {
         }
         set {
             if #available(macOS 12, *) {
+                // Check if we should defer setting interaction state during restoration
+                if shouldDeferLoading() {
+                    deferredInteractionState = newValue as? NSObject
+                    return
+                }
+                
                 browserManager.webView.interactionState = newValue
             }
         }
@@ -132,6 +140,12 @@ extension iTermBrowserViewController {
     }
 
     @objc func loadURL(_ urlString: String) {
+        // Check if we should defer loading during session restoration
+        if shouldDeferLoading() {
+            deferredURL = urlString
+            return
+        }
+        
         browserManager.loadURL(urlString)
     }
 
@@ -178,6 +192,14 @@ extension iTermBrowserViewController {
         setupToolbar()
         setupWebView()
         setupConstraints()
+        setupRestorationObserver()
+    }
+    
+    override func viewDidAppear() {
+        super.viewDidAppear()
+        if !shouldDeferLoading() {
+            loadDeferredURLIfNeeded()
+        }
     }
 
     @objc
@@ -245,6 +267,52 @@ extension iTermBrowserViewController {
             browserManager.webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             browserManager.webView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
+    }
+    
+    private func setupRestorationObserver() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(sessionRestorationDidComplete),
+            name: NSNotification.Name("iTermSessionRestorationDidCompleteNotification"),
+            object: nil
+        )
+    }
+    
+    private func shouldDeferLoading() -> Bool {
+        guard let window = view.window else {
+            // No window means not in view hierarchy - definitely defer
+            return true
+        }
+        
+        // Check if delegate conforms to restoration protocol and is performing restoration
+        if let restorationDelegate = window.delegate as? iTermSessionRestorationStatusProtocol {
+            return restorationDelegate.isPerformingSessionRestoration
+        }
+        
+        return false
+    }
+    
+    @objc private func sessionRestorationDidComplete(_ notification: Notification) {
+        if !shouldDeferLoading() {
+            loadDeferredURLIfNeeded()
+        }
+    }
+    
+    private func loadDeferredURLIfNeeded() {
+        // Handle deferred interaction state first (takes precedence over URL)
+        if let interactionState = deferredInteractionState {
+            deferredInteractionState = nil
+            if #available(macOS 12, *) {
+                browserManager.webView.interactionState = interactionState
+            }
+            return
+        }
+        
+        // Handle deferred URL
+        if let url = deferredURL {
+            deferredURL = nil
+            browserManager.loadURL(url)
+        }
     }
 }
 

@@ -56,6 +56,7 @@
 #import "iTermRateLimitedUpdate.h"
 #import "iTermRecordingCodec.h"
 #import "iTermRestorableStateController.h"
+#import "iTermSessionRestorationStatusProtocol.h"
 #import "iTermRootTerminalView.h"
 #import "iTermSavePanel.h"
 #import "iTermScriptFunctionCall.h"
@@ -233,6 +234,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     iTermGraphCodable,
     iTermObject,
     iTermRestorableWindowController,
+    iTermSessionRestorationStatusProtocol,
     iTermTabBarControlViewDelegate,
     iTermPasswordManagerDelegate,
     iTermUniquelyIdentifiable,
@@ -372,6 +374,9 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     // The window restoration completion block was called but windowDidDecodeRestorableState:
     // has not yet been called.
     BOOL _expectingDecodeOfRestorableState;
+    
+    // Tracks number of concurrent session restoration operations for deferred loading
+    NSInteger _sessionRestorationCount;
 
     // Used to prevent infinite reentrancy in windowDidChangeScreen:.
     BOOL _inWindowDidChangeScreen;
@@ -11534,17 +11539,20 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (void)restoreArrangement:(NSDictionary *)arrangement {
+    _sessionRestorationCount++;
     [self loadArrangement:arrangement
                     named:nil
                  sessions:nil
        partialAttachments:nil];
     self.restorableStateDecodePending = NO;
+    [self decrementSessionRestorationCount];
 }
 
 - (void)asyncRestoreArrangement:(NSDictionary *)arrangement
                         timeout:(void (^)(NSArray *))timeout
                      completion:(void (^)(void))completion {
     DLog(@"asyncRestoreArrangement: begin");
+    _sessionRestorationCount++;
     [self openPartialAttachmentsForArrangement:arrangement
                                        timeout:timeout
                                     completion:^(NSDictionary *partialAttachments) {
@@ -11553,6 +11561,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         self.restorableStateDecodePending = NO;
         // No more tabs will be restored, and in doing so deminiaturize the window.
         _suppressMakeCurrentTerminal &= ~iTermSuppressMakeCurrentTerminalMiniaturized;
+        [self decrementSessionRestorationCount];
         completion();
     }];
 }
@@ -12592,6 +12601,19 @@ backgroundColor:(NSColor *)backgroundColor {
     }
     assert(NO);
     return rect;
+}
+
+#pragma mark - iTermSessionRestorationStatusProtocol
+
+- (BOOL)isPerformingSessionRestoration {
+    return _sessionRestorationCount > 0;
+}
+
+- (void)decrementSessionRestorationCount {
+    _sessionRestorationCount--;
+    if (_sessionRestorationCount == 0) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionRestorationDidCompleteNotification object:self];
+    }
 }
 
 @end

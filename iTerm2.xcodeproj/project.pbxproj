@@ -3632,6 +3632,20 @@
 		A6CBB80E2E0A023A00B2CCCB /* password-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB80D2E0A023700B2CCCB /* password-demo.html */; };
 		A6CBB80F2E0A023A00B2CCCB /* password-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB80D2E0A023700B2CCCB /* password-demo.html */; };
 		A6CBB8102E0A023A00B2CCCB /* password-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB80D2E0A023700B2CCCB /* password-demo.html */; };
+		A6CBB8122E0A16A700B2CCCB /* iTermBookmarkTagEditorWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CBB8112E0A16A700B2CCCB /* iTermBookmarkTagEditorWindowController.swift */; };
+		A6CBB8232E0A21F800B2CCCB /* extract-resources.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8212E0A21F800B2CCCB /* extract-resources.js */; };
+		A6CBB8242E0A21F800B2CCCB /* rewrite-resources.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8222E0A21F800B2CCCB /* rewrite-resources.js */; };
+		A6CBB8252E0A21F800B2CCCB /* extract-resources.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8212E0A21F800B2CCCB /* extract-resources.js */; };
+		A6CBB8262E0A21F800B2CCCB /* rewrite-resources.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8222E0A21F800B2CCCB /* rewrite-resources.js */; };
+		A6CBB8272E0A21F800B2CCCB /* extract-resources.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8212E0A21F800B2CCCB /* extract-resources.js */; };
+		A6CBB8282E0A21F800B2CCCB /* rewrite-resources.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB8222E0A21F800B2CCCB /* rewrite-resources.js */; };
+		A6CBB82A2E0A21FF00B2CCCB /* iTermBrowserPageSaver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CBB8292E0A21FF00B2CCCB /* iTermBrowserPageSaver.swift */; };
+		A6CBB82C2E0A22DE00B2CCCB /* iTermBrowserContextMenuHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CBB82B2E0A22DE00B2CCCB /* iTermBrowserContextMenuHandler.swift */; };
+		A6CBB82E2E0A284100B2CCCB /* add-saved-attributes.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB82D2E0A283B00B2CCCB /* add-saved-attributes.js */; };
+		A6CBB82F2E0A284100B2CCCB /* add-saved-attributes.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB82D2E0A283B00B2CCCB /* add-saved-attributes.js */; };
+		A6CBB8302E0A284100B2CCCB /* add-saved-attributes.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB82D2E0A283B00B2CCCB /* add-saved-attributes.js */; };
+		A6CBB8382E0A647000B2CCCB /* iTermSessionRestorationStatusProtocol.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CBB8362E0A647000B2CCCB /* iTermSessionRestorationStatusProtocol.h */; };
+		A6CBB8392E0A647000B2CCCB /* iTermSessionRestorationStatusProtocol.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CBB8372E0A647000B2CCCB /* iTermSessionRestorationStatusProtocol.m */; };
 		A6CC16541CF012E300E8C148 /* iTermCarbonHotKeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */; };
 		A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */; };
 		A6CC49882C06E173003484B2 /* iTermPermissionsHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */; };
@@ -7867,6 +7881,14 @@
 		A6CBB8032E091DDF00B2CCCB /* iTermBrowserPasswordManagerHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserPasswordManagerHandler.swift; sourceTree = "<group>"; };
 		A6CBB8082E09E34500B2CCCB /* focus-password.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "focus-password.js"; sourceTree = "<group>"; };
 		A6CBB80D2E0A023700B2CCCB /* password-demo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "password-demo.html"; sourceTree = "<group>"; };
+		A6CBB8112E0A16A700B2CCCB /* iTermBookmarkTagEditorWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBookmarkTagEditorWindowController.swift; sourceTree = "<group>"; };
+		A6CBB8212E0A21F800B2CCCB /* extract-resources.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "extract-resources.js"; sourceTree = "<group>"; };
+		A6CBB8222E0A21F800B2CCCB /* rewrite-resources.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "rewrite-resources.js"; sourceTree = "<group>"; };
+		A6CBB8292E0A21FF00B2CCCB /* iTermBrowserPageSaver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserPageSaver.swift; sourceTree = "<group>"; };
+		A6CBB82B2E0A22DE00B2CCCB /* iTermBrowserContextMenuHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserContextMenuHandler.swift; sourceTree = "<group>"; };
+		A6CBB82D2E0A283B00B2CCCB /* add-saved-attributes.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "add-saved-attributes.js"; sourceTree = "<group>"; };
+		A6CBB8362E0A647000B2CCCB /* iTermSessionRestorationStatusProtocol.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSessionRestorationStatusProtocol.h; sourceTree = "<group>"; };
+		A6CBB8372E0A647000B2CCCB /* iTermSessionRestorationStatusProtocol.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSessionRestorationStatusProtocol.m; sourceTree = "<group>"; };
 		A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCarbonHotKeyController.h; sourceTree = "<group>"; };
 		A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCarbonHotKeyController.m; sourceTree = "<group>"; };
 		A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermPermissionsHelper.swift; sourceTree = "<group>"; };
@@ -10813,6 +10835,8 @@
 		A63011C120E8507D008114B7 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				A6CBB8362E0A647000B2CCCB /* iTermSessionRestorationStatusProtocol.h */,
+				A6CBB8372E0A647000B2CCCB /* iTermSessionRestorationStatusProtocol.m */,
 				A630116B20E60C8E008114B7 /* iTermStatusBarContainerView.h */,
 				A630116C20E60C8E008114B7 /* iTermStatusBarContainerView.m */,
 				A630116720E60725008114B7 /* iTermStatusBarLayout.h */,
@@ -12744,10 +12768,160 @@
 				A6CBB8032E091DDF00B2CCCB /* iTermBrowserPasswordManagerHandler.swift */,
 				A6F7D5112E05F1750065D09C /* iTermBrowserPasswordWriter.swift */,
 				A6CBB8012E091CBF00B2CCCB /* password-button.js */,
+				A6F7D5142E05F38F0065D09C /* probe-password.js */,
 				A6F7D5132E05F1F40065D09C /* write-password.js */,
 				A6CBB8082E09E34500B2CCCB /* focus-password.js */,
 			);
 			path = "Password Manager";
+			sourceTree = "<group>";
+		};
+		A6CBB8132E0A16AA00B2CCCB /* Bookmarks */ = {
+			isa = PBXGroup;
+			children = (
+				A6AF79CB2E065AA5008D77BA /* bookmarks-page.html */,
+				A6AF79CF2E065C93008D77BA /* bookmarks-page.js */,
+				A6AF79D02E065C93008D77BA /* iTermBrowserBookmarkViewHandler.swift */,
+				A6CBB8112E0A16A700B2CCCB /* iTermBookmarkTagEditorWindowController.swift */,
+			);
+			path = Bookmarks;
+			sourceTree = "<group>";
+		};
+		A6CBB8142E0A16CB00B2CCCB /* Database */ = {
+			isa = PBXGroup;
+			children = (
+				A6AF79C92E06593C008D77BA /* BrowserBookmarkTags.swift */,
+				A6AF79C52E06586A008D77BA /* BrowserBookmarks.swift */,
+				A6F7D4F32E0537710065D09C /* BrowserDatabase.swift */,
+				A6F7D4F12E0536530065D09C /* BrowserHistory.swift */,
+				A6D16EB82E087A4F0099139D /* BrowserPermissions.swift */,
+				A6F7D4F42E0537710065D09C /* BrowserVisits.swift */,
+			);
+			path = Database;
+			sourceTree = "<group>";
+		};
+		A6CBB8162E0A1B7400B2CCCB /* Local Pages */ = {
+			isa = PBXGroup;
+			children = (
+				A6F7D4C22E037BC80065D09C /* iTermBrowserCSSLoader.swift */,
+				A6F7D4BA2E0373110065D09C /* iTermBrowserErrorHandler.swift */,
+				A6AF79F92E07E27D008D77BA /* iTermBrowserLocalPageManager.swift */,
+				A6D16EB22E07EBD00099139D /* iTermBrowserStaticPageHandler.swift */,
+				A6F7D4C42E037E520065D09C /* iTermBrowserTemplateLoader.swift */,
+				A6F7D4C62E037E780065D09C /* error-page.html */,
+				A6D16EB42E07EC910099139D /* welcome-page.html */,
+				A6F7D4BE2E037BB20065D09C /* iterm-browser-common.css */,
+			);
+			path = "Local Pages";
+			sourceTree = "<group>";
+		};
+		A6CBB8172E0A1BBE00B2CCCB /* History */ = {
+			isa = PBXGroup;
+			children = (
+				A6F7D50D2E05CEDA0065D09C /* history-page.html */,
+				A6F7D5072E05CEBA0065D09C /* history-page.js */,
+				A6F7D4F72E05BDC10065D09C /* iTermBrowserHistoryController.swift */,
+				A6F7D5082E05CEBA0065D09C /* iTermBrowserHistoryViewHandler.swift */,
+			);
+			path = History;
+			sourceTree = "<group>";
+		};
+		A6CBB8182E0A1BE800B2CCCB /* Permissions */ = {
+			isa = PBXGroup;
+			children = (
+				A6D16EBA2E087A640099139D /* iTermBrowserPermissionManager.swift */,
+				A6CBB7F72E0912A100B2CCCB /* iTermBrowserPermissionsViewHandler.swift */,
+				A6CBB7F32E09124800B2CCCB /* permissions-page.html */,
+				A6CBB7F92E09149000B2CCCB /* permissions-page.js */,
+			);
+			path = Permissions;
+			sourceTree = "<group>";
+		};
+		A6CBB81A2E0A1C1700B2CCCB /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				A6F7D4BC2E037B4B0065D09C /* iTermBrowserSettingsHandler.swift */,
+				A6F7D4CA2E037EA80065D09C /* settings-page.html */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		A6CBB81B2E0A1C2900B2CCCB /* View Source */ = {
+			isa = PBXGroup;
+			children = (
+				A6F7D4D42E03D99F0065D09C /* view-source.html */,
+				A6F7D4DA2E03DBEA0065D09C /* iTermBrowserSourceHandler.swift */,
+			);
+			path = "View Source";
+			sourceTree = "<group>";
+		};
+		A6CBB81C2E0A1C5500B2CCCB /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				A6F7D4B62E03424F0065D09C /* iTermBrowserToolbar.swift */,
+				A6F7D4E02E0484790065D09C /* iTermBrowserURLTextView.swift */,
+				A6F7D4DE2E03E06E0065D09C /* iTermURLBar.swift */,
+				A6F7D4FB2E05BF0C0065D09C /* iTermURLHelpers.swift */,
+				A6F7D4DC2E03E03B0065D09C /* iTermURLTextField.swift */,
+				A6CBB82B2E0A22DE00B2CCCB /* iTermBrowserContextMenuHandler.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		A6CBB81D2E0A1C7200B2CCCB /* Polyfills */ = {
+			isa = PBXGroup;
+			children = (
+				A6CBB7B52E08999E00B2CCCB /* iTermBrowserGeolocationHandler.swift */,
+				A6CBB7B12E087F8A00B2CCCB /* iTermBrowserNotificationHandler.swift */,
+				A6CBB7B72E08B64100B2CCCB /* geolocation-bridge.js */,
+				A6CBB7AD2E087DBF00B2CCCB /* notification-bridge.js */,
+			);
+			path = Polyfills;
+			sourceTree = "<group>";
+		};
+		A6CBB81E2E0A1CB000B2CCCB /* Demos */ = {
+			isa = PBXGroup;
+			children = (
+				A6CBB7BB2E08BD9300B2CCCB /* geolocation-demo.html */,
+				A6CBB7EF2E090E9200B2CCCB /* media-demo.html */,
+				A6CBB7B32E088E1000B2CCCB /* notifications-demo.html */,
+			);
+			path = Demos;
+			sourceTree = "<group>";
+		};
+		A6CBB81F2E0A1CC200B2CCCB /* Favicon */ = {
+			isa = PBXGroup;
+			children = (
+				A6F7D5032E05C7D60065D09C /* detect-favicon.js */,
+				A6F7D5012E05C5C40065D09C /* iTermBrowserFavicon.swift */,
+			);
+			path = Favicon;
+			sourceTree = "<group>";
+		};
+		A6CBB8202E0A1CE000B2CCCB /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				A6CBB8222E0A21F800B2CCCB /* rewrite-resources.js */,
+				A6CBB7FD2E09163A00B2CCCB /* check-iframe-origins.js */,
+				A6F7D4E42E04AE7D0065D09C /* iTermAdblockManager.swift */,
+				A6F7D4D22E03D0A00065D09C /* iTermBrowserDownload.swift */,
+				A6F7D4D02E03BE3A0065D09C /* iTermBrowserFindManager.swift */,
+				A6F7D4B82E034E2B0065D09C /* iTermBrowserManager.swift */,
+				A6F7D4FD2E05C4850065D09C /* iTermBrowserNavigationState.swift */,
+				A6F7D4F92E05BE7F0065D09C /* iTermBrowserSuggestionsController.swift */,
+				A6F7D4B42E0340A80065D09C /* iTermBrowserViewController.swift */,
+				A6F7D4D82E03DB420065D09C /* iTermBrowserWebView.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		A6CBB8352E0A3B1000B2CCCB /* Page Saver */ = {
+			isa = PBXGroup;
+			children = (
+				A6CBB8292E0A21FF00B2CCCB /* iTermBrowserPageSaver.swift */,
+				A6CBB82D2E0A283B00B2CCCB /* add-saved-attributes.js */,
+				A6CBB8212E0A21F800B2CCCB /* extract-resources.js */,
+			);
+			path = "Page Saver";
 			sourceTree = "<group>";
 		};
 		A6CEBF5F1DCE7DF3009F4FD2 /* Proto */ = {
@@ -13022,60 +13196,20 @@
 		A6F7D4B32E0340A30065D09C /* Browser */ = {
 			isa = PBXGroup;
 			children = (
+				A6CBB8352E0A3B1000B2CCCB /* Page Saver */,
+				A6CBB8132E0A16AA00B2CCCB /* Bookmarks */,
+				A6CBB8202E0A1CE000B2CCCB /* Core */,
+				A6CBB8142E0A16CB00B2CCCB /* Database */,
+				A6CBB81E2E0A1CB000B2CCCB /* Demos */,
+				A6CBB81F2E0A1CC200B2CCCB /* Favicon */,
+				A6CBB8172E0A1BBE00B2CCCB /* History */,
+				A6CBB8162E0A1B7400B2CCCB /* Local Pages */,
 				A6CBB80C2E09E4A700B2CCCB /* Password Manager */,
-				A6AF79CB2E065AA5008D77BA /* bookmarks-page.html */,
-				A6AF79CF2E065C93008D77BA /* bookmarks-page.js */,
-				A6CBB7FD2E09163A00B2CCCB /* check-iframe-origins.js */,
-				A6F7D5032E05C7D60065D09C /* detect-favicon.js */,
-				A6F7D4C62E037E780065D09C /* error-page.html */,
-				A6CBB7B72E08B64100B2CCCB /* geolocation-bridge.js */,
-				A6CBB7BB2E08BD9300B2CCCB /* geolocation-demo.html */,
-				A6F7D50D2E05CEDA0065D09C /* history-page.html */,
-				A6F7D5072E05CEBA0065D09C /* history-page.js */,
-				A6F7D4BE2E037BB20065D09C /* iterm-browser-common.css */,
-				A6CBB7EF2E090E9200B2CCCB /* media-demo.html */,
-				A6CBB7AD2E087DBF00B2CCCB /* notification-bridge.js */,
-				A6CBB7B32E088E1000B2CCCB /* notifications-demo.html */,
-				A6CBB7F32E09124800B2CCCB /* permissions-page.html */,
-				A6CBB7F92E09149000B2CCCB /* permissions-page.js */,
-				A6F7D5142E05F38F0065D09C /* probe-password.js */,
-				A6F7D4CA2E037EA80065D09C /* settings-page.html */,
-				A6F7D4D42E03D99F0065D09C /* view-source.html */,
-				A6D16EB42E07EC910099139D /* welcome-page.html */,
-				A6AF79C92E06593C008D77BA /* BrowserBookmarkTags.swift */,
-				A6AF79C52E06586A008D77BA /* BrowserBookmarks.swift */,
-				A6F7D4F32E0537710065D09C /* BrowserDatabase.swift */,
-				A6F7D4F12E0536530065D09C /* BrowserHistory.swift */,
-				A6D16EB82E087A4F0099139D /* BrowserPermissions.swift */,
-				A6F7D4F42E0537710065D09C /* BrowserVisits.swift */,
-				A6F7D4E42E04AE7D0065D09C /* iTermAdblockManager.swift */,
-				A6F7D4C22E037BC80065D09C /* iTermBrowserCSSLoader.swift */,
-				A6AF79D02E065C93008D77BA /* iTermBrowserBookmarkViewHandler.swift */,
-				A6CBB7B52E08999E00B2CCCB /* iTermBrowserGeolocationHandler.swift */,
-				A6F7D4D22E03D0A00065D09C /* iTermBrowserDownload.swift */,
-				A6F7D4BA2E0373110065D09C /* iTermBrowserErrorHandler.swift */,
-				A6F7D5012E05C5C40065D09C /* iTermBrowserFavicon.swift */,
-				A6F7D4D02E03BE3A0065D09C /* iTermBrowserFindManager.swift */,
-				A6F7D4F72E05BDC10065D09C /* iTermBrowserHistoryController.swift */,
-				A6F7D5082E05CEBA0065D09C /* iTermBrowserHistoryViewHandler.swift */,
-				A6AF79F92E07E27D008D77BA /* iTermBrowserLocalPageManager.swift */,
-				A6F7D4B82E034E2B0065D09C /* iTermBrowserManager.swift */,
-				A6F7D4FD2E05C4850065D09C /* iTermBrowserNavigationState.swift */,
-				A6CBB7B12E087F8A00B2CCCB /* iTermBrowserNotificationHandler.swift */,
-				A6D16EBA2E087A640099139D /* iTermBrowserPermissionManager.swift */,
-				A6CBB7F72E0912A100B2CCCB /* iTermBrowserPermissionsViewHandler.swift */,
-				A6F7D4BC2E037B4B0065D09C /* iTermBrowserSettingsHandler.swift */,
-				A6F7D4DA2E03DBEA0065D09C /* iTermBrowserSourceHandler.swift */,
-				A6D16EB22E07EBD00099139D /* iTermBrowserStaticPageHandler.swift */,
-				A6F7D4F92E05BE7F0065D09C /* iTermBrowserSuggestionsController.swift */,
-				A6F7D4C42E037E520065D09C /* iTermBrowserTemplateLoader.swift */,
-				A6F7D4B62E03424F0065D09C /* iTermBrowserToolbar.swift */,
-				A6F7D4E02E0484790065D09C /* iTermBrowserURLTextView.swift */,
-				A6F7D4B42E0340A80065D09C /* iTermBrowserViewController.swift */,
-				A6F7D4D82E03DB420065D09C /* iTermBrowserWebView.swift */,
-				A6F7D4DE2E03E06E0065D09C /* iTermURLBar.swift */,
-				A6F7D4FB2E05BF0C0065D09C /* iTermURLHelpers.swift */,
-				A6F7D4DC2E03E03B0065D09C /* iTermURLTextField.swift */,
+				A6CBB8182E0A1BE800B2CCCB /* Permissions */,
+				A6CBB81D2E0A1C7200B2CCCB /* Polyfills */,
+				A6CBB81A2E0A1C1700B2CCCB /* Settings */,
+				A6CBB81C2E0A1C5500B2CCCB /* UI */,
+				A6CBB81B2E0A1C2900B2CCCB /* View Source */,
 			);
 			path = Browser;
 			sourceTree = "<group>";
@@ -14206,6 +14340,7 @@
 				53E8F36F2244A58800F3770F /* iTermActionsModel.h in Headers */,
 				A66719321DCE36C3000CE608 /* iTermAdditionalHotKeyObjectValue.h in Headers */,
 				A6FF3F322435C8E5003CCB03 /* iTermSplitViewAnimation.h in Headers */,
+				A6CBB8382E0A647000B2CCCB /* iTermSessionRestorationStatusProtocol.h in Headers */,
 				A63935952103FD8B00A16D1C /* iTermMemoryUtilization.h in Headers */,
 				A695CA7F213DAA8500486440 /* NSHost+iTerm.h in Headers */,
 				A665C1D0243A606C00F623F0 /* iTermRequestCookieCommand.h in Headers */,
@@ -15037,6 +15172,8 @@
 				A67F61EF214395D50093940A /* graphic_vim@2x.png in Resources */,
 				1D6ED97719AEA20D005A7799 /* config.png in Resources */,
 				A629F58323AF2DE900C2F16B /* iterm2_shell_integration.zsh in Resources */,
+				A6CBB8232E0A21F800B2CCCB /* extract-resources.js in Resources */,
+				A6CBB8242E0A21F800B2CCCB /* rewrite-resources.js in Resources */,
 				1DB40A431B1FDC80005B83C7 /* NoColor@2x.png in Resources */,
 				A6CBB80E2E0A023A00B2CCCB /* password-demo.html in Resources */,
 				A663010A19CFCE74004AF81C /* SuppressAllOutput.png in Resources */,
@@ -15414,6 +15551,7 @@
 				A6CBB7BE2E08BDD600B2CCCB /* geolocation-demo.html in Resources */,
 				A6109B662B969B4100D8E4E9 /* graphic_neovim@2x.png in Resources */,
 				A6C838B22CB9ACF90062BE68 /* success-sound.mp3 in Resources */,
+				A6CBB8302E0A284100B2CCCB /* add-saved-attributes.js in Resources */,
 				A6C838B32CB9ACF90062BE68 /* error-sound.mp3 in Resources */,
 				A6A64E632508BE650040490B /* StatusBarIconSnippet.png in Resources */,
 				A67F614C214395870093940A /* graphic_http.png in Resources */,
@@ -15658,6 +15796,8 @@
 				A67D0D8D1A2EE12A003A8B35 /* SplitPanel.xib in Resources */,
 				A67A50B226CCD3E300281693 /* xterm in Resources */,
 				A6F7A714213CB143004DE961 /* StatusBarIconClock@2x.png in Resources */,
+				A6CBB8272E0A21F800B2CCCB /* extract-resources.js in Resources */,
+				A6CBB8282E0A21F800B2CCCB /* rewrite-resources.js in Resources */,
 				A67D0D691A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib in Resources */,
 				A6C978F524A0194500971AA7 /* WindowCornerFull@2x.png in Resources */,
 				A6B4833129D73DA10055E24A /* text.redaction.png in Resources */,
@@ -15818,6 +15958,7 @@
 				A65DF4AA2849F2AA00AA29AB /* iterm2-shell-integration-loader.fish in Resources */,
 				A6E7AE59214394CA00DE9F3B /* graphic_bq@2x.png in Resources */,
 				A6EFF2391D20F6BF00806EEF /* EraseDarkBackground.png in Resources */,
+				A6CBB82F2E0A284100B2CCCB /* add-saved-attributes.js in Resources */,
 				A697CE642D9773CE0031583F /* InstantReplayMenuTip.png in Resources */,
 				A697CE652D9773CE0031583F /* InstantReplayMenuTip@2x.png in Resources */,
 				A6F7A74A213CB143004DE961 /* StatusBarIconRAM.png in Resources */,
@@ -16237,6 +16378,7 @@
 				A6F7A722213CB143004DE961 /* StatusBarIconCPU.png in Resources */,
 				A697CEC12D98C3560031583F /* SparklesSquareFilledOnSquare.png in Resources */,
 				A6EC5FB92B98404300F84417 /* Onboarding-AI.png in Resources */,
+				A6CBB82E2E0A284100B2CCCB /* add-saved-attributes.js in Resources */,
 				A6F7A72E213CB143004DE961 /* StatusBarIconLoupe.png in Resources */,
 				537A1FB822168DF800FBEE5A /* MinimalFindView.xib in Resources */,
 				A6CB24AE2C68149100005824 /* it2ul in Resources */,
@@ -16324,6 +16466,8 @@
 				A69A15731D7FD78200A9E7EF /* TipCalendar.png in Resources */,
 				1DA02CFB1327612600D7E7DB /* bell.png in Resources */,
 				A67D0D861A2EE12A003A8B35 /* PseudoTerminal.strings in Resources */,
+				A6CBB8252E0A21F800B2CCCB /* extract-resources.js in Resources */,
+				A6CBB8262E0A21F800B2CCCB /* rewrite-resources.js in Resources */,
 				A67F61F52143976F0093940A /* graphic_colors.json in Resources */,
 				A61A85A324F1CCB900B03880 /* iTermGlobalSearch.xib in Resources */,
 				A6F18B592AE2F39C006C08EE /* uniE0CF_lego_separator_thin.pdf in Resources */,
@@ -17861,11 +18005,13 @@
 				53D0FD4E237DC30F00DAFA8A /* NSIndexSet+iTerm.m in Sources */,
 				A629F59C23AFF4D400C2F16B /* iTermShellIntegrationPanel.m in Sources */,
 				A6A5995B25930F8F0041172E /* TextViewWrapper.m in Sources */,
+				A6CBB82A2E0A21FF00B2CCCB /* iTermBrowserPageSaver.swift in Sources */,
 				A60E046526E037BE00DD162B /* ContentSubscriber.swift in Sources */,
 				A639359A210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.m in Sources */,
 				A6C5EDCF2D4D6CFA000D9E85 /* TmuxFormatBuiltInCommand.swift in Sources */,
 				A69CCB1D211BF4FF008ADA71 /* iTermRecordingCodec.m in Sources */,
 				A6DBC2FD2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.m in Sources */,
+				A6CBB82C2E0A22DE00B2CCCB /* iTermBrowserContextMenuHandler.swift in Sources */,
 				A6069F202DF3AB9600EE6CC7 /* LLMProvider.swift in Sources */,
 				A6EB643C2D5D805500481D33 /* AIExplanationResponse.swift in Sources */,
 				A6D1A3E92C7E99A100FECDF2 /* NSPoint+iTerm.swift in Sources */,
@@ -17964,6 +18110,7 @@
 				A6BC9B1F214A2AE900F50C09 /* iTermVariableReference.m in Sources */,
 				A64B68DB2337314E009DA064 /* ToolCapturedOutputView.m in Sources */,
 				530098512259A44D00A69348 /* iTermSoundPlayer.m in Sources */,
+				A6CBB8122E0A16A700B2CCCB /* iTermBookmarkTagEditorWindowController.swift in Sources */,
 				A621F10726F53071001DD3A6 /* iTermExternalAttributeIndex.m in Sources */,
 				A6D1784721BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.m in Sources */,
 				A62CD06B27E93F5B00215E92 /* iTermSwiftHelpers.m in Sources */,
@@ -18250,6 +18397,7 @@
 				A6F66B992C2E2B7600DC3569 /* Compatibility.swift in Sources */,
 				A6F66B9A2C2E2B7600DC3569 /* BTreeNode.swift in Sources */,
 				A6F66B9B2C2E2B7600DC3569 /* SortedSet.swift in Sources */,
+				A6CBB8392E0A647000B2CCCB /* iTermSessionRestorationStatusProtocol.m in Sources */,
 				A6F66B9C2C2E2B7600DC3569 /* SortedBag.swift in Sources */,
 				A6F66B9D2C2E2B7600DC3569 /* BTreeComparisons.swift in Sources */,
 				A6F66B9E2C2E2B7600DC3569 /* List.swift in Sources */,
