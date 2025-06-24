@@ -148,6 +148,7 @@
 #define KEY_NON_ASCII_FONT         @"Non Ascii Font"
 #define KEY_FONT_CONFIG            @"Special Font Config"
 #define KEY_HORIZONTAL_SPACING     @"Horizontal Spacing"
+#define KEY_BROWSER_ZOOM           @"Browser Zoom"
 #define KEY_VERTICAL_SPACING       @"Vertical Spacing"
 #define KEY_BLINKING_CURSOR        @"Blinking Cursor"
 #define KEY_CURSOR_SHADOW          @"Cursor Shadow"
