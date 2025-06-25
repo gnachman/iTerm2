@@ -4695,17 +4695,6 @@ DQ
                         </textField>
                     </subviews>
                 </customView>
-                <button toolTip="When a password prompt appears, automatically open the password manager?" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7G9-14-8aW">
-                    <rect key="frame" x="154" y="204" width="489" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Open password manager automatically when a password prompt is detected" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="UEU-xg-gYz">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="TG6-06-mq9" id="QPe-qJ-IC9"/>
-                    </connections>
-                </button>
                 <button toolTip="Shows a configurable status bar at the top of each session." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cO8-6s-51k">
                     <rect key="frame" x="154" y="107" width="141" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -4726,15 +4715,32 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Iee-yn-w0U">
-                    <rect key="frame" x="14" y="205" width="131" height="16"/>
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Zae-Zi-gIm" customClass="iTermTerminalModeEnclosure">
+                    <rect key="frame" x="16" y="194" width="627" height="27"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Password manager:" id="Lpl-Ru-V2u">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
+                    <subviews>
+                        <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Iee-yn-w0U">
+                            <rect key="frame" x="-2" y="11" width="131" height="16"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Password manager:" id="Lpl-Ru-V2u">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <button toolTip="When a password prompt appears, automatically open the password manager?" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7G9-14-8aW">
+                            <rect key="frame" x="138" y="10" width="489" height="18"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="check" title="Open password manager automatically when a password prompt is detected" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="UEU-xg-gYz">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="settingChanged:" target="TG6-06-mq9" id="QPe-qJ-IC9"/>
+                            </connections>
+                        </button>
+                    </subviews>
+                </customView>
                 <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="voN-t3-8lg">
                     <rect key="frame" x="14" y="107" width="131" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -5004,7 +5010,7 @@ DQ
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <clipView key="contentView" id="ArV-0K-qze">
                                 <rect key="frame" x="1" y="1" width="450" height="95"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="5661">
                                         <rect key="frame" x="0.0" y="0.0" width="450" height="95"/>
