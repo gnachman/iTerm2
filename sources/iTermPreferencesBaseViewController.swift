@@ -149,6 +149,11 @@ extension iTermPreferencesBaseViewController {
         if let savedFrames {
             // Restore all the original frames
             for tuple in savedFrames.frames {
+                /*
+                if tuple.0.identifier?.rawValue == "debug" {
+                    print("Restoring frame of debug view. It is \(tuple.1)")
+                }
+                 */
                 tuple.0.frame = tuple.1
             }
             // Put back formerly removed tab view items
@@ -165,6 +170,11 @@ extension iTermPreferencesBaseViewController {
             savedFrames.configuration = configuration
         } else {
             let siblings = Set(enclosures.flatMap { $0.superview?.subviews ?? [] })
+            /*
+            if let debug = siblings.first(where: { $0.identifier?.rawValue == "debug" }) {
+                fuckingPrint("Saving frame of debug view \(debug.description). It is \(debug.frame)")
+            }
+             */
             let savedFrames = SavedFrames()
             savedFrames.frames = siblings.map { ($0, $0.frame) }
             savedFrames.tabViewItems = tabViews.map { ($0, $0.tabViewItems) }
@@ -186,7 +196,11 @@ extension iTermPreferencesBaseViewController {
                 var frame = view.frame
                 frame.origin.y += shift
                 view.frame = frame
-
+                /*
+                if view.identifier?.rawValue == "debug" {
+                    print("Shift debug view by \(shift) to \(frame)")
+                }
+                 */
                 if siblingsToRemove.contains(view) {
                     shift += view.frame.height
                     view.isHidden = true

@@ -586,7 +586,7 @@ static iTermPreferencesSearchEngine *gSearchEngine;
     [_toolbar setVisible:NO];
 
     [_profilesViewController resizeWindowForCurrentTabAnimated:NO];
-
+    [_profilesViewController didLayoutSubviewsForEditCurrentSessionMode];
 }
 
 #pragma mark - API
