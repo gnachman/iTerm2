@@ -56,7 +56,11 @@ class iTermBrowserKeyBindingActionPerformer {
             return false
 
         case .ACTION_SET_PROFILE:
-            // TODO: Make sure you're not changing to a non-browser profile! After that it's fine to use PTYSession's implementation.
+            let profile = ProfileModel.sharedInstance().bookmark(withGuid: action.parameter) as? NSDictionary
+            guard let profile, profile.profileIsBrowser else {
+                DLog("Profile not a browser: \(profile.d)\n\(Thread.callStackSymbols)")
+                return true
+            }
             return false
 
         case .ACTION_SCROLL_END:
