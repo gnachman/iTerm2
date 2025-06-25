@@ -20,8 +20,11 @@
 @property(nonatomic, copy) NSString *lockedGuid;
 @property(nonatomic, copy) NSArray *sortDescriptors;
 @property(nonatomic, readonly) int numberOfBookmarks;  // Filtered bookmarks only
+@property(nonatomic) ProfileType profileTypes;
 
-- (instancetype)initWithModel:(ProfileModel*)model;
+- (instancetype)initWithModel:(ProfileModel*)model
+                 profileTypes:(ProfileType)profileTypes NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
 
 // Cause the underlying model to have the visible bookmarks in the same order as
 // they appear here. Only bookmarks matching the filter are pushed.

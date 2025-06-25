@@ -966,7 +966,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (BOOL)hasAnnouncementWithIdentifier:(NSString *)identifier;
 
 // Change the current profile but keep the name the same.
-- (void)setProfile:(NSDictionary *)newProfile
+- (BOOL)setProfile:(NSDictionary *)newProfile
     preservingName:(BOOL)preserveName;
 
 // Make the scroll view's document view be this session's textViewWrapper.

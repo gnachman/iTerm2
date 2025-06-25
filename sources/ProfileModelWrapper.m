@@ -16,9 +16,11 @@
     NSArray* sortDescriptors;
 }
 
-- (instancetype)initWithModel:(ProfileModel*)model {
+- (instancetype)initWithModel:(ProfileModel*)model
+                 profileTypes:(ProfileType)profileTypes {
     self = [super init];
     if (self) {
+        _profileTypes = profileTypes;
         underlyingModel = model;
         bookmarks = [[NSMutableArray alloc] init];
         filter = [[NSMutableString alloc] init];
@@ -94,8 +96,10 @@
 - (void)sync {
     DLog(@"Synchronize profile model wrapper with underlying bookmarks");
     [bookmarks removeAllObjects];
-    NSArray *filteredBookmarks = [underlyingModel bookmarkIndicesMatchingFilter:filter
-                                                                         orGuid:self.lockedGuid];
+
+    NSArray *filteredBookmarks = [underlyingModel profileIndicesMatchingFilter:filter
+                                                                        orGuid:self.lockedGuid
+                                                                        ofType:_profileTypes];
     for (NSNumber *n in filteredBookmarks) {
         int i = [n intValue];
         [bookmarks addObject:[[[ProfileTableRow alloc] initWithBookmark:[underlyingModel profileAtIndex:i]
@@ -154,6 +158,11 @@
     self.lockedGuid = nil;
     [filter release];
     filter = [[NSMutableString stringWithString:newFilter] retain];
+}
+
+- (void)setProfileTypes:(ProfileType)profileTypes {
+    _profileTypes = profileTypes;
+    self.lockedGuid = nil;
 }
 
 @end
