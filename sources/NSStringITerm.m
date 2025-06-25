@@ -2960,6 +2960,19 @@ static NSDictionary<NSString *, NSNumber *> *iTermKittyDiacriticIndex(void) {
     return sca;
 }
 
++ (NSData *)dataForHexCodes:(NSString *)codes {
+    NSMutableData *data = [NSMutableData data];
+    NSArray* components = [codes componentsSeparatedByString:@" "];
+    for (NSString* part in components) {
+        const char* utf8 = [part UTF8String];
+        char* endPtr;
+        unsigned char c = strtol(utf8, &endPtr, 16);
+        if (endPtr != utf8) {
+            [data appendData:[NSData dataWithBytes:&c length:sizeof(c)]];
+        }
+    }
+    return data;
+}
 
 @end
 

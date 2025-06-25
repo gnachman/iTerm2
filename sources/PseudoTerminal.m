@@ -2328,7 +2328,8 @@ ITERM_WEAKLY_REFERENCEABLE
                  hasFlexibleView:NO
                          viewMap:nil
                       sessionMap:nil
-              partialAttachments:nil];
+              partialAttachments:nil
+                         options:nil];
 }
 
 - (void)restartSessionWithConfirmation:(PTYSession *)aSession {
@@ -3600,7 +3601,8 @@ ITERM_WEAKLY_REFERENCEABLE
                             hasFlexibleView:NO
                                     viewMap:nil
                                  sessionMap:sessionMap
-                       partialAttachments:partialAttachments]) {
+                       partialAttachments:partialAttachments
+                                  options:nil]) {
             return NO;
         }
         openedAny = YES;
@@ -8424,7 +8426,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                            sessionMap:theMap
                                        tmuxController:nil
                                    partialAttachments:nil
-                                     reservedTabGUIDs:[self tabGUIDs]];
+                                     reservedTabGUIDs:[self tabGUIDs]
+                                              options:nil];
     [tab replaceWithContentsOfTab:temporaryTab];
     [tab updatePaneTitles];
     [tab setActiveSession:nil];
@@ -8460,7 +8463,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                   sessionMap:sessionMap
                               tmuxController:nil
                           partialAttachments:nil
-                            reservedTabGUIDs:[self tabGUIDs]];
+                            reservedTabGUIDs:[self tabGUIDs]
+                                     options:nil];
     tab.uniqueId = tabUniqueId;
     for (NSString *theKey in sessionMap) {
         PTYSession *session = sessionMap[theKey];
@@ -9159,7 +9163,8 @@ typedef NS_ENUM(NSUInteger, PseudoTerminalTabSizeExclusion) {
                    hasFlexibleView:(BOOL)hasFlexible
                            viewMap:(NSDictionary<NSNumber *, SessionView *> *)viewMap
                         sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap
-                partialAttachments:(NSDictionary *)partialAttachments {
+                partialAttachments:(NSDictionary *)partialAttachments
+                           options:(NSDictionary *)options {
     PTYTab *theTab = [PTYTab tabWithArrangement:arrangement
                                           named:arrangementName
                                      inTerminal:self
@@ -9168,7 +9173,8 @@ typedef NS_ENUM(NSUInteger, PseudoTerminalTabSizeExclusion) {
                                      sessionMap:sessionMap
                                  tmuxController:nil
                              partialAttachments:partialAttachments
-                               reservedTabGUIDs:[self tabGUIDs]];
+                               reservedTabGUIDs:[self tabGUIDs]
+                                        options:options];
     if ([[theTab sessionViews] count] == 0) {
         return nil;
     }
@@ -11035,12 +11041,13 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                               didMakeSession:nil
                                   completion:nil];
     } else {
-        [destinationTerminal openTabWithArrangement:theTab.arrangementWithNewGUID
+        [destinationTerminal openTabWithArrangement:theTab.arrangementForDuplication
                                               named:nil
                                     hasFlexibleView:theTab.isTmuxTab
                                             viewMap:nil
                                          sessionMap:nil
-                                 partialAttachments:nil];
+                                 partialAttachments:nil
+                                            options:@{ PTYSessionArrangementOptionsForDuplication: @YES }];
     }
 }
 

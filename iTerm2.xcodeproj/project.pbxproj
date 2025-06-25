@@ -3681,6 +3681,26 @@
 		A6CBB90C2E0A832C00B2CCCB /* distraction-removal.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB90A2E0A832B00B2CCCB /* distraction-removal.js */; };
 		A6CBB90D2E0A832C00B2CCCB /* distraction-removal.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB90A2E0A832B00B2CCCB /* distraction-removal.js */; };
 		A6CBB9742E0B18D400B2CCCB /* iTermBrowserOpenSearchSuggestions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CBB9722E0B18D400B2CCCB /* iTermBrowserOpenSearchSuggestions.swift */; };
+		A6CBB9D62E0B608F00B2CCCB /* iTermBrowserKeyBindingActionPerformer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CBB9D52E0B608E00B2CCCB /* iTermBrowserKeyBindingActionPerformer.swift */; };
+		A6CBB9DF2E0B6E9300B2CCCB /* WKWebView+KeyBindings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CBB9DD2E0B6E9300B2CCCB /* WKWebView+KeyBindings.swift */; };
+		A6CBB9E02E0B6EA200B2CCCB /* extend-selection-character.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9D82E0B6E9300B2CCCB /* extend-selection-character.js */; };
+		A6CBB9E12E0B6EA200B2CCCB /* extend-selection-word.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9DA2E0B6E9300B2CCCB /* extend-selection-word.js */; };
+		A6CBB9E22E0B6EA200B2CCCB /* extend-selection-bigword.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9D72E0B6E9300B2CCCB /* extend-selection-bigword.js */; };
+		A6CBB9E32E0B6EA200B2CCCB /* extend-selection-line.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9D92E0B6E9300B2CCCB /* extend-selection-line.js */; };
+		A6CBB9E42E0B6EA200B2CCCB /* has-selection.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9DB2E0B6E9300B2CCCB /* has-selection.js */; };
+		A6CBB9E52E0B6EA200B2CCCB /* insert-text.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9DC2E0B6E9300B2CCCB /* insert-text.js */; };
+		A6CBB9E62E0B6EA200B2CCCB /* has-selection.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9DB2E0B6E9300B2CCCB /* has-selection.js */; };
+		A6CBB9E72E0B6EA200B2CCCB /* extend-selection-line.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9D92E0B6E9300B2CCCB /* extend-selection-line.js */; };
+		A6CBB9E82E0B6EA200B2CCCB /* insert-text.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9DC2E0B6E9300B2CCCB /* insert-text.js */; };
+		A6CBB9E92E0B6EA200B2CCCB /* extend-selection-character.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9D82E0B6E9300B2CCCB /* extend-selection-character.js */; };
+		A6CBB9EA2E0B6EA200B2CCCB /* extend-selection-word.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9DA2E0B6E9300B2CCCB /* extend-selection-word.js */; };
+		A6CBB9EB2E0B6EA200B2CCCB /* extend-selection-bigword.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9D72E0B6E9300B2CCCB /* extend-selection-bigword.js */; };
+		A6CBB9EC2E0B6EA200B2CCCB /* insert-text.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9DC2E0B6E9300B2CCCB /* insert-text.js */; };
+		A6CBB9ED2E0B6EA200B2CCCB /* extend-selection-word.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9DA2E0B6E9300B2CCCB /* extend-selection-word.js */; };
+		A6CBB9EE2E0B6EA200B2CCCB /* extend-selection-bigword.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9D72E0B6E9300B2CCCB /* extend-selection-bigword.js */; };
+		A6CBB9EF2E0B6EA200B2CCCB /* extend-selection-line.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9D92E0B6E9300B2CCCB /* extend-selection-line.js */; };
+		A6CBB9F02E0B6EA200B2CCCB /* extend-selection-character.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9D82E0B6E9300B2CCCB /* extend-selection-character.js */; };
+		A6CBB9F12E0B6EA200B2CCCB /* has-selection.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9DB2E0B6E9300B2CCCB /* has-selection.js */; };
 		A6CC16541CF012E300E8C148 /* iTermCarbonHotKeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */; };
 		A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */; };
 		A6CC49882C06E173003484B2 /* iTermPermissionsHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */; };
@@ -7937,6 +7957,14 @@
 		A6CBB9032E0A823D00B2CCCB /* exit-distraction-removal.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "exit-distraction-removal.js"; sourceTree = "<group>"; };
 		A6CBB90A2E0A832B00B2CCCB /* distraction-removal.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "distraction-removal.js"; sourceTree = "<group>"; };
 		A6CBB9722E0B18D400B2CCCB /* iTermBrowserOpenSearchSuggestions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserOpenSearchSuggestions.swift; sourceTree = "<group>"; };
+		A6CBB9D52E0B608E00B2CCCB /* iTermBrowserKeyBindingActionPerformer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserKeyBindingActionPerformer.swift; sourceTree = "<group>"; };
+		A6CBB9D72E0B6E9300B2CCCB /* extend-selection-bigword.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "extend-selection-bigword.js"; sourceTree = "<group>"; };
+		A6CBB9D82E0B6E9300B2CCCB /* extend-selection-character.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "extend-selection-character.js"; sourceTree = "<group>"; };
+		A6CBB9D92E0B6E9300B2CCCB /* extend-selection-line.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "extend-selection-line.js"; sourceTree = "<group>"; };
+		A6CBB9DA2E0B6E9300B2CCCB /* extend-selection-word.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "extend-selection-word.js"; sourceTree = "<group>"; };
+		A6CBB9DB2E0B6E9300B2CCCB /* has-selection.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "has-selection.js"; sourceTree = "<group>"; };
+		A6CBB9DC2E0B6E9300B2CCCB /* insert-text.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "insert-text.js"; sourceTree = "<group>"; };
+		A6CBB9DD2E0B6E9300B2CCCB /* WKWebView+KeyBindings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WKWebView+KeyBindings.swift"; sourceTree = "<group>"; };
 		A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCarbonHotKeyController.h; sourceTree = "<group>"; };
 		A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCarbonHotKeyController.m; sourceTree = "<group>"; };
 		A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermPermissionsHelper.swift; sourceTree = "<group>"; };
@@ -12948,6 +12976,7 @@
 		A6CBB8202E0A1CE000B2CCCB /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				A6CBB9D52E0B608E00B2CCCB /* iTermBrowserKeyBindingActionPerformer.swift */,
 				A6CBB8222E0A21F800B2CCCB /* rewrite-resources.js */,
 				A6CBB7FD2E09163A00B2CCCB /* check-iframe-origins.js */,
 				A6F7D4E42E04AE7D0065D09C /* iTermAdblockManager.swift */,
@@ -12997,6 +13026,20 @@
 				A6F7D4F92E05BE7F0065D09C /* iTermBrowserSuggestionsController.swift */,
 			);
 			path = Suggestions;
+			sourceTree = "<group>";
+		};
+		A6CBB9DE2E0B6E9300B2CCCB /* WebView Additions */ = {
+			isa = PBXGroup;
+			children = (
+				A6CBB9D72E0B6E9300B2CCCB /* extend-selection-bigword.js */,
+				A6CBB9D82E0B6E9300B2CCCB /* extend-selection-character.js */,
+				A6CBB9D92E0B6E9300B2CCCB /* extend-selection-line.js */,
+				A6CBB9DA2E0B6E9300B2CCCB /* extend-selection-word.js */,
+				A6CBB9DB2E0B6E9300B2CCCB /* has-selection.js */,
+				A6CBB9DC2E0B6E9300B2CCCB /* insert-text.js */,
+				A6CBB9DD2E0B6E9300B2CCCB /* WKWebView+KeyBindings.swift */,
+			);
+			path = "WebView Additions";
 			sourceTree = "<group>";
 		};
 		A6CEBF5F1DCE7DF3009F4FD2 /* Proto */ = {
@@ -13287,6 +13330,7 @@
 				A6CBB9732E0B18D400B2CCCB /* Suggestions */,
 				A6CBB81C2E0A1C5500B2CCCB /* UI */,
 				A6CBB81B2E0A1C2900B2CCCB /* View Source */,
+				A6CBB9DE2E0B6E9300B2CCCB /* WebView Additions */,
 			);
 			path = Browser;
 			sourceTree = "<group>";
@@ -15687,6 +15731,12 @@
 				1D8BBA751B30F7FB0005A852 /* Dismiss.png in Resources */,
 				1D6ED9DF19AEA20D005A7799 /* PrefsGeneral@2x.png in Resources */,
 				A6F370772DAB193900A0A59E /* folder.png in Resources */,
+				A6CBB9EC2E0B6EA200B2CCCB /* insert-text.js in Resources */,
+				A6CBB9ED2E0B6EA200B2CCCB /* extend-selection-word.js in Resources */,
+				A6CBB9EE2E0B6EA200B2CCCB /* extend-selection-bigword.js in Resources */,
+				A6CBB9EF2E0B6EA200B2CCCB /* extend-selection-line.js in Resources */,
+				A6CBB9F02E0B6EA200B2CCCB /* extend-selection-character.js in Resources */,
+				A6CBB9F12E0B6EA200B2CCCB /* has-selection.js in Resources */,
 				A6F370782DAB193900A0A59E /* folder@2x.png in Resources */,
 				A65B72541B1A5D7500F947A7 /* WarningSign.png in Resources */,
 				A631FCA520EF0DFB00EB824F /* iTermStatusBarKnobColorViewController.xib in Resources */,
@@ -16170,6 +16220,12 @@
 				A67F61BF214395C60093940A /* graphic_ruby@2x.png in Resources */,
 				A6E20BB51AC10A60000B18ED /* DefaultBookmark.plist in Resources */,
 				A67D0D4E1A2EE12A003A8B35 /* DirectoriesPopup.xib in Resources */,
+				A6CBB9E62E0B6EA200B2CCCB /* has-selection.js in Resources */,
+				A6CBB9E72E0B6EA200B2CCCB /* extend-selection-line.js in Resources */,
+				A6CBB9E82E0B6EA200B2CCCB /* insert-text.js in Resources */,
+				A6CBB9E92E0B6EA200B2CCCB /* extend-selection-character.js in Resources */,
+				A6CBB9EA2E0B6EA200B2CCCB /* extend-selection-word.js in Resources */,
+				A6CBB9EB2E0B6EA200B2CCCB /* extend-selection-bigword.js in Resources */,
 				A6F7A741213CB143004DE961 /* StatusBarIconHost@2x.png in Resources */,
 				A6F31A2B295BC41700C1A51E /* uniE0CC_PowerlineExtraSymbols.pdf in Resources */,
 				A66F52C22106F6F100571168 /* gitdirty@2x.png in Resources */,
@@ -16910,6 +16966,12 @@
 				9DB3D6ED176CC47E0071CCF8 /* PrefsMouse@2x.png in Resources */,
 				A68E33331DE746F5003F1D8E /* Add Mark Touch Bar Icon.png in Resources */,
 				A6E7AE98214394DD00DE9F3B /* graphic_code.png in Resources */,
+				A6CBB9E02E0B6EA200B2CCCB /* extend-selection-character.js in Resources */,
+				A6CBB9E12E0B6EA200B2CCCB /* extend-selection-word.js in Resources */,
+				A6CBB9E22E0B6EA200B2CCCB /* extend-selection-bigword.js in Resources */,
+				A6CBB9E32E0B6EA200B2CCCB /* extend-selection-line.js in Resources */,
+				A6CBB9E42E0B6EA200B2CCCB /* has-selection.js in Resources */,
+				A6CBB9E52E0B6EA200B2CCCB /* insert-text.js in Resources */,
 				1DA76A241B308AD000CB272A /* iTermTipCardViewController.xib in Resources */,
 				A6F7A72B213CB143004DE961 /* StatusBarIconNetwork@2x.png in Resources */,
 				A65D7CB021E1EBCA00E3D81C /* StopStatusIcon.png in Resources */,
@@ -17778,6 +17840,7 @@
 				A6F7D4F82E05BDC60065D09C /* iTermBrowserHistoryController.swift in Sources */,
 				A653F68624CF4EC70062377E /* FMDatabase.m in Sources */,
 				A6A73D4327C7FBFD002E4CCA /* iTermAutoMasterParser.m in Sources */,
+				A6CBB9DF2E0B6E9300B2CCCB /* WKWebView+KeyBindings.swift in Sources */,
 				A6725AD723D63B7A001CA48A /* iTermProfileModelJournal.m in Sources */,
 				A6B41406211A579300D28207 /* iTermStoplightHotbox.m in Sources */,
 				A691693B2813458F00083F99 /* PortholeFactory.swift in Sources */,
@@ -17788,6 +17851,7 @@
 				A606CBF42145AF4800B3A97E /* iTermRootTerminalView.m in Sources */,
 				A65660D52372A4A600DC6744 /* iTermCache.m in Sources */,
 				A6EC937524E78A5100EEADEF /* iTermEditSnippetWindowController.m in Sources */,
+				A6CBB9D62E0B608F00B2CCCB /* iTermBrowserKeyBindingActionPerformer.swift in Sources */,
 				53FF98272092A079008688D7 /* iTermScriptsMenuController.m in Sources */,
 				53A96ED12322040C00AEA8E0 /* iTermOpenDirectory.m in Sources */,
 				A6CB24C12C682B6300005824 /* HueVisualizationView.swift in Sources */,

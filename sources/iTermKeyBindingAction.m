@@ -32,6 +32,34 @@ static NSString *GetProfileName(NSString *guid) {
     NSDictionary *_dictionary;
 }
 
++ (NSString *)escapedText:(NSString *)text mode:(iTermSendTextEscaping)escaping {
+    NSString *temp = text;
+    switch (escaping) {
+        case iTermSendTextEscapingNone:
+            return text;
+        case iTermSendTextEscapingCommon:
+            return [temp stringByReplacingCommonlyEscapedCharactersWithControls];
+        case iTermSendTextEscapingCompatibility:
+            temp = [temp stringByReplacingEscapedChar:'n' withString:@"\n"];
+            temp = [temp stringByReplacingEscapedChar:'e' withString:@"\e"];
+            temp = [temp stringByReplacingEscapedChar:'a' withString:@"\a"];
+            temp = [temp stringByReplacingEscapedChar:'t' withString:@"\t"];
+            return temp;
+        case iTermSendTextEscapingVimAndCompatibility:
+            temp = [temp stringByExpandingVimSpecialCharacters];
+            temp = [temp stringByReplacingEscapedChar:'n' withString:@"\n"];
+            temp = [temp stringByReplacingEscapedChar:'e' withString:@"\e"];
+            temp = [temp stringByReplacingEscapedChar:'a' withString:@"\a"];
+            temp = [temp stringByReplacingEscapedChar:'t' withString:@"\t"];
+            return temp;
+        case iTermSendTextEscapingVim:
+            return [temp stringByExpandingVimSpecialCharacters];
+    }
+    assert(NO);
+    return @"";
+}
+
+
 + (instancetype)fromString:(NSString *)string {
     NSData *decoded = [[NSData alloc] initWithBase64EncodedString:string options:0];
     if (!decoded) {
