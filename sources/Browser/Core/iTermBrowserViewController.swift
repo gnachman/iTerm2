@@ -45,7 +45,6 @@ class iTermBrowserViewController: NSViewController {
     private var bookmarkTagEditor: iTermBookmarkTagEditorWindowController?
     private lazy var contextMenuHandler = iTermBrowserContextMenuHandler(webView: browserManager.webView, parentWindow: view.window)
     private var deferredURL: String?
-    private var deferredInteractionState: NSObject?
     private lazy var keyBindingActionPerformer =  {
         let performer = iTermBrowserKeyBindingActionPerformer()
         performer.delegate = self
@@ -88,8 +87,8 @@ extension iTermBrowserViewController {
     @objc var interactionState: NSObject? {
         get {
             if #available(macOS 12, *) {
-                if let deferredInteractionState {
-                    return deferredInteractionState
+                if let deferred = browserManager.webView.deferrableInteractionState {
+                    return deferred as? NSData
                 }
                 return browserManager.webView.interactionState as? NSData
             } else {
@@ -100,7 +99,7 @@ extension iTermBrowserViewController {
             if #available(macOS 12, *) {
                 // Check if we should defer setting interaction state during restoration
                 if shouldDeferLoading() {
-                    deferredInteractionState = newValue
+                    browserManager.webView.deferrableInteractionState = newValue
                     return
                 }
 
@@ -328,16 +327,10 @@ extension iTermBrowserViewController {
     }
     
     private func loadDeferredURLIfNeeded() {
-        // Handle deferred interaction state first (takes precedence over URL)
-        if let interactionState = deferredInteractionState {
-            deferredInteractionState = nil
-            if #available(macOS 12, *) {
-                browserManager.webView.interactionState = interactionState
-            }
-            return
+        if #available(macOS 12.0, *) {
+            browserManager.webView.applyDeferredInteractionStateIfNeeded()
         }
-        
-        // Handle deferred URL
+
         if let url = deferredURL {
             deferredURL = nil
             browserManager.loadURL(url)
