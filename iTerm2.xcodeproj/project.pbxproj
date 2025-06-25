@@ -12979,16 +12979,16 @@
 		A6CBB8202E0A1CE000B2CCCB /* Core */ = {
 			isa = PBXGroup;
 			children = (
-				A6CBB9D52E0B608E00B2CCCB /* iTermBrowserKeyBindingActionPerformer.swift */,
-				A6CBB8222E0A21F800B2CCCB /* rewrite-resources.js */,
 				A6CBB7FD2E09163A00B2CCCB /* check-iframe-origins.js */,
 				A6F7D4E42E04AE7D0065D09C /* iTermAdblockManager.swift */,
 				A6F7D4D22E03D0A00065D09C /* iTermBrowserDownload.swift */,
 				A6F7D4D02E03BE3A0065D09C /* iTermBrowserFindManager.swift */,
+				A6CBB9D52E0B608E00B2CCCB /* iTermBrowserKeyBindingActionPerformer.swift */,
 				A6F7D4B82E034E2B0065D09C /* iTermBrowserManager.swift */,
 				A6F7D4FD2E05C4850065D09C /* iTermBrowserNavigationState.swift */,
 				A6F7D4B42E0340A80065D09C /* iTermBrowserViewController.swift */,
 				A6F7D4D82E03DB420065D09C /* iTermBrowserWebView.swift */,
+				A6CBB8222E0A21F800B2CCCB /* rewrite-resources.js */,
 			);
 			path = Core;
 			sourceTree = "<group>";
