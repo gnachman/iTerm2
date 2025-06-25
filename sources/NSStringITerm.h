@@ -385,6 +385,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 - (iTermTuple<NSArray<NSString *> *, NSString *> *)queryBySplittingLiteralPhrases;
 - (ScreenCharArray *)asScreenCharArray;
++ (NSData *)dataForHexCodes:(NSString *)codes;
 
 @end
 

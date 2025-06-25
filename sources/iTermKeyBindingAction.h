@@ -142,6 +142,8 @@ typedef NS_ENUM(int, KEY_ACTION) {
 
 + (instancetype _Nullable)fromString:(NSString *)string;
 
++ (NSString *)escapedText:(NSString *)text mode:(iTermSendTextEscaping)escaping;
+
 - (instancetype)init NS_UNAVAILABLE;
 
 @end

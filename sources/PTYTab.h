@@ -111,7 +111,8 @@ extern NSString *const PTYTabVariableTitleOverride;
                     sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap
                 tmuxController:(TmuxController *)tmuxController
             partialAttachments:(NSDictionary *)partialAttachments
-              reservedTabGUIDs:(NSSet<NSString *> *)reservedTabGUIDs;
+              reservedTabGUIDs:(NSSet<NSString *> *)reservedTabGUIDs
+                       options:(NSDictionary *)options;
 
 + (NSDictionary<NSString *, PTYSession *> *)sessionMapWithArrangement:(NSDictionary *)arrangement
                                                              sessions:(NSArray *)sessions;
@@ -222,7 +223,7 @@ extern NSString *const PTYTabVariableTitleOverride;
 // SessionView's.
 - (void)updateFlexibleViewColors;
 - (NSDictionary *)arrangement;
-- (NSDictionary *)arrangementWithNewGUID;
+- (NSDictionary *)arrangementForDuplication;
 
 - (void)notifyWindowChanged;
 // NOTE: Do not call this directly. It doesn't handle tmux correctly.

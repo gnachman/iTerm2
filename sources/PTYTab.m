@@ -531,7 +531,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (id)copyWithZone:(NSZone *)zone {
     DLog(@"Making a copy of tab %@", self);
-    NSDictionary *arrangement = [self arrangementWithNewGUID];
+    NSDictionary *arrangement = [self arrangementForDuplication];
     PTYTab *theCopy = [PTYTab tabWithArrangement:arrangement
                                            named:nil
                                       inTerminal:[self realParentWindow]
@@ -540,7 +540,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                       sessionMap:nil
                                   tmuxController:tmuxController_
                               partialAttachments:nil
-                                reservedTabGUIDs:[NSSet set]];
+                                reservedTabGUIDs:[NSSet set]
+                                         options:nil];
     return theCopy;
 }
 
@@ -2781,7 +2782,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                               encoder:encoder
                                    replacementProfile:options[PTYTabArrangementOptionsReplacementProfile]
                                           saveProgram:[options[PTYTabArrangementOptionsReplacementSaveProgram] ?: @YES boolValue]
-                                         pendingJumps:options[PTYTabArrangementOptionsPendingJumps]];
+                                         pendingJumps:options[PTYTabArrangementOptionsPendingJumps]
+                                              options:options];
     }];
     encoder[TAB_ARRANGEMENT_IS_ACTIVE] = @(session == [self activeSession] || options[PTYTabArrangementOptionsOnlySessionID] != nil);
 
@@ -3036,7 +3038,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                    atNode:(__kindof NSView *)view
                                     inTab:(PTYTab *)theTab
                             forObjectType:(iTermObjectType)objectType
-                       partialAttachments:(NSDictionary *)partialAttachments {
+                       partialAttachments:(NSDictionary *)partialAttachments
+                                  options:(NSDictionary *)options {
     if ([[arrangement objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
         assert([view isKindOfClass:[NSSplitView class]]);
         NSSplitView* splitter = (NSSplitView*)view;
@@ -3050,7 +3053,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                            atNode:[[splitter subviews] objectAtIndex:i]
                                                             inTab:theTab
                                                     forObjectType:subObjectType
-                                               partialAttachments:partialAttachments];
+                                               partialAttachments:partialAttachments
+                                                          options:options];
             if (session) {
                 active = session;
             }
@@ -3079,7 +3083,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                   inView:view
                                             withDelegate:theTab
                                            forObjectType:objectType
-                                      partialAttachments:partialAttachments];
+                                      partialAttachments:partialAttachments
+                                                 options:options];
             [self.viewToSessionMap setObject:session forKey:view];
         }
         if ([[arrangement objectForKey:TAB_ARRANGEMENT_IS_ACTIVE] boolValue]) {
@@ -3219,7 +3224,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                     sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap
                 tmuxController:(TmuxController *)tmuxController
             partialAttachments:(NSDictionary *)partialAttachments
-              reservedTabGUIDs:(NSSet<NSString *> *)reservedTabGUIDs {
+              reservedTabGUIDs:(NSSet<NSString *> *)reservedTabGUIDs
+                       options:(NSDictionary *)options {
     PTYTab *theTab;
     NSMutableArray<PTYSession *> *revivedSessions = [NSMutableArray array];
     // Build a tree with splitters and SessionViews but no PTYSessions.
@@ -3258,7 +3264,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                         atNode:theTab->root_
                                                          inTab:theTab
                                                  forObjectType:objectType
-                                            partialAttachments:partialAttachments]];
+                                            partialAttachments:partialAttachments
+                                                       options:options]];
     theTab.titleOverride = [arrangement[TAB_ARRANGEMENT_TITLE_OVERRIDE] nilIfNull];
     NSString *guid = arrangement[TAB_GUID];
     if (guid) {
@@ -3440,7 +3447,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                  generation:iTermGenerationAlwaysEncode
                                       block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
         return [session encodeArrangementWithContents:includeContents
-                                              encoder:encoder];
+                                              encoder:encoder
+                                   replacementProfile:nil
+                                          saveProgram:YES
+                                         pendingJumps:nil
+                                              options:options];
     }];
 }
 
@@ -3456,12 +3467,18 @@ static NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangemen
 // the view's appearance, such as temporary resizing.
 - (NSDictionary *)arrangementConstructingIdMap:(BOOL)constructIdMap
                                       contents:(BOOL)contents {
+    return [self arrangementConstructingIdMap:constructIdMap contents:contents options:@{}];
+}
+
+- (NSDictionary *)arrangementConstructingIdMap:(BOOL)constructIdMap
+                                      contents:(BOOL)contents
+                                       options:(NSDictionary *)options {
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     iTermMutableDictionaryEncoderAdapter *adapter = [[iTermMutableDictionaryEncoderAdapter alloc] initWithMutableDictionary:dict];
     const BOOL commit = [self encodeWithContents:contents
                                   constructIdMap:constructIdMap
                                          encoder:adapter
-                                         options:@{}];
+                                         options:options];
     if (!commit) {
         return nil;
     }
@@ -3550,8 +3567,8 @@ static NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangemen
 }
 
 
-- (NSDictionary *)arrangementWithNewGUID {
-    NSMutableDictionary *arrangement = [[self arrangement] mutableCopy];
+- (NSDictionary *)arrangementForDuplication {
+    NSMutableDictionary *arrangement = [[self arrangementConstructingIdMap:NO contents:NO options:@{ PTYSessionArrangementOptionsForDuplication: @YES }] mutableCopy];
     arrangement[TAB_GUID] = [[NSUUID UUID] UUIDString];
     return arrangement;
 }
@@ -3907,7 +3924,8 @@ typedef struct {
                                    sessionMap:nil
                                tmuxController:tmuxController
                            partialAttachments:nil
-                             reservedTabGUIDs:[NSSet set]];
+                             reservedTabGUIDs:[NSSet set]
+                                      options:nil];
 
     NSArray *theChildren = [parseTree objectForKey:kLayoutDictChildrenKey];
     BOOL haveMultipleSessions = ([theChildren count] > 1);
@@ -4783,7 +4801,8 @@ typedef struct {
                                                          atNode:newRoot
                                                           inTab:self
                                                   forObjectType:objectType
-                                             partialAttachments:nil];
+                                             partialAttachments:nil
+                                                        options:nil];
     if (activeSession) {
         [self setActiveSession:activeSession];
     }

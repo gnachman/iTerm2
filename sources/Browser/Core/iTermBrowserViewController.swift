@@ -46,6 +46,11 @@ class iTermBrowserViewController: NSViewController {
     private lazy var contextMenuHandler = iTermBrowserContextMenuHandler(webView: browserManager.webView, parentWindow: view.window)
     private var deferredURL: String?
     private var deferredInteractionState: NSObject?
+    private lazy var keyBindingActionPerformer =  {
+        let performer = iTermBrowserKeyBindingActionPerformer()
+        performer.delegate = self
+        return performer
+    }()
 
     @objc var zoom: CGFloat {
         get {
@@ -187,6 +192,14 @@ extension iTermBrowserViewController {
         Task {
             try? await writer.fillUsername(webView: webView, username: username)
         }
+    }
+
+    // MARK: - Key Bindings
+
+    /// Returns whether we handled it.
+    @objc(performKeyBindingAction:event:)
+    func perform(keyBindingAction action: iTermKeyBindingAction, event: NSEvent) -> Bool {
+        keyBindingActionPerformer.perform(keyBindingAction: action, event: event)
     }
 }
 
@@ -578,6 +591,7 @@ extension iTermBrowserViewController {
 }
 
 // MARK: - Bookmark Management
+
 @available(macOS 11.0, *)
 extension iTermBrowserViewController: iTermBookmarkTagEditorDelegate {
     private func showBookmarkTagEditor(url: String, title: String?) {
@@ -610,4 +624,35 @@ extension iTermBrowserViewController: iTermBookmarkTagEditorDelegate {
 @available(macOS 11.0, *)
 @objc(iTermBrowserView)
 class iTermBrowserView: NSView {
+}
+
+@available(macOS 11.0, *)
+extension iTermBrowserViewController: iTermBrowserKeyBindingActionPerformerDelegate {
+    func keyBindingPerformerScroll(movement: ScrollMovement) {
+        browserManager.webView.performScroll(movement: movement)
+    }
+
+    func keyBindingPerformerSend(data: Data, broadcastAllowed: Bool) {
+        guard let string = String(data: data, encoding: .utf8) else { return }
+        
+        Task {
+            await browserManager.webView.sendText(string)
+        }
+    }
+
+    func keyBindingPerformerExtendSelect(start: Bool, forward: Bool, by: PTYTextViewSelectionExtensionUnit) {
+        browserManager.webView.extendSelection(start: start, forward: forward, by: by)
+    }
+
+    func keyBindingPerformerHasSelection() async -> Bool {
+        return await browserManager.webView.hasSelection()
+    }
+
+    func keyBindingPerformerCopyToClipboard() {
+        NSApp.sendAction(#selector(NSText.copy(_:)), to: nil, from: browserManager.webView)
+    }
+
+    func keyBindingPerformerPasteFromClipboard() {
+        NSApp.sendAction(#selector(NSText.paste(_:)), to: nil, from: browserManager.webView)
+    }
 }

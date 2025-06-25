@@ -26,7 +26,8 @@
                                                inView:[[SessionView alloc] initWithFrame:frame]
                                          withDelegate:nil
                                         forObjectType:iTermPaneObject
-                                   partialAttachments:nil];
+                                   partialAttachments:nil
+                                              options:nil];
         }];
         self.terminalGuid = restorableState[@"terminalGuid"];
         self.arrangement = restorableState[@"arrangement"];

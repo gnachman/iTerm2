@@ -366,6 +366,8 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
 static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
     @"NoSyncTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier";
 
+NSString *const PTYSessionArrangementOptionsForDuplication = @"PTYSessionArrangementOptionsForDuplication";
+
 static char iTermEffectiveAppearanceKey;
 
 @interface NSWindow (SessionPrivate)
@@ -1308,6 +1310,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)sessionModeConsumesEvent:(NSEvent *)event {
+    if (_view.isBrowser) {
+        // Browser is modeless, for now.
+        return NO;
+    }
     return [_modeHandler wouldHandleEvent:event];
 }
 
@@ -1590,7 +1596,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                                                         inView:liveView
                                                                   withDelegate:delegate
                                                                  forObjectType:objectType
-                                                            partialAttachments:nil]];
+                                                            partialAttachments:nil
+                                                                       options:nil]];
     }
     if (shouldEnterTmuxMode) {
         // Restored a tmux gateway session.
@@ -1641,7 +1648,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                                       inView:[[[SessionView alloc] initWithFrame:self.view.frame] autorelease]
                                                 withDelegate:nil
                                                forObjectType:iTermPaneObject
-                                          partialAttachments:nil];
+                                          partialAttachments:nil
+                                                     options:nil];
     return [session retain];
 }
 
@@ -1650,7 +1658,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                 inView:(SessionView *)sessionView
                           withDelegate:(id<PTYSessionDelegate>)delegate
                          forObjectType:(iTermObjectType)objectType
-                    partialAttachments:(NSDictionary *)partialAttachments {
+                    partialAttachments:(NSDictionary *)partialAttachments
+                               options:(NSDictionary *)options {
     DLog(@"Restoring session from arrangement");
 
     Profile *theBookmark =
@@ -1993,6 +2002,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                                reattached:attachedToServer];
             // NOTE: THE SCREEN SIZE IS NOW OUT OF SYNC WITH THE VIEW SIZE. IT MUST BE FIXED!
             // Store browser state for restoration in startProgram:
+        }
+        if (restoreContents || [options[PTYSessionArrangementOptionsForDuplication] boolValue]) {
             aSession->_savedBrowserState = [[NSData castFrom:arrangement[SESSION_ARRANGEMENT_BROWSER_STATE]] retain];
         }
         if (arrangement[SESSION_ARRANGEMENT_KEYLABELS]) {
@@ -5957,14 +5968,16 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                        encoder:result
                             replacementProfile:nil
                                    saveProgram:YES
-                                  pendingJumps:nil];
+                                  pendingJumps:nil
+                                       options:nil];
 }
 
 - (BOOL)encodeArrangementWithContents:(BOOL)includeContents
                               encoder:(id<iTermEncoderAdapter>)result
                    replacementProfile:(Profile *)replacementProfile
                           saveProgram:(BOOL)saveProgram
-                         pendingJumps:(NSArray<iTermSSHReconnectionInfo *> *)pendingJumps {
+                         pendingJumps:(NSArray<iTermSSHReconnectionInfo *> *)pendingJumps
+                              options:(NSDictionary *)options {
     DLog(@"Construct arrangement for session %@ with includeContents=%@", self, @(includeContents));
     if (_filter.length && _liveSession != nil) {
         DLog(@"Encode live session because this one is filtered.");
@@ -6046,15 +6059,6 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                     totalScrollbackOverflow:_screen.totalScrollbackOverflow];
         result[SESSION_ARRANGEMENT_APS] = [_automaticProfileSwitcher savedState];
         result[SESSION_ARRANGEMENT_SSH_STATE] = @(_sshState);
-        if (@available(macOS 11, *)) {
-            if (_view.isBrowser && _view.browserViewController) {
-                id interactionState = _view.browserViewController.interactionState;
-                NSData *browserStateData = [NSData castFrom:interactionState];
-                if (browserStateData) {
-                    result[SESSION_ARRANGEMENT_BROWSER_STATE] = browserStateData;
-                }
-            }
-        }
         if (_conductor) {
             NSString *json = _conductor.jsonValue;
             if (json) {
@@ -6070,6 +6074,19 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             }];
         }
     }
+
+    if (includeContents || [options[PTYSessionArrangementOptionsForDuplication] boolValue]) {
+        if (@available(macOS 11, *)) {
+            if (_view.isBrowser && _view.browserViewController) {
+                id interactionState = _view.browserViewController.interactionState;
+                NSData *browserStateData = [NSData castFrom:interactionState];
+                if (browserStateData) {
+                    result[SESSION_ARRANGEMENT_BROWSER_STATE] = browserStateData;
+                }
+            }
+        }
+    }
+
     result[SESSION_ARRANGEMENT_GUID] = _guid;
     if (_liveSession && includeContents && !_dvr) {
         [result encodeDictionaryWithKey:SESSION_ARRANGEMENT_LIVE_SESSION
@@ -9848,6 +9865,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)reallyPerformKeyBindingAction:(iTermKeyBindingAction *)action event:(NSEvent *)event {
+    if (_view.isBrowser) {
+        if (@available(macOS 11, *)) {
+            if ([_view.browserViewController performKeyBindingAction:action event:event]) {
+                return;
+            }
+        }
+    }
     BOOL isTmuxGateway = (!_exited && self.tmuxMode == TMUX_GATEWAY);
     id<iTermWindowController> windowController = self.delegate.realParentWindow ?: [[iTermController sharedInstance] currentTerminal];
 
@@ -10389,6 +10413,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if (![iTermPreferences boolForKey:kPreferenceKeyVisualIndicatorForEsc]) {
         return;
     }
+    if (_view.isBrowser) {
+        // I guess I should support this but the touchbar is all but dead.
+        return;
+    }
     _showingVisualIndicatorForEsc = YES;
 
     NSNumber *savedCursorTypeOverride = _cursorTypeOverride;
@@ -10457,6 +10485,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)regularKeyDown:(NSEvent *)event {
+    if (_view.isBrowser) {
+        return;
+    }
     DLog(@"PTYSession keyDown not short-circuted by special handler");
     const NSEventModifierFlags mask = (NSEventModifierFlagCommand | NSEventModifierFlagOption | NSEventModifierFlagShift | NSEventModifierFlagControl);
 
@@ -12660,17 +12691,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (NSData *)dataForHexCodes:(NSString *)codes {
-    NSMutableData *data = [NSMutableData data];
-    NSArray* components = [codes componentsSeparatedByString:@" "];
-    for (NSString* part in components) {
-        const char* utf8 = [part UTF8String];
-        char* endPtr;
-        unsigned char c = strtol(utf8, &endPtr, 16);
-        if (endPtr != utf8) {
-            [data appendData:[NSData dataWithBytes:&c length:sizeof(c)]];
-        }
-    }
-    return data;
+    return [NSString dataForHexCodes:codes];
 }
 
 - (void)sendHexCode:(NSString *)codes {
@@ -12716,30 +12737,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (NSString *)escapedText:(NSString *)text mode:(iTermSendTextEscaping)escaping {
-    NSString *temp = text;
-    switch (escaping) {
-        case iTermSendTextEscapingNone:
-            return text;
-        case iTermSendTextEscapingCommon:
-            return [temp stringByReplacingCommonlyEscapedCharactersWithControls];
-        case iTermSendTextEscapingCompatibility:
-            temp = [temp stringByReplacingEscapedChar:'n' withString:@"\n"];
-            temp = [temp stringByReplacingEscapedChar:'e' withString:@"\e"];
-            temp = [temp stringByReplacingEscapedChar:'a' withString:@"\a"];
-            temp = [temp stringByReplacingEscapedChar:'t' withString:@"\t"];
-            return temp;
-        case iTermSendTextEscapingVimAndCompatibility:
-            temp = [temp stringByExpandingVimSpecialCharacters];
-            temp = [temp stringByReplacingEscapedChar:'n' withString:@"\n"];
-            temp = [temp stringByReplacingEscapedChar:'e' withString:@"\e"];
-            temp = [temp stringByReplacingEscapedChar:'a' withString:@"\a"];
-            temp = [temp stringByReplacingEscapedChar:'t' withString:@"\t"];
-            return temp;
-        case iTermSendTextEscapingVim:
-            return [temp stringByExpandingVimSpecialCharacters];
-    }
-    assert(NO);
-    return @"";
+    return [iTermKeyBindingAction escapedText:text mode:escaping];
 }
 
 - (void)sendTextSlowly:(NSString *)text {

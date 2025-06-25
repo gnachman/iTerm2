@@ -50,6 +50,7 @@ extern NSString *const PTYCommandDidExitUserInfoKeySnapshot;
 extern NSString *const PTYCommandDidExitUserInfoKeyStartLine;
 extern NSString *const PTYCommandDidExitUserInfoKeyLineCount;
 extern NSString *const PTYCommandDidExitUserInfoKeyURL;
+extern NSString *const PTYSessionArrangementOptionsForDuplication;
 
 @class CapturedOutput;
 @protocol ExternalSearchResultsController;
@@ -692,7 +693,9 @@ backgroundColor:(NSColor *)backgroundColor;
                                inView:(SessionView *)sessionView
                          withDelegate:(id<PTYSessionDelegate>)delegate
                         forObjectType:(iTermObjectType)objectType
-                   partialAttachments:(NSDictionary *)partialAttachments;
+                   partialAttachments:(NSDictionary *)partialAttachments
+                              options:(NSDictionary *)options;
+
 - (PTYSession *)newSessionForChannelID:(NSString *)channelID command:(NSString *)command;
 
 + (NSDictionary *)arrangementFromTmuxParsedLayout:(NSDictionary *)parseNode
@@ -927,10 +930,12 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                               encoder:(id<iTermEncoderAdapter>)encoder;
 
 - (BOOL)encodeArrangementWithContents:(BOOL)includeContents
-                              encoder:(id<iTermEncoderAdapter>)encoder
+                              encoder:(id<iTermEncoderAdapter>)result
                    replacementProfile:(Profile *)replacementProfile
                           saveProgram:(BOOL)saveProgram
-                         pendingJumps:(NSArray<iTermSSHReconnectionInfo *> *)pendingJumps;
+                         pendingJumps:(NSArray<iTermSSHReconnectionInfo *> *)pendingJumps
+                              options:(NSDictionary *)options;
+
 - (BOOL)canChangeProfileInArrangement;
 - (void)changeProfileInArrangement;
 
