@@ -676,7 +676,7 @@ const CGFloat kDefaultTagsWidth = 80;
                               defaultAttributes:plainAttributes
                           highlightedAttributes:highlightedNameAttributes] mutableCopy] autorelease];
 
-    if (isDefault) {
+    if (isDefault && !isBrowser) {
         NSAttributedString *star = [[[NSAttributedString alloc] initWithString:@"★ "
                                                                     attributes:plainAttributes] autorelease];
         [theAttributedString insertAttributedString:star atIndex:0];
@@ -685,18 +685,16 @@ const CGFloat kDefaultTagsWidth = 80;
         NSAttributedString *browserIcon;
         if (@available(macOS 11.0, *)) {
             NSTextAttachment *attachment = [[[NSTextAttachment alloc] init] autorelease];
-            NSImage *image = [NSImage imageWithSystemSymbolName:@"safari" accessibilityDescription:nil];
+            NSString *imageName = isDefault ? @"safari.fill" : @"safari";
+            NSImage *image = [NSImage imageWithSystemSymbolName:imageName accessibilityDescription:nil];
             image.size = NSMakeSize(16, 16);
             attachment.image = image;
             NSAttributedString *safari = [NSAttributedString attributedStringWithAttachment:attachment];
             NSAttributedString *space = [[[NSAttributedString alloc] initWithString:@" "
                                                            attributes:plainAttributes] autorelease];
             browserIcon = [safari attributedStringByAppendingAttributedString:space];
-        } else {
-            browserIcon = [[[NSAttributedString alloc] initWithString:@"🕸️ "
-                                                           attributes:plainAttributes] autorelease];
+            [theAttributedString insertAttributedString:browserIcon atIndex:0];
         }
-        [theAttributedString insertAttributedString:browserIcon atIndex:0];
     }
     if (tags.count) {
         NSAttributedString *newline = [[[NSAttributedString alloc] initWithString:@"\n"
@@ -786,11 +784,12 @@ const CGFloat kDefaultTagsWidth = 80;
         DLog(@"Getting name of profile at row %d. The dictionary's address is %p. Its name is %@",
              (int)rowIndex, bookmark, bookmark[KEY_NAME]);
         Profile *defaultProfile = [[ProfileModel sharedInstance] defaultBookmark];
+        Profile *defaultBrowserProfile = [[ProfileModel sharedInstance] defaultBrowserProfile];
         *multilinePtr = [bookmark[KEY_TAGS] count] > 0;
         return [self attributedStringForName:bookmark[KEY_NAME] ?: @""
                                         tags:bookmark[KEY_TAGS]
                                     selected:[[tableView_ selectedRowIndexes] containsIndex:rowIndex]
-                                   isDefault:[bookmark[KEY_GUID] isEqualToString:defaultProfile[KEY_GUID]]
+                                   isDefault:[bookmark[KEY_GUID] isEqualToString:defaultProfile[KEY_GUID]] || [bookmark[KEY_GUID] isEqualToString:defaultBrowserProfile[KEY_GUID]]
                                    isBrowser:[bookmark[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue]
                                       filter:[searchField_ stringValue]];
     } else if (aTableColumn == commandColumn_) {

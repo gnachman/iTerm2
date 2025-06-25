@@ -103,6 +103,7 @@ extern NSString *const iTermProfileDidChange;
 - (Profile*)defaultBookmark;  // prefer defaultProfile
 - (Profile *)defaultProfile;
 - (Profile *)defaultBrowserProfileCreatingIfNeeded;
+- (Profile *)defaultBrowserProfile;
 - (Profile*)bookmarkWithName:(NSString*)name;
 - (Profile*)bookmarkWithGuid:(NSString*)guid;
 - (int)indexOfBookmarkWithName:(NSString*)name;
