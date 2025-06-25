@@ -9498,7 +9498,7 @@ instead of the system keyboard.</string>
                         <outlet property="shortcutDelegate" destination="dVg-Ac-SiZ" id="pGc-uX-EJj"/>
                     </connections>
                 </customView>
-                <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="S9t-V1-nTN" userLabel="Name label">
+                <textField identifier="debug" focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="S9t-V1-nTN" userLabel="Name label">
                     <rect key="frame" x="37" y="390" width="85" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Session Title:" id="v5v-p4-3ab">

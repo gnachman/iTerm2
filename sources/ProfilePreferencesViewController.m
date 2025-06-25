@@ -277,6 +277,13 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 }
 
 - (void)layoutSubviewsForEditCurrentSessionMode {
+    (void)[_generalViewController setVisibilityForTerminalEnclosures:YES
+                                                   browserEnclosures:YES
+                                                hiddenModeEnclosures:YES
+                                            sharedProfilesEnclosures:YES
+                                                         tabViewItem:_generalTab];
+    [_generalViewController.internalState removeAllObjects];
+
     _profilesListView.hidden = YES;
     _otherActionsPopup.hidden = YES;
     _addProfileButton.hidden = YES;
@@ -297,6 +304,10 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     newFrame.origin.y += kExtraMarginBetweenWindowBottomAndTabViewForEditCurrentSessionMode;
 
     _tabViewWrapperView.frame = newFrame;
+}
+
+- (void)didLayoutSubviewsForEditCurrentSessionMode {
+    [self updateEnclosureVisibilityForProfile:self.selectedProfile];
 }
 
 - (void)selectGuid:(NSString *)guid {
@@ -487,11 +498,11 @@ andEditComponentWithIdentifier:(NSString *)identifier
     _tabView.hidden = !profile;
     _otherActionsPopup.enabled = (profile != nil);
     if (_initialized) {
-        [self updateBrowserMode:profile];
+        [self updateEnclosureVisibilityForProfile:profile];
     }
 }
 
-- (void)updateBrowserMode:(Profile *)profile {
+- (void)updateEnclosureVisibilityForProfile:(Profile *)profile {
     const BOOL browserMode = [profile[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue];
     const BOOL profileIsShared = [[ProfileModel sharedInstance] bookmarkWithGuid:profile[KEY_GUID]] != nil;
     NSInteger i = 0;
