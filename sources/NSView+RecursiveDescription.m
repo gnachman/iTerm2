@@ -14,10 +14,10 @@
 - (NSString *)recursiveDescriptionWithPrefix:(NSString *)prefix {
     NSMutableString *s = [NSMutableString string];
 
+    [s appendString:prefix];
+    [s appendString:[self it_description]];
+    [s appendString:@"\n"];
     for (NSView *view in [self subviews]) {
-        [s appendString:prefix];
-        [s appendString:[self it_description]];
-        [s appendString:@"\n"];
         [s appendString:[view recursiveDescriptionWithPrefix:[prefix stringByAppendingString:@"|   "]]];
     }
     return s;

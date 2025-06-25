@@ -213,7 +213,6 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 }
 
 - (void)layoutSubviewsForEditCurrentSessionMode {
-    _hotKeyContainerView.hidden = YES;
 }
 
 - (NSArray *)keysForBulkCopy {
