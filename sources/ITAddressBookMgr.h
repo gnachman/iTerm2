@@ -37,6 +37,7 @@
 #define KEY_DEFAULT_GUID                @"Default Bookmark Guid"  // use this instead (not in a bookmark)
 #define KEY_DEPRECATED_BOOKMARKS        @"Bookmarks"  // Deprecated
 #define KEY_NEW_BOOKMARKS               @"New Bookmarks"
+#define KEY_DEFAULT_BROWSER_GUID        @"Default Browser Profile Guid"
 
 #pragma mark - Profile-level keys
 // IMPORTANT: If you add keys, also modify doCopyFrom in PreferencePanel.m.

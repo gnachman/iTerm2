@@ -746,9 +746,7 @@ static NSMutableArray<NSString *> *_combinedLog;
 }
 
 - (Profile *)defaultBrowserProfileCreatingIfNeeded {
-    // TODO: Do this properly with a UI and everything
-    NSString *key = @"Default Browser Profile Guid";
-    NSString *guid = [[NSUserDefaults standardUserDefaults] stringForKey:key];
+    NSString *guid = [[NSUserDefaults standardUserDefaults] stringForKey:KEY_DEFAULT_BROWSER_GUID];
     {
         Profile *profile = [self bookmarkWithGuid:guid];
         if (profile) {
@@ -761,10 +759,15 @@ static NSMutableArray<NSString *> *_combinedLog;
     profile[KEY_SCROLLBACK_LINES] = @0;
     profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeBrowserValue;
     [[NSUserDefaults standardUserDefaults] setObject:profile[KEY_GUID]
-                                              forKey:key];
+                                              forKey:KEY_DEFAULT_BROWSER_GUID];
     [self addBookmark:profile];
     [self postChangeNotification];
     return profile;
+}
+
+- (Profile *)defaultBrowserProfile {
+    NSString *guid = [[NSUserDefaults standardUserDefaults] stringForKey:KEY_DEFAULT_BROWSER_GUID];
+    return [self bookmarkWithGuid:guid];
 }
 
 - (Profile*)bookmarkWithName:(NSString*)name
@@ -844,18 +847,22 @@ static NSMutableArray<NSString *> *_combinedLog;
     return newBookmark;
 }
 
-- (void)setDefaultByGuid:(NSString*)guid
-{
+- (void)setDefaultByGuid:(NSString*)guid {
     [guid retain];
-    [defaultBookmarkGuid_ release];
-    defaultBookmarkGuid_ = guid;
-    if (prefs_) {
-        [prefs_ setObject:defaultBookmarkGuid_ forKey:KEY_DEFAULT_GUID];
+    Profile *profile = [self bookmarkWithGuid:guid];
+    if (profile.profileIsBrowser) {
+        [prefs_ setObject:guid forKey:KEY_DEFAULT_BROWSER_GUID];
+    } else {
+        [defaultBookmarkGuid_ release];
+        defaultBookmarkGuid_ = guid;
+        if (prefs_) {
+            [prefs_ setObject:defaultBookmarkGuid_ forKey:KEY_DEFAULT_GUID];
+        }
+        [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_SET_DEFAULT
+                                                           bookmark:[self defaultBookmark]
+                                                              model:self
+                                                         identifier:nil]];
     }
-    [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_SET_DEFAULT
-                                                       bookmark:[self defaultBookmark]
-                                                          model:self
-                                                     identifier:nil]];
     [self postChangeNotification];
 }
 
