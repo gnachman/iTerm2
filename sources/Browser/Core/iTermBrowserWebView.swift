@@ -17,6 +17,7 @@ import WebKit
 @available(macOS 11.0, *)
 class iTermBrowserWebView: WKWebView {
     weak var browserDelegate: iTermBrowserWebViewDelegate?
+    var deferrableInteractionState: Any?
 
     override init(frame: CGRect, configuration: WKWebViewConfiguration) {
         super.init(frame: frame, configuration: configuration)
@@ -25,6 +26,93 @@ class iTermBrowserWebView: WKWebView {
 
     required init?(coder: NSCoder) {
         it_fatalError("init(coder:) has not been implemented")
+    }
+    
+    // MARK: - Deferred Interaction State
+    
+    @available(macOS 12.0, *)
+    @discardableResult
+    func applyDeferredInteractionStateIfNeeded() -> Bool {
+        guard let deferred = deferrableInteractionState else { return false }
+
+        DLog("Applying deferred interaction state")
+        deferrableInteractionState = nil
+        interactionState = deferred
+        return true
+    }
+    
+    // MARK: - Override navigation methods to apply deferred state
+    
+    @discardableResult
+    override func load(_ request: URLRequest) -> WKNavigation? {
+        if #available(macOS 12.0, *) {
+            applyDeferredInteractionStateIfNeeded()
+        }
+        return super.load(request)
+    }
+    
+    @discardableResult
+    override func loadHTMLString(_ string: String, baseURL: URL?) -> WKNavigation? {
+        if #available(macOS 12.0, *) {
+            applyDeferredInteractionStateIfNeeded()
+        }
+        return super.loadHTMLString(string, baseURL: baseURL)
+    }
+    
+    @discardableResult
+    override func load(_ data: Data, mimeType MIMEType: String, characterEncodingName: String, baseURL: URL) -> WKNavigation? {
+        if #available(macOS 12.0, *) {
+            applyDeferredInteractionStateIfNeeded()
+        }
+        return super.load(data, mimeType: MIMEType, characterEncodingName: characterEncodingName, baseURL: baseURL)
+    }
+    
+    @discardableResult
+    override func loadFileURL(_ URL: URL, allowingReadAccessTo readAccessURL: URL) -> WKNavigation? {
+        if #available(macOS 12.0, *) {
+            applyDeferredInteractionStateIfNeeded()
+        }
+        return super.loadFileURL(URL, allowingReadAccessTo: readAccessURL)
+    }
+    
+    @discardableResult
+    override func reload() -> WKNavigation? {
+        if #available(macOS 12.0, *) {
+            applyDeferredInteractionStateIfNeeded()
+        }
+        return super.reload()
+    }
+    
+    @discardableResult
+    override func reloadFromOrigin() -> WKNavigation? {
+        if #available(macOS 12.0, *) {
+            applyDeferredInteractionStateIfNeeded()
+        }
+        return super.reloadFromOrigin()
+    }
+    
+    @discardableResult
+    override func goBack() -> WKNavigation? {
+        if #available(macOS 12.0, *) {
+            applyDeferredInteractionStateIfNeeded()
+        }
+        return super.goBack()
+    }
+    
+    @discardableResult
+    override func goForward() -> WKNavigation? {
+        if #available(macOS 12.0, *) {
+            applyDeferredInteractionStateIfNeeded()
+        }
+        return super.goForward()
+    }
+    
+    @discardableResult
+    override func go(to item: WKBackForwardListItem) -> WKNavigation? {
+        if #available(macOS 12.0, *) {
+            applyDeferredInteractionStateIfNeeded()
+        }
+        return super.go(to: item)
     }
 
     override func willOpenMenu(_ menu: NSMenu, with event: NSEvent) {
