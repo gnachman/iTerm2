@@ -16,3 +16,6 @@ class BrowserModeEnclosure: ModalEnclosure {}
 
 @objc(iTermHiddenModeEnclosure)
 class HiddenModeEnclosure: ModalEnclosure {}
+
+@objc(iTermSharedProfileEnclosure)
+class SharedProfileEnclosure: ModalEnclosure {}

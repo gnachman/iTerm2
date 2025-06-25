@@ -39,13 +39,6 @@
 #import "ProfilesWindowPreferencesViewController.h"
 #import "ProfilesSessionPreferencesViewController.h"
 
-typedef NS_ENUM(NSUInteger, BrowserMode) {
-    BrowserModeUninitialized,
-    BrowserModeOff,
-    BrowserModeOn,
-    BrowserModeHidden
-};
-
 @interface NSWindow(LazyHacks)
 - (void)safeMakeFirstResponder:(id)view;
 @end
@@ -133,13 +126,12 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     NSRect _desiredFrame;
     BOOL _needsWarning;
     BOOL _initialized;
-    BrowserMode _browserMode;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _browserMode = BrowserModeUninitialized;
+
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(reloadProfiles)
                                                      name:kReloadAllProfiles
@@ -500,43 +492,26 @@ andEditComponentWithIdentifier:(NSString *)identifier
 }
 
 - (void)updateBrowserMode:(Profile *)profile {
-    BrowserMode desiredMode;
-    if (![iTermAdvancedSettingsModel browserProfiles]) {
-        desiredMode = BrowserModeHidden;
-    } else {
-        const BOOL profileWantsBrowserMode = [profile[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue];
-        desiredMode = profileWantsBrowserMode ? BrowserModeOn : BrowserModeOff;
-    }
-    if (desiredMode != _browserMode) {
-        _browserMode = desiredMode;
-        NSInteger i = 0;
-        for (NSArray *tuple in [self tabViewControllerTuples]) {
-            NSTabViewItem *tabViewItem = tuple[0];
-            iTermProfilePreferencesBaseViewController *vc = tuple[1];
-            BOOL wantTab = YES;
-            switch (desiredMode) {
-                case BrowserModeOn:
-                    wantTab = [vc enterBrowserModeForTabViewItem:tabViewItem];
-                    break;
-                case BrowserModeOff:
-                    wantTab = [vc enterTerminalModeForTabViewItem:tabViewItem];
-                    break;
-                case BrowserModeHidden:
-                    wantTab = [vc enterHiddenModeForTabViewItem:tabViewItem];
-                    break;
-                case BrowserModeUninitialized:
-                    assert(NO);
+    const BOOL browserMode = [profile[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue];
+    const BOOL profileIsShared = [[ProfileModel sharedInstance] bookmarkWithGuid:profile[KEY_GUID]] != nil;
+    NSInteger i = 0;
+    for (NSArray *tuple in [self tabViewControllerTuples]) {
+        NSTabViewItem *tabViewItem = tuple[0];
+        iTermProfilePreferencesBaseViewController *vc = tuple[1];
+        const BOOL wantTab = [vc setVisibilityForTerminalEnclosures:!browserMode
+                                                  browserEnclosures:browserMode
+                                               hiddenModeEnclosures:[iTermAdvancedSettingsModel browserProfiles]
+                                           sharedProfilesEnclosures:profileIsShared
+                                                        tabViewItem:tabViewItem];
+        const BOOL haveTab = [_tabView.tabViewItems containsObject:tabViewItem];
+        if (wantTab) {
+            if (!haveTab) {
+                [_tabView insertTabViewItem:tabViewItem atIndex:i];
             }
-            const BOOL haveTab = [_tabView.tabViewItems containsObject:tabViewItem];
-            if (wantTab) {
-                if (!haveTab) {
-                    [_tabView insertTabViewItem:tabViewItem atIndex:i];
-                }
-                i += 1;
-            } else {
-                if (haveTab) {
-                    [_tabView removeTabViewItem:tabViewItem];
-                }
+            i += 1;
+        } else {
+            if (haveTab) {
+                [_tabView removeTabViewItem:tabViewItem];
             }
         }
     }

@@ -45,6 +45,7 @@
 #import "iTermRemotePreferences.h"
 #import "iTermSearchFieldCell.h"
 #import "iTermShortcutInputView.h"
+#import "iTermSizeRememberingView.h"'
 #import "iTermSnippetsModel.h"
 #import "iTermStatusBarComponentKnob.h"
 #import "iTermStatusBarComponent.h"
