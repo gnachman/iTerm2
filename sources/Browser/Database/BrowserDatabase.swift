@@ -7,6 +7,60 @@
 
 import Foundation
 
+@objc
+class iTermBrowserBookmarkFinder: NSObject {
+    private static var cache: (String, [iTermTuple<NSString, NSURL>])?
+    private static var busy = MutableAtomicObject(0)
+
+    @objc(bookmarksMatchingSubstring:)
+    static func bookmarksMatching(substring: String) -> [iTermTuple<NSString, NSURL>] {
+        if busy.value > 0 {
+            return cachedIfValid(for: substring)
+        }
+        let group = DispatchGroup()
+        var results = [iTermTuple<NSString, NSURL>]()
+        group.enter()
+
+        busy.mutate { $0 + 1 }
+        Task.detached(priority: .userInitiated) {
+            defer {
+                group.leave()
+                busy.mutate { $0 - 1 }
+            }
+            guard let db = await BrowserDatabase.instance else {
+                return
+            }
+
+            let bookmarks = await db.searchBookmarks(terms: substring)
+            let tuples: [iTermTuple<NSString, NSURL>] = bookmarks.compactMap { bookmark in
+                guard let url = URL(string: bookmark.url) else {
+                    return nil
+                }
+                return iTermTuple(
+                    object: (bookmark.title ?? "") as NSString,
+                    andObject: url as NSURL
+                )
+            }
+
+            results.append(contentsOf: tuples)
+        }
+
+        switch group.wait(timeout: .now() + 0.05) {
+        case .success:
+            return results
+        case .timedOut:
+            return cachedIfValid(for: substring)
+        }
+    }
+
+    private static func cachedIfValid(for substring: String) -> [iTermTuple<NSString, NSURL>] {
+        if let cache, substring.range(of: cache.0) != nil {
+            return cache.1
+        }
+        return []
+    }
+}
+
 actor BrowserDatabase {
     // Serial queue to ensure all SQLite operations happen on the same thread
     private let databaseQueue = DispatchQueue(label: "BrowserDatabase.sqlite", qos: .utility)

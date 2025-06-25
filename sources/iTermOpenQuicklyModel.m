@@ -1,5 +1,6 @@
 #import "iTermOpenQuicklyModel.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermActionsModel.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
@@ -33,6 +34,7 @@
 
 // It's nice for each of these to be unique so in degenerate cases (e.g., empty query) the detail
 // uses the same feature for all items.
+static const double kMultiplierForURLItem = 6;
 static const double kInvocationMultiplier = 5;
 static const double kSessionBadgeMultiplier = 3;
 static const double kSessionNameMultiplier = 2;
@@ -65,6 +67,9 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
 // Multipliers for profile items
 static const double kProfileNameMultiplierForProfileItem = 0.1;
 
+// Browser bookmarks
+static const double kProfileNameMultiplierForBookmarkItem = 0.097;
+
 // Multiplier for color preset name. Rank between scripts and profiles.
 static const double kProfileNameMultiplierForColorPresetItem = 0.095;
 
@@ -90,7 +95,9 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
                       [iTermOpenQuicklyCreateTabCommand class],
                       [iTermOpenQuicklyColorPresetCommand class],
                       [iTermOpenQuicklyScriptCommand class],
-                      [iTermOpenQuicklyActionCommand class]];
+                      [iTermOpenQuicklyActionCommand class],
+                      [iTermOpenQuicklySnippetCommand class],
+                      [iTermOpenQuicklyBookmarkCommand class]];
     });
     return commands;
 }
@@ -173,31 +180,51 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
 
 // Returns a function PTYSession -> (Feature name, Feature value) that gives the value which most distinguishes sessions from one another.
 - (iTermTuple<NSString *, NSString *> *(^)(PTYSession *))detailFunctionForSessions:(NSArray<PTYSession *> *)sessions {
-    iTermTuple<NSString *, NSString *> *(^pwd)(PTYSession *) = ^iTermTuple<NSString *, NSString *> *(PTYSession *session) {
-        return [iTermTuple tupleWithObject:@"Directory" andObject:session.variablesScope.path];
+    iTermTriple<NSString *, NSString *, NSNumber *> *(^pwd)(PTYSession *) = ^id(PTYSession *session) {
+        return [iTermTriple tripleWithObject:@"Directory"
+                                   andObject:session.variablesScope.path
+                                   object:@(session.variablesScope.path.length > 0)];
     };
-    iTermTuple<NSString *, NSString *> *(^command)(PTYSession *) = ^iTermTuple<NSString *, NSString *> *(PTYSession *session) {
-        return [iTermTuple tupleWithObject:@"Command" andObject:session.commands.lastObject];
+    iTermTriple<NSString *, NSString *, NSNumber *> *(^command)(PTYSession *) = ^id(PTYSession *session) {
+        return [iTermTriple tripleWithObject:@"Command"
+                                   andObject:session.commands.lastObject
+                                   object:@(session.commands.lastObject.length > 0)];
     };
-    iTermTuple<NSString *, NSString *> *(^hostname)(PTYSession *) = ^iTermTuple<NSString *, NSString *> *(PTYSession *session) {
-        return [iTermTuple tupleWithObject:@"Host" andObject:session.currentHost.usernameAndHostname];
+    iTermTriple<NSString *, NSString *, NSNumber *> *(^hostname)(PTYSession *) = ^id(PTYSession *session) {
+        return [iTermTriple tripleWithObject:@"Host"
+                                   andObject:session.currentHost.usernameAndHostname
+                                   object:@(session.currentHost != nil)];
     };
-    iTermTuple<NSString *, NSString *> *(^badge)(PTYSession *) = ^iTermTuple<NSString *, NSString *> *(PTYSession *session) {
-        return [iTermTuple tupleWithObject:@"Badge" andObject:session.badgeLabel];
+    iTermTriple<NSString *, NSString *, NSNumber *> *(^badge)(PTYSession *) = ^id(PTYSession *session) {
+        return [iTermTriple tripleWithObject:@"Badge"
+                                   andObject:session.badgeLabel
+                                   object:@(session.badgeLabel.length > 0)];
     };
-    NSArray<iTermTuple<NSString *, NSString *> *(^)(PTYSession *)> *functions = @[ pwd, command, hostname, badge ];
+    iTermTriple<NSString *, NSString *, NSNumber *> *(^webSite)(PTYSession *) = ^id(PTYSession *session) {
+        return [iTermTriple tripleWithObject:@"Web Site"
+                                   andObject:session.webSiteTitle ?: @""
+                                      object:@(session.webSiteTitle.length > 0)];
+    };
+
+    // functions and functionValues are parallel arrays.
+    NSArray<iTermTriple<NSString *, NSString *, NSNumber *>  *(^)(PTYSession *)> *functions = @[ pwd, command, hostname, badge ];
+    if ([iTermAdvancedSettingsModel browserProfiles]) {
+        functions = [functions arrayByAddingObject:webSite];
+    }
     NSMutableArray<NSMutableArray *> *functionValues = [NSMutableArray array];
-    [functions enumerateObjectsUsingBlock:^(iTermTuple<NSString *, NSString *> *(^ _Nonnull obj)(PTYSession *), NSUInteger idx, BOOL * _Nonnull stop) {
+    [functions enumerateObjectsUsingBlock:^(iTermTriple<NSString *, NSString *, NSNumber *>  *(^ _Nonnull obj)(PTYSession *), NSUInteger idx, BOOL * _Nonnull stop) {
         [functionValues addObject:[NSMutableArray array]];
     }];
     [sessions enumerateObjectsUsingBlock:^(PTYSession * _Nonnull session, NSUInteger sessionIndex, BOOL * _Nonnull stop) {
-        [functions enumerateObjectsUsingBlock:^(iTermTuple<NSString *, NSString *> *(^ _Nonnull f)(PTYSession *), NSUInteger functionIndex, BOOL * _Nonnull stop) {
-            iTermTuple<NSString *, NSString *> *value = f(session);
+        [functions enumerateObjectsUsingBlock:^(iTermTriple<NSString *, NSString *, NSNumber *>  *(^ _Nonnull f)(PTYSession *), NSUInteger functionIndex, BOOL * _Nonnull stop) {
+            iTermTriple<NSString *, NSString *, NSNumber *>  *value = f(session);
             if (value) {
                 [functionValues[functionIndex] addObject:value];
             }
         }];
     }];
+
+    // indexes is the set of indexes that have values for all sessions.
     NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
     [functionValues enumerateObjectsUsingBlock:^(NSMutableArray * _Nonnull values, NSUInteger idx, BOOL * _Nonnull stop) {
         if (values.count == sessions.count) {
@@ -205,27 +232,43 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         }
     }];
 
-    NSMutableArray<iTermTuple<NSString *, NSString *> *(^)(PTYSession *)> *filteredFunctions = [NSMutableArray array];
+    // filteredFunction[Value]s is those functions and values that are usable by all sessions
+    NSMutableArray<iTermTriple<NSString *, NSString *, NSNumber *>  *(^)(PTYSession *)> *filteredFunctions = [NSMutableArray array];
     NSMutableArray<NSMutableArray *> *filteredFunctionValues = [NSMutableArray array];
     [indexes enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
         [filteredFunctions addObject:functions[idx]];
         [filteredFunctionValues addObject:functionValues[idx]];
     }];
-    double (^variance)(NSArray<iTermTuple<NSString *, NSString *> *> *) = ^double(NSArray<iTermTuple<NSString *, NSString *> *> *tuples) {
+    double (^variance)(NSArray<iTermTriple<NSString *, NSString *, NSNumber *>  *> *) = ^double(NSArray<iTermTriple<NSString *, NSString *, NSNumber *>  *> *tuples) {
         NSSet<NSString *> *set = [NSSet setWithArray:[tuples mapWithBlock:^id _Nonnull(iTermTuple<NSString *,NSString *> * _Nonnull tuple) {
             return tuple.secondObject;
         }]];
         return set.count;
     };
-    const NSUInteger best = [filteredFunctionValues indexOfMaxWithBlock:
-                             ^NSComparisonResult(NSMutableArray<iTermTuple<NSString *, NSString *> *> *obj1,
-                                                 NSMutableArray<iTermTuple<NSString *, NSString *> *> *obj2) {
+
+    // Indexes into filteredFunction[Value]s sorted by variance. The functions at the end of the list discriminate sessions better.
+    NSArray<NSNumber *> *sortedIndexes = [NSArray sequenceWithRange:NSMakeRange(0, filteredFunctionValues.count)];
+    sortedIndexes = [sortedIndexes sortedArrayUsingComparator:^NSComparisonResult(NSNumber *li, NSNumber *ri) {
+        NSMutableArray<iTermTriple<NSString *, NSString *, NSNumber *>  *> *obj1 = filteredFunctionValues[li.unsignedIntegerValue];
+        NSMutableArray<iTermTriple<NSString *, NSString *, NSNumber *>  *> *obj2 = filteredFunctionValues[ri.unsignedIntegerValue];
         return [@(variance(obj1)) compare:@(variance(obj2))];
     }];
-    if (best == NSNotFound) {
+    if (sortedIndexes.count == 0) {
         return nil;
     }
-    return filteredFunctions[best];
+
+    // Return a function that can be called with a session to get its description.
+    return ^id(PTYSession *session) {
+        for (NSNumber *i in sortedIndexes.reversed) {
+            iTermTriple<NSString *, NSString *, NSNumber *> *candidate = filteredFunctions[i.unsignedIntegerValue](session);
+            if (candidate.thirdObject.boolValue) {
+                // The value for this session is valid.
+                return [iTermTuple tupleWithObject:candidate.firstObject
+                                         andObject:candidate.secondObject];
+            }
+        }
+        return nil;
+    };
 }
 
 - (void)addSessionLocationToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
@@ -261,19 +304,21 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
             item.identifier = session.guid;
             if (detailFunction) {
                 iTermTuple<NSString *, NSString *> *detailTuple = detailFunction(session);
-                // "Feature: value" giving identifying info about this session to distinguish it from others. Query-independent.
-                NSAttributedString *refinement =
-                [self.delegate openQuicklyModelAttributedStringForDetail:detailTuple.secondObject
-                                                             featureName:detailTuple.firstObject];
-                if (![detailTuple.firstObject isEqual:detail.firstObject] && item.detail != nil) {
-                    NSMutableAttributedString *temp = [item.detail mutableCopy];
-                    NSAttributedString *emdash = [[NSAttributedString alloc] initWithString:@" — "
-                                                                                 attributes:[item.detail attributesAtIndex:0 effectiveRange:nil]];
-                    [temp appendAttributedString:emdash];
-                    [temp appendAttributedString:refinement];
-                    item.detail = temp;
-                } else {
-                    item.detail = refinement;
+                if (detailTuple) {
+                    // "Feature: value" giving identifying info about this session to distinguish it from others. Query-independent.
+                    NSAttributedString *refinement =
+                    [self.delegate openQuicklyModelAttributedStringForDetail:detailTuple.secondObject
+                                                                 featureName:detailTuple.firstObject];
+                    if (![detailTuple.firstObject isEqual:detail.firstObject] && item.detail != nil) {
+                        NSMutableAttributedString *temp = [item.detail mutableCopy];
+                        NSAttributedString *emdash = [[NSAttributedString alloc] initWithString:@" — "
+                                                                                     attributes:[item.detail attributesAtIndex:0 effectiveRange:nil]];
+                        [temp appendAttributedString:emdash];
+                        [temp appendAttributedString:refinement];
+                        item.detail = temp;
+                    } else {
+                        item.detail = refinement;
+                    }
                 }
             }
             [items addObject:item];
@@ -433,6 +478,51 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
             newSessionWithProfileItem.title = attributedName;
             newSessionWithProfileItem.identifier = profile[KEY_GUID];
             [items addObject:newSessionWithProfileItem];
+        }
+    }
+}
+
+- (void)addBookmarkToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
+               withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
+    if (![iTermAdvancedSettingsModel browserProfiles]) {
+        return;
+    }
+    for (iTermTuple<NSString *, NSURL *> *tuple in [iTermBrowserBookmarkFinder bookmarksMatchingSubstring:matcher.query]) {
+        iTermOpenQuicklyBookmarkItem *item = [[iTermOpenQuicklyBookmarkItem alloc] init];
+        NSMutableAttributedString *attributedName = [[NSMutableAttributedString alloc] init];
+        item.score = [self scoreForBookmarkTitle:tuple.firstObject url:tuple.secondObject matcher:matcher attributedName:attributedName];
+        if (item.score > 0) {
+            item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
+                                                                            value:@"Open Bookmark in Browser"
+                                                               highlightedIndexes:nil];
+            item.title = attributedName;
+            item.identifier = tuple.secondObject.absoluteString;
+            item.url = tuple.secondObject;
+            item.bookmarkName = tuple.firstObject;
+            [items addObject:item];
+        }
+    }
+}
+
+- (void)addURLToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
+           withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
+    if (![iTermAdvancedSettingsModel browserProfiles]) {
+        return;
+    }
+    NSURL *url = [NSURL URLWithString:matcher.query];
+    if ([matcher.query hasPrefix:@"https://"] && url != nil) {
+        iTermOpenQuicklyURLItem *item = [[iTermOpenQuicklyURLItem alloc] init];
+
+        NSMutableAttributedString *attributedName = [[NSMutableAttributedString alloc] init];
+        item.score = [self scoreForURL:url matcher:matcher attributedName:attributedName];
+        if (item.score > 0) {
+            item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
+                                                                            value:@"Open URL in Browser"
+                                                               highlightedIndexes:nil];
+            item.title = attributedName;
+            item.identifier = matcher.query;
+            item.url = [NSURL URLWithString:matcher.query];
+            [items addObject:item];
         }
     }
 }
@@ -746,6 +836,14 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
             [self addInvocation:queryString scope:scope toItems:items withMatcher:matcher];
         }
 #endif
+        if ([iTermAdvancedSettingsModel browserProfiles]) {
+            if ([command supportsBookmarks]) {
+                [self addBookmarkToItems:items withMatcher:matcher];
+            }
+            if ([command supportsURLs]) {
+                [self addURLToItems:items withMatcher:matcher];
+            }
+        }
     }
     // Sort from highest to lowest score.
     [items sortUsingComparator:^NSComparisonResult(iTermOpenQuicklyItem *obj1,
@@ -850,6 +948,10 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     } else if ([item isKindOfClass:[iTermOpenQuicklyNamedMarkItem class]]) {
         return item;
     } else if ([item isKindOfClass:[iTermOpenQuicklyMenuItem class]]) {
+        return item;
+    } else if ([item isKindOfClass:[iTermOpenQuicklyBookmarkItem class]]) {
+        return item;
+    } else if ([item isKindOfClass:[iTermOpenQuicklyURLItem class]]) {
         return item;
     }
     if (@available(macOS 11, *)) {
@@ -1010,6 +1112,39 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
                                       name:nil
                                   features:nameFeature
                                      limit:2 * kProfileNameMultiplierForColorPresetItem];
+    if (nameFeature.count) {
+        [attributedName appendAttributedString:nameFeature[0][0]];
+    }
+    return score;
+}
+
+- (double)scoreForURL:(NSURL *)url
+              matcher:(iTermMinimumSubsequenceMatcher *)matcher
+       attributedName:(NSMutableAttributedString *)attributedName {
+    NSMutableArray *nameFeature = [NSMutableArray array];
+    double score = [self scoreUsingMatcher:matcher
+                                 documents:@[ url.absoluteString ]
+                                multiplier:kMultiplierForURLItem
+                                      name:nil
+                                  features:nameFeature
+                                     limit:2 * kMultiplierForURLItem];
+    if (nameFeature.count) {
+        [attributedName appendAttributedString:nameFeature[0][0]];
+    }
+    return score;
+}
+
+- (double)scoreForBookmarkTitle:(NSString *)title
+                            url:(NSURL *)url
+                        matcher:(iTermMinimumSubsequenceMatcher *)matcher
+                 attributedName:(NSMutableAttributedString *)attributedName {
+    NSMutableArray *nameFeature = [NSMutableArray array];
+    double score = [self scoreUsingMatcher:matcher
+                                 documents:@[ url.absoluteString, title ]
+                                multiplier:kProfileNameMultiplierForBookmarkItem
+                                      name:nil
+                                  features:nameFeature
+                                     limit:2 * kProfileNameMultiplierForBookmarkItem];
     if (nameFeature.count) {
         [attributedName appendAttributedString:nameFeature[0][0]];
     }

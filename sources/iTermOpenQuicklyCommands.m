@@ -77,6 +77,14 @@
     return NO;
 }
 
+- (BOOL)supportsBookmarks {
+    return NO;
+}
+
+- (BOOL)supportsURLs {
+    return NO;
+}
+
 @end
 
 @implementation iTermOpenQuicklyInTabsWindowArrangementCommand
@@ -254,6 +262,15 @@
 - (BOOL)supportsMenuItems {
     return YES;
 }
+
+- (BOOL)supportsBookmarks {
+    return YES;
+}
+
+- (BOOL)supportsURLs {
+    return YES;
+}
+
 @end
 
 @implementation iTermOpenQuicklyActionCommand
@@ -283,6 +300,22 @@
 }
 
 - (BOOL)supportsSnippet {
+    return YES;
+}
+
+@end
+
+@implementation iTermOpenQuicklyBookmarkCommand
+
++ (NSString *)restrictionDescription {
+    return @"open bookmark";
+}
+
++ (NSString *)command {
+    return @"b";
+}
+
+- (BOOL)supportsBookmarks {
     return YES;
 }
 

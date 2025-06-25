@@ -1,4 +1,6 @@
 #import "iTermOpenQuicklyWindowController.h"
+
+#import "iTerm2SharedARC-Swift.h"
 #import "ITAddressBookMgr.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
@@ -345,6 +347,26 @@
                             [alert runModal];
                         }
                     }];
+                } else {
+                    if ([iTermAdvancedSettingsModel browserProfiles]) {
+                        if ([object isKindOfClass:[iTermOpenQuicklyBookmarkItem class]]) {
+                            iTermOpenQuicklyBookmarkItem *item = [iTermOpenQuicklyBookmarkItem castFrom:object];
+                            PTYSession *session = iTermController.sharedInstance.currentTerminal.currentSession;
+                            if (session.profile.profileIsBrowser) {
+                                [session openURL:item.url];
+                            } else {
+                                [[iTermController sharedInstance] openURLInNewBrowserTab:item.url];
+                            }
+                        } else if ([object isKindOfClass:[iTermOpenQuicklyURLItem class]]) {
+                            iTermOpenQuicklyURLItem *item = [iTermOpenQuicklyURLItem castFrom:object];
+                            PTYSession *session = iTermController.sharedInstance.currentTerminal.currentSession;
+                            if (session.profile.profileIsBrowser) {
+                                [session openURL:item.url];
+                            } else {
+                                [[iTermController sharedInstance] openURLInNewBrowserTab:item.url];
+                            }
+                        }
+                    }
                 }
             }
         }

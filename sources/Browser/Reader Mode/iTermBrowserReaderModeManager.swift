@@ -152,7 +152,8 @@ class iTermBrowserReaderModeManager: NSObject {
             DLog("Error exiting distraction removal mode: \(error)")
         }
     }
-    
+
+    @MainActor
     private func ensureScriptsInjected() async -> Bool {
         if scriptsInjected {
             return true

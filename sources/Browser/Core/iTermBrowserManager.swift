@@ -264,6 +264,9 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
     }
 
     func pageContent() async -> PageContent? {
+        guard webView.url != nil else {
+            return nil
+        }
         guard let title = webView.title ?? webView.url?.absoluteString else {
             return nil
         }

@@ -136,3 +136,34 @@
 }
 
 @end
+
+@implementation iTermOpenQuicklyBookmarkItem
+
+- (NSImage *)icon {
+    if (@available(macOS 11, *)) {
+        NSImageSymbolConfiguration *config = [NSImageSymbolConfiguration configurationWithPointSize:32 weight:NSFontWeightRegular];
+        NSImage *image = [NSImage imageWithSystemSymbolName:@"bookmark" accessibilityDescription:@"globe"];
+        image = [image imageWithSymbolConfiguration:config];
+        image.size = NSMakeSize(32, 32);
+        return image;
+    }
+    return nil;
+}
+
+@end
+
+@implementation iTermOpenQuicklyURLItem
+
+- (NSImage *)icon {
+    if (@available(macOS 11, *)) {
+        NSImageSymbolConfiguration *config = [NSImageSymbolConfiguration configurationWithPointSize:32 weight:NSFontWeightRegular];
+        NSImage *image = [NSImage imageWithSystemSymbolName:@"globe" accessibilityDescription:@"globe"];
+        image = [image imageWithSymbolConfiguration:config];
+        image.size = NSMakeSize(32, 32);
+        return image;
+    }
+    return nil;
+}
+
+@end
+

@@ -90,3 +90,12 @@ NS_AVAILABLE_MAC(11_0)
 @property(nonatomic, readonly) BOOL valid;
 @end
 
+@interface iTermOpenQuicklyBookmarkItem: iTermOpenQuicklyItem
+@property(nonatomic, copy) NSString *bookmarkName;
+@property(nonatomic, strong) NSURL *url;
+@end
+
+@interface iTermOpenQuicklyURLItem: iTermOpenQuicklyItem
+@property(nonatomic, strong) NSURL *url;
+@end
+
