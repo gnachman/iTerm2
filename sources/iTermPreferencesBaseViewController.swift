@@ -110,9 +110,9 @@ extension iTermPreferencesBaseViewController {
                 }
             }
             // On the first call, save a bunch of state. On subsequent calls, restore it.
-            let savedFrames = saveOrRestoreFrames(enclosures,
-                                                  nestedTabViews,
-                                                  configuration)
+            saveOrRestoreFrames(enclosures,
+                                nestedTabViews,
+                                configuration)
             let groupedRemove = Dictionary(grouping: remove,
                                            by: { $0.superview?.it_addressString ?? "(nil)" })
             for enclosure in reveal {
@@ -145,7 +145,7 @@ extension iTermPreferencesBaseViewController {
 
     private func saveOrRestoreFrames(_ enclosures: [ModalEnclosure],
                                      _ tabViews: [NSTabView],
-                                     _ configuration: SavedFrames.Configuration) -> SavedFrames {
+                                     _ configuration: SavedFrames.Configuration) {
         if let savedFrames {
             // Restore all the original frames
             for tuple in savedFrames.frames {
@@ -163,7 +163,6 @@ extension iTermPreferencesBaseViewController {
                 }
             }
             savedFrames.configuration = configuration
-            return savedFrames
         } else {
             let siblings = Set(enclosures.flatMap { $0.superview?.subviews ?? [] })
             let savedFrames = SavedFrames()
@@ -171,7 +170,6 @@ extension iTermPreferencesBaseViewController {
             savedFrames.tabViewItems = tabViews.map { ($0, $0.tabViewItems) }
             savedFrames.configuration = configuration
             internalState[key] = savedFrames
-            return savedFrames
         }
     }
 

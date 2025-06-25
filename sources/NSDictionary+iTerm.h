@@ -17,6 +17,8 @@
 
 @interface NSDictionary<__covariant KeyType, __covariant ObjectType> (iTerm)
 
+@property(nonatomic, readonly) BOOL profileIsBrowser;
+
 + (instancetype)it_dictionaryWithContentsOfData:(NSData *)data;
 
 + (CGFloat)defaultAlphaForColorPresetKey:(NSString *)key;

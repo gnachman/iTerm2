@@ -137,8 +137,13 @@ const CGFloat kDefaultTagsWidth = 80;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect model:(ProfileModel *)dataSource font:(NSFont *)font {
+    return [self initWithFrame:frameRect model:dataSource font:font profileTypes:ProfileTypeAll];
+}
+
+- (instancetype)initWithFrame:(NSRect)frameRect model:(ProfileModel*)dataSource font:(NSFont *)font profileTypes:(ProfileType)profileTypes {
     self = [super initWithFrame:frameRect];
     if (self) {
+        _profileTypes = profileTypes;
         _savedHeights = [[NSMutableDictionary alloc] init];
         margin_ = kInterWidgetMargin;
         [self setUnderlyingDatasource:dataSource];
@@ -470,13 +475,10 @@ const CGFloat kDefaultTagsWidth = 80;
     [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/search_syntax.html"]];
 }
 
-- (void)setUnderlyingDatasource:(ProfileModel*)dataSource
-{
+- (void)setUnderlyingDatasource:(ProfileModel*)dataSource {
     [dataSource_ autorelease];
-    dataSource_ = [[ProfileModelWrapper alloc] initWithModel:dataSource];
+    dataSource_ = [[ProfileModelWrapper alloc] initWithModel:dataSource profileTypes:_profileTypes];
 }
-
-
 
 - (ProfileModelWrapper*)dataSource
 {
@@ -1064,6 +1066,12 @@ const CGFloat kDefaultTagsWidth = 80;
     if ([self.delegate respondsToSelector:@selector(profileTableFilterDidChange:)]) {
         [self.delegate profileTableFilterDidChange:self];
     }
+}
+
+- (void)setProfileTypes:(ProfileType)profileTypes {
+    _profileTypes = profileTypes;
+    dataSource_.profileTypes = profileTypes;
+    [self reloadData];
 }
 
 - (void)multiColumns

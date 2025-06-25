@@ -13920,14 +13920,18 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 }
 
-- (void)setProfile:(NSDictionary *)newProfile
+- (BOOL)setProfile:(NSDictionary *)newProfile
     preservingName:(BOOL)preservingName {
-    [self setProfile:newProfile preservingName:preservingName adjustWindow:YES];
+    return [self setProfile:newProfile preservingName:preservingName adjustWindow:YES];
 }
 
-- (void)setProfile:(NSDictionary *)newProfile
+- (BOOL)setProfile:(NSDictionary *)newProfile
     preservingName:(BOOL)preserveName
       adjustWindow:(BOOL)adjustWindow {
+    if (self.profile.profileType != newProfile.profileType) {
+        DLog(@"Can't change browserness from %@ to %@", self.profile, newProfile);
+        return NO;
+    }
     DLog(@"Set profile to\n%@", newProfile);
     // Force triggers to be checked. We may be switching to a profile without triggers
     // and we don't want them to run on the lines of text above _triggerLine later on
@@ -13949,10 +13953,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [self remarry];
     if (preserveName) {
         [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionProfileName: newProfile[KEY_NAME] ?: [NSNull null] }];
-        return;
+        return YES;
     }
     [self profileDidChangeToProfileWithName:newProfile[KEY_NAME]];
     DLog(@"Done setting profile of %@", self);
+    return YES;
 }
 
 - (void)screenSetPasteboard:(NSString *)value {
@@ -16797,7 +16802,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 - (void)automaticProfileSwitcherLoadProfile:(iTermSavedProfile *)savedProfile {
     Profile *underlyingProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:savedProfile.originalProfile[KEY_GUID]];
     Profile *replacementProfile = underlyingProfile ?: savedProfile.originalProfile;
-    [self setProfile:replacementProfile preservingName:NO adjustWindow:NO];
+    if (![self setProfile:replacementProfile preservingName:NO adjustWindow:NO]) {
+        [_view showUnobtrusiveMessage:[NSString stringWithFormat:@"Can’t switch to profile “%@”—wrong profile type.", underlyingProfile[KEY_NAME]]];
+        return;
+    }
     if (savedProfile.isDivorced) {
         NSMutableDictionary *overrides = [NSMutableDictionary dictionary];
         for (NSString *key in savedProfile.overriddenFields) {
@@ -19493,7 +19501,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
 
-    ProfileListView *profiles = [[[ProfileListView alloc] initWithFrame:NSMakeRect(0, 0, 300, 300)] autorelease];
+    ProfileListView *profiles = [[[ProfileListView alloc] initWithFrame:NSMakeRect(0, 0, 300, 300)
+                                                                  model:[ProfileModel sharedInstance]
+                                                                   font:nil] autorelease];
     [profiles disableArrowHandler];
 
     alert.accessoryView = profiles;

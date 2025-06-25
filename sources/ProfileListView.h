@@ -70,9 +70,11 @@ extern NSString *const kProfileWasDeletedNotification;
 @property(nonatomic, readonly) NSInteger selectedRow;
 @property(nonatomic, readonly) NSString *selectedGuid;
 @property(nonatomic, readonly) NSDictionary *restorableState;
+@property(nonatomic) ProfileType profileTypes;
 
 - (instancetype)initWithFrame:(NSRect)frameRect model:(ProfileModel*)dataSource;
 - (instancetype)initWithFrame:(NSRect)frameRect model:(ProfileModel*)dataSource font:(NSFont *)font;
+- (instancetype)initWithFrame:(NSRect)frameRect model:(ProfileModel*)dataSource font:(NSFont *)font profileTypes:(ProfileType)profileTypes;
 - (ProfileModelWrapper*)dataSource;
 - (void)setUnderlyingDatasource:(ProfileModel*)dataSource;
 - (void)focusSearchField;

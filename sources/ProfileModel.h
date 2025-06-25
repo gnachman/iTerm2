@@ -26,6 +26,13 @@
 
 #import "iTermProfile.h"
 
+typedef NS_OPTIONS(NSUInteger, ProfileType) {
+    ProfileTypeTerminal = 1,
+    ProfileTypeBrowser = 1 << 1,
+
+    ProfileTypeAll = (ProfileTypeTerminal | ProfileTypeBrowser)
+};
+
 @protocol iTermProfileModelMenuController;
 
 // Notification posted when a stored profile changes.
@@ -75,6 +82,9 @@ extern NSString *const iTermProfileDidChange;
 - (int)numberOfBookmarksWithFilter:(NSString*)filter;
 - (NSArray*)bookmarkIndicesMatchingFilter:(NSString*)filter;
 - (NSArray*)bookmarkIndicesMatchingFilter:(NSString*)filter orGuid:(NSString *)lockedGuid;
+- (NSArray<Profile *> *)profileIndicesMatchingFilter:(NSString *)filter
+                                              orGuid:(NSString *)lockedGuid
+                                              ofType:(ProfileType)profileTypes;
 - (int)indexOfProfileWithGuid:(NSString*)guid;
 - (int)indexOfProfileWithGuid:(NSString*)guid withFilter:(NSString*)filter;
 - (Profile*)profileAtIndex:(int)index;
@@ -131,5 +141,10 @@ extern NSString *const iTermProfileDidChange;
 - (void)recordSortOrder;
 - (void)moveProfileWithGuidIfNeededToRespectSortOrder:(NSString *)guid;
 
+@end
+
+@interface NSDictionary(ProfileModel)
+@property(nonatomic, readonly) ProfileType profileType;
++ (ProfileType)profileTypeForCustomCommand:(id)customCommand;  // pass the value of KEY_CUSTOM_COMMAND
 @end
 

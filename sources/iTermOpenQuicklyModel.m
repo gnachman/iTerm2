@@ -469,6 +469,10 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
 - (void)addChangeProfileToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
                     withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
     for (Profile *profile in [[ProfileModel sharedInstance] bookmarks]) {
+        if (profile.profileType != iTermController.sharedInstance.currentTerminal.currentSession.profile.profileType) {
+            // Prevent selecting a type that will fail
+            continue;
+        }
         iTermOpenQuicklyChangeProfileItem *changeProfileItem = [[iTermOpenQuicklyChangeProfileItem alloc] init];
         NSMutableAttributedString *attributedName = [[NSMutableAttributedString alloc] init];
         changeProfileItem.score = [self scoreForProfile:profile matcher:matcher attributedName:attributedName];
