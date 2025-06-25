@@ -17648,6 +17648,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self backgroundColorDidChangeJigglingIfNeeded:NO];
 }
 
+- (BOOL)textViewProfileTypeIsTerminal {
+    return !_view.isBrowser;
+}
+
 - (void)removeSelectedCommandRange {
     if (!_selectedCommandMark) {
         return;
