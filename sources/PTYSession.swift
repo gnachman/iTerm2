@@ -937,3 +937,23 @@ extension PTYSession {
         return textview.colorMap.color(forKey: kColorMapForeground)
     }
 }
+
+@available(macOS 11, *)
+extension PTYSession {
+    @objc(openURL:)
+    func open(url: URL) {
+        guard view.isBrowser else {
+            DLog("Can't open \(url), not a browser")
+            return
+        }
+        view.browserViewController?.loadURL(url.absoluteString)
+    }
+
+    @objc
+    var webSiteTitle: String? {
+        if #available(macOS 11, *) {
+            return view.browserViewController?.title
+        }
+        return nil
+    }
+}

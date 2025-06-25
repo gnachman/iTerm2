@@ -237,6 +237,7 @@ typedef NS_OPTIONS(NSUInteger, iTermSingleUseWindowOptions) {
                 username:(NSString *)username;
 
 - (NSArray<NSString *> *)currentSnippetsFilter;
+- (void)openURLInNewBrowserTab:(NSURL *)url;
 
 @end
 

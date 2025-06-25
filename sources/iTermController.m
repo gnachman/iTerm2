@@ -1669,6 +1669,24 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                               completion:completion];
 }
 
+- (void)openURLInNewBrowserTab:(NSURL *)url {
+    if (![iTermAdvancedSettingsModel browserProfiles]) {
+        return;
+    }
+    [iTermSessionLauncher launchBookmark:[ProfileModel.sharedInstance defaultBrowserProfileCreatingIfNeeded]
+                              inTerminal:[[iTermController sharedInstance] currentTerminal]
+                                 withURL:url.absoluteString
+                        hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                 makeKey:YES
+                             canActivate:YES
+                      respectTabbingMode:NO
+                                   index:nil
+                                 command:nil
+                             makeSession:nil
+                          didMakeSession:nil
+                              completion:nil];
+}
+
 - (WKWebView *)openSingleUserBrowserWindowWithURL:(NSURL *)url
                                     configuration:(WKWebViewConfiguration *)configuration
                                           options:(iTermSingleUseWindowOptions)options

@@ -745,6 +745,28 @@ static NSMutableArray<NSString *> *_combinedLog;
     return [self bookmarkWithGuid:defaultBookmarkGuid_];
 }
 
+- (Profile *)defaultBrowserProfileCreatingIfNeeded {
+    // TODO: Do this properly with a UI and everything
+    NSString *key = @"Default Browser Profile Guid";
+    NSString *guid = [[NSUserDefaults standardUserDefaults] stringForKey:key];
+    {
+        Profile *profile = [self bookmarkWithGuid:guid];
+        if (profile) {
+            return profile;
+        }
+    }
+    MutableProfile *profile = [[[MutableProfile alloc] init] autorelease];
+    profile[KEY_NAME] = @"Web Browser";
+    profile[KEY_GUID] = ProfileModel.freshGuid;
+    profile[KEY_SCROLLBACK_LINES] = @0;
+    profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeBrowserValue;
+    [[NSUserDefaults standardUserDefaults] setObject:profile[KEY_GUID]
+                                              forKey:key];
+    [self addBookmark:profile];
+    [self postChangeNotification];
+    return profile;
+}
+
 - (Profile*)bookmarkWithName:(NSString*)name
 {
     int count = [bookmarks_ count];
