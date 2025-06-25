@@ -439,6 +439,10 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
 
 - (void)addChangeColorPresetToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
                         withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
+    if ([[[[[iTermController sharedInstance] currentTerminal] currentSession] profile] profileIsBrowser]) {
+        // Browser does not support color presets.
+        return;
+    }
     iTermColorPresetDictionary *allPresets = [iTermColorPresets allColorPresets];
     NSColor *defaultColor = [NSColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1];
     const BOOL dark = [[NSApp effectiveAppearance] it_isDark];
