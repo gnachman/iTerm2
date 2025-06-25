@@ -643,6 +643,10 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     return [iTermTouchbarMappings globalTouchBarMap];
 }
 
+- (ProfileType)keyMappingProfileType:(iTermKeyMappingViewController *)viewController {
+    return ProfileTypeAll;
+}
+
 - (BOOL)keyMapping:(iTermKeyMappingViewController *)viewController shouldImportKeystrokes:(NSSet<iTermKeystroke *> *)keystrokesThatWillChange {
     NSSet<iTermKeystroke *> *keystrokesInGlobalMapping = [iTermKeyMappings keystrokesInGlobalMapping];
     if (![keystrokesInGlobalMapping isSubsetOfSet:keystrokesThatWillChange]) {

@@ -538,6 +538,10 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     return YES;
 }
 
+- (ProfileType)keyMappingProfileType:(iTermKeyMappingViewController *)viewController {
+    return [Profile profileTypeForCustomCommand:[self objectForKey:KEY_CUSTOM_COMMAND]];
+}
+
 - (void)keyMapping:(iTermKeyMappingViewController *)viewController
      didChangeItem:(iTermKeystrokeOrTouchbarItem *)item
            atIndex:(NSInteger)index

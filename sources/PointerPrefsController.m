@@ -967,7 +967,8 @@ typedef enum {
             [editArgumentButton_ setHidden:NO];
             _menuItemPopupView.hidden = YES;
             [editArgumentLabel_ setStringValue:@"Profile:"];
-            [editArgumentButton_ populateWithProfilesSelectingGuid:currentArg];
+            [editArgumentButton_ populateWithProfilesSelectingGuid:currentArg
+                                                      profileTypes:ProfileTypeAll];
             _pasteSpecialViewContainer.hidden = YES;
             break;
 

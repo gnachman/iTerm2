@@ -9,6 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 #import "iTermKeystroke.h"
+#import "ProfileModel.h"
 
 @class iTermKeyBindingAction;
 @class iTermKeyMappingViewController;
@@ -39,6 +40,8 @@
     loadPresetsNamed:(NSString *)presetName;
 
 - (BOOL)keyMapping:(iTermKeyMappingViewController *)viewController shouldImportKeystrokes:(NSSet<iTermKeystroke *> *)keys;
+
+- (ProfileType)keyMappingProfileType:(iTermKeyMappingViewController *)viewController;
 
 @end
 
