@@ -13,6 +13,7 @@
 #import "iTermKeyBindingAction.h"
 #import "iTermVariableHistory.h"
 #import "iTermVariableScope.h"
+#import "ProfileModel.h"
 
 @class iTermAction;
 
@@ -36,11 +37,13 @@ typedef NS_ENUM(NSUInteger, iTermEditKeyActionWindowControllerMode) {
 @property(nonatomic, readonly) iTermAction *unboundAction;
 @property(nonatomic) iTermSendTextEscaping escaping;
 @property(nonatomic, readonly) iTermActionApplyMode applyMode;
+@property(nonatomic) ProfileType profileType;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithCoder:(NSCoder *)coder NS_UNAVAILABLE;
 - (instancetype)initWithContext:(iTermVariablesSuggestionContext)context
-                           mode:(iTermEditKeyActionWindowControllerMode)mode;
+                           mode:(iTermEditKeyActionWindowControllerMode)mode
+                    profileType:(ProfileType)profileType;
 
 // Used by client to remember if this was opened to add a new mapping or edit an existing one.
 @property(nonatomic) BOOL isNewMapping;

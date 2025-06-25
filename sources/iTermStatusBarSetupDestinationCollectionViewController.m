@@ -408,7 +408,8 @@ draggingImageForItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
 }
 
 - (iTermStatusBarSetupKnobsViewController *)viewControllerToConfigureComponent:(id<iTermStatusBarComponent>)component {
-    return [[iTermStatusBarSetupKnobsViewController alloc] initWithComponent:component];
+    return [[iTermStatusBarSetupKnobsViewController alloc] initWithComponent:component
+                                                                 profileType:_profileType];
 }
 
 - (void)collectionView:(NSCollectionView *)collectionView didDeselectItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths {
@@ -463,7 +464,7 @@ draggingImageForItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
     if (!component) {
         return;
     }
-    
+
     iTermStatusBarSetupKnobsViewController *viewController = [self viewControllerToConfigureComponent:component];
     viewController.view.frame = NSMakeRect(0, 0, viewController.preferredContentSize.width, viewController.preferredContentSize.height);
     iTermStatusBarSetupConfigureComponentWindowController *windowController =

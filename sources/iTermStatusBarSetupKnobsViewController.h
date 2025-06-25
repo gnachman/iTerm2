@@ -8,6 +8,7 @@
 #import <Cocoa/Cocoa.h>
 #import "iTermStatusBarComponent.h"
 #import "iTermStatusBarComponentKnob.h"
+#import "ProfileModel.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -16,7 +17,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSDictionary *knobValues;
 @property (nonatomic, readonly) NSArray<iTermStatusBarComponentKnob *> *knobs;
 
-- (instancetype)initWithComponent:(id<iTermStatusBarComponent>)component NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithComponent:(id<iTermStatusBarComponent>)component
+                      profileType:(ProfileType)profileType NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)initWithNibName:(nullable NSNibName)nibNameOrNil
                          bundle:(nullable NSBundle *)nibBundleOrNil NS_UNAVAILABLE;

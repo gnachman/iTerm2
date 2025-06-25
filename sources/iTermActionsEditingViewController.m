@@ -77,7 +77,8 @@ static NSString *const iTermActionsEditingPasteboardType = @"com.googlecode.iter
 - (iTermEditKeyActionWindowController *)newEditKeyActionWindowControllerForAction:(iTermAction *)action {
     iTermEditKeyActionWindowController *windowController =
     [[iTermEditKeyActionWindowController alloc] initWithContext:iTermVariablesSuggestionContextSession
-                                                           mode:iTermEditKeyActionWindowControllerModeUnbound];
+                                                           mode:iTermEditKeyActionWindowControllerModeUnbound
+                                                    profileType:_profileType];
     windowController.escaping = iTermSendTextEscapingCommon;
     if (action) {
         windowController.label = action.title;

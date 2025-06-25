@@ -20,8 +20,12 @@
     iTermEditKeyActionWindowController *_windowController;
 }
 
-- (instancetype)init {
-    return [super initWithNibName:nil bundle:nil];
+- (instancetype)initWithProfileType:(ProfileType)profileType {
+    self = [super initWithNibName:nil bundle:nil];
+    if (self) {
+        _profileType = profileType;
+    }
+    return self;
 }
 
 - (void)loadView {
@@ -62,7 +66,8 @@
 - (iTermEditKeyActionWindowController *)newEditKeyActionWindowControllerForAction:(iTermAction *)action {
     iTermEditKeyActionWindowController *windowController =
     [[iTermEditKeyActionWindowController alloc] initWithContext:iTermVariablesSuggestionContextSession
-                                                           mode:iTermEditKeyActionWindowControllerModeUnbound];
+                                                           mode:iTermEditKeyActionWindowControllerModeUnbound
+                                                    profileType:_profileType];
     windowController.titleIsInterpolated = YES;
     windowController.escaping = action.escaping;
     if (action) {

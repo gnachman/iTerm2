@@ -263,7 +263,8 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
 - (iTermEditKeyActionWindowController *)newEditKeyActionWindowControllerForAction:(iTermAction *)action {
     iTermEditKeyActionWindowController *windowController =
     [[iTermEditKeyActionWindowController alloc] initWithContext:iTermVariablesSuggestionContextSession
-                                                           mode:iTermEditKeyActionWindowControllerModeUnbound];
+                                                           mode:iTermEditKeyActionWindowControllerModeUnbound
+                                                    profileType:ProfileTypeAll];
     if (action) {
         windowController.label = action.title;
         windowController.isNewMapping = NO;

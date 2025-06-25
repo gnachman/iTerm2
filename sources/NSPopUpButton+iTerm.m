@@ -16,12 +16,16 @@
 
 @implementation NSPopUpButton (iTerm)
 
-- (void)populateWithProfilesSelectingGuid:(NSString*)selectedGuid {
+- (void)populateWithProfilesSelectingGuid:(NSString*)selectedGuid
+                             profileTypes:(ProfileType)profileTypes {
     int selectedIndex = 0;
     int i = 0;
     [self removeAllItems];
     NSArray* profiles = [[ProfileModel sharedInstance] bookmarks];
     for (Profile* profile in profiles) {
+        if ((profile.profileType & profileTypes) == 0) {
+            continue;
+        }
         int j = 0;
         NSString* temp;
         do {

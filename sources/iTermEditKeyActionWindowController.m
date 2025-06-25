@@ -304,9 +304,11 @@ const CGFloat sideMarginWidth = 40;
 }
 
 - (instancetype)initWithContext:(iTermVariablesSuggestionContext)context
-                           mode:(iTermEditKeyActionWindowControllerMode)mode {
-    self = [super initWithWindowNibName:@"iTermEditKeyActionWindowController"];
+                           mode:(iTermEditKeyActionWindowControllerMode)mode
+                    profileType:(ProfileType)profileType {
+    self = [super initWithWindowNibName:@"iTermEditKeyActionWindowController" owner:self];
     if (self) {
+        _profileType = profileType;
         _suggestContext = context;
         _mode = mode;
     }
@@ -550,7 +552,8 @@ const CGFloat sideMarginWidth = 40;
     [self updateViewsAnimated:NO secondary:secondary];
 
     if (!_profilePopup.isHidden) {
-        [_profilePopup populateWithProfilesSelectingGuid:parameterValue ?: @""];
+        [_profilePopup populateWithProfilesSelectingGuid:parameterValue ?: @""
+                                            profileTypes:_profileType];
     }
     if (!_colorPresetsPopup.isHidden) {
         [_colorPresetsPopup loadColorPresetsSelecting:parameterValue ?: @""];
@@ -700,6 +703,10 @@ const CGFloat sideMarginWidth = 40;
     _helpButton.hidden = config.helpString == nil;
     [_parameterLabel setHidden:config.parameterLabelHidden];
     [_profilePopup setHidden:config.profilePopupHidden];
+    if (!config.profilePopupHidden) {
+        [_profilePopup populateWithProfilesSelectingGuid:config.parameterValue ?: @""
+                                            profileTypes:_profileType];
+    }
     [_selectionMovementUnit setHidden:config.selectionMovementUnitHidden];
     [_profileLabel setHidden:config.profileLabelHidden];
     [_menuToSelectPopup setHidden:config.menuToSelectPopupHidden];
@@ -1007,7 +1014,8 @@ const CGFloat sideMarginWidth = 40;
     }
     if (view == _comboView || view == _secondaryComboView) {
         NSString *guid = [[_profilePopup selectedItem] representedObject];
-        [_profilePopup populateWithProfilesSelectingGuid:guid];
+        [_profilePopup populateWithProfilesSelectingGuid:guid
+                                            profileTypes:_profileType];
         [_colorPresetsPopup loadColorPresetsSelecting:_colorPresetsPopup.selectedItem.representedObject];
         [_snippetsPopup populateWithSnippetsSelectingActionKey:_snippetsPopup.selectedItem.representedObject];
         [_menuToSelectPopup reloadData];
