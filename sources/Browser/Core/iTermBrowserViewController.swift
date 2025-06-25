@@ -88,6 +88,9 @@ extension iTermBrowserViewController {
     @objc var interactionState: NSObject? {
         get {
             if #available(macOS 12, *) {
+                if let deferredInteractionState {
+                    return deferredInteractionState
+                }
                 return browserManager.webView.interactionState as? NSData
             } else {
                 return nil
@@ -100,7 +103,7 @@ extension iTermBrowserViewController {
                     deferredInteractionState = newValue
                     return
                 }
-                
+
                 browserManager.webView.interactionState = newValue
             }
         }
