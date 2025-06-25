@@ -2090,7 +2090,9 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
          (int)[[iTermApplication sharedApplication] it_modifierFlags],
          (int)NSApp.currentEvent.modifierFlags);
     const BOOL option = !!([[iTermApplication sharedApplication] it_modifierFlags] & NSEventModifierFlagOption);
-    if (option) {
+
+    // Browser does not support advanced paste yet.
+    if (option && self.delegate.textViewProfileTypeIsTerminal) {
         // Multiple call sites depend on this (open quickly, menu item, and possibly other stuff added later).
         [self.delegate openAdvancedPasteWithText:snippet.value escaping:snippet.escaping];
     } else {

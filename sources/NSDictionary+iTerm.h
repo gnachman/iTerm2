@@ -18,6 +18,7 @@
 @interface NSDictionary<__covariant KeyType, __covariant ObjectType> (iTerm)
 
 @property(nonatomic, readonly) BOOL profileIsBrowser;
+@property(nonatomic, readonly) BOOL profileIsTerminal;
 
 + (instancetype)it_dictionaryWithContentsOfData:(NSData *)data;
 
