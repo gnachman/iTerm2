@@ -1,5 +1,5 @@
 //
-//  WKWebView+KeyBindings.swift
+//  iTermBrowserWebView+Actions
 //  iTerm2
 //
 //  Created by George Nachman on 12/24/24.
@@ -8,7 +8,7 @@
 import WebKit
 
 @available(macOS 11.0, *)
-extension WKWebView {
+extension iTermBrowserWebView {
     func performScroll(movement: ScrollMovement) {
         let script: String
         
@@ -139,16 +139,7 @@ extension WKWebView {
             
             await MainActor.run {
                 if inNewTab {
-                    // Find the delegate through the responder chain
-                    var responder: NSResponder? = self
-                    while let r = responder {
-                        if let viewController = r as? iTermBrowserViewController {
-                            viewController.delegate?.browserViewController(viewController,
-                                                                          openNewTabForURL: url)
-                            break
-                        }
-                        responder = r.nextResponder
-                    }
+                    browserDelegate?.webViewOpenURLInNewTab(self, url: url)
                 } else {
                     self.load(URLRequest(url: url))
                 }

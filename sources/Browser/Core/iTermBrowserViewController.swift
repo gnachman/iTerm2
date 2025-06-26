@@ -792,12 +792,21 @@ extension iTermBrowserViewController: iTermBrowserActionPerforming {
         NSApp.sendAction(#selector(NSText.paste(_:)), to: nil, from: browserManager.webView)
     }
 
-    func actionPerformingQuicklookable(atPointInWindow point: NSPoint) async -> (NSRect, [URL])? {
+    func actionPerformingOpenQuickLook(atPointInWindow point: NSPoint) {
         guard let window = view.window else {
-            return nil
+            return
         }
-        let urls = await browserManager.webView.urls(atPointInWindow: point)
-        return (window.convertToScreen(NSRect(origin: point, size: NSSize(width: 1, height: 1))), urls)
+        
+        Task {
+            let webUrls = await browserManager.webView.urls(atPointInWindow: point)
+            guard !webUrls.isEmpty else {
+                return
+            }
+            
+            let screenRect = window.convertToScreen(NSRect(origin: point, size: NSSize(width: 1, height: 1)))
+            let helper = QuickLookHelper()
+            helper.showQuickLookWithDownloads(for: webUrls, from: screenRect)
+        }
     }
 }
 

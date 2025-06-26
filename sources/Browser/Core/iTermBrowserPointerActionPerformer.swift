@@ -155,13 +155,6 @@ class iTermBrowserPointerActionPerformer: NSObject, PointerControllerDelegate {
     }
 
     func quickLook(with event: NSEvent!) {
-        Task { @MainActor in
-            guard let (screenRect, urls) = await delegate?.actionPerformingQuicklookable(atPointInWindow: event.locationInWindow) else {
-                return
-            }
-            let helper = QuickLookHelper()
-            // I am led to believe this will only work for file urls, but let's see.
-            helper.showQuickLook(for: urls, from: screenRect)
-        }
+        delegate?.actionPerformingOpenQuickLook(atPointInWindow: event.locationInWindow)
     }
 }

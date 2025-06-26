@@ -46,6 +46,8 @@ compatibilityEscaping:(BOOL)compatibilityEscaping {
         }
     } else if ([action isEqualToString:kOpenTargetPointerAction]) {
         [delegate_ openTargetWithEvent:event];
+    } else if ([action isEqualToString:kOpenTargetInBackgroundPointerAction]) {
+        [delegate_ openTargetInBackgroundWithEvent:event];
     } else if ([action isEqualToString:kSmartSelectionPointerAction]) {
         [delegate_ smartSelectAndMaybeCopyWithEvent:event
                                    ignoringNewlines:NO];

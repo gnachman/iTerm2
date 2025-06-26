@@ -233,35 +233,7 @@ class iTermBrowserPageSaver {
     }
     
     private func extensionForMimeType(_ mimeType: String) -> String {
-        // Create reverse mapping from the comprehensive extensionToMime dictionary
-        let mimeToExtension = extensionToMime.lossilyInverted
-        
-        // Try exact match first
-        if let fileExtension = mimeToExtension[mimeType.lowercased()] {
-            return fileExtension
-        }
-        
-        // Try without parameters (e.g., "text/html; charset=utf-8" -> "text/html")
-        let cleanMimeType = mimeType.components(separatedBy: ";").first?.trimmingCharacters(in: .whitespaces) ?? mimeType
-        if let fileExtension = mimeToExtension[cleanMimeType.lowercased()] {
-            return fileExtension
-        }
-        
-        // Fallback to common types for major categories
-        switch cleanMimeType.lowercased() {
-        case let mime where mime.hasPrefix("image/"):
-            return "img"
-        case let mime where mime.hasPrefix("video/"):
-            return "vid"
-        case let mime where mime.hasPrefix("audio/"):
-            return "aud"
-        case let mime where mime.hasPrefix("text/"):
-            return "txt"
-        case let mime where mime.hasPrefix("application/"):
-            return "bin"
-        default:
-            return "dat"
-        }
+        return MimeTypeUtilities.extensionForMimeType(mimeType)
     }
     
     private func sanitizeFilename(_ name: String) -> String {

@@ -545,6 +545,10 @@ extension iTermBrowserManager: iTermBrowserWebViewDelegate {
             await delegate?.browserManager(self, doSmartSelectionAtPointInWindow: point)
         }
     }
+
+    func webViewOpenURLInNewTab(_ webView: iTermBrowserWebView, url: URL) {
+        delegate?.browserManager(self, openNewTabForURL: url)
+    }
 }
 
 // MARK: - WKScriptMessageHandler
