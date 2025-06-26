@@ -11,8 +11,15 @@ import WebKit
 
 @available(macOS 11.0, *)
 class iTermBrowserPermissionManager: NSObject {
-    static let shared = iTermBrowserPermissionManager()
-    
+    private let user: iTermBrowserUser
+
+    init(user: iTermBrowserUser) {
+        self.user = user
+    }
+}
+
+@available(macOS 11.0, *)
+extension iTermBrowserPermissionManager {
     // MARK: - Permission Management
     
     func requestPermission(for permissionType: BrowserPermissionType, origin: String) async -> BrowserPermissionDecision {
@@ -41,7 +48,7 @@ class iTermBrowserPermissionManager: NSObject {
     }
     
     func getPermissionDecision(for permissionType: BrowserPermissionType, origin: String) async -> BrowserPermissionDecision? {
-        guard let database = await BrowserDatabase.instance else {
+        guard let database = await BrowserDatabase.instance(for: user) else {
             return nil
         }
         
@@ -50,7 +57,7 @@ class iTermBrowserPermissionManager: NSObject {
     }
     
     func revokePermission(for permissionType: BrowserPermissionType, origin: String) async -> Bool {
-        guard let database = await BrowserDatabase.instance else {
+        guard let database = await BrowserDatabase.instance(for: user) else {
             return false
         }
         
@@ -58,7 +65,7 @@ class iTermBrowserPermissionManager: NSObject {
     }
     
     func revokeAllPermissions(for origin: String) async -> Bool {
-        guard let database = await BrowserDatabase.instance else {
+        guard let database = await BrowserDatabase.instance(for: user) else {
             return false
         }
         
@@ -66,7 +73,7 @@ class iTermBrowserPermissionManager: NSObject {
     }
     
     func getAllPermissions() async -> [BrowserPermissions] {
-        guard let database = await BrowserDatabase.instance else {
+        guard let database = await BrowserDatabase.instance(for: user) else {
             return []
         }
         
@@ -103,7 +110,7 @@ class iTermBrowserPermissionManager: NSObject {
     // MARK: - Private Helper Methods
     
     private func savePermissionDecision(origin: String, permissionType: BrowserPermissionType, decision: BrowserPermissionDecision) async {
-        guard let database = await BrowserDatabase.instance else {
+        guard let database = await BrowserDatabase.instance(for: user) else {
             DLog("Could not save permission: database unavailable")
             return
         }
@@ -132,7 +139,7 @@ class iTermBrowserPermissionManager: NSObject {
     }
 
     private func handleGeolocationPermissionRequest(origin: String) async -> BrowserPermissionDecision {
-        guard let handler = iTermBrowserGeolocationHandler.instance else {
+        guard let handler = iTermBrowserGeolocationHandler.instance(for: user) else {
             return .denied
         }
         switch handler.systemAuthorizationStatus {

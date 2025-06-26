@@ -42,7 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @interface iTermSqliteDatabaseImpl: NSObject<iTermDatabase>
-- (instancetype)initWithURL:(NSURL *)url lockName:(NSString *)lockName;
+- (instancetype)initWithURL:(NSURL *)url lockName:(NSString * _Nullable)lockName;
 - (instancetype)initWithURL:(NSURL *)url;
 - (instancetype)init NS_UNAVAILABLE;
 @end

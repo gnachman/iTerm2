@@ -487,18 +487,19 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     if (![iTermAdvancedSettingsModel browserProfiles]) {
         return;
     }
-    for (iTermTuple<NSString *, NSURL *> *tuple in [iTermBrowserBookmarkFinder bookmarksMatchingSubstring:matcher.query]) {
+    for (iTermTriple<NSString *, NSURL *, NSString *> *triple in [iTermBrowserBookmarkFinder bookmarksMatchingSubstring:matcher.query]) {
         iTermOpenQuicklyBookmarkItem *item = [[iTermOpenQuicklyBookmarkItem alloc] init];
         NSMutableAttributedString *attributedName = [[NSMutableAttributedString alloc] init];
-        item.score = [self scoreForBookmarkTitle:tuple.firstObject url:tuple.secondObject matcher:matcher attributedName:attributedName];
+        item.score = [self scoreForBookmarkTitle:triple.firstObject url:triple.secondObject matcher:matcher attributedName:attributedName];
         if (item.score > 0) {
             item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
                                                                             value:@"Open Bookmark in Browser"
                                                                highlightedIndexes:nil];
             item.title = attributedName;
-            item.identifier = tuple.secondObject.absoluteString;
-            item.url = tuple.secondObject;
-            item.bookmarkName = tuple.firstObject;
+            item.identifier = [triple.secondObject absoluteString];
+            item.url = triple.secondObject;
+            item.bookmarkName = triple.firstObject;
+            item.userID = triple.thirdObject;
             [items addObject:item];
         }
     }

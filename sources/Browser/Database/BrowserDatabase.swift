@@ -7,86 +7,79 @@
 
 import Foundation
 
-@objc
-class iTermBrowserBookmarkFinder: NSObject {
-    private static var cache: (String, [iTermTuple<NSString, NSURL>])?
-    private static var busy = MutableAtomicObject(0)
-
-    @objc(bookmarksMatchingSubstring:)
-    static func bookmarksMatching(substring: String) -> [iTermTuple<NSString, NSURL>] {
-        if busy.value > 0 {
-            return cachedIfValid(for: substring)
-        }
-        let group = DispatchGroup()
-        var results = [iTermTuple<NSString, NSURL>]()
-        group.enter()
-
-        busy.mutate { $0 + 1 }
-        Task.detached(priority: .userInitiated) {
-            defer {
-                group.leave()
-                busy.mutate { $0 - 1 }
-            }
-            guard let db = await BrowserDatabase.instance else {
-                return
-            }
-
-            let bookmarks = await db.searchBookmarks(terms: substring)
-            let tuples: [iTermTuple<NSString, NSURL>] = bookmarks.compactMap { bookmark in
-                guard let url = URL(string: bookmark.url) else {
-                    return nil
-                }
-                return iTermTuple(
-                    object: (bookmark.title ?? "") as NSString,
-                    andObject: url as NSURL
-                )
-            }
-
-            results.append(contentsOf: tuples)
-        }
-
-        switch group.wait(timeout: .now() + 0.05) {
-        case .success:
-            return results
-        case .timedOut:
-            return cachedIfValid(for: substring)
-        }
-    }
-
-    private static func cachedIfValid(for substring: String) -> [iTermTuple<NSString, NSURL>] {
-        if let cache, substring.range(of: cache.0) != nil {
-            return cache.1
-        }
-        return []
-    }
-}
-
 actor BrowserDatabase {
     // Serial queue to ensure all SQLite operations happen on the same thread
-    private let databaseQueue = DispatchQueue(label: "BrowserDatabase.sqlite", qos: .utility)
-    
-    private static var _instance: BrowserDatabase?
-    static var instanceIfExists: BrowserDatabase? { _instance }
-    static var instance: BrowserDatabase? {
-        get async {
-            if let _instance {
-                return _instance
-            }
-            guard let url else {
-                return nil
-            }
-            _instance = await BrowserDatabase(url: url)
-            return _instance
+    private let databaseQueue = DispatchQueue(label: "com.iterm2.browser-db", qos: .utility)
+    let userID: String?
+
+    private static var _instances = [iTermBrowserUser: BrowserDatabase]()
+
+    static func instance(for user: iTermBrowserUser) async -> BrowserDatabase? {
+        if let instance = _instances[user] {
+            return instance
         }
-    }
-    static var url: URL? {
-        let appDefaults = FileManager.default.applicationSupportDirectory()
-        guard let appDefaults else {
+        guard let url = url(for: user) else {
             return nil
         }
-        var url = URL(fileURLWithPath: appDefaults)
-        url.appendPathComponent("browserdb.sqlite")
-        return url
+        let userID: String? = switch user {
+        case .devNull: nil
+        case .regular(id: let id): id.uuidString
+        }
+        let instance = await BrowserDatabase(url: url, userID: userID)
+        _instances[user] = instance
+        return instance
+    }
+
+    static func url(for user: iTermBrowserUser) -> URL? {
+        switch user {
+        case .devNull:
+            return URL(string: "file::memory:?mode=memory&cache=shared")
+        case .regular(id: let userID):
+            let appDefaults = FileManager.default.applicationSupportDirectory()
+            guard let appDefaults else {
+                return nil
+            }
+            var url = URL(fileURLWithPath: appDefaults)
+            url.appendPathComponent("browserdb-\(userID).sqlite")
+            return url
+        }
+    }
+
+    static var allPersistentInstances: [BrowserDatabase] {
+        get async {
+            var instances = [BrowserDatabase]()
+            guard let appDefaults = FileManager.default.applicationSupportDirectory() else {
+                return instances
+            }
+            let supportURL = URL(fileURLWithPath: appDefaults)
+            let fileManager = FileManager.default
+            do {
+                let files = try fileManager.contentsOfDirectory(
+                    at: supportURL,
+                    includingPropertiesForKeys: nil,
+                    options: .skipsHiddenFiles
+                )
+                for fileURL in files {
+                    guard fileURL.pathExtension == "sqlite" else {
+                        continue
+                    }
+                    let name = fileURL.deletingPathExtension().lastPathComponent
+                    guard name.hasPrefix("browserdb-") else {
+                        continue
+                    }
+                    guard let idPart = UUID(uuidString: String(name.dropFirst("browserdb-".count))) else {
+                        continue
+                    }
+                    let user = iTermBrowserUser.regular(id: idPart)
+                    if let db = await BrowserDatabase.instance(for: user) {
+                        instances.append(db)
+                    }
+                }
+            } catch {
+                DLog("\(error)")
+            }
+            return instances
+        }
     }
 
     private let _db: iTermDatabase
@@ -116,9 +109,11 @@ actor BrowserDatabase {
         }
     }
     
-    init?(url: URL) async {
-        _db = iTermSqliteDatabaseImpl(url: url, lockName: "browserdb-lock")
-        
+    private init?(url: URL, userID: String?) async {
+        self.userID = userID
+        let lockName = userID.map { "browserdb-lock-\($0)" }
+        _db = iTermSqliteDatabaseImpl(url: url, lockName: lockName)
+
         // Ensure database initialization happens on the same thread as all operations
         let initResult = await withDatabase { db in
             if !db.lock() {

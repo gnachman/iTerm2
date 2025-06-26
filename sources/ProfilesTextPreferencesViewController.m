@@ -56,7 +56,6 @@
     IBOutlet BFPCompositeView *_asciiFontPicker;
     IBOutlet BFPCompositeView *_nonASCIIFontPicker;
     IBOutlet NSTextField *_ligatureWarning;
-    IBOutlet NSSlider *_browserPageZoom;
     BFPSizePickerView *_horizontalSpacingView;
     BFPSizePickerView *_verticalSpacingView;
 
@@ -296,11 +295,6 @@
                     key:KEY_POWERLINE
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
-
-    [self defineControl:_browserPageZoom
-                    key:KEY_BROWSER_ZOOM
-            relatedView:nil
-                   type:kPreferenceInfoTypeSlider];
 
     [self updateFontsDescriptionsIncludingSpacing:YES];
     [self updateNonAsciiFontViewVisibility];

@@ -18,11 +18,20 @@ import Foundation
 @MainActor
 class iTermBrowserPermissionsViewHandler: NSObject, iTermBrowserPageHandler {
     static let permissionsURL = URL(string: "\(iTermBrowserSchemes.about):permissions")!
-    
+    private let user: iTermBrowserUser
+
     weak var delegate: iTermBrowserPermissionsViewHandlerDelegate?
-    
+
+    init(user: iTermBrowserUser) {
+        self.user = user
+    }
+}
+
+@available(macOS 11.0, *)
+@MainActor
+extension iTermBrowserPermissionsViewHandler {
     // MARK: - Public Interface
-    
+
     func generatePermissionsHTML() -> String {
         let script = iTermBrowserTemplateLoader.loadTemplate(named: "permissions-page",
                                                              type: "js",
@@ -94,7 +103,7 @@ class iTermBrowserPermissionsViewHandler: NSObject, iTermBrowserPageHandler {
     private func loadPermissions(offset: Int, limit: Int, searchQuery: String, permissionTypeFilter: String, statusFilter: String, webView: WKWebView) async {
         DLog("Loading permissions: offset=\(offset), limit=\(limit), query='\(searchQuery)', typeFilter='\(permissionTypeFilter)', statusFilter='\(statusFilter)'")
         
-        guard let database = await BrowserDatabase.instance else {
+        guard let database = await BrowserDatabase.instance(for: user) else {
             DLog("Failed to get database instance")
             await sendPermissions([], hasMore: false, to: webView)
             return
@@ -152,8 +161,8 @@ class iTermBrowserPermissionsViewHandler: NSObject, iTermBrowserPageHandler {
     }
     
     private func revokePermission(origin: String, permissionType: BrowserPermissionType, webView: WKWebView) async {
-        guard let database = await BrowserDatabase.instance else { return }
-        
+        guard let database = await BrowserDatabase.instance(for: user) else { return }
+
         let success = await database.revokePermission(origin: origin, permissionType: permissionType)
         if success {
             // Notify all browser instances to reload tabs containing this origin
@@ -164,8 +173,8 @@ class iTermBrowserPermissionsViewHandler: NSObject, iTermBrowserPageHandler {
     }
     
     private func revokeAllPermissions(for origin: String, webView: WKWebView) async {
-        guard let database = await BrowserDatabase.instance else { return }
-        
+        guard let database = await BrowserDatabase.instance(for: user) else { return }
+
         let success = await database.revokeAllPermissions(for: origin)
         if success {
             // Notify all browser instances to reload tabs containing this origin
@@ -177,7 +186,7 @@ class iTermBrowserPermissionsViewHandler: NSObject, iTermBrowserPageHandler {
     }
     
     private func clearAllPermissions(webView: WKWebView) async {
-        guard let database = await BrowserDatabase.instance else { return }
+        guard let database = await BrowserDatabase.instance(for: user) else { return }
         
         // Get all permissions to revoke them properly
         let allPermissions = await database.getAllPermissions()

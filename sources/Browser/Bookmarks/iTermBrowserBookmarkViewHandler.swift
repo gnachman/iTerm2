@@ -18,9 +18,20 @@ import Foundation
 @MainActor
 class iTermBrowserBookmarkViewHandler: NSObject, iTermBrowserPageHandler {
     static let bookmarksURL = URL(string: "\(iTermBrowserSchemes.about):bookmarks")!
-    
+    private let user: iTermBrowserUser
+
     weak var delegate: iTermBrowserBookmarkViewHandlerDelegate?
-    
+
+    init(user: iTermBrowserUser) {
+        self.user = user
+    }
+}
+
+
+@available(macOS 11.0, *)
+@objc(iTermBrowserBookmarkViewHandler)
+@MainActor
+extension iTermBrowserBookmarkViewHandler {
     // MARK: - Public Interface
     
     func generateBookmarksHTML() -> String {
@@ -95,7 +106,7 @@ class iTermBrowserBookmarkViewHandler: NSObject, iTermBrowserPageHandler {
     private func loadBookmarks(offset: Int, limit: Int, searchQuery: String, sortBy: String, tags: [String], webView: WKWebView) async {
         DLog("Loading bookmarks: offset=\(offset), limit=\(limit), query='\(searchQuery)', sortBy=\(sortBy), tags=\(tags)")
         
-        guard let database = await BrowserDatabase.instance else {
+        guard let database = await BrowserDatabase.instance(for: user) else {
             DLog("Failed to get database instance")
             await sendBookmarks([], hasMore: false, to: webView)
             return
@@ -154,7 +165,7 @@ class iTermBrowserBookmarkViewHandler: NSObject, iTermBrowserPageHandler {
     }
     
     private func loadTags(webView: WKWebView) async {
-        guard let database = await BrowserDatabase.instance else {
+        guard let database = await BrowserDatabase.instance(for: user) else {
             await sendTags([], to: webView)
             return
         }
@@ -164,8 +175,8 @@ class iTermBrowserBookmarkViewHandler: NSObject, iTermBrowserPageHandler {
     }
     
     private func deleteBookmark(url: String, webView: WKWebView) async {
-        guard let database = await BrowserDatabase.instance else { return }
-        
+        guard let database = await BrowserDatabase.instance(for: user) else { return }
+
         let success = await database.removeBookmark(url: url)
         if success {
             await sendBookmarkDeletedConfirmation(url: url, to: webView)
@@ -173,7 +184,7 @@ class iTermBrowserBookmarkViewHandler: NSObject, iTermBrowserPageHandler {
     }
     
     private func clearAllBookmarks(webView: WKWebView) async {
-        guard let database = await BrowserDatabase.instance else { return }
+        guard let database = await BrowserDatabase.instance(for: user) else { return }
         await database.deleteAllBookmarks()
         await sendBookmarksClearedConfirmation(to: webView)
     }

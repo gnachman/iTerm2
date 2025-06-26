@@ -95,6 +95,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     IBOutlet NSTabViewItem *_textTab;
     IBOutlet NSTabViewItem *_windowTab;
     IBOutlet NSTabViewItem *_terminalTab;
+    IBOutlet NSTabViewItem *_webTab;
     IBOutlet NSTabViewItem *_sessionTab;
     IBOutlet NSTabViewItem *_keysTab;
     IBOutlet NSTabViewItem *_advancedTab;
@@ -119,6 +120,9 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 
     // Advanced tab view controller
     IBOutlet ProfilesAdvancedPreferencesViewController *_advancedViewController;
+
+    // Web tab view controller
+    IBOutlet ProfilesWebPreferencesViewController *_webViewController;
 
     CGFloat _minWidth;
 
@@ -172,6 +176,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     return @[ @[ _generalTab, _generalViewController.view ],
               @[ _colorsTab, _colorsViewController.view ],
               @[ _textTab, _textViewController.view ],
+              @[ _webTab, _webViewController.view ],
               @[ _windowTab, _windowViewController.view ],
               @[ _terminalTab, _terminalViewController.view ],
               @[ _sessionTab, _sessionViewController.view ],
@@ -183,6 +188,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     return @[ @[ _generalTab, _generalViewController ],
               @[ _colorsTab, _colorsViewController ],
               @[ _textTab, _textViewController ],
+              @[ _webTab, _webViewController ],
               @[ _windowTab, _windowViewController ],
               @[ _terminalTab, _terminalViewController ],
               @[ _sessionTab, _sessionViewController ],
@@ -478,6 +484,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     return @[ _generalViewController,
               _colorsViewController,
               _textViewController,
+              _webViewController,
               _windowViewController,
               _terminalViewController,
               _sessionViewController,
@@ -509,8 +516,13 @@ andEditComponentWithIdentifier:(NSString *)identifier
     }
 }
 
+- (ProfileType)profileType {
+    Profile *profile = [self selectedProfile];
+    return [Profile profileTypeForCustomCommand:profile[KEY_CUSTOM_COMMAND]];
+}
+
 - (void)updateEnclosureVisibilityForProfile:(Profile *)profile {
-    const BOOL browserMode = [profile[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue];
+    const BOOL browserMode = [Profile profileTypeForCustomCommand:profile[KEY_CUSTOM_COMMAND]] == ProfileTypeBrowser;
     const BOOL profileIsShared = [[ProfileModel sharedInstance] bookmarkWithGuid:profile[KEY_GUID]] != nil;
     NSInteger i = 0;
     for (NSArray *tuple in [self tabViewControllerTuples]) {
@@ -742,15 +754,23 @@ andEditComponentWithIdentifier:(NSString *)identifier
                                               forKey: @"New Bookmarks"];
 }
 
+- (NSArray<NSString *> *)visibleTabLabels {
+    return [_tabView.tabViewItems mapWithBlock:^id(__kindof NSTabViewItem *tabViewItem) {
+        return tabViewItem.label;
+    }];
+}
+
 - (IBAction)openCopyBookmarks:(id)sender
 {
     Profile *profile = [self selectedProfile];
     _bulkCopyController =
-        [[BulkCopyProfilePreferencesWindowController alloc] init];
+    [[BulkCopyProfilePreferencesWindowController alloc] initWithIdentifiers:[self visibleTabLabels]
+                                                               profileTypes:self.profileType];
     _bulkCopyController.sourceGuid = profile[KEY_GUID];
 
     _bulkCopyController.keysForColors = [_colorsViewController keysForBulkCopy];
     _bulkCopyController.keysForText = [_textViewController keysForBulkCopy];
+    _bulkCopyController.keysForWeb = [_webViewController keysForBulkCopy];
     _bulkCopyController.keysForWindow = [_windowViewController keysForBulkCopy];
     _bulkCopyController.keysForTerminal = [_terminalViewController keysForBulkCopy];
     _bulkCopyController.keysForSession = [_sessionViewController keysForBulkCopy];

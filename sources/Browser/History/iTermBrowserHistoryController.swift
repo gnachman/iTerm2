@@ -11,15 +11,19 @@ import WebKit
 class iTermBrowserHistoryController {
     private let sessionGuid: String
     private let navigationState: iTermBrowserNavigationState
+    private let user: iTermBrowserUser
 
-    init(sessionGuid: String, navigationState: iTermBrowserNavigationState) {
+    init(user: iTermBrowserUser,
+         sessionGuid: String,
+         navigationState: iTermBrowserNavigationState) {
+        self.user = user
         self.sessionGuid = sessionGuid
         self.navigationState = navigationState
     }
 
     func getHistorySuggestions(for query: String,
                                        attributes: [NSAttributedString.Key: Any]) async -> [iTermBrowserSuggestionsController.ScoredSuggestion] {
-        guard let database = await BrowserDatabase.instance else {
+        guard let database = await BrowserDatabase.instance(for: user) else {
             return []
         }
 
@@ -55,7 +59,7 @@ class iTermBrowserHistoryController {
         // Record visit in browser history
         if let url, !url.absoluteString.hasPrefix(iTermBrowserSchemes.about + ":") {
             Task {
-                await BrowserDatabase.instance?.recordVisit(
+                await BrowserDatabase.instance(for: user)?.recordVisit(
                     url: url.absoluteString,
                     title: title,
                     sessionGuid: sessionGuid,
@@ -72,7 +76,7 @@ class iTermBrowserHistoryController {
            !url.hasPrefix(iTermBrowserSchemes.about + ":"),
            !title.isEmpty {
             Task {
-                await BrowserDatabase.instance?.updateTitle(title, forUrl: url)
+                await BrowserDatabase.instance(for: user)?.updateTitle(title, forUrl: url)
             }
         }
     }

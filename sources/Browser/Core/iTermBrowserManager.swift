@@ -57,17 +57,21 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private let navigationState: iTermBrowserNavigationState
     private var navigationCount = 0
     private lazy var readerModeManager = iTermBrowserReaderModeManager(webView: webView)
+    let user: iTermBrowserUser
 
-    init(configuration: WKWebViewConfiguration?,
+    init(user: iTermBrowserUser,
+         configuration: WKWebViewConfiguration?,
          sessionGuid: String,
          historyController: iTermBrowserHistoryController,
          navigationState: iTermBrowserNavigationState,
          profile: Profile,
          pointerController: PointerController) {
+        self.user = user
         self.sessionGuid = sessionGuid
         self.historyController = historyController
         self.navigationState = navigationState
-        self.localPageManager = iTermBrowserLocalPageManager(historyController: historyController)
+        self.localPageManager = iTermBrowserLocalPageManager(user: user,
+                                                             historyController: historyController)
         super.init()
 
         localPageManager.delegate = self
@@ -85,7 +89,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private func setupWebView(configuration preferredConfiguration: WKWebViewConfiguration?,
                               profile: Profile,
                               pointerController: PointerController) {
-        let notificationHandler = iTermBrowserNotificationHandler()
+        let notificationHandler = iTermBrowserNotificationHandler(user: user)
         self.notificationHandler = notificationHandler
 
         let configuration: WKWebViewConfiguration
@@ -155,7 +159,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                 configuration.userContentController.addUserScript(notificationScript)
             }
 
-            let geolocationHandler = iTermBrowserGeolocationHandler.instance
+            let geolocationHandler = iTermBrowserGeolocationHandler.instance(for: user)
             if let geolocationHandler {
                 let geolocationScript = WKUserScript(
                     source: geolocationHandler.javascript,
@@ -181,6 +185,15 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
             configuration.setURLSchemeHandler(self, forURLScheme: iTermBrowserSchemes.about)
         }
 
+        switch user {
+        case .regular(id: let userID):
+            if #available(macOS 14, *) {
+                let profileStore = WKWebsiteDataStore(forIdentifier: userID)
+                configuration.websiteDataStore = profileStore
+            }
+        case .devNull:
+            configuration.websiteDataStore = .nonPersistent()
+        }
 
         webView = iTermBrowserWebView(frame: .zero,
                                       configuration: configuration,
@@ -575,7 +588,7 @@ extension iTermBrowserManager {
             notificationHandler?.handleMessage(webView: webView, message: message)
 
         case iTermBrowserGeolocationHandler.messageHandlerName:
-            iTermBrowserGeolocationHandler.instance?.handleMessage(webView: webView, message: message)
+            iTermBrowserGeolocationHandler.instance(for: user)?.handleMessage(webView: webView, message: message)
 
         case iTermBrowserPasswordManagerHandler.messageHandlerName:
             switch iTermBrowserPasswordManagerHandler.instance?.handleMessage(
@@ -695,7 +708,7 @@ extension iTermBrowserManager: WKNavigationDelegate {
         if let url = webView.url {
             let originString = iTermBrowserPermissionManager.normalizeOrigin(from: url)
             Task {
-                await iTermBrowserGeolocationHandler.instance?.updatePermissionState(
+                await iTermBrowserGeolocationHandler.instance(for: user)?.updatePermissionState(
                     for: originString,
                     webView: webView)
             }
@@ -1116,7 +1129,7 @@ extension iTermBrowserManager: WKUIDelegate {
                  decideMediaCapturePermissionsFor origin: WKSecurityOrigin,
                  initiatedBy frame: WKFrameInfo,
                  type: WKMediaCaptureType) async -> WKPermissionDecision {
-        return await iTermBrowserPermissionManager.shared.handleMediaCapturePermissionRequest(
+        return await iTermBrowserPermissionManager(user: user).handleMediaCapturePermissionRequest(
             from: webView,
             origin: origin,
             frame: frame,

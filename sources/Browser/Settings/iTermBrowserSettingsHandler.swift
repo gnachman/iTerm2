@@ -21,8 +21,10 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     static let settingsURL = URL(string: "\(iTermBrowserSchemes.about):settings")!
     weak var delegate: iTermBrowserSettingsHandlerDelegate?
     private let secret: String
-    
-    override init() {
+    private let user: iTermBrowserUser
+
+    init(user: iTermBrowserUser) {
+        self.user = user
         guard let secret = String.makeSecureHexString() else {
             it_fatalError("Failed to generate secure hex string for settings handler")
         }
@@ -132,12 +134,13 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         let dataTypes = WKWebsiteDataStore.allWebsiteDataTypes()
 
         websiteDataStore.removeData(ofTypes: dataTypes, modifiedSince: Date(timeIntervalSince1970: 0)) {
+            let user = self.user
             Task {
                 let message: String
-                if await BrowserDatabase.instance?.erase() == true {
+                if await BrowserDatabase.instance(for: user)?.erase() == true {
                     message = "All website data has been cleared successfully!"
                 } else {
-                    if let url = BrowserDatabase.url {
+                    if let url = BrowserDatabase.url(for: user) {
                         message = "The browser database could not be deleted. It is in \(url.path)"
                     } else {
                         message = "The browser database could not be deleted. Your application support folder could not be found."

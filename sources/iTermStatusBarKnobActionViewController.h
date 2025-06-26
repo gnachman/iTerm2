@@ -18,7 +18,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithCoder:(NSCoder *)coder NS_UNAVAILABLE;
-- (instancetype)initWithNibName:(NSNibName)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil NS_UNAVAILABLE;
+- (instancetype)initWithNibName:(NSNibName _Nullable)nibNameOrNil
+                         bundle:(NSBundle * _Nullable)nibBundleOrNil NS_UNAVAILABLE;
 
 - (instancetype)initWithProfileType:(ProfileType)profileType NS_DESIGNATED_INITIALIZER;
 

@@ -18,11 +18,13 @@ import Foundation
 @MainActor
 class iTermBrowserHistoryViewHandler: NSObject, iTermBrowserPageHandler {
     static let historyURL = URL(string: "\(iTermBrowserSchemes.about):history")!
-    
+    private let user: iTermBrowserUser
     weak var delegate: iTermBrowserHistoryViewHandlerDelegate?
     private let historyController: iTermBrowserHistoryController
     
-    init(historyController: iTermBrowserHistoryController) {
+    init(user: iTermBrowserUser,
+         historyController: iTermBrowserHistoryController) {
+        self.user = user
         self.historyController = historyController
         super.init()
     }
@@ -96,7 +98,7 @@ class iTermBrowserHistoryViewHandler: NSObject, iTermBrowserPageHandler {
     private func loadHistoryEntries(offset: Int, limit: Int, searchQuery: String, webView: WKWebView) async {
         DLog("Loading history entries: offset=\(offset), limit=\(limit), query='\(searchQuery)'")
         
-        guard let database = await BrowserDatabase.instance else {
+        guard let database = await BrowserDatabase.instance(for: user) else {
             DLog("Failed to get database instance")
             await sendHistoryEntries([], hasMore: false, to: webView)
             return
@@ -120,7 +122,7 @@ class iTermBrowserHistoryViewHandler: NSObject, iTermBrowserPageHandler {
     }
     
     private func deleteHistoryEntry(entryId: String, webView: WKWebView) async {
-        guard let database = await BrowserDatabase.instance else { return }
+        guard let database = await BrowserDatabase.instance(for: user) else { return }
         await database.deleteHistoryEntry(id: entryId)
         
         // Send confirmation to UI on main actor
@@ -128,7 +130,7 @@ class iTermBrowserHistoryViewHandler: NSObject, iTermBrowserPageHandler {
     }
     
     private func clearAllHistory(webView: WKWebView) async {
-        guard let database = await BrowserDatabase.instance else { return }
+        guard let database = await BrowserDatabase.instance(for: user) else { return }
         await database.deleteAllHistory()
         
         // Reload the history view on main actor
