@@ -175,16 +175,13 @@ class iTermBrowserStaticPageRegistry {
             "media-demo",
             "password-demo",
             "selection-test",
-            "smartselection-demo"
+            "smartselection-demo",
+            "indexeddb-demo"
         ]
         for page in pages {
             registerStaticPage(urlPath: page, templateName: page, substitutions: [:])
         }
         #endif
-        
-        // Add more static pages here as needed:
-        // registerStaticPage(urlPath: "help", templateName: "help-page")
-        // registerStaticPage(urlPath: "about", templateName: "about-page")
     }
     
     func registerStaticPage(urlPath: String, templateName: String, substitutions: [String: String] = [:]) {

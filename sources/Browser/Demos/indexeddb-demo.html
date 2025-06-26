@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>IndexedDB Persistence Test</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    button { margin-right: 10px; }
+    pre { background: #f4f4f4; padding: 10px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>IndexedDB Persistence Test</h1>
+  <button id="writeBtn">Write Data</button>
+  <button id="readBtn">Read Data</button>
+  <pre id="output"></pre>
+
+  <script>
+    const dbName    = 'PersistenceDB';
+    const storeName = 'entries';
+    let db;
+
+    function log(msg) {
+      document.getElementById('output').textContent += msg + '\n';
+    }
+
+    function openDatabase() {
+      const req = indexedDB.open(dbName, 1);
+
+      req.onupgradeneeded = e => {
+        db = e.target.result;
+        if (!db.objectStoreNames.contains(storeName)) {
+          db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
+        }
+      };
+
+      req.onsuccess = e => {
+        db = e.target.result;
+        log('DB opened');
+      };
+
+      req.onerror = e => {
+        log('DB open error: ' + e.target.error);
+      };
+    }
+
+    function writeData() {
+      const tx    = db.transaction(storeName, 'readwrite');
+      const store = tx.objectStore(storeName);
+      const record = { timestamp: new Date().toISOString() };
+      store.add(record).onsuccess = () => log('Wrote: ' + record.timestamp);
+      tx.onerror = e => log('Write error: ' + e.target.error);
+    }
+
+    function readData() {
+      const tx    = db.transaction(storeName, 'readonly');
+      const store = tx.objectStore(storeName);
+      store.getAll().onsuccess = e => {
+        log('Read all: ' + JSON.stringify(e.target.result));
+      };
+      tx.onerror = e => log('Read error: ' + e.target.error);
+    }
+
+    document.getElementById('writeBtn').addEventListener('click', writeData);
+    document.getElementById('readBtn').addEventListener('click', readData);
+
+    openDatabase();
+  </script>
+</body>
+</html>
