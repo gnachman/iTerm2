@@ -25,13 +25,21 @@
     func browserManagerDidRequestCopyPageTitle(_ manager: iTermBrowserManager)
     func browserManager(_ manager: iTermBrowserManager, didChangeReaderModeState isActive: Bool)
     func browserManager(_ manager: iTermBrowserManager, didChangeDistractionRemovalState isActive: Bool)
+    func browserManagerSetMouseInfo(
+        _ browserManager: iTermBrowserManager,
+        pointInView: NSPoint,
+        button: Int,
+        count: Int,
+        modifiers: NSEvent.ModifierFlags,
+        sideEffects: iTermClickSideEffects,
+        state: iTermMouseState)
 }
 
 typealias Profile = [AnyHashable: Any]
 
 @available(macOS 11.0, *)
 @objc(iTermBrowserManager)
-class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler, iTermBrowserWebViewDelegate {
+class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler {
     weak var delegate: iTermBrowserManagerDelegate?
     private(set) var webView: iTermBrowserWebView!
     private var lastFailedURL: URL?
@@ -52,7 +60,8 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
          sessionGuid: String,
          historyController: iTermBrowserHistoryController,
          navigationState: iTermBrowserNavigationState,
-         profile: Profile) {
+         profile: Profile,
+         pointerController: PointerController) {
         self.sessionGuid = sessionGuid
         self.historyController = historyController
         self.navigationState = navigationState
@@ -60,7 +69,9 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
         super.init()
 
         localPageManager.delegate = self
-        setupWebView(configuration: configuration, profile: profile)
+        setupWebView(configuration: configuration,
+                     profile: profile,
+                     pointerController: pointerController)
         setupPermissionNotificationObserver()
     }
     
@@ -70,7 +81,8 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
     }
     
     private func setupWebView(configuration preferredConfiguration: WKWebViewConfiguration?,
-                              profile: Profile) {
+                              profile: Profile,
+                              pointerController: PointerController) {
         let notificationHandler = iTermBrowserNotificationHandler()
         self.notificationHandler = notificationHandler
 
@@ -168,7 +180,9 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
         }
 
 
-        webView = iTermBrowserWebView(frame: .zero, configuration: configuration)
+        webView = iTermBrowserWebView(frame: .zero,
+                                      configuration: configuration,
+                                      pointerController: pointerController)
         webView.navigationDelegate = self
         webView.uiDelegate = self
         webView.pageZoom = iTermProfilePreferences.double(forKey: KEY_BROWSER_ZOOM, inProfile: profile) / 100.0
@@ -488,6 +502,40 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler,
         localPageManager.cleanupAfterFailedNavigation(currentURL: webView.url?.absoluteString)
     }
     
+}
+
+// MARK: - iTermBrowserWebViewDelegate
+
+@available(macOS 11.0, *)
+extension iTermBrowserManager: iTermBrowserWebViewDelegate {
+    func webViewSetMouseInfo(_ webView: iTermBrowserWebView,
+                             pointInView: NSPoint,
+                             button: Int,
+                             count: Int,
+                             modifiers: NSEvent.ModifierFlags,
+                             sideEffects: iTermClickSideEffects,
+                             state: iTermMouseState) {
+        delegate?.browserManagerSetMouseInfo(
+            self,
+            pointInView: pointInView,
+            button: button,
+            count: count,
+            modifiers: modifiers,
+            sideEffects: sideEffects,
+            state: state)
+    }
+
+    func webViewDidRequestViewSource(_ webView: iTermBrowserWebView) {
+        viewPageSource()
+    }
+
+    func webViewDidRequestSavePageAs(_ webView: iTermBrowserWebView) {
+        savePageAs()
+    }
+
+    func webViewDidRequestCopyPageTitle(_ webView: iTermBrowserWebView) {
+        copyPageTitle()
+    }
 }
 
 // MARK: - WKScriptMessageHandler
@@ -956,20 +1004,6 @@ extension iTermBrowserManager: WKUIDelegate {
         }
     }
 
-    // MARK: - iTermBrowserWebViewDelegate
-    
-    func webViewDidRequestViewSource(_ webView: iTermBrowserWebView) {
-        viewPageSource()
-    }
-    
-    func webViewDidRequestSavePageAs(_ webView: iTermBrowserWebView) {
-        savePageAs()
-    }
-    
-    func webViewDidRequestCopyPageTitle(_ webView: iTermBrowserWebView) {
-        copyPageTitle()
-    }
-    
     @objc private func viewPageSource() {
         // Get the current page's HTML source
         guard let url = webView.url else {

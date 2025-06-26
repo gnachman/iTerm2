@@ -5,29 +5,9 @@
 //  Created by George Nachman on 6/24/25.
 //
 
-enum ScrollMovement {
-    case end
-    case home
-    case down
-    case up
-    case pageDown
-    case pageUp
-}
-
-protocol iTermBrowserKeyBindingActionPerformerDelegate: AnyObject {
-    func keyBindingPerformerScroll(movement: ScrollMovement)
-    func keyBindingPerformerSend(data: Data, broadcastAllowed: Bool)
-
-    // Extend the start or end of the selection forward (to the right) or leftwards (to the left)
-    func keyBindingPerformerExtendSelect(start: Bool, forward: Bool, by: PTYTextViewSelectionExtensionUnit)
-    func keyBindingPerformerHasSelection() async -> Bool
-    func keyBindingPerformerCopyToClipboard()
-    func keyBindingPerformerPasteFromClipboard()
-}
-
 @available(macOS 11, *)
 class iTermBrowserKeyBindingActionPerformer {
-    weak var delegate: iTermBrowserKeyBindingActionPerformerDelegate?
+    weak var delegate: iTermBrowserActionPerforming?
 
     func perform(keyBindingAction action: iTermKeyBindingAction, event: NSEvent) -> Bool {
         let parameter = action.parameter as NSString
@@ -64,17 +44,17 @@ class iTermBrowserKeyBindingActionPerformer {
             return false
 
         case .ACTION_SCROLL_END:
-            delegate?.keyBindingPerformerScroll(movement: .end)
+            delegate?.actionPerformingScroll(movement: .end)
         case .ACTION_SCROLL_HOME:
-            delegate?.keyBindingPerformerScroll(movement: .home)
+            delegate?.actionPerformingScroll(movement: .home)
         case .ACTION_SCROLL_LINE_DOWN:
-            delegate?.keyBindingPerformerScroll(movement: .down)
+            delegate?.actionPerformingScroll(movement: .down)
         case .ACTION_SCROLL_LINE_UP:
-            delegate?.keyBindingPerformerScroll(movement: .up)
+            delegate?.actionPerformingScroll(movement: .up)
         case .ACTION_SCROLL_PAGE_DOWN:
-            delegate?.keyBindingPerformerScroll(movement: .pageDown)
+            delegate?.actionPerformingScroll(movement: .pageDown)
         case .ACTION_SCROLL_PAGE_UP:
-            delegate?.keyBindingPerformerScroll(movement: .pageUp)
+            delegate?.actionPerformingScroll(movement: .pageUp)
 
         case .ACTION_ESCAPE_SEQUENCE, .ACTION_IR_FORWARD, .ACTION_IR_BACKWARD,
                 .ACTION_SEND_C_H_BACKSPACE, .ACTION_SEND_C_QM_BACKSPACE, .ACTION_RUN_COPROCESS,
@@ -90,50 +70,50 @@ class iTermBrowserKeyBindingActionPerformer {
             // Variations of sending text
         case .ACTION_HEX_CODE:
             if let data = NSString.data(forHexCodes: parameter as String) {
-                delegate?.keyBindingPerformerSend(
+                delegate?.actionPerformingSend(
                     data: data,
                     broadcastAllowed: true)
             }
         case .ACTION_TEXT:
-            delegate?.keyBindingPerformerSend(
+            delegate?.actionPerformingSend(
                 data: iTermKeyBindingAction.escapedText(parameter as String,
                                                         mode: action.escaping).lossyData,
                 broadcastAllowed: true)
         case .ACTION_VIM_TEXT:
-            delegate?.keyBindingPerformerSend(
+            delegate?.actionPerformingSend(
                 data: iTermKeyBindingAction.escapedText(parameter as String,
                                                         mode: action.vimEscaping).lossyData,
                 broadcastAllowed: true)
         case .ACTION_SEND_SNIPPET:
             if let snippet  = iTermSnippetsModel.sharedInstance().snippet(withActionKey: parameter) {
-                delegate?.keyBindingPerformerSend(
+                delegate?.actionPerformingSend(
                     data: snippet.value.lossyData, broadcastAllowed: true)
             }
 
         case .ACTION_MOVE_END_OF_SELECTION_LEFT:
             if let unit = PTYTextViewSelectionExtensionUnit(rawValue: parameter.integerValue) {
-                delegate?.keyBindingPerformerExtendSelect(
+                delegate?.actionPerformingExtendSelect(
                     start: false,
                     forward: false,
                     by: unit)
             }
         case .ACTION_MOVE_END_OF_SELECTION_RIGHT:
             if let unit = PTYTextViewSelectionExtensionUnit(rawValue: parameter.integerValue) {
-                delegate?.keyBindingPerformerExtendSelect(
+                delegate?.actionPerformingExtendSelect(
                     start: false,
                     forward: true,
                     by: unit)
             }
         case .ACTION_MOVE_START_OF_SELECTION_LEFT:
             if let unit = PTYTextViewSelectionExtensionUnit(rawValue: parameter.integerValue) {
-                delegate?.keyBindingPerformerExtendSelect(
+                delegate?.actionPerformingExtendSelect(
                     start: true,
                     forward: false,
                     by: unit)
             }
         case .ACTION_MOVE_START_OF_SELECTION_RIGHT:
             if let unit = PTYTextViewSelectionExtensionUnit(rawValue: parameter.integerValue) {
-                delegate?.keyBindingPerformerExtendSelect(
+                delegate?.actionPerformingExtendSelect(
                     start: true,
                     forward: true,
                     by: unit)
@@ -142,19 +122,19 @@ class iTermBrowserKeyBindingActionPerformer {
         case .ACTION_COPY_OR_SEND:
             if let data = data(for: event) {
                 Task {
-                    if await delegate?.keyBindingPerformerHasSelection() == true {
-                        delegate?.keyBindingPerformerCopyToClipboard()
+                    if await delegate?.actionPerformingHasSelection() == true {
+                        delegate?.actionPerformingCopyToClipboard()
                     } else {
-                        delegate?.keyBindingPerformerSend(data: data, broadcastAllowed: true)
+                        delegate?.actionPerformingSend(data: data, broadcastAllowed: true)
                     }
                 }
             }
 
         case .ACTION_PASTE_OR_SEND:
             if !NSString.fromPasteboard().isEmpty {
-                delegate?.keyBindingPerformerPasteFromClipboard()
+                delegate?.actionPerformingPasteFromClipboard()
             } else if let data = data(for: event) {
-                delegate?.keyBindingPerformerSend(data: data,
+                delegate?.actionPerformingSend(data: data,
                                                   broadcastAllowed: true)
             }
         @unknown default:

@@ -85,7 +85,86 @@ extension WKWebView {
             }
         }
     }
-    
+
+    func extendSelection(toPointInWindow point: NSPoint) {
+        // TODO: Extend the existing selection to this point. Extend either the start or the end depending on which is closest
+    }
+
+    func openLink(atPointInWindow point: NSPoint,
+                  inNewTab: Bool) {
+        // TODO: If there is something clickable at this point, open it either here or in a new tab.
+    }
+
+    private func text(atPointInWindow point: NSPoint,
+                      radius: Int) async -> (String, String) {
+        // TODO: Return a tuple of text before point and text after point, up to `radius` screen lines each.
+        return ("", "") // placeholder
+    }
+
+    func performSmartSelection(atPointInWindow point: NSPoint,
+                               rules: [SmartSelectRule]) async {
+        guard let match = await firstMatch(atPointInWindow: point, rules: rules) else {
+            return
+        }
+        // TODO: Select the matching text
+    }
+
+    struct SmartMatch {
+        var beforeCount: Int
+        var afterCount: Int
+        var rule: SmartSelectRule
+        var components: [String]
+        var score: Double
+    }
+    func firstMatch(atPointInWindow point: NSPoint,
+                    rules: [SmartSelectRule]) async -> SmartMatch? {
+        // Number of lines above and below the location to include in the search
+        var matches = [String: SmartMatch]()
+        let radius = Int(iTermAdvancedSettingsModel.smartSelectionRadius())
+        let (before, after) = await text(atPointInWindow: point, radius: radius)
+        for rule in rules {
+            guard let regex = try? NSRegularExpression(pattern: rule.regex) else {
+                continue
+            }
+            var startOffset = 0
+            while startOffset < before.utf16.count {
+                let substring = before[utf16: startOffset...] + after
+                let fullRange = NSRange(location: 0,
+                                        length: substring.utf16.count)
+                let result = regex.firstMatch(in: String(substring),
+                                              range: fullRange)
+                if let result {
+                    let matchingRange = result.range(at: 0)
+                    let matchingText = String(substring)[utf16: matchingRange]
+                    let score = rule.weight * Double(matchingText.utf16.count)
+                    let beforeCount = before.utf16.count - matchingRange.lowerBound
+                    if beforeCount > 0 {
+                        if (matches[matchingText]?.score ?? 0) < score {
+                            let components = (1..<result.numberOfRanges).map { i in
+                                let range = result.range(at: i)
+                                return String(substring)[utf16: range]
+                            }
+                            matches[matchingText] = SmartMatch(
+                                beforeCount: beforeCount,
+                                afterCount: matchingRange.length - beforeCount,
+                                rule: rule,
+                                components: components,
+                                score: score)
+                        }
+                        startOffset = matchingRange.upperBound - 1
+                    } else {
+                        startOffset += matchingRange.lowerBound
+                    }
+                } else {
+                    break
+                }
+            }
+        }
+        return matches.values.max { lhs, rhs in
+            lhs.score < rhs.score
+        }
+    }
+
     func extendSelection(start: Bool, forward: Bool, by unit: PTYTextViewSelectionExtensionUnit) {
         // Skip mark case as requested
         if unit == .mark {

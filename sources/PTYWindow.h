@@ -148,3 +148,6 @@ typedef NSWindow<iTermWeaklyReferenceable, PTYWindow> iTermTerminalWindow;
 
 @end
 
+@interface NSWindow (SessionPrivate)
+- (void)_moveToScreen:(NSScreen *)sender;
+@end

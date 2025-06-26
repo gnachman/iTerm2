@@ -7,8 +7,13 @@
 
 import WebKit
 
+struct SmartSelectRule {
+    var regex: String
+    var weight: Double
+}
+
 @available(macOS 11.0, *)
-@objc protocol iTermBrowserViewControllerDelegate: AnyObject {
+protocol iTermBrowserViewControllerDelegate: AnyObject {
     func browserViewController(_ controller: iTermBrowserViewController,
                                didUpdateTitle title: String?)
     func browserViewController(_ controller: iTermBrowserViewController,
@@ -29,12 +34,33 @@ import WebKit
     func browserViewControllerDidSelectAskAI(_ controller: iTermBrowserViewController,
                                              title: String,
                                              content: String)
+    func browserViewControllerSetMouseInfo(
+        _ controller: iTermBrowserViewController,
+        pointInView: NSPoint,
+        button: Int,
+        count: Int,
+        modifiers: NSEvent.ModifierFlags,
+        sideEffects: iTermClickSideEffects,
+        state: iTermMouseState)
+
+    func browserViewControllerMovePane(_ controller: iTermBrowserViewController)
+    func browserViewControllerEnclosingTerminal(_ controller: iTermBrowserViewController) -> PseudoTerminal
+    func browserViewControllerSplit(_ controller: iTermBrowserViewController,
+                                    vertically: Bool,
+                                    guid: String)
+
+    func browserViewControllerSelectPane(_ controller: iTermBrowserViewController,
+                                         forward: Bool)
+    func browserViewControllerInvoke(_ controller: iTermBrowserViewController,
+                                     scriptFunction: String)
+    func browserViewControllerSmartSelectionRules(
+        _ controller: iTermBrowserViewController) -> [SmartSelectRule]
 }
 
 @available(macOS 11.0, *)
 @objc(iTermBrowserViewController)
 class iTermBrowserViewController: NSViewController {
-    @objc weak var delegate: iTermBrowserViewControllerDelegate?
+    weak var delegate: iTermBrowserViewControllerDelegate?
     private let browserManager: iTermBrowserManager
     private var toolbar: iTermBrowserToolbar!
     private var backgroundView: NSVisualEffectView!
@@ -50,6 +76,8 @@ class iTermBrowserViewController: NSViewController {
         performer.delegate = self
         return performer
     }()
+    private let pointerController = PointerController()
+    private let pointerActionPerformer = iTermBrowserPointerActionPerformer()
 
     @objc var zoom: CGFloat {
         get {
@@ -69,10 +97,14 @@ class iTermBrowserViewController: NSViewController {
                                              sessionGuid: sessionGuid,
                                              historyController: historyController,
                                              navigationState: navigationState,
-                                             profile: profile)
+                                             profile: profile,
+                                             pointerController: pointerController)
         suggestionsController = iTermBrowserSuggestionsController(historyController: historyController,
                                                                   attributes: CompletionsWindow.regularAttributes(font: nil))
         super.init(nibName: nil, bundle: nil)
+
+        pointerController.delegate = pointerActionPerformer
+        pointerActionPerformer.delegate = self
     }
 
     required init?(coder: NSCoder) {
@@ -546,6 +578,23 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
     func browserManager(_ manager: iTermBrowserManager, didChangeDistractionRemovalState isActive: Bool) {
         // No additional action needed - toolbar will update based on state
     }
+
+    func browserManagerSetMouseInfo(_ browserManager: iTermBrowserManager,
+                                    pointInView: NSPoint,
+                                    button: Int,
+                                    count: Int,
+                                    modifiers: NSEvent.ModifierFlags,
+                                    sideEffects: iTermClickSideEffects,
+                                    state: iTermMouseState) {
+        delegate?.browserViewControllerSetMouseInfo(
+            self,
+            pointInView: pointInView,
+            button: button,
+            count: count,
+            modifiers: modifiers,
+            sideEffects: sideEffects,
+            state: state)
+    }
 }
 
 // MARK: - Actions
@@ -623,12 +672,82 @@ class iTermBrowserView: NSView {
 }
 
 @available(macOS 11.0, *)
-extension iTermBrowserViewController: iTermBrowserKeyBindingActionPerformerDelegate {
-    func keyBindingPerformerScroll(movement: ScrollMovement) {
+extension iTermBrowserViewController: iTermBrowserActionPerforming {
+    func actionPerformExtendSelection(toPointInWindow point: NSPoint) {
+        browserManager.webView.extendSelection(toPointInWindow: point)
+    }
+    
+    func actionPerformingOpen(atWindowLocation point: NSPoint,
+                              inBackground: Bool) {
+        browserManager.webView.openLink(atPointInWindow: point, inNewTab: inBackground)
+    }
+    
+    func actionPerformingSmartSelect(atWindowLocation point: NSPoint) {
+        guard let rules = delegate?.browserViewControllerSmartSelectionRules(self) else {
+            return
+        }
+        Task {
+            await browserManager.webView.performSmartSelection(atPointInWindow: point,
+                                                         rules: rules)
+        }
+    }
+    
+    func actionPerformingOpenContextMenu(atWindowLocation point: NSPoint) {
+        guard let window = browserManager.webView.window else {
+            return
+        }
+
+        // Convert point to screen coordinates
+        let viewPoint = webView.convert(point, to: nil)
+        let screenPoint = window.convertToScreen(
+            NSRect(origin: viewPoint, size: .zero)).origin
+
+        // Create a synthetic right‐click event
+        guard let event = NSEvent.mouseEvent(with: .rightMouseDown,
+                                             location: screenPoint,
+                                             modifierFlags: [],
+                                             timestamp: ProcessInfo.processInfo.systemUptime,
+                                             windowNumber: window.windowNumber,
+                                             context: nil,
+                                             eventNumber: 0,
+                                             clickCount: 1,
+                                             pressure: 1) else {
+            return
+        }
+
+        guard let menu = webView.menu(for: event) else {
+            return
+        }
+
+        // Pop it up
+        NSMenu.popUpContextMenu(menu, with: event, for: webView)
+    }
+
+    func actionPerformingMovePane() {
+        delegate?.browserViewControllerMovePane(self)
+    }
+    
+    func actionPerformingCurrentTerminal() -> PseudoTerminal? {
+        return delegate?.browserViewControllerEnclosingTerminal(self)
+    }
+    
+    func actionPerformingSplit(vertically: Bool, guid: String) {
+        delegate?.browserViewControllerSplit(self, vertically: vertically, guid: guid)
+    }
+    
+    func actionPerformingSelectPane(forward: Bool) {
+        delegate?.browserViewControllerSelectPane(self, forward: forward)
+    }
+    
+    func actionPerformingInvoke(scriptFunction: String) {
+        delegate?.browserViewControllerInvoke(self, scriptFunction: scriptFunction)
+    }
+    
+    func actionPerformingScroll(movement: ScrollMovement) {
         browserManager.webView.performScroll(movement: movement)
     }
 
-    func keyBindingPerformerSend(data: Data, broadcastAllowed: Bool) {
+    func actionPerformingSend(data: Data, broadcastAllowed: Bool) {
         guard let string = String(data: data, encoding: .utf8) else { return }
         
         Task {
@@ -636,19 +755,19 @@ extension iTermBrowserViewController: iTermBrowserKeyBindingActionPerformerDeleg
         }
     }
 
-    func keyBindingPerformerExtendSelect(start: Bool, forward: Bool, by: PTYTextViewSelectionExtensionUnit) {
+    func actionPerformingExtendSelect(start: Bool, forward: Bool, by: PTYTextViewSelectionExtensionUnit) {
         browserManager.webView.extendSelection(start: start, forward: forward, by: by)
     }
 
-    func keyBindingPerformerHasSelection() async -> Bool {
+    func actionPerformingHasSelection() async -> Bool {
         return await browserManager.webView.hasSelection()
     }
 
-    func keyBindingPerformerCopyToClipboard() {
+    func actionPerformingCopyToClipboard() {
         NSApp.sendAction(#selector(NSText.copy(_:)), to: nil, from: browserManager.webView)
     }
 
-    func keyBindingPerformerPasteFromClipboard() {
+    func actionPerformingPasteFromClipboard() {
         NSApp.sendAction(#selector(NSText.paste(_:)), to: nil, from: browserManager.webView)
     }
 }
