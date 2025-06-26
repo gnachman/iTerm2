@@ -34,16 +34,15 @@ protocol iTermBrowserActionPerforming: AnyObject {
 
     func actionPerformingOpenContextMenu(atWindowLocation: NSPoint)
 
-    // MovePaneController.sharedInstance().movePane(session)
     func actionPerformingMovePane()
 
     func actionPerformingCurrentTerminal() -> PseudoTerminal?
 
-    // textViewSPlitVertically:withPRofileGuid:
     func actionPerformingSplit(vertically: Bool, guid: String)
 
     // delegate.previousSession or nextSession
     func actionPerformingSelectPane(forward: Bool)
     func actionPerformingInvoke(scriptFunction: String)
+    func actionPerformingQuicklookable(atPointInWindow point: NSPoint) async -> (NSRect, [URL])? 
 }
 

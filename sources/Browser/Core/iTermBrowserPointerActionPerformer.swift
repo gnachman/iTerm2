@@ -52,7 +52,7 @@ class iTermBrowserPointerActionPerformer: NSObject, PointerControllerDelegate {
                                        inBackground: true)
     }
 
-    func smartSelectAndMaybeCopy(with event: NSEvent!) {
+    func smartSelectAndMaybeCopy(with event: NSEvent!, ignoringNewlines: Bool) {
         delegate?.actionPerformingSmartSelect(atWindowLocation: event.locationInWindow)
     }
 
@@ -152,5 +152,16 @@ class iTermBrowserPointerActionPerformer: NSObject, PointerControllerDelegate {
 
     func invokeScriptFunction(_ function: String!, with event: NSEvent!) {
         delegate?.actionPerformingInvoke(scriptFunction: function)
+    }
+
+    func quickLook(with event: NSEvent!) {
+        Task { @MainActor in
+            guard let (screenRect, urls) = await delegate?.actionPerformingQuicklookable(atPointInWindow: event.locationInWindow) else {
+                return
+            }
+            let helper = QuickLookHelper()
+            // I am led to believe this will only work for file urls, but let's see.
+            helper.showQuickLook(for: urls, from: screenRect)
+        }
     }
 }

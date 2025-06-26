@@ -104,6 +104,7 @@
 #import "iTermVariables.h"
 #import "iTermVirtualOffset.h"
 #import "iTermWarning.h"
+#import "WindowControllerInterface.h"
 #import "FileTransferManager.h"
 #import "FindContext.h"
 #import "IntervalTree.h"

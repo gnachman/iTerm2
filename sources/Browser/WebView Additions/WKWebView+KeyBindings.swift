@@ -87,26 +87,165 @@ extension WKWebView {
     }
 
     func extendSelection(toPointInWindow point: NSPoint) {
-        // TODO: Extend the existing selection to this point. Extend either the start or the end depending on which is closest
+        let pointInView = self.convert(point, from: nil)
+        
+        // Scale from view coordinates to JavaScript client coordinates
+        // Account for both pageZoom and magnification
+        let baseJSX = pointInView.x / self.pageZoom
+        let baseJSY = pointInView.y / self.pageZoom
+        
+        // When magnified, we need to scale down by magnification
+        let jsX = baseJSX / self.magnification
+        let jsY = baseJSY / self.magnification
+        
+        let script = iTermBrowserTemplateLoader.loadTemplate(
+            named: "extend-selection-to-point",
+            type: "js",
+            substitutions: [
+                "X": "\(jsX)",
+                "Y": "\(jsY)"
+            ]
+        )
+        
+        evaluateJavaScript(script) { _, _ in }
     }
 
+    @MainActor
     func openLink(atPointInWindow point: NSPoint,
                   inNewTab: Bool) {
-        // TODO: If there is something clickable at this point, open it either here or in a new tab.
+        Task {
+            let pointInView = self.convert(point, from: nil)
+            
+            // Scale from view coordinates to JavaScript client coordinates
+            // Account for both pageZoom and magnification
+            let baseJSX = pointInView.x / self.pageZoom
+            let baseJSY = pointInView.y / self.pageZoom
+            let jsX = baseJSX / self.magnification
+            let jsY = baseJSY / self.magnification
+            
+            let script = iTermBrowserTemplateLoader.loadTemplate(
+                named: "open-link-at-point",
+                type: "js",
+                substitutions: [
+                    "X": "\(jsX)",
+                    "Y": "\(jsY)"
+                ]
+            )
+            
+            guard let result = try? await evaluateJavaScript(script),
+                  let linkInfo = result as? [String: Any],
+                  let urlString = linkInfo["url"] as? String,
+                  let url = URL(string: urlString) else {
+                return
+            }
+            
+            await MainActor.run {
+                if inNewTab {
+                    // Find the delegate through the responder chain
+                    var responder: NSResponder? = self
+                    while let r = responder {
+                        if let viewController = r as? iTermBrowserViewController {
+                            viewController.delegate?.browserViewController(viewController,
+                                                                          openNewTabForURL: url)
+                            break
+                        }
+                        responder = r.nextResponder
+                    }
+                } else {
+                    self.load(URLRequest(url: url))
+                }
+            }
+        }
     }
 
+    @MainActor
     private func text(atPointInWindow point: NSPoint,
                       radius: Int) async -> (String, String) {
-        // TODO: Return a tuple of text before point and text after point, up to `radius` screen lines each.
-        return ("", "") // placeholder
+        let pointInView = self.convert(point, from: nil)
+        
+        // Scale from view coordinates to JavaScript client coordinates
+        // Account for both pageZoom and magnification
+        let baseJSX = pointInView.x / self.pageZoom
+        let baseJSY = pointInView.y / self.pageZoom
+        let jsX = baseJSX / self.magnification
+        let jsY = baseJSY / self.magnification
+        
+        let script = iTermBrowserTemplateLoader.loadTemplate(
+            named: "extract-text-at-point",
+            type: "js",
+            substitutions: [
+                "X": "\(jsX)",
+                "Y": "\(jsY)",
+                "RADIUS": String(radius)
+            ]
+        )
+        
+        guard let result = try? await evaluateJavaScript(script),
+              let textInfo = result as? [String: Any],
+              let beforeText = textInfo["before"] as? String,
+              let afterText = textInfo["after"] as? String else {
+            return ("", "")
+        }
+        
+        return (beforeText, afterText)
     }
 
+    @MainActor
     func performSmartSelection(atPointInWindow point: NSPoint,
                                rules: [SmartSelectRule]) async {
         guard let match = await firstMatch(atPointInWindow: point, rules: rules) else {
             return
         }
-        // TODO: Select the matching text
+        
+        let pointInView = self.convert(point, from: nil)
+        
+        // Scale from view coordinates to JavaScript client coordinates
+        // Account for both pageZoom and magnification
+        let baseJSX = pointInView.x / self.pageZoom
+        let baseJSY = pointInView.y / self.pageZoom
+        let jsX = baseJSX / self.magnification
+        let jsY = baseJSY / self.magnification
+        
+        let script = iTermBrowserTemplateLoader.loadTemplate(
+            named: "select-text",
+            type: "js",
+            substitutions: [
+                "X": "\(jsX)",
+                "Y": "\(jsY)",
+                "BEFORE_COUNT": String(match.beforeCount),
+                "AFTER_COUNT": String(match.afterCount)
+            ]
+        )
+        
+        _ = try? await evaluateJavaScript(script)
+    }
+
+    @MainActor
+    func urls(atPointInWindow point: NSPoint) async -> [URL] {
+        let pointInView = self.convert(point, from: nil)
+        
+        // Scale from view coordinates to JavaScript client coordinates
+        // Account for both pageZoom and magnification
+        let baseJSX = pointInView.x / self.pageZoom
+        let baseJSY = pointInView.y / self.pageZoom
+        let jsX = baseJSX / self.magnification
+        let jsY = baseJSY / self.magnification
+        
+        let script = iTermBrowserTemplateLoader.loadTemplate(
+            named: "urls-at-point",
+            type: "js",
+            substitutions: [
+                "X": "\(jsX)",
+                "Y": "\(jsY)"
+            ]
+        )
+        
+        guard let result = try? await evaluateJavaScript(script),
+              let urlStrings = result as? [String] else {
+            return []
+        }
+        
+        return urlStrings.compactMap { URL(string: $0) }
     }
 
     struct SmartMatch {

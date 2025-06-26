@@ -304,17 +304,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return self;
 }
 
-- (void)becomeBrowser:(NSString *)initialURL
-        configuration:(WKWebViewConfiguration *)configuration
-             delegate:(id<iTermBrowserViewControllerDelegate>)delegate
-     interactionState:(NSData *)interactionState
-          sessionGuid:(NSString *)sessionGuid
-              profile:(Profile *)profile {
-    _browserViewController = [[iTermBrowserViewController alloc] initWithConfiguration:configuration
-                                                                           sessionGuid:sessionGuid
-                                                                               profile:profile];
-
-    _browserViewController.delegate = delegate;
+- (void)setBrowserViewController:(iTermBrowserViewController *)browserViewController
+                      initialURL:(NSString *)initialURL
+                interactionState:(NSData *)interactionState NS_AVAILABLE_MAC(11_0) {
+    _browserViewController = browserViewController;
 
     // Set initial frame to avoid constraint conflicts
     CGFloat titleHeight = _showTitle ? _title.frame.size.height : 0;
@@ -324,12 +317,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
                                      self.frame.size.width,
                                      self.frame.size.height - titleHeight - reservedSpaceOnBottom);
     _browserViewController.view.frame = initialFrame;
-    
+
     [self insertSubview:_browserViewController.view atIndex:_contentViewIndex + 1];
-    
+
     // Hide terminal views when in browser mode
     [self setTerminalViewsHidden:YES];
-    
+
     [self updateLayout];
 
     if (interactionState) {

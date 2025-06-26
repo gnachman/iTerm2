@@ -22,6 +22,9 @@ import WebKit
         modifiers: NSEvent.ModifierFlags,
         sideEffects: iTermClickSideEffects,
         state: iTermMouseState)
+
+    func webViewDidRequestDoSmartSelection(_ webView: iTermBrowserWebView,
+                                           pointInWindow point: NSPoint)
 }
 
 @available(macOS 11.0, *)
@@ -153,8 +156,18 @@ class iTermBrowserWebView: WKWebView {
         }
         mouseDown = true
         mouseDownLocationInWindow = event.locationInWindow
-        // TODO: Smart selection logic goes here. See shouldSmartSelectWithClicks:
-        return (false, sideEffects)
+
+        let ssClicks = if iTermPreferences.bool(forKey: kPreferenceKeyDoubleClickPerformsSmartSelection) {
+            2
+        } else {
+            4
+        }
+        if event.clickCount == ssClicks {
+            browserDelegate?.webViewDidRequestDoSmartSelection(self, pointInWindow: event.locationInWindow)
+            sideEffects.insert(.modifySelection)
+            return (false, sideEffects)
+        }
+        return (true, sideEffects)
     }
 
     private func emulateThirdButton(pressDown: Bool, with event: NSEvent) {
@@ -258,6 +271,10 @@ class iTermBrowserWebView: WKWebView {
 
     override func rightMouseUp(with event: NSEvent) {
         if threeFingerTapGestureRecognizer.rightMouseUp(event) {
+            return
+        }
+        if pointerController.mouseUp(event, withTouches: Int32(numTouches), reportable: false) {
+            setMouseInfo(event: event, sideEffects: [.performBoundAction])
             return
         }
         super.rightMouseUp(with: event)

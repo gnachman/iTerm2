@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selection Extension Test Page</title>
+    <style>
+        body {
+            font-family: monospace;
+            font-size: 16px;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border: 2px solid #333;
+        }
+        
+        .coordinate-display {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 1000;
+        }
+        
+        .grid {
+            background-image: 
+                linear-gradient(to right, #ddd 1px, transparent 1px),
+                linear-gradient(to bottom, #ddd 1px, transparent 1px);
+            background-size: 50px 25px;
+            background-position: 0 0;
+            min-height: 600px;
+            position: relative;
+        }
+        
+        .coordinate-marker {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: red;
+            border-radius: 50%;
+            transform: translate(-5px, -5px);
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        .text-content {
+            position: relative;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            margin: 20px 0;
+        }
+        
+        .coordinates-info {
+            background: #e8f4fd;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 4px solid #0366d6;
+        }
+        
+        .test-instructions {
+            background: #fff3cd;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .ruler-x {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-bottom: 1px solid #999;
+            font-size: 10px;
+            z-index: 50;
+        }
+        
+        .ruler-y {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 30px;
+            background: rgba(255, 255, 255, 0.9);
+            border-right: 1px solid #999;
+            font-size: 10px;
+            z-index: 50;
+        }
+        
+        .ruler-mark {
+            position: absolute;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="coordinate-display" id="coordinateDisplay">
+        Mouse: (0, 0)<br>
+        Page: (0, 0)<br>
+        Window: 0x0
+    </div>
+    
+    <div class="container">
+        <h1>Selection Extension Test Page</h1>
+        
+        <div class="test-instructions">
+            <strong>Test Instructions:</strong>
+            <ol>
+                <li>Select some text in the content below</li>
+                <li>Use your extend selection action to extend the selection to different points</li>
+                <li>Watch the console logs to see coordinate conversions and decisions</li>
+                <li>The red dots show where you click, and coordinates are displayed in the top-right</li>
+            </ol>
+        </div>
+        
+        <div class="coordinates-info">
+            <strong>Coordinate Information:</strong><br>
+            • Grid squares are 50px wide × 25px tall<br>
+            • Red rulers show pixel positions<br>
+            • Mouse coordinates are shown in real-time<br>
+            • Check browser console for detailed JavaScript logs<br>
+            • Check Swift console for coordinate conversion logs
+        </div>
+        
+        <div class="grid" id="testGrid">
+            <!-- Rulers will be added by JavaScript -->
+            
+            <div class="text-content" style="top: 50px; left: 50px;">
+                <h2>Sample Text Content for Testing</h2>
+                <p>This is the first paragraph of test content. It contains multiple lines of text that you can use to test selection extension functionality. Try selecting part of this text and then extending the selection to different points on the page.</p>
+                
+                <p>Here is a second paragraph with different content. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.</p>
+                
+                <p>The third paragraph contains even more text for testing purposes. You should be able to select text in any of these paragraphs and then extend the selection to points in other paragraphs or different lines within the same paragraph.</p>
+            </div>
+            
+            <div class="text-content" style="top: 300px; left: 200px;">
+                <h3>Another Text Block</h3>
+                <p>This text block is positioned at a different location to test coordinate conversion across different areas of the page. Click around this area and watch the coordinate logs.</p>
+                
+                <ul>
+                    <li>List item one with selectable text</li>
+                    <li>List item two for more testing options</li>
+                    <li>List item three to complete the set</li>
+                </ul>
+            </div>
+            
+            <div class="text-content" style="top: 450px; left: 100px;">
+                <p><strong>Bold text</strong> and <em>italic text</em> and <code>code text</code> for variety in testing selection across different inline elements and formatting.</p>
+                
+                <p>Final paragraph at coordinates around (100, 450) relative to the grid container. Use this to test selection extension across large distances on the page.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Track mouse coordinates and log click events
+        let coordinateDisplay = document.getElementById('coordinateDisplay');
+        let testGrid = document.getElementById('testGrid');
+        let clickMarkers = [];
+        
+        // Update coordinate display on mouse move
+        document.addEventListener('mousemove', function(e) {
+            coordinateDisplay.innerHTML = `
+                Mouse: (${e.clientX}, ${e.clientY})<br>
+                Page: (${e.pageX}, ${e.pageY})<br>
+                Window: ${window.innerWidth}x${window.innerHeight}<br>
+                Scroll: (${window.scrollX}, ${window.scrollY})
+            `;
+        });
+        
+        // Log detailed information on mouse down
+        document.addEventListener('mousedown', function(e) {
+            console.log('=== MOUSE DOWN EVENT ===');
+            console.log('Client coordinates (viewport):', e.clientX, e.clientY);
+            console.log('Page coordinates (document):', e.pageX, e.pageY);
+            console.log('Screen coordinates:', e.screenX, e.screenY);
+            console.log('Offset coordinates:', e.offsetX, e.offsetY);
+            console.log('Target element:', e.target.tagName, e.target.className);
+            console.log('Window size:', window.innerWidth, 'x', window.innerHeight);
+            console.log('Document size:', document.documentElement.scrollWidth, 'x', document.documentElement.scrollHeight);
+            console.log('Page zoom / device pixel ratio:', window.devicePixelRatio);
+            console.log('Scroll position:', window.scrollX, window.scrollY);
+            
+            // Add a visual marker at click position
+            addClickMarker(e.clientX, e.clientY);
+            
+            // Element from point test
+            let elementAtPoint = document.elementFromPoint(e.clientX, e.clientY);
+            console.log('Element from point:', elementAtPoint?.tagName, elementAtPoint?.textContent?.substring(0, 30));
+            
+            // Caret range test
+            let caretRange = document.caretRangeFromPoint(e.clientX, e.clientY);
+            if (caretRange) {
+                console.log('Caret range created successfully at:', caretRange.startOffset);
+                console.log('Caret container type:', caretRange.startContainer.nodeType === Node.TEXT_NODE ? 'TEXT_NODE' : caretRange.startContainer.tagName);
+            } else {
+                console.log('Caret range failed at coordinates:', e.clientX, e.clientY);
+            }
+            
+            console.log('========================');
+        });
+        
+        // Add visual click marker
+        function addClickMarker(x, y) {
+            console.log('*** RED DOT PLACED AT:', 'x=' + x, 'y=' + y, '***');
+            
+            // Remove old markers if we have too many
+            if (clickMarkers.length > 5) {
+                let oldMarker = clickMarkers.shift();
+                oldMarker.remove();
+            }
+            
+            let marker = document.createElement('div');
+            marker.className = 'coordinate-marker';
+            marker.style.left = x + 'px';
+            marker.style.top = y + 'px';
+            marker.style.position = 'fixed';
+            document.body.appendChild(marker);
+            clickMarkers.push(marker);
+            
+            // Fade out after 3 seconds
+            setTimeout(() => {
+                marker.style.opacity = '0.3';
+            }, 3000);
+        }
+        
+        // Create rulers
+        function createRulers() {
+            let container = document.getElementById('testGrid');
+            
+            // X-axis ruler
+            let rulerX = document.createElement('div');
+            rulerX.className = 'ruler-x';
+            for (let x = 0; x < 800; x += 50) {
+                let mark = document.createElement('div');
+                mark.className = 'ruler-mark';
+                mark.style.left = x + 'px';
+                mark.style.top = '2px';
+                mark.textContent = x;
+                rulerX.appendChild(mark);
+            }
+            container.appendChild(rulerX);
+            
+            // Y-axis ruler
+            let rulerY = document.createElement('div');
+            rulerY.className = 'ruler-y';
+            for (let y = 0; y < 600; y += 50) {
+                let mark = document.createElement('div');
+                mark.className = 'ruler-mark';
+                mark.style.left = '2px';
+                mark.style.top = y + 'px';
+                mark.textContent = y;
+                rulerY.appendChild(mark);
+            }
+            container.appendChild(rulerY);
+        }
+        
+        // Initialize rulers when page loads
+        document.addEventListener('DOMContentLoaded', createRulers);
+        
+        // Log selection changes
+        document.addEventListener('selectionchange', function() {
+            let selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                console.log('Selection changed:', selection.toString().substring(0, 50));
+            }
+        });
+        
+        // Track magnification changes
+        let lastVisualViewportScale = 1;
+        let lastWindowDimensions = { width: window.innerWidth, height: window.innerHeight };
+        
+        function logMagnificationState(context) {
+            const visualViewport = window.visualViewport;
+            const currentScale = visualViewport ? visualViewport.scale : 1;
+            const currentDimensions = { width: window.innerWidth, height: window.innerHeight };
+            
+            console.log(`[Magnification ${context}]`);
+            console.log('  Visual viewport scale:', currentScale);
+            console.log('  Window dimensions:', currentDimensions.width, 'x', currentDimensions.height);
+            console.log('  Visual viewport offset:', visualViewport ? `(${visualViewport.offsetLeft}, ${visualViewport.offsetTop})` : 'N/A');
+            console.log('  Visual viewport size:', visualViewport ? `${visualViewport.width}x${visualViewport.height}` : 'N/A');
+            console.log('  Device pixel ratio:', window.devicePixelRatio);
+            console.log('  Document zoom level:', document.documentElement.style.zoom || 'none');
+            
+            return { scale: currentScale, dimensions: currentDimensions };
+        }
+        
+        // Monitor for magnification changes
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', function() {
+                const state = logMagnificationState('Visual Viewport Resize');
+                lastVisualViewportScale = state.scale;
+                lastWindowDimensions = state.dimensions;
+            });
+            
+            window.visualViewport.addEventListener('scroll', function() {
+                console.log('[Magnification Visual Viewport Scroll]');
+                console.log('  Visual viewport offset:', window.visualViewport.offsetLeft, window.visualViewport.offsetTop);
+            });
+        }
+        
+        // Monitor window resize (which can indicate zoom changes)
+        window.addEventListener('resize', function() {
+            const state = logMagnificationState('Window Resize');
+            if (state.scale !== lastVisualViewportScale || 
+                state.dimensions.width !== lastWindowDimensions.width ||
+                state.dimensions.height !== lastWindowDimensions.height) {
+                console.log('  ** MAGNIFICATION CHANGE DETECTED **');
+                lastVisualViewportScale = state.scale;
+                lastWindowDimensions = state.dimensions;
+            }
+        });
+        
+        // Additional debug info
+        console.log('Test page loaded');
+        logMagnificationState('Initial Load');
+        console.log('Visual viewport support:', !!window.visualViewport);
+    </script>
+</body>
+</html>

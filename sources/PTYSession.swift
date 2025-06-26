@@ -5,6 +5,8 @@
 //  Created by George Nachman on 2/10/25.
 //
 
+import WebKit
+
 // MARK: - AI Chat
 extension PTYSession {
     func add(aiAnnotations annotations: [AITermAnnotation],
@@ -955,5 +957,22 @@ extension PTYSession {
             return view.browserViewController?.title
         }
         return nil
+    }
+}
+
+
+@available(macOS 11, *)
+extension PTYSession {
+    @objc
+    func becomeBrowser(configuration: WKWebViewConfiguration,
+                       interactionState: Data?) {
+        let vc = iTermBrowserViewController(configuration: configuration,
+                                            sessionGuid: guid,
+                                            profile: profile)
+        vc.delegate = self
+        view.setBrowserViewController(
+            vc, initialURL: iTermProfilePreferences.string(forKey: KEY_INITIAL_URL,
+                                                           inProfile: profile),
+            interactionState: interactionState)
     }
 }

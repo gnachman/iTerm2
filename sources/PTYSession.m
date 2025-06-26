@@ -2997,13 +2997,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     _sshState = ssh ? iTermSSHStateProfile : iTermSSHStateNone;
     if (@available(macOS 11, *)) {
         if (browser) {
-            [_view becomeBrowser:[iTermProfilePreferences stringForKey:KEY_INITIAL_URL
-                                                             inProfile:self.profile]
-                   configuration:webViewConfiguration
-                        delegate:self
-                interactionState:_savedBrowserState
-                     sessionGuid:_guid
-                         profile:self.profile];
+            [self becomeBrowserWithConfiguration:webViewConfiguration
+                                interactionState:_savedBrowserState];
             [_savedBrowserState release];
             _savedBrowserState = nil;
             completion(YES);
@@ -3027,8 +3022,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             _logging = nil;
             [[self loggingHelper] setPath:autoLogFilename
                                   enabled:autoLogFilename != nil
-                                    style:iTermLoggingStyleFromUserDefaultsValue([iTermProfilePreferences unsignedIntegerForKey:KEY_LOGGING_STYLE
-                                                                                                                      inProfile:self.profile])
+                                    style:iTermLoggingStyleFromUserDefaultsValue([iTermProfilePreferences unsignedIntegerForKey:KEY_LOGGING_STYLE inProfile:self.profile])
                         asciicastMetadata:[self asciicastMetadata]
                                    append:nil
                                    window:self.view.window];
@@ -11137,8 +11131,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     self.active = YES;
 }
 
-- (void)textViewSplitVertically:(BOOL)vertically withProfileGuid:(NSString *)guid
-{
+- (void)textViewSplitVertically:(BOOL)vertically withProfileGuid:(NSString *)guid {
     Profile *profile;
     if (guid) {
         profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
@@ -11182,7 +11175,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)textViewSelectMenuItemWithIdentifier:(NSString *)identifier title:(NSString *)title {
-    [PTYSession _recursiveSelectMenuItemWithTitle:title identifier:identifier inMenu:[NSApp mainMenu]];
+    [[NSApp mainMenu] it_selectMenuItemWithTitle:title
+                                      identifier:identifier];
 }
 
 - (void)textViewPasteSpecialWithStringConfiguration:(NSString *)configuration
