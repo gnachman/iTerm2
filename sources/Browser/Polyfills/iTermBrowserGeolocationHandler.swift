@@ -10,15 +10,22 @@ import WebKit
 
 @available(macOS 11.0, *)
 class iTermBrowserGeolocationHandler: NSObject {
-    static let instance: iTermBrowserGeolocationHandler? = {
+    private static var instances = [iTermBrowserUser: iTermBrowserGeolocationHandler]()
+    static func instance(for user: iTermBrowserUser) -> iTermBrowserGeolocationHandler? {
         if #available(macOS 12, *) {
-            return iTermBrowserGeolocationHandler()
+            if let existing = instances[user] {
+                return existing
+            }
+            let instance = iTermBrowserGeolocationHandler(user: user)
+            instances[user] = instance
+            return instance
         } else {
             return nil
         }
-    }()
+    }
+
     static let messageHandlerName = "iTermGeolocation"
-    
+    private let user: iTermBrowserUser
     private let locationManager = CLLocationManager()
     private var pendingPermissionRequests = [String: CheckedContinuation<Bool, Never>]()
     private let secret: String
@@ -60,7 +67,8 @@ class iTermBrowserGeolocationHandler: NSObject {
         }
     }
 
-    override init() {
+    init(user: iTermBrowserUser) {
+        self.user = user
         guard let secret = String.makeSecureHexString() else {
             it_fatalError("Failed to generate secure token for geolocation handler")
         }
@@ -127,7 +135,7 @@ class iTermBrowserGeolocationHandler: NSObject {
         let origin = message.frameInfo.securityOrigin
         Task {
             let originString = iTermBrowserPermissionManager.normalizeOrigin(from: origin)
-            let permission = await iTermBrowserPermissionManager.shared.requestPermission(
+            let permission = await iTermBrowserPermissionManager(user: user).requestPermission(
                 for: .geolocation,
                 origin: originString)
             if permission != .granted {
@@ -337,7 +345,7 @@ extension iTermBrowserGeolocationHandler {
     // MARK: - Permission State Updates
     
     func updatePermissionState(for origin: String, webView: WKWebView) async {
-        let decision = await iTermBrowserPermissionManager.shared.getPermissionDecision(
+        let decision = await iTermBrowserPermissionManager(user: user).getPermissionDecision(
             for: .geolocation,
             origin: origin
         )

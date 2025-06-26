@@ -14,11 +14,13 @@ import WebKit
 class iTermBrowserNotificationHandler {
     static let messageHandlerName = "iTermNotification"
     private let secret: String
+    private let user: iTermBrowserUser
 
-    init?() {
+    init?(user: iTermBrowserUser) {
         guard let secret = String.makeSecureHexString() else {
             return nil
         }
+        self.user = user
         self.secret = secret
     }
 
@@ -66,7 +68,7 @@ class iTermBrowserNotificationHandler {
     }
 
     private func originIsPermitted(_ originString: String) async -> Bool {
-        let disposition = await iTermBrowserPermissionManager.shared.getPermissionDecision(for: .notification, origin: originString)
+        let disposition = await iTermBrowserPermissionManager(user: user).getPermissionDecision(for: .notification, origin: originString)
         return disposition == .granted
     }
 
@@ -79,7 +81,7 @@ class iTermBrowserNotificationHandler {
             return
         }
         
-        let decision = await iTermBrowserPermissionManager.shared.requestPermission(
+        let decision = await iTermBrowserPermissionManager(user: user).requestPermission(
             for: .notification,
             origin: originString
         )
@@ -133,7 +135,7 @@ class iTermBrowserNotificationHandler {
                                   body: String,
                                   icon: String?,
                                   origin: String) async {
-        guard let decision = await iTermBrowserPermissionManager.shared.getPermissionDecision(for: .notification, origin: origin),
+        guard let decision = await iTermBrowserPermissionManager(user: user).getPermissionDecision(for: .notification, origin: origin),
               decision == .granted else {
             DLog("Notifications not allowed for origin: \(origin)")
             return
@@ -168,7 +170,7 @@ class iTermBrowserNotificationHandler {
     // MARK: - Permission State Updates
     
     func updatePermissionState(for origin: String, webView: WKWebView) async {
-        let decision = await iTermBrowserPermissionManager.shared.getPermissionDecision(
+        let decision = await iTermBrowserPermissionManager(user: user).getPermissionDecision(
             for: .notification,
             origin: origin
         )

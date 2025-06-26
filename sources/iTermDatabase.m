@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "FMDatabase.h"
+#import "NSArray+iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
 
 @interface FMResultSet (iTerm)<iTermDatabaseResultSet>
@@ -31,11 +32,11 @@
 @synthesize timeoutHandler;
 
 + (NSArray<NSURL *> *)allURLsForDatabaseAt:(NSURL *)url {
-    return @[
+    return [@[
         url,
-        [url.URLByDeletingPathExtension URLByAppendingPathExtension:@"sqlite-shm"],
-        [url.URLByDeletingPathExtension URLByAppendingPathExtension:@"sqlite-wal"],
-    ];
+        [url.URLByDeletingPathExtension URLByAppendingPathExtension:@"sqlite-shm"] ?: [NSNull null],
+        [url.URLByDeletingPathExtension URLByAppendingPathExtension:@"sqlite-wal"] ?: [NSNull null],
+    ] arrayByRemovingNulls];
 }
 
 + (void)touchWithPrivateUnixPermissions:(NSURL *)url {
@@ -53,8 +54,10 @@
 }
 
 - (instancetype)initWithURL:(NSURL *)url lockName:(NSString *)lockName {
-    for (NSURL *fileURL in [iTermSqliteDatabaseImpl allURLsForDatabaseAt:url]) {
-        [iTermSqliteDatabaseImpl touchWithPrivateUnixPermissions:fileURL];
+    if (![url.absoluteString hasPrefix:@"file::memory:"]) {
+        for (NSURL *fileURL in [iTermSqliteDatabaseImpl allURLsForDatabaseAt:url]) {
+            [iTermSqliteDatabaseImpl touchWithPrivateUnixPermissions:fileURL];
+        }
     }
     FMDatabase *db = [FMDatabase databaseWithPath:url.path];
     return [self initWithDatabase:db lockName:lockName];
@@ -248,7 +251,7 @@ typedef enum {
 }
 
 - (BOOL)passesIntegrityCheck {
-    assert(_advisoryLock);
+    assert(!_lockName || _advisoryLock != nil);
 
     if (![iTermAdvancedSettingsModel performSQLiteIntegrityCheck]) {
         return YES;
@@ -299,7 +302,7 @@ typedef enum {
 
 - (BOOL)open {
     DLog(@"Open");
-    assert(_advisoryLock);
+    assert(!_lockName || _advisoryLock != nil);
     // At this point we always return with the lock held.
     const BOOL ok = [_db open];
     if (!ok) {
@@ -321,16 +324,25 @@ typedef enum {
 }
 
 - (void)unlock {
+    if (!_lockName) {
+        return;
+    }
     [_advisoryLock closeFile];
     _advisoryLock = nil;
 }
 
 - (NSString *)advisoryLockPath {
+    if (!_lockName) {
+        return nil;
+    }
     NSURL *url = [_db.databaseURL.URLByDeletingLastPathComponent URLByAppendingPathComponent:_lockName];
     return url.path;
 }
 
 - (BOOL)lock {
+    if (!_lockName) {
+        return YES;
+    }
     [_advisoryLock closeFile];
     _advisoryLock = nil;
 

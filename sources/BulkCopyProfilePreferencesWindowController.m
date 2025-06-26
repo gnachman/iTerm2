@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "NSArray+iTerm.h"
 #import "PreferencePanel.h"
 #import "ProfileListView.h"
 #import "ProfileModel.h"
@@ -22,14 +23,25 @@ typedef enum {
     BulkCopyKeyboard,
     BulkCopySession,
     BulkCopyAdvanced,
+    BulkCopyWeb
 } BulkCopySettings;
 
+// These match labels in the profiles tab view. I guess it should be identifiers but I would probably forget to set them.
+NSString *const iTermBulkCopyIdentifierColors = @"Colors";
+NSString *const iTermBulkCopyIdentifierText = @"Text";
+NSString *const iTermBulkCopyIdentifierWeb = @"Web";
+NSString *const iTermBulkCopyIdentifierWindow = @"Window";
+NSString *const iTermBulkCopyIdentifierTerminal = @"Terminal";
+NSString *const iTermBulkCopyIdentifierSession = @"Session";
+NSString *const iTermBulkCopyIdentifierKeys = @"Keys";
+NSString *const iTermBulkCopyIdentifierAdvanced = @"Advanced";
 
 @implementation BulkCopyProfilePreferencesWindowController {
     // Copy Profile Settings...
     IBOutlet NSTextField *_bulkCopyLabel;
     IBOutlet NSButton *_copyColors;
     IBOutlet NSButton *_copyText;
+    IBOutlet NSButton *_copyWeb;
     IBOutlet NSButton *_copyTerminal;
     IBOutlet NSButton *_copyWindow;
     IBOutlet NSButton *_copyKeyboard;
@@ -37,10 +49,18 @@ typedef enum {
     IBOutlet NSButton *_copyAdvanced;
     IBOutlet ProfileListView *_copyTo;
     IBOutlet NSButton *_copyButton;
+    NSArray<NSString *> *_identifiersToKeep;
+    ProfileType _profileTypes;
 }
 
-- (instancetype)init {
-    return [super initWithWindowNibName:@"BulkCopyProfilePreferences"];
+- (instancetype)initWithIdentifiers:(NSArray<NSString *> *)identifiers
+                       profileTypes:(ProfileType)profileTypes {
+    self = [super initWithWindowNibName:@"BulkCopyProfilePreferences"];
+    if (self) {
+        _profileTypes = profileTypes;
+        _identifiersToKeep = [identifiers copy];
+    }
+    return self;
 }
 
 - (void)dealloc {
@@ -48,6 +68,45 @@ typedef enum {
 }
 
 - (void)awakeFromNib {
+    _copyTo.profileTypes = _profileTypes;
+    NSDictionary *map = @{
+        iTermBulkCopyIdentifierColors: _copyColors,
+        iTermBulkCopyIdentifierText: _copyText,
+        iTermBulkCopyIdentifierWeb: _copyWeb,
+        iTermBulkCopyIdentifierWindow: _copyWindow,
+        iTermBulkCopyIdentifierTerminal: _copyTerminal,
+        iTermBulkCopyIdentifierSession: _copySession,
+        iTermBulkCopyIdentifierKeys: _copyKeyboard,
+        iTermBulkCopyIdentifierAdvanced: _copyAdvanced,
+    };
+    [map enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSView *view, BOOL * _Nonnull stop) {
+        if (![_identifiersToKeep containsObject:key]) {
+            view.hidden = YES;
+        }
+    }];
+    NSArray<NSView *> *views = [[map allValues] sortedArrayUsingComparator:^NSComparisonResult(NSView *lhs, NSView *rhs) {
+        return [@(lhs.frame.origin.x) compare:@(rhs.frame.origin.x)];
+    }];
+
+    NSMutableArray<NSNumber *> *offsets = [NSMutableArray array];
+    for (NSUInteger i = 1; i < views.count; i++) {
+        [offsets addObject:@(views[i].frame.origin.x - views[i - 1].frame.origin.x)];
+    }
+    CGFloat x = views.firstObject.frame.origin.x;
+    NSUInteger i = 0;
+
+    for (NSView *view in views) {
+        NSRect frame = view.frame;
+        if (!view.hidden) {
+            frame.origin.x = x;
+            view.frame = frame;
+            if (i < offsets.count) {
+                x += offsets[i].doubleValue;
+            }
+        }
+        i += 1;
+    }
+
     [_copyTo allowMultipleSelections];
     [self updateLabel];
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -87,6 +146,9 @@ typedef enum {
         }
         if ([_copyText state] == NSControlStateValueOn) {
             [self copyAttributes:BulkCopyText fromProfileWithGuid:_sourceGuid toProfileWithGuid:destGuid];
+        }
+        if ([_copyWeb state] == NSControlStateValueOn) {
+            [self copyAttributes:BulkCopyWeb fromProfileWithGuid:_sourceGuid toProfileWithGuid:destGuid];
         }
         if ([_copyWindow state] == NSControlStateValueOn) {
             [self copyAttributes:BulkCopyWindow fromProfileWithGuid:_sourceGuid toProfileWithGuid:destGuid];
@@ -140,6 +202,9 @@ typedef enum {
             break;
         case BulkCopyText:
             keys = _keysForText;
+            break;
+        case BulkCopyWeb:
+            keys = _keysForWeb;
             break;
         case BulkCopyWindow:
             keys = _keysForWindow;

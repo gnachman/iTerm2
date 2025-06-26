@@ -149,7 +149,6 @@
 #define KEY_NON_ASCII_FONT         @"Non Ascii Font"
 #define KEY_FONT_CONFIG            @"Special Font Config"
 #define KEY_HORIZONTAL_SPACING     @"Horizontal Spacing"
-#define KEY_BROWSER_ZOOM           @"Browser Zoom"
 #define KEY_VERTICAL_SPACING       @"Vertical Spacing"
 #define KEY_BLINKING_CURSOR        @"Blinking Cursor"
 #define KEY_CURSOR_SHADOW          @"Cursor Shadow"
@@ -176,6 +175,10 @@
 #define KEY_NON_ASCII_LIGATURES    @"Non-ASCII Ligatures"
 #define KEY_BACKGROUND_IMAGE_MODE  @"Background Image Mode"  // iTermBackgroundImageMode enum
 #define KEY_POWERLINE              @"Draw Powerline Glyphs"
+
+// Web
+#define KEY_BROWSER_ZOOM           @"Browser Zoom"
+#define KEY_BROWSER_DEV_NULL       @"Dev Null Mode"
 
 // Terminal
 #define KEY_DISABLE_WINDOW_RESIZING           @"Disable Window Resizing"

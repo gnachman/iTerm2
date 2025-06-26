@@ -53,8 +53,11 @@ class iTermBrowserLocalPageManager: NSObject {
     weak var delegate: iTermBrowserLocalPageManagerDelegate?
     private var activePageContexts: [String: iTermBrowserPageContext] = [:]
     private let historyController: iTermBrowserHistoryController
-    
-    init(historyController: iTermBrowserHistoryController) {
+    private let user: iTermBrowserUser
+
+    init(user: iTermBrowserUser,
+         historyController: iTermBrowserHistoryController) {
+        self.user = user
         self.historyController = historyController
         super.init()
     }
@@ -235,22 +238,23 @@ private extension iTermBrowserLocalPageManager {
         
         switch urlString {
         case iTermBrowserSettingsHandler.settingsURL.absoluteString:
-            let handler = iTermBrowserSettingsHandler()
+            let handler = iTermBrowserSettingsHandler(user: user)
             handler.delegate = self
             context = iTermBrowserPageContext(handler: handler, requiresMessageHandler: true)
             
         case iTermBrowserHistoryViewHandler.historyURL.absoluteString:
-            let handler = iTermBrowserHistoryViewHandler(historyController: historyController)
+            let handler = iTermBrowserHistoryViewHandler(user: user,
+                                                         historyController: historyController)
             handler.delegate = self
             context = iTermBrowserPageContext(handler: handler, requiresMessageHandler: true)
             
         case iTermBrowserBookmarkViewHandler.bookmarksURL.absoluteString:
-            let handler = iTermBrowserBookmarkViewHandler()
+            let handler = iTermBrowserBookmarkViewHandler(user: user)
             handler.delegate = self
             context = iTermBrowserPageContext(handler: handler, requiresMessageHandler: true)
             
         case iTermBrowserPermissionsViewHandler.permissionsURL.absoluteString:
-            let handler = iTermBrowserPermissionsViewHandler()
+            let handler = iTermBrowserPermissionsViewHandler(user: user)
             handler.delegate = self
             context = iTermBrowserPageContext(handler: handler, requiresMessageHandler: true)
             

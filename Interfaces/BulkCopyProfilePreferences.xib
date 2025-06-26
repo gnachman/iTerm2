@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="17132" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="23504" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="17132"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="23504"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -17,6 +17,7 @@
                 <outlet property="_copyTerminal" destination="JQ9-AJ-VBd" id="x0z-Sg-c96"/>
                 <outlet property="_copyText" destination="aM3-9L-MGa" id="Ftg-1B-86y"/>
                 <outlet property="_copyTo" destination="uE4-LX-CTT" id="4Hs-wS-t4J"/>
+                <outlet property="_copyWeb" destination="8Xb-3V-rNL" id="wzM-qM-ho1"/>
                 <outlet property="_copyWindow" destination="tp8-sU-UEo" id="hY7-qn-ecJ"/>
                 <outlet property="window" destination="viC-2q-HiR" id="kXD-z4-sL3"/>
             </connections>
@@ -26,13 +27,13 @@
         <window title="Copy Bookmark Settings" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" hidesOnDeactivate="YES" visibleAtLaunch="NO" animationBehavior="default" titlebarAppearsTransparent="YES" id="viC-2q-HiR" customClass="NSPanel">
             <windowStyleMask key="styleMask" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="162" y="79" width="560" height="400"/>
+            <rect key="contentRect" x="162" y="79" width="619" height="400"/>
             <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1667"/>
             <view key="contentView" id="PO1-5T-ObR">
-                <rect key="frame" x="0.0" y="0.0" width="560" height="400"/>
+                <rect key="frame" x="0.0" y="0.0" width="619" height="400"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ouG-t3-Tz8">
+                    <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ouG-t3-Tz8">
                         <rect key="frame" x="17" y="364" width="438" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="xxx" id="I4v-0V-7xw">
@@ -41,7 +42,7 @@
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
-                    <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Oye-Bx-dhb">
+                    <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Oye-Bx-dhb">
                         <rect key="frame" x="17" y="305" width="200" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="To these profiles:" id="nfi-Fs-Fpa">
@@ -94,8 +95,19 @@
                             <outlet property="nextKeyView" destination="CEn-pG-8pg" id="6ji-Jw-GjM"/>
                         </connections>
                     </button>
+                    <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8Xb-3V-rNL">
+                        <rect key="frame" x="318" y="340" width="54" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="check" title="Web" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="DnD-Zx-Die">
+                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <outlet property="nextKeyView" destination="CEn-pG-8pg" id="mkc-Do-5lK"/>
+                        </connections>
+                    </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CEn-pG-8pg">
-                        <rect key="frame" x="321" y="340" width="57" height="18"/>
+                        <rect key="frame" x="378" y="340" width="57" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Keys" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="WPj-v2-zIZ">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -106,7 +118,7 @@
                         </connections>
                     </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="91T-bR-nMt">
-                        <rect key="frame" x="382" y="340" width="72" height="18"/>
+                        <rect key="frame" x="439" y="340" width="72" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Session" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="F3M-Vq-JAY">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -117,7 +129,7 @@
                         </connections>
                     </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="HG2-Ad-TQV">
-                        <rect key="frame" x="458" y="340" width="84" height="18"/>
+                        <rect key="frame" x="515" y="340" width="84" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Advanced" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="fuM-ok-LHm">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -128,16 +140,16 @@
                         </connections>
                     </button>
                     <customView autoresizesSubviews="NO" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="uE4-LX-CTT" customClass="ProfileListView">
-                        <rect key="frame" x="32" y="62" width="508" height="235"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <rect key="frame" x="32" y="62" width="567" height="235"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                         <connections>
                             <outlet property="delegate" destination="-2" id="HTC-aI-fNU"/>
                             <outlet property="nextKeyView" destination="puk-vn-6CO" id="aSN-xd-cPe"/>
                         </connections>
                     </customView>
                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VVP-os-AzU">
-                        <rect key="frame" x="450" y="14" width="96" height="32"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <rect key="frame" x="509" y="14" width="96" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="push" title="Copy" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="zoP-e3-jDv">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -150,8 +162,8 @@ DQ
                         </connections>
                     </button>
                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="puk-vn-6CO">
-                        <rect key="frame" x="354" y="14" width="96" height="32"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <rect key="frame" x="413" y="14" width="96" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="NM7-uB-FSU">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -169,7 +181,7 @@ Gw
             <connections>
                 <outlet property="delegate" destination="-2" id="2Yp-lL-izG"/>
             </connections>
-            <point key="canvasLocation" x="139" y="149"/>
+            <point key="canvasLocation" x="168.5" y="149"/>
         </window>
     </objects>
 </document>

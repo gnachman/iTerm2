@@ -317,6 +317,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_FUNCTION,
 
                              KEY_BROWSER_ZOOM,
+                             KEY_BROWSER_DEV_NULL,
 
                              KEY_PROFILE_TYPE_PHONY];
         NSArray *stringArrays = @[ KEY_TAGS, KEY_JOBS, KEY_BOUND_HOSTS, KEY_SNIPPETS_FILTER ];
@@ -676,6 +677,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_SNIPPETS_FILTER: @[],
 
                   KEY_BROWSER_ZOOM: @100,
+                  KEY_BROWSER_DEV_NULL: @NO
 
                   // NOTES:
                   //   * Remove deprecated values from this list.

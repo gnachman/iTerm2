@@ -37,6 +37,9 @@ extern NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues;
 
 #pragma mark - Core Methods
 
+// Swift subclases have to call this from init?(coder:)
+- (void)commonInit;
+
 // Bind a preference control to a key defined in iTermPreferences.
 - (PreferenceInfo *)defineControl:(NSControl *)control
                               key:(NSString *)key

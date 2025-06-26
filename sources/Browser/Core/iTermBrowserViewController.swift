@@ -91,15 +91,23 @@ class iTermBrowserViewController: NSViewController {
     @objc(initWithConfiguration:sessionGuid:profile:)
     init(configuration: WKWebViewConfiguration?, sessionGuid: String, profile: Profile)  {
         self.sessionGuid = sessionGuid
-        historyController = iTermBrowserHistoryController(sessionGuid: sessionGuid,
+        let user: iTermBrowserUser = if iTermProfilePreferences.bool(forKey: KEY_BROWSER_DEV_NULL, inProfile: profile) {
+            .devNull
+        } else {
+            .regular(id: UUID(uuidString: "00000000-0000-4000-8000-000000000000")!)
+        }
+        historyController = iTermBrowserHistoryController(user: user,
+                                                          sessionGuid: sessionGuid,
                                                           navigationState: navigationState)
-        browserManager = iTermBrowserManager(configuration: configuration,
+        browserManager = iTermBrowserManager(user: user,
+                                             configuration: configuration,
                                              sessionGuid: sessionGuid,
                                              historyController: historyController,
                                              navigationState: navigationState,
                                              profile: profile,
                                              pointerController: pointerController)
-        suggestionsController = iTermBrowserSuggestionsController(historyController: historyController,
+        suggestionsController = iTermBrowserSuggestionsController(user: user,
+                                                                  historyController: historyController,
                                                                   attributes: CompletionsWindow.regularAttributes(font: nil))
         super.init(nibName: nil, bundle: nil)
 
@@ -424,7 +432,7 @@ extension iTermBrowserViewController: iTermBrowserToolbarDelegate {
             return
         }
         
-        guard let database = await BrowserDatabase.instance else {
+        guard let database = await BrowserDatabase.instance(for: browserManager.user) else {
             return
         }
         
@@ -474,7 +482,7 @@ extension iTermBrowserViewController: iTermBrowserToolbarDelegate {
     
     func browserToolbarIsCurrentURLBookmarked() async -> Bool {
         guard let currentURL = browserManager.webView.url?.absoluteString,
-              let database = await BrowserDatabase.instance else {
+              let database = await BrowserDatabase.instance(for: browserManager.user) else {
             return false
         }
         
@@ -651,7 +659,10 @@ extension iTermBrowserViewController: iTermBookmarkTagEditorDelegate {
         bookmarkTagEditor?.close()
         
         // Create and show new editor
-        let editor = iTermBookmarkTagEditorWindowController(url: url, title: title, delegate: self)
+        let editor = iTermBookmarkTagEditorWindowController(user: browserManager.user,
+                                                            url: url,
+                                                            title: title,
+                                                            delegate: self)
         bookmarkTagEditor = editor
         editor.showWindow(self)
         

@@ -61,36 +61,50 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
     NSRect _desiredFrame;
 
     NSPointerArray *_otherSearchableViews;
+    BOOL _initialized;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
-    if (self) {
-        _internalState = [NSMutableDictionary dictionary];
-        _keyMap = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsStrongMemory
-                                            valueOptions:NSPointerFunctionsStrongMemory
-                                                capacity:16];
-        _keys = [[NSMutableSet alloc] init];
-        _keysWithSyntheticGetters = [NSMutableSet set];
-        _keysWithSyntheticSetters = [NSMutableSet set];
-        _docs = [NSMutableArray array];
-        _otherSearchableViews = [NSPointerArray weakObjectsPointerArray];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(didToggleIndicateNonDefaultValues:)
-                                                     name:iTermPreferencesDidToggleIndicateNonDefaultValues
-                                                   object:nil];
-
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(preferenceDidChangeFromOtherPanel:)
-                                                     name:kPreferenceDidChangeFromOtherPanel
-                                                   object:nil];
-
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(preferencePanelWillClose:)
-                                                     name:kPreferencePanelWillCloseNotification
-                                                   object:nil];
-    }
+    [self commonInit];
     return self;
+}
+
+- (instancetype)initWithCoder:(NSCoder *)coder {
+    self = [super initWithCoder:coder];
+    [self commonInit];
+    return self;
+}
+
+- (void)commonInit {
+    if (_initialized) {
+        NSLog(@"Double initialization detected for %@", self);
+        return;
+    }
+    _initialized = YES;
+    _internalState = [NSMutableDictionary dictionary];
+    _keyMap = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsStrongMemory
+                                        valueOptions:NSPointerFunctionsStrongMemory
+                                            capacity:16];
+    _keys = [[NSMutableSet alloc] init];
+    _keysWithSyntheticGetters = [NSMutableSet set];
+    _keysWithSyntheticSetters = [NSMutableSet set];
+    _docs = [NSMutableArray array];
+    _otherSearchableViews = [NSPointerArray weakObjectsPointerArray];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(didToggleIndicateNonDefaultValues:)
+                                                 name:iTermPreferencesDidToggleIndicateNonDefaultValues
+                                               object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(preferenceDidChangeFromOtherPanel:)
+                                                 name:kPreferenceDidChangeFromOtherPanel
+                                               object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(preferencePanelWillClose:)
+                                                 name:kPreferencePanelWillCloseNotification
+                                               object:nil];
 }
 
 - (void)dealloc {

@@ -14,7 +14,8 @@ import Cocoa
 @objc
 class iTermBookmarkTagEditorWindowController: NSWindowController {
     weak var delegate: iTermBookmarkTagEditorDelegate?
-    
+    private var user: iTermBrowserUser!
+
     private var bookmarkURL: String = ""
     private var bookmarkTitle: String = ""
     private var currentTags: Set<String> = []
@@ -27,8 +28,12 @@ class iTermBookmarkTagEditorWindowController: NSWindowController {
     @IBOutlet var saveButton: NSButton!
     @IBOutlet var cancelButton: NSButton!
     
-    convenience init(url: String, title: String?, delegate: iTermBookmarkTagEditorDelegate?) {
+    convenience init(user: iTermBrowserUser,
+                     url: String,
+                     title: String?,
+                     delegate: iTermBookmarkTagEditorDelegate?) {
         self.init()
+        self.user = user
         self.bookmarkURL = url
         self.bookmarkTitle = title ?? url
         self.delegate = delegate
@@ -157,8 +162,8 @@ class iTermBookmarkTagEditorWindowController: NSWindowController {
     }
     
     private func loadTagsAndBookmarkData() async {
-        guard let database = await BrowserDatabase.instance else { return }
-        
+        guard let database = await BrowserDatabase.instance(for: user) else { return }
+
         // Load all available tags for autocomplete
         allTags = await database.getAllTags()
         
@@ -183,8 +188,8 @@ class iTermBookmarkTagEditorWindowController: NSWindowController {
     }
     
     private func updateBookmarkTags(newTags: Set<String>) async {
-        guard let database = await BrowserDatabase.instance else { return }
-        
+        guard let database = await BrowserDatabase.instance(for: user) else { return }
+
         // Remove tags that are no longer present
         for tag in currentTags.subtracting(newTags) {
             _ = await database.removeTagFromBookmark(url: bookmarkURL, tag: tag)
@@ -200,8 +205,8 @@ class iTermBookmarkTagEditorWindowController: NSWindowController {
     }
     
     private func cleanupUnusedTags() async {
-        guard let database = await BrowserDatabase.instance else { return }
-        
+        guard let database = await BrowserDatabase.instance(for: user) else { return }
+
         // Get all tags that are no longer used by any bookmark
         let allCurrentTags = await database.getAllTags()
         
@@ -229,8 +234,8 @@ class iTermBookmarkTagEditorWindowController: NSWindowController {
     }
     
     private func performDeleteBookmark() async {
-        guard let database = await BrowserDatabase.instance else { return }
-        
+        guard let database = await BrowserDatabase.instance(for: user) else { return }
+
         let success = await database.removeBookmark(url: bookmarkURL)
         
         await MainActor.run {

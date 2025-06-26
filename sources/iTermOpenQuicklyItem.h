@@ -93,6 +93,7 @@ NS_AVAILABLE_MAC(11_0)
 @interface iTermOpenQuicklyBookmarkItem: iTermOpenQuicklyItem
 @property(nonatomic, copy) NSString *bookmarkName;
 @property(nonatomic, strong) NSURL *url;
+@property(nonatomic, copy) NSString *userID;
 @end
 
 @interface iTermOpenQuicklyURLItem: iTermOpenQuicklyItem

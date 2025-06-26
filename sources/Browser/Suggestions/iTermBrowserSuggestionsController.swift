@@ -11,6 +11,8 @@ class iTermBrowserSuggestionsController {
     private let midTruncatingAttributes: [NSAttributedString.Key: Any]
     let historyController: iTermBrowserHistoryController
     private let openSearchSuggestions: iTermBrowserOpenSearchSuggestions
+    private let user: iTermBrowserUser
+
     struct ScoredSuggestion {
         let suggestion: URLSuggestion
         let score: Int
@@ -26,8 +28,10 @@ class iTermBrowserSuggestionsController {
         case history = 0  // visit count gets added to this.
     }
 
-    init(historyController: iTermBrowserHistoryController,
+    init(user: iTermBrowserUser,
+         historyController: iTermBrowserHistoryController,
          attributes: [NSAttributedString.Key: Any]) {
+        self.user = user
         tailTruncatingAttributes = attributes.modifyingParagraphStyle {
             $0.lineBreakMode = .byTruncatingTail
         }
@@ -180,7 +184,7 @@ class iTermBrowserSuggestionsController {
     }
 
     private func getBookmarkSuggestions(for query: String) async -> [ScoredSuggestion] {
-        guard let database = await BrowserDatabase.instance else {
+        guard let database = await BrowserDatabase.instance(for: user) else {
             return []
         }
         
