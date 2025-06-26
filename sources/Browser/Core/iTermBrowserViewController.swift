@@ -704,9 +704,6 @@ extension iTermBrowserViewController: iTermBrowserActionPerforming {
             return
         }
 
-        // Convert window coordinates to web view coordinates for the event location
-        let viewPoint = webView.convert(point, from: nil)
-        
         // For the event location, we might need to use the original window coordinates
         // since the menu positioning could be relative to the window
         let windowNumber = window.windowNumber
@@ -718,7 +715,7 @@ extension iTermBrowserViewController: iTermBrowserActionPerforming {
                                                      modifierFlags: [],
                                                      timestamp: timestamp,
                                                      windowNumber: windowNumber,
-                                                     context: window.graphicsContext,
+                                                     context: nil,
                                                      eventNumber: 1,
                                                      clickCount: 1,
                                                      pressure: 1.0) else {
@@ -732,7 +729,7 @@ extension iTermBrowserViewController: iTermBrowserActionPerforming {
                                                    modifierFlags: [],
                                                    timestamp: timestamp + 0.1,
                                                    windowNumber: windowNumber,
-                                                   context: window.graphicsContext,
+                                                   context: nil,
                                                    eventNumber: 2,
                                                    clickCount: 1,
                                                    pressure: 1.0) else {
