@@ -9,6 +9,7 @@
 #import "iTermPreferencesBaseViewController.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermPreferences.h"
 #import "iTermSlider.h"
 #import "NSColor+iTerm.h"
@@ -296,11 +297,11 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
         DLog(@"type=%@", @(info.type));
         switch (info.type) {
             case kPreferenceInfoTypeCheckbox:
-                [self setBool:([sender state] == NSControlStateValueOn) forKey:info.key];
+                [self setBool:([(NSButton *)sender state] == NSControlStateValueOn) forKey:info.key];
                 break;
 
             case kPreferenceInfoTypeInvertedCheckbox:
-                [self setBool:([sender state] == NSControlStateValueOff) forKey:info.key];
+                [self setBool:([(NSButton *)sender state] == NSControlStateValueOff) forKey:info.key];
                 break;
 
             case kPreferenceInfoTypeIntegerTextField:
@@ -369,7 +370,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
                 break;
 
             case kPreferenceInfoTypeColorWell:
-                [self setObject:[[sender color] dictionaryValue] forKey:info.key];
+                [self setObject:[[(CPKColorWell *)sender color] dictionaryValue] forKey:info.key];
                 break;
 
             default:
@@ -461,6 +462,13 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
                     searchable:NO];
 }
 
+- (ProfileType)profileTypesForView:(NSView *)view {
+    if ([self isKindOfClass:[iTermProfilePreferencesBaseViewController class]]) {
+        return view.enclosingModalEnclosure.visibleForProfileTypes;
+    }
+    return ProfileTypeAll;
+}
+
 - (void)addViewToSearchIndex:(NSView *)view
                  displayName:(NSString *)displayName
                      phrases:(NSArray<NSString *> *)phrases
@@ -469,7 +477,8 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
     if (displayName) {
         iTermPreferencesSearchDocument *doc = [iTermPreferencesSearchDocument documentWithDisplayName:displayName
                                                                                            identifier:nonnilKey
-                                                                                       keywordPhrases:phrases];
+                                                                                       keywordPhrases:phrases
+                                                                                         profileTypes:[self profileTypesForView:view]];
         doc.ownerIdentifier = self.documentOwnerIdentifier;
         [_docs addObject:doc];
     } else {

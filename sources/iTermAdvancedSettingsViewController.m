@@ -732,7 +732,8 @@ static void iTermAdvancedSettingsSaveSecureString(NSDictionary *dict, NSString *
         _docs = [[iTermAdvancedSettingsViewController sortedAdvancedSettings] mapWithBlock:^id(NSDictionary *dict) {
             iTermPreferencesSearchDocument *doc = [iTermPreferencesSearchDocument documentWithDisplayName:@"Advanced Preferences…"  // dict[kAdvancedSettingDescription]
                                                                                                identifier:@"Advanced Preferences"  // dict[kAdvancedSettingIdentifier]
-                                                                                           keywordPhrases:@[ dict[kAdvancedSettingDescription] ]];
+                                                                                           keywordPhrases:@[ dict[kAdvancedSettingDescription] ]
+                                                                                             profileTypes:ProfileTypeAll];
             doc.queryIndependentScore = -1;
             doc.ownerIdentifier = self.documentOwnerIdentifier;
             return doc;

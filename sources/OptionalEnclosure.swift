@@ -10,6 +10,11 @@
 class ModalEnclosure: NSView {
     var shiftsViewsBeneath: Bool = true
     var neighborToGrowRight: NSView?
+
+    @objc
+    var visibleForProfileTypes: ProfileType {
+        return [.all]
+    }
 }
 
 @objc(iTermTerminalModeEnclosure)
@@ -33,22 +38,57 @@ class TerminalModeEnclosure: ModalEnclosure {
             super.neighborToGrowRight = newValue
         }
     }
+
+    @objc
+    override var visibleForProfileTypes: ProfileType {
+        return [.terminal]
+    }
 }
 
 @objc(iTermBrowserModeEnclosure)
 @IBDesignable
-class BrowserModeEnclosure: ModalEnclosure {}
+class BrowserModeEnclosure: ModalEnclosure {
+    @objc
+    override var visibleForProfileTypes: ProfileType {
+        return [.browser]
+    }
+}
 
 @objc(iTermHiddenModeEnclosure)
 @IBDesignable
-class HiddenModeEnclosure: ModalEnclosure {}
+class HiddenModeEnclosure: ModalEnclosure {
+    @objc
+    override var visibleForProfileTypes: ProfileType {
+        if iTermAdvancedSettingsModel.browserProfiles() {
+            return [.all]
+        } else {
+            return []
+        }
+    }
+}
 
 @objc(iTermSharedProfileEnclosure)
 @IBDesignable
-class SharedProfileEnclosure: ModalEnclosure {}
+class SharedProfileEnclosure: ModalEnclosure {
+    @objc
+    override var visibleForProfileTypes: ProfileType {
+        return [.all]
+    }
+}
 
-@objc(iTermWTF)
-@IBDesignable
-class iTermWTF: ModalEnclosure {
-    @IBInspectable var blowsChunks: Bool = false
+extension NSView {
+    @objc
+    var enclosingModalEnclosure: ModalEnclosure? {
+        var current = self
+        while true {
+            if let enclosure = current as? ModalEnclosure {
+                return enclosure
+            }
+            if let parent = current.superview {
+                current = parent
+            } else {
+                return nil
+            }
+        }
+    }
 }

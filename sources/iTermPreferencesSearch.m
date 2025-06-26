@@ -10,20 +10,24 @@
 #import "NSObject+iTerm.h"
 #import "NSSet+iTerm.h"
 #import "NSStringITerm.h"
+#import "iTermAdvancedSettingsModel.h"
 
 @implementation iTermPreferencesSearchDocument
 
 + (instancetype)documentWithDisplayName:(NSString *)displayName
                              identifier:(NSString *)identifier
-                         keywordPhrases:(NSArray<NSString *> *)keywordPhrases {
+                         keywordPhrases:(NSArray<NSString *> *)keywordPhrases
+                           profileTypes:(ProfileType)profileTypes {
     return [[iTermPreferencesSearchDocument alloc] initWithDisplayName:displayName
                                                             identifier:identifier
-                                                        keywordPhrases:keywordPhrases];
+                                                        keywordPhrases:keywordPhrases
+                                                          profileTypes:profileTypes];
 }
 
 - (instancetype)initWithDisplayName:(NSString *)displayName
                          identifier:(NSString *)identifier
-                     keywordPhrases:(NSArray<NSString *> *)keywordPhrases {
+                     keywordPhrases:(NSArray<NSString *> *)keywordPhrases
+                       profileTypes:(ProfileType)profileTypes {
     self = [super init];
     if (self) {
         static NSUInteger nextDocId;
@@ -31,6 +35,7 @@
         _displayName = [displayName copy];
         _identifier = [identifier copy];
         _keywordPhrases = [keywordPhrases copy];
+        _profileTypes = profileTypes;
     }
     return self;
 }
@@ -230,6 +235,9 @@
 }
 
 - (void)addDocumentToIndex:(iTermPreferencesSearchDocument *)document {
+    if (document.profileTypes == ProfileTypeBrowser && ![iTermAdvancedSettingsModel browserProfiles]) {
+        return;
+    }
     for (NSString *keyword in [NSSet setWithArray:document.allKeywords]) {
         [self addToken:keyword inDocument:document toIndex:_keywordIndex];
     }

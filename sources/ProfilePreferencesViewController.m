@@ -370,6 +370,13 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     }
 }
 
+- (void)selectDefaultBrowserProfile {
+    NSString *guid = [[ProfileModel sharedInstance] defaultBrowserProfileCreatingIfNeeded][KEY_GUID];
+    if (guid) {
+        [self openToProfileWithGuid:guid];
+    }
+}
+
 - (void)openToProfileWithGuid:(NSString *)guid
 andEditComponentWithIdentifier:(NSString *)identifier
                         scope:(iTermVariableScope<iTermSessionScope> *)scope {
@@ -1190,6 +1197,23 @@ andEditComponentWithIdentifier:(NSString *)identifier
             [self.tabView selectTabViewItem:item];
             return;
         }
+    }
+}
+
+- (void)switchToProfileOfType:(ProfileType)profileType {
+    if (profileType & ProfileTypeTerminal) {
+        [self selectDefaultProfile];
+        return;
+    }
+    if (profileType & ProfileTypeBrowser) {
+        [self selectDefaultBrowserProfile];
+        return;
+    }
+}
+
+- (void)switchProfilesIfNeededToRevealDocument:(iTermPreferencesSearchDocument *)document {
+    if ((document.profileTypes & _generalViewController.profileType) == 0) {
+        [self switchToProfileOfType:document.profileTypes];
     }
 }
 

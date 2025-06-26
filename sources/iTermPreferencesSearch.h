@@ -6,6 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "ProfileModel.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -17,10 +18,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSNumber *docid;
 @property (nonatomic, strong) NSString *ownerIdentifier;
 @property (nonatomic) double queryIndependentScore;
+@property (nonatomic, readonly) ProfileType profileTypes;
 
 + (instancetype)documentWithDisplayName:(NSString *)displayName
                              identifier:(NSString *)identifier
-                         keywordPhrases:(NSArray<NSString *> *)keywordPhrases;
+                         keywordPhrases:(NSArray<NSString *> *)keywordPhrases
+                           profileTypes:(ProfileType)profileTypes;
 
 - (instancetype)init NS_UNAVAILABLE;
 @end

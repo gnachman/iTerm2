@@ -1275,6 +1275,9 @@ andEditComponentWithIdentifier:(NSString *)identifier
      [self showScrimIfNeeded];
     // Revealing can cause a first responder change which removes the scrim, so note that we shouldn't do that.
     _revealingControl = YES;
+    if ([viewController isKindOfClass:[iTermProfilePreferencesBaseViewController class]]) {
+        [_profilesViewController switchProfilesIfNeededToRevealDocument:document];
+    }
     _scrim.cutoutView = [viewController searchableViewControllerRevealItemForDocument:document
                                                                              forQuery:self.searchField.stringValue
                                                                         willChangeTab:&waitForInnerTabToSwitch];
