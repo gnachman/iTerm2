@@ -169,11 +169,17 @@ class iTermBrowserStaticPageRegistry {
         // Register all static pages here
         registerStaticPage(urlPath: "welcome", templateName: "welcome-page", substitutions: [:])
         #if DEBUG
-        registerStaticPage(urlPath: "notifications-demo", templateName: "notifications-demo", substitutions: [:])
-        registerStaticPage(urlPath: "geolocation-demo", templateName: "geolocation-demo", substitutions: [:])
-        registerStaticPage(urlPath: "media-demo", templateName: "media-demo", substitutions: [:])
-        registerStaticPage(urlPath: "password-demo", templateName: "password-demo", substitutions: [:])
-        registerStaticPage(urlPath: "selection-test", templateName: "selection-test", substitutions: [:])
+        let pages = [
+            "notifications-demo",
+            "geolocation-demo",
+            "media-demo",
+            "password-demo",
+            "selection-test",
+            "smartselection-demo"
+        ]
+        for page in pages {
+            registerStaticPage(urlPath: page, templateName: page, substitutions: [:])
+        }
         #endif
         
         // Add more static pages here as needed:

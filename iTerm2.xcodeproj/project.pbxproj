@@ -3088,6 +3088,9 @@
 		A6A3EDE32E0D149D00D711DA /* selection-test.html in Resources */ = {isa = PBXBuildFile; fileRef = A6A3EDE12E0D149D00D711DA /* selection-test.html */; };
 		A6A3EDE42E0D149D00D711DA /* selection-test.html in Resources */ = {isa = PBXBuildFile; fileRef = A6A3EDE12E0D149D00D711DA /* selection-test.html */; };
 		A6A3EDE62E0D26E100D711DA /* MimeTypeUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A3EDE52E0D26E100D711DA /* MimeTypeUtilities.swift */; };
+		A6A3EDE82E0DAF0600D711DA /* smartselection-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6A3EDE72E0DAF0300D711DA /* smartselection-demo.html */; };
+		A6A3EDE92E0DAF0600D711DA /* smartselection-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6A3EDE72E0DAF0300D711DA /* smartselection-demo.html */; };
+		A6A3EDEA2E0DAF0600D711DA /* smartselection-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6A3EDE72E0DAF0300D711DA /* smartselection-demo.html */; };
 		A6A453931FF318D8009FD3B7 /* iTermTexturePageCollection.mm in Sources */ = {isa = PBXBuildFile; fileRef = A6A453921FF318D8009FD3B7 /* iTermTexturePageCollection.mm */; };
 		A6A4865D20B6706700493302 /* ProfilesKeysPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A269961902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m */; };
 		A6A4865E20B6758D00493302 /* iTermPreferencesBaseViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7138818F26445008D94DD /* iTermPreferencesBaseViewController.m */; };
@@ -7683,6 +7686,7 @@
 		A6A3EDDB2E0D0C7E00D711DA /* urls-at-point.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "urls-at-point.js"; sourceTree = "<group>"; };
 		A6A3EDE12E0D149D00D711DA /* selection-test.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "selection-test.html"; sourceTree = "<group>"; };
 		A6A3EDE52E0D26E100D711DA /* MimeTypeUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MimeTypeUtilities.swift; sourceTree = "<group>"; };
+		A6A3EDE72E0DAF0300D711DA /* smartselection-demo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "smartselection-demo.html"; sourceTree = "<group>"; };
 		A6A453921FF318D8009FD3B7 /* iTermTexturePageCollection.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = iTermTexturePageCollection.mm; path = Metal/Renderers/iTermTexturePageCollection.mm; sourceTree = "<group>"; };
 		A6A4B29F240B67A400184EAC /* PTYMouseHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PTYMouseHandler.h; sourceTree = "<group>"; };
 		A6A4B2A0240B67A400184EAC /* PTYMouseHandler.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PTYMouseHandler.m; sourceTree = "<group>"; };
@@ -12997,6 +13001,7 @@
 		A6CBB81E2E0A1CB000B2CCCB /* Demos */ = {
 			isa = PBXGroup;
 			children = (
+				A6A3EDE72E0DAF0300D711DA /* smartselection-demo.html */,
 				A6A3EDE12E0D149D00D711DA /* selection-test.html */,
 				A6CBB7BB2E08BD9300B2CCCB /* geolocation-demo.html */,
 				A6CBB7EF2E090E9200B2CCCB /* media-demo.html */,
@@ -15534,6 +15539,7 @@
 				A697CEA82D9861470031583F /* BroadcastStripesMenuTip.png in Resources */,
 				A697CEA92D9861470031583F /* BroadcastStripesMenuTip@2x.png in Resources */,
 				1D6ED9A519AEA20D005A7799 /* MigrationMap.plist in Resources */,
+				A6A3EDEA2E0DAF0600D711DA /* smartselection-demo.html in Resources */,
 				1D6ED9A619AEA20D005A7799 /* DefaultGlobalKeyMap.plist in Resources */,
 				A6643F132CA62190004B757B /* coderabbitai.png in Resources */,
 				53AA764B237E35A50094D75A /* OpenQuicklyActionIcon.png in Resources */,
@@ -16076,6 +16082,7 @@
 				A640486F29BFCB6D0063C34A /* SpecialExceptionsWindowController.xib in Resources */,
 				A6F31A31295BC41700C1A51E /* uniE0C8_PowerlineExtraSymbols.pdf in Resources */,
 				A6F31A37295BC41700C1A51E /* uniE0C6_PowerlineExtraSymbols.pdf in Resources */,
+				A6A3EDE82E0DAF0600D711DA /* smartselection-demo.html in Resources */,
 				A67F61CB214395C60093940A /* graphic_shell.png in Resources */,
 				A6F7D50F2E05CEDA0065D09C /* history-page.html in Resources */,
 				A67F118118D82B9500B23C7B /* PrefsAdvanced.png in Resources */,
@@ -16757,6 +16764,7 @@
 				A68615612D78D37500E9CCC2 /* clock.png in Resources */,
 				A67F61F82143976F0093940A /* graphic_icons.json in Resources */,
 				A697101218DFA7D5007E901D /* closebutton@2x.png in Resources */,
+				A6A3EDE92E0DAF0600D711DA /* smartselection-demo.html in Resources */,
 				A697CE6C2D97C2720031583F /* CoprocessMenuTip.png in Resources */,
 				A697CE6D2D97C2720031583F /* CoprocessMenuTip@2x.png in Resources */,
 				A6CBB8102E0A023A00B2CCCB /* password-demo.html in Resources */,
