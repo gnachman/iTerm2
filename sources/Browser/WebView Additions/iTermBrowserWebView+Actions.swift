@@ -216,7 +216,7 @@ extension iTermBrowserWebView {
         return urlStrings.compactMap { URL(string: $0) }
     }
 
-    struct SmartMatch {
+    struct WebSmartMatch {
         var beforeCount: Int
         var afterCount: Int
         var rule: SmartSelectRule
@@ -224,11 +224,13 @@ extension iTermBrowserWebView {
         var score: Double
     }
     func firstMatch(atPointInWindow point: NSPoint,
-                    rules: [SmartSelectRule]) async -> SmartMatch? {
+                    rules: [SmartSelectRule]) async -> WebSmartMatch? {
         // Number of lines above and below the location to include in the search
-        var matches = [String: SmartMatch]()
+        var matches = [String: WebSmartMatch]()
         let radius = Int(iTermAdvancedSettingsModel.smartSelectionRadius())
         let (before, after) = await text(atPointInWindow: point, radius: radius)
+        let fullBeforeAbsRange = 0..<before.utf16.count
+        let fullAfterAbsRange = before.utf16.count..<(before.utf16.count + after.utf16.count)
         for rule in rules {
             guard let regex = try? NSRegularExpression(pattern: rule.regex) else {
                 continue
@@ -244,27 +246,37 @@ extension iTermBrowserWebView {
                     let matchingRange = result.range(at: 0)
                     let matchingText = String(substring)[utf16: matchingRange]
                     let score = rule.weight * Double(matchingText.utf16.count)
-                    let beforeCount = before.utf16.count - matchingRange.lowerBound
-                    if beforeCount > 0 {
+
+                    let matchAbsRange = (startOffset + matchingRange.lowerBound)..<(startOffset + matchingRange.upperBound)
+                    let beforeMatchingRange = matchAbsRange.intersection(fullBeforeAbsRange)
+                    let afterMatchingRange = matchAbsRange.intersection(fullAfterAbsRange)
+
+                    let beforeCount = beforeMatchingRange?.count ?? 0
+                    let afterCount = afterMatchingRange?.count ?? 0
+                    if beforeCount > 0 && afterCount > 0 {
                         if (matches[matchingText]?.score ?? 0) < score {
                             let components = (1..<result.numberOfRanges).map { i in
                                 let range = result.range(at: i)
+                                if range.location == NSNotFound || range.length == 0 {
+                                    return ""
+                                }
                                 return String(substring)[utf16: range]
                             }
-                            matches[matchingText] = SmartMatch(
+                            matches[matchingText] = WebSmartMatch(
                                 beforeCount: beforeCount,
-                                afterCount: matchingRange.length - beforeCount,
+                                afterCount: afterCount,
                                 rule: rule,
                                 components: components,
                                 score: score)
                         }
-                        startOffset = matchingRange.upperBound - 1
+                        startOffset += matchingRange.upperBound - 1
                     } else {
                         startOffset += matchingRange.lowerBound
                     }
                 } else {
                     break
                 }
+                startOffset += 1
             }
         }
         return matches.values.max { lhs, rhs in
