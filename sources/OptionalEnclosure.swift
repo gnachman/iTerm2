@@ -6,16 +6,49 @@
 //
 
 @objc(iTermModalEnclosure)
-class ModalEnclosure: NSView {}
+@IBDesignable
+class ModalEnclosure: NSView {
+    var shiftsViewsBeneath: Bool = true
+    var neighborToGrowRight: NSView?
+}
 
 @objc(iTermTerminalModeEnclosure)
-class TerminalModeEnclosure: ModalEnclosure {}
+@IBDesignable
+class TerminalModeEnclosure: ModalEnclosure {
+    @IBInspectable
+    override var shiftsViewsBeneath: Bool {
+        get {
+            super.shiftsViewsBeneath
+        }
+        set {
+            super.shiftsViewsBeneath = newValue
+        }
+    }
+
+    @IBOutlet override var neighborToGrowRight: NSView? {
+        get {
+            super.neighborToGrowRight
+        }
+        set {
+            super.neighborToGrowRight = newValue
+        }
+    }
+}
 
 @objc(iTermBrowserModeEnclosure)
+@IBDesignable
 class BrowserModeEnclosure: ModalEnclosure {}
 
 @objc(iTermHiddenModeEnclosure)
+@IBDesignable
 class HiddenModeEnclosure: ModalEnclosure {}
 
 @objc(iTermSharedProfileEnclosure)
+@IBDesignable
 class SharedProfileEnclosure: ModalEnclosure {}
+
+@objc(iTermWTF)
+@IBDesignable
+class iTermWTF: ModalEnclosure {
+    @IBInspectable var blowsChunks: Bool = false
+}
