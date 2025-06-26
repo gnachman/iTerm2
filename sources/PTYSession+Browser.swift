@@ -15,13 +15,13 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
             setUntrustedIconName(title)
         }
     }
-    
+
     func browserViewController(_ controller: iTermBrowserViewController, didUpdateFavicon favicon: NSImage?) {
         if let favicon {
             delegate?.sessionDidChangeGraphic(self, shouldShow: true, image: favicon)
         }
     }
-    
+
     func browserViewController(_ controller: iTermBrowserViewController,
                                requestNewWindowForURL url: URL,
                                configuration: WKWebViewConfiguration) -> WKWebView? {
@@ -85,6 +85,23 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
         }
         windowController.showChatWindow()
         windowController.createChat(name: title, inject: content)
+    }
+
+    func browserViewController(_ controller: iTermBrowserViewController,
+                               pointInView: NSPoint,
+                               button: Int,
+                               count: Int,
+                               modifiers: NSEvent.ModifierFlags,
+                               sideEffects: iTermClickSideEffects,
+                               state: iTermMouseState) {
+        textViewSetClick(
+            VT100GridAbsCoord(x: Int32(clamping: pointInView.x),
+                              y: Int64(clamping: pointInView.y)),
+            button: button,
+            count: count,
+            modifiers: modifiers,
+            sideEffects: sideEffects,
+            state: state)
     }
 }
 

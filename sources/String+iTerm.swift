@@ -395,3 +395,38 @@ extension String {
         return bytes.map { String(format: "%02x", $0) }.joined()
     }
 }
+
+import Foundation
+
+extension String {
+    subscript(utf16 range: NSRange) -> String {
+        let utf16View = utf16
+
+        let fromUtf16Index = utf16View.index(
+                utf16View.startIndex,
+                offsetBy: range.location,
+                limitedBy: utf16View.endIndex)!
+        let toUtf16Index = utf16View.index(
+                fromUtf16Index,
+                offsetBy: range.length,
+                limitedBy: utf16View.endIndex)!
+
+        let startIndex = String.Index(fromUtf16Index, within: self)!
+        let endIndex = String.Index(toUtf16Index, within: self)!
+
+        return String(self[startIndex..<endIndex])
+    }
+
+    subscript(utf16: Range<Int>) -> String {
+        return self[utf16: NSRange(utf16)]
+    }
+
+    subscript(utf16 range: PartialRangeFrom<Int>) -> String {
+        let utf16View = utf16
+        let startLocation = range.lowerBound
+        let utf16Count = utf16View.count
+        let length = utf16Count - startLocation
+        let nsRange = NSRange(location: startLocation, length: length)
+        return self[utf16: nsRange]
+    }
+}

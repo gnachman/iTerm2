@@ -143,6 +143,7 @@
 #import "NSFont+iTerm.h"
 #import "NSHost+iTerm.h"
 #import "NSImage+iTerm.h"
+#import "NSMenu+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSPasteboard+iTerm.h"
 #import "NSScreen+iTerm.h"
@@ -369,10 +370,6 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
 NSString *const PTYSessionArrangementOptionsForDuplication = @"PTYSessionArrangementOptionsForDuplication";
 
 static char iTermEffectiveAppearanceKey;
-
-@interface NSWindow (SessionPrivate)
-- (void)_moveToScreen:(NSScreen *)sender;
-@end
 
 typedef NS_ENUM(NSUInteger, iTermSSHState) {
     // Normal state.
@@ -4234,41 +4231,6 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     return NO;
 }
 
-+ (BOOL)_recursiveSelectMenuItemWithTitle:(NSString*)title identifier:(NSString *)identifier inMenu:(NSMenu*)menu {
-    [menu update];
-
-    if (menu == [NSApp windowsMenu] &&
-        [[NSApp keyWindow] respondsToSelector:@selector(_moveToScreen:)] &&
-        [NSScreen it_stringLooksLikeUniqueKey:identifier]) {
-        NSScreen *screen = [NSScreen it_screenWithUniqueKey:identifier];
-        if (screen) {
-            [NSApp sendAction:@selector(_moveToScreen:) to:nil from:screen];
-            return YES;
-        }
-    }
-
-    for (NSMenuItem* item in [menu itemArray]) {
-        if (![item isEnabled] || [item isHidden]) {
-            continue;
-        }
-        if ([item hasSubmenu]) {
-            if ([PTYSession _recursiveSelectMenuItemWithTitle:title identifier:identifier inMenu:[item submenu]]) {
-                return YES;
-            }
-        }
-        if ([ITAddressBookMgr shortcutIdentifier:identifier title:title matchesItem:item]) {
-            if (item.hasSubmenu) {
-                return YES;
-            }
-            [NSApp sendAction:[item action]
-                           to:[item target]
-                         from:item];
-            return YES;
-        }
-    }
-    return NO;
-}
-
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent *)event {
     // Check if we have a custom key mapping for this event
     iTermKeyBindingAction *action = [iTermKeyMappings actionForKeystroke:[iTermKeystroke withEvent:event]
@@ -4293,7 +4255,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (parts.count > 1) {
         identifier = parts[1];
     }
-    if (![self _recursiveSelectMenuItemWithTitle:title identifier:identifier inMenu:[NSApp mainMenu]]) {
+    if (![NSApp.mainMenu it_selectMenuItemWithTitle:title identifier:identifier]) {
         DLog(@"Beep: failed to find menu item with title %@ and identifier %@", title, identifier);
         NSBeep();
     }

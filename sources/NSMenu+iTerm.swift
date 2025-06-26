@@ -113,5 +113,3 @@ extension NSMenu {
         addItem(item)
     }
 }
-
-
