@@ -958,6 +958,11 @@ extension PTYSession {
         }
         return nil
     }
+
+    @objc
+    func loadDeferredURLIfNeeded() {
+        view.browserViewController?.loadDeferredURLIfNeeded()
+    }
 }
 
 

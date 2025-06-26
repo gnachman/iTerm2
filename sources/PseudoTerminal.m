@@ -473,6 +473,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 - (instancetype)initWithWindowNibName:(NSString *)windowNibName {
     self = [super initWithWindowNibName:windowNibName];
     if (self) {
+        _automaticallySelectNewTabs = YES;
         self.autoCommandHistorySessionGuid = nil;
     }
     return self;
@@ -560,6 +561,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                                      screen:(int)screenNumber
                            hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                                     profile:(Profile *)profile {
+    _automaticallySelectNewTabs = YES;
     _creationTime = [NSDate it_timeSinceBoot];
     const iTermWindowType windowType = iTermThemedWindowType(unsafeWindowType);
     iTermWindowType savedWindowType = iTermThemedWindowType(unsafeSavedWindowType);
@@ -10393,7 +10395,9 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         const int safeIndex = MAX(0, MIN(_contentView.tabView.tabViewItems.count, anIndex));
         [_contentView.tabView insertTabViewItem:aTabViewItem atIndex:safeIndex];
         [aTabViewItem release];
-        [_contentView.tabView selectTabViewItemAtIndex:safeIndex];
+        if (_automaticallySelectNewTabs || _contentView.tabView.tabViewItems.count == 1) {
+            [_contentView.tabView selectTabViewItemAtIndex:safeIndex];
+        }
         if (self.windowInitialized && !_restoringWindow) {
             if (self.tabs.count == 1) {
                 // It's important to do this before makeKeyAndOrderFront because API clients need

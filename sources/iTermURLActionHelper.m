@@ -275,11 +275,7 @@
         return;
     }
     if (background) {
-        [[NSWorkspace sharedWorkspace] openURLs:@[ url ]
-                        withAppBundleIdentifier:nil
-                                        options:NSWorkspaceLaunchWithoutActivation
-                 additionalEventParamDescriptor:nil
-                              launchIdentifiers:nil];
+        [[NSWorkspace sharedWorkspace] it_openURL:url options:NSWorkspaceLaunchWithoutActivation];
     } else {
         [[NSWorkspace sharedWorkspace] it_openURL:url];
     }

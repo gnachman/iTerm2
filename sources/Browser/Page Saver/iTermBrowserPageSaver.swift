@@ -162,7 +162,7 @@ class iTermBrowserPageSaver {
         }
         
         // Skip non-HTTP(S) URLs
-        guard ["http", "https"].contains(resourceURL.scheme?.lowercased()) else {
+        guard iTermBrowserMetadata.supportedSchemes.contains(resourceURL.scheme?.lowercased() ?? "") else {
             return nil
         }
         

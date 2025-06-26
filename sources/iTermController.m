@@ -1669,29 +1669,42 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                               completion:completion];
 }
 
-- (void)openURLInNewBrowserTab:(NSURL *)url {
+- (BOOL)openURLInNewBrowserTab:(NSURL *)url selectTab:(BOOL)selectTab {
     if (![iTermAdvancedSettingsModel browserProfiles]) {
-        return;
+        return NO;
     }
-    [iTermSessionLauncher launchBookmark:[ProfileModel.sharedInstance defaultBrowserProfileCreatingIfNeeded]
-                              inTerminal:[[iTermController sharedInstance] currentTerminal]
-                                 withURL:url.absoluteString
-                        hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                 makeKey:YES
-                             canActivate:YES
-                      respectTabbingMode:NO
-                                   index:nil
-                                 command:nil
-                             makeSession:nil
-                          didMakeSession:nil
-                              completion:nil];
+    Profile *profile = [[ProfileModel sharedInstance] defaultBrowserProfileCreatingIfNeeded];
+
+    PseudoTerminal *term = [self currentTerminal];
+    if (!term) {
+        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
+                                                 windowType:WINDOW_TYPE_ACCESSORY
+                                            savedWindowType:WINDOW_TYPE_ACCESSORY
+                                                     screen:-1
+                                           hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                                    profile:profile] autorelease];
+        [self addTerminalWindow:term];
+    }
+
+    iTermSessionLauncher *launcher = [[iTermSessionLauncher alloc] initWithProfile:profile windowController:term];
+    launcher.url = url.absoluteString;
+    launcher.hotkeyWindowType = iTermHotkeyWindowTypeNone;
+    launcher.makeKey = selectTab;
+    launcher.canActivate = YES;
+    launcher.respectTabbingMode = NO;
+    launcher.disableAutomaticTabSelection = !selectTab;
+    [launcher launchWithCompletion:nil];
+    return YES;
 }
 
 - (WKWebView *)openSingleUserBrowserWindowWithURL:(NSURL *)url
                                     configuration:(WKWebViewConfiguration *)configuration
                                           options:(iTermSingleUseWindowOptions)options
                                        completion:(void (^)(void))completion {
-    MutableProfile *windowProfile = [[[self defaultBookmark] mutableCopy] autorelease];
+    if (![iTermAdvancedSettingsModel browserProfiles]) {
+        return nil;
+    }
+    MutableProfile *windowProfile = [[[[ProfileModel sharedInstance] defaultBrowserProfileCreatingIfNeeded] mutableCopy] autorelease];
     if ([windowProfile[KEY_WINDOW_TYPE] integerValue] == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
         [windowProfile[KEY_WINDOW_TYPE] integerValue] == WINDOW_TYPE_LION_FULL_SCREEN) {
         windowProfile[KEY_WINDOW_TYPE] = @(iTermWindowDefaultType());

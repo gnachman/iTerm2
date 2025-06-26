@@ -54,6 +54,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (readonly, nonatomic, readonly) PseudoTerminal *windowController;
 @property (nullable, nonatomic, strong) NSNumber *index;
 
+// Select newly created tab? Set to YES to keep the original tab selected.
+@property (nonatomic) BOOL disableAutomaticTabSelection;
+
 + (BOOL)profileIsWellFormed:(Profile *)profile;
 
 // These class methods are a migration path for legacy code that predates the session launcher.

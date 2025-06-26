@@ -358,7 +358,7 @@ extension iTermBrowserViewController {
         }
     }
     
-    private func loadDeferredURLIfNeeded() {
+    func loadDeferredURLIfNeeded() {
         if #available(macOS 12.0, *) {
             browserManager.webView.applyDeferredInteractionStateIfNeeded()
         }
