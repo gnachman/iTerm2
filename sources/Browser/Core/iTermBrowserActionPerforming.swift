@@ -43,6 +43,6 @@ protocol iTermBrowserActionPerforming: AnyObject {
     // delegate.previousSession or nextSession
     func actionPerformingSelectPane(forward: Bool)
     func actionPerformingInvoke(scriptFunction: String)
-    func actionPerformingQuicklookable(atPointInWindow point: NSPoint) async -> (NSRect, [URL])? 
+    func actionPerformingOpenQuickLook(atPointInWindow point: NSPoint)
 }
 

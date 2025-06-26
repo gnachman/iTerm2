@@ -25,6 +25,7 @@ import WebKit
 
     func webViewDidRequestDoSmartSelection(_ webView: iTermBrowserWebView,
                                            pointInWindow point: NSPoint)
+    func webViewOpenURLInNewTab(_ webView: iTermBrowserWebView, url: URL)
 }
 
 @available(macOS 11.0, *)

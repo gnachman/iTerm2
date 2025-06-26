@@ -12,6 +12,7 @@ class QuickLookHelper: NSResponder, QLPreviewPanelDataSource, QLPreviewPanelDele
 
     private var fileURLs: [URL] = []
     private var sourceRect: NSRect = .zero
+    private var onPanelClosed: (() -> Void)?
 
     // Keep track of who we spliced out of the responder chain
     private weak var windowHoldingUs: NSWindow?
@@ -35,6 +36,104 @@ class QuickLookHelper: NSResponder, QLPreviewPanelDataSource, QLPreviewPanelDele
 
         QLPreviewPanel.shared()?.makeKeyAndOrderFront(nil)
     }
+    
+    /// Show Quick Look with initial URLs and support for progressive additions
+    func showQuickLook(for initialUrls: [URL],
+                       from sourceRect: NSRect,
+                       onPanelClosed: @escaping () -> Void) {
+        self.onPanelClosed = onPanelClosed
+        showQuickLook(for: initialUrls, from: sourceRect)
+    }
+    
+    /// Add a new file URL to the existing QuickLook panel
+    func addFileURL(_ url: URL) {
+        guard let panel = QLPreviewPanel.shared(), panel.isVisible else {
+            return
+        }
+        
+        fileURLs.append(url)
+        panel.reloadData()
+    }
+    
+    /// Show QuickLook with support for downloading remote URLs
+    func showQuickLookWithDownloads(for urls: [URL], from sourceRect: NSRect) {
+        // Separate local and web URLs
+        let localUrls = urls.filter { $0.isFileURL }
+        let remoteUrls = urls.filter { !$0.isFileURL }
+        
+        // Show QuickLook immediately with local files
+        showQuickLook(for: localUrls, from: sourceRect) { [weak self] in
+            // Cancel downloads when QuickLook is closed
+            self?.cancelDownloads()
+        }
+        
+        // Start downloading remote URLs and add them as they complete
+        if !remoteUrls.isEmpty {
+            downloadUrlsProgressively(remoteUrls)
+        }
+    }
+    
+    private var downloadTasks: [Task<Void, Never>] = []
+    
+    private func downloadUrlsProgressively(_ urls: [URL]) {
+        for url in urls {
+            let task = Task { [weak self] in
+                if let localUrl = await self?.downloadUrlToTemporaryFile(url) {
+                    await MainActor.run {
+                        self?.addFileURL(localUrl)
+                    }
+                }
+            }
+            downloadTasks.append(task)
+        }
+    }
+    
+    private func cancelDownloads() {
+        for task in downloadTasks {
+            task.cancel()
+        }
+        downloadTasks.removeAll()
+    }
+    
+    private func downloadUrlToTemporaryFile(_ url: URL) async -> URL? {
+        guard url.scheme == "http" || url.scheme == "https" else {
+            return url
+        }
+        
+        do {
+            // Check for cancellation before starting download
+            try Task.checkCancellation()
+            
+            let (data, response) = try await URLSession.shared.data(from: url)
+            
+            // Check for cancellation after download but before file operations
+            try Task.checkCancellation()
+            
+            let mimeType = response.mimeType ?? "application/octet-stream"
+            let fileExtension = MimeTypeUtilities.extensionForMimeType(mimeType)
+            
+            let tempDirectory = FileManager.default.temporaryDirectory
+            let filename = url.lastPathComponent.isEmpty ? "download" : url.lastPathComponent
+            let sanitizedFilename = sanitizeFilename(filename)
+            let finalFilename = "\(sanitizedFilename).\(fileExtension)"
+            let tempFileUrl = tempDirectory.appendingPathComponent(finalFilename)
+            
+            try data.write(to: tempFileUrl)
+            DLog("Downloaded \(url) to \(tempFileUrl)")
+            return tempFileUrl
+        } catch is CancellationError {
+            DLog("Download cancelled for \(url)")
+            return nil
+        } catch {
+            DLog("Failed to download \(url): \(error)")
+            return nil
+        }
+    }
+    
+    private func sanitizeFilename(_ name: String) -> String {
+        let invalidChars = CharacterSet(charactersIn: "\\/:*?\"<>|")
+        return name.components(separatedBy: invalidChars).joined(separator: "_")
+    }
 
     // MARK: - NSResponder “panel controller” plumbing
 
@@ -56,6 +155,10 @@ class QuickLookHelper: NSResponder, QLPreviewPanelDataSource, QLPreviewPanelDele
         }
         panel.dataSource = nil
         panel.delegate = nil
+        
+        // Notify that the panel was closed
+        onPanelClosed?()
+        onPanelClosed = nil
     }
 
     // MARK: - QLPreviewPanelDataSource
