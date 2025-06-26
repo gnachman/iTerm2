@@ -8,8 +8,8 @@
 import WebKit
 
 @objc
-class SVGViewController: NSViewController {
-    private let webView = WKWebView(frame: .zero)
+class SVGViewController: NSViewController, WKScriptMessageHandler {
+    private var webView: WKWebView!
     var html: String = "" {
         didSet {
             webView.loadHTMLString(html, baseURL: nil)
@@ -29,6 +29,56 @@ class SVGViewController: NSViewController {
 
     override func viewDidLoad() {
         loadSVG()
+    }
+
+    override init(nibName nibNameOrNil: NSNib.Name?, bundle nibBundleOrNil: Bundle?) {
+        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
+        let js = """
+               let oldLog = console.log;
+               let oldError = console.error;
+               console.log = function() {
+                   oldLog.apply(console, arguments);
+                   window.webkit.messageHandlers.iTerm2ConsoleLog.postMessage(
+                       Array.from(arguments).join(" ")
+                   );
+               };
+               console.error = function() {
+                   oldError.apply(console, arguments);
+                   window.webkit.messageHandlers.iTerm2ConsoleLog.postMessage(
+                       Array.from(arguments).join(" ")
+                   );
+               };
+               return true;
+           """
+        let script = WKUserScript(
+            source: "(function() {" + js + "})();",
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: false
+        )
+        let configuration = WKWebViewConfiguration()
+        configuration.userContentController.add(self, name: "iTerm2ConsoleLog")
+        configuration.userContentController.addUserScript(script)
+
+        webView = WKWebView(frame: .zero, configuration: configuration)
+    }
+    
+    required init?(coder: NSCoder) {
+        it_fatalError("init(coder:) has not been implemented")
+    }
+    
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        // Handle console.log messages separately since they come as String
+        switch message.name {
+        case "iTerm2ConsoleLog":
+            let string = if let logMessage = message.body as? String {
+                logMessage
+            } else {
+                message.body
+            }
+            NSLog("SVGViewController JS Console: \(string)")
+        default:
+            break
+        }
     }
 
     private func loadSVG() {
@@ -128,7 +178,8 @@ class RegexVisualizationViewController: SVGViewController {
             preferredContentSize = min(maxSize, sizeEstimator!.desiredSize)
         } else {
             sizeEstimator = SVGSizeEstimator(html: html) { [weak self] size in
-                self?.preferredContentSize = size
+                guard let self = self else { return }
+                self.preferredContentSize = min(self.maxSize, size)
             }
         }
     }
