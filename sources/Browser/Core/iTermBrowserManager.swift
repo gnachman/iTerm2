@@ -33,6 +33,8 @@
         modifiers: NSEvent.ModifierFlags,
         sideEffects: iTermClickSideEffects,
         state: iTermMouseState)
+    func browserManager(_ browserManager: iTermBrowserManager,
+                        doSmartSelectionAtPointInWindow point: NSPoint) async
 }
 
 typealias Profile = [AnyHashable: Any]
@@ -535,6 +537,13 @@ extension iTermBrowserManager: iTermBrowserWebViewDelegate {
 
     func webViewDidRequestCopyPageTitle(_ webView: iTermBrowserWebView) {
         copyPageTitle()
+    }
+
+    func webViewDidRequestDoSmartSelection(_ webView: iTermBrowserWebView,
+                                           pointInWindow point: NSPoint) {
+        Task {
+            await delegate?.browserManager(self, doSmartSelectionAtPointInWindow: point)
+        }
     }
 }
 

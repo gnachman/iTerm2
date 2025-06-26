@@ -87,13 +87,13 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
         windowController.createChat(name: title, inject: content)
     }
 
-    func browserViewController(_ controller: iTermBrowserViewController,
-                               pointInView: NSPoint,
-                               button: Int,
-                               count: Int,
-                               modifiers: NSEvent.ModifierFlags,
-                               sideEffects: iTermClickSideEffects,
-                               state: iTermMouseState) {
+    func browserViewControllerSetMouseInfo(_ controller: iTermBrowserViewController,
+                                           pointInView: NSPoint,
+                                           button: Int,
+                                           count: Int,
+                                           modifiers: NSEvent.ModifierFlags,
+                                           sideEffects: iTermClickSideEffects,
+                                           state: iTermMouseState) {
         textViewSetClick(
             VT100GridAbsCoord(x: Int32(clamping: pointInView.x),
                               y: Int64(clamping: pointInView.y)),
@@ -103,6 +103,43 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
             sideEffects: sideEffects,
             state: state)
     }
+
+    func browserViewControllerMovePane(_ controller: iTermBrowserViewController) {
+        MovePaneController.sharedInstance().movePane(self)
+    }
+
+    func browserViewControllerEnclosingTerminal(_ controller: iTermBrowserViewController) -> PseudoTerminal? {
+        return delegate?.realParentWindow() as? PseudoTerminal
+    }
+
+    func browserViewControllerSplit(_ controller: iTermBrowserViewController, vertically: Bool, guid: String) {
+        textViewSplitVertically(vertically, withProfileGuid: guid)
+    }
+
+    func browserViewControllerSelectPane(_ controller: iTermBrowserViewController, forward: Bool) {
+        if forward {
+            delegate?.nextSession()
+        } else {
+            delegate?.previousSession()
+        }
+    }
+
+    func browserViewControllerInvoke(_ controller: iTermBrowserViewController, scriptFunction: String) {
+        invokeFunctionCall(scriptFunction,
+                           scope: genericScope,
+                           origin: "Pointer action")
+    }
+
+    func browserViewControllerSmartSelectionRules(_ controller: iTermBrowserViewController) -> [SmartSelectRule] {
+        (textview.smartSelectionRules ?? SmartSelectionController.defaultRules()).compactMap { obj -> SmartSelectRule? in
+            guard let dict = obj as? [AnyHashable: Any] else {
+                return nil
+            }
+            return SmartSelectRule(regex: SmartSelectionController.regex(inRule: dict),
+                                   weight: SmartSelectionController.precision(inRule: dict))
+        }
+    }
+
 }
 
 // MARK: - Browser Find Support

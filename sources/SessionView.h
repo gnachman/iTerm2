@@ -214,12 +214,9 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property (nonatomic, readonly) BOOL isBrowser;
 @property (nonatomic, readonly) iTermBrowserViewController *browserViewController NS_AVAILABLE_MAC(11);
 
-- (void)becomeBrowser:(NSString *)initialURL
-        configuration:(WKWebViewConfiguration *)configuration
-             delegate:(id<iTermBrowserViewControllerDelegate>)delegate
-     interactionState:(NSData *)interactionState
-          sessionGuid:(NSString *)sessionGuid
-              profile:(Profile *)profile NS_AVAILABLE_MAC(11);
+- (void)setBrowserViewController:(iTermBrowserViewController *)browserViewController
+                      initialURL:(NSString *)initialURL
+                interactionState:(NSData *)interactionState NS_AVAILABLE_MAC(11_0);
 
 - (void)setTerminalBackgroundColor:(NSColor *)color;
 

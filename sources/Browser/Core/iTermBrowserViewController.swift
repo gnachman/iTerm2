@@ -44,7 +44,7 @@ protocol iTermBrowserViewControllerDelegate: AnyObject {
         state: iTermMouseState)
 
     func browserViewControllerMovePane(_ controller: iTermBrowserViewController)
-    func browserViewControllerEnclosingTerminal(_ controller: iTermBrowserViewController) -> PseudoTerminal
+    func browserViewControllerEnclosingTerminal(_ controller: iTermBrowserViewController) -> PseudoTerminal?
     func browserViewControllerSplit(_ controller: iTermBrowserViewController,
                                     vertically: Bool,
                                     guid: String)
@@ -595,6 +595,13 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
             sideEffects: sideEffects,
             state: state)
     }
+
+    func browserManager(_ browserManager: iTermBrowserManager, doSmartSelectionAtPointInWindow point: NSPoint) async {
+        guard let rules = delegate?.browserViewControllerSmartSelectionRules(self) else {
+            return
+        }
+        await browserManager.webView.performSmartSelection(atPointInWindow: point, rules: rules)
+    }
 }
 
 // MARK: - Actions
@@ -676,22 +683,22 @@ extension iTermBrowserViewController: iTermBrowserActionPerforming {
     func actionPerformExtendSelection(toPointInWindow point: NSPoint) {
         browserManager.webView.extendSelection(toPointInWindow: point)
     }
-    
+
     func actionPerformingOpen(atWindowLocation point: NSPoint,
                               inBackground: Bool) {
         browserManager.webView.openLink(atPointInWindow: point, inNewTab: inBackground)
     }
-    
+
     func actionPerformingSmartSelect(atWindowLocation point: NSPoint) {
         guard let rules = delegate?.browserViewControllerSmartSelectionRules(self) else {
             return
         }
         Task {
             await browserManager.webView.performSmartSelection(atPointInWindow: point,
-                                                         rules: rules)
+                                                               rules: rules)
         }
     }
-    
+
     func actionPerformingOpenContextMenu(atWindowLocation point: NSPoint) {
         guard let window = browserManager.webView.window else {
             return
@@ -726,30 +733,30 @@ extension iTermBrowserViewController: iTermBrowserActionPerforming {
     func actionPerformingMovePane() {
         delegate?.browserViewControllerMovePane(self)
     }
-    
+
     func actionPerformingCurrentTerminal() -> PseudoTerminal? {
         return delegate?.browserViewControllerEnclosingTerminal(self)
     }
-    
+
     func actionPerformingSplit(vertically: Bool, guid: String) {
         delegate?.browserViewControllerSplit(self, vertically: vertically, guid: guid)
     }
-    
+
     func actionPerformingSelectPane(forward: Bool) {
         delegate?.browserViewControllerSelectPane(self, forward: forward)
     }
-    
+
     func actionPerformingInvoke(scriptFunction: String) {
         delegate?.browserViewControllerInvoke(self, scriptFunction: scriptFunction)
     }
-    
+
     func actionPerformingScroll(movement: ScrollMovement) {
         browserManager.webView.performScroll(movement: movement)
     }
 
     func actionPerformingSend(data: Data, broadcastAllowed: Bool) {
         guard let string = String(data: data, encoding: .utf8) else { return }
-        
+
         Task {
             await browserManager.webView.sendText(string)
         }
@@ -770,4 +777,13 @@ extension iTermBrowserViewController: iTermBrowserActionPerforming {
     func actionPerformingPasteFromClipboard() {
         NSApp.sendAction(#selector(NSText.paste(_:)), to: nil, from: browserManager.webView)
     }
+
+    func actionPerformingQuicklookable(atPointInWindow point: NSPoint) async -> (NSRect, [URL])? {
+        guard let window = view.window else {
+            return nil
+        }
+        let urls = await browserManager.webView.urls(atPointInWindow: point)
+        return (window.convertToScreen(NSRect(origin: point, size: NSSize(width: 1, height: 1))), urls)
+    }
 }
+
