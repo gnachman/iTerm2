@@ -9,6 +9,7 @@
 #import "iTermProfilePreferencesBaseViewController.h"
 
 #import "DebugLogging.h"
+#import "ITAddressBookMgr.h"
 #import "iTermProfilePreferences.h"
 #import "NSObject+iTerm.h"
 
@@ -266,6 +267,14 @@
 }
 
 - (void)updateBrowserSpecific {
+}
+
+- (ProfileType)profileType {
+    if ([[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue]) {
+        return ProfileTypeBrowser;
+    } else {
+        return ProfileTypeTerminal;
+    }
 }
 
 - (void)reloadProfile {
