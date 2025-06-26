@@ -184,36 +184,56 @@ extension iTermPreferencesBaseViewController {
     }
 
     // Both sets of views are grouped by parent, so it's an array of sibling views.
-    private func updateViews(remove: [[NSView]],
+    private func updateViews(remove: [[ModalEnclosure]],
                              nestedTabViews: [NSTabView]) {
         // For each group of siblings go bottom to top removing and shifting up
-        for siblingsToRemove in remove {
-            let parent = siblingsToRemove.first!.superview!
-            let sortedSiblings = parent.subviews.sorted { $0.frame.minY < $1.frame.minY }
+        for modalEnclosuresToRemove in remove {
+            let parent = modalEnclosuresToRemove.first!.superview!
+            let verticallySortedSiblings = parent.subviews.sorted { $0.frame.minY < $1.frame.minY }
+            shift(sortedSiblings: verticallySortedSiblings, modalEnclosuresToRemove: modalEnclosuresToRemove, vertically: true)
+            let horizontallySortedSiblings = parent.subviews.sorted { $0.frame.minX < $1.frame.minX }
+            shift(sortedSiblings: horizontallySortedSiblings, modalEnclosuresToRemove: modalEnclosuresToRemove, vertically: false)
 
-            var shift = CGFloat(0)
-            for view in sortedSiblings.reversed() {
-                var frame = view.frame
-                frame.origin.y += shift
-                view.frame = frame
-                /*
-                if view.identifier?.rawValue == "debug" {
-                    print("Shift debug view by \(shift) to \(frame)")
-                }
-                 */
-                if siblingsToRemove.contains(view) {
-                    shift += view.frame.height
-                    view.isHidden = true
+            // If any nested tab view items had no visible controls, remove them from their enclosing tab view.
+            for tabView in nestedTabViews {
+                for tabViewItem in tabView.tabViewItems {
+                    if let view = tabViewItem.view, !hasVisibleControls(view) {
+                        tabView.removeTabViewItem(tabViewItem)
+                    }
                 }
             }
         }
+    }
 
-
-        // If any nested tab view items had no visible controls, remove them from their enclosing tab view.
-        for tabView in nestedTabViews {
-            for tabViewItem in tabView.tabViewItems {
-                if let view = tabViewItem.view, !hasVisibleControls(view) {
-                    tabView.removeTabViewItem(tabViewItem)
+    // Horizontal shifting isn't implemented becuase it's not needed. For now the horizontal pass
+    // only grows neighbors that are linked by `neighborToGrowRight` and everything else happens in
+    // the vertical pass.
+    private func shift(sortedSiblings: [NSView],
+                       modalEnclosuresToRemove: [ModalEnclosure],
+                       vertically: Bool) {
+        var shift = CGFloat(0)
+        for view in sortedSiblings.reversed() {
+            var frame = view.frame
+            if vertically {
+                frame.origin.y += shift
+                view.frame = frame
+            }
+            /*
+             if view.identifier?.rawValue == "debug" {
+             print("Shift debug view by \(shift) to \(frame)")
+             }
+             */
+            if let thisEnclosure = view as? ModalEnclosure,
+               modalEnclosuresToRemove.contains(thisEnclosure) {
+                if vertically {
+                    if thisEnclosure.shiftsViewsBeneath {
+                        shift += view.frame.height
+                    }
+                    view.isHidden = true
+                } else if let neighbor = thisEnclosure.neighborToGrowRight {
+                    var frame = neighbor.frame
+                    frame.size.width += view.frame.width
+                    neighbor.frame = frame
                 }
             }
         }
