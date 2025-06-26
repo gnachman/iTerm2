@@ -1057,7 +1057,7 @@ extension iTermBrowserManager: WKUIDelegate {
     
     private func fetchOriginalSource(url: URL, completion: @escaping (String?) -> Void) {
         // Skip non-HTTP URLs
-        guard url.scheme == "http" || url.scheme == "https" else {
+        guard iTermBrowserMetadata.supportedSchemes.contains(url.scheme?.lowercased() ?? "") else {
             completion(nil)
             return
         }

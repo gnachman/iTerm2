@@ -15,6 +15,7 @@
 
 - (BOOL)it_securityAgentIsActive;
 - (BOOL)it_openURL:(NSURL *)url;
+- (BOOL)it_openURL:(NSURL *)url options:(NSWorkspaceLaunchOptions)options;
 - (NSString *)it_newToken;
 - (BOOL)it_checkToken:(NSString *)token;
 

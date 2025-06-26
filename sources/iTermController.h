@@ -223,7 +223,7 @@ typedef NS_OPTIONS(NSUInteger, iTermSingleUseWindowOptions) {
                         didMakeSession:(void (^)(PTYSession *session))didMakeSession
                             completion:(void (^)(void))completion;
 - (NSWindow *)openSingleUseLoginWindowAndWrite:(NSData *)data completion:(void (^)(PTYSession *session))completion;
-
+- (BOOL)openURLInNewBrowserTab:(NSURL *)url selectTab:(BOOL)selectTab;
 - (WKWebView *)openSingleUserBrowserWindowWithURL:(NSURL *)url
                                     configuration:(WKWebViewConfiguration *)configuration
                                           options:(iTermSingleUseWindowOptions)options
@@ -237,7 +237,6 @@ typedef NS_OPTIONS(NSUInteger, iTermSingleUseWindowOptions) {
                 username:(NSString *)username;
 
 - (NSArray<NSString *> *)currentSnippetsFilter;
-- (void)openURLInNewBrowserTab:(NSURL *)url;
 
 @end
 

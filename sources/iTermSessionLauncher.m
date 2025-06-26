@@ -8,6 +8,7 @@
 #import "iTermSessionLauncher.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermController.h"
@@ -298,7 +299,10 @@
     DLog(@"Creating a new session by URL: %@", _url);
     PTYSession *session = [windowController.sessionFactory newSessionWithProfile:profile
                                                                           parent:nil];
+    const BOOL saved = windowController.automaticallySelectNewTabs;
+    windowController.automaticallySelectNewTabs = !self.disableAutomaticTabSelection;
     [windowController addSessionInNewTab:session];
+    windowController.automaticallySelectNewTabs = saved;
     __weak __typeof(self) weakSelf = self;
 
     if ([[NSNumber castFrom:profile[KEY_LOCK_SCROLL_ON_LAUNCH]] boolValue]) {
@@ -335,6 +339,9 @@
                                                      completion:
      ^(PTYSession *newSession, BOOL ok) {
         DLog(@"launch by url finished with ok=%@", @(ok));
+        if (@available(macOS 11, *)) {
+            [newSession loadDeferredURLIfNeeded];
+        }
         [weakSelf setFinishedWithSuccess:ok];
     }];
     [windowController.sessionFactory attachOrLaunchWithRequest:launchRequest];
@@ -345,12 +352,18 @@
                                  completion:(void (^)(PTYSession *, BOOL willCallCompletionBlock))completion {
     DLog(@"Make session by creating tab");
     __weak __typeof(self) weakSelf = self;
+    const BOOL saved = windowController.automaticallySelectNewTabs;
+    windowController.automaticallySelectNewTabs = !self.disableAutomaticTabSelection;
+    __weak __typeof(windowController) weakWindowController = windowController;
     [windowController asyncCreateTabWithProfile:profile
                                     withCommand:_command
                                     environment:nil
                                        tabIndex:self.index
                                  didMakeSession:^(PTYSession *session) { completion(session, YES); }
-                                completion:^(PTYSession *newSession, BOOL ok) { [weakSelf setFinishedWithSuccess:ok]; }];
+                                completion:^(PTYSession *newSession, BOOL ok) {
+        weakWindowController.automaticallySelectNewTabs = saved;
+        [weakSelf setFinishedWithSuccess:ok]; }]
+    ;
 }
 
 - (NSDictionary *)profile:(NSDictionary *)aDict

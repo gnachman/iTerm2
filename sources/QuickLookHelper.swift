@@ -96,7 +96,7 @@ class QuickLookHelper: NSResponder, QLPreviewPanelDataSource, QLPreviewPanelDele
     }
     
     private func downloadUrlToTemporaryFile(_ url: URL) async -> URL? {
-        guard url.scheme == "http" || url.scheme == "https" else {
+        guard url.scheme == "https" else {
             return url
         }
         
