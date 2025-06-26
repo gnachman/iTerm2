@@ -86,24 +86,29 @@ extension WKWebView {
         }
     }
 
-    func extendSelection(toPointInWindow point: NSPoint) {
-        let pointInView = self.convert(point, from: nil)
+    private func convertToJavaScriptCoordinates(_ windowPoint: NSPoint) -> NSPoint {
+        let pointInView = self.convert(windowPoint, from: nil)
         
         // Scale from view coordinates to JavaScript client coordinates
         // Account for both pageZoom and magnification
         let baseJSX = pointInView.x / self.pageZoom
         let baseJSY = pointInView.y / self.pageZoom
         
-        // When magnified, we need to scale down by magnification
         let jsX = baseJSX / self.magnification
         let jsY = baseJSY / self.magnification
+        
+        return NSPoint(x: jsX, y: jsY)
+    }
+    
+    func extendSelection(toPointInWindow point: NSPoint) {
+        let jsPoint = convertToJavaScriptCoordinates(point)
         
         let script = iTermBrowserTemplateLoader.loadTemplate(
             named: "extend-selection-to-point",
             type: "js",
             substitutions: [
-                "X": "\(jsX)",
-                "Y": "\(jsY)"
+                "X": "\(jsPoint.x)",
+                "Y": "\(jsPoint.y)"
             ]
         )
         
@@ -114,21 +119,14 @@ extension WKWebView {
     func openLink(atPointInWindow point: NSPoint,
                   inNewTab: Bool) {
         Task {
-            let pointInView = self.convert(point, from: nil)
-            
-            // Scale from view coordinates to JavaScript client coordinates
-            // Account for both pageZoom and magnification
-            let baseJSX = pointInView.x / self.pageZoom
-            let baseJSY = pointInView.y / self.pageZoom
-            let jsX = baseJSX / self.magnification
-            let jsY = baseJSY / self.magnification
+            let jsPoint = convertToJavaScriptCoordinates(point)
             
             let script = iTermBrowserTemplateLoader.loadTemplate(
                 named: "open-link-at-point",
                 type: "js",
                 substitutions: [
-                    "X": "\(jsX)",
-                    "Y": "\(jsY)"
+                    "X": "\(jsPoint.x)",
+                    "Y": "\(jsPoint.y)"
                 ]
             )
             
@@ -161,21 +159,14 @@ extension WKWebView {
     @MainActor
     private func text(atPointInWindow point: NSPoint,
                       radius: Int) async -> (String, String) {
-        let pointInView = self.convert(point, from: nil)
-        
-        // Scale from view coordinates to JavaScript client coordinates
-        // Account for both pageZoom and magnification
-        let baseJSX = pointInView.x / self.pageZoom
-        let baseJSY = pointInView.y / self.pageZoom
-        let jsX = baseJSX / self.magnification
-        let jsY = baseJSY / self.magnification
+        let jsPoint = convertToJavaScriptCoordinates(point)
         
         let script = iTermBrowserTemplateLoader.loadTemplate(
             named: "extract-text-at-point",
             type: "js",
             substitutions: [
-                "X": "\(jsX)",
-                "Y": "\(jsY)",
+                "X": "\(jsPoint.x)",
+                "Y": "\(jsPoint.y)",
                 "RADIUS": String(radius)
             ]
         )
@@ -197,21 +188,14 @@ extension WKWebView {
             return
         }
         
-        let pointInView = self.convert(point, from: nil)
-        
-        // Scale from view coordinates to JavaScript client coordinates
-        // Account for both pageZoom and magnification
-        let baseJSX = pointInView.x / self.pageZoom
-        let baseJSY = pointInView.y / self.pageZoom
-        let jsX = baseJSX / self.magnification
-        let jsY = baseJSY / self.magnification
+        let jsPoint = convertToJavaScriptCoordinates(point)
         
         let script = iTermBrowserTemplateLoader.loadTemplate(
             named: "select-text",
             type: "js",
             substitutions: [
-                "X": "\(jsX)",
-                "Y": "\(jsY)",
+                "X": "\(jsPoint.x)",
+                "Y": "\(jsPoint.y)",
                 "BEFORE_COUNT": String(match.beforeCount),
                 "AFTER_COUNT": String(match.afterCount)
             ]
@@ -222,21 +206,14 @@ extension WKWebView {
 
     @MainActor
     func urls(atPointInWindow point: NSPoint) async -> [URL] {
-        let pointInView = self.convert(point, from: nil)
-        
-        // Scale from view coordinates to JavaScript client coordinates
-        // Account for both pageZoom and magnification
-        let baseJSX = pointInView.x / self.pageZoom
-        let baseJSY = pointInView.y / self.pageZoom
-        let jsX = baseJSX / self.magnification
-        let jsY = baseJSY / self.magnification
+        let jsPoint = convertToJavaScriptCoordinates(point)
         
         let script = iTermBrowserTemplateLoader.loadTemplate(
             named: "urls-at-point",
             type: "js",
             substitutions: [
-                "X": "\(jsX)",
-                "Y": "\(jsY)"
+                "X": "\(jsPoint.x)",
+                "Y": "\(jsPoint.y)"
             ]
         )
         

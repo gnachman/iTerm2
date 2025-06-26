@@ -700,34 +700,51 @@ extension iTermBrowserViewController: iTermBrowserActionPerforming {
     }
 
     func actionPerformingOpenContextMenu(atWindowLocation point: NSPoint) {
-        guard let window = browserManager.webView.window else {
+        guard let webView = browserManager.webView, let window = webView.window else {
             return
         }
 
-        // Convert point to screen coordinates
-        let viewPoint = webView.convert(point, to: nil)
-        let screenPoint = window.convertToScreen(
-            NSRect(origin: viewPoint, size: .zero)).origin
-
-        // Create a synthetic right‐click event
-        guard let event = NSEvent.mouseEvent(with: .rightMouseDown,
-                                             location: screenPoint,
-                                             modifierFlags: [],
-                                             timestamp: ProcessInfo.processInfo.systemUptime,
-                                             windowNumber: window.windowNumber,
-                                             context: nil,
-                                             eventNumber: 0,
-                                             clickCount: 1,
-                                             pressure: 1) else {
+        // Convert window coordinates to web view coordinates for the event location
+        let viewPoint = webView.convert(point, from: nil)
+        
+        // For the event location, we might need to use the original window coordinates
+        // since the menu positioning could be relative to the window
+        let windowNumber = window.windowNumber
+        let timestamp = ProcessInfo.processInfo.systemUptime
+        
+        // Create a proper right mouse down event using window coordinates
+        guard let rightMouseDown = NSEvent.mouseEvent(with: .rightMouseDown,
+                                                     location: point,
+                                                     modifierFlags: [],
+                                                     timestamp: timestamp,
+                                                     windowNumber: windowNumber,
+                                                     context: window.graphicsContext,
+                                                     eventNumber: 1,
+                                                     clickCount: 1,
+                                                     pressure: 1.0) else {
+            DLog("Failed to create right mouse down event")
             return
         }
-
-        guard let menu = webView.menu(for: event) else {
+        
+        // Create corresponding right mouse up event
+        guard let rightMouseUp = NSEvent.mouseEvent(with: .rightMouseUp,
+                                                   location: point,
+                                                   modifierFlags: [],
+                                                   timestamp: timestamp + 0.1,
+                                                   windowNumber: windowNumber,
+                                                   context: window.graphicsContext,
+                                                   eventNumber: 2,
+                                                   clickCount: 1,
+                                                   pressure: 1.0) else {
+            DLog("Failed to create right mouse up event")
             return
         }
-
-        // Pop it up
-        NSMenu.popUpContextMenu(menu, with: event, for: webView)
+        
+        DLog("Sending right mouse events to webView")
+        
+        // Send the events directly to the web view
+        webView.rightMouseDown(with: rightMouseDown)
+        webView.rightMouseUp(with: rightMouseUp)
     }
 
     func actionPerformingMovePane() {
