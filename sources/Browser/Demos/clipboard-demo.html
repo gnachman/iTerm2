@@ -1,0 +1,88 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Clipboard Read/Write Demo</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 2em;
+    }
+    button {
+      margin: 0.5em 0;
+      display: block;
+    }
+    #log {
+      white-space: pre-wrap;
+      background: #f0f0f0;
+      padding: 1em;
+      margin-top: 1em;
+      height: 200px;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Clipboard Read/Write Demo</h1>
+
+  <button id="writeButton">Write to Clipboard</button>
+  <button id="readButton">Read from Clipboard</button>
+  <div id="clipboardContent"></div>
+
+  <h2>Auto Clipboard Test (no user gesture)</h2>
+  <div id="log"></div>
+
+  <script>
+    const writeButton = document.getElementById('writeButton')
+    const readButton = document.getElementById('readButton')
+    const clipboardContent = document.getElementById('clipboardContent')
+    const log = document.getElementById('log')
+
+    function appendLog(message) {
+      log.textContent = message + '\n' + log.textContent
+    }
+
+    writeButton.addEventListener('click', async function() {
+      try {
+        await navigator.clipboard.writeText('Hello from Clipboard!')
+        appendLog('User gesture write: Success')
+      } catch (error) {
+        appendLog('User gesture write: ' + error)
+      }
+    })
+
+    readButton.addEventListener('click', async function() {
+      try {
+        const text = await navigator.clipboard.readText()
+        clipboardContent.textContent = 'Clipboard contains: ' + text
+        appendLog('User gesture read: Success')
+      } catch (error) {
+        appendLog('User gesture read: ' + error)
+      }
+    })
+
+    // Attempt read/write on timer (no user gesture)
+    async function autoTest() {
+      try {
+        await navigator.clipboard.writeText('Auto write')
+        appendLog('Auto write: Success')
+      } catch (error) {
+        appendLog('Auto write: ' + error)
+      }
+
+      try {
+        const text = await navigator.clipboard.readText()
+        appendLog('Auto read: Success, got: ' + text)
+      } catch (error) {
+        appendLog('Auto read: ' + error)
+      }
+    }
+
+    setTimeout(function() {
+      appendLog('Starting auto clipboard test...')
+      autoTest()
+    }, 1000)
+  </script>
+</body>
+</html>

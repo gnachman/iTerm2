@@ -176,7 +176,8 @@ class iTermBrowserStaticPageRegistry {
             "password-demo",
             "selection-test",
             "smartselection-demo",
-            "indexeddb-demo"
+            "indexeddb-demo",
+            "clipboard-demo"
         ]
         for page in pages {
             registerStaticPage(urlPath: page, templateName: page, substitutions: [:])
