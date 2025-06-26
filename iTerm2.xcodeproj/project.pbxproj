@@ -4899,6 +4899,9 @@
 		A6FE614C2AC252940078A66D /* BlockMark.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6FE614B2AC252940078A66D /* BlockMark.swift */; };
 		A6FE7A752E0DF12900BEBCE4 /* iTermBrowserUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6FE7A742E0DF12600BEBCE4 /* iTermBrowserUser.swift */; };
 		A6FE7A772E0DF1DA00BEBCE4 /* iTermBrowserBookmarkFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6FE7A762E0DF1D900BEBCE4 /* iTermBrowserBookmarkFinder.swift */; };
+		A6FE7A792E0E120100BEBCE4 /* indexeddb-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A782E0E11F800BEBCE4 /* indexeddb-demo.html */; };
+		A6FE7A7A2E0E120100BEBCE4 /* indexeddb-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A782E0E11F800BEBCE4 /* indexeddb-demo.html */; };
+		A6FE7A7B2E0E120100BEBCE4 /* indexeddb-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A782E0E11F800BEBCE4 /* indexeddb-demo.html */; };
 		A6FE8D03209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FE8D00209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.h */; };
 		A6FE8D04209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FE8D01209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m */; };
 		A6FE8D07209382C000B5C648 /* download@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FE8D05209382C000B5C648 /* download@2x.png */; };
@@ -8623,6 +8626,7 @@
 		A6FE614B2AC252940078A66D /* BlockMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockMark.swift; sourceTree = "<group>"; };
 		A6FE7A742E0DF12600BEBCE4 /* iTermBrowserUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserUser.swift; sourceTree = "<group>"; };
 		A6FE7A762E0DF1D900BEBCE4 /* iTermBrowserBookmarkFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserBookmarkFinder.swift; sourceTree = "<group>"; };
+		A6FE7A782E0E11F800BEBCE4 /* indexeddb-demo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "indexeddb-demo.html"; sourceTree = "<group>"; };
 		A6FE8D00209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermOptionalComponentDownloadWindowController.h; sourceTree = "<group>"; };
 		A6FE8D01209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermOptionalComponentDownloadWindowController.m; sourceTree = "<group>"; };
 		A6FE8D02209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermOptionalComponentDownloadWindowController.xib; sourceTree = "<group>"; };
@@ -13011,6 +13015,7 @@
 		A6CBB81E2E0A1CB000B2CCCB /* Demos */ = {
 			isa = PBXGroup;
 			children = (
+				A6FE7A782E0E11F800BEBCE4 /* indexeddb-demo.html */,
 				A6A3EDE72E0DAF0300D711DA /* smartselection-demo.html */,
 				A6A3EDE12E0D149D00D711DA /* selection-test.html */,
 				A6CBB7BB2E08BD9300B2CCCB /* geolocation-demo.html */,
@@ -15897,6 +15902,7 @@
 				A6E7AE6C214394CA00DE9F3B /* graphic_bower.png in Resources */,
 				A6CBB90B2E0A832C00B2CCCB /* distraction-removal.js in Resources */,
 				1D6ED9EC19AEA20D005A7799 /* PrefsArrangements@2x.png in Resources */,
+				A6FE7A7A2E0E120100BEBCE4 /* indexeddb-demo.html in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -15904,6 +15910,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A6FE7A792E0E120100BEBCE4 /* indexeddb-demo.html in Resources */,
 				A6B70FBC19830C37007A4284 /* dead.png in Resources */,
 				A697CDB12D975AE20031583F /* Toolbelt-Screenshot@2x.png in Resources */,
 				A697CDB22D975AE20031583F /* VerticalSplit@2x.png in Resources */,
@@ -16927,6 +16934,7 @@
 				A697CE7B2D97C3FA0031583F /* TriggersMenuTip@2x.png in Resources */,
 				A6E7AEAC214394F600DE9F3B /* graphic_database.png in Resources */,
 				A67F61BE214395C60093940A /* graphic_ruby@2x.png in Resources */,
+				A6FE7A7B2E0E120100BEBCE4 /* indexeddb-demo.html in Resources */,
 				1D48B28D165F3669000046EE /* TabClose_Front.png in Resources */,
 				A67F61B0214395B70093940A /* graphic_php.png in Resources */,
 				A697CE322D976AFE0031583F /* AnnotationsMenuTip.png in Resources */,
