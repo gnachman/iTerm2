@@ -389,11 +389,11 @@ Gw
             <rect key="contentRect" x="269" y="110" width="924" height="463"/>
             <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1667"/>
             <view key="contentView" misplaced="YES" id="1924">
-                <rect key="frame" x="0.0" y="0.0" width="957" height="463"/>
+                <rect key="frame" x="0.0" y="0.0" width="924" height="463"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
                     <tabView fixedFrame="YES" type="noTabsNoBorder" initialItem="1944" translatesAutoresizingMaskIntoConstraints="NO" id="1943" userLabel="Top level NSTabView">
-                        <rect key="frame" x="13" y="0.0" width="944" height="454"/>
+                        <rect key="frame" x="13" y="0.0" width="911" height="454"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <font key="font" metaFont="system"/>
                         <tabViewItems>
@@ -411,15 +411,15 @@ Gw
                             </tabViewItem>
                             <tabViewItem label="Bookmarks" identifier="2" id="1945" userLabel="Profiles">
                                 <view key="view" id="1946">
-                                    <rect key="frame" x="0.0" y="0.0" width="944" height="454"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="911" height="454"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="P2y-de-Vwq" userLabel="Wrapper view" customClass="iTermProfilePreferencesTabViewWrapperView">
-                                            <rect key="frame" x="327" y="0.0" width="608" height="454"/>
+                                            <rect key="frame" x="327" y="0.0" width="575" height="454"/>
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                             <subviews>
                                                 <tabView fixedFrame="YES" allowsTruncatedLabels="NO" initialItem="2101" translatesAutoresizingMaskIntoConstraints="NO" id="2100" userLabel="Profiles Tab View">
-                                                    <rect key="frame" x="-7" y="0.0" width="612" height="450"/>
+                                                    <rect key="frame" x="-7" y="0.0" width="579" height="450"/>
                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                     <font key="font" metaFont="system"/>
                                                     <tabViewItems>
@@ -473,7 +473,7 @@ Gw
                                                         </tabViewItem>
                                                         <tabViewItem label="Advanced" identifier="Item 7" id="5776">
                                                             <view key="view" id="5777" userLabel="Filler">
-                                                                <rect key="frame" x="10" y="33" width="592" height="404"/>
+                                                                <rect key="frame" x="10" y="33" width="559" height="404"/>
                                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                             </view>
                                                         </tabViewItem>

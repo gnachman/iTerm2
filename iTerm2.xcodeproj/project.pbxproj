@@ -4912,6 +4912,18 @@
 		A6FE7A872E0E252300BEBCE4 /* hover-link-detector.js in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A862E0E252300BEBCE4 /* hover-link-detector.js */; };
 		A6FE7A882E0E252300BEBCE4 /* hover-link-detector.js in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A862E0E252300BEBCE4 /* hover-link-detector.js */; };
 		A6FE7A892E0E252300BEBCE4 /* hover-link-detector.js in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A862E0E252300BEBCE4 /* hover-link-detector.js */; };
+		A6FE7A8B2E0E679800BEBCE4 /* autofill-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A8A2E0E679800BEBCE4 /* autofill-demo.html */; };
+		A6FE7A8C2E0E679800BEBCE4 /* autofill-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A8A2E0E679800BEBCE4 /* autofill-demo.html */; };
+		A6FE7A8D2E0E679800BEBCE4 /* autofill-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A8A2E0E679800BEBCE4 /* autofill-demo.html */; };
+		A6FE7A922E0E6B7F00BEBCE4 /* autofill-detector.js in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A8E2E0E6B7F00BEBCE4 /* autofill-detector.js */; };
+		A6FE7A952E0E6B7F00BEBCE4 /* autofill-detector.js in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A8E2E0E6B7F00BEBCE4 /* autofill-detector.js */; };
+		A6FE7A982E0E6B7F00BEBCE4 /* autofill-detector.js in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A8E2E0E6B7F00BEBCE4 /* autofill-detector.js */; };
+		A6FE7A9B2E0E6B7F00BEBCE4 /* iTermBrowserAutofillWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6FE7A902E0E6B7F00BEBCE4 /* iTermBrowserAutofillWriter.swift */; };
+		A6FE7A9C2E0E6B7F00BEBCE4 /* iTermBrowserAutofillHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6FE7A8F2E0E6B7F00BEBCE4 /* iTermBrowserAutofillHandler.swift */; };
+		A6FE7A9E2E0E6BA000BEBCE4 /* autofill-write.js in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A9D2E0E6BA000BEBCE4 /* autofill-write.js */; };
+		A6FE7A9F2E0E6BA000BEBCE4 /* autofill-write.js in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A9D2E0E6BA000BEBCE4 /* autofill-write.js */; };
+		A6FE7AA02E0E6BA000BEBCE4 /* autofill-write.js in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A9D2E0E6BA000BEBCE4 /* autofill-write.js */; };
+		A6FE7AA22E0E738900BEBCE4 /* iTermBrowserAutofillContactSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6FE7AA12E0E738900BEBCE4 /* iTermBrowserAutofillContactSource.swift */; };
 		A6FE8D03209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FE8D00209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.h */; };
 		A6FE8D04209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FE8D01209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m */; };
 		A6FE8D07209382C000B5C648 /* download@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FE8D05209382C000B5C648 /* download@2x.png */; };
@@ -8641,6 +8653,12 @@
 		A6FE7A802E0E188A00BEBCE4 /* dragdrop-demo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "dragdrop-demo.html"; sourceTree = "<group>"; };
 		A6FE7A842E0E24AC00BEBCE4 /* iTermBrowserHoverLinkHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserHoverLinkHandler.swift; sourceTree = "<group>"; };
 		A6FE7A862E0E252300BEBCE4 /* hover-link-detector.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "hover-link-detector.js"; sourceTree = "<group>"; };
+		A6FE7A8A2E0E679800BEBCE4 /* autofill-demo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "autofill-demo.html"; sourceTree = "<group>"; };
+		A6FE7A8E2E0E6B7F00BEBCE4 /* autofill-detector.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "autofill-detector.js"; sourceTree = "<group>"; };
+		A6FE7A8F2E0E6B7F00BEBCE4 /* iTermBrowserAutofillHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserAutofillHandler.swift; sourceTree = "<group>"; };
+		A6FE7A902E0E6B7F00BEBCE4 /* iTermBrowserAutofillWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserAutofillWriter.swift; sourceTree = "<group>"; };
+		A6FE7A9D2E0E6BA000BEBCE4 /* autofill-write.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "autofill-write.js"; sourceTree = "<group>"; };
+		A6FE7AA12E0E738900BEBCE4 /* iTermBrowserAutofillContactSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserAutofillContactSource.swift; sourceTree = "<group>"; };
 		A6FE8D00209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermOptionalComponentDownloadWindowController.h; sourceTree = "<group>"; };
 		A6FE8D01209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermOptionalComponentDownloadWindowController.m; sourceTree = "<group>"; };
 		A6FE8D02209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermOptionalComponentDownloadWindowController.xib; sourceTree = "<group>"; };
@@ -13029,6 +13047,7 @@
 		A6CBB81E2E0A1CB000B2CCCB /* Demos */ = {
 			isa = PBXGroup;
 			children = (
+				A6FE7A8A2E0E679800BEBCE4 /* autofill-demo.html */,
 				A6FE7A802E0E188A00BEBCE4 /* dragdrop-demo.html */,
 				A6FE7A7C2E0E12DC00BEBCE4 /* clipboard-demo.html */,
 				A6FE7A782E0E11F800BEBCE4 /* indexeddb-demo.html */,
@@ -13402,6 +13421,7 @@
 		A6F7D4B32E0340A30065D09C /* Browser */ = {
 			isa = PBXGroup;
 			children = (
+				A6FE7A912E0E6B7F00BEBCE4 /* Autofill */,
 				A6CBB8132E0A16AA00B2CCCB /* Bookmarks */,
 				A6CBB8202E0A1CE000B2CCCB /* Core */,
 				A6CBB8142E0A16CB00B2CCCB /* Database */,
@@ -13442,6 +13462,18 @@
 				A664AE772C55A6B800A6807A /* iTermModernKeyMapper.swift */,
 			);
 			name = KeyMappers;
+			sourceTree = "<group>";
+		};
+		A6FE7A912E0E6B7F00BEBCE4 /* Autofill */ = {
+			isa = PBXGroup;
+			children = (
+				A6FE7A8E2E0E6B7F00BEBCE4 /* autofill-detector.js */,
+				A6FE7A9D2E0E6BA000BEBCE4 /* autofill-write.js */,
+				A6FE7AA12E0E738900BEBCE4 /* iTermBrowserAutofillContactSource.swift */,
+				A6FE7A8F2E0E6B7F00BEBCE4 /* iTermBrowserAutofillHandler.swift */,
+				A6FE7A902E0E6B7F00BEBCE4 /* iTermBrowserAutofillWriter.swift */,
+			);
+			path = Autofill;
 			sourceTree = "<group>";
 		};
 		A6FEA2651CF2C80700376F28 /* Hotkey */ = {
@@ -15432,6 +15464,7 @@
 				A65E6F5A2547F1D5008A4866 /* WindowCornerFull_Square.png in Resources */,
 				A6B4833829D73DA10055E24A /* square.and.pencil.png in Resources */,
 				A62DBBA420F47CFA008B63D1 /* GoBack@2x.png in Resources */,
+				A6FE7A8B2E0E679800BEBCE4 /* autofill-demo.html in Resources */,
 				A6614A2720958EDD00A10D97 /* iTermBuildingScriptWindowController.xib in Resources */,
 				A6FE8D09209382C000B5C648 /* download@2x.png in Resources */,
 				A67F615D214395990093940A /* graphic_micro.png in Resources */,
@@ -15546,6 +15579,7 @@
 				A6E7AE91214394DD00DE9F3B /* graphic_composer.png in Resources */,
 				A67D0D5B1A2EE12A003A8B35 /* iTerm.strings in Resources */,
 				A6DC98A628A82608009D21C0 /* Window.png in Resources */,
+				A6FE7AA02E0E6BA000BEBCE4 /* autofill-write.js in Resources */,
 				A6C4352321D1C64800346910 /* iterm2Invoke.js in Resources */,
 				1D6ED99D19AEA20D005A7799 /* dead.png in Resources */,
 				A6F7A733213CB143004DE961 /* StatusBarIconGitBranch.png in Resources */,
@@ -15798,6 +15832,7 @@
 				A6EFF23C1D20F6C000806EEF /* EraseDarkBackground@2x.png in Resources */,
 				1DEDF56B19C917FD005B023A /* new-tab.png in Resources */,
 				1D6ED9D519AEA20D005A7799 /* TabClose_Front.png in Resources */,
+				A6FE7A922E0E6B7F00BEBCE4 /* autofill-detector.js in Resources */,
 				A60C036B2089897400FE2F1F /* iTermScriptConsole.xib in Resources */,
 				A610941C2A4A213D00AC2268 /* key-dark.png in Resources */,
 				A67F6160214395990093940A /* graphic_monitor@2x.png in Resources */,
@@ -16030,6 +16065,7 @@
 				A6CBB9062E0A823D00B2CCCB /* enter-distraction-removal.js in Resources */,
 				A6A3EDD12E0D04A400D711DA /* open-link-at-point.js in Resources */,
 				A6CBB9072E0A823D00B2CCCB /* exit-distraction-removal.js in Resources */,
+				A6FE7A8D2E0E679800BEBCE4 /* autofill-demo.html in Resources */,
 				A697CDF82D9760F00031583F /* FilterMenuTip@2x.jpg in Resources */,
 				A697CE5C2D9773360031583F /* OpenQuicklyMenuTip.jpg in Resources */,
 				A697CE5D2D9773360031583F /* OpenQuicklyMenuTip@2x.jpg in Resources */,
@@ -16216,6 +16252,7 @@
 				5376CB3D220D2E4300FE7476 /* git.sb in Resources */,
 				A66A882F24DFCCC30043728B /* graphic_postgres@2x.png in Resources */,
 				A67F61EB214395D50093940A /* graphic_yarn@2x.png in Resources */,
+				A6FE7A952E0E6B7F00BEBCE4 /* autofill-detector.js in Resources */,
 				A66351472B659309009B93F7 /* PinnedIndicator@2x.png in Resources */,
 				A686C1991ADF62F200906FAE /* Zoomed@2x.png in Resources */,
 				A65E6F592547F1D5008A4866 /* WindowCornerFull_Square.png in Resources */,
@@ -16428,6 +16465,7 @@
 				A67F619C214395B70093940A /* graphic_php@2x.png in Resources */,
 				A6C838B42CB9ACF90062BE68 /* success-sound.mp3 in Resources */,
 				A6C838B52CB9ACF90062BE68 /* error-sound.mp3 in Resources */,
+				A6FE7A9E2E0E6BA000BEBCE4 /* autofill-write.js in Resources */,
 				A68ADA0829CCBE4C0008E092 /* CommandInfoViewController.xib in Resources */,
 				A6F18B452AE2F39C006C08EE /* uniE0A3_column-number.pdf in Resources */,
 				A6F2F219250757FE00FC227F /* PrefsShortcuts@2x.png in Resources */,
@@ -16522,6 +16560,7 @@
 				5346902C1C94FF1900B7E4E9 /* overflowImage@2x.png in Resources */,
 				1D5FDD7F1208E91100C46BA3 /* important.png in Resources */,
 				1D5FDD811208E91100C46BA3 /* newwin.png in Resources */,
+				A6FE7A982E0E6B7F00BEBCE4 /* autofill-detector.js in Resources */,
 				A6F18B562AE2F39C006C08EE /* uniE0B4_right-half-circle-thick.pdf in Resources */,
 				1DC2AF5119521CFF005769D5 /* QuestionMarkSign.png in Resources */,
 				A6FE7A882E0E252300BEBCE4 /* hover-link-detector.js in Resources */,
@@ -16766,6 +16805,7 @@
 				A6CBB8F72E0A6FC800B2CCCB /* reader-mode.css in Resources */,
 				A697CE9B2D97C8E90031583F /* AIChatMenuTip@2x.png in Resources */,
 				A67D0D771A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */,
+				A6FE7A8C2E0E679800BEBCE4 /* autofill-demo.html in Resources */,
 				A6CB24A52C68149100005824 /* it2copy in Resources */,
 				A697CED12D9B0FB60031583F /* CommandSelectionHelp.md in Resources */,
 				A6CB24AD2C68149100005824 /* it2profile in Resources */,
@@ -16843,6 +16883,7 @@
 				A67D0D7D1A2EE12A003A8B35 /* PreferencePanel.strings in Resources */,
 				A6BF8D1A21EB188E003CF805 /* iTermDependencyEditorWindowController.xib in Resources */,
 				A68E333C1DE78D08003F1D8E /* Man Page Touch Bar Icon@2x.png in Resources */,
+				A6FE7A9F2E0E6BA000BEBCE4 /* autofill-write.js in Resources */,
 				A6F1B3C22693B82C00546767 /* DebugLogging.png in Resources */,
 				A6F31A30295BC41700C1A51E /* uniE0C8_PowerlineExtraSymbols.pdf in Resources */,
 				53C5650121B8C26C002B3167 /* PowerlineVersionControlBranch.pdf in Resources */,
@@ -17732,6 +17773,8 @@
 				A66433392DE8C6FD0099F722 /* ResponsesAPIResponse.swift in Sources */,
 				A65B1B602D137BF700F5A740 /* PopoverHelpButton.swift in Sources */,
 				A6FF3F2F2435BA3C003CCB03 /* FindView.m in Sources */,
+				A6FE7A9B2E0E6B7F00BEBCE4 /* iTermBrowserAutofillWriter.swift in Sources */,
+				A6FE7A9C2E0E6B7F00BEBCE4 /* iTermBrowserAutofillHandler.swift in Sources */,
 				A67DAF1D299D61D100AD331A /* iTermTextDrawingHelper.m in Sources */,
 				53E9DFE6220D53110070C9C0 /* SetHostnameTrigger.m in Sources */,
 				A6481658228FE6B1008E7E0C /* iTermObject.m in Sources */,
@@ -18495,6 +18538,7 @@
 				A6A4B2B42426BA6C00184EAC /* iTermKeyBindingAction.m in Sources */,
 				A612E5C92DACB2920014F159 /* FileDescriptorMonitor.swift in Sources */,
 				A6A4867720B67C3600493302 /* ProfilesAdvancedPreferencesViewController.m in Sources */,
+				A6FE7AA22E0E738900BEBCE4 /* iTermBrowserAutofillContactSource.swift in Sources */,
 				A6725AD323D639C2001CA48A /* iTermProfilesMenuController.m in Sources */,
 				A6EC937C24E8568D00EEADEF /* iTermBuriedSessions.m in Sources */,
 				A6822748280786A5005DF0B4 /* Porthole.swift in Sources */,
