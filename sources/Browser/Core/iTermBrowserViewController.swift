@@ -87,6 +87,15 @@ class iTermBrowserViewController: NSViewController {
             browserManager.webView!.pageZoom = newValue / 100.0
         }
     }
+    
+    deinit {
+        toolbar?.cleanup()
+    }
+    
+    override func viewWillDisappear() {
+        super.viewWillDisappear()
+        toolbar?.cleanup()
+    }
 
     @objc(initWithConfiguration:sessionGuid:profile:)
     init(configuration: WKWebViewConfiguration?, sessionGuid: String, profile: Profile)  {
