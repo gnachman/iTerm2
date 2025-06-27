@@ -59,7 +59,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     let historyController: iTermBrowserHistoryController
     private let navigationState: iTermBrowserNavigationState
     private var navigationCount = 0
-    private lazy var readerModeManager = iTermBrowserReaderModeManager(webView: webView)
+    private let readerModeManager = iTermBrowserReaderModeManager()
     let user: iTermBrowserUser
 
     init(user: iTermBrowserUser,
@@ -106,6 +106,16 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
             configuration = WKWebViewConfiguration()
             configuration.preferences = prefs
 
+            switch user {
+            case .regular(id: let userID):
+                if #available(macOS 14, *) {
+                    let profileStore = WKWebsiteDataStore(forIdentifier: userID)
+                    configuration.websiteDataStore = profileStore
+                }
+            case .devNull:
+                configuration.websiteDataStore = .nonPersistent()
+            }
+
             var js = """
                 let oldLog = console.log;
                 let oldError = console.error;
@@ -151,7 +161,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
             )
             configuration.userContentController.add(self, name: "iTerm2ConsoleLog")
             configuration.userContentController.addUserScript(script)
-            
+            // TODO: Ensure all of these handlers are stateless because related webviews (e.g., target=_blank) share them.
             if let notificationHandler {
                 let notificationScript = WKUserScript(
                     source: notificationHandler.javascript,
@@ -185,7 +195,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                 autofillHandler.delegate = self
                 let userScript = WKUserScript(source: autofillHandler.javascript,
                                               injectionTime: .atDocumentEnd,
-                                              forMainFrameOnly: false)
+                                              forMainFrameOnly: true)
                 configuration.userContentController.add(self, name: iTermBrowserAutofillHandler.messageHandlerName)
                 configuration.userContentController.addUserScript(userScript)
             }
@@ -200,21 +210,16 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                 configuration.userContentController.addUserScript(userScript)
             }
 
+            // Setup reader mode
+
+            readerModeManager.delegate = self
+            configuration.userContentController.add(readerModeManager, name: "readerMode")
+
             // Trick google into thinking we're a real browser. Who knows what this might break.
             configuration.applicationNameForUserAgent = "Safari/16.4"
 
             // Register custom URL scheme handler for iterm2-about: URLs
             configuration.setURLSchemeHandler(self, forURLScheme: iTermBrowserSchemes.about)
-        }
-
-        switch user {
-        case .regular(id: let userID):
-            if #available(macOS 14, *) {
-                let profileStore = WKWebsiteDataStore(forIdentifier: userID)
-                configuration.websiteDataStore = profileStore
-            }
-        case .devNull:
-            configuration.websiteDataStore = .nonPersistent()
         }
 
         webView = iTermBrowserWebView(frame: .zero,
@@ -241,9 +246,6 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         
         // Setup settings delegate
         setupSettingsDelegate()
-        
-        // Setup reader mode
-        readerModeManager.delegate = self
     }
     
     private func setupPermissionNotificationObserver() {
@@ -321,14 +323,14 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         guard let title = webView.title ?? webView.url?.absoluteString else {
             return nil
         }
-        guard let content = await readerModeManager.plainTextContent() else {
+        guard let content = await readerModeManager.plainTextContent(webView: webView) else {
             return nil
         }
         return .init(title: title, content: content)
     }
 
     func toggleReaderMode() {
-        readerModeManager.toggle()
+        readerModeManager.toggle(webView: webView)
     }
     
     var isReaderModeActive: Bool {
@@ -337,7 +339,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     
     func toggleDistractionRemoval() {
         Task {
-            await readerModeManager.toggleDistractionRemovalMode()
+            await readerModeManager.toggleDistractionRemovalMode(webView: webView)
         }
     }
     
@@ -609,9 +611,9 @@ extension iTermBrowserManager {
                 message.body
             }
 #if DEBUG
-            NSLog("Javascript Console: \(string)")
+            NSLog("%@", "Javascript Console: \(string)")
 #else
-            XLog("Javascript Console: \(string)")
+            XLog("%@", "Javascript Console: \(string)")
 #endif
 
 
@@ -1340,4 +1342,16 @@ extension iTermBrowserManager: iTermBrowserAutofillHandlerDelegate {
             }
         }
     }
+    
+    #if DEBUG
+    func debugAutofillFields() {
+        guard let webView = webView else { return }
+        let js = "if (window.debugAutofillFields) { window.debugAutofillFields(); }"
+        webView.evaluateJavaScript(js) { result, error in
+            if let error = error {
+                NSLog("Debug autofill fields error: \(error)")
+            }
+        }
+    }
+    #endif
 }

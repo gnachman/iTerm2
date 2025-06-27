@@ -524,6 +524,12 @@ extension iTermBrowserViewController: iTermBrowserToolbarDelegate {
             }
         }
     }
+    
+    #if DEBUG
+    func browserToolbarDidTapDebugAutofill() {
+        browserManager.debugAutofillFields()
+    }
+    #endif
 
     func browserToolbarShouldOfferReaderMode() async -> Bool {
         return await (browserManager.pageContent()?.content ?? "").count > 10
