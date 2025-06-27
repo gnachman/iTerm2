@@ -56,7 +56,7 @@ class iTermBrowserAutofillHandler {
     }
     
     private func handleAutofillRequest(webView: WKWebView, body: [String: Any]) {
-        guard let activeField = body["activeField"] as? [String: Any],
+        guard body["activeField"] as? [String: Any] != nil,
               let fields = body["fields"] as? [[String: Any]] else {
             return
         }

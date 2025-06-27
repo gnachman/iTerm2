@@ -31,6 +31,33 @@ class iTermBrowserTemplateLoader: NSObject {
             result = result.replacingOccurrences(of: "{{COMMON_CSS}}", with: commonCSS)
         }
         
+        // Handle {{INCLUDE:filename}} patterns
+        let includePattern = "\\{\\{INCLUDE:([^}]+)\\}\\}"
+        let regex = try! NSRegularExpression(pattern: includePattern)
+        let range = NSRange(location: 0, length: result.utf16.count)
+        
+        // Find all include matches and replace them
+        let matches = regex.matches(in: result, range: range).reversed() // Reverse to avoid index issues
+        for match in matches {
+            if let filenameRange = Range(match.range(at: 1), in: result) {
+                let filename = String(result[filenameRange])
+                
+                // Extract name and extension from filename
+                let components = filename.split(separator: ".")
+                if components.count >= 2 {
+                    let name = String(components.dropLast().joined(separator: "."))
+                    let ext = String(components.last!)
+                    
+                    // Load the included file
+                    if let includePath = Bundle.main.path(forResource: name, ofType: ext),
+                       let includeContent = try? String(contentsOfFile: includePath) {
+                        let fullRange = Range(match.range(at: 0), in: result)!
+                        result.replaceSubrange(fullRange, with: includeContent)
+                    }
+                }
+            }
+        }
+        
         // Replace all other {{KEY}} substitutions
         for (key, value) in substitutions {
             let placeholder = "{{\(key)}}"

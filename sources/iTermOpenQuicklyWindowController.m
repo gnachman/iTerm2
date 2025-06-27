@@ -313,7 +313,7 @@
             iTermOpenQuicklyNamedMarkItem *item = [iTermOpenQuicklyNamedMarkItem castFrom:object];
             if (item.session) {
                 [item.session reveal];
-                [item.session scrollToMark:item.namedMark];
+                [item.session scrollToNamedMark:item.namedMark];
             }
         } else if ([object isKindOfClass:[iTermOpenQuicklyMenuItem class]]) {
             iTermOpenQuicklyMenuItem *item = [iTermOpenQuicklyMenuItem castFrom:object];

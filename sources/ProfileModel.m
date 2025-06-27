@@ -339,7 +339,7 @@ static NSMutableArray<NSString *> *_combinedLog;
 }
 
 - (NSArray*)bookmarkIndicesMatchingFilter:(NSString*)filter orGuid:(NSString *)lockedGuid {
-    return [self profilesIndicesMatchingFilter:filter orGuid:lockedGuid ofType:ProfileTypeAll];
+    return [self profileIndicesMatchingFilter:filter orGuid:lockedGuid ofType:ProfileTypeAll];
 }
 
 - (NSArray<Profile *> *)profileIndicesMatchingFilter:(NSString *)filter

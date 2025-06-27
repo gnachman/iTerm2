@@ -306,7 +306,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
 - (void)setBrowserViewController:(iTermBrowserViewController *)browserViewController
                       initialURL:(NSString *)initialURL
-                interactionState:(NSData *)interactionState NS_AVAILABLE_MAC(11_0) {
+                 restorableState:(NSDictionary *)restorableState NS_AVAILABLE_MAC(11_0) {
     _browserViewController = browserViewController;
 
     // Set initial frame to avoid constraint conflicts
@@ -325,12 +325,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
     [self updateLayout];
 
-    if (interactionState) {
-        // Restore interaction state instead of loading URL
-        [_browserViewController setInteractionState:interactionState];
-    } else {
-        [_browserViewController loadURL:initialURL];
-    }
+    [_browserViewController loadRestorableState:restorableState orURL:initialURL];
+
     NSResponder *prev = self.nextResponder;
     [self setNextResponder:_browserViewController];
     _browserViewController.nextResponder = prev;

@@ -970,7 +970,7 @@ extension PTYSession {
 extension PTYSession {
     @objc
     func becomeBrowser(configuration: WKWebViewConfiguration,
-                       interactionState: Data?) {
+                       restorableState: NSDictionary?) {
         let nullValue = NSNull()
         let terminalOnlyKeys = [
             KEY_INITIAL_TEXT: nullValue,
@@ -1165,6 +1165,6 @@ extension PTYSession {
         view.setBrowserViewController(
             vc, initialURL: iTermProfilePreferences.string(forKey: KEY_INITIAL_URL,
                                                            inProfile: profile),
-            interactionState: interactionState)
+            restorableState: restorableState as? [AnyHashable: Any])
     }
 }

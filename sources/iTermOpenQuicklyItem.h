@@ -3,7 +3,7 @@
 @class iTermLogoGenerator;
 @class iTermOpenQuicklyTableCellView;
 @class iTermVariableScope;
-@protocol VT100ScreenMarkReading;
+@protocol iTermGenericNamedMarkReading;
 @class PTYSession;
 @class NSMenuItem;
 
@@ -81,7 +81,7 @@ NS_AVAILABLE_MAC(11_0)
 @end
 
 @interface iTermOpenQuicklyNamedMarkItem: iTermOpenQuicklyItem
-@property(nonatomic, strong) id<VT100ScreenMarkReading> namedMark;
+@property(nonatomic, strong) id<iTermGenericNamedMarkReading> namedMark;
 @property(nonatomic, weak) PTYSession *session;
 @end
 

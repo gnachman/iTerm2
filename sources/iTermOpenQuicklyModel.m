@@ -361,7 +361,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     return item;
 }
 
-- (iTermOpenQuicklyNamedMarkItem *)itemForNamedMark:(id<VT100ScreenMarkReading>)namedMark
+- (iTermOpenQuicklyNamedMarkItem *)itemForNamedMark:(id<iTermGenericNamedMarkReading>)namedMark
                                           inSession:(PTYSession *)session
                                             matcher:(iTermMinimumSubsequenceMatcher *)matcher {
     iTermOpenQuicklyNamedMarkItem *item = [[iTermOpenQuicklyNamedMarkItem alloc] init];
@@ -631,7 +631,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
 - (void)addNamedMarksToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
                  withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
     for (PTYSession *session in [[iTermController sharedInstance] allSessions]) {
-        for (id<VT100ScreenMarkReading> namedMark in session.screen.namedMarks) {
+        for (id<iTermGenericNamedMarkReading> namedMark in session.namedMarks) {
             if (!namedMark.name.length) {
                 continue;
             }
@@ -1067,7 +1067,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     return score;
 }
 
-- (double)scoreForNamedMark:(id<VT100ScreenMarkReading>)namedMark
+- (double)scoreForNamedMark:(id<iTermGenericNamedMarkReading>)namedMark
                     matcher:(iTermMinimumSubsequenceMatcher *)matcher
              attributedName:(NSMutableAttributedString *)attributedName
             inActiveSession:(BOOL)inActiveSession {
