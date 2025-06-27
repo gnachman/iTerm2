@@ -344,6 +344,14 @@ class iTermURLBar: NSView {
         case .tab:
             acceptCurrentSuggestion()
             return true
+        case .escape:
+            // Reset to current URL and hide suggestions
+            if let currentURL = currentURL {
+                textField.stringValue = currentURL
+                textField.selectText(nil)
+            }
+            hideSuggestions()
+            return true
         }
     }
     

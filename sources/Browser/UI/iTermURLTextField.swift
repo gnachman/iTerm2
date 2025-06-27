@@ -26,6 +26,7 @@ class iTermURLTextField: NSScrollView {
         case up
         case down
         case tab
+        case escape
     }
     
     // Text view and container
@@ -218,6 +219,12 @@ extension iTermURLTextField: NSTextViewDelegate {
             // Handle Enter key
             if let target = target, let action = action {
                 _ = target.perform(action, with: self)
+                return true
+            }
+        }
+        if commandSelector == #selector(NSResponder.cancelOperation(_:)) {
+            // Handle Escape key
+            if onSpecialKey?(.escape) == true {
                 return true
             }
         }
