@@ -311,8 +311,8 @@ class iTermBrowserWebView: WKWebView {
         let sideEffects = mouseDraggedImpl(with: event)
         if sideEffects != [.ignore] {
             setMouseInfo(event: event, sideEffects: sideEffects)
-            super.mouseDragged(with: event)
         }
+        super.mouseDragged(with: event)
     }
 
     private func mouseDraggedImpl(with event: NSEvent) -> iTermClickSideEffects {

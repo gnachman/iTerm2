@@ -42,6 +42,7 @@ protocol iTermBrowserToolbarDelegate: AnyObject {
     func browserToolbarIsCurrentURLBookmarked() async -> Bool
     func browserToolbarDidTapAskAI()
     func browserToolbarShouldOfferReaderMode() async -> Bool
+    func browserToolbarDidTapDebugAutofill()
 }
 
 @available(macOS 11.0, *)
@@ -242,6 +243,14 @@ class iTermBrowserToolbar: NSView {
 
                 menu.addItem(NSMenuItem.separator())
 
+                #if DEBUG
+                // Debug Autofill menu item (debug builds only)
+                let debugAutofillItem = NSMenuItem(title: "Debug Autofill Fields", action: #selector(debugAutofillMenuItemSelected), keyEquivalent: "")
+                debugAutofillItem.target = self
+                debugAutofillItem.image = NSImage(systemSymbolName: "magnifyingglass.circle", accessibilityDescription: nil)
+                menu.addItem(debugAutofillItem)
+                #endif
+
                 // Settings menu item
                 let settingsItem = NSMenuItem(title: "Settings", action: #selector(settingsMenuItemSelected), keyEquivalent: "")
                 settingsItem.target = self
@@ -282,6 +291,12 @@ class iTermBrowserToolbar: NSView {
     @objc private func settingsMenuItemSelected() {
         delegate?.browserToolbarDidTapSettings()
     }
+    
+    #if DEBUG
+    @objc private func debugAutofillMenuItemSelected() {
+        delegate?.browserToolbarDidTapDebugAutofill()
+    }
+    #endif
     
     @objc private func historyMenuItemSelected() {
         delegate?.browserToolbarDidTapHistory()
