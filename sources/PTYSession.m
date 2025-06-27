@@ -3541,6 +3541,12 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (void)writeData:(NSData *)data {
+    if (@available(macOS 11, *)) {
+        if (_view.isBrowser) {
+            [_view.browserViewController sendData:data];
+            return;
+        }
+    }
     const char *bytes = data.bytes;
     BOOL newline = NO;
     for (NSUInteger i = 0; i < data.length; i++) {
