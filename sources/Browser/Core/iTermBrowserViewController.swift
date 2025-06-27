@@ -85,6 +85,13 @@ class iTermBrowserViewController: NSViewController {
     private let pointerActionPerformer = iTermBrowserPointerActionPerformer()
     private let namedMarkManager = iTermBrowserNamedMarkManager()
 
+    class ShadeView: SolidColorView {
+        override func hitTest(_ point: NSPoint) -> NSView? {
+            return nil
+        }
+    }
+    private let shadeView = ShadeView()
+
     @objc var zoom: CGFloat {
         get {
             round(browserManager.webView!.pageZoom * 100.0)
@@ -214,6 +221,16 @@ extension iTermBrowserViewController {
 
         Task {
             await browserManager.webView.sendText(string)
+        }
+    }
+
+    @objc var dimming: CGFloat {
+        get {
+            shadeView.color.alphaComponent
+        }
+        set {
+            shadeView.isHidden = newValue < 0.01
+            shadeView.color = .black.withAlphaComponent(newValue)
         }
     }
 
@@ -357,6 +374,7 @@ extension iTermBrowserViewController {
         setupBrowserManager()
         setupToolbar()
         setupWebView()
+        setupShade()
         setupConstraints()
         setupRestorationObserver()
     }
@@ -414,6 +432,13 @@ extension iTermBrowserViewController {
         view.addSubview(browserManager.webView)
     }
 
+    private func setupShade() {
+        shadeView.color = .black
+        shadeView.isHidden = true
+        shadeView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(shadeView)
+    }
+
     private func setupConstraints() {
         NSLayoutConstraint.activate([
             // Background view constraints (full view coverage)
@@ -432,7 +457,13 @@ extension iTermBrowserViewController {
             browserManager.webView.topAnchor.constraint(equalTo: toolbar.bottomAnchor),
             browserManager.webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             browserManager.webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            browserManager.webView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            browserManager.webView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            // Shadeview
+            shadeView.topAnchor.constraint(equalTo: view.topAnchor),
+            shadeView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            shadeView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            shadeView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
         ])
     }
     
