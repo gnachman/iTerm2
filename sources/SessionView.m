@@ -1218,6 +1218,9 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
     [self _dimShadeToDimmingAmount:amount];
     [_title setDimmingAmount:amount];
+    if (@available(macOS 11, *)) {
+        _browserViewController.dimming = amount;
+    }
     iTermStatusBarViewController *statusBar = self.delegate.sessionViewStatusBarViewController;
     [statusBar updateColors];
 }
