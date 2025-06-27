@@ -86,7 +86,7 @@ extension iTermBrowserWebView {
         }
     }
 
-    private func convertToJavaScriptCoordinates(_ windowPoint: NSPoint) -> NSPoint {
+    func convertToJavaScriptCoordinates(_ windowPoint: NSPoint) -> NSPoint {
         let pointInView = self.convert(windowPoint, from: nil)
         
         // Scale from view coordinates to JavaScript client coordinates

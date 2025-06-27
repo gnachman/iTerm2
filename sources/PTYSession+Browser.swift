@@ -139,6 +139,12 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
                                    weight: SmartSelectionController.precision(inRule: dict))
         }
     }
+    
+    func browserViewController(_ controller: iTermBrowserViewController, didHoverURL url: String?, frame: NSRect) {
+        let webView = controller.webView
+        let frameInSessionView = view.convert(frame, from: webView)
+        _ = view.setHoverURL(url, anchorFrame: frameInSessionView)
+    }
 
 }
 

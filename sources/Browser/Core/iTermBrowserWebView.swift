@@ -26,6 +26,7 @@ import WebKit
     func webViewDidRequestDoSmartSelection(_ webView: iTermBrowserWebView,
                                            pointInWindow point: NSPoint)
     func webViewOpenURLInNewTab(_ webView: iTermBrowserWebView, url: URL)
+    func webViewDidHoverURL(_ webView: iTermBrowserWebView, url: String?, frame: NSRect)
 }
 
 @available(macOS 11.0, *)
@@ -38,6 +39,7 @@ class iTermBrowserWebView: WKWebView {
     private var numTouches = 0  // TODO
     private var mouseDown = false  // TODO
     private var mouseDownLocationInWindow: NSPoint?
+    private var hoverLinkSecret: String?
 
     init(frame: CGRect,
          configuration: WKWebViewConfiguration,
@@ -529,4 +531,16 @@ class iTermBrowserWebView: WKWebView {
           contextInfo: nil
         )
     }
+    
+    // MARK: - Mouse Tracking for Hover
+    
+    override func mouseExited(with event: NSEvent) {
+        super.mouseExited(with: event)
+        clearHover()
+    }
+    
+    func clearHover() {
+        browserDelegate?.webViewDidHoverURL(self, url: nil, frame: NSZeroRect)
+    }
+    
 }

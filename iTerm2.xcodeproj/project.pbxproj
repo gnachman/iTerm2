@@ -4908,6 +4908,10 @@
 		A6FE7A812E0E188F00BEBCE4 /* dragdrop-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A802E0E188A00BEBCE4 /* dragdrop-demo.html */; };
 		A6FE7A822E0E188F00BEBCE4 /* dragdrop-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A802E0E188A00BEBCE4 /* dragdrop-demo.html */; };
 		A6FE7A832E0E188F00BEBCE4 /* dragdrop-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A802E0E188A00BEBCE4 /* dragdrop-demo.html */; };
+		A6FE7A852E0E24AC00BEBCE4 /* iTermBrowserHoverLinkHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6FE7A842E0E24AC00BEBCE4 /* iTermBrowserHoverLinkHandler.swift */; };
+		A6FE7A872E0E252300BEBCE4 /* hover-link-detector.js in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A862E0E252300BEBCE4 /* hover-link-detector.js */; };
+		A6FE7A882E0E252300BEBCE4 /* hover-link-detector.js in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A862E0E252300BEBCE4 /* hover-link-detector.js */; };
+		A6FE7A892E0E252300BEBCE4 /* hover-link-detector.js in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A862E0E252300BEBCE4 /* hover-link-detector.js */; };
 		A6FE8D03209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FE8D00209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.h */; };
 		A6FE8D04209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FE8D01209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m */; };
 		A6FE8D07209382C000B5C648 /* download@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FE8D05209382C000B5C648 /* download@2x.png */; };
@@ -8635,6 +8639,8 @@
 		A6FE7A782E0E11F800BEBCE4 /* indexeddb-demo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "indexeddb-demo.html"; sourceTree = "<group>"; };
 		A6FE7A7C2E0E12DC00BEBCE4 /* clipboard-demo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "clipboard-demo.html"; sourceTree = "<group>"; };
 		A6FE7A802E0E188A00BEBCE4 /* dragdrop-demo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "dragdrop-demo.html"; sourceTree = "<group>"; };
+		A6FE7A842E0E24AC00BEBCE4 /* iTermBrowserHoverLinkHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserHoverLinkHandler.swift; sourceTree = "<group>"; };
+		A6FE7A862E0E252300BEBCE4 /* hover-link-detector.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "hover-link-detector.js"; sourceTree = "<group>"; };
 		A6FE8D00209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermOptionalComponentDownloadWindowController.h; sourceTree = "<group>"; };
 		A6FE8D01209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermOptionalComponentDownloadWindowController.m; sourceTree = "<group>"; };
 		A6FE8D02209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermOptionalComponentDownloadWindowController.xib; sourceTree = "<group>"; };
@@ -13047,17 +13053,19 @@
 		A6CBB8202E0A1CE000B2CCCB /* Core */ = {
 			isa = PBXGroup;
 			children = (
-				A6FE7A742E0DF12600BEBCE4 /* iTermBrowserUser.swift */,
-				A6A3EDEB2E0DC6A400D711DA /* iTermBrowserMetadata.swift */,
 				A6CBB7FD2E09163A00B2CCCB /* check-iframe-origins.js */,
+				A6FE7A862E0E252300BEBCE4 /* hover-link-detector.js */,
 				A6F7D4E42E04AE7D0065D09C /* iTermAdblockManager.swift */,
 				A6A3EDC52E0CDA9500D711DA /* iTermBrowserActionPerforming.swift */,
 				A6F7D4D22E03D0A00065D09C /* iTermBrowserDownload.swift */,
 				A6F7D4D02E03BE3A0065D09C /* iTermBrowserFindManager.swift */,
+				A6FE7A842E0E24AC00BEBCE4 /* iTermBrowserHoverLinkHandler.swift */,
 				A6CBB9D52E0B608E00B2CCCB /* iTermBrowserKeyBindingActionPerformer.swift */,
 				A6F7D4B82E034E2B0065D09C /* iTermBrowserManager.swift */,
+				A6A3EDEB2E0DC6A400D711DA /* iTermBrowserMetadata.swift */,
 				A6F7D4FD2E05C4850065D09C /* iTermBrowserNavigationState.swift */,
 				A6A3EDC32E0CDA1D00D711DA /* iTermBrowserPointerActionPerformer.swift */,
+				A6FE7A742E0DF12600BEBCE4 /* iTermBrowserUser.swift */,
 				A6F7D4B42E0340A80065D09C /* iTermBrowserViewController.swift */,
 				A6F7D4D82E03DB420065D09C /* iTermBrowserWebView.swift */,
 				A6CBB8222E0A21F800B2CCCB /* rewrite-resources.js */,
@@ -15853,6 +15861,7 @@
 				A6E7AE94214394DD00DE9F3B /* graphic_coffee.png in Resources */,
 				1D6ED9E319AEA20D005A7799 /* Alert.png in Resources */,
 				A629F57F23AF2DE100C2F16B /* iterm2_shell_integration.bash in Resources */,
+				A6FE7A872E0E252300BEBCE4 /* hover-link-detector.js in Resources */,
 				A63011BD20E83083008114B7 /* iTermStatusBarKnobTextViewController.xib in Resources */,
 				A6F7A730213CB143004DE961 /* StatusBarIconLoupe.png in Resources */,
 				A66A883324DFCCC30043728B /* graphic_elixir@2x.png in Resources */,
@@ -15929,6 +15938,7 @@
 				A697CDB32D975AE20031583F /* AdvancedPaste@2x.png in Resources */,
 				A697CDB42D975AE20031583F /* TmuxDashboard.png in Resources */,
 				A697CDB52D975AE20031583F /* HorizontalSplit@2x.png in Resources */,
+				A6FE7A892E0E252300BEBCE4 /* hover-link-detector.js in Resources */,
 				A697CEC02D98C3560031583F /* SparklesSquareFilledOnSquare.png in Resources */,
 				A697CDB62D975AE20031583F /* Toolbelt-Screenshot.png in Resources */,
 				A697CDB72D975AE20031583F /* AIMenuTip@2x.jpg in Resources */,
@@ -16514,6 +16524,7 @@
 				1D5FDD811208E91100C46BA3 /* newwin.png in Resources */,
 				A6F18B562AE2F39C006C08EE /* uniE0B4_right-half-circle-thick.pdf in Resources */,
 				1DC2AF5119521CFF005769D5 /* QuestionMarkSign.png in Resources */,
+				A6FE7A882E0E252300BEBCE4 /* hover-link-detector.js in Resources */,
 				A6DB14642D6D09C800266394 /* AIStreaming.png in Resources */,
 				A66433532DEA78A60099F722 /* globe@2x.png in Resources */,
 				A66433542DEA78A60099F722 /* globe.png in Resources */,
@@ -18056,6 +18067,7 @@
 				A61A85B224F23CDE00B03880 /* iTermGlobalSearchEngineCursor.m in Sources */,
 				A688AA5C298C389B007F4603 /* ConductorFileTransfer.swift in Sources */,
 				A6A2D6E424345D4000A4DF5B /* iTermMinimalComposerViewController.m in Sources */,
+				A6FE7A852E0E24AC00BEBCE4 /* iTermBrowserHoverLinkHandler.swift in Sources */,
 				A658882A201F06ED006F48DB /* iTermTexture.m in Sources */,
 				A6AFD68D24496F1C007D0660 /* iTermClientServerProtocolMessageBox.m in Sources */,
 				A6A4B2AC2426B70C00184EAC /* iTermKeystrokeFormatter.m in Sources */,

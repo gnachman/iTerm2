@@ -35,6 +35,8 @@
         state: iTermMouseState)
     func browserManager(_ browserManager: iTermBrowserManager,
                         doSmartSelectionAtPointInWindow point: NSPoint) async
+    func browserManager(_ browserManager: iTermBrowserManager,
+                        didHoverURL url: String?, frame: NSRect)
 }
 
 typealias Profile = [AnyHashable: Any]
@@ -51,6 +53,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private var _findManager: Any?
     private var adblockManager: iTermAdblockManager?
     private var notificationHandler: iTermBrowserNotificationHandler?
+    private var hoverLinkHandler: iTermBrowserHoverLinkHandler?
     let passwordWriter = iTermBrowserPasswordWriter()
     let sessionGuid: String
     let historyController: iTermBrowserHistoryController
@@ -175,6 +178,16 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                                               injectionTime: .atDocumentEnd,
                                               forMainFrameOnly: false)
                 configuration.userContentController.add(self, name: iTermBrowserPasswordManagerHandler.messageHandlerName)
+                configuration.userContentController.addUserScript(userScript)
+            }
+            
+            // Set up hover link detection
+            hoverLinkHandler = iTermBrowserHoverLinkHandler()
+            if let hoverLinkHandler = hoverLinkHandler {
+                let userScript = WKUserScript(source: hoverLinkHandler.javascript,
+                                              injectionTime: .atDocumentEnd,
+                                              forMainFrameOnly: false)
+                configuration.userContentController.add(self, name: iTermBrowserHoverLinkHandler.messageHandlerName)
                 configuration.userContentController.addUserScript(userScript)
             }
 
@@ -562,6 +575,15 @@ extension iTermBrowserManager: iTermBrowserWebViewDelegate {
     func webViewOpenURLInNewTab(_ webView: iTermBrowserWebView, url: URL) {
         delegate?.browserManager(self, openNewTabForURL: url)
     }
+    
+    func webViewDidHoverURL(_ webView: iTermBrowserWebView, url: String?, frame: NSRect) {
+        delegate?.browserManager(self, didHoverURL: url, frame: frame)
+        
+        // If clearing hover, also clear it in JavaScript
+        if url == nil {
+            hoverLinkHandler?.clearHover(in: webView)
+        }
+    }
 }
 
 // MARK: - WKScriptMessageHandler
@@ -625,6 +647,13 @@ extension iTermBrowserManager {
                                                            id: passwordID)
                         }
                     }
+            }
+            
+        case iTermBrowserHoverLinkHandler.messageHandlerName:
+            if let hoverInfo = hoverLinkHandler?.handleMessage(webView: webView, message: message) {
+                // Pass frame in webview coordinates - delegate will handle conversion as needed
+                NSLog("BrowserManager: WebView frame %@ -> delegate", NSStringFromRect(hoverInfo.frame))
+                delegate?.browserManager(self, didHoverURL: hoverInfo.url, frame: hoverInfo.frame)
             }
 
         default:

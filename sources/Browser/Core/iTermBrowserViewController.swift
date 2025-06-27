@@ -48,6 +48,9 @@ protocol iTermBrowserViewControllerDelegate: AnyObject {
     func browserViewControllerSplit(_ controller: iTermBrowserViewController,
                                     vertically: Bool,
                                     guid: String)
+    func browserViewController(_ controller: iTermBrowserViewController,
+                               didHoverURL url: String?,
+                               frame: NSRect)
 
     func browserViewControllerSelectPane(_ controller: iTermBrowserViewController,
                                          forward: Bool)
@@ -630,6 +633,10 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
             return
         }
         await browserManager.webView.performSmartSelection(atPointInWindow: point, rules: rules)
+    }
+    
+    func browserManager(_ browserManager: iTermBrowserManager, didHoverURL url: String?, frame: NSRect) {
+        delegate?.browserViewController(self, didHoverURL: url, frame: frame)
     }
 }
 
