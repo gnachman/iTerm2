@@ -267,6 +267,14 @@ class iTermBrowserWebView: WKWebView {
 
         super.mouseUp(with: event)
         setMouseInfo(event: event, sideEffects: [])
+        
+        // Check if copy-on-select is enabled and copy selection if it exists
+        if iTermPreferences.bool(forKey: kPreferenceKeySelectionCopiesText) {
+            Task {
+                await copySelectionToClipboard()
+            }
+        }
+        
         return []
     }
 

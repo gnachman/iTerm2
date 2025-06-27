@@ -193,6 +193,11 @@ extension iTermBrowserWebView {
         )
         
         _ = try? await evaluateJavaScript(script)
+        
+        // Copy selection if the preference is enabled
+        if iTermPreferences.bool(forKey: kPreferenceKeySelectionCopiesText) {
+            await copySelectionToClipboard()
+        }
     }
 
     @MainActor
@@ -351,6 +356,32 @@ extension iTermBrowserWebView {
             return result as? Bool ?? false
         } catch {
             return false
+        }
+    }
+    
+    func copySelectionToClipboard() async {
+        let script = """
+        (function() {
+            var selection = window.getSelection();
+            return selection ? selection.toString() : "";
+        })();
+        """
+        
+        do {
+            let result = try await evaluateJavaScript(script)
+            if let selectedText = result as? String {
+                let shouldCopy = !selectedText.isEmpty || !iTermAdvancedSettingsModel.disallowCopyEmptyString()
+                if shouldCopy {
+                    await MainActor.run {
+                        let pasteboard = NSPasteboard.general
+                        pasteboard.clearContents()
+                        pasteboard.setString(selectedText, forType: .string)
+                        PasteboardHistory.sharedInstance().save(selectedText)
+                    }
+                }
+            }
+        } catch {
+            DLog("\(error)")
         }
     }
 }
