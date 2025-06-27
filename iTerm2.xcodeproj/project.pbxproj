@@ -4905,6 +4905,9 @@
 		A6FE7A7D2E0E12DE00BEBCE4 /* clipboard-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A7C2E0E12DC00BEBCE4 /* clipboard-demo.html */; };
 		A6FE7A7E2E0E12DE00BEBCE4 /* clipboard-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A7C2E0E12DC00BEBCE4 /* clipboard-demo.html */; };
 		A6FE7A7F2E0E12DE00BEBCE4 /* clipboard-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A7C2E0E12DC00BEBCE4 /* clipboard-demo.html */; };
+		A6FE7A812E0E188F00BEBCE4 /* dragdrop-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A802E0E188A00BEBCE4 /* dragdrop-demo.html */; };
+		A6FE7A822E0E188F00BEBCE4 /* dragdrop-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A802E0E188A00BEBCE4 /* dragdrop-demo.html */; };
+		A6FE7A832E0E188F00BEBCE4 /* dragdrop-demo.html in Resources */ = {isa = PBXBuildFile; fileRef = A6FE7A802E0E188A00BEBCE4 /* dragdrop-demo.html */; };
 		A6FE8D03209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FE8D00209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.h */; };
 		A6FE8D04209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FE8D01209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m */; };
 		A6FE8D07209382C000B5C648 /* download@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FE8D05209382C000B5C648 /* download@2x.png */; };
@@ -8631,6 +8634,7 @@
 		A6FE7A762E0DF1D900BEBCE4 /* iTermBrowserBookmarkFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserBookmarkFinder.swift; sourceTree = "<group>"; };
 		A6FE7A782E0E11F800BEBCE4 /* indexeddb-demo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "indexeddb-demo.html"; sourceTree = "<group>"; };
 		A6FE7A7C2E0E12DC00BEBCE4 /* clipboard-demo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "clipboard-demo.html"; sourceTree = "<group>"; };
+		A6FE7A802E0E188A00BEBCE4 /* dragdrop-demo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "dragdrop-demo.html"; sourceTree = "<group>"; };
 		A6FE8D00209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermOptionalComponentDownloadWindowController.h; sourceTree = "<group>"; };
 		A6FE8D01209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermOptionalComponentDownloadWindowController.m; sourceTree = "<group>"; };
 		A6FE8D02209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermOptionalComponentDownloadWindowController.xib; sourceTree = "<group>"; };
@@ -13019,6 +13023,7 @@
 		A6CBB81E2E0A1CB000B2CCCB /* Demos */ = {
 			isa = PBXGroup;
 			children = (
+				A6FE7A802E0E188A00BEBCE4 /* dragdrop-demo.html */,
 				A6FE7A7C2E0E12DC00BEBCE4 /* clipboard-demo.html */,
 				A6FE7A782E0E11F800BEBCE4 /* indexeddb-demo.html */,
 				A6A3EDE72E0DAF0300D711DA /* smartselection-demo.html */,
@@ -15470,6 +15475,7 @@
 				A697CE132D9764E00031583F /* CapturedOutputMenuTip.png in Resources */,
 				A6F18B3D2AE2F39C006C08EE /* uniE0CE_lego_separator.pdf in Resources */,
 				A665C1FC2440461500F623F0 /* WindowCorner@2x.png in Resources */,
+				A6FE7A822E0E188F00BEBCE4 /* dragdrop-demo.html in Resources */,
 				A6F7A721213CB143004DE961 /* StatusBarIconCPU@2x.png in Resources */,
 				A690F7031B424C55009F76D8 /* Media.xcassets in Resources */,
 				1D8BBA6D1B30F5C30005A852 /* Navigate@2x.png in Resources */,
@@ -16285,6 +16291,7 @@
 				A6CBB7BD2E08BDD600B2CCCB /* geolocation-demo.html in Resources */,
 				A67D0D7B1A2EE12A003A8B35 /* PasteView.xib in Resources */,
 				1DBBA5E21B3CB0590026E3B6 /* restore-arrangement@2x.png in Resources */,
+				A6FE7A812E0E188F00BEBCE4 /* dragdrop-demo.html in Resources */,
 				A67D0D6C1A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib in Resources */,
 				53FF9825209283D2008688D7 /* template_pyenv_daemon.py in Resources */,
 				A67F617F214395A70093940A /* graphic_perl.png in Resources */,
@@ -16694,6 +16701,7 @@
 				1D99C8E41BD59C37001EE1FC /* SearchCursor.png in Resources */,
 				1D8BBA7B1B30FD230005A852 /* Later@2x.png in Resources */,
 				A686C1951ADF62F200906FAE /* Zoomed.png in Resources */,
+				A6FE7A832E0E188F00BEBCE4 /* dragdrop-demo.html in Resources */,
 				1D94EAAD12D64022008225A9 /* UKCrashReporter Readme.txt in Resources */,
 				A6E16C5F24A85D5F00C6DB06 /* BigSurAddTab@2x.png in Resources */,
 				A6F7A737213CB143004DE961 /* StatusBarIconGitBranch@2x.png in Resources */,
