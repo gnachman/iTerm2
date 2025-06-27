@@ -223,7 +223,13 @@ class iTermURLBar: NSView {
     // MARK: - Public Methods
     
     @objc func focus() {
-        textField.focus()
+        if textField.isFirstResponder {
+            // Already focused, select all text
+            textField.selectText(nil)
+        } else {
+            // Not focused, focus it (which will select all automatically)
+            textField.focus()
+        }
     }
     
     @objc func cleanup() {
