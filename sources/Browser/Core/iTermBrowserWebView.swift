@@ -117,6 +117,8 @@ class iTermBrowserWebView: WKWebView {
         let (callSuper, sideEffects) = mouseDownImpl(event: event)
         if callSuper {
             super.mouseDown(with: event)
+        } else {
+            DLog("Not calling super")
         }
         if sideEffects != [.ignore] {
             setMouseInfo(event: event, sideEffects: sideEffects)
@@ -161,7 +163,9 @@ class iTermBrowserWebView: WKWebView {
         mouseDownLocationInWindow = event.locationInWindow
 
         let ssClicks = if iTermPreferences.bool(forKey: kPreferenceKeyDoubleClickPerformsSmartSelection) {
-            2
+            // Unfortunately this breaks double-click followed by drag. Better to keep that working than have smart select on double click.
+            // 2
+            4
         } else {
             4
         }
