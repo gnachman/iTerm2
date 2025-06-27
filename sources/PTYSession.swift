@@ -1158,6 +1158,10 @@ extension PTYSession {
             KEY_CURSOR_BOOST + COLORS_DARK_MODE_SUFFIX: nullValue,
         ]
         setSessionSpecificProfileValues(terminalOnlyKeys)
+
+        if iTermProfilePreferences.bool(forKey: KEY_BROWSER_DEV_NULL, inProfile: self.profile) {
+            setSessionSpecificProfileValues([KEY_UNDO_TIMEOUT: 0])
+        }
         let vc = iTermBrowserViewController(configuration: configuration,
                                             sessionGuid: guid,
                                             profile: profile)

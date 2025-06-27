@@ -35,9 +35,11 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     // MARK: - Public Interface
     
     func generateSettingsHTML() -> String {
+        let isDevNull = (user == .devNull)
         let substitutions = ["ADBLOCK_ENABLED": iTermAdvancedSettingsModel.adblockEnabled() ? "checked" : "",
                              "ADBLOCK_URL": iTermAdvancedSettingsModel.adblockListURL().replacingOccurrences(of: "&", with: "&amp;").replacingOccurrences(of: "\"", with: "&quot;"),
-                             "SECRET": secret]
+                             "SECRET": secret,
+                             "DEV_NULL_NOTE": isDevNull ? "" : "display: none;"]
 
         return iTermBrowserTemplateLoader.loadTemplate(named: "settings-page",
                                                        type: "html",

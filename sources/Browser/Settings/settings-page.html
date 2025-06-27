@@ -144,6 +144,26 @@
             background: linear-gradient(135deg, #ff9500, #ffcc02);
         }
         
+        /* Dev null note styling */
+        .dev-null-note {
+            background: linear-gradient(135deg, #007aff10, #5ac8fa08);
+            border: 1px solid #007aff30;
+            border-radius: 12px;
+            margin: 0 -8px 16px -8px;
+            padding: 18px 20px !important;
+        }
+        
+        .dev-null-note .setting-info h3 {
+            color: #007aff;
+            font-weight: 700;
+        }
+        
+        .dev-null-note .setting-info p {
+            color: var(--text-color);
+            opacity: 0.9;
+            font-weight: 500;
+        }
+        
         
         /* Input group */
         .input-group {
@@ -231,6 +251,12 @@
         <div class="privacy-section">
             <div class="section">
                 <h2>Privacy & Data</h2>
+                <div class="setting-item dev-null-note" style="{{DEV_NULL_NOTE}}">
+                    <div class="setting-info">
+                        <h3>🔒 /dev/null Mode Active</h3>
+                        <p>This profile is in /dev/null mode. Cookies, history, and all other browser data are stored in RAM and will be lost when the tab is closed.</p>
+                    </div>
+                </div>
                 <div class="setting-item">
                     <div class="setting-info">
                         <h3>Clear All Cookies</h3>
