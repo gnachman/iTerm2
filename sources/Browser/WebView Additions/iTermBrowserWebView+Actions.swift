@@ -370,7 +370,7 @@ extension iTermBrowserWebView {
         do {
             let result = try await evaluateJavaScript(script)
             if let selectedText = result as? String {
-                let shouldCopy = !selectedText.isEmpty || !iTermAdvancedSettingsModel.disallowCopyEmptyString()
+                let shouldCopy = !selectedText.isEmpty
                 if shouldCopy {
                     await MainActor.run {
                         let pasteboard = NSPasteboard.general

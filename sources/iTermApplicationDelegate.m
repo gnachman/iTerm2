@@ -3430,10 +3430,10 @@ static iTermKeyEventReplayer *gReplayer;
         [menu removeAllItems];
 
         // Populate the submenu with dynamic menu items
-        NSArray<id<VT100ScreenMarkReading>> *namedMarks = [[[[[[iTermController sharedInstance] currentTerminal] currentSession] screen] namedMarks] sortedArrayUsingComparator:^NSComparisonResult(id<VT100ScreenMarkReading> lhs, id<VT100ScreenMarkReading> rhs) {
-            return [@(lhs.entry.interval.location) compare:@(rhs.entry.interval.location)];
+        NSArray<id<iTermGenericNamedMarkReading>> *namedMarks = [[[[[iTermController sharedInstance] currentTerminal] currentSession] namedMarks] sortedArrayUsingComparator:^NSComparisonResult(id<VT100ScreenMarkReading> lhs, id<VT100ScreenMarkReading> rhs) {
+            return [@(lhs.namedMarkSort) compare:@(rhs.namedMarkSort)];
         }];
-        for (id<VT100ScreenMarkReading> mark in namedMarks) {
+        for (id<iTermGenericNamedMarkReading> mark in namedMarks) {
             NSMenuItem *menuItem = [[NSMenuItem alloc] initWithTitle:mark.name ?: @"Unnamed Mark"
                                                               action:@selector(navigateToNamedMark:)
                                                        keyEquivalent:@""];

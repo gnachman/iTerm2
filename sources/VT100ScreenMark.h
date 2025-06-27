@@ -18,11 +18,17 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol VT100ScreenMarkReading;
 @class iTermPromise<T>;
 
+@protocol iTermGenericNamedMarkReading
+@property (nonatomic, readonly, nullable, copy) NSString *name;
+@property (nonatomic, readonly) NSInteger namedMarkSort;
+@property (nonatomic, readonly, copy) NSString *guid;
+@end
+
 @protocol iTermMarkDelegate <NSObject>
 - (void)markDidBecomeCommandMark:(id<VT100ScreenMarkReading>)mark;
 @end
 
-@protocol VT100ScreenMarkReading<NSObject, IntervalTreeImmutableObject, iTermMark>
+@protocol VT100ScreenMarkReading<NSObject, IntervalTreeImmutableObject, iTermMark, iTermGenericNamedMarkReading>
 @property(nonatomic, readonly) BOOL isPrompt;
 @property(nonatomic, copy, readonly) NSString *guid;
 @property(nonatomic, readonly) NSInteger clearCount;

@@ -23,6 +23,7 @@
     func browserManager(_ manager: iTermBrowserManager, openPasswordManagerForHost host: String?, forUser: Bool, didSendUserName: (() -> ())?)
     func browserManagerDidRequestSavePageAs(_ manager: iTermBrowserManager)
     func browserManagerDidRequestCopyPageTitle(_ manager: iTermBrowserManager)
+    func browserManagerDidRequestAddNamedMark(_ manager: iTermBrowserManager, atPoint point: NSPoint)
     func browserManager(_ manager: iTermBrowserManager, didChangeReaderModeState isActive: Bool)
     func browserManager(_ manager: iTermBrowserManager, didChangeDistractionRemovalState isActive: Bool)
     func browserManagerSetMouseInfo(
@@ -61,6 +62,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private var navigationCount = 0
     private let readerModeManager = iTermBrowserReaderModeManager()
     let user: iTermBrowserUser
+    private var currentMainFrameHTTPMethod: String?
 
     private static var safariVersion = {
         Bundle(path: "/Applications/Safari.app")?.infoDictionary?["CFBundleShortVersionString"] as? String
@@ -360,6 +362,10 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         return readerModeManager.isDistractionRemovalActive
     }
     
+    var currentHTTPMethod: String? {
+        return currentMainFrameHTTPMethod
+    }
+    
     func loadURL(_ urlString: String) {
         guard let url = normalizeURL(urlString) else {
             // TODO: Handle invalid URL
@@ -587,6 +593,10 @@ extension iTermBrowserManager: iTermBrowserWebViewDelegate {
 
     func webViewDidRequestCopyPageTitle(_ webView: iTermBrowserWebView) {
         copyPageTitle()
+    }
+    
+    func webViewDidRequestAddNamedMark(_ webView: iTermBrowserWebView, atPoint point: NSPoint) {
+        delegate?.browserManagerDidRequestAddNamedMark(self, atPoint: point)
     }
 
     func webViewDidRequestDoSmartSelection(_ webView: iTermBrowserWebView,
@@ -833,6 +843,11 @@ extension iTermBrowserManager: WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        // Track HTTP method for main frame navigations only
+        if navigationAction.targetFrame?.isMainFrame == true {
+            currentMainFrameHTTPMethod = navigationAction.request.httpMethod
+        }
+        
         if navigationAction.navigationType == .linkActivated {
             if navigationAction.modifierFlags.contains(.command),
                let url = navigationAction.request.url {

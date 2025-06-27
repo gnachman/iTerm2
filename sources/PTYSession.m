@@ -626,7 +626,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     iTermPasteboardReporter *_pasteboardReporter;
     iTermSSHState _sshState;
     // Stored browser interaction state for restoration
-    NSData *_savedBrowserState;
+    NSDictionary *_savedBrowserState;
     // (unique ID, hostname)
     NSMutableData *_sshWriteQueue;
     BOOL _jiggleUponAttach;
@@ -2001,7 +2001,7 @@ ITERM_WEAKLY_REFERENCEABLE
             // Store browser state for restoration in startProgram:
         }
         if (restoreContents || [options[PTYSessionArrangementOptionsForDuplication] boolValue]) {
-            aSession->_savedBrowserState = [[NSData castFrom:arrangement[SESSION_ARRANGEMENT_BROWSER_STATE]] retain];
+            aSession->_savedBrowserState = [[NSDictionary castFrom:arrangement[SESSION_ARRANGEMENT_BROWSER_STATE]] retain];
         }
         if (arrangement[SESSION_ARRANGEMENT_KEYLABELS]) {
             // restoreKeyLabels wants the cursor position to be set so do it after restoring contents.
@@ -2998,7 +2998,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (@available(macOS 11, *)) {
         if (browser) {
             [self becomeBrowserWithConfiguration:webViewConfiguration
-                                interactionState:_savedBrowserState];
+                                 restorableState:_savedBrowserState];
             [_savedBrowserState release];
             _savedBrowserState = nil;
             completion(YES);
@@ -6040,10 +6040,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (includeContents || [options[PTYSessionArrangementOptionsForDuplication] boolValue]) {
         if (@available(macOS 11, *)) {
             if (_view.isBrowser && _view.browserViewController) {
-                id interactionState = _view.browserViewController.interactionState;
-                NSData *browserStateData = [NSData castFrom:interactionState];
-                if (browserStateData) {
-                    result[SESSION_ARRANGEMENT_BROWSER_STATE] = browserStateData;
+                NSDictionary *browserState = _view.browserViewController.restorableState;
+                if (browserState) {
+                    result[SESSION_ARRANGEMENT_BROWSER_STATE] = browserState;
                 }
             }
         }
@@ -8753,6 +8752,23 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 }
 
+- (void)scrollToNamedMark:(id<iTermGenericNamedMarkReading>)genericMark {
+    if (@available(macOS 11, *)) {
+        if (self.isBrowserSession) {
+            [_view.browserViewController revealNamedMark:genericMark];
+            return;
+        }
+    }
+    if ([[NSObject castFrom:genericMark] conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
+        id<VT100ScreenMarkReading> mark = (id)genericMark;
+        if ([_screen containsMark:mark]) {
+            VT100GridRange range = [_screen lineNumberRangeOfInterval:mark.entry.interval];
+            [_textview scrollLineNumberRangeIntoView:range];
+            [self highlightMarkOrNote:mark];
+        }
+    }
+}
+
 - (void)revealPromptMarkWithID:(NSString *)guid {
     id<VT100ScreenMarkReading> mark = [_screen promptMarkWithGUID:guid];
     if (mark) {
@@ -8766,6 +8782,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)scrollToMarkWithGUID:(NSString *)guid {
+    if (@available(macOS 11, *)) {
+        if (self.isBrowserSession) {
+            [_view.browserViewController revealNamedMarkWithGUID:guid];
+        }
+        return;
+    }
     id<VT100ScreenMarkReading> mark = [_screen namedMarkWithGUID:guid];
     if (mark) {
         [self scrollToMark:mark];
@@ -13816,6 +13838,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)saveScrollPositionWithName:(NSString *)name {
+    if (@available(macOS 11, *)) {
+        if ([self isBrowserSession]) {
+            [_view.browserViewController addNamedMark:name];
+        }
+    }
     DLog(@"saveScrollPositionWithName:%@", name);
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [_textview refresh];  // Handle scrollback overflow so we have the most recent scroll position
@@ -13835,27 +13862,67 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }];
 }
 
-- (void)renameMark:(id<VT100ScreenMarkReading>)mark to:(NSString *)newName {
-    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        VT100ScreenMark *screenMark = (VT100ScreenMark *)[mark progenitor];
-        if (!screenMark.entry.interval) {
-            // Mark has already been rmeoved
+- (void)renameMark:(id<iTermGenericNamedMarkReading>)genericMark to:(NSString *)newName {
+    if (@available(macOS 11, *)) {
+        if (self.isBrowserSession) {
+            [_view.browserViewController renameNamedMark:genericMark to:newName];
             return;
         }
-        if (!newName && !screenMark.command && !screenMark.isPrompt) {
-            // Remove a non-command named mark
-            [mutableState removeNamedMark:screenMark];
+    }
+    if ([[NSObject castFrom:genericMark] conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
+        id<VT100ScreenMarkReading> mark = (id)genericMark;
+        [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+            VT100ScreenMark *screenMark = (VT100ScreenMark *)[mark progenitor];
+            if (!screenMark.entry.interval) {
+                // Mark has already been rmeoved
+                return;
+            }
+            if (!newName && !screenMark.command && !screenMark.isPrompt) {
+                // Remove a non-command named mark
+                [mutableState removeNamedMark:screenMark];
+                return;
+            }
+            [mutableState setName:newName forMark:screenMark];
+            VT100GridAbsCoordRange range = [mutableState absCoordRangeForInterval:mark.entry.interval];
+            const long long actualLine = range.end.y;
+            [mutableState removeAnnotationsOnLine:range.start.y];
+            if (newName) {
+                [mutableState addNoteWithText:[PTYAnnotation textForAnnotationForNamedMarkWithName:newName]
+                              inAbsoluteRange:VT100GridAbsCoordRangeMake(0, actualLine, mutableState.width, actualLine)];
+            }
+        }];
+    }
+}
+
+- (void)removeNamedMark:(id<iTermGenericNamedMarkReading>)genericMark {
+    if (@available(macOS 11, *)) {
+        if (self.isBrowserSession) {
+            [_view.browserViewController removeNamedMark:genericMark];
             return;
         }
-        [mutableState setName:newName forMark:screenMark];
-        VT100GridAbsCoordRange range = [mutableState absCoordRangeForInterval:mark.entry.interval];
-        const long long actualLine = range.end.y;
-        [mutableState removeAnnotationsOnLine:range.start.y];
-        if (newName) {
-            [mutableState addNoteWithText:[PTYAnnotation textForAnnotationForNamedMarkWithName:newName]
-                          inAbsoluteRange:VT100GridAbsCoordRangeMake(0, actualLine, mutableState.width, actualLine)];
+    }
+    if ([[NSObject castFrom:genericMark] conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
+        id<VT100ScreenMarkReading> mark = (id)genericMark;
+        [_screen removeNamedMark:mark];
+    }
+}
+
+- (BOOL)canAddNamedMark {
+    if (@available(macOS 11, *)) {
+        if (self.isBrowserSession) {
+            return _view.browserViewController.canAddNamedMark;
         }
-    }];
+    }
+    return YES; // Always allow for terminal sessions
+}
+
+- (NSArray<id<iTermGenericNamedMarkReading>> *)namedMarks {
+    if (@available(macOS 11, *)) {
+        if ([self isBrowserSession]) {
+            return [_view.browserViewController namedMarks];
+        }
+    }
+    return _screen.namedMarks;
 }
 
 - (void)screenStealFocus {

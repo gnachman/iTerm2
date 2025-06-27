@@ -45,7 +45,7 @@ class ToolNamedMarks: NSView, ToolbeltTool, NSTableViewDelegate, NSTableViewData
     private var removeButton: NSButton?
     private var editButton: NSButton?
 
-    private var marks = [VT100ScreenMarkReading]()
+    private var marks = [iTermGenericNamedMarkReading]()
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -137,9 +137,9 @@ class ToolNamedMarks: NSView, ToolbeltTool, NSTableViewDelegate, NSTableViewData
 
     @objc override var isFlipped: Bool { true }
 
-    @objc(setNamedMarks:) func set(marks: [VT100ScreenMarkReading]) {
+    @objc(setNamedMarks:) func set(marks: [iTermGenericNamedMarkReading]) {
         self.marks = marks.sorted(by: { lhs, rhs in
-            return (lhs.entry?.interval.location ?? 0) < (rhs.entry?.interval.location ?? 0)
+            return (lhs.namedMarkSort) < (rhs.namedMarkSort)
         })
         _tableView!.reloadData()
     }
@@ -178,7 +178,7 @@ class ToolNamedMarks: NSView, ToolbeltTool, NSTableViewDelegate, NSTableViewData
         if row == -1 {
             return
         }
-        toolWrapper().delegate?.delegate?.toolbeltDidSelect(marks[row])
+        toolWrapper().delegate?.delegate?.toolbeltDidSelectNamedMark(marks[row])
     }
 
     @objc func add(_ sender: Any) {
@@ -186,14 +186,14 @@ class ToolNamedMarks: NSView, ToolbeltTool, NSTableViewDelegate, NSTableViewData
     }
 
     @objc func remove(_ sender: Any) {
-        let marks = _tableView!.selectedRowIndexes.map { i -> VT100ScreenMarkReading in return self.marks[i] }
+        let marks = _tableView!.selectedRowIndexes.map { i -> iTermGenericNamedMarkReading in return self.marks[i] }
         for mark in marks {
             toolWrapper().delegate?.delegate?.toolbeltRemoveNamedMark(mark)
         }
     }
 
     @objc func edit(_ sender: Any) {
-        let marks = _tableView!.selectedRowIndexes.map { i -> VT100ScreenMarkReading in return self.marks[i] }
+        let marks = _tableView!.selectedRowIndexes.map { i -> iTermGenericNamedMarkReading in return self.marks[i] }
         for mark in marks {
             toolWrapper().delegate?.delegate?.toolbeltRenameNamedMark(mark, to: nil)
         }
@@ -206,6 +206,8 @@ class ToolNamedMarks: NSView, ToolbeltTool, NSTableViewDelegate, NSTableViewData
             let row = _tableView?.row(for: cell) else {
             return
         }
-        toolWrapper().delegate?.delegate?.toolbeltRenameNamedMark(marks[row], to: textField.stringValue)
+        let newValue = textField.stringValue
+        _tableView?.reloadData()
+        toolWrapper().delegate?.delegate?.toolbeltRenameNamedMark(marks[row], to: newValue)
     }
 }

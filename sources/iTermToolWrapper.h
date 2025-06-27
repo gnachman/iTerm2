@@ -19,6 +19,7 @@
 @protocol VT100ScreenMarkReading;
 @protocol VT100RemoteHostReading;
 @class iTermCommandHistoryCommandUseMO;
+@protocol iTermGenericNamedMarkReading;
 @class ToolNamedMarks;
 @class iTermToolWrapper;
 @class iTermToolCodecierge;
@@ -35,6 +36,7 @@
 - (id<ProcessInfoProvider>)toolbeltCurrentShellProcessInfoProvider;
 - (id<VT100ScreenMarkReading>)toolbeltLastCommandMark;
 - (void)toolbeltDidSelectMark:(id<iTermMark>)mark;
+- (void)toolbeltDidSelectNamedMark:(id<iTermGenericNamedMarkReading>)mark;
 - (void)toolbeltActivateTriggerForCapturedOutputInCurrentSession:(CapturedOutput *)capturedOutput;
 - (BOOL)toolbeltCurrentSessionHasGuid:(NSString *)guid;
 - (NSString *)toolbeltCurrentSessionGUID;
@@ -43,8 +45,8 @@
 - (void)toolbeltOpenAdvancedPasteWithString:(NSString *)text escaping:(iTermSendTextEscaping)escaping;
 - (void)toolbeltOpenComposerWithString:(NSString *)text escaping:(iTermSendTextEscaping)escaping;
 - (void)toolbeltAddNamedMark;
-- (void)toolbeltRemoveNamedMark:(id<VT100ScreenMarkReading>)mark;
-- (void)toolbeltRenameNamedMark:(id<VT100ScreenMarkReading>)mark to:(NSString *)newName;
+- (void)toolbeltRemoveNamedMark:(id<iTermGenericNamedMarkReading>)mark;
+- (void)toolbeltRenameNamedMark:(id<iTermGenericNamedMarkReading>)mark to:(NSString *)newName;
 - (NSArray<NSString *> *)toolbeltSnippetTags;
 - (void)toolbeltMakeCurrentSessionFirstResponder;
 

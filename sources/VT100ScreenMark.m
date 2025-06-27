@@ -217,6 +217,10 @@ static NSString *const kMarkOutputStart = @"Output Start";
             self.isDoppelganger ? @"IsDop" : @"NotDop"];
 }
 
+- (NSInteger)namedMarkSort {
+    return self.entry.interval.location;
+}
+
 - (NSString *)guid {
     if (!_guid) {
         self.guid = [NSString uuid];

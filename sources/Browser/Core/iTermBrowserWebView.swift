@@ -12,6 +12,7 @@ import WebKit
     func webViewDidRequestViewSource(_ webView: iTermBrowserWebView)
     func webViewDidRequestSavePageAs(_ webView: iTermBrowserWebView)
     func webViewDidRequestCopyPageTitle(_ webView: iTermBrowserWebView)
+    func webViewDidRequestAddNamedMark(_ webView: iTermBrowserWebView, atPoint point: NSPoint)
 
     // Should update self.variablesScope.mouseInfo
     func webViewSetMouseInfo(
@@ -40,6 +41,7 @@ class iTermBrowserWebView: WKWebView {
     private var mouseDown = false  // TODO
     private var mouseDownLocationInWindow: NSPoint?
     private var hoverLinkSecret: String?
+    private var contextMenuClickLocation: NSPoint?
 
     init(frame: CGRect,
          configuration: WKWebViewConfiguration,
@@ -477,7 +479,17 @@ class iTermBrowserWebView: WKWebView {
     override func willOpenMenu(_ menu: NSMenu, with event: NSEvent) {
         super.willOpenMenu(menu, with: event)
 
+        // Store the click location in view coordinates for the named mark functionality
+        contextMenuClickLocation = convert(event.locationInWindow, from: nil)
+
         // Add separator before our custom items
+        menu.addItem(NSMenuItem.separator())
+        
+        // Add Named Mark menu item
+        let addMarkItem = NSMenuItem(title: "Add Named Mark…", action: #selector(addNamedMarkMenuClicked), keyEquivalent: "")
+        addMarkItem.target = self
+        menu.addItem(addMarkItem)
+        
         menu.addItem(NSMenuItem.separator())
         
         // Add Save Page As menu item
@@ -503,6 +515,11 @@ class iTermBrowserWebView: WKWebView {
         menu.addItem(viewSourceItem)
     }
 
+    @objc private func addNamedMarkMenuClicked() {
+        guard let clickLocation = contextMenuClickLocation else { return }
+        browserDelegate?.webViewDidRequestAddNamedMark(self, atPoint: clickLocation)
+    }
+    
     @objc private func viewSourceMenuClicked() {
         browserDelegate?.webViewDidRequestViewSource(self)
     }

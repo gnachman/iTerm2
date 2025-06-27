@@ -904,10 +904,14 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (void)previousAnnotation;
 - (void)nextAnnotation;
 - (void)scrollToMark:(id<iTermMark>)mark;
+- (void)scrollToNamedMark:(id<iTermGenericNamedMarkReading>)mark;
 - (void)scrollToMarkWithGUID:(NSString *)guid;
 - (void)revealPromptMarkWithID:(NSString *)guid;
 - (void)saveScrollPositionWithName:(NSString *)name;
-- (void)renameMark:(id<VT100ScreenMarkReading>)mark to:(NSString *)newName;
+- (void)renameMark:(id<iTermGenericNamedMarkReading>)mark to:(NSString *)newName;
+- (NSArray<id<iTermGenericNamedMarkReading>> *)namedMarks;
+- (void)removeNamedMark:(id<iTermGenericNamedMarkReading>)mark;
+- (BOOL)canAddNamedMark;
 
 // Select this session and tab and bring window to foreground.
 - (void)reveal;

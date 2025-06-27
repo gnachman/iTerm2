@@ -2158,8 +2158,14 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self currentSession] screenSaveScrollPosition];
 }
 
-- (IBAction)addNamedMark:(id)sender
-{
+- (IBAction)addNamedMark:(id)sender {
+    if (self.currentSession.isBrowserSession) {
+        // I'm not sure this is reachable but I want to be safe.
+        if (@available(macOS 11, *)) {
+            [self.currentSession.view.browserViewController addNamedMark:sender];
+        }
+        return;
+    }
     __weak PTYSession *session = self.currentSession;
     [iTermBookmarkDialogViewController showInWindow:self.window
                                      withCompletion:^(NSString * _Nonnull name) {
@@ -3796,7 +3802,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)refreshNamedMarks {
-    [[_contentView.toolbelt namedMarksView] setNamedMarks:self.currentSession.screen.namedMarks];
+    [[_contentView.toolbelt namedMarksView] setNamedMarks:self.currentSession.namedMarks];
 }
 
 - (int)numRunningSessions
@@ -10832,6 +10838,8 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         return self.currentSession != nil && !self.currentSession.shouldShowAutoComposer;
     } else if (item.action == @selector(reset:)) {
         return self.currentSession != nil && !self.currentSession.view.isBrowser;
+    } else if (item.action == @selector(addNamedMark:)) {
+        return self.currentSession != nil && [self.currentSession canAddNamedMark];
     }
 
     return result;
@@ -12148,6 +12156,11 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     [self.currentSession takeFocus];
 }
 
+- (void)toolbeltDidSelectNamedMark:(id<iTermGenericNamedMarkReading>)mark {
+    [self.currentSession scrollToNamedMark:mark];
+    [self.currentSession takeFocus];
+}
+
 - (void)toolbeltActivateTriggerForCapturedOutputInCurrentSession:(CapturedOutput *)capturedOutput {
     [self.currentSession performActionForCapturedOutput:capturedOutput];
 }
@@ -12176,8 +12189,8 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     [self addNamedMark:nil];
 }
 
-- (void)toolbeltRemoveNamedMark:(id<VT100ScreenMarkReading>)mark {
-    [self.currentSession.screen removeNamedMark:mark];
+- (void)toolbeltRemoveNamedMark:(id<iTermGenericNamedMarkReading>)mark {
+    [self.currentSession removeNamedMark:mark];
 }
 
 - (void)toolbeltRenameNamedMark:(id<VT100ScreenMarkReading>)mark to:(NSString *)newName {
