@@ -53,6 +53,7 @@ class iTermBrowserToolbar: NSView {
     private var forwardButton: NSButton!
     private var reloadButton: NSButton!
     private var stopButton: NSButton!
+    private var devNullIndicator: NSButton!
     private var urlBar: iTermURLBar!
     private var menuButton: NSButton!
 
@@ -100,6 +101,14 @@ class iTermBrowserToolbar: NSView {
         stopButton.isHidden = true  // Initially hidden, shown during loading
         addSubview(stopButton)
         
+        devNullIndicator = NSButton()
+        devNullIndicator.image = NSImage(systemSymbolName: "eye.slash", accessibilityDescription: "Dev Null Mode")
+        devNullIndicator.target = self
+        devNullIndicator.action = #selector(devNullIndicatorTapped)
+        devNullIndicator.translatesAutoresizingMaskIntoConstraints = false
+        devNullIndicator.isHidden = true  // Initially hidden, shown only in /dev/null mode
+        addSubview(devNullIndicator)
+        
         urlBar = iTermURLBar()
         urlBar.delegate = self
         urlBar.translatesAutoresizingMaskIntoConstraints = false
@@ -138,8 +147,14 @@ class iTermBrowserToolbar: NSView {
             
             urlBar.leadingAnchor.constraint(equalTo: reloadButton.trailingAnchor, constant: 12),
             urlBar.centerYAnchor.constraint(equalTo: centerYAnchor),
-            urlBar.trailingAnchor.constraint(equalTo: menuButton.leadingAnchor, constant: -12),
+            urlBar.trailingAnchor.constraint(equalTo: devNullIndicator.leadingAnchor, constant: -12),
             urlBar.heightAnchor.constraint(equalToConstant: 28),
+            
+            // Dev null indicator positioned to the left of menu button
+            devNullIndicator.trailingAnchor.constraint(equalTo: menuButton.leadingAnchor, constant: -8),
+            devNullIndicator.centerYAnchor.constraint(equalTo: centerYAnchor),
+            devNullIndicator.widthAnchor.constraint(equalToConstant: 32),
+            devNullIndicator.heightAnchor.constraint(equalToConstant: 32),
             
             menuButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
             menuButton.centerYAnchor.constraint(equalTo: centerYAnchor),
@@ -175,6 +190,10 @@ class iTermBrowserToolbar: NSView {
     
     @objc private func stopTapped() {
         delegate?.browserToolbarDidTapStop()
+    }
+    
+    @objc private func devNullIndicatorTapped() {
+        showDevNullInfoPopover()
     }
     
     // URL submission is now handled by iTermURLBar delegate
@@ -222,27 +241,29 @@ class iTermBrowserToolbar: NSView {
 
                 }
 
-                let bookmarkTitle = isBookmarked ? "Remove Bookmark" : "Add Bookmark"
-                let bookmarkIcon = isBookmarked ? "bookmark.fill" : "bookmark"
-                let bookmarkItem = NSMenuItem(title: bookmarkTitle, action: #selector(bookmarkMenuItemSelected), keyEquivalent: "")
-                bookmarkItem.target = self
-                bookmarkItem.image = NSImage(systemSymbolName: bookmarkIcon, accessibilityDescription: nil)
-                bookmarkItem.isEnabled = currentURL != nil
-                menu.addItem(bookmarkItem)
-                
-                menu.addItem(NSMenuItem.separator())
+                if devNullIndicator.isHidden {
+                    let bookmarkTitle = isBookmarked ? "Remove Bookmark" : "Add Bookmark"
+                    let bookmarkIcon = isBookmarked ? "bookmark.fill" : "bookmark"
+                    let bookmarkItem = NSMenuItem(title: bookmarkTitle, action: #selector(bookmarkMenuItemSelected), keyEquivalent: "")
+                    bookmarkItem.target = self
+                    bookmarkItem.image = NSImage(systemSymbolName: bookmarkIcon, accessibilityDescription: nil)
+                    bookmarkItem.isEnabled = currentURL != nil
+                    menu.addItem(bookmarkItem)
 
-                // Manage Bookmarks menu item
-                let manageBookmarksItem = NSMenuItem(title: "Manage Bookmarks", action: #selector(manageBookmarksMenuItemSelected), keyEquivalent: "")
-                manageBookmarksItem.target = self
-                manageBookmarksItem.image = NSImage(systemSymbolName: "book", accessibilityDescription: nil)
-                menu.addItem(manageBookmarksItem)
+                    menu.addItem(NSMenuItem.separator())
 
-                // History menu item
-                let historyItem = NSMenuItem(title: "History", action: #selector(historyMenuItemSelected), keyEquivalent: "")
-                historyItem.target = self
-                historyItem.image = NSImage(systemSymbolName: "clock", accessibilityDescription: nil)
-                menu.addItem(historyItem)
+                    // Manage Bookmarks menu item
+                    let manageBookmarksItem = NSMenuItem(title: "Manage Bookmarks", action: #selector(manageBookmarksMenuItemSelected), keyEquivalent: "")
+                    manageBookmarksItem.target = self
+                    manageBookmarksItem.image = NSImage(systemSymbolName: "book", accessibilityDescription: nil)
+                    menu.addItem(manageBookmarksItem)
+
+                    // History menu item
+                    let historyItem = NSMenuItem(title: "History", action: #selector(historyMenuItemSelected), keyEquivalent: "")
+                    historyItem.target = self
+                    historyItem.image = NSImage(systemSymbolName: "clock", accessibilityDescription: nil)
+                    menu.addItem(historyItem)
+                }
 
                 menu.addItem(NSMenuItem.separator())
 
@@ -326,6 +347,22 @@ class iTermBrowserToolbar: NSView {
     func updateNavigationButtons(canGoBack: Bool, canGoForward: Bool) {
         backButton.isEnabled = canGoBack
         forwardButton.isEnabled = canGoForward
+    }
+    
+    func setDevNullMode(_ isDevNull: Bool) {
+        devNullIndicator.isHidden = !isDevNull
+    }
+    
+    private func showDevNullInfoPopover() {
+        devNullIndicator.it_showInformativeMessage(withMarkdown: """
+        ## /dev/null Mode
+        
+        Your browsing activity is not being saved. No history, bookmarks, or other data will be stored.
+        
+        This mode is set in the browser’s Profile under **Settings > Profile > Web > Privacy**.
+        
+        ## 🙈 🙉 🙊
+        """)
     }
     
     // MARK: - Long Press History
