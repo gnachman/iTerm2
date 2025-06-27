@@ -60,11 +60,13 @@ class iTermBrowserKeyBindingActionPerformer {
                 .ACTION_SEND_C_H_BACKSPACE, .ACTION_SEND_C_QM_BACKSPACE, .ACTION_RUN_COPROCESS,
                 .ACTION_TOGGLE_MOUSE_REPORTING:
             // Bindings that do not make sense in a browser are "handled".
+            // UPDATE iTermEditKeyActionWindowController WHEN CHANGING THIS! It excludes items that are in this list.
             return true
 
         case .ACTION_LOAD_COLOR_PRESET, .ACTION_FIND_REGEX, .ACTION_PASTE_SPECIAL,
                 .ACTION_PASTE_SPECIAL_FROM_SELECTION:
             // Not yet implemented, but should be!
+            // UPDATE iTermEditKeyActionWindowController WHEN CHANGING THIS! It excludes items that are in this list.
             return true
 
             // Variations of sending text
