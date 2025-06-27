@@ -181,6 +181,15 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                 configuration.userContentController.addUserScript(userScript)
             }
             
+            if let autofillHandler = iTermBrowserAutofillHandler.instance {
+                autofillHandler.delegate = self
+                let userScript = WKUserScript(source: autofillHandler.javascript,
+                                              injectionTime: .atDocumentEnd,
+                                              forMainFrameOnly: false)
+                configuration.userContentController.add(self, name: iTermBrowserAutofillHandler.messageHandlerName)
+                configuration.userContentController.addUserScript(userScript)
+            }
+            
             // Set up hover link detection
             hoverLinkHandler = iTermBrowserHoverLinkHandler()
             if let hoverLinkHandler = hoverLinkHandler {
@@ -655,6 +664,9 @@ extension iTermBrowserManager {
                 NSLog("BrowserManager: WebView frame %@ -> delegate", NSStringFromRect(hoverInfo.frame))
                 delegate?.browserManager(self, didHoverURL: hoverInfo.url, frame: hoverInfo.frame)
             }
+            
+        case iTermBrowserAutofillHandler.messageHandlerName:
+            _ = iTermBrowserAutofillHandler.instance?.handleMessage(webView: webView, message: message)
 
         default:
             DLog(message.name)
@@ -1304,5 +1316,28 @@ extension iTermBrowserManager: iTermBrowserReaderModeManagerDelegate {
     
     func readerModeManager(_ manager: iTermBrowserReaderModeManager, didChangeDistractionRemovalState isActive: Bool) {
         delegate?.browserManager(self, didChangeDistractionRemovalState: isActive)
+    }
+}
+
+@available(macOS 11.0, *)
+extension iTermBrowserManager: iTermBrowserAutofillHandlerDelegate {
+    func autoFillHandler(_ handler: iTermBrowserAutofillHandler,
+                         requestAutofillForHost host: String,
+                         fields: [[String: Any]]) {
+        NSLog("Autofill requested for host: \(host) with \(fields.count) fields")
+        
+        Task {
+            let contactSource = iTermBrowserAutofillContactSource()
+            do {
+                let fieldData = try await contactSource.prepareAutofillData(for: fields)
+                if !fieldData.isEmpty {
+                    await handler.fillFields(fieldData)
+                } else {
+                    NSLog("No contact data available for autofill")
+                }
+            } catch {
+                NSLog("Failed to get contact data for autofill: \(error)")
+            }
+        }
     }
 }

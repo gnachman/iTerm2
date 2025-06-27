@@ -12,7 +12,11 @@
       "WebFetch(domain:swiftlybald.com)",
       "Bash(xcodebuild:*)",
       "Bash(git add:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(mkdir:*)",
+      "Bash(for file in /Users/gnachman/git/iterm2-alt3/plists/{beta,dev,nightly,preview,release}-iTerm2.plist)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(done)"
     ],
     "deny": []
   }
