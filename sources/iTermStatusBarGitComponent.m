@@ -106,6 +106,10 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     return self;
 }
 
++ (int)compatibleProfileTypes {
+    return ProfileTypeTerminal;
+}
+
 - (void)pwdDidChange {
     DLog(@"PWD changed, update git poller directory");
     _gitPoller.currentDirectory = [self.scope valueForVariableName:iTermVariableKeySessionPath];

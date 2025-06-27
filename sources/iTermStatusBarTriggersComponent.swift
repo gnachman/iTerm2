@@ -23,6 +23,10 @@ class StatusBarTriggersComponent: iTermStatusBarTextComponent {
         return delegate?.statusBarComponentTriggersDataSource(self)
     }
 
+    override static var compatibleProfileTypes: ProfileType {
+        [.terminal]
+    }
+
     override func statusBarComponentIcon() -> NSImage {
         return NSImage.it_cacheableImageNamed("StatusBarIconTriggers", for: Self.self)
     }

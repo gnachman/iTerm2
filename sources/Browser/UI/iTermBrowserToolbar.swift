@@ -193,11 +193,6 @@ class iTermBrowserToolbar: NSView {
             let readerAvailable = (await delegate?.browserToolbarShouldOfferReaderMode() == true)
             await MainActor.run {
                 if readerAvailable {
-                    let askAIItem = NSMenuItem(title: "Ask AI…", action: #selector(askAIMenuItemSelected), keyEquivalent: "")
-                    askAIItem.target = self
-                    askAIItem.image = NSImage(systemSymbolName: "sparkles", accessibilityDescription: nil)
-                    menu.addItem(askAIItem)
-
                     // Reader Mode menu item
                     let isReaderModeActive = delegate?.browserToolbarIsReaderModeActive() ?? false
                     let readerModeTitle = isReaderModeActive ? "Exit Reader Mode" : "Reader Mode"
@@ -207,7 +202,7 @@ class iTermBrowserToolbar: NSView {
                     readerModeItem.image = NSImage(systemSymbolName: readerModeIcon, accessibilityDescription: nil)
                     readerModeItem.isEnabled = currentURL != nil
                     menu.addItem(readerModeItem)
-                    
+
                     // Distraction Removal menu item
                     let isDistractionRemovalActive = delegate?.browserToolbarIsDistractionRemovalActive() ?? false
                     let distractionRemovalTitle = isDistractionRemovalActive ? "Exit Distraction Removal" : "Remove Distractions"
@@ -217,6 +212,14 @@ class iTermBrowserToolbar: NSView {
                     distractionRemovalItem.image = NSImage(systemSymbolName: distractionRemovalIcon, accessibilityDescription: nil)
                     distractionRemovalItem.isEnabled = currentURL != nil
                     menu.addItem(distractionRemovalItem)
+
+                    menu.addItem(NSMenuItem.separator())
+
+                    let askAIItem = NSMenuItem(title: "Ask AI…", action: #selector(askAIMenuItemSelected), keyEquivalent: "")
+                    askAIItem.target = self
+                    askAIItem.image = NSImage(systemSymbolName: "sparkles", accessibilityDescription: nil)
+                    menu.addItem(askAIItem)
+
                 }
 
                 let bookmarkTitle = isBookmarked ? "Remove Bookmark" : "Add Bookmark"
@@ -249,6 +252,7 @@ class iTermBrowserToolbar: NSView {
                 debugAutofillItem.target = self
                 debugAutofillItem.image = NSImage(systemSymbolName: "magnifyingglass.circle", accessibilityDescription: nil)
                 menu.addItem(debugAutofillItem)
+                menu.addItem(NSMenuItem.separator())
                 #endif
 
                 // Settings menu item

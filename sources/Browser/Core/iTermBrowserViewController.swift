@@ -58,6 +58,8 @@ protocol iTermBrowserViewControllerDelegate: AnyObject {
                                      scriptFunction: String)
     func browserViewControllerSmartSelectionRules(
         _ controller: iTermBrowserViewController) -> [SmartSelectRule]
+    func browserViewController(_ controller: iTermBrowserViewController,
+                               didNavigateTo url: URL)
 }
 
 @available(macOS 11.0, *)
@@ -644,6 +646,9 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
     func browserManager(_ manager: iTermBrowserManager, didFinishNavigation navigation: WKNavigation?) {
         toolbar.setLoading(false)
         namedMarkManager.didFinishNavigation(webView: manager.webView, success: true)
+        if let url = manager.webView.url {
+            delegate?.browserViewController(self, didNavigateTo: url)
+        }
     }
 
     func browserManager(_ manager: iTermBrowserManager, didFailNavigation navigation: WKNavigation?, withError error: Error) {

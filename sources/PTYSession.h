@@ -492,7 +492,7 @@ backgroundColor:(NSColor *)backgroundColor;
 // Call this on tmux clients to get the session with the tmux gateway.
 @property(nonatomic, readonly) PTYSession *tmuxGatewaySession;
 
-@property(nonatomic, readonly) id<VT100RemoteHostReading> currentHost;
+@property(nonatomic) id<VT100RemoteHostReading> currentHost;
 
 @property(nonatomic, readonly) int tmuxPane;
 
