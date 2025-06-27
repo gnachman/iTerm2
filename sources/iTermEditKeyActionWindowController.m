@@ -337,13 +337,13 @@ const CGFloat sideMarginWidth = 40;
     }
 
     groups = [groups arrayByAddingObjectsFromArray:[@[
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Miscellaneous" items:@[
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Run Coprocess" tag:KEY_ACTION_RUN_COPROCESS],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Start Instant Replay" tag:KEY_ACTION_IR_BACKWARD],
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Miscellaneous" items:[@[
+            _profileType != ProfileTypeTerminal ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:@"Run Coprocess" tag:KEY_ACTION_RUN_COPROCESS],
+            _profileType != ProfileTypeTerminal ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:@"Start Instant Replay" tag:KEY_ACTION_IR_BACKWARD],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Undo" tag:KEY_ACTION_UNDO],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send tmux Command" tag:KEY_ACTION_SEND_TMUX_COMMAND],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Alert on Next Mark" tag:KEY_ACTION_ALERT_ON_NEXT_MARK],
-        ]],
+        ] arrayByRemovingNulls]],
 
         [[iTermSearchableComboViewGroup alloc] initWithLabel:@"New Tab or Window" items:@[
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"New Window with Profile" tag:KEY_ACTION_NEW_WINDOW_WITH_PROFILE],
@@ -356,10 +356,10 @@ const CGFloat sideMarginWidth = 40;
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Split Vertically with Profile" tag:KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE],
         ]],
 
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Profile" items:@[
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Profile" items:[@[
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Change Profile" tag:KEY_ACTION_SET_PROFILE],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Load Color Preset" tag:KEY_ACTION_LOAD_COLOR_PRESET],
-        ]],
+            _profileType != ProfileTypeTerminal ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:@"Load Color Preset" tag:KEY_ACTION_LOAD_COLOR_PRESET],
+        ] arrayByRemovingNulls]],
 
         [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Navigate Tabs" items:@[
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Next Tab" tag:KEY_ACTION_NEXT_SESSION],
@@ -411,37 +411,37 @@ const CGFloat sideMarginWidth = 40;
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Move Session to Split Pane" tag:KEY_ACTION_MOVE_TO_SPLIT_PANE],
         ]],
 
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Send Keystrokes" items:@[
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send ^H Backspace" tag:KEY_ACTION_SEND_C_H_BACKSPACE],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send ^? Backspace" tag:KEY_ACTION_SEND_C_QM_BACKSPACE],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Escape Sequence" tag:KEY_ACTION_ESCAPE_SEQUENCE],
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Send Keystrokes" items:[@[
+            _profileType != ProfileTypeTerminal ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send ^H Backspace" tag:KEY_ACTION_SEND_C_H_BACKSPACE],
+            _profileType != ProfileTypeTerminal ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send ^? Backspace" tag:KEY_ACTION_SEND_C_QM_BACKSPACE],
+            _profileType != ProfileTypeTerminal ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Escape Sequence" tag:KEY_ACTION_ESCAPE_SEQUENCE],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Hex Code" tag:KEY_ACTION_HEX_CODE],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Text" tag:KEY_ACTION_TEXT],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Text with “vim” Special Chars" tag:KEY_ACTION_VIM_TEXT],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Snippet" tag:KEY_ACTION_SEND_SNIPPET],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Compose…" tag:KEY_ACTION_COMPOSE],
-        ]],
+        ] arrayByRemovingNulls]],
 
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Search" items:@[
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Find Regular Expression…" tag:KEY_ACTION_FIND_REGEX],
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Search" items:[@[
+            _profileType != ProfileTypeTerminal ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:@"Find Regular Expression…" tag:KEY_ACTION_FIND_REGEX],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Find Again Down" tag:KEY_FIND_AGAIN_DOWN],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Find Again Up" tag:KEY_FIND_AGAIN_UP],
-        ]],
+        ] arrayByRemovingNulls]],
 
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Pasteboard" items:@[
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Paste…" tag:KEY_ACTION_PASTE_SPECIAL],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Paste from Selection…" tag:KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION],
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Pasteboard" items:[@[
+            _profileType != ProfileTypeTerminal ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:@"Paste…" tag:KEY_ACTION_PASTE_SPECIAL],
+            _profileType != ProfileTypeTerminal ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:@"Paste from Selection…" tag:KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Copy or Send ^C" tag:KEY_ACTION_COPY_OR_SEND],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Paste or Send ^V" tag:KEY_ACTION_PASTE_OR_SEND],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Copy Interpolated String" tag:KEY_ACTION_COPY_INTERPOLATED_STRING],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Copy Mode Commands" tag:KEY_ACTION_COPY_MODE],
-        ]],
+        ] arrayByRemovingNulls]],
 
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Toggles" items:@[
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Toggles" items:[@[
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Toggle Fullscreen" tag:KEY_ACTION_TOGGLE_FULLSCREEN],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Toggle Pin Hotkey Window" tag:KEY_ACTION_TOGGLE_HOTKEY_WINDOW_PINNING],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Toggle Mouse Reporting" tag:KEY_ACTION_TOGGLE_MOUSE_REPORTING],
-        ]],
+            _profileType != ProfileTypeTerminal ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:@"Toggle Mouse Reporting" tag:KEY_ACTION_TOGGLE_MOUSE_REPORTING],
+        ] arrayByRemovingNulls]],
 
         [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Selection" items:@[
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Move Start of Selection Back" tag:KEY_ACTION_MOVE_START_OF_SELECTION_LEFT],
