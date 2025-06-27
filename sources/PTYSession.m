@@ -8457,8 +8457,21 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                     [[arrangement objectForKey:SESSION_ARRANGEMENT_ROWS] intValue])];
 }
 
+- (BOOL)isBrowserSession {
+    return self.view.isBrowser || self.profile.profileIsBrowser;
+}
+
 - (BOOL)isCompatibleWith:(PTYSession *)otherSession
 {
+    // Browser sessions cannot be split panes with tmux sessions
+    BOOL selfIsBrowser = [self isBrowserSession];
+    BOOL otherIsBrowser = [otherSession isBrowserSession];
+    
+    if ((selfIsBrowser && otherSession.tmuxMode == TMUX_CLIENT) ||
+        (self.tmuxMode == TMUX_CLIENT && otherIsBrowser)) {
+        return NO;
+    }
+    
     if (self.tmuxMode != TMUX_CLIENT && otherSession.tmuxMode != TMUX_CLIENT) {
         // Non-clients are always compatible
         return YES;

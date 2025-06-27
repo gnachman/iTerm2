@@ -48,17 +48,10 @@ class MoveSessionBuiltInFunction: iTermBuiltInFunction {
                           code: 2,
                           userInfo: [NSLocalizedDescriptionKey: "Invalid session ID"])
         }
-        if source.isTmuxClient != destination.isTmuxClient {
+        if !source.is(compatibleWith: destination) {
             throw NSError(domain: "com.iterm2.move-session",
                           code: 3,
-                          userInfo: [NSLocalizedDescriptionKey: "You can't intermingle tmux and non-tmux sessions"])
-        }
-        if source.isTmuxClient {
-            if source.tmuxController !== destination.tmuxController {
-                throw NSError(domain: "com.iterm2.move-session",
-                              code: 4,
-                              userInfo: [NSLocalizedDescriptionKey: "Sessions belong to different tmuxes"])
-            }
+                          userInfo: [NSLocalizedDescriptionKey: "Sessions are not compatible"])
         }
         guard let sourceTab = source.delegate as? PTYTab, let destinationTab = destination.delegate as? PTYTab else {
             throw NSError(domain: "com.iterm2.move-session",
