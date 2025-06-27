@@ -6935,11 +6935,11 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                         </tabViewItem>
                         <tabViewItem label="Selection" identifier="" id="3Jf-X1-Drt">
                             <view key="view" id="aNs-OQ-hfy">
-                                <rect key="frame" x="10" y="33" width="755" height="693"/>
+                                <rect key="frame" x="10" y="33" width="755" height="513"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rkL-re-0L0" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="89" y="369" width="599" height="331"/>
+                                        <rect key="frame" x="89" y="189" width="599" height="331"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2095">

@@ -1,0 +1,87 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Drag & Drop Test</title>
+  <style>
+    #drop-zone {
+      width: 300px;
+      height: 200px;
+      border: 2px dashed #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    #drop-zone.hover {
+      border-color: #333;
+      background: #f0f0f0;
+    }
+
+    #file-list {
+      margin-top: 10px;
+      list-style: none;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="drop-zone">Drop files here</div>
+  <ul id="file-list"></ul>
+  <script>
+    const dropZone = document.getElementById("drop-zone");
+    const fileList = document.getElementById("file-list");
+
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    function highlight() {
+      dropZone.classList.add("hover");
+    }
+
+    function unhighlight() {
+      dropZone.classList.remove("hover");
+    }
+
+    function handleFiles(files) {
+      fileList.innerHTML = "";
+      for (let i = 0; i < files.length; i++) {
+        const li = document.createElement("li");
+        li.textContent = files[i].name;
+        fileList.appendChild(li);
+      }
+    }
+
+    function handleDrop(e) {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      handleFiles(files);
+    }
+
+    const events1 = ["dragenter", "dragover", "dragleave", "drop"];
+    const events2 = ["dragenter", "dragover"];
+    const events3 = ["dragleave", "drop"];
+
+    for (let i = 0; i < events1.length; i++) {
+      const eventName = events1[i];
+      dropZone.addEventListener(eventName, preventDefaults, false);
+    }
+
+    for (let i = 0; i < events2.length; i++) {
+      const eventName = events2[i];
+      dropZone.addEventListener(eventName, highlight, false);
+    }
+
+    for (let i = 0; i < events3.length; i++) {
+      const eventName = events3[i];
+      dropZone.addEventListener(eventName, unhighlight, false);
+    }
+
+    dropZone.addEventListener("drop", handleDrop, false);
+  </script>
+</body>
+</html>

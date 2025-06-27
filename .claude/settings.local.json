@@ -11,7 +11,8 @@
       "WebFetch(domain:webkit.org)",
       "WebFetch(domain:swiftlybald.com)",
       "Bash(xcodebuild:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }
