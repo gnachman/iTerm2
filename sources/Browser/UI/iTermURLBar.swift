@@ -108,6 +108,11 @@ class iTermURLBar: NSView {
         super.init(coder: coder)
         setupUI()
     }
+    
+    deinit {
+        closeCompletions()
+        currentSuggestionsTask?.cancel()
+    }
 
     // MARK: - Setup
     
@@ -221,6 +226,11 @@ class iTermURLBar: NSView {
         textField.focus()
     }
     
+    @objc func cleanup() {
+        closeCompletions()
+        currentSuggestionsTask?.cancel()
+    }
+    
     func showSuggestions(_ suggestions: [URLSuggestion]) {
         guard showSuggestions, !suggestions.isEmpty else {
             hideSuggestions()
@@ -260,6 +270,21 @@ class iTermURLBar: NSView {
     
     func hideSuggestions() {
         closeCompletions()
+    }
+    
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if window == nil {
+            // View was removed from window, clean up completions
+            closeCompletions()
+            currentSuggestionsTask?.cancel()
+        }
+    }
+    
+    override func removeFromSuperview() {
+        closeCompletions()
+        currentSuggestionsTask?.cancel()
+        super.removeFromSuperview()
     }
     
     // MARK: - Private Methods

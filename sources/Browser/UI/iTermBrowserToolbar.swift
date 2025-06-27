@@ -150,6 +150,15 @@ class iTermBrowserToolbar: NSView {
     func focusURLBar() {
         urlBar.focus()
     }
+    
+    @objc func cleanup() {
+        urlBar.cleanup()
+    }
+    
+    override func removeFromSuperview() {
+        cleanup()
+        super.removeFromSuperview()
+    }
 
     @objc func backTapped() {
         delegate?.browserToolbarDidSelectHistoryItem(steps: -1)
