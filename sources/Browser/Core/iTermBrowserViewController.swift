@@ -173,6 +173,18 @@ extension iTermBrowserViewController {
         }
     }
 
+    @objc(sendData:)
+    func send(data: Data) {
+        let string = data.lossyString
+        guard !string.isEmpty else {
+            return
+        }
+
+        Task {
+            await browserManager.webView.sendText(string)
+        }
+    }
+
     // MARK: - Search
 
     func startFind(_ string: String, caseSensitive: Bool) {
