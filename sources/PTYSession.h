@@ -887,6 +887,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (void)startTmuxMode:(NSString *)dcsID;
 
 - (void)tmuxDetach;
+// Returns YES if this session is a browser session.
+- (BOOL)isBrowserSession;
 // Two sessions are compatible if they may share the same tab. Tmux clients
 // impose this restriction because they must belong to the same controller.
 - (BOOL)isCompatibleWith:(PTYSession *)otherSession;
