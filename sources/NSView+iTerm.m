@@ -224,6 +224,10 @@ static NSInteger gTakingSnapshot;
     [self it_setAssociatedObject:popoverVC forKey:@"PopoverWarning"];
 }
 
+- (void)it_showInformativeMessageWithMarkdown:(NSString *)markdown {
+    [self it_showWarningWithMarkdown:markdown];
+}
+
 - (void)it_showWarningWithMarkdown:(NSString *)markdown {
     NSAttributedString *attributedString = [NSAttributedString attributedStringWithMarkdown:markdown
                                                                                    font:[NSFont systemFontOfSize:[NSFont systemFontSize]]

@@ -55,6 +55,7 @@
 - (void)it_showWarning:(NSString *)text rect:(NSRect)rect;
 - (void)it_showWarningWithAttributedString:(NSAttributedString *)text rect:(NSRect)rect;
 - (void)it_showWarningWithMarkdown:(NSString *)markdown;;
+- (void)it_showInformativeMessageWithMarkdown:(NSString *)markdown;
 - (void)it_removeWarning;
 
 // Accessibility APIs use y=0 at the top of the screen instead of the bottom. <3

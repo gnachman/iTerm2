@@ -405,6 +405,7 @@ extension iTermBrowserViewController {
         toolbar = iTermBrowserToolbar()
         toolbar.delegate = self
         toolbar.translatesAutoresizingMaskIntoConstraints = false
+        toolbar.setDevNullMode(browserManager.user == .devNull)
         view.addSubview(toolbar)
     }
 
