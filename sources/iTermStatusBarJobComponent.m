@@ -53,6 +53,10 @@ NS_ASSUME_NONNULL_BEGIN
     return [fromSuper dictionaryByMergingDictionary:self.defaultMinMaxWidthKnobValues];
 }
 
++ (ProfileType)compatibleProfileTypes {
+    return ProfileTypeTerminal;
+}
+
 - (CGFloat)statusBarComponentPreferredWidth {
     return [self clampedWidth:[super statusBarComponentPreferredWidth]];
 }

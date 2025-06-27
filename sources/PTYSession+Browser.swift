@@ -146,6 +146,11 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
         _ = view.setHoverURL(url, anchorFrame: frameInSessionView)
     }
 
+    func browserViewController(_ controller: iTermBrowserViewController,
+                               didNavigateTo url: URL) {
+        let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        currentHost = VT100RemoteHost(username: components?.user, hostname: url.host)
+    }
 }
 
 // MARK: - Browser Find Support

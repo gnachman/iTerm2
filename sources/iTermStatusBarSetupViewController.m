@@ -132,6 +132,9 @@ NS_ASSUME_NONNULL_BEGIN
                                  [iTermStatusBarSwiftyStringComponent class],
                                  [iTermStatusBarFunctionCallComponent class],
                                  ];
+    classes = [classes filteredArrayUsingBlock:^BOOL(Class c) {
+        return ((ProfileType)[c compatibleProfileTypes] & _profileType) != 0;
+    }];
     _elements = [classes mapWithBlock:^id(Class theClass) {
         iTermStatusBarBuiltInComponentFactory *factory =
             [[iTermStatusBarBuiltInComponentFactory alloc] initWithClass:theClass];
