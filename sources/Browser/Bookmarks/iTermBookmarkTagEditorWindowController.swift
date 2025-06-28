@@ -25,8 +25,8 @@ class iTermBookmarkTagEditorWindowController: NSWindowController {
     @IBOutlet var urlLabel: NSTextField!
     @IBOutlet var tagsTokenField: NSTokenField!
     @IBOutlet var deleteButton: NSButton!
-    @IBOutlet var saveButton: NSButton!
     @IBOutlet var cancelButton: NSButton!
+    @IBOutlet var saveButton: NSButton!
     
     convenience init(user: iTermBrowserUser,
                      url: String,
@@ -92,16 +92,16 @@ class iTermBookmarkTagEditorWindowController: NSWindowController {
         deleteButton.translatesAutoresizingMaskIntoConstraints = false
         deleteButton.bezelStyle = .rounded
         
-        saveButton = NSButton(title: "Save", target: self, action: #selector(saveChanges))
-        saveButton.translatesAutoresizingMaskIntoConstraints = false
-        saveButton.bezelStyle = .rounded
-        saveButton.keyEquivalent = "\r"
-        
         cancelButton = NSButton(title: "Cancel", target: self, action: #selector(cancel))
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
         cancelButton.bezelStyle = .rounded
         cancelButton.keyEquivalent = "\u{1b}" // Escape key
         
+        saveButton = NSButton(title: "Save", target: self, action: #selector(saveChanges))
+        saveButton.translatesAutoresizingMaskIntoConstraints = false
+        saveButton.bezelStyle = .rounded
+        saveButton.keyEquivalent = "\r"
+
         // Add views
         contentView.addSubview(titleLabel)
         contentView.addSubview(titleValueLabel)
@@ -110,8 +110,8 @@ class iTermBookmarkTagEditorWindowController: NSWindowController {
         contentView.addSubview(tagsLabel)
         contentView.addSubview(tagsTokenField)
         contentView.addSubview(deleteButton)
-        contentView.addSubview(saveButton)
         contentView.addSubview(cancelButton)
+        contentView.addSubview(saveButton)
         
         // Set up constraints
         NSLayoutConstraint.activate([
@@ -147,11 +147,11 @@ class iTermBookmarkTagEditorWindowController: NSWindowController {
             deleteButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             deleteButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20),
             
-            cancelButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            cancelButton.bottomAnchor.constraint(equalTo: deleteButton.bottomAnchor),
+            saveButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            saveButton.bottomAnchor.constraint(equalTo: deleteButton.bottomAnchor),
             
-            saveButton.trailingAnchor.constraint(equalTo: cancelButton.leadingAnchor, constant: -12),
-            saveButton.bottomAnchor.constraint(equalTo: deleteButton.bottomAnchor)
+            cancelButton.trailingAnchor.constraint(equalTo: saveButton.leadingAnchor, constant: -12),
+            cancelButton.bottomAnchor.constraint(equalTo: deleteButton.bottomAnchor)
         ])
     }
     

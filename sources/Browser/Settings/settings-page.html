@@ -345,13 +345,19 @@
                         <p>URL for downloading ad blocking rules (updates daily)</p>
                     </div>
                     <div class="input-group">
-                        <input type="url" id="adblockURL" value="{{ADBLOCK_URL}}" placeholder="https://easylist.to/easylist/easylist.txt" onchange="updateAdblockURL(this.value)">
+                        <input type="url" id="adblockURL" value="{{ADBLOCK_URL}}" placeholder="https://easylist-downloads.adblockplus.org/easylist_content_blocker.json" onchange="updateAdblockURL(this.value)">
                         <button class="button small" onclick="forceAdblockUpdate()">Update Now</button>
                     </div>
                 </div>
                 <div class="setting-item">
                     <div class="status-message" id="adblockStatus" style="display: none;">
                         <span class="status-text"></span>
+                    </div>
+                </div>
+                <div class="setting-item" id="adblockStats">
+                    <div class="setting-info">
+                        <h3>Filter Statistics</h3>
+                        <p id="adblockStatsText">Loading filter statistics...</p>
                     </div>
                 </div>
             </div>
@@ -402,6 +408,13 @@
                 action: 'forceAdblockUpdate',
                 sessionSecret: sessionSecret
             });
+            // Refresh stats after a brief delay to allow for update
+            setTimeout(() => {
+                window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                    action: 'getAdblockStats',
+                    sessionSecret: sessionSecret
+                });
+            }, 2000);
         }
         
         function openPermissions() {
@@ -531,6 +544,10 @@
                 action: 'getSearchSettings',
                 sessionSecret: sessionSecret
             });
+            window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                action: 'getAdblockStats',
+                sessionSecret: sessionSecret
+            });
         });
         
         // Function to update UI with current settings (called from Swift)
@@ -558,6 +575,36 @@
                 customSearchItem.style.display = 'none';
                 customSuggestItem.style.display = 'none';
             }
+        }
+        
+        function updateAdblockStats(stats) {
+            const statsText = document.getElementById('adblockStatsText');
+            const ruleCount = stats.ruleCount;
+            const lastUpdate = stats.lastUpdate;
+            
+            if (ruleCount === 0) {
+                statsText.textContent = 'No filter rules loaded';
+                return;
+            }
+            
+            let text = `${ruleCount.toLocaleString()} filter rules loaded`;
+            
+            if (lastUpdate > 0) {
+                const lastUpdateDate = new Date(lastUpdate * 1000);
+                const now = new Date();
+                const diffHours = Math.floor((now - lastUpdateDate) / (1000 * 60 * 60));
+                
+                if (diffHours < 1) {
+                    text += ' (updated recently)';
+                } else if (diffHours < 24) {
+                    text += ` (updated ${diffHours} hours ago)`;
+                } else {
+                    const diffDays = Math.floor(diffHours / 24);
+                    text += ` (updated ${diffDays} days ago)`;
+                }
+            }
+            
+            statsText.textContent = text;
         }
     </script>
 </body>

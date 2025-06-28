@@ -115,6 +115,8 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             sendAdblockSettings(to: webView)
         case "getSearchSettings":
             sendSearchSettings(to: webView)
+        case "getAdblockStats":
+            sendAdblockStats(to: webView)
         default:
             break
         }
@@ -199,6 +201,26 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             webView.evaluateJavaScript(script, completionHandler: nil)
         } catch {
             DLog("Failed to encode adblock settings: \(error)")
+        }
+    }
+    
+    private func sendAdblockStats(to webView: WKWebView) {
+        let ruleCount = iTermAdblockManager.shared.getRuleCount()
+        let lastUpdate = UserDefaults.standard.object(forKey: "NoSyncAdblockLastUpdate") as? Date
+        
+        let stats = [
+            "ruleCount": ruleCount,
+            "lastUpdate": lastUpdate?.timeIntervalSince1970 ?? 0
+        ] as [String: Any]
+        
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: stats)
+            let jsonString = String(data: jsonData, encoding: .utf8)!
+            
+            let script = "updateAdblockStats(\(jsonString));"
+            webView.evaluateJavaScript(script, completionHandler: nil)
+        } catch {
+            DLog("Failed to encode adblock stats: \(error)")
         }
     }
     

@@ -12,21 +12,17 @@
     const elements = document.elementsFromPoint(point.x, point.y)
         .filter(x => x !== document.documentElement && x !== document.body);
     
-    console.log('[DEBUG] Elements at point:', elements.map(el => ({
-        tag: el.tagName,
-        id: el.id,
-        classes: el.className,
-        text: el.innerText?.substring(0, 50) + '...'
-    })));
+    console.log('[DEBUG] Elements at point:');
+    elements.forEach((el, i) => {
+        console.log(`  ${i}: ${el.tagName}${el.id ? '#' + el.id : ''}${el.className ? '.' + el.className.split(' ').join('.') : ''}`);
+        console.log(`     text: "${(el.innerText || '').substring(0, 50)}..."`);
+    });
     
     // Test main container detection
     const mainContainer = detectMainContainer() || document.body;
-    console.log('[DEBUG] Detected main container:', {
-        tag: mainContainer.tagName,
-        id: mainContainer.id,
-        classes: mainContainer.className,
-        text: mainContainer.innerText?.substring(0, 100) + '...'
-    });
+    console.log('[DEBUG] Detected main container:', 
+        `${mainContainer.tagName}${mainContainer.id ? '#' + mainContainer.id : ''}${mainContainer.className ? '.' + mainContainer.className.split(' ').join('.') : ''}`);
+    console.log('[DEBUG] Main container text:', `"${(mainContainer.innerText || '').substring(0, 100)}..."`);
     
     // Test what would be removed
     if (elements.length > 0) {
@@ -37,27 +33,30 @@
             }
             
             const root = findRootOverlay(el, mainContainer);
-            console.log('[DEBUG] Would remove root overlay:', {
-                tag: root.tagName,
-                id: root.id,
-                classes: root.className,
-                text: root.innerText?.substring(0, 100) + '...',
-                isMainContainer: root === mainContainer,
-                containsMainContainer: root.contains(mainContainer)
-            });
+            console.log('[DEBUG] Would remove root overlay:', 
+                `${root.tagName}${root.id ? '#' + root.id : ''}${root.className ? '.' + root.className.split(' ').join('.') : ''}`);
+            console.log('[DEBUG] Root overlay text:', `"${(root.innerText || '').substring(0, 100)}..."`);
+            console.log('[DEBUG] Is main container?', root === mainContainer);
+            console.log('[DEBUG] Contains main container?', root.contains(mainContainer));
             
-            // Show the path from element to root
+            // Show the path from element to root with detailed analysis
             let curr = el;
             const path = [];
+            console.log('[DEBUG] Walking up from clicked element:');
+            let step = 0;
             while (curr && curr !== root && curr !== document.body) {
-                path.push({
-                    tag: curr.tagName,
-                    id: curr.id,
-                    classes: curr.className
-                });
+                const classes = curr.className || '';
+                const id = curr.id || '';
+                const combined = (classes + ' ' + id).toLowerCase();
+                const isAdRelated = /(^|\s)(ad|advertisement|banner|popup|modal|overlay|sidebar|widget|promo)(\s|$)/.test(combined) ||
+                                   /(adsby|display_ad|ad_place|advert)/.test(combined);
+                
+                console.log(`  ${step}: ${curr.tagName}${curr.id ? '#' + curr.id : ''}${curr.className ? '.' + curr.className.split(' ').join('.') : ''} (ad-related: ${isAdRelated})`);
+                path.push(`${curr.tagName}${curr.id ? '#' + curr.id : ''}${curr.className ? '.' + curr.className.split(' ').join('.') : ''}`);
                 curr = curr.parentElement;
+                step++;
             }
-            console.log('[DEBUG] Path from clicked element to root:', path);
+            console.log('[DEBUG] Path from clicked element to root:', path.join(' -> '));
             break;
         }
     }
