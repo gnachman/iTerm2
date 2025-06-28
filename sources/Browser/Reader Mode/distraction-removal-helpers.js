@@ -46,11 +46,48 @@ function detectMainContainer(article) {
 function findRootOverlay(el, mainContainer) {
     const ancestors = [];
     let curr = el;
+    let adContainer = null;
+    
+    // Walk up the tree, looking for ad-related containers
     while (curr && curr !== mainContainer && curr !== document.body) {
         ancestors.push(curr);
+        
+        // Check if this is an ad-related container
+        const classes = curr.className || '';
+        const id = curr.id || '';
+        const combined = (classes + ' ' + id).toLowerCase();
+        
+        if (/(^|\s)(ad|advertisement|banner|popup|modal|overlay|sidebar|widget|promo)(\s|$)/.test(combined) ||
+            /(adsby|display_ad|ad_place|advert)/.test(combined)) {
+            // Found an ad container - now walk up until we find a significantly larger parent
+            adContainer = curr;
+            let parent = curr.parentElement;
+            
+            while (parent && parent !== mainContainer && parent !== document.body) {
+                const currRect = adContainer.getBoundingClientRect();
+                const parentRect = parent.getBoundingClientRect();
+                const currArea = currRect.width * currRect.height;
+                const parentArea = parentRect.width * parentRect.height;
+                
+                // If parent is significantly larger (>10% bigger), stop at current
+                if (parentArea > currArea * 1.1) {
+                    break;
+                }
+                
+                // Parent is similar size, keep walking up
+                adContainer = parent;
+                parent = parent.parentElement;
+            }
+            
+            return adContainer;
+        }
+        
         curr = curr.parentElement;
     }
+    
     if (!ancestors.length) return el;
+    
+    // Return the largest element if no ad container was found
     return ancestors.reduce((best, node) => {
         const r = node.getBoundingClientRect();
         const area = r.width * r.height;
@@ -82,7 +119,7 @@ function injectDistractionRemovalStyles() {
     document.head.appendChild(s);
 }
 
-function removeElementAtPoint(clientX, clientY, mainContainer, removed) {
+function removeElementAtPoint(clientX, clientY, mainContainer, removed, skipBackdrops = false) {
     console.log('[DR] remove element at', clientX, clientY);
     const pts = document.elementsFromPoint(clientX, clientY)
         .filter(x => x !== document.documentElement && x !== document.body);
@@ -91,22 +128,40 @@ function removeElementAtPoint(clientX, clientY, mainContainer, removed) {
     for (const el of pts) {
         if (el === mainContainer) break;
         const root = findRootOverlay(el, mainContainer);
+        
+        // Check if already removed
+        if (root.classList.contains('dr-removed')) {
+            console.log('[DR] element already removed:', root);
+            break;
+        }
+        
+        const rect = root.getBoundingClientRect();
         console.log('[DR] hiding root overlay:', root);
-        removed.push(root);
+        console.log('[DR] root overlay bounds:', `x=${rect.x}, y=${rect.y}, width=${rect.width}, height=${rect.height}`);
+        
+        // More aggressive removal for stubborn ads
         root.classList.add('dr-removed');
+        root.style.display = 'none';
+        root.style.visibility = 'hidden';
+        root.style.opacity = '0';
+        root.style.height = '0';
+        root.style.width = '0';
+        root.style.overflow = 'hidden';
+        
+        removed.push(root);
         didHide = true;
         break;
     }
     
-    if (didHide) {
-        // Hide any backdrops that cover the viewport
+    if (didHide && !skipBackdrops) {
+        // Hide any backdrops that cover the viewport (only in full distraction removal mode)
         const bps = findBackdropElements(mainContainer, removed);
         bps.forEach(bp => {
             console.log('[DR] hiding backdrop via geometry:', bp);
             removed.push(bp);
             bp.classList.add('dr-removed');
         });
-    } else {
+    } else if (!didHide) {
         console.log('[DR] nothing to hide');
     }
     
