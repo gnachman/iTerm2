@@ -330,6 +330,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     NSResponder *prev = self.nextResponder;
     [self setNextResponder:_browserViewController];
     _browserViewController.nextResponder = prev;
+    [self.window makeFirstResponder:_browserViewController];
 }
 
 - (BOOL)isBrowser {

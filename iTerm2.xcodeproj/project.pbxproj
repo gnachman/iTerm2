@@ -13112,7 +13112,6 @@
 		A6CBB8202E0A1CE000B2CCCB /* Core */ = {
 			isa = PBXGroup;
 			children = (
-				A6FE7AA82E0F121F00BEBCE4 /* iTermBrowserRestorableState.swift */,
 				A6CBB7FD2E09163A00B2CCCB /* check-iframe-origins.js */,
 				A6FE7A862E0E252300BEBCE4 /* hover-link-detector.js */,
 				A6F7D4E42E04AE7D0065D09C /* iTermAdblockManager.swift */,
@@ -13125,6 +13124,7 @@
 				A6A3EDEB2E0DC6A400D711DA /* iTermBrowserMetadata.swift */,
 				A6F7D4FD2E05C4850065D09C /* iTermBrowserNavigationState.swift */,
 				A6A3EDC32E0CDA1D00D711DA /* iTermBrowserPointerActionPerformer.swift */,
+				A6FE7AA82E0F121F00BEBCE4 /* iTermBrowserRestorableState.swift */,
 				A6FE7A742E0DF12600BEBCE4 /* iTermBrowserUser.swift */,
 				A6F7D4B42E0340A80065D09C /* iTermBrowserViewController.swift */,
 				A6F7D4D82E03DB420065D09C /* iTermBrowserWebView.swift */,
