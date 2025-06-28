@@ -32,6 +32,7 @@
 @class iTermExpect;
 @class iTermFindCursorView;
 @class iTermFindOnPageHelper;
+@class iTermFocusFollowsMouse;
 @class iTermFontTable;
 @class iTermImageWrapper;
 @protocol iTermPathMarkReading;
@@ -483,10 +484,6 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 @property (nonatomic, readonly) double transparencyAlpha;
 
-// Number of times -stealKeyFocus has been called since the last time it
-// was released with releaseKeyFocus.
-@property (nonatomic, readonly) int keyFocusStolenCount;
-
 // Is the cursor eligible to blink?
 @property (nonatomic, readonly) BOOL isCursorBlinking;
 
@@ -532,6 +529,8 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 // nil if no color is extended into the margins, otherwise the color.
 @property (nonatomic, readonly) NSColor *colorForMargins;
+
+@property (nonatomic, readonly) iTermFocusFollowsMouse *focusFollowsMouse;
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
@@ -755,9 +754,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (NSRect)frameForCoord:(VT100GridCoord)coord;
 
 - (iTermLogicalMovementHelper *)logicalMovementHelperForCursorCoordinate:(VT100GridCoord)cursorCoord;
-
-// Undoes -refuseFirstResponderAtCurrentMouseLocation.
-- (void)resetMouseLocationToRefuseFirstResponderAt;
 
 - (void)setTransparencyAffectsOnlyDefaultBackgroundColor:(BOOL)value;
 

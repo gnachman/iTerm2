@@ -26,4 +26,8 @@
     return YES;
 }
 
+- (BOOL)implementsDisableFocusFollowsMouse {
+    return YES;
+}
+
 @end

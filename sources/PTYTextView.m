@@ -122,7 +122,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 
 @end
 
-@interface PTYTextView(MouseHandler)<iTermSecureInputRequesting, PTYMouseHandlerDelegate>
+@interface PTYTextView(MouseHandler)<iTermFocusFollowsMouseDelegate, iTermSecureInputRequesting, PTYMouseHandlerDelegate>
 @end
 
 @implementation PTYTextView {
@@ -168,8 +168,6 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 
     iTermTextViewAccessibilityHelper *_accessibilityHelper;
     iTermBadgeLabel *_badgeLabel;
-
-    NSPoint _mouseLocationToRefuseFirstResponderAt;
 
     NSMutableArray<iTermHighlightedRow *> *_highlightedRows;
 
@@ -267,7 +265,9 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
         // to know I want to keep control over this because debugging it will be horrible. So every
         // draw call (NSRectFill, etc.) does a last-second translation by the virtual offset.
         [super setAlphaValue:0];
-        [self resetMouseLocationToRefuseFirstResponderAt];
+        _focusFollowsMouse = [[iTermFocusFollowsMouse alloc] init];
+        _focusFollowsMouse.delegate = self;
+        [_focusFollowsMouse resetMouseLocationToRefuseFirstResponderAt];
         _drawingHelper = [[iTermTextDrawingHelper alloc] init];
         _drawingHelper.delegate = self;
 
@@ -336,7 +336,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
         _badgeLabel = [[iTermBadgeLabel alloc] init];
         _badgeLabel.delegate = self;
 
-        [self refuseFirstResponderAtCurrentMouseLocation];
+        [_focusFollowsMouse refuseFirstResponderAtCurrentMouseLocation];
 
         _scrollAccumulator = [[iTermScrollAccumulator alloc] init];
 
@@ -422,6 +422,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     [_selectCommandTimer release];
     [_marginColorWidthBuffer release];
     [_marginColorTwiceHeightBuffer release];
+    [_focusFollowsMouse release];
 
     [super dealloc];
 }
@@ -1100,8 +1101,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (BOOL)wantsMouseMovementEvents {
-    if (_mouseLocationToRefuseFirstResponderAt.x < DBL_MAX ||
-        _mouseLocationToRefuseFirstResponderAt.y < DBL_MAX) {
+    if (_focusFollowsMouse.haveTrackedMovement) {
         DLog(@"Have a mouse location to refuse first responder at, so track mouse moved");
         return YES;
     }
@@ -1158,7 +1158,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 // If this changes also update -wantsMouseMovementEvents.
 - (void)mouseMoved:(NSEvent *)event {
     DLog(@"mouseMoved:%@", event);
-    [self resetMouseLocationToRefuseFirstResponderAt];
+    [_focusFollowsMouse mouseMoved:event];
     [self updateUnderlinedURLs:event];
     [self updateButtonHover:event.locationInWindow pressed:!!([NSEvent pressedMouseButtons] & 1)];
     [self updateCursor:event];
@@ -1237,19 +1237,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
 - (void)mouseExited:(NSEvent *)event {
     DLog(@"Mouse exited %@", self);
-    if (_keyFocusStolenCount) {
-        DLog(@"Releasing key focus %d times", (int)_keyFocusStolenCount);
-        for (int i = 0; i < _keyFocusStolenCount; i++) {
-            [self releaseKeyFocus];
-        }
-        [[iTermSecureKeyboardEntryController sharedInstance] didReleaseFocus];
-        _keyFocusStolenCount = 0;
+    if ([_focusFollowsMouse mouseExited:event]) {
         [self requestDelegateRedraw];
-    }
-    if ([NSApp isActive]) {
-        [self resetMouseLocationToRefuseFirstResponderAt];
-    } else {
-        DLog(@"Ignore mouse exited because app is not active");
     }
     [self updateUnderlinedURLs:event];
 
@@ -1264,17 +1253,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 - (void)mouseEntered:(NSEvent *)event {
     DLog(@"Mouse entered %@", self);
     [_mouseHandler mouseEntered:event];
-    if ([iTermAdvancedSettingsModel stealKeyFocus] &&
-        [iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
-        DLog(@"Trying to steal key focus");
-        if ([self stealKeyFocus]) {
-            if (_keyFocusStolenCount == 0) {
-                [[self window] makeFirstResponder:self];
-                [[iTermSecureKeyboardEntryController sharedInstance] didStealFocus];
-            }
-            ++_keyFocusStolenCount;
-            [self requestDelegateRedraw];
-        }
+
+    if ([_focusFollowsMouse mouseWillEnter:event]) {
+        [self requestDelegateRedraw];
     }
     [self updateUnderlinedURLs:event];
     NSScrollView *scrollView = self.enclosingScrollView;
@@ -1285,49 +1266,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
              event, NSStringFromPoint(event.locationInWindow), NSStringFromRect([self convertRect:self.bounds toView:nil]));
         return;
     }
-    if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] &&
-        [[self window] alphaValue] > 0 &&
-        ![NSApp modalWindow]) {
-        DLog(@"Taking FFM path in PTYTextView.mouseEntered");
-        // Some windows automatically close when they lose key status and are
-        // incompatible with FFM. Check if the key window or its controller implements
-        // disableFocusFollowsMouse and if it returns YES do nothing.
-        id obj = nil;
-        if ([[NSApp keyWindow] respondsToSelector:@selector(disableFocusFollowsMouse)]) {
-            obj = [NSApp keyWindow];
-        } else if ([[[NSApp keyWindow] windowController] respondsToSelector:@selector(disableFocusFollowsMouse)]) {
-            obj = [[NSApp keyWindow] windowController];
-        }
-        if (!NSEqualPoints(_mouseLocationToRefuseFirstResponderAt, [NSEvent mouseLocation])) {
-            DLog(@"%p Mouse location is %@, refusal point is %@", self, NSStringFromPoint([NSEvent mouseLocation]), NSStringFromPoint(_mouseLocationToRefuseFirstResponderAt));
-            if ([iTermAdvancedSettingsModel stealKeyFocus]) {
-                DLog(@"steal");
-                if (![obj disableFocusFollowsMouse]) {
-                    DLog(@"makeKeyWindow");
-                    [[self window] makeKeyWindow];
-                }
-            } else {
-                if ([NSApp isActive] && ![obj disableFocusFollowsMouse]) {
-                    DLog(@"makeKeyWIndow without stealing");
-                    [[self window] makeKeyWindow];
-                } else {
-                    DLog(@"Not making key window. NSApp.isActive=%@ obj.disableFocusFollowsMouse=%@", @(NSApp.isActive), @([obj disableFocusFollowsMouse]));
-                }
-            }
-            if ([self isInKeyWindow]) {
-                DLog(@"In key window so call textViewDidBecomeFirstResponder");
-                if (self.window.firstResponder != self) {
-                    [self.window makeFirstResponder:self];
-                } else {
-                    [_delegate textViewDidBecomeFirstResponder];
-                }
-            } else {
-                DLog(@"Not in key window");
-            }
-        } else {
-            DLog(@"%p Refusing first responder on enter", self);
-        }
-    }
+    [_focusFollowsMouse mouseEntered:event];
 }
 
 #pragma mark - NSView Mouse Helpers
@@ -1646,7 +1585,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     _drawingHelper.textViewIsFirstResponder = self.window.firstResponder == self;
     _drawingHelper.isInKeyWindow = [self isInKeyWindow];
     // Draw the cursor filled in when we're inactive if there's a popup open or key focus was stolen.
-    _drawingHelper.shouldDrawFilledInCursor = ([self.delegate textViewShouldDrawFilledInCursor] || _keyFocusStolenCount);
+    _drawingHelper.shouldDrawFilledInCursor = ([self.delegate textViewShouldDrawFilledInCursor] || _focusFollowsMouse.haveStolenFocus);
     _drawingHelper.isFrontTextView = (self == [[iTermController sharedInstance] frontTextView]);
     _drawingHelper.transparencyAlpha = [self transparencyAlpha];
     _drawingHelper.now = [NSDate timeIntervalSinceReferenceDate];
@@ -1937,19 +1876,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [self requestDelegateRedraw];
 }
 
-
-#pragma mark - First Responder
-
 - (void)refuseFirstResponderAtCurrentMouseLocation {
-    DLog(@"set refuse location");
-    _mouseLocationToRefuseFirstResponderAt = [NSEvent mouseLocation];
-    [self.delegate textViewUpdateTrackingAreas];
-}
-
-- (void)resetMouseLocationToRefuseFirstResponderAt {
-    DLog(@"reset refuse location from\n%@", [NSThread callStackSymbols]);
-    _mouseLocationToRefuseFirstResponderAt = NSMakePoint(DBL_MAX, DBL_MAX);
-    [self.delegate textViewUpdateTrackingAreas];
+    [_focusFollowsMouse refuseFirstResponderAtCurrentMouseLocation];
 }
 
 #pragma mark - Geometry
@@ -2279,44 +2207,6 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         return [[self window] isMainWindow];
     }
     return NO;
-}
-
-// Uses an undocumented/deprecated API to receive key presses even when inactive.
-- (BOOL)stealKeyFocus {
-    // Make sure everything needed for focus stealing exists in this version of Mac OS.
-    CPSGetCurrentProcessFunction *getCurrentProcess = GetCPSGetCurrentProcessFunction();
-    CPSStealKeyFocusFunction *stealKeyFocus = GetCPSStealKeyFocusFunction();
-    CPSReleaseKeyFocusFunction *releaseKeyFocus = GetCPSReleaseKeyFocusFunction();
-
-    if (!getCurrentProcess || !stealKeyFocus || !releaseKeyFocus) {
-        return NO;
-    }
-
-    CPSProcessSerNum psn;
-    if (getCurrentProcess(&psn) == noErr) {
-        OSErr err = stealKeyFocus(&psn);
-        DLog(@"CPSStealKeyFocus returned %d", (int)err);
-        // CPSStealKeyFocus appears to succeed even when it returns an error. See issue 4113.
-        return YES;
-    }
-
-    return NO;
-}
-
-// Undoes -stealKeyFocus.
-- (void)releaseKeyFocus {
-    CPSGetCurrentProcessFunction *getCurrentProcess = GetCPSGetCurrentProcessFunction();
-    CPSReleaseKeyFocusFunction *releaseKeyFocus = GetCPSReleaseKeyFocusFunction();
-
-    if (!getCurrentProcess || !releaseKeyFocus) {
-        return;
-    }
-
-    CPSProcessSerNum psn;
-    if (getCurrentProcess(&psn) == noErr) {
-        DLog(@"CPSReleaseKeyFocus");
-        releaseKeyFocus(&psn);
-    }
 }
 
 #pragma mark - Blinking
@@ -5186,7 +5076,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (void)applicationDidResignActive:(NSNotification *)notification {
     DLog(@"applicationDidResignActive: reset _numTouches to 0");
     _mouseHandler.numTouches = 0;
-    [self refuseFirstResponderAtCurrentMouseLocation];
 }
 
 - (void)redrawTerminalsNotification:(NSNotification *)notification {
@@ -7208,6 +7097,20 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
 
 - (BOOL)isRequestingSecureInput {
     return [self.delegate textViewPasswordInput];
+}
+
+#pragma mark - iTermFocusFollowsMouseDelegate
+
+- (void)focusFollowsMouseDidBecomeFirstResponder {
+    [self.delegate textViewDidBecomeFirstResponder];
+}
+
+- (NSResponder *)focusFollowsMouseDesiredFirstResponder {
+    return self;
+}
+
+- (void)focusFollowsMouseDidChangeMouseLocationToRefusFirstResponderAt {
+    [self.delegate textViewUpdateTrackingAreas];
 }
 
 @end

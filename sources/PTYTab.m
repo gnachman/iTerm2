@@ -6847,7 +6847,7 @@ backgroundColor:(NSColor *)backgroundColor {
 
 - (void)sessionDisableFocusFollowsMouseAtCurrentLocation {
     for (PTYSession *session in self.sessions) {
-        [session.textview refuseFirstResponderAtCurrentMouseLocation];
+        [session refuseFirstResponderAtCurrentMouseLocation];
     }
 }
 

@@ -151,6 +151,10 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
         let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
         currentHost = VT100RemoteHost(username: components?.user, hostname: url.host)
     }
+
+    func browserViewControllerDidBecomeFirstResponder(_ controller: iTermBrowserViewController) {
+        notifyActive()
+    }
 }
 
 // MARK: - Browser Find Support
