@@ -6,6 +6,7 @@
 //
 
 @preconcurrency import WebKit
+import Network
 
 @available(macOS 11.0, *)
 @objc protocol iTermBrowserManagerDelegate: AnyObject {
@@ -121,6 +122,9 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
             case .devNull:
                 configuration.websiteDataStore = .nonPersistent()
             }
+            
+            // Configure proxy if enabled
+            applyProxyConfiguration(to: configuration.websiteDataStore)
 
             var js = """
                 let oldLog = console.log;
@@ -1218,6 +1222,8 @@ extension iTermBrowserManager: iTermBrowserLocalPageManagerDelegate {
     func localPageManagerDidUpdateAdblockSettings(_ manager: iTermBrowserLocalPageManager) {
         // Update adblock rules when settings change
         updateAdblockSettings()
+        // Also update proxy configuration since the delegate is shared
+        updateProxyConfiguration()
     }
     
     func localPageManagerDidRequestAdblockUpdate(_ manager: iTermBrowserLocalPageManager) {
@@ -1243,6 +1249,27 @@ extension iTermBrowserManager {
         // Find the settings page webview and update its status
         if webView.url == iTermBrowserSettingsHandler.settingsURL {
             localPageManager.notifySettingsPageOfAdblockUpdate(success: success, error: error, webView: webView)
+        }
+    }
+    
+    @objc func updateProxyConfiguration() {
+        applyProxyConfiguration(to: webView.configuration.websiteDataStore)
+    }
+    
+    private func applyProxyConfiguration(to dataStore: WKWebsiteDataStore) {
+        guard #available(macOS 14.0, *) else { return }
+        
+        if iTermAdvancedSettingsModel.browserProxyEnabled() {
+            let proxyHost = iTermAdvancedSettingsModel.browserProxyHost() ?? "127.0.0.1"
+            let proxyPort = iTermAdvancedSettingsModel.browserProxyPort()
+            
+            let endpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(proxyHost), port: NWEndpoint.Port(integerLiteral: UInt16(proxyPort)))
+            let proxyConfig = ProxyConfiguration(httpCONNECTProxy: endpoint)
+            dataStore.proxyConfigurations = [proxyConfig]
+            DLog("Configured browser proxy: \(proxyHost):\(proxyPort)")
+        } else {
+            dataStore.proxyConfigurations = []
+            DLog("Disabled browser proxy")
         }
     }
 }
