@@ -144,6 +144,43 @@
             background: linear-gradient(135deg, #ff9500, #ffcc02);
         }
         
+        /* Proxy section specific styling */
+        .proxy-section .section h2::before {
+            background: linear-gradient(135deg, #5856d6, #af52de);
+        }
+        
+        /* Proxy input styling */
+        .input-group input[type="text"],
+        .input-group input[type="number"] {
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--section-bg);
+            color: var(--text-color);
+            font-size: 14px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            transition: all 0.2s ease;
+        }
+        
+        .input-group input[type="text"]:focus,
+        .input-group input[type="number"]:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px var(--accent-color)20;
+        }
+        
+        .input-group input:disabled {
+            cursor: not-allowed;
+            background: var(--border-color);
+        }
+        
+        .input-group span {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            color: var(--secondary-text);
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
         /* Dev null note styling */
         .dev-null-note {
             background: linear-gradient(135deg, #007aff10, #5ac8fa08);
@@ -363,6 +400,33 @@
             </div>
         </div>
         
+        <div class="proxy-section">
+            <div class="section">
+                <h2>Proxy Settings</h2>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3>Enable HTTP Proxy</h3>
+                        <p>Route browser traffic through a proxy server (e.g., Privoxy)</p>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" id="proxyEnabled" onchange="toggleProxy(this.checked)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3>Proxy Server</h3>
+                        <p>HTTP CONNECT proxy address and port</p>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="proxyHost" value="127.0.0.1" placeholder="127.0.0.1" onchange="updateProxyHost(this.value)" style="width: 150px;">
+                        <span>:</span>
+                        <input type="number" id="proxyPort" value="8118" placeholder="8118" min="1" max="65535" onchange="updateProxyPort(this.value)" style="width: 80px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
     </div>
     
     <script>
@@ -548,6 +612,10 @@
                 action: 'getAdblockStats',
                 sessionSecret: sessionSecret
             });
+            window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                action: 'getProxySettings',
+                sessionSecret: sessionSecret
+            });
         });
         
         // Function to update UI with current settings (called from Swift)
@@ -605,6 +673,53 @@
             }
             
             statsText.textContent = text;
+        }
+        
+        // Proxy settings functions
+        function toggleProxy(enabled) {
+            window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                action: 'setProxyEnabled',
+                value: enabled,
+                sessionSecret: sessionSecret
+            });
+            updateProxyFieldsState(enabled);
+        }
+        
+        function updateProxyHost(host) {
+            if (host && host.trim()) {
+                window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                    action: 'setProxyHost',
+                    value: host.trim(),
+                    sessionSecret: sessionSecret
+                });
+            }
+        }
+        
+        function updateProxyPort(port) {
+            const portNum = parseInt(port);
+            if (!isNaN(portNum) && portNum >= 1 && portNum <= 65535) {
+                window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                    action: 'setProxyPort',
+                    value: portNum,
+                    sessionSecret: sessionSecret
+                });
+            }
+        }
+        
+        function updateProxyFieldsState(enabled) {
+            const hostField = document.getElementById('proxyHost');
+            const portField = document.getElementById('proxyPort');
+            hostField.disabled = !enabled;
+            portField.disabled = !enabled;
+            hostField.style.opacity = enabled ? '1' : '0.5';
+            portField.style.opacity = enabled ? '1' : '0.5';
+        }
+        
+        function updateProxyUI(settings) {
+            document.getElementById('proxyEnabled').checked = settings.enabled;
+            document.getElementById('proxyHost').value = settings.host;
+            document.getElementById('proxyPort').value = settings.port;
+            updateProxyFieldsState(settings.enabled);
         }
     </script>
 </body>

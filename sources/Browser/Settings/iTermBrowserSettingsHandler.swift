@@ -117,6 +117,20 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             sendSearchSettings(to: webView)
         case "getAdblockStats":
             sendAdblockStats(to: webView)
+        case "setProxyEnabled":
+            if let enabled = message["value"] as? Bool {
+                setProxyEnabled(enabled, webView: webView)
+            }
+        case "setProxyHost":
+            if let host = message["value"] as? String {
+                setProxyHost(host, webView: webView)
+            }
+        case "setProxyPort":
+            if let port = message["value"] as? Int {
+                setProxyPort(port, webView: webView)
+            }
+        case "getProxySettings":
+            sendProxySettings(to: webView)
         default:
             break
         }
@@ -283,6 +297,69 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             webView.evaluateJavaScript(script, completionHandler: nil)
         } catch {
             DLog("Failed to encode search settings: \(error)")
+        }
+    }
+    
+    // MARK: - Proxy Settings
+    
+    private func setProxyEnabled(_ enabled: Bool, webView: WKWebView) {
+        iTermAdvancedSettingsModel.setBrowserProxyEnabled(enabled)
+        
+        DLog("Browser proxy \(enabled ? "enabled" : "disabled")")
+        
+        let message = enabled ? "Proxy enabled" : "Proxy disabled"
+        showStatusMessage(message, type: "success", in: webView)
+        
+        // Notify delegate to reconfigure webview if needed
+        delegate?.settingsHandlerDidUpdateAdblockSettings(self)
+    }
+    
+    private func setProxyHost(_ host: String, webView: WKWebView) {
+        guard !host.isEmpty else { return }
+        
+        iTermAdvancedSettingsModel.setBrowserProxyHost(host)
+        
+        DLog("Browser proxy host updated to: \(host)")
+        showStatusMessage("Proxy host updated", type: "success", in: webView)
+        
+        // Notify delegate to reconfigure webview if needed
+        delegate?.settingsHandlerDidUpdateAdblockSettings(self)
+    }
+    
+    private func setProxyPort(_ port: Int, webView: WKWebView) {
+        guard port >= 1 && port <= 65535 else {
+            showStatusMessage("Invalid port number", type: "error", in: webView)
+            return
+        }
+        
+        iTermAdvancedSettingsModel.setBrowserProxyPort(Int32(port))
+        
+        DLog("Browser proxy port updated to: \(port)")
+        showStatusMessage("Proxy port updated", type: "success", in: webView)
+        
+        // Notify delegate to reconfigure webview if needed
+        delegate?.settingsHandlerDidUpdateAdblockSettings(self)
+    }
+    
+    private func sendProxySettings(to webView: WKWebView) {
+        let enabled = iTermAdvancedSettingsModel.browserProxyEnabled()
+        let host = iTermAdvancedSettingsModel.browserProxyHost() ?? "127.0.0.1"
+        let port = iTermAdvancedSettingsModel.browserProxyPort()
+        
+        let settings = [
+            "enabled": enabled,
+            "host": host,
+            "port": port
+        ] as [String: Any]
+        
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: settings)
+            let jsonString = String(data: jsonData, encoding: .utf8)!
+            
+            let script = "updateProxyUI(\(jsonString));"
+            webView.evaluateJavaScript(script, completionHandler: nil)
+        } catch {
+            DLog("Failed to encode proxy settings: \(error)")
         }
     }
     
