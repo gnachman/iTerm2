@@ -10,7 +10,12 @@ import Foundation
 @available(macOS 11.0, *)
 @objc(iTermBrowserTemplateLoader)
 class iTermBrowserTemplateLoader: NSObject {
-    
+    static func load(template templateName: String, substitutions: [String: String] = [:]) -> String {
+        let base = templateName.deletingPathExtension
+        let ext = templateName.pathExtension
+        return loadTemplate(named: base, type: ext, substitutions: substitutions)
+    }
+
     static func loadTemplate(named templateName: String,
                              type: String,
                              substitutions: [String: String] = [:]) -> String {

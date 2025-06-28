@@ -181,6 +181,23 @@
             font-weight: 600;
         }
         
+        /* Link styling */
+        .setting-info a {
+            color: var(--accent-color);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-bottom-color 0.2s ease;
+        }
+        
+        .setting-info a:hover {
+            border-bottom-color: var(--accent-color);
+        }
+        
+        .setting-info small {
+            opacity: 0.8;
+            font-size: 13px;
+        }
+        
         /* Dev null note styling */
         .dev-null-note {
             background: linear-gradient(135deg, #007aff10, #5ac8fa08);
@@ -368,8 +385,8 @@
                 <h2>Ad Blocking</h2>
                 <div class="setting-item">
                     <div class="setting-info">
-                        <h3>Enable Ad Blocking</h3>
-                        <p>Block ads and trackers using filter lists</p>
+                        <h3>Enable WebKit Ad Blocking</h3>
+                        <p>Block ads using WebKit content rules (list-based blocking)</p>
                     </div>
                     <label class="toggle">
                         <input type="checkbox" id="adblockEnabled" {{ADBLOCK_ENABLED}} onchange="toggleAdblock(this.checked)">
@@ -379,7 +396,7 @@
                 <div class="setting-item">
                     <div class="setting-info">
                         <h3>Filter List URL</h3>
-                        <p>URL for downloading ad blocking rules (updates daily)</p>
+                        <p>URL for downloading WebKit ad blocking rules (updates daily)</p>
                     </div>
                     <div class="input-group">
                         <input type="url" id="adblockURL" value="{{ADBLOCK_URL}}" placeholder="https://easylist-downloads.adblockplus.org/easylist_content_blocker.json" onchange="updateAdblockURL(this.value)">
@@ -393,8 +410,41 @@
                 </div>
                 <div class="setting-item" id="adblockStats">
                     <div class="setting-info">
-                        <h3>Filter Statistics</h3>
-                        <p id="adblockStatsText">Loading filter statistics...</p>
+                        <h3>WebKit Filter Statistics</h3>
+                        <p id="adblockStatsText">Loading filter statistics…</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="adblock-section">
+            <div class="section">
+                <h2>Advanced Ad Blocking</h2>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3>Enable Rust Ad Blocking Engine</h3>
+                        <p>Enhanced ad blocking with cosmetic filtering and advanced rules (requires restart)<br>
+                        <small>This feature uses <a href="https://github.com/brave/adblock-rust?tab=readme-ov-file" target="_blank">Brave's Rust-based adblock engine</a></small></p>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" id="rustAdblockEnabled" {{RUST_ADBLOCK_ENABLED}} onchange="toggleRustAdblock(this.checked)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3>Filter List URL</h3>
+                        <p>URL for downloading Rust ad blocking rules (EasyList format)</p>
+                    </div>
+                    <div class="input-group">
+                        <input type="url" id="rustAdblockURL" value="" placeholder="https://easylist.to/easylist/easylist.txt" onchange="updateRustAdblockURL(this.value)">
+                        <button class="button small" onclick="forceRustAdblockUpdate()">Update Now</button>
+                    </div>
+                </div>
+                <div class="setting-item" id="rustAdblockStats">
+                    <div class="setting-info">
+                        <h3>Rust Engine Statistics</h3>
+                        <p id="rustAdblockStatsText">Loading Rust engine statistics…</p>
                     </div>
                 </div>
             </div>
@@ -467,7 +517,7 @@
         }
         
         function forceAdblockUpdate() {
-            showStatus('Updating ad block rules...', 'info');
+            showStatus('Updating ad block rules…', 'info');
             window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
                 action: 'forceAdblockUpdate',
                 sessionSecret: sessionSecret
@@ -479,6 +529,42 @@
                     sessionSecret: sessionSecret
                 });
             }, 2000);
+        }
+        
+        function toggleRustAdblock(enabled) {
+            window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                action: 'setRustAdblockEnabled',
+                value: enabled,
+                sessionSecret: sessionSecret
+            });
+            if (enabled) {
+                showStatus('Rust ad blocking enabled. Restart required for full effect.', 'info', 5000);
+            }
+        }
+        
+        function updateRustAdblockURL(url) {
+            if (url && url.trim()) {
+                window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                    action: 'setRustAdblockURL',
+                    value: url.trim(),
+                    sessionSecret: sessionSecret
+                });
+            }
+        }
+        
+        function forceRustAdblockUpdate() {
+            showStatus('Reloading Rust ad blocking filter lists…', 'info');
+            window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                action: 'forceRustAdblockUpdate',
+                sessionSecret: sessionSecret
+            });
+            // Refresh stats after a brief delay
+            setTimeout(() => {
+                window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                    action: 'getRustAdblockStats',
+                    sessionSecret: sessionSecret
+                });
+            }, 3000);
         }
         
         function openPermissions() {
@@ -613,6 +699,14 @@
                 sessionSecret: sessionSecret
             });
             window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                action: 'getRustAdblockSettings',
+                sessionSecret: sessionSecret
+            });
+            window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                action: 'getRustAdblockStats',
+                sessionSecret: sessionSecret
+            });
+            window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
                 action: 'getProxySettings',
                 sessionSecret: sessionSecret
             });
@@ -670,6 +764,35 @@
                     const diffDays = Math.floor(diffHours / 24);
                     text += ` (updated ${diffDays} days ago)`;
                 }
+            }
+            
+            statsText.textContent = text;
+        }
+        
+        function updateRustAdblockUI(settings) {
+            document.getElementById('rustAdblockEnabled').checked = settings.enabled;
+            document.getElementById('rustAdblockURL').value = settings.url;
+        }
+        
+        function updateRustAdblockStats(stats) {
+            const statsText = document.getElementById('rustAdblockStatsText');
+            
+            if (!stats.enabled) {
+                statsText.textContent = 'Rust ad blocking is disabled';
+                return;
+            }
+            
+            if (!stats.engineLoaded) {
+                statsText.textContent = 'Loading filter lists...';
+                return;
+            }
+            
+            const hiddenCount = stats.hiddenElementsCount || 0;
+            const blockedCount = stats.blockedRequestsCount || 0;
+            
+            let text = `EasyList loaded successfully`;
+            if (hiddenCount > 0 || blockedCount > 0) {
+                text += ` • ${hiddenCount} elements hidden, ${blockedCount} requests blocked`;
             }
             
             statsText.textContent = text;
