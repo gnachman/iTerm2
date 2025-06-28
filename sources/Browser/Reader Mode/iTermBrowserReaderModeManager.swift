@@ -95,7 +95,23 @@ class iTermBrowserReaderModeManager: NSObject {
             DLog("Error exiting reader mode: \(error)")
         }
     }
-    
+
+    func removeElement(webView: WKWebView, at point: NSPoint) {
+        Task {
+            do {
+                let script = iTermBrowserTemplateLoader.loadTemplate(named: "remove-element-at-point",
+                                                                     type: "js",
+                                                                     substitutions: [
+                                                                        "POINT_X": "\(point.x)",
+                                                                        "POINT_Y": "\(point.y)"
+                                                                     ])
+                try await webView.evaluateJavaScript(script)
+            } catch {
+                DLog("Error in removeElement: \(error)")
+            }
+        }
+    }
+
     func toggleDistractionRemovalMode(webView: WKWebView) async {
         if isDistractionRemovalActive {
             await exitDistractionRemovalMode(webView: webView)

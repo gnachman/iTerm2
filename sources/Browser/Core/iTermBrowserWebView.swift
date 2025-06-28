@@ -28,6 +28,7 @@ import WebKit
                                            pointInWindow point: NSPoint)
     func webViewOpenURLInNewTab(_ webView: iTermBrowserWebView, url: URL)
     func webViewDidHoverURL(_ webView: iTermBrowserWebView, url: String?, frame: NSRect)
+    func webViewDidRequestRemoveElement(_ webView: iTermBrowserWebView, at: NSPoint)
 }
 
 @available(macOS 11.0, *)
@@ -513,13 +514,23 @@ class iTermBrowserWebView: WKWebView {
         let viewSourceItem = NSMenuItem(title: "View Source", action: #selector(viewSourceMenuClicked), keyEquivalent: "")
         viewSourceItem.target = self
         menu.addItem(viewSourceItem)
+
+        let removeElement = NSMenuItem(title: "Remove Element", action: #selector(removeElementMenuClicked), keyEquivalent: "")
+        viewSourceItem.target = self
+        menu.addItem(removeElement)
     }
 
     @objc private func addNamedMarkMenuClicked() {
         guard let clickLocation = contextMenuClickLocation else { return }
-        browserDelegate?.webViewDidRequestAddNamedMark(self, atPoint: clickLocation)
+        browserDelegate?.webViewDidRequestAddNamedMark(self, atPoint: convertToJavaScriptCoordinates(clickLocation))
     }
-    
+
+    @objc private func removeElementMenuClicked() {
+        if let contextMenuClickLocation {
+            browserDelegate?.webViewDidRequestRemoveElement(self, at: convertToJavaScriptCoordinates(contextMenuClickLocation))
+        }
+    }
+
     @objc private func viewSourceMenuClicked() {
         browserDelegate?.webViewDidRequestViewSource(self)
     }

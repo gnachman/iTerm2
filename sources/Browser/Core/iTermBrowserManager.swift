@@ -583,6 +583,10 @@ extension iTermBrowserManager: iTermBrowserWebViewDelegate {
             state: state)
     }
 
+    func webViewDidRequestRemoveElement(_ webView: iTermBrowserWebView, at point: NSPoint) {
+        readerModeManager.removeElement(webView: webView, at: point)
+    }
+
     func webViewDidRequestViewSource(_ webView: iTermBrowserWebView) {
         viewPageSource()
     }
