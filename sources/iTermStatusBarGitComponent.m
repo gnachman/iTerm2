@@ -106,7 +106,7 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     return self;
 }
 
-+ (int)compatibleProfileTypes {
++ (ProfileType)compatibleProfileTypes {
     return ProfileTypeTerminal;
 }
 

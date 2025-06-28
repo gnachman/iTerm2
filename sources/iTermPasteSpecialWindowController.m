@@ -84,13 +84,14 @@
     IBOutlet NSPopUpButton *_itemList;
     IBOutlet NSTextView *_preview;
     IBOutlet NSTextField *_estimatedDuration;
-    IBOutlet NSView *_pasteSpecialViewContainer;
-
+    IBOutlet NSView *_terminalModeEnclosure;
+    NSView *_pasteSpecialViewContainer;
     iTermPasteSpecialViewController *_pasteSpecialViewController;
     NSString *_shell;
 
     // Object to paste not representable as a string and is pre-base64 encoded.
     BOOL _base64only;
+    ProfileType _profileType;
 }
 
 - (instancetype)initWithChunkSize:(NSInteger)chunkSize
@@ -100,7 +101,8 @@
                   isAtShellPrompt:(BOOL)isAtShellPrompt
                forceEscapeSymbols:(BOOL)forceEscapeSymbols
                             shell:(NSString *)shell
-                   encoding:(NSStringEncoding)encoding {
+                   encoding:(NSStringEncoding)encoding
+                      profileType:(ProfileType)profileType {
     self = [super initWithWindowNibName:@"iTermPasteSpecialWindow"];
     if (self) {
         _shell = [shell lastPathComponent];
@@ -109,6 +111,7 @@
         _canWaitForPrompt = canWaitForPrompt;
         _isAtShellPrompt = isAtShellPrompt;
         _forceEscapeSymbols = forceEscapeSymbols;
+        _profileType = profileType;
         NSMutableArray *values = [NSMutableArray array];
         NSMutableArray *labels = [NSMutableArray array];
 
@@ -153,6 +156,23 @@
 }
 
 - (void)awakeFromNib {
+    const CGFloat heightBefore = _pasteSpecialViewController.view.frame.size.height;
+    _pasteSpecialViewController.profileType = _profileType;
+    const CGFloat heightAfter = _pasteSpecialViewController.view.frame.size.height;
+    if (_profileType != ProfileTypeTerminal) {
+        _terminalModeEnclosure.hidden = YES;
+    }
+    const CGFloat shrinkage = heightBefore - heightAfter;
+
+    NSRect frame = _statsLabel.frame;
+    frame.origin.y -= shrinkage;
+
+    frame = _preview.enclosingScrollView.frame;
+    frame.origin.y -= shrinkage;
+    frame.size.height += shrinkage;
+    _preview.enclosingScrollView.frame = frame;
+
+
     _preview.backgroundColor = [NSColor textBackgroundColor];
     _preview.textColor = [NSColor textColor];
     _preview.automaticSpellingCorrectionEnabled = NO;
@@ -415,6 +435,7 @@
             isAtShellPrompt:(BOOL)isAtShellPrompt
          forceEscapeSymbols:(BOOL)forceEscapeSymbols
                       shell:(NSString *)shell
+                profileType:(ProfileType)profileType
                  completion:(iTermPasteSpecialCompletionBlock)completion {
     iTermPasteSpecialWindowController *controller =
         [[iTermPasteSpecialWindowController alloc] initWithChunkSize:chunkSize
@@ -424,7 +445,8 @@
                                                      isAtShellPrompt:isAtShellPrompt
                                                   forceEscapeSymbols:forceEscapeSymbols
                                                                shell:shell
-                                                            encoding:encoding];
+                                                            encoding:encoding
+                                                         profileType:profileType];
     NSWindow *window = [controller window];
     [presentingWindow beginSheet:window completionHandler:^(NSModalResponse returnCode) {
         [NSApp stopModal];

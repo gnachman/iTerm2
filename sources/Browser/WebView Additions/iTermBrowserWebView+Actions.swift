@@ -358,30 +358,34 @@ extension iTermBrowserWebView {
             return false
         }
     }
-    
-    func copySelectionToClipboard() async {
-        let script = """
-        (function() {
-            var selection = window.getSelection();
-            return selection ? selection.toString() : "";
-        })();
-        """
-        
-        do {
-            let result = try await evaluateJavaScript(script)
-            if let selectedText = result as? String {
-                let shouldCopy = !selectedText.isEmpty
-                if shouldCopy {
-                    await MainActor.run {
-                        let pasteboard = NSPasteboard.general
-                        pasteboard.clearContents()
-                        pasteboard.setString(selectedText, forType: .string)
-                        PasteboardHistory.sharedInstance().save(selectedText)
-                    }
-                }
+
+    var selectedText: String? {
+        get async {
+            let script = """
+            (function() {
+                var selection = window.getSelection();
+                return selection ? selection.toString() : "";
+            })();
+            """
+            do {
+                let result = try await evaluateJavaScript(script)
+                return result as? String
+            } catch {
+                DLog("\(error)")
+                return nil
             }
-        } catch {
-            DLog("\(error)")
+        }
+    }
+
+    func copySelectionToClipboard() async {
+        if let selectedText = await selectedText, !selectedText.isEmpty {
+            await MainActor.run {
+                let pasteboard = NSPasteboard.general
+                pasteboard.clearContents()
+                pasteboard.setString(selectedText, forType: .string)
+                PasteboardHistory.sharedInstance().save(selectedText)
+            }
         }
     }
 }
+

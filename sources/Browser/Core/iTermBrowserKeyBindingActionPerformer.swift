@@ -63,11 +63,18 @@ class iTermBrowserKeyBindingActionPerformer {
             // UPDATE iTermEditKeyActionWindowController WHEN CHANGING THIS! It excludes items that are in this list.
             return true
 
-        case .ACTION_LOAD_COLOR_PRESET, .ACTION_FIND_REGEX, .ACTION_PASTE_SPECIAL,
-                .ACTION_PASTE_SPECIAL_FROM_SELECTION:
+        case .ACTION_LOAD_COLOR_PRESET, .ACTION_FIND_REGEX:
             // Not yet implemented, but should be!
             // UPDATE iTermEditKeyActionWindowController WHEN CHANGING THIS! It excludes items that are in this list.
             return true
+
+        case .ACTION_PASTE_SPECIAL_FROM_SELECTION:
+            delegate?.actionPerformingPasteSpecial(config: parameter as String,
+                                                   fromSelection: true)
+
+        case .ACTION_PASTE_SPECIAL:
+            delegate?.actionPerformingPasteSpecial(config: parameter as String,
+                                                   fromSelection: false)
 
             // Variations of sending text
         case .ACTION_HEX_CODE:

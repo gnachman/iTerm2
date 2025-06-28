@@ -14,7 +14,7 @@ class ProfilesWebPreferencesViewController: iTermProfilePreferencesBaseViewContr
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
     }
 
-    override required init?(coder: NSCoder) {
+    required init?(coder: NSCoder) {
         super.init(coder: coder)
     }
 

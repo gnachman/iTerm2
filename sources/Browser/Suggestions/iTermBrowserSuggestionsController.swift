@@ -21,8 +21,8 @@ class iTermBrowserSuggestionsController {
     enum Score: Int {
         case strongSearch = 3_000_001
         case strongURL = 3_000_000
+        case weakSearch = 2_999_999
         case openSearch = 2_000_000  // index gets subtracted from this
-        case weakSearch = 999_999
         case weakURL = 999_998
         case bookmarks = 500_000  // visit count gets added to this, and bookmarks take priority over history
         case history = 0  // visit count gets added to this.

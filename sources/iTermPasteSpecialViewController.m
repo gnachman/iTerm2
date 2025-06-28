@@ -7,6 +7,7 @@
 //
 
 #import "iTermPasteSpecialViewController.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "NSTextField+iTerm.h"
 #import "PasteEvent.h"
 
@@ -89,6 +90,21 @@ static NSString *const kSubstitution = @"Substitution";
 
     [_icuRegexHelpLabel replaceWithHyperlinkTo:[NSURL URLWithString:@"https://iterm2.com/regex"]];
     _icuRegexHelpLabel = nil;
+}
+
+- (void)setProfileType:(ProfileType)profileType {
+    _profileType = profileType;
+    NSSize shrinkage;
+    (void)[self.view setVisibilityForTerminalEnclosures:!!(profileType & ProfileTypeTerminal)
+                                      browserEnclosures:!!(profileType & ProfileTypeBrowser)
+                                   hiddenModeEnclosures:[iTermAdvancedSettingsModel browserProfiles]
+                               sharedProfilesEnclosures:false
+                                           stateStorage:[NSMutableDictionary dictionary]
+                                              shrinkage:&shrinkage];
+    NSRect frame = self.view.frame;
+    frame.size.height -= shrinkage.height;
+    frame.size.width -= shrinkage.width;
+    self.view.frame = frame;
 }
 
 // TODO: When 10.7 support is dropped use NSByteCountFormatter
