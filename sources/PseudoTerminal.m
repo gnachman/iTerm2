@@ -8507,6 +8507,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return index;
 }
 
+// newSession is either a newly created session (if performSetup is YES) or an existing session that is joining a new split pane.
 - (void)splitVertically:(BOOL)isVertical
                  before:(BOOL)before
           addingSession:(PTYSession *)newSession
@@ -8515,7 +8516,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     DLog(@"splitVertically:%@ before:%@ addingSession:%@ targetSession:%@ performSetup:%@ self=%@",
          @(isVertical), @(before), newSession, targetSession, @(performSetup), self);
     [self.currentSession.textview refuseFirstResponderAtCurrentMouseLocation];
-    NSView *scrollView;
     NSColor *tabColor;
     PTYTab *tab = [self tabForSession:targetSession] ?: [self currentTab];
     if (newSession.tabColor) {
@@ -8525,26 +8525,33 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         // Inherit from tab.
         tabColor = [[[_contentView.tabBarControl tabColorForTabViewItem:[tab tabViewItem]] retain] autorelease];
     }
+    SessionView *originalNewSessionView = [[newSession.view retain] autorelease];
+
+    // This assigns to newSession.view
     [tab splitVertically:isVertical
               newSession:newSession
                   before:before
            targetSession:targetSession];
-    SessionView *sessionView = newSession.view;
-    scrollView = sessionView.scrollview;
-    NSSize size = [sessionView frame].size;
+
+    NSSize size = [newSession.view frame].size;
     if (performSetup) {
+        // Adding a newly created session into a new split
         [self setupSession:newSession withSize:&size];
-        scrollView = newSession.view.scrollview;
     } else {
+        // Moving an existing session (newSession) into a new split
         [newSession setScrollViewDocumentView];
+
+        // SessionView doesn't have any state that survives being moved except the browser view & view controller.
+        if (@available(macOS 11, *)) {
+            if (originalNewSessionView.browserViewController) {
+                [newSession.view setBrowserViewController:originalNewSessionView.browserViewController
+                                               initialURL:nil
+                                          restorableState:nil];
+            }
+        }
     }
-    // Move the scrollView created by PTYSession into sessionView.
-    [scrollView retain];
-    [scrollView removeFromSuperview];
-    [sessionView addSubviewBelowFindView:scrollView];
-    [scrollView release];
     if (!performSetup) {
-        [scrollView setFrameSize:[sessionView frame].size];
+        [newSession.view.scrollview setFrameSize:[newSession.view frame].size];
     }
     [self fitTabsToWindow];
 
