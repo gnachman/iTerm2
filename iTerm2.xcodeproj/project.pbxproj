@@ -1183,6 +1183,12 @@
 		A612206F2E0F4C2400F48E64 /* get-xpath-at-point.js in Resources */ = {isa = PBXBuildFile; fileRef = A612206A2E0F4C2400F48E64 /* get-xpath-at-point.js */; };
 		A61220702E0F4C2400F48E64 /* xpath-utils.js in Resources */ = {isa = PBXBuildFile; fileRef = A612206B2E0F4C2400F48E64 /* xpath-utils.js */; };
 		A61220712E0F4C2400F48E64 /* get-xpath-at-point.js in Resources */ = {isa = PBXBuildFile; fileRef = A612206A2E0F4C2400F48E64 /* get-xpath-at-point.js */; };
+		A61220742E0FA74700F48E64 /* distraction-removal-helpers.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220722E0FA74700F48E64 /* distraction-removal-helpers.js */; };
+		A61220752E0FA74700F48E64 /* remove-element-at-point.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220732E0FA74700F48E64 /* remove-element-at-point.js */; };
+		A61220762E0FA74700F48E64 /* distraction-removal-helpers.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220722E0FA74700F48E64 /* distraction-removal-helpers.js */; };
+		A61220772E0FA74700F48E64 /* remove-element-at-point.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220732E0FA74700F48E64 /* remove-element-at-point.js */; };
+		A61220782E0FA74700F48E64 /* distraction-removal-helpers.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220722E0FA74700F48E64 /* distraction-removal-helpers.js */; };
+		A61220792E0FA74700F48E64 /* remove-element-at-point.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220732E0FA74700F48E64 /* remove-element-at-point.js */; };
 		A612E5C92DACB2920014F159 /* FileDescriptorMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A612E5C82DACB2890014F159 /* FileDescriptorMonitor.swift */; };
 		A612E5CB2DACB5E80014F159 /* IOBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A612E5CA2DACB5E50014F159 /* IOBuffer.swift */; };
 		A612E5CE2DAD968F0014F159 /* ChannelJobManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A612E5CD2DAD96870014F159 /* ChannelJobManager.swift */; };
@@ -6310,6 +6316,8 @@
 		A61220662E0F469400F48E64 /* show-named-mark-annotations.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "show-named-mark-annotations.js"; sourceTree = "<group>"; };
 		A612206A2E0F4C2400F48E64 /* get-xpath-at-point.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "get-xpath-at-point.js"; sourceTree = "<group>"; };
 		A612206B2E0F4C2400F48E64 /* xpath-utils.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "xpath-utils.js"; sourceTree = "<group>"; };
+		A61220722E0FA74700F48E64 /* distraction-removal-helpers.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "distraction-removal-helpers.js"; sourceTree = "<group>"; };
+		A61220732E0FA74700F48E64 /* remove-element-at-point.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "remove-element-at-point.js"; sourceTree = "<group>"; };
 		A612E5C82DACB2890014F159 /* FileDescriptorMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileDescriptorMonitor.swift; sourceTree = "<group>"; };
 		A612E5CA2DACB5E50014F159 /* IOBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOBuffer.swift; sourceTree = "<group>"; };
 		A612E5CD2DAD96870014F159 /* ChannelJobManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelJobManager.swift; sourceTree = "<group>"; };
@@ -13130,6 +13138,8 @@
 		A6CBB8BE2E0A695D00B2CCCB /* Reader Mode */ = {
 			isa = PBXGroup;
 			children = (
+				A61220722E0FA74700F48E64 /* distraction-removal-helpers.js */,
+				A61220732E0FA74700F48E64 /* remove-element-at-point.js */,
 				A6CBB90A2E0A832B00B2CCCB /* distraction-removal.js */,
 				A6CBB9022E0A823D00B2CCCB /* enter-distraction-removal.js */,
 				A6CBB9032E0A823D00B2CCCB /* exit-distraction-removal.js */,
@@ -13446,7 +13456,6 @@
 		A6F7D4B32E0340A30065D09C /* Browser */ = {
 			isa = PBXGroup;
 			children = (
-				A6FE7AA32E0F10A900BEBCE4 /* Marks */,
 				A6FE7A912E0E6B7F00BEBCE4 /* Autofill */,
 				A6CBB8132E0A16AA00B2CCCB /* Bookmarks */,
 				A6CBB8202E0A1CE000B2CCCB /* Core */,
@@ -13455,6 +13464,7 @@
 				A6CBB81F2E0A1CC200B2CCCB /* Favicon */,
 				A6CBB8172E0A1BBE00B2CCCB /* History */,
 				A6CBB8162E0A1B7400B2CCCB /* Local Pages */,
+				A6FE7AA32E0F10A900BEBCE4 /* Marks */,
 				A6CBB8352E0A3B1000B2CCCB /* Page Saver */,
 				A6CBB80C2E09E4A700B2CCCB /* Password Manager */,
 				A6CBB8182E0A1BE800B2CCCB /* Permissions */,
@@ -15463,6 +15473,8 @@
 				A6B4833229D73DA10055E24A /* text.redaction.png in Resources */,
 				A636C3BA22891BD900A83E2F /* StatusBarIconNoBattery@2x.png in Resources */,
 				A67F6136214395570093940A /* graphic_gulp.png in Resources */,
+				A61220762E0FA74700F48E64 /* distraction-removal-helpers.js in Resources */,
+				A61220772E0FA74700F48E64 /* remove-element-at-point.js in Resources */,
 				1D6ED97919AEA20D005A7799 /* important.png in Resources */,
 				1D6ED97B19AEA20D005A7799 /* newwin.png in Resources */,
 				A6CBB8ED2E0A6C5D00B2CCCB /* exit-reader-mode.js in Resources */,
@@ -16265,6 +16277,8 @@
 				A612206F2E0F4C2400F48E64 /* get-xpath-at-point.js in Resources */,
 				A66A882624DFCCC30043728B /* graphic_erlang.png in Resources */,
 				A63011B420E7EE69008114B7 /* iTermStatusBarKnobNumericViewController.xib in Resources */,
+				A61220742E0FA74700F48E64 /* distraction-removal-helpers.js in Resources */,
+				A61220752E0FA74700F48E64 /* remove-element-at-point.js in Resources */,
 				A6A1BCC829CB700400646E9F /* square.and.arrow.up.png in Resources */,
 				1D8BBA741B30F7FB0005A852 /* Dismiss.png in Resources */,
 				A67D0D811A2EE12A003A8B35 /* PreferencePanel.xib in Resources */,
@@ -17087,6 +17101,8 @@
 				A602AAE62B0BCDB100E6C965 /* whitebox_logo.png in Resources */,
 				A64F32142B853CEE008EFDC9 /* dice.png in Resources */,
 				A6E7AE8C214394DD00DE9F3B /* graphic_composer@2x.png in Resources */,
+				A61220782E0FA74700F48E64 /* distraction-removal-helpers.js in Resources */,
+				A61220792E0FA74700F48E64 /* remove-element-at-point.js in Resources */,
 				A67F618A214395A70093940A /* graphic_nginx@2x.png in Resources */,
 				1D4BAFEE1BFE77E4004FF52B /* iTermPrintAccessoryViewController.xib in Resources */,
 				A6F7A716213CB143004DE961 /* StatusBarIconRAM@2x.png in Resources */,
