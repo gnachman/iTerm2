@@ -4126,6 +4126,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] autoHides];
 }
 
+- (BOOL)implementsDisableFocusFollowsMouse {
+    return YES;
+}
+
 - (CGFloat)growToolbeltBy:(CGFloat)diff {
     CGFloat before = _contentView.toolbeltWidth;
     _contentView.toolbeltWidth = _contentView.toolbeltWidth + diff;
@@ -8515,7 +8519,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
            performSetup:(BOOL)performSetup {
     DLog(@"splitVertically:%@ before:%@ addingSession:%@ targetSession:%@ performSetup:%@ self=%@",
          @(isVertical), @(before), newSession, targetSession, @(performSetup), self);
-    [self.currentSession.textview refuseFirstResponderAtCurrentMouseLocation];
+    [self.currentSession refuseFirstResponderAtCurrentMouseLocation];
     NSColor *tabColor;
     PTYTab *tab = [self tabForSession:targetSession] ?: [self currentTab];
     if (newSession.tabColor) {

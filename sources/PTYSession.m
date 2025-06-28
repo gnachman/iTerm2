@@ -13666,6 +13666,16 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [self.delegate sessionDisableFocusFollowsMouseAtCurrentLocation];
 }
 
+- (void)refuseFirstResponderAtCurrentMouseLocation {
+    if (@available(macOS 11, *)) {
+        if (_view.isBrowser) {
+            [_view.browserViewController refuseFirstResponderAtCurrentMouseLocation];
+            return;
+        }
+    }
+    [self.textview refuseFirstResponderAtCurrentMouseLocation];
+}
+
 - (void)reveal {
     DLog(@"Reveal session %@", self);
     if ([[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:self]) {
@@ -16886,6 +16896,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)sessionViewMouseEntered:(NSEvent *)event {
     DLog(@"sessionViewMouseEntered");
+    if (@available(macOS 11, *)) {
+        if (_view.isBrowser) {
+            return;
+        }
+    }
     [_textview mouseEntered:event];
     [_textview requestDelegateRedraw];
     [_textview updateCursor:event];

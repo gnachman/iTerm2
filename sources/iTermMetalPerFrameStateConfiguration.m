@@ -45,7 +45,7 @@ static vector_float4 VectorForColor(NSColor *color) {
     _isInKeyWindow = [textView isInKeyWindow];
     _textViewIsActiveSession = [textView.delegate textViewIsActiveSession];
     _textViewIsFirstResponder = drawingHelper.textViewIsFirstResponder;
-    _shouldDrawFilledInCursor = ([textView.delegate textViewShouldDrawFilledInCursor] || textView.keyFocusStolenCount);
+    _shouldDrawFilledInCursor = ([textView.delegate textViewShouldDrawFilledInCursor] || textView.focusFollowsMouse.haveStolenFocus);
     _blinkAllowed = textView.blinkAllowed;
     _blinkingItemsVisible = drawingHelper.blinkingItemsVisible;
     const BOOL forceAA = (drawingHelper.forceAntialiasingOnRetina && drawingHelper.isRetina);

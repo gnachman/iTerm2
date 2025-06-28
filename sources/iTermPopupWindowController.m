@@ -144,6 +144,10 @@
     return YES;
 }
 
+- (BOOL)implementsDisableFocusFollowsMouse {
+    return YES;
+}
+
 - (PopupWindow *)popupWindow {
     return (PopupWindow *)self.window;
 }

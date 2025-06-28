@@ -29,6 +29,7 @@ import WebKit
     func webViewOpenURLInNewTab(_ webView: iTermBrowserWebView, url: URL)
     func webViewDidHoverURL(_ webView: iTermBrowserWebView, url: String?, frame: NSRect)
     func webViewDidRequestRemoveElement(_ webView: iTermBrowserWebView, at: NSPoint)
+    func webViewDidBecomeFirstResponder(_ webView: iTermBrowserWebView)
 }
 
 @available(macOS 11.0, *)
@@ -43,17 +44,29 @@ class iTermBrowserWebView: WKWebView {
     private var mouseDownLocationInWindow: NSPoint?
     private var hoverLinkSecret: String?
     private var contextMenuClickLocation: NSPoint?
+    private var trackingArea: NSTrackingArea?
+    private let focusFollowsMouse = iTermFocusFollowsMouse()
 
     init(frame: CGRect,
          configuration: WKWebViewConfiguration,
          pointerController: PointerController) {
         self.pointerController = pointerController
+
         super.init(frame: frame, configuration: configuration)
+
+        focusFollowsMouse.delegate = self
         allowsMagnification = true
         threeFingerTapGestureRecognizer = ThreeFingerTapGestureRecognizer(target: self,
                                                                           selector: #selector(threeFingerTap(_:)))
         allowedTouchTypes = .indirect
         wantsRestingTouches = true
+        
+        // Set up tracking area for mouse enter/exit
+        updateTrackingAreas()
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(applicationDidResignActive(_:)),
+                                               name: NSApplication.didResignActiveNotification,
+                                               object: nil)
     }
 
     required init?(coder: NSCoder) {
@@ -390,6 +403,12 @@ class iTermBrowserWebView: WKWebView {
             state: state)
     }
 
+    // MARK: - Notifications
+
+    @objc private func applicationDidResignActive(_ notification: Notification) {
+        numTouches = 0
+    }
+
     // MARK: - Deferred Interaction State
     
     @available(macOS 12.0, *)
@@ -570,13 +589,65 @@ class iTermBrowserWebView: WKWebView {
     
     // MARK: - Mouse Tracking for Hover
     
-    override func mouseExited(with event: NSEvent) {
-        super.mouseExited(with: event)
-        clearHover()
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        
+        // Remove existing tracking area if present
+        if let trackingArea = trackingArea {
+            removeTrackingArea(trackingArea)
+        }
+        
+        // Create new tracking area for mouse enter/exit
+        var options: NSTrackingArea.Options = [.mouseEnteredAndExited, .activeInKeyWindow]
+        if focusFollowsMouse.focusFollowsMouse {
+            options.insert(.mouseMoved)
+        }
+        trackingArea = NSTrackingArea(rect: bounds,
+                                      options: options,
+                                      owner: self,
+                                      userInfo: nil)
+        
+        if let trackingArea = trackingArea {
+            addTrackingArea(trackingArea)
+        }
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        super.mouseEntered(with: event)
+        _ = focusFollowsMouse.mouseWillEnter(with: event)
+        focusFollowsMouse.mouseEntered(with: event)
     }
     
+    override func mouseExited(with event: NSEvent) {
+        super.mouseExited(with: event)
+        _ = focusFollowsMouse.mouseExited(with: event)
+        clearHover()
+    }
+
+    override func mouseMoved(with event: NSEvent) {
+        super.mouseMoved(with: event)
+        focusFollowsMouse.mouseMoved(with: event)
+    }
     func clearHover() {
         browserDelegate?.webViewDidHoverURL(self, url: nil, frame: NSZeroRect)
     }
     
+}
+
+@available(macOS 11.0, *)
+extension iTermBrowserWebView: iTermFocusFollowsMouseDelegate {
+    func focusFollowsMouseDidBecomeFirstResponder() {
+        browserDelegate?.webViewDidBecomeFirstResponder(self)
+    }
+    
+    func focusFollowsMouseDesiredFirstResponder() -> NSResponder {
+        return self
+    }
+    
+    func focusFollowsMouseDidChangeMouseLocationToRefusFirstResponderAt() {
+    }
+    
+    func refuseFirstResponderAtCurrentMouseLocation() {
+        focusFollowsMouse.refuseFirstResponderAtCurrentMouseLocation()
+    }
 }

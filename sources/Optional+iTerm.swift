@@ -27,6 +27,7 @@ public extension Optional where Wrapped: CustomDebugStringConvertible {
             return obj.debugDescription
         }
     }
+    // I don't know why but adding d here breaks a bunch of unrelated stuff.
 }
 
 public extension Optional where Wrapped: CustomStringConvertible {
@@ -37,6 +38,9 @@ public extension Optional where Wrapped: CustomStringConvertible {
         case .some(let obj):
             return obj.description
         }
+    }
+    var d: String {
+        descriptionOrNil
     }
 }
 
@@ -91,6 +95,21 @@ extension Optional where Wrapped == URL {
             return "(nil)"
         case .some(let value):
             return value.absoluteString
+        }
+    }
+}
+
+extension Optional where Wrapped: AnyObject {
+    var d: String {
+        switch self {
+        case .none:
+            return "(nil)"
+        case .some(let value):
+            if let obj = value as? NSObject {
+                return obj.description
+            }
+            let ptr = Unmanaged.passUnretained(value).toOpaque()
+            return String(format: "%p", Int(bitPattern: ptr))
         }
     }
 }

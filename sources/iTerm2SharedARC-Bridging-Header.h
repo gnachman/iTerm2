@@ -75,6 +75,7 @@
 #import "iTermSSHHelpers.h"
 #import "iTermScriptExporter.h"
 #import "iTermScriptImporter.h"
+#import "iTermSecureKeyboardEntryController.h"
 #import "iTermSelection.h"
 #import "iTermSelectionExtraction.h"
 #import "iTermSessionLauncher.h"

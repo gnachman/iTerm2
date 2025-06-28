@@ -1195,6 +1195,7 @@
 		A61220BF2E0FAC9200F48E64 /* visual-debug-remove-element.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220BE2E0FAC9200F48E64 /* visual-debug-remove-element.js */; };
 		A61220C02E0FAC9200F48E64 /* visual-debug-remove-element.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220BE2E0FAC9200F48E64 /* visual-debug-remove-element.js */; };
 		A61220C12E0FAC9200F48E64 /* visual-debug-remove-element.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220BE2E0FAC9200F48E64 /* visual-debug-remove-element.js */; };
+		A61220E32E10489600F48E64 /* iTermFocusFollowsMouse.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61220E22E10489000F48E64 /* iTermFocusFollowsMouse.swift */; };
 		A612E5C92DACB2920014F159 /* FileDescriptorMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A612E5C82DACB2890014F159 /* FileDescriptorMonitor.swift */; };
 		A612E5CB2DACB5E80014F159 /* IOBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A612E5CA2DACB5E50014F159 /* IOBuffer.swift */; };
 		A612E5CE2DAD968F0014F159 /* ChannelJobManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A612E5CD2DAD96870014F159 /* ChannelJobManager.swift */; };
@@ -6326,6 +6327,7 @@
 		A61220732E0FA74700F48E64 /* remove-element-at-point.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "remove-element-at-point.js"; sourceTree = "<group>"; };
 		A61220BA2E0FAAB300F48E64 /* debug-remove-element-at-point.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "debug-remove-element-at-point.js"; sourceTree = "<group>"; };
 		A61220BE2E0FAC9200F48E64 /* visual-debug-remove-element.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "visual-debug-remove-element.js"; sourceTree = "<group>"; };
+		A61220E22E10489000F48E64 /* iTermFocusFollowsMouse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermFocusFollowsMouse.swift; sourceTree = "<group>"; };
 		A612E5C82DACB2890014F159 /* FileDescriptorMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileDescriptorMonitor.swift; sourceTree = "<group>"; };
 		A612E5CA2DACB5E50014F159 /* IOBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOBuffer.swift; sourceTree = "<group>"; };
 		A612E5CD2DAD96870014F159 /* ChannelJobManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelJobManager.swift; sourceTree = "<group>"; };
@@ -11083,6 +11085,7 @@
 		A63F40AC1842988A003A6A6D /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				A61220E22E10489000F48E64 /* iTermFocusFollowsMouse.swift */,
 				A6F7D4CE2E038B540065D09C /* PTYSession+Browser.swift */,
 				A69553882DD1AA7B002E694D /* TokenArray.swift */,
 				A6C811F82DD1A7850088E628 /* TwoTierTokenQueue.swift */,
@@ -18532,6 +18535,7 @@
 				A6D10E3D27F7C9FA0026DB56 /* ComposerTextView.swift in Sources */,
 				530AB8BD20B3D3D000D2AA08 /* iTermWindowHacks.m in Sources */,
 				A6DBC0462005DC2B00F1466D /* iTermTuple.m in Sources */,
+				A61220E32E10489600F48E64 /* iTermFocusFollowsMouse.swift in Sources */,
 				A61F456F22FA52CD00E2054A /* iTermUnreadCountView.m in Sources */,
 				A664334E2DE938AD0099F722 /* ResponsesAPIRequest.swift in Sources */,
 				A6069F002DF0224800EE6CC7 /* SSHFilePanelSidebar.swift in Sources */,

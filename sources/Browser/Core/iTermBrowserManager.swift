@@ -39,6 +39,7 @@ import Network
                         doSmartSelectionAtPointInWindow point: NSPoint) async
     func browserManager(_ browserManager: iTermBrowserManager,
                         didHoverURL url: String?, frame: NSRect)
+    func browserManagerDidBecomeFirstResponder(_ browserManager: iTermBrowserManager)
 }
 
 typealias Profile = [AnyHashable: Any]
@@ -585,6 +586,10 @@ extension iTermBrowserManager: iTermBrowserWebViewDelegate {
             modifiers: modifiers,
             sideEffects: sideEffects,
             state: state)
+    }
+
+    func webViewDidBecomeFirstResponder(_ webView: iTermBrowserWebView) {
+        delegate?.browserManagerDidBecomeFirstResponder(self)
     }
 
     func webViewDidRequestRemoveElement(_ webView: iTermBrowserWebView, at point: NSPoint) {

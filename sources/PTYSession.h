@@ -492,7 +492,7 @@ backgroundColor:(NSColor *)backgroundColor;
 // Call this on tmux clients to get the session with the tmux gateway.
 @property(nonatomic, readonly) PTYSession *tmuxGatewaySession;
 
-@property(nonatomic) id<VT100RemoteHostReading> currentHost;
+@property(nonatomic, strong) id<VT100RemoteHostReading> currentHost;
 
 @property(nonatomic, readonly) int tmuxPane;
 
@@ -1035,6 +1035,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (BOOL)handleFlagsChangedWithBuckyBits:(NSEvent *)event;
 - (CGFloat)desiredRightExtra;
 + (CGFloat)desiredRightExtraForProfile:(Profile *)profile;
+- (void)refuseFirstResponderAtCurrentMouseLocation;
 
 #pragma mark - API
 

@@ -60,6 +60,7 @@ protocol iTermBrowserViewControllerDelegate: AnyObject {
         _ controller: iTermBrowserViewController) -> [SmartSelectRule]
     func browserViewController(_ controller: iTermBrowserViewController,
                                didNavigateTo url: URL)
+    func browserViewControllerDidBecomeFirstResponder(_ controller: iTermBrowserViewController)
 }
 
 @available(macOS 11.0, *)
@@ -232,6 +233,11 @@ extension iTermBrowserViewController {
             shadeView.isHidden = newValue < 0.01
             shadeView.color = .black.withAlphaComponent(newValue)
         }
+    }
+
+    @objc
+    func refuseFirstResponderAtCurrentMouseLocation() {
+        browserManager.webView.refuseFirstResponderAtCurrentMouseLocation()
     }
 
     // MARK: - Search
@@ -792,6 +798,10 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
     
     func browserManager(_ browserManager: iTermBrowserManager, didHoverURL url: String?, frame: NSRect) {
         delegate?.browserViewController(self, didHoverURL: url, frame: frame)
+    }
+
+    func browserManagerDidBecomeFirstResponder(_ browserManager: iTermBrowserManager) {
+        delegate?.browserViewControllerDidBecomeFirstResponder(self)
     }
 }
 
