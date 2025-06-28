@@ -43,3 +43,6 @@
 [submodule "submodules/railroad_dsl"]
 	path = submodules/railroad_dsl
 	url = https://github.com/gnachman/railroad_dsl
+[submodule "submodules/adblock-rust"]
+	path = submodules/adblock-rust
+        url = https://github.com/gnachman/adblock-rust

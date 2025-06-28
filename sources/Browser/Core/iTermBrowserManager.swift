@@ -54,7 +54,8 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private let localPageManager: iTermBrowserLocalPageManager
     private(set) var favicon: NSImage?
     private var _findManager: Any?
-    private var adblockManager: iTermAdblockManager?
+    private var adblockManager: iTermBrowserAdblockManager?
+    private var adblockHandler: iTermBrowserAdblockHandler?
     private var notificationHandler: iTermBrowserNotificationHandler?
     private var hoverLinkHandler: iTermBrowserHoverLinkHandler?
     let passwordWriter = iTermBrowserPasswordWriter()
@@ -260,6 +261,9 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         if #available(macOS 13.0, *) {
             _findManager = iTermBrowserFindManager(webView: webView)
         }
+        
+        // Initialize adblock handler
+        adblockHandler = iTermBrowserAdblockHandler(webView: webView)
         
         // Setup adblocking
         setupAdblocking()
@@ -565,6 +569,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         localPageManager.cleanupAfterFailedNavigation(currentURL: webView.url?.absoluteString)
     }
     
+    
 }
 
 // MARK: - iTermBrowserWebViewDelegate
@@ -809,6 +814,9 @@ extension iTermBrowserManager: WKNavigationDelegate {
         }
         // Update title in browser history if available
         historyController.titleDidChange(for: webView.url, title: webView.title)
+        
+        // Apply cosmetic filtering using adblock-rust
+        adblockHandler?.applyCosmeticFiltering()
 
         delegate?.browserManager(self, didFinishNavigation: navigation)
     }
@@ -1302,21 +1310,21 @@ extension iTermBrowserManager {
 
     @objc func setupAdblocking() {
         // Use shared adblock manager
-        adblockManager = iTermAdblockManager.shared
+        adblockManager = iTermBrowserAdblockManager.shared
         
         // Listen for adblock notifications
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(adblockRulesDidUpdate),
-            name: iTermAdblockManager.didUpdateRulesNotification,
-            object: iTermAdblockManager.shared
+            name: iTermBrowserAdblockManager.didUpdateRulesNotification,
+            object: iTermBrowserAdblockManager.shared
         )
         
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(adblockDidFail(_:)),
-            name: iTermAdblockManager.didFailWithErrorNotification,
-            object: iTermAdblockManager.shared
+            name: iTermBrowserAdblockManager.didFailWithErrorNotification,
+            object: iTermBrowserAdblockManager.shared
         )
         
         // Start updates if needed
@@ -1344,7 +1352,7 @@ extension iTermBrowserManager {
     }
     
     @objc private func adblockDidFail(_ notification: Notification) {
-        guard let error = notification.userInfo?[iTermAdblockManager.errorKey] as? Error else {
+        guard let error = notification.userInfo?[iTermBrowserAdblockManager.errorKey] as? Error else {
             return
         }
         

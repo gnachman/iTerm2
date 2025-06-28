@@ -749,6 +749,7 @@ DEFINE_INT(badgeTopMargin, 10, SECTION_BADGE @"Default value for the top margin 
 
 DEFINE_SETTABLE_BOOL(adblockEnabled, AdblockEnabled, NO, SECTION_WEB_BROWSER @"Enable ad blocking in the web browser?\nWhen enabled, downloads and applies ad blocking rules from the configured URL.");
 DEFINE_SETTABLE_STRING(adblockListURL, AdblockListURL, @"https://easylist-downloads.adblockplus.org/easylist_content_blocker.json", SECTION_WEB_BROWSER @"URL for ad blocking filter list\nThis should be a JSON file in WebKit content blocker format. The list is downloaded automatically every 24 hours.");
+DEFINE_SETTABLE_STRING(rustAdblockListURL, RustAdblockListURL, @"https://easylist.to/easylist/easylist.txt", SECTION_WEB_BROWSER @"URL for Rust ad blocking filter list\nThis should be a text file in EasyList format. Used by the advanced Rust-based ad blocking engine.");
 DEFINE_SETTABLE_BOOL(browserProxyEnabled, BrowserProxyEnabled, NO, SECTION_WEB_BROWSER @"Enable HTTP proxy for web browser?\nWhen enabled, routes all browser traffic through the configured proxy server.");
 DEFINE_SETTABLE_STRING(browserProxyHost, BrowserProxyHost, @"127.0.0.1", SECTION_WEB_BROWSER @"HTTP proxy hostname or IP address\nThe address of the proxy server to use for browser connections.");
 DEFINE_INT(browserProxyPort, 8118, SECTION_WEB_BROWSER @"HTTP proxy port\nThe port number of the proxy server.");

@@ -17,7 +17,12 @@
       "Bash(for file in /Users/gnachman/git/iterm2-alt3/plists/{beta,dev,nightly,preview,release}-iTerm2.plist)",
       "Bash(do echo \"=== $file ===\")",
       "Bash(done)",
-      "WebFetch(domain:easylist-downloads.adblockplus.org)"
+      "WebFetch(domain:easylist-downloads.adblockplus.org)",
+      "Bash(git submodule add:*)",
+      "Bash(swiftc:*)",
+      "Bash(otool:*)",
+      "Bash(nm:*)",
+      "Bash(objdump:*)"
     ],
     "deny": []
   }

@@ -1196,6 +1196,13 @@
 		A61220C02E0FAC9200F48E64 /* visual-debug-remove-element.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220BE2E0FAC9200F48E64 /* visual-debug-remove-element.js */; };
 		A61220C12E0FAC9200F48E64 /* visual-debug-remove-element.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220BE2E0FAC9200F48E64 /* visual-debug-remove-element.js */; };
 		A61220E32E10489600F48E64 /* iTermFocusFollowsMouse.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61220E22E10489000F48E64 /* iTermFocusFollowsMouse.swift */; };
+		A61220E62E10528800F48E64 /* iTermBrowserAdblockRustManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61220E42E10528800F48E64 /* iTermBrowserAdblockRustManager.swift */; };
+		A61220E72E10528800F48E64 /* iTermBrowserAdblockRustWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61220E52E10528800F48E64 /* iTermBrowserAdblockRustWrapper.swift */; };
+		A61220E92E10542400F48E64 /* libadblock.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A61220E82E10542400F48E64 /* libadblock.a */; };
+		A61220EB2E106F9800F48E64 /* adblock-css-injection.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220EA2E106F9800F48E64 /* adblock-css-injection.js */; };
+		A61220EC2E106F9800F48E64 /* adblock-css-injection.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220EA2E106F9800F48E64 /* adblock-css-injection.js */; };
+		A61220ED2E106F9800F48E64 /* adblock-css-injection.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220EA2E106F9800F48E64 /* adblock-css-injection.js */; };
+		A61220EF2E106F9E00F48E64 /* iTermBrowserAdblockHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61220EE2E106F9E00F48E64 /* iTermBrowserAdblockHandler.swift */; };
 		A612E5C92DACB2920014F159 /* FileDescriptorMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A612E5C82DACB2890014F159 /* FileDescriptorMonitor.swift */; };
 		A612E5CB2DACB5E80014F159 /* IOBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A612E5CA2DACB5E50014F159 /* IOBuffer.swift */; };
 		A612E5CE2DAD968F0014F159 /* ChannelJobManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A612E5CD2DAD96870014F159 /* ChannelJobManager.swift */; };
@@ -4862,7 +4869,7 @@
 		A6F7D4DD2E03E03B0065D09C /* iTermURLTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4DC2E03E03B0065D09C /* iTermURLTextField.swift */; };
 		A6F7D4DF2E03E06E0065D09C /* iTermURLBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4DE2E03E06E0065D09C /* iTermURLBar.swift */; };
 		A6F7D4E12E04847E0065D09C /* iTermBrowserURLTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4E02E0484790065D09C /* iTermBrowserURLTextView.swift */; };
-		A6F7D4E52E04AE7D0065D09C /* iTermAdblockManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4E42E04AE7D0065D09C /* iTermAdblockManager.swift */; };
+		A6F7D4E52E04AE7D0065D09C /* iTermBrowserAdblockManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4E42E04AE7D0065D09C /* iTermBrowserAdblockManager.swift */; };
 		A6F7D4EE2E0532B40065D09C /* Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4ED2E0532B00065D09C /* Database.swift */; };
 		A6F7D4F02E0532C90065D09C /* DatabaseBackedArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4EF2E0532C60065D09C /* DatabaseBackedArray.swift */; };
 		A6F7D4F22E0536530065D09C /* BrowserHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7D4F12E0536530065D09C /* BrowserHistory.swift */; };
@@ -6328,6 +6335,11 @@
 		A61220BA2E0FAAB300F48E64 /* debug-remove-element-at-point.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "debug-remove-element-at-point.js"; sourceTree = "<group>"; };
 		A61220BE2E0FAC9200F48E64 /* visual-debug-remove-element.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "visual-debug-remove-element.js"; sourceTree = "<group>"; };
 		A61220E22E10489000F48E64 /* iTermFocusFollowsMouse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermFocusFollowsMouse.swift; sourceTree = "<group>"; };
+		A61220E42E10528800F48E64 /* iTermBrowserAdblockRustManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserAdblockRustManager.swift; sourceTree = "<group>"; };
+		A61220E52E10528800F48E64 /* iTermBrowserAdblockRustWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserAdblockRustWrapper.swift; sourceTree = "<group>"; };
+		A61220E82E10542400F48E64 /* libadblock.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libadblock.a; path = "ThirdParty/adblock-rust/lib/libadblock.a"; sourceTree = "<group>"; };
+		A61220EA2E106F9800F48E64 /* adblock-css-injection.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "adblock-css-injection.js"; sourceTree = "<group>"; };
+		A61220EE2E106F9E00F48E64 /* iTermBrowserAdblockHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserAdblockHandler.swift; sourceTree = "<group>"; };
 		A612E5C82DACB2890014F159 /* FileDescriptorMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileDescriptorMonitor.swift; sourceTree = "<group>"; };
 		A612E5CA2DACB5E50014F159 /* IOBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOBuffer.swift; sourceTree = "<group>"; };
 		A612E5CD2DAD96870014F159 /* ChannelJobManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelJobManager.swift; sourceTree = "<group>"; };
@@ -8640,7 +8652,7 @@
 		A6F7D4DC2E03E03B0065D09C /* iTermURLTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermURLTextField.swift; sourceTree = "<group>"; };
 		A6F7D4DE2E03E06E0065D09C /* iTermURLBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermURLBar.swift; sourceTree = "<group>"; };
 		A6F7D4E02E0484790065D09C /* iTermBrowserURLTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserURLTextView.swift; sourceTree = "<group>"; };
-		A6F7D4E42E04AE7D0065D09C /* iTermAdblockManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermAdblockManager.swift; sourceTree = "<group>"; };
+		A6F7D4E42E04AE7D0065D09C /* iTermBrowserAdblockManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserAdblockManager.swift; sourceTree = "<group>"; };
 		A6F7D4ED2E0532B00065D09C /* Database.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Database.swift; sourceTree = "<group>"; };
 		A6F7D4EF2E0532C60065D09C /* DatabaseBackedArray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseBackedArray.swift; sourceTree = "<group>"; };
 		A6F7D4F12E0536530065D09C /* BrowserHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserHistory.swift; sourceTree = "<group>"; };
@@ -8872,7 +8884,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A68BE9502DE5142A002DD513 /* librailroad_dsl.dylib in Frameworks */,
 				A6A3D18B2815EF4D00C0C9E0 /* Highlightr.framework in Frameworks */,
 				A6EC8050281BC67900493544 /* SwiftyMarkdown.framework in Frameworks */,
 				A666130D225CFF6900840E89 /* BetterFontPicker.framework in Frameworks */,
@@ -8888,6 +8899,8 @@
 				1DF0897113DBAF4C00A52AD8 /* Quartz.framework in Frameworks */,
 				A6C763D21B45C5B200E3C992 /* libiTerm2Shared.a in Frameworks */,
 				A667195F1DCE36F8000CE608 /* libiTerm2SharedARC.a in Frameworks */,
+				A61220E92E10542400F48E64 /* libadblock.a in Frameworks */,
+				A68BE9502DE5142A002DD513 /* librailroad_dsl.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -10325,6 +10338,7 @@
 		1DD39AD5180B8118004E56D5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				A61220E82E10542400F48E64 /* libadblock.a */,
 				A68BE93E2DE3BA3D002DD513 /* librailroad_dsl.dylib */,
 				1D94EAC712D641D3008225A9 /* AddressBook.framework */,
 				A60EAE7C23F9CEB3007536CE /* ApplicationServices.framework */,
@@ -10770,6 +10784,18 @@
 				A60593B4257DF9A500CACEE6 /* main.c */,
 			);
 			path = ShellLauncher;
+			sourceTree = "<group>";
+		};
+		A61220F02E1070EF00F48E64 /* Ad Blocking */ = {
+			isa = PBXGroup;
+			children = (
+				A61220EA2E106F9800F48E64 /* adblock-css-injection.js */,
+				A61220EE2E106F9E00F48E64 /* iTermBrowserAdblockHandler.swift */,
+				A6F7D4E42E04AE7D0065D09C /* iTermBrowserAdblockManager.swift */,
+				A61220E42E10528800F48E64 /* iTermBrowserAdblockRustManager.swift */,
+				A61220E52E10528800F48E64 /* iTermBrowserAdblockRustWrapper.swift */,
+			);
+			path = "Ad Blocking";
 			sourceTree = "<group>";
 		};
 		A612E5CC2DACB5FD0014F159 /* Channels */ = {
@@ -13117,7 +13143,7 @@
 			children = (
 				A6CBB7FD2E09163A00B2CCCB /* check-iframe-origins.js */,
 				A6FE7A862E0E252300BEBCE4 /* hover-link-detector.js */,
-				A6F7D4E42E04AE7D0065D09C /* iTermAdblockManager.swift */,
+				A6CBB8222E0A21F800B2CCCB /* rewrite-resources.js */,
 				A6A3EDC52E0CDA9500D711DA /* iTermBrowserActionPerforming.swift */,
 				A6F7D4D22E03D0A00065D09C /* iTermBrowserDownload.swift */,
 				A6F7D4D02E03BE3A0065D09C /* iTermBrowserFindManager.swift */,
@@ -13131,7 +13157,6 @@
 				A6FE7A742E0DF12600BEBCE4 /* iTermBrowserUser.swift */,
 				A6F7D4B42E0340A80065D09C /* iTermBrowserViewController.swift */,
 				A6F7D4D82E03DB420065D09C /* iTermBrowserWebView.swift */,
-				A6CBB8222E0A21F800B2CCCB /* rewrite-resources.js */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -13469,6 +13494,7 @@
 		A6F7D4B32E0340A30065D09C /* Browser */ = {
 			isa = PBXGroup;
 			children = (
+				A61220F02E1070EF00F48E64 /* Ad Blocking */,
 				A6FE7A912E0E6B7F00BEBCE4 /* Autofill */,
 				A6CBB8132E0A16AA00B2CCCB /* Bookmarks */,
 				A6CBB8202E0A1CE000B2CCCB /* Core */,
@@ -15992,6 +16018,7 @@
 				A6D16EB72E07ED050099139D /* welcome-page.html in Resources */,
 				A610941F2A4A213D00AC2268 /* key-light.png in Resources */,
 				1D6ED9E819AEA20D005A7799 /* PrefsMouse.png in Resources */,
+				A61220ED2E106F9800F48E64 /* adblock-css-injection.js in Resources */,
 				A6E7AE8E214394DD00DE9F3B /* graphic_composer@2x.png in Resources */,
 				A60D02432687F86E00E19362 /* iTermStatusBarKnobFontViewController.xib in Resources */,
 				A6E7AE60214394CA00DE9F3B /* graphic_clojure.png in Resources */,
@@ -16131,6 +16158,7 @@
 				A6FE8D0E2093893700B5C648 /* iTermOptionalComponentDownloadWindowController.xib in Resources */,
 				A6CBB8FF2E0A754900B2CCCB /* extract-plain-text.js in Resources */,
 				A68BE9482DE428D5002DD513 /* flowchart@2x.png in Resources */,
+				A61220EB2E106F9800F48E64 /* adblock-css-injection.js in Resources */,
 				A68BE9492DE428D5002DD513 /* flowchart.png in Resources */,
 				A697CE102D9764E00031583F /* CapturedOutputMenuTip@2x.png in Resources */,
 				A697CE112D9764E00031583F /* CapturedOutputMenuTip.png in Resources */,
@@ -16832,6 +16860,7 @@
 				A6B70FC319830F0D007A4284 /* NewOutput@2x.png in Resources */,
 				1D99C8E41BD59C37001EE1FC /* SearchCursor.png in Resources */,
 				1D8BBA7B1B30FD230005A852 /* Later@2x.png in Resources */,
+				A61220EC2E106F9800F48E64 /* adblock-css-injection.js in Resources */,
 				A686C1951ADF62F200906FAE /* Zoomed.png in Resources */,
 				A6FE7A832E0E188F00BEBCE4 /* dragdrop-demo.html in Resources */,
 				1D94EAAD12D64022008225A9 /* UKCrashReporter Readme.txt in Resources */,
@@ -18349,6 +18378,8 @@
 				A656186C2D67AE240059CD35 /* GradientView.swift in Sources */,
 				A66F52B62105AC5B00571168 /* iTermStatusBarGitComponent.m in Sources */,
 				A66F3CF81FED741E00AA2021 /* iTermTextRendererTransientState.mm in Sources */,
+				A61220E62E10528800F48E64 /* iTermBrowserAdblockRustManager.swift in Sources */,
+				A61220E72E10528800F48E64 /* iTermBrowserAdblockRustWrapper.swift in Sources */,
 				A69C9333212108BC00531438 /* iTermStatusBarComposerComponent.m in Sources */,
 				A67960E41F8201A1008A42BC /* iTermMetalDriver.m in Sources */,
 				A608A58027978076003525F7 /* VT100ScreenMark.m in Sources */,
@@ -18404,6 +18435,7 @@
 				A68BE8A52DE10FC0002DD513 /* iTermIntegerNumberFormatter.m in Sources */,
 				A63011CD20E851E0008114B7 /* iTermStatusBarSpringComponent.m in Sources */,
 				A6E1881D2A535EBB00416B1A /* ToastWindowController.m in Sources */,
+				A61220EF2E106F9E00F48E64 /* iTermBrowserAdblockHandler.swift in Sources */,
 				539E4ECE22E172360084FE9A /* iTermAutomaticProfileSwitcher.m in Sources */,
 				A6EB64272D5BC1AA00481D33 /* ChatListDataSource.swift in Sources */,
 				A6E304672E00C6C90029CAB4 /* QuickLookHelper.swift in Sources */,
@@ -18604,7 +18636,7 @@
 				A6A7235C2DB7362D00A8115D /* iTermMutableStringProtocol.swift in Sources */,
 				A6EC937024E787BA00EEADEF /* iTermSnippetsModel.m in Sources */,
 				A629F5A223AFF53F00C2F16B /* iTermShellIntegrationFirstPageViewController.m in Sources */,
-				A6F7D4E52E04AE7D0065D09C /* iTermAdblockManager.swift in Sources */,
+				A6F7D4E52E04AE7D0065D09C /* iTermBrowserAdblockManager.swift in Sources */,
 				A6F699292730998B00C4A3A6 /* iTermBadgeLabel.m in Sources */,
 				A6069F2C2DF3AC2A00EE6CC7 /* LLMMetadata.swift in Sources */,
 				A6E5D20C1FA3C55700EDD002 /* iTermMetalRowData.m in Sources */,
@@ -19455,6 +19487,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
+					"$(PROJECT_DIR)/ThirdParty/adblock-rust/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 1.0;
@@ -20735,6 +20768,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
+					"$(PROJECT_DIR)/ThirdParty/adblock-rust/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 1.0;
@@ -21010,7 +21044,10 @@
 				PRODUCT_NAME = iTerm2Shared;
 				SDKROOT = macosx;
 				SKIP_INSTALL = NO;
-				USER_HEADER_SEARCH_PATHS = "$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources";
+				USER_HEADER_SEARCH_PATHS = (
+					"$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources",
+					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
+				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -21152,7 +21189,7 @@
 				USER_HEADER_SEARCH_PATHS = (
 					"$(PROJECT_DIR)/SearchableComboListView",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
-					"$(",
+					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
 				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
@@ -21476,7 +21513,7 @@
 				USER_HEADER_SEARCH_PATHS = (
 					"$(PROJECT_DIR)/SearchableComboListView",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
-					"$(",
+					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
 				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
@@ -21548,7 +21585,7 @@
 				USER_HEADER_SEARCH_PATHS = (
 					"$(PROJECT_DIR)/SearchableComboListView",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
-					"$(",
+					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
 				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
@@ -21622,7 +21659,7 @@
 				USER_HEADER_SEARCH_PATHS = (
 					"$(PROJECT_DIR)/SearchableComboListView",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
-					"$(",
+					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
 				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
@@ -22597,7 +22634,10 @@
 				PRODUCT_NAME = iTerm2Shared;
 				SDKROOT = macosx;
 				SKIP_INSTALL = NO;
-				USER_HEADER_SEARCH_PATHS = "$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources";
+				USER_HEADER_SEARCH_PATHS = (
+					"$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources",
+					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
+				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -22655,7 +22695,10 @@
 				PRODUCT_NAME = iTerm2Shared;
 				SDKROOT = macosx;
 				SKIP_INSTALL = NO;
-				USER_HEADER_SEARCH_PATHS = "$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources";
+				USER_HEADER_SEARCH_PATHS = (
+					"$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources",
+					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
+				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -22713,7 +22756,10 @@
 				PRODUCT_NAME = iTerm2Shared;
 				SDKROOT = macosx;
 				SKIP_INSTALL = NO;
-				USER_HEADER_SEARCH_PATHS = "$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources";
+				USER_HEADER_SEARCH_PATHS = (
+					"$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources",
+					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
+				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -22984,6 +23030,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
+					"$(PROJECT_DIR)/ThirdParty/adblock-rust/lib",
 				);
 				LINK_WITH_STANDARD_LIBRARIES = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
@@ -23078,6 +23125,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
+					"$(PROJECT_DIR)/ThirdParty/adblock-rust/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 1.0;

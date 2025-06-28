@@ -39,6 +39,8 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (void)setAdblockEnabled:(BOOL)value;
 + (NSString *)adblockListURL;
 + (void)setAdblockListURL:(NSString *)value;
++ (NSString *)rustAdblockListURL;
++ (void)setRustAdblockListURL:(NSString *)value;
 + (BOOL)browserProxyEnabled;
 + (void)setBrowserProxyEnabled:(BOOL)value;
 + (NSString *)browserProxyHost;
