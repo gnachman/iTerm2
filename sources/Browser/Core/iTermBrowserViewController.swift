@@ -358,6 +358,28 @@ extension iTermBrowserViewController {
         
         return httpMethod == "GET"
     }
+
+    // MARK: - Paste
+
+    @objc
+    func openAdvancedPaste() {
+        guard let window = view.window else { return }
+        Task { @MainActor [weak self] in
+            let event = await iTermPasteSpecialWindowController.showAsPanel(in: window,
+                                                                            chunkSize: 1_024 * 1_024,
+                                                                            delayBetweenChunks: 0,
+                                                                            bracketingEnabled: false,
+                                                                            encoding: String.Encoding.utf8.rawValue,
+                                                                            canWaitForPrompt: false,
+                                                                            isAtShellPrompt: false,
+                                                                            forceEscapeSymbols: false,
+                                                                            shell: "",
+                                                                            profileType: .browser)
+            if let event {
+                self?.send(data: event.string.lossyData)
+            }
+        }
+    }
 }
 
 // MARK: -  Overrides
@@ -784,6 +806,11 @@ extension iTermBrowserViewController {
         return true
     }
 
+    @objc(pasteOptions:)
+    func pasteOptions(_ sender: Any) {
+        openAdvancedPaste()
+    }
+
     @objc
     @IBAction
     func browserOpenLocation(_ sender: Any) {
@@ -999,6 +1026,24 @@ extension iTermBrowserViewController: iTermBrowserActionPerforming {
             let screenRect = window.convertToScreen(NSRect(origin: point, size: NSSize(width: 1, height: 1)))
             let helper = QuickLookHelper()
             helper.showQuickLookWithDownloads(for: webUrls, from: screenRect)
+        }
+    }
+
+    func actionPerformingPasteSpecial(config: String, fromSelection: Bool) {
+        Task { @MainActor in
+            let string: String?
+            if fromSelection {
+                string = await browserManager.webView.selectedText
+            } else {
+                string = NSString.fromPasteboard()
+            }
+            if let string {
+                let event = iTermPasteSpecialViewController.pasteEvent(forConfig: config, string: string)
+                iTermPasteHelper.sanitizePasteEvent(event, encoding: String.Encoding.utf8.rawValue)
+                if let data = event?.string.lossyData {
+                    send(data: data)
+                }
+            }
         }
     }
 }

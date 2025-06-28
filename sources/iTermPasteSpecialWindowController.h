@@ -8,6 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "PasteEvent.h"
+#import "ProfileModel.h"
 
 typedef void (^iTermPasteSpecialCompletionBlock)(PasteEvent *pasteEvent);
 
@@ -22,6 +23,7 @@ typedef void (^iTermPasteSpecialCompletionBlock)(PasteEvent *pasteEvent);
             isAtShellPrompt:(BOOL)isAtShellPrompt
          forceEscapeSymbols:(BOOL)forceEscapeSymbols
                       shell:(NSString *)shell
+                profileType:(ProfileType)profileType
                  completion:(iTermPasteSpecialCompletionBlock)completion;
 
 @end

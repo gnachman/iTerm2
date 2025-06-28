@@ -428,14 +428,14 @@ const CGFloat sideMarginWidth = 40;
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Find Again Up" tag:KEY_FIND_AGAIN_UP],
         ] arrayByRemovingNulls]],
 
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Pasteboard" items:[@[
-            _profileType != ProfileTypeTerminal ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:@"Paste…" tag:KEY_ACTION_PASTE_SPECIAL],
-            _profileType != ProfileTypeTerminal ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:@"Paste from Selection…" tag:KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION],
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Pasteboard" items:@[
+            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Paste…" tag:KEY_ACTION_PASTE_SPECIAL],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Paste from Selection…" tag:KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Copy or Send ^C" tag:KEY_ACTION_COPY_OR_SEND],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Paste or Send ^V" tag:KEY_ACTION_PASTE_OR_SEND],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Copy Interpolated String" tag:KEY_ACTION_COPY_INTERPOLATED_STRING],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Copy Mode Commands" tag:KEY_ACTION_COPY_MODE],
-        ] arrayByRemovingNulls]],
+        ]],
 
         [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Toggles" items:[@[
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Toggle Fullscreen" tag:KEY_ACTION_TOGGLE_FULLSCREEN],
@@ -546,6 +546,7 @@ const CGFloat sideMarginWidth = 40;
 
     if (_pasteSpecialViewController == nil) {
         _pasteSpecialViewController = [[iTermPasteSpecialViewController alloc] init];
+        _pasteSpecialViewController.profileType = _profileType;
         [_pasteSpecialViewController view];
     }
 
