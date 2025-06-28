@@ -522,12 +522,16 @@ class iTermBrowserWebView: WKWebView {
 
     @objc private func addNamedMarkMenuClicked() {
         guard let clickLocation = contextMenuClickLocation else { return }
-        browserDelegate?.webViewDidRequestAddNamedMark(self, atPoint: convertToJavaScriptCoordinates(clickLocation))
+        browserDelegate?.webViewDidRequestAddNamedMark(
+            self,
+            atPoint: convertToJavaScriptCoordinates(convert(clickLocation, to: nil)))
     }
 
     @objc private func removeElementMenuClicked() {
         if let contextMenuClickLocation {
-            browserDelegate?.webViewDidRequestRemoveElement(self, at: convertToJavaScriptCoordinates(contextMenuClickLocation))
+            browserDelegate?.webViewDidRequestRemoveElement(
+                self,
+                at: convertToJavaScriptCoordinates(convert(contextMenuClickLocation, to: nil)))
         }
     }
 

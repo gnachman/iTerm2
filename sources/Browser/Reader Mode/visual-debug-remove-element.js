@@ -47,8 +47,9 @@
     mainLabel.textContent = 'MAIN CONTAINER: ' + mainContainer.tagName + (mainContainer.id ? '#' + mainContainer.id : '') + (mainContainer.className ? '.' + mainContainer.className.split(' ').join('.') : '');
     mainLabel.style.cssText = `
         position: absolute;
-        background: blue;
-        color: white;
+        background: white;
+        color: black;
+        border: 2px solid blue;
         padding: 2px 5px;
         font-size: 12px;
         font-family: monospace;
@@ -87,8 +88,9 @@
         label.textContent = `${step}: ${elementName} ${isAdRelated ? '(AD-RELATED)' : ''}`;
         label.style.cssText = `
             position: absolute;
-            background: ${color};
-            color: white;
+            background: white;
+            color: black;
+            border: 2px solid ${color};
             padding: 2px 5px;
             font-size: 11px;
             font-family: monospace;
@@ -109,6 +111,7 @@
     // Show what would be removed
     const root = findRootOverlay(clickedElement, mainContainer);
     root.style.outline = '5px solid magenta';
+    root.style.opacity = '0.5';
     root.style.position = root.style.position || 'relative';
     
     const removeLabel = document.createElement('div');
@@ -116,8 +119,9 @@
     removeLabel.textContent = 'WOULD REMOVE: ' + root.tagName + (root.id ? '#' + root.id : '') + (root.className ? '.' + root.className.split(' ').join('.') : '');
     removeLabel.style.cssText = `
         position: absolute;
-        background: magenta;
-        color: white;
+        background: white;
+        color: black;
+        border: 3px solid magenta;
         padding: 3px 8px;
         font-size: 14px;
         font-weight: bold;
@@ -132,15 +136,7 @@
     console.log('[VISUAL DEBUG] Would remove:', 
         `${root.tagName}${root.id ? '#' + root.id : ''}${root.className ? '.' + root.className.split(' ').join('.') : ''}`);
     
-    // Clean up after 10 seconds
-    setTimeout(() => {
-        document.querySelectorAll('.debug-border, .debug-label, .debug-click-dot').forEach(el => el.remove());
-        document.querySelectorAll('*').forEach(el => {
-            if (el.style.outline && el.style.outline.includes('solid')) {
-                el.style.outline = '';
-            }
-        });
-    }, 10000);
+    // Visual debug will persist until page reload or next debug run
     
-    return `Visual debug active for 10 seconds. Check the page!`;
+    return `Visual debug active. Check the page!`;
 })();

@@ -79,6 +79,20 @@ class iTermAdblockManager: NSObject {
         return compiledRuleList
     }
     
+    @objc func getRuleCount() -> Int {
+        guard FileManager.default.fileExists(atPath: compiledRulesPath) else {
+            return 0
+        }
+        
+        do {
+            let jsonString = try String(contentsOfFile: compiledRulesPath, encoding: .utf8)
+            let jsonData = try JSONSerialization.jsonObject(with: jsonString.data(using: .utf8)!, options: []) as! [[String: Any]]
+            return jsonData.count
+        } catch {
+            return 0
+        }
+    }
+    
     @objc func clearRules() {
         compiledRuleList = nil
         NotificationCenter.default.post(name: Self.didUpdateRulesNotification, object: self)
