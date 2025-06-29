@@ -231,7 +231,7 @@ extension iTermBrowserViewController {
         }
         set {
             shadeView.isHidden = newValue < 0.01
-            shadeView.color = .black.withAlphaComponent(newValue)
+            shadeView.color = .init(white: 0.5, alpha: newValue)
         }
     }
 
