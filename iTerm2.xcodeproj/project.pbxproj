@@ -3054,6 +3054,16 @@
 		A69FEEDD2E12400900AFF7A8 /* NIOHTTP1 in Frameworks */ = {isa = PBXBuildFile; productRef = A69FEEDC2E12400900AFF7A8 /* NIOHTTP1 */; };
 		A69FEF272E12417B00AFF7A8 /* iTermProxy.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A69FEEBA2E123B8700AFF7A8 /* iTermProxy.framework */; };
 		A69FF3892E12FC3B00AFF7A8 /* iTermBrowserContextMenuHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69FF3882E12FC3500AFF7A8 /* iTermBrowserContextMenuHelper.swift */; };
+		A69FF38B2E13012F00AFF7A8 /* iTermContextMenuUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = A69FF38A2E13012900AFF7A8 /* iTermContextMenuUtilities.h */; };
+		A69FF38D2E13014600AFF7A8 /* iTermContextMenuUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = A69FF38C2E13014400AFF7A8 /* iTermContextMenuUtilities.m */; };
+		A69FF3AF2E1311FE00AFF7A8 /* iTermBrowserSelectionMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69FF3AE2E1311F500AFF7A8 /* iTermBrowserSelectionMonitor.swift */; };
+		A69FF3B12E1314AA00AFF7A8 /* monitor-selection.js in Resources */ = {isa = PBXBuildFile; fileRef = A69FF3B02E13120F00AFF7A8 /* monitor-selection.js */; };
+		A69FF3B22E1314AA00AFF7A8 /* monitor-selection.js in Resources */ = {isa = PBXBuildFile; fileRef = A69FF3B02E13120F00AFF7A8 /* monitor-selection.js */; };
+		A69FF3B32E1314AA00AFF7A8 /* monitor-selection.js in Resources */ = {isa = PBXBuildFile; fileRef = A69FF3B02E13120F00AFF7A8 /* monitor-selection.js */; };
+		A69FF3B52E1316C900AFF7A8 /* iTermBrowserContextMenuMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69FF3B42E1316C800AFF7A8 /* iTermBrowserContextMenuMonitor.swift */; };
+		A69FF3B72E13173400AFF7A8 /* monitor-context-menu.js in Resources */ = {isa = PBXBuildFile; fileRef = A69FF3B62E1316CD00AFF7A8 /* monitor-context-menu.js */; };
+		A69FF3B82E13173400AFF7A8 /* monitor-context-menu.js in Resources */ = {isa = PBXBuildFile; fileRef = A69FF3B62E1316CD00AFF7A8 /* monitor-context-menu.js */; };
+		A69FF3B92E13173400AFF7A8 /* monitor-context-menu.js in Resources */ = {isa = PBXBuildFile; fileRef = A69FF3B62E1316CD00AFF7A8 /* monitor-context-menu.js */; };
 		A6A13AA218C2D23300B241ED /* iTermColorMap.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA018C2D23300B241ED /* iTermColorMap.h */; };
 		A6A13AA718C2D45900B241ED /* NSColor+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */; };
 		A6A13AAC18C3347200B241ED /* VT100Output.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AAA18C3347200B241ED /* VT100Output.h */; };
@@ -7725,6 +7735,12 @@
 		A69D721A264716FC009D6EAC /* UnselectedTabShadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = UnselectedTabShadow.png; sourceTree = "<group>"; };
 		A69FEEBA2E123B8700AFF7A8 /* iTermProxy.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = iTermProxy.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		A69FF3882E12FC3500AFF7A8 /* iTermBrowserContextMenuHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserContextMenuHelper.swift; sourceTree = "<group>"; };
+		A69FF38A2E13012900AFF7A8 /* iTermContextMenuUtilities.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermContextMenuUtilities.h; sourceTree = "<group>"; };
+		A69FF38C2E13014400AFF7A8 /* iTermContextMenuUtilities.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermContextMenuUtilities.m; sourceTree = "<group>"; };
+		A69FF3AE2E1311F500AFF7A8 /* iTermBrowserSelectionMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserSelectionMonitor.swift; sourceTree = "<group>"; };
+		A69FF3B02E13120F00AFF7A8 /* monitor-selection.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "monitor-selection.js"; sourceTree = "<group>"; };
+		A69FF3B42E1316C800AFF7A8 /* iTermBrowserContextMenuMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserContextMenuMonitor.swift; sourceTree = "<group>"; };
+		A69FF3B62E1316CD00AFF7A8 /* monitor-context-menu.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "monitor-context-menu.js"; sourceTree = "<group>"; };
 		A6A13AA018C2D23300B241ED /* iTermColorMap.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermColorMap.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA118C2D23300B241ED /* iTermColorMap.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermColorMap.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -12052,6 +12068,8 @@
 		A68A30C9186D101C007F550F /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				A69FF38C2E13014400AFF7A8 /* iTermContextMenuUtilities.m */,
+				A69FF38A2E13012900AFF7A8 /* iTermContextMenuUtilities.h */,
 				A6A3EDE52E0D26E100D711DA /* MimeTypeUtilities.swift */,
 				A6A3EDC12E0CA95E00D711DA /* print.swift */,
 				A6F7D51B2E0613920065D09C /* MainMenuMangler.swift */,
@@ -13173,9 +13191,10 @@
 		A6CBB8202E0A1CE000B2CCCB /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				A69FF3B62E1316CD00AFF7A8 /* monitor-context-menu.js */,
+				A69FF3B42E1316C800AFF7A8 /* iTermBrowserContextMenuMonitor.swift */,
 				A6CBB7FD2E09163A00B2CCCB /* check-iframe-origins.js */,
 				A6FE7A862E0E252300BEBCE4 /* hover-link-detector.js */,
-				A6CBB8222E0A21F800B2CCCB /* rewrite-resources.js */,
 				A6A3EDC52E0CDA9500D711DA /* iTermBrowserActionPerforming.swift */,
 				A69FF3882E12FC3500AFF7A8 /* iTermBrowserContextMenuHelper.swift */,
 				A6F7D4D22E03D0A00065D09C /* iTermBrowserDownload.swift */,
@@ -13187,9 +13206,12 @@
 				A6F7D4FD2E05C4850065D09C /* iTermBrowserNavigationState.swift */,
 				A6A3EDC32E0CDA1D00D711DA /* iTermBrowserPointerActionPerformer.swift */,
 				A6FE7AA82E0F121F00BEBCE4 /* iTermBrowserRestorableState.swift */,
+				A69FF3AE2E1311F500AFF7A8 /* iTermBrowserSelectionMonitor.swift */,
 				A6FE7A742E0DF12600BEBCE4 /* iTermBrowserUser.swift */,
 				A6F7D4B42E0340A80065D09C /* iTermBrowserViewController.swift */,
 				A6F7D4D82E03DB420065D09C /* iTermBrowserWebView.swift */,
+				A69FF3B02E13120F00AFF7A8 /* monitor-selection.js */,
+				A6CBB8222E0A21F800B2CCCB /* rewrite-resources.js */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -14502,6 +14524,7 @@
 				A618FFBD22409DF900B8FD88 /* iTermTheme.h in Headers */,
 				A66719111DCE36C3000CE608 /* iTermCommandHistoryCommandUseMO.h in Headers */,
 				537BFDD12101AD9F0098C91F /* iTermCPUUtilization.h in Headers */,
+				A69FF38B2E13012F00AFF7A8 /* iTermContextMenuUtilities.h in Headers */,
 				A653F68124CF4EC70062377E /* FMDatabaseQueue.h in Headers */,
 				537BFDDE2102B4060098C91F /* iTermPublisher.h in Headers */,
 				A63011A920E7EDFC008114B7 /* iTermStatusBarKnobCheckboxViewController.h in Headers */,
@@ -15616,6 +15639,7 @@
 				A630118720E6A61F008114B7 /* iTermStatusBarSetupViewController.xib in Resources */,
 				A6B4833529D73DA10055E24A /* paperplane.fill.png in Resources */,
 				A6E7AE6F214394CA00DE9F3B /* graphic_bower@2x.png in Resources */,
+				A69FF3B32E1314AA00AFF7A8 /* monitor-selection.js in Resources */,
 				A67F6143214395870093940A /* graphic_http@2x.png in Resources */,
 				1D6ED98719AEA20D005A7799 /* Maximized.png in Resources */,
 				A697CDE82D975E680031583F /* ActionsMenuTip.jpg in Resources */,
@@ -15871,6 +15895,7 @@
 				A6DB14662D6D09C800266394 /* AIStreaming.png in Resources */,
 				A6FEA28A1CF4DD2700376F28 /* iTermHotkeyPreferencesWindowController.xib in Resources */,
 				1D6ED9BF19AEA20D005A7799 /* closebutton@2x.png in Resources */,
+				A69FF3B92E13173400AFF7A8 /* monitor-context-menu.js in Resources */,
 				A65D7CB521E1EBCE00E3D81C /* StopStatusIcon@2x.png in Resources */,
 				A68615652D78D39100E9CCC2 /* document.png in Resources */,
 				A6F7D5172E05F39D0065D09C /* probe-password.js in Resources */,
@@ -16321,6 +16346,7 @@
 				A6A3D191281663EE00C0C9E0 /* extensions.json in Resources */,
 				A635F1F12507621A008C3038 /* iTermSnippetsEditingViewController.xib in Resources */,
 				1DC2A1CD1949165D005769D5 /* Maximized.png in Resources */,
+				A69FF3B22E1314AA00AFF7A8 /* monitor-selection.js in Resources */,
 				A6EFF23A1D20F6BF00806EEF /* EraseDarkBackground@2x.png in Resources */,
 				A623D94F1F8984710011F8C3 /* key@2x.png in Resources */,
 				530098542259AAEF00A69348 /* keyclick.m4a in Resources */,
@@ -16382,6 +16408,7 @@
 				5308BF9622828A28004BECAC /* StatusBarIconCharging.png in Resources */,
 				5308BF5C227C02DE004BECAC /* InternetAccessPolicy.plist in Resources */,
 				A67D0D571A2EE12A003A8B35 /* InstantReplay.xib in Resources */,
+				A69FF3B82E13173400AFF7A8 /* monitor-context-menu.js in Resources */,
 				A67F614E214395870093940A /* graphic_java@2x.png in Resources */,
 				A6F1B3C02693B82C00546767 /* DebugLogging@2x.png in Resources */,
 				A67F614B214395870093940A /* graphic_http.png in Resources */,
@@ -16710,6 +16737,7 @@
 				A67F6141214395870093940A /* graphic_http@2x.png in Resources */,
 				A6CB24A12C68149100005824 /* it2api in Resources */,
 				1D44CCDB1CC6A1DE00BE5630 /* Loupe.png in Resources */,
+				A69FF3B12E1314AA00AFF7A8 /* monitor-selection.js in Resources */,
 				A67D0D5C1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib in Resources */,
 				A61220692E0F469400F48E64 /* show-named-mark-annotations.js in Resources */,
 				A6BCAADB21F6F53E0000CD29 /* iTermTextPopoverViewController.xib in Resources */,
@@ -16939,6 +16967,7 @@
 				A6F7A737213CB143004DE961 /* StatusBarIconGitBranch@2x.png in Resources */,
 				A65B72A91B3285A300F947A7 /* DisableTips.png in Resources */,
 				A66A882524DFCCC30043728B /* graphic_erlang.png in Resources */,
+				A69FF3B72E13173400AFF7A8 /* monitor-context-menu.js in Resources */,
 				530098532259AAEF00A69348 /* keyclick.m4a in Resources */,
 				5376CB3C220D2E4300FE7476 /* git.sb in Resources */,
 				A66DB80F1C8E182B00233E88 /* Info@2x.png in Resources */,
@@ -18529,6 +18558,7 @@
 				A6D16EBB2E087A640099139D /* iTermBrowserPermissionManager.swift in Sources */,
 				A62841572CE28BA200D0796B /* iTermWordExtractor.m in Sources */,
 				A66433582DEA87DA0099F722 /* ResponsesResponseStreamingParser.swift in Sources */,
+				A69FF3AF2E1311FE00AFF7A8 /* iTermBrowserSelectionMonitor.swift in Sources */,
 				A6E2B49329F99550002737AD /* CommandParser.swift in Sources */,
 				A60E045A26DD537B00DD162B /* AsyncFilter.swift in Sources */,
 				A6A723A92DC010B400A8115D /* SubArray.swift in Sources */,
@@ -18641,6 +18671,7 @@
 				A62EE25527448CDB00D57B54 /* SwiftyStringWithBackreferencesEvaluator.swift in Sources */,
 				A673DEBF22624A90004EBF4D /* iTermCopyModeHandler.m in Sources */,
 				A6631A1D2D6E4DC7006C603B /* MarkdownHelpers.swift in Sources */,
+				A69FF38D2E13014600AFF7A8 /* iTermContextMenuUtilities.m in Sources */,
 				A675856124595D6C00827C25 /* iTermSquash.m in Sources */,
 				A6B540FB224838A100D3AD14 /* NSColor+PSM.m in Sources */,
 				A6D10E3D27F7C9FA0026DB56 /* ComposerTextView.swift in Sources */,
@@ -18846,6 +18877,7 @@
 				A66C818C294E755C00452A11 /* AITerm.swift in Sources */,
 				A60C035D2089698500FE2F1F /* iTermAPIScriptLauncher.m in Sources */,
 				A6275BFF2C7D45140031089D /* KittyImageRenderer.swift in Sources */,
+				A69FF3B52E1316C900AFF7A8 /* iTermBrowserContextMenuMonitor.swift in Sources */,
 				A6A30ED72950EACF0050F01A /* NSView+RecursiveDescription.m in Sources */,
 				A6E34BD12118097A00F147DD /* iTermBackgroundDrawingHelper.m in Sources */,
 				A6E2B49529FA3DB4002737AD /* FileChecker.swift in Sources */,

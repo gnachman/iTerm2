@@ -24,6 +24,7 @@
 #import "iTermCommandRunnerPool.h"
 #import "iTermBuriedSessions.h"
 #import "iTermCPUUtilization.h"
+#import "iTermContextMenuUtilities.h"
 #import "iTermController.h"
 #import "iTermCopyModeHandler.h"
 #import "iTermCoreTextLineRenderingHelper.h"

@@ -11,7 +11,6 @@ import WebKit
 @objc protocol iTermBrowserWebViewDelegate: AnyObject {
     func webViewDidRequestViewSource(_ webView: iTermBrowserWebView)
     func webViewDidRequestSavePageAs(_ webView: iTermBrowserWebView)
-    func webViewDidRequestCopyPageTitle(_ webView: iTermBrowserWebView)
     func webViewDidRequestAddNamedMark(_ webView: iTermBrowserWebView, atPoint point: NSPoint)
 
     // Should update self.variablesScope.mouseInfo
@@ -30,6 +29,7 @@ import WebKit
     func webViewDidHoverURL(_ webView: iTermBrowserWebView, url: String?, frame: NSRect)
     func webViewDidRequestRemoveElement(_ webView: iTermBrowserWebView, at: NSPoint)
     func webViewDidBecomeFirstResponder(_ webView: iTermBrowserWebView)
+    func webViewDidCopy(_ webView: iTermBrowserWebView, string: String)
 }
 
 @available(macOS 11.0, *)
@@ -46,6 +46,16 @@ class iTermBrowserWebView: WKWebView {
     private var trackingArea: NSTrackingArea?
     private let focusFollowsMouse = iTermFocusFollowsMouse()
     private let contextMenuHelper = iTermBrowserContextMenuHelper()
+    var currentSelection: String? {
+        didSet {
+            DLog("current selection changed to \(currentSelection.d)")
+            if iTermPreferences.bool(forKey: kPreferenceKeySelectionCopiesText),
+               let selection = currentSelection,
+               !selection.isEmpty {
+                copy(string: selection)
+            }
+        }
+    }
 
     init(frame: CGRect,
          configuration: WKWebViewConfiguration,
@@ -98,6 +108,64 @@ class iTermBrowserWebView: WKWebView {
             mouseUp(with: fakeEvent)
         }
         numTouches = saved
+    }
+
+    func openContextMenu(atJavascriptLocation jsPoint: NSPoint) {
+        let pointInWindow = convertFromJavascriptCoordinates(jsPoint)
+        openContextMenu(atPointInWindow: pointInWindow, allowJavascriptToIntercept: false)
+    }
+
+    func openContextMenu(atPointInWindow point: NSPoint,
+                         allowJavascriptToIntercept: Bool) {
+        DLog("open context menu")
+        guard let window else {
+            return
+        }
+        Task { @MainActor in
+            DLog("fetching selection")
+            currentSelection = try? await evaluateJavaScript("window.getSelection().toString();") as? String
+            DLog("selection is \(currentSelection.d)")
+            // For the event location, we might need to use the original window coordinates
+            // since the menu positioning could be relative to the window
+            let windowNumber = window.windowNumber
+            let timestamp = ProcessInfo.processInfo.systemUptime
+
+            // This works in conjunction with iTermBrowserContextMenuMonitor, which only allows the
+            // context menu to go through if option is pressed. That way we know the selection before
+            // it opens.
+            guard let rightMouseDown = NSEvent.mouseEvent(with: .rightMouseDown,
+                                                          location: point,
+                                                          modifierFlags: allowJavascriptToIntercept ? [] : [.option],
+                                                          timestamp: timestamp,
+                                                          windowNumber: windowNumber,
+                                                          context: nil,
+                                                          eventNumber: 1,
+                                                          clickCount: 1,
+                                                          pressure: 1.0) else {
+                DLog("Failed to create right mouse down event")
+                return
+            }
+
+            // Create corresponding right mouse up event
+            guard let rightMouseUp = NSEvent.mouseEvent(with: .rightMouseUp,
+                                                        location: point,
+                                                        modifierFlags: allowJavascriptToIntercept ? [] : [.option],
+                                                        timestamp: timestamp + 0.1,
+                                                        windowNumber: windowNumber,
+                                                        context: nil,
+                                                        eventNumber: 2,
+                                                        clickCount: 1,
+                                                        pressure: 1.0) else {
+                DLog("Failed to create right mouse up event")
+                return
+            }
+
+            DLog("Sending right mouse events to webView")
+
+            // Send the events directly to the web view
+            self.rightMouseDown(with: rightMouseDown)
+            self.rightMouseUp(with: rightMouseUp)
+        }
     }
 
     // MARK: - NSView
@@ -291,17 +359,11 @@ class iTermBrowserWebView: WKWebView {
         super.mouseUp(with: event)
         setMouseInfo(event: event, sideEffects: [])
         
-        // Check if copy-on-select is enabled and copy selection if it exists
-        if iTermPreferences.bool(forKey: kPreferenceKeySelectionCopiesText) {
-            Task {
-                await copySelectionToClipboard()
-            }
-        }
-        
         return []
     }
 
     override func rightMouseUp(with event: NSEvent) {
+        DLog("rightMouseUp")
         if threeFingerTapGestureRecognizer.rightMouseUp(event) {
             return
         }
@@ -309,6 +371,7 @@ class iTermBrowserWebView: WKWebView {
             setMouseInfo(event: event, sideEffects: [.performBoundAction])
             return
         }
+        DLog("super.rightMouseUp")
         super.rightMouseUp(with: event)
         setMouseInfo(event: event, sideEffects: [])
     }
@@ -402,6 +465,25 @@ class iTermBrowserWebView: WKWebView {
             modifiers: event.it_modifierFlags,
             sideEffects: sideEffects,
             state: state)
+    }
+
+    @objc override func printView(_ sender: Any?) {
+        let printInfo = NSPrintInfo.shared
+        printInfo.horizontalPagination = .fit
+        printInfo.verticalPagination = .automatic
+        printInfo.isHorizontallyCentered = true
+        printInfo.isVerticallyCentered = true
+
+        let op = printOperation(with: printInfo)
+        op.showsPrintPanel = true
+        op.showsProgressPanel = true
+        op.view?.frame = bounds
+        op.runModal(
+          for: window!,
+          delegate: self,
+          didRun: nil,
+          contextInfo: nil
+        )
     }
 
     // MARK: - Notifications
@@ -499,7 +581,7 @@ class iTermBrowserWebView: WKWebView {
 
     override func willOpenMenu(_ menu: NSMenu, with event: NSEvent) {
         super.willOpenMenu(menu, with: event)
-
+        DLog("will open menu")
         contextMenuHelper.decorate(menu: menu, event: event)
     }
 
@@ -570,6 +652,13 @@ extension iTermBrowserWebView: iTermFocusFollowsMouseDelegate {
 
 @available(macOS 11.0, *)
 extension iTermBrowserWebView: iTermBrowserContextMenuHelperDelegate {
+    func contextMenuCurrentShortSelection() -> String? {
+        guard let currentSelection, currentSelection.count < 200 else {
+            return nil
+        }
+        return currentSelection
+    }
+    
     func contextMenuAddNamedMark(at point: NSPoint) {
         browserDelegate?.webViewDidRequestAddNamedMark(
             self,
@@ -589,7 +678,13 @@ extension iTermBrowserWebView: iTermBrowserContextMenuHelperDelegate {
     }
 
     func contextMenuCopyPageTitle() {
-        browserDelegate?.webViewDidRequestCopyPageTitle(self)
+        var string = title
+        if (string ?? "").isEmpty {
+            string = url?.absoluteString ?? ""
+        }
+        if let string, !string.isEmpty {
+            copy(string: string)
+        }
     }
 
     func contextMenuPrint() {
@@ -601,27 +696,38 @@ extension iTermBrowserWebView: iTermBrowserContextMenuHelperDelegate {
             self,
             at: convertToJavaScriptCoordinates(point))
     }
+
+    func contextMenuCopy(string: String) {
+        copy(string: string)
+    }
 }
+
+// MARK: - Internal methods
 
 @available(macOS 11.0, *)
 extension iTermBrowserWebView {
-    @objc(print:)
-    override func printView(_ sender: Any?) {
-        let printInfo = NSPrintInfo.shared
-        printInfo.horizontalPagination = .fit
-        printInfo.verticalPagination = .automatic
-        printInfo.isHorizontallyCentered = true
-        printInfo.isVerticallyCentered = true
+    func copy(string: String) {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(string, forType: .string)
+        browserDelegate?.webViewDidCopy(self, string: string)
+    }
 
-        let op = printOperation(with: printInfo)
-        op.showsPrintPanel = true
-        op.showsProgressPanel = true
-        op.view?.frame = bounds
-        op.runModal(
-          for: window!,
-          delegate: self,
-          didRun: nil,
-          contextInfo: nil
-        )
+    var selectedText: String? {
+        get async {
+            let script = """
+            (function() {
+                var selection = window.getSelection();
+                return selection ? selection.toString() : "";
+            })();
+            """
+            do {
+                let result = try await evaluateJavaScript(script)
+                return result as? String
+            } catch {
+                DLog("\(error)")
+                return nil
+            }
+        }
     }
 }

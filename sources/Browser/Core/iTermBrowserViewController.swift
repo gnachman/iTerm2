@@ -61,6 +61,7 @@ protocol iTermBrowserViewControllerDelegate: AnyObject {
     func browserViewController(_ controller: iTermBrowserViewController,
                                didNavigateTo url: URL)
     func browserViewControllerDidBecomeFirstResponder(_ controller: iTermBrowserViewController)
+    func browserViewController(_ controller: iTermBrowserViewController, didCopyString string: String)
 }
 
 @available(macOS 11.0, *)
@@ -678,7 +679,7 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
         // Close bookmark tag editor when navigating to a different URL
         bookmarkTagEditor?.closeFromNavigation()
         bookmarkTagEditor = nil
-        
+
         toolbar.updateURL(url)
     }
 
@@ -739,15 +740,11 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
                                         forUser: forUser,
                                         didSendUserName: didSendUserName)
     }
-    
+
     func browserManagerDidRequestSavePageAs(_ manager: iTermBrowserManager) {
         contextMenuHandler.savePageAs()
     }
-    
-    func browserManagerDidRequestCopyPageTitle(_ manager: iTermBrowserManager) {
-        contextMenuHandler.copyPageTitle()
-    }
-    
+
     func browserManagerDidRequestAddNamedMark(_ manager: iTermBrowserManager, atPoint point: NSPoint) {
         guard let window = browserManager.webView.window else {
             return
@@ -756,18 +753,18 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
             Task { @MainActor in
                 guard let self else { return }
                 try await self.namedMarkManager.add(with: name,
-                                                   webView: self.browserManager.webView,
-                                                   httpMethod: self.browserManager.currentHTTPMethod,
-                                                   clickPoint: point)
+                                                    webView: self.browserManager.webView,
+                                                    httpMethod: self.browserManager.currentHTTPMethod,
+                                                    clickPoint: point)
                 NamedMarksDidChangeNotification(sessionGuid: self.sessionGuid).post()
             }
         }
     }
-    
+
     func browserManager(_ manager: iTermBrowserManager, didChangeReaderModeState isActive: Bool) {
         // No additional action needed - toolbar will update based on state
     }
-    
+
     func browserManager(_ manager: iTermBrowserManager, didChangeDistractionRemovalState isActive: Bool) {
         // No additional action needed - toolbar will update based on state
     }
@@ -795,13 +792,17 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
         }
         await browserManager.webView.performSmartSelection(atPointInWindow: point, rules: rules)
     }
-    
+
     func browserManager(_ browserManager: iTermBrowserManager, didHoverURL url: String?, frame: NSRect) {
         delegate?.browserViewController(self, didHoverURL: url, frame: frame)
     }
 
     func browserManagerDidBecomeFirstResponder(_ browserManager: iTermBrowserManager) {
         delegate?.browserViewControllerDidBecomeFirstResponder(self)
+    }
+
+    func browserManager(_ browserManager: iTermBrowserManager, didCopyString string: String) {
+        delegate?.browserViewController(self, didCopyString: string)
     }
 }
 
@@ -930,48 +931,11 @@ extension iTermBrowserViewController: iTermBrowserActionPerforming {
     }
 
     func actionPerformingOpenContextMenu(atWindowLocation point: NSPoint) {
-        guard let webView = browserManager.webView, let window = webView.window else {
+        guard let webView = browserManager.webView else {
             return
         }
-
-        // For the event location, we might need to use the original window coordinates
-        // since the menu positioning could be relative to the window
-        let windowNumber = window.windowNumber
-        let timestamp = ProcessInfo.processInfo.systemUptime
-        
-        // Create a proper right mouse down event using window coordinates
-        guard let rightMouseDown = NSEvent.mouseEvent(with: .rightMouseDown,
-                                                     location: point,
-                                                     modifierFlags: [],
-                                                     timestamp: timestamp,
-                                                     windowNumber: windowNumber,
-                                                     context: nil,
-                                                     eventNumber: 1,
-                                                     clickCount: 1,
-                                                     pressure: 1.0) else {
-            DLog("Failed to create right mouse down event")
-            return
-        }
-        
-        // Create corresponding right mouse up event
-        guard let rightMouseUp = NSEvent.mouseEvent(with: .rightMouseUp,
-                                                   location: point,
-                                                   modifierFlags: [],
-                                                   timestamp: timestamp + 0.1,
-                                                   windowNumber: windowNumber,
-                                                   context: nil,
-                                                   eventNumber: 2,
-                                                   clickCount: 1,
-                                                   pressure: 1.0) else {
-            DLog("Failed to create right mouse up event")
-            return
-        }
-        
-        DLog("Sending right mouse events to webView")
-        
-        // Send the events directly to the web view
-        webView.rightMouseDown(with: rightMouseDown)
-        webView.rightMouseUp(with: rightMouseUp)
+        webView.openContextMenu(atPointInWindow: point,
+                                allowJavascriptToIntercept: true)
     }
 
     func actionPerformingMovePane() {
