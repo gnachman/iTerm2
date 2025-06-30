@@ -149,9 +149,10 @@
             background: linear-gradient(135deg, #5856d6, #af52de);
         }
         
-        /* Proxy input styling */
+        /* Input styling */
         .input-group input[type="text"],
-        .input-group input[type="number"] {
+        .input-group input[type="number"],
+        .input-group input[type="url"] {
             padding: 10px 14px;
             border: 1px solid var(--border-color);
             border-radius: 8px;
@@ -160,10 +161,12 @@
             font-size: 14px;
             font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
             transition: all 0.2s ease;
+            flex: 1;
         }
         
         .input-group input[type="text"]:focus,
-        .input-group input[type="number"]:focus {
+        .input-group input[type="number"]:focus,
+        .input-group input[type="url"]:focus {
             outline: none;
             border-color: var(--accent-color);
             box-shadow: 0 0 0 3px var(--accent-color)20;
@@ -179,6 +182,80 @@
             color: var(--secondary-text);
             font-size: 16px;
             font-weight: 600;
+        }
+        
+        /* URL list styling */
+        .url-item {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+        
+        .url-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .url-item input[type="url"] {
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--section-bg);
+            color: var(--text-color);
+            font-size: 14px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            transition: all 0.2s ease;
+            flex: 1;
+        }
+        
+        .url-item input[type="url"]:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px var(--accent-color)20;
+        }
+        
+        .remove-url {
+            background-color: #ff3b30 !important;
+            border-color: #ff3b30 !important;
+            min-width: 28px;
+            width: 28px;
+            flex-shrink: 0;
+            padding: 6px 8px;
+        }
+        
+        .remove-url:hover {
+            background-color: #d70015 !important;
+            border-color: #d70015 !important;
+        }
+        
+        /* URL settings container */
+        .url-settings {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+        }
+        
+        /* Button group styling */
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        /* Setting note styling */
+        .setting-note {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: var(--border-color);
+            border-radius: 8px;
+            border-left: 4px solid #ff9500;
+        }
+        
+        .setting-note p {
+            margin: 0;
+            font-size: 14px;
+            color: var(--secondary-text);
+            line-height: 1.4;
         }
         
         /* Link styling */
@@ -433,19 +510,27 @@
                 </div>
                 <div class="setting-item">
                     <div class="setting-info">
-                        <h3>Filter List URL</h3>
-                        <p>URL for downloading Rust ad blocking rules (EasyList format)</p>
-                    </div>
-                    <div class="input-group">
-                        <input type="url" id="rustAdblockURL" value="" placeholder="https://easylist.to/easylist/easylist.txt" onchange="updateRustAdblockURL(this.value)">
-                        <button class="button small" onclick="forceRustAdblockUpdate()">Update Now</button>
+                        <h3>Filter List URLs</h3>
+                        <p>URLs for downloading Rust ad blocking rules (EasyList format). Lists are loaded in order.</p>
+                        <div class="url-settings">
+                            <div id="rustAdblockURLContainer">
+                                <!-- URL list will be populated by JavaScript -->
+                            </div>
+                            <div class="button-group">
+                                <button class="button small" onclick="addRustAdblockURL()">+ Add URL</button>
+                                <button class="button small" onclick="forceRustAdblockUpdate()">Update Now</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="setting-item" id="rustAdblockStats">
                     <div class="setting-info">
-                        <h3>Rust Engine Statistics</h3>
+                        <h3>Status</h3>
                         <p id="rustAdblockStatsText">Loading Rust engine statistics…</p>
                     </div>
+                </div>
+                <div class="setting-note">
+                    <p><strong>Note:</strong> Advanced Ad Blocking works by running a local proxy server. It cannot be used simultaneously with the HTTP Proxy feature below.</p>
                 </div>
             </div>
         </div>
@@ -456,7 +541,7 @@
                 <div class="setting-item">
                     <div class="setting-info">
                         <h3>Enable HTTP Proxy</h3>
-                        <p>Route browser traffic through a proxy server (e.g., Privoxy)</p>
+                        <p>Route browser traffic through a CONNECT proxy server.</p>
                     </div>
                     <label class="toggle">
                         <input type="checkbox" id="proxyEnabled" onchange="toggleProxy(this.checked)">
@@ -473,6 +558,9 @@
                         <span>:</span>
                         <input type="number" id="proxyPort" value="8118" placeholder="8118" min="1" max="65535" onchange="updateProxyPort(this.value)" style="width: 80px;">
                     </div>
+                </div>
+                <div class="setting-note">
+                    <p><strong>Note:</strong> HTTP Proxy cannot be used simultaneously with Advanced Ad Blocking, which runs its own local proxy server.</p>
                 </div>
             </div>
         </div>
@@ -532,6 +620,20 @@
         }
         
         function toggleRustAdblock(enabled) {
+            if (enabled) {
+                // Disable proxy when enabling Rust ad blocking
+                const proxyCheckbox = document.getElementById('proxyEnabled');
+                if (proxyCheckbox.checked) {
+                    proxyCheckbox.checked = false;
+                    window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                        action: 'setProxyEnabled',
+                        value: false,
+                        sessionSecret: sessionSecret
+                    });
+                    updateProxyFieldsState(false);
+                }
+            }
+            
             window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
                 action: 'setRustAdblockEnabled',
                 value: enabled,
@@ -542,14 +644,36 @@
             }
         }
         
-        function updateRustAdblockURL(url) {
-            if (url && url.trim()) {
-                window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
-                    action: 'setRustAdblockURL',
-                    value: url.trim(),
-                    sessionSecret: sessionSecret
-                });
-            }
+        function updateRustAdblockURLs() {
+            const container = document.getElementById('rustAdblockURLContainer');
+            const inputs = container.querySelectorAll('input[type="url"]');
+            const urls = Array.from(inputs)
+                .map(input => input.value.trim())
+                .filter(url => url !== '');
+            
+            const urlString = urls.join(' ');
+            window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                action: 'setRustAdblockURL',
+                value: urlString,
+                sessionSecret: sessionSecret
+            });
+        }
+        
+        function addRustAdblockURL() {
+            const container = document.getElementById('rustAdblockURLContainer');
+            const urlDiv = document.createElement('div');
+            urlDiv.className = 'url-item';
+            urlDiv.innerHTML = `
+                <input type="url" placeholder="https://easylist.to/easylist/easylist.txt" onchange="updateRustAdblockURLs()">
+                <button class="button small remove-url" onclick="removeRustAdblockURL(this)">-</button>
+            `;
+            container.appendChild(urlDiv);
+        }
+        
+        function removeRustAdblockURL(button) {
+            const urlDiv = button.parentElement;
+            urlDiv.remove();
+            updateRustAdblockURLs();
         }
         
         function forceRustAdblockUpdate() {
@@ -757,7 +881,7 @@
                 const diffHours = Math.floor((now - lastUpdateDate) / (1000 * 60 * 60));
                 
                 if (diffHours < 1) {
-                    text += ' (updated recently)';
+                    text += ' (updated in the last hour)';
                 } else if (diffHours < 24) {
                     text += ` (updated ${diffHours} hours ago)`;
                 } else {
@@ -771,7 +895,26 @@
         
         function updateRustAdblockUI(settings) {
             document.getElementById('rustAdblockEnabled').checked = settings.enabled;
-            document.getElementById('rustAdblockURL').value = settings.url;
+            
+            const container = document.getElementById('rustAdblockURLContainer');
+            container.innerHTML = '';
+            
+            if (settings.url) {
+                const urls = settings.url.split(' ').filter(url => url.trim() !== '');
+                urls.forEach(url => {
+                    const urlDiv = document.createElement('div');
+                    urlDiv.className = 'url-item';
+                    urlDiv.innerHTML = `
+                        <input type="url" value="${url.trim()}" placeholder="https://easylist.to/easylist/easylist.txt" onchange="updateRustAdblockURLs()">
+                        <button class="button small remove-url" onclick="removeRustAdblockURL(this)">-</button>
+                    `;
+                    container.appendChild(urlDiv);
+                });
+            }
+            
+            if (container.children.length === 0) {
+                addRustAdblockURL();
+            }
         }
         
         function updateRustAdblockStats(stats) {
@@ -782,15 +925,21 @@
                 return;
             }
             
-            if (!stats.engineLoaded) {
-                statsText.textContent = 'Loading filter lists...';
+            if (stats.isDownloading) {
+                statsText.textContent = 'Downloading filter lists…';
                 return;
             }
             
+            if (!stats.engineLoaded) {
+                statsText.textContent = 'No filter lists loaded';
+                return;
+            }
+            
+            const ruleCount = stats.ruleCount || 0;
             const hiddenCount = stats.hiddenElementsCount || 0;
             const blockedCount = stats.blockedRequestsCount || 0;
             
-            let text = `EasyList loaded successfully`;
+            let text = `${ruleCount.toLocaleString()} rules loaded`;
             if (hiddenCount > 0 || blockedCount > 0) {
                 text += ` • ${hiddenCount} elements hidden, ${blockedCount} requests blocked`;
             }
@@ -800,6 +949,19 @@
         
         // Proxy settings functions
         function toggleProxy(enabled) {
+            if (enabled) {
+                // Disable Rust ad blocking when enabling proxy
+                const rustAdblockCheckbox = document.getElementById('rustAdblockEnabled');
+                if (rustAdblockCheckbox.checked) {
+                    rustAdblockCheckbox.checked = false;
+                    window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                        action: 'setRustAdblockEnabled',
+                        value: false,
+                        sessionSecret: sessionSecret
+                    });
+                }
+            }
+            
             window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
                 action: 'setProxyEnabled',
                 value: enabled,
