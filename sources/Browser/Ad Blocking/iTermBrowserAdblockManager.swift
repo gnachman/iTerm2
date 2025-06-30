@@ -7,6 +7,7 @@
 
 import Foundation
 import WebKit
+import iTermProxy
 
 @available(macOS 11.0, *)
 @objc(iTermBrowserAdblockManager)
@@ -50,7 +51,15 @@ class iTermBrowserAdblockManager: NSObject {
     }
     
     // MARK: - Public Interface
-    
+
+    func internalProxyDidStart() {
+        iTermBrowserAdblockRustManager.shared.updateInternalProxyInstalled(desired: true)
+    }
+
+    func internalProxyDidStop() {
+        iTermBrowserAdblockRustManager.shared.updateInternalProxyInstalled(desired: false)
+    }
+
     @objc func updateRulesIfNeeded() {
         guard iTermAdvancedSettingsModel.adblockEnabled() else {
             clearRules()

@@ -7,6 +7,7 @@
 
 @preconcurrency import WebKit
 import Network
+import iTermProxy
 
 @available(macOS 11.0, *)
 @objc protocol iTermBrowserManagerDelegate: AnyObject {
@@ -101,6 +102,9 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private func setupWebView(configuration preferredConfiguration: WKWebViewConfiguration?,
                               profile: Profile,
                               pointerController: PointerController) {
+        // Setup adblocking. This has to be done early because it's needed when applying the proxy configuration.
+        setupAdblocking()
+
         let notificationHandler = iTermBrowserNotificationHandler(user: user)
         self.notificationHandler = notificationHandler
 
@@ -264,9 +268,6 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         
         // Initialize adblock handler
         adblockHandler = iTermBrowserAdblockHandler(webView: webView)
-        
-        // Setup adblocking
-        setupAdblocking()
         
         // Setup settings delegate
         setupSettingsDelegate()
@@ -1265,7 +1266,7 @@ extension iTermBrowserManager {
         }
     }
     
-    @objc func updateProxyConfiguration() {
+    func updateProxyConfiguration() {
         applyProxyConfiguration(to: webView.configuration.websiteDataStore)
     }
     
@@ -1275,15 +1276,36 @@ extension iTermBrowserManager {
         if iTermAdvancedSettingsModel.browserProxyEnabled() {
             let proxyHost = iTermAdvancedSettingsModel.browserProxyHost() ?? "127.0.0.1"
             let proxyPort = iTermAdvancedSettingsModel.browserProxyPort()
-            
+
             let endpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(proxyHost), port: NWEndpoint.Port(integerLiteral: UInt16(proxyPort)))
             let proxyConfig = ProxyConfiguration(httpCONNECTProxy: endpoint)
             dataStore.proxyConfigurations = [proxyConfig]
+            adblockManager?.internalProxyDidStop()
             DLog("Configured browser proxy: \(proxyHost):\(proxyPort)")
         } else {
+            // Use the internal proxy
             dataStore.proxyConfigurations = []
-            DLog("Disabled browser proxy")
+            Task {
+                do {
+                    let proxyPort = try await iTermProxy.Server.instance.ensureRunning()
+                    await MainActor.run { [weak self] in
+                        self?.startUsingInternalProxy(onPort: proxyPort)
+                    }
+                } catch {
+                    DLog("Failed to start server")
+                }
+            }
         }
+    }
+
+    @available(macOS 14, *)
+    @MainActor
+    private func startUsingInternalProxy(onPort proxyPort: Int) {
+        let proxyHost = "127.0.0.1"
+        let endpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(proxyHost), port: NWEndpoint.Port(integerLiteral: UInt16(proxyPort)))
+        let proxyConfig = ProxyConfiguration(httpCONNECTProxy: endpoint)
+        webView.configuration.websiteDataStore.proxyConfigurations = [proxyConfig]
+        adblockManager?.internalProxyDidStart()
     }
 }
 
