@@ -12,6 +12,7 @@ import Foundation
 @objc protocol iTermBrowserSettingsHandlerDelegate: AnyObject {
     @MainActor func settingsHandlerDidUpdateAdblockSettings(_ handler: iTermBrowserSettingsHandler)
     @MainActor func settingsHandlerDidRequestAdblockUpdate(_ handler: iTermBrowserSettingsHandler)
+    @MainActor func settingsHandlerWebView(_ handler: iTermBrowserSettingsHandler) -> WKWebView?
 }
 
 @available(macOS 11.0, *)
@@ -30,6 +31,21 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         }
         self.secret = secret
         super.init()
+        
+        // Observe Rust adblock stats changes
+        NotificationCenter.default.addObserver(self, 
+                                             selector: #selector(rustAdblockStatsChanged), 
+                                             name: .rustAdblockStatsChanged, 
+                                             object: nil)
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    @objc private func rustAdblockStatsChanged() {
+        guard let webView = delegate?.settingsHandlerWebView(self) else { return }
+        sendRustAdblockStats(to: webView)
     }
 
     // MARK: - Public Interface
@@ -327,10 +343,13 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     
     private func sendRustAdblockStats(to webView: WKWebView) {
         let enabled = iTermAdvancedSettingsModel.adblockEnabled()
+        let manager = iTermBrowserAdblockRustManager.shared
         
         let stats = [
             "enabled": enabled,
-            "engineLoaded": enabled, // Simple check for now
+            "engineLoaded": manager.engine != nil,
+            "isDownloading": manager.isDownloading,
+            "ruleCount": manager.ruleCount,
             "hiddenElementsCount": 0, // Could be enhanced with actual tracking
             "blockedRequestsCount": 0  // Could be enhanced with actual tracking
         ] as [String: Any]

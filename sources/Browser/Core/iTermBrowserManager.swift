@@ -1249,6 +1249,10 @@ extension iTermBrowserManager: iTermBrowserLocalPageManagerDelegate {
         // Navigate to the URL in the current browser
         loadURL(url)
     }
+    
+    func localPageManagerWebView(_ manager: iTermBrowserLocalPageManager) -> WKWebView? {
+        return webView
+    }
 }
 
 @available(macOS 11.0, *)
