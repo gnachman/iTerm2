@@ -43,9 +43,9 @@ class iTermBrowserWebView: WKWebView {
     private var mouseDown = false  // TODO
     private var mouseDownLocationInWindow: NSPoint?
     private var hoverLinkSecret: String?
-    private var contextMenuClickLocation: NSPoint?
     private var trackingArea: NSTrackingArea?
     private let focusFollowsMouse = iTermFocusFollowsMouse()
+    private let contextMenuHelper = iTermBrowserContextMenuHelper()
 
     init(frame: CGRect,
          configuration: WKWebViewConfiguration,
@@ -54,6 +54,7 @@ class iTermBrowserWebView: WKWebView {
 
         super.init(frame: frame, configuration: configuration)
 
+        contextMenuHelper.delegate = self
         focusFollowsMouse.delegate = self
         allowsMagnification = true
         threeFingerTapGestureRecognizer = ThreeFingerTapGestureRecognizer(target: self,
@@ -499,94 +500,9 @@ class iTermBrowserWebView: WKWebView {
     override func willOpenMenu(_ menu: NSMenu, with event: NSEvent) {
         super.willOpenMenu(menu, with: event)
 
-        // Store the click location in view coordinates for the named mark functionality
-        contextMenuClickLocation = convert(event.locationInWindow, from: nil)
-
-        // Add separator before our custom items
-        menu.addItem(NSMenuItem.separator())
-        
-        // Add Named Mark menu item
-        let addMarkItem = NSMenuItem(title: "Add Named Mark…", action: #selector(addNamedMarkMenuClicked), keyEquivalent: "")
-        addMarkItem.target = self
-        menu.addItem(addMarkItem)
-        
-        menu.addItem(NSMenuItem.separator())
-        
-        // Add Save Page As menu item
-        let savePageItem = NSMenuItem(title: "Save Page As…", action: #selector(savePageAsMenuClicked), keyEquivalent: "")
-        savePageItem.target = self
-        menu.addItem(savePageItem)
-        
-        // Add Print Page menu item
-        let printPageItem = NSMenuItem(title: "Print…", action: #selector(printView(_:)), keyEquivalent: "")
-        printPageItem.target = self
-        menu.addItem(printPageItem)
-        
-        // Add Copy Page Title menu item
-        let copyTitleItem = NSMenuItem(title: "Copy Page Title", action: #selector(copyPageTitleMenuClicked), keyEquivalent: "")
-        copyTitleItem.target = self
-        menu.addItem(copyTitleItem)
-
-        menu.addItem(NSMenuItem.separator())
-
-        // Add View Source menu item
-        let viewSourceItem = NSMenuItem(title: "View Source", action: #selector(viewSourceMenuClicked), keyEquivalent: "")
-        viewSourceItem.target = self
-        menu.addItem(viewSourceItem)
-
-        let removeElement = NSMenuItem(title: "Remove Element", action: #selector(removeElementMenuClicked), keyEquivalent: "")
-        viewSourceItem.target = self
-        menu.addItem(removeElement)
+        contextMenuHelper.decorate(menu: menu, event: event)
     }
 
-    @objc private func addNamedMarkMenuClicked() {
-        guard let clickLocation = contextMenuClickLocation else { return }
-        browserDelegate?.webViewDidRequestAddNamedMark(
-            self,
-            atPoint: convertToJavaScriptCoordinates(convert(clickLocation, to: nil)))
-    }
-
-    @objc private func removeElementMenuClicked() {
-        if let contextMenuClickLocation {
-            browserDelegate?.webViewDidRequestRemoveElement(
-                self,
-                at: convertToJavaScriptCoordinates(convert(contextMenuClickLocation, to: nil)))
-        }
-    }
-
-    @objc private func viewSourceMenuClicked() {
-        browserDelegate?.webViewDidRequestViewSource(self)
-    }
-    
-    @objc private func savePageAsMenuClicked() {
-        browserDelegate?.webViewDidRequestSavePageAs(self)
-    }
-    
-    @objc private func copyPageTitleMenuClicked() {
-        browserDelegate?.webViewDidRequestCopyPageTitle(self)
-    }
-
-    // https://stackoverflow.com/questions/46777468/swift-mac-os-blank-page-printed-when-i-try-to-print-webview-wkwebview
-    @objc(print:)
-    override func printView(_ sender: Any?) {
-        let printInfo = NSPrintInfo.shared
-        printInfo.horizontalPagination = .fit
-        printInfo.verticalPagination = .automatic
-        printInfo.isHorizontallyCentered = true
-        printInfo.isVerticallyCentered = true
-
-        let op = printOperation(with: printInfo)
-        op.showsPrintPanel = true
-        op.showsProgressPanel = true
-        op.view?.frame = bounds
-        op.runModal(
-          for: window!,
-          delegate: self,
-          didRun: nil,
-          contextInfo: nil
-        )
-    }
-    
     // MARK: - Mouse Tracking for Hover
     
     override func updateTrackingAreas() {
@@ -649,5 +565,63 @@ extension iTermBrowserWebView: iTermFocusFollowsMouseDelegate {
     
     func refuseFirstResponderAtCurrentMouseLocation() {
         focusFollowsMouse.refuseFirstResponderAtCurrentMouseLocation()
+    }
+}
+
+@available(macOS 11.0, *)
+extension iTermBrowserWebView: iTermBrowserContextMenuHelperDelegate {
+    func contextMenuAddNamedMark(at point: NSPoint) {
+        browserDelegate?.webViewDidRequestAddNamedMark(
+            self,
+            atPoint: convertToJavaScriptCoordinates(point))
+    }
+
+    func contextMenuConvertPointFromWindowToView(_ point: NSPoint) -> NSPoint {
+        return convert(point, to: nil)
+    }
+
+    func contextMenuViewSource() {
+        browserDelegate?.webViewDidRequestViewSource(self)
+    }
+
+    func contextMenuSavePageAs() {
+        browserDelegate?.webViewDidRequestSavePageAs(self)
+    }
+
+    func contextMenuCopyPageTitle() {
+        browserDelegate?.webViewDidRequestCopyPageTitle(self)
+    }
+
+    func contextMenuPrint() {
+        printView(nil)
+    }
+
+    func contextMenuRemoveElement(at point: NSPoint) {
+        browserDelegate?.webViewDidRequestRemoveElement(
+            self,
+            at: convertToJavaScriptCoordinates(point))
+    }
+}
+
+@available(macOS 11.0, *)
+extension iTermBrowserWebView {
+    @objc(print:)
+    override func printView(_ sender: Any?) {
+        let printInfo = NSPrintInfo.shared
+        printInfo.horizontalPagination = .fit
+        printInfo.verticalPagination = .automatic
+        printInfo.isHorizontallyCentered = true
+        printInfo.isVerticallyCentered = true
+
+        let op = printOperation(with: printInfo)
+        op.showsPrintPanel = true
+        op.showsProgressPanel = true
+        op.view?.frame = bounds
+        op.runModal(
+          for: window!,
+          delegate: self,
+          didRun: nil,
+          contextInfo: nil
+        )
     }
 }
