@@ -303,11 +303,20 @@
 	</dict>
 	<key>files2</key>
 	<dict>
+		<key>Frameworks/libclang_rt.asan_osx_dynamic.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			ogT3IA/tH4loLXtwN0Dz5IJ334s=
+			</data>
+			<key>requirement</key>
+			<string>anchor apple generic and identifier "libclang_rt.asan_osx_dynamic" and (certificate leaf[field.1.2.840.113635.100.6.1.9] /* exists */ or certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = H7V7XYVQ7D)</string>
+		</dict>
 		<key>MacOS/fileop</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			oxGuXHKxXbNFxzq15Db8X/Ne8zI=
+			HNifZFvNVrsXRT6IXVidh+pAcPY=
 			</data>
 			<key>requirement</key>
 			<string>anchor apple generic and identifier fileop and (certificate leaf[field.1.2.840.113635.100.6.1.9] /* exists */ or certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = H7V7XYVQ7D)</string>
