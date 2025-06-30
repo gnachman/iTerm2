@@ -24,7 +24,6 @@ import iTermProxy
     func browserManager(_ manager: iTermBrowserManager, openNewSplitPaneForURL url: URL, vertical: Bool)
     func browserManager(_ manager: iTermBrowserManager, openPasswordManagerForHost host: String?, forUser: Bool, didSendUserName: (() -> ())?)
     func browserManagerDidRequestSavePageAs(_ manager: iTermBrowserManager)
-    func browserManagerDidRequestCopyPageTitle(_ manager: iTermBrowserManager)
     func browserManagerDidRequestAddNamedMark(_ manager: iTermBrowserManager, atPoint point: NSPoint)
     func browserManager(_ manager: iTermBrowserManager, didChangeReaderModeState isActive: Bool)
     func browserManager(_ manager: iTermBrowserManager, didChangeDistractionRemovalState isActive: Bool)
@@ -41,6 +40,7 @@ import iTermProxy
     func browserManager(_ browserManager: iTermBrowserManager,
                         didHoverURL url: String?, frame: NSRect)
     func browserManagerDidBecomeFirstResponder(_ browserManager: iTermBrowserManager)
+    func browserManager(_ browserManager: iTermBrowserManager, didCopyString: String)
 }
 
 typealias Profile = [AnyHashable: Any]
@@ -60,6 +60,8 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private var notificationHandler: iTermBrowserNotificationHandler?
     private var hoverLinkHandler: iTermBrowserHoverLinkHandler?
     let passwordWriter = iTermBrowserPasswordWriter()
+    private let selectionMonitor = iTermBrowserSelectionMonitor()
+    private let contextMenuMonitor = iTermBrowserContextMenuMonitor()
     let sessionGuid: String
     let historyController: iTermBrowserHistoryController
     private let navigationState: iTermBrowserNavigationState
@@ -186,6 +188,22 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                 )
                 configuration.userContentController.add(self, name: iTermBrowserNotificationHandler.messageHandlerName)
                 configuration.userContentController.addUserScript(notificationScript)
+            }
+
+            if let selectionMonitor {
+                let script = WKUserScript(source: selectionMonitor.javascript,
+                                              injectionTime: .atDocumentStart,
+                                              forMainFrameOnly: false)
+                configuration.userContentController.add(self, name: iTermBrowserSelectionMonitor.messageHandlerName)
+                configuration.userContentController.addUserScript(script)
+            }
+
+            if let contextMenuMonitor {
+                let script = WKUserScript(source: contextMenuMonitor.javascript,
+                                              injectionTime: .atDocumentStart,
+                                              forMainFrameOnly: false)
+                configuration.userContentController.add(self, name: iTermBrowserContextMenuMonitor.messageHandlerName)
+                configuration.userContentController.addUserScript(script)
             }
 
             let geolocationHandler = iTermBrowserGeolocationHandler.instance(for: user)
@@ -610,10 +628,6 @@ extension iTermBrowserManager: iTermBrowserWebViewDelegate {
         savePageAs()
     }
 
-    func webViewDidRequestCopyPageTitle(_ webView: iTermBrowserWebView) {
-        copyPageTitle()
-    }
-    
     func webViewDidRequestAddNamedMark(_ webView: iTermBrowserWebView, atPoint point: NSPoint) {
         delegate?.browserManagerDidRequestAddNamedMark(self, atPoint: point)
     }
@@ -636,6 +650,10 @@ extension iTermBrowserManager: iTermBrowserWebViewDelegate {
         if url == nil {
             hoverLinkHandler?.clearHover(in: webView)
         }
+    }
+
+    func webViewDidCopy(_ webView: iTermBrowserWebView, string: String) {
+        delegate?.browserManager(self, didCopyString: string)
     }
 }
 
@@ -711,6 +729,12 @@ extension iTermBrowserManager {
             
         case iTermBrowserAutofillHandler.messageHandlerName:
             _ = iTermBrowserAutofillHandler.instance?.handleMessage(webView: webView, message: message)
+
+        case iTermBrowserSelectionMonitor.messageHandlerName:
+            selectionMonitor?.handleMessage(message, webView: webView)
+
+        case iTermBrowserContextMenuMonitor.messageHandlerName:
+            contextMenuMonitor?.handleMessage(message, webView: webView)
 
         default:
             DLog(message.name)
@@ -1209,10 +1233,6 @@ extension iTermBrowserManager: WKUIDelegate {
     
     @objc private func savePageAs() {
         delegate?.browserManagerDidRequestSavePageAs(self)
-    }
-    
-    @objc private func copyPageTitle() {
-        delegate?.browserManagerDidRequestCopyPageTitle(self)
     }
     
     // MARK: - Media Capture Permissions

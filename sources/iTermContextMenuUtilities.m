@@ -1,0 +1,318 @@
+//
+//  iTermContextMenuUtilities.m
+//  iTerm2
+//
+//  Created by George Nachman on 6/30/25.
+//
+
+#import "iTermContextMenuUtilities.h"
+#import "NSStringITerm.h"
+#import "RegexKitLite.h"
+#import "iTerm2SharedARC-Swift.h"
+
+@implementation NSString(ContextMenu)
+
+- (NSArray<iTermTuple<NSString *, NSString *> *> *)helpfulSynonyms {
+    NSMutableArray *array = [NSMutableArray array];
+    iTermTuple<NSString *, NSString *> *hexOrDecimalConversion = [self hexOrDecimalConversionHelp];
+    if (hexOrDecimalConversion) {
+        [array addObject:hexOrDecimalConversion];
+    }
+    iTermTuple<NSString *, NSString *> *scientificNotationConversion = [self scientificNotationConversionHelp];
+    if (scientificNotationConversion) {
+        [array addObject:scientificNotationConversion];
+    }
+    iTermTuple<NSString *, NSString *> *timestampConversion = [self timestampConversionHelp];
+    if (timestampConversion) {
+        [array addObject:timestampConversion];
+    }
+    iTermTuple<NSString *, NSString *> *utf8Help = [self utf8Help];
+    if (utf8Help) {
+        [array addObject:utf8Help];
+    }
+    if (array.count) {
+        return array;
+    } else {
+        return nil;
+    }
+}
+
+- (iTermTuple<NSString *, NSString *> *)hexOrDecimalConversionHelp {
+    unsigned long long value;
+    BOOL mustBePositive = NO;
+    BOOL decToHex;
+    BOOL is32bit;
+    if ([self hasPrefix:@"0x"] && [self length] <= 18) {
+        decToHex = NO;
+        NSScanner *scanner = [NSScanner scannerWithString:self];
+        [scanner setScanLocation:2]; // bypass 0x
+        if (![scanner scanHexLongLong:&value]) {
+            return nil;
+        }
+        is32bit = [self length] <= 10;
+    } else {
+        if (![[self stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] isNumeric]) {
+            return nil;
+        }
+        decToHex = YES;
+        NSDecimalNumber *temp = [NSDecimalNumber decimalNumberWithString:self];
+        if ([temp isEqual:[NSDecimalNumber notANumber]]) {
+            return nil;
+        }
+        NSDecimalNumber *smallestSignedLongLong =
+            [NSDecimalNumber decimalNumberWithString:@"-9223372036854775808"];
+        NSDecimalNumber *largestUnsignedLongLong =
+            [NSDecimalNumber decimalNumberWithString:@"18446744073709551615"];
+        if ([temp doubleValue] > 0) {
+            if ([temp compare:largestUnsignedLongLong] == NSOrderedDescending) {
+                return nil;
+            }
+            mustBePositive = YES;
+            is32bit = ([temp compare:@2147483648LL] == NSOrderedAscending);
+        } else if ([temp compare:smallestSignedLongLong] == NSOrderedAscending) {
+            // Negative but smaller than a signed 64 bit can hold
+            return nil;
+        } else {
+            // Negative but fits in signed 64 bit
+            is32bit = ([temp compare:@-2147483649LL] == NSOrderedDescending);
+        }
+        value = [temp unsignedLongLongValue];
+    }
+
+    NSNumberFormatter *numberFormatter = [[NSNumberFormatter alloc] init];
+    numberFormatter.numberStyle = NSNumberFormatterDecimalStyle;
+
+    NSString *humanReadableSize = [NSString stringWithHumanReadableSize:value];
+    if (value >= 1024) {
+        humanReadableSize = [NSString stringWithFormat:@" (%@)", humanReadableSize];
+    } else {
+        humanReadableSize = @"";
+    }
+
+    if (is32bit) {
+        // Value fits in a signed 32-bit value, so treat it as such
+        int intValue =
+        (int)value;
+        NSString *formattedDecimalValue = [numberFormatter stringFromNumber:@(intValue)];
+        if (decToHex) {
+            if (intValue < 0) {
+                humanReadableSize = @"";
+            }
+            NSString *converted = [NSString stringWithFormat:@"0x%x%@", intValue, humanReadableSize];
+            NSString *display = [NSString stringWithFormat:@"%@ = %@",
+                                 formattedDecimalValue, converted];
+            return [iTermTuple tupleWithObject:display andObject:converted];
+        } else if (intValue >= 0) {
+            NSString *converted = [NSString stringWithFormat:@"%@%@",
+                                   formattedDecimalValue, humanReadableSize];
+            NSString *display = [NSString stringWithFormat:@"0x%x = %@%@",
+                                 intValue, formattedDecimalValue, humanReadableSize];
+            return [iTermTuple tupleWithObject:display andObject:converted];
+        } else {
+            unsigned int unsignedIntValue = (unsigned int)value;
+            NSString *formattedUnsignedDecimalValue =
+                [numberFormatter stringFromNumber:@(unsignedIntValue)];
+            NSString *converted = formattedDecimalValue;
+            NSString *display = [NSString stringWithFormat:@"0x%x = %@ or %@%@",
+                                 intValue, formattedDecimalValue, formattedUnsignedDecimalValue,
+                                 humanReadableSize];
+            return [iTermTuple tupleWithObject:display andObject:converted];
+        }
+    } else {
+        // 64-bit value
+        NSDecimalNumber *decimalNumber;
+        long long signedValue = value;
+        if (!mustBePositive && signedValue < 0) {
+            decimalNumber = [NSDecimalNumber decimalNumberWithMantissa:-signedValue
+                                                              exponent:0
+                                                            isNegative:YES];
+        } else {
+            decimalNumber = [NSDecimalNumber decimalNumberWithMantissa:value
+                                                              exponent:0
+                                                            isNegative:NO];
+        }
+        NSString *formattedDecimalValue = [numberFormatter stringFromNumber:decimalNumber];
+        if (decToHex) {
+            if (!mustBePositive && signedValue < 0) {
+                humanReadableSize = @"";
+            }
+            NSString *converted = [NSString stringWithFormat:@"0x%llx%@", value, humanReadableSize];
+            NSString *display = [NSString stringWithFormat:@"%@ = 0x%llx%@",
+                                 formattedDecimalValue, value, humanReadableSize];
+            return [iTermTuple tupleWithObject:display andObject:converted];
+        } else if (signedValue >= 0) {
+            NSString *converted = [NSString stringWithFormat:@"%@%@",
+                                   formattedDecimalValue, humanReadableSize];
+            NSString *display = [NSString stringWithFormat:@"0x%llx = %@%@",
+                                 value, formattedDecimalValue, humanReadableSize];
+            return [iTermTuple tupleWithObject:display andObject:converted];
+        } else {
+            // Value is negative and converting hex to decimal.
+            NSDecimalNumber *unsignedDecimalNumber =
+                [NSDecimalNumber decimalNumberWithMantissa:value
+                                                  exponent:0
+                                                isNegative:NO];
+            NSString *formattedUnsignedDecimalValue =
+                [numberFormatter stringFromNumber:unsignedDecimalNumber];
+            NSString *converted = [NSString stringWithFormat:@"%@",
+                                   formattedDecimalValue];
+            NSString *display = [NSString stringWithFormat:@"0x%llx = %@ or %@%@",
+                                 value, formattedDecimalValue, formattedUnsignedDecimalValue,
+                                 humanReadableSize];
+            return [iTermTuple tupleWithObject:display andObject:converted];
+        }
+    }
+}
+
+- (iTermTuple<NSString *, NSString *> *)scientificNotationConversionHelp {
+    NSString *scientificNotationRegex = @"^-?(0|[1-9]\\d*)?(\\.\\d+)?[eE][+\\-]?\\d+$";
+    const BOOL isScientificNotation = [self isMatchedByRegex:scientificNotationRegex];
+    if (!isScientificNotation) {
+        return nil;
+    }
+
+    NSDecimalNumber *number = [[NSDecimalNumber alloc] initWithString:self];
+    if (!number || [number isEqual:[NSDecimalNumber notANumber]]) {
+        return nil;
+    }
+
+    NSNumberFormatter *numberFormatter = [[NSNumberFormatter alloc] init];
+    numberFormatter.numberStyle = NSNumberFormatterDecimalStyle;
+    numberFormatter.maximumFractionDigits = 1000;
+    NSString *formattedNumber = [numberFormatter stringFromNumber:number];
+
+    return [iTermTuple tupleWithObject:[NSString stringWithFormat:@"%@ = %@", self, formattedNumber]
+                             andObject:formattedNumber];
+}
+
+- (iTermTuple<NSString *, NSString *> *)timestampConversionHelp {
+    NSDate *date;
+    date = [self dateValueFromUnix];
+    BOOL wasUnix = (date != nil);
+    if (!date) {
+        date = [self dateValueFromUTC];
+    }
+    if (date) {
+        NSString *template;
+        if (fmod(date.timeIntervalSince1970, 1) > 0.001) {
+            template = @"yyyyMMMd j:mm:ss.SSS z";
+        } else {
+            template = @"yyyyMMMd j:mm:ss z";
+        }
+        NSLocale *currentLocale = [NSLocale currentLocale];
+        NSDateFormatter *fmt = [[NSDateFormatter alloc] init];
+        NSString *dateFormat = [NSDateFormatter dateFormatFromTemplate:template
+                                                               options:0
+                                                                locale:currentLocale];
+        [fmt setDateFormat:dateFormat];
+        if (wasUnix) {
+            return [iTermTuple tupleWithObject:[fmt stringFromDate:date]
+                                     andObject:[fmt stringFromDate:date]];
+        } else {
+            return [iTermTuple tupleWithObject:[NSString stringWithFormat:@"Unix timestamp %@", @(date.timeIntervalSince1970)]
+                                     andObject:[@(date.timeIntervalSince1970) stringValue]];
+        }
+    } else {
+        return nil;
+    }
+}
+
+- (iTermTuple<NSString *, NSString *> *)utf8Help {
+    if (self.length == 0) {
+        return nil;
+    }
+
+    CFRange graphemeClusterRange = CFStringGetRangeOfComposedCharactersAtIndex((CFStringRef)self, 0);
+    if (graphemeClusterRange.location != 0 ||
+        graphemeClusterRange.length != self.length) {
+        // Only works for a single grapheme cluster.
+        return nil;
+    }
+
+    if ([self characterAtIndex:0] < 128 && self.length == 1) {
+        // No help for ASCII
+        return nil;
+    }
+
+    // Convert to UCS-4
+    NSData *data = [self dataUsingEncoding:NSUTF32StringEncoding];
+    const int *characters = (int *)data.bytes;
+    int numCharacters = data.length / 4;
+
+    // Output UTF-8 hex codes
+    NSMutableArray *byteStrings = [NSMutableArray array];
+    const char *utf8 = [self UTF8String];
+    for (size_t i = 0; utf8[i]; i++) {
+        [byteStrings addObject:[NSString stringWithFormat:@"0x%02x", utf8[i] & 0xff]];
+    }
+    NSString *utf8String = [byteStrings componentsJoinedByString:@" "];
+
+    // Output UCS-4 hex codes
+    NSMutableArray *ucs4Strings = [NSMutableArray array];
+    for (NSUInteger i = 0; i < numCharacters; i++) {
+        if (characters[i] == 0xfeff) {
+            // Ignore byte order mark
+            continue;
+        }
+        [ucs4Strings addObject:[NSString stringWithFormat:@"U+%04x", characters[i]]];
+    }
+    NSString *ucs4String = [ucs4Strings componentsJoinedByString:@" "];
+
+    return [iTermTuple tupleWithObject:[NSString stringWithFormat:@"“%@” = %@ = %@ (UTF-8)", self, ucs4String, utf8String]
+                             andObject:utf8String];
+}
+
+- (NSDate *)dateValueFromUnix {
+    typedef struct {
+        NSString *regex;
+        double divisor;
+    } Format;
+    // TODO: Change these regexes to begin with ^[12] in the year 2032 or so.
+    Format formats[] = {
+        {
+            .regex = @"^1[0-9]{9}$",
+            .divisor = 1
+        },
+        {
+            .regex = @"^1[0-9]{12}$",
+            .divisor = 1000
+        },
+        {
+            .regex = @"^1[0-9]{15}$",
+            .divisor = 1000000
+        },
+        {
+            .regex = @"^1[0-9]{9}\\.[0-9]+$",
+            .divisor = 1
+        }
+    };
+    for (size_t i = 0; i < sizeof(formats) / sizeof(*formats); i++) {
+        if ([self isMatchedByRegex:formats[i].regex]) {
+            const NSTimeInterval timestamp = [self doubleValue] / formats[i].divisor;
+            return [NSDate dateWithTimeIntervalSince1970:timestamp];
+        }
+    }
+    return nil;
+}
+
+- (NSDate *)dateValueFromUTC {
+    NSArray<NSString *> *formats = @[ @"E, d MMM yyyy HH:mm:ss zzz",
+                                      @"EEE MMM dd HH:mm:ss zzz yyyy",
+                                      @"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                                      @"yyyy-MM-dd't'HH:mm:ss.SSS'z'",
+                                      @"yyyy-MM-dd'T'HH:mm:ss'Z'",
+                                      @"yyyy-MM-dd't'HH:mm:ss'z'",
+                                      @"yyyy-MM-dd'T'HH:mm'Z'",
+                                      @"yyyy-MM-dd't'HH:mm'z'" ];
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    for (NSString *format in formats) {
+        dateFormatter.dateFormat = format;
+        dateFormatter.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"];
+        NSDate *date = [dateFormatter dateFromString:self];
+        if (date) {
+            return date;
+        }
+    }
+    return nil;
+}
+@end

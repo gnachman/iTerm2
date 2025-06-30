@@ -155,6 +155,10 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
     func browserViewControllerDidBecomeFirstResponder(_ controller: iTermBrowserViewController) {
         notifyActive()
     }
+
+    func browserViewController(_ controller: iTermBrowserViewController, didCopyString string: String) {
+        PasteboardHistory.sharedInstance().save(string)
+    }
 }
 
 // MARK: - Browser Find Support

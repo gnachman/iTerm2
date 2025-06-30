@@ -86,6 +86,7 @@ extension iTermBrowserWebView {
         }
     }
 
+    // window -> js
     func convertToJavaScriptCoordinates(_ windowPoint: NSPoint) -> NSPoint {
         let pointInView = self.convert(windowPoint, from: nil)
         
@@ -99,7 +100,21 @@ extension iTermBrowserWebView {
         
         return NSPoint(x: jsX, y: jsY)
     }
-    
+
+    // js -> window
+    func convertFromJavascriptCoordinates(_ jsPoint: NSPoint) -> NSPoint {
+        let jsX = jsPoint.x
+        let jsY = jsPoint.y
+
+        let baseJSX = jsX * self.magnification
+        let baseJSY = jsY * self.magnification
+
+        let pointInView = NSPoint(x: baseJSX * self.pageZoom,
+                                  y: baseJSY * self.pageZoom)
+
+        return self.convert(pointInView, to: nil)
+    }
+
     func extendSelection(toPointInWindow point: NSPoint) {
         let jsPoint = convertToJavaScriptCoordinates(point)
         
@@ -359,31 +374,10 @@ extension iTermBrowserWebView {
         }
     }
 
-    var selectedText: String? {
-        get async {
-            let script = """
-            (function() {
-                var selection = window.getSelection();
-                return selection ? selection.toString() : "";
-            })();
-            """
-            do {
-                let result = try await evaluateJavaScript(script)
-                return result as? String
-            } catch {
-                DLog("\(error)")
-                return nil
-            }
-        }
-    }
-
     func copySelectionToClipboard() async {
         if let selectedText = await selectedText, !selectedText.isEmpty {
             await MainActor.run {
-                let pasteboard = NSPasteboard.general
-                pasteboard.clearContents()
-                pasteboard.setString(selectedText, forType: .string)
-                PasteboardHistory.sharedInstance().save(selectedText)
+                copy(string: selectedText)
             }
         }
     }

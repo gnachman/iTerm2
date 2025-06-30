@@ -64,22 +64,6 @@ class iTermBrowserContextMenuHandler {
         alert.beginSheetModal(for: window, completionHandler: nil)
     }
     
-    func copyPageTitle() {
-        guard let title = webView.title, !title.isEmpty else {
-            // Fallback to URL if no title
-            if let url = webView.url?.absoluteString {
-                let pasteboard = NSPasteboard.general
-                pasteboard.clearContents()
-                pasteboard.setString(url, forType: .string)
-            }
-            return
-        }
-        
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setString(title, forType: .string)
-    }
-    
     private func sanitizeFilename(_ name: String) -> String {
         let invalidChars = CharacterSet(charactersIn: "\\/:*?\"<>|")
         return name.components(separatedBy: invalidChars).joined(separator: "_")

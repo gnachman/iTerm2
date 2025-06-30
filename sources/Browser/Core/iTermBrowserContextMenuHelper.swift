@@ -13,12 +13,16 @@ protocol iTermBrowserContextMenuHelperDelegate: AnyObject {
     func contextMenuCopyPageTitle()
     func contextMenuPrint()
     func contextMenuRemoveElement(at point: NSPoint)
+    func contextMenuCurrentShortSelection() -> String?
+    func contextMenuCopy(string: String)
 }
+
 class iTermBrowserContextMenuHelper {
     private(set) var contextMenuClickLocation: NSPoint?
     weak var delegate: iTermBrowserContextMenuHelperDelegate?
 
     func decorate(menu: NSMenu, event: NSEvent) {
+        DLog("decorate menu")
         guard let converted = convertPointFromWindowToView(event.locationInWindow) else {
             return
         }
@@ -28,6 +32,21 @@ class iTermBrowserContextMenuHelper {
         // Add separator before our custom items
         menu.addItem(NSMenuItem.separator())
 
+        if let selectedText = delegate?.contextMenuCurrentShortSelection() {
+            var i = 0
+            for synonym in selectedText.helpfulSynonyms {
+                let item = NSMenuItem()
+                item.title = synonym.firstObject! as String
+                item.representedObject = synonym.secondObject
+                item.target = self
+                item.action = #selector(copyRepresentedObject(_:))
+                menu.insertItem(item, at: i)
+                i += 1
+            }
+            if !selectedText.helpfulSynonyms.isEmpty {
+                menu.insertItem(NSMenuItem.separator(), at: i)
+            }
+        }
         // Add Named Mark menu item
         let addMarkItem = NSMenuItem(title: "Add Named Mark…", action: #selector(addNamedMarkMenuClicked), keyEquivalent: "")
         addMarkItem.target = self
@@ -98,8 +117,11 @@ class iTermBrowserContextMenuHelper {
             return
         }
         delegate?.contextMenuRemoveElement(at: convertedLocation)
-        if let contextMenuClickLocation {
-        }
     }
 
+    @objc private func copyRepresentedObject(_ sender: Any) {
+        if let menuItem = sender as? NSMenuItem, let string = menuItem.representedObject as? String {
+            delegate?.contextMenuCopy(string: string)
+        }
+    }
 }

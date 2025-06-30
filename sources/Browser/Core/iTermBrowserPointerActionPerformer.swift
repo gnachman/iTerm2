@@ -58,7 +58,7 @@ class iTermBrowserPointerActionPerformer: NSObject, PointerControllerDelegate {
 
     func openContextMenu(with event: NSEvent!) {
         delegate?.actionPerformingOpenContextMenu(
-            atWindowLocation: event.locationInWindow)
+            atWindowLocation: event.locationInWindow,)
     }
 
     func nextTab(with event: NSEvent!) {
