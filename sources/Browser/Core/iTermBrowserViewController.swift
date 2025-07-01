@@ -797,7 +797,9 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
         guard let rules = delegate?.browserViewControllerSmartSelectionRules(self) else {
             return
         }
-        await browserManager.webView.performSmartSelection(atPointInWindow: point, rules: rules)
+        await browserManager.webView.performSmartSelection(atPointInWindow: point,
+                                                           rules: rules,
+                                                           requireAction: false)
     }
 
     func browserManager(_ browserManager: iTermBrowserManager, didHoverURL url: String?, frame: NSRect) {
@@ -957,7 +959,8 @@ extension iTermBrowserViewController: iTermBrowserActionPerforming {
         }
         Task {
             await browserManager.webView.performSmartSelection(atPointInWindow: point,
-                                                               rules: rules)
+                                                               rules: rules,
+                                                               requireAction: false)
         }
     }
 
