@@ -530,6 +530,9 @@ backgroundColor:(NSColor *)backgroundColor;
 // Has output been received recently?
 @property(nonatomic, readonly) BOOL isProcessing;
 
+// Browser navigation loading state
+@property(nonatomic, assign) BOOL browserIsLoading;
+
 // Indicates if you're at the shell prompt and not running a command. Returns
 // NO if shell integration is not in use.
 @property(nonatomic, readonly) BOOL isAtShellPrompt;

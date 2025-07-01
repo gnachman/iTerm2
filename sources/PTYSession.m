@@ -664,6 +664,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     // Holds NSNull or ScreenCharArray. NSNull signals to remove the last line.
     NSMutableArray *_pendingFilterUpdates;
+    
+    // Browser navigation state
+    BOOL _browserIsLoading;
 }
 
 @synthesize isDivorced = _divorced;
@@ -5322,6 +5325,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
 // You're processing if data was read off the socket in the last "idleTimeSeconds".
 - (BOOL)isProcessing {
+    // For browser tabs, check if navigation is in progress
+    if (_view.isBrowser) {
+        return _browserIsLoading;
+    }
+    
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     return (now - _lastOutputIgnoringOutputAfterResizing) < _idleTime;
 }
@@ -8456,6 +8464,17 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                     [[arrangement objectForKey:SESSION_ARRANGEMENT_ROWS] intValue])];
 }
 
+- (void)setBrowserIsLoading:(BOOL)browserIsLoading {
+    _browserIsLoading = browserIsLoading;
+    self.active = YES;
+}
+
+- (BOOL)newOutput {
+    if (_browserIsLoading) {
+        return YES;
+    }
+    return _newOutput;
+}
 - (BOOL)isBrowserSession {
     return self.view.isBrowser || self.profile.profileIsBrowser;
 }

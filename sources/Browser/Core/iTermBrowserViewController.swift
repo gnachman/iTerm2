@@ -69,6 +69,8 @@ protocol iTermBrowserViewControllerDelegate: AnyObject {
     func browserViewController(_ controller: iTermBrowserViewController, openFile file: String)
     func browserViewController(_ controller: iTermBrowserViewController, performSplitPaneAction action: iTermBrowserSplitPaneAction)
     func browserViewControllerCurrentTabHasMultipleSessions(_ controller: iTermBrowserViewController) -> Bool
+    func browserViewControllerDidStartNavigation(_ controller: iTermBrowserViewController)
+    func browserViewControllerDidFinishNavigation(_ controller: iTermBrowserViewController)
 }
 
 @available(macOS 11.0, *)
@@ -709,6 +711,7 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
 
     func browserManager(_ manager: iTermBrowserManager, didStartNavigation navigation: WKNavigation?) {
         toolbar.setLoading(true)
+        delegate?.browserViewControllerDidStartNavigation(self)
     }
 
     func browserManager(_ manager: iTermBrowserManager, didFinishNavigation navigation: WKNavigation?) {
@@ -717,11 +720,13 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
         if let url = manager.webView.url {
             delegate?.browserViewController(self, didNavigateTo: url)
         }
+        delegate?.browserViewControllerDidFinishNavigation(self)
     }
 
     func browserManager(_ manager: iTermBrowserManager, didFailNavigation navigation: WKNavigation?, withError error: Error) {
         toolbar.setLoading(false)
         namedMarkManager.didFinishNavigation(webView: manager.webView, success: false)
+        delegate?.browserViewControllerDidFinishNavigation(self)
     }
 
     func browserManager(_ manager: iTermBrowserManager, requestNewWindowForURL url: URL, configuration: WKWebViewConfiguration) -> WKWebView? {
