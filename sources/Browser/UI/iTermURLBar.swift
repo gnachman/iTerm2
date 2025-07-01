@@ -62,6 +62,7 @@ class iTermURLBar: NSView {
     private var _currentURL: String?
     private var _isLoading: Bool = false
     private var _favicon: NSImage?
+    private var draggedURL: URL?
     
     // Behavioral controls
     var showSuggestions: Bool = true
@@ -151,6 +152,9 @@ class iTermURLBar: NSView {
         faviconView = NSImageView()
         faviconView?.translatesAutoresizingMaskIntoConstraints = false
         faviconView?.imageScaling = .scaleProportionallyUpOrDown
+        faviconView?.unregisterDraggedTypes()  // Clear default drag behavior
+        faviconView?.setAccessibilityRole(.button)
+        faviconView?.setAccessibilityLabel("Site icon - drag to copy URL")
         addSubview(faviconView!)
         
         // Progress indicator
@@ -369,6 +373,48 @@ class iTermURLBar: NSView {
             delegate?.urlBar(self, didSubmitURL: selectedItem.suggestion)
         }
     }
+    
+    // MARK: - Drag and Drop
+    
+    override func mouseDown(with event: NSEvent) {
+        // Check if mouse down is on the favicon
+        let locationInView = convert(event.locationInWindow, from: nil)
+        if let faviconView = faviconView,
+           NSPointInRect(locationInView, faviconView.frame),
+           let currentURL = currentURL,
+           let url = URL(string: currentURL) {
+            
+            // Create a custom pasteboard item that includes both URL and string representations
+            let pasteboardItem = NSPasteboardItem()
+            
+            // Add URL representation
+            pasteboardItem.setDataProvider(self, forTypes: [.URL])
+            
+            // Add string representation (for terminal compatibility)
+            pasteboardItem.setString(currentURL, forType: .string)
+            
+            // Add file URL if it's a file
+            if url.isFileURL {
+                pasteboardItem.setString(url.path, forType: .fileURL)
+            }
+            
+            // Create dragging item with our custom pasteboard item
+            let draggingItem = NSDraggingItem(pasteboardWriter: pasteboardItem)
+            
+            // Set the dragging image to the favicon or a default
+            let dragImage = favicon ?? NSImage(systemSymbolName: "globe", accessibilityDescription: nil) ?? NSImage()
+            draggingItem.setDraggingFrame(faviconView.frame, contents: dragImage)
+            
+            // Store the URL for the data provider
+            self.draggedURL = url
+            
+            // Begin the dragging session
+            beginDraggingSession(with: [draggingItem], event: event, source: self)
+            return
+        }
+        
+        super.mouseDown(with: event)
+    }
 
     private var locationForCompletionsWindow: NSRect {
         // Get text field position in screen coordinates
@@ -473,5 +519,45 @@ extension iTermURLBar: iTermURLTextFieldDelegate {
             textField.stringValue = replacement
         }
         handleTextChange(textField.stringValue)
+    }
+}
+
+// MARK: - NSDraggingSource
+
+@available(macOS 11.0, *)
+extension iTermURLBar: NSDraggingSource {
+    func draggingSession(_ session: NSDraggingSession, sourceOperationMaskFor context: NSDraggingContext) -> NSDragOperation {
+        switch context {
+        case .outsideApplication:
+            return [.copy, .link]
+        case .withinApplication:
+            return [.copy, .link]
+        @unknown default:
+            return .copy
+        }
+    }
+    
+    func draggingSession(_ session: NSDraggingSession, willBeginAt screenPoint: NSPoint) {
+        // Provide visual feedback if needed
+        faviconView?.alphaValue = 0.5
+    }
+    
+    func draggingSession(_ session: NSDraggingSession, endedAt screenPoint: NSPoint, operation: NSDragOperation) {
+        // Restore visual state
+        faviconView?.alphaValue = 1.0
+        draggedURL = nil
+    }
+}
+
+// MARK: - NSPasteboardItemDataProvider
+
+@available(macOS 11.0, *)
+extension iTermURLBar: NSPasteboardItemDataProvider {
+    func pasteboard(_ pasteboard: NSPasteboard?, item: NSPasteboardItem, provideDataForType type: NSPasteboard.PasteboardType) {
+        guard let url = draggedURL else { return }
+        
+        if type == .URL {
+            pasteboard?.setData(url.dataRepresentation, forType: .URL)
+        }
     }
 }
