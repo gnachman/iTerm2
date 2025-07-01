@@ -362,6 +362,20 @@ class iTermBrowserWebView: WKWebView {
         }
         if !mouseDown {
             return [.ignore]
+        } else if event.clickCount == 1,
+                  event.modifierFlags.intersection([.control, .command, .option, .shift]) == [.command],
+                  let rules = browserDelegate?.webViewSmartSelectionRules(self) {
+            Task {
+                if let match = await performSmartSelection(atPointInWindow: event.locationInWindow, rules: rules, requireAction: true),
+                   let actionDict = match.rule.actions.first,
+                   let interpolate = browserDelegate?.webViewScopeShouldInterpolateSmartSelectionParameters(self) {
+                    DLog("Construct payload with components: \(match.components)")
+                    let payload = SmartSelectionActionPayload(actionDict: actionDict,
+                                                              captureComponents: match.components,
+                                                              useInterpolation: interpolate)
+                    performSmartSelectionAction(payload: payload)
+                }
+            }
         }
         mouseDown = false
 
@@ -369,6 +383,56 @@ class iTermBrowserWebView: WKWebView {
         setMouseInfo(event: event, sideEffects: [])
         
         return []
+    }
+
+    private func performSmartSelectionAction(payload: SmartSelectionActionPayload) {
+        evaluateCustomAction(payload: payload) { [weak self] string in
+            guard let string else {
+                return
+            }
+            self?.executeSmartSelectionAction(payload: payload, evaluatedString: string)
+        }
+    }
+
+    private func executeSmartSelectionAction(payload: SmartSelectionActionPayload,
+                                             evaluatedString string: String) {
+        let actionEnum = ContextMenuActionPrefsController.action(forActionDict: payload.actionDict)
+        switch actionEnum {
+        case .openFileContextMenuAction:
+            browserDelegate?.webViewOpenFile(self, file: string)
+        case .openUrlContextMenuAction:
+            if let url = URL(string: string) {
+                browserDelegate?.webViewOpenURLInNewTab(self, url: url)
+            }
+        case .runCommandContextMenuAction, .runCoprocessContextMenuAction, .sendTextContextMenuAction:
+            //  Nots upported
+            break
+        case .runCommandInWindowContextMenuAction:
+            browserDelegate?.webViewRunCommand(self, command: string)
+        case .copyContextMenuAction:
+            copy(string: string)
+
+        @unknown default:
+            break
+        }
+    }
+
+    fileprivate func evaluateCustomAction(payload: SmartSelectionActionPayload,
+                                          completion: @escaping (String?) -> ()) {
+        guard let tuple = browserDelegate?.webViewScope(self),
+              let myScope = tuple.0.copy() as? iTermVariableScope else {
+            return
+        }
+        // You can define local values with:
+        // myScope.setValue(vlaue, forVariableNamed:key)
+        // But we should just define the relevant things like URL for all web pgaes.
+        ContextMenuActionPrefsController.computeParameter(
+            forActionDict: payload.actionDict,
+            withCaptureComponents: payload.captureComponents,
+            useInterpolation: payload.useInterpolation,
+            scope: myScope,
+            owner: tuple.1,
+            completion: completion)
     }
 
     override func rightMouseUp(with event: NSEvent) {
@@ -746,6 +810,10 @@ extension iTermBrowserWebView: iTermBrowserContextMenuHelperDelegate {
 
     func contextMenuScope() -> (iTermVariableScope, iTermObject)? {
         return browserDelegate?.webViewScope(self)
+    }
+
+    func contextMenuPerformSmartSelectionAction(payload: SmartSelectionActionPayload) {
+        performSmartSelectionAction(payload: payload)
     }
 
     func contextMenuInterpolateSmartSelectionParameters() -> Bool {

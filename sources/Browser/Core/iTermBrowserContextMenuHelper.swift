@@ -29,16 +29,14 @@ protocol iTermBrowserContextMenuHelperDelegate: AnyObject {
     func contextMenuSearch(for query: String)
     func contextMenuSmartSelectionMatches(forText text: String) -> [WebSmartMatch]
     func contextMenuCurrentURL() -> URL?
-    func contextMenuOpenFile(_ value: String)
-    func contextMenuOpenURL(_ value: String)
-    func contextMenuRunCommand(_ value: String)
+    func contextMenuPerformSmartSelectionAction(payload: SmartSelectionActionPayload)
     func contextMenuScope() -> (iTermVariableScope, iTermObject)?
     func contextMenuInterpolateSmartSelectionParameters() -> Bool
     func contextMenuPerformSplitPaneAction(action: iTermBrowserSplitPaneAction)
     func contextMenuCurrentTabHasMultipleSessions() -> Bool
 }
 
-fileprivate class SmartSelectionActionPayload: NSObject {
+class SmartSelectionActionPayload: NSObject {
     var actionDict: [String: Any]
     var captureComponents: [String]
     var useInterpolation: Bool
@@ -230,107 +228,23 @@ class iTermBrowserContextMenuHelper: NSObject {
         let actionEnum = ContextMenuActionPrefsController.action(
             forActionDict: payload.actionDict)
 
-        let selector: Selector? = switch actionEnum {
-        case .openFileContextMenuAction:
-            #selector(openFileSSA(_:))
-        case .openUrlContextMenuAction:
-            #selector(openURLSSA(_:))
-        case .runCommandContextMenuAction:
-            nil
-        case .runCoprocessContextMenuAction:
-            nil
-        case .sendTextContextMenuAction:
-            nil
-        case .runCommandInWindowContextMenuAction:
-            #selector(runCommandSSA(_:))
-        case .copyContextMenuAction:
-            #selector(copySSA(_:))
-        @unknown default:
-            nil
-        }
         let item = NSMenuItem(title: title,
-                              action: selector,
+                              action: #selector(performSmartSelectionAction(_:)),
                               keyEquivalent: "")
         item.representedObject = payload
         item.target = self
         menu.insertItem(item, at: index)
     }
 
-    @objc private func openFileSSA(_ sender: Any?) {
+    @objc private func performSmartSelectionAction(_ sender: Any?) {
         guard let menuItem = sender as? NSMenuItem else {
             return
         }
         guard let payload = menuItem.representedObject as? SmartSelectionActionPayload else {
             return
         }
-        evaluateCustomAction(payload: payload) { [weak self] string in
-            if let string {
-                self?.delegate?.contextMenuOpenFile(string)
-            }
-        }
+        delegate?.contextMenuPerformSmartSelectionAction(payload: payload)
     }
-
-    @objc private func openURLSSA(_ sender: Any?) {
-        guard let menuItem = sender as? NSMenuItem else {
-            return
-        }
-        guard let payload = menuItem.representedObject as? SmartSelectionActionPayload else {
-            return
-        }
-        evaluateCustomAction(payload: payload) { [weak self] string in
-            if let string {
-                self?.delegate?.contextMenuOpenURL(string)
-            }
-        }
-    }
-
-    @objc private func runCommandSSA(_ sender: Any?) {
-        guard let menuItem = sender as? NSMenuItem else {
-            return
-        }
-        guard let payload = menuItem.representedObject as? SmartSelectionActionPayload else {
-            return
-        }
-        evaluateCustomAction(payload: payload) { [weak self] string in
-            if let string {
-                self?.delegate?.contextMenuRunCommand(string)
-            }
-        }
-    }
-
-    @objc private func copySSA(_ sender: Any?) {
-        guard let menuItem = sender as? NSMenuItem else {
-            return
-        }
-        guard let payload = menuItem.representedObject as? SmartSelectionActionPayload else {
-            return
-        }
-        evaluateCustomAction(payload: payload) { [weak self] string in
-            if let string {
-                self?.delegate?.contextMenuCopy(string: string)
-            }
-        }
-    }
-
-    fileprivate func evaluateCustomAction(payload: SmartSelectionActionPayload,
-                                          completion: @escaping (String?) -> ()) {
-        guard let delegate,
-              let tuple = delegate.contextMenuScope(),
-              let myScope = tuple.0.copy() as? iTermVariableScope else {
-            return
-        }
-        // You can define local values with:
-        // myScope.setValue(vlaue, forVariableNamed:key)
-        // But we should just define the relevant things like URL for all web pgaes.
-        ContextMenuActionPrefsController.computeParameter(
-            forActionDict: payload.actionDict,
-            withCaptureComponents: payload.captureComponents,
-            useInterpolation: payload.useInterpolation,
-            scope: myScope,
-            owner: tuple.1,
-            completion: completion)
-    }
-
 
     private func convertPointFromWindowToView(_ point: NSPoint) -> NSPoint? {
         return delegate?.contextMenuConvertPointFromWindowToView(point)

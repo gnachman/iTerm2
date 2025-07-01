@@ -196,10 +196,12 @@ extension iTermBrowserWebView {
     }
 
     @MainActor
+    @discardableResult
     func performSmartSelection(atPointInWindow point: NSPoint,
-                               rules: [SmartSelectRule]) async {
-        guard let match = await firstMatch(atPointInWindow: point, rules: rules) else {
-            return
+                               rules: [SmartSelectRule],
+                               requireAction: Bool) async -> WebSmartMatch? {
+        guard let match = await firstMatch(atPointInWindow: point, rules: rules, requireAction: false) else {
+            return nil
         }
         
         let jsPoint = convertToJavaScriptCoordinates(point)
@@ -216,11 +218,16 @@ extension iTermBrowserWebView {
         )
         
         _ = try? await evaluateJavaScript(script)
-        
+
+        if requireAction {
+            return match
+        }
+
         // Copy selection if the preference is enabled
         if iTermPreferences.bool(forKey: kPreferenceKeySelectionCopiesText) {
             await copySelectionToClipboard()
         }
+        return match
     }
 
     @MainActor
@@ -267,7 +274,8 @@ extension iTermBrowserWebView {
     }
 
     func firstMatch(atPointInWindow point: NSPoint,
-                    rules: [SmartSelectRule]) async -> WebSmartMatch? {
+                    rules: [SmartSelectRule],
+                    requireAction: Bool) async -> WebSmartMatch? {
         // Number of lines above and below the location to include in the search
         var matches = [String: WebSmartMatch]()
         let radius = Int(iTermAdvancedSettingsModel.smartSelectionRadius())
@@ -275,7 +283,11 @@ extension iTermBrowserWebView {
         let fullBeforeAbsRange = 0..<before.utf16.count
         let fullAfterAbsRange = before.utf16.count..<(before.utf16.count + after.utf16.count)
         for rule in rules {
+            DLog("Try \(rule.regex)")
             guard let regex = try? NSRegularExpression(pattern: rule.regex) else {
+                continue
+            }
+            if requireAction && rule.actions.isEmpty {
                 continue
             }
             var startOffset = 0
@@ -287,6 +299,7 @@ extension iTermBrowserWebView {
                                               range: fullRange)
                 if let result {
                     let matchingRange = result.range(at: 0)
+                    DLog("Matches in \(matchingRange)")
                     let matchingText = String(substring)[utf16: matchingRange]
                     let score = rule.weight * Double(matchingText.utf16.count)
 
@@ -297,14 +310,16 @@ extension iTermBrowserWebView {
                     let beforeCount = beforeMatchingRange?.count ?? 0
                     let afterCount = afterMatchingRange?.count ?? 0
                     if beforeCount > 0 && afterCount > 0 {
+                        DLog("Best score so far for \(matchingText) is \(matches[matchingText]?.score) versus this one which has a score of \(score)")
                         if (matches[matchingText]?.score ?? 0) < score {
-                            let components = (1..<result.numberOfRanges).map { i in
+                            let components = (0..<result.numberOfRanges).map { i in
                                 let range = result.range(at: i)
                                 if range.location == NSNotFound || range.length == 0 {
                                     return ""
                                 }
                                 return String(substring)[utf16: range]
                             }
+                            DLog("Add match with actions \(rule.actions) and components \(components)")
                             matches[matchingText] = WebSmartMatch(
                                 beforeCount: beforeCount,
                                 afterCount: afterCount,
