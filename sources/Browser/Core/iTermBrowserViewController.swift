@@ -71,6 +71,7 @@ protocol iTermBrowserViewControllerDelegate: AnyObject {
     func browserViewControllerCurrentTabHasMultipleSessions(_ controller: iTermBrowserViewController) -> Bool
     func browserViewControllerDidStartNavigation(_ controller: iTermBrowserViewController)
     func browserViewControllerDidFinishNavigation(_ controller: iTermBrowserViewController)
+    func browserViewControllerDidReceiveNamedMarkUpdate(_ controller: iTermBrowserViewController, guid: String, text: String)
 }
 
 @available(macOS 11.0, *)
@@ -94,7 +95,6 @@ class iTermBrowserViewController: NSViewController {
     }()
     private let pointerController = PointerController()
     private let pointerActionPerformer = iTermBrowserPointerActionPerformer()
-    private let namedMarkManager = iTermBrowserNamedMarkManager()
 
     class ShadeView: SolidColorView {
         override func hitTest(_ point: NSPoint) -> NSView? {
@@ -162,7 +162,7 @@ extension iTermBrowserViewController {
         if let restorableState, let dict = restorableState as? [String: Any] {
             let state = iTermBrowserRestorableState.create(from: dict)
             interactionState = state.interactionState
-            namedMarkManager.namedMarks = state.namedMarks
+            browserManager.namedMarkManager?.namedMarks = state.namedMarks
         } else if let url {
             loadURL(url)
         }
@@ -170,7 +170,7 @@ extension iTermBrowserViewController {
 
     @objc var restorableState: NSDictionary {
         let state = iTermBrowserRestorableState(interactionState: interactionState as? NSData,
-                                                namedMarks: namedMarkManager.namedMarks)
+                                                namedMarks: browserManager.namedMarkManager?.namedMarks ?? [])
         return state.dictionaryValue as NSDictionary
     }
 
@@ -326,7 +326,7 @@ extension iTermBrowserViewController {
     @objc(renameNamedMark:to:)
     func renameNamedMark(_ mark: iTermGenericNamedMarkReading, to name: String) {
         if let myMark = mark as? iTermBrowserNamedMark {
-            namedMarkManager.rename(myMark, to: name, webView: browserManager.webView)
+            browserManager.namedMarkManager?.rename(myMark, to: name, webView: browserManager.webView)
             NamedMarksDidChangeNotification(sessionGuid: self.sessionGuid).post()
         }
     }
@@ -334,27 +334,27 @@ extension iTermBrowserViewController {
     @objc(removeNamedMark:)
     func removeNamedMark(_ mark: iTermGenericNamedMarkReading) {
         if let myMark = mark as? iTermBrowserNamedMark {
-            namedMarkManager.remove(myMark, webView: browserManager.webView)
+            browserManager.namedMarkManager?.remove(myMark, webView: browserManager.webView)
             NamedMarksDidChangeNotification(sessionGuid: self.sessionGuid).post()
         }
     }
 
     @objc(namedMarks)
     var namedMarks: [iTermGenericNamedMarkReading] {
-        return namedMarkManager.namedMarks
+        return browserManager.namedMarkManager?.namedMarks ?? []
     }
 
     @objc(revealNamedMark:)
     func reveal(namedMark: iTermGenericNamedMarkReading) {
         if let myMark = namedMark as? iTermBrowserNamedMark {
-            namedMarkManager.reveal(myMark, webView: browserManager.webView)
+            browserManager.namedMarkManager?.reveal(myMark, webView: browserManager.webView)
         }
     }
     
     @objc(revealNamedMarkWithGUID:)
     func revealNamedMark(guid: String) {
-        if let myMark = namedMarkManager.namedMarks.first(where: { $0.guid == guid }) {
-            namedMarkManager.reveal(myMark, webView: browserManager.webView)
+        if let myMark = browserManager.namedMarkManager?.namedMarks.first(where: { $0.guid == guid }) {
+            browserManager.namedMarkManager?.reveal(myMark, webView: browserManager.webView)
         }
     }
 
@@ -716,7 +716,7 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
 
     func browserManager(_ manager: iTermBrowserManager, didFinishNavigation navigation: WKNavigation?) {
         toolbar.setLoading(false)
-        namedMarkManager.didFinishNavigation(webView: manager.webView, success: true)
+        browserManager.namedMarkManager?.didFinishNavigation(webView: manager.webView, success: true)
         if let url = manager.webView.url {
             delegate?.browserViewController(self, didNavigateTo: url)
         }
@@ -725,7 +725,7 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
 
     func browserManager(_ manager: iTermBrowserManager, didFailNavigation navigation: WKNavigation?, withError error: Error) {
         toolbar.setLoading(false)
-        namedMarkManager.didFinishNavigation(webView: manager.webView, success: false)
+        browserManager.namedMarkManager?.didFinishNavigation(webView: manager.webView, success: false)
         delegate?.browserViewControllerDidFinishNavigation(self)
     }
 
@@ -764,7 +764,7 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
         BookmarkDialogViewController.show(window: window) { [weak self] name in
             Task { @MainActor in
                 guard let self else { return }
-                try await self.namedMarkManager.add(with: name,
+                try await self.browserManager.namedMarkManager?.add(with: name,
                                                     webView: self.browserManager.webView,
                                                     httpMethod: self.browserManager.currentHTTPMethod,
                                                     clickPoint: point)
@@ -842,6 +842,10 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
     func browserManagerCurrentTabHasMultipleSessions(_ browserManager: iTermBrowserManager) -> Bool {
         return delegate?.browserViewControllerCurrentTabHasMultipleSessions(self) ?? false
     }
+    
+    func browserManager(_ manager: iTermBrowserManager, didReceiveNamedMarkUpdate guid: String, text: String) {
+        delegate?.browserViewControllerDidReceiveNamedMarkUpdate(self, guid: guid, text: text)
+    }
 }
 
 // MARK: - Actions
@@ -898,7 +902,7 @@ extension iTermBrowserViewController {
         BookmarkDialogViewController.show(window: window) { [weak self] name in
             Task { @MainActor in
                 guard let self else { return }
-                try await self.namedMarkManager.add(with: name,
+                try await self.browserManager.namedMarkManager?.add(with: name,
                                                     webView: self.browserManager.webView,
                                                     httpMethod: self.browserManager.currentHTTPMethod)
                 NamedMarksDidChangeNotification(sessionGuid: self.sessionGuid).post()

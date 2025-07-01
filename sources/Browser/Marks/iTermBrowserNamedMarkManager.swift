@@ -23,12 +23,14 @@ class iTermBrowserNamedMark: NSObject, iTermGenericNamedMarkReading {
     let name: String?
     let namedMarkSort: Int
     var guid: String
+    var text: String
 
-    init(url: URL, name: String, sort: Int, guid: String) {
+    init(url: URL, name: String, sort: Int, guid: String, text: String = "") {
         self.url = url
         self.name = name
         self.namedMarkSort = sort
         self.guid = guid
+        self.text = text
 
         super.init()
     }
@@ -38,12 +40,14 @@ class iTermBrowserNamedMark: NSObject, iTermGenericNamedMarkReading {
         case name
         case sort
         case guid
+        case text
     }
     var dictionaryValue: [String: Any] {
         return [CodingKeys.url.rawValue: url.absoluteString,
                 CodingKeys.name.rawValue: name!,
                 CodingKeys.sort.rawValue: namedMarkSort,
-                CodingKeys.guid.rawValue: guid]
+                CodingKeys.guid.rawValue: guid,
+                CodingKeys.text.rawValue: text]
     }
 
     init?(dictionaryValue: [String: Any]) {
@@ -68,16 +72,29 @@ class iTermBrowserNamedMark: NSObject, iTermGenericNamedMarkReading {
         }
         self.guid = guid
 
+        // Text field is optional for backward compatibility
+        self.text = dictionaryValue[CodingKeys.text.rawValue] as? String ?? ""
+
         super.init()
     }
 }
 
 @available(macOS 11, *)
 class iTermBrowserNamedMarkManager {
+    static let messageHandlerName = "iTerm2NamedMarkUpdate"
+    static let layoutUpdateHandlerName = "iTerm2MarkLayoutUpdate"
     private var _namedMarks = [iTermBrowserNamedMark]()
     private var pendingNavigationMark: iTermBrowserNamedMark?
+    private let secret: String
 
     private var nextSort = 0
+    
+    init?() {
+        guard let secret = String.makeSecureHexString() else {
+            return nil
+        }
+        self.secret = secret
+    }
 }
 
 @available(macOS 11, *)
@@ -133,7 +150,16 @@ extension iTermBrowserNamedMarkManager {
             
             // Create custom fragment with XPath and offset
             // Note: Don't URL-encode here - URLComponents will handle encoding when setting the fragment
-            let fragment = "iterm-mark:xpath=\(xpath)&offsetY=\(offsetY)&scrollY=\(scrollY)"
+            var fragment = "iterm-mark:xpath=\(xpath)&offsetY=\(offsetY)&scrollY=\(scrollY)"
+            
+            // Add text fragment if available for improved reliability
+            if let textFragment = data["textFragment"] as? String, !textFragment.isEmpty {
+                // URL encode the text fragment value since it contains special characters
+                if let encodedTextFragment = textFragment.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
+                    fragment += "&textFragment=\(encodedTextFragment)"
+                }
+            }
+            
             components?.fragment = fragment
             
             guard let markURL = components?.url else { return }
@@ -158,9 +184,19 @@ extension iTermBrowserNamedMarkManager {
             namedMarks[i] = iTermBrowserNamedMark(url: mark.url,
                                                   name: newName,
                                                   sort: mark.namedMarkSort,
-                                                  guid: mark.guid)
+                                                  guid: mark.guid,
+                                                  text: mark.text)
             
             // Refresh annotations to show the updated name
+            reloadAnnotations(webView: webView)
+        }
+    }
+    
+    func updateText(_ mark: iTermBrowserNamedMark, text: String, webView: WKWebView) {
+        if let i = namedMarks.firstIndex(where: { $0.guid == mark.guid }) {
+            namedMarks[i].text = text
+            
+            // Refresh annotations to show the updated mark
             reloadAnnotations(webView: webView)
         }
     }
@@ -201,8 +237,107 @@ extension iTermBrowserNamedMarkManager {
             }
             // Show annotations for any marks on this page
             reloadAnnotations(webView: webView)
+            // Set up layout change monitoring
+            setupLayoutChangeMonitoring(webView: webView)
         } else {
             DLog("Navigation failed for \(webView.url.d) with pending mark \((pendingNavigationMark?.guid).d)")
+        }
+    }
+    
+    private func setupLayoutChangeMonitoring(webView: WKWebView) {
+        let script = """
+        (function() {
+            var lastViewportWidth = window.innerWidth;
+            var lastViewportHeight = window.innerHeight;
+            var lastScrollY = window.pageYOffset;
+            var updatePending = false;
+            
+            function scheduleMarkUpdate() {
+                if (updatePending) return;
+                updatePending = true;
+                
+                setTimeout(function() {
+                    updatePending = false;
+                    var currentWidth = window.innerWidth;
+                    var currentHeight = window.innerHeight;
+                    var currentScrollY = window.pageYOffset;
+                    
+                    // Check if significant layout changes occurred
+                    var widthChanged = Math.abs(currentWidth - lastViewportWidth) > 50;
+                    var heightChanged = Math.abs(currentHeight - lastViewportHeight) > 50;
+                    var significantScroll = Math.abs(currentScrollY - lastScrollY) > 100;
+                    
+                    if (widthChanged || heightChanged || significantScroll) {
+                        console.log('Layout change detected, updating marks');
+                        try {
+                            window.webkit.messageHandlers.iTerm2MarkLayoutUpdate.postMessage({
+                                type: 'layoutChange',
+                                width: currentWidth,
+                                height: currentHeight,
+                                scrollY: currentScrollY
+                            });
+                        } catch (error) {
+                            console.log('Error sending layout update:', error);
+                        }
+                        
+                        lastViewportWidth = currentWidth;
+                        lastViewportHeight = currentHeight;
+                        lastScrollY = currentScrollY;
+                    }
+                }, 500); // Debounce updates
+            }
+            
+            // Monitor resize events
+            window.addEventListener('resize', scheduleMarkUpdate);
+            
+            // Monitor scroll events (for significant scrolling that might indicate content changes)
+            window.addEventListener('scroll', scheduleMarkUpdate);
+            
+            // Monitor DOM mutations that might affect layout
+            if (window.MutationObserver) {
+                var observer = new MutationObserver(function(mutations) {
+                    var significantChange = false;
+                    for (var i = 0; i < mutations.length; i++) {
+                        var mutation = mutations[i];
+                        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                            // Check if added nodes are significant (not just text or small elements)
+                            for (var j = 0; j < mutation.addedNodes.length; j++) {
+                                var node = mutation.addedNodes[j];
+                                if (node.nodeType === Node.ELEMENT_NODE) {
+                                    var element = node;
+                                    var rect = element.getBoundingClientRect();
+                                    if (rect.height > 50 || rect.width > 200) {
+                                        significantChange = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (significantChange) break;
+                    }
+                    
+                    if (significantChange) {
+                        console.log('Significant DOM change detected');
+                        scheduleMarkUpdate();
+                    }
+                });
+                
+                observer.observe(document.body, {
+                    childList: true,
+                    subtree: true
+                });
+            }
+            
+            console.log('Mark layout monitoring initialized');
+        })();
+        """
+        
+        Task {
+            do {
+                try await webView.evaluateJavaScript(script)
+            } catch {
+                DLog("Error setting up layout change monitoring: \(error)")
+            }
         }
     }
     
@@ -244,16 +379,28 @@ extension iTermBrowserNamedMarkManager {
             return
         }
         
-        DLog("Parsed parameters - xpath: \(xpath), offsetY: \(offsetY), scrollY: \(scrollY)")
+        // Extract text fragment if available
+        let textFragment = params["textFragment"]?.removingPercentEncoding
+        
+        DLog("Parsed parameters - xpath: \(xpath), offsetY: \(offsetY), scrollY: \(scrollY), textFragment: \(textFragment ?? "none")")
+        
+        var substitutions: [String: String] = [
+            "XPATH": xpath,
+            "OFFSET_Y": offsetY,
+            "SCROLL_Y": scrollY
+        ]
+        
+        // Add text fragment if available
+        if let textFragment = textFragment {
+            substitutions["TEXT_FRAGMENT"] = textFragment
+        } else {
+            substitutions["TEXT_FRAGMENT"] = ""
+        }
         
         let script = iTermBrowserTemplateLoader.loadTemplate(
             named: "navigate-to-named-mark",
             type: "js",
-            substitutions: [
-                "XPATH": xpath,
-                "OFFSET_Y": offsetY,
-                "SCROLL_Y": scrollY
-            ]
+            substitutions: substitutions
         )
         
         Task {
@@ -307,7 +454,9 @@ extension iTermBrowserNamedMarkManager {
             markData.append([
                 "name": mark.name ?? "Unnamed",
                 "xpath": xpath,
-                "offsetY": offsetY
+                "offsetY": offsetY,
+                "text": mark.text,
+                "guid": mark.guid
             ])
         }
         
@@ -322,7 +471,8 @@ extension iTermBrowserNamedMarkManager {
                 named: "show-named-mark-annotations",
                 type: "js",
                 substitutions: [
-                    "MARKS_JSON": jsonString
+                    "MARKS_JSON": jsonString,
+                    "SECRET": secret
                 ]
             )
             
@@ -340,6 +490,138 @@ extension iTermBrowserNamedMarkManager {
 
     private func urlEncode(_ string: String) -> String {
         return string.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? string
+    }
+    
+    func handleMessage(webView: WKWebView, message: WKScriptMessage) -> (guid: String, text: String)? {
+        guard let messageData = message.body as? [String: Any],
+              let guid = messageData["guid"] as? String,
+              let text = messageData["text"] as? String,
+              let sessionSecret = messageData["sessionSecret"] as? String,
+              sessionSecret == secret else {
+            return nil
+        }
+        
+        // Find the mark and update its text
+        if let mark = namedMarks.first(where: { $0.guid == guid }) {
+            updateText(mark, text: text, webView: webView)
+            return (guid: guid, text: text)
+        }
+        
+        return nil
+    }
+    
+    func handleLayoutUpdateMessage(webView: WKWebView, message: WKScriptMessage) {
+        guard let messageData = message.body as? [String: Any],
+              let type = messageData["type"] as? String,
+              type == "layoutChange" else {
+            return
+        }
+        
+        DLog("Handling layout change, updating mark positions")
+        updateMarkPositions(webView: webView)
+    }
+    
+    private func updateMarkPositions(webView: WKWebView) {
+        guard let currentURL = webView.url else { return }
+        
+        // Find marks for this page
+        let marksForPage = namedMarks.filter { mark in
+            mark.url.withoutFragment == currentURL.withoutFragment
+        }
+        
+        guard !marksForPage.isEmpty else { return }
+        
+        let script = iTermBrowserTemplateLoader.loadTemplate(
+            named: "update-mark-positions",
+            type: "js",
+            substitutions: [
+                "SECRET": secret
+            ]
+        )
+        
+        Task {
+            do {
+                let result = try await webView.evaluateJavaScript(script)
+                if let updates = result as? [[String: Any]] {
+                    await processMarkPositionUpdates(updates: updates, webView: webView)
+                }
+            } catch {
+                DLog("Error updating mark positions: \(error)")
+            }
+        }
+    }
+    
+    private func processMarkPositionUpdates(updates: [[String: Any]], webView: WKWebView) async {
+        var hasUpdates = false
+        
+        for update in updates {
+            guard let guid = update["guid"] as? String,
+                  let newScrollY = update["scrollY"] as? Int,
+                  let newOffsetY = update["offsetY"] as? Int,
+                  let markIndex = namedMarks.firstIndex(where: { $0.guid == guid }) else {
+                continue
+            }
+            
+            let currentMark = namedMarks[markIndex]
+            
+            // Parse current fragment to update scroll and offset values
+            guard let fragment = currentMark.url.fragment,
+                  fragment.hasPrefix("iterm-mark:") else {
+                continue
+            }
+            
+            let paramString = String(fragment.dropFirst("iterm-mark:".count))
+            var params: [String: String] = [:]
+            for pair in paramString.split(separator: "&") {
+                let components = pair.split(separator: "=", maxSplits: 1)
+                if components.count == 2 {
+                    let key = String(components[0])
+                    let value = String(components[1])
+                    params[key] = value.removingPercentEncoding ?? value
+                }
+            }
+            
+            // Update scroll and offset values
+            params["scrollY"] = String(newScrollY)
+            params["offsetY"] = String(newOffsetY)
+            
+            // Rebuild fragment
+            var newParamPairs: [String] = []
+            for (key, value) in params {
+                if key == "textFragment" {
+                    // Re-encode text fragment
+                    if let encoded = value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
+                        newParamPairs.append("\(key)=\(encoded)")
+                    }
+                } else {
+                    newParamPairs.append("\(key)=\(value)")
+                }
+            }
+            
+            let newFragment = "iterm-mark:" + newParamPairs.joined(separator: "&")
+            
+            // Create new URL with updated fragment
+            var components = URLComponents(url: currentMark.url, resolvingAgainstBaseURL: false)
+            components?.fragment = newFragment
+            
+            if let newURL = components?.url {
+                // Update the mark
+                namedMarks[markIndex] = iTermBrowserNamedMark(
+                    url: newURL,
+                    name: currentMark.name ?? "Unnamed",
+                    sort: currentMark.namedMarkSort,
+                    guid: currentMark.guid,
+                    text: currentMark.text
+                )
+                hasUpdates = true
+                DLog("Updated mark position for: \(currentMark.name ?? "Unnamed")")
+            }
+        }
+        
+        if hasUpdates {
+            // Refresh annotations to show updated positions
+            reloadAnnotations(webView: webView)
+        }
     }
 }
 
