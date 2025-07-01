@@ -5,6 +5,7 @@
 //  Created by George Nachman on 6/3/25.
 //
 
+@MainActor
 protocol SSHEndpoint: AnyObject {
     @available(macOS 11.0, *)
     @MainActor
@@ -77,19 +78,44 @@ public enum DownloadType {
     case directory
 }
 
-public struct RemoteFile: Codable, Equatable, CustomDebugStringConvertible {
-    public struct FileInfo: Codable, Equatable {
-        public var size: Int?
+
+public struct RemoteFile: Codable, Equatable, Sendable {
+    public let kind: Kind
+    public let absolutePath: String
+    public let permissions: Permissions?
+    public let parentPermissions: Permissions?
+    public let ctime: Date?
+    public let mtime: Date?
+
+    public init(kind: Kind,
+                absolutePath: String,
+                permissions: Permissions? = nil,
+                parentPermissions: Permissions? = nil,
+                ctime: Date? = nil,
+                mtime: Date? = nil) {
+        self.kind = kind
+        self.absolutePath = absolutePath
+        self.permissions = permissions
+        self.parentPermissions = parentPermissions
+        self.ctime = ctime
+        self.mtime = mtime
+    }
+
+}
+
+extension RemoteFile: CustomDebugStringConvertible {
+    public struct FileInfo: Codable, Equatable, Sendable {
+        public let size: Int?
 
         public init(size: Int? = nil) {
             self.size = size
         }
     }
 
-    public struct Permissions: Codable, Equatable {
-        public var r: Bool = true
-        public var w: Bool = false
-        public var x: Bool = true
+    public struct Permissions: Codable, Equatable, Sendable {
+        public let r: Bool
+        public let w: Bool
+        public let x: Bool
 
         public init(r: Bool = true,
                     w: Bool = false,
@@ -100,7 +126,7 @@ public struct RemoteFile: Codable, Equatable, CustomDebugStringConvertible {
         }
     }
 
-    public enum Kind: Codable, Equatable, CustomDebugStringConvertible {
+    public enum Kind: Codable, Equatable, CustomDebugStringConvertible, Sendable {
         case file(FileInfo)
         case folder
         case host
@@ -139,12 +165,6 @@ public struct RemoteFile: Codable, Equatable, CustomDebugStringConvertible {
         }
     }
 
-    public var kind: Kind
-    public var absolutePath: String
-    public var permissions: Permissions?
-    public var parentPermissions: Permissions?
-    public var ctime: Date?
-    public var mtime: Date?
     public var size: Int? {
         switch kind {
         case .file(let fileInfo):
@@ -166,20 +186,6 @@ public struct RemoteFile: Codable, Equatable, CustomDebugStringConvertible {
         case .byDate:
             return (lhs.mtime ?? Date.distantPast) < (rhs.mtime ?? Date.distantPast)
         }
-    }
-
-    public init(kind: Kind,
-                absolutePath: String,
-                permissions: Permissions? = nil,
-                parentPermissions: Permissions? = nil,
-                ctime: Date? = nil,
-                mtime: Date? = nil) {
-        self.kind = kind
-        self.absolutePath = absolutePath
-        self.permissions = permissions
-        self.parentPermissions = parentPermissions
-        self.ctime = ctime
-        self.mtime = mtime
     }
 
     public var debugDescription: String {

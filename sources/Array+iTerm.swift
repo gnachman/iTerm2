@@ -177,3 +177,13 @@ extension Array {
         return indexes.map { self[$0] }
     }
 }
+
+extension Array {
+    func get(_ index: Index, default defaultValue: Element) -> Element {
+        if index < endIndex {
+            return self[index]
+        }
+        return defaultValue
+    }
+}
+

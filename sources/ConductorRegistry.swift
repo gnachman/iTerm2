@@ -6,6 +6,7 @@
 //
 
 // Tracks framing conductors.
+@MainActor
 class ConductorRegistry {
     static let instance = ConductorRegistry()
     private(set) var conductors: [SSHIdentity: [WeakBox<Conductor>]] = [:]
@@ -27,14 +28,14 @@ class ConductorRegistry {
         }
     }
 
-    func remove(conductor: Conductor) {
-        if conductors[conductor.sshIdentity] != nil {
-            let existing = conductors[conductor.sshIdentity]?.compactMap(\.value) ?? []
-            let updated = existing.filter { $0.sshIdentity != conductor.sshIdentity }
+    func remove(conductorGUID: String, sshIdentity: SSHIdentity) {
+        if conductors[sshIdentity] != nil {
+            let existing = conductors[sshIdentity]?.compactMap(\.value) ?? []
+            let updated = existing.filter { $0.guid != conductorGUID }
             if updated.isEmpty {
-                conductors.removeValue(forKey: conductor.sshIdentity)
+                conductors.removeValue(forKey: sshIdentity)
             } else {
-                conductors[conductor.sshIdentity] = updated.map { WeakBox($0) }
+                conductors[sshIdentity] = updated.map { WeakBox($0) }
             }
             if #available (macOS 11.0, *) {
                 if updated.count < existing.count {

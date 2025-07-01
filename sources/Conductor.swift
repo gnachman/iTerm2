@@ -7,14 +7,6 @@
 
 import Foundation
 
-protocol SSHCommandRunning: AnyObject {
-    func runRemoteCommand(_ commandLine: String,
-                          completion: @escaping  (Data, Int32) -> ())
-    func registerProcess(_ pid: pid_t)
-    func deregisterProcess(_ pid: pid_t)
-    func poll(_ completion: @escaping (Data) -> ())
-}
-
 @objc(iTermConductorDelegate)
 protocol ConductorDelegate: Any {
     @objc(conductorWriteString:) func conductorWrite(string: String)
@@ -26,77 +18,14 @@ protocol ConductorDelegate: Any {
     var guid: String { get }
 }
 
-struct SSHReconnectionInfo: Codable {
-    var sshargs: String
-    var initialDirectory: String?
-    var boolargs: String
-}
-
-@objc(iTermSSHReconnectionInfo)
-class SSHReconnectionInfoObjC: NSObject {
-    private(set) var state: SSHReconnectionInfo
-    init(_ info: SSHReconnectionInfo) {
-        self.state = info
-    }
-
-    @objc(initWithData:) init?(serialized: Data) {
-        do {
-            state = try JSONDecoder().decode(SSHReconnectionInfo.self, from: serialized)
-        } catch {
-            return nil
-        }
-    }
-
-    @objc var sshargs: String { state.sshargs }
-    @objc var initialDirectory: String? { state.initialDirectory }
-    @objc var boolargs: String { state.boolargs }
-
-    @objc var serialized: Data {
-        return try! JSONEncoder().encode(state)
-    }
-}
-
 @objc(iTermConductor)
-class Conductor: NSObject, Codable {
-    override var debugDescription: String {
-        return "<Conductor: \(self.it_addressString) \(sshargs) dcs=\(dcsID) clientUniqueID=\(clientUniqueID) state=\(state) parent=\(String(describing: parent?.debugDescription))>"
-    }
-
-    @objc let sshargs: String
-    private let varsToSend: [String: String]
-    // Environment variables shared from client before running ssh
-    private let clientVars: [String: String]
-    // Comes from parsedSSHArguments.commandargs but possibly modified to inject shell integration.
-    private var modifiedCommandArgs: [String]?
-    private var modifiedVars: [String: String]?
-    private struct Payload: Codable {
+@MainActor
+class Conductor: NSObject {
+    struct Payload: Codable {
         let path: String
         let destination: String
     }
-    private var payloads: [Payload] = []
-    private let initialDirectory: String?
-    private let parsedSSHArguments: ParsedSSHArguments
-    private let shouldInjectShellIntegration: Bool
-    private let depth: Int32
-    @objc let parent: Conductor?
-    @objc var autopollEnabled = true
-    private var _queueWrites = true
-    private var restored = false
-    private var autopoll = ""
-    // Jumps that children must do.
-    private(set) var subsequentJumps: [SSHReconnectionInfo] = []
-    @objc(subsequentJumps) var subsequentJumps_objc: [SSHReconnectionInfoObjC] {
-        return subsequentJumps.map { SSHReconnectionInfoObjC($0) }
-    }
-    // If non-nil, a jump that I haven't done yet.
-    private var myJump: SSHReconnectionInfo?
-    private var suggestionCache = SuggestionCache()
-    @objc private(set) var environmentVariables = [String: String]()
-    private static var downloadSemaphore = {
-        let maxConcurrentDownloads = 2
-        return AsyncSemaphore(value: maxConcurrentDownloads)
-    }()
-    private class Search {
+    class Search {
         var id: String
         var continuation: AsyncThrowingStream<RemoteFile, any Error>.Continuation
         var cancellation: Cancellation
@@ -112,8 +41,285 @@ class Conductor: NSObject, Codable {
         }
     }
 
-    private var currentSearch: Search?
+    override var debugDescription: String {
+        return "<Conductor: \(self.it_addressString) \(sshargs) dcs=\(dcsID) clientUniqueID=\(clientUniqueID) state=\(state) parent=\(String(describing: parent?.debugDescription))>"
+    }
 
+    class RestorableState: Codable {
+        let sshargs: String
+        let varsToSend: [String: String]
+        let clientVars: [String: String]
+        var payloads: [Payload] = []
+        let initialDirectory: String?
+        let shouldInjectShellIntegration: Bool
+        let parsedSSHArguments: ParsedSSHArguments
+        let depth: Int32
+        var parentState: RestorableState?
+        var framedPID: Int32? = nil
+        var state: State = .ground
+        var queue = [ExecutionContext]()
+        let boolArgs: String
+        let dcsID: String
+        let clientUniqueID: String
+        var modifiedVars: [String: String]?
+        var modifiedCommandArgs: [String]?
+        var homeDirectory: String?
+        var shell: String?
+        var uname: String?
+        var _terminalConfiguration: CodableNSDictionary?
+
+        init(sshargs: String,
+             varsToSend: [String: String],
+             clientVars: [String: String],
+             payloads: [Payload],
+             initialDirectory: String?,
+             shouldInjectShellIntegration: Bool,
+             parsedSSHArguments: ParsedSSHArguments,
+             depth: Int32,
+             parentState: RestorableState?,
+             framedPID: Int32?,
+             state: State,
+             queue: [ExecutionContext],
+             boolArgs: String,
+             dcsID: String,
+             clientUniqueID: String,
+             modifiedVars: [String: String]?,
+             modifiedCommandArgs: [String]?,
+             homeDirectory: String?,
+             shell: String?,
+             uname: String?,
+             _terminalConfiguration: CodableNSDictionary?) {
+            self.sshargs = sshargs
+            self.varsToSend = varsToSend
+            self.clientVars = clientVars
+            self.payloads = payloads
+            self.initialDirectory = initialDirectory
+            self.shouldInjectShellIntegration = shouldInjectShellIntegration
+            self.parsedSSHArguments = parsedSSHArguments
+            self.depth = depth
+            self.parentState = parentState
+            self.framedPID = framedPID
+            self.state = state
+            self.queue = queue
+            self.boolArgs = boolArgs
+            self.dcsID = dcsID
+            self.clientUniqueID = clientUniqueID
+            self.modifiedVars = modifiedVars
+            self.modifiedCommandArgs = modifiedCommandArgs
+            self.homeDirectory = homeDirectory
+            self.shell = shell
+            self.uname = uname
+            self._terminalConfiguration = _terminalConfiguration
+        }
+
+        private enum CodingKeys: CodingKey {
+            // Note backgroundJobs is not included because it isn't restorable.
+          case sshargs, varsToSend, payloads, initialDirectory, parsedSSHArguments, depth, parent,
+               framedPID, remoteInfo, state, queue, boolArgs, dcsID, clientUniqueID,
+               modifiedVars, modifiedCommandArgs, clientVars, shouldInjectShellIntegration,
+               homeDirectory, shell, pythonversion, uname, terminalConfiguration
+        }
+
+        required init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            sshargs = try container.decode(String.self, forKey: .sshargs)
+            varsToSend = try container.decode([String: String].self, forKey: .varsToSend)
+            clientVars = try container.decode([String: String].self, forKey: .clientVars)
+            payloads = try container.decode([(Payload)].self, forKey: .payloads)
+            initialDirectory = try container.decode(String?.self, forKey: .initialDirectory)
+            shouldInjectShellIntegration = try container.decode(Bool.self, forKey: .shouldInjectShellIntegration)
+            parsedSSHArguments = try container.decode(ParsedSSHArguments.self, forKey: .parsedSSHArguments)
+            depth = try container.decode(Int32.self, forKey: .depth)
+            parentState = try container.decode(RestorableState.self, forKey: .parent)
+            framedPID = try container.decode(Int32?.self, forKey: .framedPID)
+            state = try  container.decode(State.self, forKey: .state)
+            queue = try container.decode([ExecutionContext].self, forKey: .queue)
+            boolArgs = try container.decode(String.self, forKey: .boolArgs)
+            dcsID = try container.decode(String.self, forKey: .dcsID)
+            clientUniqueID = try container.decode(String.self, forKey: .clientUniqueID)
+            modifiedVars = try container.decode([String: String]?.self, forKey: .modifiedVars)
+            modifiedCommandArgs = try container.decode([String]?.self, forKey: .modifiedCommandArgs)
+            homeDirectory = try? container.decode(String?.self, forKey: .homeDirectory)
+            shell = try? container.decode(String?.self, forKey: .shell)
+            uname = try? container.decode(String?.self, forKey: .uname)
+            _terminalConfiguration = try? container.decode(CodableNSDictionary?.self,
+                                                           forKey: .terminalConfiguration)
+        }
+
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(sshargs, forKey: .sshargs)
+            try container.encode(varsToSend, forKey: .varsToSend)
+            try container.encode(clientVars, forKey: .clientVars)
+            try container.encode(payloads, forKey: .payloads)
+            try container.encode(initialDirectory, forKey: .initialDirectory)
+            try container.encode(shouldInjectShellIntegration, forKey: .shouldInjectShellIntegration)
+            try container.encode(parsedSSHArguments, forKey: .parsedSSHArguments)
+            try container.encode(depth, forKey: .depth)
+            try container.encode(parentState, forKey: .parent)
+            try container.encode(framedPID, forKey: .framedPID)
+            try container.encode(State.ground, forKey: .state)
+            try container.encode([ExecutionContext](), forKey: .queue)
+            try container.encode(boolArgs, forKey: .boolArgs)
+            try container.encode(dcsID, forKey: .dcsID)
+            try container.encode(clientUniqueID, forKey: .clientUniqueID)
+            try container.encode(modifiedVars, forKey: .modifiedVars)
+            try container.encode(modifiedCommandArgs, forKey: .modifiedCommandArgs)
+            try container.encode(homeDirectory, forKey: .homeDirectory)
+            try container.encode(shell, forKey: .shell)
+            try container.encode(uname, forKey: .uname)
+            try container.encode(_terminalConfiguration, forKey: .terminalConfiguration)
+        }
+    }
+    let guid = UUID().uuidString
+    private var restorableState: RestorableState
+    private var restored = false
+    @objc var sshargs: String {
+        restorableState.sshargs
+    }
+
+    var varsToSend: [String: String] {
+        restorableState.varsToSend
+    }
+    // Environment variables shared from client before running ssh
+    var clientVars: [String: String] {
+        restorableState.clientVars
+    }
+    var payloads: [Payload] {
+        get {
+            restorableState.payloads
+        }
+        set {
+            restorableState.payloads = newValue
+        }
+    }
+    var initialDirectory: String? {
+        restorableState.initialDirectory
+    }
+    var shouldInjectShellIntegration: Bool {
+        restorableState.shouldInjectShellIntegration
+    }
+    var parsedSSHArguments: ParsedSSHArguments {
+        restorableState.parsedSSHArguments
+    }
+    var depth: Int32 {
+        restorableState.depth
+    }
+    private var _parent: Conductor?
+    @objc var parent: Conductor? {
+        if let _parent {
+            return _parent
+        }
+        guard let parentState = restorableState.parentState else {
+            return nil
+        }
+        let parent = Conductor(restorableState: parentState, restored: true)
+        _parent = parent
+        return parent
+    }
+    var framedPID: Int32? {
+        get {
+            restorableState.framedPID
+        }
+        set {
+            restorableState.framedPID = newValue
+            if restorableState.framedPID != nil {
+                ConductorRegistry.instance.addConductor(self, for: sshIdentity)
+            }
+        }
+    }
+    var state: State {
+        get {
+            restorableState.state
+        }
+        set {
+            DLog("[\(framedPID.map { String($0) } ?? "unframed")] state \(state) -> \(newValue)")
+            restorableState.state = newValue
+        }
+    }
+    var queue: [ExecutionContext] {
+        get {
+            restorableState.queue
+        }
+        set {
+            restorableState.queue = newValue
+        }
+    }
+    @objc var boolArgs: String {
+        restorableState.boolArgs
+    }
+    @objc var dcsID: String {
+        restorableState.dcsID
+    }
+    @objc var clientUniqueID: String {  // provided by client when hooking dcs
+        restorableState.clientUniqueID
+    }
+    var modifiedVars: [String: String]? {
+        get {
+            restorableState.modifiedVars
+        }
+        set {
+            restorableState.modifiedVars = newValue
+        }
+    }
+
+    // Comes from parsedSSHArguments.commandargs but possibly modified to inject shell integration.
+    var modifiedCommandArgs: [String]? {
+        get {
+            restorableState.modifiedCommandArgs
+        }
+        set {
+            restorableState.modifiedCommandArgs = newValue
+        }
+    }
+    @objc var homeDirectory: String? {
+        get {
+            restorableState.homeDirectory
+        }
+        set {
+            restorableState.homeDirectory = newValue
+        }
+    }
+    @objc var shell: String? {
+        get {
+            restorableState.shell
+        }
+        set {
+            restorableState.shell = newValue
+        }
+    }
+    @objc var uname: String? {
+        get {
+            restorableState.uname
+        }
+        set {
+            restorableState.uname = newValue
+        }
+    }
+    var _terminalConfiguration: CodableNSDictionary? {
+        get {
+            restorableState._terminalConfiguration
+        }
+        set {
+            restorableState._terminalConfiguration = newValue
+        }
+    }
+
+    @objc var autopollEnabled = true
+    var _queueWrites = true
+    var autopoll = ""
+    // Jumps that children must do.
+    var subsequentJumps: [SSHReconnectionInfo] = []
+    // If non-nil, a jump that I haven't done yet.
+    var myJump: SSHReconnectionInfo?
+    var suggestionCache = SuggestionCache()
+    @objc var environmentVariables = [String: String]()
+    static var downloadSemaphore = {
+        let maxConcurrentDownloads = 2
+        return AsyncSemaphore(value: maxConcurrentDownloads)
+    }()
+
+    var currentSearch: Search?
     @objc
     lazy var fileChecker: FileChecker? = {
         guard #available(macOS 11, *) else {
@@ -123,6 +329,141 @@ class Conductor: NSObject, Codable {
         checker.dataSource = self
         return checker
     }()
+    var ttyState = TTYState()
+    lazy var _processInfoProvider: SSHProcessInfoProvider = {
+        let provider = SSHProcessInfoProvider(rootPID: framedPID!, runner: self)
+        provider.register(trackedPID: framedPID!)
+        if let sessionID = delegate?.guid {
+            let instance = iTermCPUUtilization.instance(forSessionID: sessionID)
+            instance.publisher = provider.cpuUtilizationPublisher
+        }
+        return provider
+    }()
+    var backgroundJobs = [Int32: State]()
+
+    @objc weak var delegate: ConductorDelegate? {
+        didSet {
+            if !restored || framedPID == nil {
+                return
+            }
+            restored = false
+        }
+    }
+    @objc var currentDirectory: String?
+
+    let superVerbose = false
+
+    private init(restorableState: RestorableState,
+                 restored: Bool) {
+        self.restorableState = restorableState
+        self.restored = restored
+        super.init()
+        if framedPID != nil {
+            ConductorRegistry.instance.addConductor(self, for: sshIdentity)
+        }
+    }
+    @objc
+    convenience init(_ sshargs: String,
+                     boolArgs: String,
+                     dcsID: String,
+                     clientUniqueID: String,
+                     varsToSend: [String: String],
+                     clientVars: [String: String],
+                     initialDirectory: String?,
+                     shouldInjectShellIntegration: Bool,
+                     parent: Conductor?) {
+        let depth = if let parent {
+            if parent.framing {
+                parent.depth + 1
+            } else {
+                // Use same depth as parent because it won't wrap input for us.
+                parent.depth
+            }
+        } else {
+            Int32(0)
+        }
+        self.init(restorableState: RestorableState(
+            sshargs: sshargs,
+            varsToSend: varsToSend,
+            clientVars: clientVars,
+            payloads: [],
+            initialDirectory: initialDirectory,
+            shouldInjectShellIntegration: shouldInjectShellIntegration,
+            parsedSSHArguments: ParsedSSHArguments(sshargs,
+                                                   booleanArgs: boolArgs,
+                                                   hostnameFinder: iTermHostnameFinder()),
+            depth: depth,
+            parentState: nil,
+            framedPID: nil,
+            state: .ground,
+            queue: [],
+            boolArgs: boolArgs,
+            dcsID: dcsID,
+            clientUniqueID: clientUniqueID,
+            modifiedVars: nil,
+            modifiedCommandArgs: nil,
+            homeDirectory: nil,
+            shell: nil,
+            uname: nil,
+            _terminalConfiguration: nil),
+                  restored: false)
+        _parent = parent
+        DLog("Conductor starting")
+    }
+
+    @objc(initWithRecovery:)
+    convenience init(recovery: ConductorRecovery) {
+        let depth = if let parent = recovery.parent {
+            if parent.framing {
+                parent.depth + 1
+            } else {
+                // Use same depth as parent because it won't wrap input for us.
+                parent.depth
+            }
+        } else {
+            Int32(0)
+        }
+        self.init(restorableState: RestorableState(
+            sshargs: recovery.sshargs,
+            varsToSend: [:],
+            clientVars: [:],
+            payloads: [],
+            initialDirectory: nil,
+            shouldInjectShellIntegration: false,
+            parsedSSHArguments: ParsedSSHArguments(recovery.sshargs,
+                                                   booleanArgs: recovery.boolArgs,
+                                                   hostnameFinder: iTermHostnameFinder()),
+            depth: depth,
+            parentState: nil,
+            framedPID: recovery.pid,
+            state: .recovered,
+            queue: [],
+            boolArgs: recovery.boolArgs,
+            dcsID: recovery.dcsID,
+            clientUniqueID: recovery.clientUniqueID,
+            modifiedVars: nil,
+            modifiedCommandArgs: nil,
+            homeDirectory: nil,
+            shell: nil,
+            uname: nil,
+                                                   _terminalConfiguration: nil),
+                  restored: false)
+        _parent = recovery.parent
+    }
+
+    deinit {
+        let uniqueID = guid
+        let sshid = restorableState.parsedSSHArguments.identity
+        Task { @MainActor in
+            ConductorRegistry.instance.remove(conductorGUID: uniqueID, sshIdentity: sshid)
+        }
+    }
+}
+
+extension Conductor {
+    @objc(subsequentJumps) var subsequentJumps_objc: [SSHReconnectionInfoObjC] {
+        return subsequentJumps.map { SSHReconnectionInfoObjC($0) }
+    }
 
     @objc var queueWrites: Bool {
         if let parent = parent {
@@ -130,7 +471,7 @@ class Conductor: NSObject, Codable {
         }
         return nontransitiveQueueWrites
     }
-    private var nontransitiveQueueWrites: Bool {
+    var nontransitiveQueueWrites: Bool {
         switch state {
         case .unhooked:
             return false
@@ -140,7 +481,7 @@ class Conductor: NSObject, Codable {
         }
     }
 
-    private struct TTYState {
+    struct TTYState {
         var echo = true
         var icanon = true
 
@@ -148,8 +489,6 @@ class Conductor: NSObject, Codable {
             return !echo && icanon
         }
     }
-
-    private var ttyState = TTYState()
 
     @objc var framing: Bool {
         return framedPID != nil
@@ -170,13 +509,6 @@ class Conductor: NSObject, Codable {
         }
         return nil
     }
-    private(set) var framedPID: Int32? = nil {
-        didSet {
-            if framedPID != nil {
-                ConductorRegistry.instance.addConductor(self, for: sshIdentity)
-            }
-        }
-    }
     // If this returns true, route writes through sendKeys(_:).
     @objc var handlesKeystrokes: Bool {
         return framedPID != nil && queueWrites
@@ -184,15 +516,6 @@ class Conductor: NSObject, Codable {
     @objc var sshIdentity: SSHIdentity {
         return parsedSSHArguments.identity
     }
-    private lazy var _processInfoProvider: SSHProcessInfoProvider = {
-        let provider = SSHProcessInfoProvider(rootPID: framedPID!, runner: self)
-        provider.register(trackedPID: framedPID!)
-        if let sessionID = delegate?.guid {
-            let instance = iTermCPUUtilization.instance(forSessionID: sessionID)
-            instance.publisher = provider.cpuUtilizationPublisher
-        }
-        return provider
-    }()
     @objc var cpuUtilizationPublisher: iTermPublisher<NSNumber> {
         if let remote = sshProcessInfoProvider?.cpuUtilizationPublisher {
             return remote
@@ -200,7 +523,7 @@ class Conductor: NSObject, Codable {
         return iTermLocalCPUUtilizationPublisher.sharedInstance()
     }
 
-    private var sshProcessInfoProvider: SSHProcessInfoProvider? {
+    var sshProcessInfoProvider: SSHProcessInfoProvider? {
         if framedPID == nil && autopollEnabled {
             return nil
         }
@@ -212,11 +535,6 @@ class Conductor: NSObject, Codable {
         }
         return _processInfoProvider
     }
-    private var backgroundJobs = [Int32: State]()
-    @objc private(set) var homeDirectory: String?
-    @objc private(set) var uname: String?
-    @objc private(set) var shell: String?
-    private var _terminalConfiguration: CodableNSDictionary?
     @objc var terminalConfiguration: NSDictionary? {
         get {
             _terminalConfiguration?.dictionary
@@ -880,84 +1198,18 @@ class Conductor: NSObject, Codable {
         case canceled
     }
 
-    private var state: State = .ground {
-        willSet {
-            DLog("[\(framedPID.map { String($0) } ?? "unframed")] state \(state) -> \(newValue)")
-        }
-    }
-
-    private var queue = [ExecutionContext]()
-
-    @objc weak var delegate: ConductorDelegate? {
-        didSet {
-            if !restored || framedPID == nil {
-                return
-            }
-            restored = false
-        }
-    }
-    @objc let boolArgs: String
-    @objc let dcsID: String
-    @objc let clientUniqueID: String  // provided by client when hooking dcs
-    @objc var currentDirectory: String?
-
-    private let superVerbose = false
     private var verbose: Bool {
         return superVerbose || gDebugLogging.boolValue
-    }
-
-    enum CodingKeys: CodingKey {
-        // Note backgroundJobs is not included because it isn't restorable.
-      case sshargs, varsToSend, payloads, initialDirectory, parsedSSHArguments, depth, parent,
-           framedPID, remoteInfo, state, queue, boolArgs, dcsID, clientUniqueID,
-           modifiedVars, modifiedCommandArgs, clientVars, shouldInjectShellIntegration,
-           homeDirectory, shell, pythonversion, uname, terminalConfiguration
-    }
-
-
-    @objc init(_ sshargs: String,
-               boolArgs: String,
-               dcsID: String,
-               clientUniqueID: String,
-               varsToSend: [String: String],
-               clientVars: [String: String],
-               initialDirectory: String?,
-               shouldInjectShellIntegration: Bool,
-               parent: Conductor?) {
-        self.sshargs = sshargs
-        self.boolArgs = boolArgs
-        self.dcsID = dcsID
-        self.clientUniqueID = clientUniqueID
-        parsedSSHArguments = ParsedSSHArguments(sshargs,
-                                                booleanArgs: boolArgs,
-                                                hostnameFinder: iTermHostnameFinder())
-        self.varsToSend = varsToSend
-        self.clientVars = clientVars
-
-        self.initialDirectory = initialDirectory
-        self.shouldInjectShellIntegration = shouldInjectShellIntegration
-        if let parent {
-            if parent.framing {
-                self.depth = parent.depth + 1
-            } else {
-                // Use same depth as parent because it won't wrap input for us.
-                self.depth = parent.depth
-            }
-        } else {
-            self.depth = 0
-        }
-        self.parent = parent
-        super.init()
-        DLog("Conductor starting")
     }
 
     @objc(newConductorWithJSON:delegate:)
     static func create(_ json: String, delegate: ConductorDelegate) -> Conductor? {
         let decoder = JSONDecoder()
         guard let data = json.data(using: .utf8),
-              let leaf = try? decoder.decode(Conductor.self, from: data) else {
+              let leafState = try? decoder.decode(Conductor.RestorableState.self, from: data) else {
             return nil
         }
+        let leaf = Conductor(restorableState: leafState, restored: true)
         var current: Conductor? = leaf
         while current != nil {
             current?.delegate = delegate
@@ -967,73 +1219,14 @@ class Conductor: NSObject, Codable {
         return leaf
     }
 
-    @objc(initWithRecovery:)
-    init(recovery: ConductorRecovery) {
-        sshargs = recovery.sshargs
-        varsToSend = [:]
-        clientVars = [:]
-        payloads = []
-        initialDirectory = nil
-        shouldInjectShellIntegration = false
-        parsedSSHArguments = ParsedSSHArguments(sshargs,
-                                                booleanArgs: recovery.boolArgs,
-                                                hostnameFinder: iTermHostnameFinder())
-        if let parent = recovery.parent {
-            if parent.framing {
-                depth = parent.depth + 1
-            } else {
-                depth = parent.depth
-            }
-        } else {
-            depth = 0
-        }
-        framedPID = recovery.pid
-        state = .recovered
-        boolArgs = recovery.boolArgs
-        dcsID = recovery.dcsID
-        clientUniqueID = recovery.clientUniqueID
-        parent = recovery.parent
+    private func prepareToEncode() {
+        parent?.prepareToEncode()
+        restorableState.parentState = parent?.restorableState
     }
-
-    required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        sshargs = try container.decode(String.self, forKey: .sshargs)
-        varsToSend = try container.decode([String: String].self, forKey: .varsToSend)
-        clientVars = try container.decode([String: String].self, forKey: .clientVars)
-        payloads = try container.decode([(Payload)].self, forKey: .payloads)
-        initialDirectory = try container.decode(String?.self, forKey: .initialDirectory)
-        shouldInjectShellIntegration = try container.decode(Bool.self, forKey: .shouldInjectShellIntegration)
-        parsedSSHArguments = try container.decode(ParsedSSHArguments.self, forKey: .parsedSSHArguments)
-        depth = try container.decode(Int32.self, forKey: .depth)
-        parent = try container.decode(Conductor?.self, forKey: .parent)
-        framedPID = try container.decode(Int32?.self, forKey: .framedPID)
-        state = try  container.decode(State.self, forKey: .state)
-        queue = try container.decode([ExecutionContext].self, forKey: .queue)
-        boolArgs = try container.decode(String.self, forKey: .boolArgs)
-        dcsID = try container.decode(String.self, forKey: .dcsID)
-        clientUniqueID = try container.decode(String.self, forKey: .clientUniqueID)
-        modifiedVars = try container.decode([String: String]?.self, forKey: .modifiedVars)
-        modifiedCommandArgs = try container.decode([String]?.self, forKey: .modifiedCommandArgs)
-        homeDirectory = try? container.decode(String?.self, forKey: .homeDirectory)
-        shell = try? container.decode(String?.self, forKey: .shell)
-        uname = try? container.decode(String?.self, forKey: .uname)
-        _terminalConfiguration = try? container.decode(CodableNSDictionary?.self, forKey: .terminalConfiguration)
-        restored = true
-
-        super.init()
-
-        if framedPID != nil {
-            ConductorRegistry.instance.addConductor(self, for: sshIdentity)
-        }
-    }
-
-    deinit {
-        ConductorRegistry.instance.remove(conductor: self)
-    }
-
     @objc var jsonValue: String? {
         let encoder = JSONEncoder()
-        guard let data = try? encoder.encode(self) else {
+        prepareToEncode()
+        guard let data = try? encoder.encode(restorableState) else {
             return nil
         }
         return String(data: data, encoding: .utf8)
@@ -1062,35 +1255,10 @@ class Conductor: NSObject, Codable {
         return [framedPID: [dcsID, childTree] as [Any]]
     }
 
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(sshargs, forKey: .sshargs)
-        try container.encode(varsToSend, forKey: .varsToSend)
-        try container.encode(clientVars, forKey: .clientVars)
-        try container.encode(payloads, forKey: .payloads)
-        try container.encode(initialDirectory, forKey: .initialDirectory)
-        try container.encode(shouldInjectShellIntegration, forKey: .shouldInjectShellIntegration)
-        try container.encode(parsedSSHArguments, forKey: .parsedSSHArguments)
-        try container.encode(depth, forKey: .depth)
-        try container.encode(parent, forKey: .parent)
-        try container.encode(framedPID, forKey: .framedPID)
-        try container.encode(State.ground, forKey: .state)
-        try container.encode([ExecutionContext](), forKey: .queue)
-        try container.encode(boolArgs, forKey: .boolArgs)
-        try container.encode(dcsID, forKey: .dcsID)
-        try container.encode(clientUniqueID, forKey: .clientUniqueID)
-        try container.encode(modifiedVars, forKey: .modifiedVars)
-        try container.encode(modifiedCommandArgs, forKey: .modifiedCommandArgs)
-        try container.encode(homeDirectory, forKey: .homeDirectory)
-        try container.encode(shell, forKey: .shell)
-        try container.encode(uname, forKey: .uname)
-        try container.encode(_terminalConfiguration, forKey: .terminalConfiguration)
-    }
-
-    private func DLog(_ messageBlock: @autoclosure () -> String,
-                      file: String = #file,
-                      line: Int = #line,
-                      function: String = #function) {
+    func DLog(_ messageBlock: @autoclosure () -> String,
+              file: String = #file,
+              line: Int = #line,
+              function: String = #function) {
         if verbose {
             let message = messageBlock()
             DebugLogImpl(file, Int32(line), function, "[\(self.it_addressString)@\(depth)] \(message)")
@@ -1226,7 +1394,7 @@ class Conductor: NSObject, Codable {
         queue = []
         state = .ground
         send(.quit, .fireAndForget)
-        ConductorRegistry.instance.remove(conductor: self)
+        ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
         delegate?.conductorQuit()
         delegate?.conductorStateDidChange()
     }
@@ -1331,7 +1499,7 @@ class Conductor: NSObject, Codable {
     }
 
     @available(macOS 11.0, *)
-    fileprivate func framerFile(_ subcommand: FileSubcommand,
+    func framerFile(_ subcommand: FileSubcommand,
                                 highPriority: Bool = false,
                                 completion: @escaping (String, Int32) -> ()) {
         log("Sending framerFile request \(subcommand)")
@@ -1723,7 +1891,7 @@ class Conductor: NSObject, Codable {
             update(executionContext: pending, result: .abort)
         }
         state = .unhooked
-        ConductorRegistry.instance.remove(conductor: self)
+        ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
     }
 
     @objc func handleCommandBegin(identifier: String, depth: Int32) {
@@ -2013,9 +2181,9 @@ class Conductor: NSObject, Codable {
         }
     }
 
-    private func send(_ command: Command,
-                      highPriority: Bool = false,
-                      _ handler: ExecutionContext.Handler) {
+    func send(_ command: Command,
+              highPriority: Bool = false,
+              _ handler: ExecutionContext.Handler) {
         log("append \(command) to queue in state \(state)")
         let context = ExecutionContext(command: command, handler: handler)
         DLog("Enqueue: \(command)")
@@ -2034,7 +2202,7 @@ class Conductor: NSObject, Codable {
         }
     }
 
-    private func cancelEnqueuedRequests(where predicate: (Command) -> (Bool)) {
+    func cancelEnqueuedRequests(where predicate: (Command) -> (Bool)) {
         let indexes = queue.indexes {
             predicate($0.command)
         }
@@ -2185,7 +2353,7 @@ class Conductor: NSObject, Codable {
         }
     }
 
-    private func forceReturnToGroundState() {
+    func forceReturnToGroundState() {
         DLog("forceReturnToGroundState")
         state = .ground
         for context in queue {
@@ -2199,131 +2367,12 @@ class Conductor: NSObject, Codable {
         DLog("FAIL: \(reason)")
         forceReturnToGroundState()
         // Try to launch the login shell so you're not completely stuck.
-        ConductorRegistry.instance.remove(conductor: self)
+        ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
         delegate?.conductorWrite(string: Command.execLoginShell([]).stringValue + "\n")
         delegate?.conductorAbort(reason: reason)
     }
 }
 
-extension Conductor: SSHCommandRunning {
-    func registerProcess(_ pid: pid_t) {
-        send(.framerRegister(pid: pid), .fireAndForget)
-    }
-
-    func deregisterProcess(_ pid: pid_t) {
-        send(.framerDeregister(pid: pid), .fireAndForget)
-    }
-
-    func poll(_ completion: @escaping (Data) -> ()) {
-        if queue.anySatisfies({ $0.command == .framerPoll }) {
-            DLog("Declining to add second poll to queue")
-            return
-        }
-        send(.framerPoll, .handlePoll(StringArray(), completion))
-    }
-
-    @objc
-    func reset() {
-        send(.framerReset, .fireAndForget)
-        if autopollEnabled {
-            send(.framerAutopoll, .fireAndForget)
-            if let framedPID = framedPID {
-                sshProcessInfoProvider?.register(trackedPID: framedPID)
-            }
-        }
-    }
-
-    @objc
-    func resetTransitively() {
-        parent?.reset()
-        reset()
-    }
-
-    @objc
-    func didResynchronize() {
-        DLog("didResynchronize")
-        forceReturnToGroundState()
-        resetTransitively()
-        DLog(self.debugDescription)
-    }
-
-    private func addBackgroundJob(_ pid: Int32, command: Command, completion: @escaping (Data, Int32) -> ()) {
-        let context = ExecutionContext(command: command, handler: .handleBackgroundJob(StringArray(), completion))
-        backgroundJobs[pid] = .executingPipeline(context, [])
-    }
-
-    @objc
-    func runRemoteCommand(_ commandLine: String,
-                          completion: @escaping (Data, Int32) -> ()) {
-        if framedPID == 0 {
-            completion(Data(), -1)
-            return
-        }
-
-        // This command ends almost immediately, providing only the child process's pid as output,
-        // but in actuality continues running in the background producing %output messages and
-        // eventually %terminate.
-        send(.framerRun(commandLine), .handleRunRemoteCommand(commandLine, completion))
-    }
-}
-
-fileprivate class ConductorPayloadBuilder {
-    private var tarJobs = [TarJob]()
-
-    func add(localPath: URL, destination: URL) {
-        for (i, _) in tarJobs.enumerated() {
-            if tarJobs[i].add(local: localPath, destination: destination) {
-                return
-            }
-        }
-        tarJobs.append(TarJob(local: localPath, destination: destination))
-    }
-
-    func enumeratePayloads(_ closure: (Data, String) -> ()) {
-        for job in tarJobs {
-            if let data = try? job.tarballData() {
-                closure(data, job.destinationBase.path)
-            }
-        }
-    }
-}
-
-extension String {
-    func chunk(_ maxSize: Int, continuation: String = "") -> [String] {
-        var parts = [String]()
-        var index = self.startIndex
-        while index < self.endIndex {
-            let end = self.index(index,
-                                 offsetBy: min(maxSize,
-                                               self.distance(from: index,
-                                                             to: self.endIndex)))
-            let part = String(self[index..<end]) + (end < self.endIndex ? continuation : "")
-            if !part.isEmpty {
-                parts.append(part)
-            }
-            index = end
-        }
-        return parts
-    }
-}
-
-extension Data {
-    func nonEmptyBase64EncodedString() -> String {
-        if isEmpty {
-            return "="
-        }
-        return base64EncodedString()
-    }
-}
-
-extension Array {
-    func get(_ index: Index, default defaultValue: Element) -> Element {
-        if index < endIndex {
-            return self[index]
-        }
-        return defaultValue
-    }
-}
 
 extension Array where Element == Conductor.Nesting {
     var tree: NSDictionary {
@@ -2336,920 +2385,4 @@ extension Array where Element == Conductor.Nesting {
     }
 }
 
-extension Data {
-    func last(_ n: Int) -> Data {
-        if count < n {
-            return self
-        }
-        let i = count - n
-        return self[i...]
-    }
-
-    var semiVerboseDescription: String {
-        if count > 32 {
-            return self[..<16].semiVerboseDescription + "…" + self.last(16).semiVerboseDescription
-        }
-        if let string = String(data: self, encoding: .utf8) {
-            let safe = (string as NSString).escapingControlCharactersAndBackslash()!
-            return "“\(safe)”"
-        }
-        return (self as NSData).it_hexEncoded()
-    }
-}
-
-public enum iTermFileProviderServiceError: Error, Codable, CustomDebugStringConvertible {
-    case notFound(String)
-    case unknown(String)
-    case notAFile(String)
-    case permissionDenied(String)
-    case internalError(String)  // e.g., URL with contents not readable
-    case disconnected
-
-    public var debugDescription: String {
-        switch self {
-        case .notFound(let item):
-            return "<notFound \(item)>"
-        case .unknown(let reason):
-            return "<unknown \(reason)>"
-        case .notAFile(let file):
-            return "<notAFile \(file)>"
-        case .permissionDenied(let file):
-            return "<permissionDenied \(file)>"
-        case .internalError(let reason):
-            return "<internalError \(reason)>"
-        case .disconnected:
-            return "<disconnected>"
-        }
-    }
-
-    public static func wrap<T>(_ closure: () throws -> T) throws -> T {
-        do {
-            return try closure()
-        } catch let error as iTermFileProviderServiceError {
-            throw error
-        } catch {
-            throw iTermFileProviderServiceError.internalError(error.localizedDescription)
-        }
-    }
-}
-
-enum SSHEndpointException: LocalizedError {
-    case connectionClosed
-    case fileNotFound
-    case internalError  // e.g., non-decodable data from fetch
-    case transferCanceled
-
-    var errorDescription: String? {
-        get {
-            switch self {
-            case .connectionClosed:
-                return "Connection closed"
-            case .fileNotFound:
-                return "File not found"
-            case .internalError:
-                return "Internal error"
-            case .transferCanceled:
-                return "File transfer canceled"
-            }
-        }
-    }
-}
-
-
-@available(macOS 11.0, *)
-extension Conductor: SSHEndpoint {
-    @MainActor
-    private func performFileOperation(subcommand: FileSubcommand,
-                                      highPriority: Bool = false) async throws -> String {
-        let (output, code) = await withCheckedContinuation { continuation in
-            framerFile(subcommand, highPriority: highPriority) { content, code in
-                log("File subcommand \(subcommand) finished with code \(code)")
-                continuation.resume(returning: (content, code))
-            }
-        }
-        if code < 0 {
-            throw SSHEndpointException.connectionClosed
-        }
-        if code > 0 {
-            throw SSHEndpointException.fileNotFound
-        }
-        return output
-    }
-
-    @objc(fetchDirectoryListingOfPath:queue:completion:)
-    @MainActor
-    func objcListFiles(_ path: String,
-                       queue: DispatchQueue,
-                       completion: @escaping ([iTermDirectoryEntry]) -> ()) {
-        Task {
-            do {
-                let files = try await listFiles(path, sort: .byName)
-                let entries = files.map {
-                    var mode = mode_t(0)
-                    switch $0.kind {
-                    case .folder:
-                        mode |= S_IFDIR
-                    default:
-                        break
-                    }
-                    if $0.permissions?.r ?? true {
-                        mode |= S_IRUSR
-                    }
-                    if $0.permissions?.x ?? false {
-                        mode |= S_IXUSR
-                    }
-                    return iTermDirectoryEntry(name: $0.name, mode: mode)
-                }
-                queue.async {
-                    completion(entries)
-                }
-            } catch {
-                DLog("\(error) for \(path)")
-                queue.async {
-                    completion([])
-                }
-            }
-        }
-    }
-
-    @MainActor
-    func listFiles(_ path: String, sort: FileSorting) async throws -> [RemoteFile] {
-        return try await logging("listFiles")  {
-            guard let pathData = path.data(using: .utf8) else {
-                throw iTermFileProviderServiceError.notFound(path)
-            }
-            log("perform file operation to list \(path)")
-            let json = try await performFileOperation(subcommand: .ls(path: pathData,
-                                                                      sorting: sort))
-            log("file operation completed with \(json.count) characters")
-            guard let jsonData = json.data(using: .utf8) else {
-                throw iTermFileProviderServiceError.internalError("Server returned garbage")
-            }
-            let decoder = JSONDecoder()
-            return try iTermFileProviderServiceError.wrap {
-                return try decoder.decode([RemoteFile].self, from: jsonData)
-            }
-        }
-    }
-
-    @MainActor
-    func download(_ path: String, chunk: DownloadChunk?, uniqueID: String?) async throws -> Data {
-        return try await logging("download \(path) \(String(describing: chunk))") {
-            guard let pathData = path.data(using: .utf8) else {
-                throw iTermFileProviderServiceError.notFound(path)
-            }
-            log("perform file operation to download \(path) with uniqueID \(uniqueID.d)")
-            let b64: String = try await performFileOperation(subcommand: .fetch(path: pathData,
-                                                                                chunk: chunk,
-                                                                                uniqueID: uniqueID))
-            log("file operation completed with \(b64.count) characters")
-            guard let data = Data(base64Encoded: b64) else {
-                throw iTermFileProviderServiceError.internalError("Server returned garbage")
-            }
-            return data
-        }
-    }
-
-    @MainActor
-    func cancelDownload(uniqueID: String) async throws {
-        DLog("Want to cancel downloads with unique ID \(uniqueID)")
-        cancelEnqueuedRequests { command in
-            switch command {
-            case .framerFile(let sub):
-                switch sub {
-                case .fetch(path: let path, chunk: let chunk, uniqueID: uniqueID):
-                    DLog("Canceling fetch of \(path) with unique ID \(uniqueID)")
-                    chunk?.performanceOperationCounter?.complete(.queued)
-                    return true
-                default:
-                    return false
-                }
-            default:
-                return false
-            }
-        }
-    }
-
-    @MainActor
-    func zip(_ path: String) async throws -> String {
-        return try await logging("zip \(path)") {
-            guard let pathData = path.data(using: .utf8) else {
-                throw iTermFileProviderServiceError.notFound(path)
-            }
-            log("perform file operation to zip \(path)")
-            return try await performFileOperation(subcommand: .zip(path: pathData))
-        }
-    }
-
-    private func remoteFile(_ json: String) throws -> RemoteFile {
-        log("file operation completed with \(json.count) characters")
-        guard let jsonData = json.data(using: .utf8) else {
-            throw iTermFileProviderServiceError.internalError("Server returned garbage")
-        }
-        let decoder = JSONDecoder()
-        return try iTermFileProviderServiceError.wrap {
-            return try decoder.decode(RemoteFile.self, from: jsonData)
-        }
-    }
-
-    @objc
-    @MainActor
-    func stat(_ path: String,
-              queue: DispatchQueue,
-              completion: @escaping (Int32, UnsafePointer<stat>?) -> ()) {
-        Task {
-            do {
-                let rf = try await stat(path)
-                queue.async {
-                    var sb = rf.toStat()
-                    completion(0, &sb)
-                }
-            } catch {
-                queue.async {
-                    completion(1, nil)
-                }
-            }
-        }
-    }
-
-    @MainActor
-    func stat(_ path: String) async throws -> RemoteFile {
-        return try await stat(path, highPriority: false)
-    }
-
-    @MainActor
-    func stat(_ path: String, highPriority: Bool = false) async throws -> RemoteFile {
-        return try await logging("stat \(path)") {
-            guard let pathData = path.data(using: .utf8) else {
-                throw iTermFileProviderServiceError.notFound(path)
-            }
-            log("perform file operation to stat \(path)")
-            let json = try await performFileOperation(subcommand: .stat(path: pathData),
-                                                      highPriority: highPriority)
-            let result = try remoteFile(json)
-            log("finished")
-            return result
-        }
-    }
-
-    @MainActor
-    func suggestions(_ requestInputs: SuggestionRequest.Inputs) async throws -> [String] {
-        log("Request suggestions for inputs \(requestInputs)")
-        return try await logging("suggestions \(requestInputs)") {
-            cancelEnqueuedRequests { request in
-                switch request {
-                case .framerFile(let sub):
-                    switch sub {
-                    case .fetchSuggestions:
-                        return true
-                    default:
-                        return false
-                    }
-                default:
-                    return false
-                }
-            }
-            let json = try await performFileOperation(subcommand: .fetchSuggestions(request: requestInputs),
-                                                      highPriority: true)
-            log("Suggestions for \(requestInputs) are: \(json)")
-            guard let data = json.data(using: .utf8) else {
-                return []
-            }
-            return try JSONDecoder().decode([String].self, from: data)
-        }
-    }
-
-    @MainActor
-    func delete(_ path: String, recursive: Bool) async throws {
-        try await logging("delete \(path) recursive=\(recursive)") {
-            guard let pathData = path.data(using: .utf8) else {
-                throw iTermFileProviderServiceError.notFound(path)
-            }
-            log("perform file operation to delete \(path)")
-            _ = try await performFileOperation(subcommand: .rm(path: pathData, recursive: recursive))
-            log("finished")
-        }
-    }
-
-    @MainActor
-    func ln(_ source: String, _ symlink: String) async throws -> RemoteFile {
-        try await logging("ln -s \(source) \(symlink)") {
-            guard let sourceData = source.data(using: .utf8) else {
-                throw iTermFileProviderServiceError.notFound(source)
-            }
-            guard let symlinkData = symlink.data(using: .utf8) else {
-                throw iTermFileProviderServiceError.notFound(symlink)
-            }
-            log("perform file operation to make a symlink")
-            let json = try await performFileOperation(subcommand: .ln(source: sourceData,
-                                                                      symlink: symlinkData))
-            let result = try remoteFile(json)
-            log("finished")
-            return result
-        }
-    }
-
-    @MainActor
-    func mv(_ source: String, newParent: String, newName: String) async throws -> RemoteFile {
-        let dest = newParent.appending(pathComponent: newName)
-        return try await logging("mv \(source) \(dest)") {
-            guard let sourceData = source.data(using: .utf8) else {
-                throw iTermFileProviderServiceError.notFound(source)
-            }
-            guard let destData = dest.data(using: .utf8) else {
-                throw iTermFileProviderServiceError.notFound(newName)
-            }
-            log("perform file operation to make a symlink")
-            let json = try await performFileOperation(subcommand: .mv(source: sourceData,
-                                                                      dest: destData))
-            let result = try remoteFile(json)
-            log("finished")
-            return result
-        }
-    }
-
-    @MainActor
-    func rm(_ file: String, recursive: Bool) async throws {
-        try await logging("rm \(recursive ? "-rf " : "-f") \(file)") {
-            log("perform file operation to unlink")
-            guard let fileData = file.data(using: .utf8) else {
-                throw iTermFileProviderServiceError.notFound(file)
-            }
-            _ = try await performFileOperation(subcommand: .rm(path: fileData,
-                                                               recursive: recursive))
-        }
-    }
-
-    @MainActor
-    func mkdir(_ path: String) async throws {
-        try await logging("mkdir \(path)") {
-            guard let pathData = path.data(using: .utf8) else {
-                throw iTermFileProviderServiceError.notFound(path)
-            }
-            log("perform file operation to mkdir \(path)")
-            _ = try await performFileOperation(subcommand: .mkdir(path: pathData))
-            log("finished")
-        }
-    }
-
-
-    func create(file: String, content: Data, completion: @escaping (Error?) -> ()) {
-        Task {
-            do {
-                try await create(file, content: content)
-                DispatchQueue.main.async {
-                    completion(nil)
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    completion(error)
-                }
-            }
-        }
-    }
-    @MainActor
-    func create(_ file: String, content: Data) async throws {
-        try await logging("create \(file) length=\(content.count) bytes") {
-            guard let pathData = file.data(using: .utf8) else {
-                throw iTermFileProviderServiceError.notFound(file)
-            }
-            log("perform file operation to create \(file)")
-            _ = try await performFileOperation(subcommand: .create(path: pathData, content: content))
-            log("finished")
-        }
-    }
-
-    @MainActor
-    func append(_ file: String, content: Data) async throws {
-        try await logging("append \(file) length=\(content.count) bytes") {
-            guard let pathData = file.data(using: .utf8) else {
-                throw iTermFileProviderServiceError.notFound(file)
-            }
-            log("perform file operation to append \(file)")
-            _ = try await performFileOperation(subcommand: .append(path: pathData, content: content))
-            log("finished")
-        }
-    }
-
-    // This is just create + stat
-    @MainActor
-    func replace(_ file: String, content: Data) async throws -> RemoteFile {
-        try await logging("replace \(file) length=\(content.count) bytes") {
-            guard let pathData = file.data(using: .utf8) else {
-                throw iTermFileProviderServiceError.notFound(file)
-            }
-            log("perform file operation to replace \(file)")
-            let json = try await performFileOperation(subcommand: .create(path: pathData, content: content))
-            let result = try remoteFile(json)
-            log("finished")
-            return result
-        }
-    }
-
-    @MainActor
-    func setModificationDate(_ file: String, date: Date) async throws -> RemoteFile {
-        try await logging("utime \(file) \(date)") {
-            guard let pathData = file.data(using: .utf8) else {
-                throw iTermFileProviderServiceError.notFound(file)
-            }
-            log("perform file operation to utime \(file)")
-            let json = try await performFileOperation(subcommand: .utime(path: pathData,
-                                                                         date: date))
-            let result = try remoteFile(json)
-            log("finished")
-            return result
-        }
-    }
-
-    @MainActor
-    func chmod(_ file: String, permissions: RemoteFile.Permissions) async throws -> RemoteFile {
-        try await logging("utime \(file) \(permissions)") {
-            guard let pathData = file.data(using: .utf8) else {
-                throw iTermFileProviderServiceError.notFound(file)
-            }
-            log("perform file operation to chmod \(file)")
-            let json = try await performFileOperation(subcommand: .chmod(path: pathData,
-                                                                         r: permissions.r,
-                                                                         w: permissions.w,
-                                                                         x: permissions.x))
-            let result = try remoteFile(json)
-            log("finished")
-            return result
-        }
-    }
-
-    @available(macOS 11.0, *)
-    @MainActor
-    func search(_ basedir: String,
-                query: String,
-                cancellation: Cancellation) async throws -> AsyncThrowingStream<RemoteFile, Error> {
-        currentSearch?.cancellation.cancel()
-        return try await logging("search \(basedir) \(query)") {
-            let id = try await performFileOperation(subcommand: .search(.start(query: query.lossyData,
-                                                                               baseDirectory: basedir.lossyData)))
-            cancellation.impl = { [weak self] in
-                Task { @MainActor in
-                    try? await self?.performFileOperation(subcommand: .search(.stop(id: id)))
-                }
-            }
-            return AsyncThrowingStream<RemoteFile, Error> { continuation in
-                DLog("Begin new search with id \(id) and query \(query)")
-                currentSearch = Search(id: id,
-                                       query: query,
-                                       continuation: continuation,
-                                       cancellation: cancellation)
-            }
-        }
-    }
-}
-
-struct CodableNSDictionary: Codable {
-    let dictionary: NSDictionary
-
-    init(_ dictionary: NSDictionary) {
-        self.dictionary = dictionary
-    }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let data = try container.decode(Data.self)
-        var format = PropertyListSerialization.PropertyListFormat.binary
-        let plist = try PropertyListSerialization.propertyList(from: data, format: &format)
-        if let dictionary = plist as? NSDictionary {
-            self.dictionary = dictionary
-        } else {
-            throw DecodingError.typeMismatch(Swift.type(of: plist),
-                                             .init(codingPath: [],
-                                                   debugDescription: "Not a dictionary"))
-        }
-    }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        let data = try PropertyListSerialization.data(fromPropertyList: dictionary,
-                                                      format: .binary,
-                                                      options: 0)
-        try container.encode(data)
-    }
-}
-
-@available(macOS 11.0, *)
-extension Conductor: ConductorFileTransferDelegate {
-    func beginDownload(fileTransfer: ConductorFileTransfer) {
-        guard let path = fileTransfer.localPath() else {
-            fileTransfer.fail(reason: "No local path specified")
-            return
-        }
-        let remotePath = fileTransfer.path.path!
-
-        FileManager.default.createFile(atPath: path, contents: nil, attributes: nil)
-        guard let fileHandle = FileHandle(forUpdatingAtPath: path) else {
-            fileTransfer.fail(reason: "Could not open \(path)")
-            return
-        }
-        Task {
-            await reallyBeginDownload(fileTransfer: fileTransfer,
-                                      remotePath: remotePath,
-                                      fileHandle: fileHandle,
-                                      allowDirectories: true)
-        }
-    }
-
-    @MainActor
-    private func reallyBeginDownload(fileTransfer: ConductorFileTransfer,
-                                     remotePath: String,
-                                     fileHandle: FileHandle,
-                                     allowDirectories: Bool) async {
-        do {
-            let info = try await stat(remotePath)
-            if info.kind == .folder {
-                if !allowDirectories {
-                    fileTransfer.fail(reason: "Transfer of directory at \(remotePath) not allowed")
-                }
-                await reallyDownloadFolder(info: info,
-                                           fileTransfer: fileTransfer,
-                                           remotePath: remotePath,
-                                           fileHandle: fileHandle)
-                return
-            }
-            let sizeKnown: Bool
-            if let size = info.size {
-                sizeKnown = true
-                fileTransfer.fileSize = size
-            } else {
-                sizeKnown = false
-            }
-            var done = false
-            var offset = 0
-
-            let chunkSize = 1024
-            defer {
-                try? fileHandle.close()
-            }
-            while !done {
-                if fileTransfer.isStopped {
-                    fileTransfer.abort()
-                    return
-                }
-                let chunk = DownloadChunk(offset: offset, size: chunkSize)
-                let data = try await download(remotePath, chunk: chunk, uniqueID: nil)
-                if data.isEmpty {
-                    done = true
-                } else {
-                    try fileHandle.write(contentsOf: data)
-                    if !sizeKnown {
-                        fileTransfer.fileSize = fileTransfer.fileSize + data.count
-                    }
-                    fileTransfer.didTransferBytes(UInt(data.count))
-                    offset += data.count
-                }
-            }
-            fileTransfer.didFinishSuccessfully()
-        } catch {
-            fileTransfer.fail(reason: error.localizedDescription)
-        }
-    }
-
-    @MainActor
-    func downloadChunked(remoteFile: RemoteFile,
-                         progress: Progress?,
-                         cancellation: Cancellation?,
-                         destination: URL) async throws -> DownloadType {
-        DLog("Download of \(remoteFile.absolutePath) requested")
-        await Conductor.downloadSemaphore.wait()
-        DLog("Download of \(remoteFile.absolutePath) beginning")
-        defer {
-            Task {
-                DLog("Download of \(remoteFile.absolutePath) completely finished")
-                await Conductor.downloadSemaphore.signal()
-            }
-        }
-        if remoteFile.kind.isFolder {
-            let remoteZipPath = try await zip(remoteFile.absolutePath)
-            do {
-                let zipRemoteFile = try await stat(remoteZipPath)
-                let localZipPath = destination.appendingPathExtension("zip")
-                _ = try await downloadChunked(
-                    remoteFile: zipRemoteFile,
-                    progress: progress,
-                    cancellation: cancellation,
-                    destination: localZipPath)
-
-                // The `destination` argument is the current directory in which unzip is run. I give
-                // -d path in args so it will create destination.path if needed and then
-                // unzip therein.
-                try await iTermCommandRunner.unzipURL(
-                    localZipPath,
-                    withArguments: ["-q", "-o", "-d", destination.path],
-                    destination: "/",
-                    callbackQueue: .main)
-                try? await rm(remoteZipPath, recursive: false)
-                try? FileManager.default.removeItem(at: localZipPath)
-            } catch {
-                try? await rm(remoteZipPath, recursive: false)
-                throw error
-            }
-            return .directory
-        }
-
-        it_assert(remoteFile.kind.isRegularFile, "Only files can be downloaded")
-
-        let chunkSize = 4096
-        progress?.fraction = 0
-        let state = DownloadState(remoteFile: remoteFile,
-                                  chunkSize: chunkSize,
-                                  cancellation: cancellation,
-                                  progress: progress,
-                                  conductor: self)
-        while state.shouldFetchMore {
-            try await state.addTask(conductor: self)
-        }
-        if let cancellation, cancellation.canceled {
-            DLog("Download of \(remoteFile.absolutePath) throwing")
-            throw SSHEndpointException.transferCanceled
-        }
-        DLog("Download of \(remoteFile.absolutePath) finished normally")
-        try state.content.write(to: destination)
-        return .file
-    }
-
-    class DownloadState {
-        var remoteFile: RemoteFile
-        var offset = 0
-        var chunkSize: Int
-        var counter = PerformanceCounter<DownloadOp>()
-        var cancellation: Cancellation?
-        var progress: Progress?
-        var content = Data()
-
-        private struct Pending {
-            var uniqueID: String
-            var offset: Int
-            var task: Task<Data, Error>
-        }
-        private var tasks = [Pending]()
-
-        init(remoteFile: RemoteFile,
-             chunkSize: Int,
-             cancellation: Cancellation?,
-             progress: Progress?,
-             conductor: Conductor) {
-            self.remoteFile = remoteFile
-            self.chunkSize = chunkSize
-            self.cancellation = cancellation
-            self.progress = progress
-
-            cancellation?.impl = { [weak self, weak conductor] in
-                conductor?.DLog("Cancellation requested")
-                Task { @MainActor in
-                    guard let self, let conductor else {
-                        conductor?.DLog("Already dealloced")
-                        return
-                    }
-                    for pending in self.tasks {
-                        try? await conductor.cancelDownload(uniqueID: pending.uniqueID)
-                    }
-                }
-            }
-        }
-
-        var shouldFetchMore: Bool {
-            if cancellation?.canceled == true {
-                return false
-            }
-            return offset < remoteFile.size!
-        }
-
-        func addTask(conductor: Conductor) async throws {
-            let taskOffset = offset
-            offset += chunkSize
-            let uniqueID = UUID().uuidString
-            let pending = Pending(
-                uniqueID: uniqueID,
-                offset: taskOffset,
-                task: Task { @MainActor in
-                    let data = try await conductor.downloadOneChunk(
-                        remoteFile: remoteFile,
-                        offset: taskOffset,
-                        chunkSize: chunkSize,
-                        uniqueID: uniqueID,
-                        counter: counter)
-                    counter.perform(.post) {
-                        if data.isEmpty {
-                            progress?.fraction = 1.0
-                        } else {
-                            progress?.fraction = min(1.0, max(0, Double(offset) / Double(remoteFile.size!)))
-                        }
-                    }
-                    return data
-                })
-            tasks.append(pending)
-            let maxConcurrency = 8
-            while tasks.count >= maxConcurrency || (!tasks.isEmpty && !shouldFetchMore) {
-                if cancellation?.canceled == true {
-                    break
-                }
-                let result = try await tasks.removeFirst().task.value
-                content.append(result)
-                if result.isEmpty && !tasks.isEmpty {
-                    throw ConductorFileTransfer.ConductorFileTransferError(
-                        "Download ended prematurely (received \(content.count) of \(remoteFile.size!) byte\(remoteFile.size! == 1 ? "" : "s")")
-                }
-            }
-        }
-    }
-
-    @MainActor
-    private func downloadOneChunk(remoteFile: RemoteFile,
-                                  offset: Int,
-                                  chunkSize: Int,
-                                  uniqueID: String,
-                                  counter: PerformanceCounter<DownloadOp>) async throws -> Data {
-        let poc = counter.start([.queued, .sent, .transferring])
-        let chunk = DownloadChunk(offset: offset,
-                                  size: chunkSize,
-                                  performanceOperationCounter: poc)
-
-        DLog("Send request to download from offset \(offset)")
-        let data = try await download(remoteFile.absolutePath,
-                                      chunk: chunk,
-                                      uniqueID: uniqueID)
-        DLog("Finished request to download from offset \(offset)")
-        poc.complete(.transferring)
-
-        // counter.log()
-        return data
-    }
-
-    @MainActor
-    private func reallyDownloadFolder(info: RemoteFile,
-                                      fileTransfer: ConductorFileTransfer,
-                                      remotePath: String,
-                                      fileHandle: FileHandle) async {
-        do {
-            let remoteZipPath = try await zip(remotePath)
-            fileTransfer.isZipOfFolder = true
-            await reallyBeginDownload(fileTransfer: fileTransfer,
-                                      remotePath: remoteZipPath,
-                                      fileHandle: fileHandle,
-                                      allowDirectories: false)
-            try? await rm(remoteZipPath, recursive: false)
-        } catch {
-            fileTransfer.fail(reason: error.localizedDescription)
-        }
-    }
-
-    func beginUpload(fileTransfer: ConductorFileTransfer) {
-        guard let path = fileTransfer.localPath() else {
-            fileTransfer.fail(reason: "No local filename specified")
-            return
-        }
-        Task {
-            await reallyBeginUpload(fileTransfer: fileTransfer,
-                                    from: path)
-        }
-    }
-
-    @MainActor
-    private func reallyBeginUpload(fileTransfer: ConductorFileTransfer,
-                                   from path: String) async {
-        let tempfile = fileTransfer.path.path + ".uploading-\(UUID().uuidString)"
-        do {
-            let fileURL = URL(fileURLWithPath: path)
-            let data = try Data(contentsOf: fileURL)
-            // Make an empty file and then upload chunks so we don't monopolize the connection.
-            try await create(tempfile,
-                             content: Data())
-            fileTransfer.fileSize = data.count
-            var offset = 0
-            while offset < data.count {
-                if fileTransfer.isStopped {
-                    fileTransfer.abort()
-                    return
-                }
-                let maxChunkSize = 1024
-                let chunk = data.subdata(in: offset..<min(data.count, offset + maxChunkSize))
-                offset += chunk.count
-                try await append(tempfile, content: chunk)
-                fileTransfer.didTransferBytes(UInt(chunk.count))
-            }
-            // Find a good name
-            var proposedName = fileTransfer.path.path!
-            var remoteName: String?
-            for i in 0..<100 {
-                let info = try? await stat(proposedName)
-                if info == nil {
-                    remoteName = proposedName
-                    break
-                }
-                proposedName = fileTransfer.path.path + " (\(i + 2))"
-            }
-            guard let remoteName else {
-                throw ConductorFileTransfer.ConductorFileTransferError("Too many iterations to find a valid file name on remote host for upload")
-            }
-            fileTransfer.remoteName = remoteName
-            // Rename the tempfile to the proper name
-            _ = try await mv(
-                tempfile,
-                newParent: remoteName.deletingLastPathComponent,
-                newName: remoteName.lastPathComponent)
-            fileTransfer.didFinishSuccessfully()
-        } catch {
-            // Delete the temp file
-            try? await rm(tempfile, recursive: false)
-            fileTransfer.fail(reason: error.localizedDescription)
-        }
-    }
-}
-
-@available(macOS 11, *)
-extension Conductor: FileCheckerDataSource {
-    func fileCheckerDataSourceDidReset() {
-        parent?.fileChecker?.reset()
-    }
-
-    @objc
-    var canCheckFiles: Bool {
-        guard framing && delegate != nil else {
-            return false
-        }
-        if case .unhooked = state {
-            return false
-        }
-        return true
-    }
-
-    var fileCheckerDataSourceCanPerformFileChecking: Bool {
-        return canCheckFiles
-    }
-
-    func fileCheckerDataSourceCheck(path: String, completion: @escaping (Bool) -> ()) {
-        Task {
-            let exists: Bool
-            do {
-                DLog("Really stat \(path)")
-                _ = try await self.stat(path, highPriority: true)
-                exists = true
-            } catch {
-                exists = false
-            }
-            DispatchQueue.main.async {
-                completion(exists)
-            }
-        }
-    }
-}
-
-// Helper to convert a Date to a timespec structure.
-private func timespecFromDate(_ date: Date) -> timespec {
-    var ts = timespec()
-    // Convert seconds to time_t and extract the fractional part for nanoseconds.
-    let t = date.timeIntervalSince1970
-    ts.tv_sec = time_t(t)
-    ts.tv_nsec = Int((t - TimeInterval(ts.tv_sec)) * 1_000_000_000)
-    return ts
-}
-
-extension RemoteFile {
-    /// Converts a `RemoteFile` instance into a Unix-like `struct stat`.
-    func toStat() -> stat {
-        var fileStat = stat()
-
-        var fileType: mode_t = 0
-        switch self.kind {
-        case .file:
-            fileType = S_IFREG   // Regular file.
-        case .folder:
-            fileType = S_IFDIR   // Directory.
-        case .symlink:
-            fileType = S_IFLNK   // Symlink.
-        case .host:
-            // There is no direct mapping for "host" in POSIX;
-            // here we default to treating it like a regular file.
-            fileType = S_IFREG
-        }
-
-        // Calculate permission bits based on our Permissions type.
-        var permissionBits: mode_t = 0
-        if let perms = self.permissions {
-            if perms.r {
-                permissionBits |= S_IRUSR
-            }
-            if perms.w {
-                permissionBits |= S_IWUSR
-            }
-            if perms.x {
-                permissionBits |= S_IXUSR
-            }
-        }
-        // Combine type and permission bits.
-        fileStat.st_mode = fileType | permissionBits
-
-        // File size: use the wrapped file info for files, or 0 for directories and others.
-        let sizeValue = self.size ?? 0
-        fileStat.st_size = off_t(sizeValue)
-
-        return fileStat
-    }
-}
 

@@ -7,6 +7,7 @@
 
 import Foundation
 
+@MainActor
 protocol FileCheckerDataSource: AnyObject {
     func fileCheckerDataSourceDidReset()
     var fileCheckerDataSourceCanPerformFileChecking: Bool { get }
@@ -14,6 +15,7 @@ protocol FileCheckerDataSource: AnyObject {
 }
 
 @objc(iTermFileChecker)
+@MainActor
 class FileChecker: NSObject {
     weak var dataSource: FileCheckerDataSource?
     var maxConcurrentChecks = 5

@@ -3072,6 +3072,16 @@
 		A69FF3C12E13A23600AFF7A8 /* update-mark-positions.js in Resources */ = {isa = PBXBuildFile; fileRef = A69FF3BE2E13A23600AFF7A8 /* update-mark-positions.js */; };
 		A69FF3C32E13A54100AFF7A8 /* BrowserNamedMarks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69FF3C22E13A54100AFF7A8 /* BrowserNamedMarks.swift */; };
 		A69FF3C72E143ABD00AFF7A8 /* HoverButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69FF3C62E143ABC00AFF7A8 /* HoverButton.swift */; };
+		A69FF3C92E14678500AFF7A8 /* SSHCommandRunning.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69FF3C82E14678200AFF7A8 /* SSHCommandRunning.swift */; };
+		A69FF3CB2E14679200AFF7A8 /* SSHReconnectionInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69FF3CA2E14679000AFF7A8 /* SSHReconnectionInfo.swift */; };
+		A69FF3CD2E1467D800AFF7A8 /* iTermFileProviderServiceError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69FF3CC2E1467D600AFF7A8 /* iTermFileProviderServiceError.swift */; };
+		A69FF3CF2E1467E400AFF7A8 /* SSHEndpointException.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69FF3CE2E1467E300AFF7A8 /* SSHEndpointException.swift */; };
+		A69FF3D12E1467F500AFF7A8 /* Conductor+SSHEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69FF3D02E1467F100AFF7A8 /* Conductor+SSHEndpoint.swift */; };
+		A69FF3D32E14682000AFF7A8 /* Conductor+SSHCommandRunning.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69FF3D22E14681D00AFF7A8 /* Conductor+SSHCommandRunning.swift */; };
+		A69FF3D52E14685F00AFF7A8 /* ConductorPayloadBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69FF3D42E14685E00AFF7A8 /* ConductorPayloadBuilder.swift */; };
+		A69FF3D72E14687B00AFF7A8 /* CodableNSDictionary.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69FF3D62E14687A00AFF7A8 /* CodableNSDictionary.swift */; };
+		A69FF3D92E14688A00AFF7A8 /* Conductor+ConductorFileTransferDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69FF3D82E14688800AFF7A8 /* Conductor+ConductorFileTransferDelegate.swift */; };
+		A69FF3DB2E14689B00AFF7A8 /* Conductor+FileCheckerDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69FF3DA2E14689900AFF7A8 /* Conductor+FileCheckerDataSource.swift */; };
 		A6A13AA218C2D23300B241ED /* iTermColorMap.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA018C2D23300B241ED /* iTermColorMap.h */; };
 		A6A13AA718C2D45900B241ED /* NSColor+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */; };
 		A6A13AAC18C3347200B241ED /* VT100Output.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AAA18C3347200B241ED /* VT100Output.h */; };
@@ -7753,6 +7763,16 @@
 		A69FF3BE2E13A23600AFF7A8 /* update-mark-positions.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "update-mark-positions.js"; sourceTree = "<group>"; };
 		A69FF3C22E13A54100AFF7A8 /* BrowserNamedMarks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserNamedMarks.swift; sourceTree = "<group>"; };
 		A69FF3C62E143ABC00AFF7A8 /* HoverButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoverButton.swift; sourceTree = "<group>"; };
+		A69FF3C82E14678200AFF7A8 /* SSHCommandRunning.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHCommandRunning.swift; sourceTree = "<group>"; };
+		A69FF3CA2E14679000AFF7A8 /* SSHReconnectionInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHReconnectionInfo.swift; sourceTree = "<group>"; };
+		A69FF3CC2E1467D600AFF7A8 /* iTermFileProviderServiceError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermFileProviderServiceError.swift; sourceTree = "<group>"; };
+		A69FF3CE2E1467E300AFF7A8 /* SSHEndpointException.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHEndpointException.swift; sourceTree = "<group>"; };
+		A69FF3D02E1467F100AFF7A8 /* Conductor+SSHEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Conductor+SSHEndpoint.swift"; sourceTree = "<group>"; };
+		A69FF3D22E14681D00AFF7A8 /* Conductor+SSHCommandRunning.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Conductor+SSHCommandRunning.swift"; sourceTree = "<group>"; };
+		A69FF3D42E14685E00AFF7A8 /* ConductorPayloadBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConductorPayloadBuilder.swift; sourceTree = "<group>"; };
+		A69FF3D62E14687A00AFF7A8 /* CodableNSDictionary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodableNSDictionary.swift; sourceTree = "<group>"; };
+		A69FF3D82E14688800AFF7A8 /* Conductor+ConductorFileTransferDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Conductor+ConductorFileTransferDelegate.swift"; sourceTree = "<group>"; };
+		A69FF3DA2E14689900AFF7A8 /* Conductor+FileCheckerDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Conductor+FileCheckerDataSource.swift"; sourceTree = "<group>"; };
 		A6A13AA018C2D23300B241ED /* iTermColorMap.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermColorMap.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA118C2D23300B241ED /* iTermColorMap.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermColorMap.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -13498,6 +13518,16 @@
 		A6EC807F2828E9E100493544 /* ssh */ = {
 			isa = PBXGroup;
 			children = (
+				A69FF3DA2E14689900AFF7A8 /* Conductor+FileCheckerDataSource.swift */,
+				A69FF3D82E14688800AFF7A8 /* Conductor+ConductorFileTransferDelegate.swift */,
+				A69FF3D62E14687A00AFF7A8 /* CodableNSDictionary.swift */,
+				A69FF3D42E14685E00AFF7A8 /* ConductorPayloadBuilder.swift */,
+				A69FF3D22E14681D00AFF7A8 /* Conductor+SSHCommandRunning.swift */,
+				A69FF3D02E1467F100AFF7A8 /* Conductor+SSHEndpoint.swift */,
+				A69FF3CE2E1467E300AFF7A8 /* SSHEndpointException.swift */,
+				A69FF3CC2E1467D600AFF7A8 /* iTermFileProviderServiceError.swift */,
+				A69FF3CA2E14679000AFF7A8 /* SSHReconnectionInfo.swift */,
+				A69FF3C82E14678200AFF7A8 /* SSHCommandRunning.swift */,
 				A6E304662E00C6C70029CAB4 /* QuickLookHelper.swift */,
 				A6E304042DF8E11D0029CAB4 /* ConductorRegistry.swift */,
 				A6069F392DF7B79200EE6CC7 /* SSHFolderDialogTextField.swift */,
@@ -17970,6 +18000,7 @@
 				A6069F1C2DF3AB3E00EE6CC7 /* LLMVectorStore.swift in Sources */,
 				537BFDDF2102B4060098C91F /* iTermPublisher.m in Sources */,
 				A6D7E0712C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift in Sources */,
+				A69FF3CB2E14679200AFF7A8 /* SSHReconnectionInfo.swift in Sources */,
 				A61A85A224F1A70500B03880 /* iTermGlobalSearchWindowController.m in Sources */,
 				A6354B942A1A8828002836A3 /* BookmarkDialogViewController.swift in Sources */,
 				A6916941281346A400083F99 /* ExclusiveSelectionTextView.swift in Sources */,
@@ -18029,6 +18060,7 @@
 				A635F1DD25075E8D008C3038 /* iTermShortcutsViewController.m in Sources */,
 				A6069F142DF25D2F00EE6CC7 /* NSMutableAttributedString+iTerm.swift in Sources */,
 				A62EED9720DF602F00943DE3 /* iTermCommandRunner.m in Sources */,
+				A69FF3CF2E1467E400AFF7A8 /* SSHEndpointException.swift in Sources */,
 				A63821F5229E644E005D74BE /* iTermStatusIndicatingTextFieldCell.m in Sources */,
 				A6E304052DF8E11E0029CAB4 /* ConductorRegistry.swift in Sources */,
 				A667C238276BD5A0006B4DEF /* VT100Grid.m in Sources */,
@@ -18083,6 +18115,7 @@
 				A626DF0C217D3034005600F9 /* iTermTabBarAccessoryViewController.m in Sources */,
 				A6E5110E24C1729E00D6552D /* iTermAttributedStringProxy.m in Sources */,
 				A6A3EDCA2E0CE2AA00D711DA /* NSMenu+iTerm.m in Sources */,
+				A69FF3C92E14678500AFF7A8 /* SSHCommandRunning.swift in Sources */,
 				A6180D6D21A35D5E0073F219 /* iTermMetalPerFrameState.m in Sources */,
 				530AB7B520A615D900D2AA08 /* iTermPythonArgumentParser.m in Sources */,
 				A6024B7A254C93DA0036D6CF /* NSSet+iTerm.m in Sources */,
@@ -18263,6 +18296,7 @@
 				A62C8FC3248033C000E22E95 /* iTermTmuxJobManager.m in Sources */,
 				A65B1BD52D1E3CC800F5A740 /* iTermMTKView.swift in Sources */,
 				A63011B220E7EE62008114B7 /* iTermStatusBarKnobNumericViewController.m in Sources */,
+				A69FF3CD2E1467D800AFF7A8 /* iTermFileProviderServiceError.swift in Sources */,
 				A619DC4E2CD5A1D0004B8996 /* iTermCoreTextLineRenderingHelper.m in Sources */,
 				A606CBF42145AF4800B3A97E /* iTermRootTerminalView.m in Sources */,
 				A65660D52372A4A600DC6744 /* iTermCache.m in Sources */,
@@ -18388,6 +18422,7 @@
 				A6A3EDEC2E0DC6A800D711DA /* iTermBrowserMetadata.swift in Sources */,
 				A645DD4827D5E2CD003947CE /* NSData+iTerm.m in Sources */,
 				A6F718CB2266DB380053488E /* iTermURLActionHelper.m in Sources */,
+				A69FF3D52E14685F00AFF7A8 /* ConductorPayloadBuilder.swift in Sources */,
 				A6DB145E2D6CEDF200266394 /* SystemMessageCellView.swift in Sources */,
 				A6BC8AD021C7608B00796BF3 /* iTermImageCache.m in Sources */,
 				A671AC6026D95C0400B23C95 /* HTMLEncoding.swift in Sources */,
@@ -18419,6 +18454,7 @@
 				A630119520E70C0A008114B7 /* iTermStatusBarSetupDestinationCollectionViewController.m in Sources */,
 				A6AF79D12E065C93008D77BA /* iTermBrowserBookmarkViewHandler.swift in Sources */,
 				A6481655228FD511008E7E0C /* iTermVariablesIndex.m in Sources */,
+				A69FF3D32E14682000AFF7A8 /* Conductor+SSHCommandRunning.swift in Sources */,
 				A6069F182DF25D8300EE6CC7 /* AITermControllerObjC.swift in Sources */,
 				A616CF0D284143A300EF82D0 /* ConductorRecovery.swift in Sources */,
 				A67DAF1F299D634000AD331A /* OffscreenCommandLine.swift in Sources */,
@@ -18450,6 +18486,7 @@
 				A6BBBFCD2CC8721A000A697C /* ProducerConsumerQueue.swift in Sources */,
 				A6396B042C4722210064BCFD /* iTermTerminfo.m in Sources */,
 				A667C26F277B8F1F006B4DEF /* VT100ScreenMutableState.m in Sources */,
+				A69FF3D12E1467F500AFF7A8 /* Conductor+SSHEndpoint.swift in Sources */,
 				A6E39FAB2CD18B6B00035787 /* BidiDisplayInfo.swift in Sources */,
 				A668E8A31E7EFEA5005F8758 /* iTermURLStore.m in Sources */,
 				A61E0C502D5ACD4F00D4633A /* PTYSession.swift in Sources */,
@@ -18522,6 +18559,7 @@
 				A6D5724127BCDAA1002E6E9F /* CharacterAttributes.swift in Sources */,
 				A6A2D6D624331F0600A4DF5B /* iTermHamburgerButton.m in Sources */,
 				A691693F281345D000083F99 /* PortholeContainerView.swift in Sources */,
+				A69FF3DB2E14689B00AFF7A8 /* Conductor+FileCheckerDataSource.swift in Sources */,
 				A6BF035521E179380097DA86 /* iTermVariableHistory.m in Sources */,
 				A6CD8A442234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m in Sources */,
 				A61F9DD32D0E04AA0003FC13 /* ExpandingTextField.swift in Sources */,
@@ -18619,6 +18657,7 @@
 				A6D1A3E92C7E99A100FECDF2 /* NSPoint+iTerm.swift in Sources */,
 				A65429B020C492F000CE71B1 /* iTermParameterPanelWindowController.m in Sources */,
 				53FF84E3217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.m in Sources */,
+				A69FF3D72E14687B00AFF7A8 /* CodableNSDictionary.swift in Sources */,
 				A631FC9920EF04E900EB824F /* iTermStatusBarSetupConfigureComponentWindowController.m in Sources */,
 				A603E9FF283EE9BD0028B648 /* ObjCExceptions.m in Sources */,
 				A62F8FD121D9A603008EA71C /* iTermTermkeyKeyMapper.m in Sources */,
@@ -18631,6 +18670,7 @@
 				A65003ED29FDE6950028BC9E /* FocusBuiltInFunction.swift in Sources */,
 				A61E0C4E2D5ACBCF00D4633A /* ChatWindowController.swift in Sources */,
 				A65943CC1F83382B00598B1E /* iTermMetalClipView.m in Sources */,
+				A69FF3D92E14688A00AFF7A8 /* Conductor+ConductorFileTransferDelegate.swift in Sources */,
 				A6EC936724E513DB00EEADEF /* iTermSlowOperationGateway.m in Sources */,
 				53E9DFE5220D530E0070C9C0 /* SetDirectoryTrigger.m in Sources */,
 				A6069F242DF3ABCF00EE6CC7 /* Gemini.swift in Sources */,

@@ -22,6 +22,7 @@ protocol PathCompletionHelperDelegate: AnyObject {
 // Opens a window listing subdirectories of the path in a PathMark. Works over ssh when using ssh integration.
 @objc(iTermPathCompletionHelper)
 @available(macOS 11.0, *)
+@MainActor
 class PathCompletionHelper: NSObject {
     private let hostname: String?
     private let username: String?

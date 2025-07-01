@@ -10,6 +10,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+NS_SWIFT_SENDABLE
 @interface iTermDirectoryEntry: NSObject<NSSecureCoding>
 
 @property (nonatomic, readonly) NSString *name;
