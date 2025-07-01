@@ -15308,6 +15308,7 @@
 				A6725AD923D64A57001CA48A /* CopyFiles */,
 				A67A515026CCD54000281693 /* CopyFiles */,
 				A65DF4AC2849F2E700AA29AB /* CopyFiles */,
+				A69FF3DC2E14A06D00AFF7A8 /* Make symlink to iTerm */,
 				A6C1FE6E284C1BF200EA8A3B /* Embed Foundation Extensions */,
 				A64BD0CD295FAA67001F3F7E /* CopyFiles */,
 			);
@@ -15372,7 +15373,6 @@
 				A66717861DCE36C3000CE608 /* Sources */,
 				A66719031DCE36C3000CE608 /* Frameworks */,
 				A66719091DCE36C3000CE608 /* Headers */,
-				A60D023826844E6500E19362 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -17786,35 +17786,38 @@
 		};
 		93BD20450FE16DD50059656D /* Rewrite version number in plist file */ = {
 			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
 			buildActionMask = 12;
 			files = (
 			);
 			inputFileListPaths = (
 			);
 			inputPaths = (
+				"$(SRCROOT)/version.txt",
+				"$(SRCROOT)/plists/dev-iTerm2.plist",
 			);
 			name = "Rewrite version number in plist file";
 			outputPaths = (
+				"$(SRCROOT)/plists/iTerm2.plist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "test -f $SRCROOT/plists/iTerm2.plist || cp $SRCROOT/plists/dev-iTerm2.plist $SRCROOT/plists/iTerm2.plist\nexec tools/updateVersion.py\ncd $BUILT_PRODUCTS_DIR/iTerm2.app/Contents/MacOS\nln -s iTerm2 iTerm\n";
+			shellScript = "test -f $SRCROOT/plists/iTerm2.plist || cp $SRCROOT/plists/dev-iTerm2.plist $SRCROOT/plists/iTerm2.plist\n\n# ---\n# Update version\n\n# 1) Compute the “extra” suffix\nif [[ \"${CONFIGURATION:-}\" == \"Development\" ]]; then\n    extra=\"dev\"\nelif [[ \"${CONFIGURATION:-}\" == \"Nightly\" ]]; then\n  echo Nightly configuration detected.\n  extra=\"$(date +%Y%m%d-nightly)\"\nelse\n  echo Unknown configuration ${CONFIGURATION:-}\n  extra=\"$(date +%Y%m%d)\"\nfi\n\n# 2) Read your version prefix and substitute \"%(extra)s\"\nprefix=$(< \"${SRCROOT}/version.txt\")\nversion=$(printf '%s' \"$prefix\" | sed \"s/%(extra)s/$extra/g\")\n\n# 3) Point at your Info-plist\nplist=\"${SRCROOT}/plists/iTerm2.plist\"\necho \"Updating $plist → $version\"\n\n# 4) PlistBuddy calls\n/usr/libexec/PlistBuddy \\\n  -c \"Set :CFBundleShortVersionString $version\" \\\n  -c \"Set :CFBundleVersion           $version\" \\\n  -c \"Set :CFBundleGetInfoString    $version\" \\\n  \"$plist\"\n  \n# ---\n\n";
 		};
-		A60D023826844E6500E19362 /* ShellScript */ = {
+		A69FF3DC2E14A06D00AFF7A8 /* Make symlink to iTerm */ = {
 			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/Makefile",
+				"$(DERIVED_SOURCES_DIR)/iTerm2-Swift.h",
 			);
+			name = "Make symlink to iTerm";
 			outputFileListPaths = (
 			);
 			outputPaths = (
+				"$(PROJECT_DERIVED_FILE_DIR)/iTerm2-Swift.h",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -19636,7 +19639,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -19689,7 +19692,6 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
-					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2;
 				PRODUCT_NAME = iTerm2;
@@ -19770,7 +19772,6 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
-					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
 				PRODUCT_NAME = iTerm2ForApplescriptTesting;
@@ -19843,7 +19844,6 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
-					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
 				PRODUCT_NAME = iTerm2ForApplescriptTesting;
@@ -19914,7 +19914,6 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
-					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
 				PRODUCT_NAME = iTerm2ForApplescriptTesting;
@@ -20004,7 +20003,6 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
-					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.google.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -20086,7 +20084,6 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
-					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.google.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -20168,7 +20165,6 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
-					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.google.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -20383,7 +20379,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-DSANDBOXED_WORKER";
 				OTHER_CODE_SIGN_FLAGS = "";
-				OTHER_LDFLAGS = "-ld_classic";
+				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.sandboxed-worker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -20458,7 +20454,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_CFLAGS = "-DSANDBOXED_WORKER";
-				OTHER_LDFLAGS = "-ld_classic";
+				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.sandboxed-worker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -20532,7 +20528,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_CFLAGS = "-DSANDBOXED_WORKER";
-				OTHER_LDFLAGS = "-ld_classic";
+				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.sandboxed-worker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -20606,7 +20602,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_CFLAGS = "-DSANDBOXED_WORKER";
-				OTHER_LDFLAGS = "-ld_classic";
+				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.sandboxed-worker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -20675,7 +20671,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CODE_SIGN_FLAGS = "";
-				OTHER_LDFLAGS = "-ld_classic";
+				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -20732,7 +20728,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				OTHER_LDFLAGS = "-ld_classic";
+				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -20789,7 +20785,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				OTHER_LDFLAGS = "-ld_classic";
+				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -20846,7 +20842,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				OTHER_LDFLAGS = "-ld_classic";
+				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -20918,7 +20914,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -20967,7 +20963,6 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
-					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2;
 				PRODUCT_NAME = iTerm2;
@@ -21055,7 +21050,6 @@
 					"-laprutil-1",
 					"-licucore",
 					"-ObjC",
-					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.google.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -21164,7 +21158,6 @@
 					"-laprutil-1",
 					"-licucore",
 					"-ObjC",
-					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
 				PRODUCT_NAME = iTerm2ForApplescriptTesting;
@@ -21449,7 +21442,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-DITERM_SERVER=1";
 				OTHER_CODE_SIGN_FLAGS = "";
-				OTHER_LDFLAGS = "-ld_classic";
+				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -21507,7 +21500,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_CFLAGS = "-DITERM_SERVER=1";
-				OTHER_LDFLAGS = "-ld_classic";
+				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -21565,7 +21558,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_CFLAGS = "-DITERM_SERVER=1";
-				OTHER_LDFLAGS = "-ld_classic";
+				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -21623,7 +21616,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_CFLAGS = "-DITERM_SERVER=1";
-				OTHER_LDFLAGS = "-ld_classic";
+				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -21948,7 +21941,6 @@
 					"-liconv",
 					"-lz",
 					$PROJECT_DIR/ThirdParty/libgit2/lib/libgit2.a,
-					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.pidinfo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -22028,7 +22020,6 @@
 					"-liconv",
 					"-lz",
 					$PROJECT_DIR/ThirdParty/libgit2/lib/libgit2.a,
-					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.pidinfo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -22108,7 +22099,6 @@
 					"-liconv",
 					"-lz",
 					$PROJECT_DIR/ThirdParty/libgit2/lib/libgit2.a,
-					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.pidinfo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -22188,7 +22178,6 @@
 					"-liconv",
 					"-lz",
 					$PROJECT_DIR/ThirdParty/libgit2/lib/libgit2.a,
-					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.pidinfo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -22610,7 +22599,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CODE_SIGN_FLAGS = "";
-				OTHER_LDFLAGS = "-ld_classic";
+				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTerm2ImportStatus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -22684,7 +22673,7 @@
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				OTHER_LDFLAGS = "-ld_classic";
+				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTerm2ImportStatus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -22758,7 +22747,7 @@
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				OTHER_LDFLAGS = "-ld_classic";
+				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTerm2ImportStatus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -22832,7 +22821,7 @@
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				OTHER_LDFLAGS = "-ld_classic";
+				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTerm2ImportStatus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -23535,7 +23524,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_HARDENED_RUNTIME = NO;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -23590,7 +23579,6 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
-					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2;
 				PRODUCT_NAME = iTerm2;
@@ -23631,7 +23619,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -23680,7 +23668,6 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
-					"-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2;
 				PRODUCT_NAME = iTerm2;

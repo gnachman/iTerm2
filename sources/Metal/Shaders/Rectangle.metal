@@ -19,7 +19,7 @@ vertex iTermRectangleVertexFunctionOutput
 iTermRectangleVertexShader(uint vertexID [[ vertex_id ]],
                            constant iTermVertex *vertexArray [[ buffer(iTermVertexInputIndexVertices) ]],
                            constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]],
-                           device vector_float4 *color [[ buffer(iTermVertexColorArray) ]],
+                           constant vector_float4 *color [[ buffer(iTermVertexColorArray) ]],
                            unsigned int iid [[instance_id]]) {
     iTermRectangleVertexFunctionOutput out;
 
