@@ -466,19 +466,19 @@ class iTermBrowserToolbar: NSView {
 
 @available(macOS 11.0, *)
 extension iTermBrowserToolbar: iTermURLBarDelegate {
-    func urlBar(_ urlBar: iTermURLBar, didSubmitURL url: String) {
+    func urlBarDidSubmitURL(url: String) {
         delegate?.browserToolbarDidSubmitURL(url)
     }
     
-    func urlBar(_ urlBar: iTermURLBar, didRequestSuggestions query: String) async -> [URLSuggestion] {
+    func urlBarDidRequestSuggestions(query: String) async -> [URLSuggestion] {
         return await delegate?.browserToolbarDidRequestSuggestions(query) ?? []
     }
     
-    func urlBarDidBeginEditing(_ urlBar: iTermURLBar, string: String) -> String? {
+    func urlBarDidBeginEditing(string: String) -> String? {
         return delegate?.browserToolbarDidBeginEditingURL(string: string)
     }
     
-    func urlBarDidEndEditing(_ urlBar: iTermURLBar) {
+    func urlBarDidEndEditing() {
         delegate?.browserToolbarUserDidSubmitNavigationRequest()
     }
 }

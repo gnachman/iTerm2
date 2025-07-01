@@ -137,6 +137,7 @@ class iTermURLTextField: NSScrollView {
         hasHorizontalScroller = false
         borderType = .noBorder
         drawsBackground = false
+        focusRingType = .none
         
         // Set up constraints to maintain single-line height
         textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude,
