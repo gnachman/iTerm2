@@ -20,6 +20,12 @@ func detectFavicon(webView: WKWebView) async throws -> Either<NSImage, URL> {
     if currentURL.absoluteString.hasPrefix(iTermBrowserSchemes.about + ":") {
         return .left(NSApp.applicationIconImage)
     }
+    
+    // For file: URLs, use the system icon for that file
+    if currentURL.scheme == "file", let path = currentURL.path.removingPercentEncoding {
+        let fileIcon = NSWorkspace.shared.icon(forFile: path)
+        return .left(fileIcon)
+    }
 
     // JavaScript to find favicon links in the page
     let script = iTermBrowserTemplateLoader.loadTemplate(named: "detect-favicon",
