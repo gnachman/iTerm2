@@ -98,7 +98,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         self.navigationState = navigationState
         self.localPageManager = iTermBrowserLocalPageManager(user: user,
                                                              historyController: historyController)
-        self.namedMarkManager = iTermBrowserNamedMarkManager()
+        self.namedMarkManager = iTermBrowserNamedMarkManager(user: user)
         super.init()
 
         localPageManager.delegate = self

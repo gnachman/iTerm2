@@ -7,16 +7,6 @@
 
 import WebKit
 
-extension URL {
-    var withoutFragment: URL? {
-        guard var components = URLComponents(url: self, resolvingAgainstBaseURL: false) else {
-            return nil
-        }
-        components.fragment = nil
-        return components.url
-    }
-}
-
 @available(macOS 11, *)
 class iTermBrowserNamedMark: NSObject, iTermGenericNamedMarkReading {
     let url: URL
@@ -83,30 +73,96 @@ class iTermBrowserNamedMark: NSObject, iTermGenericNamedMarkReading {
 class iTermBrowserNamedMarkManager {
     static let messageHandlerName = "iTerm2NamedMarkUpdate"
     static let layoutUpdateHandlerName = "iTerm2MarkLayoutUpdate"
-    private var _namedMarks = [iTermBrowserNamedMark]()
     private var pendingNavigationMark: iTermBrowserNamedMark?
     private let secret: String
-
-    private var nextSort = 0
+    private let user: iTermBrowserUser
+    private var _cachedNamedMarks: [iTermBrowserNamedMark] = []
     
-    init?() {
+    init?(user: iTermBrowserUser) {
         guard let secret = String.makeSecureHexString() else {
             return nil
         }
         self.secret = secret
+        self.user = user
+        
+        // Load marks from database in background
+        loadMarksFromDatabase()
+    }
+    
+    private func loadMarksFromDatabase() {
+        Task {
+            guard let db = await BrowserDatabase.instance(for: user) else { return }
+            let dbMarks = await db.getAllNamedMarks()
+            
+            let marks = dbMarks.compactMap { dbMark -> iTermBrowserNamedMark? in
+                guard let url = URL(string: dbMark.url) else { return nil }
+                return iTermBrowserNamedMark(
+                    url: url,
+                    name: dbMark.name,
+                    sort: Int(dbMark.sort ?? 0),
+                    guid: dbMark.guid,
+                    text: dbMark.text
+                )
+            }
+            
+            await MainActor.run {
+                self._cachedNamedMarks = marks
+                self.postNamedMarksDidChangeNotification()
+            }
+        }
+    }
+    
+    private func postNamedMarksDidChangeNotification() {
+        NamedMarksDidChangeNotification(sessionGuid: nil).post()
+    }
+    
+    private func refreshCacheAndNotify(currentPageUrl: String? = nil) async {
+        guard let db = await BrowserDatabase.instance(for: user) else { 
+            DLog("Failed to get database instance in refreshCacheAndNotify")
+            return 
+        }
+        let dbMarks = await db.getAllNamedMarks(sortBy: currentPageUrl)
+        DLog("Retrieved \(dbMarks.count) marks from database")
+        
+        let marks = dbMarks.compactMap { dbMark -> iTermBrowserNamedMark? in
+            guard let url = URL(string: dbMark.url) else { return nil }
+            return iTermBrowserNamedMark(
+                url: url,
+                name: dbMark.name,
+                sort: Int(dbMark.sort ?? 0),
+                guid: dbMark.guid,
+                text: dbMark.text
+            )
+        }
+        
+        await MainActor.run {
+            self._cachedNamedMarks = marks
+            DLog("Updated cache with \(marks.count) marks, posting notification")
+            self.postNamedMarksDidChangeNotification()
+        }
+    }
+    
+    func getNamedMarksSortedByCurrentPage(currentPageUrl: String) async -> [iTermBrowserNamedMark] {
+        guard let db = await BrowserDatabase.instance(for: user) else { return [] }
+        let dbMarks = await db.getAllNamedMarks(sortBy: currentPageUrl)
+        
+        return dbMarks.compactMap { dbMark -> iTermBrowserNamedMark? in
+            guard let url = URL(string: dbMark.url) else { return nil }
+            return iTermBrowserNamedMark(
+                url: url,
+                name: dbMark.name,
+                sort: Int(dbMark.sort ?? 0),
+                guid: dbMark.guid,
+                text: dbMark.text
+            )
+        }
     }
 }
 
 @available(macOS 11, *)
 extension iTermBrowserNamedMarkManager {
     var namedMarks: [iTermBrowserNamedMark] {
-        get {
-            _namedMarks
-        }
-        set {
-            _namedMarks = newValue
-            nextSort = _namedMarks.map { $0.namedMarkSort }.max() ?? 0
-        }
+        return _cachedNamedMarks
     }
 
     func add(with name: String, webView: WKWebView, httpMethod: String?, clickPoint: NSPoint? = nil) async throws {
@@ -164,12 +220,24 @@ extension iTermBrowserNamedMarkManager {
             
             guard let markURL = components?.url else { return }
             
-            // Create and store the named mark
-            let mark = iTermBrowserNamedMark(url: markURL, name: name, sort: nextSort, guid: UUID().uuidString)
-            nextSort += 1
+            // Create and store the named mark in database
+            let guid = UUID().uuidString
             
-            // Add the new mark
-            self.namedMarks.append(mark)
+            // Add to database
+            guard let db = await BrowserDatabase.instance(for: user) else {
+                throw iTermError("Failed to get database instance")
+            }
+            
+            let success = await db.addNamedMark(guid: guid, url: markURL.absoluteString, name: name, text: "")
+            DLog("Database add result: \(success) for mark '\(name)' with URL: \(markURL.absoluteString)")
+            
+            if !success {
+                throw iTermError("Failed to save named mark to database")
+            }
+            
+            // Refresh cache and notify clients
+            DLog("Refreshing cache and notifying clients after adding mark")
+            await refreshCacheAndNotify()
             
             // Refresh annotations to show the new mark
             reloadAnnotations(webView: webView)
@@ -180,40 +248,58 @@ extension iTermBrowserNamedMarkManager {
     }
     
     func rename(_ mark: iTermBrowserNamedMark, to newName: String, webView: WKWebView) {
-        if let i = namedMarks.firstIndex(where: { $0.guid == mark.guid }) {
-            namedMarks[i] = iTermBrowserNamedMark(url: mark.url,
-                                                  name: newName,
-                                                  sort: mark.namedMarkSort,
-                                                  guid: mark.guid,
-                                                  text: mark.text)
+        Task {
+            guard let db = await BrowserDatabase.instance(for: user) else { return }
             
-            // Refresh annotations to show the updated name
-            reloadAnnotations(webView: webView)
+            let success = await db.updateNamedMarkName(guid: mark.guid, name: newName)
+            if success {
+                // Refresh cache and notify clients
+                await refreshCacheAndNotify()
+                
+                // Refresh annotations to show the updated name
+                reloadAnnotations(webView: webView)
+            }
         }
     }
     
     func updateText(_ mark: iTermBrowserNamedMark, text: String, webView: WKWebView) {
-        if let i = namedMarks.firstIndex(where: { $0.guid == mark.guid }) {
-            namedMarks[i].text = text
+        Task {
+            guard let db = await BrowserDatabase.instance(for: user) else { return }
             
-            // Refresh annotations to show the updated mark
-            reloadAnnotations(webView: webView)
+            let success = await db.updateNamedMarkText(guid: mark.guid, text: text)
+            if success {
+                // Refresh cache and notify clients
+                await refreshCacheAndNotify()
+                
+                // Refresh annotations to show the updated mark
+                reloadAnnotations(webView: webView)
+            }
         }
     }
 
     func remove(_ mark: iTermBrowserNamedMark) {
-        namedMarks.removeAll {
-            $0.guid == mark.guid
+        Task {
+            guard let db = await BrowserDatabase.instance(for: user) else { return }
+            let success = await db.removeNamedMark(guid: mark.guid)
+            if success {
+                // Refresh cache and notify clients
+                await refreshCacheAndNotify()
+            }
         }
     }
     
     func remove(_ mark: iTermBrowserNamedMark, webView: WKWebView) {
-        namedMarks.removeAll {
-            $0.guid == mark.guid
+        Task {
+            guard let db = await BrowserDatabase.instance(for: user) else { return }
+            let success = await db.removeNamedMark(guid: mark.guid)
+            if success {
+                // Refresh cache and notify clients
+                await refreshCacheAndNotify()
+                
+                // Refresh annotations after removing the mark
+                reloadAnnotations(webView: webView)
+            }
         }
-        
-        // Refresh annotations after removing the mark
-        reloadAnnotations(webView: webView)
     }
 
     func reveal(_ namedMark: iTermBrowserNamedMark, webView: WKWebView) {
@@ -235,6 +321,14 @@ extension iTermBrowserNamedMarkManager {
             if pendingNavigationMark != nil {
                 navigateToMark(webView: webView)
             }
+            
+            // Refresh cache with current page URL for sorting
+            if let currentURL = webView.url {
+                Task {
+                    await refreshCacheAndNotify(currentPageUrl: currentURL.absoluteString)
+                }
+            }
+            
             // Show annotations for any marks on this page
             reloadAnnotations(webView: webView)
             // Set up layout change monitoring
@@ -418,12 +512,31 @@ extension iTermBrowserNamedMarkManager {
     private func reloadAnnotations(webView: WKWebView) {
         guard let currentURL = webView.url else { return }
         
-        // Find marks for this page (ignoring fragment)
-        let marksForPage = namedMarks.filter { mark in
-            mark.url.withoutFragment == currentURL.withoutFragment
+        Task {
+            guard let db = await BrowserDatabase.instance(for: user) else { return }
+            
+            // Get marks for this URL from database
+            let dbMarks = await db.getNamedMarksForUrl(currentURL.absoluteString)
+            
+            // Convert to iTermBrowserNamedMark objects
+            let marksForPage = dbMarks.compactMap { dbMark -> iTermBrowserNamedMark? in
+                guard let url = URL(string: dbMark.url) else { return nil }
+                return iTermBrowserNamedMark(
+                    url: url,
+                    name: dbMark.name,
+                    sort: Int(dbMark.sort ?? 0),
+                    guid: dbMark.guid,
+                    text: dbMark.text
+                )
+            }
+            
+            guard !marksForPage.isEmpty else { return }
+            
+            await showAnnotations(marksForPage: marksForPage, webView: webView)
         }
-        
-        guard !marksForPage.isEmpty else { return }
+    }
+    
+    private func showAnnotations(marksForPage: [iTermBrowserNamedMark], webView: WKWebView) async {
         
         // Convert marks to JavaScript format
         var markData: [[String: Any]] = []
@@ -552,74 +665,21 @@ extension iTermBrowserNamedMarkManager {
     }
     
     private func processMarkPositionUpdates(updates: [[String: Any]], webView: WKWebView) async {
-        var hasUpdates = false
-        
-        for update in updates {
+        // Position updates from layout changes should not modify the stored URL
+        // The URL contains XPath and text fragment which are stable identifiers
+        // We just update the annotations to reflect new positions visually
+        let hasUpdates = updates.anySatisfies { update in
             guard let guid = update["guid"] as? String,
-                  let newScrollY = update["scrollY"] as? Int,
-                  let newOffsetY = update["offsetY"] as? Int,
-                  let markIndex = namedMarks.firstIndex(where: { $0.guid == guid }) else {
-                continue
+                  update["scrollY"] is Int,
+                  update["offsetY"] is Int,
+                  namedMarks.first(where: { $0.guid == guid }) != nil else {
+                return false
             }
-            
-            let currentMark = namedMarks[markIndex]
-            
-            // Parse current fragment to update scroll and offset values
-            guard let fragment = currentMark.url.fragment,
-                  fragment.hasPrefix("iterm-mark:") else {
-                continue
-            }
-            
-            let paramString = String(fragment.dropFirst("iterm-mark:".count))
-            var params: [String: String] = [:]
-            for pair in paramString.split(separator: "&") {
-                let components = pair.split(separator: "=", maxSplits: 1)
-                if components.count == 2 {
-                    let key = String(components[0])
-                    let value = String(components[1])
-                    params[key] = value.removingPercentEncoding ?? value
-                }
-            }
-            
-            // Update scroll and offset values
-            params["scrollY"] = String(newScrollY)
-            params["offsetY"] = String(newOffsetY)
-            
-            // Rebuild fragment
-            var newParamPairs: [String] = []
-            for (key, value) in params {
-                if key == "textFragment" {
-                    // Re-encode text fragment
-                    if let encoded = value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
-                        newParamPairs.append("\(key)=\(encoded)")
-                    }
-                } else {
-                    newParamPairs.append("\(key)=\(value)")
-                }
-            }
-            
-            let newFragment = "iterm-mark:" + newParamPairs.joined(separator: "&")
-            
-            // Create new URL with updated fragment
-            var components = URLComponents(url: currentMark.url, resolvingAgainstBaseURL: false)
-            components?.fragment = newFragment
-            
-            if let newURL = components?.url {
-                // Update the mark
-                namedMarks[markIndex] = iTermBrowserNamedMark(
-                    url: newURL,
-                    name: currentMark.name ?? "Unnamed",
-                    sort: currentMark.namedMarkSort,
-                    guid: currentMark.guid,
-                    text: currentMark.text
-                )
-                hasUpdates = true
-                DLog("Updated mark position for: \(currentMark.name ?? "Unnamed")")
-            }
+            return true
         }
-        
+
         if hasUpdates {
-            // Refresh annotations to show updated positions
+            // Just refresh the visual annotations with current positions
             reloadAnnotations(webView: webView)
         }
     }

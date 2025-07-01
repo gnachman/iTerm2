@@ -162,15 +162,13 @@ extension iTermBrowserViewController {
         if let restorableState, let dict = restorableState as? [String: Any] {
             let state = iTermBrowserRestorableState.create(from: dict)
             interactionState = state.interactionState
-            browserManager.namedMarkManager?.namedMarks = state.namedMarks
         } else if let url {
             loadURL(url)
         }
     }
 
     @objc var restorableState: NSDictionary {
-        let state = iTermBrowserRestorableState(interactionState: interactionState as? NSData,
-                                                namedMarks: browserManager.namedMarkManager?.namedMarks ?? [])
+        let state = iTermBrowserRestorableState(interactionState: interactionState as? NSData)
         return state.dictionaryValue as NSDictionary
     }
 
@@ -327,7 +325,7 @@ extension iTermBrowserViewController {
     func renameNamedMark(_ mark: iTermGenericNamedMarkReading, to name: String) {
         if let myMark = mark as? iTermBrowserNamedMark {
             browserManager.namedMarkManager?.rename(myMark, to: name, webView: browserManager.webView)
-            NamedMarksDidChangeNotification(sessionGuid: self.sessionGuid).post()
+            NamedMarksDidChangeNotification(sessionGuid: nil).post()
         }
     }
 
@@ -335,12 +333,19 @@ extension iTermBrowserViewController {
     func removeNamedMark(_ mark: iTermGenericNamedMarkReading) {
         if let myMark = mark as? iTermBrowserNamedMark {
             browserManager.namedMarkManager?.remove(myMark, webView: browserManager.webView)
-            NamedMarksDidChangeNotification(sessionGuid: self.sessionGuid).post()
+            NamedMarksDidChangeNotification(sessionGuid: nil).post()
         }
     }
 
     @objc(namedMarks)
     var namedMarks: [iTermGenericNamedMarkReading] {
+        return browserManager.namedMarkManager?.namedMarks ?? []
+    }
+    
+    @objc(namedMarksSortedByCurrentPage)
+    var namedMarksSortedByCurrentPage: [iTermGenericNamedMarkReading] {
+        // If they're not loaded yet return an empty array and we'll post a
+        // refresh notification when they're ready.
         return browserManager.namedMarkManager?.namedMarks ?? []
     }
 
@@ -768,7 +773,7 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
                                                     webView: self.browserManager.webView,
                                                     httpMethod: self.browserManager.currentHTTPMethod,
                                                     clickPoint: point)
-                NamedMarksDidChangeNotification(sessionGuid: self.sessionGuid).post()
+                NamedMarksDidChangeNotification(sessionGuid: nil).post()
             }
         }
     }
@@ -905,7 +910,7 @@ extension iTermBrowserViewController {
                 try await self.browserManager.namedMarkManager?.add(with: name,
                                                     webView: self.browserManager.webView,
                                                     httpMethod: self.browserManager.currentHTTPMethod)
-                NamedMarksDidChangeNotification(sessionGuid: self.sessionGuid).post()
+                NamedMarksDidChangeNotification(sessionGuid: nil).post()
             }
         }
     }
