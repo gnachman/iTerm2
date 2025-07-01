@@ -41,7 +41,7 @@
 	<key>DTXcodeBuild</key>
 	<string>16F6</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>10.15</string>
+	<string>12.4</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2019 George Nachman. All rights reserved.</string>
 </dict>
