@@ -9764,7 +9764,7 @@ instead of the system keyboard.</string>
             <rect key="frame" x="0.0" y="0.0" width="629" height="317"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <visualEffectView fixedFrame="YES" blendingMode="behindWindow" material="appearanceBased" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="hsQ-SE-Bcy">
+                <visualEffectView fixedFrame="YES" blendingMode="behindWindow" material="popover" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="hsQ-SE-Bcy">
                     <rect key="frame" x="0.0" y="0.0" width="629" height="317"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     <subviews>

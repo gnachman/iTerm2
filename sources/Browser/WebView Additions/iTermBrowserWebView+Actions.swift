@@ -310,7 +310,7 @@ extension iTermBrowserWebView {
                     let beforeCount = beforeMatchingRange?.count ?? 0
                     let afterCount = afterMatchingRange?.count ?? 0
                     if beforeCount > 0 && afterCount > 0 {
-                        DLog("Best score so far for \(matchingText) is \(matches[matchingText]?.score) versus this one which has a score of \(score)")
+                        DLog("Best score so far for \(matchingText) is \((matches[matchingText]?.score).d) versus this one which has a score of \(score)")
                         if (matches[matchingText]?.score ?? 0) < score {
                             let components = (0..<result.numberOfRanges).map { i in
                                 let range = result.range(at: i)

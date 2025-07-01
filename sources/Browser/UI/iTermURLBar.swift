@@ -584,8 +584,8 @@ extension iTermURLBarGuts: NSTextFieldDelegate {
     func controlTextDidEndEditing(_ obj: Notification) {
         isTextFieldFocused = false
         superview?.needsDisplay = true
-        Dog("iTermURLBar: controlTextDidEndEditing")
-        Dog("  setting shouldSelectAllOnFirstClick to true")
+        DLog("iTermURLBar: controlTextDidEndEditing")
+        DLog("  setting shouldSelectAllOnFirstClick to true")
         DispatchQueue.main.async { [weak self] in
             if let textField = self?.textField, !textField.textFieldIsFirstResponder() {
                 DLog("iTermURLBar: Hide suggstions")

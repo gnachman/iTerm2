@@ -605,10 +605,10 @@ static _Atomic int gPerformingJoinedBlock;
     const BOOL shouldMoveSelectionIfUnsent = haveScrollRegion && grid.cursor.y == VT100GridRangeMax(grid.scrollRegionRows);
     BOOL sent = NO;
     [self incrementOverflowBy:[grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBufferToUse
-                                                                         unlimitedScrollback:self.unlimitedScrollback
-                                                                     useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
-                                                                                  willScroll:nil
-                                                                            sentToLineBuffer:&sent]];
+                                                             unlimitedScrollback:self.unlimitedScrollback
+                                                         useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
+                                                                      willScroll:nil
+                                                                sentToLineBuffer:&sent]];
 
     if (!sent && shouldMoveSelectionIfUnsent) {
         const VT100GridRect rect = [grid scrollRegionRect];
@@ -1055,7 +1055,7 @@ static _Atomic int gPerformingJoinedBlock;
     const int cursorX = self.currentGrid.cursor.x;
     if (delta > 0) {
         for (int i = 0; i < delta && self.currentGrid.cursor.y > 0; i++) {
-          DLog(@"Scroll up");
+            DLog(@"Scroll up");
             [self incrementOverflowBy:
              [self.currentGrid scrollWholeScreenUpIntoLineBuffer:self.linebuffer unlimitedScrollback:self.unlimitedScrollback]];
             [self.currentGrid setCursor:VT100GridCoordMake(cursorX, self.currentGrid.cursor.y - 1)];
@@ -1153,7 +1153,7 @@ static _Atomic int gPerformingJoinedBlock;
 - (void)scrollScreenIntoHistoryWithLineBuffer:(LineBuffer *)lineBuffer {
     const int n = MAX(self.lastGridLineWithKittyImage,
                       MAX(self.lastGridLineWithVisibleMarkOrAnnotation + 1,
-                      [self.currentGrid numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:YES]));
+                          [self.currentGrid numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:YES]));
     for (int i = 0; i < n; i++) {
         [self incrementOverflowBy:
          [self.currentGrid scrollWholeScreenUpIntoLineBuffer:lineBuffer
@@ -1787,7 +1787,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                                   self.numberOfScrollbackLines)
                             startingAfter:self.numberOfScrollbackLines - count - 1
                               downByLines:count];
-     // Move content down so prompt ends at the bottom of the screen. This is based on the cursor's
+    // Move content down so prompt ends at the bottom of the screen. This is based on the cursor's
     // position.
     self.currentGrid.cursorY -= count;
     [self movePromptUnderComposerIfNeeded];
@@ -4246,7 +4246,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                           startingAfter:(int)startingAfter
                             downByLines:(int)deltaLines {
     DLog(@"shiftIntervalTreeObjectsInRange:%@ startingAfter:%@ downByLines:%@",
-          VT100GridCoordRangeDescription(inputRange), @(startingAfter), @(deltaLines));
+         VT100GridCoordRangeDescription(inputRange), @(startingAfter), @(deltaLines));
     Interval *intervalToMove =
     [self intervalForGridCoordRange:inputRange];
 
@@ -4293,8 +4293,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     for (NSValue *value in [self.currentGrid rectsForRun:run]) {
         VT100GridRect rect = [value gridRectValue];
         [self.currentGrid setURL:url
-                          inRectFrom:rect.origin
-                                  to:VT100GridRectMax(rect)];
+                      inRectFrom:rect.origin
+                              to:VT100GridRectMax(rect)];
     }
 }
 
@@ -4402,7 +4402,7 @@ lengthExcludingInBandSignaling:(int)lengthExcludingInBandSignaling
     [_echoProbe updateEchoProbeStateWithTokenCVector:&vector];
     [_tokenExecutor addTokens:vector
                   lengthTotal:lengthTotal
-           lengthExcludingInBandSignaling:lengthExcludingInBandSignaling
+lengthExcludingInBandSignaling:lengthExcludingInBandSignaling
                  highPriority:highPriority];
 }
 
@@ -4421,7 +4421,10 @@ lengthExcludingInBandSignaling:(int)lengthExcludingInBandSignaling
         CVectorDestroy(&vector);
         return;
     }
-    [self addTokens:vector length:data.length highPriority:YES];
+    [self addTokens:vector
+        lengthTotal:data.length
+lengthExcludingInBandSignaling:data.length
+       highPriority:YES];
 }
 
 #pragma mark - Triggers
@@ -4468,7 +4471,7 @@ lengthExcludingInBandSignaling:(int)lengthExcludingInBandSignaling
 
 - (BOOL)shouldEvaluateTriggers {
     return (_triggerEvaluator.haveTriggersOrExpectations ||
-             self.config.loggingEnabled ||
+            self.config.loggingEnabled ||
             _postTriggerActions.count != 0);
 }
 
@@ -6244,10 +6247,10 @@ launchCoprocessWithCommand:(NSString *)command
 }
 
 - (void)tokenExecutorDidExecuteWithLengthTotal:(NSInteger)lengthTotal
-                            lengthExcludingInBandSignaling:(NSInteger)lengthExcludingInBandSignaling
+                lengthExcludingInBandSignaling:(NSInteger)lengthExcludingInBandSignaling
                                     throughput:(NSInteger)throughput {
     [_executorUpdate addBytesExecutedTotal:lengthTotal
-                              excludingInBandSignaling:lengthExcludingInBandSignaling];
+                  excludingInBandSignaling:lengthExcludingInBandSignaling];
     _executorUpdate.estimatedThroughput = throughput;
     [_executorUpdateScheduler markNeedsUpdate];
 }
