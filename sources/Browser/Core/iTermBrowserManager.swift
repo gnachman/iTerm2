@@ -27,6 +27,7 @@ protocol iTermBrowserManagerDelegate: AnyObject {
     func browserManagerDidRequestAddNamedMark(_ manager: iTermBrowserManager, atPoint point: NSPoint)
     func browserManager(_ manager: iTermBrowserManager, didChangeReaderModeState isActive: Bool)
     func browserManager(_ manager: iTermBrowserManager, didChangeDistractionRemovalState isActive: Bool)
+    func browserManager(_ manager: iTermBrowserManager, didReceiveNamedMarkUpdate guid: String, text: String)
     func browserManagerSetMouseInfo(
         _ browserManager: iTermBrowserManager,
         pointInView: NSPoint,
@@ -71,6 +72,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     let passwordWriter = iTermBrowserPasswordWriter()
     private let selectionMonitor = iTermBrowserSelectionMonitor()
     private let contextMenuMonitor = iTermBrowserContextMenuMonitor()
+    let namedMarkManager: iTermBrowserNamedMarkManager?
     let sessionGuid: String
     let historyController: iTermBrowserHistoryController
     private let navigationState: iTermBrowserNavigationState
@@ -96,6 +98,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         self.navigationState = navigationState
         self.localPageManager = iTermBrowserLocalPageManager(user: user,
                                                              historyController: historyController)
+        self.namedMarkManager = iTermBrowserNamedMarkManager()
         super.init()
 
         localPageManager.delegate = self
@@ -257,6 +260,12 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
 
             readerModeManager.delegate = self
             configuration.userContentController.add(readerModeManager, name: "readerMode")
+            
+            // Add message handler for named mark updates
+            if namedMarkManager != nil {
+                configuration.userContentController.add(self, name: iTermBrowserNamedMarkManager.messageHandlerName)
+                configuration.userContentController.add(self, name: iTermBrowserNamedMarkManager.layoutUpdateHandlerName)
+            }
 
             // Register custom URL scheme handler for iterm2-about: URLs
             configuration.setURLSchemeHandler(self, forURLScheme: iTermBrowserSchemes.about)
@@ -843,6 +852,14 @@ extension iTermBrowserManager {
 
         case iTermBrowserContextMenuMonitor.messageHandlerName:
             contextMenuMonitor?.handleMessage(message, webView: webView)
+            
+        case iTermBrowserNamedMarkManager.messageHandlerName:
+            if let result = namedMarkManager?.handleMessage(webView: webView, message: message) {
+                delegate?.browserManager(self, didReceiveNamedMarkUpdate: result.guid, text: result.text)
+            }
+            
+        case iTermBrowserNamedMarkManager.layoutUpdateHandlerName:
+            namedMarkManager?.handleLayoutUpdateMessage(webView: webView, message: message)
 
         default:
             DLog(message.name)

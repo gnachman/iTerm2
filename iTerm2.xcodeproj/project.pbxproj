@@ -3064,6 +3064,12 @@
 		A69FF3B72E13173400AFF7A8 /* monitor-context-menu.js in Resources */ = {isa = PBXBuildFile; fileRef = A69FF3B62E1316CD00AFF7A8 /* monitor-context-menu.js */; };
 		A69FF3B82E13173400AFF7A8 /* monitor-context-menu.js in Resources */ = {isa = PBXBuildFile; fileRef = A69FF3B62E1316CD00AFF7A8 /* monitor-context-menu.js */; };
 		A69FF3B92E13173400AFF7A8 /* monitor-context-menu.js in Resources */ = {isa = PBXBuildFile; fileRef = A69FF3B62E1316CD00AFF7A8 /* monitor-context-menu.js */; };
+		A69FF3BB2E139DBA00AFF7A8 /* extract-text-fragment.js in Resources */ = {isa = PBXBuildFile; fileRef = A69FF3BA2E139DBA00AFF7A8 /* extract-text-fragment.js */; };
+		A69FF3BC2E139DBA00AFF7A8 /* extract-text-fragment.js in Resources */ = {isa = PBXBuildFile; fileRef = A69FF3BA2E139DBA00AFF7A8 /* extract-text-fragment.js */; };
+		A69FF3BD2E139DBA00AFF7A8 /* extract-text-fragment.js in Resources */ = {isa = PBXBuildFile; fileRef = A69FF3BA2E139DBA00AFF7A8 /* extract-text-fragment.js */; };
+		A69FF3BF2E13A23600AFF7A8 /* update-mark-positions.js in Resources */ = {isa = PBXBuildFile; fileRef = A69FF3BE2E13A23600AFF7A8 /* update-mark-positions.js */; };
+		A69FF3C02E13A23600AFF7A8 /* update-mark-positions.js in Resources */ = {isa = PBXBuildFile; fileRef = A69FF3BE2E13A23600AFF7A8 /* update-mark-positions.js */; };
+		A69FF3C12E13A23600AFF7A8 /* update-mark-positions.js in Resources */ = {isa = PBXBuildFile; fileRef = A69FF3BE2E13A23600AFF7A8 /* update-mark-positions.js */; };
 		A6A13AA218C2D23300B241ED /* iTermColorMap.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA018C2D23300B241ED /* iTermColorMap.h */; };
 		A6A13AA718C2D45900B241ED /* NSColor+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */; };
 		A6A13AAC18C3347200B241ED /* VT100Output.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AAA18C3347200B241ED /* VT100Output.h */; };
@@ -7741,6 +7747,8 @@
 		A69FF3B02E13120F00AFF7A8 /* monitor-selection.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "monitor-selection.js"; sourceTree = "<group>"; };
 		A69FF3B42E1316C800AFF7A8 /* iTermBrowserContextMenuMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserContextMenuMonitor.swift; sourceTree = "<group>"; };
 		A69FF3B62E1316CD00AFF7A8 /* monitor-context-menu.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "monitor-context-menu.js"; sourceTree = "<group>"; };
+		A69FF3BA2E139DBA00AFF7A8 /* extract-text-fragment.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "extract-text-fragment.js"; sourceTree = "<group>"; };
+		A69FF3BE2E13A23600AFF7A8 /* update-mark-positions.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "update-mark-positions.js"; sourceTree = "<group>"; };
 		A6A13AA018C2D23300B241ED /* iTermColorMap.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermColorMap.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA118C2D23300B241ED /* iTermColorMap.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermColorMap.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -13609,12 +13617,14 @@
 		A6FE7AA32E0F10A900BEBCE4 /* Marks */ = {
 			isa = PBXGroup;
 			children = (
+				A69FF3BA2E139DBA00AFF7A8 /* extract-text-fragment.js */,
 				A6FE7ABF2E0F418900BEBCE4 /* get-viewport-center-xpath.js */,
 				A612206A2E0F4C2400F48E64 /* get-xpath-at-point.js */,
-				A6FE7AA42E0F10B300BEBCE4 /* iTermBrowserNamedMarkManager.swift */,
 				A6FE7AB52E0F27DD00BEBCE4 /* navigate-to-named-mark.js */,
 				A61220662E0F469400F48E64 /* show-named-mark-annotations.js */,
+				A69FF3BE2E13A23600AFF7A8 /* update-mark-positions.js */,
 				A612206B2E0F4C2400F48E64 /* xpath-utils.js */,
+				A6FE7AA42E0F10B300BEBCE4 /* iTermBrowserNamedMarkManager.swift */,
 			);
 			path = Marks;
 			sourceTree = "<group>";
@@ -15820,6 +15830,7 @@
 				A623D9501F8984710011F8C3 /* key@2x.png in Resources */,
 				1D6ED9AF19AEA20D005A7799 /* UKCrashReporter.strings in Resources */,
 				A697CEC82D98CEB00031583F /* OpenQuicklyMenuItem.png in Resources */,
+				A69FF3BC2E139DBA00AFF7A8 /* extract-text-fragment.js in Resources */,
 				A6EC0B0B2C87DF5E00598D20 /* uniE0D6_Powerline_normal-right-inverse-cutout.pdf in Resources */,
 				A67F61F2214395D50093940A /* graphic_zip@2x.png in Resources */,
 				A67D0D671A2EE12A003A8B35 /* iTermPasswordManager.xib in Resources */,
@@ -16085,6 +16096,7 @@
 				A67D0D6A1A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib in Resources */,
 				A6B9662425F95DAF00D45CBD /* iTermTriggersPanel.xib in Resources */,
 				A68615682D78D3AB00E9CCC2 /* sparkles.png in Resources */,
+				A69FF3C12E13A23600AFF7A8 /* update-mark-positions.js in Resources */,
 				A6A1BCC929CB700400646E9F /* square.and.arrow.up.png in Resources */,
 				A6E7AE94214394DD00DE9F3B /* graphic_coffee.png in Resources */,
 				1D6ED9E319AEA20D005A7799 /* Alert.png in Resources */,
@@ -16176,6 +16188,7 @@
 				A697CDBA2D975AE20031583F /* HorizontalSplit.png in Resources */,
 				A697CE1A2D9765B70031583F /* CodeciergeMenuTip@2x.png in Resources */,
 				A697CE1B2D9765B70031583F /* CodeciergeMenuTip.png in Resources */,
+				A69FF3C02E13A23600AFF7A8 /* update-mark-positions.js in Resources */,
 				A697CDBB2D975AE20031583F /* RenderNatively@2x.png in Resources */,
 				A697CDBC2D975AE20031583F /* AIExplainTip.jpg in Resources */,
 				A697CDBD2D975AE20031583F /* RenderNatively.png in Resources */,
@@ -16471,6 +16484,7 @@
 				A6EC8047281B391900493544 /* TextViewPortholeRenderer-dark.css in Resources */,
 				A6F7A74D213CB143004DE961 /* StatusBarIconComposer@2x.png in Resources */,
 				A65429B320C4931100CE71B1 /* iTermParameterPanelWindowController.xib in Resources */,
+				A69FF3BD2E139DBA00AFF7A8 /* extract-text-fragment.js in Resources */,
 				A67A50E226CCD3E300281693 /* xterm-new in Resources */,
 				A6E7AEA4214394F600DE9F3B /* graphic_git.png in Resources */,
 				A66E804C27544E61003ABDF9 /* SecureKeyboardEntry@2x.png in Resources */,
@@ -16814,6 +16828,7 @@
 				537A1FBC22169B2200FBEE5A /* MinimalPasteView.xib in Resources */,
 				A62DBBA220F47CFA008B63D1 /* GoBack@2x.png in Resources */,
 				A68E33381DE746F5003F1D8E /* Previous Mark Touch Bar Icon@2x.png in Resources */,
+				A69FF3BB2E139DBA00AFF7A8 /* extract-text-fragment.js in Resources */,
 				A67D0D351A2EE12A003A8B35 /* AddressBook.strings in Resources */,
 				A6EFF2311D2049A300806EEF /* Erase.png in Resources */,
 				A6EA848327223B02009D14AB /* graphic_emacs.png in Resources */,
@@ -17343,6 +17358,7 @@
 				A6A64E642508BE650040490B /* StatusBarIconSnippet@2x.png in Resources */,
 				A68615642D78D39100E9CCC2 /* document.png in Resources */,
 				A6CB249E2C68149100005824 /* it2setkeylabel in Resources */,
+				A69FF3BF2E13A23600AFF7A8 /* update-mark-positions.js in Resources */,
 				A6E7AE67214394CA00DE9F3B /* graphic_bullhorn@2x.png in Resources */,
 				9DB3D6ED176CC47E0071CCF8 /* PrefsMouse@2x.png in Resources */,
 				A68E33331DE746F5003F1D8E /* Add Mark Touch Bar Icon.png in Resources */,
