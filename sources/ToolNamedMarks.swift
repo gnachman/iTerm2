@@ -138,9 +138,15 @@ class ToolNamedMarks: NSView, ToolbeltTool, NSTableViewDelegate, NSTableViewData
     @objc override var isFlipped: Bool { true }
 
     @objc(setNamedMarks:) func set(marks: [iTermGenericNamedMarkReading]) {
-        self.marks = marks.sorted(by: { lhs, rhs in
-            return (lhs.namedMarkSort) < (rhs.namedMarkSort)
-        })
+        // For browser sessions, preserve the database ordering which already sorts current page marks first
+        // For terminal sessions, sort by namedMarkSort
+        if toolWrapper().delegate?.delegate?.toolbeltCurrentSessionIsBrowser() == true {
+            self.marks = marks
+        } else {
+            self.marks = marks.sorted(by: { lhs, rhs in
+                return (lhs.namedMarkSort) < (rhs.namedMarkSort)
+            })
+        }
         _tableView!.reloadData()
     }
 

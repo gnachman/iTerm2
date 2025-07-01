@@ -836,7 +836,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                                                                name:NSWorkspaceActiveSpaceDidChangeNotification
                                                              object:nil];
     [iTermNamedMarksDidChangeNotification subscribeWithOwner:self block:^(iTermNamedMarksDidChangeNotification * _Nonnull notif) {
-        if ([notif.sessionGuid isEqualToString:weakSelf.currentSession.guid]) {
+        if (notif.sessionGuid == nil || [notif.sessionGuid isEqualToString:weakSelf.currentSession.guid]) {
             [weakSelf refreshNamedMarks];
         }
     }];
@@ -12148,6 +12148,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 
 - (NSString *)toolbeltCurrentSessionGUID {
     return self.currentSession.guid;
+}
+
+- (BOOL)toolbeltCurrentSessionIsBrowser {
+    return self.currentSession.isBrowserSession;
 }
 
 - (pid_t)toolbeltCurrentShellProcessId {

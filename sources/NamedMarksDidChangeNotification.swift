@@ -9,9 +9,10 @@ import Foundation
 
 @objc(iTermNamedMarksDidChangeNotification)
 class NamedMarksDidChangeNotification: iTermBaseNotification {
-    @objc var sessionGuid: String
+    // If nil, reload all in browser sessions
+    @objc var sessionGuid: String?
 
-    @objc init(sessionGuid: String) {
+    @objc init(sessionGuid: String?) {
         self.sessionGuid = sessionGuid
         super.init(private: ())
     }

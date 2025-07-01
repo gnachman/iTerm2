@@ -251,6 +251,22 @@ actor BrowserDatabase {
             }
         }
 
+        // Create BrowserNamedMarks table
+        if !db.executeUpdate(BrowserNamedMarks.schema(), withArguments: []) {
+            return false
+        }
+        
+        let namedMarksMigrations = BrowserNamedMarks.migrations(existingColumns:
+            listColumns(
+                resultSet: db.executeQuery(
+                    BrowserNamedMarks.tableInfoQuery(),
+                    withArguments: [])))
+        for migration in namedMarksMigrations {
+            if !db.executeUpdate(migration.query, withArguments: migration.args) {
+                return false
+            }
+        }
+
         return true
     }
     
@@ -747,6 +763,96 @@ actor BrowserDatabase {
         while resultSet.next() {
             if let permission = BrowserPermissions(dbResultSet: resultSet) {
                 results.append(permission)
+            }
+        }
+        resultSet.close()
+        return results
+    }
+    
+    // MARK: - Named Marks Management
+    
+    func addNamedMark(guid: String, url: String, name: String, text: String = "") async -> Bool {
+        return await withDatabase { db in
+            let namedMark = BrowserNamedMarks(guid: guid, url: url, name: name, text: text)
+            let (query, args) = namedMark.appendQuery()
+            return db.executeUpdate(query, withArguments: args)
+        }
+    }
+    
+    func removeNamedMark(guid: String) async -> Bool {
+        return await withDatabase { db in
+            let (query, args) = BrowserNamedMarks.deleteNamedMarkQuery(guid: guid)
+            return db.executeUpdate(query, withArguments: args)
+        }
+    }
+    
+    func getNamedMark(guid: String) async -> BrowserNamedMarks? {
+        return await withDatabase { db in
+            let (query, args) = BrowserNamedMarks.getNamedMarkQuery(guid: guid)
+            guard let resultSet = db.executeQuery(query, withArguments: args) else {
+                return nil
+            }
+            
+            var namedMark: BrowserNamedMarks?
+            if resultSet.next() {
+                namedMark = BrowserNamedMarks(dbResultSet: resultSet)
+            }
+            resultSet.close()
+            return namedMark
+        }
+    }
+    
+    func getAllNamedMarks(sortBy currentPageUrl: String? = nil, offset: Int = 0, limit: Int = 100) async -> [BrowserNamedMarks] {
+        return await withDatabase { db in
+            let (query, args) = BrowserNamedMarks.getAllNamedMarksQuery(sortBy: currentPageUrl, offset: offset, limit: limit)
+            return self.executeNamedMarksQuery(db: db, query: query, args: args)
+        }
+    }
+    
+    func getNamedMarksForUrl(_ url: String) async -> [BrowserNamedMarks] {
+        return await withDatabase { db in
+            let (query, args) = BrowserNamedMarks.getNamedMarksForUrlQuery(url: url)
+            return self.executeNamedMarksQuery(db: db, query: query, args: args)
+        }
+    }
+    
+    func searchNamedMarks(terms: String, offset: Int = 0, limit: Int = 50) async -> [BrowserNamedMarks] {
+        return await withDatabase { db in
+            let (query, args) = BrowserNamedMarks.searchNamedMarksQuery(terms: terms, offset: offset, limit: limit)
+            return self.executeNamedMarksQuery(db: db, query: query, args: args)
+        }
+    }
+    
+    func updateNamedMarkName(guid: String, name: String) async -> Bool {
+        return await withDatabase { db in
+            let (query, args) = BrowserNamedMarks.updateNamedMarkNameQuery(guid: guid, name: name)
+            return db.executeUpdate(query, withArguments: args)
+        }
+    }
+    
+    func updateNamedMarkText(guid: String, text: String) async -> Bool {
+        return await withDatabase { db in
+            let (query, args) = BrowserNamedMarks.updateNamedMarkTextQuery(guid: guid, text: text)
+            return db.executeUpdate(query, withArguments: args)
+        }
+    }
+    
+    
+    func deleteAllNamedMarks() async {
+        await withDatabase { db in
+            _ = db.executeUpdate("DELETE FROM BrowserNamedMarks", withArguments: [])
+        }
+    }
+    
+    private func executeNamedMarksQuery(db: iTermDatabase, query: String, args: [Any?]) -> [BrowserNamedMarks] {
+        guard let resultSet = db.executeQuery(query, withArguments: args) else {
+            return []
+        }
+        
+        var results: [BrowserNamedMarks] = []
+        while resultSet.next() {
+            if let namedMark = BrowserNamedMarks(dbResultSet: resultSet) {
+                results.append(namedMark)
             }
         }
         resultSet.close()

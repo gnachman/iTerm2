@@ -3070,6 +3070,7 @@
 		A69FF3BF2E13A23600AFF7A8 /* update-mark-positions.js in Resources */ = {isa = PBXBuildFile; fileRef = A69FF3BE2E13A23600AFF7A8 /* update-mark-positions.js */; };
 		A69FF3C02E13A23600AFF7A8 /* update-mark-positions.js in Resources */ = {isa = PBXBuildFile; fileRef = A69FF3BE2E13A23600AFF7A8 /* update-mark-positions.js */; };
 		A69FF3C12E13A23600AFF7A8 /* update-mark-positions.js in Resources */ = {isa = PBXBuildFile; fileRef = A69FF3BE2E13A23600AFF7A8 /* update-mark-positions.js */; };
+		A69FF3C32E13A54100AFF7A8 /* BrowserNamedMarks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69FF3C22E13A54100AFF7A8 /* BrowserNamedMarks.swift */; };
 		A6A13AA218C2D23300B241ED /* iTermColorMap.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA018C2D23300B241ED /* iTermColorMap.h */; };
 		A6A13AA718C2D45900B241ED /* NSColor+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */; };
 		A6A13AAC18C3347200B241ED /* VT100Output.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AAA18C3347200B241ED /* VT100Output.h */; };
@@ -7749,6 +7750,7 @@
 		A69FF3B62E1316CD00AFF7A8 /* monitor-context-menu.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "monitor-context-menu.js"; sourceTree = "<group>"; };
 		A69FF3BA2E139DBA00AFF7A8 /* extract-text-fragment.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "extract-text-fragment.js"; sourceTree = "<group>"; };
 		A69FF3BE2E13A23600AFF7A8 /* update-mark-positions.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "update-mark-positions.js"; sourceTree = "<group>"; };
+		A69FF3C22E13A54100AFF7A8 /* BrowserNamedMarks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserNamedMarks.swift; sourceTree = "<group>"; };
 		A6A13AA018C2D23300B241ED /* iTermColorMap.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermColorMap.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA118C2D23300B241ED /* iTermColorMap.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermColorMap.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -13086,6 +13088,7 @@
 				A6AF79C52E06586A008D77BA /* BrowserBookmarks.swift */,
 				A6F7D4F32E0537710065D09C /* BrowserDatabase.swift */,
 				A6F7D4F12E0536530065D09C /* BrowserHistory.swift */,
+				A69FF3C22E13A54100AFF7A8 /* BrowserNamedMarks.swift */,
 				A6D16EB82E087A4F0099139D /* BrowserPermissions.swift */,
 				A6F7D4F42E0537710065D09C /* BrowserVisits.swift */,
 			);
@@ -18406,6 +18409,7 @@
 				5387013E23629EE8005FDB65 /* iTermPasswordManagerWindowController.m in Sources */,
 				A60464202E0DEE48002C7986 /* ProfilesWebPreferencesViewController.swift in Sources */,
 				A688AA5A298B07BB007F4603 /* iTermBaseHotKey.m in Sources */,
+				A69FF3C32E13A54100AFF7A8 /* BrowserNamedMarks.swift in Sources */,
 				A653F67E24CF4EC70062377E /* FMDatabaseQueue.m in Sources */,
 				A6F7D5092E05CEBA0065D09C /* iTermBrowserHistoryViewHandler.swift in Sources */,
 				A6A4B2A72425D18D00184EAC /* iTermKeystroke.m in Sources */,
