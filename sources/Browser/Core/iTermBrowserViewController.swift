@@ -10,6 +10,7 @@ import WebKit
 struct SmartSelectRule {
     var regex: String
     var weight: Double
+    var actions: Array<[String: Any]>
 }
 
 @available(macOS 11.0, *)
@@ -62,6 +63,12 @@ protocol iTermBrowserViewControllerDelegate: AnyObject {
                                didNavigateTo url: URL)
     func browserViewControllerDidBecomeFirstResponder(_ controller: iTermBrowserViewController)
     func browserViewController(_ controller: iTermBrowserViewController, didCopyString string: String)
+    func browserViewController(_ controller: iTermBrowserViewController, runCommand command: String)
+    func browserViewControllerScope(_ controller: iTermBrowserViewController) -> (iTermVariableScope, iTermObject)
+    func browserViewControllerShouldInterpolateSmartSelectionParameters(_ controller: iTermBrowserViewController) -> Bool
+    func browserViewController(_ controller: iTermBrowserViewController, openFile file: String)
+    func browserViewController(_ controller: iTermBrowserViewController, performSplitPaneAction action: iTermBrowserSplitPaneAction)
+    func browserViewControllerCurrentTabHasMultipleSessions(_ controller: iTermBrowserViewController) -> Bool
 }
 
 @available(macOS 11.0, *)
@@ -803,6 +810,30 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
 
     func browserManager(_ browserManager: iTermBrowserManager, didCopyString string: String) {
         delegate?.browserViewController(self, didCopyString: string)
+    }
+
+    func browserManagerSmartSelectionRules(
+        _ browserManager: iTermBrowserManager) -> [SmartSelectRule] {
+            return delegate?.browserViewControllerSmartSelectionRules(self) ?? []
+        }
+    func browserManagerRunCommand(_ browserManager: iTermBrowserManager, command: String) {
+        delegate?.browserViewController(self, runCommand: command)
+    }
+    func browserManagerScope(_ browserManager: iTermBrowserManager) -> (iTermVariableScope, iTermObject)? {
+        return delegate?.browserViewControllerScope(self)
+    }
+    func browserManagerShouldInterpolateSmartSelectionParameters(
+        _ browserManager: iTermBrowserManager) -> Bool {
+            return delegate?.browserViewControllerShouldInterpolateSmartSelectionParameters(self) ?? false
+        }
+    func browserManager(_ browserManager: iTermBrowserManager, openFile file: String) {
+        delegate?.browserViewController(self, openFile: file)
+    }
+    func browserManager(_ browserManager: iTermBrowserManager, performSplitPaneAction action: iTermBrowserSplitPaneAction) {
+        delegate?.browserViewController(self, performSplitPaneAction: action)
+    }
+    func browserManagerCurrentTabHasMultipleSessions(_ browserManager: iTermBrowserManager) -> Bool {
+        return delegate?.browserViewControllerCurrentTabHasMultipleSessions(self) ?? false
     }
 }
 

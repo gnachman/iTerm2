@@ -7,6 +7,14 @@
 
 import WebKit
 
+struct WebSmartMatch {
+    var beforeCount: Int
+    var afterCount: Int
+    var rule: SmartSelectRule
+    var components: [String]
+    var score: Double
+}
+
 @available(macOS 11.0, *)
 extension iTermBrowserWebView {
     func performScroll(movement: ScrollMovement) {
@@ -236,13 +244,28 @@ extension iTermBrowserWebView {
         return urlStrings.compactMap { URL(string: $0) }
     }
 
-    struct WebSmartMatch {
-        var beforeCount: Int
-        var afterCount: Int
-        var rule: SmartSelectRule
-        var components: [String]
-        var score: Double
+    func allMatches(rules: [SmartSelectRule],
+                    in text: String) -> [WebSmartMatch] {
+        var results = [WebSmartMatch]()
+        for rule in rules {
+            for i in 0..<text.utf16.count {
+                let substring = text[utf16: i...]
+                let components = substring.captureGroups(regex: rule.regex)
+                if components.isEmpty {
+                    continue
+                }
+                DLog("Components for \(rule.regex) are \(components)")
+                results.append(.init(beforeCount: 0,
+                                     afterCount: 0,
+                                     rule: rule,
+                                     components: components.map { substring[utf16: $0] },
+                                     score: rule.weight * Double(components[0].length)))
+                break
+            }
+        }
+        return results
     }
+
     func firstMatch(atPointInWindow point: NSPoint,
                     rules: [SmartSelectRule]) async -> WebSmartMatch? {
         // Number of lines above and below the location to include in the search

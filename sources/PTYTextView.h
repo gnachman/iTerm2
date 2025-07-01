@@ -368,7 +368,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 @property(nonatomic, assign) id<PTYTextViewDelegate> delegate;
 
 // Array of dictionaries.
-@property(nonatomic, copy) NSArray *smartSelectionRules;
+@property(nonatomic, copy) NSArray<NSDictionary<NSString *, id> *> *smartSelectionRules;
 
 // Intercell spacing as a proportion of cell size.
 @property(nonatomic, assign) CGFloat horizontalSpacing;

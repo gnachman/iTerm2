@@ -131,12 +131,11 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
     }
 
     func browserViewControllerSmartSelectionRules(_ controller: iTermBrowserViewController) -> [SmartSelectRule] {
-        (textview.smartSelectionRules ?? SmartSelectionController.defaultRules()).compactMap { obj -> SmartSelectRule? in
-            guard let dict = obj as? [AnyHashable: Any] else {
-                return nil
-            }
+        let rules = iTermProfilePreferences.object(forKey: KEY_SMART_SELECTION_RULES, inProfile: profile) as? [[String: Any]] ?? SmartSelectionController.defaultRules() ?? []
+        return rules.map { dict in
             return SmartSelectRule(regex: SmartSelectionController.regex(inRule: dict),
-                                   weight: SmartSelectionController.precision(inRule: dict))
+                                   weight: SmartSelectionController.precision(inRule: dict),
+                                   actions: SmartSelectionController.actions(inRule: dict) ?? [])
         }
     }
     
@@ -158,6 +157,74 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
 
     func browserViewController(_ controller: iTermBrowserViewController, didCopyString string: String) {
         PasteboardHistory.sharedInstance().save(string)
+    }
+
+    func browserViewController(_ controller: iTermBrowserViewController, runCommand command: String) {
+        guard iTermWarning.show(withTitle: "OK to run:\n\(command)",
+                             actions: ["OK", "Cancel"],
+                             accessory: nil,
+                             identifier: nil,
+                             silenceable: .kiTermWarningTypePersistent,
+                             heading: "Run command?",
+                                window: view.window) == .kiTermWarningSelection0 else {
+            return
+        }
+        iTermController.sharedInstance().openSingleUseWindow(withCommand: command,
+                                                             inject: nil,
+                                                             environment: nil,
+                                                             pwd: nil,
+                                                             options: [.doNotEscapeArguments],
+                                                             didMakeSession: nil,
+                                                             completion: nil)
+    }
+
+    func browserViewControllerScope(_ controller: iTermBrowserViewController) -> (iTermVariableScope, iTermObject) {
+        return (genericScope, self)
+    }
+
+    func browserViewControllerShouldInterpolateSmartSelectionParameters(_ controller: iTermBrowserViewController) -> Bool {
+        return iTermProfilePreferences.bool(forKey: KEY_SMART_SELECTION_ACTIONS_USE_INTERPOLATED_STRINGS,
+                                            inProfile: profile)
+    }
+
+    func browserViewController(_ controller: iTermBrowserViewController, openFile file: String) {
+        guard iTermWarning.show(withTitle: "OK to open this file?\n\(file)",
+                             actions: ["OK", "Cancel"],
+                             accessory: nil,
+                             identifier: nil,
+                             silenceable: .kiTermWarningTypePersistent,
+                             heading: "Open file?",
+                                window: view.window) == .kiTermWarningSelection0 else {
+            return
+        }
+        NSWorkspace.shared.openFile(file)
+    }
+
+    func browserViewController(_ controller: iTermBrowserViewController, performSplitPaneAction action: iTermBrowserSplitPaneAction) {
+        switch action {
+        case .splitPaneVertically, .splitPaneHorizontally:
+            textViewSplitVertically(action == .splitPaneVertically, withProfileGuid: nil)
+
+        case .movePane:
+            textViewMovePane()
+
+        case .moveBrowserToTab:
+            if let window = view.window {
+                MovePaneController.sharedInstance().moveSession(self, toTabIn: window)
+            }
+
+        case .moveBrowserToWindow:
+            if let window = view.window {
+                MovePaneController.sharedInstance().moveSession(toNewWindow: self,
+                                                                at: window.convertPoint(toScreen: NSPoint(x: -10.0, y: -10.0)))
+            }
+        case .swapSessions:
+            MovePaneController.sharedInstance().swapPane(self)
+        }
+    }
+
+    func browserViewControllerCurrentTabHasMultipleSessions(_ controller: iTermBrowserViewController) -> Bool {
+        return (delegate?.sessions().count ?? 0) > 1
     }
 }
 

@@ -316,3 +316,197 @@
     return nil;
 }
 @end
+
+@implementation iTermContextMenuUtilities
+
++ (BOOL)addMenuItemForColors:(NSString *)shortSelectedText menu:(NSMenu *)theMenu index:(NSInteger)i {
+    NSArray *captures = [shortSelectedText captureComponentsMatchedByRegex:@"^#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$"];
+    if (captures.count) {
+        NSMenuItem *theItem = [[NSMenuItem alloc] init];
+        NSColor *color = [NSColor colorFromHexString:shortSelectedText];
+        if (color) {
+            CGFloat x;
+            if (@available(macOS 10.16, *)) {
+                x = 15;
+            } else {
+                x = 11;
+            }
+            const CGFloat margin = 2;
+            const CGFloat height = 24;
+            const CGFloat width = 24;
+            NSView *wrapper = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, width + x, height + margin * 2)];
+            NSView *colorView = [[NSView alloc] initWithFrame:NSMakeRect(x, margin, width, height)];
+            colorView.wantsLayer = YES;
+            colorView.layer = [[CALayer alloc] init];
+            colorView.layer.backgroundColor = [color CGColor];
+            colorView.layer.borderColor = [color.isDark ? [NSColor colorWithWhite:0.8 alpha:1] : [NSColor colorWithWhite:0.2 alpha:1] CGColor];
+            colorView.layer.borderWidth = 1;
+            colorView.layer.cornerRadius = 3;
+            wrapper.autoresizesSubviews = YES;
+            colorView.autoresizingMask = NSViewMaxXMargin;
+            [wrapper addSubview:colorView];
+            theItem.view = wrapper;
+            [theMenu insertItem:theItem atIndex:i];
+            return YES;
+        }
+    }
+    return NO;
+}
+
++ (BOOL)addMenuItemForBase64Encoded:(NSString *)shortSelectedText menu:(NSMenu *)theMenu index:(NSInteger)i selector:(nonnull SEL)selector target:(id)target {
+    if (shortSelectedText.mayBeBase64Encoded && shortSelectedText.length > 3) {
+        NSData *decoded = [NSData dataWithBase64EncodedString:shortSelectedText];
+        if (!decoded) {
+            decoded = [NSData dataWithURLSafeBase64EncodedString:shortSelectedText];
+        }
+        if (decoded) {
+            NSMenuItem *item = [[NSMenuItem alloc] init];
+            item.title = [NSString stringWithFormat:@"Base64: %@", [decoded humanFriendlyStringRepresentation]];
+            item.action = selector;
+            item.target = target;
+            item.representedObject = decoded;
+            [theMenu insertItem:item atIndex:i];
+            return YES;
+        }
+    }
+    return NO;
+}
+
+static int32_t iTermInt32FromBytes(const unsigned char *bytes, BOOL bigEndian) {
+    uint32_t i;
+    if (bigEndian) {
+        i = ((((uint32_t)bytes[0]) << 24) |
+             (((uint32_t)bytes[1]) << 16) |
+             (((uint32_t)bytes[2]) << 8) |
+             (((uint32_t)bytes[3]) << 0));
+    } else {
+        i = ((((uint32_t)bytes[3]) << 24) |
+             (((uint32_t)bytes[2]) << 16) |
+             (((uint32_t)bytes[1]) << 8) |
+             (((uint32_t)bytes[0]) << 0));
+    }
+    return i;
+}
+
+static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) {
+    uint64_t i;
+    if (bigEndian) {
+        i = ((((uint64_t)bytes[0]) << 56) |
+             (((uint64_t)bytes[1]) << 48) |
+             (((uint64_t)bytes[2]) << 40) |
+             (((uint64_t)bytes[3]) << 32) |
+             (((uint64_t)bytes[4]) << 24) |
+             (((uint64_t)bytes[5]) << 16) |
+             (((uint64_t)bytes[6]) << 8) |
+             (((uint64_t)bytes[7]) << 0));
+    } else {
+        i = ((((uint64_t)bytes[7]) << 56) |
+             (((uint64_t)bytes[6]) << 48) |
+             (((uint64_t)bytes[5]) << 40) |
+             (((uint64_t)bytes[4]) << 32) |
+             (((uint64_t)bytes[3]) << 24) |
+             (((uint64_t)bytes[2]) << 16) |
+             (((uint64_t)bytes[1]) << 8) |
+             (((uint64_t)bytes[0]) << 0));
+    }
+    return i;
+}
+
++ (NSInteger)addMenuItemsForNumericConversions:(NSString *)text menu:(NSMenu *)theMenu index:(NSInteger)i selector:(SEL)selector target:(id)target {
+    NSInteger index = i;
+    NSData *data = [text dataFromWhitespaceDelimitedHexValues];
+    if (data.length > 0) {
+        NSMenuItem *theItem = nil;
+        if (data.length > 1) {
+            if (data.length == 4) {
+                const uint32_t be = iTermInt32FromBytes(data.bytes, YES);
+                theItem = [[NSMenuItem alloc] init];
+                theItem.title = [NSString stringWithFormat:@"Big-Endian int32: %@", @(be)];
+                theItem.target = self;
+                theItem.action = selector;
+                theItem.target = target;
+                theItem.representedObject = [@(be) stringValue];
+                [theMenu insertItem:theItem atIndex:index++];
+
+                const uint32_t le = iTermInt32FromBytes(data.bytes, NO);
+                theItem = [[NSMenuItem alloc] init];
+                theItem.title = [NSString stringWithFormat:@"Little-Endian int32: %@", @(le)];
+                theItem.target = self;
+                theItem.action = selector;
+                theItem.target = target;
+                theItem.representedObject = [@(le) stringValue];
+                [theMenu insertItem:theItem atIndex:index++];
+            } else if (data.length == 8) {
+                const uint64_t be = iTermInt64FromBytes(data.bytes, YES);
+                theItem = [[NSMenuItem alloc] init];
+                theItem.title = [NSString stringWithFormat:@"Big-Endian int64: %@", @(be)];
+                theItem.target = self;
+                theItem.action = selector;
+                theItem.target = target;
+                theItem.representedObject = [@(be) stringValue];
+                [theMenu insertItem:theItem atIndex:index++];
+
+                const uint64_t le = iTermInt64FromBytes(data.bytes, NO);
+                theItem = [[NSMenuItem alloc] init];
+                theItem.title = [NSString stringWithFormat:@"Little-Endian int64: %@", @(le)];
+                theItem.target = self;
+                theItem.action = selector;
+                theItem.target = target;
+                theItem.representedObject = [@(le) stringValue];
+                [theMenu insertItem:theItem atIndex:index++];
+            } else if (data.length < 100) {
+                NSString *stringValue = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+                if (stringValue) {
+                    theItem = [[NSMenuItem alloc] init];
+                    theItem.title = [NSString stringWithFormat:@"%@ UTF-8 bytes: %@", @(data.length), stringValue];
+                    theItem.target = self;
+                    theItem.action = selector;
+                    theItem.target = target;
+                    theItem.representedObject = stringValue;
+                    [theMenu insertItem:theItem atIndex:index++];
+                }
+            }
+            if (!theItem && data.length > 4) {
+                theItem = [[NSMenuItem alloc] init];
+                theItem.title = [NSString stringWithFormat:@"%@ hex bytes", @(data.length)];
+                [theMenu insertItem:theItem atIndex:index++];
+            }
+        }
+    }
+    return index;
+}
+
++ (NSInteger)addMenuItemsToCopyBase64:(NSString *)text
+                                 menu:(NSMenu *)theMenu
+                                index:(NSInteger)i
+                             selectorForString:(SEL)selectorForString
+                      selectorForData:(SEL)selectorForData
+                               target:(id _Nullable)target {
+    NSInteger index = i;
+
+    if (text.mayBeBase64Encoded) {
+        NSData *decoded = [NSData dataWithBase64EncodedString:text];
+        if (!decoded) {
+            decoded = [NSData dataWithURLSafeBase64EncodedString:text];
+        }
+        if (decoded) {
+            NSMenuItem *item = [[NSMenuItem alloc] init];
+            item.title = @"Copy Base64-Decoded";
+            item.action = selectorForData;
+            item.target = target;
+            item.representedObject = decoded;
+            [theMenu insertItem:item atIndex:index++];
+        }
+    }
+    NSString *encoded = [[text dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:NSDataBase64Encoding76CharacterLineLength];
+    NSMenuItem *item = [[NSMenuItem alloc] init];
+    item.title = @"Copy Base64-Encoded";
+    item.target = target;
+    item.action = selectorForString;
+    item.representedObject = encoded;
+    [theMenu insertItem:item atIndex:index++];
+
+    return index;
+}
+
+@end
