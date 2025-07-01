@@ -17,7 +17,7 @@ iTermMarkVertexShader(uint vertexID [[ vertex_id ]],
                       constant float2 *offset [[ buffer(iTermVertexInputIndexOffset) ]],
                       constant iTermVertex *vertexArray [[ buffer(iTermVertexInputIndexVertices) ]],
                       constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]],
-                      device iTermMarkPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
+                      constant iTermMarkPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
                       unsigned int iid [[instance_id]]) {
     iTermMarkVertexFunctionOutput out;
 
@@ -52,11 +52,11 @@ typedef struct {
 
 vertex iTermLineStyleMarkVertexFunctionOutput
 iTermLineStyleMarkVertexShader(uint vertexID [[ vertex_id ]],
-                      constant float2 *offset [[ buffer(iTermVertexInputIndexOffset) ]],
-                      constant iTermVertex *vertexArray [[ buffer(iTermVertexInputIndexVertices) ]],
-                      constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]],
-                      device iTermLineStyleMarkPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
-                      unsigned int iid [[instance_id]]) {
+                               constant float2 *offset [[ buffer(iTermVertexInputIndexOffset) ]],
+                               constant iTermVertex *vertexArray [[ buffer(iTermVertexInputIndexVertices) ]],
+                               constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]],
+                               constant iTermLineStyleMarkPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
+                               unsigned int iid [[instance_id]]) {
     iTermLineStyleMarkVertexFunctionOutput out;
 
     float2 pixelSpacePosition = vertexArray[vertexID].position.xy;

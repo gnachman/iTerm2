@@ -23,7 +23,7 @@ vertex iTermBlockVertexFunctionOutput
 iTermBlockVertexShader(uint vertexID [[ vertex_id ]],
                        constant iTermVertex *vertexArray [[ buffer(iTermVertexInputIndexVertices) ]],
                        constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]],
-                       device vector_float2 *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
+                       constant vector_float2 *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
                        unsigned int iid [[instance_id]]) {
     iTermBlockVertexFunctionOutput out;
 

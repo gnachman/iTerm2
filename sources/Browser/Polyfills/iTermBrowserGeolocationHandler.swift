@@ -85,7 +85,7 @@ class iTermBrowserGeolocationHandler: NSObject {
     }
 
     var systemAuthorizationStatus: AuthorizationStatus {
-        switch CLLocationManager.authorizationStatus() {
+        switch CLLocationManager().authorizationStatus {
         case .notDetermined:
                 .notDetermined
         case .restricted, .denied:
