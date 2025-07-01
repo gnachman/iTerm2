@@ -552,7 +552,14 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
 
     private func notifyDelegateOfUpdates() {
         delegate?.browserManager(self, didUpdateURL: webView.url?.absoluteString)
-        delegate?.browserManager(self, didUpdateTitle: webView.title)
+        
+        // For file: URLs, use the filename as title
+        var title = webView.title
+        if let url = webView.url, url.scheme == "file" {
+            title = url.lastPathComponent
+        }
+        
+        delegate?.browserManager(self, didUpdateTitle: title)
         delegate?.browserManager(self, didUpdateCanGoBack: webView.canGoBack)
         delegate?.browserManager(self, didUpdateCanGoForward: webView.canGoForward)
     }
