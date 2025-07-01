@@ -226,6 +226,16 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
     func browserViewControllerCurrentTabHasMultipleSessions(_ controller: iTermBrowserViewController) -> Bool {
         return (delegate?.sessions().count ?? 0) > 1
     }
+    
+    func browserViewControllerDidStartNavigation(_ controller: iTermBrowserViewController) {
+        browserIsLoading = true
+        updateDisplayBecause("browser activity")
+    }
+    
+    func browserViewControllerDidFinishNavigation(_ controller: iTermBrowserViewController) {
+        browserIsLoading = false
+        updateDisplayBecause("browser activity")
+    }
 }
 
 // MARK: - Browser Find Support
