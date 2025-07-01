@@ -13,37 +13,18 @@
 #import "SIGIdentity.h"
 #import "SIGKey.h"
 
-@implementation SIGSHA2SigningAlgorithm {
-    SecTransformRef _readTransform;
-    SecTransformRef _dataDigestTransform;
-    SecTransformRef _dataSignTransform;
-    SecGroupTransformRef _group;
-}
+#import <CommonCrypto/CommonDigest.h>
+#import <Security/Security.h>
+
+@implementation SIGSHA2SigningAlgorithm
 
 + (NSString *)name {
     return SIGArchiveDigestTypeSHA2;
 }
 
-- (void)dealloc {
-    if (_readTransform) {
-        CFRelease(_readTransform);
-    }
-    if (_dataDigestTransform) {
-        CFRelease(_dataDigestTransform);
-    }
-    if (_dataSignTransform) {
-        CFRelease(_dataSignTransform);
-    }
-    if (_group) {
-        CFRelease(_group);
-    }
-}
-
 - (NSData *)signatureForInputStream:(NSInputStream *)readStream
                       usingIdentity:(SIGIdentity *)identity
                               error:(out NSError **)error {
-    CFErrorRef err = NULL;
-    
     SIGKey *privateKey = identity.privateKey;
     if (!privateKey) {
         if (error) {
@@ -51,120 +32,70 @@
         }
         return nil;
     }
-    
-    _readTransform = SecTransformCreateReadTransformWithReadStream((__bridge CFReadStreamRef)readStream);
-    if (!_readTransform) {
+
+    [readStream open];
+
+    CC_SHA256_CTX shaCtx;
+    CC_SHA256_Init(&shaCtx);
+
+    uint8_t buffer[4096];
+    NSInteger bytesRead = 0;
+    while ((bytesRead = [readStream read:buffer
+                              maxLength:sizeof(buffer)]) > 0) {
+        CC_SHA256_Update(&shaCtx,
+                         buffer,
+                         (CC_LONG)bytesRead);
+    }
+
+    [readStream close];
+
+    if (bytesRead < 0) {
         if (error) {
-            *error = [SIGError errorWrapping:(__bridge NSError *)err
-                                      code:SIGErrorCodeAlgorithmCreationFailed
-                                      detail:@"Failed to create read transform"];
+            *error = [SIGError errorWithCode:SIGErrorCodeAlgorithmCreationFailed
+                                     detail:@"Error reading input stream"];
         }
         return nil;
     }
-    
-    _dataDigestTransform = SecDigestTransformCreate(kSecDigestSHA2,
-                                                   256,
-                                                   &err);
-    if (!_dataDigestTransform) {
+
+    uint8_t digest[CC_SHA256_DIGEST_LENGTH];
+    CC_SHA256_Final(digest, &shaCtx);
+
+    CFDataRef digestData = CFDataCreate(kCFAllocatorDefault,
+                                        digest,
+                                        CC_SHA256_DIGEST_LENGTH);
+
+    SecKeyRef key = privateKey.secKey;
+    SecKeyAlgorithm algorithm = kSecKeyAlgorithmRSASignatureDigestPKCS1v15SHA256;
+
+    if (!SecKeyIsAlgorithmSupported(key,
+                                    kSecKeyOperationTypeSign,
+                                    algorithm)) {
+        CFRelease(digestData);
         if (error) {
-            *error = [SIGError errorWrapping:(__bridge NSError *)err
-                                      code:SIGErrorCodeAlgorithmCreationFailed
-                                      detail:@"Failed to create SHA2 digest transform"];
+            *error = [SIGError errorWithCode:SIGErrorCodeAlgorithmCreationFailed
+                                     detail:@"Key does not support requested algorithm"];
         }
         return nil;
     }
-    
-    _dataSignTransform = SecSignTransformCreate(privateKey.secKey,
-                                               &err);
-    if (!_dataSignTransform) {
+
+    CFErrorRef cfErr = NULL;
+    CFDataRef  sigCFData = SecKeyCreateSignature(key,
+                                                 algorithm,
+                                                 digestData,
+                                                 &cfErr);
+    CFRelease(digestData);
+
+    if (!sigCFData) {
+        NSError *underlying = CFBridgingRelease(cfErr);
         if (error) {
-            *error = [SIGError errorWrapping:(__bridge NSError *)err
+            *error = [SIGError errorWrapping:underlying
                                       code:SIGErrorCodeAlgorithmCreationFailed
-                                      detail:@"Failed to create private key transform"];
+                                    detail:@"Signing failed"];
         }
         return nil;
     }
-    
-    SecTransformSetAttribute(_dataSignTransform,
-                             kSecInputIsAttributeName,
-                             kSecInputIsDigest,
-                             &err);
-    if (err) {
-        if (error) {
-            *error = [SIGError errorWrapping:(__bridge NSError *)err
-                                      code:SIGErrorCodeAlgorithmCreationFailed
-                                      detail:@"Failed to set is-digest attribute"];
-        }
-        return nil;
-    }
-    
-    SecTransformSetAttribute(_dataSignTransform,
-                             kSecDigestTypeAttribute,
-                             kSecDigestSHA2,
-                             &err);
-    if (err) {
-        if (error) {
-            *error = [SIGError errorWrapping:(__bridge NSError *)err
-                                      code:SIGErrorCodeAlgorithmCreationFailed
-                                      detail:@"Failed to set digest-type attribute"];
-        }
-        return nil;
-    }
-    
-    SecTransformSetAttribute(_dataSignTransform,
-                             kSecDigestLengthAttribute,
-                             (__bridge CFTypeRef _Nonnull)@256,
-                             &err);
-    if (err) {
-        if (error) {
-            *error = [SIGError errorWrapping:(__bridge NSError *)err
-                                      code:SIGErrorCodeAlgorithmCreationFailed
-                                      detail:@"Failed to set digest-length attribute"];
-        }
-        return nil;
-    }
-    
-    _group = SecTransformCreateGroupTransform();
-    SecTransformConnectTransforms(_readTransform,
-                                  kSecTransformOutputAttributeName,
-                                  _dataDigestTransform,
-                                  kSecTransformInputAttributeName,
-                                  _group,
-                                  &err);
-    if (err != nil) {
-        if (error) {
-            *error = [SIGError errorWrapping:(__bridge NSError *)err
-                                      code:SIGErrorCodeAlgorithmCreationFailed
-                                      detail:@"Failed to conenct read to digest transform"];
-        }
-        return nil;
-    }
-    
-    SecTransformConnectTransforms(_dataDigestTransform,
-                                  kSecTransformOutputAttributeName,
-                                  _dataSignTransform,
-                                  kSecTransformInputAttributeName,
-                                  _group,
-                                  &err);
-    if (err != nil) {
-        if (error) {
-            *error = [SIGError errorWrapping:(__bridge NSError *)err
-                                      code:SIGErrorCodeAlgorithmCreationFailed
-                                      detail:@"Failed to connect digest to sign transform"];
-        }
-        return nil;
-    }
-    
-    NSData *signature = (__bridge_transfer NSData *)SecTransformExecute(_group, &err);
-    if (err != nil) {
-        if (error) {
-            *error = [SIGError errorWrapping:(__bridge NSError *)err
-                                      code:SIGErrorCodeAlgorithmCreationFailed
-                                      detail:@"Execution of signature algorithm failed"];
-        }
-        return nil;
-    }
-    
+
+    NSData *signature = CFBridgingRelease(sigCFData);
     return signature;
 }
 

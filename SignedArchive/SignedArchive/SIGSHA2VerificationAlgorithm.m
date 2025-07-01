@@ -12,156 +12,87 @@
 #import "SIGError.h"
 #import "SIGVerificationAlgorithm.h"
 
-@implementation SIGSHA2VerificationAlgorithm {
-    SecTransformRef _dataReadTransform;
-    SecTransformRef _dataDigestTransform;
-    SecTransformRef _dataVerifyTransform;
-    SecGroupTransformRef _group;
-}
+#import <CommonCrypto/CommonDigest.h>
+#import <Security/Security.h>
+
+
+@implementation SIGSHA2VerificationAlgorithm
 
 + (NSString *)name {
     return SIGArchiveDigestTypeSHA2;
-}
-
-- (void)dealloc {
-    if (_dataReadTransform) {
-        CFRelease(_dataReadTransform);
-    }
-    if (_dataDigestTransform) {
-        CFRelease(_dataDigestTransform);
-    }
-    if (_dataVerifyTransform) {
-        CFRelease(_dataVerifyTransform);
-    }
-    if (_group) {
-        CFRelease(_group);
-    }
 }
 
 - (BOOL)verifyInputStream:(NSInputStream *)payloadInputStream
             signatureData:(NSData *)signatureData
                 publicKey:(SecKeyRef)publicKey
                     error:(out NSError **)error {
-    _dataReadTransform = SecTransformCreateReadTransformWithReadStream((__bridge CFReadStreamRef)payloadInputStream);
-    if (!_dataReadTransform) {
+    [payloadInputStream open];
+
+    CC_SHA256_CTX shaCtx;
+    CC_SHA256_Init(&shaCtx);
+
+    uint8_t buffer[4096];
+    NSInteger bytesRead = 0;
+    while ((bytesRead = [payloadInputStream read:buffer
+                                     maxLength:sizeof(buffer)]) > 0) {
+        CC_SHA256_Update(&shaCtx,
+                         buffer,
+                         (CC_LONG)bytesRead);
+    }
+
+    [payloadInputStream close];
+
+    if (bytesRead < 0) {
         if (error) {
-            *error = [SIGError errorWithCode:SIGErrorCodeUnknown];
+            *error = [SIGError errorWithCode:SIGErrorCodeUnknown
+                                     detail:@"Error reading payload stream"];
         }
         return NO;
     }
-    
-    _dataDigestTransform = SecDigestTransformCreate(kSecDigestSHA2,
-                                                    256,
-                                                    NULL);
-    if (!_dataDigestTransform) {
+
+    uint8_t digest[CC_SHA256_DIGEST_LENGTH];
+    CC_SHA256_Final(digest,
+                    &shaCtx);
+
+    CFDataRef digestData = CFDataCreate(kCFAllocatorDefault,
+                                        digest,
+                                        CC_SHA256_DIGEST_LENGTH);
+
+    SecKeyAlgorithm algorithm = kSecKeyAlgorithmRSASignatureDigestPKCS1v15SHA256;
+
+    if (!SecKeyIsAlgorithmSupported(publicKey,
+                                    kSecKeyOperationTypeVerify,
+                                    algorithm)) {
+        CFRelease(digestData);
         if (error) {
-            *error = [SIGError errorWithCode:SIGErrorCodeUnknown];
+            *error = [SIGError errorWithCode:SIGErrorCodeAlgorithmCreationFailed
+                                     detail:@"Key does not support requested algorithm"];
         }
         return NO;
     }
-    
-    CFErrorRef secError = NULL;
-    _dataVerifyTransform = SecVerifyTransformCreate(publicKey,
-                                                    (__bridge CFDataRef)signatureData,
-                                                    &secError);
-    if (!_dataVerifyTransform || secError) {
+
+    CFErrorRef cfErr = NULL;
+    Boolean result = SecKeyVerifySignature(publicKey,
+                                           algorithm,
+                                           digestData,
+                                           (__bridge CFDataRef)signatureData,
+                                           &cfErr);
+    CFRelease(digestData);
+
+    if (!result) {
+        NSError *underlying = CFBridgingRelease(cfErr);
         if (error) {
-            *error = [SIGError errorWrapping:(__bridge NSError *)secError
-                                      code:SIGErrorCodeAlgorithmCreationFailed
-                                      detail:@"Failed to create data verification transform"];
+            if (underlying) {
+                *error = [SIGError errorWrapping:underlying
+                                          code:SIGErrorCodeSignatureDoesNotMatchPayload
+                                        detail:@"Signature verification failed"];
+            } else {
+                *error = [SIGError errorWithCode:SIGErrorCodeSignatureDoesNotMatchPayload];
+            }
         }
-        if (secError) {
-            CFRelease(secError);
-        }
-        return NO;
     }
-    
-    BOOL ok;
-    ok = SecTransformSetAttribute(_dataVerifyTransform,
-                                  kSecInputIsAttributeName,
-                                  kSecInputIsDigest,
-                                  NULL);
-    if (!ok) {
-        if (error) {
-            *error = [SIGError errorWithCode:SIGErrorCodeUnknown];
-        }
-        return NO;
-    }
-    
-    ok = SecTransformSetAttribute(_dataVerifyTransform,
-                                  kSecDigestTypeAttribute,
-                                  kSecDigestSHA2,
-                                  NULL);
-    if (!ok) {
-        if (error) {
-            *error = [SIGError errorWithCode:SIGErrorCodeUnknown];
-        }
-        return NO;
-    }
-    
-    ok = SecTransformSetAttribute(_dataVerifyTransform,
-                                  kSecDigestLengthAttribute,
-                                  (__bridge CFTypeRef _Nonnull)(@256),
-                                  NULL);
-    if (!ok) {
-        if (error) {
-            *error = [SIGError errorWithCode:SIGErrorCodeUnknown];
-        }
-        return NO;
-    }
-    
-    _group = SecTransformCreateGroupTransform();
-    SecTransformConnectTransforms(_dataReadTransform,
-                                  kSecTransformOutputAttributeName,
-                                  _dataDigestTransform,
-                                  kSecTransformInputAttributeName,
-                                  _group,
-                                  &secError);
-    if (secError) {
-        if (error) {
-            *error = [SIGError errorWrapping:(__bridge NSError *)secError
-                                      code:SIGErrorCodeAlgorithmCreationFailed
-                                      detail:@"Failed to connect read to digest transform"];
-        }
-        CFRelease(secError);
-        return NO;
-    }
-    
-    SecTransformConnectTransforms(_dataDigestTransform,
-                                  kSecTransformOutputAttributeName,
-                                  _dataVerifyTransform,
-                                  kSecTransformInputAttributeName,
-                                  _group,
-                                  &secError);
-    if (secError) {
-        if (error) {
-            *error = [SIGError errorWrapping:(__bridge NSError *)secError
-                                      code:SIGErrorCodeAlgorithmCreationFailed
-                                      detail:@"Failed to connect digest to verify transform"];
-        }
-        CFRelease(secError);
-        return NO;
-    }
-    
-    NSNumber *result = (__bridge_transfer NSNumber *)SecTransformExecute(_group, &secError);
-    if (secError) {
-        if (error) {
-            *error = [SIGError errorWrapping:(__bridge NSError *)secError
-                                      code:SIGErrorCodeAlgorithmCreationFailed
-                                      detail:@"Failed to execute verification"];
-        }
-        CFRelease(secError);
-        return NO;
-    }
-    
-    if (!result.boolValue) {
-        if (error) {
-            *error = [SIGError errorWithCode:SIGErrorCodeSignatureDoesNotMatchPayload];
-        }
-        return NO;
-    }
-    
-    return YES;
+
+    return (BOOL)result;
 }
 
 @end
