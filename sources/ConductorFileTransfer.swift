@@ -8,12 +8,14 @@
 import Foundation
 
 @available(macOS 11, *)
+@MainActor
 protocol ConductorFileTransferDelegate: AnyObject {
     func beginDownload(fileTransfer: ConductorFileTransfer)
     func beginUpload(fileTransfer: ConductorFileTransfer)
 }
 
 @available(macOS 11, *)
+@MainActor
 @objc
 class ConductorFileTransfer: TransferrableFile {
     @objc var path: SCPPath
@@ -89,7 +91,7 @@ class ConductorFileTransfer: TransferrableFile {
         return downloads.appendingPathComponent(tempFileName)
     }
 
-    class ConductorFileTransferError: NSObject, LocalizedError {
+    final class ConductorFileTransferError: NSObject, LocalizedError {
         private let reason: String
         init(_ reason: String) {
             self.reason = reason

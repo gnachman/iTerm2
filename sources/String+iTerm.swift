@@ -430,3 +430,22 @@ extension String {
         return self[utf16: nsRange]
     }
 }
+extension String {
+    func chunk(_ maxSize: Int, continuation: String = "") -> [String] {
+        var parts = [String]()
+        var index = self.startIndex
+        while index < self.endIndex {
+            let end = self.index(index,
+                                 offsetBy: min(maxSize,
+                                               self.distance(from: index,
+                                                             to: self.endIndex)))
+            let part = String(self[index..<end]) + (end < self.endIndex ? continuation : "")
+            if !part.isEmpty {
+                parts.append(part)
+            }
+            index = end
+        }
+        return parts
+    }
+}
+

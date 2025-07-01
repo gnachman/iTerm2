@@ -105,6 +105,7 @@ fileprivate struct PSRow {
     }
 }
 
+@MainActor
 class SSHProcessInfoProvider {
     private weak var runner: SSHCommandRunning?
     private var collection: ProcessCollectionProvider?
@@ -131,23 +132,29 @@ class SSHProcessInfoProvider {
             forName: NSApplication.didBecomeActiveNotification,
             object: nil,
             queue: nil) { [weak self] _ in
-                self?.rateLimit.minimumInterval = 1
+                Task { @MainActor in
+                    self?.rateLimit.minimumInterval = 1
+                }
             }
         NotificationCenter.default.addObserver(
             forName: NSApplication.didResignActiveNotification,
             object: nil,
             queue: nil) { [weak self] _ in
-                self?.rateLimit.minimumInterval = 5
+                Task { @MainActor in
+                    self?.rateLimit.minimumInterval = 5
+                }
             }
         needsUpdate = true
         Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
-            guard let self else {
-                timer.invalidate()
-                return
-            }
-            // We must publish once a second for the status bar component to draw properly.
-            if let cpuUtilization {
-                cpuUtilizationPublisher.publish(NSNumber(value: cpuUtilization))
+            Task { @MainActor [weak self] in
+                guard let self else {
+                    timer.invalidate()
+                    return
+                }
+                // We must publish once a second for the status bar component to draw properly.
+                if let cpuUtilization = self.cpuUtilization {
+                    self.cpuUtilizationPublisher.publish(NSNumber(value: cpuUtilization))
+                }
             }
         }
     }
@@ -346,6 +353,7 @@ fileprivate class SSHProcessDataSource: NSObject, ProcessDataSource {
     }
 }
 
+@MainActor
 extension SSHProcessInfoProvider: ProcessInfoProvider {
     func processInfo(for pid: pid_t) -> iTermProcessInfo? {
         return collection?.info(forProcessID: pid)
@@ -393,6 +401,7 @@ extension SSHProcessInfoProvider: ProcessInfoProvider {
     }
 }
 
+@MainActor
 extension SSHProcessInfoProvider: SessionProcessInfoProvider {
     func cachedProcessInfoIfAvailable() -> iTermProcessInfo? {
         if let info = deepestForegroundJob(for: rootPID) {

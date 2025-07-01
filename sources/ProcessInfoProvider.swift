@@ -30,6 +30,7 @@ protocol ProcessCollectionProvider {
 }
 
 @objc
+@MainActor
 protocol ProcessInfoProvider {
     @objc(processInfoForPid:)
     func processInfo(for pid: pid_t) -> iTermProcessInfo?
@@ -60,6 +61,7 @@ protocol ProcessInfoProvider {
 }
 
 @objc
+@MainActor
 protocol SessionProcessInfoProvider {
     @objc(cachedProcessInfoIfAvailable)
     func cachedProcessInfoIfAvailable() -> iTermProcessInfo?

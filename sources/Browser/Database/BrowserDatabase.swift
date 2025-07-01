@@ -86,11 +86,10 @@ actor BrowserDatabase {
     
     // Helper methods to run database operations on the same thread
     private func withDatabase<T>(_ operation: @escaping (iTermDatabase) throws -> T) async throws -> T {
-        let db = _db
         return try await withCheckedThrowingContinuation { continuation in
             databaseQueue.async {
                 do {
-                    let result = try operation(db)
+                    let result = try operation(self._db)
                     continuation.resume(returning: result)
                 } catch {
                     continuation.resume(throwing: error)
@@ -100,10 +99,9 @@ actor BrowserDatabase {
     }
     
     private func withDatabase<T>(_ operation: @escaping (iTermDatabase) -> T) async -> T {
-        let db = _db
         return await withCheckedContinuation { continuation in
             databaseQueue.async {
-                let result = operation(db)
+                let result = operation(self._db)
                 continuation.resume(returning: result)
             }
         }

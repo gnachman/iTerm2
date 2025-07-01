@@ -8,11 +8,13 @@
 import Foundation
 
 @objc(iTermSyntaxHighlighting)
+@MainActor
 protocol SyntaxHighlighting {
     @objc func highlight(range: NSRange)
 }
 
 @objc(iTermSyntaxHighlighter)
+@MainActor
 class iTermSyntaxHighlighter: NSObject, SyntaxHighlighting {
     private let instance: SyntaxHighlighter
 
@@ -72,6 +74,7 @@ fileprivate struct Colors {
     }
 }
 
+@MainActor
 class SyntaxHighlighter {
     private let value: NSMutableAttributedString
     private let fontTable: FontTable

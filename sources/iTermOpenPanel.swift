@@ -30,6 +30,7 @@ class iTermOpenPanelItem: NSObject {
 }
 
 @objc
+@MainActor
 class iTermOpenPanel: NSObject {
     @objc var canChooseDirectories = true
     @objc var canChooseFiles = true
