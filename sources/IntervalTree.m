@@ -1239,6 +1239,7 @@ static NSString *const kIntervalLengthKey = @"Length";
 }
 
 - (void)sanityCheck {
+#ifdef INTERVAL_TREE_SANITY_CHECK
     NSMutableSet *values = [NSMutableSet set];
     for (id value in _tree.allValues) {
         NSString *addr = [NSString stringWithFormat:@"%p", value];
@@ -1252,6 +1253,7 @@ static NSString *const kIntervalLengthKey = @"Length";
     if (_tree.root) {
         [self sanityCheckAtNode:_tree.root];
     }
+#endif  // INTERVAL_TREE_SANITY_CHECK
 }
 
 - (NSDictionary *)dictionaryValueWithOffset:(long long)offset {

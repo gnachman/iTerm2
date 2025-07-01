@@ -102,7 +102,6 @@ class iTermURLTextField: NSScrollView {
         
         // Create custom text view
         textView = iTermBrowserURLTextView(frame: bounds, textContainer: textContainer)
-        textView.translatesAutoresizingMaskIntoConstraints = false
         textView.delegate = self
         textView.isVerticallyResizable = false
         textView.isHorizontallyResizable = true
@@ -143,6 +142,16 @@ class iTermURLTextField: NSScrollView {
         textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude,
                                   height: CGFloat.greatestFiniteMagnitude)
         textView.minSize = NSSize(width: 0, height: 0)
+    }
+    
+    override func layout() {
+        super.layout()
+        textView.frame = bounds
+    }
+    
+    override func resize(withOldSuperviewSize oldSize: NSSize) {
+        super.resize(withOldSuperviewSize: oldSize)
+        textView.frame = bounds
     }
     
     private func notifyTextDidChange() {
