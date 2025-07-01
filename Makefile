@@ -9,6 +9,7 @@ COMPACTDATE=$(shell date +"%Y%m%d")
 VERSION = $(shell cat version.txt | sed -e "s/%(extra)s/$(COMPACTDATE)/")
 NAME=$(shell echo $(VERSION) | sed -e "s/\\./_/g")
 CMAKE ?= /opt/homebrew/bin/cmake
+DEPLOYMENT_TARGET=12.0
 
 .PHONY: clean all backup-old-iterm restart
 
@@ -98,11 +99,11 @@ preview:
 
 x86libsixel: force
 	mkdir -p submodules/libsixel/build-x86
-	cd submodules/libsixel/build-x86 && PKG_CONFIG=/opt/homebrew/bin/pkg-config CC="/usr/bin/clang -target x86_64-apple-macos10.14" LDFLAGS="-ld_classic -target x86_64-apple-macos10.14" CFLAGS="-target x86_64-apple-macos10.14" LIBTOOLFLAGS="-target x86_64-apple-macos10.14" ../configure -host=x86_64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-x86 --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
+	cd submodules/libsixel/build-x86 && PKG_CONFIG=/opt/homebrew/bin/pkg-config CC="/usr/bin/clang -target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LDFLAGS="-ld_classic -target x86_64-apple-macos$(DEPLOYMENT_TARGET)" CFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LIBTOOLFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" ../configure -host=x86_64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-x86 --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
 
 armsixel: force
 	mkdir -p submodules/libsixel/build-arm
-	cd submodules/libsixel/build-arm && PKG_CONFIG=/opt/homebrew/bin/pkg-config CC="/usr/bin/clang -target arm64-apple-macos10.14" LDFLAGS="-ld_classic -target arm64-apple-macos10.14" CFLAGS="-target arm64-apple-macos10.14" LIBTOOLFLAGS="-target arm64-apple-macos10.14" ../configure --host=aarch64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-arm --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
+	cd submodules/libsixel/build-arm && PKG_CONFIG=/opt/homebrew/bin/pkg-config CC="/usr/bin/clang -target arm64-apple-macos$(DEPLOYMENT_TARGET)" LDFLAGS="-ld_classic -target arm64-apple-macos$(DEPLOYMENT_TARGET)" CFLAGS="-target arm64-apple-macos$(DEPLOYMENT_TARGET)" LIBTOOLFLAGS="-target arm64-apple-macos$(DEPLOYMENT_TARGET)" ../configure --host=aarch64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-arm --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
 
 # Usage: go to an intel mac and run make x86libsixel and commit it. Go to an arm mac and run make armsixel && make libsixel.
 fatlibsixel: force armsixel x86libsixel
@@ -111,7 +112,7 @@ fatlibsixel: force armsixel x86libsixel
 armopenssl: force
 	echo Begin building configure-armopenssl
 	cd submodules/openssl && make clean && make distclean || echo make failed
-	cd submodules/openssl && ./Configure darwin64-arm64-cc no-shared -fPIC -mmacosx-version-min=10.15 -Wl,-ld_classic
+	cd submodules/openssl && ./Configure darwin64-arm64-cc no-shared -fPIC -mmacosx-version-min=$(DEPLOYMENT_TARGET) -Wl,-ld_classic
 	echo Begin building armopenssl
 	cd submodules/openssl && $(MAKE)
 	rm -rf submodules/openssl/build-arm
@@ -121,7 +122,7 @@ armopenssl: force
 x86openssl: force
 	echo Begin building configure-x86openssl
 	cd submodules/openssl && make clean && make distclean || echo make failed
-	cd submodules/openssl && ./Configure darwin64-x86_64-cc no-shared -fPIC -mmacosx-version-min=10.15 -Wl,-ld_classic
+	cd submodules/openssl && ./Configure darwin64-x86_64-cc no-shared -fPIC -mmacosx-version-min=$(DEPLOYMENT_TARGET) -Wl,-ld_classic
 	echo Begin building x86openssl
 	cd submodules/openssl && $(MAKE)
 	rm -rf submodules/openssl/build-x86
@@ -143,14 +144,14 @@ x86libssh2: force
 	mkdir -p submodules/libssh2/build_x86_64
 	# Add this flag to enable tracing:
 	# -DCMAKE_C_FLAGS="-DLIBSSH2DEBUG"
-	cd submodules/libssh2/build_x86_64 && $(CMAKE) -DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew -DOPENSSL_INCLUDE_DIR=${PWD}/submodules/openssl/build-fat/include -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl/build-fat -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCRYPTO_BACKEND=OpenSSL -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14 -DCMAKE_EXE_LINKER_FLAGS="-ld_classic" -DCMAKE_MODULE_LINKER_FLAGS="-ld_classic" .. && $(MAKE) libssh2_static
+	cd submodules/libssh2/build_x86_64 && $(CMAKE) -DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew -DOPENSSL_INCLUDE_DIR=${PWD}/submodules/openssl/build-fat/include -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl/build-fat -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCRYPTO_BACKEND=OpenSSL -DCMAKE_OSX_DEPLOYMENT_TARGET=$(DEPLOYMENT_TARGET) -DCMAKE_EXE_LINKER_FLAGS="-ld_classic" -DCMAKE_MODULE_LINKER_FLAGS="-ld_classic" .. && $(MAKE) libssh2_static
 
 armlibssh2: force
 	echo Begin building armlibssh2
 	mkdir -p submodules/libssh2/build_arm64
 	# Add this flag to enable tracing:
 	# -DCMAKE_C_FLAGS="-DLIBSSH2DEBUG"
-	cd submodules/libssh2/build_arm64 && $(CMAKE) -DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew -DOPENSSL_INCLUDE_DIR=${PWD}/submodules/openssl/include -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=arm64 -DCRYPTO_BACKEND=OpenSSL -DCMAKE_EXE_LINKER_FLAGS="-ld_classic" -DCMAKE_MODULE_LINKER_FLAGS="-ld_classic" -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14 .. && $(MAKE) libssh2_static
+	cd submodules/libssh2/build_arm64 && $(CMAKE) -DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew -DOPENSSL_INCLUDE_DIR=${PWD}/submodules/openssl/include -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=arm64 -DCRYPTO_BACKEND=OpenSSL -DCMAKE_EXE_LINKER_FLAGS="-ld_classic" -DCMAKE_MODULE_LINKER_FLAGS="-ld_classic" -DCMAKE_OSX_DEPLOYMENT_TARGET=$(DEPLOYMENT_TARGET) .. && $(MAKE) libssh2_static
 
 fatlibssh2: force fatopenssl
 	echo Begin building fatlibssh2
@@ -195,7 +196,7 @@ paranoidrailroad: force
 
 libgit2: force
 	mkdir -p submodules/libgit2/build
-	PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} -DBUILD_CLAR=OFF -DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew -DBUILD_SHARED_LIBS=OFF -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_OSX_DEPLOYMENT_TARGET="10.14" -DCMAKE_INSTALL_PREFIX=../../../ThirdParty/libgit2 -DUSE_SSH=OFF -DUSE_ICONV=OFF ..
+	PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} -DBUILD_CLAR=OFF -DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew -DBUILD_SHARED_LIBS=OFF -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_OSX_DEPLOYMENT_TARGET="$(DEPLOYMENT_TARGET)" -DCMAKE_INSTALL_PREFIX=../../../ThirdParty/libgit2 -DUSE_SSH=OFF -DUSE_ICONV=OFF ..
 	PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} --build . --target install --parallel "$$(sysctl -n hw.ncpu)"
 
 sparkle: force
