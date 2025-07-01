@@ -3071,6 +3071,7 @@
 		A69FF3C02E13A23600AFF7A8 /* update-mark-positions.js in Resources */ = {isa = PBXBuildFile; fileRef = A69FF3BE2E13A23600AFF7A8 /* update-mark-positions.js */; };
 		A69FF3C12E13A23600AFF7A8 /* update-mark-positions.js in Resources */ = {isa = PBXBuildFile; fileRef = A69FF3BE2E13A23600AFF7A8 /* update-mark-positions.js */; };
 		A69FF3C32E13A54100AFF7A8 /* BrowserNamedMarks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69FF3C22E13A54100AFF7A8 /* BrowserNamedMarks.swift */; };
+		A69FF3C72E143ABD00AFF7A8 /* HoverButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69FF3C62E143ABC00AFF7A8 /* HoverButton.swift */; };
 		A6A13AA218C2D23300B241ED /* iTermColorMap.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA018C2D23300B241ED /* iTermColorMap.h */; };
 		A6A13AA718C2D45900B241ED /* NSColor+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */; };
 		A6A13AAC18C3347200B241ED /* VT100Output.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AAA18C3347200B241ED /* VT100Output.h */; };
@@ -7751,6 +7752,7 @@
 		A69FF3BA2E139DBA00AFF7A8 /* extract-text-fragment.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "extract-text-fragment.js"; sourceTree = "<group>"; };
 		A69FF3BE2E13A23600AFF7A8 /* update-mark-positions.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "update-mark-positions.js"; sourceTree = "<group>"; };
 		A69FF3C22E13A54100AFF7A8 /* BrowserNamedMarks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserNamedMarks.swift; sourceTree = "<group>"; };
+		A69FF3C62E143ABC00AFF7A8 /* HoverButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoverButton.swift; sourceTree = "<group>"; };
 		A6A13AA018C2D23300B241ED /* iTermColorMap.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermColorMap.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA118C2D23300B241ED /* iTermColorMap.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermColorMap.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -13153,6 +13155,7 @@
 		A6CBB81C2E0A1C5500B2CCCB /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				A69FF3C62E143ABC00AFF7A8 /* HoverButton.swift */,
 				A6F7D4B62E03424F0065D09C /* iTermBrowserToolbar.swift */,
 				A6F7D4E02E0484790065D09C /* iTermBrowserURLTextView.swift */,
 				A6F7D4DE2E03E06E0065D09C /* iTermURLBar.swift */,
@@ -18920,6 +18923,7 @@
 				A697CED32D9D8E590031583F /* VimKeyParser.swift in Sources */,
 				A639E1A12112CA33001696DE /* iTermEchoProbe.m in Sources */,
 				A6D10E3A27F7C2BC0026DB56 /* NSPoint+MultiCursor.swift in Sources */,
+				A69FF3C72E143ABD00AFF7A8 /* HoverButton.swift in Sources */,
 				A67DAF14299C506000AD331A /* iTermOffscreenCommandLineBackgroundRenderer.m in Sources */,
 				A68ADA0B29D397400008E092 /* Progress.swift in Sources */,
 				A6644BE325CDCCD600419355 /* iTermLegacyView.m in Sources */,

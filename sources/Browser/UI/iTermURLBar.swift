@@ -97,9 +97,9 @@ class iTermURLBar: NSView {
             updateFavicon()
         }
     }
-    
+
     // MARK: - Initialization
-    
+
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         setupUI()
@@ -121,14 +121,12 @@ class iTermURLBar: NSView {
         setupTextFieldBackground()
         setupTextField()
         setupIcons()
-        setupConstraints()
         setupTextFieldDelegate()
     }
     
     private func setupTextFieldBackground() {
         class URLBarTextFieldBackground: NSView { }
         textFieldBackground = URLBarTextFieldBackground()
-        textFieldBackground.translatesAutoresizingMaskIntoConstraints = false
         textFieldBackground.wantsLayer = true
         textFieldBackground.layer?.cornerRadius = 8
         textFieldBackground.layer?.borderWidth = 1
@@ -140,7 +138,6 @@ class iTermURLBar: NSView {
     private func setupTextField() {
         textField = iTermURLTextField(frame: .zero)
         textField.urlTextFieldDelegate = self
-        textField.translatesAutoresizingMaskIntoConstraints = false
         textField.placeholderString = "Search or enter website name"
         textField.font = NSFont.systemFont(ofSize: 13)
         
@@ -150,7 +147,6 @@ class iTermURLBar: NSView {
     private func setupIcons() {
         // Favicon view
         faviconView = NSImageView()
-        faviconView?.translatesAutoresizingMaskIntoConstraints = false
         faviconView?.imageScaling = .scaleProportionallyUpOrDown
         faviconView?.unregisterDraggedTypes()  // Clear default drag behavior
         faviconView?.setAccessibilityRole(.button)
@@ -159,60 +155,47 @@ class iTermURLBar: NSView {
         
         // Progress indicator
         progressIndicator = NSProgressIndicator()
-        progressIndicator?.translatesAutoresizingMaskIntoConstraints = false
         progressIndicator?.style = .spinning
         progressIndicator?.controlSize = .small
         progressIndicator?.isHidden = true
         addSubview(progressIndicator!)
     }
     
-    private func setupConstraints() {
-        guard let faviconView = faviconView,
-              let progressIndicator = progressIndicator else { return }
-        let inset = 8.0
-        NSLayoutConstraint.activate([
-            // Favicon view (left side)
-            faviconView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
-            faviconView.centerYAnchor.constraint(equalTo: centerYAnchor),
-            faviconView.widthAnchor.constraint(equalToConstant: 16),
-            faviconView.heightAnchor.constraint(equalToConstant: 16),
-
-            // Progress indicator (right side)
-            progressIndicator.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
-            progressIndicator.centerYAnchor.constraint(equalTo: centerYAnchor),
-            progressIndicator.widthAnchor.constraint(equalToConstant: 16),
-            progressIndicator.heightAnchor.constraint(equalToConstant: 16),
-
-            // Text field background (center, with margins for icons)
-            textFieldBackground.leadingAnchor.constraint(equalTo: faviconView.trailingAnchor, constant: 8),
-            textFieldBackground.trailingAnchor.constraint(equalTo: progressIndicator.leadingAnchor, constant: -8),
-            textFieldBackground.centerYAnchor.constraint(equalTo: centerYAnchor),
-            textFieldBackground.heightAnchor.constraint(equalToConstant: 28),
-
-            textField.leadingAnchor.constraint(
-                equalTo: textFieldBackground.leadingAnchor,
-                constant: inset
-            ),
-            textField.trailingAnchor.constraint(
-                equalTo: textFieldBackground.trailingAnchor,
-                constant: -inset
-            ),
-            textField.centerYAnchor.constraint(equalTo: textFieldBackground.centerYAnchor,
-                                               constant: 2),
-            textField.heightAnchor.constraint(equalToConstant: 22),
-            widthAnchor.constraint(greaterThanOrEqualToConstant: 200)
-        ])
-
-        // Make the textField grow along with the text view until it can't
-        let textWidthConstraint = textField.widthAnchor.constraint(
-            equalTo: textField.textView.widthAnchor,
-            constant: textField.textView.textContainerInset.width * 2
-        )
-        textWidthConstraint.priority = .defaultLow
-        textWidthConstraint.isActive = true
-
-        textField.setContentHuggingPriority(.required, for: .horizontal)
-        textField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+    override func layout() {
+        super.layout()
+        layoutComponents()
+    }
+    
+    override func resize(withOldSuperviewSize oldSize: NSSize) {
+        super.resize(withOldSuperviewSize: oldSize)
+        layoutComponents()
+    }
+    
+    private func layoutComponents() {
+        let bounds = self.bounds
+        let iconSize = NSSize(width: 16, height: 16)
+        let iconY = (bounds.height - iconSize.height) / 2
+        
+        // Favicon on left
+        faviconView?.frame = NSRect(x: 8, y: iconY,
+                                   width: iconSize.width, height: iconSize.height)
+        
+        // Progress indicator on right
+        let progressX = bounds.width - iconSize.width - 8
+        progressIndicator?.frame = NSRect(x: progressX, y: iconY,
+                                         width: iconSize.width, height: iconSize.height)
+        
+        // Text field background in center
+        let bgX: CGFloat = 32 // After favicon + spacing
+        let bgWidth = progressX - bgX - 8
+        let bgHeight: CGFloat = 28
+        let bgY = (bounds.height - bgHeight) / 2
+        textFieldBackground.frame = NSRect(x: bgX, y: bgY, width: bgWidth, height: bgHeight)
+        
+        // Text field inside background with insets
+        let inset: CGFloat = 8
+        textField.frame = NSRect(x: inset, y: 2,
+                                width: bgWidth - inset * 2, height: 22)
     }
 
     private func setupTextFieldDelegate() {

@@ -60,107 +60,156 @@ class iTermBrowserToolbar: NSView {
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         setupButtons()
-        setupConstraints()
     }
 
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setupButtons()
-        setupConstraints()
     }
 
     private func setupButtons() {
-        backButton = NSButton()
-        backButton.image = NSImage(systemSymbolName: "chevron.left", accessibilityDescription: "Back")
+        backButton = HoverButton(symbolName: "chevron.left",
+                                 accessibilityDescription: "Back")
         backButton.target = self
         backButton.action = #selector(backTapped)
-        backButton.translatesAutoresizingMaskIntoConstraints = false
         setupLongPressForButton(backButton, action: #selector(showBackHistory))
         addSubview(backButton)
 
-        forwardButton = NSButton()
-        forwardButton.image = NSImage(systemSymbolName: "chevron.right", accessibilityDescription: "Forward")
+        forwardButton = HoverButton(symbolName: "chevron.right",
+                                    accessibilityDescription: "Forward")
         forwardButton.target = self
         forwardButton.action = #selector(forwardTapped)
-        forwardButton.translatesAutoresizingMaskIntoConstraints = false
         setupLongPressForButton(forwardButton, action: #selector(showForwardHistory))
         addSubview(forwardButton)
 
-        reloadButton = NSButton()
-        reloadButton.image = NSImage(systemSymbolName: "arrow.clockwise", accessibilityDescription: "Reload")
+        reloadButton = HoverButton(symbolName: "arrow.clockwise",
+                                   accessibilityDescription: "Reload")
         reloadButton.target = self
         reloadButton.action = #selector(reloadTapped)
-        reloadButton.translatesAutoresizingMaskIntoConstraints = false
         addSubview(reloadButton)
         
-        stopButton = NSButton()
-        stopButton.image = NSImage(systemSymbolName: "xmark", accessibilityDescription: "Stop")
+        stopButton = HoverButton(symbolName: "xmark",
+                                 accessibilityDescription: "Stop")
         stopButton.target = self
         stopButton.action = #selector(stopTapped)
-        stopButton.translatesAutoresizingMaskIntoConstraints = false
         stopButton.isHidden = true  // Initially hidden, shown during loading
         addSubview(stopButton)
         
-        devNullIndicator = NSButton()
-        devNullIndicator.image = NSImage(systemSymbolName: "eye.slash", accessibilityDescription: "Dev Null Mode")
+        devNullIndicator = HoverButton(symbolName: "eye.slash",
+                                       accessibilityDescription: "Dev Null Mode")
         devNullIndicator.target = self
         devNullIndicator.action = #selector(devNullIndicatorTapped)
-        devNullIndicator.translatesAutoresizingMaskIntoConstraints = false
         devNullIndicator.isHidden = true  // Initially hidden, shown only in /dev/null mode
         addSubview(devNullIndicator)
         
         urlBar = iTermURLBar()
         urlBar.delegate = self
-        urlBar.translatesAutoresizingMaskIntoConstraints = false
         addSubview(urlBar)
         
-        menuButton = NSButton()
-        menuButton.image = NSImage(systemSymbolName: "line.3.horizontal", accessibilityDescription: "Menu")
+        menuButton = HoverButton(symbolName: "line.3.horizontal",
+                                 accessibilityDescription: "Menu")
         menuButton.target = self
         menuButton.action = #selector(menuTapped)
-        menuButton.translatesAutoresizingMaskIntoConstraints = false
         addSubview(menuButton)
     }
 
-    private func setupConstraints() {
-        NSLayoutConstraint.activate([
-            backButton.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
-            backButton.centerYAnchor.constraint(equalTo: centerYAnchor),
-            backButton.widthAnchor.constraint(equalToConstant: 32),
-            backButton.heightAnchor.constraint(equalToConstant: 32),
+    override func layout() {
+        super.layout()
+        layoutButtons()
+    }
+    
+    override func resize(withOldSuperviewSize oldSize: NSSize) {
+        super.resize(withOldSuperviewSize: oldSize)
+        layoutButtons()
+    }
 
-            forwardButton.leadingAnchor.constraint(equalTo: backButton.trailingAnchor, constant: 8),
-            forwardButton.centerYAnchor.constraint(equalTo: centerYAnchor),
-            forwardButton.widthAnchor.constraint(equalToConstant: 32),
-            forwardButton.heightAnchor.constraint(equalToConstant: 32),
+    struct HorizontalLayoutHelper {
+        enum Direction {
+            case ltr
+            case rtl
+        }
+        var direction: Direction
+        var x = CGFloat(0)
+        var spacing: CGFloat = 0
 
-            reloadButton.leadingAnchor.constraint(equalTo: forwardButton.trailingAnchor, constant: 8),
-            reloadButton.centerYAnchor.constraint(equalTo: centerYAnchor),
-            reloadButton.widthAnchor.constraint(equalToConstant: 32),
-            reloadButton.heightAnchor.constraint(equalToConstant: 32),
-            
-            // Stop button shares same position as reload button
-            stopButton.leadingAnchor.constraint(equalTo: forwardButton.trailingAnchor, constant: 8),
-            stopButton.centerYAnchor.constraint(equalTo: centerYAnchor),
-            stopButton.widthAnchor.constraint(equalToConstant: 32),
-            stopButton.heightAnchor.constraint(equalToConstant: 32),
-            
-            urlBar.leadingAnchor.constraint(equalTo: reloadButton.trailingAnchor, constant: 12),
-            urlBar.centerYAnchor.constraint(equalTo: centerYAnchor),
-            urlBar.trailingAnchor.constraint(equalTo: devNullIndicator.leadingAnchor, constant: -12),
-            urlBar.heightAnchor.constraint(equalToConstant: 28),
-            
-            // Dev null indicator positioned to the left of menu button
-            devNullIndicator.trailingAnchor.constraint(equalTo: menuButton.leadingAnchor, constant: -8),
-            devNullIndicator.centerYAnchor.constraint(equalTo: centerYAnchor),
-            devNullIndicator.widthAnchor.constraint(equalToConstant: 32),
-            devNullIndicator.heightAnchor.constraint(equalToConstant: 32),
-            
-            menuButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
-            menuButton.centerYAnchor.constraint(equalTo: centerYAnchor),
-            menuButton.widthAnchor.constraint(equalToConstant: 32),
-            menuButton.heightAnchor.constraint(equalToConstant: 32)
-        ])
+        mutating func add(_ view: NSView, extraSpacing: CGFloat = 0.0) {
+            if let button = view as? NSButton {
+                button.sizeToFit()
+            }
+            var frame = view.frame
+            switch direction {
+            case .ltr:
+                break
+            case .rtl:
+                x -= frame.width
+            }
+            frame.origin.x = x
+            view.frame = frame
+            switch direction {
+            case .ltr:
+                x += frame.width + spacing + extraSpacing
+            case .rtl:
+                x -= spacing + extraSpacing
+            }
+        }
+
+        // Set the frame of view to be centered between minX and maxX. It will take fraction % of
+        // the space. If the available space is less than preferredMinWidth, fraction is disregarded
+        // and all the space is used.
+        mutating func addProportional(_ view: NSView, minX: CGFloat, maxX: CGFloat, preferredMinWidth: CGFloat, fraction: CGFloat) {
+            let available = maxX - minX
+            var proposed = available * fraction
+            if proposed < preferredMinWidth {
+                proposed = min(preferredMinWidth, available)
+            }
+            let unused = available - proposed
+            let padding = unused / 2.0
+            var frame = view.frame
+            frame.origin.x = minX + padding
+            frame.size.width = proposed
+            view.frame = frame
+        }
+    }
+
+    struct VerticalLayoutHelper {
+        var enclosureHeight: CGFloat
+
+        func centerInEnclosure(_ view: NSView, fixedHeight: CGFloat? = nil) {
+            var frame = view.frame
+            if let fixedHeight {
+                frame.size.height = fixedHeight
+            }
+            frame.origin.y = (enclosureHeight - frame.height) / 2.0
+            view.frame = frame
+        }
+    }
+
+    private func layoutButtons() {
+        var leftHelper = HorizontalLayoutHelper(direction: .ltr, x: 8, spacing: 0)
+
+        leftHelper.add(backButton)
+        leftHelper.add(forwardButton)
+        leftHelper.add(reloadButton)
+        leftHelper.x += 12.0
+
+        var rightHelper = HorizontalLayoutHelper(direction: .rtl, x: bounds.maxX, spacing: 0)
+
+        rightHelper.add(menuButton)
+        if !devNullIndicator.isHidden {
+            rightHelper.add(devNullIndicator)
+        }
+        rightHelper.x -= 12.0
+
+        leftHelper.addProportional(urlBar, minX: leftHelper.x, maxX: rightHelper.x, preferredMinWidth: 250.0, fraction: 0.55)
+
+        let verticalHelper = VerticalLayoutHelper(enclosureHeight: bounds.height)
+        verticalHelper.centerInEnclosure(backButton)
+        verticalHelper.centerInEnclosure(forwardButton)
+        verticalHelper.centerInEnclosure(reloadButton)
+        verticalHelper.centerInEnclosure(stopButton)
+        verticalHelper.centerInEnclosure(menuButton)
+        verticalHelper.centerInEnclosure(devNullIndicator)
+        verticalHelper.centerInEnclosure(urlBar, fixedHeight: 28.0)
     }
 
     func focusURLBar() {

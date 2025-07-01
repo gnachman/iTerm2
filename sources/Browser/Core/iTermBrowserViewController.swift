@@ -418,7 +418,6 @@ extension iTermBrowserViewController {
         setupToolbar()
         setupWebView()
         setupShade()
-        setupConstraints()
         setupRestorationObserver()
     }
     
@@ -427,6 +426,11 @@ extension iTermBrowserViewController {
         if !shouldDeferLoading() {
             loadDeferredURLIfNeeded()
         }
+    }
+    
+    override func viewDidLayout() {
+        super.viewDidLayout()
+        layoutSubviews()
     }
 
     @objc
@@ -454,7 +458,6 @@ extension iTermBrowserViewController {
         backgroundView = NSVisualEffectView()
         backgroundView.material = .contentBackground
         backgroundView.blendingMode = .behindWindow
-        backgroundView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(backgroundView)
     }
 
@@ -465,49 +468,37 @@ extension iTermBrowserViewController {
     private func setupToolbar() {
         toolbar = iTermBrowserToolbar()
         toolbar.delegate = self
-        toolbar.translatesAutoresizingMaskIntoConstraints = false
         toolbar.setDevNullMode(browserManager.user == .devNull)
         view.addSubview(toolbar)
     }
 
     private func setupWebView() {
-        browserManager.webView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(browserManager.webView)
     }
 
     private func setupShade() {
         shadeView.color = .black
         shadeView.isHidden = true
-        shadeView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(shadeView)
     }
 
-    private func setupConstraints() {
-        NSLayoutConstraint.activate([
-            // Background view constraints (full view coverage)
-            backgroundView.topAnchor.constraint(equalTo: view.topAnchor),
-            backgroundView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            backgroundView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            backgroundView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-
-            // Toolbar constraints
-            toolbar.topAnchor.constraint(equalTo: view.topAnchor),
-            toolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            toolbar.heightAnchor.constraint(equalToConstant: 44),
-
-            // WebView constraints
-            browserManager.webView.topAnchor.constraint(equalTo: toolbar.bottomAnchor),
-            browserManager.webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            browserManager.webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            browserManager.webView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-
-            // Shadeview
-            shadeView.topAnchor.constraint(equalTo: view.topAnchor),
-            shadeView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            shadeView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            shadeView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-        ])
+    private func layoutSubviews() {
+        let bounds = view.bounds
+        
+        // Background view - full coverage
+        backgroundView.frame = bounds
+        
+        // Toolbar - top, full width, 44pt height
+        toolbar.frame = NSRect(x: 0, y: bounds.height - 44,
+                              width: bounds.width, height: 44)
+        
+        // WebView - below toolbar
+        browserManager.webView.frame = NSRect(x: 0, y: 0,
+                                            width: bounds.width,
+                                            height: bounds.height - 44)
+        
+        // Shade view - full coverage
+        shadeView.frame = bounds
     }
     
     private func setupRestorationObserver() {
@@ -954,6 +945,13 @@ extension iTermBrowserViewController: iTermBookmarkTagEditorDelegate {
 @available(macOS 11.0, *)
 @objc(iTermBrowserView)
 class iTermBrowserView: NSView {
+    override func resize(withOldSuperviewSize oldSize: NSSize) {
+        super.resize(withOldSuperviewSize: oldSize)
+        // Notify the view controller to relayout subviews
+        if let viewController = self.nextResponder as? iTermBrowserViewController {
+            viewController.viewDidLayout()
+        }
+    }
 }
 
 @available(macOS 11.0, *)
