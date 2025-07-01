@@ -225,8 +225,6 @@ class iTermBrowserContextMenuHelper: NSObject {
             withCaptureComponents: payload.captureComponents,
             workingDirectory: nil,
             remoteHost: remoteHost)
-        let actionEnum = ContextMenuActionPrefsController.action(
-            forActionDict: payload.actionDict)
 
         let item = NSMenuItem(title: title,
                               action: #selector(performSmartSelectionAction(_:)),

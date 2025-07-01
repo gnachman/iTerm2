@@ -136,6 +136,8 @@ typedef struct {
     CGContextRef _metalContext;
 }
 
+@dynamic timestampBaseline;
+
 - (instancetype)initWithTextView:(PTYTextView *)textView
                           screen:(VT100Screen *)screen
                             glue:(id<iTermMetalPerFrameStateDelegate>)glue

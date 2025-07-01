@@ -362,7 +362,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 @property (nonatomic) BOOL suppressAllOutput;
 
 - (void)threadedReadTask:(char *)buffer length:(int)length;
-- (void)addTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority;
+- (void)addTokens:(CVector)vector
+      lengthTotal:(int)lengthTotal
+lengthExcludingInBandSignaling:(int)lengthExcludingInBandSignaling
+     highPriority:(BOOL)highPriority;
+
 - (void)scheduleTokenExecution;
 - (void)injectData:(NSData *)data;
 

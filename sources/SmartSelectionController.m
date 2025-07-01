@@ -571,7 +571,7 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
     _playgroundResultLabel.stringValue = result.rule[kNotesKey];
     [_playgroundTextView highlightGridRange:VT100GridCoordRangeMake(result.startX,
                                                                     result.absStartY,
-                                                                    result.endX + 1,
+                                                                    result.endX,
                                                                     result.absEndY)];
 }
 
@@ -627,17 +627,13 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
     return iTermImmutableMetadataDefault();
 }
 
-- (int)numberOfLines { 
-    return [[self componentsSeparatedByString:@"\n"] count];
-}
-
-- (nonnull ScreenCharArray *)screenCharArrayAtScreenIndex:(int)index { 
+- (nonnull ScreenCharArray *)screenCharArrayAtScreenIndex:(int)index {
     return [self screenCharArrayForLine:index];
 }
 
 - (nonnull ScreenCharArray *)screenCharArrayForLine:(int)line {
     NSArray<NSString *> *lines = [self componentsSeparatedByString:@"\n"];
-    return [lines[line] asScreenCharArray];
+    return [[lines[line] asScreenCharArray] paddedToAtLeastLength:self.width];
 }
 
 - (long long)totalScrollbackOverflow { 

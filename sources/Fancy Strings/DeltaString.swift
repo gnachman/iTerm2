@@ -23,13 +23,12 @@ class DeltaString: NSObject {
         let buffer = UnsafeBufferPointer(start: deltas, count: Int(length))
         return Array(buffer)
     }
-    /// replace all your old inits with this single one:
+
     @objc
     init(string: NSString,
          length: CInt,
          deltasStore: UnsafeMutablePointer<CInt>,
-         backingStore: UnsafeMutablePointer<unichar>?)
-    {
+         backingStore: UnsafeMutablePointer<unichar>?) {
         self.unsafeString = string
         self.length = length
         self.deltasStore = deltasStore
@@ -43,6 +42,12 @@ class DeltaString: NSObject {
     }
 
     func cellIndexForUTF16Index(_ utf16Index: Int) -> Int {
+        if utf16Index >= length {
+            if length == 0 {
+                return utf16Index
+            }
+            return utf16Index + Int(deltasStore[Int(length) - 1])
+        }
         return utf16Index + Int(deltasStore[utf16Index])
     }
 }

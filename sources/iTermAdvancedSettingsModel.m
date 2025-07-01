@@ -194,7 +194,7 @@ DEFINE_SETTABLE_BOILERPLATE(name, capitalizedName, const BOOL *, kiTermAdvancedS
 DEFINE_BOILERPLATE(name, int, kiTermAdvancedSettingTypeInteger, theDefault, theDescription, iTermAdvancedSettingsModelTransformInt, iTermAdvancedSettingsModelInverseTransformInt)
 
 #define DEFINE_SETTABLE_INT(name, capitalizedName, theDefault, theDescription) \
-DEFINE_SETTABLE_BOILERPLATE(name, capitalizedName, int, kiTermAdvancedSettingTypeInt, theDefault, theDescription, iTermAdvancedSettingsModelTransformInt, iTermAdvancedSettingsModelInverseTransformInt)
+DEFINE_SETTABLE_BOILERPLATE(name, capitalizedName, int, kiTermAdvancedSettingTypeInteger, theDefault, theDescription, iTermAdvancedSettingsModelTransformInt, iTermAdvancedSettingsModelInverseTransformInt)
 
 #define DEFINE_NONNEGATIVE_INT(name, theDefault, theDescription) \
 DEFINE_BOILERPLATE(name, int, kiTermAdvancedSettingTypeInteger, theDefault, theDescription, iTermAdvancedSettingsModelTransformNonnegativeInt, iTermAdvancedSettingsModelInverseTransformInt)
@@ -752,7 +752,7 @@ DEFINE_SETTABLE_STRING(adblockListURL, AdblockListURL, @"https://easylist-downlo
 DEFINE_SETTABLE_STRING(rustAdblockListURL, RustAdblockListURL, @"https://easylist.to/easylist/easylist.txt https://easylist.to/easylist/easyprivacy.txt https://easylist.to/easylist/fanboy-social.txt", SECTION_WEB_BROWSER @"URLs for Rust ad blocking filter lists\nSpace-delimited list of URLs to text files in EasyList format. Used by the advanced Rust-based ad blocking engine.");
 DEFINE_SETTABLE_BOOL(browserProxyEnabled, BrowserProxyEnabled, NO, SECTION_WEB_BROWSER @"Enable HTTP proxy for web browser?\nWhen enabled, routes all browser traffic through the configured proxy server.");
 DEFINE_SETTABLE_STRING(browserProxyHost, BrowserProxyHost, @"127.0.0.1", SECTION_WEB_BROWSER @"HTTP proxy hostname or IP address\nThe address of the proxy server to use for browser connections.");
-DEFINE_INT(browserProxyPort, 8118, SECTION_WEB_BROWSER @"HTTP proxy port\nThe port number of the proxy server.");
+DEFINE_SETTABLE_INT(browserProxyPort, BrowserProxyPort, 8118, SECTION_WEB_BROWSER @"HTTP proxy port\nThe port number of the proxy server.");
 
 #pragma mark - Experimental Features
 

@@ -1966,6 +1966,7 @@ class Conductor: NSObject, Codable {
                         framedPID = finished.login
                         state = .ground
 
+                        delegate?.conductorStateDidChange()
                         return ConductorRecovery(pid: finished.login,
                                                  dcsID: finished.dcsID,
                                                  tree: finished.tree,
@@ -1973,7 +1974,6 @@ class Conductor: NSObject, Codable {
                                                  boolArgs: finished.boolArgs,
                                                  clientUniqueID: finished.clientUniqueID,
                                                  parent: parent)
-                        delegate?.conductorStateDidChange()
                     }
                     return nil
                 }
