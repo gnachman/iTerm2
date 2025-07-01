@@ -34,3 +34,9 @@ extension NSSize {
         return NSSize(width: 1.0 / width, height: 1.0 / height)
     }
 }
+
+extension NSSize {
+    var area: CGFloat {
+        return width * height
+    }
+}

@@ -64,6 +64,7 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
     }
 
     var maxWidth: CGFloat = 500
+    var alwaysUseMaxWidth = false
 
     // MARK: - Mode and Subviews
     private var mode: Mode  // changed from let to var
@@ -221,7 +222,8 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
         adjustedLocation.x -= 24
         adjustedLocation.y += 2
         let bottomLeft = adjustedLocation
-        return  (topLeft, bottomLeft)
+        NSLog("Bottom left point is \(bottomLeft)")
+        return (topLeft, bottomLeft)
     }
 
     func updateOrigin(location:  NSRect) {
@@ -251,7 +253,16 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
                    height: size.height)
         }
 
-        return frame.nudgedHorizontally(into: screen.visibleFrame)
+        if let parent, let screen = predominantScreen(for: parent.frame) {
+            return frame.nudgedHorizontally(into: screen.visibleFrame)
+        }
+        return frame
+    }
+
+    private func predominantScreen(for frame: NSRect) -> NSScreen? {
+        return NSScreen.screens.max { lhs, rhs in
+            lhs.frame.intersection(frame).size.area < rhs.frame.intersection(frame).size.area
+        }
     }
 
     // MARK: - Dynamic Mode Configuration
@@ -495,7 +506,9 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
                 column.width = columnWidth
             }
         }
-
+        if alwaysUseMaxWidth {
+            requiredWidth = maxWidth
+        }
         if requiredWidth != frame.width {
             var frame = self.frame
             frame.size.width = requiredWidth

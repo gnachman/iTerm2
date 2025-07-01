@@ -29,6 +29,12 @@ extension NSPoint {
     func addingX(_ dx: CGFloat) -> NSPoint {
         return NSPoint(x: x + dx, y: y)
     }
+    static func -=(lhs: inout NSPoint, rhs: NSPoint) {
+        lhs = lhs - rhs
+    }
+    static func +=(lhs: inout NSPoint, rhs: NSPoint) {
+        lhs = lhs + rhs
+    }
 }
 
 extension NSPoint {

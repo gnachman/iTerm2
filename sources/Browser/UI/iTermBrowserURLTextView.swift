@@ -22,6 +22,9 @@ class iTermBrowserURLTextView: PlaceholderTextView {
             width: CGFloat.greatestFiniteMagnitude,
             height: CGFloat.greatestFiniteMagnitude
         )
+        
+        // Disable focus ring since the containing view will draw it
+        focusRingType = .none
     }
 
     @MainActor required init?(coder: NSCoder) {
