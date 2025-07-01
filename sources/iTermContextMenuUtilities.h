@@ -15,6 +15,26 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @interface iTermContextMenuUtilities: NSObject
++ (BOOL)addMenuItemForColors:(NSString *)shortSelectedText menu:(NSMenu *)theMenu index:(NSInteger)i;
++ (BOOL)addMenuItemForBase64Encoded:(NSString *)shortSelectedText
+                               menu:(NSMenu *)theMenu
+                              index:(NSInteger)i
+                           selector:(SEL)selector
+                             target:(id _Nullable)target;
+
++ (NSInteger)addMenuItemsForNumericConversions:(NSString *)text
+                                          menu:(NSMenu *)theMenu
+                                         index:(NSInteger)i
+                                      selector:(SEL)selector
+                                        target:(id _Nullable)target;
+
++ (NSInteger)addMenuItemsToCopyBase64:(NSString *)text
+                                 menu:(NSMenu *)theMenu
+                                index:(NSInteger)i
+                             selectorForString:(SEL)selectorForString
+                      selectorForData:(SEL)selectorForData
+                               target:(id _Nullable)target;
+
 @end
 
 NS_ASSUME_NONNULL_END

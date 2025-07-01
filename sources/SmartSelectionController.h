@@ -52,9 +52,9 @@ extern const double SmartSelectionVeryHighPrecision;
 
 + (BOOL)logDebugInfo;
 + (double)precisionInRule:(NSDictionary *)rule;
-+ (NSArray *)actionsInRule:(NSDictionary *)rule;
++ (NSArray<NSDictionary<NSString *, id> *> *)actionsInRule:(NSDictionary *)rule;
 + (NSString *)regexInRule:(NSDictionary *)rule;
-+ (NSArray *)defaultRules;
++ (NSArray<NSDictionary<NSString *, id> *> *)defaultRules;
 - (IBAction)addRule:(id)sender;
 - (IBAction)removeRule:(id)sender;
 - (IBAction)loadDefaults:(id)sender;

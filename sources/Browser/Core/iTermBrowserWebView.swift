@@ -8,7 +8,7 @@
 import WebKit
 
 @available(macOS 11.0, *)
-@objc protocol iTermBrowserWebViewDelegate: AnyObject {
+protocol iTermBrowserWebViewDelegate: AnyObject {
     func webViewDidRequestViewSource(_ webView: iTermBrowserWebView)
     func webViewDidRequestSavePageAs(_ webView: iTermBrowserWebView)
     func webViewDidRequestAddNamedMark(_ webView: iTermBrowserWebView, atPoint point: NSPoint)
@@ -30,6 +30,15 @@ import WebKit
     func webViewDidRequestRemoveElement(_ webView: iTermBrowserWebView, at: NSPoint)
     func webViewDidBecomeFirstResponder(_ webView: iTermBrowserWebView)
     func webViewDidCopy(_ webView: iTermBrowserWebView, string: String)
+    func webViewSearchEngineName(_ webView: iTermBrowserWebView) -> String?
+    func webViewPerformWebSearch(_ webView: iTermBrowserWebView, query: String)
+    func webViewSmartSelectionRules(_ webView: iTermBrowserWebView) -> [SmartSelectRule]
+    func webViewRunCommand(_ webView: iTermBrowserWebView, command: String)
+    func webViewScope(_ webView: iTermBrowserWebView) -> (iTermVariableScope, iTermObject)?
+    func webViewScopeShouldInterpolateSmartSelectionParameters(_ webView: iTermBrowserWebView) -> Bool
+    func webViewOpenFile(_ webView: iTermBrowserWebView, file: String)
+    func webViewPerformSplitPaneAction(_ webView: iTermBrowserWebView, action: iTermBrowserSplitPaneAction)
+    func webViewCurrentTabHasMultipleSessions(_ webView: iTermBrowserWebView) -> Bool
 }
 
 @available(macOS 11.0, *)
@@ -652,13 +661,10 @@ extension iTermBrowserWebView: iTermFocusFollowsMouseDelegate {
 
 @available(macOS 11.0, *)
 extension iTermBrowserWebView: iTermBrowserContextMenuHelperDelegate {
-    func contextMenuCurrentShortSelection() -> String? {
-        guard let currentSelection, currentSelection.count < 200 else {
-            return nil
-        }
+    func contextMenuCurrentSelection() -> String? {
         return currentSelection
     }
-    
+
     func contextMenuAddNamedMark(at point: NSPoint) {
         browserDelegate?.webViewDidRequestAddNamedMark(
             self,
@@ -699,6 +705,59 @@ extension iTermBrowserWebView: iTermBrowserContextMenuHelperDelegate {
 
     func contextMenuCopy(string: String) {
         copy(string: string)
+    }
+
+    func contextMenuCopy(data: Data) {
+        copy(string: data.lossyString)
+    }
+
+    func contextMenuSearchEngineName() -> String? {
+        return browserDelegate?.webViewSearchEngineName(self)
+    }
+
+    func contextMenuSearch(for query: String) {
+        browserDelegate?.webViewPerformWebSearch(self, query: query)
+    }
+
+    func contextMenuSmartSelectionMatches(forText text: String) -> [WebSmartMatch] {
+        guard let rules = (browserDelegate?.webViewSmartSelectionRules(self)) else {
+            return []
+        }
+        return allMatches(rules: rules, in: text)
+    }
+
+    func contextMenuCurrentURL() -> URL? {
+        return url
+    }
+
+    func contextMenuOpenFile(_ value: String) {
+        browserDelegate?.webViewOpenFile(self, file: value)
+    }
+
+    func contextMenuOpenURL(_ value: String) {
+        if let url = URL(string: value) {
+            browserDelegate?.webViewOpenURLInNewTab(self, url: url)
+        }
+    }
+
+    func contextMenuRunCommand(_ value: String) {
+        browserDelegate?.webViewRunCommand(self, command: value)
+    }
+
+    func contextMenuScope() -> (iTermVariableScope, iTermObject)? {
+        return browserDelegate?.webViewScope(self)
+    }
+
+    func contextMenuInterpolateSmartSelectionParameters() -> Bool {
+        return browserDelegate?.webViewScopeShouldInterpolateSmartSelectionParameters(self) ?? false
+    }
+
+    func contextMenuPerformSplitPaneAction(action: iTermBrowserSplitPaneAction) {
+        browserDelegate?.webViewPerformSplitPaneAction(self, action: action)
+    }
+
+    func contextMenuCurrentTabHasMultipleSessions() -> Bool {
+        return browserDelegate?.webViewCurrentTabHasMultipleSessions(self) ?? false
     }
 }
 

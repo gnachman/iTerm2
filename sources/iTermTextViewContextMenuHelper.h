@@ -25,6 +25,8 @@ NS_ASSUME_NONNULL_BEGIN
 @class iTermURLActionHelper;
 @class iTermVariableScope;
 
+extern const int kMaxSelectedTextLengthForCustomActions;
+
 // First responder can choose to implement these.
 @interface NSResponder(ContextMenuHelper)
 - (void)terminalStateToggleAlternateScreen:(id)sender;

@@ -2,6 +2,7 @@
 //  Use this file to import your target's public headers that you would like to expose to Swift.
 //
 
+#import "ContextMenuActionPrefsController.h"
 #import "DebugLogging.h"
 #import "DVRBuffer.h"
 #import "FMDatabase.h"
@@ -99,6 +100,7 @@
 #import "iTermTemporaryDoubleBufferedGridController.h"
 #import "iTermTextDataSource.h"
 #import "iTermTextExtractor.h"
+#import "iTermTextViewContextMenuHelper.h"
 #import "iTermThroughputEstimator.h"
 #import "iTermTuple.h"
 #import "iTermURLStore.h"

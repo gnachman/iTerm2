@@ -10,7 +10,7 @@ import Network
 import iTermProxy
 
 @available(macOS 11.0, *)
-@objc protocol iTermBrowserManagerDelegate: AnyObject {
+protocol iTermBrowserManagerDelegate: AnyObject {
     func browserManager(_ manager: iTermBrowserManager, didUpdateURL url: String?)
     func browserManager(_ manager: iTermBrowserManager, didUpdateTitle title: String?)
     func browserManager(_ manager: iTermBrowserManager, didUpdateFavicon favicon: NSImage?)
@@ -41,6 +41,15 @@ import iTermProxy
                         didHoverURL url: String?, frame: NSRect)
     func browserManagerDidBecomeFirstResponder(_ browserManager: iTermBrowserManager)
     func browserManager(_ browserManager: iTermBrowserManager, didCopyString: String)
+    func browserManagerSmartSelectionRules(
+        _ browserManager: iTermBrowserManager) -> [SmartSelectRule]
+    func browserManagerRunCommand(_ browserManager: iTermBrowserManager, command: String)
+    func browserManagerScope(_ browserManager: iTermBrowserManager) -> (iTermVariableScope, iTermObject)?
+    func browserManagerShouldInterpolateSmartSelectionParameters(
+        _ browserManager: iTermBrowserManager) -> Bool
+    func browserManager(_ browserManager: iTermBrowserManager, openFile file: String)
+    func browserManager(_ browserManager: iTermBrowserManager, performSplitPaneAction action: iTermBrowserSplitPaneAction)
+    func browserManagerCurrentTabHasMultipleSessions(_ browserManager: iTermBrowserManager) -> Bool
 }
 
 typealias Profile = [AnyHashable: Any]
@@ -642,10 +651,10 @@ extension iTermBrowserManager: iTermBrowserWebViewDelegate {
     func webViewOpenURLInNewTab(_ webView: iTermBrowserWebView, url: URL) {
         delegate?.browserManager(self, openNewTabForURL: url)
     }
-    
+
     func webViewDidHoverURL(_ webView: iTermBrowserWebView, url: String?, frame: NSRect) {
         delegate?.browserManager(self, didHoverURL: url, frame: frame)
-        
+
         // If clearing hover, also clear it in JavaScript
         if url == nil {
             hoverLinkHandler?.clearHover(in: webView)
@@ -654,6 +663,98 @@ extension iTermBrowserManager: iTermBrowserWebViewDelegate {
 
     func webViewDidCopy(_ webView: iTermBrowserWebView, string: String) {
         delegate?.browserManager(self, didCopyString: string)
+    }
+
+    func webViewSearchEngineName(_ webView: iTermBrowserWebView) -> String? {
+        guard let url = URL(string: iTermAdvancedSettingsModel.searchCommand()),
+              let parts = url.host?.lowercased().components(separatedBy: ".") else {
+            return nil
+        }
+
+        if parts.count < 2 {
+            return nil
+        }
+        let domain = parts[parts.count - 2] + "." + parts[parts.count - 1]
+        switch domain {
+        case "google.com":
+            return "Google"
+        case "bing.com":
+            return "Bing"
+        case "baidu.com":
+            return "Baidu"
+        case "yandex.com":
+            return "Yandex"
+        case "duckduckgo.com":
+            return "DuckDuckGo"
+        case "ecosia.org":
+            return "Ecosia"
+        case "startpage.com":
+            return "Startpage"
+        case "searxng.org":
+            return "SearXNG"
+        case "swisscows.ch":
+            return "Swisscows"
+        case "dogpile.com":
+            return "Dogpile"
+        case "metacrawler.com":
+            return "MetaCrawler"
+        case "mojeek.com":
+            return "Mojeek"
+        case "kagi.com":
+            return "Kagi"
+        case "qwant.com":
+            return "Qwant"
+        case "excite.com":
+            return "Excite"
+        case "hotbot.com":
+            return "HotBot"
+        case "lycos.com":
+            return "Lycos"
+        case "sogou.com":
+            return "Sogou"
+        case "youdao.com":
+            return "Youdao"
+        case "webcrawler.com":
+            return "WebCrawler"
+        default:
+            return nil
+        }
+    }
+
+    func webViewPerformWebSearch(_ webView: iTermBrowserWebView, query: String) {
+        guard let escapedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+              let url = URL(string: iTermAdvancedSettingsModel.searchCommand().replacingOccurrences(of: "%@", with: escapedQuery)) else {
+            return
+        }
+        delegate?.browserManager(self, openNewTabForURL: url)
+    }
+
+    func webViewSmartSelectionRules(_ webView: iTermBrowserWebView) -> [SmartSelectRule] {
+        return delegate?.browserManagerSmartSelectionRules(self) ?? []
+    }
+
+    func webViewRunCommand(_ webView: iTermBrowserWebView, command: String) {
+        delegate?.browserManagerRunCommand(self, command: command)
+    }
+
+    func webViewScope(_ webView: iTermBrowserWebView) -> (iTermVariableScope, iTermObject)? {
+        delegate?.browserManagerScope(self)
+    }
+
+    func webViewScopeShouldInterpolateSmartSelectionParameters(_ webView: iTermBrowserWebView) -> Bool {
+        delegate?.browserManagerShouldInterpolateSmartSelectionParameters(self) ?? false
+    }
+
+    func webViewOpenFile(_ webView: iTermBrowserWebView, file: String) {
+        delegate?.browserManager(self, openFile: file)
+    }
+
+    func webViewPerformSplitPaneAction(_ webView: iTermBrowserWebView, action: iTermBrowserSplitPaneAction) {
+        delegate?.browserManager(self, performSplitPaneAction: action)
+    }
+
+    func webViewCurrentTabHasMultipleSessions(_ webView: iTermBrowserWebView) -> Bool {
+        return delegate?.browserManagerCurrentTabHasMultipleSessions(self) ?? false
     }
 }
 
