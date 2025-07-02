@@ -60,7 +60,6 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 
 @interface ProfilePreferencesViewController () <
     iTermProfilePreferencesBaseViewControllerDelegate,
-    NSFontChanging,
     NSTabViewDelegate,
     ProfileListViewDelegate,
     ProfilesGeneralPreferencesViewControllerDelegate>
@@ -418,10 +417,6 @@ andEditComponentWithIdentifier:(NSString *)identifier
     [self.view.window performSelector:@selector(safeMakeFirstResponder:)
                            withObject:_generalViewController.profileNameFieldForEditCurrentSession
                            afterDelay:0];
-}
-
-- (void)changeFont:(id)fontManager {
-    [_textViewController changeFont:fontManager];
 }
 
 - (void)resizeWindowForCurrentTabAnimated:(BOOL)animated {

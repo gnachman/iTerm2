@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="23727" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14490.70"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="23727"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -11,6 +11,8 @@
                 <outlet property="_box" destination="vOr-3g-4Df" id="Xsj-aa-KWF"/>
                 <outlet property="_boxContent" destination="J9t-1g-aG1" id="cez-Z0-asx"/>
                 <outlet property="_description" destination="gEy-sx-fqK" id="OmV-Ue-IFP"/>
+                <outlet property="_selectionView" destination="ZDk-pg-it1" id="b1E-7i-adc"/>
+                <outlet property="_vevContainer" destination="eal-9m-DyR" id="cD5-FA-6hP"/>
                 <outlet property="textField" destination="Pyb-il-04Q" id="fjU-pe-s77"/>
                 <outlet property="view" destination="VuE-al-3yA" id="2uK-EP-Ftl"/>
             </connections>
@@ -21,14 +23,24 @@
             <rect key="frame" x="0.0" y="0.0" width="280" height="50"/>
             <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
             <subviews>
-                <box boxType="custom" borderType="line" cornerRadius="4" title="Box" titlePosition="noTitle" id="vOr-3g-4Df">
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="eal-9m-DyR">
+                    <rect key="frame" x="2" y="24" width="280" height="70"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <subviews>
+                        <visualEffectView fixedFrame="YES" blendingMode="behindWindow" material="selection" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="ZDk-pg-it1">
+                            <rect key="frame" x="0.0" y="0.0" width="280" height="70"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        </visualEffectView>
+                    </subviews>
+                </customView>
+                <box fixedFrame="YES" boxType="custom" borderType="line" cornerRadius="4" title="Box" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="vOr-3g-4Df">
                     <rect key="frame" x="0.0" y="24" width="280" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES" heightSizable="YES" flexibleMaxY="YES"/>
                     <view key="contentView" id="J9t-1g-aG1">
                         <rect key="frame" x="1" y="1" width="278" height="24"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="1000" id="Pyb-il-04Q">
+                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="1000" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Pyb-il-04Q">
                                 <rect key="frame" x="12" y="7" width="266" height="17"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Label" id="rKc-pE-bfW">
@@ -41,7 +53,7 @@
                     </view>
                     <color key="fillColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                 </box>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="gEy-sx-fqK">
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gEy-sx-fqK">
                     <rect key="frame" x="-2" y="7" width="284" height="14"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="center" title="Label" id="RTX-9d-D3x">
