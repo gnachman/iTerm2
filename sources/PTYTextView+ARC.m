@@ -359,7 +359,7 @@ iTermCommandInfoViewControllerDelegate>
     NSURL *url = [NSURL fileURLWithPath:path];
 
     NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
-    [pbItem setString:[url absoluteString] forType:(NSString *)kUTTypeFileURL];
+    [pbItem setString:[url absoluteString] forType:NSPasteboardTypeFileURL];
     NSDraggingItem *dragItem = [[NSDraggingItem alloc] initWithPasteboardWriter:pbItem];
     [dragItem setDraggingFrame:NSMakeRect(dragPosition.x, dragPosition.y, dragImage.size.width, dragImage.size.height)
                       contents:dragImage];
@@ -1891,7 +1891,9 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
     NSString *directory = [[NSFileManager defaultManager] downloadsDirectory] ?: NSHomeDirectory();
     [NSSavePanel setDirectoryURL:[NSURL fileURLWithPath:directory] onceForID:@"saveImageAs" savePanel:panel];
     panel.nameFieldStringValue = [imageInfo.filename lastPathComponent];
-    panel.allowedFileTypes = @[ @"png", @"bmp", @"gif", @"jp2", @"jpeg", @"jpg", @"tiff" ];
+    panel.allowedContentTypes = [@[ @"png", @"bmp", @"gif", @"jp2", @"jpeg", @"jpg", @"tiff" ] mapWithBlock:^id _Nullable(NSString *ext) {
+        return [UTType typeWithFilenameExtension:ext];
+    }];
     panel.allowsOtherFileTypes = NO;
     panel.canCreateDirectories = YES;
     [panel setExtensionHidden:NO];

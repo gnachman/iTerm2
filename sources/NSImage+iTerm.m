@@ -15,11 +15,7 @@
 #import "NSObject+iTerm.h"
 #import "iTermPresentationController.h"
 
-#ifndef MAC_OS_X_VERSION_10_16
-@interface NSImage(ImageFuture)
-+ (NSImage *)imageWithSystemSymbolName:(NSString *)name accessibilityDescription:(NSString *)accessibilityDescription NS_AVAILABLE_MAC(10_16);
-@end
-#endif
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 @implementation NSImage (iTerm)
 
@@ -238,13 +234,12 @@
 }
 
 + (NSString *)extensionForUniformType:(NSString *)type {
-    NSDictionary *map = @{ (NSString *)kUTTypeBMP: @"bmp",
-                           (NSString *)kUTTypeGIF: @"gif",
-                           (NSString *)kUTTypeJPEG2000: @"jp2",
-                           (NSString *)kUTTypeJPEG: @"jpeg",
-                           (NSString *)kUTTypePNG: @"png",
-                           (NSString *)kUTTypeTIFF: @"tiff",
-                           (NSString *)kUTTypeICO: @"ico" };
+    NSDictionary *map = @{ UTTypeBMP.identifier: @"bmp",
+                           UTTypeGIF.identifier: @"gif",
+                           UTTypeJPEG.identifier: @"jpeg",
+                           UTTypePNG.identifier: @"png",
+                           UTTypeTIFF.identifier: @"tiff",
+                           UTTypeICO.identifier: @"ico" };
     return map[type];
 }
 

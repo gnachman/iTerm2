@@ -27,6 +27,8 @@
 #import "iTermGlyphCharacterSource.h"
 #import "iTermRegularCharacterSource.h"
 
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
+
 #define ENABLE_DEBUG_CHARACTER_SOURCE_ALIGNMENT 0
 
 extern void CGContextSetFontSmoothingStyle(CGContextRef, int);
@@ -361,7 +363,10 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         NSURL *url = [NSURL fileURLWithPath:[NSString stringWithFormat:@"/tmp/full.%@.%@,%@.%@.png", self.debugName, @(offset.x), @(offset.y), @(iteration)]];
 
         // Step 3: Write the CGImage to disk as PNG
-        CGImageDestinationRef destination = CGImageDestinationCreateWithURL((__bridge CFURLRef)url, kUTTypePNG, 1, NULL);
+        CGImageDestinationRef destination = CGImageDestinationCreateWithURL((__bridge CFURLRef)url,
+                                                                            (__bridge CFStringRef)UTTypePNG.identifier,
+                                                                            1,
+                                                                            NULL);
         CGImageDestinationAddImage(destination, imageRef, nil);
 
         if (!CGImageDestinationFinalize(destination)) {

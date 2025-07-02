@@ -129,7 +129,6 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
     }
 
     WKPreferences *prefs = [[NSClassFromString(@"WKPreferences") alloc] init];
-    prefs.javaScriptEnabled = YES;
     prefs.javaScriptCanOpenWindowsAutomatically = NO;
     @try {
         // oh ffs, you have to do this to get the web inspector to show up

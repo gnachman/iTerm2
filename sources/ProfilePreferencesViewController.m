@@ -866,7 +866,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     openPanel.canChooseFiles = YES;
     openPanel.canChooseDirectories = NO;
     openPanel.allowsMultipleSelection = YES;
-    openPanel.allowedFileTypes = @[ @"json" ];
+    openPanel.allowedContentTypes = @[ UTTypeJSON ];
 
     if ([openPanel runModal] == NSModalResponseOK) {
         for (NSURL *url in openPanel.URLs) {

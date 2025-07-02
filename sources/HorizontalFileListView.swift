@@ -701,7 +701,7 @@ class FileItemView: NSCollectionViewItem {
             isPlaceholder = false
             let mimeToExtension = extensionToMime.lossilyInverted
             let ext = mimeToExtension[mimeType] ?? "txt"
-            icon = NSWorkspace.shared.icon(forFileType: ext)
+            icon = NSWorkspace.shared.icon(for: UTType(mimeType: mimeType) ?? UTType(filenameExtension: ext)!)
             progressIndicator.isHidden = true
         case .regular(let filePath):
             isPlaceholder = false
@@ -717,7 +717,8 @@ class FileItemView: NSCollectionViewItem {
                     icon = NSWorkspace.shared.icon(forFile: "/")
                 }
             } else {
-                icon = NSWorkspace.shared.icon(forFileType: (fileName as NSString).pathExtension)
+                let uttype = UTType(filenameExtension: (fileName as NSString).pathExtension) ?? UTType.plainText
+                icon = NSWorkspace.shared.icon(for: uttype)
             }
             progressIndicator.isHidden = false
 

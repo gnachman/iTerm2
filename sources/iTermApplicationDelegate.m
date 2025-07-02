@@ -1433,7 +1433,7 @@ static iTermKeyEventReplayer *gReplayer;
 - (IBAction)replayRecordedKeys:(id)sender {
     NSOpenPanel *panel = [NSOpenPanel openPanel];
     panel.title = @"Choose a JSON File";
-    panel.allowedFileTypes = @[@"json"];
+    panel.allowedContentTypes = @[ UTTypeJSON ];
     panel.canChooseFiles = YES;
     panel.canChooseDirectories = NO;
     panel.allowsMultipleSelection = NO;
@@ -2801,7 +2801,7 @@ static iTermKeyEventReplayer *gReplayer;
     panel.canChooseFiles = YES;
     panel.canChooseDirectories = NO;
     panel.allowsMultipleSelection = NO;
-    panel.allowedFileTypes = @[ @"iterm2arrangement" ];
+    panel.allowedContentTypes = @[ [UTType typeWithFilenameExtension:@"iterm2arrangement"] ];
     [panel beginWithCompletionHandler:^(NSModalResponse result) {
         if (result == NSModalResponseOK) {
             completion(panel.URL.path);

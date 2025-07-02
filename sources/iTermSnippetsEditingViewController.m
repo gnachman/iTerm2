@@ -21,6 +21,7 @@
 #import "NSTableView+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSView+iTerm.h"
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.iterm2.iTermSnippetsEditingPasteboardType";
 
@@ -400,7 +401,7 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
 
 - (IBAction)import:(id)sender {
     NSOpenPanel *panel = [[NSOpenPanel alloc] init];
-    panel.allowedFileTypes = @[ @"it2snippets" ];
+    panel.allowedContentTypes = @[ [UTType typeWithFilenameExtension:@"it2snippets"] ];
     panel.canChooseFiles = YES;
     panel.canChooseDirectories = NO;
     panel.allowsMultipleSelection = YES;
@@ -415,7 +416,7 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
 
 - (IBAction)export:(id)sender {
     NSSavePanel *panel = [NSSavePanel savePanel];
-    panel.allowedFileTypes = @[ @"it2snippets" ];
+    panel.allowedContentTypes = @[ [UTType typeWithFilenameExtension:@"it2snippets"] ];
 
     const NSModalResponse response = [panel runModal];
     if (response != NSModalResponseOK) {

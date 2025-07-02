@@ -20,6 +20,7 @@
 #import "NSJSONSerialization+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
 static NSString *const INTERCHANGE_KEY_MAPPING_DICT = @"Key Mappings";
@@ -549,7 +550,7 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
 
 - (void)exportMenuItem:(id)sender {
     _savePanel = [NSSavePanel savePanel];
-    [_savePanel setAllowedFileTypes:@[ @"itermkeymap" ]];
+    [_savePanel setAllowedContentTypes:@[ [UTType typeWithFilenameExtension:@"itermkeymap"] ]];
     __weak __typeof(self) weakSelf = self;
     [_savePanel beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse result) {
         if (result == NSModalResponseOK) {

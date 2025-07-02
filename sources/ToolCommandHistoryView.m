@@ -292,7 +292,7 @@ static const CGFloat kHelpMargin = 5;
 - (id <NSPasteboardWriting>)tableView:(NSTableView *)tableView pasteboardWriterForRow:(NSInteger)row {
     NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
     iTermCommandHistoryCommandUseMO *commandUse = filteredEntries_[row];
-    [pbItem setString:commandUse.command forType:(NSString *)kUTTypeUTF8PlainText];
+    [pbItem setString:commandUse.command forType:UTTypeUTF8PlainText.identifier];
     return pbItem;
 }
 

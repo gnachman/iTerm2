@@ -14,12 +14,13 @@
 #import "NSData+GZIP.h"
 #import "PTYSession.h"
 #import "PseudoTerminal.h"
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 @implementation iTermRecordingCodec
 
 + (void)loadRecording {
     NSOpenPanel *panel = [[NSOpenPanel alloc] init];
-    panel.allowedFileTypes = @[ @"itr" ];
+    panel.allowedContentTypes = @[ [UTType typeWithFilenameExtension:@"itr"] ];
     if ([panel runModal] == NSModalResponseOK) {
         [self loadRecording:panel.URL];
     }
@@ -138,7 +139,7 @@
     [iTermSavePanel asyncShowWithOptions:0
                               identifier:@"ExportRecording"
                         initialDirectory:NSHomeDirectory()
-                         defaultFilename:@"Recording.itr"
+                         defaultFilename:@"Recording"
                         allowedFileTypes:@[ @"itr" ]
                                   window:window
                               completion:^(iTermSavePanel *savePanel) {

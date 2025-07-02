@@ -17,6 +17,7 @@
 #import <apr-1/apr_base64.h>
 #import <CommonCrypto/CommonCryptor.h>
 #import <CommonCrypto/CommonDigest.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -178,22 +179,21 @@
     struct {
         const char *fingerprint;
         int length;
-        CFStringRef uti;
+        NSString *uti;
     } identifiers[] = {
-        { "BM", 2, kUTTypeBMP },
-        { "GIF", 3, kUTTypeGIF },
-        { "\xff\xd8\xff", 3, kUTTypeJPEG },
-        { "\x00\x00\x01\x00", 4, kUTTypeICO },
-        { "II\x2a\x00", 4, kUTTypeTIFF },
-        { "MM\x00\x2a", 4, kUTTypeTIFF },
-        { "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a", 8, kUTTypePNG },
-        { "\x00\x00\x00\x0c\x6a\x50\x20\x20\x0d\x0a\x87\x0a", 12, kUTTypeJPEG2000 }
+        { "BM", 2, UTTypeBMP.identifier },
+        { "GIF", 3, UTTypeGIF.identifier },
+        { "\xff\xd8\xff", 3, UTTypeJPEG.identifier },
+        { "\x00\x00\x01\x00", 4, UTTypeICO.identifier },
+        { "II\x2a\x00", 4, UTTypeTIFF.identifier },
+        { "MM\x00\x2a", 4, UTTypeTIFF.identifier },
+        { "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a", 8, UTTypePNG.identifier },
     };
 
     for (int i = 0; i < sizeof(identifiers) / sizeof(*identifiers); i++) {
         if (self.length >= identifiers[i].length &&
             !memcmp(self.bytes, identifiers[i].fingerprint, identifiers[i].length)) {
-            return (__bridge NSString *)identifiers[i].uti;
+            return identifiers[i].uti;
         }
     }
     return nil;

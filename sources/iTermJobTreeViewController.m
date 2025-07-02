@@ -20,6 +20,7 @@
 #import "NSTableColumn+iTerm.h"
 #import "NSTableView+iTerm.h"
 #import "NSTextField+iTerm.h"
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 static const int kDefaultSignal = 9;
 static int gSignalsToList[] = {
@@ -631,7 +632,7 @@ static int gSignalsToList[] = {
     iTermJobProxy *info = item ?: _root;
     NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
     NSString *aString = [@(info.pid) stringValue];
-    [pbItem setString:aString forType:(NSString *)kUTTypeUTF8PlainText];
+    [pbItem setString:aString forType:UTTypeUTF8PlainText.identifier];
     return pbItem;
 }
 

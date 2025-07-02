@@ -4256,7 +4256,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
     // start the drag
     NSPasteboardItem *pbItem = [[[NSPasteboardItem alloc] init] autorelease];
-    [pbItem setString:aString forType:(NSString *)kUTTypeUTF8PlainText];
+    [pbItem setString:aString forType:UTTypeUTF8PlainText.identifier];
     NSDraggingItem *dragItem =
         [[[NSDraggingItem alloc] initWithPasteboardWriter:pbItem] autorelease];
     [dragItem setDraggingFrame:NSMakeRect(dragPoint.x,
@@ -4854,9 +4854,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
 #pragma mark - Services
 
-- (id)validRequestorForSendType:(NSString *)sendType returnType:(NSString *)returnType
-{
-    NSSet *acceptedReturnTypes = [NSSet setWithArray:@[ (NSString *)kUTTypeUTF8PlainText,
+- (id)validRequestorForSendType:(NSString *)sendType returnType:(NSString *)returnType {
+    NSSet *acceptedReturnTypes = [NSSet setWithArray:@[ UTTypeUTF8PlainText.identifier,
                                                         NSPasteboardTypeString ]];
     NSSet *acceptedSendTypes = nil;
     if ([_selection hasSelection] && [_selection length] <= [_dataSource width] * 10000) {

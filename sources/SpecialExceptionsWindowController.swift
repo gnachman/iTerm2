@@ -396,7 +396,7 @@ final class SpecialExceptionsWindowController: NSWindowController {
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = false
-        panel.allowedFileTypes = [ ext ]
+        panel.allowedContentTypes = [ext].compactMap { UTType(filenameExtension: $0) }
         guard panel.runModal() == .OK, let url = panel.url else {
             return
         }

@@ -16,11 +16,13 @@
 #import "iTermSystemVersion.h"
 #import "iTermVariableScope.h"
 #import "iTermWarning.h"
+#import "NSArray+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSScreen+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSView+iTerm.h"
 #import "PreferencePanel.h"
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 // On macOS 10.13, we see that blur over 26 can turn red (issue 6138).
 // On macOS 10.14, we have evidence that it's safe up to 64 (issue 9438).
@@ -378,7 +380,9 @@ CGFloat iTermMaxBlurRadius(void) {
     panel.canChooseDirectories = NO;
     panel.canChooseFiles = YES;
     panel.allowsMultipleSelection = NO;
-    [panel setAllowedFileTypes:[NSImage imageTypes]];
+    [panel setAllowedContentTypes:[NSImage.imageTypes mapWithBlock:^id _Nullable(NSString *ext) {
+        return [UTType typeWithIdentifier:ext];
+    }]];
 
     void (^completion)(NSInteger) = ^(NSInteger result) {
         if (result == NSModalResponseOK) {
