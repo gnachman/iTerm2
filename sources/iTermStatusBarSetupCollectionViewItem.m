@@ -14,6 +14,8 @@
 
 @implementation iTermStatusBarSetupCollectionViewItem {
     IBOutlet NSBox *_box;
+    IBOutlet NSVisualEffectView *_selectionView;
+    IBOutlet NSView *_vevContainer;
     IBOutlet NSView *_boxContent;
     IBOutlet NSTextField *_description;
     NSEdgeInsets _textFieldInsets;
@@ -36,6 +38,10 @@
     _textFieldInsets.bottom = _textFieldInsets.top;
     _boxMinY = _box.frame.origin.y;
     _descriptionMinY = _description.frame.origin.y;
+    _selectionView.hidden = YES;
+    _vevContainer.wantsLayer = YES;
+    _vevContainer.layer.cornerRadius = 4.0;
+    _vevContainer.layer.masksToBounds = YES;
     [self updateFillColor];
 }
 
@@ -82,6 +88,9 @@
                                                                  _textFieldInsets.bottom,
                                                                  textFieldSize.width,
                                                                  textFieldSize.height)];
+    _vevContainer.frame = NSMakeRect(0, _box.frame.origin.y, self.view.bounds.size.width, _box.frame.size.height);
+    _selectionView.frame = _vevContainer.bounds;
+
     if (!self.hideDetail) {
         _description.frame = [self.view retinaRoundRect:NSMakeRect(_textFieldInsets.left,
                                                                    _descriptionMinY,
@@ -110,23 +119,20 @@
         return;
     }
     if (self.selected) {
-        _box.fillColor = [NSColor selectedControlColor];
+        _selectionView.hidden = NO;
     } else {
         switch (self.highlightState) {
             case NSCollectionViewItemHighlightNone:
-                _box.fillColor = _backgroundColor ?: [NSColor controlColor];
+                _selectionView.hidden = YES;
                 break;
 
             case NSCollectionViewItemHighlightAsDropTarget:
             case NSCollectionViewItemHighlightForSelection:
-                _box.fillColor = [NSColor controlHighlightColor];
-                break;
             case NSCollectionViewItemHighlightForDeselection:
-                _box.fillColor = [NSColor controlLightHighlightColor];
+                _selectionView.hidden = NO;
                 break;
         }
     }
-    [self.view setNeedsDisplay:YES];
 }
 
 @end
