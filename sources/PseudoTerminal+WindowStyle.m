@@ -1050,7 +1050,6 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
                     NSWindowStyleMaskTitled |
                     NSWindowStyleMaskClosable |
                     NSWindowStyleMaskMiniaturizable |
-                    NSWindowStyleMaskTexturedBackground |
                     resizable);
 
         case WINDOW_TYPE_MAXIMIZED:
@@ -1058,7 +1057,6 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
                     NSWindowStyleMaskTitled |
                     NSWindowStyleMaskClosable |
                     NSWindowStyleMaskMiniaturizable |
-                    NSWindowStyleMaskTexturedBackground |
                     resizable);
 
         case WINDOW_TYPE_LION_FULL_SCREEN:
@@ -1071,8 +1069,7 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
                     NSWindowStyleMaskTitled |
                     NSWindowStyleMaskClosable |
                     NSWindowStyleMaskMiniaturizable |
-                    resizable |
-                    NSWindowStyleMaskTexturedBackground);
+                    resizable);
     }
 }
 
