@@ -1,0 +1,17 @@
+#!/bin/bash
+set -euo pipefail
+
+head_content=$(< "$SRCROOT/.git/HEAD")
+if [[ $head_content == ref:* ]]; then
+  # HEAD points at a branch
+  refpath=${head_content#ref: }
+  fullref="$SRCROOT/.git/${refpath}"
+  if [[ -f $fullref ]]; then
+    printf "%s" $(< "$fullref")
+  else
+    printf "%s" "unknown"
+  fi
+else
+  # detached HEAD: HEAD is the commit hash
+  printf "%s" $head_content
+fi
