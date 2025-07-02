@@ -31,7 +31,7 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
 @implementation iTermSnippetsEditingView
 @end
 
-@interface iTermSnippetsEditingViewController ()<NSTableViewDataSource, NSTableViewDelegate, NSSearchFieldDelegate, NSMenuDelegate>
+@interface iTermSnippetsEditingViewController ()<NSTableViewDataSource, NSTableViewDelegate, NSSearchFieldDelegate, NSMenuDelegate, NSMenuItemValidation>
 @end
 
 @implementation iTermSnippetsEditingViewController {

@@ -44,7 +44,7 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
 @interface NSString(iTermTextDataSource)<iTermTextDataSource>
 @end
 
-@interface SmartSelectionController() <NSTableViewDataSource, NSTableViewDelegate, NSTextFieldDelegate, iTermPlaygroundTextViewDelegate>
+@interface SmartSelectionController() <NSTableViewDataSource, NSTableViewDelegate, NSTextFieldDelegate, iTermPlaygroundTextViewDelegate, NSMenuItemValidation>
 @end
 
 @implementation SmartSelectionController {

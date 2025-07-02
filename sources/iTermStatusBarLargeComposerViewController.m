@@ -27,7 +27,7 @@
 #import "iTermTextPopoverViewController.h"
 #import "iTermWarning.h"
 
-@interface iTermComposerView : NSView
+@interface iTermComposerView : NSView<NSMenuItemValidation>
 @end
 @implementation iTermComposerView {
     NSView *_backgroundView;

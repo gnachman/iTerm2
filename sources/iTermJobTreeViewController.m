@@ -243,6 +243,9 @@ static int gSignalsToList[] = {
 }
 @end
 
+@interface iTermJobTreeViewController()<NSMenuItemValidation>
+@end
+
 @implementation iTermJobTreeViewController {
     iTermJobProxy *_root;
     pid_t _pid;

@@ -422,7 +422,7 @@ static PreferencePanel *gSessionsPreferencePanel;
 
 @end
 
-@interface PreferencePanel() <iTermPrefsPanelDelegate, iTermPreferencesSearchEngineResultsWindowControllerDelegate, NSSearchFieldDelegate, NSTabViewDelegate, iTermPreferencePanelSizing>
+@interface PreferencePanel() <iTermPrefsPanelDelegate, iTermPreferencesSearchEngineResultsWindowControllerDelegate, NSSearchFieldDelegate, NSTabViewDelegate, iTermPreferencePanelSizing, NSToolbarItemValidation, NSMenuItemValidation>
 
 @end
 

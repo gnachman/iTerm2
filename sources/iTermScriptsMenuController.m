@@ -104,7 +104,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
-@interface iTermScriptsMenuController()<NSOpenSavePanelDelegate, SCEventListenerProtocol>
+@interface iTermScriptsMenuController()<NSOpenSavePanelDelegate, SCEventListenerProtocol, NSMenuItemValidation>
 @end
 
 @implementation iTermScriptsMenuController {

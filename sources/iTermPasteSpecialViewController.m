@@ -51,6 +51,9 @@ static NSString *const kShouldUseRegexSubstitution = @"UseRegexSubstitution";
 static NSString *const kRegularExpression = @"Regex";
 static NSString *const kSubstitution = @"Substitution";
 
+@interface iTermPasteSpecialViewController()<NSControlTextEditingDelegate>
+@end
+
 @implementation iTermPasteSpecialViewController {
     IBOutlet NSTextField *_spacesPerTab;
     IBOutlet NSButton *_escapeShellCharsWithBackslash;

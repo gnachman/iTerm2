@@ -169,7 +169,8 @@ static BOOL hasBecomeActive = NO;
     iTermPasswordManagerDelegate,
     iTermRestorableStateControllerDelegate,
     iTermUntitledWindowStateMachineDelegate,
-    NSMenuDelegate>
+    NSMenuDelegate,
+    NSMenuItemValidation>
 
 @property(nonatomic, readwrite) BOOL workspaceSessionActive;
 

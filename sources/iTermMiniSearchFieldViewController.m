@@ -21,7 +21,7 @@
 #import "NSTextField+iTerm.h"
 #import "PSMTabBarControl.h"
 
-@interface iTermMiniSearchFieldViewController ()
+@interface iTermMiniSearchFieldViewController ()<NSMenuItemValidation, NSControlTextEditingDelegate>
 
 @end
 
@@ -318,7 +318,7 @@
     return [self.driver currentIndex];
 }
 
-#pragma mark - NSControl
+#pragma mark - NSControlTextEditingDelegate
 
 - (void)controlTextDidChange:(NSNotification *)aNotification {
     NSTextField *field = [aNotification object];

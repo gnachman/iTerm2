@@ -26,7 +26,7 @@
 static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 4;
 
-@interface ToolPasteHistory()<NSMenuDelegate>
+@interface ToolPasteHistory()<NSMenuDelegate, NSMenuItemValidation>
 @end
 
 @implementation ToolPasteHistory {

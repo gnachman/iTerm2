@@ -19,6 +19,9 @@
 
 #define PopLog DLog
 
+@interface iTermPopupWindowController()<NSMenuItemValidation>
+@end
+
 @implementation iTermPopupWindowController {
     // Subclass-owned tableview.
     NSTableView* tableView_;

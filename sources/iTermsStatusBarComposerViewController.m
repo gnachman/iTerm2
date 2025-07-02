@@ -19,7 +19,7 @@
 
 static NSString *const iTermComposerComboBoxDidBecomeFirstResponder = @"iTermComposerComboBoxDidBecomeFirstResponder";
 
-@interface iTermsStatusBarComposerViewController ()<NSComboBoxDelegate>
+@interface iTermsStatusBarComposerViewController ()<NSComboBoxDelegate, NSMenuItemValidation>
 @end
 
 @interface iTermComposerComboBox : NSComboBox

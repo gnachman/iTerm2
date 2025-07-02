@@ -59,7 +59,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
-@interface iTermStatusBarSetupViewController ()<NSCollectionViewDataSource, NSCollectionViewDelegateFlowLayout>
+@interface iTermStatusBarSetupViewController ()<NSCollectionViewDataSource, NSCollectionViewDelegateFlowLayout, NSFontChanging, NSMenuItemValidation>
 
 @end
 
