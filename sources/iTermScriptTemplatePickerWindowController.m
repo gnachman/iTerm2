@@ -23,29 +23,25 @@
 
 @end
 
-@implementation iTermSelectableBox
-
-- (void)mouseDown:(NSEvent *)event {
-    [self setFillColor:[NSColor selectedMenuItemColor] textColor:[NSColor whiteColor] inView:self];
+@implementation iTermSelectableBox {
+    IBOutlet NSVisualEffectView *_selectionEffect;
 }
 
-- (void)setFillColor:(NSColor *)fillColor textColor:(NSColor *)textColor inView:(NSView *)containerView {
-    self.fillColor = fillColor;
-    for (NSView *view in containerView.subviews) {
-        NSTextField *textField = [NSTextField castFrom:view];
-        if (textField) {
-            textField.textColor = textColor;
-        } else {
-            [self setFillColor:fillColor textColor:textColor inView:view];
-        }
-    }
+- (void)awakeFromNib {
+    _selectionEffect.material = NSVisualEffectMaterialSelection;
+    _selectionEffect.blendingMode = NSVisualEffectBlendingModeWithinWindow;
+    _selectionEffect.state = NSVisualEffectStateActive;
+    _selectionEffect.hidden = YES;
+}
+
+- (void)mouseDown:(NSEvent *)event {
+    _selectionEffect.hidden = NO;
 }
 
 - (void)mouseUp:(NSEvent *)event {
+    _selectionEffect.hidden = YES;
     if (event.clickCount == 1) {
         [self.delegate didSelectSelectableBox:self];
-    } else {
-        [self setFillColor:[NSColor gridColor] textColor:[NSColor blackColor] inView:self];
     }
 }
 
