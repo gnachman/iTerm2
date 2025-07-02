@@ -2108,15 +2108,6 @@ static iTermKeyEventReplayer *gReplayer;
     }
 }
 
-- (NSString *)shortVersionStringOfAppWithBundleId:(NSString *)bundleId {
-    NSString *bundlePath =
-            [[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundleId];
-    NSBundle *bundle = [NSBundle bundleWithPath:bundlePath];
-    NSDictionary *info = [bundle infoDictionary];
-    NSString *version = info[@"CFBundleShortVersionString"];
-    return version;
-}
-
 - (BOOL)version:(NSString *)version newerThan:(NSString *)otherVersion {
     id<SUVersionComparison> comparator = [SUStandardVersionComparator defaultComparator];
     NSInteger result = [comparator compareVersion:version toVersion:otherVersion];

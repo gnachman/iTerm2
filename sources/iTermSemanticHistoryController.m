@@ -125,7 +125,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 
 - (NSBundle *)applicationBundleWithIdentifier:(NSString *)bundleIdentifier {
     NSString *bundlePath =
-        [[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundleIdentifier];
+        [[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:bundleIdentifier].path;
     NSBundle *bundle = [NSBundle bundleWithPath:bundlePath];
     return bundle;
 }
@@ -374,7 +374,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 }
 
 - (NSString *)absolutePathForAppBundleWithIdentifier:(NSString *)bundleId {
-    return [[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundleId];
+    return [[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:bundleId].path;
 }
 
 - (void)launchSublimeTextWithBundleIdentifier:(NSString *)bundleId path:(NSString *)path {
