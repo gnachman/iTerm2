@@ -6,25 +6,25 @@
 //
 
 #import "iTermSignatureVerifier.h"
-#include <CommonCrypto/CommonDigest.h>
+#import <CommonCrypto/CommonDigest.h>
 #import <Security/Security.h>
 
 static NSString *const iTermSignatureVerifierErrorDomain = @"com.iterm2.signature-verifier";
 
 @implementation iTermSignatureVerifier {
-    SecKeyRef _publicSecKey;
-
-    SecTransformRef _dataReadTransform;
-    SecTransformRef _dataDigestTransform;
-    SecTransformRef _dataVerifyTransform;
-    SecTransformRef _dataSignTransform;
-    SecGroupTransformRef _group;
+    SecKeyRef _publicKey;
 }
 
 + (NSError *)validateFileURL:(NSURL *)url
         withEncodedSignature:(NSString *)encodedSignature
                    publicKey:(NSString *)encodedPublicKey {
-    NSData *publicKeyData = [encodedPublicKey dataUsingEncoding:NSUTF8StringEncoding];
+    NSData *publicKeyData = [self derKeyDataFromPEMString:encodedPublicKey];
+    if (!publicKeyData) {
+        return [[NSError alloc] initWithDomain:iTermSignatureVerifierErrorDomain
+                                          code:iTermSignatureVerifierErrorCodeBadPublicKeyError
+                                      userInfo:@{ NSLocalizedDescriptionKey: @"Invalid public key format" }];
+    }
+
     iTermSignatureVerifier *verifier = [[self alloc] initWithPublicKeyData:publicKeyData];
     if (!verifier) {
         return [[NSError alloc] initWithDomain:iTermSignatureVerifierErrorDomain
@@ -42,41 +42,19 @@ static NSString *const iTermSignatureVerifierErrorDomain = @"com.iterm2.signatur
 
     self = [super init];
     if (self) {
-        SecExternalFormat format = kSecFormatOpenSSL;
-        SecExternalItemType itemType = kSecItemTypePublicKey;
-        CFArrayRef items = NULL;
+        CFErrorRef err = NULL;
+        NSDictionary *opts = @{
+            (__bridge id)kSecAttrKeyType : (__bridge id)kSecAttrKeyTypeRSA,
+            (__bridge id)kSecAttrKeyClass : (__bridge id)kSecAttrKeyClassPublic,
+        };
 
-        OSStatus status = SecItemImport((__bridge CFDataRef)publicKeyData,
-                                        NULL,
-                                        &format,
-                                        &itemType,
-                                        (SecItemImportExportFlags)0,
-                                        NULL,
-                                        NULL,
-                                        &items);
-        if (status != errSecSuccess || !items) {
-            if (items) {
-                CFRelease(items);
+        _publicKey = SecKeyCreateWithData((__bridge CFDataRef)publicKeyData,
+                                          (__bridge CFDictionaryRef)opts,
+                                          &err);
+        if (!_publicKey || err) {
+            if (err) {
+                CFRelease(err);
             }
-            return nil;
-        }
-
-        if (format == kSecFormatOpenSSL &&
-            itemType == kSecItemTypePublicKey &&
-            CFArrayGetCount(items) == 1) {
-            _publicSecKey = (SecKeyRef)CFRetain(CFArrayGetValueAtIndex(items, 0));
-        }
-
-        if (items) {
-            CFRelease(items);
-        }
-
-        if (_publicSecKey == NULL) {
-            return nil;
-        }
-
-        _group = SecTransformCreateGroupTransform();
-        if (!_group) {
             return nil;
         }
     }
@@ -84,23 +62,53 @@ static NSString *const iTermSignatureVerifierErrorDomain = @"com.iterm2.signatur
 }
 
 - (void)dealloc {
-    if (_dataReadTransform) {
-        CFRelease(_dataReadTransform);
-    }
-    if (_dataDigestTransform) {
-        CFRelease(_dataDigestTransform);
-    }
-    if (_dataVerifyTransform) {
-        CFRelease(_dataVerifyTransform);
-    }
-    if (_group) {
-        CFRelease(_group);
+    if (_publicKey) {
+        CFRelease(_publicKey);
     }
 }
 
+- (NSData *)sha256DigestOfFileAtURL:(NSURL *)url error:(NSError **)error {
+    NSInputStream *stream = [NSInputStream inputStreamWithURL:url];
+    [stream open];
+    if (stream.streamStatus != NSStreamStatusOpen) {
+        if (error) {
+            *error = [NSError errorWithDomain:iTermSignatureVerifierErrorDomain
+                                         code:iTermSignatureVerifierErrorCodeFileNotFound
+                                     userInfo:@{ NSLocalizedDescriptionKey : @"File not found" }];
+        }
+        return nil;
+    }
+
+    CC_SHA256_CTX ctx;
+    CC_SHA256_Init(&ctx);
+
+    uint8_t buffer[4096];
+    NSInteger read;
+    while ((read = [stream read:buffer maxLength:sizeof(buffer)]) > 0) {
+        CC_SHA256_Update(&ctx, buffer, (CC_LONG)read);
+    }
+
+    [stream close];
+    if (read < 0) {
+        if (error) {
+            *error = [NSError errorWithDomain:iTermSignatureVerifierErrorDomain
+                                         code:iTermSignatureVerifierErrorCodeReadError
+                                     userInfo:@{ NSLocalizedDescriptionKey : @"Could not read input file" }];
+        }
+        return nil;
+    }
+
+
+    unsigned char digestBytes[CC_SHA256_DIGEST_LENGTH];
+    CC_SHA256_Final(digestBytes, &ctx);
+
+    return [NSData dataWithBytes:digestBytes
+                          length:CC_SHA256_DIGEST_LENGTH];
+}
+
 - (NSError *)validateFileURL:(NSURL *)url withEncodedSignature:(NSString *)encodedSignature {
-    NSString *strippedSignature =
-	[encodedSignature stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSString *strippedSignature = 
+        [encodedSignature stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     NSData *signature = [[NSData alloc] initWithBase64EncodedString:strippedSignature
                                                             options:0];
     if (!signature) {
@@ -109,100 +117,49 @@ static NSString *const iTermSignatureVerifierErrorDomain = @"com.iterm2.signatur
                                       userInfo:@{ NSLocalizedDescriptionKey: @"Could not base-64 decode signature" }];
     }
 
-    NSInputStream *dataInputStream = [NSInputStream inputStreamWithFileAtPath:url.path];
-    if (!dataInputStream) {
-        return [[NSError alloc] initWithDomain:iTermSignatureVerifierErrorDomain
-                                          code:iTermSignatureVerifierErrorCodeFileNotFound
-                                      userInfo:@{ NSLocalizedDescriptionKey: @"File not found" }];
+    NSError *digestErr = nil;
+    NSData *digest = [self sha256DigestOfFileAtURL:url error:&digestErr];
+    if (!digest) {
+        return digestErr;
     }
 
-    _dataReadTransform = SecTransformCreateReadTransformWithReadStream((__bridge CFReadStreamRef)dataInputStream);
-    if (!_dataReadTransform) {
-        return [[NSError alloc] initWithDomain:iTermSignatureVerifierErrorDomain
-                                          code:iTermSignatureVerifierErrorCodeReadError
-                                      userInfo:@{ NSLocalizedDescriptionKey: @"Could not read input file" }];
-    }
-
-    _dataDigestTransform = SecDigestTransformCreate(kSecDigestSHA2, 256, NULL);
-    if (!_dataDigestTransform) {
-        return [[NSError alloc] initWithDomain:iTermSignatureVerifierErrorDomain
-                                          code:iTermSignatureVerifierErrorCodeInternalError
-                                      userInfo:@{ NSLocalizedDescriptionKey: @"Could not create SHA2 digest transform" }];
-    }
-
-    CFErrorRef secError = NULL;
-    _dataVerifyTransform = SecVerifyTransformCreate(_publicSecKey, (__bridge CFDataRef)signature, &secError);
-    if (!_dataVerifyTransform || secError) {
-        if (secError) {
-            CFRelease(secError);
+    CFErrorRef secErr = NULL;
+    SecKeyAlgorithm algo = kSecKeyAlgorithmRSASignatureDigestPKCS1v15SHA256;
+    bool ok = SecKeyVerifySignature(_publicKey,
+                                    algo,
+                                    (__bridge CFDataRef)digest,
+                                    (__bridge CFDataRef)signature,
+                                    &secErr);
+    if (!ok) {
+        if (secErr) {
+            CFRelease(secErr);
         }
-        return [[NSError alloc] initWithDomain:iTermSignatureVerifierErrorDomain
-                                          code:iTermSignatureVerifierErrorCodeInternalError
-                                      userInfo:@{ NSLocalizedDescriptionKey: @"Could not create verify transform" }];
-    }
-    BOOL ok;
-    ok = SecTransformSetAttribute(_dataVerifyTransform, kSecInputIsAttributeName, kSecInputIsDigest, NULL );
-    if (!ok) {
-        return [[NSError alloc] initWithDomain:iTermSignatureVerifierErrorDomain
-                                          code:iTermSignatureVerifierErrorCodeInternalError
-                                      userInfo:@{ NSLocalizedDescriptionKey: @"Could not set input-is attribute" }];
-    }
-
-    ok = SecTransformSetAttribute(_dataVerifyTransform, kSecDigestTypeAttribute, kSecDigestSHA2, NULL );
-    if (!ok) {
-        return [[NSError alloc] initWithDomain:iTermSignatureVerifierErrorDomain
-                                          code:iTermSignatureVerifierErrorCodeInternalError
-                                      userInfo:@{ NSLocalizedDescriptionKey: @"Could not set digest-type attribute" }];
-    }
-
-    ok = SecTransformSetAttribute(_dataVerifyTransform, kSecDigestLengthAttribute, (__bridge CFTypeRef _Nonnull)(@256), NULL );
-    if (!ok) {
-        return [[NSError alloc] initWithDomain:iTermSignatureVerifierErrorDomain
-                                          code:iTermSignatureVerifierErrorCodeInternalError
-                                      userInfo:@{ NSLocalizedDescriptionKey: @"Could not set digest-length attribute" }];
-    }
-
-    SecTransformConnectTransforms(_dataReadTransform,
-                                  kSecTransformOutputAttributeName,
-                                  _dataDigestTransform,
-                                  kSecTransformInputAttributeName,
-                                  _group,
-                                  &secError);
-    if (secError) {
-        CFRelease(secError);
-        return [[NSError alloc] initWithDomain:iTermSignatureVerifierErrorDomain
-                                          code:iTermSignatureVerifierErrorCodeInternalError
-                                      userInfo:@{ NSLocalizedDescriptionKey: @"Could not connect data read to data digest" }];
-    }
-
-    SecTransformConnectTransforms(_dataDigestTransform,
-                                  kSecTransformOutputAttributeName,
-                                  _dataVerifyTransform,
-                                  kSecTransformInputAttributeName,
-                                  _group,
-                                  &secError);
-    if (secError) {
-        CFRelease(secError);
-        return [[NSError alloc] initWithDomain:iTermSignatureVerifierErrorDomain
-                                          code:iTermSignatureVerifierErrorCodeInternalError
-                                      userInfo:@{ NSLocalizedDescriptionKey: @"Could not connect data digest to data verify" }];
-    }
-
-    NSNumber *result = CFBridgingRelease(SecTransformExecute(_group, &secError));
-    if (secError) {
-        CFRelease(secError);
-        return [[NSError alloc] initWithDomain:iTermSignatureVerifierErrorDomain
-                                          code:iTermSignatureVerifierErrorCodeSignatureVerificationFailedError
-                                      userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"RSA signature verification failed: %@", secError] }];
-    }
-
-    if (!result.boolValue) {
         return [[NSError alloc] initWithDomain:iTermSignatureVerifierErrorDomain
                                           code:iTermSignatureVerifierErrorCodeSignatureDoesNotMatchError
                                       userInfo:@{ NSLocalizedDescriptionKey: @"RSA signature does not match. Data does not match signature or wrong public key." }];
     }
 
     return nil;
+}
+
++ (NSData *)derKeyDataFromPEMString:(NSString *)pemString {
+    NSString *header = @"-----BEGIN PUBLIC KEY-----";
+    NSString *footer = @"-----END PUBLIC KEY-----";
+    NSString *keyString = pemString;
+
+    if ([pemString containsString:header] &&
+        [pemString containsString:footer]) {
+        NSRange start = [pemString rangeOfString:header];
+        NSRange end = [pemString rangeOfString:footer];
+        NSUInteger loc = NSMaxRange(start);
+        NSUInteger len = end.location - loc;
+        keyString = [pemString substringWithRange:NSMakeRange(loc, len)];
+    }
+
+    keyString = [keyString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+
+    return [[NSData alloc] initWithBase64EncodedString:keyString
+                                              options:NSDataBase64DecodingIgnoreUnknownCharacters];
 }
 
 @end
