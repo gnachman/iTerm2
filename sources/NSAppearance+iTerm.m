@@ -42,21 +42,12 @@
 }
 
 + (void)it_performBlockWithCurrentAppearanceSetToAppearanceForCurrentTheme:(void (^)(void))block {
-    NSAppearance *saved = [self currentAppearance];
-    [NSAppearance setCurrentAppearance:[self it_appearanceForCurrentTheme]];
-    block();
-    [NSAppearance setCurrentAppearance:saved];
+    NSAppearance *appearance = [self it_appearanceForCurrentTheme];
+    [appearance performAsCurrentDrawingAppearance:block];
 }
 
 - (void)it_performAsCurrentDrawingAppearance:(void (^NS_NOESCAPE)(void))block {
-    if (@available(macOS 11, *)) {
-        [self performAsCurrentDrawingAppearance:block];
-    } else {
-        NSAppearance *saved = [NSAppearance currentAppearance];
-        [NSAppearance setCurrentAppearance:self];
-        block();
-        [NSAppearance setCurrentAppearance:saved];
-    }
+    [self performAsCurrentDrawingAppearance:block];
 }
 
 - (iTermPreferencesTabStyle)it_tabStyle:(iTermPreferencesTabStyle)tabStyle {

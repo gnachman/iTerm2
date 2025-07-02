@@ -48,7 +48,8 @@ typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
     NSTableViewDataSource,
     NSTableViewDelegate,
     NSControlTextEditingDelegate,
-    NSWindowDelegate>
+    NSWindowDelegate,
+    NSMenuItemValidation>
 @end
 
 @implementation iTermPasswordManagerWindowController {
