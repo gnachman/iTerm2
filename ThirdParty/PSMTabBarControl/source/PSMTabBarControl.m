@@ -1902,8 +1902,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
     resizeWidgetFrame.size.height = 22;
 
     if ([[self window] showsResizeIndicator] && NSIntersectsRect([self frame], resizeWidgetFrame)) {
-        //the resize widgets are larger on metal windows
-        _resizeAreaCompensation = [[self window] styleMask] & NSWindowStyleMaskTexturedBackground ? 20 : 8;
+        // The resize widgets are larger on metal windows. I'm pretty sure this code path is dead.
+        _resizeAreaCompensation = 8;
     } else {
         _resizeAreaCompensation = 0;
     }

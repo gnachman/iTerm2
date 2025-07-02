@@ -659,7 +659,9 @@ NS_ASSUME_NONNULL_BEGIN
         }
         return;
     }
-    [[NSWorkspace sharedWorkspace] launchApplication:fullPath];
+    [[NSWorkspace sharedWorkspace] openApplicationAtURL:[NSURL fileURLWithPath:fullPath]
+                                          configuration:[NSWorkspaceOpenConfiguration configuration]
+                                      completionHandler:nil];
 }
 
 // NOTE: This logic needs to be kept in sync with -launchScriptWithAbsolutePath

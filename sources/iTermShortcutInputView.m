@@ -48,7 +48,7 @@
 }
 
 - (void)setBackgroundStyle:(NSBackgroundStyle)backgroundStyle {
-    if (backgroundStyle == NSBackgroundStyleLight) {
+    if (backgroundStyle == NSBackgroundStyleNormal) {
         [_clearButton setImage:[NSImage it_imageNamed:@"Erase" forClass:self.class]];
     } else {
         [_clearButton setImage:[NSImage it_imageNamed:@"EraseDarkBackground" forClass:self.class]];
@@ -67,7 +67,7 @@
     NSColor *innerLineColor;
     NSColor *textColor;
     NSColor *fieldColor;
-    if (self.backgroundStyle == NSBackgroundStyleLight) {
+    if (self.backgroundStyle == NSBackgroundStyleNormal) {
         if (self.isEnabled) {
             outerLineColor = [NSColor colorWithWhite:169.0/255.0 alpha:1];
             innerLineColor = [NSColor colorWithWhite:240.0/255.0 alpha:1];
