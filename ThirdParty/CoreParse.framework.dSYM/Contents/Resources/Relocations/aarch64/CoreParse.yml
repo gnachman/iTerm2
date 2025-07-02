@@ -1,6 +1,6 @@
 ---
 triple:          'arm64-apple-darwin'
-binary-path:     '/Users/gnachman/git/iterm2-alt2/ThirdParty/CoreParse.framework/Versions/A/CoreParse'
+binary-path:     '/Users/gnachman/git/iterm2-alt3/ThirdParty/CoreParse.framework/Versions/A/CoreParse'
 relocations:
   - { offset: 0x48F99, size: 0x8, addend: 0x0, symName: '-[CPTokeniser init]', symObjAddr: 0x0, symBinAddr: 0x2518, symSize: 0x60 }
   - { offset: 0x48FD9, size: 0x8, addend: 0x0, symName: '-[CPTokeniser advanceLineNumber:columnNumber:withInput:range:]', symObjAddr: 0x61C, symBinAddr: 0x2B34, symSize: 0xDC }
@@ -111,8 +111,8 @@ relocations:
   - { offset: 0x4B555, size: 0x8, addend: 0x0, symName: '-[CPNumberToken hash]', symObjAddr: 0x158, symBinAddr: 0x3CA4, symSize: 0x14 }
   - { offset: 0x4B58C, size: 0x8, addend: 0x0, symName: '-[CPNumberToken isNumberToken]', symObjAddr: 0x16C, symBinAddr: 0x3CB8, symSize: 0x8 }
   - { offset: 0x4B5BF, size: 0x8, addend: 0x0, symName: '-[CPNumberToken isEqual:]', symObjAddr: 0x174, symBinAddr: 0x3CC0, symSize: 0x48 }
-  - { offset: 0x4B606, size: 0x8, addend: 0x0, symName: '-[CPNumberToken number]', symObjAddr: 0x1BC, symBinAddr: 0x3D08, symSize: 0x10 }
-  - { offset: 0x4B63D, size: 0x8, addend: 0x0, symName: '-[CPNumberToken setNumber:]', symObjAddr: 0x1CC, symBinAddr: 0x3D18, symSize: 0xC }
+  - { offset: 0x4B606, size: 0x8, addend: 0x0, symName: '-[CPNumberToken numberValue]', symObjAddr: 0x1BC, symBinAddr: 0x3D08, symSize: 0x10 }
+  - { offset: 0x4B63D, size: 0x8, addend: 0x0, symName: '-[CPNumberToken setNumberValue:]', symObjAddr: 0x1CC, symBinAddr: 0x3D18, symSize: 0xC }
   - { offset: 0x4B67C, size: 0x8, addend: 0x0, symName: '-[NSObject(CPIsNumberToken) isNumberToken]', symObjAddr: 0x1D8, symBinAddr: 0x3D24, symSize: 0x8 }
   - { offset: 0x4B72C, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceRecogniser initWithCoder:]', symObjAddr: 0x0, symBinAddr: 0x3D2C, symSize: 0x34 }
   - { offset: 0x4B74B, size: 0x8, addend: 0x0, symName: '-[CPWhiteSpaceRecogniser initWithCoder:]', symObjAddr: 0x0, symBinAddr: 0x3D2C, symSize: 0x34 }
@@ -427,8 +427,8 @@ relocations:
   - { offset: 0x54C3E, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser matchHandler]', symObjAddr: 0x268, symBinAddr: 0xC3C8, symSize: 0x8 }
   - { offset: 0x54C75, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser setMatchHandler:]', symObjAddr: 0x270, symBinAddr: 0xC3D0, symSize: 0x8 }
   - { offset: 0x54D3C, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) rulesByNonTerminal]', symObjAddr: 0x0, symBinAddr: 0xC3D8, symSize: 0xC }
-  - { offset: 0x54D56, size: 0x8, addend: 0x0, symName: _rulesByNonTerminalKey, symObjAddr: 0x3018, symBinAddr: 0x22868, symSize: 0x0 }
-  - { offset: 0x54D73, size: 0x8, addend: 0x0, symName: _followCacheKey, symObjAddr: 0x3019, symBinAddr: 0x22869, symSize: 0x0 }
+  - { offset: 0x54D56, size: 0x8, addend: 0x0, symName: _rulesByNonTerminalKey, symObjAddr: 0x3010, symBinAddr: 0x22868, symSize: 0x0 }
+  - { offset: 0x54D73, size: 0x8, addend: 0x0, symName: _followCacheKey, symObjAddr: 0x3011, symBinAddr: 0x22869, symSize: 0x0 }
   - { offset: 0x54DBA, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) rulesByNonTerminal]', symObjAddr: 0x0, symBinAddr: 0xC3D8, symSize: 0xC }
   - { offset: 0x54E53, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) setRulesByNonTerminal:]', symObjAddr: 0xC, symBinAddr: 0xC3E4, symSize: 0x10 }
   - { offset: 0x54EE7, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) followCache]', symObjAddr: 0x1C, symBinAddr: 0xC3F4, symSize: 0xC }

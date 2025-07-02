@@ -48,7 +48,7 @@
 /**
  * The number found in the input stream.
  */
-@property (readwrite,copy) NSNumber *number;
+@property (readwrite,copy) NSNumber *numberValue;
 
 @end
 

@@ -10,7 +10,7 @@
 		</data>
 		<key>Resources/SUStatus.nib</key>
 		<data>
-		GC+oCfWU40n2Ot9N47wxTpyhvKs=
+		mxCbSqCHOIoPnOLBdUHuxuw4qx8=
 		</data>
 		<key>Resources/ar.lproj/Sparkle.strings</key>
 		<dict>
@@ -316,7 +316,7 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			HNifZFvNVrsXRT6IXVidh+pAcPY=
+			6oD6t+gk2QsOFaNNEAwGRaAdCu4=
 			</data>
 			<key>requirement</key>
 			<string>anchor apple generic and identifier fileop and (certificate leaf[field.1.2.840.113635.100.6.1.9] /* exists */ or certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = H7V7XYVQ7D)</string>
@@ -332,7 +332,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			xqJxj562/lF6QGdi6RML1BLspzFNVov0Tx22/gRGxu4=
+			A7yZQClayiM+ZNEwJblbt/esbVYnQkX9gfEE1dHbnTo=
 			</data>
 		</dict>
 		<key>Resources/ar.lproj/Sparkle.strings</key>

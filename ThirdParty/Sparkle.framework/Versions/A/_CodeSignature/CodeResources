@@ -6,19 +6,19 @@
 	<dict>
 		<key>Resources/Autoupdate.app/Contents/Frameworks/libclang_rt.asan_osx_dynamic.dylib</key>
 		<data>
-		2zPyOYGLAzpG7d604si2w3EzhNM=
+		ui3xF1HzJ1R5ZY12GVwjNA5kCjE=
 		</data>
 		<key>Resources/Autoupdate.app/Contents/Info.plist</key>
 		<data>
-		TnpBpESzM3CrVvsG8bcSAiSJaKo=
+		LXfRyqMAwW/K9OwaNnIIM01x93I=
 		</data>
 		<key>Resources/Autoupdate.app/Contents/MacOS/Autoupdate</key>
 		<data>
-		6tcKTecyPHLsfScDboA5RHXy73s=
+		5cvw9gf6TpDFVLbemPrfUOF0Ga8=
 		</data>
 		<key>Resources/Autoupdate.app/Contents/MacOS/fileop</key>
 		<data>
-		dxSierU/3dLTR/WMFLeFoeU+UiE=
+		sUUCFlmU4pCPJQtBwMP86WL4HG8=
 		</data>
 		<key>Resources/Autoupdate.app/Contents/PkgInfo</key>
 		<data>
@@ -30,7 +30,7 @@
 		</data>
 		<key>Resources/Autoupdate.app/Contents/Resources/SUStatus.nib</key>
 		<data>
-		GC+oCfWU40n2Ot9N47wxTpyhvKs=
+		mxCbSqCHOIoPnOLBdUHuxuw4qx8=
 		</data>
 		<key>Resources/Autoupdate.app/Contents/Resources/ar.lproj/Sparkle.strings</key>
 		<dict>
@@ -322,7 +322,7 @@
 		</dict>
 		<key>Resources/Autoupdate.app/Contents/_CodeSignature/CodeResources</key>
 		<data>
-		PGoGoUIOHwHFfYEPtWJFrW6yXJ4=
+		F7fJV/IKLFzeLNkrlG/h3SqQ6wI=
 		</data>
 		<key>Resources/DarkAqua.css</key>
 		<data>
@@ -330,7 +330,7 @@
 		</data>
 		<key>Resources/Info.plist</key>
 		<data>
-		sUVnS5vnePnDRJsh0HZrPXFqzP0=
+		njCESy/kFjI4OiaxCv+VUTlFUQ8=
 		</data>
 		<key>Resources/SUModelTranslation.plist</key>
 		<data>
@@ -1585,28 +1585,28 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			LzZANRlgqRZc5hqF9xqWCRiFr0Fs8wj9daOFEAn6768=
+			H35B3KctCGsNP+eABL8sstOB+cZSglDK6Z1O13RKSPQ=
 			</data>
 		</dict>
 		<key>Resources/Autoupdate.app/Contents/Info.plist</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			CgKBKxyyJHEvc30Gx8OWMQnWBudjR59fcKu0SvFmDfw=
+			hzIWvwPpjUIqxqWtENue32IkRZs+vIRfwOebl1djJtQ=
 			</data>
 		</dict>
 		<key>Resources/Autoupdate.app/Contents/MacOS/Autoupdate</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			bHCzz4CMX9cCdwGkzhpNMy8K4PxmkzX12ESrQUVq/eA=
+			W6RzWH651lxypX1Cr4hNrezCj22lwUjmZNS7J0PUphM=
 			</data>
 		</dict>
 		<key>Resources/Autoupdate.app/Contents/MacOS/fileop</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			/heHfoqqfXMXCrb2C2qbbTbaGxZcd/l8doM1EfLZlF8=
+			X+aNaXRLAZBWpQIsXjN3sfXeRSiG/wsI0YQ82ohdEJk=
 			</data>
 		</dict>
 		<key>Resources/Autoupdate.app/Contents/PkgInfo</key>
@@ -1627,7 +1627,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			xqJxj562/lF6QGdi6RML1BLspzFNVov0Tx22/gRGxu4=
+			A7yZQClayiM+ZNEwJblbt/esbVYnQkX9gfEE1dHbnTo=
 			</data>
 		</dict>
 		<key>Resources/Autoupdate.app/Contents/Resources/ar.lproj/Sparkle.strings</key>
@@ -1922,7 +1922,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			A1bKFmO2QIiWlrnwYojG1mCcAiQ4QOEjf+9b2vcr8/A=
+			NUR5qi5/GJ5OhP5x2oTBT1K6tHXSIfggKDgYAAW394I=
 			</data>
 		</dict>
 		<key>Resources/DarkAqua.css</key>
@@ -1936,7 +1936,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			oYuACRspi9cpUHHoDrqisgZJBZtJ+yH5zlKIEoc1xUQ=
+			8boqEeFlm41K9+caCvpzAWD1lmZSKZMG0dc9/3ESa3k=
 			</data>
 		</dict>
 		<key>Resources/SUModelTranslation.plist</key>

@@ -38,4 +38,4 @@ dlopen=''
 dlpreopen=''
 
 # Directory that this library needs to be installed in:
-libdir='/Users/gnachman/git/iterm2-alt2/ThirdParty/libsixel-x86/lib'
+libdir='/Users/gnachman/git/iterm2-alt3/ThirdParty/libsixel-x86/lib'
