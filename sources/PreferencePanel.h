@@ -106,7 +106,6 @@ void LoadPrefsFromCustomFolder(void);
 - (void)run;
 - (iTermShortcutInputView *)hotkeyField;
 
-- (void)changeFont:(id)fontManager;
 - (void)selectProfilesTab;
 
 // Go to the profiles tab, go to its Keys sub-tab, and open the Hotkey window panel.

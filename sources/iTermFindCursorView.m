@@ -174,7 +174,7 @@ const double kFindCursorHoleRadius = 30;
     CAShapeLayer *mask = [[[CAShapeLayer alloc] init] autorelease];
 
     NSBezierPath *outerPath = [NSBezierPath bezierPath];
-    outerPath.windingRule = NSEvenOddWindingRule;
+    outerPath.windingRule = NSWindingRuleEvenOdd;
 
     NSBezierPath *path = [NSBezierPath bezierPathWithOvalInRect:NSMakeRect(cursorPosition.x - 20,
                                                                            cursorPosition.y - 20,

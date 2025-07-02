@@ -47,7 +47,6 @@ extern NSString *const kProfileSessionHotkeyDidChange;
 
 - (void)selectFirstProfileIfNecessary;
 
-- (void)changeFont:(id)fontManager;
 - (void)selectGeneralTab;
 
 - (void)openToProfileWithGuid:(NSString *)guid
