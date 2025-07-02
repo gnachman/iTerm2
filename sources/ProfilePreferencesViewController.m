@@ -60,6 +60,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 
 @interface ProfilePreferencesViewController () <
     iTermProfilePreferencesBaseViewControllerDelegate,
+    NSFontChanging,
     NSTabViewDelegate,
     ProfileListViewDelegate,
     ProfilesGeneralPreferencesViewControllerDelegate>

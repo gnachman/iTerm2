@@ -3022,7 +3022,8 @@ static iTermKeyEventReplayer *gReplayer;
     for (NSResponder *responder in [self allResponders]) {
         if ([responder respondsToSelector:@selector(undo:)] &&
             [responder respondsToSelector:@selector(validateMenuItem:)] &&
-            [responder validateMenuItem:menuItem]) {
+            [responder conformsToProtocol:@protocol(NSMenuItemValidation)] &&
+            [(id<NSMenuItemValidation>)responder validateMenuItem:menuItem]) {
             return responder;
         }
     }
