@@ -183,7 +183,7 @@ static const CGFloat kCollapsedHeight = 51;
 }
 
 - (void)open:(id)sender {
-    [[NSWorkspace sharedWorkspace] openFile:self.transferrableFile.localPath];
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:self.transferrableFile.localPath]];
 }
 
 - (NSString *)stringForStatus:(TransferrableFileStatus)status {

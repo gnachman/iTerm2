@@ -24,6 +24,7 @@
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSWorkspace+iTerm.h"
 #import "SCEvents.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -382,11 +383,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)revealScriptsInFinder {
     NSString *scriptsPath = [[NSFileManager defaultManager] scriptsPath];
+
     [[NSFileManager defaultManager] createDirectoryAtPath:scriptsPath
                               withIntermediateDirectories:YES
                                                attributes:nil
                                                     error:nil];
-    [[NSWorkspace sharedWorkspace] openFile:scriptsPath withApplication:@"Finder"];
+    [[NSWorkspace sharedWorkspace] it_revealInFinder:scriptsPath];
 }
 
 - (void)setInstallRuntimeMenuItem:(NSMenuItem *)installRuntimeMenuItem {
@@ -820,7 +822,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                                  silenceable:kiTermWarningTypePermanentlySilenceable
                                                                       window:nil];
         if (selection == kiTermWarningSelection0) {
-            [[NSWorkspace sharedWorkspace] openFile:destinationTemplatePath];
+            [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:destinationTemplatePath]];
             return;
         }
     }

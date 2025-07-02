@@ -14,9 +14,10 @@
 - (NSString *)temporaryFileNameWithPrefix:(NSString *)prefix suffix:(NSString *)suffix;
 
 - (BOOL)it_securityAgentIsActive;
-- (BOOL)it_openURL:(NSURL *)url;
-- (BOOL)it_openURL:(NSURL *)url options:(NSWorkspaceLaunchOptions)options;
+- (void)it_openURL:(NSURL *)url;
+- (void)it_openURL:(NSURL *)url configuration:(NSWorkspaceOpenConfiguration *)configuration;
 - (NSString *)it_newToken;
 - (BOOL)it_checkToken:(NSString *)token;
+- (void)it_revealInFinder:(NSString *)path;
 
 @end

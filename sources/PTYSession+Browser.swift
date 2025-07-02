@@ -195,7 +195,7 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
                                 window: view.window) == .kiTermWarningSelection0 else {
             return
         }
-        NSWorkspace.shared.openFile(file)
+        NSWorkspace.shared.open(URL(fileURLWithPath: file))
     }
 
     func browserViewController(_ controller: iTermBrowserViewController, performSplitPaneAction action: iTermBrowserSplitPaneAction) {

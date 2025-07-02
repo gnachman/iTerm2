@@ -201,10 +201,10 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
         [[NSWorkspace sharedWorkspace] it_openURL:components.URL];
         return YES;
     }
-    BOOL ok = [[NSWorkspace sharedWorkspace] openFile:fullPath];
+    BOOL ok = [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:fullPath]];
     if (!ok && [self offerToPickApplicationToOpenFile:fullPath]) {
         DLog(@"Try to open %@ again", fullPath);
-        ok = [[NSWorkspace sharedWorkspace] openFile:fullPath];
+        ok = [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:fullPath]];
         DLog(@"ok=%d", (int)ok);
     }
     return ok;

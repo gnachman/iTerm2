@@ -895,7 +895,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
         if (!value) {
             return;
         }
-        [[NSWorkspace sharedWorkspace] openFile:[value stringByExpandingTildeInPath]];
+        [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:[value stringByExpandingTildeInPath]]];
     }];
 }
 
