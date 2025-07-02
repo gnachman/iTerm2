@@ -189,7 +189,8 @@ class RectangleRenderer: NSObject, iTermMetalCellRendererProtocol {
                           height: frame.height)
         case .points(let rect):
             var scaled = rect * scale
-            scaled.origin.y = CGFloat(cellConfiguration.viewportSize.y) - scaled.maxY
+            // The origin is the coordinate for the bottom left of the rectangle. The body will be visually above it.
+            scaled.origin.y = CGFloat(cellConfiguration.viewportSize.y) - scaled.maxY - margins.bottom
             return scaled
         }
     }
