@@ -22,6 +22,7 @@
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "PTYTask.h"
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 static const CGFloat kMargin = 0;
 
@@ -78,7 +79,7 @@ static const CGFloat kMargin = 0;
 - (id <NSPasteboardWriting>)tableView:(NSTableView *)tableView pasteboardWriterForRow:(NSInteger)row {
     NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
     NSString *aString = [@(_processInfos[row].processID) stringValue];
-    [pbItem setString:aString forType:(NSString *)kUTTypeUTF8PlainText];
+    [pbItem setString:aString forType:UTTypeUTF8PlainText.identifier];
     return pbItem;
 }
 

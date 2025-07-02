@@ -510,7 +510,9 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     panel.canChooseDirectories = NO;
     panel.canChooseFiles = YES;
     panel.allowsMultipleSelection = NO;
-    [panel setAllowedFileTypes:[NSImage imageTypes]];
+    [panel setAllowedContentTypes:[NSImage.imageTypes mapWithBlock:^id _Nullable(NSString *ext) {
+        return [UTType typeWithIdentifier:ext];
+    }]];
 
     void (^completion)(NSInteger) = ^(NSInteger result) {
         if (result == NSModalResponseOK) {

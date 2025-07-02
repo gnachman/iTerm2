@@ -5,9 +5,14 @@
 //  Created by George Nachman on 6/3/25.
 //
 
+import UniformTypeIdentifiers
+
 extension NSImage {
     static func iconImage(filename: String, size: NSSize) -> NSImage {
-        let icon = NSWorkspace.shared.icon(forFileType: NSHFSTypeOfFile(filename) ?? "")
+        guard let uttype = UTType(filenameExtension: (filename as NSString).pathExtension) else {
+            return NSWorkspace.shared.icon(for: UTType.utf8PlainText)
+        }
+        let icon = NSWorkspace.shared.icon(for: uttype)
         icon.size = size
         return icon
     }

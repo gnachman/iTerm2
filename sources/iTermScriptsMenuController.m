@@ -441,7 +441,7 @@ NS_ASSUME_NONNULL_BEGIN
     }
     DLog(@"begin");
     NSOpenPanel *panel = [[NSOpenPanel alloc] init];
-    panel.allowedFileTypes = @[ @"zip", @"its", @"py" ];
+    panel.allowedContentTypes = @[ UTTypeZIP, [UTType typeWithFilenameExtension:@"its"], UTTypePythonScript ];
     panel.allowsMultipleSelection = YES;
     if ([panel runModal] == NSModalResponseOK) {
         NSArray<NSURL *> *urls = [panel.URLs copy];
@@ -975,13 +975,13 @@ NS_ASSUME_NONNULL_BEGIN
     NSTokenField *tokenField = nil;
     NSPopUpButton *pythonVersionPopup = nil;
     if (picker.selectedEnvironment == iTermScriptEnvironmentPrivateEnvironment) {
-        savePanel.allowedFileTypes = @[ @"" ];
+        savePanel.allowedContentTypes = @[ UTTypeFolder ];
         tokenField = [self newTokenFieldForDependencies];
         pythonVersionPopup = [self newPythonVersionPopup];
         savePanel.accessoryView = [self newAccessoryViewForSavePanelWithTokenField:tokenField
                                                                 pythonVersionPopup:pythonVersionPopup];
     } else {
-        savePanel.allowedFileTypes = @[ @"py" ];
+        savePanel.allowedContentTypes = @[ UTTypePythonScript ];
     }
     savePanel.directoryURL = [NSURL fileURLWithPath:[[NSFileManager defaultManager] scriptsPath]];
 

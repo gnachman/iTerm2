@@ -18,6 +18,7 @@
 #import "NSTextField+iTerm.h"
 #import "PasteboardHistory.h"
 #import "RegexKitLite.h"
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 @interface iTermFileReference : NSObject
 @property(nonatomic, readonly) NSData *data;
@@ -218,45 +219,39 @@
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
 
     for (NSPasteboardItem *item in pasteboard.pasteboardItems) {
-        NSString *string = [item stringForType:(NSString *)kUTTypeUTF8PlainText];
-        if (string && ![item stringForType:(NSString *)kUTTypeFileURL]) {
+        NSString *string = [item stringForType:UTTypeUTF8PlainText.identifier];
+        if (string && ![item stringForType:UTTypeFileURL.identifier]) {
             // Is a non-file URL string. File URLs get special handling.
             [values addObject:string];
-            CFStringRef description = NULL;
+            NSString *description = NULL;
             for (NSString *theType in item.types) {
-                description = UTTypeCopyDescription((__bridge CFStringRef)theType);
+                description = [UTType typeWithIdentifier:theType].localizedDescription;
                 if (description) {
                     break;
                 }
             }
             NSString *label = [NSString stringWithFormat:@"%@: “%@”",
-                               [((__bridge NSString *)description ?: @"Unknown Type") stringByCapitalizingFirstLetter],
+                               [(description ?: @"Unknown Type") stringByCapitalizingFirstLetter],
                                [string ellipsizedDescriptionNoLongerThan:100]];
-            if (description) {
-                CFRelease(description);
-            }
             [labels addObject:label];
         }
         if (!string) {
-            NSString *theType = (NSString *)kUTTypeData;
-            CFStringRef description = NULL;
+            NSString *theType = UTTypeData.identifier;
+            NSString *description = NULL;
             NSData *data = [item dataForType:theType];
             if (!data) {
                 for (NSString *typeName in item.types) {
                     if ([typeName hasPrefix:@"public."] &&
-                        ![typeName isEqualTo:(NSString *)kUTTypeFileURL]) {
+                        ![typeName isEqualTo:UTTypeFileURL.identifier]) {
                         data = [item dataForType:typeName];
-                        description = UTTypeCopyDescription((__bridge CFStringRef)typeName);
+                        description = [UTType typeWithIdentifier:typeName].localizedDescription;
                         break;
                     }
                 }
             }
             if (data && description) {
                 [values addObject:data];
-                [labels addObject:(__bridge NSString *)description];
-            }
-            if (description) {
-                CFRelease(description);
+                [labels addObject:description];
             }
         }
     }

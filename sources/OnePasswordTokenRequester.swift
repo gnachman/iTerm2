@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UniformTypeIdentifiers
 
 class OnePasswordUtils {
     static let basicEnvironment = ["HOME": NSHomeDirectory()]
@@ -111,7 +112,7 @@ class OnePasswordUtils {
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = false
-        panel.allowedFileTypes = [ "" ]
+        panel.allowedContentTypes = [ UTType.unixExecutable ]
         let delegate = OnePasswordCLIFinderOpenPanelDelegate()
         return withExtendedLifetime(delegate) {
             panel.delegate = delegate

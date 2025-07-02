@@ -54,6 +54,7 @@
 #import <Carbon/Carbon.h>
 #import <Foundation/Foundation.h>
 #import <NaturalLanguage/NaturalLanguage.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import <wctype.h>
 
 @implementation NSString (iTerm)
@@ -160,7 +161,7 @@
     if (!info) {
         DLog(@"Using fallback technique of iterating pasteboard items %@", [[NSPasteboard generalPasteboard] pasteboardItems]);
         for (NSPasteboardItem *item in [[NSPasteboard generalPasteboard] pasteboardItems]) {
-            info = [item stringForType:(NSString *)kUTTypeUTF8PlainText];
+            info = [item stringForType:UTTypeUTF8PlainText.identifier];
             if (info) {
                 return info;
             }

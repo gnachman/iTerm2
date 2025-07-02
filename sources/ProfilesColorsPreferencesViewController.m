@@ -580,7 +580,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     [openPanel setCanChooseFiles:YES];
     [openPanel setCanChooseDirectories:NO];
     [openPanel setAllowsMultipleSelection:YES];
-    [openPanel setAllowedFileTypes:[NSArray arrayWithObject:@"itermcolors"]];
+    [openPanel setAllowedContentTypes:@[ [UTType typeWithFilenameExtension:@"itermcolors"] ]];
 
     // Display the dialog.  If the OK button was pressed,
     // process the files.
@@ -654,7 +654,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     NSSavePanel *savePanel = [NSSavePanel savePanel];
 
     // Set options.
-    [savePanel setAllowedFileTypes:[NSArray arrayWithObject:@"itermcolors"]];
+    [savePanel setAllowedContentTypes:@[ [UTType typeWithFilenameExtension:@"itermcolors"] ]];
 
     if ([savePanel runModal] == NSModalResponseOK) {
         [self exportColorPresetToFile:savePanel.URL.path];

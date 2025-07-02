@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UniformTypeIdentifiers
 
 class LastPassDataSource: CommandLinePasswordDataSource {
     enum LPError: Error {
@@ -546,7 +547,7 @@ class LastPassUtils {
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = false
-        panel.allowedFileTypes = [ "" ]
+        panel.allowedContentTypes = [ UTType.unixExecutable ]
         let delegate = LastPassCLIFinderOpenPanelDelegate()
         return withExtendedLifetime(delegate) {
             panel.delegate = delegate

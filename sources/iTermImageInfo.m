@@ -16,6 +16,7 @@
 #import "NSData+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSWorkspace+iTerm.h"
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 static NSString *const kImageInfoSizeKey = @"Size";
 static NSString *const kImageInfoImageKey = @"Image";  // data
@@ -165,12 +166,11 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
         }
 
         NSData *data = nil;
-        NSDictionary *universalTypeToCocoaMap = @{ (NSString *)kUTTypeBMP: @(NSBitmapImageFileTypeBMP),
-                                                   (NSString *)kUTTypeGIF: @(NSBitmapImageFileTypeGIF),
-                                                   (NSString *)kUTTypeJPEG2000: @(NSBitmapImageFileTypeJPEG2000),
-                                                   (NSString *)kUTTypeJPEG: @(NSBitmapImageFileTypeJPEG),
-                                                   (NSString *)kUTTypePNG: @(NSBitmapImageFileTypePNG),
-                                                   (NSString *)kUTTypeTIFF: @(NSBitmapImageFileTypeTIFF) };
+        NSDictionary *universalTypeToCocoaMap = @{ UTTypeBMP.identifier: @(NSBitmapImageFileTypeBMP),
+                                                   UTTypeGIF.identifier: @(NSBitmapImageFileTypeGIF),
+                                                   UTTypeJPEG.identifier: @(NSBitmapImageFileTypeJPEG),
+                                                   UTTypePNG.identifier: @(NSBitmapImageFileTypePNG),
+                                                   UTTypeTIFF.identifier: @(NSBitmapImageFileTypeTIFF) };
         NSString *imageType = self.imageType;
         if (self.broken) {
             data = self.data;
@@ -204,7 +204,7 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
             return type;
         }
 
-        return (NSString *)kUTTypeImage;
+        return UTTypeImage.identifier;
     }
 }
 
@@ -419,9 +419,9 @@ static NSSize iTermImageInfoGetSizeForRegionPreservingAspectRatio(const NSSize r
         NSArray *types;
         NSString *imageType = self.imageType;
         if (imageType) {
-            types = @[ (NSString *)kUTTypeFileURL, (NSString *)imageType ];
+            types = @[ NSPasteboardTypeFileURL, imageType ];
         } else {
-            types = @[ (NSString *)kUTTypeFileURL ];
+            types = @[ NSPasteboardTypeFileURL ];
         }
         [pbItem setDataProvider:self forTypes:types];
 
@@ -431,17 +431,18 @@ static NSSize iTermImageInfoGetSizeForRegionPreservingAspectRatio(const NSSize r
 
 #pragma mark - NSPasteboardItemDataProvider
 
-- (void)pasteboard:(NSPasteboard *)pasteboard item:(NSPasteboardItem *)item provideDataForType:(NSString *)type {
+- (void)pasteboard:(NSPasteboard *)pasteboard
+              item:(NSPasteboardItem *)item
+provideDataForType:(NSString *)type {
     @synchronized(self) {
-        if ([type isEqualToString:(NSString *)kUTTypeFileURL]) {
-            // Write image to a temp file and provide its location.
-            [item setString:[[NSURL fileURLWithPath:self.nameForNewSavedTempFile] absoluteString]
-                    forType:(NSString *)kUTTypeFileURL];
+        if ([type isEqualToString:NSPasteboardTypeFileURL]) {
+            NSURL *url = [NSURL fileURLWithPath:self.nameForNewSavedTempFile];
+            [item setString:url.absoluteString
+                    forType:NSPasteboardTypeFileURL];
         } else {
-            if ([type isEqualToString:(NSString *)kUTTypeImage] && ![_data uniformTypeIdentifierForImageData]) {
-                [item setData:_data forType:type];
+            if ([type isEqualToString:UTTypeImage.identifier] && ![_data uniformTypeIdentifierForImageData]) {
+                [item setData:_data forType:UTTypeImage.identifier];
             } else {
-                // Provide our data, which is already in the format requested by |type|.
                 [item setData:self.data forType:type];
             }
         }

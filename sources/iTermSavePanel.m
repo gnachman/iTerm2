@@ -11,8 +11,10 @@
 #import "iTermSavePanelFileFormatAccessory.h"
 #import "iTermWarning.h"
 #import "NSStringITerm.h"
+#import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 static NSString *const kInitialDirectoryKey = @"Initial Directory";
 static NSString *const iTermSavePanelLoggingStyleUserDefaultsKey = @"NoSyncLoggingStyle";
@@ -38,19 +40,16 @@ static NSString *const iTermSavePanelLoggingStyleUserDefaultsKey = @"NoSyncLoggi
 }
 
 + (NSString *)nameForFileType:(NSString *)extension {
-    CFStringRef fileUTI = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension,
-                                                                (__bridge CFStringRef)extension,
-                                                                NULL);
-    NSString *lowercaseDescription = (__bridge_transfer NSString *)UTTypeCopyDescription(fileUTI);
-
-    CFRelease(fileUTI);
-
-    lowercaseDescription = [lowercaseDescription stringByCapitalizingFirstLetter];
-    NSRange range = [lowercaseDescription rangeOfString:[NSString stringWithFormat:@"(%@)", extension]];
-    if (range.location == NSNotFound) {
-        return lowercaseDescription;
+    UTType *type = [UTType typeWithFilenameExtension:extension];
+    NSString *description = type.localizedDescription ?: extension;
+    NSString *capitalized = [description stringByCapitalizingFirstLetter];
+    NSString *pattern = [NSString stringWithFormat:@"(%@)", extension];
+    NSRange range = [capitalized rangeOfString:pattern];
+    if (range.location != NSNotFound) {
+        return [capitalized stringByReplacingCharactersInRange:range
+                                                  withString:extension.uppercaseString];
     }
-    return [lowercaseDescription stringByReplacingCharactersInRange:range withString:[extension uppercaseString]];
+    return capitalized;
 }
 
 + (iTermSavePanelFileFormatAccessory *)newFileFormatAccessoryViewControllerFileWithFileTypes:(NSArray<NSString *> *)fileTypes
@@ -89,7 +88,9 @@ static NSString *const iTermSavePanelLoggingStyleUserDefaultsKey = @"NoSyncLoggi
     savePanel.nameFieldStringValue = defaultFilename;
     if (allowedFileTypes) {
         savePanel.extensionHidden = NO;
-        savePanel.allowedFileTypes = allowedFileTypes;
+        savePanel.allowedContentTypes = [allowedFileTypes mapWithBlock:^id _Nullable(NSString *ext) {
+            return [UTType typeWithFilenameExtension:ext];
+        }];
     }
     iTermSavePanelFileFormatAccessory *accessoryViewController = nil;
     NSPopUpButton *button = nil;
@@ -256,7 +257,9 @@ typedef NS_ENUM(NSUInteger, iTermSavePanelAction) {
     if (delegate.forcedExtension) {
         URL = [[URL URLByDeletingPathExtension] URLByAppendingPathExtension:delegate.forcedExtension];
     }
-    NSArray<NSString *> *allowedFileTypes = savePanel.allowedFileTypes;
+    NSArray<NSString *> *allowedFileTypes = [savePanel.allowedContentTypes mapWithBlock:^id _Nullable(UTType *uttype) {
+        return uttype.preferredFilenameExtension;
+    }];
     if (options & kSavePanelOptionAppendOrReplace) {
         if (!delegate.filename) {
             // Something went wrong.

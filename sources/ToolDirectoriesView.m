@@ -28,6 +28,7 @@
 #import "NSWorkspace+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 5;
@@ -244,7 +245,7 @@ static const CGFloat kHelpMargin = 5;
 - (id <NSPasteboardWriting>)tableView:(NSTableView *)tableView pasteboardWriterForRow:(NSInteger)row {
     NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
     iTermRecentDirectoryMO *entry = filteredEntries_[row];
-    [pbItem setString:entry.path forType:(NSString *)kUTTypeUTF8PlainText];
+    [pbItem setString:entry.path forType:UTTypeUTF8PlainText.identifier];
     return pbItem;
 }
 

@@ -20,6 +20,7 @@
 #import "NSTextField+iTerm.h"
 
 #import <Carbon/Carbon.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 static NSString *const iTermActionsEditingPasteboardType = @"com.googlecode.iterm2.iTermActionsEditingPasteboardType";
 
@@ -214,7 +215,7 @@ static NSString *const iTermActionsEditingPasteboardType = @"com.googlecode.iter
 
 - (IBAction)import:(id)sender {
     NSOpenPanel *panel = [[NSOpenPanel alloc] init];
-    panel.allowedFileTypes = @[ @"it2actions" ];
+    panel.allowedContentTypes = @[ [UTType typeWithFilenameExtension:@"it2actions"] ];
     panel.canChooseFiles = YES;
     panel.canChooseDirectories = NO;
     panel.allowsMultipleSelection = YES;
@@ -229,7 +230,7 @@ static NSString *const iTermActionsEditingPasteboardType = @"com.googlecode.iter
 
 - (IBAction)export:(id)sender {
     NSSavePanel *panel = [NSSavePanel savePanel];
-    panel.allowedFileTypes = @[ @"it2actions" ];
+    panel.allowedContentTypes = @[ [UTType typeWithFilenameExtension:@"it2actions"] ];
 
     const NSModalResponse response = [panel runModal];
     if (response != NSModalResponseOK) {

@@ -33,10 +33,7 @@ class AttributedStringSaver: NSObject {
         savePanel.canSelectHiddenExtension = true
         savePanel.isExtensionHidden = false
 
-        if #available(macOS 11, *) {
-            savePanel.allowedContentTypes = [ UTType.flatRTFD ]
-        }
-        savePanel.allowedFileTypes = [ "rtf" ]
+        savePanel.allowedContentTypes = [ UTType.rtf ]
 
         savePanel.beginSheetModal(for: window) { response in
             self.finish(savePanel: savePanel, window: window, response: response)

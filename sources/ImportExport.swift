@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UniformTypeIdentifiers
 
 @objc(iTerm2ImportExport)
 class ImportExport: NSObject {
@@ -13,7 +14,7 @@ class ImportExport: NSObject {
     static func exportAll() -> String? {
         DLog("Begin")
         let savePanel = NSSavePanel()
-        savePanel.allowedFileTypes = ["itermexport"]
+        savePanel.allowedContentTypes = ["itermexport"].compactMap { UTType(filenameExtension: $0) }
         savePanel.nameFieldStringValue = "iTerm2 State.itermexport"
         savePanel.title = "Export iTerm2 Settings and Data"
 
@@ -62,7 +63,7 @@ class ImportExport: NSObject {
     @objc
     static func importAll() -> String? {
         let openPanel = NSOpenPanel()
-        openPanel.allowedFileTypes = ["itermexport"]
+        openPanel.allowedContentTypes = ["itermexport"].compactMap { UTType(filenameExtension: $0) }
         openPanel.canChooseFiles = true
         openPanel.canChooseDirectories = false
         openPanel.allowsMultipleSelection = false

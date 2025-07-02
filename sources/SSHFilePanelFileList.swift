@@ -478,7 +478,7 @@ class SSHFilePanelFileList: NSScrollView {
             let pathExtension = (file.name as NSString).pathExtension.lowercased()
             if !pathExtension.isEmpty {
                 let workspace = NSWorkspace.shared
-                return workspace.icon(forFileType: pathExtension)
+                return workspace.icon(for: UTType(filenameExtension: pathExtension)!)
             }
             return NSImage(named: NSImage.multipleDocumentsName)
         case .symlink:

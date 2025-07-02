@@ -21,6 +21,8 @@
 #import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
 
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
+
 static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 4;
 
@@ -209,7 +211,7 @@ static const CGFloat kMargin = 4;
 - (id <NSPasteboardWriting>)tableView:(NSTableView *)tableView pasteboardWriterForRow:(NSInteger)row {
     NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
     PasteboardEntry* entry = pasteHistory_.entries[row];
-    [pbItem setString:entry.mainValue forType:(NSString *)kUTTypeUTF8PlainText];
+    [pbItem setString:entry.mainValue forType:UTTypeUTF8PlainText.identifier];
     return pbItem;
 }
 
