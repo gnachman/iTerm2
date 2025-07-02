@@ -50,9 +50,10 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import <UserNotifications/UserNotifications.h>
 
 @interface iTermNotificationController : NSObject <
-  NSUserNotificationCenterDelegate>
+  UNUserNotificationCenterDelegate>
 
 + (instancetype)sharedInstance;
 
