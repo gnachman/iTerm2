@@ -231,7 +231,6 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         _scrollview.contentView = _metalClipView;
         _scrollview.drawsBackground = NO;
 
-        _scrollview.contentView.copiesOnScroll = NO;
         // assign the main view
         [self addSubviewBelowFindView:_scrollview];
 

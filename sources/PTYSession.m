@@ -17972,7 +17972,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                     if (selection == 0) {
                                                         NSString *filename = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"coprocess-stderr." suffix:@".txt"];
                                                         [errors writeToFile:filename atomically:NO encoding:NSUTF8StringEncoding error:nil];
-                                                        [[NSWorkspace sharedWorkspace] openFile:filename];
+                                                        [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:filename]];
                                                     } else if (selection == 1) {
                                                         [Coprocess setSilentlyIgnoreErrors:YES fromCommand:command];
                                                     }

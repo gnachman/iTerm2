@@ -22,14 +22,6 @@ NSString *const iTermMetalClipViewWillScroll = @"iTermMetalClipViewWillScroll";
     NSInteger _disableShowingOverlayScrollers;
 }
 
-- (instancetype)initWithFrame:(NSRect)frameRect {
-    self = [super initWithFrame:frameRect];
-    if (self) {
-        self.copiesOnScroll = NO;
-    }
-    return self;
-}
-
 - (void)scrollToPoint:(NSPoint)newOrigin {
     DLog(@"scrollToPoint:%@\n%@", NSStringFromPoint(newOrigin), [NSThread callStackSymbols]);
     [super scrollToPoint:newOrigin];
