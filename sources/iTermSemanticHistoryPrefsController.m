@@ -123,7 +123,7 @@ enum {
             [bundleId isEqualToString:kSublimeText3Identifier] ||
             [bundleId isEqualToString:kSublimeText4Identifier]) {
             // Extra check for sublime text.
-            if (![[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundleId]) {
+            if (![[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:bundleId].path) {
                 return NO;
             } else {
                 return YES;
