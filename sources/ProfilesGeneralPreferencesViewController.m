@@ -56,7 +56,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 
 static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfilePreferencesUpdateSessionName";
 
-@interface ProfilesGeneralPreferencesViewController () <iTermImageWellDelegate, iTermShortcutInputViewDelegate, NSMenuDelegate, NSTabViewDelegate, ProfileListViewDelegate>
+@interface ProfilesGeneralPreferencesViewController () <iTermImageWellDelegate, iTermShortcutInputViewDelegate, NSMenuDelegate, NSTabViewDelegate, ProfileListViewDelegate, NSMenuItemValidation, NSControlTextEditingDelegate>
 @end
 
 @implementation ProfilesGeneralPreferencesViewController {
@@ -1415,7 +1415,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     [_profileDelegate profilesGeneralPreferencesSessionHotkeyDidChange];
 }
 
-#pragma mark - NSControlSubclassNotifications
+#pragma mark - NSControlTextEditingDelegate
 
 - (void)controlTextDidChange:(NSNotification *)aNotification {
     id control = [aNotification object];

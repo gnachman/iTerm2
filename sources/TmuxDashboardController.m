@@ -24,7 +24,7 @@
 #import "PTYTab.h"
 #import "PseudoTerminal.h"
 
-@interface TmuxDashboardController ()
+@interface TmuxDashboardController ()<NSControlTextEditingDelegate>
 
 - (void)tmuxControllerDetached:(NSNotification *)notification;
 - (TmuxController *)tmuxController;

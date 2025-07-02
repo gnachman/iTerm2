@@ -64,7 +64,7 @@ static NSString *const iTermSemanticHistoryPrefsControllerCaveatTextFieldDidClic
 }
 @end
 
-@interface iTermSemanticHistoryPrefsController()
+@interface iTermSemanticHistoryPrefsController()<NSControlTextEditingDelegate>
 @end
 
 @implementation iTermSemanticHistoryPrefsController {

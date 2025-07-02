@@ -242,6 +242,8 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     iTermRootTerminalViewDelegate,
     iTermToolbeltViewDelegate,
     NSComboBoxDelegate,
+    NSFontChanging,
+    NSMenuItemValidation,
     PSMMinimalTabStyleDelegate>
 
 @property(nonatomic, assign) BOOL windowInitialized;

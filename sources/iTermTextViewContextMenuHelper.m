@@ -37,6 +37,9 @@
 
 const int kMaxSelectedTextLengthForCustomActions = 400;
 
+@interface iTermTextViewContextMenuHelper()<NSMenuItemValidation>
+@end
+
 @implementation iTermTextViewContextMenuHelper
 
 - (instancetype)initWithURLActionHelper:(iTermURLActionHelper *)urlActionHelper {

@@ -41,6 +41,8 @@ iTermKeyboardHandlerDelegate,
 iTermSelectionDelegate,
 iTermSelectionScrollHelperDelegate,
 NSDraggingSource,
+NSFontChanging,
+NSMenuItemValidation,
 NSPopoverDelegate> {
     NSCursor *cursor_;
     PTYMouseHandler *_mouseHandler;

@@ -11,7 +11,7 @@
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 
-@interface iTermStatusBarKnobNumericViewController ()
+@interface iTermStatusBarKnobNumericViewController ()<NSControlTextEditingDelegate>
 
 @end
 

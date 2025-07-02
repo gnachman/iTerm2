@@ -11,6 +11,9 @@
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 
+@interface iTermSnippetsMenuController()<NSMenuItemValidation>
+@end
+
 @implementation iTermSnippetsMenuController {
     IBOutlet NSMenuItem *_menuItem;
     NSMenu *_overridingMenu;  // If set, this takes priority over _menuItem

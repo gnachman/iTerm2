@@ -8,19 +8,17 @@
 
 #import "iTermFontPanel.h"
 
+@interface iTermFontPanel()<NSFontChanging>
+@end
+
 @implementation iTermFontPanel
 
-+ (void)makeDefault
-{
++ (void)makeDefault {
     [NSFontManager setFontPanelFactory:[iTermFontPanel class]];
 }
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpartial-availability"
-- (NSFontPanelModeMask)validModesForFontPanel:(NSFontPanel *)fontPanel
-{
+- (NSFontPanelModeMask)validModesForFontPanel:(NSFontPanel *)fontPanel {
     return kValidModesForFontPanel;
 }
-#pragma clang diagnostic pop
 
 @end

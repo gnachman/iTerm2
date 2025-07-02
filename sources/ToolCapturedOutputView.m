@@ -34,6 +34,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
 @interface ToolCapturedOutputView() <
     ToolbeltTool,
     NSMenuDelegate,
+    NSMenuItemValidation,
     NSSearchFieldDelegate,
     NSTextFieldDelegate>
 @end

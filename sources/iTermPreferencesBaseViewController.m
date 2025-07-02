@@ -45,7 +45,7 @@ NSString *const kPreferenceDidChangeFromOtherPanel = @"kPreferenceDidChangeFromO
 NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPreferencesDidToggleIndicateNonDefaultValues";
 
-@interface iTermPreferencesBaseViewController()
+@interface iTermPreferencesBaseViewController()<NSControlTextEditingDelegate>
 // If set to YES, then controls won't be updated with values from backing store when it changes.
 @property(nonatomic, assign) BOOL disableUpdates;
 @end
@@ -966,7 +966,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
     }
 }
 
-#pragma mark - NSControl Delegate Informal Protocol
+#pragma mark - NSControlTextEditingDelegate
 
 // This is a notification signature but it gets called because we're the delegate of text fields.
 - (void)controlTextDidChange:(NSNotification *)aNotification {

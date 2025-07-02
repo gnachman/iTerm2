@@ -125,7 +125,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
 
 @end
 
-@interface PSMTabBarControl ()<PSMTabBarControlProtocol>
+@interface PSMTabBarControl ()<PSMTabBarControlProtocol, NSMenuItemValidation, NSViewToolTipOwner>
 @end
 
 @implementation PSMTabBarControl {
