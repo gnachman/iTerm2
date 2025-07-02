@@ -805,10 +805,6 @@ andEditComponentWithIdentifier:(NSString *)identifier
     [super close];
 }
 
-- (void)changeFont:(id)fontManager {
-    [_profilesViewController changeFont:fontManager];
-}
-
 #pragma mark - IBActions
 
 - (IBAction)showGlobalTabView:(id)sender {

@@ -182,7 +182,7 @@ static void AMIndeterminateProgressIndicatorDrawSpoke(NSPoint firstPoint,
     NSLineCapStyle previousLineCapStyle = [NSBezierPath defaultLineCapStyle];
     CGFloat previousLineWidth = [NSBezierPath defaultLineWidth];
 
-    [NSBezierPath setDefaultLineCapStyle:NSRoundLineCapStyle];
+    [NSBezierPath setDefaultLineCapStyle:NSLineCapStyleRound];
     [NSBezierPath setDefaultLineWidth:strokeWidth];
 
     [NSBezierPath strokeLineFromPoint:firstPoint toPoint:secondPoint];

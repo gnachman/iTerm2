@@ -4411,8 +4411,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
 - (void)printContent:(id)content {
     NSPrintInfo *printInfo = [NSPrintInfo sharedPrintInfo];
-    [printInfo setHorizontalPagination:NSFitPagination];
-    [printInfo setVerticalPagination:NSAutoPagination];
+    [printInfo setHorizontalPagination:NSPrintingPaginationModeFit];
+    [printInfo setVerticalPagination:NSPrintingPaginationModeAutomatic];
     [printInfo setVerticallyCentered:NO];
 
     // Create a temporary view with the contents, change to black on white, and

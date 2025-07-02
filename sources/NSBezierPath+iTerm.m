@@ -76,16 +76,16 @@
         NSPoint associatedPoints[3];
         NSBezierPathElement element = [self elementAtIndex:i associatedPoints:associatedPoints];
         switch (element) {
-            case NSMoveToBezierPathElement:
+            case NSBezierPathElementMoveTo:
                 CGPathMoveToPoint(path, NULL, associatedPoints[0].x, associatedPoints[0].y);
                 break;
 
-            case NSLineToBezierPathElement:
+            case NSBezierPathElementLineTo:
                 closed = NO;
                 CGPathAddLineToPoint(path, NULL, associatedPoints[0].x, associatedPoints[0].y);
                 break;
 
-            case NSCurveToBezierPathElement:
+            case NSBezierPathElementCurveTo:
                 closed = NO;
                 CGPathAddCurveToPoint(path, NULL,
                                       associatedPoints[0].x, associatedPoints[0].y,
@@ -93,7 +93,7 @@
                                       associatedPoints[2].x, associatedPoints[2].y);
                 break;
 
-            case NSClosePathBezierPathElement:
+            case NSBezierPathElementClosePath:
                 closed = YES;
                 if (!open) {
                     CGPathCloseSubpath(path);
