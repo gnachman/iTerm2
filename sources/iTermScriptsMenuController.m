@@ -814,10 +814,12 @@ NS_ASSUME_NONNULL_BEGIN
               atomically:NO
                 encoding:NSUTF8StringEncoding
                    error:nil];
-    NSString *app;
-    NSString *type;
-    BOOL ok = [[NSWorkspace sharedWorkspace] getInfoForFile:destinationTemplatePath application:&app type:&type];
-    if (ok) {
+    NSString *app = nil;
+    NSURL *appURL = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:[NSURL fileURLWithPath:destinationTemplatePath]];
+    if (appURL) {
+        app = [[NSFileManager defaultManager] displayNameAtPath:appURL.path];
+    }
+    if (app) {
         iTermWarningSelection selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Open new script in %@?", app]
                                                                      actions:@[ @"OK", @"Show in Finder" ]
                                                                   identifier:@"NoSyncOpenNewPythonScriptInDefaultEditor"
