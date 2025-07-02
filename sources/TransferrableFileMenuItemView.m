@@ -89,7 +89,6 @@ static CGFloat TransferrableFileMenuItemViewRightMargin(void) {
 
     if ([[self enclosingMenuItem] isHighlighted]) {
         self.lastDrawnHighlighted = YES;
-        [[NSColor selectedMenuItemColor] set];
         textColor = [NSColor selectedMenuItemTextColor];
         grayColor = [NSColor alternateSelectedControlTextColor];
         _effectView.state = NSVisualEffectStateActive;
