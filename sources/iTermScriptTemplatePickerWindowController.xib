@@ -47,7 +47,7 @@
                                     <rect key="frame" x="1" y="1" width="438" height="108"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
-                                        <visualEffectView fixedFrame="YES" blendingMode="behindWindow" material="appearanceBased" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="WXc-Wf-11o">
+                                        <visualEffectView fixedFrame="YES" blendingMode="behindWindow" material="selection" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="WXc-Wf-11o">
                                             <rect key="frame" x="0.0" y="0.0" width="438" height="108"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         </visualEffectView>
@@ -93,7 +93,7 @@
                                     <rect key="frame" x="1" y="1" width="438" height="106"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
-                                        <visualEffectView fixedFrame="YES" blendingMode="behindWindow" material="appearanceBased" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="wPh-5N-ZbR">
+                                        <visualEffectView fixedFrame="YES" blendingMode="behindWindow" material="selection" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="wPh-5N-ZbR">
                                             <rect key="frame" x="0.0" y="-1" width="438" height="108"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         </visualEffectView>
@@ -180,7 +180,7 @@ Gw
                         <rect key="frame" x="1" y="1" width="438" height="108"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <visualEffectView fixedFrame="YES" blendingMode="behindWindow" material="appearanceBased" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="018-s7-4ML">
+                            <visualEffectView fixedFrame="YES" blendingMode="behindWindow" material="selection" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="018-s7-4ML">
                                 <rect key="frame" x="0.0" y="0.0" width="438" height="108"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </visualEffectView>
@@ -226,7 +226,7 @@ Gw
                         <rect key="frame" x="1" y="1" width="438" height="108"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <visualEffectView fixedFrame="YES" blendingMode="behindWindow" material="appearanceBased" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="CI2-VA-YCs">
+                            <visualEffectView fixedFrame="YES" blendingMode="behindWindow" material="selection" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="CI2-VA-YCs">
                                 <rect key="frame" x="0.0" y="0.0" width="438" height="108"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </visualEffectView>
