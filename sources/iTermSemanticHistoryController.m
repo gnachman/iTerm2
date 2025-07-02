@@ -679,27 +679,31 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     [runner run];
 }
 
-- (BOOL)openFile:(NSString *)fullPath fragment:(NSString *)fragment {
+- (void)openFile:(NSString *)fullPath fragment:(NSString *)fragment {
     DLog(@"Open file %@", fullPath);
-    return [[iTermLaunchServices sharedInstance] openFile:fullPath
-                                                 fragment:fragment];
+    [[iTermLaunchServices sharedInstance] openFile:fullPath
+                                          fragment:fragment];
 }
 
-- (BOOL)openURL:(NSURL *)url editorIdentifier:(NSString *)editorIdentifier {
+- (void)openURL:(NSURL *)url editorIdentifier:(NSString *)editorIdentifier {
     DLog(@"Open URL %@", url);
     if (editorIdentifier) {
-        return [[NSWorkspace sharedWorkspace] openURLs:@[ url ]
-                               withAppBundleIdentifier:editorIdentifier
-                                               options:NSWorkspaceLaunchDefault
-                        additionalEventParamDescriptor:nil
-                                     launchIdentifiers:NULL];
+        NSURL *applicationURL = [[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:editorIdentifier];
+        if (!applicationURL) {
+            DLog(@"No url for %@", editorIdentifier);
+            return;
+        }
+        [[NSWorkspace sharedWorkspace] openURLs:@[ url ]
+                           withApplicationAtURL:applicationURL
+                                  configuration:[NSWorkspaceOpenConfiguration configuration]
+                              completionHandler:nil];
     } else {
-        return [[NSWorkspace sharedWorkspace] it_openURL:url];
+        [[NSWorkspace sharedWorkspace] it_openURL:url];
     }
 }
 
-- (BOOL)openURL:(NSURL *)url {
-    return [self openURL:url editorIdentifier:nil];
+- (void)openURL:(NSURL *)url {
+    [self openURL:url editorIdentifier:nil];
 }
 
 - (NSDictionary *)numericSubstitutions {

@@ -23,8 +23,13 @@
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSMutableDictionary+Profile.h"
+#import "NSWorkspace+iTerm.h"
 #import "ProfileModel.h"
 #import "SCEvents.h"
+
+@interface iTermAlertAccessoryButtonUnfucker: NSView
+- (instancetype)initWithButton:(NSButton *)button;
+@end
 
 @interface iTermDynamicProfileManager () <SCEventListenerProtocol>
 @end
@@ -179,9 +184,9 @@
                    @(count), count == 1 ? @"" : @"s"];
     }
     _pendingErrors = 0;
-    NSButton *button = nil;
+    iTermAlertAccessoryButtonUnfucker *container = nil;
     if (file && [[NSFileManager defaultManager] fileExistsAtPath:file]) {
-        button = [[NSButton alloc] init];
+        NSButton *button = [[NSButton alloc] init];
         button.buttonType = NSButtonTypeMomentaryPushIn;
         button.bezelStyle = NSBezelStyleRounded;
         button.title = @"Reveal in Finder";
@@ -189,11 +194,13 @@
         [button setTarget:self];
         [button setIdentifier:file];
         [button sizeToFit];
+
+        container = [[iTermAlertAccessoryButtonUnfucker alloc] initWithButton:button];
     }
     const iTermWarningSelection selection =
     [iTermWarning showWarningWithTitle:message
                                actions:@[ @"OK", @"View Log" ]
-                             accessory:button
+                             accessory:container
                             identifier:@"NoSyncDynamicProfilesWarning"
                            silenceable:kiTermWarningTypeTemporarilySilenceable
                                heading:@"Dynamic Profiles Error"
@@ -218,8 +225,7 @@
 - (void)revealProfileWithGUID:(NSString *)guid {
     NSString *fullPath = _guidToPathMap[guid];
     if (!fullPath) {
-        [[NSWorkspace sharedWorkspace] openFile:self.dynamicProfilesPath
-                                withApplication:@"Finder"];
+        [[NSWorkspace sharedWorkspace] it_revealInFinder:self.dynamicProfilesPath];
         return;
     }
     [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:fullPath] ]];
@@ -782,6 +788,31 @@
 
 - (void)pathWatcher:(SCEvents *)pathWatcher eventOccurred:(SCEvent *)event {
     [self somethingChanged];
+}
+
+@end
+
+// Accessory views in alerts are buggy so do this stupid dance. Tested in macOS 15.4.
+@implementation iTermAlertAccessoryButtonUnfucker {
+    NSButton *_button;
+}
+
+- (instancetype)initWithButton:(NSButton *)button {
+    self = [super initWithFrame:button.frame];
+    if (self) {
+        [self addSubview:button];
+        [self layoutButton];
+    }
+    return self;
+}
+
+- (void)layoutButton {
+    _button.frame = self.bounds;
+}
+
+- (void)resizeWithOldSuperviewSize:(NSSize)oldSize {
+    [super resizeWithOldSuperviewSize:oldSize];
+    [self layoutButton];
 }
 
 @end

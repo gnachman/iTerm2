@@ -133,9 +133,9 @@ extern NSString *const kSemanticHistoryColumnNumberKey;
 // Tests can subclass and override these methods to avoid interacting with the filesystem.
 - (void)launchTaskWithPath:(NSString *)path arguments:(NSArray *)arguments completion:(void (^)(void))completion;
 - (void)launchAppWithBundleIdentifier:(NSString *)bundleIdentifier path:(NSString *)path;
-- (BOOL)openFile:(NSString *)fullPath fragment:(NSString *)fragment;
-- (BOOL)openURL:(NSURL *)url;
-- (BOOL)openURL:(NSURL *)url editorIdentifier:(NSString *)editorIdentifier;
+- (void)openFile:(NSString *)fullPath fragment:(NSString *)fragment;
+- (void)openURL:(NSURL *)url;
+- (void)openURL:(NSURL *)url editorIdentifier:(NSString *)editorIdentifier;
 - (BOOL)defaultAppForFileIsEditor:(NSString *)file;
 - (NSString *)absolutePathForAppBundleWithIdentifier:(NSString *)bundleId;
 - (NSString *)bundleIdForDefaultAppForFile:(NSString *)file;

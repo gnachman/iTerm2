@@ -60,36 +60,6 @@ void *const iTermDeclineFirstResponderAssociatedObjectKey = (void *)"iTermDeclin
     }
 }
 
-- (NSString *)it_styleMaskDescription {
-    NSDictionary *map = @{ @(NSWindowStyleMaskClosable): @"closable",
-                           @(NSWindowStyleMaskMiniaturizable): @"miniaturizable",
-                           @(NSWindowStyleMaskResizable): @"resizable",
-                           @(NSWindowStyleMaskTexturedBackground): @"textured-background",
-                           @(NSWindowStyleMaskUnifiedTitleAndToolbar): @"unified",
-                           @(NSWindowStyleMaskFullScreen): @"fullscreen",
-                           @(NSWindowStyleMaskFullSizeContentView): @"full-size-content-view",
-                           @(NSWindowStyleMaskUtilityWindow): @"utility",
-                           @(NSWindowStyleMaskDocModalWindow): @"doc-modal",
-                           @(NSWindowStyleMaskNonactivatingPanel): @"non-activating-panel",
-                           @(NSWindowStyleMaskHUDWindow): @"hud-window" };
-
-    NSUInteger i = 1;
-    NSMutableArray *array = [NSMutableArray array];
-    const NSUInteger styleMask = self.styleMask;
-    while (i) {
-        if (styleMask & i) {
-            NSString *name = map[@(i)];
-            if (name) {
-                [array addObject:name];
-            } else {
-                [array addObject:[@(i) stringValue]];
-            }
-        }
-        i <<= 1;
-    }
-    return [array componentsJoinedByString:@" "];
-}
-
 - (void)it_makeKeyAndOrderFront {
     [[iTermApplication sharedApplication] it_makeWindowKey:self];
 }

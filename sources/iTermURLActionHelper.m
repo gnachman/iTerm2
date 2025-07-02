@@ -275,7 +275,9 @@
         return;
     }
     if (background) {
-        [[NSWorkspace sharedWorkspace] it_openURL:url options:NSWorkspaceLaunchWithoutActivation];
+        NSWorkspaceOpenConfiguration *config = [NSWorkspaceOpenConfiguration configuration];
+        config.activates = NO;
+        [[NSWorkspace sharedWorkspace] it_openURL:url configuration:config];
     } else {
         [[NSWorkspace sharedWorkspace] it_openURL:url];
     }
@@ -364,7 +366,7 @@
 
             case kURLActionOpenImage:
                 DLog(@"Open image");
-                [[NSWorkspace sharedWorkspace] openFile:[(id<iTermImageInfoReading>)action.identifier nameForNewSavedTempFile]];
+                [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:[(id<iTermImageInfoReading>)action.identifier nameForNewSavedTempFile]]];
                 break;
 
             case kURLActionSecureCopyFile:

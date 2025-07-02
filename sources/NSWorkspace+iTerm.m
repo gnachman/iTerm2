@@ -44,20 +44,19 @@
     return [bundleIdentifier isEqualToString:@"com.apple.SecurityAgent"];
 }
 
-- (BOOL)it_openURL:(NSURL *)url {
-    return [self it_openURL:url options:0];
+- (void)it_openURL:(NSURL *)url {
+    [self it_openURL:url configuration:[NSWorkspaceOpenConfiguration configuration]];
 }
 
-- (BOOL)it_openURL:(NSURL *)url options:(NSWorkspaceLaunchOptions)options {
+- (void)it_openURL:(NSURL *)url configuration:(NSWorkspaceOpenConfiguration *)configuration {
     DLog(@"%@", url);
     if (!url) {
-        return NO;
+        return;
     }
     if (![@[ @"http", @"https", @"ftp"] containsObject:url.scheme]) {
         // The browser configured in advanced settings and the built-in browser don't handle this scheme.
         DLog(@"Non-web scheme");
-        NSError *error = nil;
-        return [self openURL:url options:options configuration:@{} error:&error];
+        [self openURL:url configuration:configuration completionHandler:nil];
     }
 
     NSString *bundleID = [iTermAdvancedSettingsModel browserBundleID];
@@ -67,13 +66,13 @@
             if ([iTermBrowserMetadata.supportedSchemes containsObject:url.scheme]) {
                 if ([bundleID isEqual:NSBundle.mainBundle.bundleIdentifier] || [self it_isDefaultAppForURL:url]) {
                     // We are the default app. Skip all the machinery and open it directly.
-                    if ([self it_openURLLocally:url options:options]) {
-                        return YES;
+                    if ([self it_openURLLocally:url configuration:configuration]) {
+                        return;
                     }
                 }
                 // This feature is new and this is the main way people will discover it. Sorry for the annoyance :(
-                if ([self it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:url options:options]) {
-                    return YES;
+                if ([self it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:url configuration:configuration]) {
+                    return;
                 }
             }
         }
@@ -82,29 +81,26 @@
     if ([bundleID stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]].length == 0) {
         // No custom app configured in advanced settings so use the systemwide default.
         DLog(@"Empty custom bundle ID “%@”", bundleID);
-        NSError *error = nil;
-        return [self openURL:url options:options configuration:@{} error:&error];
+        return [self openURL:url configuration:configuration completionHandler:nil];
     }
     NSURL *appURL = [self URLForApplicationWithBundleIdentifier:bundleID];
     if (!appURL) {
         // The custom app configured in advanced settings isn't installed. Use the sytemwide default.
         DLog(@"No url for bundle ID %@", bundleID);
-        NSError *error = nil;
-        return [self openURL:url options:options configuration:@{} error:&error];
+        return [self openURL:url configuration:configuration completionHandler:nil];
     }
 
     // Open with the advanced-settings-configured default browser.
     DLog(@"Open %@ with %@", url, appURL);
-    NSError *error = nil;
-    [self openURLs:@[ url ] withApplicationAtURL:appURL options:options configuration:@{} error:&error];
-    DLog(@"%@", error);
-
-    if (error) {
-        // That didn't work so just use the default browser
-        NSError *error = nil;
-        return [self openURL:url options:options configuration:@{} error:&error];
-    }
-    return YES;
+    [self openURLs:@[ url ]
+withApplicationAtURL:appURL
+     configuration:configuration
+ completionHandler:^(NSRunningApplication * _Nullable app, NSError * _Nullable error) {
+        if (error) {
+            // That didn't work so just use the default browser
+            return [self openURL:url configuration:configuration completionHandler:nil];
+        }
+    }];
 }
 
 - (BOOL)it_isDefaultAppForURL:(NSURL *)url {
@@ -124,7 +120,7 @@
     return NO;
 }
 
-- (BOOL)it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:(NSURL *)url options:(NSWorkspaceLaunchOptions)options {
+- (BOOL)it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:(NSURL *)url configuration:(NSWorkspaceOpenConfiguration *)configuration {
     if ([iTermWarning showWarningWithTitle:@"iTerm2 can display web pages! Would you like to open this link in iTem2?"
                                    actions:@[ @"Use Default Browser", @"Open in iTerm2"]
                                  accessory:nil
@@ -132,14 +128,14 @@
                                silenceable:kiTermWarningTypePermanentlySilenceable
                                    heading:@"Open in iTerm2?"
                                     window:nil] == kiTermWarningSelection1) {
-        return [self it_openURLLocally:url options:options];
+        return [self it_openURLLocally:url configuration:configuration];
     }
     return NO;
 }
 
-- (BOOL)it_openURLLocally:(NSURL *)url options:(NSWorkspaceLaunchOptions)options {
+- (BOOL)it_openURLLocally:(NSURL *)url configuration:(NSWorkspaceOpenConfiguration *)configuration {
     return [[iTermController sharedInstance] openURLInNewBrowserTab:url
-                                                          selectTab:(options & NSWorkspaceLaunchWithoutActivation) == 0];
+                                                          selectTab:configuration.activates];
 }
 
 static NSMutableSet<NSString * > *urlTokens;
@@ -160,6 +156,18 @@ static NSMutableSet<NSString * > *urlTokens;
     }
     [urlTokens removeObject:token];
     return YES;
+}
+
+- (void)it_revealInFinder:(NSString *)path {
+    NSURL *finderURL = [[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:@"com.apple.finder"];
+    if (!finderURL) {
+        DLog(@"Can't find Finder");
+        return;
+    }
+    [[NSWorkspace sharedWorkspace] openURLs:@[ [NSURL fileURLWithPath:path] ]
+                       withApplicationAtURL:finderURL
+                              configuration:[NSWorkspaceOpenConfiguration configuration]
+                          completionHandler:nil];
 }
 
 @end
