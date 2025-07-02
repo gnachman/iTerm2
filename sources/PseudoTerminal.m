@@ -2815,12 +2815,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [[NSColor blackColor] set];
     NSRectFill(rect);
-    [[NSColor windowFrameColor] set];
+    [[NSColor grayColor] set];
     NSFrameRect(rect);
     NSRect windowRect = rect;
 
     int N = [(NSDictionary *)[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_TABS] count];
-    [[NSColor windowFrameColor] set];
+    [[NSColor controlAccentColor] set];
     NSRect tabsRect = NSMakeRect(rect.origin.x + 1,
                                  rect.origin.y,
                                  rect.size.width - 2,
