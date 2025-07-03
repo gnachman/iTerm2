@@ -493,7 +493,7 @@
     }];
     [_grammarProcessor addProductionRule:@"expression ::= 'Number'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-        return [[iTermParsedExpression alloc] initWithNumber:[(CPNumberToken *)syntaxTree.children[0] number]];
+        return [[iTermParsedExpression alloc] initWithNumber:[(CPNumberToken *)syntaxTree.children[0] numberValue]];
     }];
     [_grammarProcessor addProductionRule:@"expression ::= 'true'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
@@ -540,7 +540,7 @@
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
         CPNumberToken *numberToken = syntaxTree.children[2];
         return [weakSelf pathOrDereferencedArrayFromPath:syntaxTree.children[0]
-                                                   index:numberToken.number];
+                                                   index:numberToken.numberValue];
     }];
     [_grammarProcessor addProductionRule:@"path ::= 'Identifier'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
