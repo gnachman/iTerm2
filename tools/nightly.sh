@@ -50,7 +50,7 @@ make clean || die "Make clean failed"
 #security unlock-keychain -p "$ITERM_KEYCHAIN_PASSWORD" "$ITERM_KEYCHAIN"
 security unlock-keychain -p "$ITERM_KEYCHAIN_PASSWORD"
 make Nightly || die "Nightly build failed"
-COMPACTDATE=$(date +"%Y%m%d")-nightly
+COMPACTDATE=20250702-2-nightly
 VERSION=$(cat version.txt | sed -e "s/%(extra)s/$COMPACTDATE/")
 NAME=$(echo $VERSION | sed -e "s/\\./_/g")
 SVNDIR=~/iterm2-website
@@ -86,6 +86,7 @@ zip -ry $NOTARIZED_ZIP iTerm.app
 
 # Modern
 SparkleSign nightly_modern.xml nightly_modern_template.xml "$SIGNING_KEY"
+vi
 
 #https://github.com/Homebrew/homebrew-cask-versions/pull/6965
 #cask-repair --cask-url https://www.iterm2.com/nightly/latest -b --cask-version $CASK_VERSION iterm2-nightly < /dev/null
