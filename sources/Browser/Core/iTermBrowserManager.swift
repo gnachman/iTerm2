@@ -790,7 +790,7 @@ extension iTermBrowserManager {
 #if DEBUG
             NSLog("%@", "Javascript Console: \(string)")
 #else
-            XLog("%@", "Javascript Console: \(string)")
+            XLog("Javascript Console: \(string)")
 #endif
 
 

@@ -42,7 +42,9 @@ protocol iTermBrowserToolbarDelegate: AnyObject {
     func browserToolbarIsCurrentURLBookmarked() async -> Bool
     func browserToolbarDidTapAskAI()
     func browserToolbarShouldOfferReaderMode() async -> Bool
+#if DEBUG
     func browserToolbarDidTapDebugAutofill()
+#endif
 }
 
 @available(macOS 11.0, *)
