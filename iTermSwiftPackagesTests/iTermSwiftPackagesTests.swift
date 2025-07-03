@@ -1,14 +1,14 @@
 //
-//  iTermProxyTests.swift
-//  iTermProxyTests
+//  iTermSwiftPackagesTests.swift
+//  iTermSwiftPackagesTests
 //
 //  Created by George Nachman on 6/29/25.
 //
 
 import XCTest
-@testable import iTermProxy
+@testable import iTermSwiftPackages
 
-final class iTermProxyTests: XCTestCase {
+final class iTermSwiftPackagesTests: XCTestCase {
 
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.

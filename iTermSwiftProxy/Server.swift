@@ -1,6 +1,6 @@
 //
-//  iTermProxy.swift
-//  iTermProxy
+//  iTermSwiftPackages.swift
+//  iTermSwiftPackages
 //
 //  Created by George Nachman on 6/29/25.
 //

@@ -7,7 +7,8 @@
 
 @preconcurrency import WebKit
 import Network
-import iTermProxy
+import WebExtensionsFramework
+import iTermSwiftPackages
 
 @available(macOS 11.0, *)
 protocol iTermBrowserManagerDelegate: AnyObject {
@@ -80,6 +81,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private let readerModeManager = iTermBrowserReaderModeManager()
     let user: iTermBrowserUser
     private var currentMainFrameHTTPMethod: String?
+    private let userState: iTermBrowserUserState
 
     private static var safariVersion = {
         Bundle(path: "/Applications/Safari.app")?.infoDictionary?["CFBundleShortVersionString"] as? String
@@ -93,6 +95,9 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
          profile: Profile,
          pointerController: PointerController) {
         self.user = user
+        self.userState = iTermBrowserUserState.instance(
+            for: user,
+            configuration: iTermBrowserUserState.Configuration(user: user))
         self.sessionGuid = sessionGuid
         self.historyController = historyController
         self.navigationState = navigationState
@@ -111,6 +116,12 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     deinit {
         // Remove KVO observer to prevent crashes
         webView?.removeObserver(self, forKeyPath: "title")
+        if let webView = self.webView {
+            let userState = self.userState
+            Task { @MainActor in
+                userState.unregisterWebView(webView)
+            }
+        }
     }
     
     private func setupWebView(configuration preferredConfiguration: WKWebViewConfiguration?,
@@ -290,6 +301,8 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         webView.uiDelegate = self
         webView.pageZoom = iTermProfilePreferences.double(forKey: KEY_BROWSER_ZOOM, inProfile: profile) / 100.0
         webView.browserDelegate = self
+
+        userState.registerWebView(webView)
 
         // Enable back/forward navigation
         webView.allowsBackForwardNavigationGestures = true
@@ -1436,7 +1449,7 @@ extension iTermBrowserManager {
             dataStore.proxyConfigurations = []
             Task {
                 do {
-                    let proxyPort = try await iTermProxy.Server.instance.ensureRunning()
+                    let proxyPort = try await iTermSwiftPackages.Server.instance.ensureRunning()
                     await MainActor.run { [weak self] in
                         self?.startUsingInternalProxy(onPort: proxyPort)
                     }
@@ -1598,3 +1611,15 @@ extension iTermBrowserManager: iTermBrowserAutofillHandlerDelegate {
     }
     #endif
 }
+
+extension iTermBrowserUserState.Configuration {
+    init(user: iTermBrowserUser) {
+        switch user {
+        case .devNull:
+            extensionsAllowed = false
+        default:
+            extensionsAllowed = true
+        }
+    }
+}
+

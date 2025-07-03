@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Blue Circle",
+  "version": "1.0.0",
+  "description": "Adds a blue circle to test pages",
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ]
+}

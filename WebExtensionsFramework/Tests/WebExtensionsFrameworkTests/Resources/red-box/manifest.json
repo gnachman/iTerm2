@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Red Box",
+  "version": "1.0",
+  "description": "Adds a red box to the top of every page",
+  
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": ["content.js"],
+    "run_at": "document_end"
+  }]
+}

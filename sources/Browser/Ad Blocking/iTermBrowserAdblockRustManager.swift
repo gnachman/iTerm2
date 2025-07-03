@@ -1,5 +1,5 @@
 import Foundation
-import iTermProxy
+import iTermSwiftPackages
 
 extension Notification.Name {
     static let rustAdblockStatsChanged = Notification.Name("rustAdblockStatsChanged")
@@ -161,7 +161,7 @@ class iTermBrowserAdblockRustManager {
     }
 
     func updateInternalProxyInstalled(desired: Bool) {
-        let server = iTermProxy.Server.instance
+        let server = iTermSwiftPackages.Server.instance
         if desired {
             if server.portIfRunning != nil && server.monitor == nil {
                 server.monitor = self

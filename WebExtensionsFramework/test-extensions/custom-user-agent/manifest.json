@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Custom User Agent Modifier",
+  "version": "1.0",
+  "description": "Modifies User-Agent header for specific domains to test browser-proxy context correlation",
+  
+  "permissions": [
+    "tabs",
+    "storage",
+    "declarativeNetRequest"
+  ],
+  
+  "host_permissions": [
+    "*://example.com/*",
+    "*://httpbin.org/*"
+  ],
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "content_scripts": [{
+    "matches": ["*://example.com/*", "*://httpbin.org/*"],
+    "js": ["content.js"],
+    "run_at": "document_end"
+  }],
+  
+  "declarative_net_request": {
+    "rule_resources": [{
+      "id": "user_agent_rules",
+      "enabled": true,
+      "path": "rules.json"
+    }]
+  },
+  
+  "action": {
+    "default_title": "Custom User Agent",
+    "default_popup": "popup.html"
+  }
+}

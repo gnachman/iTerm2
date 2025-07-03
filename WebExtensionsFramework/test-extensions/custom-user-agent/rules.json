@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        {
+          "header": "User-Agent",
+          "operation": "set",
+          "value": "CustomBrowser/1.0 (Test Extension)"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "*://example.com/*",
+      "resourceTypes": ["main_frame", "sub_frame", "xmlhttprequest", "script", "image", "stylesheet"]
+    }
+  },
+  {
+    "id": 2,
+    "priority": 1,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        {
+          "header": "User-Agent",
+          "operation": "set",
+          "value": "CustomBrowser/1.0 (Test Extension)"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "*://httpbin.org/*",
+      "resourceTypes": ["main_frame", "sub_frame", "xmlhttprequest", "script", "image", "stylesheet"]
+    }
+  }
+]
