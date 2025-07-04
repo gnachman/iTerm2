@@ -308,7 +308,7 @@ static void StartDebugLogging(void) {
     if (!gDebugLogging) {
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
-            FileProviderLogging.callback = ^(NSString *message) {
+            iTermCallbackLogging.callback = ^(NSString *message) {
                 DLog(@"%@", message);
             };
         });

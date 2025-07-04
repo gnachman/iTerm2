@@ -7,6 +7,7 @@
 
 import Foundation
 import OSLog
+import WebExtensionsFramework
 
 func DLog(_ messageBlock: @autoclosure () -> String, file: String = #file, line: Int = #line, function: String = #function) {
     guard gDebugLogging.boolValue else {
@@ -29,6 +30,34 @@ func XLog(_ messageBlock: @autoclosure () -> String, file: String = #file, line:
 @available(macOS 11.0, *)
 struct iTermLogger {
     private static let logger = Logger(subsystem: "com.iterm2.logger", category: "main")
+
+    public func fatalError(_ messageBlock: @autoclosure () -> String,
+                           file: StaticString,
+                           line: UInt,
+                           function: StaticString) -> Never {
+        let message = messageBlock()
+        if gDebugLogging.boolValue {
+            DebugLogImpl(String(describing: file),
+                         Int32(line),
+                         String(describing: function),
+                         message)
+        }
+        Self.logger.error("\(message, privacy: .public)")
+        it_fatalError(message)
+    }
+
+    public func error(_ messageBlock: @autoclosure () -> String,
+                     file: String = #file,
+                     line: Int = #line,
+                     function: String = #function) {
+        if !gDebugLogging.boolValue {
+            return
+        }
+        let message = messageBlock()
+        Self.logger.error("\(message, privacy: .public)")
+        DebugLogImpl(file, Int32(line), function, message)
+    }
+
     public func info(_ messageBlock: @autoclosure () -> String,
                      file: String = #file,
                      line: Int = #line,
@@ -54,7 +83,8 @@ struct iTermLogger {
     }
 }
 
-@objc(FileProviderLogging) class FileProviderLogging: NSObject {
+@objc(iTermCallbackLogging)
+class iTermCallbackLogging: NSObject {
     @objc static var callback: ((String) -> ())? = nil
 
     @available(macOS 11.0, *)
@@ -63,15 +93,15 @@ struct iTermLogger {
 
 public class LogContext {
     @TaskLocal
-    static var logContexts = ["FileProvider"]
+    static var logContexts = ["Root"]
 }
 
 public func log(_ message: String) {
     if #available(macOS 11.0, *) {
         let prefix = LogContext.logContexts.joined(separator: " > ")
-        FileProviderLogging.logger.info("FileProviderLog: \(prefix): \(message)")
+        iTermCallbackLogging.logger.info("\(prefix): \(message)")
     }
-    FileProviderLogging.callback?(message)
+    iTermCallbackLogging.callback?(message)
 }
 
 public func logging<T>(_ prefix: String, closure: () throws -> T) rethrows -> T {
@@ -205,4 +235,24 @@ public func preconditionFailure(
     line: UInt = #line
 ) -> Never {
     abort()
+}
+
+extension iTermLogger: BrowserExtensionLogger {
+    func assert(_ condition: @autoclosure () -> Bool, _ message: @autoclosure () -> String, file: StaticString, line: UInt, function: StaticString) {
+        if !condition() {
+            fatalError(message(), file: file, line: UInt(Int(line)), function: function)
+        }
+    }
+    
+    func preconditionFailure(_ message: @autoclosure () -> String, file: StaticString, line: UInt, function: StaticString) -> Never {
+        fatalError(message(), file: file, line: UInt(Int(line)), function: function)
+    }
+    
+    func inContext<T>(_ prefix: String, closure: () throws -> T) rethrows -> T {
+        return try logging(prefix, closure: closure)
+    }
+    
+    func inContext<T>(_ prefix: String, closure: () async throws -> T) async rethrows -> T {
+        return try await logging(prefix, closure: closure)
+    }
 }

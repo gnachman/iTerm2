@@ -15,9 +15,13 @@ class iTermBrowserUserState {
     private let activeExtensionManager: BrowserExtensionActiveManager?
     private let configuration: Configuration
     private let userDefaultsObserver: iTermUserDefaultsObserver
+    private let hiddenContainer = NSView()
+    private let backgroundService: BrowserExtensionBackgroundService?
+    private let logger = iTermLogger()
 
     struct Configuration: Equatable {
         var extensionsAllowed = true
+        var devNullMode: Bool
     }
 
     init(_ configuration: Configuration) {
@@ -25,16 +29,25 @@ class iTermBrowserUserState {
         if #available(macOS 14, *) {
             if configuration.extensionsAllowed {
                 extensionRegistry = BrowserExtensionRegistry()
+                let backgroundService = BrowserExtensionBackgroundService(
+                    hiddenContainer: hiddenContainer,
+                    logger: logger,
+                    useEphemeralDataStore: configuration.devNullMode,
+                    urlSchemeHandler: BrowserExtensionURLSchemeHandler())
+                self.backgroundService = backgroundService
                 activeExtensionManager = BrowserExtensionActiveManager(
                     injectionScriptGenerator: BrowserExtensionInjectionScriptGenerator(),
-                    userScriptFactory: BrowserExtensionUserScriptFactory())
+                    userScriptFactory: BrowserExtensionUserScriptFactory(),
+                    backgroundService: backgroundService)
             } else {
                 extensionRegistry = nil
                 activeExtensionManager = nil
+                backgroundService = nil
             }
         } else {
             extensionRegistry = nil
             activeExtensionManager = nil
+            backgroundService = nil
         }
         userDefaultsObserver = iTermUserDefaultsObserver()
 
@@ -116,12 +129,12 @@ extension iTermBrowserUserState {
             return
         }
         let active = activeExtensionManager.allActiveExtensions()
-        var pathToID = [String: String]()
+        var pathToID = [String: UUID]()
         for (id, ext) in active {
             pathToID[ext.browserExtension.baseURL.path] = id
         }
 
-        let currentPaths = Set(active.keys)
+        let currentPaths = Set(active.values.map { $0.browserExtension.baseURL.path })
         let desiredPaths = Self.desiredActivePaths()
         DLog("Current paths: \(currentPaths.joined(separator: "; "))")
         DLog("Desired paths: \(desiredPaths.joined(separator: "; "))")
@@ -136,12 +149,8 @@ extension iTermBrowserUserState {
         DLog("Extension registry contains \(extensionRegistry!.extensions.map { "\($0.baseURL.path) with ID \($0.id)" }.joined(separator: "; "))")
         for path in toAdd {
             if let browserExtension = extensionRegistry?.extensions.first(where: { $0.baseURL.path == path }) {
-                do {
-                    DLog("Will activate \(browserExtension.id)")
-                    try activeExtensionManager.activate(browserExtension)
-                } catch {
-                    DLog("Failed to activate \(browserExtension.id)")
-                }
+                DLog("Will activate \(browserExtension.id)")
+                activeExtensionManager.activate(browserExtension)
             } else {
                 DLog("Failed to find extension at \(path)")
             }

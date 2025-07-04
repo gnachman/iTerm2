@@ -104,14 +104,18 @@ public class BrowserExtensionURLSchemeHandler: NSObject, WKURLSchemeHandler {
         </html>
         """
         
-        // Create response
+        // Create response with CSP headers to prevent runtime injection
         let data = html.data(using: .utf8)!
-        let response = URLResponse(
+        let headers = [
+            "Content-Security-Policy": "default-src 'none'; script-src 'self'; connect-src https:;",
+            "Content-Type": "text/html; charset=utf-8"
+        ]
+        let response = HTTPURLResponse(
             url: task.request.url!,
-            mimeType: "text/html",
-            expectedContentLength: data.count,
-            textEncodingName: "utf-8"
-        )
+            statusCode: 200,
+            httpVersion: "HTTP/1.1",
+            headerFields: headers
+        )!
         
         // Send response
         task.didReceive(response)

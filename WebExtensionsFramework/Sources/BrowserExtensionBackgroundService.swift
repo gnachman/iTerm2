@@ -94,11 +94,11 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         // Create WKWebView configuration
         let configuration = WKWebViewConfiguration()
         
-        // CRITICAL: Each extension gets its own process pool for true isolation
+        // Each extension gets its own process pool for true isolation
         // This prevents cookie/cache/memory sharing between extensions
         configuration.processPool = WKProcessPool()
         
-        // SECURITY: Disable JavaScript from opening windows automatically
+        // Disable JavaScript from opening windows automatically
         configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
         
         // Register custom URL scheme handler for isolated origins
@@ -169,7 +169,7 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
             extensionId: extensionId
         )
         
-        // Store strong references to delegates (critical for security)
+        // Store strong references to delegates
         navigationDelegates[extensionId] = navigationDelegate
         uiDelegates[extensionId] = uiDelegate
         
@@ -177,12 +177,25 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         webView.navigationDelegate = navigationDelegate
         webView.uiDelegate = uiDelegate
         
-        // Load the background page
-        let request = URLRequest(url: backgroundURL)
-        _ = webView.load(request)
-        
-        // Wait for navigation to complete
-        try await navigationDelegate.waitForLoad()
+        do {
+            // Load the background page
+            let request = URLRequest(url: backgroundURL)
+            _ = webView.load(request)
+            
+            // Wait for navigation to complete with cancellation support
+            try await withTaskCancellationHandler {
+                try await navigationDelegate.waitForLoad()
+            } onCancel: {
+                // Cancel the navigation if the Task is cancelled
+                Task { @MainActor in
+                    webView.stopLoading()
+                }
+            }
+        } catch {
+            // Clean up if loading fails to prevent resource leaks
+            stopBackgroundScript(for: extensionId)
+            throw error
+        }
         
         logger.info("Background script loaded for: \(extensionId)")
     }
@@ -194,6 +207,9 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         }
         
         logger.info("Stopping background script for extension: \(extensionId)")
+        
+        // Cancel any in-flight navigation to prevent 404 errors
+        webView.stopLoading()
         
         // Clear delegates
         webView.navigationDelegate = nil
@@ -348,7 +364,13 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
                 'requestAnimationFrame', 'cancelAnimationFrame',
                 
                 // Workers (DOM-related)
-                'Worker', 'SharedWorker',
+                'Worker', 'SharedWorker', 'DedicatedWorkerGlobalScope', 'importScripts',
+                
+                // Broadcast APIs
+                'BroadcastChannel', 'MessageChannel', 'MessagePort',
+                
+                // Server-Sent Events
+                'EventSource',
                 
                 // Gamepad
                 'Gamepad', 'GamepadButton', 'GamepadEvent',
@@ -439,7 +461,6 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
 /// and provides security by blocking all navigation except the initial background page
 private class BackgroundScriptNavigationDelegate: NSObject, WKNavigationDelegate {
     private var continuation: CheckedContinuation<Void, Error>?
-    private let lock = NSLock()
     private let allowedURL: URL
     private let logger: BrowserExtensionLogger
     private let extensionId: UUID
@@ -453,16 +474,22 @@ private class BackgroundScriptNavigationDelegate: NSObject, WKNavigationDelegate
     
     func waitForLoad() async throws {
         try await withCheckedThrowingContinuation { continuation in
-            lock.lock()
+            // WK callbacks always come on main thread, so no locking needed
             self.continuation = continuation
-            lock.unlock()
         }
     }
     
-    // SECURITY: Only allow the initial background page URL
+    // Only allow the initial background page URL
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         guard let url = navigationAction.request.url else {
             logger.error("Navigation blocked - no URL for extension: \(extensionId)")
+            decisionHandler(.cancel)
+            return
+        }
+        
+        // Block redirects explicitly
+        if navigationAction.navigationType == .other && url != allowedURL {
+            logger.error("Navigation blocked - redirect to unauthorized URL: \(url) (extension: \(extensionId))")
             decisionHandler(.cancel)
             return
         }
@@ -477,24 +504,18 @@ private class BackgroundScriptNavigationDelegate: NSObject, WKNavigationDelegate
     }
     
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        lock.lock()
         continuation?.resume()
         continuation = nil
-        lock.unlock()
     }
     
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-        lock.lock()
         continuation?.resume(throwing: error)
         continuation = nil
-        lock.unlock()
     }
     
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-        lock.lock()
         continuation?.resume(throwing: error)
         continuation = nil
-        lock.unlock()
     }
 }
 
@@ -509,30 +530,36 @@ private class BackgroundScriptUIDelegate: NSObject, WKUIDelegate {
         super.init()
     }
     
-    // SECURITY: Block all attempts to create new windows/tabs
+    // Block all attempts to create new windows/tabs
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
         logger.error("Blocked attempt to create new window from background script (extension: \(extensionId))")
         return nil
     }
     
-    // SECURITY: Block all JavaScript alerts
+    // Block all JavaScript alerts
     func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
         logger.error("Blocked JavaScript alert from background script: '\(message)' (extension: \(extensionId))")
         completionHandler()
     }
     
-    // SECURITY: Block all JavaScript confirms
+    // Block all JavaScript confirms
     func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (Bool) -> Void) {
         logger.error("Blocked JavaScript confirm from background script: '\(message)' (extension: \(extensionId))")
         completionHandler(false)
     }
     
-    // SECURITY: Block all JavaScript prompts
+    // Block all JavaScript prompts
     func webView(_ webView: WKWebView, runJavaScriptTextInputPanelWithPrompt prompt: String, defaultText: String?, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (String?) -> Void) {
         logger.error("Blocked JavaScript prompt from background script: '\(prompt)' (extension: \(extensionId))")
         completionHandler(nil)
     }
     
+    // Block file open panels
+    func webView(_ webView: WKWebView, runOpenPanelWith parameters: WKOpenPanelParameters, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping ([URL]?) -> Void) {
+        logger.error("Blocked file open panel from background script (extension: \(extensionId))")
+        completionHandler(nil)
+    }
+    
     // Note: Context menu blocking would require newer WKUIDelegate methods
-    // The main security threats (window.open, navigation, dialogs) are covered above
+    // The main security threats (window.open, navigation, dialogs, file access) are covered above
 }
