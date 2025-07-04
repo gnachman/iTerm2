@@ -43,6 +43,12 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
     /// Map of extension ID to background WKWebView
     private var backgroundWebViews: [String: WKWebView] = [:]
     
+    /// Map of extension ID to navigation delegate (must keep strong reference)
+    private var navigationDelegates: [String: BackgroundScriptNavigationDelegate] = [:]
+    
+    /// Map of extension ID to UI delegate (must keep strong reference)
+    private var uiDelegates: [String: BackgroundScriptUIDelegate] = [:]
+    
     /// Hidden container view for WKWebViews (must be in view hierarchy)
     private let hiddenContainer: NSView
     
@@ -52,15 +58,20 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
     /// Whether to use ephemeral data store (for incognito mode)
     private let useEphemeralDataStore: Bool
     
+    /// URL scheme handler for isolated extension origins
+    private let urlSchemeHandler: BrowserExtensionURLSchemeHandler
+    
     /// Initialize background service
     /// - Parameters:
     ///   - hiddenContainer: Hidden container view for WKWebViews
     ///   - logger: Logger for debugging and error reporting
     ///   - useEphemeralDataStore: Whether to use ephemeral data store
-    public init(hiddenContainer: NSView, logger: BrowserExtensionLogger, useEphemeralDataStore: Bool = false) {
+    ///   - urlSchemeHandler: URL scheme handler for isolated origins
+    public init(hiddenContainer: NSView, logger: BrowserExtensionLogger, useEphemeralDataStore: Bool, urlSchemeHandler: BrowserExtensionURLSchemeHandler) {
         self.hiddenContainer = hiddenContainer
         self.logger = logger
         self.useEphemeralDataStore = useEphemeralDataStore
+        self.urlSchemeHandler = urlSchemeHandler
     }
     
     public func startBackgroundScript(for browserExtension: BrowserExtension) async throws {
@@ -83,16 +94,54 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         // Create WKWebView configuration
         let configuration = WKWebViewConfiguration()
         
-        // Set up data store (ephemeral or persistent)
+        // CRITICAL: Each extension gets its own process pool for true isolation
+        // This prevents cookie/cache/memory sharing between extensions
+        configuration.processPool = WKProcessPool()
+        
+        // SECURITY: Disable JavaScript from opening windows automatically
+        configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
+        
+        // Register custom URL scheme handler for isolated origins
+        configuration.setURLSchemeHandler(urlSchemeHandler, forURLScheme: BrowserExtensionURLSchemeHandler.scheme)
+        
+        // Set up data store (each extension gets its own isolated data store)
         if useEphemeralDataStore {
+            // Each extension gets its own ephemeral data store for complete isolation
             configuration.websiteDataStore = WKWebsiteDataStore.nonPersistent()
             logger.debug("Using ephemeral data store for extension: \(extensionId)")
         } else {
-            configuration.websiteDataStore = WKWebsiteDataStore.default()
-            logger.debug("Using persistent data store for extension: \(extensionId)")
+            // Create a persistent data store with extension-specific identifier
+            // This ensures each extension has completely separate storage
+            if #available(macOS 14.0, *) {
+                let dataStoreIdentifier = UUID(uuidString: extensionId) ?? UUID()
+                configuration.websiteDataStore = WKWebsiteDataStore(forIdentifier: dataStoreIdentifier)
+                logger.debug("Using persistent data store with ID \(dataStoreIdentifier) for extension: \(extensionId)")
+            } else {
+                fatalError("Background script storage isolation requires macOS 14.0 or later")
+            }
         }
         
-        // DOM nuke script will be injected as part of the HTML to ensure proper execution order
+        // Inject DOM nuke script in the page world to shadow DOM globals
+        // Extension scripts will run in .defaultClient world for complete isolation
+        let domNukeScript = generateDOMNukeScript()
+        let nukeUserScript = WKUserScript(
+            source: domNukeScript,
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: false,
+            in: .page
+        )
+        configuration.userContentController.addUserScript(nukeUserScript)
+        
+        // Inject extension background script in .defaultClient world for isolation
+        if let backgroundResource = browserExtension.backgroundScriptResource {
+            let backgroundUserScript = WKUserScript(
+                source: backgroundResource.jsContent,
+                injectionTime: .atDocumentEnd,
+                forMainFrameOnly: false,
+                in: .defaultClient
+            )
+            configuration.userContentController.addUserScript(backgroundUserScript)
+        }
         
         // Create hidden WKWebView
         let webView = WKWebView(frame: CGRect.zero, configuration: configuration)
@@ -104,29 +153,37 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         // Store reference
         backgroundWebViews[extensionId] = webView
         
-        // Create a simple HTML page and inject the script directly
-        // TODO: Re-enable DOM nuke script after fixing execution issues
-        let html = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>Background Script</title>
-        </head>
-        <body>
-            <script>
-            \(backgroundResource.jsContent)
-            </script>
-        </body>
-        </html>
-        """
+        // Register the background script with the URL scheme handler
+        urlSchemeHandler.registerBackgroundScript(backgroundResource, for: extensionId)
         
-        // Load the HTML
-        _ = webView.loadHTMLString(html, baseURL: browserExtension.baseURL)
+        // Load the background page from custom scheme for isolated origin
+        let backgroundURL = BrowserExtensionURLSchemeHandler.backgroundPageURL(for: extensionId)
         
-        // Ensure the HTML has loaded and scripts can execute
-        // This forces the WebView to process the HTML and be ready for script execution
-        _ = try? await webView.evaluateJavaScript("1 + 1")
+        // Create security delegates that will persist for the lifetime of the WebView
+        let navigationDelegate = BackgroundScriptNavigationDelegate(
+            allowedURL: backgroundURL,
+            logger: logger,
+            extensionId: extensionId
+        )
+        let uiDelegate = BackgroundScriptUIDelegate(
+            logger: logger,
+            extensionId: extensionId
+        )
+        
+        // Store strong references to delegates (critical for security)
+        navigationDelegates[extensionId] = navigationDelegate
+        uiDelegates[extensionId] = uiDelegate
+        
+        // Assign delegates to WebView
+        webView.navigationDelegate = navigationDelegate
+        webView.uiDelegate = uiDelegate
+        
+        // Load the background page
+        let request = URLRequest(url: backgroundURL)
+        _ = webView.load(request)
+        
+        // Wait for navigation to complete
+        try await navigationDelegate.waitForLoad()
         
         logger.info("Background script loaded for: \(extensionId)")
     }
@@ -139,11 +196,20 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         
         logger.info("Stopping background script for extension: \(extensionId)")
         
+        // Clear delegates
+        webView.navigationDelegate = nil
+        webView.uiDelegate = nil
+        
         // Remove from container
         webView.removeFromSuperview()
         
-        // Remove reference
+        // Unregister from URL scheme handler
+        urlSchemeHandler.unregisterBackgroundScript(for: extensionId)
+        
+        // Remove all references
         backgroundWebViews.removeValue(forKey: extensionId)
+        navigationDelegates.removeValue(forKey: extensionId)
+        uiDelegates.removeValue(forKey: extensionId)
         
         logger.debug("Background script stopped for extension: \(extensionId)")
     }
@@ -174,7 +240,9 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
             ])
         }
         
-        return try await webView.evaluateJavaScript(javascript)
+        // Evaluate in .defaultClient world to match where extension scripts execute
+        // (DOM nuke script runs in .page world, so they're isolated)
+        return try await webView.evaluateJavaScript(javascript, in: nil, contentWorld: .defaultClient)
     }
     
     /// Generate DOM nuke script to remove DOM globals from background script context
@@ -293,48 +361,41 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
                 'XMLHttpRequest', 'XMLHttpRequestEventTarget', 'XMLHttpRequestUpload'
             ];
             
-            // Remove each DOM global
+            // Shadow each DOM global by defining an own property
+            // This works for both own properties and inherited properties from prototype chain
             DOM_GLOBALS.forEach(name => {
                 if (name in global) {
                     try {
-                        const descriptor = Object.getOwnPropertyDescriptor(global, name);
-                        
-                        // Only override if it's configurable
-                        if (!descriptor || descriptor.configurable) {
-                            Object.defineProperty(global, name, {
-                                get() { 
-                                    // Return undefined instead of null to match natural behavior
-                                    return undefined;
-                                },
-                                set() {
-                                    // Silently ignore attempts to set
-                                },
-                                enumerable: false,
-                                configurable: true
-                            });
-                        }
+                        // Shadow the property with undefined, making it truly inaccessible
+                        Object.defineProperty(global, name, {
+                            value: undefined,
+                            writable: false,
+                            configurable: true,
+                            enumerable: false
+                        });
                     } catch (e) {
-                        // Some properties might throw when accessed
+                        // If we can't define the property, try setting it directly
                         try {
                             global[name] = undefined;
                         } catch (e2) {
-                            // If we can't remove it, leave it alone
+                            // If we can't override it, leave it alone
                         }
                     }
                 }
             });
             
-            // Also remove any DOM properties from window/global that might not be in our list
+            // Special handling for window since window === globalThis in WKWebView
+            // We want to shadow window but NOT globalThis itself, as extension scripts need globalThis
             try {
-                if (global.window && global.window !== global) {
-                    Object.defineProperty(global, 'window', {
-                        get() { return undefined; },
-                        set() {},
-                        enumerable: false,
-                        configurable: true
-                    });
-                }
+                Object.defineProperty(global, 'window', {
+                    value: undefined,
+                    writable: false,
+                    configurable: true,
+                    enumerable: false
+                });
             } catch (e) {}
+            
+            // Don't shadow globalThis itself - extensions need access to it for their own globals
             
             // Set up service worker-like environment
             // Keep 'self' pointing to global for compatibility
@@ -367,7 +428,112 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
             // - indexedDB
             // - caches (Cache API)
             
+            // Set debug marker
+            global.__domNukeExecuted = true;
+            
         })();
         """
     }
+}
+
+/// Navigation delegate that uses async/await for page load completion
+/// and provides security by blocking all navigation except the initial background page
+private class BackgroundScriptNavigationDelegate: NSObject, WKNavigationDelegate {
+    private var continuation: CheckedContinuation<Void, Error>?
+    private let lock = NSLock()
+    private let allowedURL: URL
+    private let logger: BrowserExtensionLogger
+    private let extensionId: String
+    
+    init(allowedURL: URL, logger: BrowserExtensionLogger, extensionId: String) {
+        self.allowedURL = allowedURL
+        self.logger = logger
+        self.extensionId = extensionId
+        super.init()
+    }
+    
+    func waitForLoad() async throws {
+        try await withCheckedThrowingContinuation { continuation in
+            lock.lock()
+            self.continuation = continuation
+            lock.unlock()
+        }
+    }
+    
+    // SECURITY: Only allow the initial background page URL
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        guard let url = navigationAction.request.url else {
+            logger.error("Navigation blocked - no URL for extension: \(extensionId)")
+            decisionHandler(.cancel)
+            return
+        }
+        
+        if url == allowedURL {
+            logger.debug("Navigation allowed for background page: \(url) (extension: \(extensionId))")
+            decisionHandler(.allow)
+        } else {
+            logger.error("Navigation blocked to unauthorized URL: \(url) (extension: \(extensionId))")
+            decisionHandler(.cancel)
+        }
+    }
+    
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        lock.lock()
+        continuation?.resume()
+        continuation = nil
+        lock.unlock()
+    }
+    
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        lock.lock()
+        continuation?.resume(throwing: error)
+        continuation = nil
+        lock.unlock()
+    }
+    
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        lock.lock()
+        continuation?.resume(throwing: error)
+        continuation = nil
+        lock.unlock()
+    }
+}
+
+/// UI delegate that blocks all UI interactions from background scripts
+private class BackgroundScriptUIDelegate: NSObject, WKUIDelegate {
+    private let logger: BrowserExtensionLogger
+    private let extensionId: String
+    
+    init(logger: BrowserExtensionLogger, extensionId: String) {
+        self.logger = logger
+        self.extensionId = extensionId
+        super.init()
+    }
+    
+    // SECURITY: Block all attempts to create new windows/tabs
+    func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
+        logger.error("Blocked attempt to create new window from background script (extension: \(extensionId))")
+        return nil
+    }
+    
+    // SECURITY: Block all JavaScript alerts
+    func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
+        logger.error("Blocked JavaScript alert from background script: '\(message)' (extension: \(extensionId))")
+        completionHandler()
+    }
+    
+    // SECURITY: Block all JavaScript confirms
+    func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (Bool) -> Void) {
+        logger.error("Blocked JavaScript confirm from background script: '\(message)' (extension: \(extensionId))")
+        completionHandler(false)
+    }
+    
+    // SECURITY: Block all JavaScript prompts
+    func webView(_ webView: WKWebView, runJavaScriptTextInputPanelWithPrompt prompt: String, defaultText: String?, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (String?) -> Void) {
+        logger.error("Blocked JavaScript prompt from background script: '\(prompt)' (extension: \(extensionId))")
+        completionHandler(nil)
+    }
+    
+    // Note: Context menu blocking would require newer WKUIDelegate methods
+    // The main security threats (window.open, navigation, dialogs) are covered above
 }

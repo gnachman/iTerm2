@@ -80,19 +80,36 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     private var registeredWebViews: [ObjectIdentifier: WeakBox<BrowserExtensionWKWebView>] = [:]
     private let injectionScriptGenerator: BrowserExtensionInjectionScriptGeneratorProtocol
     private let userScriptFactory: BrowserExtensionUserScriptFactoryProtocol
+    private let backgroundService: BrowserExtensionBackgroundServiceProtocol
 
     public init(
         injectionScriptGenerator: BrowserExtensionInjectionScriptGeneratorProtocol,
-        userScriptFactory: BrowserExtensionUserScriptFactoryProtocol
+        userScriptFactory: BrowserExtensionUserScriptFactoryProtocol,
+        backgroundService: BrowserExtensionBackgroundServiceProtocol
     ) {
         self.injectionScriptGenerator = injectionScriptGenerator
         self.userScriptFactory = userScriptFactory
+        self.backgroundService = backgroundService
     }
     
     public convenience init() {
+        // Create a hidden container view for background scripts
+        // This must be added to a view hierarchy for WKWebView to work properly
+        let hiddenContainer = NSView()
+        hiddenContainer.isHidden = true
+        
+        // Create background service with default logger
+        let backgroundService = BrowserExtensionBackgroundService(
+            hiddenContainer: hiddenContainer,
+            logger: DefaultBrowserExtensionLogger(),
+            useEphemeralDataStore: false,
+            urlSchemeHandler: BrowserExtensionURLSchemeHandler()
+        )
+        
         self.init(
             injectionScriptGenerator: BrowserExtensionInjectionScriptGenerator(),
-            userScriptFactory: BrowserExtensionUserScriptFactory()
+            userScriptFactory: BrowserExtensionUserScriptFactory(),
+            backgroundService: backgroundService
         )
     }
     
