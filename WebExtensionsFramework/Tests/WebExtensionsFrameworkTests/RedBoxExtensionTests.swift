@@ -36,7 +36,7 @@ final class RedBoxExtensionTests: XCTestCase {
         XCTAssertEqual(contentScript.runAt, .documentEnd)
         
         // Verify validation passes
-        let validator = ManifestValidator()
+        let validator = ManifestValidator(logger: createTestLogger())
         XCTAssertNoThrow(try validator.validate(manifest))
     }
     
@@ -73,7 +73,7 @@ final class RedBoxExtensionTests: XCTestCase {
         XCTAssertEqual(contentScript.runAt, .documentEnd)
         
         // Verify the real manifest validates successfully
-        let validator = ManifestValidator()
+        let validator = ManifestValidator(logger: createTestLogger())
         XCTAssertNoThrow(try validator.validate(manifest))
     }
 }

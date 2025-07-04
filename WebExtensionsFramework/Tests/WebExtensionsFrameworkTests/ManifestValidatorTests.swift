@@ -5,14 +5,14 @@ final class ManifestValidatorTests: XCTestCase {
     
     func testValidManifestVersion() {
         let manifest = ExtensionManifest(manifestVersion: 3, name: "Test Extension", version: "1.0")
-        let validator = ManifestValidator()
+        let validator = ManifestValidator(logger: createTestLogger())
         
         XCTAssertNoThrow(try validator.validate(manifest))
     }
     
     func testInvalidManifestVersionTooLow() {
         let manifest = ExtensionManifest(manifestVersion: 2, name: "Test Extension", version: "1.0")
-        let validator = ManifestValidator()
+        let validator = ManifestValidator(logger: createTestLogger())
         
         XCTAssertThrowsError(try validator.validate(manifest)) { error in
             XCTAssertTrue(error is ManifestValidationError)
@@ -24,7 +24,7 @@ final class ManifestValidatorTests: XCTestCase {
     
     func testInvalidManifestVersionTooHigh() {
         let manifest = ExtensionManifest(manifestVersion: 4, name: "Test Extension", version: "1.0")
-        let validator = ManifestValidator()
+        let validator = ManifestValidator(logger: createTestLogger())
         
         XCTAssertThrowsError(try validator.validate(manifest)) { error in
             XCTAssertTrue(error is ManifestValidationError)
@@ -39,7 +39,7 @@ final class ManifestValidatorTests: XCTestCase {
     func testValidBackgroundServiceWorker() {
         let backgroundScript = BackgroundScript(serviceWorker: "background.js", scripts: nil, persistent: nil, type: nil)
         let manifest = ExtensionManifest(manifestVersion: 3, name: "Test Extension", version: "1.0", description: nil, contentScripts: nil, background: backgroundScript)
-        let validator = ManifestValidator()
+        let validator = ManifestValidator(logger: createTestLogger())
         
         XCTAssertNoThrow(try validator.validate(manifest))
     }
@@ -47,7 +47,7 @@ final class ManifestValidatorTests: XCTestCase {
     func testValidBackgroundScripts() {
         let backgroundScript = BackgroundScript(serviceWorker: nil, scripts: ["background.js", "utils.js"], persistent: false, type: nil)
         let manifest = ExtensionManifest(manifestVersion: 3, name: "Test Extension", version: "1.0", description: nil, contentScripts: nil, background: backgroundScript)
-        let validator = ManifestValidator()
+        let validator = ManifestValidator(logger: createTestLogger())
         
         XCTAssertNoThrow(try validator.validate(manifest))
     }
@@ -55,14 +55,14 @@ final class ManifestValidatorTests: XCTestCase {
     func testValidBackgroundWithModuleType() {
         let backgroundScript = BackgroundScript(serviceWorker: "background.js", scripts: nil, persistent: nil, type: "module")
         let manifest = ExtensionManifest(manifestVersion: 3, name: "Test Extension", version: "1.0", description: nil, contentScripts: nil, background: backgroundScript)
-        let validator = ManifestValidator()
+        let validator = ManifestValidator(logger: createTestLogger())
         
         XCTAssertNoThrow(try validator.validate(manifest))
     }
     
     func testBackgroundOptional() {
         let manifest = ExtensionManifest(manifestVersion: 3, name: "Test Extension", version: "1.0")
-        let validator = ManifestValidator()
+        let validator = ManifestValidator(logger: createTestLogger())
         
         XCTAssertNoThrow(try validator.validate(manifest))
     }
@@ -70,7 +70,7 @@ final class ManifestValidatorTests: XCTestCase {
     func testInvalidBackgroundNeitherServiceWorkerNorScripts() {
         let backgroundScript = BackgroundScript(serviceWorker: nil, scripts: nil, persistent: nil, type: nil)
         let manifest = ExtensionManifest(manifestVersion: 3, name: "Test Extension", version: "1.0", description: nil, contentScripts: nil, background: backgroundScript)
-        let validator = ManifestValidator()
+        let validator = ManifestValidator(logger: createTestLogger())
         
         XCTAssertThrowsError(try validator.validate(manifest)) { error in
             XCTAssertTrue(error is ManifestValidationError)
@@ -85,7 +85,7 @@ final class ManifestValidatorTests: XCTestCase {
     func testInvalidBackgroundBothServiceWorkerAndScripts() {
         let backgroundScript = BackgroundScript(serviceWorker: "background.js", scripts: ["background.js"], persistent: nil, type: nil)
         let manifest = ExtensionManifest(manifestVersion: 3, name: "Test Extension", version: "1.0", description: nil, contentScripts: nil, background: backgroundScript)
-        let validator = ManifestValidator()
+        let validator = ManifestValidator(logger: createTestLogger())
         
         XCTAssertThrowsError(try validator.validate(manifest)) { error in
             XCTAssertTrue(error is ManifestValidationError)
@@ -100,7 +100,7 @@ final class ManifestValidatorTests: XCTestCase {
     func testInvalidBackgroundServiceWorkerNotJsFile() {
         let backgroundScript = BackgroundScript(serviceWorker: "background.ts", scripts: nil, persistent: nil, type: nil)
         let manifest = ExtensionManifest(manifestVersion: 3, name: "Test Extension", version: "1.0", description: nil, contentScripts: nil, background: backgroundScript)
-        let validator = ManifestValidator()
+        let validator = ManifestValidator(logger: createTestLogger())
         
         XCTAssertThrowsError(try validator.validate(manifest)) { error in
             XCTAssertTrue(error is ManifestValidationError)
@@ -115,7 +115,7 @@ final class ManifestValidatorTests: XCTestCase {
     func testInvalidBackgroundScriptNotJsFile() {
         let backgroundScript = BackgroundScript(serviceWorker: nil, scripts: ["background.js", "utils.ts"], persistent: nil, type: nil)
         let manifest = ExtensionManifest(manifestVersion: 3, name: "Test Extension", version: "1.0", description: nil, contentScripts: nil, background: backgroundScript)
-        let validator = ManifestValidator()
+        let validator = ManifestValidator(logger: createTestLogger())
         
         XCTAssertThrowsError(try validator.validate(manifest)) { error in
             XCTAssertTrue(error is ManifestValidationError)
@@ -130,7 +130,7 @@ final class ManifestValidatorTests: XCTestCase {
     func testInvalidBackgroundType() {
         let backgroundScript = BackgroundScript(serviceWorker: "background.js", scripts: nil, persistent: nil, type: "invalid")
         let manifest = ExtensionManifest(manifestVersion: 3, name: "Test Extension", version: "1.0", description: nil, contentScripts: nil, background: backgroundScript)
-        let validator = ManifestValidator()
+        let validator = ManifestValidator(logger: createTestLogger())
         
         XCTAssertThrowsError(try validator.validate(manifest)) { error in
             XCTAssertTrue(error is ManifestValidationError)
@@ -145,7 +145,7 @@ final class ManifestValidatorTests: XCTestCase {
     func testValidBackgroundEmptyScriptsArray() {
         let backgroundScript = BackgroundScript(serviceWorker: nil, scripts: [], persistent: nil, type: nil)
         let manifest = ExtensionManifest(manifestVersion: 3, name: "Test Extension", version: "1.0", description: nil, contentScripts: nil, background: backgroundScript)
-        let validator = ManifestValidator()
+        let validator = ManifestValidator(logger: createTestLogger())
         
         XCTAssertThrowsError(try validator.validate(manifest)) { error in
             XCTAssertTrue(error is ManifestValidationError)

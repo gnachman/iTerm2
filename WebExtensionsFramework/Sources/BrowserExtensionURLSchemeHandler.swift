@@ -15,17 +15,29 @@ public class BrowserExtensionURLSchemeHandler: NSObject, WKURLSchemeHandler {
     /// Map of extension ID to their background script resources
     private var extensionResources: [UUID: BackgroundScriptResource] = [:]
     
+    /// Logger for debugging and error reporting
+    private let logger: BrowserExtensionLogger
+    
+    /// Initialize the URL scheme handler
+    /// - Parameter logger: Logger for debugging and error reporting
+    public init(logger: BrowserExtensionLogger) {
+        self.logger = logger
+        super.init()
+    }
+    
     /// Register a background script resource for an extension
     /// - Parameters:
     ///   - resource: The background script resource
     ///   - extensionId: The extension ID
     public func registerBackgroundScript(_ resource: BackgroundScriptResource, for extensionId: UUID) {
+        logger.debug("Registering background script for extension: \(extensionId)")
         extensionResources[extensionId] = resource
     }
     
     /// Unregister background script resource for an extension
     /// - Parameter extensionId: The extension ID
     public func unregisterBackgroundScript(for extensionId: UUID) {
+        logger.debug("Unregistering background script for extension: \(extensionId)")
         extensionResources.removeValue(forKey: extensionId)
     }
     
@@ -39,38 +51,44 @@ public class BrowserExtensionURLSchemeHandler: NSObject, WKURLSchemeHandler {
     // MARK: - WKURLSchemeHandler
     
     public func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
-        guard let url = urlSchemeTask.request.url,
-              url.scheme == Self.scheme,
-              let host = url.host else {
-            urlSchemeTask.didFailWithError(NSError(
-                domain: "BrowserExtensionURLSchemeHandler",
-                code: 1,
-                userInfo: [NSLocalizedDescriptionKey: "Invalid extension URL: \(urlSchemeTask.request.url?.absoluteString ?? "nil")"]
-            ))
-            return
-        }
-        
-        guard let extensionId = UUID(uuidString: host) else {
-            urlSchemeTask.didFailWithError(NSError(
-                domain: "BrowserExtensionURLSchemeHandler",
-                code: 1,
-                userInfo: [NSLocalizedDescriptionKey: "Invalid extension ID (not a UUID): \(host)"]
-            ))
-            return
-        }
-        
-        let path = url.path
-        
-        // Handle background.html requests
-        if path == "/background.html" {
-            handleBackgroundPageRequest(for: extensionId, task: urlSchemeTask)
-        } else {
-            // Unknown path
-            urlSchemeTask.didFailWithError(NSError(
-                domain: "BrowserExtensionURLSchemeHandler", 
-                code: 2,
-                userInfo: [NSLocalizedDescriptionKey: "Unknown path: \(path)"]
-            ))
+        logger.inContext("Handle URL scheme request for \(urlSchemeTask.request.url?.absoluteString ?? "nil")") {
+            guard let url = urlSchemeTask.request.url,
+                  url.scheme == Self.scheme,
+                  let host = url.host else {
+                logger.error("Invalid extension URL: \(urlSchemeTask.request.url?.absoluteString ?? "nil")")
+                urlSchemeTask.didFailWithError(NSError(
+                    domain: "BrowserExtensionURLSchemeHandler",
+                    code: 1,
+                    userInfo: [NSLocalizedDescriptionKey: "Invalid extension URL: \(urlSchemeTask.request.url?.absoluteString ?? "nil")"]
+                ))
+                return
+            }
+            
+            guard let extensionId = UUID(uuidString: host) else {
+                logger.error("Invalid extension ID (not a UUID): \(host)")
+                urlSchemeTask.didFailWithError(NSError(
+                    domain: "BrowserExtensionURLSchemeHandler",
+                    code: 1,
+                    userInfo: [NSLocalizedDescriptionKey: "Invalid extension ID (not a UUID): \(host)"]
+                ))
+                return
+            }
+            
+            let path = url.path
+            logger.debug("Handling request for extension \(extensionId), path: \(path)")
+            
+            // Handle background.html requests
+            if path == "/background.html" {
+                handleBackgroundPageRequest(for: extensionId, task: urlSchemeTask)
+            } else {
+                logger.error("Unknown path requested: \(path)")
+                // Unknown path
+                urlSchemeTask.didFailWithError(NSError(
+                    domain: "BrowserExtensionURLSchemeHandler", 
+                    code: 2,
+                    userInfo: [NSLocalizedDescriptionKey: "Unknown path: \(path)"]
+                ))
+            }
         }
     }
     
@@ -82,6 +100,7 @@ public class BrowserExtensionURLSchemeHandler: NSObject, WKURLSchemeHandler {
     
     private func handleBackgroundPageRequest(for extensionId: UUID, task: WKURLSchemeTask) {
         guard extensionResources[extensionId] != nil else {
+            logger.error("No background script registered for extension: \(extensionId)")
             task.didFailWithError(NSError(
                 domain: "BrowserExtensionURLSchemeHandler",
                 code: 3,
@@ -89,6 +108,8 @@ public class BrowserExtensionURLSchemeHandler: NSObject, WKURLSchemeHandler {
             ))
             return
         }
+        
+        logger.debug("Serving background page for extension: \(extensionId)")
         
         // Create simple HTML page - background script is injected via user script in .defaultClient world
         let html = """
@@ -121,5 +142,6 @@ public class BrowserExtensionURLSchemeHandler: NSObject, WKURLSchemeHandler {
         task.didReceive(response)
         task.didReceive(data)
         task.didFinish()
+        logger.debug("Successfully served background page for extension: \(extensionId)")
     }
 }

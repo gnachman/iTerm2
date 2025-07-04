@@ -98,32 +98,42 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     /// Activate an extension with its runtime objects
     /// - Parameter browserExtension: The extension to activate
     public func activate(_ browserExtension: BrowserExtension) {
-        let extensionId = browserExtension.id
-        
-        // Check if already active
-        if activeExtensions[extensionId] != nil {
-            fatalError("Extension with ID \(extensionId) is already active")
+        logger.inContext("Activate extension \(browserExtension.id)") {
+            let extensionId = browserExtension.id
+            
+            // Check if already active
+            if activeExtensions[extensionId] != nil {
+                logger.fatalError("Extension with ID \(extensionId) is already active")
+            }
+            
+            logger.info("Activating extension with ID: \(extensionId)")
+            
+            // Create content world for this extension
+            let worldName = "Extension-\(extensionId.uuidString)"
+            let contentWorld = WKContentWorld.world(name: worldName)
+            logger.debug("Created content world: \(worldName)")
+            
+            // Create active extension
+            let activeExtension = ActiveExtension(browserExtension: browserExtension, contentWorld: contentWorld)
+            activeExtensions[extensionId] = activeExtension
+            
+            // Update injection scripts in all registered webviews
+            updateInjectionScriptsInAllWebViews()
+            logger.info("Successfully activated extension with ID: \(extensionId)")
         }
-        
-        // Create content world for this extension
-        let worldName = "Extension-\(extensionId.uuidString)"
-        let contentWorld = WKContentWorld.world(name: worldName)
-        
-        // Create active extension
-        let activeExtension = ActiveExtension(browserExtension: browserExtension, contentWorld: contentWorld)
-        activeExtensions[extensionId] = activeExtension
-        
-        // Update injection scripts in all registered webviews
-        updateInjectionScriptsInAllWebViews()
     }
     
     /// Deactivate an extension and clean up its runtime objects
     /// - Parameter extensionId: The unique identifier for the extension
     public func deactivate(_ extensionId: UUID) {
-        activeExtensions.removeValue(forKey: extensionId)
-        
-        // Update injection scripts in all registered webviews
-        updateInjectionScriptsInAllWebViews()
+        logger.inContext("Deactivate extension \(extensionId)") {
+            logger.info("Deactivating extension with ID: \(extensionId)")
+            activeExtensions.removeValue(forKey: extensionId)
+            
+            // Update injection scripts in all registered webviews
+            updateInjectionScriptsInAllWebViews()
+            logger.info("Successfully deactivated extension with ID: \(extensionId)")
+        }
     }
     
     /// Get an active extension by ID
@@ -157,19 +167,25 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     /// Register a webview to receive injection script updates
     /// - Parameter webView: The webview to register
     public func registerWebView(_ webView: BrowserExtensionWKWebView) throws {
-        // Clean up any deallocated webviews first
-        cleanupDeallocatedWebViews()
-        
-        let id = ObjectIdentifier(webView)
-        registeredWebViews[id] = WeakBox(webView)
-        
-        // Install current injection scripts
-        updateInjectionScriptsInWebView(webView)
+        logger.inContext("Register webview") {
+            logger.debug("Registering webview for injection script updates")
+            
+            // Clean up any deallocated webviews first
+            cleanupDeallocatedWebViews()
+            
+            let id = ObjectIdentifier(webView)
+            registeredWebViews[id] = WeakBox(webView)
+            
+            // Install current injection scripts
+            updateInjectionScriptsInWebView(webView)
+            logger.debug("Successfully registered webview with \(activeExtensions.count) active extension(s)")
+        }
     }
     
     /// Unregister a webview from injection script updates
     /// - Parameter webView: The webview to unregister
     public func unregisterWebView(_ webView: BrowserExtensionWKWebView) {
+        logger.debug("Unregistering webview from injection script updates")
         let id = ObjectIdentifier(webView)
         registeredWebViews.removeValue(forKey: id)
     }
@@ -198,11 +214,14 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     
     /// Update the injection scripts in a specific webview
     private func updateInjectionScriptsInWebView(_ webView: BrowserExtensionWKWebView) {
+        logger.debug("Updating injection scripts in webview for \(activeExtensions.count) active extension(s)")
+        
         // Remove all existing user scripts first
         webView.be_configuration.be_userContentController.be_removeAllUserScripts()
         
         // Generate and install a separate injection script for each active extension
-        for (_, activeExtension) in activeExtensions {
+        for (extensionId, activeExtension) in activeExtensions {
+            logger.debug("Installing injection script for extension: \(extensionId)")
             let injectionScriptSource = injectionScriptGenerator.generateInjectionScript(for: activeExtension)
             
             let injectionUserScript = userScriptFactory.createUserScript(
@@ -214,5 +233,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
             
             webView.be_configuration.be_userContentController.be_addUserScript(injectionUserScript)
         }
+        
+        logger.debug("Finished updating injection scripts in webview")
     }
 }

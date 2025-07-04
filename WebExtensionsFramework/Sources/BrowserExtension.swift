@@ -63,41 +63,56 @@ public class BrowserExtension {
     /// Loaded background script resource
     public private(set) var backgroundScriptResource: BackgroundScriptResource?
     
+    /// Logger for debugging and error reporting
+    private let logger: BrowserExtensionLogger
+    
     /// Initialize a browser extension
     /// - Parameters:
     ///   - manifest: The extension's manifest
     ///   - baseURL: Base URL for the extension's files
-    public init(manifest: ExtensionManifest, baseURL: URL) {
+    ///   - logger: Logger for debugging and error reporting
+    public init(manifest: ExtensionManifest, baseURL: URL, logger: BrowserExtensionLogger) {
         self.manifest = manifest
         self.baseURL = baseURL
         self.id = UUID()
+        self.logger = logger
     }
 
     /// Load content scripts from the extension directory
     public func loadContentScripts() throws {
-        guard let contentScripts = manifest.contentScripts else {
-            contentScriptResources = []
-            return
+        try logger.inContext("Load content scripts for extension \(id)") {
+            guard let contentScripts = manifest.contentScripts else {
+                logger.debug("No content scripts defined in manifest")
+                contentScriptResources = []
+                return
+            }
+            
+            logger.info("Loading \(contentScripts.count) content script(s)")
+            var resources: [ContentScriptResource] = []
+            
+            for contentScript in contentScripts {
+                let resource = try loadContentScriptResource(contentScript)
+                resources.append(resource)
+            }
+            
+            contentScriptResources = resources
+            logger.info("Successfully loaded \(resources.count) content script resource(s)")
         }
-        
-        var resources: [ContentScriptResource] = []
-        
-        for contentScript in contentScripts {
-            let resource = try loadContentScriptResource(contentScript)
-            resources.append(resource)
-        }
-        
-        contentScriptResources = resources
     }
     
     /// Load background script from the extension directory
     public func loadBackgroundScript() throws {
-        guard let background = manifest.background else {
-            backgroundScriptResource = nil
-            return
+        try logger.inContext("Load background script for extension \(id)") {
+            guard let background = manifest.background else {
+                logger.debug("No background script defined in manifest")
+                backgroundScriptResource = nil
+                return
+            }
+            
+            logger.info("Loading background script")
+            backgroundScriptResource = try loadBackgroundScriptResource(background)
+            logger.info("Successfully loaded background script")
         }
-        
-        backgroundScriptResource = try loadBackgroundScriptResource(background)
     }
     
     /// Load a single content script resource (JS only for now)
@@ -106,7 +121,9 @@ public class BrowserExtension {
         
         // Load JavaScript files
         if let jsFiles = contentScript.js {
+            logger.debug("Loading \(jsFiles.count) JavaScript file(s) for content script")
             for jsFile in jsFiles {
+                logger.debug("Loading JavaScript file: \(jsFile)")
                 let content = try loadFileContent(jsFile)
                 jsContent.append(content)
             }
@@ -124,12 +141,15 @@ public class BrowserExtension {
         var isServiceWorker: Bool = false
         
         if let serviceWorker = background.serviceWorker {
+            logger.debug("Loading service worker: \(serviceWorker)")
             jsContent = try loadFileContent(serviceWorker)
             isServiceWorker = true
         } else if let scripts = background.scripts {
+            logger.debug("Loading \(scripts.count) legacy background script(s)")
             // Concatenate legacy background scripts
             var combinedScripts: [String] = []
             for script in scripts {
+                logger.debug("Loading legacy background script: \(script)")
                 let content = try loadFileContent(script)
                 combinedScripts.append(content)
             }
@@ -150,10 +170,13 @@ public class BrowserExtension {
         
         do {
             let content = try String(contentsOf: fileURL, encoding: .utf8)
+            logger.debug("Successfully loaded file \(relativePath), size: \(content.count) characters")
             return content
         } catch CocoaError.fileReadNoSuchFile {
+            logger.error("File not found: \(relativePath)")
             throw ContentScriptLoadingError.fileNotFound(relativePath)
         } catch {
+            logger.error("IO error loading file \(relativePath): \(error)")
             throw ContentScriptLoadingError.ioError(relativePath, error)
         }
     }

@@ -66,5 +66,27 @@ public extension BrowserExtensionLogger {
                function: StaticString = #function) {
         error(messageBlock(), file: file, line: line, function: function)
     }
+    
+    func fatalError(_ messageBlock: @autoclosure () -> String,
+                    file: StaticString = #file,
+                    line: Int = #line,
+                    function: StaticString = #function) -> Never {
+        fatalError(messageBlock(), file: file, line: line, function: function)
+    }
+    
+    func assert(_ condition: @autoclosure () -> Bool,
+                _ message: @autoclosure () -> String,
+                file: StaticString = #file,
+                line: Int = #line,
+                function: StaticString = #function) {
+        assert(condition(), message(), file: file, line: line, function: function)
+    }
+    
+    func preconditionFailure(_ messageBlock: @autoclosure () -> String,
+                            file: StaticString = #file,
+                            line: Int = #line,
+                            function: StaticString = #function) -> Never {
+        preconditionFailure(messageBlock(), file: file, line: line, function: function)
+    }
 }
 

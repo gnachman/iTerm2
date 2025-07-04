@@ -30,6 +30,22 @@ func XLog(_ messageBlock: @autoclosure () -> String, file: String = #file, line:
 class iTermLogger {
     private static let logger = Logger(subsystem: "com.iterm2.logger", category: "main")
     let verbosePaths = Set<[String]>()
+    enum Level: Int {
+        case debug
+        case info
+        case error
+        case fatal
+
+        var prefix: String {
+            switch self {
+            case .debug: "D"
+            case .info: "I"
+            case .error: "ERROR"
+            case .fatal: "FATAL"
+            }
+        }
+    }
+    var verbosityLevel = Level.error
 
     @TaskLocal
     static var logContexts = [String]()
@@ -38,16 +54,26 @@ class iTermLogger {
                         file: StaticString,
                         line: Int,
                         function: StaticString,
-                        severity: String) -> String {
-        let prefix = LogContext.logContexts.joined(separator: " > ")
-        return severity + " " + (prefix.isEmpty ? "" : "\(prefix) | ") + "\(file):\(line) \(function): \(messageBlock())"
+                        level: Level) -> String {
+        let contexts = LogContext.logContexts
+        let prefix = contexts.joined(separator: " > ")
+        let formatted = level.prefix + " " + (prefix.isEmpty ? "" : "\(prefix) | ") + "\(file):\(line) \(function): \(messageBlock())"
+        if level.rawValue >= verbosityLevel.rawValue ||
+            verbosePaths.contains(where: { contexts.starts(with: $0) }) {
+            if formatted.count > 1024 {
+                NSFuckingLog("%@", "\(formatted)")
+            } else {
+                NSLog("%@", "\(formatted)")
+            }
+        }
+        return formatted
 
     }
     public func fatalError(_ messageBlock: @autoclosure () -> String,
                            file: StaticString,
                            line: Int,
                            function: StaticString) -> Never {
-        let message = format(messageBlock, file: file, line: line, function: function, severity: "FATAL")
+        let message = format(messageBlock, file: file, line: line, function: function, level: .fatal)
         if gDebugLogging.boolValue {
             DebugLogImpl(String(describing: file),
                          Int32(line),
@@ -65,7 +91,7 @@ class iTermLogger {
         if !gDebugLogging.boolValue {
             return
         }
-        let message = format(messageBlock, file: file, line: line, function: function, severity: "ERROR")
+        let message = format(messageBlock, file: file, line: line, function: function, level: .error)
         Self.logger.error("\(message, privacy: .public)")
         DebugLogImpl(String(describing: file), Int32(line), String(describing: function), message)
     }
@@ -77,7 +103,7 @@ class iTermLogger {
         if !gDebugLogging.boolValue {
             return
         }
-        let message = format(messageBlock, file: file, line: line, function: function, severity: "I ")
+        let message = format(messageBlock, file: file, line: line, function: function, level: .info)
         Self.logger.info("\(message, privacy: .public)")
         DebugLogImpl(String(describing: file), Int32(line), String(describing: function), message)
     }
@@ -89,7 +115,7 @@ class iTermLogger {
         if !gDebugLogging.boolValue {
             return
         }
-        let message = format(messageBlock, file: file, line: line, function: function, severity: "D ")
+        let message = format(messageBlock, file: file, line: line, function: function, level: .debug)
         Self.logger.debug("\(message, privacy: .public)")
         DebugLogImpl(String(describing: file), Int32(line), String(describing: function), message)
     }

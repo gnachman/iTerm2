@@ -9,14 +9,20 @@ import WebKit
 @MainActor
 public class BrowserExtensionNavigationHandler: NSObject, BrowserExtensionWKNavigationDelegate {
     
+    /// Logger for debugging and error reporting
+    private let logger: BrowserExtensionLogger
+    
     /// Initialize the navigation handler
-    public override init() {
+    /// - Parameter logger: Logger for debugging and error reporting
+    public init(logger: BrowserExtensionLogger) {
+        self.logger = logger
         super.init()
     }
     
     // MARK: - BrowserExtensionWKNavigationDelegate Methods
     
     public func webView(_ webView: BrowserExtensionWKWebView, decidePolicyFor navigationAction: BrowserExtensionWKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        logger.debug("Navigation action requested for URL: \(navigationAction.be_request.url?.absoluteString ?? "nil")")
         // Injection script should already be installed by the active manager
         // No need to add it here on every navigation
         decisionHandler(.allow)
@@ -36,20 +42,24 @@ public class BrowserExtensionNavigationHandler: NSObject, BrowserExtensionWKNavi
     }
     
     public func webView(_ webView: BrowserExtensionWKWebView, didFailProvisionalNavigation navigation: BrowserExtensionWKNavigation?, withError error: Error) {
+        logger.error("Provisional navigation failed for URL: \(webView.be_url?.absoluteString ?? "nil"), error: \(error)")
         // TODO: Handle provisional navigation failures
     }
     
     public func webView(_ webView: BrowserExtensionWKWebView, didCommit navigation: BrowserExtensionWKNavigation?) {
+        logger.debug("Navigation committed for URL: \(webView.be_url?.absoluteString ?? "nil")")
         // Injection script is already injected and will handle timing automatically
         // No additional action needed here
     }
     
     public func webView(_ webView: BrowserExtensionWKWebView, didFinish navigation: BrowserExtensionWKNavigation?) {
+        logger.debug("Navigation finished for URL: \(webView.be_url?.absoluteString ?? "nil")")
         // Injection script is already injected and will handle timing automatically
         // No additional action needed here
     }
     
     public func webView(_ webView: BrowserExtensionWKWebView, didFail navigation: BrowserExtensionWKNavigation?, withError error: Error) {
+        logger.error("Navigation failed for URL: \(webView.be_url?.absoluteString ?? "nil"), error: \(error)")
         // TODO: Handle navigation failures
     }
     

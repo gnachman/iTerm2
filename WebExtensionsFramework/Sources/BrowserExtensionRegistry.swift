@@ -37,6 +37,9 @@ public class BrowserExtensionRegistry {
     /// Dictionary of extensions keyed by their path
     private var extensionsByPath: [String: BrowserExtension] = [:]
     
+    /// Logger for debugging and error reporting
+    private let logger: BrowserExtensionLogger
+    
     /// Read-only collection of all registered extensions
     public var extensions: [BrowserExtension] {
         Array(extensionsByPath.values)
@@ -47,76 +50,99 @@ public class BrowserExtensionRegistry {
         Set(extensionsByPath.keys)
     }
 
-    public init() {}
+    /// Initialize the registry
+    /// - Parameter logger: Logger for debugging and error reporting
+    public init(logger: BrowserExtensionLogger) {
+        self.logger = logger
+    }
     
     /// Add an extension from the given path
     /// - Parameter extensionPath: Path to the extension directory
     /// - Throws: BrowserExtensionRegistryError if the extension cannot be added
     public func add(extensionPath: String) throws {
-        // Check if extension already exists
-        if extensionsByPath[extensionPath] != nil {
-            throw BrowserExtensionRegistryError.extensionAlreadyExists(extensionPath)
-        }
-        
-        // Validate path exists
-        let extensionURL = URL(fileURLWithPath: extensionPath)
-        guard FileManager.default.fileExists(atPath: extensionPath) else {
-            throw BrowserExtensionRegistryError.invalidExtensionPath(extensionPath)
-        }
-        
-        // Load manifest
-        let manifestURL = extensionURL.appendingPathComponent("manifest.json")
-        guard FileManager.default.fileExists(atPath: manifestURL.path) else {
-            throw BrowserExtensionRegistryError.invalidExtensionPath("manifest.json not found")
-        }
-        
-        // Load and validate manifest
-        let manifest: ExtensionManifest
-        do {
-            let manifestData = try Data(contentsOf: manifestURL)
-            manifest = try JSONDecoder().decode(ExtensionManifest.self, from: manifestData)
+        try logger.inContext("Add extension from path \(extensionPath)") {
+            // Check if extension already exists
+            if extensionsByPath[extensionPath] != nil {
+                logger.error("Extension already exists at path: \(extensionPath)")
+                throw BrowserExtensionRegistryError.extensionAlreadyExists(extensionPath)
+            }
             
-            // Validate manifest
-            let validator = ManifestValidator()
-            try validator.validate(manifest)
-        } catch {
-            throw BrowserExtensionRegistryError.manifestLoadError(extensionPath, error)
-        }
-        
-        // Create BrowserExtension
-        let browserExtension = BrowserExtension(manifest: manifest, baseURL: extensionURL)
-        
-        // Load content scripts
-        do {
-            try browserExtension.loadContentScripts()
-        } catch {
-            throw BrowserExtensionRegistryError.contentScriptLoadError(extensionPath, error)
-        }
+            logger.info("Adding extension from path: \(extensionPath)")
+            
+            // Validate path exists
+            let extensionURL = URL(fileURLWithPath: extensionPath)
+            guard FileManager.default.fileExists(atPath: extensionPath) else {
+                logger.error("Extension path does not exist: \(extensionPath)")
+                throw BrowserExtensionRegistryError.invalidExtensionPath(extensionPath)
+            }
+            
+            // Load manifest
+            let manifestURL = extensionURL.appendingPathComponent("manifest.json")
+            guard FileManager.default.fileExists(atPath: manifestURL.path) else {
+                logger.error("manifest.json not found at: \(manifestURL.path)")
+                throw BrowserExtensionRegistryError.invalidExtensionPath("manifest.json not found")
+            }
+            
+            // Load and validate manifest
+            let manifest: ExtensionManifest
+            do {
+                logger.debug("Loading manifest from: \(manifestURL.path)")
+                let manifestData = try Data(contentsOf: manifestURL)
+                manifest = try JSONDecoder().decode(ExtensionManifest.self, from: manifestData)
+                
+                // Validate manifest
+                logger.debug("Validating manifest")
+                let validator = ManifestValidator(logger: logger)
+                try validator.validate(manifest)
+                logger.debug("Manifest validation successful")
+            } catch {
+                logger.error("Failed to load/validate manifest: \(error)")
+                throw BrowserExtensionRegistryError.manifestLoadError(extensionPath, error)
+            }
+            
+            // Create BrowserExtension
+            let browserExtension = BrowserExtension(manifest: manifest, baseURL: extensionURL, logger: logger)
+            
+            // Load content scripts
+            do {
+                try browserExtension.loadContentScripts()
+            } catch {
+                logger.error("Failed to load content scripts: \(error)")
+                throw BrowserExtensionRegistryError.contentScriptLoadError(extensionPath, error)
+            }
 
-        // Store in registry
-        extensionsByPath[extensionPath] = browserExtension
-        
-        NotificationCenter.default.post(
-            name: Self.registryDidChangeNotification,
-            object: self
-        )
+            // Store in registry
+            extensionsByPath[extensionPath] = browserExtension
+            logger.info("Successfully added extension with ID: \(browserExtension.id)")
+            
+            NotificationCenter.default.post(
+                name: Self.registryDidChangeNotification,
+                object: self
+            )
+        }
     }
     
     /// Remove an extension from the registry
     /// - Parameter extensionPath: Path to the extension directory to remove
     /// - Throws: BrowserExtensionRegistryError if the extension cannot be removed
     public func remove(extensionPath: String) throws {
-        // Check if extension exists
-        guard extensionsByPath[extensionPath] != nil else {
-            throw BrowserExtensionRegistryError.extensionNotFound(extensionPath)
+        try logger.inContext("Remove extension from path \(extensionPath)") {
+            // Check if extension exists
+            guard let browserExtension = extensionsByPath[extensionPath] else {
+                logger.error("Extension not found at path: \(extensionPath)")
+                throw BrowserExtensionRegistryError.extensionNotFound(extensionPath)
+            }
+            
+            logger.info("Removing extension with ID: \(browserExtension.id)")
+            
+            // Remove from registry
+            extensionsByPath.removeValue(forKey: extensionPath)
+            logger.info("Successfully removed extension from registry")
+            
+            NotificationCenter.default.post(
+                name: Self.registryDidChangeNotification,
+                object: self
+            )
         }
-        
-        // Remove from registry
-        extensionsByPath.removeValue(forKey: extensionPath)
-        
-        NotificationCenter.default.post(
-            name: Self.registryDidChangeNotification,
-            object: self
-        )
     }
 }

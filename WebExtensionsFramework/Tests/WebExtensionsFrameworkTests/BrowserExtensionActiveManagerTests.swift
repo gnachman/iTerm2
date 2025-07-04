@@ -11,16 +11,8 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
     
     override func setUp() {
         super.setUp()
-        manager = BrowserExtensionActiveManager()
-        
-        let manifest = ExtensionManifest(
-            manifestVersion: 3,
-            name: "Test Extension",
-            version: "1.0.0"
-        )
-        
-        let extensionURL = URL(fileURLWithPath: "/test/extension")
-        testExtension = BrowserExtension(manifest: manifest, baseURL: extensionURL)
+        manager = createTestActiveManager()
+        testExtension = createTestBrowserExtension()
     }
     
     override func tearDown() {
@@ -121,7 +113,7 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
         )
         
         let extensionURL2 = URL(fileURLWithPath: "/test/extension2")
-        let testExtension2 = BrowserExtension(manifest: manifest2, baseURL: extensionURL2)
+        let testExtension2 = BrowserExtension(manifest: manifest2, baseURL: extensionURL2, logger: createTestLogger())
         
         manager.activate(testExtension)
         manager.activate(testExtension2)
@@ -144,7 +136,7 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
         )
         
         let extensionURL2 = URL(fileURLWithPath: "/test/extension2")
-        let testExtension2 = BrowserExtension(manifest: manifest2, baseURL: extensionURL2)
+        let testExtension2 = BrowserExtension(manifest: manifest2, baseURL: extensionURL2, logger: createTestLogger())
         
         manager.activate(testExtension)
         manager.activate(testExtension2)
@@ -191,11 +183,11 @@ extension BrowserExtensionActiveManager {
             hiddenContainer: hiddenContainer,
             logger: logger,
             useEphemeralDataStore: false,
-            urlSchemeHandler: BrowserExtensionURLSchemeHandler()
+            urlSchemeHandler: BrowserExtensionURLSchemeHandler(logger: logger)
         )
 
         self.init(
-            injectionScriptGenerator: BrowserExtensionInjectionScriptGenerator(),
+            injectionScriptGenerator: BrowserExtensionInjectionScriptGenerator(logger: logger),
             userScriptFactory: BrowserExtensionUserScriptFactory(),
             backgroundService: backgroundService,
             logger: logger

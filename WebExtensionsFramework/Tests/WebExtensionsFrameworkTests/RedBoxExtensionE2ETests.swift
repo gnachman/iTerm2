@@ -18,13 +18,13 @@ final class RedBoxExtensionE2ETests: XCTestCase {
         webView = WKWebView(frame: CGRect(x: 0, y: 0, width: 800, height: 600), configuration: config)
         
         // Set up extension framework components
-        registry = BrowserExtensionRegistry()
+        registry = createTestRegistry()
         activeManager = BrowserExtensionActiveManager()
         
         // Register the webview with the active manager
         try activeManager.registerWebView(webView)
         
-        navigationHandler = BrowserExtensionNavigationHandler()
+        navigationHandler = BrowserExtensionNavigationHandler(logger: createTestLogger())
     }
     
     override func tearDown() async throws {

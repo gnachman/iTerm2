@@ -17,29 +17,41 @@ public protocol BrowserExtensionInjectionScriptGeneratorProtocol {
 @MainActor
 public class BrowserExtensionInjectionScriptGenerator: BrowserExtensionInjectionScriptGeneratorProtocol {
     
-    public init() {}
+    /// Logger for debugging and error reporting
+    private let logger: BrowserExtensionLogger
+    
+    /// Initialize the injection script generator
+    /// - Parameter logger: Logger for debugging and error reporting
+    public init(logger: BrowserExtensionLogger) {
+        self.logger = logger
+    }
     
     /// Generate an injection user script for a single extension
     /// - Parameter activeExtension: The active extension to generate a script for
     /// - Returns: JavaScript source code for the extension's injection script
     public func generateInjectionScript(for activeExtension: ActiveExtension) -> String {
-        let extensionId = activeExtension.browserExtension.id
-        let contentScriptResources = activeExtension.browserExtension.contentScriptResources
-        
-        var extensionScripts: [[String: Any]] = []
-        
-        for resource in contentScriptResources {
-            let scriptData: [String: Any] = [
-                "id": extensionId.uuidString,
-                "patterns": resource.config.matches,
-                "runAt": resource.config.runAt?.rawValue ?? "document_end",
-                "allFrames": resource.config.allFrames ?? false,
-                "scripts": resource.jsContent
-            ]
-            extensionScripts.append(scriptData)
+        return logger.inContext("Generate injection script for extension \(activeExtension.browserExtension.id)") {
+            let extensionId = activeExtension.browserExtension.id
+            let contentScriptResources = activeExtension.browserExtension.contentScriptResources
+            
+            logger.debug("Generating injection script for \(contentScriptResources.count) content script resource(s)")
+            var extensionScripts: [[String: Any]] = []
+            
+            for resource in contentScriptResources {
+                let scriptData: [String: Any] = [
+                    "id": extensionId.uuidString,
+                    "patterns": resource.config.matches,
+                    "runAt": resource.config.runAt?.rawValue ?? "document_end",
+                    "allFrames": resource.config.allFrames ?? false,
+                    "scripts": resource.jsContent
+                ]
+                extensionScripts.append(scriptData)
+            }
+            
+            let injectionScript = generateInjectionScriptSource(for: extensionId.uuidString, scripts: extensionScripts)
+            logger.debug("Generated injection script with \(injectionScript.count) characters")
+            return injectionScript
         }
-        
-        return generateInjectionScriptSource(for: extensionId.uuidString, scripts: extensionScripts)
     }
     
     /// Generate the JavaScript source code for a single extension's injection script

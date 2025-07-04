@@ -9,7 +9,7 @@ final class BrowserExtensionNavigationHandlerTests: XCTestCase {
     
     override func setUp() {
         super.setUp()
-        handler = BrowserExtensionNavigationHandler()
+        handler = BrowserExtensionNavigationHandler(logger: createTestLogger())
     }
     
     override func tearDown() {

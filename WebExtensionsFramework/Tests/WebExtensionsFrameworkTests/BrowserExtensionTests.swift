@@ -12,7 +12,7 @@ final class BrowserExtensionTests: XCTestCase {
         )
         let extensionURL = URL(fileURLWithPath: "/test/path")
         
-        let browserExtension = BrowserExtension(manifest: manifest, baseURL: extensionURL)
+        let browserExtension = BrowserExtension(manifest: manifest, baseURL: extensionURL, logger: createTestLogger())
         
         let actualManifest = browserExtension.manifest
         let actualBaseURL = browserExtension.baseURL
@@ -36,8 +36,8 @@ final class BrowserExtensionTests: XCTestCase {
             version: "1.0"
         )
         
-        let extension1 = BrowserExtension(manifest: manifest1, baseURL: URL(fileURLWithPath: "/test/path1"))
-        let extension2 = BrowserExtension(manifest: manifest2, baseURL: URL(fileURLWithPath: "/test/path2"))
+        let extension1 = BrowserExtension(manifest: manifest1, baseURL: URL(fileURLWithPath: "/test/path1"), logger: createTestLogger())
+        let extension2 = BrowserExtension(manifest: manifest2, baseURL: URL(fileURLWithPath: "/test/path2"), logger: createTestLogger())
         
         let id1 = extension1.id
         let id2 = extension2.id
@@ -76,7 +76,7 @@ final class BrowserExtensionTests: XCTestCase {
             )]
         )
         
-        let browserExtension = BrowserExtension(manifest: manifest, baseURL: tempURL)
+        let browserExtension = BrowserExtension(manifest: manifest, baseURL: tempURL, logger: createTestLogger())
         
         // Load content scripts
         try! browserExtension.loadContentScripts()
@@ -118,7 +118,7 @@ final class BrowserExtensionTests: XCTestCase {
             )]
         )
         
-        let browserExtension = BrowserExtension(manifest: manifest, baseURL: tempURL)
+        let browserExtension = BrowserExtension(manifest: manifest, baseURL: tempURL, logger: createTestLogger())
         
         do {
             try browserExtension.loadContentScripts()
@@ -140,7 +140,7 @@ final class BrowserExtensionTests: XCTestCase {
             version: "1.0"
         )
         
-        let browserExtension = BrowserExtension(manifest: manifest, baseURL: URL(fileURLWithPath: "/tmp"))
+        let browserExtension = BrowserExtension(manifest: manifest, baseURL: URL(fileURLWithPath: "/tmp"), logger: createTestLogger())
         
         try! browserExtension.loadContentScripts()
         
@@ -176,7 +176,7 @@ final class BrowserExtensionTests: XCTestCase {
             background: backgroundScript
         )
         
-        let browserExtension = BrowserExtension(manifest: manifest, baseURL: tempURL)
+        let browserExtension = BrowserExtension(manifest: manifest, baseURL: tempURL, logger: createTestLogger())
         
         // Load background script
         try! browserExtension.loadBackgroundScript()
@@ -222,7 +222,7 @@ final class BrowserExtensionTests: XCTestCase {
             background: backgroundScript
         )
         
-        let browserExtension = BrowserExtension(manifest: manifest, baseURL: tempURL)
+        let browserExtension = BrowserExtension(manifest: manifest, baseURL: tempURL, logger: createTestLogger())
         
         // Load background script
         try! browserExtension.loadBackgroundScript()
@@ -247,7 +247,7 @@ final class BrowserExtensionTests: XCTestCase {
             version: "1.0"
         )
         
-        let browserExtension = BrowserExtension(manifest: manifest, baseURL: URL(fileURLWithPath: "/tmp"))
+        let browserExtension = BrowserExtension(manifest: manifest, baseURL: URL(fileURLWithPath: "/tmp"), logger: createTestLogger())
         
         try! browserExtension.loadBackgroundScript()
         
@@ -273,7 +273,7 @@ final class BrowserExtensionTests: XCTestCase {
             background: backgroundScript
         )
         
-        let browserExtension = BrowserExtension(manifest: manifest, baseURL: tempURL)
+        let browserExtension = BrowserExtension(manifest: manifest, baseURL: tempURL, logger: createTestLogger())
         
         do {
             try browserExtension.loadBackgroundScript()

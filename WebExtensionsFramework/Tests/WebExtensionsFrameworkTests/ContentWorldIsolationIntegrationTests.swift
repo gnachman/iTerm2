@@ -18,13 +18,14 @@ final class ContentWorldIsolationIntegrationTests: XCTestCase {
         webView = WKWebView(frame: CGRect(x: 0, y: 0, width: 800, height: 600), configuration: config)
         
         // Set up extension framework components
-        registry = BrowserExtensionRegistry()
-        activeManager = BrowserExtensionActiveManager()
+        let logger = createTestLogger()
+        registry = createTestRegistry(logger: logger)
+        activeManager = BrowserExtensionActiveManager() // Use convenience init with real implementations
         
         // Register the webview with the active manager
         try activeManager.registerWebView(webView)
         
-        navigationHandler = BrowserExtensionNavigationHandler()
+        navigationHandler = BrowserExtensionNavigationHandler(logger: logger)
     }
     
     override func tearDown() async throws {
