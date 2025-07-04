@@ -21,6 +21,29 @@ public enum ContentScriptWorld: String, Codable {
     case main = "MAIN"
 }
 
+/// Represents a background script configuration
+/// Reference: Documentation/manifest-fields/background.md
+public struct BackgroundScript: Codable {
+    /// Service worker script file (Manifest V3 preferred approach)
+    public let serviceWorker: String?
+    
+    /// Background script files (Manifest V2 compatibility)
+    public let scripts: [String]?
+    
+    /// Whether the background script is persistent (deprecated in V3)
+    public let persistent: Bool?
+    
+    /// Background script type for module loading
+    public let type: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case serviceWorker = "service_worker"
+        case scripts
+        case persistent
+        case type
+    }
+}
+
 /// Represents a content script configuration
 /// Reference: Documentation/manifest-fields/content_scripts.md
 public struct ContentScript: Codable {
@@ -96,11 +119,16 @@ public struct ExtensionManifest: Codable {
     /// Reference: Documentation/manifest-fields/content_scripts.md
     public var contentScripts: [ContentScript]?
     
+    /// Background script configuration
+    /// Reference: Documentation/manifest-fields/background.md
+    public var background: BackgroundScript?
+    
     enum CodingKeys: String, CodingKey {
         case manifestVersion = "manifest_version"
         case name
         case version
         case description
         case contentScripts = "content_scripts"
+        case background
     }
 }

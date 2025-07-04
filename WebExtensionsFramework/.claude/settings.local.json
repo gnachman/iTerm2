@@ -9,7 +9,8 @@
       "Bash(swift test:*)",
       "Bash(swift build)",
       "Bash(swift package:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

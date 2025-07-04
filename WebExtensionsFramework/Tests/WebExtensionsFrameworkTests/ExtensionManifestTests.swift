@@ -187,4 +187,87 @@ final class ExtensionManifestTests: XCTestCase {
         XCTAssertNil(contentScript.css)
         XCTAssertNil(contentScript.runAt)
     }
+    
+    // MARK: - background tests (background.md)
+    
+    func testBackgroundServiceWorkerDecoding() {
+        let json = """
+        {
+            "manifest_version": 3,
+            "name": "Test Extension",
+            "version": "1.0",
+            "background": {
+                "service_worker": "background.js"
+            }
+        }
+        """
+        
+        let data = json.data(using: .utf8)!
+        let manifest = try! JSONDecoder().decode(ExtensionManifest.self, from: data)
+        
+        XCTAssertNotNil(manifest.background)
+        XCTAssertEqual(manifest.background?.serviceWorker, "background.js")
+        XCTAssertNil(manifest.background?.scripts)
+        XCTAssertNil(manifest.background?.persistent)
+        XCTAssertNil(manifest.background?.type)
+    }
+    
+    func testBackgroundLegacyScriptsDecoding() {
+        let json = """
+        {
+            "manifest_version": 3,
+            "name": "Test Extension",
+            "version": "1.0",
+            "background": {
+                "scripts": ["background.js", "utils.js"],
+                "persistent": false
+            }
+        }
+        """
+        
+        let data = json.data(using: .utf8)!
+        let manifest = try! JSONDecoder().decode(ExtensionManifest.self, from: data)
+        
+        XCTAssertNotNil(manifest.background)
+        XCTAssertNil(manifest.background?.serviceWorker)
+        XCTAssertEqual(manifest.background?.scripts, ["background.js", "utils.js"])
+        XCTAssertEqual(manifest.background?.persistent, false)
+        XCTAssertNil(manifest.background?.type)
+    }
+    
+    func testBackgroundWithTypeDecoding() {
+        let json = """
+        {
+            "manifest_version": 3,
+            "name": "Test Extension",
+            "version": "1.0",
+            "background": {
+                "service_worker": "background.js",
+                "type": "module"
+            }
+        }
+        """
+        
+        let data = json.data(using: .utf8)!
+        let manifest = try! JSONDecoder().decode(ExtensionManifest.self, from: data)
+        
+        XCTAssertNotNil(manifest.background)
+        XCTAssertEqual(manifest.background?.serviceWorker, "background.js")
+        XCTAssertEqual(manifest.background?.type, "module")
+    }
+    
+    func testBackgroundOptional() {
+        let json = """
+        {
+            "manifest_version": 3,
+            "name": "Test Extension",
+            "version": "1.0"
+        }
+        """
+        
+        let data = json.data(using: .utf8)!
+        let manifest = try! JSONDecoder().decode(ExtensionManifest.self, from: data)
+        
+        XCTAssertNil(manifest.background)
+    }
 }

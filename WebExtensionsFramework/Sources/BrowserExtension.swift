@@ -14,6 +14,18 @@ public struct ContentScriptResource {
     public let jsContent: [String]
 }
 
+/// Represents a loaded background script resource
+public struct BackgroundScriptResource {
+    /// The original background script configuration from manifest
+    public let config: BackgroundScript
+    
+    /// Loaded JavaScript content (from service worker or scripts)
+    public let jsContent: String
+    
+    /// Whether this is a service worker (true) or legacy background script (false)
+    public let isServiceWorker: Bool
+}
+
 /// Errors that can occur during content script loading
 public enum ContentScriptLoadingError: Error, LocalizedError {
     case fileNotFound(String)
@@ -48,6 +60,9 @@ public class BrowserExtension {
     /// Loaded content script resources
     public private(set) var contentScriptResources: [ContentScriptResource] = []
     
+    /// Loaded background script resource
+    public private(set) var backgroundScriptResource: BackgroundScriptResource?
+    
     /// Initialize a browser extension
     /// - Parameters:
     ///   - manifest: The extension's manifest
@@ -75,6 +90,16 @@ public class BrowserExtension {
         contentScriptResources = resources
     }
     
+    /// Load background script from the extension directory
+    public func loadBackgroundScript() throws {
+        guard let background = manifest.background else {
+            backgroundScriptResource = nil
+            return
+        }
+        
+        backgroundScriptResource = try loadBackgroundScriptResource(background)
+    }
+    
     /// Load a single content script resource (JS only for now)
     private func loadContentScriptResource(_ contentScript: ContentScript) throws -> ContentScriptResource {
         var jsContent: [String] = []
@@ -93,6 +118,32 @@ public class BrowserExtension {
         )
     }
     
+    /// Load a single background script resource
+    private func loadBackgroundScriptResource(_ background: BackgroundScript) throws -> BackgroundScriptResource {
+        var jsContent: String = ""
+        var isServiceWorker: Bool = false
+        
+        if let serviceWorker = background.serviceWorker {
+            jsContent = try loadFileContent(serviceWorker)
+            isServiceWorker = true
+        } else if let scripts = background.scripts {
+            // Concatenate legacy background scripts
+            var combinedScripts: [String] = []
+            for script in scripts {
+                let content = try loadFileContent(script)
+                combinedScripts.append(content)
+            }
+            jsContent = combinedScripts.joined(separator: "\n\n")
+            isServiceWorker = false
+        }
+        
+        return BackgroundScriptResource(
+            config: background,
+            jsContent: jsContent,
+            isServiceWorker: isServiceWorker
+        )
+    }
+    
     /// Load content from a file relative to the extension's base URL
     private func loadFileContent(_ relativePath: String) throws -> String {
         let fileURL = baseURL.appendingPathComponent(relativePath)
@@ -105,5 +156,13 @@ public class BrowserExtension {
         } catch {
             throw ContentScriptLoadingError.ioError(relativePath, error)
         }
+    }
+    
+    // MARK: - Testing Support
+    
+    /// Set background script resource for testing purposes only
+    /// - Parameter resource: The background script resource to set
+    internal func setBackgroundScriptResource(_ resource: BackgroundScriptResource?) {
+        backgroundScriptResource = resource
     }
 }
