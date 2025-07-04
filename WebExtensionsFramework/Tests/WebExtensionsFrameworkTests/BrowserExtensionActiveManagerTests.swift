@@ -1,5 +1,6 @@
-import XCTest
+import os.log
 import WebKit
+import XCTest
 @testable import WebExtensionsFramework
 
 @MainActor
@@ -174,5 +175,126 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
     func testGetNonExistentActiveExtension() {
         let activeExtension = manager.activeExtension(for: UUID())
         XCTAssertNil(activeExtension)
+    }
+}
+
+extension BrowserExtensionActiveManager {
+    public convenience init() {
+        // Create a hidden container view for background scripts
+        // This must be added to a view hierarchy for WKWebView to work properly
+        let hiddenContainer = NSView()
+        hiddenContainer.isHidden = true
+        let logger = DefaultBrowserExtensionLogger()
+
+        // Create background service with default logger
+        let backgroundService = BrowserExtensionBackgroundService(
+            hiddenContainer: hiddenContainer,
+            logger: logger,
+            useEphemeralDataStore: false,
+            urlSchemeHandler: BrowserExtensionURLSchemeHandler()
+        )
+
+        self.init(
+            injectionScriptGenerator: BrowserExtensionInjectionScriptGenerator(),
+            userScriptFactory: BrowserExtensionUserScriptFactory(),
+            backgroundService: backgroundService,
+            logger: logger
+        )
+    }
+}
+
+/// Default implementation of BrowserExtensionLogger using os.log
+public class DefaultBrowserExtensionLogger: BrowserExtensionLogger {
+    private static let logger = Logger(subsystem: "com.webextensions.framework", category: "main")
+    @TaskLocal static var logContexts = ["Root"]
+
+    public init() {}
+
+    public func info(_ messageBlock: @autoclosure () -> String,
+                     file: StaticString = #file,
+                     line: Int = #line,
+                     function: StaticString = #function) {
+        let message = "Info: " + prefixed(message: "\(file):\(line) (\(function)): \(messageBlock())")
+        Self.logger.info("\(message, privacy: .public)")
+    }
+
+    public func debug(_ messageBlock: @autoclosure () -> String,
+                      file: StaticString = #file,
+                      line: Int = #line,
+                      function: StaticString = #function) {
+        let message = "Debug: " + prefixed(message: "\(file):\(line) (\(function)): \(messageBlock())")
+        Self.logger.debug("\(message, privacy: .public)")
+    }
+
+    public func error(_ messageBlock: @autoclosure () -> String,
+                      file: StaticString = #file,
+                      line: Int = #line,
+                      function: StaticString = #function) {
+        let message = "Error: " + prefixed(message: "\(file):\(line) (\(function)): \(messageBlock())")
+        Self.logger.error("\(message, privacy: .public)")
+    }
+
+    public func assert(
+        _ condition: @autoclosure () -> Bool,
+        _ message: @autoclosure () -> String = "",
+        file: StaticString = #file,
+        line: Int = #line,
+        function: StaticString = #function) {
+        Swift.assert(condition(), message(), file: file, line: UInt(line))
+    }
+
+    public func fatalError(
+        _ message: @autoclosure () -> String = "",
+        file: StaticString = #file,
+        line: Int = #line,
+        function: StaticString = #function) -> Never {
+        Swift.fatalError(message(), file: file, line: UInt(line))
+    }
+
+    public func preconditionFailure(
+        _ message: @autoclosure () -> String = "",
+        file: StaticString = #file,
+        line: Int = #line,
+        function: StaticString = #function) -> Never {
+        Swift.preconditionFailure(message(), file: file, line: UInt(line))
+    }
+
+    private func prefixed(message: String) -> String {
+        let prefix = DefaultBrowserExtensionLogger.logContexts.joined(separator: " > ")
+        return "\(prefix): \(message)"
+    }
+
+    public func inContext<T>(_ prefix: String, closure: () throws -> T) rethrows -> T {
+        return try DefaultBrowserExtensionLogger.$logContexts.withValue(
+            DefaultBrowserExtensionLogger.logContexts + [prefix]
+        ) {
+            Self.logger.debug("\(self.prefixed(message: "Begin"), privacy: .public)")
+            defer {
+                Self.logger.debug("\(self.prefixed(message: "End"), privacy: .public)")
+            }
+            do {
+                return try closure()
+            } catch {
+                Self.logger.debug("\(self.prefixed(message: "Exiting scope with error \(error)"), privacy: .public)")
+                throw error
+            }
+        }
+    }
+
+    public func inContext<T>(_ prefix: String, closure: () async throws -> T) async rethrows -> T {
+        return try await DefaultBrowserExtensionLogger.$logContexts.withValue(
+            DefaultBrowserExtensionLogger.logContexts + [prefix]
+        ) {
+            Self.logger.debug("\(self.prefixed(message: "Begin"), privacy: .public)")
+            defer {
+                Self.logger.debug("\(self.prefixed(message: "End"), privacy: .public)")
+            }
+            do {
+                return try await closure()
+            } catch {
+                Self.logger.debug("\(self.prefixed(message: "Exiting scope with error \(error)"), privacy: .public)")
+                throw error
+            }
+        }
     }
 }

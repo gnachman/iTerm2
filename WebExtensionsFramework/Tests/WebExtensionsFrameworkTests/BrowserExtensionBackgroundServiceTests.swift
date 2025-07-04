@@ -1062,3 +1062,77 @@ class FailingURLSchemeHandler: BrowserExtensionURLSchemeHandler {
         urlSchemeTask.didFailWithError(error)
     }
 }
+
+
+/// Test implementation of BrowserExtensionLogger that captures messages
+public class TestBrowserExtensionLogger: BrowserExtensionLogger {
+    public struct LogMessage {
+        public let level: String
+        public let message: String
+        public let file: StaticString
+        public let line: Int
+        public let function: StaticString
+    }
+
+    public private(set) var messages: [LogMessage] = []
+
+    public init() {}
+
+    public func clear() {
+        messages.removeAll()
+    }
+
+    public func info(_ messageBlock: @autoclosure () -> String,
+                     file: StaticString = #file,
+                     line: Int = #line,
+                     function: StaticString = #function) {
+        messages.append(LogMessage(level: "INFO", message: messageBlock(), file: file, line: line, function: function))
+    }
+
+    public func debug(_ messageBlock: @autoclosure () -> String,
+                      file: StaticString = #file,
+                      line: Int = #line,
+                      function: StaticString = #function) {
+        messages.append(LogMessage(level: "DEBUG", message: messageBlock(), file: file, line: line, function: function))
+    }
+
+    public func error(_ messageBlock: @autoclosure () -> String,
+                      file: StaticString = #file,
+                      line: Int = #line,
+                      function: StaticString = #function) {
+        messages.append(LogMessage(level: "ERROR", message: messageBlock(), file: file, line: line, function: function))
+    }
+
+    public func assert(
+        _ condition: @autoclosure () -> Bool,
+        _ message: @autoclosure () -> String = "",
+        file: StaticString = #file,
+        line: Int = #line,
+        function: StaticString = #function) {
+        Swift.assert(condition(), message(), file: file, line: UInt(line))
+    }
+
+    public func fatalError(
+        _ message: @autoclosure () -> String = "",
+        file: StaticString = #file,
+        line: Int = #line,
+        function: StaticString = #function) -> Never {
+        Swift.fatalError(message(), file: file, line: UInt(line))
+    }
+
+    public func preconditionFailure(
+        _ message: @autoclosure () -> String = "",
+        file: StaticString = #file,
+        line: Int = #line,
+        function: StaticString = #function) -> Never {
+        Swift.preconditionFailure(message(), file: file, line: UInt(line))
+    }
+
+    public func inContext<T>(_ prefix: String, closure: () throws -> T) rethrows -> T {
+        return try closure()
+    }
+
+    public func inContext<T>(_ prefix: String, closure: () async throws -> T) async rethrows -> T {
+        return try await closure()
+    }
+}

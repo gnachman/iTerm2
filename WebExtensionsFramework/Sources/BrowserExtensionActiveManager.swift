@@ -1,4 +1,5 @@
 // BrowserExtensionActiveManager.swift
+// BrowserExtensionActiveManager.swift
 // Manages active extensions and their runtime objects
 
 import Foundation
@@ -80,36 +81,18 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     private let injectionScriptGenerator: BrowserExtensionInjectionScriptGeneratorProtocol
     private let userScriptFactory: BrowserExtensionUserScriptFactoryProtocol
     private let backgroundService: BrowserExtensionBackgroundServiceProtocol
+    private let logger: BrowserExtensionLogger
 
     public init(
         injectionScriptGenerator: BrowserExtensionInjectionScriptGeneratorProtocol,
         userScriptFactory: BrowserExtensionUserScriptFactoryProtocol,
-        backgroundService: BrowserExtensionBackgroundServiceProtocol
+        backgroundService: BrowserExtensionBackgroundServiceProtocol,
+        logger: BrowserExtensionLogger
     ) {
         self.injectionScriptGenerator = injectionScriptGenerator
         self.userScriptFactory = userScriptFactory
         self.backgroundService = backgroundService
-    }
-    
-    public convenience init() {
-        // Create a hidden container view for background scripts
-        // This must be added to a view hierarchy for WKWebView to work properly
-        let hiddenContainer = NSView()
-        hiddenContainer.isHidden = true
-        
-        // Create background service with default logger
-        let backgroundService = BrowserExtensionBackgroundService(
-            hiddenContainer: hiddenContainer,
-            logger: DefaultBrowserExtensionLogger(),
-            useEphemeralDataStore: false,
-            urlSchemeHandler: BrowserExtensionURLSchemeHandler()
-        )
-        
-        self.init(
-            injectionScriptGenerator: BrowserExtensionInjectionScriptGenerator(),
-            userScriptFactory: BrowserExtensionUserScriptFactory(),
-            backgroundService: backgroundService
-        )
+        self.logger = logger
     }
     
     /// Activate an extension with its runtime objects
