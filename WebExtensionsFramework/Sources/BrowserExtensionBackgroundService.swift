@@ -120,16 +120,28 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
             }
         }
         
-        // Inject DOM nuke script in the page world to shadow DOM globals
-        // Extension scripts will run in .defaultClient world for complete isolation
+        // Inject DOM nuke script in both worlds for defense in depth:
+        // - In .page world: protects against malicious page content
+        // - In .defaultClient world: removes DOM APIs from extension context
         let domNukeScript = generateDOMNukeScript()
-        let nukeUserScript = WKUserScript(
+        
+        // Add to .page world
+        let nukeUserScriptPage = WKUserScript(
             source: domNukeScript,
             injectionTime: .atDocumentStart,
             forMainFrameOnly: false,
             in: .page
         )
-        configuration.userContentController.addUserScript(nukeUserScript)
+        configuration.userContentController.addUserScript(nukeUserScriptPage)
+        
+        // Add to .defaultClient world (where extension scripts run)
+        let nukeUserScriptClient = WKUserScript(
+            source: domNukeScript,
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: false,
+            in: .defaultClient
+        )
+        configuration.userContentController.addUserScript(nukeUserScriptClient)
         
         // Inject extension background script in .defaultClient world for isolation
         if let backgroundResource = browserExtension.backgroundScriptResource {
@@ -189,6 +201,7 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
                 // Cancel the navigation if the Task is cancelled
                 Task { @MainActor in
                     webView.stopLoading()
+                    navigationDelegate.cancelWaitForLoad()
                 }
             }
         } catch {
@@ -312,6 +325,9 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
                 'open', 'print', 'stop',
                 'focus', 'blur', 'close',
                 
+                // Storage APIs (extensions should use chrome.storage instead)
+                'localStorage', 'sessionStorage',
+                
                 // Selection and Range
                 'Selection', 'Range', 'getSelection',
                 
@@ -320,9 +336,6 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
                 
                 // Observers
                 'MutationObserver', 'IntersectionObserver', 'ResizeObserver',
-                
-                // Storage (legacy - encourage chrome.storage)
-                'localStorage', 'sessionStorage', 'Storage',
                 
                 // Other DOM APIs
                 'history', 'History',
@@ -464,7 +477,8 @@ private class BackgroundScriptNavigationDelegate: NSObject, WKNavigationDelegate
     private let allowedURL: URL
     private let logger: BrowserExtensionLogger
     private let extensionId: UUID
-    
+    private var navigationCount = 0
+
     init(allowedURL: URL, logger: BrowserExtensionLogger, extensionId: UUID) {
         self.allowedURL = allowedURL
         self.logger = logger
@@ -478,18 +492,24 @@ private class BackgroundScriptNavigationDelegate: NSObject, WKNavigationDelegate
             self.continuation = continuation
         }
     }
-    
+
+    func cancelWaitForLoad() {
+        if let saved = continuation {
+            continuation = nil
+            saved.resume()
+        }
+    }
+
     // Only allow the initial background page URL
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-        guard let url = navigationAction.request.url else {
-            logger.error("Navigation blocked - no URL for extension: \(extensionId)")
+        if navigationCount > 0 {
+            logger.error("Navigation blocked - already allowed one through.")
             decisionHandler(.cancel)
             return
         }
-        
-        // Block redirects explicitly
-        if navigationAction.navigationType == .other && url != allowedURL {
-            logger.error("Navigation blocked - redirect to unauthorized URL: \(url) (extension: \(extensionId))")
+        navigationCount += 1
+        guard let url = navigationAction.request.url else {
+            logger.error("Navigation blocked - no URL for extension: \(extensionId)")
             decisionHandler(.cancel)
             return
         }
@@ -559,7 +579,9 @@ private class BackgroundScriptUIDelegate: NSObject, WKUIDelegate {
         logger.error("Blocked file open panel from background script (extension: \(extensionId))")
         completionHandler(nil)
     }
-    
-    // Note: Context menu blocking would require newer WKUIDelegate methods
-    // The main security threats (window.open, navigation, dialogs, file access) are covered above
+
+    func webView(_ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin, initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType, decisionHandler: @escaping @MainActor (WKPermissionDecision) -> Void) {
+        logger.error("Blocked media capture from background script (extension: \(extensionId))")
+        decisionHandler(.deny)
+    }
 }

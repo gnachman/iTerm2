@@ -705,13 +705,20 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
                     globalThis.navigationAttempted = false;
                 }
                 
-                // Try to open a new window
+                // Try to open a new window (should be undefined)
                 try {
-                    window.open('https://evil.com');
-                    globalThis.windowOpenAttempted = true;
+                    if (typeof window.open === 'undefined') {
+                        globalThis.windowOpenAttempted = false;
+                        globalThis.windowOpenUndefined = true;
+                    } else {
+                        window.open('https://evil.com');
+                        globalThis.windowOpenAttempted = true;
+                        globalThis.windowOpenUndefined = false;
+                    }
                 } catch (e) {
                     globalThis.windowOpenError = e.message;
                     globalThis.windowOpenAttempted = false;
+                    globalThis.windowOpenUndefined = false;
                 }
                 
                 // Record that the script executed successfully
@@ -728,17 +735,12 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
         let scriptExecuted = try await backgroundService.evaluateJavaScript("globalThis.scriptExecuted", in: testExtension.id)
         XCTAssertEqual(scriptExecuted as? Bool, true, "Background script should have executed")
         
-        // Verify that window.open was called but blocked by security measures
-        let windowOpenAttempted = try await backgroundService.evaluateJavaScript("globalThis.windowOpenAttempted", in: testExtension.id) 
-        XCTAssertEqual(windowOpenAttempted as? Bool, true, "window.open should be callable but blocked by UI delegate")
+        // Verify that window.open was undefined (blocked by DOM nuke script)
+        let windowOpenUndefined = try await backgroundService.evaluateJavaScript("globalThis.windowOpenUndefined", in: testExtension.id) 
+        XCTAssertEqual(windowOpenUndefined as? Bool, true, "window.open should be undefined in background scripts")
         
-        // The key security measure is that the UI delegate blocks window creation
-        // window.open() might return truthy but no actual window should be created
-        // The real test is that no new webviews are created in the container
+        // Verify that only the background script webview exists
         let initialWebViewCount = mockHiddenContainer.addedSubviews.count
-        
-        // Verify that window.open() didn't actually create new windows
-        // The UI delegate should have blocked the window creation
         XCTAssertEqual(initialWebViewCount, 1, "Should only have the background script webview, no new windows")
         
         // Test that alert() is blocked by the DOM nuke script
@@ -749,21 +751,21 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
         backgroundService.stopBackgroundScript(for: testExtension.id)
     }
     
-    /// Test WKContentWorld separation - DOM nuke script runs in .page, extensions run in .defaultClient
+    /// Test WKContentWorld separation with DOM nuke script running in both worlds
     func testContentWorldSeparation() async throws {
         try await backgroundService.startBackgroundScript(for: testExtension)
         
         let extensionId = testExtension.id
         
-        // The DOM nuke script runs in .page world, so extension scripts in .defaultClient world
-        // should have access to clean DOM APIs. This is the correct behavior for isolation.
+        // The DOM nuke script now runs in both .page and .defaultClient worlds for defense in depth.
+        // This means background scripts don't have access to DOM APIs they shouldn't use.
         
-        // Verify that DOM APIs are available to extension scripts (they run in .defaultClient world)
+        // Verify that DOM APIs are properly removed from extension scripts
         let workerResult = try await backgroundService.evaluateJavaScript("typeof Worker", in: extensionId)
-        XCTAssertEqual(workerResult as? String, "function", "Worker should be available in .defaultClient world")
+        XCTAssertEqual(workerResult as? String, "undefined", "Worker should be removed from background scripts")
         
         let xmlHttpRequestResult = try await backgroundService.evaluateJavaScript("typeof XMLHttpRequest", in: extensionId)
-        XCTAssertEqual(xmlHttpRequestResult as? String, "function", "XMLHttpRequest should be available in .defaultClient world")
+        XCTAssertEqual(xmlHttpRequestResult as? String, "undefined", "XMLHttpRequest should be removed from background scripts")
         
         // Test that essential APIs are still available for extensions
         let fetchResult = try await backgroundService.evaluateJavaScript("typeof fetch", in: extensionId)
@@ -775,15 +777,12 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
         let globalThisResult = try await backgroundService.evaluateJavaScript("typeof globalThis", in: extensionId)
         XCTAssertEqual(globalThisResult as? String, "object", "globalThis should be available")
         
-        // Test modern communication APIs if available
+        // Test that BroadcastChannel is also properly removed
         let broadcastChannelResult = try await backgroundService.evaluateJavaScript("typeof BroadcastChannel", in: extensionId)
-        // These may or may not be available depending on WKWebView version
-        if (broadcastChannelResult as? String) == "function" {
-            // This is fine - extension scripts have access to clean APIs in .defaultClient world
-        }
+        XCTAssertEqual(broadcastChannelResult as? String, "undefined", "BroadcastChannel should be removed from background scripts")
         
-        // The key security benefit is that the .page world (where malicious content runs)
-        // has DOM APIs nuked, while .defaultClient world (where extension scripts run) is clean
+        // The key security benefit is that DOM APIs are removed from all worlds where
+        // background scripts execute, preventing access to inappropriate browser APIs
     }
     
     /// Test that CSP headers are properly set in URL scheme handler
