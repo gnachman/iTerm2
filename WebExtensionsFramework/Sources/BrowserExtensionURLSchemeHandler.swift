@@ -13,27 +13,27 @@ public class BrowserExtensionURLSchemeHandler: NSObject, WKURLSchemeHandler {
     public static let scheme = "extension"
     
     /// Map of extension ID to their background script resources
-    private var extensionResources: [String: BackgroundScriptResource] = [:]
+    private var extensionResources: [UUID: BackgroundScriptResource] = [:]
     
     /// Register a background script resource for an extension
     /// - Parameters:
     ///   - resource: The background script resource
     ///   - extensionId: The extension ID
-    public func registerBackgroundScript(_ resource: BackgroundScriptResource, for extensionId: String) {
+    public func registerBackgroundScript(_ resource: BackgroundScriptResource, for extensionId: UUID) {
         extensionResources[extensionId] = resource
     }
     
     /// Unregister background script resource for an extension
     /// - Parameter extensionId: The extension ID
-    public func unregisterBackgroundScript(for extensionId: String) {
+    public func unregisterBackgroundScript(for extensionId: UUID) {
         extensionResources.removeValue(forKey: extensionId)
     }
     
     /// Generate URL for extension's background page
     /// - Parameter extensionId: The extension ID
     /// - Returns: URL for the background page
-    public static func backgroundPageURL(for extensionId: String) -> URL {
-        return URL(string: "\(scheme)://\(extensionId)/background.html")!
+    public static func backgroundPageURL(for extensionId: UUID) -> URL {
+        return URL(string: "\(scheme)://\(extensionId.uuidString)/background.html")!
     }
     
     // MARK: - WKURLSchemeHandler
@@ -50,7 +50,15 @@ public class BrowserExtensionURLSchemeHandler: NSObject, WKURLSchemeHandler {
             return
         }
         
-        let extensionId = host
+        guard let extensionId = UUID(uuidString: host) else {
+            urlSchemeTask.didFailWithError(NSError(
+                domain: "BrowserExtensionURLSchemeHandler",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "Invalid extension ID (not a UUID): \(host)"]
+            ))
+            return
+        }
+        
         let path = url.path
         
         // Handle background.html requests
@@ -72,7 +80,7 @@ public class BrowserExtensionURLSchemeHandler: NSObject, WKURLSchemeHandler {
     
     // MARK: - Private Methods
     
-    private func handleBackgroundPageRequest(for extensionId: String, task: WKURLSchemeTask) {
+    private func handleBackgroundPageRequest(for extensionId: UUID, task: WKURLSchemeTask) {
         guard extensionResources[extensionId] != nil else {
             task.didFailWithError(NSError(
                 domain: "BrowserExtensionURLSchemeHandler",

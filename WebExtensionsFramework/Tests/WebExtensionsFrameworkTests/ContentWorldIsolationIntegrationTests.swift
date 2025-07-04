@@ -72,8 +72,8 @@ final class ContentWorldIsolationIntegrationTests: XCTestCase {
         XCTAssertNotNil(blueCircleExtension, "Blue Circle extension should be loaded")
         
         // 3. Activate both extensions
-        try activeManager.activate(redBoxExtension!)
-        try activeManager.activate(blueCircleExtension!)
+        activeManager.activate(redBoxExtension!)
+        activeManager.activate(blueCircleExtension!)
         
         let redBoxId = redBoxExtension!.id
         let blueCircleId = blueCircleExtension!.id
@@ -220,8 +220,8 @@ final class ContentWorldIsolationIntegrationTests: XCTestCase {
             }
         }
         
-        try activeManager.activate(redBoxExtension!)
-        try activeManager.activate(blueCircleExtension!)
+        activeManager.activate(redBoxExtension!)
+        activeManager.activate(blueCircleExtension!)
         
         let redBoxId = redBoxExtension!.id
         let blueCircleId = blueCircleExtension!.id

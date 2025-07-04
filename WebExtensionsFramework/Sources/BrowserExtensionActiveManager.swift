@@ -39,26 +39,25 @@ public class ActiveExtension {
 public protocol BrowserExtensionActiveManagerProtocol {
     /// Activate an extension with its runtime objects
     /// - Parameter browserExtension: The extension to activate
-    /// - Throws: BrowserExtensionRegistryError if activation fails
-    func activate(_ browserExtension: BrowserExtension) throws
+    func activate(_ browserExtension: BrowserExtension)
     
     /// Deactivate an extension and clean up its runtime objects
     /// - Parameter extensionId: The unique identifier for the extension
-    func deactivate(_ extensionId: String)
+    func deactivate(_ extensionId: UUID)
     
     /// Get an active extension by ID
     /// - Parameter extensionId: The unique identifier for the extension
     /// - Returns: The active extension if found
-    func activeExtension(for extensionId: String) -> ActiveExtension?
+    func activeExtension(for extensionId: UUID) -> ActiveExtension?
     
     /// Get all active extensions
     /// - Returns: Dictionary of extension IDs to active extensions
-    func allActiveExtensions() -> [String: ActiveExtension]
+    func allActiveExtensions() -> [UUID: ActiveExtension]
     
     /// Check if an extension is active
     /// - Parameter extensionId: The unique identifier for the extension
     /// - Returns: True if the extension is active
-    func isActive(_ extensionId: String) -> Bool
+    func isActive(_ extensionId: UUID) -> Bool
     
     /// Deactivate all extensions
     func deactivateAll()
@@ -76,7 +75,7 @@ public protocol BrowserExtensionActiveManagerProtocol {
 @MainActor
 public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtocol {
     
-    private var activeExtensions: [String: ActiveExtension] = [:]
+    private var activeExtensions: [UUID: ActiveExtension] = [:]
     private var registeredWebViews: [ObjectIdentifier: WeakBox<BrowserExtensionWKWebView>] = [:]
     private let injectionScriptGenerator: BrowserExtensionInjectionScriptGeneratorProtocol
     private let userScriptFactory: BrowserExtensionUserScriptFactoryProtocol
@@ -115,17 +114,16 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     
     /// Activate an extension with its runtime objects
     /// - Parameter browserExtension: The extension to activate
-    /// - Throws: BrowserExtensionRegistryError if activation fails
-    public func activate(_ browserExtension: BrowserExtension) throws {
+    public func activate(_ browserExtension: BrowserExtension) {
         let extensionId = browserExtension.id
         
         // Check if already active
         if activeExtensions[extensionId] != nil {
-            throw BrowserExtensionRegistryError.extensionAlreadyExists(extensionId)
+            fatalError("Extension with ID \(extensionId) is already active")
         }
         
         // Create content world for this extension
-        let worldName = "Extension-\(extensionId)"
+        let worldName = "Extension-\(extensionId.uuidString)"
         let contentWorld = WKContentWorld.world(name: worldName)
         
         // Create active extension
@@ -138,7 +136,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     
     /// Deactivate an extension and clean up its runtime objects
     /// - Parameter extensionId: The unique identifier for the extension
-    public func deactivate(_ extensionId: String) {
+    public func deactivate(_ extensionId: UUID) {
         activeExtensions.removeValue(forKey: extensionId)
         
         // Update injection scripts in all registered webviews
@@ -148,20 +146,20 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     /// Get an active extension by ID
     /// - Parameter extensionId: The unique identifier for the extension
     /// - Returns: The active extension if found
-    public func activeExtension(for extensionId: String) -> ActiveExtension? {
+    public func activeExtension(for extensionId: UUID) -> ActiveExtension? {
         return activeExtensions[extensionId]
     }
     
     /// Get all active extensions
     /// - Returns: Dictionary of extension IDs to active extensions
-    public func allActiveExtensions() -> [String: ActiveExtension] {
+    public func allActiveExtensions() -> [UUID: ActiveExtension] {
         return activeExtensions
     }
     
     /// Check if an extension is active
     /// - Parameter extensionId: The unique identifier for the extension
     /// - Returns: True if the extension is active
-    public func isActive(_ extensionId: String) -> Bool {
+    public func isActive(_ extensionId: UUID) -> Bool {
         return activeExtensions[extensionId] != nil
     }
     

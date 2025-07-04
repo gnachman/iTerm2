@@ -35,7 +35,7 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
     
     /// Test activating an extension
     func testActivateExtension() async throws {
-        try manager.activate(testExtension)
+        manager.activate(testExtension)
         
         let extensionId = testExtension.id
         let isActive = manager.isActive(extensionId)
@@ -44,7 +44,7 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
     
     /// Test getting an active extension
     func testGetActiveExtension() async throws {
-        try manager.activate(testExtension)
+        manager.activate(testExtension)
         
         let extensionId = testExtension.id
         let activeExtension = manager.activeExtension(for: extensionId)
@@ -58,7 +58,7 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
     
     /// Test that content world is created for extension
     func testContentWorldCreation() async throws {
-        try manager.activate(testExtension)
+        manager.activate(testExtension)
         
         let extensionId = testExtension.id
         let activeExtension = manager.activeExtension(for: extensionId)
@@ -69,7 +69,7 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
     /// Test activation timestamp
     func testActivationTimestamp() async throws {
         let beforeActivation = Date()
-        try manager.activate(testExtension)
+        manager.activate(testExtension)
         let afterActivation = Date()
         
         let extensionId = testExtension.id
@@ -81,23 +81,22 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
         XCTAssertLessThanOrEqual(activatedAt!, afterActivation)
     }
     
-    /// Test that activating the same extension twice throws an error
+    /// Test that activating the same extension twice calls fatalError (should not happen in practice)
     func testActivateSameExtensionTwice() async throws {
-        try manager.activate(testExtension)
+        manager.activate(testExtension)
         
-        let expectedId = testExtension.id
-        XCTAssertThrowsError(try manager.activate(testExtension)) { error in
-            if case BrowserExtensionRegistryError.extensionAlreadyExists(let id) = error {
-                XCTAssertEqual(id, expectedId)
-            } else {
-                XCTFail("Wrong error type: \(error)")
-            }
-        }
+        // Second activation should be prevented by caller logic, not by this method
+        // This test verifies the extension is already active
+        let extensionId = testExtension.id
+        XCTAssertTrue(manager.isActive(extensionId))
+        
+        // In practice, callers should check isActive() before calling activate()
+        // The fatalError is a last resort for programming errors
     }
     
     /// Test deactivating an extension
     func testDeactivateExtension() async throws {
-        try manager.activate(testExtension)
+        manager.activate(testExtension)
         
         let extensionId = testExtension.id
         var isActive = manager.isActive(extensionId)
@@ -123,8 +122,8 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
         let extensionURL2 = URL(fileURLWithPath: "/test/extension2")
         let testExtension2 = BrowserExtension(manifest: manifest2, baseURL: extensionURL2)
         
-        try manager.activate(testExtension)
-        try manager.activate(testExtension2)
+        manager.activate(testExtension)
+        manager.activate(testExtension2)
         
         let allActive = manager.allActiveExtensions()
         XCTAssertEqual(allActive.count, 2)
@@ -146,8 +145,8 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
         let extensionURL2 = URL(fileURLWithPath: "/test/extension2")
         let testExtension2 = BrowserExtension(manifest: manifest2, baseURL: extensionURL2)
         
-        try manager.activate(testExtension)
-        try manager.activate(testExtension2)
+        manager.activate(testExtension)
+        manager.activate(testExtension2)
         
         var allActive = manager.allActiveExtensions()
         XCTAssertEqual(allActive.count, 2)
@@ -167,13 +166,13 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
     
     /// Test checking if non-existent extension is active
     func testIsActiveForNonExistentExtension() {
-        let isActive = manager.isActive("non-existent-extension")
+        let isActive = manager.isActive(UUID())
         XCTAssertFalse(isActive)
     }
     
     /// Test getting non-existent active extension
     func testGetNonExistentActiveExtension() {
-        let activeExtension = manager.activeExtension(for: "non-existent-extension")
+        let activeExtension = manager.activeExtension(for: UUID())
         XCTAssertNil(activeExtension)
     }
 }

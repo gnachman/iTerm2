@@ -55,7 +55,7 @@ public class BrowserExtension {
     public let baseURL: URL
     
     /// Unique identifier for this extension instance
-    public let id: String
+    public let id: UUID
     
     /// Loaded content script resources
     public private(set) var contentScriptResources: [ContentScriptResource] = []
@@ -70,7 +70,7 @@ public class BrowserExtension {
     public init(manifest: ExtensionManifest, baseURL: URL) {
         self.manifest = manifest
         self.baseURL = baseURL
-        self.id = UUID().uuidString
+        self.id = UUID()
     }
 
     /// Load content scripts from the extension directory

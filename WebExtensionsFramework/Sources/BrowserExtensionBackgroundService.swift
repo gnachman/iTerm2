@@ -15,7 +15,7 @@ public protocol BrowserExtensionBackgroundServiceProtocol {
     
     /// Stop background script for the given extension ID
     /// - Parameter extensionId: The extension ID to stop background script for
-    func stopBackgroundScript(for extensionId: String)
+    func stopBackgroundScript(for extensionId: UUID)
     
     /// Stop all running background scripts
     func stopAllBackgroundScripts()
@@ -23,17 +23,17 @@ public protocol BrowserExtensionBackgroundServiceProtocol {
     /// Check if background script is active for the given extension ID
     /// - Parameter extensionId: The extension ID to check
     /// - Returns: True if background script is active
-    func isBackgroundScriptActive(for extensionId: String) -> Bool
+    func isBackgroundScriptActive(for extensionId: UUID) -> Bool
     
     /// Get list of extension IDs with active background scripts
-    var activeBackgroundScriptExtensionIds: Set<String> { get }
+    var activeBackgroundScriptExtensionIds: Set<UUID> { get }
     
     /// Evaluate JavaScript in a specific extension's background script context
     /// - Parameters:
     ///   - javascript: The JavaScript code to evaluate
     ///   - extensionId: The extension ID to evaluate in
     /// - Returns: The result of the JavaScript evaluation
-    func evaluateJavaScript(_ javascript: String, in extensionId: String) async throws -> Any?
+    func evaluateJavaScript(_ javascript: String, in extensionId: UUID) async throws -> Any?
 }
 
 /// Implementation of background service that runs extension background scripts in hidden WKWebViews
@@ -41,13 +41,13 @@ public protocol BrowserExtensionBackgroundServiceProtocol {
 public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServiceProtocol {
     
     /// Map of extension ID to background WKWebView
-    private var backgroundWebViews: [String: WKWebView] = [:]
+    private var backgroundWebViews: [UUID: WKWebView] = [:]
     
     /// Map of extension ID to navigation delegate (must keep strong reference)
-    private var navigationDelegates: [String: BackgroundScriptNavigationDelegate] = [:]
+    private var navigationDelegates: [UUID: BackgroundScriptNavigationDelegate] = [:]
     
     /// Map of extension ID to UI delegate (must keep strong reference)
-    private var uiDelegates: [String: BackgroundScriptUIDelegate] = [:]
+    private var uiDelegates: [UUID: BackgroundScriptUIDelegate] = [:]
     
     /// Hidden container view for WKWebViews (must be in view hierarchy)
     private let hiddenContainer: NSView
@@ -113,9 +113,8 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
             // Create a persistent data store with extension-specific identifier
             // This ensures each extension has completely separate storage
             if #available(macOS 14.0, *) {
-                let dataStoreIdentifier = UUID(uuidString: extensionId) ?? UUID()
-                configuration.websiteDataStore = WKWebsiteDataStore(forIdentifier: dataStoreIdentifier)
-                logger.debug("Using persistent data store with ID \(dataStoreIdentifier) for extension: \(extensionId)")
+                configuration.websiteDataStore = WKWebsiteDataStore(forIdentifier: extensionId)
+                logger.debug("Using persistent data store with ID \(extensionId) for extension: \(extensionId)")
             } else {
                 fatalError("Background script storage isolation requires macOS 14.0 or later")
             }
@@ -188,7 +187,7 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         logger.info("Background script loaded for: \(extensionId)")
     }
     
-    public func stopBackgroundScript(for extensionId: String) {
+    public func stopBackgroundScript(for extensionId: UUID) {
         guard let webView = backgroundWebViews[extensionId] else {
             logger.debug("No background script running for extension: \(extensionId)")
             return
@@ -225,15 +224,15 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         logger.debug("All background scripts stopped")
     }
     
-    public func isBackgroundScriptActive(for extensionId: String) -> Bool {
+    public func isBackgroundScriptActive(for extensionId: UUID) -> Bool {
         return backgroundWebViews[extensionId] != nil
     }
     
-    public var activeBackgroundScriptExtensionIds: Set<String> {
+    public var activeBackgroundScriptExtensionIds: Set<UUID> {
         return Set(backgroundWebViews.keys)
     }
     
-    public func evaluateJavaScript(_ javascript: String, in extensionId: String) async throws -> Any? {
+    public func evaluateJavaScript(_ javascript: String, in extensionId: UUID) async throws -> Any? {
         guard let webView = backgroundWebViews[extensionId] else {
             throw NSError(domain: "BrowserExtensionBackgroundService", code: 1, userInfo: [
                 NSLocalizedDescriptionKey: "No background script running for extension: \(extensionId)"
@@ -443,9 +442,9 @@ private class BackgroundScriptNavigationDelegate: NSObject, WKNavigationDelegate
     private let lock = NSLock()
     private let allowedURL: URL
     private let logger: BrowserExtensionLogger
-    private let extensionId: String
+    private let extensionId: UUID
     
-    init(allowedURL: URL, logger: BrowserExtensionLogger, extensionId: String) {
+    init(allowedURL: URL, logger: BrowserExtensionLogger, extensionId: UUID) {
         self.allowedURL = allowedURL
         self.logger = logger
         self.extensionId = extensionId
@@ -502,9 +501,9 @@ private class BackgroundScriptNavigationDelegate: NSObject, WKNavigationDelegate
 /// UI delegate that blocks all UI interactions from background scripts
 private class BackgroundScriptUIDelegate: NSObject, WKUIDelegate {
     private let logger: BrowserExtensionLogger
-    private let extensionId: String
+    private let extensionId: UUID
     
-    init(logger: BrowserExtensionLogger, extensionId: String) {
+    init(logger: BrowserExtensionLogger, extensionId: UUID) {
         self.logger = logger
         self.extensionId = extensionId
         super.init()

@@ -30,7 +30,7 @@ public class BrowserExtensionInjectionScriptGenerator: BrowserExtensionInjection
         
         for resource in contentScriptResources {
             let scriptData: [String: Any] = [
-                "id": extensionId,
+                "id": extensionId.uuidString,
                 "patterns": resource.config.matches,
                 "runAt": resource.config.runAt?.rawValue ?? "document_end",
                 "allFrames": resource.config.allFrames ?? false,
@@ -39,7 +39,7 @@ public class BrowserExtensionInjectionScriptGenerator: BrowserExtensionInjection
             extensionScripts.append(scriptData)
         }
         
-        return generateInjectionScriptSource(for: extensionId, scripts: extensionScripts)
+        return generateInjectionScriptSource(for: extensionId.uuidString, scripts: extensionScripts)
     }
     
     /// Generate the JavaScript source code for a single extension's injection script
