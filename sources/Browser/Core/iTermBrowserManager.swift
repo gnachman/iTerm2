@@ -1617,8 +1617,10 @@ extension iTermBrowserUserState.Configuration {
         switch user {
         case .devNull:
             extensionsAllowed = false
+            persistentStorageDisallowed = true
         default:
             extensionsAllowed = true
+            persistentStorageDisallowed = false
         }
     }
 }

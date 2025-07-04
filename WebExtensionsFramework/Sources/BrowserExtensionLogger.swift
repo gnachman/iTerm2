@@ -7,37 +7,37 @@ import os.log
 /// Protocol for logging within the WebExtensions framework
 public protocol BrowserExtensionLogger {
     func info(_ messageBlock: @autoclosure () -> String,
-              file: String,
+              file: StaticString,
               line: Int,
-              function: String)
-    
+              function: StaticString)
+
     func debug(_ messageBlock: @autoclosure () -> String,
-               file: String,
+               file: StaticString,
                line: Int,
-               function: String)
-    
+               function: StaticString)
+
     func error(_ messageBlock: @autoclosure () -> String,
-               file: String,
+               file: StaticString,
                line: Int,
-               function: String)
-    
+               function: StaticString)
+
     func assert(
         _ condition: @autoclosure () -> Bool,
         _ message: @autoclosure () -> String,
         file: StaticString,
-        line: UInt,
+        line: Int,
         function: StaticString)
 
     func fatalError(
         _ message: @autoclosure () -> String,
         file: StaticString,
-        line: UInt,
+        line: Int,
         function: StaticString) -> Never
 
     func preconditionFailure(
         _ message: @autoclosure () -> String,
         file: StaticString,
-        line: UInt,
+        line: Int,
         function: StaticString) -> Never
 
     func inContext<T>(_ prefix: String, closure: () throws -> T) rethrows -> T
@@ -48,23 +48,23 @@ public protocol BrowserExtensionLogger {
 
 public extension BrowserExtensionLogger {
     func info(_ messageBlock: @autoclosure () -> String,
-              file: String = #file,
+              file: StaticString = #file,
               line: Int = #line,
-              function: String = #function) {
+              function: StaticString = #function) {
         info(messageBlock(), file: file, line: line, function: function)
     }
     
     func debug(_ messageBlock: @autoclosure () -> String,
-               file: String = #file,
+               file: StaticString = #file,
                line: Int = #line,
-               function: String = #function) {
+               function: StaticString = #function) {
         debug(messageBlock(), file: file, line: line, function: function)
     }
     
     func error(_ messageBlock: @autoclosure () -> String,
-               file: String = #file,
+               file: StaticString = #file,
                line: Int = #line,
-               function: String = #function) {
+               function: StaticString = #function) {
         error(messageBlock(), file: file, line: line, function: function)
     }
 }
@@ -77,25 +77,25 @@ public class DefaultBrowserExtensionLogger: BrowserExtensionLogger {
     public init() {}
 
     public func info(_ messageBlock: @autoclosure () -> String,
-                     file: String = #file,
+                     file: StaticString = #file,
                      line: Int = #line,
-                     function: String = #function) {
+                     function: StaticString = #function) {
         let message = "Info: " + prefixed(message: "\(file):\(line) (\(function)): \(messageBlock())")
         Self.logger.info("\(message, privacy: .public)")
     }
 
     public func debug(_ messageBlock: @autoclosure () -> String,
-                      file: String = #file,
+                      file: StaticString = #file,
                       line: Int = #line,
-                      function: String = #function) {
+                      function: StaticString = #function) {
         let message = "Debug: " + prefixed(message: "\(file):\(line) (\(function)): \(messageBlock())")
         Self.logger.debug("\(message, privacy: .public)")
     }
 
     public func error(_ messageBlock: @autoclosure () -> String,
-                      file: String = #file,
+                      file: StaticString = #file,
                       line: Int = #line,
-                      function: String = #function) {
+                      function: StaticString = #function) {
         let message = "Error: " + prefixed(message: "\(file):\(line) (\(function)): \(messageBlock())")
         Self.logger.error("\(message, privacy: .public)")
     }
@@ -104,25 +104,25 @@ public class DefaultBrowserExtensionLogger: BrowserExtensionLogger {
         _ condition: @autoclosure () -> Bool,
         _ message: @autoclosure () -> String = "",
         file: StaticString = #file,
-        line: UInt = #line,
+        line: Int = #line,
         function: StaticString = #function) {
-        Swift.assert(condition(), message(), file: file, line: line)
+        Swift.assert(condition(), message(), file: file, line: UInt(line))
     }
 
     public func fatalError(
         _ message: @autoclosure () -> String = "",
         file: StaticString = #file,
-        line: UInt = #line,
+        line: Int = #line,
         function: StaticString = #function) -> Never {
-        Swift.fatalError(message(), file: file, line: line)
+        Swift.fatalError(message(), file: file, line: UInt(line))
     }
 
     public func preconditionFailure(
         _ message: @autoclosure () -> String = "",
         file: StaticString = #file,
-        line: UInt = #line,
+        line: Int = #line,
         function: StaticString = #function) -> Never {
-        Swift.preconditionFailure(message(), file: file, line: line)
+        Swift.preconditionFailure(message(), file: file, line: UInt(line))
     }
 
     private func prefixed(message: String) -> String {
@@ -170,9 +170,9 @@ public class TestBrowserExtensionLogger: BrowserExtensionLogger {
     public struct LogMessage {
         public let level: String
         public let message: String
-        public let file: String
+        public let file: StaticString
         public let line: Int
-        public let function: String
+        public let function: StaticString
     }
     
     public private(set) var messages: [LogMessage] = []
@@ -184,23 +184,23 @@ public class TestBrowserExtensionLogger: BrowserExtensionLogger {
     }
     
     public func info(_ messageBlock: @autoclosure () -> String,
-                     file: String = #file,
+                     file: StaticString = #file,
                      line: Int = #line,
-                     function: String = #function) {
+                     function: StaticString = #function) {
         messages.append(LogMessage(level: "INFO", message: messageBlock(), file: file, line: line, function: function))
     }
     
     public func debug(_ messageBlock: @autoclosure () -> String,
-                      file: String = #file,
+                      file: StaticString = #file,
                       line: Int = #line,
-                      function: String = #function) {
+                      function: StaticString = #function) {
         messages.append(LogMessage(level: "DEBUG", message: messageBlock(), file: file, line: line, function: function))
     }
     
     public func error(_ messageBlock: @autoclosure () -> String,
-                      file: String = #file,
+                      file: StaticString = #file,
                       line: Int = #line,
-                      function: String = #function) {
+                      function: StaticString = #function) {
         messages.append(LogMessage(level: "ERROR", message: messageBlock(), file: file, line: line, function: function))
     }
     
@@ -208,25 +208,25 @@ public class TestBrowserExtensionLogger: BrowserExtensionLogger {
         _ condition: @autoclosure () -> Bool,
         _ message: @autoclosure () -> String = "",
         file: StaticString = #file,
-        line: UInt = #line,
+        line: Int = #line,
         function: StaticString = #function) {
-        Swift.assert(condition(), message(), file: file, line: line)
+        Swift.assert(condition(), message(), file: file, line: UInt(line))
     }
     
     public func fatalError(
         _ message: @autoclosure () -> String = "",
         file: StaticString = #file,
-        line: UInt = #line,
+        line: Int = #line,
         function: StaticString = #function) -> Never {
-        Swift.fatalError(message(), file: file, line: line)
+        Swift.fatalError(message(), file: file, line: UInt(line))
     }
     
     public func preconditionFailure(
         _ message: @autoclosure () -> String = "",
         file: StaticString = #file,
-        line: UInt = #line,
+        line: Int = #line,
         function: StaticString = #function) -> Never {
-        Swift.preconditionFailure(message(), file: file, line: line)
+        Swift.preconditionFailure(message(), file: file, line: UInt(line))
     }
     
     public func inContext<T>(_ prefix: String, closure: () throws -> T) rethrows -> T {

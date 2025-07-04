@@ -21,7 +21,7 @@ class iTermBrowserUserState {
 
     struct Configuration: Equatable {
         var extensionsAllowed = true
-        var devNullMode: Bool
+        var persistentStorageDisallowed: Bool
     }
 
     init(_ configuration: Configuration) {
@@ -32,7 +32,7 @@ class iTermBrowserUserState {
                 let backgroundService = BrowserExtensionBackgroundService(
                     hiddenContainer: hiddenContainer,
                     logger: logger,
-                    useEphemeralDataStore: configuration.devNullMode,
+                    useEphemeralDataStore: configuration.persistentStorageDisallowed,
                     urlSchemeHandler: BrowserExtensionURLSchemeHandler())
                 self.backgroundService = backgroundService
                 activeExtensionManager = BrowserExtensionActiveManager(

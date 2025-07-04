@@ -27,15 +27,27 @@ func XLog(_ messageBlock: @autoclosure () -> String, file: String = #file, line:
     DebugLogImpl(file.cString(using: .utf8), Int32(line), function.cString(using: .utf8), message)
 }
 
-@available(macOS 11.0, *)
-struct iTermLogger {
+class iTermLogger {
     private static let logger = Logger(subsystem: "com.iterm2.logger", category: "main")
+    let verbosePaths = Set<[String]>()
 
+    @TaskLocal
+    static var logContexts = [String]()
+
+    private func format(_ messageBlock: () -> String,
+                        file: StaticString,
+                        line: Int,
+                        function: StaticString,
+                        severity: String) -> String {
+        let prefix = LogContext.logContexts.joined(separator: " > ")
+        return severity + " " + (prefix.isEmpty ? "" : "\(prefix) | ") + "\(file):\(line) \(function): \(messageBlock())"
+
+    }
     public func fatalError(_ messageBlock: @autoclosure () -> String,
                            file: StaticString,
-                           line: UInt,
+                           line: Int,
                            function: StaticString) -> Never {
-        let message = messageBlock()
+        let message = format(messageBlock, file: file, line: line, function: function, severity: "FATAL")
         if gDebugLogging.boolValue {
             DebugLogImpl(String(describing: file),
                          Int32(line),
@@ -47,39 +59,86 @@ struct iTermLogger {
     }
 
     public func error(_ messageBlock: @autoclosure () -> String,
-                     file: String = #file,
-                     line: Int = #line,
-                     function: String = #function) {
+                      file: StaticString = #file,
+                      line: Int = #line,
+                      function: StaticString = #function) {
         if !gDebugLogging.boolValue {
             return
         }
-        let message = messageBlock()
+        let message = format(messageBlock, file: file, line: line, function: function, severity: "ERROR")
         Self.logger.error("\(message, privacy: .public)")
-        DebugLogImpl(file, Int32(line), function, message)
+        DebugLogImpl(String(describing: file), Int32(line), String(describing: function), message)
     }
 
     public func info(_ messageBlock: @autoclosure () -> String,
-                     file: String = #file,
+                     file: StaticString = #file,
                      line: Int = #line,
-                     function: String = #function) {
+                     function: StaticString = #function) {
         if !gDebugLogging.boolValue {
             return
         }
-        let message = messageBlock()
+        let message = format(messageBlock, file: file, line: line, function: function, severity: "I ")
         Self.logger.info("\(message, privacy: .public)")
-        DebugLogImpl(file, Int32(line), function, message)
+        DebugLogImpl(String(describing: file), Int32(line), String(describing: function), message)
     }
 
     public func debug(_ messageBlock: @autoclosure () -> String,
-                     file: String = #file,
-                     line: Int = #line,
-                     function: String = #function) {
+                      file: StaticString = #file,
+                      line: Int = #line,
+                      function: StaticString = #function) {
         if !gDebugLogging.boolValue {
             return
         }
-        let message = messageBlock()
+        let message = format(messageBlock, file: file, line: line, function: function, severity: "D ")
         Self.logger.debug("\(message, privacy: .public)")
-        DebugLogImpl(file, Int32(line), function, message)
+        DebugLogImpl(String(describing: file), Int32(line), String(describing: function), message)
+    }
+
+    func assert(_ condition: @autoclosure () -> Bool, _ message: @autoclosure () -> String, file: StaticString, line: Int, function: StaticString) {
+        if !condition() {
+            fatalError(message(), file: file, line: Int(line), function: function)
+        }
+    }
+
+    func preconditionFailure(_ message: @autoclosure () -> String, file: StaticString, line: Int, function: StaticString) -> Never {
+        fatalError(message(), file: file, line: Int(line), function: function)
+    }
+
+    func inContext<T>(_ prefix: String, closure: () throws -> T) rethrows -> T {
+        return try logging(prefix, closure: closure)
+    }
+
+    func inContext<T>(_ prefix: String, closure: () async throws -> T) async rethrows -> T {
+        return try await logging(prefix, closure: closure)
+    }
+
+    public func logging<T>(_ prefix: String, closure: () throws -> T) rethrows -> T {
+        return try iTermLogger.$logContexts.withValue(iTermLogger.logContexts + [prefix]) {
+            log("begin")
+            do {
+                defer {
+                    log("end")
+                }
+                return try closure()
+            } catch {
+                log("Exiting logging scope with uncaught error \(error)")
+                throw error
+            }
+        }
+    }
+    public func logging<T>(_ prefix: String, closure: () async throws -> T) async rethrows -> T {
+        return try await iTermLogger.$logContexts.withValue(iTermLogger.logContexts + [prefix]) {
+            log("begin")
+            do {
+                defer {
+                    log("end")
+                }
+                return try await closure()
+            } catch {
+                log("Exiting logging scope with uncaught error \(error)")
+                throw error
+            }
+        }
     }
 }
 
@@ -237,22 +296,4 @@ public func preconditionFailure(
     abort()
 }
 
-extension iTermLogger: BrowserExtensionLogger {
-    func assert(_ condition: @autoclosure () -> Bool, _ message: @autoclosure () -> String, file: StaticString, line: UInt, function: StaticString) {
-        if !condition() {
-            fatalError(message(), file: file, line: UInt(Int(line)), function: function)
-        }
-    }
-    
-    func preconditionFailure(_ message: @autoclosure () -> String, file: StaticString, line: UInt, function: StaticString) -> Never {
-        fatalError(message(), file: file, line: UInt(Int(line)), function: function)
-    }
-    
-    func inContext<T>(_ prefix: String, closure: () throws -> T) rethrows -> T {
-        return try logging(prefix, closure: closure)
-    }
-    
-    func inContext<T>(_ prefix: String, closure: () async throws -> T) async rethrows -> T {
-        return try await logging(prefix, closure: closure)
-    }
-}
+extension iTermLogger: BrowserExtensionLogger {}
