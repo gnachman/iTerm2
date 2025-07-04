@@ -49,6 +49,9 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
     /// Map of extension ID to UI delegate (must keep strong reference)
     private var uiDelegates: [UUID: BackgroundScriptUIDelegate] = [:]
     
+    /// Map of extension ID to console message handler (must keep strong reference)
+    private var consoleMessageHandlers: [UUID: ConsoleMessageHandler] = [:]
+    
     /// Hidden container view for WKWebViews (must be in view hierarchy)
     private let hiddenContainer: NSView
     
@@ -121,8 +124,8 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         }
         
         // Inject DOM nuke script in both worlds for defense in depth:
-        // - In .page world: protects against malicious page content
-        // - In .defaultClient world: removes DOM APIs from extension context
+        // - In .page world: removes DOM APIs from extension context (extensions now run here)
+        // - In .defaultClient world: protects against any other scripts
         let domNukeScript = generateDOMNukeScript()
         
         // Add to .page world
@@ -143,13 +146,28 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         )
         configuration.userContentController.addUserScript(nukeUserScriptClient)
         
-        // Inject extension background script in .defaultClient world for isolation
+        // Add console message handler 
+        let consoleHandler = ConsoleMessageHandler(logger: logger, extensionId: extensionId)
+        configuration.userContentController.add(consoleHandler, name: "consoleLog")
+        consoleMessageHandlers[extensionId] = consoleHandler
+        
+        // Add console.log override script in .page world (where webkit.messageHandlers is available)
+        let consoleOverrideScript = generateConsoleOverrideScript()
+        let consoleOverrideUserScript = WKUserScript(
+            source: consoleOverrideScript,
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: false,
+            in: .page
+        )
+        configuration.userContentController.addUserScript(consoleOverrideUserScript)
+        
+        // Inject extension background script in .page world (where webkit.messageHandlers is available)
         if let backgroundResource = browserExtension.backgroundScriptResource {
             let backgroundUserScript = WKUserScript(
                 source: backgroundResource.jsContent,
                 injectionTime: .atDocumentEnd,
                 forMainFrameOnly: false,
-                in: .defaultClient
+                in: .page
             )
             configuration.userContentController.addUserScript(backgroundUserScript)
         }
@@ -228,6 +246,11 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         webView.navigationDelegate = nil
         webView.uiDelegate = nil
         
+        // Remove console message handler
+        if consoleMessageHandlers[extensionId] != nil {
+            webView.configuration.userContentController.removeScriptMessageHandler(forName: "consoleLog")
+        }
+        
         // Remove from container
         webView.removeFromSuperview()
         
@@ -238,6 +261,7 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         backgroundWebViews.removeValue(forKey: extensionId)
         navigationDelegates.removeValue(forKey: extensionId)
         uiDelegates.removeValue(forKey: extensionId)
+        consoleMessageHandlers.removeValue(forKey: extensionId)
         
         logger.debug("Background script stopped for extension: \(extensionId)")
     }
@@ -268,9 +292,9 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
             ])
         }
         
-        // Evaluate in .defaultClient world to match where extension scripts execute
-        // (DOM nuke script runs in .page world, so they're isolated)
-        return try await webView.evaluateJavaScript(javascript, in: nil, contentWorld: .defaultClient)
+        // Evaluate in .page world to match where extension scripts now execute
+        // (extension scripts now run in .page world to access webkit.messageHandlers)
+        return try await webView.evaluateJavaScript(javascript, in: nil, contentWorld: .page)
     }
     
     /// Generate DOM nuke script to remove DOM globals from background script context
@@ -461,9 +485,80 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
             // - WebSocket
             // - indexedDB
             // - caches (Cache API)
+            // - webkit (for webkit.messageHandlers communication with Swift)
             
             // Set debug marker
             global.__domNukeExecuted = true;
+            
+        })();
+        """
+    }
+    
+    
+    /// Generate console override script that overrides console.log to send messages to Swift
+    private func generateConsoleOverrideScript() -> String {
+        return """
+        (() => {
+            'use strict';
+            
+            // Get the proper global object reference
+            const global = (function() {
+                if (typeof globalThis !== 'undefined') return globalThis;
+                if (typeof window !== 'undefined') return window;
+                if (typeof global !== 'undefined') return global;
+                if (typeof self !== 'undefined') return self;
+                throw new Error('Unable to locate global object');
+            })();
+            
+            // Store original console methods
+            const originalConsole = global.console || {};
+            const originalLog = originalConsole.log || function() {};
+            
+            // Override console.log to send messages to .page world
+            global.console = global.console || {};
+            global.console.log = function(...args) {
+                // Call original console.log first (for debugging in Web Inspector)
+                try {
+                    originalLog.apply(originalConsole, args);
+                } catch (e) {
+                    // Ignore errors from original console.log
+                }
+                
+                // Send to Swift via webkit.messageHandlers
+                try {
+                    const message = args.map(arg => {
+                        if (typeof arg === 'string') {
+                            return arg;
+                        } else if (arg === null) {
+                            return 'null';
+                        } else if (arg === undefined) {
+                            return 'undefined';
+                        } else {
+                            try {
+                                return JSON.stringify(arg);
+                            } catch (e) {
+                                return String(arg);
+                            }
+                        }
+                    }).join(' ');
+                    
+                    // Send directly to Swift via webkit.messageHandlers
+                    if (typeof webkit !== 'undefined' && 
+                        webkit.messageHandlers && 
+                        webkit.messageHandlers.consoleLog) {
+                        webkit.messageHandlers.consoleLog.postMessage(message);
+                    }
+                } catch (e) {
+                    // Ignore errors when sending to Swift
+                }
+            };
+            
+            // Preserve other console methods
+            ['debug', 'info', 'warn', 'error', 'trace', 'dir', 'dirxml', 'group', 'groupEnd', 'time', 'timeEnd', 'assert', 'clear'].forEach(method => {
+                if (originalConsole[method] && !global.console[method]) {
+                    global.console[method] = originalConsole[method];
+                }
+            });
             
         })();
         """
@@ -583,5 +678,26 @@ private class BackgroundScriptUIDelegate: NSObject, WKUIDelegate {
     func webView(_ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin, initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType, decisionHandler: @escaping @MainActor (WKPermissionDecision) -> Void) {
         logger.error("Blocked media capture from background script (extension: \(extensionId))")
         decisionHandler(.deny)
+    }
+}
+
+/// Console message handler that forwards console.log messages to the logger
+private class ConsoleMessageHandler: NSObject, WKScriptMessageHandler {
+    private let logger: BrowserExtensionLogger
+    private let extensionId: UUID
+    
+    init(logger: BrowserExtensionLogger, extensionId: UUID) {
+        self.logger = logger
+        self.extensionId = extensionId
+        super.init()
+    }
+    
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        guard message.name == "consoleLog",
+              let messageBody = message.body as? String else {
+            return
+        }
+        
+        logger.info("Console [\(extensionId)]: \(messageBody)")
     }
 }

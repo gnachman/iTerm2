@@ -995,6 +995,164 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
         XCTAssertNotNil(mockTask.error, "Should have failed with invalid UUID")
         XCTAssertTrue(mockTask.error?.localizedDescription.contains("not a UUID") == true, "Error should mention UUID validation")
     }
+    
+    /// Test console.log interception and logging
+    func testConsoleLogInterception() async throws {
+        // Clear any existing log messages
+        testLogger.clear()
+        
+        // Create an extension with console.log statements
+        let backgroundScript = BackgroundScript(
+            serviceWorker: "background.js",
+            scripts: nil,
+            persistent: nil,
+            type: nil
+        )
+        let manifest = ExtensionManifest(
+            manifestVersion: 3,
+            name: "Console Test Extension",
+            version: "1.0",
+            background: backgroundScript
+        )
+        let consoleTestExtension = BrowserExtension(manifest: manifest, baseURL: URL(fileURLWithPath: "/test/console-test"), logger: testLogger)
+        let mockBackgroundResource = BackgroundScriptResource(
+            config: backgroundScript,
+            jsContent: """
+                // Test webkit messageHandlers availability
+                globalThis.webkitExists = typeof webkit !== 'undefined';
+                globalThis.messageHandlersExists = typeof webkit !== 'undefined' && !!webkit.messageHandlers;
+                
+                // Test direct message handler call
+                try {
+                    if (typeof webkit !== 'undefined' && webkit.messageHandlers && webkit.messageHandlers.consoleLog) {
+                        webkit.messageHandlers.consoleLog.postMessage('Direct test message');
+                        globalThis.directMessageSent = true;
+                    } else {
+                        globalThis.directMessageSent = false;
+                    }
+                } catch (e) {
+                    globalThis.directMessageSent = false;
+                }
+                
+                console.log('Hello from extension!');
+                console.log('Testing with number:', 42);
+                console.log('Testing with object:', { key: 'value', nested: { data: true } });
+                console.log('Testing with null:', null);
+                console.log('Testing with undefined:', undefined);
+                console.log('Multiple', 'arguments', 'test');
+                
+                // Verify console.log is still a function
+                globalThis.consoleLogType = typeof console.log;
+                
+                // Test that other console methods are preserved
+                globalThis.consoleErrorType = typeof console.error;
+                globalThis.consoleWarnType = typeof console.warn;
+                globalThis.consoleInfoType = typeof console.info;
+                
+                // Test console exists
+                globalThis.consoleExists = typeof console === 'object';
+                
+                globalThis.testCompleted = true;
+            """,
+            isServiceWorker: true
+        )
+        consoleTestExtension.setBackgroundScriptResource(mockBackgroundResource)
+        
+        // Start the background script
+        try await backgroundService.startBackgroundScript(for: consoleTestExtension)
+        
+        // Wait longer for the console.log messages to be processed
+        try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+        
+        // Verify the script executed
+        let testCompleted = try await backgroundService.evaluateJavaScript("globalThis.testCompleted", in: consoleTestExtension.id)
+        XCTAssertEqual(testCompleted as? Bool, true, "Test script should have completed")
+        
+        // Verify console.log is still a function
+        let consoleLogType = try await backgroundService.evaluateJavaScript("globalThis.consoleLogType", in: consoleTestExtension.id)
+        XCTAssertEqual(consoleLogType as? String, "function", "console.log should be a function")
+        
+        // Verify other console methods are preserved
+        let consoleErrorType = try await backgroundService.evaluateJavaScript("globalThis.consoleErrorType", in: consoleTestExtension.id)
+        XCTAssertEqual(consoleErrorType as? String, "function", "console.error should be preserved")
+        
+        let consoleWarnType = try await backgroundService.evaluateJavaScript("globalThis.consoleWarnType", in: consoleTestExtension.id)
+        XCTAssertEqual(consoleWarnType as? String, "function", "console.warn should be preserved")
+        
+        // Verify console exists
+        let consoleExists = try await backgroundService.evaluateJavaScript("globalThis.consoleExists", in: consoleTestExtension.id)
+        XCTAssertEqual(consoleExists as? Bool, true, "console should exist")
+        
+        // Verify webkit.messageHandlers is working
+        let webkitExists = try await backgroundService.evaluateJavaScript("globalThis.webkitExists", in: consoleTestExtension.id)
+        XCTAssertEqual(webkitExists as? NSNumber, 1, "webkit should be available")
+        
+        let messageHandlersExists = try await backgroundService.evaluateJavaScript("globalThis.messageHandlersExists", in: consoleTestExtension.id)
+        XCTAssertEqual(messageHandlersExists as? NSNumber, 1, "webkit.messageHandlers should be available")
+        
+        let directMessageSent = try await backgroundService.evaluateJavaScript("globalThis.directMessageSent", in: consoleTestExtension.id)
+        XCTAssertEqual(directMessageSent as? NSNumber, 1, "Direct message should have been sent successfully")
+        
+        // Verify console.log messages were captured in the logger
+        let infoMessages = testLogger.messages.filter { $0.level == "INFO" }
+        let consoleMessages = infoMessages.filter { $0.message.contains("Console [") }
+        
+        
+        // We should have at least 6 console.log messages
+        XCTAssertGreaterThanOrEqual(consoleMessages.count, 6, "Should have captured console.log messages")
+        
+        // Check specific console.log messages
+        let extensionId = consoleTestExtension.id
+        XCTAssertTrue(consoleMessages.contains { $0.message.contains("Console [\(extensionId)]: Hello from extension!") }, "Should capture simple string message")
+        XCTAssertTrue(consoleMessages.contains { $0.message.contains("Console [\(extensionId)]: Testing with number: 42") }, "Should capture message with number")
+        XCTAssertTrue(consoleMessages.contains { $0.message.contains("Console [\(extensionId)]: Testing with null: null") }, "Should capture message with null")
+        XCTAssertTrue(consoleMessages.contains { $0.message.contains("Console [\(extensionId)]: Testing with undefined: undefined") }, "Should capture message with undefined")
+        XCTAssertTrue(consoleMessages.contains { $0.message.contains("Console [\(extensionId)]: Multiple arguments test") }, "Should capture message with multiple arguments")
+        
+        // Clean up
+        backgroundService.stopBackgroundScript(for: consoleTestExtension.id)
+    }
+    
+    /// Test basic webkit message handler functionality
+    func testBasicWebKitMessageHandler() async throws {
+        let testLogger = TestBrowserExtensionLogger()
+        let handler = SimpleMessageHandler(logger: testLogger)
+        
+        let config = WKWebViewConfiguration()
+        config.userContentController.add(handler, name: "testHandler")
+        
+        let testScript = WKUserScript(
+            source: """
+                setTimeout(() => {
+                    if (typeof webkit !== 'undefined' && webkit.messageHandlers && webkit.messageHandlers.testHandler) {
+                        webkit.messageHandlers.testHandler.postMessage('test message');
+                    }
+                }, 100);
+            """,
+            injectionTime: .atDocumentEnd,
+            forMainFrameOnly: true
+        )
+        config.userContentController.addUserScript(testScript)
+        
+        let webView = WKWebView(frame: CGRect.zero, configuration: config)
+        mockHiddenContainer.addSubview(webView)
+        
+        // Load a simple HTML page
+        let html = "<html><body>Test</body></html>"
+        webView.loadHTMLString(html, baseURL: nil)
+        
+        // Wait for script to execute
+        try await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
+        
+        // Check if message was received
+        print("Basic webkit test messages: \(testLogger.messages.count)")
+        for message in testLogger.messages {
+            print("[\(message.level)]: \(message.message)")
+        }
+        
+        webView.removeFromSuperview()
+        config.userContentController.removeScriptMessageHandler(forName: "testHandler")
+    }
 }
 
 // MARK: - Mock Objects
@@ -1060,6 +1218,19 @@ class FailingURLSchemeHandler: BrowserExtensionURLSchemeHandler {
             NSLocalizedDescriptionKey: "Simulated navigation failure for testing"
         ])
         urlSchemeTask.didFailWithError(error)
+    }
+}
+
+class SimpleMessageHandler: NSObject, WKScriptMessageHandler {
+    private let logger: TestBrowserExtensionLogger
+    
+    init(logger: TestBrowserExtensionLogger) {
+        self.logger = logger
+        super.init()
+    }
+    
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        logger.info("SimpleMessageHandler received: \(message.body)")
     }
 }
 

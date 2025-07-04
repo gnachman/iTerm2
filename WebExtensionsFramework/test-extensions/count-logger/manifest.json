@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Count Logger",
+  "version": "1.0",
+  "description": "Logs an increasing count to the console every second",
+  
+  "background": {
+    "service_worker": "background.js"
+  }
+}
