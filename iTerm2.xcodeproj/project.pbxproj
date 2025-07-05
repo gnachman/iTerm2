@@ -3631,6 +3631,7 @@
 		A6C7642B1B45CBA800E3C992 /* libSSKeychain.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C671923E83500DF1410 /* libSSKeychain.a */; };
 		A6C7C96D2E172F3E00AA7668 /* WebExtensionsFramework in Frameworks */ = {isa = PBXBuildFile; productRef = A6C7C96C2E172F3E00AA7668 /* WebExtensionsFramework */; };
 		A6C7C96F2E1730AA00AA7668 /* iTermBrowserUserState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C7C96E2E1730A400AA7668 /* iTermBrowserUserState.swift */; };
+		A6C7C9712E18F27800AA7668 /* iTermBrowserWebViewHandlerProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C7C9702E18F26E00AA7668 /* iTermBrowserWebViewHandlerProxy.swift */; };
 		A6C7DE52199F3087001E5C75 /* PTYWindow+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE51199F3087001E5C75 /* PTYWindow+Scripting.h */; };
 		A6C7DE5519A4591E001E5C75 /* iTermNewWindowCommand.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE5319A4591E001E5C75 /* iTermNewWindowCommand.h */; };
 		A6C7DE5919A459E9001E5C75 /* iTerm2.sdef in Resources */ = {isa = PBXBuildFile; fileRef = A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */; };
@@ -8075,6 +8076,7 @@
 		A6C7641C1B45CB2800E3C992 /* iTerm2XCTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iTerm2XCTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A6C7641F1B45CB2800E3C992 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A6C7C96E2E1730A400AA7668 /* iTermBrowserUserState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserUserState.swift; sourceTree = "<group>"; };
+		A6C7C9702E18F26E00AA7668 /* iTermBrowserWebViewHandlerProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserWebViewHandlerProxy.swift; sourceTree = "<group>"; };
 		A6C7DE4E199F302C001E5C75 /* PTYWindow+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "PTYWindow+Scripting.m"; sourceTree = "<group>"; };
 		A6C7DE51199F3087001E5C75 /* PTYWindow+Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PTYWindow+Scripting.h"; sourceTree = "<group>"; };
 		A6C7DE5319A4591E001E5C75 /* iTermNewWindowCommand.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermNewWindowCommand.h; sourceTree = "<group>"; };
@@ -13229,6 +13231,7 @@
 		A6CBB8202E0A1CE000B2CCCB /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				A6C7C9702E18F26E00AA7668 /* iTermBrowserWebViewHandlerProxy.swift */,
 				A6C7C96E2E1730A400AA7668 /* iTermBrowserUserState.swift */,
 				A6CBB7FD2E09163A00B2CCCB /* check-iframe-origins.js */,
 				A6FE7A862E0E252300BEBCE4 /* hover-link-detector.js */,
@@ -18673,6 +18676,7 @@
 				A603E9FF283EE9BD0028B648 /* ObjCExceptions.m in Sources */,
 				A62F8FD121D9A603008EA71C /* iTermTermkeyKeyMapper.m in Sources */,
 				A6069EFC2DF0162700EE6CC7 /* SSHFilePanelSidebarItem.swift in Sources */,
+				A6C7C9712E18F27800AA7668 /* iTermBrowserWebViewHandlerProxy.swift in Sources */,
 				A630117B20E69C23008114B7 /* iTermStatusBarSwiftyStringComponent.m in Sources */,
 				A629F59323AF49AD00C2F16B /* iTermExpect.m in Sources */,
 				A656E9961F99C60300158128 /* iTermSubpixelModelBuilder.mm in Sources */,

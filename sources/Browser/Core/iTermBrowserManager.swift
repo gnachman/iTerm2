@@ -79,9 +79,11 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private let navigationState: iTermBrowserNavigationState
     private var navigationCount = 0
     private let readerModeManager = iTermBrowserReaderModeManager()
+    private let autofillHandler = iTermBrowserAutofillHandler()
     let user: iTermBrowserUser
     private var currentMainFrameHTTPMethod: String?
     let userState: iTermBrowserUserState
+    private let handlerProxy = iTermBrowserWebViewHandlerProxy()
 
     private static var safariVersion = {
         Bundle(path: "/Applications/Safari.app")?.infoDictionary?["CFBundleShortVersionString"] as? String
@@ -105,7 +107,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                                                              historyController: historyController)
         self.namedMarkManager = iTermBrowserNamedMarkManager(user: user)
         super.init()
-
+        handlerProxy.delegate = self
         localPageManager.delegate = self
         setupWebView(configuration: configuration,
                      profile: profile,
@@ -200,8 +202,10 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                 injectionTime: .atDocumentStart,
                 forMainFrameOnly: false
             )
-            configuration.userContentController.add(self, name: "iTerm2ConsoleLog")
+
+            configuration.userContentController.add(handlerProxy, name: "iTerm2ConsoleLog")
             configuration.userContentController.addUserScript(script)
+
             // TODO: Ensure all of these handlers are stateless because related webviews (e.g., target=_blank) share them.
             if let notificationHandler {
                 let notificationScript = WKUserScript(
@@ -209,7 +213,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                     injectionTime: .atDocumentStart,
                     forMainFrameOnly: false
                 )
-                configuration.userContentController.add(self, name: iTermBrowserNotificationHandler.messageHandlerName)
+                configuration.userContentController.add(handlerProxy, name: iTermBrowserNotificationHandler.messageHandlerName)
                 configuration.userContentController.addUserScript(notificationScript)
             }
 
@@ -217,7 +221,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                 let script = WKUserScript(source: selectionMonitor.javascript,
                                               injectionTime: .atDocumentStart,
                                               forMainFrameOnly: false)
-                configuration.userContentController.add(self, name: iTermBrowserSelectionMonitor.messageHandlerName)
+                configuration.userContentController.add(handlerProxy, name: iTermBrowserSelectionMonitor.messageHandlerName)
                 configuration.userContentController.addUserScript(script)
             }
 
@@ -225,7 +229,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                 let script = WKUserScript(source: contextMenuMonitor.javascript,
                                               injectionTime: .atDocumentStart,
                                               forMainFrameOnly: false)
-                configuration.userContentController.add(self, name: iTermBrowserContextMenuMonitor.messageHandlerName)
+                configuration.userContentController.add(handlerProxy, name: iTermBrowserContextMenuMonitor.messageHandlerName)
                 configuration.userContentController.addUserScript(script)
             }
 
@@ -236,7 +240,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                     injectionTime: .atDocumentStart,
                     forMainFrameOnly: false
                 )
-                configuration.userContentController.add(self, name: iTermBrowserGeolocationHandler.messageHandlerName)
+                configuration.userContentController.add(handlerProxy, name: iTermBrowserGeolocationHandler.messageHandlerName)
                 configuration.userContentController.addUserScript(geolocationScript)
             }
 
@@ -244,26 +248,26 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                 let userScript = WKUserScript(source: passwordManagerHandler.javascript,
                                               injectionTime: .atDocumentEnd,
                                               forMainFrameOnly: false)
-                configuration.userContentController.add(self, name: iTermBrowserPasswordManagerHandler.messageHandlerName)
+                configuration.userContentController.add(handlerProxy, name: iTermBrowserPasswordManagerHandler.messageHandlerName)
                 configuration.userContentController.addUserScript(userScript)
             }
-            
-            if let autofillHandler = iTermBrowserAutofillHandler.instance {
+
+            if let autofillHandler {
                 autofillHandler.delegate = self
                 let userScript = WKUserScript(source: autofillHandler.javascript,
                                               injectionTime: .atDocumentEnd,
                                               forMainFrameOnly: true)
-                configuration.userContentController.add(self, name: iTermBrowserAutofillHandler.messageHandlerName)
+                configuration.userContentController.add(handlerProxy, name: iTermBrowserAutofillHandler.messageHandlerName)
                 configuration.userContentController.addUserScript(userScript)
             }
-            
+
             // Set up hover link detection
             hoverLinkHandler = iTermBrowserHoverLinkHandler()
             if let hoverLinkHandler = hoverLinkHandler {
                 let userScript = WKUserScript(source: hoverLinkHandler.javascript,
                                               injectionTime: .atDocumentEnd,
                                               forMainFrameOnly: false)
-                configuration.userContentController.add(self, name: iTermBrowserHoverLinkHandler.messageHandlerName)
+                configuration.userContentController.add(handlerProxy, name: iTermBrowserHoverLinkHandler.messageHandlerName)
                 configuration.userContentController.addUserScript(userScript)
             }
 
@@ -271,15 +275,14 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
 
             readerModeManager.delegate = self
             configuration.userContentController.add(readerModeManager, name: "readerMode")
-            
+
             // Add message handler for named mark updates
             if namedMarkManager != nil {
-                configuration.userContentController.add(self, name: iTermBrowserNamedMarkManager.messageHandlerName)
-                configuration.userContentController.add(self, name: iTermBrowserNamedMarkManager.layoutUpdateHandlerName)
+                configuration.userContentController.add(handlerProxy, name: iTermBrowserNamedMarkManager.messageHandlerName)
+                configuration.userContentController.add(handlerProxy, name: iTermBrowserNamedMarkManager.layoutUpdateHandlerName)
             }
-
             // Register custom URL scheme handler for iterm2-about: URLs
-            configuration.setURLSchemeHandler(self, forURLScheme: iTermBrowserSchemes.about)
+            configuration.setURLSchemeHandler(handlerProxy, forURLScheme: iTermBrowserSchemes.about)
         }
 
         webView = iTermBrowserWebView(frame: .zero,
@@ -610,12 +613,12 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     
     private func injectMessageHandlersIfNeeded() {
         guard let currentURL = webView.url?.absoluteString else { return }
-        
+
         localPageManager.setupMessageHandlers(for: webView, currentURL: currentURL)
         
         // Register message handler if needed
         if localPageManager.shouldRegisterMessageHandler(for: currentURL) {
-            webView.configuration.userContentController.add(self, name: currentURL)
+            webView.configuration.userContentController.add(handlerProxy, name: currentURL)
             localPageManager.markMessageHandlerRegistered(for: currentURL)
             localPageManager.injectJavaScript(for: currentURL, webView: webView)
             DLog("Registered message handler for \(currentURL)")
@@ -858,7 +861,7 @@ extension iTermBrowserManager {
             }
             
         case iTermBrowserAutofillHandler.messageHandlerName:
-            _ = iTermBrowserAutofillHandler.instance?.handleMessage(webView: webView, message: message)
+            _ = autofillHandler?.handleMessage(webView: webView, message: message)
 
         case iTermBrowserSelectionMonitor.messageHandlerName:
             selectionMonitor?.handleMessage(message, webView: webView)
@@ -1070,14 +1073,14 @@ extension iTermBrowserManager: WKNavigationDelegate {
         if targetURL.absoluteString.hasPrefix(iTermBrowserSchemes.about + ":") {
             let urlString = targetURL.absoluteString
             localPageManager.prepareForNavigation(to: targetURL)
-            
+
             // Pre-register message handler if needed
             if localPageManager.shouldRegisterMessageHandler(for: urlString) {
-                webView.configuration.userContentController.add(self, name: urlString)
+                webView.configuration.userContentController.add(handlerProxy, name: urlString)
                 localPageManager.markMessageHandlerRegistered(for: urlString)
                 DLog("Pre-registered message handler for \(urlString)")
             }
-            
+
             decisionHandler(.allow)
             return
         }
