@@ -13,7 +13,9 @@
       "Bash(git add:*)",
       "Bash(rg:*)",
       "Bash(find:*)",
-      "WebFetch(domain:developer.chrome.com)"
+      "WebFetch(domain:developer.chrome.com)",
+      "WebFetch(domain:chromium.googlesource.com)",
+      "WebFetch(domain:searchfox.org)"
     ],
     "deny": []
   }
