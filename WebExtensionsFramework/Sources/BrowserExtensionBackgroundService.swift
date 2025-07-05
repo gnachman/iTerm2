@@ -115,72 +115,23 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         
         logger.info("Starting background script for extension: \(extensionId)")
         
-        // Create WKWebView configuration
-        let configuration = WKWebViewConfiguration()
-        
-        // Each extension gets its own process pool for true isolation
-        // This prevents cookie/cache/memory sharing between extensions
-        configuration.processPool = WKProcessPool()
-        
-        // Disable JavaScript from opening windows automatically
-        configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
-        
-        // Register custom URL scheme handler for isolated origins
-        configuration.setURLSchemeHandler(urlSchemeHandler, forURLScheme: BrowserExtensionURLSchemeHandler.scheme)
-        
-        // Set up data store (each extension gets its own isolated data store)
-        if useEphemeralDataStore {
-            // Each extension gets its own ephemeral data store for complete isolation
-            configuration.websiteDataStore = WKWebsiteDataStore.nonPersistent()
-            logger.debug("Using ephemeral data store for extension: \(extensionId)")
-        } else {
-            // Create a persistent data store with extension-specific identifier
-            // This ensures each extension has completely separate storage
-            if #available(macOS 14.0, *) {
-                configuration.websiteDataStore = WKWebsiteDataStore(forIdentifier: extensionId)
-                logger.debug("Using persistent data store with ID \(extensionId) for extension: \(extensionId)")
-            } else {
-                fatalError("Background script storage isolation requires macOS 14.0 or later")
-            }
-        }
-        
-        // Inject DOM nuke script in both worlds for defense in depth:
-        // - In .page world: removes DOM APIs from extension context (extensions now run here)
-        // - In .defaultClient world: protects against any other scripts
-        let domNukeScript = generateDOMNukeScript()
-        
-        // Add to .page world
-        let nukeUserScriptPage = WKUserScript(
-            source: domNukeScript,
-            injectionTime: .atDocumentStart,
-            forMainFrameOnly: false,
-            in: .page
+        // Create WebView using factory
+        let factoryConfiguration = BrowserExtensionWebViewFactory.Configuration(
+            extensionId: extensionId.uuidString,
+            logger: logger,
+            urlSchemeHandler: urlSchemeHandler,
+            hiddenContainer: hiddenContainer,
+            useEphemeralDataStore: useEphemeralDataStore
         )
-        configuration.userContentController.addUserScript(nukeUserScriptPage)
         
-        // Add to .defaultClient world (where extension scripts run)
-        let nukeUserScriptClient = WKUserScript(
-            source: domNukeScript,
-            injectionTime: .atDocumentStart,
-            forMainFrameOnly: false,
-            in: .defaultClient
+        let webView = try BrowserExtensionWebViewFactory.createWebView(
+            type: .backgroundScript,
+            configuration: factoryConfiguration
         )
-        configuration.userContentController.addUserScript(nukeUserScriptClient)
         
         // Add console message handler 
         let consoleHandler = ConsoleMessageHandler(logger: logger, extensionId: extensionId)
-        configuration.userContentController.add(consoleHandler, name: "consoleLog")
-
-
-        // Add console.log override script in .page world (where webkit.messageHandlers is available)
-        let consoleOverrideScript = generateConsoleOverrideScript()
-        let consoleOverrideUserScript = WKUserScript(
-            source: consoleOverrideScript,
-            injectionTime: .atDocumentStart,
-            forMainFrameOnly: false,
-            in: .page
-        )
-        configuration.userContentController.addUserScript(consoleOverrideUserScript)
+        webView.configuration.userContentController.add(consoleHandler, name: "consoleLog")
         
         // Inject extension background script in .page world (where webkit.messageHandlers is available)
         if let backgroundResource = browserExtension.backgroundScriptResource {
@@ -190,17 +141,8 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
                 forMainFrameOnly: false,
                 in: .page
             )
-            configuration.userContentController.addUserScript(backgroundUserScript)
+            webView.configuration.userContentController.addUserScript(backgroundUserScript)
         }
-        
-        // Create hidden WKWebView
-        let webView = WKWebView(frame: CGRect.zero, configuration: configuration)
-        webView.isHidden = true
-        
-        // Add to hidden container (required for full functionality)
-        hiddenContainer.addSubview(webView)
-
-        webView.frame = hiddenContainer.bounds
 
 
         // Register the background script with the URL scheme handler
@@ -315,275 +257,6 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         // Evaluate in .page world to match where extension scripts now execute
         // (extension scripts now run in .page world to access webkit.messageHandlers)
         return try await webView.evaluateJavaScript(javascript, in: nil, contentWorld: .page)
-    }
-    
-    /// Generate DOM nuke script to remove DOM globals from background script context
-    private func generateDOMNukeScript() -> String {
-        return """
-        (() => {
-            'use strict';
-            
-            // Get the proper global object reference
-            const global = (function() {
-                if (typeof globalThis !== 'undefined') return globalThis;
-                if (typeof window !== 'undefined') return window;
-                if (typeof global !== 'undefined') return global;
-                if (typeof self !== 'undefined') return self;
-                throw new Error('Unable to locate global object');
-            })();
-            
-            // List of DOM-related globals to remove
-            const DOM_GLOBALS = [
-                // Core DOM objects (but not 'window' itself as we need it for the global reference)
-                'document', 'Document',
-                'HTMLDocument', 'XMLDocument',
-                
-                // Element constructors
-                'HTMLElement', 'Element', 'Node', 'Text', 'Comment',
-                'DocumentFragment', 'DocumentType', 'ProcessingInstruction',
-                'CharacterData', 'Attr', 'CDATASection',
-                
-                // HTML Element constructors
-                'HTMLDivElement', 'HTMLSpanElement', 'HTMLButtonElement',
-                'HTMLInputElement', 'HTMLFormElement', 'HTMLAnchorElement',
-                'HTMLImageElement', 'HTMLCanvasElement', 'HTMLVideoElement',
-                'HTMLAudioElement', 'HTMLScriptElement', 'HTMLStyleElement',
-                'HTMLLinkElement', 'HTMLMetaElement', 'HTMLHeadElement',
-                'HTMLBodyElement', 'HTMLHtmlElement', 'HTMLTableElement',
-                'HTMLTableRowElement', 'HTMLTableCellElement', 'HTMLParagraphElement',
-                'HTMLBRElement', 'HTMLHRElement', 'HTMLLIElement', 'HTMLUListElement',
-                'HTMLOListElement', 'HTMLPreElement', 'HTMLTextAreaElement',
-                'HTMLSelectElement', 'HTMLOptionElement', 'HTMLOptGroupElement',
-                'HTMLFieldSetElement', 'HTMLLegendElement', 'HTMLLabelElement',
-                
-                // SVG Elements
-                'SVGElement', 'SVGGraphicsElement', 'SVGSVGElement',
-                
-                // Events (constructors only, not the base Event)
-                'UIEvent', 'MouseEvent', 'KeyboardEvent', 'TouchEvent',
-                'WheelEvent', 'InputEvent', 'FocusEvent', 'CompositionEvent',
-                'CustomEvent', 'AnimationEvent', 'TransitionEvent',
-                
-                // UI/Browser APIs
-                'alert', 'confirm', 'prompt',
-                'open', 'print', 'stop',
-                'focus', 'blur', 'close',
-                
-                // Storage APIs (extensions should use chrome.storage instead)
-                'localStorage', 'sessionStorage',
-                
-                // Selection and Range
-                'Selection', 'Range', 'getSelection',
-                
-                // Parser
-                'DOMParser', 'XMLSerializer',
-                
-                // Observers
-                'MutationObserver', 'IntersectionObserver', 'ResizeObserver',
-                
-                // Other DOM APIs
-                'history', 'History',
-        
-                // I would like to remove location and Location, but doing so causes navigation to undefined.
-        
-                'navigator', 'Navigator',
-                'screen', 'Screen',
-                
-                // Forms
-                'FormData',
-                
-                // Media
-                'MediaQueryList', 'matchMedia',
-                
-                // CSSOM
-                'CSSStyleDeclaration', 'CSSRule', 'CSSStyleSheet',
-                'getComputedStyle',
-                
-                // Performance (DOM-related parts)
-                'PerformanceNavigation', 'PerformanceTiming',
-                
-                // Frames
-                'frames', 'frameElement', 'parent', 'top',
-                
-                // Scrolling
-                'scrollTo', 'scrollBy', 'scroll',
-                'scrollX', 'scrollY', 'pageXOffset', 'pageYOffset',
-                
-                // Dimensions
-                'innerWidth', 'innerHeight', 'outerWidth', 'outerHeight',
-                'screenX', 'screenY', 'screenLeft', 'screenTop',
-                
-                // Device
-                'devicePixelRatio',
-                
-                // Base64
-                'atob', 'btoa',
-                
-                // Timers (keep setTimeout/setInterval as they're needed)
-                'requestAnimationFrame', 'cancelAnimationFrame',
-                
-                // Workers (DOM-related)
-                'Worker', 'SharedWorker', 'DedicatedWorkerGlobalScope', 'importScripts',
-                
-                // Broadcast APIs
-                'BroadcastChannel', 'MessageChannel', 'MessagePort',
-                
-                // Server-Sent Events
-                'EventSource',
-                
-                // Gamepad
-                'Gamepad', 'GamepadButton', 'GamepadEvent',
-                
-                // WebGL
-                'WebGLRenderingContext', 'WebGL2RenderingContext',
-                
-                // XHR (legacy - encourage fetch)
-                'XMLHttpRequest', 'XMLHttpRequestEventTarget', 'XMLHttpRequestUpload'
-            ];
-            
-            // Shadow each DOM global by defining an own property
-            // This works for both own properties and inherited properties from prototype chain
-            DOM_GLOBALS.forEach(name => {
-                if (name in global) {
-                    try {
-                        // Shadow the property with undefined, making it truly inaccessible
-                        Object.defineProperty(global, name, {
-                            value: undefined,
-                            writable: false,
-                            configurable: true,
-                            enumerable: false
-                        });
-                    } catch (e) {
-                        // If we can't define the property, try setting it directly
-                        try {
-                            global[name] = undefined;
-                        } catch (e2) {
-                            // If we can't override it, leave it alone
-                        }
-                    }
-                }
-            });
-            
-            // Special handling for window since window === globalThis in WKWebView
-            // We want to shadow window but NOT globalThis itself, as extension scripts need globalThis
-            try {
-                Object.defineProperty(global, 'window', {
-                    value: undefined,
-                    writable: false,
-                    configurable: true,
-                    enumerable: false
-                });
-            } catch (e) {}
-            
-            // Don't shadow globalThis itself - extensions need access to it for their own globals
-            
-            // Set up service worker-like environment
-            // Keep 'self' pointing to global for compatibility
-            if (!global.self) {
-                global.self = global;
-            }
-            
-            // Add minimal registration object for service worker compatibility
-            if (!global.registration) {
-                global.registration = {
-                    scope: '/',
-                    active: null,
-                    installing: null,
-                    waiting: null,
-                    updateViaCache: 'none'
-                };
-            }
-            
-            // Ensure critical APIs remain available:
-            // - globalThis, self
-            // - console, Math, JSON, Object, Array, String, Number, Boolean, Symbol, BigInt
-            // - Promise, Error, TypeError, ReferenceError, etc.
-            // - fetch, Request, Response, Headers, URL, URLSearchParams
-            // - crypto, TextEncoder, TextDecoder
-            // - setTimeout, setInterval, clearTimeout, clearInterval
-            // - queueMicrotask, structuredClone
-            // - AbortController, AbortSignal
-            // - Event, EventTarget (base classes needed for chrome.runtime events)
-            // - WebSocket
-            // - indexedDB
-            // - caches (Cache API)
-            // - webkit (for webkit.messageHandlers communication with Swift)
-            
-            // Set debug marker
-            global.__domNukeExecuted = true;
-            
-        })();
-        """
-    }
-    
-    
-    /// Generate console override script that overrides console.log to send messages to Swift
-    private func generateConsoleOverrideScript() -> String {
-        return """
-        (() => {
-            'use strict';
-            
-            // Get the proper global object reference
-            const global = (function() {
-                if (typeof globalThis !== 'undefined') return globalThis;
-                if (typeof window !== 'undefined') return window;
-                if (typeof global !== 'undefined') return global;
-                if (typeof self !== 'undefined') return self;
-                throw new Error('Unable to locate global object');
-            })();
-            
-            // Store original console methods
-            const originalConsole = global.console || {};
-            const originalLog = originalConsole.log || function() {};
-            
-            // Override console.log to send messages to .page world
-            global.console = global.console || {};
-            global.console.log = function(...args) {
-                // Call original console.log first (for debugging in Web Inspector)
-                try {
-                    originalLog.apply(originalConsole, args);
-                } catch (e) {
-                    // Ignore errors from original console.log
-                }
-                
-                // Send to Swift via webkit.messageHandlers
-                try {
-                    const message = args.map(arg => {
-                        if (typeof arg === 'string') {
-                            return arg;
-                        } else if (arg === null) {
-                            return 'null';
-                        } else if (arg === undefined) {
-                            return 'undefined';
-                        } else {
-                            try {
-                                return JSON.stringify(arg);
-                            } catch (e) {
-                                return String(arg);
-                            }
-                        }
-                    }).join(' ');
-                    
-                    // Send directly to Swift via webkit.messageHandlers
-                    if (typeof webkit !== 'undefined' && 
-                        webkit.messageHandlers && 
-                        webkit.messageHandlers.consoleLog) {
-                        webkit.messageHandlers.consoleLog.postMessage(message);
-                    }
-                } catch (e) {
-                    // Ignore errors when sending to Swift
-                }
-            };
-            
-            // Preserve other console methods
-            ['debug', 'info', 'warn', 'error', 'trace', 'dir', 'dirxml', 'group', 'groupEnd', 'time', 'timeEnd', 'assert', 'clear'].forEach(method => {
-                if (originalConsole[method] && !global.console[method]) {
-                    global.console[method] = originalConsole[method];
-                }
-            });
-            
-        })();
-        """
     }
 }
 
