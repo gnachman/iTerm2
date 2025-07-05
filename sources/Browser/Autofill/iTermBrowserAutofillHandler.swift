@@ -11,7 +11,6 @@ protocol iTermBrowserAutofillHandlerDelegate: AnyObject {
 @available(macOS 11.0, *)
 @MainActor
 class iTermBrowserAutofillHandler {
-    static let instance = iTermBrowserAutofillHandler()
     static let messageHandlerName = "iTermAutofillHandler"
     
     weak var delegate: iTermBrowserAutofillHandlerDelegate?
