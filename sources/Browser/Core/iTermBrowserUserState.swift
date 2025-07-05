@@ -8,15 +8,42 @@
 import WebExtensionsFramework
 import WebKit
 
+@objc
+class iTermBrowserHiddenContainer: NSView {
+    var superviewObserver: ((NSView?) -> ())?
+
+    init() {
+        super.init(frame: NSRect(x: 0, y: 0, width: 1, height: 1))
+        alphaValue = 0.0
+    }
+    
+    required init?(coder: NSCoder) {
+        return nil
+    }
+
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        return nil
+    }
+
+    override func viewDidMoveToSuperview() {
+        superviewObserver?(superview)
+    }
+
+    override func viewDidMoveToWindow() {
+        iTermLogger.instance.debug("Hidden container \(it_addressString) moved to window \(window?.description ?? "(nil)")")
+    }
+}
+
 @MainActor
 class iTermBrowserUserState {
-    private static var _instances = [iTermBrowserUser: iTermBrowserUserState]()
+    private static var _instances = [iTermBrowserUser: WeakBox<iTermBrowserUserState>]()
     private let extensionRegistry: BrowserExtensionRegistry?
     private let activeExtensionManager: BrowserExtensionActiveManager?
     private let configuration: Configuration
     private let userDefaultsObserver: iTermUserDefaultsObserver
-    private let hiddenContainer = NSView()
+    let hiddenContainer = iTermBrowserHiddenContainer()
     private let backgroundService: BrowserExtensionBackgroundService?
+    let user: iTermBrowserUser
     private let logger = iTermLogger()
 
     struct Configuration: Equatable {
@@ -24,21 +51,27 @@ class iTermBrowserUserState {
         var persistentStorageDisallowed: Bool
     }
 
-    init(_ configuration: Configuration) {
+    init(_ configuration: Configuration, user: iTermBrowserUser) {
+        self.user = user
         self.configuration = configuration
         if #available(macOS 14, *) {
+            logger.loggerPrefix = "[Browser] "
+            #if DEBUG
+            logger.verbosityLevel = .debug
+            #endif
             if configuration.extensionsAllowed {
-                extensionRegistry = BrowserExtensionRegistry()
+                extensionRegistry = BrowserExtensionRegistry(logger: logger)
                 let backgroundService = BrowserExtensionBackgroundService(
                     hiddenContainer: hiddenContainer,
                     logger: logger,
                     useEphemeralDataStore: configuration.persistentStorageDisallowed,
-                    urlSchemeHandler: BrowserExtensionURLSchemeHandler())
+                    urlSchemeHandler: BrowserExtensionURLSchemeHandler(logger: logger))
                 self.backgroundService = backgroundService
                 activeExtensionManager = BrowserExtensionActiveManager(
-                    injectionScriptGenerator: BrowserExtensionInjectionScriptGenerator(),
+                    injectionScriptGenerator: BrowserExtensionInjectionScriptGenerator(logger: logger),
                     userScriptFactory: BrowserExtensionUserScriptFactory(),
-                    backgroundService: backgroundService)
+                    backgroundService: backgroundService,
+                    logger: logger)
             } else {
                 extensionRegistry = nil
                 activeExtensionManager = nil
@@ -67,16 +100,20 @@ class iTermBrowserUserState {
             }
         }
     }
+
+    deinit {
+        logger.info("User state for \(user) deallocated")
+    }
 }
 
 extension iTermBrowserUserState {
     @MainActor
     static func instance(for user: iTermBrowserUser, configuration: Configuration) -> iTermBrowserUserState {
-        if let existing = _instances[user], existing.configuration == configuration {
+        if let existing = _instances[user]?.value, existing.configuration == configuration {
             return existing
         }
-        let state = iTermBrowserUserState(configuration)
-        _instances[user] = state
+        let state = iTermBrowserUserState(configuration, user: user)
+        _instances[user] = .init(state)
         return state
     }
 
@@ -102,15 +139,15 @@ extension iTermBrowserUserState {
         }
         let current = extensionRegistry.extensionPaths
         let desired = Self.desiredLoadPaths()
-        DLog("Currently loaded: \(Array(current).joined(separator: ";a"))")
-        DLog("Desired: \(Array(desired).joined(separator: ";a"))")
+        logger.debug("Currently loaded: \(Array(current).joined(separator: ";a"))")
+        logger.debug("Desired: \(Array(desired).joined(separator: ";a"))")
 
         let toRemove = current.subtracting(desired)
         for path in toRemove {
             do {
                 try extensionRegistry.remove(extensionPath: path)
             } catch {
-                DLog("Failed to remove \(path): \(error)")
+                logger.debug("Failed to remove \(path): \(error)")
             }
         }
 
@@ -119,7 +156,7 @@ extension iTermBrowserUserState {
             do {
                 try extensionRegistry.add(extensionPath: path)
             } catch {
-                DLog("Failed to add \(path): \(error)")
+                logger.debug("Failed to add \(path): \(error)")
             }
         }
     }
@@ -136,8 +173,8 @@ extension iTermBrowserUserState {
 
         let currentPaths = Set(active.values.map { $0.browserExtension.baseURL.path })
         let desiredPaths = Self.desiredActivePaths()
-        DLog("Current paths: \(currentPaths.joined(separator: "; "))")
-        DLog("Desired paths: \(desiredPaths.joined(separator: "; "))")
+        logger.debug("Current paths: \(currentPaths.joined(separator: "; "))")
+        logger.debug("Desired paths: \(desiredPaths.joined(separator: "; "))")
         let pathsToRemove = currentPaths.subtracting(desiredPaths)
         for path in pathsToRemove {
             if let id = pathToID[path] {
@@ -146,13 +183,13 @@ extension iTermBrowserUserState {
         }
 
         let toAdd = desiredPaths.subtracting(currentPaths)
-        DLog("Extension registry contains \(extensionRegistry!.extensions.map { "\($0.baseURL.path) with ID \($0.id)" }.joined(separator: "; "))")
+        logger.debug("Extension registry contains \(extensionRegistry!.extensions.map { "\($0.baseURL.path) with ID \($0.id)" }.joined(separator: "; "))")
         for path in toAdd {
             if let browserExtension = extensionRegistry?.extensions.first(where: { $0.baseURL.path == path }) {
-                DLog("Will activate \(browserExtension.id)")
+                logger.info("Will activate \(browserExtension.id)")
                 activeExtensionManager.activate(browserExtension)
             } else {
-                DLog("Failed to find extension at \(path)")
+                logger.error("Failed to find extension at \(path)")
             }
         }
     }
@@ -161,7 +198,7 @@ extension iTermBrowserUserState {
         do {
             try activeExtensionManager?.registerWebView(webView)
         } catch {
-            DLog("Failed to register webview: \(error)")
+            logger.error("Failed to register webview: \(error)")
         }
     }
 

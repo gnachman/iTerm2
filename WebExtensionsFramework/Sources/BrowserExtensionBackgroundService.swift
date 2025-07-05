@@ -39,19 +39,40 @@ public protocol BrowserExtensionBackgroundServiceProtocol {
 /// Implementation of background service that runs extension background scripts in hidden WKWebViews
 @MainActor
 public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServiceProtocol {
-    
-    /// Map of extension ID to background WKWebView
-    private var backgroundWebViews: [UUID: WKWebView] = [:]
-    
-    /// Map of extension ID to navigation delegate (must keep strong reference)
-    private var navigationDelegates: [UUID: BackgroundScriptNavigationDelegate] = [:]
-    
-    /// Map of extension ID to UI delegate (must keep strong reference)
-    private var uiDelegates: [UUID: BackgroundScriptUIDelegate] = [:]
-    
-    /// Map of extension ID to console message handler (must keep strong reference)
-    private var consoleMessageHandlers: [UUID: ConsoleMessageHandler] = [:]
-    
+    @MainActor
+    private class BackgroundJob {
+        let webView: WKWebView
+        let navigationDelegate: BackgroundScriptNavigationDelegate
+        let uiDelegate: BackgroundScriptUIDelegate
+        let consoleMessageHandler: ConsoleMessageHandler
+        let timer: Timer
+
+        init(id: UUID,
+             webView: WKWebView,
+             navigationDelegate: BackgroundScriptNavigationDelegate,
+             uiDelegate: BackgroundScriptUIDelegate,
+             consoleMessageHandler: ConsoleMessageHandler,
+             logger: BrowserExtensionLogger) {
+            self.webView = webView
+            self.navigationDelegate = navigationDelegate
+            self.uiDelegate = uiDelegate
+            self.consoleMessageHandler = consoleMessageHandler
+
+            // TODO: There's a bunch of logic around when to tear down idle workers, how to detect
+            // idleness, and so on. This is a workaround to prevent WKWebView from halting JS
+            // execution, but it is wasteful without the other logic around stopping it.
+            timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true, block: { _ in
+                webView.evaluateJavaScript("true;")
+            })
+        }
+
+        deinit {
+            timer.invalidate()
+        }
+    }
+    /// Map of extension ID to background job state
+    private var jobs: [UUID: BackgroundJob] = [:]
+
     /// Hidden container view for WKWebViews (must be in view hierarchy)
     private let hiddenContainer: NSView
     
@@ -79,9 +100,9 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
     
     public func startBackgroundScript(for browserExtension: BrowserExtension) async throws {
         let extensionId = browserExtension.id
-        
+
         // Check if already running
-        if backgroundWebViews[extensionId] != nil {
+        if jobs[extensionId] != nil {
             logger.debug("Background script already running for extension: \(extensionId)")
             return
         }
@@ -149,8 +170,8 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         // Add console message handler 
         let consoleHandler = ConsoleMessageHandler(logger: logger, extensionId: extensionId)
         configuration.userContentController.add(consoleHandler, name: "consoleLog")
-        consoleMessageHandlers[extensionId] = consoleHandler
-        
+
+
         // Add console.log override script in .page world (where webkit.messageHandlers is available)
         let consoleOverrideScript = generateConsoleOverrideScript()
         let consoleOverrideUserScript = WKUserScript(
@@ -178,10 +199,10 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         
         // Add to hidden container (required for full functionality)
         hiddenContainer.addSubview(webView)
-        
-        // Store reference
-        backgroundWebViews[extensionId] = webView
-        
+
+        webView.frame = hiddenContainer.bounds
+
+
         // Register the background script with the URL scheme handler
         urlSchemeHandler.registerBackgroundScript(backgroundResource, for: extensionId)
         
@@ -200,18 +221,22 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         )
         
         // Store strong references to delegates
-        navigationDelegates[extensionId] = navigationDelegate
-        uiDelegates[extensionId] = uiDelegate
-        
+        jobs[extensionId] = .init(id: extensionId,
+                                  webView: webView,
+                                  navigationDelegate: navigationDelegate,
+                                  uiDelegate: uiDelegate,
+                                  consoleMessageHandler: consoleHandler,
+                                  logger: logger)
+
         // Assign delegates to WebView
         webView.navigationDelegate = navigationDelegate
         webView.uiDelegate = uiDelegate
-        
+
         do {
             // Load the background page
             let request = URLRequest(url: backgroundURL)
             _ = webView.load(request)
-            
+
             // Wait for navigation to complete with cancellation support
             try await withTaskCancellationHandler {
                 try await navigationDelegate.waitForLoad()
@@ -232,11 +257,11 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
     }
     
     public func stopBackgroundScript(for extensionId: UUID) {
-        guard let webView = backgroundWebViews[extensionId] else {
+        guard let job = jobs[extensionId] else {
             logger.debug("No background script running for extension: \(extensionId)")
             return
         }
-        
+        let webView = job.webView
         logger.info("Stopping background script for extension: \(extensionId)")
         
         // Cancel any in-flight navigation to prevent 404 errors
@@ -247,10 +272,8 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         webView.uiDelegate = nil
         
         // Remove console message handler
-        if consoleMessageHandlers[extensionId] != nil {
-            webView.configuration.userContentController.removeScriptMessageHandler(forName: "consoleLog")
-        }
-        
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: "consoleLog")
+
         // Remove from container
         webView.removeFromSuperview()
         
@@ -258,18 +281,15 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         urlSchemeHandler.unregisterBackgroundScript(for: extensionId)
         
         // Remove all references
-        backgroundWebViews.removeValue(forKey: extensionId)
-        navigationDelegates.removeValue(forKey: extensionId)
-        uiDelegates.removeValue(forKey: extensionId)
-        consoleMessageHandlers.removeValue(forKey: extensionId)
-        
+        jobs.removeValue(forKey: extensionId)
+
         logger.debug("Background script stopped for extension: \(extensionId)")
     }
     
     public func stopAllBackgroundScripts() {
         logger.info("Stopping all background scripts")
         
-        let extensionIds = Array(backgroundWebViews.keys)
+        let extensionIds = Array(jobs.keys)
         for extensionId in extensionIds {
             stopBackgroundScript(for: extensionId)
         }
@@ -278,15 +298,15 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
     }
     
     public func isBackgroundScriptActive(for extensionId: UUID) -> Bool {
-        return backgroundWebViews[extensionId] != nil
+        return jobs[extensionId] != nil
     }
     
     public var activeBackgroundScriptExtensionIds: Set<UUID> {
-        return Set(backgroundWebViews.keys)
+        return Set(jobs.keys)
     }
     
     public func evaluateJavaScript(_ javascript: String, in extensionId: UUID) async throws -> Any? {
-        guard let webView = backgroundWebViews[extensionId] else {
+        guard let webView = jobs[extensionId]?.webView else {
             throw NSError(domain: "BrowserExtensionBackgroundService", code: 1, userInfo: [
                 NSLocalizedDescriptionKey: "No background script running for extension: \(extensionId)"
             ])
@@ -363,7 +383,9 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
                 
                 // Other DOM APIs
                 'history', 'History',
-                'location', 'Location',
+        
+                // I would like to remove location and Location, but doing so causes navigation to undefined.
+        
                 'navigator', 'Navigator',
                 'screen', 'Screen',
                 
@@ -598,7 +620,7 @@ private class BackgroundScriptNavigationDelegate: NSObject, WKNavigationDelegate
     // Only allow the initial background page URL
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if navigationCount > 0 {
-            logger.error("Navigation blocked - already allowed one through.")
+            logger.error("Navigation blocked - already allowed one through. url=\(navigationAction.request.url?.absoluteString ?? "(nil)")")
             decisionHandler(.cancel)
             return
         }
@@ -630,6 +652,16 @@ private class BackgroundScriptNavigationDelegate: NSObject, WKNavigationDelegate
     
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
         continuation?.resume(throwing: error)
+        continuation = nil
+    }
+    
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        logger.info("WebView process terminated during navigation for extension: \(extensionId)")
+        continuation?.resume(throwing: NSError(
+            domain: "BrowserExtensionBackgroundService",
+            code: 4,
+            userInfo: [NSLocalizedDescriptionKey: "WebView process terminated for extension: \(extensionId)"]
+        ))
         continuation = nil
     }
 }
@@ -678,6 +710,10 @@ private class BackgroundScriptUIDelegate: NSObject, WKUIDelegate {
     func webView(_ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin, initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType, decisionHandler: @escaping @MainActor (WKPermissionDecision) -> Void) {
         logger.error("Blocked media capture from background script (extension: \(extensionId))")
         decisionHandler(.deny)
+    }
+    
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        logger.info("WebView process terminated for extension: \(extensionId)")
     }
 }
 

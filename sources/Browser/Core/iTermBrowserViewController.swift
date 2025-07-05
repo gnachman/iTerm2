@@ -95,6 +95,8 @@ class iTermBrowserViewController: NSViewController {
     }()
     private let pointerController = PointerController()
     private let pointerActionPerformer = iTermBrowserPointerActionPerformer()
+    private static let didDeinitialize = Notification.Name("iTermBrowserViewControllerDidDeinitialize")
+    private let logger = iTermLogger()
 
     class ShadeView: SolidColorView {
         override func hitTest(_ point: NSPoint) -> NSView? {
@@ -114,6 +116,7 @@ class iTermBrowserViewController: NSViewController {
     
     deinit {
         toolbar?.cleanup()
+        NotificationCenter.default.removeObserver(self)
     }
     
     override func viewWillDisappear() {
@@ -146,6 +149,12 @@ class iTermBrowserViewController: NSViewController {
 
         pointerController.delegate = pointerActionPerformer
         pointerActionPerformer.delegate = self
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(otherBrowserViewControllerDidDeinitialize),
+            name: Self.didDeinitialize,
+            object: nil)
     }
 
     required init?(coder: NSCoder) {
@@ -474,6 +483,16 @@ extension iTermBrowserViewController {
 
     private func setupWebView() {
         view.addSubview(browserManager.webView)
+        view.addSubview(browserManager.userState.hiddenContainer)
+        browserManager.userState.hiddenContainer.superviewObserver = { newSuperview in
+            if newSuperview == nil {
+                NotificationCenter.default.post(name: Self.didDeinitialize, object: nil)
+            }
+        }
+        browserManager.userState.hiddenContainer.frame = NSRect(x: 0, y: 0, width: 1, height: 1)
+        for view in browserManager.userState.hiddenContainer.subviews {
+            view.frame = browserManager.userState.hiddenContainer.bounds
+        }
     }
 
     private func setupShade() {
@@ -538,6 +557,17 @@ extension iTermBrowserViewController {
         if let url = deferredURL {
             deferredURL = nil
             browserManager.loadURL(url)
+        }
+    }
+}
+
+// MARK: - Notification Handlers
+extension iTermBrowserViewController {
+    @objc
+    private func otherBrowserViewControllerDidDeinitialize() {
+        if browserManager.userState.hiddenContainer.superview == nil {
+            logger.info("Taking ownership of hidden container for user state for \(browserManager.userState.user)")
+            view.addSubview(browserManager.userState.hiddenContainer)
         }
     }
 }

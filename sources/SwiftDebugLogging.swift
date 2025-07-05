@@ -28,8 +28,10 @@ func XLog(_ messageBlock: @autoclosure () -> String, file: String = #file, line:
 }
 
 class iTermLogger {
+    static let instance = iTermLogger()
     private static let logger = Logger(subsystem: "com.iterm2.logger", category: "main")
     let verbosePaths = Set<[String]>()
+    var loggerPrefix = ""
     enum Level: Int {
         case debug
         case info
@@ -45,10 +47,18 @@ class iTermLogger {
             }
         }
     }
-    var verbosityLevel = Level.error
+    var verbosityLevel = Level.debug
+    var nslog = true
+    var oslog = false
 
     @TaskLocal
     static var logContexts = [String]()
+
+    private func shouldLogVerbosely(level: Level) -> Bool {
+        let contexts = LogContext.logContexts
+        return (level.rawValue >= verbosityLevel.rawValue ||
+                verbosePaths.contains(where: { contexts.starts(with: $0) }))
+    }
 
     private func format(_ messageBlock: () -> String,
                         file: StaticString,
@@ -57,13 +67,26 @@ class iTermLogger {
                         level: Level) -> String {
         let contexts = LogContext.logContexts
         let prefix = contexts.joined(separator: " > ")
-        let formatted = level.prefix + " " + (prefix.isEmpty ? "" : "\(prefix) | ") + "\(file):\(line) \(function): \(messageBlock())"
-        if level.rawValue >= verbosityLevel.rawValue ||
-            verbosePaths.contains(where: { contexts.starts(with: $0) }) {
-            if formatted.count > 1024 {
-                NSFuckingLog("%@", "\(formatted)")
-            } else {
-                NSLog("%@", "\(formatted)")
+        let formatted = "\(loggerPrefix)\(level.prefix) \(prefix.isEmpty ? "" : "\(prefix) | "))\((String(describing: file) as NSString).lastPathComponent):\(line) \(function): \(messageBlock())"
+        if shouldLogVerbosely(level: level) {
+            if nslog {
+                if formatted.count > 1024 {
+                    NSFuckingLog("%@", "\(formatted)")
+                } else {
+                    NSLog("%@", "\(formatted)")
+                }
+            }
+            if oslog {
+                switch level {
+                case .debug:
+                    Self.logger.debug("\(formatted, privacy: .public)")
+                case .info:
+                    Self.logger.info("\(formatted, privacy: .public)")
+                case .error:
+                    Self.logger.error("\(formatted, privacy: .public)")
+                case .fatal:
+                    Self.logger.critical("\(formatted, privacy: .public)")
+                }
             }
         }
         return formatted
@@ -88,36 +111,30 @@ class iTermLogger {
                       file: StaticString = #file,
                       line: Int = #line,
                       function: StaticString = #function) {
-        if !gDebugLogging.boolValue {
-            return
+        if gDebugLogging.boolValue || shouldLogVerbosely(level: .error) {
+            let message = format(messageBlock, file: file, line: line, function: function, level: .error)
+            DebugLogImpl(String(describing: file), Int32(line), String(describing: function), message)
         }
-        let message = format(messageBlock, file: file, line: line, function: function, level: .error)
-        Self.logger.error("\(message, privacy: .public)")
-        DebugLogImpl(String(describing: file), Int32(line), String(describing: function), message)
     }
 
     public func info(_ messageBlock: @autoclosure () -> String,
                      file: StaticString = #file,
                      line: Int = #line,
                      function: StaticString = #function) {
-        if !gDebugLogging.boolValue {
-            return
+        if gDebugLogging.boolValue || shouldLogVerbosely(level: .info) {
+            let message = format(messageBlock, file: file, line: line, function: function, level: .info)
+            DebugLogImpl(String(describing: file), Int32(line), String(describing: function), message)
         }
-        let message = format(messageBlock, file: file, line: line, function: function, level: .info)
-        Self.logger.info("\(message, privacy: .public)")
-        DebugLogImpl(String(describing: file), Int32(line), String(describing: function), message)
     }
 
     public func debug(_ messageBlock: @autoclosure () -> String,
                       file: StaticString = #file,
                       line: Int = #line,
                       function: StaticString = #function) {
-        if !gDebugLogging.boolValue {
-            return
+        if gDebugLogging.boolValue || shouldLogVerbosely(level: .debug) {
+            let message = format(messageBlock, file: file, line: line, function: function, level: .debug)
+            DebugLogImpl(String(describing: file), Int32(line), String(describing: function), message)
         }
-        let message = format(messageBlock, file: file, line: line, function: function, level: .debug)
-        Self.logger.debug("\(message, privacy: .public)")
-        DebugLogImpl(String(describing: file), Int32(line), String(describing: function), message)
     }
 
     func assert(_ condition: @autoclosure () -> Bool, _ message: @autoclosure () -> String, file: StaticString, line: Int, function: StaticString) {

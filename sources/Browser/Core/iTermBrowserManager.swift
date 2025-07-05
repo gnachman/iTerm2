@@ -81,7 +81,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private let readerModeManager = iTermBrowserReaderModeManager()
     let user: iTermBrowserUser
     private var currentMainFrameHTTPMethod: String?
-    private let userState: iTermBrowserUserState
+    let userState: iTermBrowserUserState
 
     private static var safariVersion = {
         Bundle(path: "/Applications/Safari.app")?.infoDictionary?["CFBundleShortVersionString"] as? String

@@ -539,9 +539,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)makeFirstResponder:(nullable NSResponder *)responder {
-#warning Revert once the bug is fixed - sometimes the tabbar becomes first responder
-    NSLog(@"%p makeFirstResponder:%@", self, responder);
-    NSLog(@"%@", [NSThread callStackSymbols]);
+    DLog(@"%p makeFirstResponder:%@", self, responder);
+    DLog(@"%@", [NSThread callStackSymbols]);
     return [super makeFirstResponder:responder];
 }
 

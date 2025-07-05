@@ -11,3 +11,13 @@ enum iTermBrowserUser: Hashable, Equatable {
     case devNull
 }
 
+extension iTermBrowserUser: CustomDebugStringConvertible {
+    var debugDescription: String {
+        switch self {
+        case .regular(id: let id):
+            return "iTermBrowserUser.regular(\(id))"
+        case .devNull:
+            return "iTermBrowserUser.devNull"
+        }
+    }
+}

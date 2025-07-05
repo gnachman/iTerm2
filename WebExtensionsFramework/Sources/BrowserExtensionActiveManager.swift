@@ -120,6 +120,15 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
             // Update injection scripts in all registered webviews
             updateInjectionScriptsInAllWebViews()
             logger.info("Successfully activated extension with ID: \(extensionId)")
+
+            Task {
+                // TODO: In real life we need to track the listeners that background scripts have requested execution for and only launch it unconditionally after install or activate.
+                do {
+                    try await backgroundService.startBackgroundScript(for: browserExtension)
+                } catch {
+                    logger.error("Failed to launch background service for \(browserExtension.baseURL.path): \(error)")
+                }
+            }
         }
     }
     

@@ -10,7 +10,8 @@ public enum BrowserExtensionRegistryError: Error, LocalizedError {
     case invalidExtensionPath(String)
     case manifestLoadError(String, Error)
     case contentScriptLoadError(String, Error)
-    
+    case backgroundScriptLoadError(String, Error)
+
     public var errorDescription: String? {
         switch self {
         case .extensionAlreadyExists(let path):
@@ -23,6 +24,8 @@ public enum BrowserExtensionRegistryError: Error, LocalizedError {
             return "Failed to load manifest at \(path): \(error.localizedDescription)"
         case .contentScriptLoadError(let path, let error):
             return "Failed to load content scripts at \(path): \(error.localizedDescription)"
+        case .backgroundScriptLoadError(let path, let error):
+            return "Failed to load background scripts at \(path): \(error.localizedDescription)"
         }
     }
 }
@@ -111,6 +114,12 @@ public class BrowserExtensionRegistry {
                 throw BrowserExtensionRegistryError.contentScriptLoadError(extensionPath, error)
             }
 
+            do {
+                try browserExtension.loadBackgroundScript()
+            } catch {
+                logger.error("Failed to load background scripts: \(error)")
+                throw BrowserExtensionRegistryError.backgroundScriptLoadError(extensionPath, error)
+            }
             // Store in registry
             extensionsByPath[extensionPath] = browserExtension
             logger.info("Successfully added extension with ID: \(browserExtension.id)")
