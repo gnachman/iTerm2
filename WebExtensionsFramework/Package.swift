@@ -20,7 +20,10 @@ let package = Package(
     targets: [
         .target(
             name: "WebExtensionsFramework",
-            dependencies: []
+            dependencies: [],
+            resources: [
+                .copy("JavaScriptAPIs")
+            ]
         ),
         .testTarget(
             name: "WebExtensionsFrameworkTests",
