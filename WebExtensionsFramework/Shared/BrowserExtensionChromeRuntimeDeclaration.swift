@@ -7,7 +7,7 @@
 
 func makeChromeRuntime(inputs: APIInputs) -> Namespace {
     // NOTE: When you change this, you must re-run `swift run APIGenerator` to generate new Swift protocols.
-    Namespace("runtime") {
+    Namespace("runtime", freeze: false, preventExtensions: true) {
         Constant("id", inputs.extensionId)
         AsyncFunction("getPlatformInfo", returns: PlatformInfo.self) {}
         VariableArgsFunction("sendMessage", returns: AnyJSONCodable.self)

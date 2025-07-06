@@ -72,38 +72,30 @@ class BrowserExtensionJavaScriptAPIInjector {
         let postamble = """
           // Function for injecting lastError in callbacks
           window.__ext_injectLastError = function(error, callback, response) {
-            const injectedError = { message: error.message || error };
-            let seen = false;
-
-            // capture original descriptor (if any)
+            const injectedError = { message: error.message || error }
+            let seen = false
             const originalDesc =
-                Object.getOwnPropertyDescriptor(chrome.runtime, 'lastError');
+              Object.getOwnPropertyDescriptor(chrome.runtime, "lastError")
 
-            // Delete and redefine the property
-            delete chrome.runtime.lastError;
-            Object.defineProperty(chrome.runtime, 'lastError', {
-                get() {
-                    seen = true;
-                    return injectedError;
-                },
-                configurable: true
+            // override getter in-place
+            Object.defineProperty(chrome.runtime, "lastError", {
+              get() {
+                seen = true;
+                return injectedError;
+              },
+              configurable: true,
+              enumerable: originalDesc.enumerable
             });
 
             try {
-                callback(response);
+              callback(response);
             } finally {
-                // Remove the injected property
-                delete chrome.runtime.lastError;
+              Object.defineProperty(chrome.runtime, "lastError", originalDesc);
 
-                // restore original descriptor if it existed
-                if (originalDesc) {
-                    Object.defineProperty(chrome.runtime, 'lastError', originalDesc);
-                }
-
-                // warn if nobody read it
-                if (!seen) {
-                    console.warn('Unchecked runtime.lastError:', injectedError.message);
-                }
+              // warn if nobody read it
+              if (!seen) {
+                console.warn('Unchecked runtime.lastError:', injectedError.message);
+              }
             }
           }
 
@@ -128,12 +120,13 @@ class BrowserExtensionJavaScriptAPIInjector {
 
           // Expose chrome.runtime
           Object.defineProperty(window, 'chrome', {
-            value: Object.freeze({ runtime }),
+            value: { runtime },
             writable: false,
             configurable: false,
             enumerable: false
           });
 
+          Object.freeze(window.chrome);
           true;
         })();
         """

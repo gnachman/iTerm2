@@ -19,3 +19,4 @@ We are building a Swift framework to enable a web browser I'm adding to iTerm2 t
 * Assume macOS 14. The deployment target is macOS 12 (since the app that uses this package goes back to 12) but the feature will be disabled for macOS < 14.
 * Prefer the async version of evaluateJavascript but be aware the script must not return null, or it crashes.
 * Class names generally begin with BrowserExtension.
+* I am not infallible. You should push back against me if you think I have made a mistake.
