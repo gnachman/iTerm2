@@ -19,23 +19,34 @@ class BrowserExtensionJavaScriptAPIInjector {
     
     // MARK: - API Injection
     
-    /// Injects the chrome.runtime.getId API into a webview
+    /// Injects the chrome.runtime APIs into a webview
     /// - Parameter webView: The webview to inject APIs into
-    func injectRuntimeIdAPI(into webView: WKWebView) {
-        logger.info("Injecting chrome.runtime.getId API into webview")
+    func injectRuntimeAPIs(into webView: WKWebView) {
+        logger.info("Injecting chrome.runtime APIs into webview")
         
-        // Add message handler for runtime.id requests
-        let messageHandlerName = "requestRuntimeId"
+        // Create shared callback handler for secure callback dispatch
+        let callbackHandler = BrowserExtensionSecureCallbackHandler(logger: logger)
+        
+        // Add message handlers
         webView.configuration.userContentController.add(
             BrowserExtensionRuntimeIdMessageHandler(
                 browserExtension: browserExtension,
+                callbackHandler: callbackHandler,
                 logger: logger
             ),
-            name: messageHandlerName
+            name: "requestRuntimeId"
+        )
+        
+        webView.configuration.userContentController.add(
+            BrowserExtensionRuntimePlatformInfoMessageHandler(
+                callbackHandler: callbackHandler,
+                logger: logger
+            ),
+            name: "requestRuntimePlatformInfo"
         )
         
         // Get the JavaScript to inject
-        let injectionScript = createRuntimeIdInjectionScript()
+        let injectionScript = createRuntimeAPIsInjectionScript()
         
         // Create and add the user script
         let userScript = WKUserScript(
@@ -49,21 +60,60 @@ class BrowserExtensionJavaScriptAPIInjector {
     
     // MARK: - Private Methods
     
-    private func createRuntimeIdInjectionScript() -> String {
+    private func createRuntimeAPIsInjectionScript() -> String {
         return """
-        // Injected at document start
         ;(function() {
-          // 1. Ensure the callback-style host API namespace exists
-          window.chrome = window.chrome || {};
-          chrome.runtime = chrome.runtime || {};
+          'use strict';
+          const __ext_callbackMap = new Map();
 
-          // 2. Define a callback-style getId method
-          chrome.runtime.getId = function(callback) {
-            // Store the callback so the native side can invoke it later
-            window.__runtimeIdCallback = callback;
-            // Ask the native host for the ID
-            window.webkit.messageHandlers.requestRuntimeId.postMessage(null);
+          function __ext_randomString(len = 16) {
+            const bytes = crypto.getRandomValues(new Uint8Array(len));
+            return Array.from(bytes)
+              .map(b => b.toString(36).padStart(2, '0'))
+              .join('')
+              .substring(0, len);
+          }
+
+          const __ext_post = window.webkit.messageHandlers;
+
+          const runtime = {
+            getId(callback) {
+              const id = __ext_randomString();
+              __ext_callbackMap.set(id, callback);
+              __ext_scheduleCleanup(id);
+              __ext_post.requestRuntimeId.postMessage({ requestId: id });
+            },
+            getPlatformInfo(callback) {
+              const id = __ext_randomString();
+              __ext_callbackMap.set(id, callback);
+              __ext_scheduleCleanup(id);
+              __ext_post.requestRuntimePlatformInfo.postMessage({ requestId: id });
+            }
           };
+          Object.freeze(runtime);
+
+          // Expose chrome.runtime
+          Object.defineProperty(window, 'chrome', {
+            value: Object.freeze({ runtime }),
+            writable: false,
+            configurable: false,
+            enumerable: false
+          });
+
+          Object.defineProperty(window, '__EXT_invokeCallback__', {
+            value(requestId, result) {
+              const cb = __ext_callbackMap.get(requestId);
+              if (cb) {
+                try { cb(result) }
+                finally { __ext_callbackMap.delete(requestId) }
+              }
+            },
+            writable: false,
+            configurable: false,
+            enumerable: false
+          });
+
+          true;
         })();
         """
     }
@@ -73,33 +123,72 @@ class BrowserExtensionJavaScriptAPIInjector {
 class BrowserExtensionRuntimeIdMessageHandler: NSObject, WKScriptMessageHandler {
     
     private let browserExtension: BrowserExtension
+    private let callbackHandler: BrowserExtensionSecureCallbackHandler
     private let logger: BrowserExtensionLogger
     
-    init(browserExtension: BrowserExtension, logger: BrowserExtensionLogger) {
+    init(browserExtension: BrowserExtension, callbackHandler: BrowserExtensionSecureCallbackHandler, logger: BrowserExtensionLogger) {
         self.browserExtension = browserExtension
+        self.callbackHandler = callbackHandler
         self.logger = logger
     }
     
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         logger.info("Received runtime.getId request from JavaScript")
         
+        // Extract requestId from message body
+        guard let messageBody = message.body as? [String: Any],
+              let requestId = messageBody["requestId"] as? String else {
+            logger.error("Invalid message format for runtime.getId: missing requestId")
+            return
+        }
+        
         // Get the extension ID
         let extensionId = browserExtension.id.uuidString
         
-        // Invoke the callback in JavaScript
-        let callbackScript = """
-        if (window.__runtimeIdCallback) {
-            window.__runtimeIdCallback('\(extensionId)');
-            delete window.__runtimeIdCallback;
-        }
-        """
+        // Use secure callback handler to invoke the callback
+        callbackHandler.invokeCallback(requestId: requestId, result: extensionId, in: message.webView)
+    }
+}
+
+/// Message handler for chrome.runtime.getPlatformInfo requests
+class BrowserExtensionRuntimePlatformInfoMessageHandler: NSObject, WKScriptMessageHandler {
+    
+    private let callbackHandler: BrowserExtensionSecureCallbackHandler
+    private let logger: BrowserExtensionLogger
+    
+    init(callbackHandler: BrowserExtensionSecureCallbackHandler, logger: BrowserExtensionLogger) {
+        self.callbackHandler = callbackHandler
+        self.logger = logger
+    }
+    
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        logger.info("Received runtime.getPlatformInfo request from JavaScript")
         
-        message.webView?.evaluateJavaScript(callbackScript) { [weak self] result, error in
-            if let error = error {
-                self?.logger.error("Error invoking runtime.getId callback: \(error)")
-            } else {
-                self?.logger.info("Successfully invoked runtime.getId callback with: \(extensionId)")
-            }
+        // Extract requestId from message body
+        guard let messageBody = message.body as? [String: Any],
+              let requestId = messageBody["requestId"] as? String else {
+            logger.error("Invalid message format for runtime.getPlatformInfo: missing requestId")
+            return
         }
+        
+        // Determine architecture at runtime
+        let arch: String
+        #if arch(x86_64)
+        arch = "x86-64"
+        #elseif arch(arm64)
+        arch = "arm64"
+        #else
+        arch = "x86-64" // Default to x86-64 for unknown architectures
+        #endif
+        
+        // Platform info for macOS
+        let platformInfo = [
+            "os": "mac",
+            "arch": arch,
+            "nacl_arch": arch  // Same as arch since NaCl isn't supported
+        ]
+        
+        // Use secure callback handler to invoke the callback
+        callbackHandler.invokeCallback(requestId: requestId, result: platformInfo, in: message.webView)
     }
 }
