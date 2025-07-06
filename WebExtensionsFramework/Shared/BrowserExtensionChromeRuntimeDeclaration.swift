@@ -10,11 +10,8 @@ func makeChromeRuntime(inputs: APIInputs) -> Namespace {
     Namespace("runtime") {
         Constant("id", inputs.extensionId)
         AsyncFunction("getPlatformInfo", returns: PlatformInfo.self) {}
-        AsyncFunction("sendMessage", returns: AnyJSONCodable.self) {
-            Argument("arg1", type: AnyJSONCodable.self)
-            Argument("arg2", type: AnyJSONCodable.self)
-            Argument("arg3", type: AnyJSONCodable.self)
-        }
+        VariableArgsFunction("sendMessage", returns: AnyJSONCodable.self)
+        ConfigurableProperty("lastError", getter: "return undefined;")
     }
 }
 

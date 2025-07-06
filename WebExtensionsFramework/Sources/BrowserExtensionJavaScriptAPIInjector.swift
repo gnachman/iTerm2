@@ -70,22 +70,65 @@ class BrowserExtensionJavaScriptAPIInjector {
         """
         let body = generatedAPIJavascript(.init(extensionId: browserExtension.id.uuidString))
         let postamble = """
-          // Expose chrome.runtime
-          Object.defineProperty(window, 'chrome', {
-            value: Object.freeze({ runtime }),
+          // Function for injecting lastError in callbacks
+          window.__ext_injectLastError = function(error, callback, response) {
+            const injectedError = { message: error.message || error };
+            let seen = false;
+
+            // capture original descriptor (if any)
+            const originalDesc =
+                Object.getOwnPropertyDescriptor(chrome.runtime, 'lastError');
+
+            // Delete and redefine the property
+            delete chrome.runtime.lastError;
+            Object.defineProperty(chrome.runtime, 'lastError', {
+                get() {
+                    seen = true;
+                    return injectedError;
+                },
+                configurable: true
+            });
+
+            try {
+                callback(response);
+            } finally {
+                // Remove the injected property
+                delete chrome.runtime.lastError;
+
+                // restore original descriptor if it existed
+                if (originalDesc) {
+                    Object.defineProperty(chrome.runtime, 'lastError', originalDesc);
+                }
+
+                // warn if nobody read it
+                if (!seen) {
+                    console.warn('Unchecked runtime.lastError:', injectedError.message);
+                }
+            }
+          }
+
+          Object.defineProperty(window, '__EXT_invokeCallback__', {
+            value(requestId, result, error) {
+              const cb = __ext_callbackMap.get(requestId);
+              if (cb) {
+                try { 
+                  if (error) {
+                    window.__ext_injectLastError(error, cb, result);
+                  } else {
+                    cb(result);
+                  }
+                }
+                finally { __ext_callbackMap.delete(requestId) }
+              }
+            },
             writable: false,
             configurable: false,
             enumerable: false
           });
 
-          Object.defineProperty(window, '__EXT_invokeCallback__', {
-            value(requestId, result) {
-              const cb = __ext_callbackMap.get(requestId);
-              if (cb) {
-                try { cb(result) }
-                finally { __ext_callbackMap.delete(requestId) }
-              }
-            },
+          // Expose chrome.runtime
+          Object.defineProperty(window, 'chrome', {
+            value: Object.freeze({ runtime }),
             writable: false,
             configurable: false,
             enumerable: false
@@ -121,8 +164,12 @@ class BrowserExtensionMessageHandler: NSObject, WKScriptMessageHandler {
             return
         }
         Task { @MainActor in
-            let obj = try await dispatch(api: api, requestId: requestId, body: messageBody)
-            callbackHandler.invokeCallback(requestId: requestId, result: obj, in: message.webView)
+            do {
+                let obj = try await dispatch(api: api, requestId: requestId, body: messageBody)
+                callbackHandler.invokeCallback(requestId: requestId, result: obj, in: message.webView)
+            } catch {
+                callbackHandler.invokeCallback(requestId: requestId, error: error, in: message.webView)
+            }
         }
     }
 }

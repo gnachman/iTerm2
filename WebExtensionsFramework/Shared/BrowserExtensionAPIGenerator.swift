@@ -65,9 +65,10 @@ internal struct Namespace: StringConvertible {
     init(_ name: String, @APIBuilder _ builder: () -> [StringConvertible]) {
         all = builder()
 
-        // split out constants vs. everything else
+        // split out different types of items
         let constants = all.compactMap { $0 as? Constant }
-        let others    = all.filter     { !($0 is Constant) }
+        let configurableProperties = all.compactMap { $0 as? ConfigurableProperty }
+        let others = all.filter { !($0 is Constant) && !($0 is ConfigurableProperty) }
 
         // normal members get 4-space indent with comma separation
         let inner = others.enumerated().map { (index, item) in
@@ -77,17 +78,23 @@ internal struct Namespace: StringConvertible {
         }
 
         // wrap each constant in a new Constant with its namespace baked in
-        let outer = constants
+        let outerConstants = constants
             .map { $0.enclosed(in: name) }
             .map { StringConvertibleIndented(content: $0, indent: 0) }
 
-        statements = [
-            .init(content: "const \(name) = {", indent: 0)
-        ] + inner + [
-            .init(content: "}", indent: 0)
-        ] + outer + [
-            .init(content: "Object.freeze(\(name));", indent: 0)
-        ]
+        // wrap each configurable property with its namespace baked in (before freeze)
+        let preFreeze = configurableProperties
+            .map { $0.enclosed(in: name) }
+            .map { StringConvertibleIndented(content: $0, indent: 0) }
+
+        var allStatements: [StringConvertibleIndented] = []
+        allStatements.append(.init(content: "const \(name) = {", indent: 0))
+        allStatements.append(contentsOf: inner)
+        allStatements.append(.init(content: "}", indent: 0))
+        allStatements.append(contentsOf: outerConstants)
+        allStatements.append(contentsOf: preFreeze)
+        
+        statements = allStatements
     }
 
     func js(indent: Int) -> String {
@@ -231,6 +238,108 @@ internal struct Constant: StringConvertible {
            writable: false,
            configurable: false,
            enumerable: true
+        });
+        """.components(separatedBy: "\n")
+            .map { pad + $0 }
+            .joined(separator: "\n")
+    }
+
+    func swiftProtocols(indent: Int) -> String {
+        ""
+    }
+    func swiftDispatch(indent: Int) -> String {
+        ""
+    }
+}
+
+// A function with variable arguments and optional callback support
+internal struct VariableArgsFunction: StringConvertible {
+    let name: String
+    let returnType: String
+    private var capitalizedName: String {
+        name.first!.uppercased() + String(name.dropFirst())
+    }
+
+    init<T: Codable>(_ name: String, returns: T.Type) {
+        self.name = name
+        self.returnType = "\(returns)"
+    }
+
+    func js(indent: Int) -> String {
+        return """
+        \(name)(...args) {
+            const hasCallback = args.length > 0 && typeof args[args.length - 1] === 'function';
+            const callback = hasCallback ? args.pop() : null;
+            
+            const id = __ext_randomString();
+            if (callback) {
+                __ext_callbackMap.set(id, callback);
+            }
+            
+            __ext_post.requestBrowserExtension.postMessage({
+                requestId: id,
+                api: \(name.jsonEncoded),
+                args: args
+            });
+        }
+        """.indentingLines(by: indent)
+    }
+
+    func swiftProtocols(indent: Int) -> String {
+        return """
+        struct \(capitalizedName)RequestImpl: Codable {
+            let requestId: String
+            let args: [AnyJSONCodable]
+        }
+        protocol \(capitalizedName)Request {
+            var requestId: String { get }
+            var args: [AnyJSONCodable] { get }
+        }
+        extension \(capitalizedName)RequestImpl: \(capitalizedName)Request {}
+        protocol \(capitalizedName)HandlerProtocol {
+            func handle(request: \(capitalizedName)Request) async throws -> \(returnType)
+        }
+        """.indentingLines(by: indent)
+    }
+
+    func swiftDispatch(indent: Int) -> String {
+        return """
+        case "\(name)":
+            let decoder = JSONDecoder()
+            let request = try decoder.decode(\(capitalizedName)RequestImpl.self, from: jsonData)
+            let handler = \(capitalizedName)Handler()
+            let response = try await handler.handle(request: request)
+            let encodedResponse = try JSONEncoder().encode(response)
+            return try JSONSerialization.jsonObject(with: encodedResponse) as! [String: Any]
+        """.indentingLines(by: indent)
+    }
+}
+
+// A configurable property that needs to be added before freeze.
+internal struct ConfigurableProperty: StringConvertible {
+    let name: String
+    let getter: String
+    private let enclosure: String?
+
+    init(_ name: String, getter: String, enclosure: String? = nil) {
+        self.name = name
+        self.getter = getter
+        self.enclosure = enclosure
+    }
+
+    func enclosed(in namespace: String) -> ConfigurableProperty {
+        ConfigurableProperty(name, getter: getter, enclosure: namespace)
+    }
+
+    func js(indent: Int) -> String {
+        let pad = String(repeating: " ", count: indent)
+        guard let e = enclosure else {
+            return ""  // Only works when enclosed in a namespace
+        }
+        return """
+        Object.defineProperty(\(e), \(name.jsonEncoded), {
+            get() { \(getter) },
+            configurable: true
         });
         """.components(separatedBy: "\n")
             .map { pad + $0 }

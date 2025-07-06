@@ -86,7 +86,7 @@ void ExtensionRuntime::GetId(dom::DOMString& aRetval) {
 **Methods/Events** (like `sendMessage`, `onMessage`):
 - Defined in schema JSON for validation
 - Custom implementation in `ext-runtime.js`
-- Handle callback/promise conversion and complex logic
+- Handle callback conversion and complex logic
 - Implement only callbacks. We will later on add https://github.com/mozilla/webextension-polyfill to add support for promises.
 
 So when tracing an API, check the schema first to understand whether it's a simple property or requires custom JavaScript logic.

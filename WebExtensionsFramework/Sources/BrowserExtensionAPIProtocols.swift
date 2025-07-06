@@ -15,15 +15,11 @@ protocol GetPlatformInfoHandlerProtocol {
 }
 struct SendMessageRequestImpl: Codable {
     let requestId: String
-    let arg1: AnyJSONCodable
-    let arg2: AnyJSONCodable
-    let arg3: AnyJSONCodable
+    let args: [AnyJSONCodable]
 }
 protocol SendMessageRequest {
     var requestId: String { get }
-    var arg1: AnyJSONCodable { get }
-    var arg2: AnyJSONCodable { get }
-    var arg3: AnyJSONCodable { get }
+    var args: [AnyJSONCodable] { get }
 }
 extension SendMessageRequestImpl: SendMessageRequest {}
 protocol SendMessageHandlerProtocol {
