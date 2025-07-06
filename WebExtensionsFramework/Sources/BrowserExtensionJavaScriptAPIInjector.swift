@@ -27,16 +27,7 @@ class BrowserExtensionJavaScriptAPIInjector {
         // Create shared callback handler for secure callback dispatch
         let callbackHandler = BrowserExtensionSecureCallbackHandler(logger: logger)
         
-        // Add message handlers
-        webView.configuration.userContentController.add(
-            BrowserExtensionRuntimeIdMessageHandler(
-                browserExtension: browserExtension,
-                callbackHandler: callbackHandler,
-                logger: logger
-            ),
-            name: "requestRuntimeId"
-        )
-        
+        // Add message handler for getPlatformInfo (id is now synchronous)
         webView.configuration.userContentController.add(
             BrowserExtensionRuntimePlatformInfoMessageHandler(
                 callbackHandler: callbackHandler,
@@ -45,8 +36,8 @@ class BrowserExtensionJavaScriptAPIInjector {
             name: "requestRuntimePlatformInfo"
         )
         
-        // Get the JavaScript to inject
-        let injectionScript = createRuntimeAPIsInjectionScript()
+        // Get the JavaScript to inject with the extension data
+        let injectionScript = createRuntimeAPIsInjectionScript(browserExtension: browserExtension)
         
         // Create and add the user script
         let userScript = WKUserScript(
@@ -60,7 +51,15 @@ class BrowserExtensionJavaScriptAPIInjector {
     
     // MARK: - Private Methods
     
-    private func createRuntimeAPIsInjectionScript() -> String {
+    private func createRuntimeAPIsInjectionScript(browserExtension: BrowserExtension) -> String {
+        // Use JSONEncoder to safely encode the extension ID
+        let extensionId = browserExtension.id.uuidString
+        guard let encodedIdData = try? JSONEncoder().encode(extensionId),
+              let encodedIdString = String(data: encodedIdData, encoding: .utf8) else {
+            logger.error("Failed to encode extension ID for JavaScript injection")
+            return ""
+        }
+        
         return """
         ;(function() {
           'use strict';
@@ -77,19 +76,21 @@ class BrowserExtensionJavaScriptAPIInjector {
           const __ext_post = window.webkit.messageHandlers;
 
           const runtime = {
-            getId(callback) {
-              const id = __ext_randomString();
-              __ext_callbackMap.set(id, callback);
-              __ext_scheduleCleanup(id);
-              __ext_post.requestRuntimeId.postMessage({ requestId: id });
-            },
             getPlatformInfo(callback) {
               const id = __ext_randomString();
               __ext_callbackMap.set(id, callback);
-              __ext_scheduleCleanup(id);
               __ext_post.requestRuntimePlatformInfo.postMessage({ requestId: id });
             }
           };
+
+          // Define id as a non-writable, non-configurable property
+          Object.defineProperty(runtime, 'id', {
+            value: \(encodedIdString),
+            writable: false,
+            configurable: false,
+            enumerable: true
+          });
+          
           Object.freeze(runtime);
 
           // Expose chrome.runtime
@@ -119,36 +120,6 @@ class BrowserExtensionJavaScriptAPIInjector {
     }
 }
 
-/// Message handler for chrome.runtime.getId requests
-class BrowserExtensionRuntimeIdMessageHandler: NSObject, WKScriptMessageHandler {
-    
-    private let browserExtension: BrowserExtension
-    private let callbackHandler: BrowserExtensionSecureCallbackHandler
-    private let logger: BrowserExtensionLogger
-    
-    init(browserExtension: BrowserExtension, callbackHandler: BrowserExtensionSecureCallbackHandler, logger: BrowserExtensionLogger) {
-        self.browserExtension = browserExtension
-        self.callbackHandler = callbackHandler
-        self.logger = logger
-    }
-    
-    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        logger.info("Received runtime.getId request from JavaScript")
-        
-        // Extract requestId from message body
-        guard let messageBody = message.body as? [String: Any],
-              let requestId = messageBody["requestId"] as? String else {
-            logger.error("Invalid message format for runtime.getId: missing requestId")
-            return
-        }
-        
-        // Get the extension ID
-        let extensionId = browserExtension.id.uuidString
-        
-        // Use secure callback handler to invoke the callback
-        callbackHandler.invokeCallback(requestId: requestId, result: extensionId, in: message.webView)
-    }
-}
 
 /// Message handler for chrome.runtime.getPlatformInfo requests
 class BrowserExtensionRuntimePlatformInfoMessageHandler: NSObject, WKScriptMessageHandler {
