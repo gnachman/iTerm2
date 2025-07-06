@@ -62,7 +62,7 @@ internal struct Namespace: StringConvertible {
     let statements: [StringConvertibleIndented]
     let all: [StringConvertible]
 
-    init(_ name: String, @APIBuilder _ builder: () -> [StringConvertible]) {
+    init(_ name: String, freeze: Bool = true, preventExtensions: Bool = false, @APIBuilder _ builder: () -> [StringConvertible]) {
         all = builder()
 
         // split out different types of items
@@ -93,6 +93,40 @@ internal struct Namespace: StringConvertible {
         allStatements.append(.init(content: "}", indent: 0))
         allStatements.append(contentsOf: outerConstants)
         allStatements.append(contentsOf: preFreeze)
+        
+        if freeze {
+            allStatements.append(.init(content: "Object.freeze(\(name));", indent: 0))
+        } else if preventExtensions {
+            // Lock down immutable properties
+            for obj in all {
+                let key: String
+                if obj is ConfigurableProperty || obj is Constant {
+                    continue
+                } else if let value = obj as? VariableArgsFunction {
+                    key = value.name
+                } else if let value = obj as? AsyncFunction {
+                    key = value.name
+                } else {
+                    fatalError("Unexpected type for child: \(type(of: obj))")
+                }
+
+                let desc = "desc_\(key)"
+                let lockdown = """
+                const \(desc) = Object.getOwnPropertyDescriptor(\(name), "\(key)")
+                Object.defineProperty(\(name), "\(key)", {
+                  value: \(desc).value,
+                  writable: \(desc).writable,
+                  writable: false,
+                  configurable: false,
+                  enumerable: \(desc).enumerable
+                })
+                """.components(separatedBy: "\n").map {
+                    StringConvertibleIndented(content: $0, indent: 0)
+                }
+                allStatements.append(contentsOf: lockdown)
+            }
+            allStatements.append(.init(content: "Object.preventExtensions(\(name));", indent: 0))
+        }
         
         statements = allStatements
     }
@@ -316,7 +350,7 @@ internal struct VariableArgsFunction: StringConvertible {
 }
 
 // A configurable property that needs to be added before freeze.
-internal struct ConfigurableProperty: StringConvertible {
+internal struct ConfigurableProperty: StringConvertible, Equatable {
     let name: String
     let getter: String
     private let enclosure: String?
@@ -339,7 +373,8 @@ internal struct ConfigurableProperty: StringConvertible {
         return """
         Object.defineProperty(\(e), \(name.jsonEncoded), {
             get() { \(getter) },
-            configurable: true
+            configurable: true,
+            enumerable: true
         });
         """.components(separatedBy: "\n")
             .map { pad + $0 }
