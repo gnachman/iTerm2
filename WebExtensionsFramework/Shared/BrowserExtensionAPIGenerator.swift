@@ -115,7 +115,6 @@ internal struct Namespace: StringConvertible {
                 const \(desc) = Object.getOwnPropertyDescriptor(\(name), "\(key)")
                 Object.defineProperty(\(name), "\(key)", {
                   value: \(desc).value,
-                  writable: \(desc).writable,
                   writable: false,
                   configurable: false,
                   enumerable: \(desc).enumerable
@@ -306,9 +305,16 @@ internal struct VariableArgsFunction: StringConvertible {
             const callback = hasCallback ? args.pop() : null;
             
             const id = __ext_randomString();
-            if (callback) {
-                __ext_callbackMap.set(id, callback);
-            }
+            
+            // Always set up a callback to handle responses
+            // If no callback was provided, we create a no-op to consume the response
+            // This prepares for Promise support via webextension-polyfill
+            const effectiveCallback = callback || (() => {
+                // No-op callback for fire-and-forget calls
+                // In the future, this will be replaced by Promise resolution
+            });
+            
+            __ext_callbackMap.set(id, effectiveCallback);
             
             __ext_post.requestBrowserExtension.postMessage({
                 requestId: id,

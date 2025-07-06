@@ -20,6 +20,7 @@ func dispatch(api: String, requestId: String, body: [String: Any]) async throws 
         let response = try await handler.handle(request: request)
         let encodedResponse = try JSONEncoder().encode(response)
         return try JSONSerialization.jsonObject(with: encodedResponse) as! [String: Any]
+
     default:
         throw NSError(domain: "BrowserExtension", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unknown API: \(api)"])
     }
