@@ -187,7 +187,7 @@ extension BrowserExtensionActiveManager {
         )
 
         self.init(
-            injectionScriptGenerator: BrowserExtensionInjectionScriptGenerator(logger: logger),
+            injectionScriptGenerator: BrowserExtensionContentScriptInjectionGenerator(logger: logger),
             userScriptFactory: BrowserExtensionUserScriptFactory(),
             backgroundService: backgroundService,
             logger: logger

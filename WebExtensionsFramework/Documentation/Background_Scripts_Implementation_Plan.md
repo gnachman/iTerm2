@@ -186,7 +186,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     private let backgroundService: BrowserExtensionBackgroundServiceProtocol
     
     public init(
-        injectionScriptGenerator: BrowserExtensionInjectionScriptGeneratorProtocol,
+        injectionScriptGenerator: BrowserExtensionContentScriptInjectionGeneratorProtocol,
         userScriptFactory: BrowserExtensionUserScriptFactoryProtocol,
         backgroundService: BrowserExtensionBackgroundServiceProtocol
     )

@@ -6,7 +6,7 @@ import WebKit
 
 /// Protocol for generating injection user scripts for individual extensions
 @MainActor
-public protocol BrowserExtensionInjectionScriptGeneratorProtocol {
+public protocol BrowserExtensionContentScriptInjectionGeneratorProtocol {
     /// Generate an injection user script for a single extension
     /// - Parameter activeExtension: The active extension to generate a script for
     /// - Returns: JavaScript source code for the extension's injection script
@@ -15,7 +15,7 @@ public protocol BrowserExtensionInjectionScriptGeneratorProtocol {
 
 /// Generates injection user scripts that handle content script execution for individual extensions
 @MainActor
-public class BrowserExtensionInjectionScriptGenerator: BrowserExtensionInjectionScriptGeneratorProtocol {
+public class BrowserExtensionContentScriptInjectionGenerator: BrowserExtensionContentScriptInjectionGeneratorProtocol {
     
     /// Logger for debugging and error reporting
     private let logger: BrowserExtensionLogger

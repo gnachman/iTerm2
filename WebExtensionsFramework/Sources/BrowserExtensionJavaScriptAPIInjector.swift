@@ -1,3 +1,4 @@
+import BrowserExtensionShared
 import Foundation
 import WebKit
 
@@ -29,11 +30,11 @@ class BrowserExtensionJavaScriptAPIInjector {
         
         // Add message handler for getPlatformInfo (id is now synchronous)
         webView.configuration.userContentController.add(
-            BrowserExtensionRuntimePlatformInfoMessageHandler(
+            BrowserExtensionMessageHandler(
                 callbackHandler: callbackHandler,
                 logger: logger
             ),
-            name: "requestRuntimePlatformInfo"
+            name: "requestBrowserExtension"
         )
         
         // Get the JavaScript to inject with the extension data
@@ -52,15 +53,7 @@ class BrowserExtensionJavaScriptAPIInjector {
     // MARK: - Private Methods
     
     private func createRuntimeAPIsInjectionScript(browserExtension: BrowserExtension) -> String {
-        // Use JSONEncoder to safely encode the extension ID
-        let extensionId = browserExtension.id.uuidString
-        guard let encodedIdData = try? JSONEncoder().encode(extensionId),
-              let encodedIdString = String(data: encodedIdData, encoding: .utf8) else {
-            logger.error("Failed to encode extension ID for JavaScript injection")
-            return ""
-        }
-        
-        return """
+        let preamble = """
         ;(function() {
           'use strict';
           const __ext_callbackMap = new Map();
@@ -74,25 +67,9 @@ class BrowserExtensionJavaScriptAPIInjector {
           }
 
           const __ext_post = window.webkit.messageHandlers;
-
-          const runtime = {
-            getPlatformInfo(callback) {
-              const id = __ext_randomString();
-              __ext_callbackMap.set(id, callback);
-              __ext_post.requestRuntimePlatformInfo.postMessage({ requestId: id });
-            }
-          };
-
-          // Define id as a non-writable, non-configurable property
-          Object.defineProperty(runtime, 'id', {
-            value: \(encodedIdString),
-            writable: false,
-            configurable: false,
-            enumerable: true
-          });
-          
-          Object.freeze(runtime);
-
+        """
+        let body = generatedAPIJavascript(.init(extensionId: browserExtension.id.uuidString))
+        let postamble = """
           // Expose chrome.runtime
           Object.defineProperty(window, 'chrome', {
             value: Object.freeze({ runtime }),
@@ -117,13 +94,14 @@ class BrowserExtensionJavaScriptAPIInjector {
           true;
         })();
         """
+        return [preamble, body, postamble].joined(separator: "\n")
     }
 }
 
 
 /// Message handler for chrome.runtime.getPlatformInfo requests
-class BrowserExtensionRuntimePlatformInfoMessageHandler: NSObject, WKScriptMessageHandler {
-    
+class BrowserExtensionMessageHandler: NSObject, WKScriptMessageHandler {
+
     private let callbackHandler: BrowserExtensionSecureCallbackHandler
     private let logger: BrowserExtensionLogger
     
@@ -137,29 +115,14 @@ class BrowserExtensionRuntimePlatformInfoMessageHandler: NSObject, WKScriptMessa
         
         // Extract requestId from message body
         guard let messageBody = message.body as? [String: Any],
-              let requestId = messageBody["requestId"] as? String else {
-            logger.error("Invalid message format for runtime.getPlatformInfo: missing requestId")
+              let requestId = messageBody["requestId"] as? String,
+              let api = messageBody["api"] as? String else {
+                  logger.error("Invalid message: \(message.body))")
             return
         }
-        
-        // Determine architecture at runtime
-        let arch: String
-        #if arch(x86_64)
-        arch = "x86-64"
-        #elseif arch(arm64)
-        arch = "arm64"
-        #else
-        arch = "x86-64" // Default to x86-64 for unknown architectures
-        #endif
-        
-        // Platform info for macOS
-        let platformInfo = [
-            "os": "mac",
-            "arch": arch,
-            "nacl_arch": arch  // Same as arch since NaCl isn't supported
-        ]
-        
-        // Use secure callback handler to invoke the callback
-        callbackHandler.invokeCallback(requestId: requestId, result: platformInfo, in: message.webView)
+        Task { @MainActor in
+            let obj = try await dispatch(api: api, requestId: requestId, body: messageBody)
+            callbackHandler.invokeCallback(requestId: requestId, result: obj, in: message.webView)
+        }
     }
 }

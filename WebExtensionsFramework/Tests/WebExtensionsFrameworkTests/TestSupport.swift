@@ -5,11 +5,9 @@ import Foundation
 import WebKit
 @testable import WebExtensionsFramework
 
-// MARK: - Test Logger (use existing TestBrowserExtensionLogger from BrowserExtensionBackgroundServiceTests)
-
 // MARK: - Mock Classes
 
-public class MockInjectionScriptGenerator: BrowserExtensionInjectionScriptGeneratorProtocol {
+public class MockInjectionScriptGenerator: BrowserExtensionContentScriptInjectionGeneratorProtocol {
     public init() {}
     
     public func generateInjectionScript(for activeExtension: ActiveExtension) -> String {

@@ -19,11 +19,22 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "WebExtensionsFramework",
+            name: "BrowserExtensionShared",
             dependencies: [],
+            path: "Shared"
+        ),
+        .target(
+            name: "WebExtensionsFramework",
+            dependencies: ["BrowserExtensionShared"],
+            path: "Sources",
             resources: [
                 .copy("JavaScriptAPIs")
             ]
+        ),
+        .executableTarget(
+            name: "APIGenerator",
+            dependencies: ["BrowserExtensionShared"],
+            path: "APIGenerator"
         ),
         .testTarget(
             name: "WebExtensionsFrameworkTests",

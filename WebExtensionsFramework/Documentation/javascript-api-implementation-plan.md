@@ -97,11 +97,11 @@ The firefox source is located in the root of the WebExtensionsFramework repo. So
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| API Registry | `toolkit/components/extensions/ext-toolkit.json` | Maps namespaces to implementations |
+| API Registry | `firefox/toolkit/components/extensions/ext-toolkit.json` | Maps namespaces to implementations |
 | JS Host APIs | `firefox/toolkit/components/extensions/parent/ext-*.js` | JavaScript callback-style implementations |
-| Schemas | `toolkit/components/extensions/schemas/*.json` | API parameter validation schemas |
-| WebIDL Interfaces | `dom/webidl/Extension*.webidl` | Browser object interface definitions |
-| C++ Bindings | `toolkit/components/extensions/webidl-api/` | Native implementation backing |
+| Schemas | `firefox/toolkit/components/extensions/schemas/*.json` | API parameter validation schemas |
+| WebIDL Interfaces | `firefox/dom/webidl/Extension*.webidl` | Browser object interface definitions |
+| C++ Bindings | `firefox/toolkit/components/extensions/webidl-api/` | Native implementation backing |
 
 ## Our Swift Implementation Architecture
 
