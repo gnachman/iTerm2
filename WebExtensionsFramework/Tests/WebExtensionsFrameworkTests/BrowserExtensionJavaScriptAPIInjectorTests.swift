@@ -48,7 +48,7 @@ class BrowserExtensionJavaScriptAPIInjectorTests: XCTestCase {
     
     func testRuntimeIdEndToEnd() async throws {
         let freshWebView = try await makeWebViewForTesting() { freshWebView in
-            injector.injectRuntimeIdAPI(into: freshWebView)
+            injector.injectRuntimeAPIs(into: freshWebView)
         }
 
         let jsBody = "return await new Promise(resolve => chrome.runtime.getId(resolve));"
@@ -56,6 +56,21 @@ class BrowserExtensionJavaScriptAPIInjectorTests: XCTestCase {
         let expectedId = mockBrowserExtension.id.uuidString
         let actual = try await freshWebView.callAsyncJavaScript(jsBody, contentWorld: .page) as? String
         XCTAssertEqual(actual, expectedId)
+    }
+    
+    func testRuntimeGetPlatformInfoEndToEnd() async throws {
+        let freshWebView = try await makeWebViewForTesting() { freshWebView in
+            injector.injectRuntimeAPIs(into: freshWebView)
+        }
+
+        let jsBody = "return await new Promise(resolve => chrome.runtime.getPlatformInfo(resolve));"
+
+        let actual = try await freshWebView.callAsyncJavaScript(jsBody, contentWorld: .page) as? [String: String]
+        
+        XCTAssertEqual(actual?["os"], "mac")
+        XCTAssertNotNil(actual?["arch"])
+        XCTAssertTrue(actual?["arch"] == "x86-64" || actual?["arch"] == "arm64")
+        XCTAssertEqual(actual?["arch"], actual?["nacl_arch"]) // nacl_arch should match arch
     }
     
     // MARK: - Helper Methods
