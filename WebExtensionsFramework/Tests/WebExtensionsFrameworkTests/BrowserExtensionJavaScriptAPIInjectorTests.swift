@@ -51,7 +51,7 @@ class BrowserExtensionJavaScriptAPIInjectorTests: XCTestCase {
             injector.injectRuntimeAPIs(into: freshWebView)
         }
 
-        let jsBody = "return await new Promise(resolve => chrome.runtime.getId(resolve));"
+        let jsBody = "return chrome.runtime.id;"
 
         let expectedId = mockBrowserExtension.id.uuidString
         let actual = try await freshWebView.callAsyncJavaScript(jsBody, contentWorld: .page) as? String
