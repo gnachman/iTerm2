@@ -78,13 +78,13 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     
     private var activeExtensions: [UUID: ActiveExtension] = [:]
     private var registeredWebViews: [ObjectIdentifier: WeakBox<BrowserExtensionWKWebView>] = [:]
-    private let injectionScriptGenerator: BrowserExtensionInjectionScriptGeneratorProtocol
+    private let injectionScriptGenerator: BrowserExtensionContentScriptInjectionGeneratorProtocol
     private let userScriptFactory: BrowserExtensionUserScriptFactoryProtocol
     private let backgroundService: BrowserExtensionBackgroundServiceProtocol
     private let logger: BrowserExtensionLogger
 
     public init(
-        injectionScriptGenerator: BrowserExtensionInjectionScriptGeneratorProtocol,
+        injectionScriptGenerator: BrowserExtensionContentScriptInjectionGeneratorProtocol,
         userScriptFactory: BrowserExtensionUserScriptFactoryProtocol,
         backgroundService: BrowserExtensionBackgroundServiceProtocol,
         logger: BrowserExtensionLogger
