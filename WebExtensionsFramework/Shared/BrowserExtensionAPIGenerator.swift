@@ -3,17 +3,17 @@ import Foundation
 internal protocol StringConvertible {
     func js(indent: Int) -> String
     func swiftProtocols(indent: Int) -> String
-    func swiftDispatch(indent: Int) -> String
+    func swiftDispatch(indent: Int) -> String?
 }
 
 extension String: StringConvertible {
     func js(indent: Int) -> String {
-        String(repeating: " ", count: indent) + self
+        return indentingLines(by: indent)
     }
     func swiftProtocols(indent: Int) -> String {
         String(repeating: " ", count: indent) + self
     }
-    func swiftDispatch(indent: Int) -> String {
+    func swiftDispatch(indent: Int) -> String? {
         String(repeating: " ", count: indent) + self
     }
 }
@@ -52,7 +52,7 @@ internal struct StringConvertibleIndented: StringConvertible {
     func swiftProtocols(indent: Int) -> String {
         content.swiftProtocols(indent: self.indent + indent)
     }
-    func swiftDispatch(indent: Int) -> String {
+    func swiftDispatch(indent: Int) -> String? {
         content.swiftDispatch(indent: self.indent + indent)
     }
 }
@@ -61,8 +61,12 @@ internal struct StringConvertibleIndented: StringConvertible {
 internal struct Namespace: StringConvertible {
     let statements: [StringConvertibleIndented]
     let all: [StringConvertible]
+    private let name: String
+    private let isTopLevel: Bool
 
-    init(_ name: String, freeze: Bool = true, preventExtensions: Bool = false, @APIBuilder _ builder: () -> [StringConvertible]) {
+    init(_ name: String, freeze: Bool = true, preventExtensions: Bool = false, isTopLevel: Bool = true, @APIBuilder _ builder: () -> [StringConvertible]) {
+        self.name = name
+        self.isTopLevel = isTopLevel
         all = builder()
 
         // split out different types of items
@@ -88,23 +92,32 @@ internal struct Namespace: StringConvertible {
             .map { StringConvertibleIndented(content: $0, indent: 0) }
 
         var allStatements: [StringConvertibleIndented] = []
-        allStatements.append(.init(content: "const \(name) = {", indent: 0))
+        if isTopLevel {
+            allStatements.append(.init(content: "const \(name) = {", indent: 0))
+        } else {
+            allStatements.append(.init(content: "\(name): {", indent: 0))
+        }
+        allStatements.append(.init(content: "// Normal members", indent: 0))
         allStatements.append(contentsOf: inner)
         allStatements.append(.init(content: "}", indent: 0))
+        allStatements.append(.init(content: "// Constants", indent: 0))
         allStatements.append(contentsOf: outerConstants)
+        allStatements.append(.init(content: "// Configurable properties", indent: 0))
         allStatements.append(contentsOf: preFreeze)
         
         if freeze {
             allStatements.append(.init(content: "Object.freeze(\(name));", indent: 0))
-        } else if preventExtensions {
-            // Lock down immutable properties
+        } else if preventExtensions && isTopLevel {
+            // Lock down immutable properties (only for top-level namespaces)
             for obj in all {
                 let key: String
-                if obj is ConfigurableProperty || obj is Constant {
+                if obj is ConfigurableProperty || obj is Constant || obj is Namespace {
                     continue
                 } else if let value = obj as? VariableArgsFunction {
                     key = value.name
                 } else if let value = obj as? AsyncFunction {
+                    key = value.name
+                } else if let value = obj as? PureJSFunction {
                     key = value.name
                 } else {
                     fatalError("Unexpected type for child: \(type(of: obj))")
@@ -125,6 +138,9 @@ internal struct Namespace: StringConvertible {
                 allStatements.append(contentsOf: lockdown)
             }
             allStatements.append(.init(content: "Object.preventExtensions(\(name));", indent: 0))
+        } else if preventExtensions && !isTopLevel {
+            // For nested namespaces, don't generate external calls since we don't have the qualified path
+            // The parent namespace should handle this
         }
         
         statements = allStatements
@@ -140,13 +156,17 @@ internal struct Namespace: StringConvertible {
             .map { $0.swiftProtocols(indent: indent) }
             .joined(separator: "\n")
     }
-    func swiftDispatch(indent: Int) -> String {
+    func swiftDispatch(indent: Int) -> String? {
+        let cases = all.compactMap { $0.swiftDispatch(indent: indent + 4) }
+        if cases.isEmpty {
+            return nil
+        }
         let s = String(repeating: " ", count: indent)
         return ([
             s + "func dispatch(api: String, requestId: String, body: [String: Any]) async throws -> [String: Any] {",
             s + "    let jsonData = try JSONSerialization.data(withJSONObject: body)",
             s + "    switch api {"] +
-           all.map { $0.swiftDispatch(indent: indent + 4) } +
+           cases +
            [s + "    default:",
             s + "        throw NSError(domain: \"BrowserExtension\", code: 1, userInfo: [NSLocalizedDescriptionKey: \"Unknown API: \\(api)\"])",
             s + "    }",
@@ -210,7 +230,7 @@ internal struct AsyncFunction: StringConvertible {
                  s + "}"
                 ]).joined(separator: "\n")
     }
-    func swiftDispatch(indent: Int) -> String {
+    func swiftDispatch(indent: Int) -> String? {
         let s = String(repeating: " ", count: indent)
         return [s + "case \"\(name)\":",
                 s + "    let decoder = JSONDecoder()",
@@ -227,6 +247,25 @@ internal struct AsyncFunction: StringConvertible {
     }
 }
 
+// An synchronous API function implemented entirely in javascript.
+internal struct PureJSFunction: StringConvertible {
+    let name: String
+    private let body: String
+    init(_ name: String, _ body: String) {
+        self.name = name
+        self.body = body
+    }
+    func js(indent: Int) -> String {
+        return body.indentingLines(by: indent)
+    }
+    func swiftProtocols(indent: Int) -> String {
+        ""
+    }
+    func swiftDispatch(indent: Int) -> String? {
+        nil
+    }
+}
+
 // The argument to an AsyncFunction
 internal struct Argument: StringConvertible {
     let name: String
@@ -237,7 +276,7 @@ internal struct Argument: StringConvertible {
     func swiftProtocols(indent: Int) -> String {
         String(repeating: " ", count: indent) + "var \(name): \(type) { get }"
     }
-    func swiftDispatch(indent: Int) -> String {
+    func swiftDispatch(indent: Int) -> String? {
         ""
     }
     init<T>(_ name: String, type: T.Type) {
@@ -282,7 +321,7 @@ internal struct Constant: StringConvertible {
     func swiftProtocols(indent: Int) -> String {
         ""
     }
-    func swiftDispatch(indent: Int) -> String {
+    func swiftDispatch(indent: Int) -> String? {
         ""
     }
 }
@@ -344,7 +383,7 @@ internal struct VariableArgsFunction: StringConvertible {
         """.indentingLines(by: indent)
     }
 
-    func swiftDispatch(indent: Int) -> String {
+    func swiftDispatch(indent: Int) -> String? {
         return """
         case "\(name)":
             let decoder = JSONDecoder()
@@ -392,7 +431,7 @@ internal struct ConfigurableProperty: StringConvertible, Equatable {
     func swiftProtocols(indent: Int) -> String {
         ""
     }
-    func swiftDispatch(indent: Int) -> String {
+    func swiftDispatch(indent: Int) -> String? {
         ""
     }
 }
@@ -419,7 +458,86 @@ public struct APIInputs {
 }
 
 public func generatedAPIJavascript(_ inputs: APIInputs) -> String {
-    return makeChromeRuntime(inputs: inputs).js(indent: 0)
+    let preamble = """
+    ;(function() {
+      'use strict';
+      const __ext_callbackMap = new Map();
+      const __ext_listeners = [];
+    
+      function __ext_randomString(len = 16) {
+        const bytes = crypto.getRandomValues(new Uint8Array(len));
+        return Array.from(bytes)
+          .map(b => b.toString(36).padStart(2, '0'))
+          .join('')
+          .substring(0, len);
+      }
+
+      const __ext_post = window.webkit.messageHandlers;
+
+    """
+    let body = makeChromeRuntime(inputs: inputs).js(indent: 0)
+    let postamble = """
+      // Function for injecting lastError in callbacks
+      window.__ext_injectLastError = function(error, callback, response) {
+        const injectedError = { message: error.message || error }
+        let seen = false
+        const originalDesc =
+          Object.getOwnPropertyDescriptor(chrome.runtime, "lastError")
+
+        // override getter in-place
+        Object.defineProperty(chrome.runtime, "lastError", {
+          get() {
+            seen = true;
+            return injectedError;
+          },
+          configurable: true,
+          enumerable: originalDesc.enumerable
+        });
+
+        try {
+          callback(response);
+        } finally {
+          Object.defineProperty(chrome.runtime, "lastError", originalDesc);
+
+          // warn if nobody read it
+          if (!seen) {
+            console.warn('Unchecked runtime.lastError:', injectedError.message);
+          }
+        }
+      }
+
+      Object.defineProperty(window, '__EXT_invokeCallback__', {
+        value(requestId, result, error) {
+          const cb = __ext_callbackMap.get(requestId);
+          if (cb) {
+            try { 
+              if (error) {
+                window.__ext_injectLastError(error, cb, result);
+              } else {
+                cb(result);
+              }
+            }
+            finally { __ext_callbackMap.delete(requestId) }
+          }
+        },
+        writable: false,
+        configurable: false,
+        enumerable: false
+      });
+
+      // Expose chrome.runtime
+      Object.defineProperty(window, 'chrome', {
+        value: { runtime },
+        writable: false,
+        configurable: false,
+        enumerable: false
+      });
+
+      Object.freeze(window.chrome);
+      true;
+    })();
+    """
+    return [preamble, body, postamble].joined(separator: "\n")
 }
 
 public func generatedAPISwift() -> String {
@@ -433,7 +551,7 @@ public func generatedAPISwift() -> String {
     """
 }
 public func generatedDispatchSwift() -> String {
-    let swiftCode = makeChromeRuntime(inputs: .init(extensionId: "")).swiftDispatch(indent: 4)
+    let swiftCode = makeChromeRuntime(inputs: .init(extensionId: "")).swiftDispatch(indent: 4) ?? ""
     return """
     // Generated file - do not edit
     import Foundation

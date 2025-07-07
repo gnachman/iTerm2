@@ -25,3 +25,6 @@ extension SendMessageRequestImpl: SendMessageRequest {}
 protocol SendMessageHandlerProtocol {
     func handle(request: SendMessageRequest, context: BrowserExtensionContext) async throws -> AnyJSONCodable
 }
+
+
+
