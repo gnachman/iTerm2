@@ -142,14 +142,16 @@ internal struct Namespace: StringConvertible {
     }
     func swiftDispatch(indent: Int) -> String {
         let s = String(repeating: " ", count: indent)
-        return ([s + "func dispatch(api: String, requestId: String, body: [String: Any]) async throws -> [String: Any] {",
-                 s + "    let jsonData = try JSONSerialization.data(withJSONObject: body)",
-                 s + "    switch api {"] +
-                all.map { $0.swiftDispatch(indent: indent + 4) } +
-                [s + "    default:",
-                 s + "        throw NSError(domain: \"BrowserExtension\", code: 1, userInfo: [NSLocalizedDescriptionKey: \"Unknown API: \\(api)\"])",
-                 s + "    }",
-                 s + "}"]).joined(separator: "\n")
+        return ([
+            s + "func dispatch(api: String, requestId: String, body: [String: Any]) async throws -> [String: Any] {",
+            s + "    let jsonData = try JSONSerialization.data(withJSONObject: body)",
+            s + "    switch api {"] +
+           all.map { $0.swiftDispatch(indent: indent + 4) } +
+           [s + "    default:",
+            s + "        throw NSError(domain: \"BrowserExtension\", code: 1, userInfo: [NSLocalizedDescriptionKey: \"Unknown API: \\(api)\"])",
+            s + "    }",
+            s + "}"
+           ]).joined(separator: "\n")
     }
 }
 
@@ -204,7 +206,7 @@ internal struct AsyncFunction: StringConvertible {
                 [s + "}",
                 s + "extension \(capitalizedName)RequestImpl: \(capitalizedName)Request {}",
                 s + "protocol \(capitalizedName)HandlerProtocol {",
-                 s2 + "func handle(request: \(capitalizedName)Request) async throws -> \(returnType)",
+                 s2 + "func handle(request: \(capitalizedName)Request, context: BrowserExtensionContext) async throws -> \(returnType)",
                  s + "}"
                 ]).joined(separator: "\n")
     }
@@ -214,7 +216,7 @@ internal struct AsyncFunction: StringConvertible {
                 s + "    let decoder = JSONDecoder()",
                 s + "    let request = try decoder.decode(\(capitalizedName)RequestImpl.self, from: jsonData)",
                 s + "    let handler = \(capitalizedName)Handler()",
-                s + "    let response = try await handler.handle(request: request)",
+                s + "    let response = try await handler.handle(request: request, context: context)",
                 s + "    let encodedResponse = try JSONEncoder().encode(response)",
                 s + "    return try JSONSerialization.jsonObject(with: encodedResponse) as! [String: Any]"].joined(separator: "\n")
     }
@@ -337,7 +339,7 @@ internal struct VariableArgsFunction: StringConvertible {
         }
         extension \(capitalizedName)RequestImpl: \(capitalizedName)Request {}
         protocol \(capitalizedName)HandlerProtocol {
-            func handle(request: \(capitalizedName)Request) async throws -> \(returnType)
+            func handle(request: \(capitalizedName)Request, context: BrowserExtensionContext) async throws -> \(returnType)
         }
         """.indentingLines(by: indent)
     }
@@ -348,7 +350,7 @@ internal struct VariableArgsFunction: StringConvertible {
             let decoder = JSONDecoder()
             let request = try decoder.decode(\(capitalizedName)RequestImpl.self, from: jsonData)
             let handler = \(capitalizedName)Handler()
-            let response = try await handler.handle(request: request)
+            let response = try await handler.handle(request: request, context: context)
             let encodedResponse = try JSONEncoder().encode(response)
             return try JSONSerialization.jsonObject(with: encodedResponse) as! [String: Any]
         """.indentingLines(by: indent)
@@ -431,12 +433,20 @@ public func generatedAPISwift() -> String {
     """
 }
 public func generatedDispatchSwift() -> String {
-    let swiftCode = makeChromeRuntime(inputs: .init(extensionId: "")).swiftDispatch(indent: 0)
+    let swiftCode = makeChromeRuntime(inputs: .init(extensionId: "")).swiftDispatch(indent: 4)
     return """
     // Generated file - do not edit
     import Foundation
     import BrowserExtensionShared
+
+    class BrowserExtensionDispatcher {
+        private let context: BrowserExtensionContext
+
+        init(context: BrowserExtensionContext) {
+            self.context = context
+        }
     
     \(swiftCode)
+    }
     """
 }

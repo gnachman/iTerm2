@@ -39,7 +39,17 @@ class SendMessageHandlerTests: XCTestCase {
         webView = AsyncWKWebView()
         webView.configuration.userContentController.add(ConsoleLogHandler(),
                                                        name: "consoleLog")
-        injector.injectRuntimeAPIs(into: webView)
+        let router = BrowserExtensionRouter(logger: mockLogger)
+        let context = BrowserExtensionContext(
+            logger: mockLogger,
+            router: router,
+            webView: webView,
+            browserExtension: mockBrowserExtension,
+            tab: nil,
+            frameId: nil
+        )
+        let dispatcher = BrowserExtensionDispatcher(context: context)
+        injector.injectRuntimeAPIs(into: webView, dispatcher: dispatcher)
         let html = "<html><body>Test</body></html>"
         try await webView.loadHTMLStringAsync(html, baseURL: nil)
         let jsBody = """
@@ -255,6 +265,182 @@ class SendMessageHandlerTests: XCTestCase {
         // Should receive an error about invalid message type
         XCTAssertNotNil(result?["error"])
         XCTAssertTrue((result?["error"] as? String)?.contains("Message must be a JSON object") ?? false)
+    }
+    
+    // MARK: - Direct Handler Tests
+    
+    func testSendMessageHandlerParsingSingleArgument() async throws {
+        let handler = SendMessageHandler()
+        let router = BrowserExtensionRouter(logger: mockLogger)
+        let context = BrowserExtensionContext(
+            logger: mockLogger,
+            router: router,
+            webView: webView,
+            browserExtension: mockBrowserExtension,
+            tab: nil,
+            frameId: nil
+        )
+        
+        // Test single argument: just message
+        let request = SendMessageRequestImpl(
+            requestId: "test-1",
+            args: [AnyJSONCodable(["greeting": "hello"])]
+        )
+        
+        do {
+            _ = try await handler.handle(request: request, context: context)
+            XCTFail("Should have thrown noMessageReceiver error")
+        } catch let error as BrowserExtensionError {
+            XCTAssertEqual(error, .noMessageReceiver)
+        }
+    }
+    
+    func testSendMessageHandlerParsingTwoArgumentsExtensionIdAndMessage() async throws {
+        let handler = SendMessageHandler()
+        let router = BrowserExtensionRouter(logger: mockLogger)
+        let context = BrowserExtensionContext(
+            logger: mockLogger,
+            router: router,
+            webView: webView,
+            browserExtension: mockBrowserExtension,
+            tab: nil,
+            frameId: nil
+        )
+        
+        // Test two arguments: extensionId and message
+        let request = SendMessageRequestImpl(
+            requestId: "test-2",
+            args: [
+                AnyJSONCodable("other-extension-id"),
+                AnyJSONCodable(["greeting": "hello"])
+            ]
+        )
+        
+        do {
+            _ = try await handler.handle(request: request, context: context)
+            XCTFail("Should have thrown noMessageReceiver error")
+        } catch let error as BrowserExtensionError {
+            XCTAssertEqual(error, .noMessageReceiver)
+        }
+    }
+    
+    func testSendMessageHandlerParsingTwoArgumentsMessageAndOptions() async throws {
+        let handler = SendMessageHandler()
+        let router = BrowserExtensionRouter(logger: mockLogger)
+        let context = BrowserExtensionContext(
+            logger: mockLogger,
+            router: router,
+            webView: webView,
+            browserExtension: mockBrowserExtension,
+            tab: nil,
+            frameId: nil
+        )
+        
+        // Test two arguments: message and options
+        let request = SendMessageRequestImpl(
+            requestId: "test-3",
+            args: [
+                AnyJSONCodable(["greeting": "hello"]),
+                AnyJSONCodable(["includeTlsChannelId": true])
+            ]
+        )
+        
+        do {
+            _ = try await handler.handle(request: request, context: context)
+            XCTFail("Should have thrown noMessageReceiver error")
+        } catch let error as BrowserExtensionError {
+            XCTAssertEqual(error, .noMessageReceiver)
+        }
+    }
+    
+    func testSendMessageHandlerParsingThreeArguments() async throws {
+        let handler = SendMessageHandler()
+        let router = BrowserExtensionRouter(logger: mockLogger)
+        let context = BrowserExtensionContext(
+            logger: mockLogger,
+            router: router,
+            webView: webView,
+            browserExtension: mockBrowserExtension,
+            tab: nil,
+            frameId: nil
+        )
+        
+        // Test three arguments: extensionId, message, and options
+        let request = SendMessageRequestImpl(
+            requestId: "test-4",
+            args: [
+                AnyJSONCodable("other-extension-id"),
+                AnyJSONCodable(["greeting": "hello"]),
+                AnyJSONCodable(["includeTlsChannelId": true])
+            ]
+        )
+        
+        do {
+            _ = try await handler.handle(request: request, context: context)
+            XCTFail("Should have thrown noMessageReceiver error")
+        } catch let error as BrowserExtensionError {
+            XCTAssertEqual(error, .noMessageReceiver)
+        }
+    }
+    
+    func testSendMessageHandlerNoArguments() async throws {
+        let handler = SendMessageHandler()
+        let router = BrowserExtensionRouter(logger: mockLogger)
+        let context = BrowserExtensionContext(
+            logger: mockLogger,
+            router: router,
+            webView: webView,
+            browserExtension: mockBrowserExtension,
+            tab: nil,
+            frameId: nil
+        )
+        
+        // Test no arguments
+        let request = SendMessageRequestImpl(
+            requestId: "test-5",
+            args: []
+        )
+        
+        do {
+            _ = try await handler.handle(request: request, context: context)
+            XCTFail("Should have thrown internalError")
+        } catch let error as BrowserExtensionError {
+            if case .internalError(let message) = error {
+                XCTAssertTrue(message.contains("at least one argument"))
+            } else {
+                XCTFail("Wrong error type: \(error)")
+            }
+        }
+    }
+    
+    func testSendMessageHandlerInvalidMessageType() async throws {
+        let handler = SendMessageHandler()
+        let router = BrowserExtensionRouter(logger: mockLogger)
+        let context = BrowserExtensionContext(
+            logger: mockLogger,
+            router: router,
+            webView: webView,
+            browserExtension: mockBrowserExtension,
+            tab: nil,
+            frameId: nil
+        )
+        
+        // Test invalid message type (not an object)
+        let request = SendMessageRequestImpl(
+            requestId: "test-6",
+            args: [AnyJSONCodable("not an object")]
+        )
+        
+        do {
+            _ = try await handler.handle(request: request, context: context)
+            XCTFail("Should have thrown internalError")
+        } catch let error as BrowserExtensionError {
+            if case .internalError(let message) = error {
+                XCTAssertTrue(message.contains("Message must be a JSON object"))
+            } else {
+                XCTFail("Wrong error type: \(error)")
+            }
+        }
     }
 }
 

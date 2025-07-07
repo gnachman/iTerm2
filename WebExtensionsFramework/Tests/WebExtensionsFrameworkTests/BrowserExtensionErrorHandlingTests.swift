@@ -71,7 +71,17 @@ class BrowserExtensionErrorHandlingTests: XCTestCase {
     
     func testSendMessageWithNoListenerSetsLastError() async throws {
         let webView = try await makeWebViewForTesting() { webView in
-            injector.injectRuntimeAPIs(into: webView)
+            let router = BrowserExtensionRouter(logger: mockLogger)
+            let context = BrowserExtensionContext(
+                logger: mockLogger,
+                router: router,
+                webView: webView,
+                browserExtension: mockBrowserExtension,
+                tab: nil,
+                frameId: nil
+            )
+            let dispatcher = BrowserExtensionDispatcher(context: context)
+            injector.injectRuntimeAPIs(into: webView, dispatcher: dispatcher)
         }
         
         // Simple test to check if sendMessage calls the callback at all
@@ -97,12 +107,15 @@ class BrowserExtensionErrorHandlingTests: XCTestCase {
             };
             """
         
-        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: .page) as? [String: Any]
+        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: WKContentWorld.page) as? [String: Any]
         print("SendMessage test result: \(result ?? [:])")
         
-        XCTAssertEqual(result?["callbackCalled"] as? Bool, true, "Callback should be called")
-        XCTAssertEqual(result?["hasLastError"] as? Bool, true, "Should have lastError")
-        XCTAssertEqual(result?["lastErrorMessage"] as? String, 
+        let callbackCalled = result?["callbackCalled"] as? Bool
+        XCTAssertEqual(callbackCalled, true, "Callback should be called")
+        let hasLastError = result?["hasLastError"] as? Bool
+        XCTAssertEqual(hasLastError, true, "Should have lastError")
+        let lastErrorMessage = result?["lastErrorMessage"] as? String
+        XCTAssertEqual(lastErrorMessage, 
                       "Could not establish connection. Receiving end does not exist.")
         // response should be null when there's an error
         XCTAssertTrue(result?["response"] is NSNull || result?["response"] == nil)
@@ -112,7 +125,17 @@ class BrowserExtensionErrorHandlingTests: XCTestCase {
         // This test would check console warnings for unchecked lastError
         // We'll need to capture console output to verify this
         let webView = try await makeWebViewForTesting() { webView in
-            injector.injectRuntimeAPIs(into: webView)
+            let router = BrowserExtensionRouter(logger: mockLogger)
+            let context = BrowserExtensionContext(
+                logger: mockLogger,
+                router: router,
+                webView: webView,
+                browserExtension: mockBrowserExtension,
+                tab: nil,
+                frameId: nil
+            )
+            let dispatcher = BrowserExtensionDispatcher(context: context)
+            injector.injectRuntimeAPIs(into: webView, dispatcher: dispatcher)
         }
         
         var consoleMessages: [String] = []
@@ -139,7 +162,7 @@ class BrowserExtensionErrorHandlingTests: XCTestCase {
             return true;
             """
         
-        _ = try await webView.callAsyncJavaScript(jsBody, contentWorld: .page)
+        _ = try await webView.callAsyncJavaScript(jsBody, contentWorld: WKContentWorld.page)
         
         // Verify warning was logged
         XCTAssertTrue(consoleMessages.contains { $0.contains("Unchecked") && $0.contains("lastError") })
