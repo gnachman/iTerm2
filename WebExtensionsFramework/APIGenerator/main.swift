@@ -5,6 +5,8 @@ if CommandLine.arguments.contains("--dumpjs") {
     // To see the JS we would generate run:
     // swift run APIGenerator -- --dumpjs
     print(generatedAPIJavascript(.init(extensionId: "extension id goes here")))
+} else if CommandLine.arguments.contains("--dumpdispatch") {
+    print(generatedDispatchSwift())
 } else {
     // Generate the API protocols
     do {

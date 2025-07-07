@@ -12,6 +12,33 @@ func makeChromeRuntime(inputs: APIInputs) -> Namespace {
         AsyncFunction("getPlatformInfo", returns: PlatformInfo.self) {}
         VariableArgsFunction("sendMessage", returns: AnyJSONCodable.self)
         ConfigurableProperty("lastError", getter: "return undefined;")
+
+        Namespace("onMessage", freeze: false, preventExtensions: true, isTopLevel: false) {
+            PureJSFunction("addListener",
+                """
+                addListener(listener) {
+                    __ext_listeners.push({ "external": false, "callback": listener });
+                }
+                """)
+            PureJSFunction("removeListener",
+                """
+                removeListener(listener) {
+                    const index = __ext_listeners.indexOf(listener);
+                    if (index !== -1) {
+                        __ext_listeners.splice(index, 1);
+                    }
+                }
+                """
+            )
+            PureJSFunction("hasListener",
+                """
+                hasListener(listener) {
+                    const index = __ext_listeners.indexOf(listener);
+                    return (index !== -1);
+                }
+                """
+            )
+        }
     }
 }
 
