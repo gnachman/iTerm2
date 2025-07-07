@@ -20,7 +20,7 @@ if CommandLine.arguments.contains("--dumpjs") {
     // Generate the dispatch function
     do {
         let content = generatedDispatchSwift()
-        let outputPath = "Sources/BrowserExtensionAPIDispatch.swift"
+        let outputPath = "Sources/BrowserExtensionDispatcher.swift"
         try content.write(toFile: outputPath, atomically: true, encoding: .utf8)
         print("Successfully generated \(outputPath)")
     } catch {

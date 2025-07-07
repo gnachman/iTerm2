@@ -48,29 +48,51 @@ class BrowserExtensionJavaScriptAPIInjectorTests: XCTestCase {
     
     func testRuntimeIdEndToEnd() async throws {
         let freshWebView = try await makeWebViewForTesting() { freshWebView in
-            injector.injectRuntimeAPIs(into: freshWebView)
+            let router = BrowserExtensionRouter(logger: mockLogger)
+            let context = BrowserExtensionContext(
+                logger: mockLogger,
+                router: router,
+                webView: freshWebView,
+                browserExtension: mockBrowserExtension,
+                tab: nil,
+                frameId: nil
+            )
+            let dispatcher = BrowserExtensionDispatcher(context: context)
+            injector.injectRuntimeAPIs(into: freshWebView, dispatcher: dispatcher)
         }
 
         let jsBody = "return chrome.runtime.id;"
 
         let expectedId = mockBrowserExtension.id.uuidString
-        let actual = try await freshWebView.callAsyncJavaScript(jsBody, contentWorld: .page) as? String
+        let actual = try await freshWebView.callAsyncJavaScript(jsBody, contentWorld: WKContentWorld.page) as? String
         XCTAssertEqual(actual, expectedId)
     }
     
     func testRuntimeGetPlatformInfoEndToEnd() async throws {
         let freshWebView = try await makeWebViewForTesting() { freshWebView in
-            injector.injectRuntimeAPIs(into: freshWebView)
+            let router = BrowserExtensionRouter(logger: mockLogger)
+            let context = BrowserExtensionContext(
+                logger: mockLogger,
+                router: router,
+                webView: freshWebView,
+                browserExtension: mockBrowserExtension,
+                tab: nil,
+                frameId: nil
+            )
+            let dispatcher = BrowserExtensionDispatcher(context: context)
+            injector.injectRuntimeAPIs(into: freshWebView, dispatcher: dispatcher)
         }
 
         let jsBody = "return await new Promise(resolve => chrome.runtime.getPlatformInfo(resolve));"
 
-        let actual = try await freshWebView.callAsyncJavaScript(jsBody, contentWorld: .page) as? [String: String]
+        let actual = try await freshWebView.callAsyncJavaScript(jsBody, contentWorld: WKContentWorld.page) as? [String: String]
         
         XCTAssertEqual(actual?["os"], "mac")
         XCTAssertNotNil(actual?["arch"])
         XCTAssertTrue(actual?["arch"] == "x86-64" || actual?["arch"] == "arm64")
-        XCTAssertEqual(actual?["arch"], actual?["nacl_arch"]) // nacl_arch should match arch
+        let arch = actual?["arch"]
+        let naclArch = actual?["nacl_arch"]
+        XCTAssertEqual(arch, naclArch) // nacl_arch should match arch
     }
     
     // MARK: - Helper Methods

@@ -3,23 +3,22 @@ import BrowserExtensionShared
 
 /// Handler for chrome.runtime.sendMessage API calls
 class SendMessageHandler: SendMessageHandlerProtocol {
-    
-    func handle(request: SendMessageRequest) async throws -> AnyJSONCodable {
+    func handle(request: SendMessageRequest,
+                context: BrowserExtensionContext) async throws -> AnyJSONCodable {
         // Parse arguments based on sendMessage signature variations:
         // 1 arg:  sendMessage(message)
         // 2 args: sendMessage(message, options) OR sendMessage(extensionId, message)
-        // 3 args: sendMessage(extensionId, message, options) OR sendMessage(message, options, callback)
-        //         (but callback is already removed by JS, so we only see the first case)
-        
+        // 3 args: sendMessage(extensionId, message, options)
+
         let args = request.args
         guard !args.isEmpty else {
             throw BrowserExtensionError.internalError("sendMessage requires at least one argument")
         }
-        
+
         var extensionId: String?
         var message: [String: Any]
         var options: [String: Any]?
-        
+
         // Parse arguments based on count and types
         switch args.count {
         case 1:
@@ -28,7 +27,7 @@ class SendMessageHandler: SendMessageHandlerProtocol {
                 throw BrowserExtensionError.internalError("Message must be a JSON object")
             }
             message = messageArg
-            
+
         case 2:
             // Need to determine if it's (extensionId, message) or (message, options)
             // If first arg is string, it's (extensionId, message)
@@ -47,7 +46,7 @@ class SendMessageHandler: SendMessageHandlerProtocol {
             } else {
                 throw BrowserExtensionError.internalError("Invalid argument types for sendMessage")
             }
-            
+
         case 3:
             // sendMessage(extensionId, message, options)
             guard let extensionIdArg = args[0].value as? String,
@@ -58,14 +57,26 @@ class SendMessageHandler: SendMessageHandlerProtocol {
             extensionId = extensionIdArg
             message = messageArg
             options = optionsArg
-            
+
         default:
             throw BrowserExtensionError.internalError("Too many arguments for sendMessage")
         }
-        
-        // For now, always throw "no receiver" to test error handling
-        // TODO: Implement actual message dispatch logic
-        throw BrowserExtensionError.noMessageReceiver
+
+        guard let webView = context.webView else {
+            throw BrowserExtensionError.noMessageReceiver
+        }
+        let messageSender = await BrowserExtensionContext.MessageSender(
+            sender: context.browserExtension,
+            senderWebview: webView,
+            tab: context.tab,
+            frameId: context.frameId)
+        context.logger.info("Will publish \(message) to \(extensionId ?? "(nil)") from \(messageSender) with options \(options ?? [:])")
+        let obj = try await context.router.publish(message: message,
+                                                   extensionId: extensionId,
+                                                   sender: messageSender,
+                                                   sendingWebView: webView,
+                                                   options: options ?? [:])
+        return AnyJSONCodable(obj)
     }
 }
 

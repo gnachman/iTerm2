@@ -22,16 +22,19 @@ class BrowserExtensionJavaScriptAPIInjector {
     
     /// Injects the chrome.runtime APIs into a webview
     /// - Parameter webView: The webview to inject APIs into
-    func injectRuntimeAPIs(into webView: WKWebView) {
+    func injectRuntimeAPIs(into webView: WKWebView, dispatcher: BrowserExtensionDispatcher) {
         logger.info("Injecting chrome.runtime APIs into webview")
         
         // Create shared callback handler for secure callback dispatch
-        let callbackHandler = BrowserExtensionSecureCallbackHandler(logger: logger)
-        
+        let callbackHandler = BrowserExtensionSecureCallbackHandler(
+            logger: logger,
+            function: .invokeCallback)
+
         // Add message handler for getPlatformInfo (id is now synchronous)
         webView.configuration.userContentController.add(
             BrowserExtensionMessageHandler(
                 callbackHandler: callbackHandler,
+                dispatcher: dispatcher,
                 logger: logger
             ),
             name: "requestBrowserExtension"
@@ -137,16 +140,21 @@ class BrowserExtensionJavaScriptAPIInjector {
 
 /// Message handler for chrome.runtime.getPlatformInfo requests
 class BrowserExtensionMessageHandler: NSObject, WKScriptMessageHandler {
-
     private let callbackHandler: BrowserExtensionSecureCallbackHandler
     private let logger: BrowserExtensionLogger
-    
-    init(callbackHandler: BrowserExtensionSecureCallbackHandler, logger: BrowserExtensionLogger) {
+    private let dispatcher: BrowserExtensionDispatcher
+
+    init(callbackHandler: BrowserExtensionSecureCallbackHandler,
+         dispatcher: BrowserExtensionDispatcher,
+         logger: BrowserExtensionLogger) {
         self.callbackHandler = callbackHandler
+        self.dispatcher = dispatcher
         self.logger = logger
     }
-    
-    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+
+    /// This is the entry point for API calls that call into native code.
+    func userContentController(_ userContentController: WKUserContentController,
+                               didReceive message: WKScriptMessage) {
         logger.info("Received runtime.getPlatformInfo request from JavaScript")
         
         // Extract requestId from message body
@@ -158,7 +166,13 @@ class BrowserExtensionMessageHandler: NSObject, WKScriptMessageHandler {
         }
         Task { @MainActor in
             do {
-                let obj = try await dispatch(api: api, requestId: requestId, body: messageBody)
+                // Invoke the correct native function
+                let obj = try await dispatcher.dispatch(
+                    api: api,
+                    requestId: requestId,
+                    body: messageBody)
+
+                // Send a response to the callback.
                 callbackHandler.invokeCallback(requestId: requestId, result: obj, in: message.webView)
             } catch {
                 callbackHandler.invokeCallback(requestId: requestId, error: error, in: message.webView)

@@ -1,7 +1,7 @@
 import Foundation
 
 /// Runtime errors that occur in the native extension code
-public enum BrowserExtensionError: Error, LocalizedError {
+public enum BrowserExtensionError: Error, LocalizedError, Equatable {
     case noMessageReceiver
     case messagePortClosed  
     case extensionContextInvalidated

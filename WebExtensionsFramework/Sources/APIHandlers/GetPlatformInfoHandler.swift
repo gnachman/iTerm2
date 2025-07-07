@@ -2,7 +2,8 @@ import Foundation
 import BrowserExtensionShared
 
 class GetPlatformInfoHandler: GetPlatformInfoHandlerProtocol {
-    func handle(request: GetPlatformInfoRequest) async throws -> PlatformInfo {
+    func handle(request: GetPlatformInfoRequest,
+                context: BrowserExtensionContext) async throws -> PlatformInfo {
         let arch: String
         #if arch(x86_64)
         arch = "x86-64"

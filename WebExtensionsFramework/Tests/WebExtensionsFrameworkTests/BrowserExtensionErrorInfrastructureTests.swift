@@ -44,7 +44,17 @@ class BrowserExtensionErrorInfrastructureTests: XCTestCase {
     // Test that the error infrastructure functions exist
     func testErrorInfrastructureExists() async throws {
         let webView = try await makeWebViewForTesting() { webView in
-            injector.injectRuntimeAPIs(into: webView)
+            let router = BrowserExtensionRouter(logger: mockLogger)
+            let context = BrowserExtensionContext(
+                logger: mockLogger,
+                router: router,
+                webView: webView,
+                browserExtension: mockBrowserExtension,
+                tab: nil,
+                frameId: nil
+            )
+            let dispatcher = BrowserExtensionDispatcher(context: context)
+            injector.injectRuntimeAPIs(into: webView, dispatcher: dispatcher)
         }
         
         let jsBody = """
@@ -57,7 +67,7 @@ class BrowserExtensionErrorInfrastructureTests: XCTestCase {
             };
             """
         
-        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: .page)
+        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: WKContentWorld.page)
         print("Infrastructure test result type: \(type(of: result))")
         print("Infrastructure test result: \(result ?? "nil")")
         
@@ -88,7 +98,17 @@ class BrowserExtensionErrorInfrastructureTests: XCTestCase {
     // Test that the lastError injection function works correctly
     func testLastErrorInjectionMechanism() async throws {
         let webView = try await makeWebViewForTesting() { webView in
-            injector.injectRuntimeAPIs(into: webView)
+            let router = BrowserExtensionRouter(logger: mockLogger)
+            let context = BrowserExtensionContext(
+                logger: mockLogger,
+                router: router,
+                webView: webView,
+                browserExtension: mockBrowserExtension,
+                tab: nil,
+                frameId: nil
+            )
+            let dispatcher = BrowserExtensionDispatcher(context: context)
+            injector.injectRuntimeAPIs(into: webView, dispatcher: dispatcher)
         }
         
         let jsBody = """
@@ -111,16 +131,29 @@ class BrowserExtensionErrorInfrastructureTests: XCTestCase {
             };
             """
         
-        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: .page) as? [String: Any]
-        XCTAssertEqual(result?["callbackCalled"] as? Bool, true)
-        XCTAssertEqual(result?["lastErrorMessage"] as? String, "Test error message")
-        XCTAssertEqual(result?["lastErrorNowUndefined"] as? Bool, true)
+        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: WKContentWorld.page) as? [String: Any]
+        let callbackCalled = result?["callbackCalled"] as? Bool
+        XCTAssertEqual(callbackCalled, true)
+        let lastErrorMessage = result?["lastErrorMessage"] as? String
+        XCTAssertEqual(lastErrorMessage, "Test error message")
+        let lastErrorNowUndefined = result?["lastErrorNowUndefined"] as? Bool
+        XCTAssertEqual(lastErrorNowUndefined, true)
     }
     
     // Test that unchecked lastError generates warning
     func testUncheckedLastErrorWarning() async throws {
         let webView = try await makeWebViewForTesting() { webView in
-            injector.injectRuntimeAPIs(into: webView)
+            let router = BrowserExtensionRouter(logger: mockLogger)
+            let context = BrowserExtensionContext(
+                logger: mockLogger,
+                router: router,
+                webView: webView,
+                browserExtension: mockBrowserExtension,
+                tab: nil,
+                frameId: nil
+            )
+            let dispatcher = BrowserExtensionDispatcher(context: context)
+            injector.injectRuntimeAPIs(into: webView, dispatcher: dispatcher)
         }
         
         var consoleMessages: [String] = []
@@ -149,7 +182,7 @@ class BrowserExtensionErrorInfrastructureTests: XCTestCase {
             return true;
             """
         
-        _ = try await webView.callAsyncJavaScript(jsBody, contentWorld: .page)
+        _ = try await webView.callAsyncJavaScript(jsBody, contentWorld: WKContentWorld.page)
         
         // Verify warning was logged
         XCTAssertTrue(consoleMessages.contains { $0.contains("Unchecked") && $0.contains("lastError") })
