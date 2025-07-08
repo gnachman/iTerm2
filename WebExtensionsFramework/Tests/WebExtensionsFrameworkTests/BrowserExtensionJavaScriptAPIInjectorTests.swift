@@ -8,8 +8,7 @@ class BrowserExtensionJavaScriptAPIInjectorTests: XCTestCase {
     var mockBrowserExtension: BrowserExtension!
     var mockLogger: BrowserExtensionLogger!
     var injector: BrowserExtensionJavaScriptAPIInjector!
-    var webView: WKWebView!
-    
+
     override func setUp() async throws {
         try await super.setUp()
         
@@ -33,13 +32,9 @@ class BrowserExtensionJavaScriptAPIInjectorTests: XCTestCase {
             browserExtension: mockBrowserExtension,
             logger: mockLogger
         )
-        
-        // Create webview
-        webView = WKWebView()
     }
     
     override func tearDown() async throws {
-        webView = nil
         injector = nil
         mockLogger = nil
         mockBrowserExtension = nil
@@ -48,7 +43,9 @@ class BrowserExtensionJavaScriptAPIInjectorTests: XCTestCase {
     
     func testRuntimeIdEndToEnd() async throws {
         let freshWebView = try await makeWebViewForTesting() { freshWebView in
-            let router = BrowserExtensionRouter(logger: mockLogger)
+            let network = BrowserExtensionNetwork()
+            network.add(webView: freshWebView, browserExtension: mockBrowserExtension)
+            let router = BrowserExtensionRouter(network: network, logger: mockLogger)
             let context = BrowserExtensionContext(
                 logger: mockLogger,
                 router: router,
@@ -58,7 +55,10 @@ class BrowserExtensionJavaScriptAPIInjectorTests: XCTestCase {
                 frameId: nil
             )
             let dispatcher = BrowserExtensionDispatcher(context: context)
-            injector.injectRuntimeAPIs(into: freshWebView, dispatcher: dispatcher)
+            injector.injectRuntimeAPIs(into: freshWebView,
+                                       dispatcher: dispatcher,
+                                       router: router,
+                                       network: network)
         }
 
         let jsBody = "return chrome.runtime.id;"
@@ -70,7 +70,9 @@ class BrowserExtensionJavaScriptAPIInjectorTests: XCTestCase {
     
     func testRuntimeGetPlatformInfoEndToEnd() async throws {
         let freshWebView = try await makeWebViewForTesting() { freshWebView in
-            let router = BrowserExtensionRouter(logger: mockLogger)
+            let network = BrowserExtensionNetwork()
+            network.add(webView: freshWebView, browserExtension: mockBrowserExtension)
+            let router = BrowserExtensionRouter(network: network, logger: mockLogger)
             let context = BrowserExtensionContext(
                 logger: mockLogger,
                 router: router,
@@ -80,7 +82,10 @@ class BrowserExtensionJavaScriptAPIInjectorTests: XCTestCase {
                 frameId: nil
             )
             let dispatcher = BrowserExtensionDispatcher(context: context)
-            injector.injectRuntimeAPIs(into: freshWebView, dispatcher: dispatcher)
+            injector.injectRuntimeAPIs(into: freshWebView,
+                                       dispatcher: dispatcher,
+                                       router: router,
+                                       network: network)
         }
 
         let jsBody = "return await new Promise(resolve => chrome.runtime.getPlatformInfo(resolve));"

@@ -72,11 +72,15 @@ class SendMessageHandler: SendMessageHandlerProtocol {
             frameId: context.frameId)
         context.logger.info("Will publish \(message) to \(extensionId ?? "(nil)") from \(messageSender) with options \(options ?? [:])")
         let obj = try await context.router.publish(message: message,
+                                                   requestId: request.requestId,
                                                    extensionId: extensionId,
                                                    sender: messageSender,
                                                    sendingWebView: webView,
                                                    options: options ?? [:])
-        return AnyJSONCodable(obj)
+        context.logger.debug("SendMessageHandler received from router: \(obj ?? "nil") type: \(type(of: obj))")
+        let result = AnyJSONCodable(obj)
+        context.logger.debug("SendMessageHandler returning AnyJSONCodable with value: \(result.value) type: \(type(of: result.value))")
+        return result
     }
 }
 

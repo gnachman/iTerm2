@@ -26,7 +26,9 @@ class SimpleChromeTest: XCTestCase {
         )
         
         let webView = AsyncWKWebView()
-        let router = BrowserExtensionRouter(logger: mockLogger)
+        let network = BrowserExtensionNetwork()
+        network.add(webView: webView, browserExtension: mockBrowserExtension)
+        let router = BrowserExtensionRouter(network: network, logger: mockLogger)
         let context = BrowserExtensionContext(
             logger: mockLogger,
             router: router,
@@ -36,8 +38,11 @@ class SimpleChromeTest: XCTestCase {
             frameId: nil
         )
         let dispatcher = BrowserExtensionDispatcher(context: context)
-        injector.injectRuntimeAPIs(into: webView, dispatcher: dispatcher)
-        
+        injector.injectRuntimeAPIs(into: webView,
+                                   dispatcher: dispatcher,
+                                   router: router,
+                                   network: network)
+
         let html = "<html><body>Test</body></html>"
         try await webView.loadHTMLStringAsync(html, baseURL: nil)
         

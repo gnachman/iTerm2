@@ -6,7 +6,7 @@ import Foundation
 import WebKit
 
 /// Weak reference wrapper for holding weak references in collections
-private class WeakBox<T> {
+class WeakBox<T> {
     private weak var _value: AnyObject?
     var value: T? {
         _value as? T

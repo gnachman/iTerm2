@@ -14,9 +14,9 @@ class BrowserExtensionRouterTests: XCTestCase {
         try await super.setUp()
         
         mockLogger = createTestLogger()
-        router = BrowserExtensionRouter(logger: mockLogger)
+        webView = AsyncWKWebView()
         
-        // Create mock browser extension
+        // Create mock browser extension first
         let manifest = ExtensionManifest(
             manifestVersion: 3,
             name: "Test Extension",
@@ -29,8 +29,11 @@ class BrowserExtensionRouterTests: XCTestCase {
             logger: mockLogger
         )
         
-        webView = AsyncWKWebView()
-    }
+        // Now create network and add webview
+        let network = BrowserExtensionNetwork()
+        network.add(webView: webView, browserExtension: mockBrowserExtension)
+        router = BrowserExtensionRouter(network: network, logger: mockLogger)
+            }
     
     override func tearDown() async throws {
         webView = nil
@@ -59,6 +62,7 @@ class BrowserExtensionRouterTests: XCTestCase {
         do {
             _ = try await router.publish(
                 message: ["type": "greeting", "data": "hello"],
+                requestId: "test-request-1",
                 extensionId: nil,
                 sender: sender,
                 sendingWebView: webView,
@@ -87,6 +91,7 @@ class BrowserExtensionRouterTests: XCTestCase {
         do {
             _ = try await router.publish(
                 message: ["type": "greeting", "data": "hello"],
+                requestId: "test-request-2",
                 extensionId: "other-extension-id",
                 sender: sender,
                 sendingWebView: webView,
@@ -115,6 +120,7 @@ class BrowserExtensionRouterTests: XCTestCase {
         do {
             _ = try await router.publish(
                 message: ["type": "greeting", "data": "hello"],
+                requestId: "test-request-3",
                 extensionId: nil,
                 sender: sender,
                 sendingWebView: webView,
@@ -189,6 +195,7 @@ class BrowserExtensionRouterTests: XCTestCase {
         do {
             _ = try await router.publish(
                 message: [:],
+                requestId: "test-request-4",
                 extensionId: nil,
                 sender: sender,
                 sendingWebView: webView,
@@ -232,6 +239,7 @@ class BrowserExtensionRouterTests: XCTestCase {
         do {
             _ = try await router.publish(
                 message: complexMessage,
+                requestId: "test-request-5",
                 extensionId: nil,
                 sender: sender,
                 sendingWebView: webView,

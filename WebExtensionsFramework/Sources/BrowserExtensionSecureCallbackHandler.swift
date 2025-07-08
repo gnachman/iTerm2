@@ -1,5 +1,6 @@
 import Foundation
 import WebKit
+import BrowserExtensionShared
 
 /// Secure callback handler that manages callback dispatch without exposing internals to page scripts
 class BrowserExtensionSecureCallbackHandler {
@@ -46,19 +47,32 @@ class BrowserExtensionSecureCallbackHandler {
                                 error: Error?,
                                 in webView: WKWebView?) {
         logger.info("Invoking secure callback for request: \(requestId)\(error != nil ? " with error" : "")")
+        logger.debug("SecureCallbackHandler received result: \(result ?? "nil") type: \(type(of: result)) error: \(error?.localizedDescription ?? "nil")")
         
-        // Encode result if present
+        // The result should already be a serialized BrowserExtensionEncodedValue from the dispatcher
         let resultString: String
         if let result {
+            // The dispatcher returns a [String: Any] that represents the encoded value
+            logger.debug("SecureCallbackHandler encoding result: \(result)")
             do {
-                let jsonData = try JSONSerialization.data(withJSONObject: result, options: [.fragmentsAllowed])
-                resultString = String(data: jsonData, encoding: .utf8) ?? "null"
+                let jsonData = try JSONSerialization.data(withJSONObject: result, options: [])
+                resultString = String(data: jsonData, encoding: .utf8) ?? "undefined"
+                logger.debug("SecureCallbackHandler JSON string: \(resultString)")
             } catch {
-                logger.error("Failed to encode result to JSON for request \(requestId): \(error)")
+                logger.error("Failed to serialize encoded result for request \(requestId): \(error)")
                 return
             }
         } else {
-            resultString = "null"
+            // No result provided (nil) - send undefined
+            let encodedValue = BrowserExtensionEncodedValue.undefined
+            do {
+                let encoder = JSONEncoder()
+                let data = try encoder.encode(encodedValue)
+                resultString = String(data: data, encoding: .utf8) ?? "undefined"
+            } catch {
+                logger.error("Failed to encode undefined result for request \(requestId): \(error)")
+                return
+            }
         }
         
         // Encode error if present
@@ -66,8 +80,7 @@ class BrowserExtensionSecureCallbackHandler {
         if let error {
             let errorInfo = BrowserExtensionErrorInfo(from: error)
             do {
-                let jsonData = try JSONEncoder().encode(errorInfo)
-                errorString = String(data: jsonData, encoding: .utf8) ?? "null"
+                errorString = try errorInfo.toJSONString()
             } catch {
                 logger.error("Failed to encode error to JSON for request \(requestId): \(error)")
                 return
@@ -78,7 +91,7 @@ class BrowserExtensionSecureCallbackHandler {
         
         // Call the secure callback function
         let callbackScript = """
-            \(function.rawValue)('\(requestId)', \(resultString), \(errorString));
+            \(function.rawValue)('\(requestId)', \(resultString.asJSONFragment), \(errorString));
         """
         
         webView?.evaluateJavaScript(callbackScript) { [weak self] _, error in

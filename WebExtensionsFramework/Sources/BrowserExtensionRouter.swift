@@ -16,22 +16,115 @@ import WebKit
 /// A listener may choose to send a reply, which goes to the sender's callback.
 class BrowserExtensionRouter {
     private let logger: BrowserExtensionLogger
+    private let network: BrowserExtensionNetwork
 
-    init(logger: BrowserExtensionLogger) {
+    class OutstandingRequest {
+        weak var webView: WKWebView?
+        var continuation: CheckedContinuation<Any?, Error>?
+
+        init(webView: WKWebView,
+             continuation: CheckedContinuation<Any?, Error>) {
+            self.webView = webView
+            self.continuation = continuation
+        }
+    }
+    // requestId is the key
+    private var outstandingRequests = [String: OutstandingRequest]()
+
+    init(network: BrowserExtensionNetwork,
+         logger: BrowserExtensionLogger) {
+        self.network = network
         self.logger = logger
     }
 
+    func sendReply(message: Any?,
+                   requestId: String) {
+        logger.info("sendReply \(String(describing: message)) with request ID \(requestId)")
+        if let outstandingRequest = outstandingRequests.removeValue(forKey: requestId) {
+            outstandingRequest.continuation?.resume(with: .success(message))
+        }
+    }
+
     // Deliver a message from sendMessage to all webviews associated with a particular extension,
-    // or, if none is given, the sender's extension.
+    // or, if none is given, the sender's extension. This returns the response, which comes
+    // asynchronously.
     func publish(message: [String: Any],
+                 requestId: String,  // Needed for recipient to respond
                  extensionId directedRecipient: String?,
                  sender: BrowserExtensionContext.MessageSender,
                  sendingWebView: WKWebView,
-                 options: [String: Any]) async throws -> [String: Any]? {
-        let destinationID = directedRecipient ?? sender.id
-        logger.info("publish \(message) to extension \(destinationID) from \(sender)")
-        throw BrowserExtensionError.noMessageReceiver
+                 options: [String: Any]) async throws -> Any? {
+        return try await withCheckedThrowingContinuation { continuation in
+            outstandingRequests[requestId] = .init(webView: sendingWebView,
+                                                   continuation: continuation)
+            Task { @MainActor in
+                let destinationID = directedRecipient ?? sender.id
+                await reallyPublish(message: message,
+                                    requestId: requestId,
+                                    destinationID: destinationID,
+                                    sender: sender,
+                                    sendingWebView: sendingWebView,
+                                    options: options)
+            }
+        }
     }
+
+    private func reallyPublish(message: [String: Any],
+                               requestId: String,
+                               destinationID: String,
+                               sender: BrowserExtensionContext.MessageSender,
+                               sendingWebView: WKWebView,
+                               options: [String: Any]) async {
+        logger.info("publish \(message) to extension \(destinationID) from \(sender)")
+
+        let receiverWebViews = network.webViews(for: destinationID)
+        guard !receiverWebViews.isEmpty else {
+            outstandingRequests.removeValue(forKey: requestId)?.continuation?.resume(throwing: BrowserExtensionError.noMessageReceiver)
+            return
+        }
+        var anyKeepAlive = false
+        var anyResponse = false
+        var anyListenersInvoked = false
+        for webview in receiverWebViews {
+            let isExternal = destinationID != sender.id
+            logger.debug("Invoke listener in webview \(webview)")
+            do {
+                let messageJSON = try message.toJSONString()
+                let senderJSON = try sender.toJSONString()
+                let requestIdJSON = try requestId.toJSONString()
+                
+                let jsResult = try await webview.evaluateJavaScript(
+                    "window.__EXT_invokeListener__(\(requestIdJSON), \(messageJSON), \(senderJSON), \(isExternal), false)")
+                guard let dict = jsResult as? [String: Any] else {
+                    logger.error("Failed to cast JavaScript result to dictionary")
+                    continue
+                }
+                let keepAlive = dict["keepAlive"]! as! Bool
+                let responded = dict["responded"]! as! Bool
+                let listenersInvoked = dict["listenersInvoked"]! as! Int
+                anyKeepAlive ||= keepAlive
+                anyResponse ||= responded
+                anyListenersInvoked ||= (listenersInvoked > 0)
+            } catch {
+                logger.error("__EXT_invokeListener__ threw: \(error)")
+            }
+        }
+        if !anyListenersInvoked {
+            outstandingRequests.removeValue(forKey: requestId)?.continuation?.resume(throwing: BrowserExtensionError.noMessageReceiver)
+        } else if !anyKeepAlive && !anyResponse {
+            outstandingRequests.removeValue(forKey: requestId)?.continuation?.resume(with: .success(nil))
+        }
+    }
+}
+
+infix operator ||= : AssignmentPrecedence
+
+@discardableResult
+func ||=(lhs: inout Bool, rhs: @autoclosure () -> Bool) -> Bool {
+    if !lhs && rhs() {
+        lhs = true
+    }
+    return lhs
 }
 
 extension Encodable {

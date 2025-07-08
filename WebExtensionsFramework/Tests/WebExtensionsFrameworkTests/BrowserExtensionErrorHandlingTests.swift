@@ -71,7 +71,9 @@ class BrowserExtensionErrorHandlingTests: XCTestCase {
     
     func testSendMessageWithNoListenerSetsLastError() async throws {
         let webView = try await makeWebViewForTesting() { webView in
-            let router = BrowserExtensionRouter(logger: mockLogger)
+            let network = BrowserExtensionNetwork()
+            network.add(webView: webView, browserExtension: mockBrowserExtension)
+            let router = BrowserExtensionRouter(network: network, logger: mockLogger)
             let context = BrowserExtensionContext(
                 logger: mockLogger,
                 router: router,
@@ -81,7 +83,10 @@ class BrowserExtensionErrorHandlingTests: XCTestCase {
                 frameId: nil
             )
             let dispatcher = BrowserExtensionDispatcher(context: context)
-            injector.injectRuntimeAPIs(into: webView, dispatcher: dispatcher)
+            injector.injectRuntimeAPIs(into: webView,
+                                       dispatcher: dispatcher,
+                                       router: router,
+                                       network: network)
         }
         
         // Simple test to check if sendMessage calls the callback at all
@@ -108,7 +113,7 @@ class BrowserExtensionErrorHandlingTests: XCTestCase {
             """
         
         let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: WKContentWorld.page) as? [String: Any]
-        print("SendMessage test result: \(result ?? [:])")
+        mockLogger.debug("SendMessage test result: \(result ?? [:])")
         
         let callbackCalled = result?["callbackCalled"] as? Bool
         XCTAssertEqual(callbackCalled, true, "Callback should be called")
@@ -125,7 +130,9 @@ class BrowserExtensionErrorHandlingTests: XCTestCase {
         // This test would check console warnings for unchecked lastError
         // We'll need to capture console output to verify this
         let webView = try await makeWebViewForTesting() { webView in
-            let router = BrowserExtensionRouter(logger: mockLogger)
+            let network = BrowserExtensionNetwork()
+            network.add(webView: webView, browserExtension: mockBrowserExtension)
+            let router = BrowserExtensionRouter(network: network, logger: mockLogger)
             let context = BrowserExtensionContext(
                 logger: mockLogger,
                 router: router,
@@ -135,7 +142,10 @@ class BrowserExtensionErrorHandlingTests: XCTestCase {
                 frameId: nil
             )
             let dispatcher = BrowserExtensionDispatcher(context: context)
-            injector.injectRuntimeAPIs(into: webView, dispatcher: dispatcher)
+            injector.injectRuntimeAPIs(into: webView,
+                                       dispatcher: dispatcher,
+                                       router: router,
+                                       network: network)
         }
         
         var consoleMessages: [String] = []

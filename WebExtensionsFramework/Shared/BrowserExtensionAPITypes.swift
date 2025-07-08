@@ -3,7 +3,7 @@ import Foundation
 // Shared types used by both the API generator and generated protocols
 
 // Can represent any JSON object.
-public struct AnyJSONCodable: Codable {
+public struct AnyJSONCodable: Codable, BrowserExtensionJSONRepresentable {
     public let value: Any
 
     public init<T>(_ value: T?) {
@@ -38,6 +38,8 @@ public struct AnyJSONCodable: Codable {
         switch value {
         case is Void:
             try container.encodeNil()
+        case is NSNull:
+            try container.encodeNil()
         case let bool as Bool:
             try container.encode(bool)
         case let int as Int:
@@ -55,9 +57,28 @@ public struct AnyJSONCodable: Codable {
             throw EncodingError.invalidValue(value, context)
         }
     }
+    
+    public var browserExtensionEncodedValue: BrowserExtensionEncodedValue {
+        // Handle the special cases that AnyJSONCodable supports
+        switch value {
+        case is Void:
+            return .undefined
+        case is NSNull:
+            return .null
+        default:
+            do {
+                // Use existing encoding logic from AnyJSONCodable
+                let data = try JSONEncoder().encode(self)
+                let jsonObject = try JSONSerialization.jsonObject(with: data)
+                return try .json(jsonObject)
+            } catch {
+                return .undefined
+            }
+        }
+    }
 }
 
-public struct PlatformInfo: Codable {
+public struct PlatformInfo: Codable, BrowserExtensionJSONRepresentable {
     public var os: String
     public var arch: String
     public var nacl_arch: String

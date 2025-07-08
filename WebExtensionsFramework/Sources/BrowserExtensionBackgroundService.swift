@@ -3,7 +3,6 @@
 
 import Foundation
 import WebKit
-import AppKit
 
 /// Protocol for managing background script execution in extensions
 @MainActor

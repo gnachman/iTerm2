@@ -1,6 +1,5 @@
 import Foundation
 import WebKit
-import AppKit
 
 /// Factory for creating configured WKWebViews for extension contexts
 @MainActor
