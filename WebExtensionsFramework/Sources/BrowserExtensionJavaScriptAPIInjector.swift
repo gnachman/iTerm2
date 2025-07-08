@@ -22,24 +22,39 @@ class BrowserExtensionJavaScriptAPIInjector {
     
     /// Injects the chrome.runtime APIs into a webview
     /// - Parameter webView: The webview to inject APIs into
-    func injectRuntimeAPIs(into webView: WKWebView, dispatcher: BrowserExtensionDispatcher) {
+    func injectRuntimeAPIs(into webView: WKWebView,
+                           dispatcher: BrowserExtensionDispatcher,
+                           router: BrowserExtensionRouter,
+                           network: BrowserExtensionNetwork) {
         logger.info("Injecting chrome.runtime APIs into webview")
+        
+        // Register webview with the network so it can receive messages
+        network.add(webView: webView, browserExtension: browserExtension)
         
         // Create shared callback handler for secure callback dispatch
         let callbackHandler = BrowserExtensionSecureCallbackHandler(
             logger: logger,
             function: .invokeCallback)
 
-        // Add message handler for getPlatformInfo (id is now synchronous)
+        // Add message handler for chrome.runtime.* native calls (id is now synchronous)
         webView.configuration.userContentController.add(
-            BrowserExtensionMessageHandler(
+            BrowserExtensionAPIRequestMessageHandler(
                 callbackHandler: callbackHandler,
                 dispatcher: dispatcher,
                 logger: logger
             ),
             name: "requestBrowserExtension"
         )
-        
+
+        // Add message handler for onMessage listeners
+        webView.configuration.userContentController.add(
+            BrowserExtensionListenerResponseHandler(
+                router: router,
+                logger: logger
+            ),
+            name: "listenerResponseBrowserExtension"
+        )
+
         // Get the JavaScript to inject with the extension data
         let injectionScript = createRuntimeAPIsInjectionScript(browserExtension: browserExtension)
         
@@ -61,45 +76,3 @@ class BrowserExtensionJavaScriptAPIInjector {
 }
 
 
-/// Message handler for chrome.runtime.getPlatformInfo requests
-class BrowserExtensionMessageHandler: NSObject, WKScriptMessageHandler {
-    private let callbackHandler: BrowserExtensionSecureCallbackHandler
-    private let logger: BrowserExtensionLogger
-    private let dispatcher: BrowserExtensionDispatcher
-
-    init(callbackHandler: BrowserExtensionSecureCallbackHandler,
-         dispatcher: BrowserExtensionDispatcher,
-         logger: BrowserExtensionLogger) {
-        self.callbackHandler = callbackHandler
-        self.dispatcher = dispatcher
-        self.logger = logger
-    }
-
-    /// This is the entry point for API calls that call into native code.
-    func userContentController(_ userContentController: WKUserContentController,
-                               didReceive message: WKScriptMessage) {
-        logger.info("Received runtime.getPlatformInfo request from JavaScript")
-        
-        // Extract requestId from message body
-        guard let messageBody = message.body as? [String: Any],
-              let requestId = messageBody["requestId"] as? String,
-              let api = messageBody["api"] as? String else {
-                  logger.error("Invalid message: \(message.body))")
-            return
-        }
-        Task { @MainActor in
-            do {
-                // Invoke the correct native function
-                let obj = try await dispatcher.dispatch(
-                    api: api,
-                    requestId: requestId,
-                    body: messageBody)
-
-                // Send a response to the callback.
-                callbackHandler.invokeCallback(requestId: requestId, result: obj, in: message.webView)
-            } catch {
-                callbackHandler.invokeCallback(requestId: requestId, error: error, in: message.webView)
-            }
-        }
-    }
-}

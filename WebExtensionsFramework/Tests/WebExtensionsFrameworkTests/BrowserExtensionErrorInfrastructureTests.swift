@@ -44,7 +44,9 @@ class BrowserExtensionErrorInfrastructureTests: XCTestCase {
     // Test that the error infrastructure functions exist
     func testErrorInfrastructureExists() async throws {
         let webView = try await makeWebViewForTesting() { webView in
-            let router = BrowserExtensionRouter(logger: mockLogger)
+            let network = BrowserExtensionNetwork()
+            network.add(webView: webView, browserExtension: mockBrowserExtension)
+            let router = BrowserExtensionRouter(network: network, logger: mockLogger)
             let context = BrowserExtensionContext(
                 logger: mockLogger,
                 router: router,
@@ -54,7 +56,10 @@ class BrowserExtensionErrorInfrastructureTests: XCTestCase {
                 frameId: nil
             )
             let dispatcher = BrowserExtensionDispatcher(context: context)
-            injector.injectRuntimeAPIs(into: webView, dispatcher: dispatcher)
+            injector.injectRuntimeAPIs(into: webView,
+                                       dispatcher: dispatcher,
+                                       router: router,
+                                       network: network)
         }
         
         let jsBody = """
@@ -68,15 +73,11 @@ class BrowserExtensionErrorInfrastructureTests: XCTestCase {
             """
         
         let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: WKContentWorld.page)
-        print("Infrastructure test result type: \(type(of: result))")
-        print("Infrastructure test result: \(result ?? "nil")")
         
         guard let dictResult = result as? [String: Any] else {
             XCTFail("Result is not a dictionary: \(result ?? "nil")")
             return
         }
-        
-        print("Dict result: \(dictResult)")
         
         // WebKit converts JavaScript booleans to numbers (1/0), so we need to check for both
         func boolValue(for key: String) -> Bool? {
@@ -98,7 +99,9 @@ class BrowserExtensionErrorInfrastructureTests: XCTestCase {
     // Test that the lastError injection function works correctly
     func testLastErrorInjectionMechanism() async throws {
         let webView = try await makeWebViewForTesting() { webView in
-            let router = BrowserExtensionRouter(logger: mockLogger)
+            let network = BrowserExtensionNetwork()
+            network.add(webView: webView, browserExtension: mockBrowserExtension)
+            let router = BrowserExtensionRouter(network: network, logger: mockLogger)
             let context = BrowserExtensionContext(
                 logger: mockLogger,
                 router: router,
@@ -108,7 +111,10 @@ class BrowserExtensionErrorInfrastructureTests: XCTestCase {
                 frameId: nil
             )
             let dispatcher = BrowserExtensionDispatcher(context: context)
-            injector.injectRuntimeAPIs(into: webView, dispatcher: dispatcher)
+            injector.injectRuntimeAPIs(into: webView,
+                                       dispatcher: dispatcher,
+                                       router: router,
+                                       network: network)
         }
         
         let jsBody = """
@@ -143,7 +149,9 @@ class BrowserExtensionErrorInfrastructureTests: XCTestCase {
     // Test that unchecked lastError generates warning
     func testUncheckedLastErrorWarning() async throws {
         let webView = try await makeWebViewForTesting() { webView in
-            let router = BrowserExtensionRouter(logger: mockLogger)
+            let network = BrowserExtensionNetwork()
+            network.add(webView: webView, browserExtension: mockBrowserExtension)
+            let router = BrowserExtensionRouter(network: network, logger: mockLogger)
             let context = BrowserExtensionContext(
                 logger: mockLogger,
                 router: router,
@@ -153,7 +161,10 @@ class BrowserExtensionErrorInfrastructureTests: XCTestCase {
                 frameId: nil
             )
             let dispatcher = BrowserExtensionDispatcher(context: context)
-            injector.injectRuntimeAPIs(into: webView, dispatcher: dispatcher)
+            injector.injectRuntimeAPIs(into: webView,
+                                       dispatcher: dispatcher,
+                                       router: router,
+                                       network: network)
         }
         
         var consoleMessages: [String] = []

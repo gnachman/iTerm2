@@ -1,0 +1,45 @@
+# Script 2:
+func myhandler(message, sender, sendResponse) { sendResponse("Got it"); }
+chrome.runtime.onMessage.addListener(myhandler)
+  __ext_listeners.push(myhandler)
+
+# Script 1:
+
+func mycallback(reply) { console.log(reply); }
+chrome.runtime.sendMessage({foo:bar}, mycallback)
+  requestId = random()  // 123
+  __ext_callbackMap[requestId] = mycallback
+  postMessage({foo:bar}, 123) 
+
+# Native - receives postMessage
+BrowserExtensionAPIRequestMessageHandler.userContentController(_:,didReceive:{requestId: 123, message: {foo:bar}, api: "sendMessage"})
+    BrowserExtensionDispatcher.dispatch(api: "sendMessage", requestId: 123, body: {foo:bar})
+        SendMessageHandler.handle()
+            BrowserExtensionRouter.publish()
+                outstandingRequests[123] = continuation
+                webView.evaluateJavaScript("__window.__EXT_invokeListener__(123, '{foo:bar}', sender, false)") 
+                return await continuation  // blocks until continuation.resume is called below, will return 123
+                
+
+# Script 2's runtime:
+__EXT_invokeListener__(requestId, message, sender, external)
+    for listener in __ext_listeners:
+        listener(message, sender, sendResponse)
+            sendResponse("Got it")
+                window.webkit.messageHandlers.listenerResponseBrowserExtension.postMessage({ 123, "Got it" });
+
+# Native - receives postMessage with reply
+BrowserExtensionListenerResponseHandler.userContentController(_:,didReceive:{123, "Got it"})                                         
+    BrowserExtensionRouter.sendReply(message:"Got it", requestId: 123)
+        outstandingRequests[123].continution.resume(with: "Got it")
+
+# await continuation from before is unblocked, returns "Got it" up to BrowserExtensionAPIRequestMessageHandler.userContentController(_:,didReceive:).
+BrowserExtensionAPIRequestMessageHandler.userContentController(_:,didReceive:)
+    BrowserExtensionSecureCallbackHandler.invokeCallback(requestId: 123, result: "Got it", in: script1webview)
+        script1webview.evaluateJavaScript("window.__EXT_invokeCallback__(123, 'Got it', null)")
+
+# Script 1:
+__EXT_invokeCallback__(123, 'Got it', null)
+    cb = __ext_callbackMap.get(requestId)
+    cb("Got it")  // calls mycallback
+        console.log("Got it")

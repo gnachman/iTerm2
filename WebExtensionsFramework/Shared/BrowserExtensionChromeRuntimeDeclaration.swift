@@ -23,9 +23,11 @@ func makeChromeRuntime(inputs: APIInputs) -> Namespace {
             PureJSFunction("removeListener",
                 """
                 removeListener(listener) {
-                    const index = __ext_listeners.indexOf(listener);
-                    if (index !== -1) {
-                        __ext_listeners.splice(index, 1);
+                    const idx = __ext_listeners.findIndex(entry =>
+                        entry.external === false &&
+                        entry.callback === listener);
+                    if (idx !== -1) {
+                        __ext_listeners.splice(idx, 1);
                     }
                 }
                 """
@@ -33,8 +35,9 @@ func makeChromeRuntime(inputs: APIInputs) -> Namespace {
             PureJSFunction("hasListener",
                 """
                 hasListener(listener) {
-                    const index = __ext_listeners.indexOf(listener);
-                    return (index !== -1);
+                    return __ext_listeners.some(entry =>
+                        entry.external === false &&
+                        entry.callback === listener);
                 }
                 """
             )

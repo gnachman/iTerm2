@@ -39,7 +39,10 @@ class SendMessageHandlerTests: XCTestCase {
         webView = AsyncWKWebView()
         webView.configuration.userContentController.add(ConsoleLogHandler(),
                                                        name: "consoleLog")
-        let router = BrowserExtensionRouter(logger: mockLogger)
+        let network = BrowserExtensionNetwork()
+        network.add(webView: webView, browserExtension: mockBrowserExtension)
+        let router = BrowserExtensionRouter(network: network,
+                                            logger: mockLogger)
         let context = BrowserExtensionContext(
             logger: mockLogger,
             router: router,
@@ -49,7 +52,10 @@ class SendMessageHandlerTests: XCTestCase {
             frameId: nil
         )
         let dispatcher = BrowserExtensionDispatcher(context: context)
-        injector.injectRuntimeAPIs(into: webView, dispatcher: dispatcher)
+        injector.injectRuntimeAPIs(into: webView,
+                                   dispatcher: dispatcher,
+                                   router: router,
+                                   network: network)
         let html = "<html><body>Test</body></html>"
         try await webView.loadHTMLStringAsync(html, baseURL: nil)
         let jsBody = """
@@ -271,7 +277,9 @@ class SendMessageHandlerTests: XCTestCase {
     
     func testSendMessageHandlerParsingSingleArgument() async throws {
         let handler = SendMessageHandler()
-        let router = BrowserExtensionRouter(logger: mockLogger)
+        let network = BrowserExtensionNetwork()
+        network.add(webView: webView, browserExtension: mockBrowserExtension)
+        let router = BrowserExtensionRouter(network: network, logger: mockLogger)
         let context = BrowserExtensionContext(
             logger: mockLogger,
             router: router,
@@ -297,7 +305,9 @@ class SendMessageHandlerTests: XCTestCase {
     
     func testSendMessageHandlerParsingTwoArgumentsExtensionIdAndMessage() async throws {
         let handler = SendMessageHandler()
-        let router = BrowserExtensionRouter(logger: mockLogger)
+        let network = BrowserExtensionNetwork()
+        network.add(webView: webView, browserExtension: mockBrowserExtension)
+        let router = BrowserExtensionRouter(network: network, logger: mockLogger)
         let context = BrowserExtensionContext(
             logger: mockLogger,
             router: router,
@@ -326,7 +336,9 @@ class SendMessageHandlerTests: XCTestCase {
     
     func testSendMessageHandlerParsingTwoArgumentsMessageAndOptions() async throws {
         let handler = SendMessageHandler()
-        let router = BrowserExtensionRouter(logger: mockLogger)
+        let network = BrowserExtensionNetwork()
+        network.add(webView: webView, browserExtension: mockBrowserExtension)
+        let router = BrowserExtensionRouter(network: network, logger: mockLogger)
         let context = BrowserExtensionContext(
             logger: mockLogger,
             router: router,
@@ -355,7 +367,9 @@ class SendMessageHandlerTests: XCTestCase {
     
     func testSendMessageHandlerParsingThreeArguments() async throws {
         let handler = SendMessageHandler()
-        let router = BrowserExtensionRouter(logger: mockLogger)
+        let network = BrowserExtensionNetwork()
+        network.add(webView: webView, browserExtension: mockBrowserExtension)
+        let router = BrowserExtensionRouter(network: network, logger: mockLogger)
         let context = BrowserExtensionContext(
             logger: mockLogger,
             router: router,
@@ -385,7 +399,9 @@ class SendMessageHandlerTests: XCTestCase {
     
     func testSendMessageHandlerNoArguments() async throws {
         let handler = SendMessageHandler()
-        let router = BrowserExtensionRouter(logger: mockLogger)
+        let network = BrowserExtensionNetwork()
+        network.add(webView: webView, browserExtension: mockBrowserExtension)
+        let router = BrowserExtensionRouter(network: network, logger: mockLogger)
         let context = BrowserExtensionContext(
             logger: mockLogger,
             router: router,
@@ -415,7 +431,9 @@ class SendMessageHandlerTests: XCTestCase {
     
     func testSendMessageHandlerInvalidMessageType() async throws {
         let handler = SendMessageHandler()
-        let router = BrowserExtensionRouter(logger: mockLogger)
+        let network = BrowserExtensionNetwork()
+        network.add(webView: webView, browserExtension: mockBrowserExtension)
+        let router = BrowserExtensionRouter(network: network, logger: mockLogger)
         let context = BrowserExtensionContext(
             logger: mockLogger,
             router: router,

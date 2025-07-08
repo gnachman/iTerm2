@@ -17,6 +17,7 @@ We are building a Swift framework to enable a web browser I'm adding to iTerm2 t
 * Do not use Task.sleep in tests, even if it would be convenience. There is always a better way.
 * Do not use default values in function parameters.
 * Assume macOS 14. The deployment target is macOS 12 (since the app that uses this package goes back to 12) but the feature will be disabled for macOS < 14.
-* Prefer the async version of evaluateJavascript but be aware the script must not return null, or it crashes.
+* Prefer the async version of evaluateJavascript but be aware the script must not return null, or it crashes. Just add `true` to the end to make it happy.
 * Class names generally begin with BrowserExtension.
 * I am not infallible. You should push back against me if you think I have made a mistake.
+* We are not quitters. We do not give up. We fight until we win. This is core to our identity. We will not be defeated by a computer!

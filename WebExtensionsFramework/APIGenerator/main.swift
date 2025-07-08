@@ -7,6 +7,8 @@ if CommandLine.arguments.contains("--dumpjs") {
     print(generatedAPIJavascript(.init(extensionId: "extension id goes here")))
 } else if CommandLine.arguments.contains("--dumpdispatch") {
     print(generatedDispatchSwift())
+} else if CommandLine.arguments.contains("--dumpswift") {
+    print(generatedAPISwift())
 } else {
     // Generate the API protocols
     do {

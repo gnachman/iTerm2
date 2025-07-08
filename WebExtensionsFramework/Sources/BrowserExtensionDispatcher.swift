@@ -18,15 +18,27 @@ class BrowserExtensionDispatcher {
             let request = try decoder.decode(GetPlatformInfoRequestImpl.self, from: jsonData)
             let handler = GetPlatformInfoHandler()
             let response = try await handler.handle(request: request, context: context)
-            let encodedResponse = try JSONEncoder().encode(response)
-            return try JSONSerialization.jsonObject(with: encodedResponse) as! [String: Any]
+            context.logger.debug("Dispatcher got response: \(response) type: \(type(of: response))")
+            let encodedValue = response.browserExtensionEncodedValue
+            context.logger.debug("Dispatcher encoded value: \(encodedValue)")
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(encodedValue)
+            let jsonObject = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+            context.logger.debug("Dispatcher returning: \(jsonObject)")
+            return jsonObject
         case "sendMessage":
             let decoder = JSONDecoder()
             let request = try decoder.decode(SendMessageRequestImpl.self, from: jsonData)
             let handler = SendMessageHandler()
             let response = try await handler.handle(request: request, context: context)
-            let encodedResponse = try JSONEncoder().encode(response)
-            return try JSONSerialization.jsonObject(with: encodedResponse) as! [String: Any]
+            context.logger.debug("Dispatcher got response: \(response) type: \(type(of: response))")
+            let encodedValue = response.browserExtensionEncodedValue
+            context.logger.debug("Dispatcher encoded value: \(encodedValue)")
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(encodedValue)
+            let jsonObject = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+            context.logger.debug("Dispatcher returning: \(jsonObject)")
+            return jsonObject
 
         default:
             throw NSError(domain: "BrowserExtension", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unknown API: \(api)"])
