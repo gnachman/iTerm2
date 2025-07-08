@@ -8,21 +8,29 @@
 import Foundation
 import WebKit
 
+/// Data source for providing content world information to the router
+public protocol BrowserExtensionRouterDataSource: AnyObject {
+    /// Get the content world for a given extension ID
+    func contentWorld(for extensionId: String) async -> WKContentWorld?
+}
+
 /// Routes messages between different webviews.
 /// The initial message is sent:
 ///     chrome.runtime.sendMessage -> chrome.runtime.onMessage.addListener
 ///     chrome.runtime.sendMessage -> chrome.runtime.onMessageExternal.addListener
 ///     chrome.tabs.sendMessage    -> chrome.runtime.onMessage.addListener
 /// A listener may choose to send a reply, which goes to the sender's callback.
-class BrowserExtensionRouter {
+@MainActor
+public class BrowserExtensionRouter {
     private let logger: BrowserExtensionLogger
     private let network: BrowserExtensionNetwork
+    public weak var dataSource: BrowserExtensionRouterDataSource?
 
     class OutstandingRequest {
-        weak var webView: WKWebView?
+        weak var webView: BrowserExtensionWKWebView?
         var continuation: CheckedContinuation<Any?, Error>?
 
-        init(webView: WKWebView,
+        init(webView: BrowserExtensionWKWebView,
              continuation: CheckedContinuation<Any?, Error>) {
             self.webView = webView
             self.continuation = continuation
@@ -31,14 +39,14 @@ class BrowserExtensionRouter {
     // requestId is the key
     private var outstandingRequests = [String: OutstandingRequest]()
 
-    init(network: BrowserExtensionNetwork,
-         logger: BrowserExtensionLogger) {
+    public init(network: BrowserExtensionNetwork,
+                logger: BrowserExtensionLogger) {
         self.network = network
         self.logger = logger
     }
 
-    func sendReply(message: Any?,
-                   requestId: String) {
+    public func sendReply(message: Any?,
+                          requestId: String) {
         logger.info("sendReply \(String(describing: message)) with request ID \(requestId)")
         if let outstandingRequest = outstandingRequests.removeValue(forKey: requestId) {
             outstandingRequest.continuation?.resume(with: .success(message))
@@ -52,20 +60,25 @@ class BrowserExtensionRouter {
                  requestId: String,  // Needed for recipient to respond
                  extensionId directedRecipient: String?,
                  sender: BrowserExtensionContext.MessageSender,
-                 sendingWebView: WKWebView,
+                 sendingWebView: BrowserExtensionWKWebView,
                  options: [String: Any]) async throws -> Any? {
-        return try await withCheckedThrowingContinuation { continuation in
-            outstandingRequests[requestId] = .init(webView: sendingWebView,
-                                                   continuation: continuation)
-            Task { @MainActor in
-                let destinationID = directedRecipient ?? sender.id
-                await reallyPublish(message: message,
-                                    requestId: requestId,
-                                    destinationID: destinationID,
-                                    sender: sender,
-                                    sendingWebView: sendingWebView,
-                                    options: options)
+        do {
+            return try await withCheckedThrowingContinuation { continuation in
+                outstandingRequests[requestId] = .init(webView: sendingWebView,
+                                                       continuation: continuation)
+                Task { @MainActor in
+                    let destinationID = directedRecipient ?? sender.id
+                    await reallyPublish(message: message,
+                                        requestId: requestId,
+                                        destinationID: destinationID,
+                                        sender: sender,
+                                        sendingWebView: sendingWebView,
+                                        options: options)
+                }
             }
+        } catch {
+            logger.error("Error publishing message \(message), requestId=\(requestId), extensionId=\(directedRecipient ?? "(self)"), sending webview=\(sendingWebView): \(error)")
+            throw error
         }
     }
 
@@ -73,12 +86,13 @@ class BrowserExtensionRouter {
                                requestId: String,
                                destinationID: String,
                                sender: BrowserExtensionContext.MessageSender,
-                               sendingWebView: WKWebView,
+                               sendingWebView: BrowserExtensionWKWebView,
                                options: [String: Any]) async {
         logger.info("publish \(message) to extension \(destinationID) from \(sender)")
 
         let receiverWebViews = network.webViews(for: destinationID)
         guard !receiverWebViews.isEmpty else {
+            logger.error("There are no webviews for extension \(destinationID) registered in the network. Throw noMessageReceiver")
             outstandingRequests.removeValue(forKey: requestId)?.continuation?.resume(throwing: BrowserExtensionError.noMessageReceiver)
             return
         }
@@ -93,10 +107,15 @@ class BrowserExtensionRouter {
                 let senderJSON = try sender.toJSONString()
                 let requestIdJSON = try requestId.toJSONString()
                 
-                let jsResult = try await webview.evaluateJavaScript(
-                    "window.__EXT_invokeListener__(\(requestIdJSON), \(messageJSON), \(senderJSON), \(isExternal), false)")
+                // Get the content world for this extension
+                let contentWorld = await dataSource?.contentWorld(for: destinationID) ?? WKContentWorld.page
+                let jsResult = try await webview.be_evaluateJavaScript(
+                    "window.__EXT_invokeListener__(\(requestIdJSON), \(messageJSON), \(senderJSON), \(isExternal), false)",
+                    in: nil,
+                    in: contentWorld)
+                logger.debug("JavaScript result: \(jsResult ?? "nil") type: \(type(of: jsResult))")
                 guard let dict = jsResult as? [String: Any] else {
-                    logger.error("Failed to cast JavaScript result to dictionary")
+                    logger.error("Failed to cast JavaScript result to dictionary: \(jsResult ?? "nil")")
                     continue
                 }
                 let keepAlive = dict["keepAlive"]! as! Bool
@@ -110,6 +129,7 @@ class BrowserExtensionRouter {
             }
         }
         if !anyListenersInvoked {
+            logger.error("No listener in the \(receiverWebViews.count) webviews existed. Throw noMessageReceiver")
             outstandingRequests.removeValue(forKey: requestId)?.continuation?.resume(throwing: BrowserExtensionError.noMessageReceiver)
         } else if !anyKeepAlive && !anyResponse {
             outstandingRequests.removeValue(forKey: requestId)?.continuation?.resume(with: .success(nil))

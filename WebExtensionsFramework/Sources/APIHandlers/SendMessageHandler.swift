@@ -3,6 +3,7 @@ import BrowserExtensionShared
 
 /// Handler for chrome.runtime.sendMessage API calls
 class SendMessageHandler: SendMessageHandlerProtocol {
+    @MainActor
     func handle(request: SendMessageRequest,
                 context: BrowserExtensionContext) async throws -> AnyJSONCodable {
         // Parse arguments based on sendMessage signature variations:
@@ -63,6 +64,7 @@ class SendMessageHandler: SendMessageHandlerProtocol {
         }
 
         guard let webView = context.webView else {
+            context.logger.error("Context has no webView. Throw noMessageReceiver")
             throw BrowserExtensionError.noMessageReceiver
         }
         let messageSender = await BrowserExtensionContext.MessageSender(

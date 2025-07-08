@@ -28,8 +28,8 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
     
     /// Test activating an extension
     func testActivateExtension() async throws {
-        manager.activate(testExtension)
-        
+        await manager.activate(testExtension)
+
         let extensionId = testExtension.id
         let isActive = manager.isActive(extensionId)
         XCTAssertTrue(isActive)
@@ -37,8 +37,8 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
     
     /// Test getting an active extension
     func testGetActiveExtension() async throws {
-        manager.activate(testExtension)
-        
+        await manager.activate(testExtension)
+
         let extensionId = testExtension.id
         let activeExtension = manager.activeExtension(for: extensionId)
         XCTAssertNotNil(activeExtension)
@@ -51,8 +51,8 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
     
     /// Test that content world is created for extension
     func testContentWorldCreation() async throws {
-        manager.activate(testExtension)
-        
+        await manager.activate(testExtension)
+
         let extensionId = testExtension.id
         let activeExtension = manager.activeExtension(for: extensionId)
         XCTAssertNotNil(activeExtension)
@@ -62,7 +62,7 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
     /// Test activation timestamp
     func testActivationTimestamp() async throws {
         let beforeActivation = Date()
-        manager.activate(testExtension)
+        await manager.activate(testExtension)
         let afterActivation = Date()
         
         let extensionId = testExtension.id
@@ -76,8 +76,8 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
     
     /// Test that activating the same extension twice calls fatalError (should not happen in practice)
     func testActivateSameExtensionTwice() async throws {
-        manager.activate(testExtension)
-        
+        await manager.activate(testExtension)
+
         // Second activation should be prevented by caller logic, not by this method
         // This test verifies the extension is already active
         let extensionId = testExtension.id
@@ -89,14 +89,14 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
     
     /// Test deactivating an extension
     func testDeactivateExtension() async throws {
-        manager.activate(testExtension)
-        
+        await manager.activate(testExtension)
+
         let extensionId = testExtension.id
         var isActive = manager.isActive(extensionId)
         XCTAssertTrue(isActive)
         
-        manager.deactivate(extensionId)
-        
+        await manager.deactivate(extensionId)
+
         isActive = manager.isActive(extensionId)
         XCTAssertFalse(isActive)
         
@@ -115,9 +115,9 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
         let extensionURL2 = URL(fileURLWithPath: "/test/extension2")
         let testExtension2 = BrowserExtension(manifest: manifest2, baseURL: extensionURL2, logger: createTestLogger())
         
-        manager.activate(testExtension)
-        manager.activate(testExtension2)
-        
+        await manager.activate(testExtension)
+        await manager.activate(testExtension2)
+
         let allActive = manager.allActiveExtensions()
         XCTAssertEqual(allActive.count, 2)
         
@@ -138,13 +138,13 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
         let extensionURL2 = URL(fileURLWithPath: "/test/extension2")
         let testExtension2 = BrowserExtension(manifest: manifest2, baseURL: extensionURL2, logger: createTestLogger())
         
-        manager.activate(testExtension)
-        manager.activate(testExtension2)
-        
+        await manager.activate(testExtension)
+        await manager.activate(testExtension2)
+
         var allActive = manager.allActiveExtensions()
         XCTAssertEqual(allActive.count, 2)
         
-        manager.deactivateAll()
+        await manager.deactivateAll()
         
         allActive = manager.allActiveExtensions()
         XCTAssertEqual(allActive.count, 0)
@@ -168,6 +168,123 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
         let activeExtension = manager.activeExtension(for: UUID())
         XCTAssertNil(activeExtension)
     }
+    
+    /// Test that chrome.runtime.id works correctly for a single extension
+    func testChromeRuntimeId() async throws {
+        // Create and register a webview
+        let webView = AsyncWKWebView()
+        
+        // Activate extension
+        await manager.activate(testExtension)
+
+        // Register webview (this adds the user scripts)
+        try await manager.registerWebView(webView)
+
+        // Load HTML - user scripts will be injected during this load
+        let html = "<html><body>Test</body></html>"
+        try await webView.loadHTMLStringAsync(html, baseURL: nil)
+        
+        // Get the content world
+        let activeExtension = manager.activeExtension(for: testExtension.id)!
+        let contentWorld = activeExtension.contentWorld
+        
+        // Check chrome.runtime.id
+        let result = try await webView.callAsyncJavaScript("""
+            return {
+                id: chrome.runtime.id,
+                idType: typeof chrome.runtime.id
+            };
+        """, contentWorld: contentWorld) as? [String: Any]
+        
+        XCTAssertEqual(result?["id"] as? String, testExtension.id.uuidString)
+        XCTAssertEqual(result?["idType"] as? String, "string")
+        
+        // Cleanup
+        manager.unregisterWebView(webView)
+    }
+    
+    /// Test that chrome.runtime.id is different for multiple extensions
+    func testChromeRuntimeIdMultipleExtensions() async throws {
+        // Create two different extensions
+        let extension1 = createTestBrowserExtension(name: "Extension 1")
+        let extension2 = createTestBrowserExtension(name: "Extension 2")
+        
+        // Create webview
+        let webView = AsyncWKWebView()
+        
+        // Activate both extensions
+        await manager.activate(extension1)
+        await manager.activate(extension2)
+
+        // Register webview (this adds the user scripts)
+        try await manager.registerWebView(webView)
+        
+        // Load HTML - user scripts will be injected during this load
+        let html = "<html><body>Test</body></html>"
+        try await webView.loadHTMLStringAsync(html, baseURL: nil)
+        
+        // Wait for user scripts to take effect
+        try await Task.sleep(nanoseconds: 100_000_000) // 100ms
+        
+        // Get content worlds
+        let activeExtension1 = manager.activeExtension(for: extension1.id)!
+        let activeExtension2 = manager.activeExtension(for: extension2.id)!
+        let contentWorld1 = activeExtension1.contentWorld
+        let contentWorld2 = activeExtension2.contentWorld
+        
+        // Check chrome.runtime.id in first extension's world
+        let result1 = try await webView.callAsyncJavaScript("""
+            return chrome.runtime.id;
+        """, contentWorld: contentWorld1) as? String
+        
+        // Check chrome.runtime.id in second extension's world
+        let result2 = try await webView.callAsyncJavaScript("""
+            return chrome.runtime.id;
+        """, contentWorld: contentWorld2) as? String
+        
+        XCTAssertEqual(result1, extension1.id.uuidString)
+        XCTAssertEqual(result2, extension2.id.uuidString)
+        XCTAssertNotEqual(result1, result2)
+        
+        // Cleanup
+        manager.unregisterWebView(webView)
+    }
+    
+    /// Test that chrome.runtime.getPlatformInfo works
+    func testChromeRuntimeGetPlatformInfo() async throws {
+        // Create and register a webview
+        let webView = AsyncWKWebView()
+        
+        // Activate extension
+        await manager.activate(testExtension)
+
+        // Register webview (this adds the user scripts)
+        try await manager.registerWebView(webView)
+
+        // Load HTML - user scripts will be injected during this load
+        let html = "<html><body>Test</body></html>"
+        try await webView.loadHTMLStringAsync(html, baseURL: nil)
+        
+        // Get the content world
+        let activeExtension = manager.activeExtension(for: testExtension.id)!
+        let contentWorld = activeExtension.contentWorld
+        
+        // Check chrome.runtime.getPlatformInfo
+        let result = try await webView.callAsyncJavaScript("""
+            return new Promise((resolve) => {
+                chrome.runtime.getPlatformInfo((info) => {
+                    resolve(info);
+                });
+            });
+        """, contentWorld: contentWorld) as? [String: Any]
+        
+        XCTAssertEqual(result?["os"] as? String, "mac")
+        XCTAssertNotNil(result?["arch"])
+        XCTAssertNotNil(result?["nacl_arch"])
+        
+        // Cleanup
+        manager.unregisterWebView(webView)
+    }
 }
 
 extension BrowserExtensionActiveManager {
@@ -186,10 +303,15 @@ extension BrowserExtensionActiveManager {
             urlSchemeHandler: BrowserExtensionURLSchemeHandler(logger: logger)
         )
 
+        let network = BrowserExtensionNetwork()
+        let router = BrowserExtensionRouter(network: network, logger: logger)
+        
         self.init(
             injectionScriptGenerator: BrowserExtensionContentScriptInjectionGenerator(logger: logger),
             userScriptFactory: BrowserExtensionUserScriptFactory(),
             backgroundService: backgroundService,
+            network: network,
+            router: router,
             logger: logger
         )
     }

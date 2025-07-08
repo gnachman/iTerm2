@@ -2,14 +2,9 @@
 import Foundation
 import BrowserExtensionShared
 
+@MainActor
 class BrowserExtensionDispatcher {
-    private let context: BrowserExtensionContext
-
-    init(context: BrowserExtensionContext) {
-        self.context = context
-    }
-
-    func dispatch(api: String, requestId: String, body: [String: Any]) async throws -> [String: Any] {
+    func dispatch(api: String, requestId: String, body: [String: Any], context: BrowserExtensionContext) async throws -> [String: Any] {
         let jsonData = try JSONSerialization.data(withJSONObject: body)
         switch api {
 

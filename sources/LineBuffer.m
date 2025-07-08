@@ -1497,6 +1497,10 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         DLog(@"Position of find context with block %@ before beginning", @(context.absBlockNum));
         return [self firstPosition];
     }
+    if (context.absBlockNum - num_dropped_blocks >= _lineBlocks.count) {
+        DLog(@"Position of find context (%@-%@=%@) is after last block (%@)", @(context.absBlockNum), @(num_dropped_blocks), @(_lineBlocks.count));
+        return [self lastPosition];
+    }
     int blockNumber = context.absBlockNum - num_dropped_blocks;
     LineBufferPosition *position = [LineBufferPosition position];
     if (context.offset >= 0) {

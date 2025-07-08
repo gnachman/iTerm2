@@ -68,7 +68,7 @@ class iTermBrowserUserState {
                     urlSchemeHandler: BrowserExtensionURLSchemeHandler(logger: logger))
                 self.backgroundService = backgroundService
                 activeExtensionManager = BrowserExtensionActiveManager(
-                    injectionScriptGenerator: BrowserExtensionInjectionScriptGenerator(logger: logger),
+                    injectionScriptGenerator: BrowserExtensionContentScriptInjectionGenerator(logger: logger),
                     userScriptFactory: BrowserExtensionUserScriptFactory(),
                     backgroundService: backgroundService,
                     logger: logger)

@@ -23,7 +23,7 @@ final class ContentWorldIsolationIntegrationTests: XCTestCase {
         activeManager = BrowserExtensionActiveManager() // Use convenience init with real implementations
         
         // Register the webview with the active manager
-        try activeManager.registerWebView(webView)
+        try await activeManager.registerWebView(webView)
         
         navigationHandler = BrowserExtensionNavigationHandler(logger: logger)
     }
@@ -73,9 +73,9 @@ final class ContentWorldIsolationIntegrationTests: XCTestCase {
         XCTAssertNotNil(blueCircleExtension, "Blue Circle extension should be loaded")
         
         // 3. Activate both extensions
-        activeManager.activate(redBoxExtension!)
-        activeManager.activate(blueCircleExtension!)
-        
+        await activeManager.activate(redBoxExtension!)
+        await activeManager.activate(blueCircleExtension!)
+
         let redBoxId = redBoxExtension!.id
         let blueCircleId = blueCircleExtension!.id
         
@@ -221,9 +221,9 @@ final class ContentWorldIsolationIntegrationTests: XCTestCase {
             }
         }
         
-        activeManager.activate(redBoxExtension!)
-        activeManager.activate(blueCircleExtension!)
-        
+        await activeManager.activate(redBoxExtension!)
+        await activeManager.activate(blueCircleExtension!)
+
         let redBoxId = redBoxExtension!.id
         let blueCircleId = blueCircleExtension!.id
         
@@ -252,7 +252,7 @@ final class ContentWorldIsolationIntegrationTests: XCTestCase {
         XCTAssertTrue(initialCheck["blueCircle"] as! Bool)
         
         // Deactivate red box extension
-        activeManager.deactivate(redBoxId)
+        await activeManager.deactivate(redBoxId)
         XCTAssertFalse(activeManager.isActive(redBoxId))
         XCTAssertTrue(activeManager.isActive(blueCircleId))
         

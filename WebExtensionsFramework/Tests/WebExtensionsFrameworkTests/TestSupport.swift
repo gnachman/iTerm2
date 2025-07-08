@@ -119,10 +119,14 @@ public func createTestBrowserExtension(name: String = "Test Extension", logger: 
 @MainActor
 public func createTestActiveManager(logger: BrowserExtensionLogger? = nil) -> BrowserExtensionActiveManager {
     let testLogger = logger ?? createTestLogger()
+    let network = BrowserExtensionNetwork()
+    let router = BrowserExtensionRouter(network: network, logger: testLogger)
     return BrowserExtensionActiveManager(
-        injectionScriptGenerator: MockInjectionScriptGenerator(),
+        injectionScriptGenerator: BrowserExtensionContentScriptInjectionGenerator(logger: testLogger),
         userScriptFactory: SimpleUserScriptFactory(),
         backgroundService: MockBackgroundService(),
+        network: network,
+        router: router,
         logger: testLogger
     )
 }

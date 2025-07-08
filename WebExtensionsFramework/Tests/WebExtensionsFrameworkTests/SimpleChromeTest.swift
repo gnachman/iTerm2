@@ -20,31 +20,22 @@ class SimpleChromeTest: XCTestCase {
             logger: mockLogger
         )
         
-        let injector = BrowserExtensionJavaScriptAPIInjector(
-            browserExtension: mockBrowserExtension,
-            logger: mockLogger
-        )
-        
+        let activeManager = createTestActiveManager(logger: mockLogger)
         let webView = AsyncWKWebView()
-        let network = BrowserExtensionNetwork()
-        network.add(webView: webView, browserExtension: mockBrowserExtension)
-        let router = BrowserExtensionRouter(network: network, logger: mockLogger)
-        let context = BrowserExtensionContext(
-            logger: mockLogger,
-            router: router,
-            webView: webView,
-            browserExtension: mockBrowserExtension,
-            tab: nil,
-            frameId: nil
-        )
-        let dispatcher = BrowserExtensionDispatcher(context: context)
-        injector.injectRuntimeAPIs(into: webView,
-                                   dispatcher: dispatcher,
-                                   router: router,
-                                   network: network)
+        
+        // Activate extension
+        await activeManager.activate(mockBrowserExtension)
+        
+        // Register webview (this adds the user scripts)
+        try await activeManager.registerWebView(webView)
 
+        // Load HTML - user scripts will be injected during this load
         let html = "<html><body>Test</body></html>"
         try await webView.loadHTMLStringAsync(html, baseURL: nil)
+        
+        // Get the content world for the extension
+        let activeExtension = activeManager.activeExtension(for: mockBrowserExtension.id)!
+        let contentWorld = activeExtension.contentWorld
         
         let jsBody = """
             return {
@@ -55,10 +46,13 @@ class SimpleChromeTest: XCTestCase {
             };
             """
         
-        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: WKContentWorld.page) as? [String: Any]
+        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: contentWorld) as? [String: Any]
         
         print("Chrome test result: \(result ?? [:])")
         
         XCTAssertEqual(result?["chromeExists"] as? Bool, true, "chrome object should exist")
+        
+        // Cleanup
+        activeManager.unregisterWebView(webView)
     }
 }

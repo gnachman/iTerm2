@@ -8,7 +8,7 @@ class SendMessageHandlerTests: XCTestCase {
     
     var mockBrowserExtension: BrowserExtension!
     var mockLogger: BrowserExtensionLogger!
-    var injector: BrowserExtensionJavaScriptAPIInjector!
+    var activeManager: BrowserExtensionActiveManager!
     var webView: AsyncWKWebView!
     
     override func setUp() async throws {
@@ -29,33 +29,21 @@ class SendMessageHandlerTests: XCTestCase {
             logger: mockLogger
         )
         
-        // Create injector
-        injector = BrowserExtensionJavaScriptAPIInjector(
-            browserExtension: mockBrowserExtension,
-            logger: mockLogger
-        )
+        // Create activeManager
+        activeManager = createTestActiveManager(logger: mockLogger)
         
         // Create and configure webView
         webView = AsyncWKWebView()
         webView.configuration.userContentController.add(ConsoleLogHandler(),
                                                        name: "consoleLog")
-        let network = BrowserExtensionNetwork()
-        network.add(webView: webView, browserExtension: mockBrowserExtension)
-        let router = BrowserExtensionRouter(network: network,
-                                            logger: mockLogger)
-        let context = BrowserExtensionContext(
-            logger: mockLogger,
-            router: router,
-            webView: webView,
-            browserExtension: mockBrowserExtension,
-            tab: nil,
-            frameId: nil
-        )
-        let dispatcher = BrowserExtensionDispatcher(context: context)
-        injector.injectRuntimeAPIs(into: webView,
-                                   dispatcher: dispatcher,
-                                   router: router,
-                                   network: network)
+        
+        // Activate extension
+        await activeManager.activate(mockBrowserExtension)
+        
+        // Register webview (this adds the user scripts)
+        try await activeManager.registerWebView(webView)
+        
+        // Load HTML - user scripts will be injected during this load
         let html = "<html><body>Test</body></html>"
         try await webView.loadHTMLStringAsync(html, baseURL: nil)
         let jsBody = """
@@ -69,11 +57,19 @@ class SendMessageHandlerTests: XCTestCase {
     }
     
     override func tearDown() async throws {
+        activeManager.unregisterWebView(webView)
+        await activeManager.deactivateAll()
         webView = nil
-        injector = nil
+        activeManager = nil
         mockLogger = nil
         mockBrowserExtension = nil
         try await super.tearDown()
+    }
+    
+    // MARK: - Helper Properties
+    
+    private var extensionContentWorld: WKContentWorld {
+        activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld
     }
     
     // MARK: - Single Argument Tests
@@ -89,7 +85,7 @@ class SendMessageHandlerTests: XCTestCase {
             }
             """
         
-        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: .page) as? [String: Any]
+        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: extensionContentWorld) as? [String: Any]
         
         // Should not throw synchronously
         XCTAssertEqual(result?["success"] as? Bool, true)
@@ -113,7 +109,7 @@ class SendMessageHandlerTests: XCTestCase {
             });
             """
         
-        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: .page) as? [String: Any]
+        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: extensionContentWorld) as? [String: Any]
         
         // We expect a "no message receiver" error
         XCTAssertEqual(result?["error"] as? String, "Could not establish connection. Receiving end does not exist.")
@@ -135,7 +131,7 @@ class SendMessageHandlerTests: XCTestCase {
             }
             """
         
-        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: .page) as? [String: Any]
+        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: extensionContentWorld) as? [String: Any]
         
         // Should not throw synchronously
         XCTAssertEqual(result?["success"] as? Bool, true)
@@ -156,7 +152,7 @@ class SendMessageHandlerTests: XCTestCase {
             }
             """
         
-        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: .page) as? [String: Any]
+        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: extensionContentWorld) as? [String: Any]
         
         // Should not throw synchronously
         XCTAssertEqual(result?["success"] as? Bool, true)
@@ -180,7 +176,7 @@ class SendMessageHandlerTests: XCTestCase {
             });
             """
         
-        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: .page) as? [String: Any]
+        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: extensionContentWorld) as? [String: Any]
         XCTAssertEqual(result?["error"] as? String, "Could not establish connection. Receiving end does not exist.")
     }
     
@@ -201,7 +197,7 @@ class SendMessageHandlerTests: XCTestCase {
             }
             """
         
-        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: .page) as? [String: Any]
+        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: extensionContentWorld) as? [String: Any]
         
         // Should not throw synchronously
         XCTAssertEqual(result?["success"] as? Bool, true)
@@ -226,7 +222,7 @@ class SendMessageHandlerTests: XCTestCase {
             });
             """
         
-        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: .page) as? [String: Any]
+        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: extensionContentWorld) as? [String: Any]
         XCTAssertEqual(result?["error"] as? String, "Could not establish connection. Receiving end does not exist.")
     }
     
@@ -243,7 +239,7 @@ class SendMessageHandlerTests: XCTestCase {
             }
             """
         
-        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: .page) as? [String: Any]
+        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: extensionContentWorld) as? [String: Any]
         
         // Should receive an error about missing arguments
         XCTAssertNotNil(result?["error"])
@@ -266,7 +262,7 @@ class SendMessageHandlerTests: XCTestCase {
             });
             """
         
-        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: .page) as? [String: Any]
+        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: extensionContentWorld) as? [String: Any]
         
         // Should receive an error about invalid message type
         XCTAssertNotNil(result?["error"])

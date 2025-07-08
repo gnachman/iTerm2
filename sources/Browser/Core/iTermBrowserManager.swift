@@ -305,6 +305,9 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         webView.pageZoom = iTermProfilePreferences.double(forKey: KEY_BROWSER_ZOOM, inProfile: profile) / 100.0
         webView.browserDelegate = self
 
+        // Start updates if needed
+        adblockManager?.updateRulesIfNeeded()
+
         userState.registerWebView(webView)
 
         // Enable back/forward navigation
@@ -1513,9 +1516,6 @@ extension iTermBrowserManager {
             name: iTermBrowserAdblockManager.didFailWithErrorNotification,
             object: iTermBrowserAdblockManager.shared
         )
-        
-        // Start updates if needed
-        adblockManager?.updateRulesIfNeeded()
     }
 
     @objc func updateAdblockSettings() {

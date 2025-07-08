@@ -15602,7 +15602,7 @@
 			mainGroup = 0464AB0D006CD2EC7F000001 /* JTerminal */;
 			packageReferences = (
 				A69FEED92E12400900AFF7A8 /* XCRemoteSwiftPackageReference "swift-nio" */,
-				A6C7C96B2E172F3E00AA7668 /* XCLocalSwiftPackageReference "WebExtensionsFramework" */,
+				A62E3BC62E1CC674002DF8C3 /* XCLocalSwiftPackageReference "WebExtensionsFramework" */,
 			);
 			productRefGroup = 0464AB32006CD2EC7F000001 /* Products */;
 			projectDirPath = "";
@@ -23987,7 +23987,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		A6C7C96B2E172F3E00AA7668 /* XCLocalSwiftPackageReference "WebExtensionsFramework" */ = {
+		A62E3BC62E1CC674002DF8C3 /* XCLocalSwiftPackageReference "WebExtensionsFramework" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = WebExtensionsFramework;
 		};

@@ -22,7 +22,7 @@ final class RedBoxExtensionE2ETests: XCTestCase {
         activeManager = BrowserExtensionActiveManager()
         
         // Register the webview with the active manager
-        try activeManager.registerWebView(webView)
+        try await activeManager.registerWebView(webView)
         
         navigationHandler = BrowserExtensionNavigationHandler(logger: createTestLogger())
     }
@@ -57,7 +57,7 @@ final class RedBoxExtensionE2ETests: XCTestCase {
         XCTAssertEqual(extensionManifest.name, "Red Box")
         
         // 3. Activate the extension
-        activeManager.activate(browserExtension)
+        await activeManager.activate(browserExtension)
         let extensionId = browserExtension.id
         XCTAssertTrue(activeManager.isActive(extensionId))
         
@@ -138,8 +138,8 @@ final class RedBoxExtensionE2ETests: XCTestCase {
         
         let extensions = registry.extensions
         let browserExtension = extensions.first!
-        activeManager.activate(browserExtension)
-        
+        await activeManager.activate(browserExtension)
+
         // Test with a URL that should match (<all_urls>)
         let htmlContent = "<html><body><h1>Test</h1></body></html>"
         
@@ -177,8 +177,8 @@ final class RedBoxExtensionE2ETests: XCTestCase {
         
         let extensions = registry.extensions
         let browserExtension = extensions.first!
-        activeManager.activate(browserExtension)
-        
+        await activeManager.activate(browserExtension)
+
         // Load page and inject content script
         let htmlContent = "<html><body><h1>Isolation Test</h1></body></html>"
         let expectation = XCTestExpectation(description: "Navigation complete")
