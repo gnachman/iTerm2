@@ -163,7 +163,7 @@ internal struct Namespace: StringConvertible {
         }
         let s = String(repeating: " ", count: indent)
         return ([
-            s + "func dispatch(api: String, requestId: String, body: [String: Any]) async throws -> [String: Any] {",
+            s + "func dispatch(api: String, requestId: String, body: [String: Any], context: BrowserExtensionContext) async throws -> [String: Any] {",
             s + "    let jsonData = try JSONSerialization.data(withJSONObject: body)",
             s + "    switch api {"] +
            cases +
@@ -226,7 +226,7 @@ internal struct AsyncFunction: StringConvertible {
                 [s + "}",
                 s + "extension \(capitalizedName)RequestImpl: \(capitalizedName)Request {}",
                 s + "protocol \(capitalizedName)HandlerProtocol {",
-                 s2 + "func handle(request: \(capitalizedName)Request, context: BrowserExtensionContext) async throws -> \(returnType)",
+                 s2 + "@MainActor func handle(request: \(capitalizedName)Request, context: BrowserExtensionContext) async throws -> \(returnType)",
                  s + "}"
                 ]).joined(separator: "\n")
     }
@@ -656,6 +656,7 @@ public func generatedDispatchSwift() -> String {
     import Foundation
     import BrowserExtensionShared
 
+    @MainActor
     class BrowserExtensionDispatcher {
         private let context: BrowserExtensionContext
 

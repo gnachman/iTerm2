@@ -13,13 +13,16 @@ class BrowserExtensionAPIRequestMessageHandler: NSObject, WKScriptMessageHandler
     private let callbackHandler: BrowserExtensionSecureCallbackHandler
     private let logger: BrowserExtensionLogger
     private let dispatcher: BrowserExtensionDispatcher
+    var contextProvider: () -> BrowserExtensionContext?
 
     init(callbackHandler: BrowserExtensionSecureCallbackHandler,
          dispatcher: BrowserExtensionDispatcher,
-         logger: BrowserExtensionLogger) {
+         logger: BrowserExtensionLogger,
+         contextProvider: @escaping () -> BrowserExtensionContext?) {
         self.callbackHandler = callbackHandler
         self.dispatcher = dispatcher
         self.logger = logger
+        self.contextProvider = contextProvider
     }
 
     /// This is the entry point for API calls that call into native code.
@@ -35,17 +38,22 @@ class BrowserExtensionAPIRequestMessageHandler: NSObject, WKScriptMessageHandler
             return
         }
         Task { @MainActor in
+            guard let context = contextProvider() else {
+                logger.error("No context provided")
+                return
+            }
             do {
                 // Invoke the correct native function
                 let obj = try await dispatcher.dispatch(
                     api: api,
                     requestId: requestId,
-                    body: messageBody)
+                    body: messageBody,
+                    context: context)
 
                 // Send a response to the callback.
-                callbackHandler.invokeCallback(requestId: requestId, result: obj, in: message.webView)
+                callbackHandler.invokeCallback(requestId: requestId, result: obj, in: message.webView, contentWorld: message.world)
             } catch {
-                callbackHandler.invokeCallback(requestId: requestId, error: error, in: message.webView)
+                callbackHandler.invokeCallback(requestId: requestId, error: error, in: message.webView, contentWorld: message.world)
             }
         }
     }

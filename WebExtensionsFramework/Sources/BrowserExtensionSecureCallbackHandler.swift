@@ -23,8 +23,9 @@ class BrowserExtensionSecureCallbackHandler {
     ///   - requestId: The unique request identifier
     ///   - result: The result to pass to the callback
     ///   - webView: The webview to execute the callback in
-    func invokeCallback(requestId: String, result: Any, in webView: WKWebView?) {
-        invokeCallback(requestId: requestId, result: result, error: nil, in: webView)
+    ///   - contentWorld: The content world to execute the callback in
+    func invokeCallback(requestId: String, result: Any, in webView: WKWebView?, contentWorld: WKContentWorld) {
+        invokeCallback(requestId: requestId, result: result, error: nil, in: webView, contentWorld: contentWorld)
     }
     
     /// Securely invoke a callback with an error
@@ -32,8 +33,9 @@ class BrowserExtensionSecureCallbackHandler {
     ///   - requestId: The unique request identifier
     ///   - error: The error that occurred
     ///   - webView: The webview to execute the callback in
-    func invokeCallback(requestId: String, error: Error, in webView: WKWebView?) {
-        invokeCallback(requestId: requestId, result: nil, error: error, in: webView)
+    ///   - contentWorld: The content world to execute the callback in
+    func invokeCallback(requestId: String, error: Error, in webView: WKWebView?, contentWorld: WKContentWorld) {
+        invokeCallback(requestId: requestId, result: nil, error: error, in: webView, contentWorld: contentWorld)
     }
 
     /// Securely invoke a callback with result and/or error
@@ -42,10 +44,12 @@ class BrowserExtensionSecureCallbackHandler {
     ///   - result: The result to pass to the callback (can be nil if error occurred)
     ///   - error: The error that occurred (can be nil if successful)
     ///   - webView: The webview to execute the callback in
+    ///   - contentWorld: The content world to execute the callback in
     private func invokeCallback(requestId: String,
                                 result: Any?,
                                 error: Error?,
-                                in webView: WKWebView?) {
+                                in webView: WKWebView?,
+                                contentWorld: WKContentWorld) {
         logger.info("Invoking secure callback for request: \(requestId)\(error != nil ? " with error" : "")")
         logger.debug("SecureCallbackHandler received result: \(result ?? "nil") type: \(type(of: result)) error: \(error?.localizedDescription ?? "nil")")
         
@@ -94,11 +98,12 @@ class BrowserExtensionSecureCallbackHandler {
             \(function.rawValue)('\(requestId)', \(resultString.asJSONFragment), \(errorString));
         """
         
-        webView?.evaluateJavaScript(callbackScript) { [weak self] _, error in
-            if let error = error {
-                self?.logger.error("Error invoking secure callback for request \(requestId): \(error)")
-            } else {
+        webView?.evaluateJavaScript(callbackScript, in: nil, in: contentWorld) { [weak self] result in
+            switch result {
+            case .success(_):
                 self?.logger.info("Successfully invoked secure callback for request: \(requestId)")
+            case .failure(let error):
+                self?.logger.error("Error invoking secure callback for request \(requestId): \(error)")
             }
         }
     }

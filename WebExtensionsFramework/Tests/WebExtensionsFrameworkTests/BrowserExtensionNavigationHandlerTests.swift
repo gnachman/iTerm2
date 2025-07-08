@@ -119,6 +119,7 @@ private class MockWebViewConfiguration: BrowserExtensionWKWebViewConfiguration {
 
 private class MockUserContentController: BrowserExtensionWKUserContentController {
     var addedUserScripts: [WKUserScript] = []
+    var addedMessageHandlers: [(WKScriptMessageHandler, String)] = []
     
     func be_addUserScript(_ userScript: WKUserScript) {
         addedUserScripts.append(userScript)
@@ -126,6 +127,10 @@ private class MockUserContentController: BrowserExtensionWKUserContentController
     
     func be_removeAllUserScripts() {
         addedUserScripts.removeAll()
+    }
+    
+    func be_add(_ scriptMessageHandler: WKScriptMessageHandler, name: String, contentWorld: WKContentWorld) {
+        addedMessageHandlers.append((scriptMessageHandler, name))
     }
 }
 

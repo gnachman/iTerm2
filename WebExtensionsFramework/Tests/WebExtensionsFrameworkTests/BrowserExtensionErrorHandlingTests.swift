@@ -7,8 +7,8 @@ class BrowserExtensionErrorHandlingTests: XCTestCase {
     
     var mockBrowserExtension: BrowserExtension!
     var mockLogger: BrowserExtensionLogger!
-    var injector: BrowserExtensionJavaScriptAPIInjector!
-    var webView: WKWebView!
+    var activeManager: BrowserExtensionActiveManager!
+    var webView: AsyncWKWebView!
     
     override func setUp() async throws {
         try await super.setUp()
@@ -28,16 +28,17 @@ class BrowserExtensionErrorHandlingTests: XCTestCase {
             logger: mockLogger
         )
         
-        // Create injector
-        injector = BrowserExtensionJavaScriptAPIInjector(
-            browserExtension: mockBrowserExtension,
-            logger: mockLogger
-        )
+        // Create activeManager
+        activeManager = createTestActiveManager(logger: mockLogger)
     }
     
     override func tearDown() async throws {
+        if let webView {
+            activeManager.unregisterWebView(webView)
+        }
+        await activeManager.deactivateAll()
         webView = nil
-        injector = nil
+        activeManager = nil
         mockLogger = nil
         mockBrowserExtension = nil
         try await super.tearDown()
@@ -70,24 +71,22 @@ class BrowserExtensionErrorHandlingTests: XCTestCase {
     // MARK: - Runtime errors (handled by native code)
     
     func testSendMessageWithNoListenerSetsLastError() async throws {
-        let webView = try await makeWebViewForTesting() { webView in
-            let network = BrowserExtensionNetwork()
-            network.add(webView: webView, browserExtension: mockBrowserExtension)
-            let router = BrowserExtensionRouter(network: network, logger: mockLogger)
-            let context = BrowserExtensionContext(
-                logger: mockLogger,
-                router: router,
-                webView: webView,
-                browserExtension: mockBrowserExtension,
-                tab: nil,
-                frameId: nil
-            )
-            let dispatcher = BrowserExtensionDispatcher(context: context)
-            injector.injectRuntimeAPIs(into: webView,
-                                       dispatcher: dispatcher,
-                                       router: router,
-                                       network: network)
-        }
+        // Create and setup webview
+        webView = AsyncWKWebView()
+        
+        // Activate extension
+        await activeManager.activate(mockBrowserExtension)
+
+        // Register webview (this adds the user scripts)
+        try await activeManager.registerWebView(webView)
+
+        // Load HTML - user scripts will be injected during this load
+        let html = "<html><body>Test</body></html>"
+        try await webView.loadHTMLStringAsync(html, baseURL: nil)
+        
+        // Get the content world
+        let activeExtension = activeManager.activeExtension(for: mockBrowserExtension.id)!
+        let contentWorld = activeExtension.contentWorld
         
         // Simple test to check if sendMessage calls the callback at all
         let jsBody = """
@@ -112,7 +111,7 @@ class BrowserExtensionErrorHandlingTests: XCTestCase {
             };
             """
         
-        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: WKContentWorld.page) as? [String: Any]
+        let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: contentWorld) as? [String: Any]
         mockLogger.debug("SendMessage test result: \(result ?? [:])")
         
         let callbackCalled = result?["callbackCalled"] as? Bool
@@ -129,30 +128,28 @@ class BrowserExtensionErrorHandlingTests: XCTestCase {
     func testUncheckedLastErrorWarning() async throws {
         // This test would check console warnings for unchecked lastError
         // We'll need to capture console output to verify this
-        let webView = try await makeWebViewForTesting() { webView in
-            let network = BrowserExtensionNetwork()
-            network.add(webView: webView, browserExtension: mockBrowserExtension)
-            let router = BrowserExtensionRouter(network: network, logger: mockLogger)
-            let context = BrowserExtensionContext(
-                logger: mockLogger,
-                router: router,
-                webView: webView,
-                browserExtension: mockBrowserExtension,
-                tab: nil,
-                frameId: nil
-            )
-            let dispatcher = BrowserExtensionDispatcher(context: context)
-            injector.injectRuntimeAPIs(into: webView,
-                                       dispatcher: dispatcher,
-                                       router: router,
-                                       network: network)
-        }
+        webView = AsyncWKWebView()
+        
+        // Activate extension
+        await activeManager.activate(mockBrowserExtension)
+
+        // Register webview (this adds the user scripts)
+        try await activeManager.registerWebView(webView)
+        
+        // Load HTML - user scripts will be injected during this load
+        let html = "<html><body>Test</body></html>"
+        try await webView.loadHTMLStringAsync(html, baseURL: nil)
+        
+        // Get the content world
+        let activeExtension = activeManager.activeExtension(for: mockBrowserExtension.id)!
+        let contentWorld = activeExtension.contentWorld
         
         var consoleMessages: [String] = []
         webView.configuration.userContentController.add(
             TestConsoleHandler { message in
                 consoleMessages.append(message)
             },
+            contentWorld: contentWorld,
             name: "testConsole"
         )
         
@@ -172,7 +169,7 @@ class BrowserExtensionErrorHandlingTests: XCTestCase {
             return true;
             """
         
-        _ = try await webView.callAsyncJavaScript(jsBody, contentWorld: WKContentWorld.page)
+        _ = try await webView.callAsyncJavaScript(jsBody, contentWorld: contentWorld)
         
         // Verify warning was logged
         XCTAssertTrue(consoleMessages.contains { $0.contains("Unchecked") && $0.contains("lastError") })

@@ -11,7 +11,7 @@ protocol GetPlatformInfoRequest {
 }
 extension GetPlatformInfoRequestImpl: GetPlatformInfoRequest {}
 protocol GetPlatformInfoHandlerProtocol {
-    func handle(request: GetPlatformInfoRequest, context: BrowserExtensionContext) async throws -> PlatformInfo
+    @MainActor func handle(request: GetPlatformInfoRequest, context: BrowserExtensionContext) async throws -> PlatformInfo
 }
 struct SendMessageRequestImpl: Codable {
     let requestId: String

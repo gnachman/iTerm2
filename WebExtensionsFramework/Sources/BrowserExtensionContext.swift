@@ -22,9 +22,12 @@ class BrowserExtensionContext {
             // More can go here, not sure what.
         }
         // only present for messages from content scripts
+        // TODO: This has to be updated when the webview moves tabs.
         var tab: Tab?
 
+        // TODO: This has to be updated when the webview moves frames.
         var frameId: Int?
+        // TODO: This has to be updated when the webview moves origins.
         var origin: String?  // origin of the frame that sent the message
 
         // For port connections only - not implemented yet
@@ -35,13 +38,13 @@ class BrowserExtensionContext {
         var userScriptWorldId: String?
 
         init(sender: BrowserExtension,
-             senderWebview: WKWebView,
+             senderWebview: BrowserExtensionWKWebView,
              tab: MessageSender.Tab?,
              frameId: Int?) async {
             id = sender.id.uuidString
-            url = (try? await senderWebview.evaluateJavaScript(
-                "window.location.href") as? String) ?? "about:empty"
-            origin = try? await senderWebview.evaluateJavaScript("window.origin") as? String
+            url = (try? await senderWebview.be_evaluateJavaScript(
+                "window.location.href", in: nil, in: WKContentWorld.page) as? String) ?? "about:empty"
+            origin = try? await senderWebview.be_evaluateJavaScript("window.origin", in: nil, in: WKContentWorld.page) as? String
             tlsChannelId = nil  // not supported
             self.tab = tab
             self.frameId = frameId
@@ -50,14 +53,14 @@ class BrowserExtensionContext {
 
     var logger: BrowserExtensionLogger
     var router: BrowserExtensionRouter
-    weak var webView: WKWebView?
+    weak var webView: BrowserExtensionWKWebView?
     var browserExtension: BrowserExtension
     var tab: MessageSender.Tab?
     var frameId: Int?
 
     init(logger: BrowserExtensionLogger,
          router: BrowserExtensionRouter,
-         webView: WKWebView?,
+         webView: BrowserExtensionWKWebView?,
          browserExtension: BrowserExtension,
          tab: MessageSender.Tab?,
          frameId: Int?) {

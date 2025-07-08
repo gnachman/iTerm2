@@ -10,7 +10,6 @@ public protocol BrowserExtensionWKWebView: AnyObject {
     var be_url: URL? { get }
     var be_configuration: BrowserExtensionWKWebViewConfiguration { get }
     func be_evaluateJavaScript(_ javaScriptString: String, in frame: WKFrameInfo?, in contentWorld: WKContentWorld) async throws -> Any?
-    func be_evaluateJavaScript(_ javaScriptString: String, in frame: WKFrameInfo?, in contentWorld: WKContentWorld, completionHandler: @escaping @MainActor @Sendable (Result<Any, Error>) -> Void)
 }
 
 // MARK: - Configuration Protocol
@@ -22,6 +21,7 @@ public protocol BrowserExtensionWKWebViewConfiguration: AnyObject {
 public protocol BrowserExtensionWKUserContentController: AnyObject {
     func be_addUserScript(_ userScript: WKUserScript)
     func be_removeAllUserScripts()
+    func be_add(_ scriptMessageHandler: WKScriptMessageHandler, name: String, contentWorld: WKContentWorld)
 }
 
 // MARK: - Navigation Protocols
@@ -70,13 +70,9 @@ extension WKWebView: BrowserExtensionWKWebView {
     public var be_configuration: BrowserExtensionWKWebViewConfiguration { configuration }
     
     public func be_evaluateJavaScript(_ javaScriptString: String, in frame: WKFrameInfo?, in contentWorld: WKContentWorld) async throws -> Any? {
-        return evaluateJavaScript(javaScriptString, in: frame, in: contentWorld)
+        return try await evaluateJavaScript(javaScriptString, in: frame, contentWorld: contentWorld)
     }
-    
-    public func be_evaluateJavaScript(_ javaScriptString: String, in frame: WKFrameInfo?, in contentWorld: WKContentWorld, completionHandler: @escaping @MainActor @Sendable (Result<Any, Error>) -> Void) {
-        evaluateJavaScript(javaScriptString, in: frame, in: contentWorld, completionHandler: completionHandler)
     }
-}
 
 extension WKWebViewConfiguration: BrowserExtensionWKWebViewConfiguration {
     public var be_userContentController: BrowserExtensionWKUserContentController { userContentController }
@@ -89,6 +85,10 @@ extension WKUserContentController: BrowserExtensionWKUserContentController {
     
     public func be_removeAllUserScripts() {
         removeAllUserScripts()
+    }
+    
+    public func be_add(_ scriptMessageHandler: WKScriptMessageHandler, name: String, contentWorld: WKContentWorld) {
+        add(scriptMessageHandler, contentWorld: contentWorld, name: name)
     }
 }
 

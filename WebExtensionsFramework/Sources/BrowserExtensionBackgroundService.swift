@@ -122,7 +122,8 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
             hiddenContainer: hiddenContainer,
             useEphemeralDataStore: useEphemeralDataStore
         )
-        
+
+        #warning("This should use the BrowserExtensionWKWebView protocol. Also it never gets chrome APIs and other JS polyfills injected. This needs to be tied into the active manager properly.")
         let webView = try BrowserExtensionWebViewFactory.createWebView(
             type: .backgroundScript,
             configuration: factoryConfiguration

@@ -14,16 +14,14 @@ class OnMessageTests: XCTestCase {
     
     var mockLogger: BrowserExtensionLogger!
     var mockBrowserExtension: BrowserExtension!
-    var injector: BrowserExtensionJavaScriptAPIInjector!
+    var activeManager: BrowserExtensionActiveManager!
     var senderWebView: AsyncWKWebView!
     var receiverWebView: AsyncWKWebView!
-    var network: BrowserExtensionNetwork!
-    var router: BrowserExtensionRouter!
     
     override func setUp() async throws {
         try await super.setUp()
         
-        mockLogger = createTestLogger()
+        mockLogger = createTestLogger(verbose: true)
         
         // Create mock browser extension
         let manifest = ExtensionManifest(
@@ -38,8 +36,7 @@ class OnMessageTests: XCTestCase {
             logger: mockLogger
         )
         
-        // Create network and webviews
-        network = BrowserExtensionNetwork()
+        // Create webviews
         senderWebView = AsyncWKWebView()
         receiverWebView = AsyncWKWebView()
         
@@ -47,46 +44,17 @@ class OnMessageTests: XCTestCase {
         senderWebView.configuration.userContentController.add(ConsoleLogHandler(), name: "consoleLog")
         receiverWebView.configuration.userContentController.add(ConsoleLogHandler(), name: "consoleLog")
         
-        // The injector will add webviews to the network, so we don't need to do it here
+        // Create activeManager
+        activeManager = createTestActiveManager(logger: mockLogger)
         
-        router = BrowserExtensionRouter(network: network, logger: mockLogger)
-        injector = BrowserExtensionJavaScriptAPIInjector(
-            browserExtension: mockBrowserExtension,
-            logger: mockLogger
-        )
+        // Activate the extension (this will set up the infrastructure properly)
+        await activeManager.activate(mockBrowserExtension)
+
+        // Register both webviews with the activeManager (this will inject APIs automatically)
+        try await activeManager.registerWebView(senderWebView)
+        try await activeManager.registerWebView(receiverWebView)
         
-        // Set up both webviews with contexts
-        let senderContext = BrowserExtensionContext(
-            logger: mockLogger,
-            router: router,
-            webView: senderWebView,
-            browserExtension: mockBrowserExtension,
-            tab: nil,
-            frameId: nil
-        )
-        let receiverContext = BrowserExtensionContext(
-            logger: mockLogger,
-            router: router,
-            webView: receiverWebView,
-            browserExtension: mockBrowserExtension,
-            tab: nil,
-            frameId: nil
-        )
-        
-        let senderDispatcher = BrowserExtensionDispatcher(context: senderContext)
-        let receiverDispatcher = BrowserExtensionDispatcher(context: receiverContext)
-        
-        // Inject APIs into both webviews
-        injector.injectRuntimeAPIs(into: senderWebView,
-                                   dispatcher: senderDispatcher,
-                                   router: router,
-                                   network: network)
-        injector.injectRuntimeAPIs(into: receiverWebView,
-                                   dispatcher: receiverDispatcher,
-                                   router: router,
-                                   network: network)
-        
-        // Load HTML into both webviews
+        // Load HTML into both webviews (this will trigger the injected scripts)
         let html = "<html><body>Test</body></html>"
         try await senderWebView.loadHTMLStringAsync(html, baseURL: nil)
         try await receiverWebView.loadHTMLStringAsync(html, baseURL: nil)
@@ -103,12 +71,13 @@ class OnMessageTests: XCTestCase {
     }
     
     override func tearDown() async throws {
+        activeManager.unregisterWebView(senderWebView)
+        activeManager.unregisterWebView(receiverWebView)
+        await activeManager.deactivateAll()
         senderWebView = nil
         receiverWebView = nil
         mockBrowserExtension = nil
-        injector = nil
-        router = nil
-        network = nil
+        activeManager = nil
         mockLogger = nil
         try await super.tearDown()
     }
@@ -122,7 +91,7 @@ class OnMessageTests: XCTestCase {
                 // Simple listener that doesn't respond
             });
             return { success: true };
-        """, contentWorld: .page) as? [String: Any]
+        """, contentWorld: activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld) as? [String: Any]
         
         XCTAssertEqual(result?["success"] as? Bool, true)
     }
@@ -144,7 +113,7 @@ class OnMessageTests: XCTestCase {
                 hasBeforeRemove: hasBeforeRemove, 
                 hasAfterRemove: hasAfterRemove 
             };
-        """, contentWorld: .page) as? [String: Any]
+        """, contentWorld: activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld) as? [String: Any]
         
         XCTAssertEqual(result?["hasBeforeRemove"] as? Bool, true)
         XCTAssertEqual(result?["hasAfterRemove"] as? Bool, false)
@@ -171,7 +140,7 @@ class OnMessageTests: XCTestCase {
                 hasAfterAdd: hasAfterAdd,
                 hasOther: hasOther
             };
-        """, contentWorld: .page) as? [String: Any]
+        """, contentWorld: activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld) as? [String: Any]
         
         XCTAssertEqual(result?["hasBeforeAdd"] as? Bool, false)
         XCTAssertEqual(result?["hasAfterAdd"] as? Bool, true)
@@ -181,6 +150,9 @@ class OnMessageTests: XCTestCase {
     // MARK: - Message sending and receiving
     
     func testSimpleMessageExchange() async throws {
+        // Get the content world for the extension
+        let extensionContentWorld = activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld
+        
         // Set up listener in receiver
         _ = try await receiverWebView.callAsyncJavaScript("""
             chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
@@ -188,7 +160,7 @@ class OnMessageTests: XCTestCase {
                     sendResponse({ reply: "hello back!" });
                 }
             });
-        """, contentWorld: .page)
+        """, contentWorld: extensionContentWorld)
         
         // Send message from sender
         let result = try await senderWebView.callAsyncJavaScript("""
@@ -204,7 +176,7 @@ class OnMessageTests: XCTestCase {
                     }
                 );
             });
-        """, contentWorld: .page) as? [String: Any]
+        """, contentWorld: extensionContentWorld) as? [String: Any]
         
         XCTAssertNil(result?["error"])
         let response = result?["response"] as? [String: Any]
@@ -222,7 +194,7 @@ class OnMessageTests: XCTestCase {
                     return true; // Keep the message channel open
                 }
             });
-        """, contentWorld: .page)
+        """, contentWorld: activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld)
         
         // Send message from sender
         let result = try await senderWebView.callAsyncJavaScript("""
@@ -238,7 +210,7 @@ class OnMessageTests: XCTestCase {
                     }
                 );
             });
-        """, contentWorld: .page) as? [String: Any]
+        """, contentWorld: activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld) as? [String: Any]
         
         XCTAssertNil(result?["error"])
         let response = result?["response"] as? [String: Any]
@@ -265,7 +237,7 @@ class OnMessageTests: XCTestCase {
             });
             
             window.getResponses = function() { return responses; };
-        """, contentWorld: .page)
+        """, contentWorld: activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld)
         
         // Send message from sender
         let result = try await senderWebView.callAsyncJavaScript("""
@@ -281,7 +253,7 @@ class OnMessageTests: XCTestCase {
                     }
                 );
             });
-        """, contentWorld: .page) as? [String: Any]
+        """, contentWorld: activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld) as? [String: Any]
         
         XCTAssertNil(result?["error"])
         let response = result?["response"] as? [String: Any]
@@ -306,7 +278,7 @@ class OnMessageTests: XCTestCase {
                     sendResponse({ success: true });
                 }
             });
-        """, contentWorld: .page)
+        """, contentWorld: activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld)
         
         // Send message from sender
         let result = try await senderWebView.callAsyncJavaScript("""
@@ -322,7 +294,7 @@ class OnMessageTests: XCTestCase {
                     }
                 );
             });
-        """, contentWorld: .page) as? [String: Any]
+        """, contentWorld: activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld) as? [String: Any]
         
         XCTAssertNil(result?["error"])
         let response = result?["response"] as? [String: Any]
@@ -338,7 +310,7 @@ class OnMessageTests: XCTestCase {
                 }
             });
             true;
-        """, contentWorld: .page)
+        """, contentWorld: activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld)
         
         // Send message from sender - should complete without throwing error
         let result = try await senderWebView.callAsyncJavaScript("""
@@ -351,7 +323,7 @@ class OnMessageTests: XCTestCase {
                     }
                 );
             });
-        """, contentWorld: .page) as? [String: Any]
+        """, contentWorld: activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld) as? [String: Any]
         
         // The main goal is that this doesn't crash
         XCTAssertNotNil(result)
@@ -373,7 +345,7 @@ class OnMessageTests: XCTestCase {
                     }
                 );
             });
-        """, contentWorld: .page) as? [String: Any]
+        """, contentWorld: activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld) as? [String: Any]
         
         // According to Chrome behavior, when there are no listeners:
         // 1. Set lastError to "Could not establish connection. Receiving end does not exist."
@@ -392,7 +364,7 @@ class OnMessageTests: XCTestCase {
                 }
             });
             true;
-        """, contentWorld: .page)
+        """, contentWorld: activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld)
         
         // Send message from sender
         let result = try await senderWebView.callAsyncJavaScript("""
@@ -409,7 +381,7 @@ class OnMessageTests: XCTestCase {
                     }
                 );
             });
-        """, contentWorld: .page) as? [String: Any]
+        """, contentWorld: activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld) as? [String: Any]
         
         // When a listener explicitly sends null, the callback should receive null, not undefined
         XCTAssertEqual(result?["hasError"] as? Bool, false)
@@ -430,7 +402,7 @@ class OnMessageTests: XCTestCase {
                 }
             });
             true;
-        """, contentWorld: .page)
+        """, contentWorld: activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld)
         
         // Send message with undefined value from sender
         let result = try await senderWebView.callAsyncJavaScript("""
@@ -449,7 +421,7 @@ class OnMessageTests: XCTestCase {
                     }
                 );
             });
-        """, contentWorld: .page) as? [String: Any]
+        """, contentWorld: activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld) as? [String: Any]
         
         // Verify the listener received undefined in the message
         XCTAssertEqual(result?["hasError"] as? Bool, false)
@@ -468,7 +440,7 @@ class OnMessageTests: XCTestCase {
                 }
             });
             true;
-        """, contentWorld: .page)
+        """, contentWorld: activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld)
         
         // Send message from sender
         let result = try await senderWebView.callAsyncJavaScript("""
@@ -485,7 +457,7 @@ class OnMessageTests: XCTestCase {
                     }
                 );
             });
-        """, contentWorld: .page) as? [String: Any]
+        """, contentWorld: activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld) as? [String: Any]
         
         // When a listener explicitly calls sendResponse(undefined), the callback should receive undefined
         XCTAssertEqual(result?["hasError"] as? Bool, false)
@@ -504,7 +476,7 @@ class OnMessageTests: XCTestCase {
                     sendResponse({ attempt: 2 }); // Should be ignored
                 }
             });
-        """, contentWorld: .page)
+        """, contentWorld: activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld)
         
         // Send message from sender
         let result = try await senderWebView.callAsyncJavaScript("""
@@ -520,7 +492,7 @@ class OnMessageTests: XCTestCase {
                     }
                 );
             });
-        """, contentWorld: .page) as? [String: Any]
+        """, contentWorld: activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld) as? [String: Any]
         
         XCTAssertNil(result?["error"])
         let response = result?["response"] as? [String: Any]
@@ -542,7 +514,7 @@ class OnMessageTests: XCTestCase {
                     });
                 }
             });
-        """, contentWorld: .page)
+        """, contentWorld: activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld)
         
         // Send complex message from sender
         let result = try await senderWebView.callAsyncJavaScript("""
@@ -569,7 +541,7 @@ class OnMessageTests: XCTestCase {
                     }
                 });
             });
-        """, contentWorld: .page) as? [String: Any]
+        """, contentWorld: activeManager.activeExtension(for: mockBrowserExtension.id)!.contentWorld) as? [String: Any]
         
         XCTAssertNil(result?["error"])
         let response = result?["response"] as? [String: Any]
