@@ -202,10 +202,13 @@ extension iTermBrowserUserState {
         }
     }
 
-    public func registerWebView(_ webView: WKWebView) {
+    public func registerWebView(_ webView: WKWebView, contentManager: BrowserExtensionUserContentManager) {
         Task { @MainActor in
             do {
-                try await activeExtensionManager?.registerWebView(webView, role: .userFacing)
+                try await activeExtensionManager?.registerWebView(
+                    webView,
+                    userContentManager: contentManager,
+                    role: .userFacing)
             } catch {
                 logger.error("Failed to register webview: \(error)")
             }
