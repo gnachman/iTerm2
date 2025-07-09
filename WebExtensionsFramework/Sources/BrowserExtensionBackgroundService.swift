@@ -9,8 +9,9 @@ import WebKit
 public protocol BrowserExtensionBackgroundServiceProtocol {
     /// Start a background script for the given extension
     /// - Parameter browserExtension: The extension to start background script for
+    /// - Returns: The webview running the background script, or nil if no background script exists
     /// - Throws: Error if background script cannot be started
-    func startBackgroundScript(for browserExtension: BrowserExtension) async throws
+    func startBackgroundScript(for browserExtension: BrowserExtension) async throws -> BrowserExtensionWKWebView?
     
     /// Stop background script for the given extension ID
     /// - Parameter extensionId: The extension ID to stop background script for
@@ -26,6 +27,9 @@ public protocol BrowserExtensionBackgroundServiceProtocol {
     
     /// Get list of extension IDs with active background scripts
     var activeBackgroundScriptExtensionIds: Set<UUID> { get }
+    
+    /// Delegate to access active extension content worlds
+    var activeManagerDelegate: BrowserExtensionActiveManagerProtocol? { get set }
     
     /// Evaluate JavaScript in a specific extension's background script context
     /// - Parameters:
@@ -84,6 +88,9 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
     /// URL scheme handler for isolated extension origins
     private let urlSchemeHandler: BrowserExtensionURLSchemeHandler
     
+    /// Delegate to access active extension content worlds
+    public weak var activeManagerDelegate: BrowserExtensionActiveManagerProtocol?
+    
     /// Initialize background service
     /// - Parameters:
     ///   - hiddenContainer: Hidden container view for WKWebViews
@@ -97,19 +104,19 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         self.urlSchemeHandler = urlSchemeHandler
     }
     
-    public func startBackgroundScript(for browserExtension: BrowserExtension) async throws {
+    public func startBackgroundScript(for browserExtension: BrowserExtension) async throws -> BrowserExtensionWKWebView? {
         let extensionId = browserExtension.id
 
         // Check if already running
-        if jobs[extensionId] != nil {
+        if let existingJob = jobs[extensionId] {
             logger.debug("Background script already running for extension: \(extensionId)")
-            return
+            return existingJob.webView
         }
         
         // Check if extension has background script
         guard let backgroundResource = browserExtension.backgroundScriptResource else {
             logger.debug("No background script for extension: \(extensionId)")
-            return
+            return nil
         }
         
         logger.info("Starting background script for extension: \(extensionId)")
@@ -123,15 +130,13 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
             useEphemeralDataStore: useEphemeralDataStore
         )
 
-        #warning("This should use the BrowserExtensionWKWebView protocol. Also it never gets chrome APIs and other JS polyfills injected. This needs to be tied into the active manager properly.")
         let webView = try BrowserExtensionWebViewFactory.createWebView(
             type: .backgroundScript,
             configuration: factoryConfiguration
         )
         
-        // Add console message handler 
+        // Console handler will be added by BrowserExtensionActiveManager when registering the webview
         let consoleHandler = ConsoleMessageHandler(logger: logger, extensionId: extensionId)
-        webView.configuration.userContentController.add(consoleHandler, name: "consoleLog")
         
         // Inject extension background script in .page world (where webkit.messageHandlers is available)
         if let backgroundResource = browserExtension.backgroundScriptResource {
@@ -143,7 +148,6 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
             )
             webView.configuration.userContentController.addUserScript(backgroundUserScript)
         }
-
 
         // Register the background script with the URL scheme handler
         urlSchemeHandler.registerBackgroundScript(backgroundResource, for: extensionId)
@@ -196,6 +200,7 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         }
         
         logger.info("Background script loaded for: \(extensionId)")
+        return webView
     }
     
     public func stopBackgroundScript(for extensionId: UUID) {
@@ -254,9 +259,14 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
             ])
         }
         
-        // Evaluate in .page world to match where extension scripts now execute
-        // (extension scripts now run in .page world to access webkit.messageHandlers)
-        return try await webView.evaluateJavaScript(javascript, in: nil, contentWorld: .page)
+        // Get the extension's content world from the active manager
+        guard let activeManager = activeManagerDelegate,
+              let activeExtension = activeManager.activeExtension(for: extensionId) else {
+            throw BrowserExtensionError.internalError("Extension not active or no active manager: \(extensionId)")
+        }
+        
+        // Evaluate in the extension's content world where Chrome APIs are injected
+        return try await webView.be_evaluateJavaScript(javascript, in: nil, in: activeExtension.contentWorld)
     }
 }
 

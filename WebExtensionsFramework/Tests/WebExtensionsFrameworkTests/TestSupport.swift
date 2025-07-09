@@ -19,11 +19,13 @@ public class MockInjectionScriptGenerator: BrowserExtensionContentScriptInjectio
 
 public class MockBackgroundService: BrowserExtensionBackgroundServiceProtocol {
     public var activeBackgroundScriptExtensionIds: Set<UUID> = []
+    public weak var activeManagerDelegate: BrowserExtensionActiveManagerProtocol?
     
     public init() {}
     
-    public func startBackgroundScript(for browserExtension: BrowserExtension) async throws {
+    public func startBackgroundScript(for browserExtension: BrowserExtension) async throws -> BrowserExtensionWKWebView? {
         activeBackgroundScriptExtensionIds.insert(browserExtension.id)
+        return nil
     }
     
     public func stopBackgroundScript(for extensionId: UUID) {

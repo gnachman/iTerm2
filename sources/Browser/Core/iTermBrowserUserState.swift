@@ -67,10 +67,13 @@ class iTermBrowserUserState {
                     useEphemeralDataStore: configuration.persistentStorageDisallowed,
                     urlSchemeHandler: BrowserExtensionURLSchemeHandler(logger: logger))
                 self.backgroundService = backgroundService
+                let network = BrowserExtensionNetwork()
                 activeExtensionManager = BrowserExtensionActiveManager(
                     injectionScriptGenerator: BrowserExtensionContentScriptInjectionGenerator(logger: logger),
                     userScriptFactory: BrowserExtensionUserScriptFactory(),
                     backgroundService: backgroundService,
+                    network: network,
+                    router: BrowserExtensionRouter(network: network, logger: logger),
                     logger: logger)
             } else {
                 extensionRegistry = nil
@@ -85,7 +88,9 @@ class iTermBrowserUserState {
         userDefaultsObserver = iTermUserDefaultsObserver()
 
         updateLoaded()
-        updateActivation()
+        Task {
+            await updateActivation()
+        }
 
         // Advanced settings use a UD observer so to avoid winning a race and seeing an outdated
         // setting, wait a spin of the mainloop so it gets to run first.
@@ -96,7 +101,9 @@ class iTermBrowserUserState {
         }
         userDefaultsObserver.observeKey("ActiveBrowserExtensionPaths") { [weak self] in
             DispatchQueue.main.async {
-                self?.updateActivation()
+                Task {
+                    await self?.updateActivation()
+                }
             }
         }
     }
@@ -161,7 +168,8 @@ extension iTermBrowserUserState {
         }
     }
 
-    private func updateActivation() {
+    @MainActor
+    private func updateActivation() async {
         guard let activeExtensionManager else {
             return
         }
@@ -178,7 +186,7 @@ extension iTermBrowserUserState {
         let pathsToRemove = currentPaths.subtracting(desiredPaths)
         for path in pathsToRemove {
             if let id = pathToID[path] {
-                activeExtensionManager.deactivate(id)
+                await activeExtensionManager.deactivate(id)
             }
         }
 
@@ -187,7 +195,7 @@ extension iTermBrowserUserState {
         for path in toAdd {
             if let browserExtension = extensionRegistry?.extensions.first(where: { $0.baseURL.path == path }) {
                 logger.info("Will activate \(browserExtension.id)")
-                activeExtensionManager.activate(browserExtension)
+                await activeExtensionManager.activate(browserExtension)
             } else {
                 logger.error("Failed to find extension at \(path)")
             }
@@ -195,10 +203,12 @@ extension iTermBrowserUserState {
     }
 
     public func registerWebView(_ webView: WKWebView) {
-        do {
-            try activeExtensionManager?.registerWebView(webView)
-        } catch {
-            logger.error("Failed to register webview: \(error)")
+        Task { @MainActor in
+            do {
+                try await activeExtensionManager?.registerWebView(webView, role: .userFacing)
+            } catch {
+                logger.error("Failed to register webview: \(error)")
+            }
         }
     }
 

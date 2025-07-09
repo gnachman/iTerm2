@@ -78,7 +78,7 @@ class BrowserExtensionErrorHandlingTests: XCTestCase {
         await activeManager.activate(mockBrowserExtension)
 
         // Register webview (this adds the user scripts)
-        try await activeManager.registerWebView(webView)
+        try await activeManager.registerWebView(webView, role: .userFacing)
 
         // Load HTML - user scripts will be injected during this load
         let html = "<html><body>Test</body></html>"
@@ -134,7 +134,7 @@ class BrowserExtensionErrorHandlingTests: XCTestCase {
         await activeManager.activate(mockBrowserExtension)
 
         // Register webview (this adds the user scripts)
-        try await activeManager.registerWebView(webView)
+        try await activeManager.registerWebView(webView, role: .userFacing)
         
         // Load HTML - user scripts will be injected during this load
         let html = "<html><body>Test</body></html>"

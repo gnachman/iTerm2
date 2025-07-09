@@ -6,6 +6,7 @@ import WebKit
 
 // MARK: - WebView Protocol
 
+@MainActor
 public protocol BrowserExtensionWKWebView: AnyObject {
     var be_url: URL? { get }
     var be_configuration: BrowserExtensionWKWebViewConfiguration { get }
@@ -14,21 +15,26 @@ public protocol BrowserExtensionWKWebView: AnyObject {
 
 // MARK: - Configuration Protocol
 
+@MainActor
 public protocol BrowserExtensionWKWebViewConfiguration: AnyObject {
     var be_userContentController: BrowserExtensionWKUserContentController { get }
 }
 
+@MainActor
 public protocol BrowserExtensionWKUserContentController: AnyObject {
     func be_addUserScript(_ userScript: WKUserScript)
     func be_removeAllUserScripts()
     func be_add(_ scriptMessageHandler: WKScriptMessageHandler, name: String, contentWorld: WKContentWorld)
+    func be_removeScriptMessageHandler(forName: String, contentWorld: WKContentWorld)
 }
 
 // MARK: - Navigation Protocols
 
+@MainActor
 public protocol BrowserExtensionWKNavigation: AnyObject {
 }
 
+@MainActor
 public protocol BrowserExtensionWKNavigationAction: AnyObject {
     var be_request: URLRequest { get }
     var be_targetFrame: BrowserExtensionWKFrameInfo? { get }
@@ -36,12 +42,14 @@ public protocol BrowserExtensionWKNavigationAction: AnyObject {
     var be_navigationType: WKNavigationType { get }
 }
 
+@MainActor
 public protocol BrowserExtensionWKNavigationResponse: AnyObject {
     var be_response: URLResponse { get }
     var be_isForMainFrame: Bool { get }
     var be_canShowMIMEType: Bool { get }
 }
 
+@MainActor
 public protocol BrowserExtensionWKFrameInfo: AnyObject {
     var be_isMainFrame: Bool { get }
     var be_request: URLRequest { get }
@@ -65,6 +73,7 @@ public protocol BrowserExtensionWKNavigationDelegate: AnyObject {
 
 // MARK: - Extensions to make WebKit types conform
 
+@MainActor
 extension WKWebView: BrowserExtensionWKWebView {
     public var be_url: URL? { url }
     public var be_configuration: BrowserExtensionWKWebViewConfiguration { configuration }
@@ -74,10 +83,12 @@ extension WKWebView: BrowserExtensionWKWebView {
     }
     }
 
+@MainActor
 extension WKWebViewConfiguration: BrowserExtensionWKWebViewConfiguration {
     public var be_userContentController: BrowserExtensionWKUserContentController { userContentController }
 }
 
+@MainActor
 extension WKUserContentController: BrowserExtensionWKUserContentController {
     public func be_addUserScript(_ userScript: WKUserScript) {
         addUserScript(userScript)
@@ -88,18 +99,27 @@ extension WKUserContentController: BrowserExtensionWKUserContentController {
     }
     
     public func be_add(_ scriptMessageHandler: WKScriptMessageHandler, name: String, contentWorld: WKContentWorld) {
+        // double-adding one with the same name crashes!
+        removeScriptMessageHandler(forName: name, contentWorld: contentWorld)
         add(scriptMessageHandler, contentWorld: contentWorld, name: name)
+    }
+    
+    public func be_removeScriptMessageHandler(forName name: String, contentWorld: WKContentWorld) {
+        removeScriptMessageHandler(forName: name, contentWorld: contentWorld)
     }
 }
 
+@MainActor
 extension WKNavigation: BrowserExtensionWKNavigation {
 }
 
+@MainActor
 extension WKFrameInfo: BrowserExtensionWKFrameInfo {
     public var be_isMainFrame: Bool { isMainFrame }
     public var be_request: URLRequest { request }
 }
 
+@MainActor
 extension WKNavigationAction: BrowserExtensionWKNavigationAction {
     public var be_request: URLRequest { request }
     public var be_targetFrame: BrowserExtensionWKFrameInfo? { targetFrame }
@@ -107,6 +127,7 @@ extension WKNavigationAction: BrowserExtensionWKNavigationAction {
     public var be_navigationType: WKNavigationType { navigationType }
 }
 
+@MainActor
 extension WKNavigationResponse: BrowserExtensionWKNavigationResponse {
     public var be_response: URLResponse { response }
     public var be_isForMainFrame: Bool { isForMainFrame }

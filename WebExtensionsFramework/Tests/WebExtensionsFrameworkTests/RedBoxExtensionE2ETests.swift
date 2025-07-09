@@ -22,7 +22,7 @@ final class RedBoxExtensionE2ETests: XCTestCase {
         activeManager = BrowserExtensionActiveManager()
         
         // Register the webview with the active manager
-        try await activeManager.registerWebView(webView)
+        try await activeManager.registerWebView(webView, role: .userFacing)
         
         navigationHandler = BrowserExtensionNavigationHandler(logger: createTestLogger())
     }
