@@ -156,7 +156,7 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
     NSString *name = [formattedFilename stringByReplacingOccurrencesOfString:@"/" withString:@"__"];
     NSString *joined = [formattedFolder stringByAppendingPathComponent:name];
     DLog(@"folder=%@ filename=%@ name=%@ joined=%@", formattedFolder, formattedFilename, name, joined);
-    return joined;
+    return [joined stringByExpandingTildeInPath];
 }
 
 - (void)setTermIDIfPossible {

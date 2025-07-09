@@ -653,7 +653,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
 }
 
 - (BOOL)logDirIsWritable {
-    return [[NSFileManager defaultManager] directoryIsWritable:[_logDir stringValue]];
+    return [[NSFileManager defaultManager] directoryIsWritable:[_logDir stringValue].stringByExpandingTildeInPath];
 }
 
 #pragma mark - PSMMinimalTabStyleDelegate
