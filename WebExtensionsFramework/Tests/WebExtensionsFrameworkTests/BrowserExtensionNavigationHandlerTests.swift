@@ -132,6 +132,10 @@ private class MockUserContentController: BrowserExtensionWKUserContentController
     func be_add(_ scriptMessageHandler: WKScriptMessageHandler, name: String, contentWorld: WKContentWorld) {
         addedMessageHandlers.append((scriptMessageHandler, name))
     }
+    
+    func be_removeScriptMessageHandler(forName name: String, contentWorld: WKContentWorld) {
+        addedMessageHandlers.removeAll { $0.1 == name }
+    }
 }
 
 private class MockNavigation: BrowserExtensionWKNavigation {

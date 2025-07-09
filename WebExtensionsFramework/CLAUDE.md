@@ -21,3 +21,4 @@ We are building a Swift framework to enable a web browser I'm adding to iTerm2 t
 * Class names generally begin with BrowserExtension.
 * I am not infallible. You should push back against me if you think I have made a mistake.
 * We are not quitters. We do not give up. We fight until we win. This is core to our identity. We will not be defeated by a computer!
+* Avoid downcasting, even conditionally.
