@@ -125,18 +125,12 @@ public func createTestActiveManager(logger: BrowserExtensionLogger? = nil) -> Br
     let router = BrowserExtensionRouter(network: network, logger: testLogger)
     return BrowserExtensionActiveManager(
         injectionScriptGenerator: BrowserExtensionContentScriptInjectionGenerator(logger: testLogger),
-        userScriptFactory: SimpleUserScriptFactory(),
+        userScriptFactory: BrowserExtensionUserScriptFactory(),
         backgroundService: MockBackgroundService(),
         network: network,
         router: router,
         logger: testLogger
     )
-}
-
-private class SimpleUserScriptFactory: BrowserExtensionUserScriptFactoryProtocol {
-    func createUserScript(source: String, injectionTime: WKUserScriptInjectionTime, forMainFrameOnly: Bool, in contentWorld: WKContentWorld) -> WKUserScript {
-        return WKUserScript(source: source, injectionTime: injectionTime, forMainFrameOnly: forMainFrameOnly, in: contentWorld)
-    }
 }
 
 @MainActor

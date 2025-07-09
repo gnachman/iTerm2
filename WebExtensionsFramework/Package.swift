@@ -21,12 +21,18 @@ let package = Package(
         .target(
             name: "BrowserExtensionShared",
             dependencies: [],
-            path: "Shared"
+            path: "Shared",
+            resources: [
+                .copy("../Resources")
+            ]
         ),
         .target(
             name: "WebExtensionsFramework",
             dependencies: ["BrowserExtensionShared"],
-            path: "Sources"
+            path: "Sources",
+            resources: [
+                .copy("../Resources")
+            ]
         ),
         .executableTarget(
             name: "APIGenerator",

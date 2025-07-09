@@ -26,6 +26,7 @@ public enum WebViewRole {
 /// Per-webview state tracking
 class WebViewState {
     weak var webView: BrowserExtensionWKWebView?
+    let userContentManager: BrowserExtensionUserContentManager
     let role: WebViewRole
 
     /// Used to ensure we don't register handlers more than once per world.
@@ -34,8 +35,9 @@ class WebViewState {
     /// Track whether we've already injected background script support for this webview
     var hasBackgroundScriptSupport: Bool = false
 
-    init(webView: BrowserExtensionWKWebView, role: WebViewRole) {
+    init(webView: BrowserExtensionWKWebView, userContentManager: BrowserExtensionUserContentManager, role: WebViewRole) {
         self.webView = webView
+        self.userContentManager = userContentManager
         self.role = role
     }
 }
@@ -91,8 +93,10 @@ public protocol BrowserExtensionActiveManagerProtocol: AnyObject {
     /// - Parameters:
     ///   - webView: The webview to register
     ///   - role: The role of the webview (userFacing or backgroundScript)
-    func registerWebView(_ webView: BrowserExtensionWKWebView, role: WebViewRole) async throws
-    
+    func registerWebView(_ webView: BrowserExtensionWKWebView,
+                         userContentManager: BrowserExtensionUserContentManager,
+                         role: WebViewRole) async throws
+
     /// Unregister a webview from injection script updates
     /// - Parameter webView: The webview to unregister
     func unregisterWebView(_ webView: BrowserExtensionWKWebView)
@@ -172,7 +176,12 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
             do {
                 if let backgroundWebView = try await backgroundService.startBackgroundScript(for: browserExtension) {
                     // Register the background webview to get Chrome APIs injected
-                    try await self.registerWebView(backgroundWebView, role: .backgroundScript(browserExtension.id))
+                    try await self.registerWebView(
+                        backgroundWebView,
+                        userContentManager: BrowserExtensionUserContentManager(
+                            webView: backgroundWebView,
+                            userScriptFactory: userScriptFactory),
+                        role: .backgroundScript(browserExtension.id))
                 }
             } catch {
                 logger.error("Failed to launch background service for \(browserExtension.baseURL.path): \(error)")
@@ -237,7 +246,9 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     /// - Parameters:
     ///   - webView: The webview to register
     ///   - role: The role of the webview (userFacing or backgroundScript)
-    public func registerWebView(_ webView: BrowserExtensionWKWebView, role: WebViewRole) async throws {
+    public func registerWebView(_ webView: BrowserExtensionWKWebView,
+                                userContentManager: BrowserExtensionUserContentManager,
+                                role: WebViewRole) async throws {
         await logger.inContext("Register webview \(webView)") {
             logger.debug("Registering webview \(webView) for injection script updates")
             
@@ -248,7 +259,9 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
             
             // Create or get webview state
             if webViewStates[id] == nil {
-                webViewStates[id] = WebViewState(webView: webView, role: role)
+                webViewStates[id] = WebViewState(webView: webView,
+                                                 userContentManager: userContentManager,
+                                                 role: role)
             }
             
             // Register webview with network for each active extension
@@ -258,7 +271,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
             
             // Install current injection scripts
             logger.debug("About to update injection scripts for webview \(webView)")
-            await updateInjectionScriptsInWebView(webView)
+            await updateInjectionScriptsInWebView(webView, userContentManager: userContentManager)
             logger.debug("Successfully registered webview with \(activeExtensions.count) active extension(s)")
         }
     }
@@ -346,13 +359,14 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
         // Update each webview
         for state in webViewStates.values {
             if let webView = state.webView {
-                await updateInjectionScriptsInWebView(webView)
+                await updateInjectionScriptsInWebView(webView, userContentManager: state.userContentManager)
             }
         }
     }
     
     /// Update the injection scripts in a specific webview
-    private func updateInjectionScriptsInWebView(_ webView: BrowserExtensionWKWebView) async {
+    private func updateInjectionScriptsInWebView(_ webView: BrowserExtensionWKWebView,
+                                                 userContentManager: BrowserExtensionUserContentManager) async {
         logger.debug("Updating injection scripts in webview \(webView) for \(activeExtensions.count) active extension(s)")
         
         // Remove all existing user scripts first
@@ -373,7 +387,10 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
             if !webViewState.hasBackgroundScriptSupport {
                 // Get the content world for this background script extension
                 if let activeExtension = activeExtensions[extensionId] {
-                    injectBackgroundScriptSupport(webView, extensionId: extensionId, contentWorld: activeExtension.contentWorld)
+                    injectBackgroundScriptSupport(webView,
+                                                  userContentManager: userContentManager,
+                                                  extensionId: extensionId,
+                                                  contentWorld: activeExtension.contentWorld)
                     webViewState.hasBackgroundScriptSupport = true
                 } else {
                     logger.error("Background script extension \(extensionId) not found in active extensions")
@@ -574,9 +591,17 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     }
     
     // MARK: - Background Script Support
-    
+
+    private enum UserScriptIdentifier: String {
+        case domNuke = "__be_domNuke"
+        case consoleLog = "__be_consoleLog"
+    }
+
     /// Inject background script-specific scripts (DOM nuke + console handler)
-    private func injectBackgroundScriptSupport(_ webView: BrowserExtensionWKWebView, extensionId: UUID, contentWorld: WKContentWorld) {
+    private func injectBackgroundScriptSupport(_ webView: BrowserExtensionWKWebView,
+                                               userContentManager: BrowserExtensionUserContentManager,
+                                               extensionId: UUID,
+                                               contentWorld: WKContentWorld) {
         // Add console.log message handler for this specific extension
         let consoleHandler = BrowserExtensionConsoleLogHandler(
             extensionId: extensionId,
@@ -597,55 +622,24 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
             name: "consoleLog",
             contentWorld: contentWorld
         )
-        // Inject DOM nuke script in .page, .defaultClient, and extension content worlds
-        let domNukeScript = generateDOMNukeScript()
-        
-        let nukeUserScriptPage = userScriptFactory.createUserScript(
-            source: domNukeScript,
-            injectionTime: .atDocumentStart,
-            forMainFrameOnly: false,
-            in: .page
-        )
-        webView.be_configuration.be_userContentController.be_addUserScript(nukeUserScriptPage)
 
-        let nukeUserScriptClient = userScriptFactory.createUserScript(
-            source: domNukeScript,
-            injectionTime: .atDocumentStart,
-            forMainFrameOnly: false,
-            in: .defaultClient
-        )
-        webView.be_configuration.be_userContentController.be_addUserScript(nukeUserScriptClient)
+        userContentManager.performAtomicUpdate {
+            // DOM Nuke
+            userContentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
+                code: generateDOMNukeScript(),
+                injectionTime: .atDocumentStart,
+                forMainFrameOnly: false,
+                worlds: [.defaultClient, contentWorld],
+                identifier: UserScriptIdentifier.domNuke.rawValue))
 
-        // CRITICAL: Also inject DOM nuke script in the extension's content world
-        // This is where the background script actually executes
-        let nukeUserScriptExtension = userScriptFactory.createUserScript(
-            source: domNukeScript,
-            injectionTime: .atDocumentStart,
-            forMainFrameOnly: false,
-            in: contentWorld
-        )
-        webView.be_configuration.be_userContentController.be_addUserScript(nukeUserScriptExtension)
-
-        // Inject console override script in both .page world and extension's content world
-        let consoleOverrideScript = generateConsoleOverrideScript()
-        
-        // .page world for compatibility with existing web content
-        let consoleOverrideUserScriptPage = userScriptFactory.createUserScript(
-            source: consoleOverrideScript,
-            injectionTime: .atDocumentStart,
-            forMainFrameOnly: false,
-            in: .page
-        )
-        webView.be_configuration.be_userContentController.be_addUserScript(consoleOverrideUserScriptPage)
-        
-        // Extension's content world for background scripts
-        let consoleOverrideUserScriptExtension = userScriptFactory.createUserScript(
-            source: consoleOverrideScript,
-            injectionTime: .atDocumentStart,
-            forMainFrameOnly: false,
-            in: contentWorld
-        )
-        webView.be_configuration.be_userContentController.be_addUserScript(consoleOverrideUserScriptExtension)
+            // console.log handler
+            userContentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
+                code: generateConsoleOverrideScript(),
+                injectionTime: .atDocumentStart,
+                forMainFrameOnly: false,
+                worlds: [.page, contentWorld],
+                identifier: UserScriptIdentifier.consoleLog.rawValue))
+        }
     }
     
     /// Execute DOM nuke script directly in the extension's content world
@@ -653,7 +647,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
         logger.debug("About to execute DOM nuke script in content world: \(contentWorld.name ?? "unnamed")")
         let domNukeScript = generateDOMNukeScript()
         do {
-            try await webView.be_evaluateJavaScript(domNukeScript, in: nil, in: contentWorld)
+            _ = try await webView.be_evaluateJavaScript(domNukeScript, in: nil, in: contentWorld)
             logger.debug("Successfully executed DOM nuke script in content world")
         } catch {
             logger.error("Failed to execute DOM nuke script in content world: \(error)")
@@ -662,258 +656,12 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     
     /// Generate DOM nuke script to remove DOM globals from background script context
     private func generateDOMNukeScript() -> String {
-        return """
-        (() => {
-            'use strict';
-            
-            // Get the proper global object reference
-            const global = (function() {
-                if (typeof globalThis !== 'undefined') return globalThis;
-                if (typeof window !== 'undefined') return window;
-                if (typeof global !== 'undefined') return global;
-                if (typeof self !== 'undefined') return self;
-                throw new Error('Unable to locate global object');
-            })();
-            
-            // List of DOM globals to shadow (make undefined)
-            const DOM_GLOBALS = [
-                // Core DOM APIs
-                'document', 'Document',
-                'HTMLDocument', 'XMLDocument',
-                
-                // Element constructors
-                'Element', 'HTMLElement', 'HTMLAnchorElement', 'HTMLButtonElement',
-                'HTMLCanvasElement', 'HTMLDivElement', 'HTMLFormElement',
-                'HTMLHeadElement', 'HTMLImageElement', 'HTMLInputElement',
-                'HTMLLabelElement', 'HTMLLinkElement', 'HTMLMetaElement',
-                'HTMLParagraphElement', 'HTMLScriptElement', 'HTMLSelectElement',
-                'HTMLSpanElement', 'HTMLStyleElement', 'HTMLTableElement',
-                'HTMLTextAreaElement', 'HTMLTitleElement', 'HTMLUListElement',
-                
-                // Event constructors and APIs
-                'Event', 'CustomEvent', 'UIEvent', 'MouseEvent', 'KeyboardEvent',
-                'TouchEvent', 'PointerEvent', 'WheelEvent', 'InputEvent',
-                'FocusEvent', 'CompositionEvent', 'ClipboardEvent',
-                'DragEvent', 'PopStateEvent', 'HashChangeEvent',
-                'PageTransitionEvent', 'BeforeUnloadEvent', 'ErrorEvent',
-                'ProgressEvent', 'MessageEvent', 'StorageEvent',
-                'addEventListener', 'removeEventListener', 'dispatchEvent',
-                
-                // Node types
-                'Node', 'Text', 'Comment', 'DocumentFragment',
-                'Attr', 'CDATASection', 'ProcessingInstruction',
-                'DocumentType', 'EntityReference', 'Entity', 'Notation',
-                
-                // CSS and styling
-                'CSSStyleDeclaration', 'CSSRule', 'CSSStyleSheet',
-                'getComputedStyle',
-                
-                // Deprecated/dangerous APIs
-                'alert', 'confirm', 'prompt',
-                'open', 'close', 'print',
-                
-                // Storage APIs that could leak data
-                'localStorage', 'sessionStorage',
-                
-                // Selection and Range
-                'Selection', 'Range', 'getSelection',
-                
-                // Parser
-                'DOMParser', 'XMLSerializer',
-                
-                // Observers
-                'MutationObserver', 'IntersectionObserver', 'ResizeObserver',
-                
-                // Other DOM APIs
-                'history', 'History',
-                'navigator', 'Navigator',
-                'screen', 'Screen',
-                
-                // Forms
-                'FormData',
-                
-                // Media
-                'MediaQueryList', 'matchMedia',
-                
-                // CSSOM
-                'CSSStyleDeclaration', 'CSSRule', 'CSSStyleSheet',
-                'getComputedStyle',
-                
-                // Performance (DOM-related parts)
-                'PerformanceNavigation', 'PerformanceTiming',
-                
-                // Frames
-                'frames', 'frameElement', 'parent', 'top',
-                
-                // Scrolling
-                'scrollTo', 'scrollBy', 'scroll',
-                'scrollX', 'scrollY', 'pageXOffset', 'pageYOffset',
-                
-                // Dimensions
-                'innerWidth', 'innerHeight', 'outerWidth', 'outerHeight',
-                'screenX', 'screenY', 'screenLeft', 'screenTop',
-                
-                // Device
-                'devicePixelRatio',
-                
-                // Base64
-                'atob', 'btoa',
-                
-                // Timers (keep setTimeout/setInterval as they're needed)
-                'requestAnimationFrame', 'cancelAnimationFrame',
-                
-                // Workers (DOM-related)
-                'Worker', 'SharedWorker', 'DedicatedWorkerGlobalScope', 'importScripts',
-                
-                // Broadcast APIs
-                'BroadcastChannel', 'MessageChannel', 'MessagePort',
-                
-                // Server-Sent Events
-                'EventSource',
-                
-                // Gamepad
-                'Gamepad', 'GamepadButton', 'GamepadEvent',
-                
-                // WebGL
-                'WebGLRenderingContext', 'WebGL2RenderingContext',
-                
-                // XHR (legacy - encourage fetch)
-                'XMLHttpRequest', 'XMLHttpRequestEventTarget', 'XMLHttpRequestUpload'
-            ];
-            
-            // Shadow each DOM global by defining an own property
-            DOM_GLOBALS.forEach(name => {
-                if (name in global) {
-                    try {
-                        Object.defineProperty(global, name, {
-                            value: undefined,
-                            writable: false,
-                            configurable: true,
-                            enumerable: false
-                        });
-                    } catch (e) {
-                        try {
-                            global[name] = undefined;
-                        } catch (e2) {
-                            // If we can't override it, leave it alone
-                        }
-                    }
-                }
-            });
-            
-            // Special handling for window since window === globalThis in WKWebView
-            try {
-                Object.defineProperty(global, 'window', {
-                    value: undefined,
-                    writable: false,
-                    configurable: true,
-                    enumerable: false
-                });
-            } catch (e) {}
-            
-            // Set up service worker-like environment
-            if (!global.self) {
-                global.self = global;
-            }
-            
-            // Add minimal registration object for service worker compatibility
-            if (!global.registration) {
-                global.registration = {
-                    scope: '/',
-                    active: null,
-                    installing: null,
-                    waiting: null,
-                    updateViaCache: 'none'
-                };
-            }
-            
-            // Set debug marker
-            global.__domNukeExecuted = true;
-            
-        })();
-        """
+        return BrowserExtensionTemplateLoader.loadTemplate(named: "dom-nuke", type: "js")
     }
     
     /// Generate console override script that overrides console.log to send messages to Swift
     private func generateConsoleOverrideScript() -> String {
-        return """
-        (() => {
-            'use strict';
-            
-            // Get the proper global object reference
-            const global = (function() {
-                if (typeof globalThis !== 'undefined') return globalThis;
-                if (typeof window !== 'undefined') return window;
-                if (typeof global !== 'undefined') return global;
-                if (typeof self !== 'undefined') return self;
-                throw new Error('Unable to locate global object');
-            })();
-            
-            // Store original console methods
-            const originalConsole = global.console || {};
-            const originalLog = originalConsole.log || function() {};
-            
-            // Override console.log to send messages to .page world
-            global.console = global.console || {};
-            global.console.log = function(...args) {
-                // Call original console.log first (for debugging in Web Inspector)
-                try {
-                    originalLog.apply(originalConsole, args);
-                } catch (e) {
-                    // Ignore errors from original console.log
-                }
-                
-                // Send to Swift via webkit.messageHandlers
-                try {
-                    // Check for webkit.messageHandlers availability more robustly
-                    if (typeof webkit === 'undefined' || 
-                        !webkit || 
-                        !webkit.messageHandlers || 
-                        typeof webkit.messageHandlers.consoleLog === 'undefined') {
-                        // webkit.messageHandlers not available, skip sending to Swift
-                        return;
-                    }
-                    
-                    const message = args.map(arg => {
-                        if (typeof arg === 'string') {
-                            return arg;
-                        } else if (arg === null) {
-                            return 'null';
-                        } else if (arg === undefined) {
-                            return 'undefined';
-                        } else {
-                            try {
-                                return JSON.stringify(arg);
-                            } catch (jsonError) {
-                                // Fallback to String() if JSON.stringify fails
-                                try {
-                                    return String(arg);
-                                } catch (stringError) {
-                                    return '[object Object]';
-                                }
-                            }
-                        }
-                    }).join(' ');
-                    
-                    // Additional safety check before sending
-                    if (typeof webkit.messageHandlers.consoleLog.postMessage === 'function') {
-                        webkit.messageHandlers.consoleLog.postMessage(message);
-                    }
-                } catch (e) {
-                    // Silently ignore errors when sending to Swift to prevent console.log from breaking
-                    // This could happen if webkit.messageHandlers becomes unavailable during execution
-                }
-            };
-            
-            // Preserve other console methods
-            ['debug', 'info', 'warn', 'error', 'trace', 'dir', 'dirxml', 'group', 'groupEnd', 'time', 'timeEnd', 'assert', 'clear'].forEach(method => {
-                if (originalConsole[method] && !global.console[method]) {
-                    global.console[method] = originalConsole[method];
-                }
-            });
-            
-        })();
-        """
+        return BrowserExtensionTemplateLoader.loadTemplate(named: "console-override", type: "js")
     }
 }
 

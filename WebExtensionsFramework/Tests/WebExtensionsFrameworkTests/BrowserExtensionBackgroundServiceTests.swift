@@ -34,7 +34,7 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
         let router = BrowserExtensionRouter(network: network, logger: testLogger)
         mockActiveManager = BrowserExtensionActiveManager(
             injectionScriptGenerator: MockInjectionScriptGenerator(),
-            userScriptFactory: SimpleUserScriptFactory(),
+            userScriptFactory: BrowserExtensionUserScriptFactory(),
             backgroundService: MockBackgroundService(),
             network: network,
             router: router,
@@ -230,7 +230,12 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
         // Register the webview with the ActiveManager to get background script support
         if let webView = backgroundWebView {
             print("DEBUG: About to register background webview with ActiveManager")
-            try await mockActiveManager.registerWebView(webView, role: .backgroundScript(testExtension.id))
+            try await mockActiveManager.registerWebView(
+                webView,
+                userContentManager: BrowserExtensionUserContentManager(
+                    webView: webView,
+                    userScriptFactory: BrowserExtensionUserScriptFactory()),
+                role: .backgroundScript(testExtension.id))
             print("DEBUG: Successfully registered background webview with ActiveManager")
         } else {
             print("DEBUG: No background webview returned from startBackgroundScript")
@@ -340,10 +345,21 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
         
         // Register the webviews with the ActiveManager to get background script support
         if let webView1 = webView1 {
-            try await mockActiveManager.registerWebView(webView1, role: .backgroundScript(testExtension1.id))
+            try await mockActiveManager.registerWebView(
+                webView1,
+                userContentManager: BrowserExtensionUserContentManager(
+                    webView: webView1,
+                    userScriptFactory: BrowserExtensionUserScriptFactory()),
+
+                role: .backgroundScript(testExtension1.id))
         }
         if let webView2 = webView2 {
-            try await mockActiveManager.registerWebView(webView2, role: .backgroundScript(testExtension2.id))
+            try await mockActiveManager.registerWebView(
+                webView2,
+                userContentManager: BrowserExtensionUserContentManager(
+                    webView: webView2,
+                    userScriptFactory: BrowserExtensionUserScriptFactory()),
+                role: .backgroundScript(testExtension2.id))
         }
         
         // Verify they're in separate processes
@@ -427,10 +443,20 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
         
         // Register the webviews with the ActiveManager to get background script support
         if let webView1 = webView1 {
-            try await mockActiveManager.registerWebView(webView1, role: .backgroundScript(testExtension1.id))
+            try await mockActiveManager.registerWebView(
+                webView1,
+                userContentManager: BrowserExtensionUserContentManager(
+                    webView: webView1,
+                    userScriptFactory: BrowserExtensionUserScriptFactory()),
+                role: .backgroundScript(testExtension1.id))
         }
         if let webView2 = webView2 {
-            try await mockActiveManager.registerWebView(webView2, role: .backgroundScript(testExtension2.id))
+            try await mockActiveManager.registerWebView(
+                webView2,
+                userContentManager: BrowserExtensionUserContentManager(
+                    webView: webView2,
+                    userScriptFactory: BrowserExtensionUserScriptFactory()),
+                role: .backgroundScript(testExtension2.id))
         }
         
         XCTAssertEqual(backgroundService.activeBackgroundScriptExtensionIds.count, 2)
@@ -548,10 +574,20 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
         
         // Register the webviews with the ActiveManager to get background script support
         if let webView1 = webView1 {
-            try await mockActiveManager.registerWebView(webView1, role: .backgroundScript(testExtension1.id))
+            try await mockActiveManager.registerWebView(
+                webView1,
+                userContentManager: BrowserExtensionUserContentManager(
+                    webView: webView1,
+                    userScriptFactory: BrowserExtensionUserScriptFactory()),
+                role: .backgroundScript(testExtension1.id))
         }
         if let webView2 = webView2 {
-            try await mockActiveManager.registerWebView(webView2, role: .backgroundScript(testExtension2.id))
+            try await mockActiveManager.registerWebView(
+                webView2,
+                userContentManager: BrowserExtensionUserContentManager(
+                    webView: webView2,
+                    userScriptFactory: BrowserExtensionUserScriptFactory()),
+                role: .backgroundScript(testExtension2.id))
         }
         
         // Test that both extensions have access to IndexedDB API
@@ -690,10 +726,20 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
         
         // Register the webviews with the ActiveManager to get background script support
         if let webView1 = webView1 {
-            try await mockActiveManager.registerWebView(webView1, role: .backgroundScript(testExtension1.id))
+            try await mockActiveManager.registerWebView(
+                webView1,
+                userContentManager: BrowserExtensionUserContentManager(
+                    webView: webView1,
+                    userScriptFactory: BrowserExtensionUserScriptFactory()),
+                role: .backgroundScript(testExtension1.id))
         }
         if let webView2 = webView2 {
-            try await mockActiveManager.registerWebView(webView2, role: .backgroundScript(testExtension2.id))
+            try await mockActiveManager.registerWebView(
+                webView2,
+                userContentManager: BrowserExtensionUserContentManager(
+                    webView: webView2,
+                    userScriptFactory: BrowserExtensionUserScriptFactory()),
+                role: .backgroundScript(testExtension2.id))
         }
         
         // Test that both ephemeral extensions have access to IndexedDB
@@ -794,7 +840,12 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
         // Start the background script
         let webView = try await backgroundService.startBackgroundScript(for: testExtension)
         if let webView = webView {
-            try await mockActiveManager.registerWebView(webView, role: .backgroundScript(testExtension.id))
+            try await mockActiveManager.registerWebView(
+                webView,
+                userContentManager: BrowserExtensionUserContentManager(
+                    webView: webView,
+                    userScriptFactory: BrowserExtensionUserScriptFactory()),
+                role: .backgroundScript(testExtension.id))
         }
         
         // Verify the script executed
@@ -888,7 +939,12 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
         // Start the background script
         let webView = try await backgroundService.startBackgroundScript(for: testExtension)
         if let webView = webView {
-            try await mockActiveManager.registerWebView(webView, role: .backgroundScript(testExtension.id))
+            try await mockActiveManager.registerWebView(
+                webView,
+                userContentManager: BrowserExtensionUserContentManager(
+                    webView: webView,
+                    userScriptFactory: BrowserExtensionUserScriptFactory()),
+                role: .backgroundScript(testExtension.id))
         }
         
         // Note: Even though document and location may be available due to WKWebView non-configurable properties,
@@ -926,7 +982,12 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
         
         // Register the webview with the ActiveManager to get background script support
         if let webView = backgroundWebView {
-            try await mockActiveManager.registerWebView(webView, role: .backgroundScript(testExtension.id))
+            try await mockActiveManager.registerWebView(
+                webView,
+                userContentManager: BrowserExtensionUserContentManager(
+                    webView: webView,
+                    userScriptFactory: BrowserExtensionUserScriptFactory()),
+                role: .backgroundScript(testExtension.id))
         }
         
         let extensionId = testExtension.id
@@ -1141,7 +1202,12 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
         // Start the background script
         let webView = try await backgroundService.startBackgroundScript(for: consoleTestExtension)
         if let webView = webView {
-            try await mockActiveManager.registerWebView(webView, role: .backgroundScript(consoleTestExtension.id))
+            try await mockActiveManager.registerWebView(
+                webView,
+                userContentManager: BrowserExtensionUserContentManager(
+                    webView: webView,
+                    userScriptFactory: BrowserExtensionUserScriptFactory()),
+                role: .backgroundScript(consoleTestExtension.id))
         }
         
         // Wait longer for the console.log messages to be processed
@@ -1390,11 +1456,3 @@ public class TestBrowserExtensionLogger: BrowserExtensionLogger {
         return try await closure()
     }
 }
-
-// Simple user script factory for testing
-private class SimpleUserScriptFactory: BrowserExtensionUserScriptFactoryProtocol {
-    func createUserScript(source: String, injectionTime: WKUserScriptInjectionTime, forMainFrameOnly: Bool, in contentWorld: WKContentWorld) -> WKUserScript {
-        return WKUserScript(source: source, injectionTime: injectionTime, forMainFrameOnly: forMainFrameOnly, in: contentWorld)
-    }
-}
-

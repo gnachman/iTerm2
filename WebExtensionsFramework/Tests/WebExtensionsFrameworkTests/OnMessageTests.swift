@@ -51,9 +51,19 @@ class OnMessageTests: XCTestCase {
         await activeManager.activate(mockBrowserExtension)
 
         // Register both webviews with the activeManager (this will inject APIs automatically)
-        try await activeManager.registerWebView(senderWebView, role: .userFacing)
-        try await activeManager.registerWebView(receiverWebView, role: .userFacing)
-        
+        try await activeManager.registerWebView(
+            senderWebView,
+            userContentManager: BrowserExtensionUserContentManager(
+                webView: senderWebView,
+                userScriptFactory: BrowserExtensionUserScriptFactory()),
+            role: .userFacing)
+        try await activeManager.registerWebView(
+            receiverWebView,
+            userContentManager: BrowserExtensionUserContentManager(
+                webView: receiverWebView,
+                userScriptFactory: BrowserExtensionUserScriptFactory()),
+            role: .userFacing)
+
         // Load HTML into both webviews (this will trigger the injected scripts)
         let html = "<html><body>Test</body></html>"
         try await senderWebView.loadHTMLStringAsync(html, baseURL: nil)
