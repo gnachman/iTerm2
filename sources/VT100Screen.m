@@ -250,7 +250,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (NSMaxRange(range) < overflow) {
         return;
     }
-    const int start = range.location < overflow ? range.location - overflow : 0;
+    const int start = range.location > overflow ? range.location - overflow : 0;
     ScreenCharArray *sca = [self screenCharArrayForLine:start];
     [self replaceRange:VT100GridAbsCoordRangeMake(0, range.location, self.width, NSMaxRange(range))
               withLine:sca
