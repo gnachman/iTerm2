@@ -35,16 +35,16 @@ Dep:
 
 Beta:
 	cp plists/beta-iTerm2.plist plists/iTerm2.plist
-	xcodebuild -scheme iTerm2 -configuration Beta -destination 'platform=macOS' -skipPackagePluginValidation && \
+	xcodebuild -scheme iTerm2 -configuration Beta -destination 'platform=macOS' -skipPackagePluginValidation ENABLE_ADDRESS_SANITIZER=NO && \
 	chmod -R go+rX build/Beta
 
 Deployment:
-	xcodebuild -scheme iTerm2 -configuration Deployment -destination 'platform=macOS' -skipPackagePluginValidation && \
+	xcodebuild -scheme iTerm2 -configuration Deployment -destination 'platform=macOS' -skipPackagePluginValidation ENABLE_ADDRESS_SANITIZER=NO && \
 	chmod -R go+rX build/Deployment
 
 Nightly: force
 	cp plists/nightly-iTerm2.plist plists/iTerm2.plist
-	xcodebuild -scheme iTerm2 -configuration Nightly -destination 'platform=macOS' -skipPackagePluginValidation
+	xcodebuild -scheme iTerm2 -configuration Nightly -destination 'platform=macOS' -skipPackagePluginValidation ENABLE_ADDRESS_SANITIZER=NO
 	chmod -R go+rX build/Nightly
 
 run: Development
