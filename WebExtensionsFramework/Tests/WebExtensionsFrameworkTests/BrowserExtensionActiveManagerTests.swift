@@ -178,7 +178,12 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
         await manager.activate(testExtension)
 
         // Register webview (this adds the user scripts)
-        try await manager.registerWebView(webView, role: .userFacing)
+        try await manager.registerWebView(
+            webView,
+            userContentManager: BrowserExtensionUserContentManager(
+                webView: webView,
+                userScriptFactory: BrowserExtensionUserScriptFactory()),
+            role: .userFacing)
 
         // Load HTML - user scripts will be injected during this load
         let html = "<html><body>Test</body></html>"
@@ -217,8 +222,13 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
         await manager.activate(extension2)
 
         // Register webview (this adds the user scripts)
-        try await manager.registerWebView(webView, role: .userFacing)
-        
+        try await manager.registerWebView(
+            webView,
+            userContentManager: BrowserExtensionUserContentManager(
+                webView: webView,
+                userScriptFactory: BrowserExtensionUserScriptFactory()),
+            role: .userFacing)
+
         // Load HTML - user scripts will be injected during this load
         let html = "<html><body>Test</body></html>"
         try await webView.loadHTMLStringAsync(html, baseURL: nil)
@@ -259,7 +269,12 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
         await manager.activate(testExtension)
 
         // Register webview (this adds the user scripts)
-        try await manager.registerWebView(webView, role: .userFacing)
+        try await manager.registerWebView(
+            webView,
+            userContentManager: BrowserExtensionUserContentManager(
+                webView: webView,
+                userScriptFactory: BrowserExtensionUserScriptFactory()),
+            role: .userFacing)
 
         // Load HTML - user scripts will be injected during this load
         let html = "<html><body>Test</body></html>"

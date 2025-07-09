@@ -23,8 +23,13 @@ final class ContentWorldIsolationIntegrationTests: XCTestCase {
         activeManager = BrowserExtensionActiveManager() // Use convenience init with real implementations
         
         // Register the webview with the active manager
-        try await activeManager.registerWebView(webView, role: .userFacing)
-        
+        try await activeManager.registerWebView(
+            webView,
+            userContentManager: BrowserExtensionUserContentManager(
+                webView: webView,
+                userScriptFactory: BrowserExtensionUserScriptFactory()),
+            role: .userFacing)
+
         navigationHandler = BrowserExtensionNavigationHandler(logger: logger)
     }
     
