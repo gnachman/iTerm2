@@ -5946,7 +5946,7 @@ launchCoprocessWithCommand:(NSString *)command
 - (void)triggerSession:(Trigger *)trigger
      foldFromNamedMark:(NSString *)markName
         toAbsoluteLine:(long long)absLine {
-    VT100ScreenMark *mark = (VT100ScreenMark *)[[self namedMarks] firstObjectPassingTest:^BOOL(NSObject *obj) {
+    VT100ScreenMark *mark = (VT100ScreenMark *)[[self namedMarks] lastObjectPassingTest:^BOOL(NSObject *obj) {
         VT100ScreenMark *mark = (VT100ScreenMark *)obj;
         return [mark.name isEqualToString:markName];
     }];

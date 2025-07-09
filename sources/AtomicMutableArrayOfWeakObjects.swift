@@ -69,5 +69,15 @@ class MutableArrayOfWeakObjects: NSObject {
             return closure(obj)
         }?.value
     }
+
+    @objc(lastObjectPassingTest:)
+    func last(where closure: (NSObject) -> (Bool)) -> NSObject? {
+        return array.last { box in
+            guard let obj = box.value else {
+                return false
+            }
+            return closure(obj)
+        }?.value
+    }
 }
 

@@ -140,7 +140,7 @@ class ToolNamedMarks: NSView, ToolbeltTool, NSTableViewDelegate, NSTableViewData
     @objc(setNamedMarks:) func set(marks: [iTermGenericNamedMarkReading]) {
         // For browser sessions, preserve the database ordering which already sorts current page marks first
         // For terminal sessions, sort by namedMarkSort
-        if toolWrapper().delegate?.delegate?.toolbeltCurrentSessionIsBrowser() == true {
+        if toolWrapper()?.delegate?.delegate?.toolbeltCurrentSessionIsBrowser() == true {
             self.marks = marks
         } else {
             self.marks = marks.sorted(by: { lhs, rhs in
