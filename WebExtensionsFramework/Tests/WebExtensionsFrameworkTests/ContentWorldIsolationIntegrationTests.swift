@@ -26,7 +26,7 @@ final class ContentWorldIsolationIntegrationTests: XCTestCase {
         try await activeManager.registerWebView(
             webView,
             userContentManager: BrowserExtensionUserContentManager(
-                webView: webView,
+                userContentController: webView.be_configuration.be_userContentController,
                 userScriptFactory: BrowserExtensionUserScriptFactory()),
             role: .userFacing)
 

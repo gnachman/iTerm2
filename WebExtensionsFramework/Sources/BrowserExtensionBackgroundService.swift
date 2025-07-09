@@ -9,9 +9,9 @@ import WebKit
 public protocol BrowserExtensionBackgroundServiceProtocol {
     /// Start a background script for the given extension
     /// - Parameter browserExtension: The extension to start background script for
-    /// - Returns: The webview running the background script, or nil if no background script exists
+    /// - Returns: Tuple of (webview, contentManager) or nil if no background script exists
     /// - Throws: Error if background script cannot be started
-    func startBackgroundScript(for browserExtension: BrowserExtension) async throws -> BrowserExtensionWKWebView?
+    func startBackgroundScript(for browserExtension: BrowserExtension) async throws -> (BrowserExtensionWKWebView, BrowserExtensionUserContentManager)?
     
     /// Stop background script for the given extension ID
     /// - Parameter extensionId: The extension ID to stop background script for
@@ -45,6 +45,7 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
     @MainActor
     private class BackgroundJob {
         let webView: WKWebView
+        let contentManager: BrowserExtensionUserContentManager
         let navigationDelegate: BackgroundScriptNavigationDelegate
         let uiDelegate: BackgroundScriptUIDelegate
         let consoleMessageHandler: ConsoleMessageHandler
@@ -52,11 +53,13 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
 
         init(id: UUID,
              webView: WKWebView,
+             contentManager: BrowserExtensionUserContentManager,
              navigationDelegate: BackgroundScriptNavigationDelegate,
              uiDelegate: BackgroundScriptUIDelegate,
              consoleMessageHandler: ConsoleMessageHandler,
              logger: BrowserExtensionLogger) {
             self.webView = webView
+            self.contentManager = contentManager
             self.navigationDelegate = navigationDelegate
             self.uiDelegate = uiDelegate
             self.consoleMessageHandler = consoleMessageHandler
@@ -104,13 +107,13 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         self.urlSchemeHandler = urlSchemeHandler
     }
     
-    public func startBackgroundScript(for browserExtension: BrowserExtension) async throws -> BrowserExtensionWKWebView? {
+    public func startBackgroundScript(for browserExtension: BrowserExtension) async throws -> (BrowserExtensionWKWebView, BrowserExtensionUserContentManager)? {
         let extensionId = browserExtension.id
 
         // Check if already running
         if let existingJob = jobs[extensionId] {
             logger.debug("Background script already running for extension: \(extensionId)")
-            return existingJob.webView
+            return (existingJob.webView, existingJob.contentManager)
         }
         
         // Check if extension has background script
@@ -135,18 +138,23 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
             configuration: factoryConfiguration
         )
         
+        // Create content manager using the webview's user content controller
+        let contentManager = BrowserExtensionUserContentManager(
+            userContentController: webView.be_configuration.be_userContentController,
+            userScriptFactory: BrowserExtensionUserScriptFactory()
+        )
+        
         // Console handler will be added by BrowserExtensionActiveManager when registering the webview
         let consoleHandler = ConsoleMessageHandler(logger: logger, extensionId: extensionId)
         
         // Inject extension background script in .page world (where webkit.messageHandlers is available)
         if let backgroundResource = browserExtension.backgroundScriptResource {
-            let backgroundUserScript = WKUserScript(
-                source: backgroundResource.jsContent,
+            contentManager.add(userScript: .init(
+                code: backgroundResource.jsContent,
                 injectionTime: .atDocumentEnd,
                 forMainFrameOnly: false,
-                in: .page
-            )
-            webView.configuration.userContentController.addUserScript(backgroundUserScript)
+                worlds: [.page],
+                identifier: "backgroundServiceContent"))
         }
 
         // Register the background script with the URL scheme handler
@@ -169,6 +177,7 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         // Store strong references to delegates
         jobs[extensionId] = .init(id: extensionId,
                                   webView: webView,
+                                  contentManager: contentManager,
                                   navigationDelegate: navigationDelegate,
                                   uiDelegate: uiDelegate,
                                   consoleMessageHandler: consoleHandler,
@@ -200,7 +209,7 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         }
         
         logger.info("Background script loaded for: \(extensionId)")
-        return webView
+        return (webView, contentManager)
     }
     
     public func stopBackgroundScript(for extensionId: UUID) {

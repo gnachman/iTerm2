@@ -10,7 +10,11 @@ import WebKit
 
 @MainActor
 public class BrowserExtensionUserContentManager {
-    weak var webView: BrowserExtensionWKWebView?
+    public weak var userContentController: BrowserExtensionWKUserContentController? {
+        didSet {
+            update()
+        }
+    }
     private var journal = [JournalEntry]()
     private var atomicUpdatesInProgress = 0
     private var installedUserScripts = [UserScript]()
@@ -22,6 +26,18 @@ public class BrowserExtensionUserContentManager {
         var forMainFrameOnly: Bool
         var worlds: [WKContentWorld]
         var identifier: String
+
+        public init(code: String,
+                    injectionTime: WKUserScriptInjectionTime,
+                    forMainFrameOnly: Bool,
+                    worlds: [WKContentWorld],
+                    identifier: String) {
+            self.code = code
+            self.injectionTime = injectionTime
+            self.forMainFrameOnly = forMainFrameOnly
+            self.worlds = worlds
+            self.identifier = identifier
+        }
 
         fileprivate func removingWorlds() -> UserScript {
             var temp = self
@@ -35,23 +51,23 @@ public class BrowserExtensionUserContentManager {
         case removeUserScript(String)
     }
 
-    init(webView: BrowserExtensionWKWebView,
-         userScriptFactory: BrowserExtensionUserScriptFactoryProtocol) {
-        self.webView = webView
+    public init(userContentController: BrowserExtensionWKUserContentController,
+                userScriptFactory: BrowserExtensionUserScriptFactoryProtocol) {
+        self.userContentController = userContentController
         self.userScriptFactory = userScriptFactory
     }
 
-    func add(userScript: UserScript) {
+    public func add(userScript: UserScript) {
         journal.append(.addUserScript(userScript))
         update()
     }
 
-    func remove(userScriptIdentifier identifier: String) {
+    public func remove(userScriptIdentifier identifier: String) {
         journal.append(.removeUserScript(identifier))
         update()
     }
 
-    func performAtomicUpdate<T>(_ closure: () throws -> T) rethrows -> T {
+    public func performAtomicUpdate<T>(_ closure: () throws -> T) rethrows -> T {
         atomicUpdatesInProgress += 1
         defer {
             atomicUpdatesInProgress -= 1
@@ -60,7 +76,7 @@ public class BrowserExtensionUserContentManager {
         return try closure()
     }
 
-    func performAtomicUpdate<T>(_ closure: () async throws -> T) async rethrows -> T {
+    public func performAtomicUpdate<T>(_ closure: () async throws -> T) async rethrows -> T {
         atomicUpdatesInProgress += 1
         defer {
             atomicUpdatesInProgress -= 1
@@ -70,7 +86,7 @@ public class BrowserExtensionUserContentManager {
     }
 
     private func update() {
-        guard let webView, atomicUpdatesInProgress == 0 else {
+        guard let userContentController, atomicUpdatesInProgress == 0 else {
             return
         }
 
@@ -99,7 +115,7 @@ public class BrowserExtensionUserContentManager {
                     return
                 }
                 installedUserScripts.remove(at: i)
-                webView.be_configuration.be_userContentController.be_removeAllUserScripts()
+                userContentController.be_removeAllUserScripts()
                 for userScript in installedUserScripts {
                     _ = install(userScript, except: [])
                 }
@@ -107,8 +123,21 @@ public class BrowserExtensionUserContentManager {
         }
     }
 
+    private func name(of world: WKContentWorld) -> String {
+        if let value = world.name  {
+            return value
+        }
+        if world === WKContentWorld.page {
+            return "page"
+        }
+        if world === WKContentWorld.defaultClient {
+            return "default client"
+        }
+        return "Unknown@\(world)"
+    }
+
     private func install(_ userScript: UserScript, except worldsToExclude: [WKContentWorld]) -> [WKContentWorld] {
-        guard let webView else {
+        guard let userContentController else {
             return []
         }
         var added = [WKContentWorld]()
@@ -116,7 +145,8 @@ public class BrowserExtensionUserContentManager {
             if worldsToExclude.contains(world) || added.contains(world) {
                 continue
             }
-            webView.be_configuration.be_userContentController.be_addUserScript(
+            print("Install in world \(world) - \(name(of: world)) \(userScript.identifier)")
+            userContentController.be_addUserScript(
                 userScriptFactory.createUserScript(
                     source: userScript.code,
                     injectionTime: userScript.injectionTime,
