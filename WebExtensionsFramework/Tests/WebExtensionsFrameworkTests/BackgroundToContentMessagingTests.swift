@@ -118,7 +118,7 @@ class BackgroundToContentMessagingTests: XCTestCase {
         try await activeManager.registerWebView(
             contentWebView,
             userContentManager: BrowserExtensionUserContentManager(
-                webView: contentWebView,
+                userContentController: contentWebView.be_configuration.be_userContentController,
                 userScriptFactory: BrowserExtensionUserScriptFactory()),
             role: .userFacing)
 

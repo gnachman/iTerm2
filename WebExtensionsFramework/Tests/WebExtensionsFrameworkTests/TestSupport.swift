@@ -23,7 +23,7 @@ public class MockBackgroundService: BrowserExtensionBackgroundServiceProtocol {
     
     public init() {}
     
-    public func startBackgroundScript(for browserExtension: BrowserExtension) async throws -> BrowserExtensionWKWebView? {
+    public func startBackgroundScript(for browserExtension: BrowserExtension) async throws -> (BrowserExtensionWKWebView, BrowserExtensionUserContentManager)? {
         activeBackgroundScriptExtensionIds.insert(browserExtension.id)
         return nil
     }

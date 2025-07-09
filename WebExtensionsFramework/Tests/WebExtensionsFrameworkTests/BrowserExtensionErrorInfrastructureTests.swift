@@ -50,7 +50,7 @@ class BrowserExtensionErrorInfrastructureTests: XCTestCase {
         try await activeManager.registerWebView(
             webView,
             userContentManager: BrowserExtensionUserContentManager(
-                webView: webView,
+                userContentController: webView.be_configuration.be_userContentController,
                 userScriptFactory: BrowserExtensionUserScriptFactory()),
             role: .userFacing)
 
@@ -107,7 +107,7 @@ class BrowserExtensionErrorInfrastructureTests: XCTestCase {
         try await activeManager.registerWebView(
             webView,
             userContentManager: BrowserExtensionUserContentManager(
-                webView: webView,
+                userContentController: webView.be_configuration.be_userContentController,
                 userScriptFactory: BrowserExtensionUserScriptFactory()),
             role: .userFacing)
 
@@ -159,7 +159,7 @@ class BrowserExtensionErrorInfrastructureTests: XCTestCase {
         try await activeManager.registerWebView(
             webView,
             userContentManager: BrowserExtensionUserContentManager(
-                webView: webView,
+                userContentController: webView.be_configuration.be_userContentController,
                 userScriptFactory: BrowserExtensionUserScriptFactory()),
             role: .userFacing)
 

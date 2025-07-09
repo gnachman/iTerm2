@@ -181,7 +181,7 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
         try await manager.registerWebView(
             webView,
             userContentManager: BrowserExtensionUserContentManager(
-                webView: webView,
+                userContentController: webView.be_configuration.be_userContentController,
                 userScriptFactory: BrowserExtensionUserScriptFactory()),
             role: .userFacing)
 
@@ -225,7 +225,7 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
         try await manager.registerWebView(
             webView,
             userContentManager: BrowserExtensionUserContentManager(
-                webView: webView,
+                userContentController: webView.be_configuration.be_userContentController,
                 userScriptFactory: BrowserExtensionUserScriptFactory()),
             role: .userFacing)
 
@@ -272,7 +272,7 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
         try await manager.registerWebView(
             webView,
             userContentManager: BrowserExtensionUserContentManager(
-                webView: webView,
+                userContentController: webView.be_configuration.be_userContentController,
                 userScriptFactory: BrowserExtensionUserScriptFactory()),
             role: .userFacing)
 

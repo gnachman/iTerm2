@@ -54,13 +54,13 @@ class OnMessageTests: XCTestCase {
         try await activeManager.registerWebView(
             senderWebView,
             userContentManager: BrowserExtensionUserContentManager(
-                webView: senderWebView,
+                userContentController: senderWebView.be_configuration.be_userContentController,
                 userScriptFactory: BrowserExtensionUserScriptFactory()),
             role: .userFacing)
         try await activeManager.registerWebView(
             receiverWebView,
             userContentManager: BrowserExtensionUserContentManager(
-                webView: receiverWebView,
+                userContentController: receiverWebView.be_configuration.be_userContentController,
                 userScriptFactory: BrowserExtensionUserScriptFactory()),
             role: .userFacing)
 

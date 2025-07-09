@@ -174,13 +174,12 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
 
             // TODO: In real life we need to track the listeners that background scripts have requested execution for and only launch it unconditionally after install or activate.
             do {
-                if let backgroundWebView = try await backgroundService.startBackgroundScript(for: browserExtension) {
+                let backgroundResult = try await backgroundService.startBackgroundScript(for: browserExtension)
+                if let (backgroundWebView, contentManager) = backgroundResult {
                     // Register the background webview to get Chrome APIs injected
                     try await self.registerWebView(
                         backgroundWebView,
-                        userContentManager: BrowserExtensionUserContentManager(
-                            webView: backgroundWebView,
-                            userScriptFactory: userScriptFactory),
+                        userContentManager: contentManager,
                         role: .backgroundScript(browserExtension.id))
                 }
             } catch {
@@ -198,11 +197,39 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
             // Clean up console handlers for any background script webviews of this extension
             cleanupConsoleHandlersForExtension(extensionId)
             
+            // Stop background script if it's running
+            backgroundService.stopBackgroundScript(for: extensionId)
+            
+            // Remove scripts for this extension from all webviews
+            removeScriptsForExtension(extensionId)
+            
             activeExtensions.removeValue(forKey: extensionId)
             
             // Update injection scripts in all registered webviews
             await updateInjectionScriptsInAllWebViews()
             logger.info("Successfully deactivated extension with ID: \(extensionId)")
+        }
+    }
+    
+    /// Remove scripts for a specific extension from all webviews
+    private func removeScriptsForExtension(_ extensionId: UUID) {
+        logger.debug("Removing scripts for extension: \(extensionId)")
+        
+        // Remove scripts from all webviews
+        for webViewState in webViewStates.values {
+            let userContentManager = webViewState.userContentManager
+            
+            // Remove injection scripts
+            userContentManager.remove(userScriptIdentifier: UserScripts.injectionScript(extensionId).identifier)
+            
+            // Remove Chrome API scripts (they're shared but we need to remove them to clean up)
+            userContentManager.remove(userScriptIdentifier: UserScripts.chromeAPIs.identifier)
+            
+            // Remove the content world from the tracking set
+            if let activeExtension = activeExtensions[extensionId],
+               let worldName = activeExtension.contentWorld.name {
+                webViewState.contentWorldsWithHandlers.remove(worldName)
+            }
         }
     }
     
@@ -236,6 +263,14 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
             }
         }
         
+        // Stop all background scripts
+        backgroundService.stopAllBackgroundScripts()
+        
+        // Remove scripts for all extensions from all webviews
+        for extensionId in activeExtensions.keys {
+            removeScriptsForExtension(extensionId)
+        }
+        
         activeExtensions.removeAll()
         
         // Update injection scripts in all registered webviews
@@ -251,7 +286,6 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
                                 role: WebViewRole) async throws {
         await logger.inContext("Register webview \(webView)") {
             logger.debug("Registering webview \(webView) for injection script updates")
-            
             // Clean up any deallocated webviews first
             cleanupDeallocatedWebViews()
             
@@ -263,12 +297,12 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
                                                  userContentManager: userContentManager,
                                                  role: role)
             }
-            
+
             // Register webview with network for each active extension
             for activeExtension in activeExtensions.values {
                 network.add(webView: webView, browserExtension: activeExtension.browserExtension)
             }
-            
+
             // Install current injection scripts
             logger.debug("About to update injection scripts for webview \(webView)")
             await updateInjectionScriptsInWebView(webView, userContentManager: userContentManager)
@@ -363,15 +397,30 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
             }
         }
     }
-    
+
+    enum UserScripts {
+        case injectionScript(UUID)
+        case chromeAPIs
+
+        var identifier: String {
+            switch self {
+            case .injectionScript(let uuid): return "Injection(\(uuid.uuidString))"
+            case .chromeAPIs: return "chromeAPIs"
+            }
+        }
+    }
     /// Update the injection scripts in a specific webview
     private func updateInjectionScriptsInWebView(_ webView: BrowserExtensionWKWebView,
                                                  userContentManager: BrowserExtensionUserContentManager) async {
+        await userContentManager.performAtomicUpdate {
+            await reallyUpdateInjections(webView: webView, userContentManager:userContentManager)
+        }
+    }
+
+    private func reallyUpdateInjections(webView: BrowserExtensionWKWebView,
+                                        userContentManager: BrowserExtensionUserContentManager) async {
         logger.debug("Updating injection scripts in webview \(webView) for \(activeExtensions.count) active extension(s)")
         
-        // Remove all existing user scripts first
-        logger.debug("Removing all user scripts from webview \(webView)")
-        webView.be_configuration.be_userContentController.be_removeAllUserScripts()
         let webViewId = ObjectIdentifier(webView)
         
         // Get or create webview state
@@ -420,6 +469,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
             }
             await injectChromeAPIs(activeExtension.browserExtension,
                                    webView: webView,
+                                   contentManager: userContentManager,
                                    contentWorld: activeExtension.contentWorld,
                                    isBackgroundScript: isBackgroundScript)
 
@@ -429,15 +479,13 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
                 // For user-facing webviews, inject content scripts
                 let injectionScriptSource = injectionScriptGenerator.generateInjectionScript(for: activeExtension)
                 
-                let injectionUserScript = userScriptFactory.createUserScript(
-                    source: injectionScriptSource,
+                userContentManager.add(userScript: .init(
+                    code: injectionScriptSource,
                     injectionTime: .atDocumentStart,
                     forMainFrameOnly: false,
-                    in: activeExtension.contentWorld
-                )
-                
-                webView.be_configuration.be_userContentController.be_addUserScript(injectionUserScript)
-                
+                    worlds: [activeExtension.contentWorld],
+                    identifier: UserScripts.injectionScript(activeExtension.browserExtension.id).identifier))
+
             case .backgroundScript(let backgroundExtensionId):
                 // For background scripts, only execute if this extension owns this background webview
                 if extensionId == backgroundExtensionId {
@@ -520,6 +568,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     /// Inject chrome.runtime APIs JavaScript for a specific extension
     private func injectChromeAPIs(_ browserExtension: BrowserExtension,
                                   webView: BrowserExtensionWKWebView,
+                                  contentManager: BrowserExtensionUserContentManager,
                                   contentWorld: WKContentWorld,
                                   isBackgroundScript: Bool = false) async {
         // Generate the JavaScript API code
@@ -539,14 +588,12 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
             }
         } else {
             // For user-facing webviews, add as user script
-            let userScript = userScriptFactory.createUserScript(
-                source: injectionScript,
+            contentManager.add(userScript: .init(
+                code: injectionScript,
                 injectionTime: .atDocumentStart,
                 forMainFrameOnly: false,
-                in: contentWorld
-            )
-            
-            webView.be_configuration.be_userContentController.be_addUserScript(userScript)
+                worlds: [contentWorld],
+                identifier: UserScripts.chromeAPIs.identifier))
             logger.debug("Added Chrome API user script to webview \(webView) in content world: \(contentWorld.name ?? "unnamed")")
         }
     }
@@ -559,20 +606,30 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     ///   - browserExtension: The extension to inject APIs for
     ///   - contentWorld: The content world to inject into
     internal func injectRuntimeAPIsForTesting(into webView: BrowserExtensionWKWebView,
+                                              contentManager: BrowserExtensionUserContentManager,
                                               for browserExtension: BrowserExtension,
                                               contentWorld: WKContentWorld) async {
         logger.info("Injecting chrome.runtime APIs for testing")
-        addMessageHandlersToWebView(webView, contentWorld: contentWorld, for: browserExtension)
+        addMessageHandlersToWebView(webView,
+                                    contentWorld: contentWorld,
+                                    for: browserExtension)
 
-        await injectChromeAPIs(browserExtension, webView: webView, contentWorld: contentWorld)
+        await injectChromeAPIs(browserExtension,
+                               webView: webView,
+                               contentManager: contentManager,
+                               contentWorld: contentWorld)
     }
     
     /// Inject only the JavaScript part for testing (without registering handlers)
     internal func injectJavaScriptOnlyForTesting(into webView: BrowserExtensionWKWebView,
+                                                 contentManager: BrowserExtensionUserContentManager,
                                                  for browserExtension: BrowserExtension,
                                                  contentWorld: WKContentWorld) async {
         logger.info("Injecting chrome.runtime JavaScript for testing")
-        await injectChromeAPIs(browserExtension, webView: webView, contentWorld: contentWorld)
+        await injectChromeAPIs(browserExtension,
+                               webView: webView,
+                               contentManager: contentManager,
+                               contentWorld: contentWorld)
     }
 
     // MARK: - BrowserExtensionRouterDataSource

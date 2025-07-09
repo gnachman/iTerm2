@@ -14,7 +14,7 @@ final class BrowserExtensionUserContentManagerTests: XCTestCase {
         mockWebView = MockUserContentWebView()
         mockUserScriptFactory = MockUserScriptFactory()
         userContentManager = BrowserExtensionUserContentManager(
-            webView: mockWebView,
+            userContentController: mockWebView.mockUserContentController,
             userScriptFactory: mockUserScriptFactory
         )
     }
@@ -245,40 +245,40 @@ final class BrowserExtensionUserContentManagerTests: XCTestCase {
     // MARK: - Nil WebView Tests
     
     func testAddUserScriptWithNilWebView() {
-        // Create a temporary webView that will be deallocated
-        var tempWebView: MockUserContentWebView? = MockUserContentWebView()
+        // Create a temporary userContentController that will be deallocated
+        var tempUserContentController: MockUserContentManagerController? = MockUserContentManagerController()
         let nilManager = BrowserExtensionUserContentManager(
-            webView: tempWebView!,
+            userContentController: tempUserContentController!,
             userScriptFactory: mockUserScriptFactory
         )
         
-        // Deallocate the webView to simulate it being nil
-        tempWebView = nil
+        // Deallocate the userContentController to simulate it being nil
+        tempUserContentController = nil
         
         let userScript = createTestUserScript()
         
         // Should not crash
         nilManager.add(userScript: userScript)
         
-        // Factory should not be called since webView is nil
+        // Factory should not be called since userContentController is nil
         XCTAssertEqual(mockUserScriptFactory.createUserScriptCalls.count, 0)
     }
     
     func testRemoveUserScriptWithNilWebView() {
-        // Create a temporary webView that will be deallocated
-        var tempWebView: MockUserContentWebView? = MockUserContentWebView()
+        // Create a temporary userContentController that will be deallocated
+        var tempUserContentController: MockUserContentManagerController? = MockUserContentManagerController()
         let nilManager = BrowserExtensionUserContentManager(
-            webView: tempWebView!,
+            userContentController: tempUserContentController!,
             userScriptFactory: mockUserScriptFactory
         )
         
-        // Deallocate the webView to simulate it being nil
-        tempWebView = nil
+        // Deallocate the userContentController to simulate it being nil
+        tempUserContentController = nil
         
         // Should not crash
         nilManager.remove(userScriptIdentifier: "test")
         
-        // Factory should not be called since webView is nil
+        // Factory should not be called since userContentController is nil
         XCTAssertEqual(mockUserScriptFactory.createUserScriptCalls.count, 0)
     }
     
