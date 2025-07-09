@@ -170,6 +170,7 @@ class iTermBrowserStaticPageRegistry {
         registerStaticPage(urlPath: "welcome", templateName: "welcome-page", substitutions: [:])
         #if DEBUG
         let pages = [
+            "dev",
             "notifications-demo",
             "geolocation-demo",
             "media-demo",

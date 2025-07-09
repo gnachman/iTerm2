@@ -125,7 +125,18 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
             }
         }
     }
-    
+
+    private enum UserScripts: String {
+        case consoleLog
+        case notificationHandler
+        case selectionMonitor
+        case contextMenuMonitor
+        case geolocation
+        case passwordManager
+        case autofillHandler
+        case hoverLinkHandler
+    }
+
     private func setupWebView(configuration preferredConfiguration: WKWebViewConfiguration?,
                               profile: Profile,
                               pointerController: PointerController) {
@@ -136,8 +147,13 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         self.notificationHandler = notificationHandler
 
         let configuration: WKWebViewConfiguration
+        let contentManager: BrowserExtensionUserContentManager
         if let preferredConfiguration {
+            #warning("TODO: Somehow deal with this and content managers")
             configuration = preferredConfiguration
+            contentManager = BrowserExtensionUserContentManager(
+                userContentController: configuration.userContentController,
+                userScriptFactory: BrowserExtensionUserScriptFactory())
         } else {
             let prefs = WKPreferences()
 
@@ -145,6 +161,9 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
             prefs.javaScriptCanOpenWindowsAutomatically = false
             configuration = WKWebViewConfiguration()
             configuration.preferences = prefs
+            contentManager = BrowserExtensionUserContentManager(
+                userContentController: configuration.userContentController,
+                userScriptFactory: BrowserExtensionUserScriptFactory())
 
             switch user {
             case .regular(id: let userID):
@@ -174,6 +193,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                         Array.from(arguments).join(" ")
                     );
                 };
+                console.log("console.log loaded");
             """
 
             #if DEBUG
@@ -197,82 +217,90 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
               });
             """)
             #endif
-            let script = WKUserScript(
-                source: "(function() {" + js + "})();",
-                injectionTime: .atDocumentStart,
-                forMainFrameOnly: false
-            )
-
             configuration.userContentController.add(handlerProxy, name: "iTerm2ConsoleLog")
-            configuration.userContentController.addUserScript(script)
+            contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
+                code: "(function() {" + js + "})();",
+                injectionTime: .atDocumentStart,
+                forMainFrameOnly: false,
+                worlds: [.page],
+                identifier: UserScripts.consoleLog.rawValue))
 
             // TODO: Ensure all of these handlers are stateless because related webviews (e.g., target=_blank) share them.
             if let notificationHandler {
-                let notificationScript = WKUserScript(
-                    source: notificationHandler.javascript,
-                    injectionTime: .atDocumentStart,
-                    forMainFrameOnly: false
-                )
                 configuration.userContentController.add(handlerProxy, name: iTermBrowserNotificationHandler.messageHandlerName)
-                configuration.userContentController.addUserScript(notificationScript)
+                contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
+                    code: notificationHandler.javascript,
+                    injectionTime: .atDocumentStart,
+                    forMainFrameOnly: false,
+                    worlds: [.page],
+                    identifier: UserScripts.notificationHandler.rawValue))
             }
 
             if let selectionMonitor {
-                let script = WKUserScript(source: selectionMonitor.javascript,
-                                              injectionTime: .atDocumentStart,
-                                              forMainFrameOnly: false)
                 configuration.userContentController.add(handlerProxy, name: iTermBrowserSelectionMonitor.messageHandlerName)
-                configuration.userContentController.addUserScript(script)
+                contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
+                    code: selectionMonitor.javascript,
+                    injectionTime: .atDocumentStart,
+                    forMainFrameOnly: false,
+                    worlds: [.page],
+                    identifier: UserScripts.selectionMonitor.rawValue))
             }
 
             if let contextMenuMonitor {
-                let script = WKUserScript(source: contextMenuMonitor.javascript,
-                                              injectionTime: .atDocumentStart,
-                                              forMainFrameOnly: false)
                 configuration.userContentController.add(handlerProxy, name: iTermBrowserContextMenuMonitor.messageHandlerName)
-                configuration.userContentController.addUserScript(script)
+                contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
+                    code: contextMenuMonitor.javascript,
+                    injectionTime: .atDocumentStart,
+                    forMainFrameOnly: false,
+                    worlds: [.page],
+                    identifier: UserScripts.contextMenuMonitor.rawValue))
             }
 
             let geolocationHandler = iTermBrowserGeolocationHandler.instance(for: user)
             if let geolocationHandler {
-                let geolocationScript = WKUserScript(
-                    source: geolocationHandler.javascript,
-                    injectionTime: .atDocumentStart,
-                    forMainFrameOnly: false
-                )
                 configuration.userContentController.add(handlerProxy, name: iTermBrowserGeolocationHandler.messageHandlerName)
-                configuration.userContentController.addUserScript(geolocationScript)
+                contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
+                    code: geolocationHandler.javascript,
+                    injectionTime: .atDocumentStart,
+                    forMainFrameOnly: false,
+                    worlds: [.page],
+                    identifier: UserScripts.geolocation.rawValue))
             }
 
             if let passwordManagerHandler = iTermBrowserPasswordManagerHandler.instance {
-                let userScript = WKUserScript(source: passwordManagerHandler.javascript,
-                                              injectionTime: .atDocumentEnd,
-                                              forMainFrameOnly: false)
                 configuration.userContentController.add(handlerProxy, name: iTermBrowserPasswordManagerHandler.messageHandlerName)
-                configuration.userContentController.addUserScript(userScript)
+                contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
+                    code: passwordManagerHandler.javascript,
+                    injectionTime: .atDocumentEnd,
+                    forMainFrameOnly: false,
+                    worlds: [.page],
+                    identifier: UserScripts.passwordManager.rawValue))
             }
 
             if let autofillHandler {
                 autofillHandler.delegate = self
-                let userScript = WKUserScript(source: autofillHandler.javascript,
-                                              injectionTime: .atDocumentEnd,
-                                              forMainFrameOnly: true)
                 configuration.userContentController.add(handlerProxy, name: iTermBrowserAutofillHandler.messageHandlerName)
-                configuration.userContentController.addUserScript(userScript)
+                contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
+                    code: autofillHandler.javascript,
+                    injectionTime: .atDocumentEnd,
+                    forMainFrameOnly: true,
+                    worlds: [.page],
+                    identifier: UserScripts.autofillHandler.rawValue))
             }
 
             // Set up hover link detection
             hoverLinkHandler = iTermBrowserHoverLinkHandler()
             if let hoverLinkHandler = hoverLinkHandler {
-                let userScript = WKUserScript(source: hoverLinkHandler.javascript,
-                                              injectionTime: .atDocumentEnd,
-                                              forMainFrameOnly: false)
                 configuration.userContentController.add(handlerProxy, name: iTermBrowserHoverLinkHandler.messageHandlerName)
-                configuration.userContentController.addUserScript(userScript)
+                contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
+                    code: hoverLinkHandler.javascript,
+                    injectionTime: .atDocumentStart,
+                    forMainFrameOnly: true,
+                    worlds: [.page],
+                    identifier: UserScripts.hoverLinkHandler.rawValue))
             }
 
             // Setup reader mode
-
             readerModeManager.delegate = self
             configuration.userContentController.add(readerModeManager, name: "readerMode")
 
@@ -308,7 +336,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         // Start updates if needed
         adblockManager?.updateRulesIfNeeded()
 
-        userState.registerWebView(webView)
+        userState.registerWebView(webView, contentManager: contentManager)
 
         // Enable back/forward navigation
         webView.allowsBackForwardNavigationGestures = true

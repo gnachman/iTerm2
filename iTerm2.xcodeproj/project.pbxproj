@@ -2249,6 +2249,9 @@
 		A670F0C42A1FDA6100C740AC /* iTermChangeTrackingDictionary.m in Sources */ = {isa = PBXBuildFile; fileRef = A670F0C22A1FDA6100C740AC /* iTermChangeTrackingDictionary.m */; };
 		A67109AC240C677D0018631A /* NSEvent+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F8E1A2449EF009B1CB6 /* NSEvent+iTerm.m */; };
 		A671AC6026D95C0400B23C95 /* HTMLEncoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = A671AC5F26D95C0400B23C95 /* HTMLEncoding.swift */; };
+		A671D6D42E1E372E0087348B /* dev.html in Resources */ = {isa = PBXBuildFile; fileRef = A671D6D32E1E37200087348B /* dev.html */; };
+		A671D6D52E1E372E0087348B /* dev.html in Resources */ = {isa = PBXBuildFile; fileRef = A671D6D32E1E37200087348B /* dev.html */; };
+		A671D6D62E1E372E0087348B /* dev.html in Resources */ = {isa = PBXBuildFile; fileRef = A671D6D32E1E37200087348B /* dev.html */; };
 		A6725AD223D639C2001CA48A /* iTermProfilesMenuController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6725AD023D639C2001CA48A /* iTermProfilesMenuController.h */; };
 		A6725AD323D639C2001CA48A /* iTermProfilesMenuController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6725AD123D639C2001CA48A /* iTermProfilesMenuController.m */; };
 		A6725AD623D63B7A001CA48A /* iTermProfileModelJournal.h in Headers */ = {isa = PBXBuildFile; fileRef = A6725AD423D63B7A001CA48A /* iTermProfileModelJournal.h */; };
@@ -7174,6 +7177,7 @@
 		A670F0C12A1FDA6100C740AC /* iTermChangeTrackingDictionary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermChangeTrackingDictionary.h; sourceTree = "<group>"; };
 		A670F0C22A1FDA6100C740AC /* iTermChangeTrackingDictionary.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermChangeTrackingDictionary.m; sourceTree = "<group>"; };
 		A671AC5F26D95C0400B23C95 /* HTMLEncoding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTMLEncoding.swift; sourceTree = "<group>"; };
+		A671D6D32E1E37200087348B /* dev.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = dev.html; sourceTree = "<group>"; };
 		A6725AD023D639C2001CA48A /* iTermProfilesMenuController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermProfilesMenuController.h; sourceTree = "<group>"; };
 		A6725AD123D639C2001CA48A /* iTermProfilesMenuController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermProfilesMenuController.m; sourceTree = "<group>"; };
 		A6725AD423D63B7A001CA48A /* iTermProfileModelJournal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermProfileModelJournal.h; sourceTree = "<group>"; };
@@ -13126,6 +13130,7 @@
 		A6CBB8162E0A1B7400B2CCCB /* Local Pages */ = {
 			isa = PBXGroup;
 			children = (
+				A671D6D32E1E37200087348B /* dev.html */,
 				A6F7D4C22E037BC80065D09C /* iTermBrowserCSSLoader.swift */,
 				A6F7D4BA2E0373110065D09C /* iTermBrowserErrorHandler.swift */,
 				A6AF79F92E07E27D008D77BA /* iTermBrowserLocalPageManager.swift */,
@@ -16128,6 +16133,7 @@
 				A64F32162B853CEE008EFDC9 /* dice.png in Resources */,
 				A697CE082D9763480031583F /* FoldMenuTip@2x.png in Resources */,
 				A697CE092D9763480031583F /* FoldMenuTip.png in Resources */,
+				A671D6D62E1E372E0087348B /* dev.html in Resources */,
 				1D6ED9E019AEA20D005A7799 /* PrefsAppearance.png in Resources */,
 				A6A64E6B2508C5B50040490B /* OpenQuicklySnippetIcon.png in Resources */,
 				A67F61EC214395D50093940A /* graphic_yarn@2x.png in Resources */,
@@ -16520,6 +16526,7 @@
 				A686C1991ADF62F200906FAE /* Zoomed@2x.png in Resources */,
 				A65E6F592547F1D5008A4866 /* WindowCornerFull_Square.png in Resources */,
 				A6F31A28295BC41700C1A51E /* uniE0C9_PowerlineExtraSymbols.pdf in Resources */,
+				A671D6D52E1E372E0087348B /* dev.html in Resources */,
 				A6DC98A528A82608009D21C0 /* Window.png in Resources */,
 				A6E7AEB3214394F600DE9F3B /* graphic_ethereum@2x.png in Resources */,
 				A67F6182214395A70093940A /* graphic_nginx.png in Resources */,
@@ -16892,6 +16899,7 @@
 				53B93DFF21F640B9001EC59C /* iTermBadgeConfigurationWindowController.xib in Resources */,
 				A65B72551B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
 				A62DBB9F20F47CFA008B63D1 /* GoForward@2x.png in Resources */,
+				A671D6D42E1E372E0087348B /* dev.html in Resources */,
 				A6E7AE8F214394DD00DE9F3B /* graphic_composer.png in Resources */,
 				A67F61D0214395C60093940A /* graphic_ruby.png in Resources */,
 				A6CBB7BC2E08BDD600B2CCCB /* geolocation-demo.html in Resources */,
