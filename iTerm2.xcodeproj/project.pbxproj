@@ -20275,6 +20275,7 @@
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = H7V7XYVQ7D;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -21549,6 +21550,7 @@
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = H7V7XYVQ7D;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -21869,6 +21871,7 @@
 					"-Wall",
 					"-Wpartial-availability",
 					"-Wno-nullability-completeness",
+					"-Wno-gnu-folding-constant",
 				);
 				WARNING_LDFLAGS = "";
 			};
@@ -23829,6 +23832,7 @@
 					"-Wall",
 					"-Wpartial-availability",
 					"-Wno-nullability-completeness",
+					"-Wno-gnu-folding-constant",
 				);
 				WARNING_LDFLAGS = "";
 			};
@@ -23891,6 +23895,7 @@
 					"-Wall",
 					"-Wpartial-availability",
 					"-Wno-nullability-completeness",
+					"-Wno-gnu-folding-constant",
 				);
 				WARNING_LDFLAGS = "";
 			};
@@ -23953,6 +23958,7 @@
 					"-Wall",
 					"-Wpartial-availability",
 					"-Wno-nullability-completeness",
+					"-Wno-gnu-folding-constant",
 				);
 				WARNING_LDFLAGS = "";
 			};
@@ -24275,6 +24281,7 @@
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = H7V7XYVQ7D;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
