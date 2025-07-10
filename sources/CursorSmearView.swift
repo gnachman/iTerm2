@@ -70,100 +70,56 @@ class CursorSmearView: NSView {
         return pathAnimation
     }
 
-    private func alignRectToConvexHull(rect: NSRect, hull: [NSPoint]) -> [NSPoint] {
-        // Get the vertices of the rectangle
-        let rectPoints = rect.vertices
-
-        // Find the closest rectangle vertex for each hull vertex
-        var alignedPoints: [NSPoint] = []
-        for hullPoint in hull {
-            // Find the rectangle vertex closest to the current hull point
-            if let closest = rectPoints.min(by: { distanceSquared($0, hullPoint) < distanceSquared($1, hullPoint) }) {
-                alignedPoints.append(closest)
-            }
-        }
-
-        // Ensure six points by duplicating necessary vertices
-        while alignedPoints.count < 6 {
-            alignedPoints.append(alignedPoints.last!)
-        }
-
-        return alignedPoints
-    }
-
     private func distanceSquared(_ p1: NSPoint, _ p2: NSPoint) -> CGFloat {
         let dx = p1.x - p2.x
         let dy = p1.y - p2.y
         return dx * dx + dy * dy
     }
 
-    private func animationPaths(rect1: NSRect, rect2: NSRect) -> [CGPath] {
-        // Compute the convex hull
-        DLog("rect1=\(rect1), rect2=\(rect2)")
-        let hull = convexHull(of: rect1, and: rect2)
+    internal func animationPaths(rect1: NSRect, rect2: NSRect) -> [CGPath] {
+        let startTopLeft = NSPoint(x: rect1.minX, y: rect1.minY)
+        let startTopRight = NSPoint(x: rect1.maxX, y: rect1.minY)
+        let startBottomRight = NSPoint(x: rect1.maxX, y: rect1.maxY)
+        let startBottomLeft = NSPoint(x: rect1.minX, y: rect1.maxY)
+        
+        let endTopLeft = NSPoint(x: rect2.minX, y: rect2.minY)
+        let endTopRight = NSPoint(x: rect2.maxX, y: rect2.minY)
+        let endBottomRight = NSPoint(x: rect2.maxX, y: rect2.maxY)
+        let endBottomLeft = NSPoint(x: rect2.minX, y: rect2.maxY)
+        
+        // Determine which quadrant rect2 is in relative to rect1
+        let dx = rect2.midX - rect1.midX
+        let dy = rect2.midY - rect1.midY
+        DLog("rect1=\(rect1), rect2=\(rect2) dx=\(dx) dy=\(dy)")
 
-        // Align the start and end rectangles to match the hull
-        let startPath = alignRectToConvexHull(rect: rect1, hull: hull)
-        let endPath = alignRectToConvexHull(rect: rect2, hull: hull)
-
-        DLog("Use animation path with start=<\(startPath), mid=\(hull), end=\(endPath)")
-        return [pathFromVertices(startPath),
-                pathFromVertices(hull),
-                pathFromVertices(endPath)]
+        if dx >= 0 && dy >= 0 {
+            // rect2 is bottom-right of rect1 (down and right in flipped coords)
+            return [pathFromVertices([startTopLeft, startTopRight, startTopRight, startBottomRight, startBottomLeft, startBottomLeft]),
+                    pathFromVertices([startTopLeft, startTopRight,   endTopRight,   endBottomRight,   endBottomLeft, startBottomLeft]),
+                    pathFromVertices([  endTopLeft,   endTopRight,   endTopRight,   endBottomRight,   endBottomLeft,   endBottomLeft])]
+        } else if dx < 0 && dy >= 0 {
+            // rect2 is bottom-left of rect1 (down and left in flipped coords)
+            return [pathFromVertices([startTopRight, startBottomRight, startBottomRight, startBottomLeft, startTopLeft, startTopLeft]),
+                    pathFromVertices([startTopRight, startBottomRight,   endBottomRight,   endBottomLeft,   endTopLeft, startTopLeft]),
+                    pathFromVertices([  endTopRight,   endBottomRight,   endBottomRight,   endBottomLeft,   endTopLeft,   endTopLeft])]
+        } else if dx < 0 && dy < 0 {
+            // rect2 is top-left of rect1 (up and left in flipped coords)
+            return [pathFromVertices([startTopLeft, startTopRight, startTopRight, startBottomRight, startBottomLeft, startBottomLeft]),
+                    pathFromVertices([  endTopLeft,   endTopRight, startTopRight, startBottomRight, startBottomLeft,   endBottomLeft]),
+                    pathFromVertices([  endTopLeft,   endTopRight,   endTopRight,   endBottomRight,   endBottomLeft,   endBottomLeft])]
+        } else {  // dx >= 0 && dy < 0
+            // rect2 is top-right of rect1 (up and right in flipped coords)
+            return [pathFromVertices([startBottomLeft, startTopLeft,  startTopLeft, startTopRight, startBottomRight, startBottomRight]),
+                    pathFromVertices([startBottomLeft, startTopLeft,    endTopLeft,   endTopRight,   endBottomRight, startBottomRight]),
+                    pathFromVertices([  endBottomLeft,   endTopLeft,    endTopLeft,   endTopRight,   endBottomRight,   endBottomRight])]
+        }
     }
-
-    private func makeConvexHullPath(start: NSRect, end: NSRect) -> CGPath {
-        // Determine the hull points explicitly
-        let vertices = convexHull(of: start, and: end)
-        return pathFromVertices(vertices)
-    }
-
+    
     private func pathFromVertices(_ vertices: [NSPoint]) -> CGPath {
         let path = CGMutablePath()
         path.addLines(between: vertices)
         path.closeSubpath()
         return path
-    }
-
-    // This implements the Monotone Chain algorithm. There is an animation here that makes it
-    // easy to understand:
-    // https://en.wikibooks.org/wiki/Algorithm_Implementation/Geometry/Convex_hull/Monotone_chain
-    func convexHull(of rect1: NSRect, and rect2: NSRect) -> [NSPoint] {
-        // Get all vertices of the two rectangles
-        let points = rect1.vertices + rect2.vertices
-
-        // Sort points by x-coordinate, breaking ties by y-coordinate
-        let sortedPoints = points.sorted { (p1, p2) -> Bool in
-            if p1.x == p2.x {
-                return p1.y < p2.y
-            }
-            return p1.x < p2.x
-        }
-
-        // Build the lower hull
-        var lower: [NSPoint] = []
-        for point in sortedPoints {
-            while lower.count >= 2 && NSPoint.cross(lower[lower.count - 2], lower[lower.count - 1], point) <= 0 {
-                lower.removeLast()
-            }
-            lower.append(point)
-        }
-
-        // Build the upper hull
-        var upper: [NSPoint] = []
-        for point in sortedPoints.reversed() {
-            while upper.count >= 2 && NSPoint.cross(upper[upper.count - 2], upper[upper.count - 1], point) <= 0 {
-                upper.removeLast()
-            }
-            upper.append(point)
-        }
-
-        // Remove the last point of each half because it's repeated at the beginning of the other
-        lower.removeLast()
-        upper.removeLast()
-
-        // Concatenate lower and upper hulls to get the full convex hull
-        return lower + upper
     }
 
     private func run(animation: CAAnimation, inLayer layer: CALayer, endFrame: NSRect) {
@@ -186,27 +142,5 @@ class CursorSmearView: NSView {
         layer.removeFromSuperlayer()
         shapeLayer = nil
         isHidden = true
-    }
-}
-
-extension NSRect {
-    var vertices: [NSPoint] {
-        [NSPoint(x: minX, y: minY),
-         NSPoint(x: maxX, y: minY),
-         NSPoint(x: minX, y: maxY),
-         NSPoint(x: maxX, y: maxY)]
-    }
-}
-
-extension NSPoint {
-    // The cross-product of three points gives the oriented area of the
-    // triangle formed by them. This is the signed area scaled by two.
-    // If it's positive, then a, b, and o are arranged in counterclockwise order.
-    // If it's negative, then a, b, and o are arranged in clockwise order.
-    // If it's zero, the points are collinear.
-    static func cross(_ o: NSPoint,
-                      _ a: NSPoint,
-                      _ b: NSPoint) -> CGFloat {
-        return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x)
     }
 }
