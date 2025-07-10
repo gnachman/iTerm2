@@ -444,10 +444,10 @@ extension TextViewPorthole: Porthole {
 
 extension Dictionary {
     func value<T>(withKey key: Key) -> T? {
-        guard let unsafe = self[key] else {
+        guard let unsafeValue = self[key] else {
             return nil
         }
-        return unsafe as? T
+        return unsafeValue as? T
     }
 }
 
