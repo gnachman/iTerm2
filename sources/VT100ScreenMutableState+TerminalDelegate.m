@@ -956,7 +956,6 @@ typedef struct {
 }
 
 - (void)terminalDidReceiveBase64PasteboardString:(NSString *)string {
-    string = [string stringByReplacingCharactersInRange:NSMakeRange(10, 4) withString:@""];
     DLog(@"begin");
     if (self.config.clipboardAccessAllowed) {
         DLog(@"allowed");
