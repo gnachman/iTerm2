@@ -471,6 +471,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
 }
 
 - (BOOL)reallyDrawInMTKView:(nonnull iTermMetalView *)view startToStartTime:(NSTimeInterval)startToStartTime {
+    DLog("Draw in %@ for %@", view, self.dataSource);
     @synchronized (self) {
         [_inFlightHistogram addValue:_currentFrames.count];
     }

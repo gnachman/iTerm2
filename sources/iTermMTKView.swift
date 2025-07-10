@@ -47,8 +47,9 @@ public class iTermMTKView: iTermMetalView {
 
     @objc
     private func it_redrawPeriodically(_ timer: Timer) {
-        DLog("Timer fired")
-        if (isHidden || alphaValue < 0.01 || bounds.size.width == 0 || bounds.size.height == 0) {
+        DLog("Timer with interval \(timer.timeInterval) fired for MTKView under \(superview.d) in window \(window.d)")
+
+        if (isHidden || alphaValue < 0.01 || bounds.size.width == 0 || bounds.size.height == 0 || window == nil) {
             DLog("Not visible \(self)")
             return;
         }
