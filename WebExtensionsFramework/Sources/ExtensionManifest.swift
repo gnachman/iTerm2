@@ -123,6 +123,22 @@ public struct ExtensionManifest: Codable {
     /// Reference: Documentation/manifest-fields/background.md
     public var background: BackgroundScript?
     
+    /// Permissions required by the extension
+    /// Reference: Documentation/manifest-fields/permissions.md
+    public var permissions: [String]?
+    
+    /// Host permissions required by the extension
+    /// Reference: Documentation/manifest-fields/host_permissions.md
+    public var hostPermissions: [String]?
+    
+    /// Optional permissions that can be requested at runtime
+    /// Reference: Documentation/manifest-fields/optional_permissions.md
+    public var optionalPermissions: [String]?
+    
+    /// Optional host permissions that can be requested at runtime
+    /// Reference: Documentation/manifest-fields/optional_host_permissions.md
+    public var optionalHostPermissions: [String]?
+    
     enum CodingKeys: String, CodingKey {
         case manifestVersion = "manifest_version"
         case name
@@ -130,5 +146,9 @@ public struct ExtensionManifest: Codable {
         case description
         case contentScripts = "content_scripts"
         case background
+        case permissions
+        case hostPermissions = "host_permissions"
+        case optionalPermissions = "optional_permissions"
+        case optionalHostPermissions = "optional_host_permissions"
     }
 }

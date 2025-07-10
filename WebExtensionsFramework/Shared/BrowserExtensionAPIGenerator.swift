@@ -226,6 +226,7 @@ internal struct AsyncFunction: StringConvertible {
                 [s + "}",
                 s + "extension \(capitalizedName)RequestImpl: \(capitalizedName)Request {}",
                 s + "protocol \(capitalizedName)HandlerProtocol {",
+                 s2 + "var requiredPermissions: [BrowserExtensionAPIPermission] { get }",
                  s2 + "@MainActor func handle(request: \(capitalizedName)Request, context: BrowserExtensionContext) async throws -> \(returnType)",
                  s + "}"
                 ]).joined(separator: "\n")
@@ -233,9 +234,10 @@ internal struct AsyncFunction: StringConvertible {
     func swiftDispatch(indent: Int) -> String? {
         let s = String(repeating: " ", count: indent)
         return [s + "case \"\(name)\":",
+                s + "    let handler = \(capitalizedName)Handler()",
+                s + "    try context.requirePermissions(handler.requiredPermissions)",
                 s + "    let decoder = JSONDecoder()",
                 s + "    let request = try decoder.decode(\(capitalizedName)RequestImpl.self, from: jsonData)",
-                s + "    let handler = \(capitalizedName)Handler()",
                 s + "    let response = try await handler.handle(request: request, context: context)",
                 s + "    context.logger.debug(\"Dispatcher got response: \\(response) type: \\(type(of: response))\")",
                 s + "    let encodedValue = response.browserExtensionEncodedValue",
@@ -384,6 +386,7 @@ internal struct VariableArgsFunction: StringConvertible {
         }
         extension \(capitalizedName)RequestImpl: \(capitalizedName)Request {}
         protocol \(capitalizedName)HandlerProtocol {
+            var requiredPermissions: [BrowserExtensionAPIPermission] { get }
             func handle(request: \(capitalizedName)Request, context: BrowserExtensionContext) async throws -> \(returnType)
         }
         """.indentingLines(by: indent)
@@ -392,9 +395,10 @@ internal struct VariableArgsFunction: StringConvertible {
     func swiftDispatch(indent: Int) -> String? {
         return """
         case "\(name)":
+            let handler = \(capitalizedName)Handler()
+            try context.requirePermissions(handler.requiredPermissions)
             let decoder = JSONDecoder()
             let request = try decoder.decode(\(capitalizedName)RequestImpl.self, from: jsonData)
-            let handler = \(capitalizedName)Handler()
             let response = try await handler.handle(request: request, context: context)
             context.logger.debug("Dispatcher got response: \\(response) type: \\(type(of: response))")
             let encodedValue = response.browserExtensionEncodedValue

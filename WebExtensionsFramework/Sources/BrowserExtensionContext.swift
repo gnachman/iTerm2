@@ -71,4 +71,31 @@ class BrowserExtensionContext {
         self.tab = tab
         self.frameId = frameId
     }
+    
+    // MARK: - Permission Checking
+    
+    /// Check if the extension has the required permissions
+    /// - Parameter requiredPermissions: Array of required API permissions
+    /// - Throws: BrowserExtensionError.insufficientPermissions if permissions are missing
+    func requirePermissions(_ requiredPermissions: [BrowserExtensionAPIPermission]) throws {
+        let manifest = browserExtension.manifest
+        
+        for permission in requiredPermissions {
+            if !manifest.hasPermission(permission) {
+                logger.error("Extension \(browserExtension.id) missing required permission: \(permission.rawValue)")
+                throw BrowserExtensionError.insufficientPermissions(permission.rawValue)
+            }
+        }
+        
+        if !requiredPermissions.isEmpty {
+            logger.debug("Extension \(browserExtension.id) has all required permissions: \(requiredPermissions.map { $0.rawValue })")
+        }
+    }
+    
+    /// Check if the extension has a specific permission
+    /// - Parameter permission: The API permission to check
+    /// - Returns: true if the extension has the permission
+    func hasPermission(_ permission: BrowserExtensionAPIPermission) -> Bool {
+        return browserExtension.manifest.hasPermission(permission)
+    }
 }

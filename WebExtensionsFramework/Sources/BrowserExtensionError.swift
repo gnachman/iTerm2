@@ -7,6 +7,7 @@ public enum BrowserExtensionError: Error, LocalizedError, Equatable {
     case extensionContextInvalidated
     case unknownAPI(String)
     case internalError(String)
+    case insufficientPermissions(String)
     
     public var errorDescription: String? {
         switch self {
@@ -20,6 +21,8 @@ public enum BrowserExtensionError: Error, LocalizedError, Equatable {
             return "Unknown API: \(api)"
         case .internalError(let message):
             return "Internal error: \(message)"
+        case .insufficientPermissions(let permission):
+            return "This extension does not have permission to use \(permission). Add \"\(permission)\" to the \"permissions\" array in the manifest."
         }
     }
 }

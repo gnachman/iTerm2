@@ -11,6 +11,7 @@ protocol GetPlatformInfoRequest {
 }
 extension GetPlatformInfoRequestImpl: GetPlatformInfoRequest {}
 protocol GetPlatformInfoHandlerProtocol {
+    var requiredPermissions: [BrowserExtensionAPIPermission] { get }
     @MainActor func handle(request: GetPlatformInfoRequest, context: BrowserExtensionContext) async throws -> PlatformInfo
 }
 struct SendMessageRequestImpl: Codable {
@@ -23,6 +24,7 @@ protocol SendMessageRequest {
 }
 extension SendMessageRequestImpl: SendMessageRequest {}
 protocol SendMessageHandlerProtocol {
+    var requiredPermissions: [BrowserExtensionAPIPermission] { get }
     func handle(request: SendMessageRequest, context: BrowserExtensionContext) async throws -> AnyJSONCodable
 }
 

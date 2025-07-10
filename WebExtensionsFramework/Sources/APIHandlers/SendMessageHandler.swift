@@ -3,6 +3,10 @@ import BrowserExtensionShared
 
 /// Handler for chrome.runtime.sendMessage API calls
 class SendMessageHandler: SendMessageHandlerProtocol {
+    
+    /// sendMessage requires no permissions
+    var requiredPermissions: [BrowserExtensionAPIPermission] { [] }
+    
     @MainActor
     func handle(request: SendMessageRequest,
                 context: BrowserExtensionContext) async throws -> AnyJSONCodable {

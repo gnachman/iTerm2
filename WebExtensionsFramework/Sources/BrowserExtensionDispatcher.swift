@@ -9,9 +9,10 @@ class BrowserExtensionDispatcher {
         switch api {
 
         case "getPlatformInfo":
+            let handler = GetPlatformInfoHandler()
+            try context.requirePermissions(handler.requiredPermissions)
             let decoder = JSONDecoder()
             let request = try decoder.decode(GetPlatformInfoRequestImpl.self, from: jsonData)
-            let handler = GetPlatformInfoHandler()
             let response = try await handler.handle(request: request, context: context)
             context.logger.debug("Dispatcher got response: \(response) type: \(type(of: response))")
             let encodedValue = response.browserExtensionEncodedValue
@@ -22,9 +23,10 @@ class BrowserExtensionDispatcher {
             context.logger.debug("Dispatcher returning: \(jsonObject)")
             return jsonObject
         case "sendMessage":
+            let handler = SendMessageHandler()
+            try context.requirePermissions(handler.requiredPermissions)
             let decoder = JSONDecoder()
             let request = try decoder.decode(SendMessageRequestImpl.self, from: jsonData)
-            let handler = SendMessageHandler()
             let response = try await handler.handle(request: request, context: context)
             context.logger.debug("Dispatcher got response: \(response) type: \(type(of: response))")
             let encodedValue = response.browserExtensionEncodedValue

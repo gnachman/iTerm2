@@ -270,4 +270,151 @@ final class ExtensionManifestTests: XCTestCase {
         
         XCTAssertNil(manifest.background)
     }
+    
+    // MARK: - permissions tests
+    
+    func testPermissionsDecoding() {
+        let json = """
+        {
+            "manifest_version": 3,
+            "name": "Test Extension",
+            "version": "1.0",
+            "permissions": ["storage", "tabs", "activeTab"]
+        }
+        """
+        
+        let data = json.data(using: .utf8)!
+        let manifest = try! JSONDecoder().decode(ExtensionManifest.self, from: data)
+        
+        XCTAssertNotNil(manifest.permissions)
+        XCTAssertEqual(manifest.permissions, ["storage", "tabs", "activeTab"])
+    }
+    
+    func testPermissionsOptional() {
+        let json = """
+        {
+            "manifest_version": 3,
+            "name": "Test Extension",
+            "version": "1.0"
+        }
+        """
+        
+        let data = json.data(using: .utf8)!
+        let manifest = try! JSONDecoder().decode(ExtensionManifest.self, from: data)
+        
+        XCTAssertNil(manifest.permissions)
+    }
+    
+    func testPermissionsEmpty() {
+        let json = """
+        {
+            "manifest_version": 3,
+            "name": "Test Extension",
+            "version": "1.0",
+            "permissions": []
+        }
+        """
+        
+        let data = json.data(using: .utf8)!
+        let manifest = try! JSONDecoder().decode(ExtensionManifest.self, from: data)
+        
+        XCTAssertNotNil(manifest.permissions)
+        XCTAssertEqual(manifest.permissions, [])
+    }
+    
+    func testHostPermissionsDecoding() {
+        let json = """
+        {
+            "manifest_version": 3,
+            "name": "Test Extension",
+            "version": "1.0",
+            "host_permissions": ["https://*.example.com/*", "*://localhost/*"]
+        }
+        """
+        
+        let data = json.data(using: .utf8)!
+        let manifest = try! JSONDecoder().decode(ExtensionManifest.self, from: data)
+        
+        XCTAssertNotNil(manifest.hostPermissions)
+        XCTAssertEqual(manifest.hostPermissions, ["https://*.example.com/*", "*://localhost/*"])
+    }
+    
+    func testHostPermissionsOptional() {
+        let json = """
+        {
+            "manifest_version": 3,
+            "name": "Test Extension",
+            "version": "1.0"
+        }
+        """
+        
+        let data = json.data(using: .utf8)!
+        let manifest = try! JSONDecoder().decode(ExtensionManifest.self, from: data)
+        
+        XCTAssertNil(manifest.hostPermissions)
+    }
+    
+    func testOptionalPermissionsDecoding() {
+        let json = """
+        {
+            "manifest_version": 3,
+            "name": "Test Extension",
+            "version": "1.0",
+            "optional_permissions": ["geolocation", "bookmarks"]
+        }
+        """
+        
+        let data = json.data(using: .utf8)!
+        let manifest = try! JSONDecoder().decode(ExtensionManifest.self, from: data)
+        
+        XCTAssertNotNil(manifest.optionalPermissions)
+        XCTAssertEqual(manifest.optionalPermissions, ["geolocation", "bookmarks"])
+    }
+    
+    func testOptionalPermissionsOptional() {
+        let json = """
+        {
+            "manifest_version": 3,
+            "name": "Test Extension",
+            "version": "1.0"
+        }
+        """
+        
+        let data = json.data(using: .utf8)!
+        let manifest = try! JSONDecoder().decode(ExtensionManifest.self, from: data)
+        
+        XCTAssertNil(manifest.optionalPermissions)
+    }
+    
+    func testOptionalHostPermissionsDecoding() {
+        let json = """
+        {
+            "manifest_version": 3,
+            "name": "Test Extension",
+            "version": "1.0",
+            "optional_host_permissions": ["https://*.google.com/*"]
+        }
+        """
+        
+        let data = json.data(using: .utf8)!
+        let manifest = try! JSONDecoder().decode(ExtensionManifest.self, from: data)
+        
+        XCTAssertNotNil(manifest.optionalHostPermissions)
+        XCTAssertEqual(manifest.optionalHostPermissions, ["https://*.google.com/*"])
+    }
+    
+    func testOptionalHostPermissionsOptional() {
+        let json = """
+        {
+            "manifest_version": 3,
+            "name": "Test Extension",
+            "version": "1.0"
+        }
+        """
+        
+        let data = json.data(using: .utf8)!
+        let manifest = try! JSONDecoder().decode(ExtensionManifest.self, from: data)
+        
+        XCTAssertNil(manifest.optionalHostPermissions)
+    }
 }

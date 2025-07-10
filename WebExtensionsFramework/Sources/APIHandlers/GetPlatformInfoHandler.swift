@@ -2,6 +2,10 @@ import Foundation
 import BrowserExtensionShared
 
 class GetPlatformInfoHandler: GetPlatformInfoHandlerProtocol {
+    
+    /// getPlatformInfo requires no permissions
+    var requiredPermissions: [BrowserExtensionAPIPermission] { [] }
+    
     func handle(request: GetPlatformInfoRequest,
                 context: BrowserExtensionContext) async throws -> PlatformInfo {
         let arch: String
