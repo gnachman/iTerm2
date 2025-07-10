@@ -10,7 +10,7 @@
 		</data>
 		<key>Resources/SUStatus.nib</key>
 		<data>
-		mxCbSqCHOIoPnOLBdUHuxuw4qx8=
+		vyoePsNYh3DJKHEEGC5x6c63jAc=
 		</data>
 		<key>Resources/ar.lproj/Sparkle.strings</key>
 		<dict>
@@ -303,20 +303,11 @@
 	</dict>
 	<key>files2</key>
 	<dict>
-		<key>Frameworks/libclang_rt.asan_osx_dynamic.dylib</key>
-		<dict>
-			<key>cdhash</key>
-			<data>
-			ogT3IA/tH4loLXtwN0Dz5IJ334s=
-			</data>
-			<key>requirement</key>
-			<string>anchor apple generic and identifier "libclang_rt.asan_osx_dynamic" and (certificate leaf[field.1.2.840.113635.100.6.1.9] /* exists */ or certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = H7V7XYVQ7D)</string>
-		</dict>
 		<key>MacOS/fileop</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			6oD6t+gk2QsOFaNNEAwGRaAdCu4=
+			GF8o2ao+lvHdsW0v4eOjXsSCRuU=
 			</data>
 			<key>requirement</key>
 			<string>anchor apple generic and identifier fileop and (certificate leaf[field.1.2.840.113635.100.6.1.9] /* exists */ or certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = H7V7XYVQ7D)</string>
@@ -332,7 +323,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			A7yZQClayiM+ZNEwJblbt/esbVYnQkX9gfEE1dHbnTo=
+			cACUv/n/AQTsan6vngB2CsivFyS5tyCvtg1czpvoN5k=
 			</data>
 		</dict>
 		<key>Resources/ar.lproj/Sparkle.strings</key>
