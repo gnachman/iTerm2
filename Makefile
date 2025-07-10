@@ -99,11 +99,11 @@ preview:
 
 x86libsixel: force
 	mkdir -p submodules/libsixel/build-x86
-	cd submodules/libsixel/build-x86 && PKG_CONFIG=/opt/homebrew/bin/pkg-config CC="/usr/bin/clang -target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LDFLAGS="-ld_classic -target x86_64-apple-macos$(DEPLOYMENT_TARGET)" CFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LIBTOOLFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" ../configure -host=x86_64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-x86 --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
+	cd submodules/libsixel/build-x86 && PKG_CONFIG=/opt/homebrew/bin/pkg-config CC="/usr/bin/clang -target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LDFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" CFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LIBTOOLFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" ../configure -host=x86_64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-x86 --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
 
 armsixel: force
 	mkdir -p submodules/libsixel/build-arm
-	cd submodules/libsixel/build-arm && PKG_CONFIG=/opt/homebrew/bin/pkg-config CC="/usr/bin/clang -target arm64-apple-macos$(DEPLOYMENT_TARGET)" LDFLAGS="-ld_classic -target arm64-apple-macos$(DEPLOYMENT_TARGET)" CFLAGS="-target arm64-apple-macos$(DEPLOYMENT_TARGET)" LIBTOOLFLAGS="-target arm64-apple-macos$(DEPLOYMENT_TARGET)" ../configure --host=aarch64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-arm --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
+	cd submodules/libsixel/build-arm && PKG_CONFIG=/opt/homebrew/bin/pkg-config CC="/usr/bin/clang -target arm64-apple-macos$(DEPLOYMENT_TARGET)" LDFLAGS="-target arm64-apple-macos$(DEPLOYMENT_TARGET)" CFLAGS="-target arm64-apple-macos$(DEPLOYMENT_TARGET)" LIBTOOLFLAGS="-target arm64-apple-macos$(DEPLOYMENT_TARGET)" ../configure --host=aarch64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-arm --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
 
 # Usage: go to an intel mac and run make x86libsixel and commit it. Go to an arm mac and run make armsixel && make libsixel.
 fatlibsixel: force armsixel x86libsixel
@@ -112,7 +112,7 @@ fatlibsixel: force armsixel x86libsixel
 armopenssl: force
 	echo Begin building configure-armopenssl
 	cd submodules/openssl && make clean && make distclean || echo make failed
-	cd submodules/openssl && ./Configure darwin64-arm64-cc no-shared -fPIC -mmacosx-version-min=$(DEPLOYMENT_TARGET) -Wl,-ld_classic
+	cd submodules/openssl && ./Configure darwin64-arm64-cc no-shared -fPIC -mmacosx-version-min=$(DEPLOYMENT_TARGET)
 	echo Begin building armopenssl
 	cd submodules/openssl && $(MAKE)
 	rm -rf submodules/openssl/build-arm
@@ -122,7 +122,7 @@ armopenssl: force
 x86openssl: force
 	echo Begin building configure-x86openssl
 	cd submodules/openssl && make clean && make distclean || echo make failed
-	cd submodules/openssl && ./Configure darwin64-x86_64-cc no-shared -fPIC -mmacosx-version-min=$(DEPLOYMENT_TARGET) -Wl,-ld_classic
+	cd submodules/openssl && ./Configure darwin64-x86_64-cc no-shared -fPIC -mmacosx-version-min=$(DEPLOYMENT_TARGET)
 	echo Begin building x86openssl
 	cd submodules/openssl && $(MAKE)
 	rm -rf submodules/openssl/build-x86
@@ -144,14 +144,14 @@ x86libssh2: force
 	mkdir -p submodules/libssh2/build_x86_64
 	# Add this flag to enable tracing:
 	# -DCMAKE_C_FLAGS="-DLIBSSH2DEBUG"
-	cd submodules/libssh2/build_x86_64 && $(CMAKE) -DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew -DOPENSSL_INCLUDE_DIR=${PWD}/submodules/openssl/build-fat/include -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl/build-fat -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCRYPTO_BACKEND=OpenSSL -DCMAKE_OSX_DEPLOYMENT_TARGET=$(DEPLOYMENT_TARGET) -DCMAKE_EXE_LINKER_FLAGS="-ld_classic" -DCMAKE_MODULE_LINKER_FLAGS="-ld_classic" .. && $(MAKE) libssh2_static
+	cd submodules/libssh2/build_x86_64 && $(CMAKE) -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew -DOPENSSL_INCLUDE_DIR=${PWD}/submodules/openssl/build-fat/include -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl/build-fat -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCRYPTO_BACKEND=OpenSSL -DCMAKE_OSX_DEPLOYMENT_TARGET=$(DEPLOYMENT_TARGET) .. && $(MAKE) libssh2_static
 
 armlibssh2: force
 	echo Begin building armlibssh2
 	mkdir -p submodules/libssh2/build_arm64
 	# Add this flag to enable tracing:
 	# -DCMAKE_C_FLAGS="-DLIBSSH2DEBUG"
-	cd submodules/libssh2/build_arm64 && $(CMAKE) -DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew -DOPENSSL_INCLUDE_DIR=${PWD}/submodules/openssl/include -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=arm64 -DCRYPTO_BACKEND=OpenSSL -DCMAKE_EXE_LINKER_FLAGS="-ld_classic" -DCMAKE_MODULE_LINKER_FLAGS="-ld_classic" -DCMAKE_OSX_DEPLOYMENT_TARGET=$(DEPLOYMENT_TARGET) .. && $(MAKE) libssh2_static
+	cd submodules/libssh2/build_arm64 && $(CMAKE) -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew -DOPENSSL_INCLUDE_DIR=${PWD}/submodules/openssl/include -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=arm64 -DCRYPTO_BACKEND=OpenSSL -DCMAKE_OSX_DEPLOYMENT_TARGET=$(DEPLOYMENT_TARGET) .. && $(MAKE) libssh2_static
 
 fatlibssh2: force fatopenssl
 	echo Begin building fatlibssh2
@@ -162,14 +162,14 @@ fatlibssh2: force fatopenssl
 
 CoreParse: force
 	rm -rf ThirdParty/CoreParse.framework
-	cd submodules/CoreParse && xcodebuild -target CoreParse -configuration Release CONFIGURATION_BUILD_DIR=../../ThirdParty VALID_ARCHS="arm64 x86_64" OTHER_LDFLAGS="-ld_classic"
+	cd submodules/CoreParse && xcodebuild -target CoreParse -configuration Release CONFIGURATION_BUILD_DIR=../../ThirdParty VALID_ARCHS="arm64 x86_64"
 	cp "submodules/CoreParse//CoreParse/Tokenisation/Token Recognisers/CPRegexpRecogniser.h" ThirdParty/CoreParse.framework/Versions/A/Headers/CPRegexpRecogniser.h
 
 NMSSH: force fatlibssh2
 	echo Begin building NMSSH
 	rm -rf ThirdParty/NMSSH.framework
 	cp submodules/libssh2/include/* submodules/NMSSH/NMSSH-OSX/Libraries/include/libssh2
-	cd submodules/NMSSH && xcodebuild -target NMSSH -project NMSSH.xcodeproj -configuration Release CONFIGURATION_BUILD_DIR=../../ThirdParty OTHER_LDFLAGS="-ld_classic"
+	cd submodules/NMSSH && xcodebuild -target NMSSH -project NMSSH.xcodeproj -configuration Release CONFIGURATION_BUILD_DIR=../../ThirdParty
 
 paranoidNMSSH: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) NMSSH
@@ -177,16 +177,16 @@ paranoidNMSSH: force
 librailroad_dsl: force
 	/opt/homebrew/bin/rustup target add x86_64-apple-darwin
 	/opt/homebrew/bin/rustup target add aarch64-apple-darwin
-	PATH=$(PATH):$(HOME)/.cargo/bin cd submodules/railroad_dsl && $(HOME)/.cargo/bin/cargo build --release --target aarch64-apple-darwin && $(HOME)/.cargo/bin/cargo build --release --target x86_64-apple-darwin && lipo -create target/aarch64-apple-darwin/release/librailroad_dsl.dylib target/x86_64-apple-darwin/release/librailroad_dsl.dylib -output ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include && install_name_tool -id @rpath/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib
+	cd submodules/railroad_dsl && /opt/homebrew/bin/rustup run stable cargo build --release --target aarch64-apple-darwin && /opt/homebrew/bin/rustup run stable cargo build --release --target x86_64-apple-darwin && lipo -create target/aarch64-apple-darwin/release/librailroad_dsl.dylib target/x86_64-apple-darwin/release/librailroad_dsl.dylib -output ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include && install_name_tool -id @rpath/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib
 
 libadblock: force
 	/opt/homebrew/bin/rustup target add x86_64-apple-darwin
 	/opt/homebrew/bin/rustup target add aarch64-apple-darwin
 	mkdir -p submodules/adblock-rust/lib
 	mkdir -p submodules/adblock-rust/include
-	cd submodules/adblock-rust && PATH=$(PATH):$(HOME)/.cargo/bin $(HOME)/.cargo/bin/cbindgen --config cbindgen.toml --crate adblock --output include/adblock.h
-	cd submodules/adblock-rust && PATH=$(PATH):$(HOME)/.cargo/bin $(HOME)/.cargo/bin/cargo build --release --target aarch64-apple-darwin --features ffi
-	cd submodules/adblock-rust && PATH=$(PATH):$(HOME)/.cargo/bin $(HOME)/.cargo/bin/cargo build --release --target x86_64-apple-darwin --features ffi
+	cd submodules/adblock-rust && /opt/homebrew/bin/rustup run stable cbindgen --config cbindgen.toml --crate adblock --output include/adblock.h
+	cd submodules/adblock-rust && /opt/homebrew/bin/rustup run stable cargo build --release --target aarch64-apple-darwin --features ffi
+	cd submodules/adblock-rust && /opt/homebrew/bin/rustup run stable cargo build --release --target x86_64-apple-darwin --features ffi
 	cd submodules/adblock-rust && lipo -create target/aarch64-apple-darwin/release/libadblock.a target/x86_64-apple-darwin/release/libadblock.a -output lib/libadblock.a
 	cp submodules/adblock-rust/include/* ThirdParty/adblock-rust/include
 	cp submodules/adblock-rust/lib/* ThirdParty/adblock-rust/lib
