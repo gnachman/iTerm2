@@ -1828,11 +1828,9 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                                bold:isBold
                                        isBackground:isBackground];
     if (isBackground) {
-        return VectorForColor([_configuration->_colorMap colorForKey:key],
-                              _configuration->_colorSpace);
+        return [_configuration->_colorMap fastColorForKey:key colorSpace:_configuration->_colorSpace];
     } else {
-        vector_float4 color = VectorForColor([_configuration->_colorMap colorForKey:key],
-                                             _configuration->_colorSpace);
+        vector_float4 color = [_configuration->_colorMap fastColorForKey:key colorSpace:_configuration->_colorSpace];
         if (isFaint) {
             // TODO: I think this is wrong and the color components need premultiplied alpha.
             color.w = _configuration->_colorMap.faintTextAlpha;

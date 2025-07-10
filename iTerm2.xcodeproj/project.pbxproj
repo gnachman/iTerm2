@@ -2032,6 +2032,7 @@
 		A6661310225CFF7200840E89 /* BetterFontPicker.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6661309225CFF5A00840E89 /* BetterFontPicker.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A6661311225CFF7A00840E89 /* BetterFontPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6661309225CFF5A00840E89 /* BetterFontPicker.framework */; };
 		A6661312225CFF7A00840E89 /* BetterFontPicker.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6661309225CFF5A00840E89 /* BetterFontPicker.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A6664C8C2E20553E00B01DC4 /* iTermColorVectorCache.mm in Sources */ = {isa = PBXBuildFile; fileRef = A6664C8B2E20553E00B01DC4 /* iTermColorVectorCache.mm */; };
 		A6667E91277BC5A900152678 /* iTermIntervalTreeObserver.m in Sources */ = {isa = PBXBuildFile; fileRef = A6667E90277BC5A900152678 /* iTermIntervalTreeObserver.m */; };
 		A6667E95277CDD1800152678 /* IdempotentOperationJoiner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6667E94277CDD1800152678 /* IdempotentOperationJoiner.swift */; };
 		A6667E97277CDDD000152678 /* Mutex.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6667E96277CDDD000152678 /* Mutex.swift */; };
@@ -7080,6 +7081,7 @@
 		A665C1F82440461400F623F0 /* WindowCorner@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "WindowCorner@2x.png"; path = "images/WindowCorner@2x.png"; sourceTree = "<group>"; };
 		A665C1F92440461500F623F0 /* WindowCorner.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = WindowCorner.png; path = images/WindowCorner.png; sourceTree = "<group>"; };
 		A6661309225CFF5A00840E89 /* BetterFontPicker.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = BetterFontPicker.framework; path = BetterFontPicker/BetterFontPicker.framework; sourceTree = "<group>"; };
+		A6664C8B2E20553E00B01DC4 /* iTermColorVectorCache.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = iTermColorVectorCache.mm; sourceTree = "<group>"; };
 		A6667E90277BC5A900152678 /* iTermIntervalTreeObserver.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermIntervalTreeObserver.m; sourceTree = "<group>"; };
 		A6667E94277CDD1800152678 /* IdempotentOperationJoiner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdempotentOperationJoiner.swift; sourceTree = "<group>"; };
 		A6667E96277CDDD000152678 /* Mutex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mutex.swift; sourceTree = "<group>"; };
@@ -12110,6 +12112,7 @@
 		A68A30C9186D101C007F550F /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				A6664C8B2E20553E00B01DC4 /* iTermColorVectorCache.mm */,
 				A69FF38C2E13014400AFF7A8 /* iTermContextMenuUtilities.m */,
 				A69FF38A2E13012900AFF7A8 /* iTermContextMenuUtilities.h */,
 				A6A3EDE52E0D26E100D711DA /* MimeTypeUtilities.swift */,
@@ -18705,6 +18708,7 @@
 				A6E7E122286E41730067642D /* NSMenu+iTerm.swift in Sources */,
 				A6C7C96F2E1730AA00AA7668 /* iTermBrowserUserState.swift in Sources */,
 				A63493E123E661B60047C31B /* iTermPresentationController.m in Sources */,
+				A6664C8C2E20553E00B01DC4 /* iTermColorVectorCache.mm in Sources */,
 				A66F52AE21045B7E00571168 /* iTermStatusBarNetworkUtilizationComponent.m in Sources */,
 				A6069F322DF6384300EE6CC7 /* iTermOpenPanel.swift in Sources */,
 				A648DABF2427E7E000C2FF02 /* iTermPreferenceDidChangeNotification.m in Sources */,

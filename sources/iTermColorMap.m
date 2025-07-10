@@ -12,6 +12,7 @@
 #import "ITAddressBookMgr.h"
 #import "NSColor+iTerm.h"
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermColorVectorCache.h"
 #import <simd/simd.h>
 
 // This value plus 0...255 are accepted.
@@ -75,6 +76,7 @@ const int kColorMapAnsiBrightModifier = 8;
 
     NSMutableDictionary<NSNumber *, NSData *> *_fastMap;
     id<iTermColorMapReading> _sanitizingAdapter;
+    iTermColorVectorCache *_colorVectorCache;
 }
 
 @synthesize generation = _generation;
@@ -115,6 +117,7 @@ const int kColorMapAnsiBrightModifier = 8;
         return;
     }
     _generation += 1;
+    [_colorVectorCache clearKey:theKey];
 
     if (!colorInArbitrarySpace) {
         [_map removeObjectForKey:@(theKey)];
@@ -185,6 +188,31 @@ const int kColorMapAnsiBrightModifier = 8;
         memmove(&value, data.bytes, sizeof(value));
         return value;
     }
+}
+
+- (vector_float4)fastColorForKey:(iTermColorMapKey)theKey colorSpace:(NSColorSpace *)colorSpace {
+    if (!colorSpace) {
+        return [self fastColorForKey:theKey];
+    }
+    
+    if (!_colorVectorCache) {
+        _colorVectorCache = [[iTermColorVectorCache alloc] init];
+    }
+    
+    vector_float4 result;
+    if ([_colorVectorCache getVector:&result forKey:theKey colorSpace:colorSpace]) {
+        return result;
+    }
+    
+    // Cache miss - compute and store
+    NSColor *color = [self colorForKey:theKey];
+    if (!color) {
+        return simd_make_float4(1, 0, 0, 1); // Red fallback
+    }
+    
+    result = [_colorVectorCache vectorForColor:color colorSpace:colorSpace];
+    [_colorVectorCache storeVector:result forKey:theKey colorSpace:colorSpace];
+    return result;
 }
 
 - (void)setDimOnlyText:(BOOL)dimOnlyText {

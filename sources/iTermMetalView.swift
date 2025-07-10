@@ -782,6 +782,7 @@ fileprivate func DisplayLinkCallback(displayLink: CVDisplayLink,
                                         flagsIn: CVOptionFlags,
                                         flagsOut: UnsafeMutablePointer<CVOptionFlags>,
                                         displayLinkContext: UnsafeMutableRawPointer?) -> CVReturn {
+    NSLog("Display link callback running")
     guard let context = displayLinkContext else {
         return kCVReturnError
     }
