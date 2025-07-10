@@ -269,7 +269,7 @@
 }
 
 - (BOOL)dismiss {
-    return [self dismissAnimated:YES];
+    return [self dismissAnimated:NO];
 }
 
 - (BOOL)dismissAnimated:(BOOL)animated {
@@ -501,7 +501,6 @@
 
 - (void)prepareToDismissMinimalView {
     DLog(@"Dismissing composer from\n%@", [NSThread callStackSymbols]);
-    _minimalViewController = nil;
     _dropDownComposerViewIsVisible = NO;
 }
 
@@ -512,6 +511,7 @@
     }
     DLog(@"Remove view %@ from hierarchy", vc.view);
     [vc.view removeFromSuperview];
+    _minimalViewController = nil;
     [self.delegate composerManagerDidDismissMinimalView:self];
 }
 
