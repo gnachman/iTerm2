@@ -17,7 +17,7 @@ old_library='libsixel.a'
 inherited_linker_flags=' '
 
 # Libraries that this one depends upon.
-dependency_libs=' -ld_classic -lm'
+dependency_libs=' -lm'
 
 # Names of additional weak libraries provided by this library
 weak_library_names=''
@@ -38,4 +38,4 @@ dlopen=''
 dlpreopen=''
 
 # Directory that this library needs to be installed in:
-libdir='/Users/gnachman/git/iterm2-alt3/ThirdParty/libsixel-x86/lib'
+libdir='/Users/gnachman/git/iterm2/ThirdParty/libsixel-x86/lib'
