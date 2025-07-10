@@ -79,6 +79,10 @@ send() {
     fi
 }
 
+error() {
+    echo "ERROR: $*" 1>&2
+}
+
 # Look for command line flags.
 while [ $# -gt 0 ]; do
     case "$1" in
