@@ -64,9 +64,10 @@
     [[[iTermSnippetsModel sharedInstance] snippets] enumerateObjectsUsingBlock:
      ^(iTermSnippet * _Nonnull snippet, NSUInteger idx, BOOL * _Nonnull stop) {
         if ([snippet hasTags:_tags]) {
-            [self add:snippet];
-            if (snippet.tags) {
+            if (snippet.tags.count) {
                 [self addTags:snippet.tags snippet:snippet toTree:tagTree];
+            } else {
+                [self add:snippet];
             }
         }
     }];
