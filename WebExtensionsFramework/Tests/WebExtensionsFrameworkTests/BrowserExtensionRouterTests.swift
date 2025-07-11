@@ -31,9 +31,13 @@ class BrowserExtensionRouterTests: XCTestCase {
         
         // Now create network and add webview
         let network = BrowserExtensionNetwork()
-        network.add(webView: webView, browserExtension: mockBrowserExtension)
+        network.add(webView: webView,
+                    world: .page,
+                    browserExtension: mockBrowserExtension,
+                    trusted: true,
+                    setAccessLevelToken: "")
         router = BrowserExtensionRouter(network: network, logger: mockLogger)
-            }
+    }
     
     override func tearDown() async throws {
         webView = nil

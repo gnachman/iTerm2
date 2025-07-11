@@ -58,7 +58,7 @@ class SendMessageHandlerTests: XCTestCase {
             };
             true;
             """
-        try await webView.evaluateJavaScript(jsBody)
+        _ = try await webView.evaluateJavaScript(jsBody)
     }
     
     override func tearDown() async throws {
@@ -277,9 +277,9 @@ class SendMessageHandlerTests: XCTestCase {
     // MARK: - Direct Handler Tests
     
     func testSendMessageHandlerParsingSingleArgument() async throws {
-        let handler = SendMessageHandler()
+        let handler = RuntimeSendMessageHandler()
         let network = BrowserExtensionNetwork()
-        network.add(webView: webView, browserExtension: mockBrowserExtension)
+        network.add(webView: webView, world: .page, browserExtension: mockBrowserExtension, trusted: true, setAccessLevelToken: "")
         let router = BrowserExtensionRouter(network: network, logger: mockLogger)
         let context = BrowserExtensionContext(
             logger: mockLogger,
@@ -287,11 +287,12 @@ class SendMessageHandlerTests: XCTestCase {
             webView: webView,
             browserExtension: mockBrowserExtension,
             tab: nil,
-            frameId: nil
+            frameId: nil,
+            contextType: .trusted
         )
         
         // Test single argument: just message
-        let request = SendMessageRequestImpl(
+        let request = RuntimeSendMessageRequestImpl(
             requestId: "test-1",
             args: [AnyJSONCodable(["greeting": "hello"])]
         )
@@ -305,9 +306,9 @@ class SendMessageHandlerTests: XCTestCase {
     }
     
     func testSendMessageHandlerParsingTwoArgumentsExtensionIdAndMessage() async throws {
-        let handler = SendMessageHandler()
+        let handler = RuntimeSendMessageHandler()
         let network = BrowserExtensionNetwork()
-        network.add(webView: webView, browserExtension: mockBrowserExtension)
+        network.add(webView: webView, world: .page, browserExtension: mockBrowserExtension, trusted: true, setAccessLevelToken: "")
         let router = BrowserExtensionRouter(network: network, logger: mockLogger)
         let context = BrowserExtensionContext(
             logger: mockLogger,
@@ -315,11 +316,12 @@ class SendMessageHandlerTests: XCTestCase {
             webView: webView,
             browserExtension: mockBrowserExtension,
             tab: nil,
-            frameId: nil
+            frameId: nil,
+            contextType: .trusted
         )
         
         // Test two arguments: extensionId and message
-        let request = SendMessageRequestImpl(
+        let request = RuntimeSendMessageRequestImpl(
             requestId: "test-2",
             args: [
                 AnyJSONCodable("other-extension-id"),
@@ -336,9 +338,9 @@ class SendMessageHandlerTests: XCTestCase {
     }
     
     func testSendMessageHandlerParsingTwoArgumentsMessageAndOptions() async throws {
-        let handler = SendMessageHandler()
+        let handler = RuntimeSendMessageHandler()
         let network = BrowserExtensionNetwork()
-        network.add(webView: webView, browserExtension: mockBrowserExtension)
+        network.add(webView: webView, world: .page, browserExtension: mockBrowserExtension, trusted: true, setAccessLevelToken: "")
         let router = BrowserExtensionRouter(network: network, logger: mockLogger)
         let context = BrowserExtensionContext(
             logger: mockLogger,
@@ -346,11 +348,12 @@ class SendMessageHandlerTests: XCTestCase {
             webView: webView,
             browserExtension: mockBrowserExtension,
             tab: nil,
-            frameId: nil
+            frameId: nil,
+            contextType: .trusted
         )
         
         // Test two arguments: message and options
-        let request = SendMessageRequestImpl(
+        let request = RuntimeSendMessageRequestImpl(
             requestId: "test-3",
             args: [
                 AnyJSONCodable(["greeting": "hello"]),
@@ -367,9 +370,9 @@ class SendMessageHandlerTests: XCTestCase {
     }
     
     func testSendMessageHandlerParsingThreeArguments() async throws {
-        let handler = SendMessageHandler()
+        let handler = RuntimeSendMessageHandler()
         let network = BrowserExtensionNetwork()
-        network.add(webView: webView, browserExtension: mockBrowserExtension)
+        network.add(webView: webView, world: .page, browserExtension: mockBrowserExtension, trusted: true, setAccessLevelToken: "")
         let router = BrowserExtensionRouter(network: network, logger: mockLogger)
         let context = BrowserExtensionContext(
             logger: mockLogger,
@@ -377,11 +380,12 @@ class SendMessageHandlerTests: XCTestCase {
             webView: webView,
             browserExtension: mockBrowserExtension,
             tab: nil,
-            frameId: nil
+            frameId: nil,
+            contextType: .trusted
         )
         
         // Test three arguments: extensionId, message, and options
-        let request = SendMessageRequestImpl(
+        let request = RuntimeSendMessageRequestImpl(
             requestId: "test-4",
             args: [
                 AnyJSONCodable("other-extension-id"),
@@ -399,9 +403,9 @@ class SendMessageHandlerTests: XCTestCase {
     }
     
     func testSendMessageHandlerNoArguments() async throws {
-        let handler = SendMessageHandler()
+        let handler = RuntimeSendMessageHandler()
         let network = BrowserExtensionNetwork()
-        network.add(webView: webView, browserExtension: mockBrowserExtension)
+        network.add(webView: webView, world: .page, browserExtension: mockBrowserExtension, trusted: true, setAccessLevelToken: "")
         let router = BrowserExtensionRouter(network: network, logger: mockLogger)
         let context = BrowserExtensionContext(
             logger: mockLogger,
@@ -409,11 +413,12 @@ class SendMessageHandlerTests: XCTestCase {
             webView: webView,
             browserExtension: mockBrowserExtension,
             tab: nil,
-            frameId: nil
+            frameId: nil,
+            contextType: .trusted
         )
         
         // Test no arguments
-        let request = SendMessageRequestImpl(
+        let request = RuntimeSendMessageRequestImpl(
             requestId: "test-5",
             args: []
         )
@@ -431,9 +436,9 @@ class SendMessageHandlerTests: XCTestCase {
     }
     
     func testSendMessageHandlerInvalidMessageType() async throws {
-        let handler = SendMessageHandler()
+        let handler = RuntimeSendMessageHandler()
         let network = BrowserExtensionNetwork()
-        network.add(webView: webView, browserExtension: mockBrowserExtension)
+        network.add(webView: webView, world: .page, browserExtension: mockBrowserExtension, trusted: true, setAccessLevelToken: "")
         let router = BrowserExtensionRouter(network: network, logger: mockLogger)
         let context = BrowserExtensionContext(
             logger: mockLogger,
@@ -441,11 +446,12 @@ class SendMessageHandlerTests: XCTestCase {
             webView: webView,
             browserExtension: mockBrowserExtension,
             tab: nil,
-            frameId: nil
+            frameId: nil,
+            contextType: .trusted
         )
         
         // Test invalid message type (not an object)
-        let request = SendMessageRequestImpl(
+        let request = RuntimeSendMessageRequestImpl(
             requestId: "test-6",
             args: [AnyJSONCodable("not an object")]
         )

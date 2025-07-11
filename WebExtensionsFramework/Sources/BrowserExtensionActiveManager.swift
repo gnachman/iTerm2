@@ -6,6 +6,11 @@ import BrowserExtensionShared
 import Foundation
 import WebKit
 
+struct DebugHandler {
+    var scriptMessageHandler: WKScriptMessageHandler
+    var name: String
+}
+
 /// Weak reference wrapper for holding weak references in collections
 class WeakBox<T> {
     private weak var _value: AnyObject?
@@ -18,7 +23,7 @@ class WeakBox<T> {
 }
 
 /// Defines the role/type of a webview for script injection customization
-public enum WebViewRole {
+public enum WebViewRole: Equatable {
     case userFacing     // User-visible webview - gets content scripts + Chrome APIs
     case backgroundScript(UUID) // Background service worker - gets Chrome APIs + DOM nuke + console handler
 }
@@ -34,11 +39,16 @@ class WebViewState {
     
     /// Track whether we've already injected background script support for this webview
     var hasBackgroundScriptSupport: Bool = false
+    var setAccessLevelToken: String
 
-    init(webView: BrowserExtensionWKWebView, userContentManager: BrowserExtensionUserContentManager, role: WebViewRole) {
+    init(webView: BrowserExtensionWKWebView,
+         userContentManager: BrowserExtensionUserContentManager,
+         role: WebViewRole,
+         setAccessLevelToken: String) {
         self.webView = webView
         self.userContentManager = userContentManager
         self.role = role
+        self.setAccessLevelToken = setAccessLevelToken
     }
 }
 
@@ -106,40 +116,69 @@ public protocol BrowserExtensionActiveManagerProtocol: AnyObject {
 @MainActor
 public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtocol, BrowserExtensionRouterDataSource {
     
-    private var activeExtensions: [UUID: ActiveExtension] = [:]
-    private var webViewStates: [ObjectIdentifier: WebViewState] = [:]
-    private let injectionScriptGenerator: BrowserExtensionContentScriptInjectionGeneratorProtocol
-    private let userScriptFactory: BrowserExtensionUserScriptFactoryProtocol
-    private var backgroundService: BrowserExtensionBackgroundServiceProtocol
-    private let network: BrowserExtensionNetwork
-    private let router: BrowserExtensionRouter
-    private let logger: BrowserExtensionLogger
-    private let callbackHandler: BrowserExtensionSecureCallbackHandler
-
-    public init(
-        injectionScriptGenerator: BrowserExtensionContentScriptInjectionGeneratorProtocol,
-        userScriptFactory: BrowserExtensionUserScriptFactoryProtocol,
-        backgroundService: BrowserExtensionBackgroundServiceProtocol,
-        network: BrowserExtensionNetwork,
-        router: BrowserExtensionRouter,
-        logger: BrowserExtensionLogger
-    ) {
-        self.injectionScriptGenerator = injectionScriptGenerator
-        self.userScriptFactory = userScriptFactory
-        self.backgroundService = backgroundService
-        self.network = network
-        self.router = router
-        self.logger = logger
-        callbackHandler = BrowserExtensionSecureCallbackHandler(
-            logger: logger,
-            function: .invokeCallback)
-        // Set ourselves as the data source for the router
-        router.dataSource = self
+    public struct Dependencies {
+        public var injectionScriptGenerator: BrowserExtensionContentScriptInjectionGeneratorProtocol
+        public var userScriptFactory: BrowserExtensionUserScriptFactoryProtocol
+        public var backgroundService: BrowserExtensionBackgroundServiceProtocol
+        public var network: BrowserExtensionNetwork
+        public var router: BrowserExtensionRouter
+        public var logger: BrowserExtensionLogger
+        public var storageManager: BrowserExtensionStorageManager
         
-        // Set ourselves as the delegate for the background service to provide content worlds
-        self.backgroundService.activeManagerDelegate = self
+        public init(
+            injectionScriptGenerator: BrowserExtensionContentScriptInjectionGeneratorProtocol,
+            userScriptFactory: BrowserExtensionUserScriptFactoryProtocol,
+            backgroundService: BrowserExtensionBackgroundServiceProtocol,
+            network: BrowserExtensionNetwork,
+            router: BrowserExtensionRouter,
+            logger: BrowserExtensionLogger,
+            storageManager: BrowserExtensionStorageManager
+        ) {
+            self.injectionScriptGenerator = injectionScriptGenerator
+            self.userScriptFactory = userScriptFactory
+            self.backgroundService = backgroundService
+            self.network = network
+            self.router = router
+            self.logger = logger
+            self.storageManager = storageManager
+        }
     }
     
+    private var activeExtensions: [UUID: ActiveExtension] = [:]
+    private var webViewStates: [ObjectIdentifier: WebViewState] = [:]
+    private var dependencies: Dependencies
+    private let callbackHandler: BrowserExtensionSecureCallbackHandler
+    
+    // Convenience properties for accessing dependencies
+    private var injectionScriptGenerator: BrowserExtensionContentScriptInjectionGeneratorProtocol { dependencies.injectionScriptGenerator }
+    private var userScriptFactory: BrowserExtensionUserScriptFactoryProtocol { dependencies.userScriptFactory }
+    private var backgroundService: BrowserExtensionBackgroundServiceProtocol { dependencies.backgroundService }
+    private var network: BrowserExtensionNetwork { dependencies.network }
+    private var router: BrowserExtensionRouter { dependencies.router }
+    private var logger: BrowserExtensionLogger { dependencies.logger }
+    private var storageManager: BrowserExtensionStorageManager { dependencies.storageManager }
+
+    // If true, adds console.log to user-facing webviews.
+    public var debug = false
+    var debugScripts = [BrowserExtensionUserContentManager.UserScript]()
+    var debugHandlers = [DebugHandler]()
+
+    public init(dependencies: Dependencies) {
+        self.dependencies = dependencies
+        callbackHandler = BrowserExtensionSecureCallbackHandler(
+            logger: dependencies.logger,
+            function: .invokeCallback)
+        // Set ourselves as the data source for the router
+        self.dependencies.router.dataSource = self
+        
+        // Set ourselves as the delegate for the background service to provide content worlds
+        self.dependencies.backgroundService.activeManagerDelegate = self
+    }
+
+    static func worldName(for extensionId: UUID) -> String {
+        return "Extension-\(extensionId.uuidString)"
+    }
+
     /// Activate an extension with its runtime objects
     /// - Parameter browserExtension: The extension to activate
     public func activate(_ browserExtension: BrowserExtension) async {
@@ -153,7 +192,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
             logger.info("Activating extension with ID: \(extensionId)")
             
             // Create content world for this extension
-            let worldName = "Extension-\(extensionId.uuidString)"
+            let worldName = Self.worldName(for: extensionId)
             let contentWorld = WKContentWorld.world(name: worldName)
             logger.debug("Created content world: \(worldName)")
             
@@ -164,7 +203,21 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
             // Register all existing webviews with the network for this extension
             for state in webViewStates.values {
                 if let webView = state.webView {
-                    network.add(webView: webView, browserExtension: browserExtension)
+                    switch state.role {
+                    case .backgroundScript:
+                        network.add(webView: webView,
+                                    world: .page,
+                                    browserExtension: browserExtension,
+                                    trusted: true,
+                                    setAccessLevelToken: "no token - this is a trusted background script")
+                    case .userFacing:
+                        assert(!state.setAccessLevelToken.isEmpty)
+                        network.add(webView: webView,
+                                    world: activeExtension.contentWorld,
+                                    browserExtension: browserExtension,
+                                    trusted: false,
+                                    setAccessLevelToken: state.setAccessLevelToken)
+                    }
                 }
             }
             
@@ -181,6 +234,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
                         backgroundWebView,
                         userContentManager: contentManager,
                         role: .backgroundScript(browserExtension.id))
+                    try await backgroundService.run(extensionId: browserExtension.id)
                 }
             } catch {
                 logger.error("Failed to launch background service for \(browserExtension.baseURL.path): \(error)")
@@ -292,15 +346,36 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
             let id = ObjectIdentifier(webView)
             
             // Create or get webview state
-            if webViewStates[id] == nil {
-                webViewStates[id] = WebViewState(webView: webView,
-                                                 userContentManager: userContentManager,
-                                                 role: role)
+            let state: WebViewState
+            if let existing = webViewStates[id] {
+                state = existing
+            } else {
+                let token = makeSecureToken()
+                assert(!token.isEmpty)
+                state = WebViewState(webView: webView,
+                                     userContentManager: userContentManager,
+                                     role: role,
+                                     setAccessLevelToken: token)
+                webViewStates[id] = state
             }
 
             // Register webview with network for each active extension
-            for activeExtension in activeExtensions.values {
-                network.add(webView: webView, browserExtension: activeExtension.browserExtension)
+            switch role {
+            case .backgroundScript(let extensionId):
+                network.add(webView: webView,
+                            world: .page,
+                            browserExtension: activeExtension(for: extensionId)!.browserExtension,
+                            trusted: true,
+                            setAccessLevelToken: "no token - this is a secure background script")
+            case .userFacing:
+                for activeExtension in activeExtensions.values {
+                    assert(!state.setAccessLevelToken.isEmpty)
+                    network.add(webView: webView,
+                                world: activeExtension.contentWorld,
+                                browserExtension: activeExtension.browserExtension,
+                                trusted: false,
+                                setAccessLevelToken: state.setAccessLevelToken)
+                }
             }
 
             // Install current injection scripts
@@ -309,7 +384,18 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
             logger.debug("Successfully registered webview with \(activeExtensions.count) active extension(s)")
         }
     }
-    
+
+    func backgroundScriptWebView(in extensionId: UUID) -> BrowserExtensionWKWebView? {
+        let state = webViewStates.values.first { state in
+            switch state.role {
+            case .userFacing: false
+            case .backgroundScript(extensionId): true
+            case .backgroundScript: false
+            }
+        }
+        return state?.webView
+    }
+
     /// Unregister a webview from injection script updates
     /// - Parameter webView: The webview to unregister
     public func unregisterWebView(_ webView: BrowserExtensionWKWebView) {
@@ -417,6 +503,18 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
         }
     }
 
+    private func makeSecureToken() -> String {
+        var bytes = [UInt8](repeating: 0, count: 16)
+        let status = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        guard status == errSecSuccess else {
+            fatalError()
+        }
+        let hex = bytes
+            .map { String(format: "%02x", $0) }
+            .joined()
+        return hex
+    }
+
     private func reallyUpdateInjections(webView: BrowserExtensionWKWebView,
                                         userContentManager: BrowserExtensionUserContentManager) async {
         logger.debug("Updating injection scripts in webview \(webView) for \(activeExtensions.count) active extension(s)")
@@ -435,95 +533,144 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
             // For background scripts, inject DOM nuke and console handler only once
             if !webViewState.hasBackgroundScriptSupport {
                 // Get the content world for this background script extension
-                if let activeExtension = activeExtensions[extensionId] {
-                    injectBackgroundScriptSupport(webView,
-                                                  userContentManager: userContentManager,
-                                                  extensionId: extensionId,
-                                                  contentWorld: activeExtension.contentWorld)
-                    webViewState.hasBackgroundScriptSupport = true
-                } else {
-                    logger.error("Background script extension \(extensionId) not found in active extensions")
-                }
+                injectBackgroundScriptSupport(webView,
+                                              userContentManager: userContentManager,
+                                              extensionId: extensionId,
+                                              contentWorld: .page)
+                webViewState.hasBackgroundScriptSupport = true
+                let browserExtension = activeExtensions[extensionId]!.browserExtension
+                assert(!webViewState.setAccessLevelToken.isEmpty)
+                await injectChromeAPIs(browserExtension,
+                                       webView: webView,
+                                       contentManager: userContentManager,
+                                       contentWorld: .page,
+                                       isBackgroundScript: true,
+                                       setAccessLevelToken: webViewState.setAccessLevelToken)
+                logger.debug("Adding message handlers for webview \(webView) for background script")
+                addMessageHandlersToWebView(webView,
+                                            contentWorld: .page,
+                                            for: browserExtension)
+                webViewState.contentWorldsWithHandlers.insert("unnamed")
+                return
             }
         case .userFacing:
             // User-facing webviews don't need special setup
+            if debug {
+                for handler in debugHandlers {
+                    webView.be_configuration.be_userContentController.be_add(handler.scriptMessageHandler,
+                                                                             name: handler.name,
+                                                                             contentWorld: .page)
+                }
+                for script in debugScripts {
+                    var temp = script
+                    temp.worlds = [WKContentWorld.page]
+                    userContentManager.add(userScript: temp)
+                }
+            }
             break
         }
-        
-        // For each active extension, add message handlers and inject scripts
+
+        // For each active extension, add message handlers and inject scripts to the content script-specific world.
         for (extensionId, activeExtension) in activeExtensions {
             logger.debug("Installing scripts for extension: \(extensionId)")
             // Add message handlers for this extension's content world (if not already added for this webview)
+            #warning("TODO: unnamed is for both page and clientLocal worlds. We should split this up")
             let contentWorldName = activeExtension.contentWorld.name ?? "unnamed"
             if !webViewState.contentWorldsWithHandlers.contains(contentWorldName) {
+                logger.debug("Adding message handlers for webview \(webView) in world \(contentWorldName)")
                 addMessageHandlersToWebView(webView,
                                             contentWorld: activeExtension.contentWorld,
                                             for: activeExtension.browserExtension)
                 webViewState.contentWorldsWithHandlers.insert(contentWorldName)
+            } else {
+                logger.debug("Skipping message handler registration for webview \(webView) in world \(contentWorldName) - already registered")
             }
             
             // Inject chrome.runtime APIs JavaScript for this extension
-            let isBackgroundScript = switch webViewState.role {
-            case .backgroundScript: true
-            case .userFacing: false
-            }
+            assert(!webViewState.setAccessLevelToken.isEmpty)
             await injectChromeAPIs(activeExtension.browserExtension,
                                    webView: webView,
                                    contentManager: userContentManager,
                                    contentWorld: activeExtension.contentWorld,
-                                   isBackgroundScript: isBackgroundScript)
+                                   isBackgroundScript: false,
+                                   setAccessLevelToken: webViewState.setAccessLevelToken)
 
-            // Inject role-specific extension scripts
-            switch webViewState.role {
-            case .userFacing:
-                // For user-facing webviews, inject content scripts
-                let injectionScriptSource = injectionScriptGenerator.generateInjectionScript(for: activeExtension)
-                
-                userContentManager.add(userScript: .init(
-                    code: injectionScriptSource,
-                    injectionTime: .atDocumentStart,
-                    forMainFrameOnly: false,
-                    worlds: [activeExtension.contentWorld],
-                    identifier: UserScripts.injectionScript(activeExtension.browserExtension.id).identifier))
-
-            case .backgroundScript(let backgroundExtensionId):
-                // For background scripts, only execute if this extension owns this background webview
-                if extensionId == backgroundExtensionId {
-                    if let backgroundResource = activeExtension.browserExtension.backgroundScriptResource {
-                        logger.debug("Executing background script content for extension \(activeExtension.browserExtension.id)")
-                        do {
-                            // Execute console override script first to ensure console.log is intercepted
-                            let consoleOverrideScript = generateConsoleOverrideScript()
-                            try await webView.be_evaluateJavaScript(consoleOverrideScript, in: nil, in: activeExtension.contentWorld)
-                            logger.debug("Successfully executed console override script in extension content world")
-                            
-                            // Then execute the actual background script
-                            try await webView.be_evaluateJavaScript(backgroundResource.jsContent, in: nil, in: activeExtension.contentWorld)
-                            logger.debug("Successfully executed background script content")
-                        } catch {
-                            logger.error("Failed to execute background script content: \(error)")
-                        }
-                    } else {
-                        logger.debug("No background script resource found for extension \(activeExtension.browserExtension.id)")
-                    }
-                }
+            if debug {
+                addFullConsoleLogging(to: webView, in: activeExtension.contentWorld, userContentManager: userContentManager, label: "User-facing in content-script world")
+                await addDebugStuff(to: webView, in: activeExtension.contentWorld, userContentManager: userContentManager, label: "User-facing in content-script world", immediate: false)
             }
+
+            // For user-facing webviews, inject content scripts
+            let injectionScriptSource = injectionScriptGenerator.generateInjectionScript(for: activeExtension)
+
+            userContentManager.add(userScript: .init(
+                code: injectionScriptSource,
+                injectionTime: .atDocumentStart,
+                forMainFrameOnly: false,
+                worlds: [activeExtension.contentWorld],
+                identifier: UserScripts.injectionScript(activeExtension.browserExtension.id).identifier))
         }
-        
+
+        if debug {
+            #warning("TODO: I think I can remove this")
+            addFullConsoleLogging(to: webView,
+                                  in: .page,
+                                  userContentManager: userContentManager,
+                                  label: "User facing in page world")
+            await addDebugStuff(to: webView,
+                                in: .page,
+                                userContentManager: userContentManager,
+                                label: "User facing in page world", immediate: false)
+        }
+
         logger.debug("Finished updating injection scripts in webview")
     }
-    
+
+    // This would typically be support for assertions.
+    private func addDebugStuff(to webView: BrowserExtensionWKWebView, in world: WKContentWorld, userContentManager: BrowserExtensionUserContentManager, label: String, immediate: Bool) async {
+        for handler in debugHandlers {
+            webView.be_configuration.be_userContentController.be_add(handler.scriptMessageHandler,
+                                                                     name: handler.name,
+                                                                     contentWorld: world)
+        }
+        for script in debugScripts {
+            var temp = script
+            temp.code = temp.code.replacingOccurrences(of: "{{LABEL}}", with: label)
+            temp.worlds = [world]
+            // I think it might be too late to run a script at page start
+            if immediate {
+                _ = try! await webView.be_evaluateJavaScript(temp.code + ";true;", in: nil, in: world)
+            } else {
+                userContentManager.add(userScript: temp)
+            }
+        }
+    }
+
+    // In tests, we need to add console.log support to webviews we do not control.
+    private func addFullConsoleLogging(to webView: BrowserExtensionWKWebView, in world: WKContentWorld, userContentManager: BrowserExtensionUserContentManager, label: String) {
+        addConsoleLogHandler(to: webView, in: world)
+        let consoleOverrideScript = "gRandomNumber='\(label)';" + generateConsoleOverrideScript()
+        userContentManager.add(userScript: .init(code: consoleOverrideScript,
+                                                 injectionTime: .atDocumentStart,
+                                                 forMainFrameOnly: false,
+                                                 worlds: [world],
+                                                 identifier: "consoleLog"))
+    }
+
     /// Add message handlers to a specific content world for an extension
     private func addMessageHandlersToWebView(_ webView: BrowserExtensionWKWebView,
                                              contentWorld: WKContentWorld,
                                              for browserExtension: BrowserExtension) {
         logger.debug("Registering message handlers for content world: \(contentWorld.name ?? "unnamed")")
-        
+
         // Add message handler for chrome.runtime.* native calls to this content world
+        let dispatcher = BrowserExtensionDispatcher()
+        dispatcher.storageManager = storageManager
+
         webView.be_configuration.be_userContentController.be_add(
             BrowserExtensionAPIRequestMessageHandler(
                 callbackHandler: callbackHandler,
-                dispatcher: BrowserExtensionDispatcher(),
+                dispatcher: dispatcher,
                 logger: logger,
                 contextProvider: { [weak self, weak webView] in
                     guard let self, let webView else {
@@ -546,6 +693,21 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
             name: "listenerResponseBrowserExtension",
             contentWorld: contentWorld
         )
+        if debug {
+            addConsoleLogHandler(to: webView, in: contentWorld)
+        }
+    }
+
+    private func addConsoleLogHandler(to webView: BrowserExtensionWKWebView,
+                                      in contentWorld: WKContentWorld) {
+        let consoleHandler = BrowserExtensionConsoleLogHandler(
+            extensionId: UUID(),
+            logger: logger
+        )
+        webView.be_configuration.be_userContentController.be_add(
+            consoleHandler,
+            name: "consoleLog",
+            contentWorld: contentWorld)
     }
     
     /// This is called when JS makes an API call (e.g.,
@@ -555,13 +717,30 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
                          browserExtension: BrowserExtension,
                          tab: BrowserExtensionContext.MessageSender.Tab?,
                          frameId: Int?) -> BrowserExtensionContext {
+        // Determine context type based on webview role
+        let webViewId = ObjectIdentifier(webView)
+        let contextType: BrowserExtensionStorageContextType
+        
+        if let webViewState = webViewStates[webViewId] {
+            switch webViewState.role {
+            case .backgroundScript:
+                contextType = .trusted
+            case .userFacing:
+                contextType = .untrusted
+            }
+        } else {
+            // Default to untrusted if we can't determine the role
+            contextType = .untrusted
+        }
+        
         return BrowserExtensionContext(
             logger: logger,
             router: router,
             webView: webView,
             browserExtension: browserExtension,
             tab: tab,
-            frameId: frameId
+            frameId: frameId,
+            contextType: contextType
         )
     }
     
@@ -570,22 +749,27 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
                                   webView: BrowserExtensionWKWebView,
                                   contentManager: BrowserExtensionUserContentManager,
                                   contentWorld: WKContentWorld,
-                                  isBackgroundScript: Bool = false) async {
+                                  isBackgroundScript: Bool,
+                                  setAccessLevelToken: String) async {
         // Generate the JavaScript API code
-        let injectionScript = generatedAPIJavascript(.init(extensionId: browserExtension.id.uuidString))
+        let trusted = isBackgroundScript
+        let injectionScript = generatedAPIJavascript(.init(extensionId: browserExtension.id.uuidString,
+                                                           trusted: trusted,
+                                                           setAccessLevelToken: trusted ? "invalid - sessionalready trusted" : setAccessLevelToken))
 
         logger.debug("Injecting Chrome APIs for extension \(browserExtension.id) into webview \(webView) in content world: \(contentWorld.name ?? "unnamed")")
         
         if isBackgroundScript {
             // For background scripts, execute DOM nuke script first, then Chrome APIs
+            #warning("TODO: I think I can remove this")
             await executeDOMNukeInContentWorld(webView, contentWorld: contentWorld)
             
-            do {
-                try await webView.be_evaluateJavaScript(injectionScript, in: nil, in: contentWorld)
-                logger.debug("Successfully executed Chrome API script immediately for background script")
-            } catch {
-                logger.error("Failed to execute Chrome API script immediately: \(error)")
-            }
+            contentManager.add(userScript: .init(code: injectionScript,
+                                                 injectionTime: .atDocumentStart,
+                                                 forMainFrameOnly: false,
+                                                 worlds: [.page],
+                                                 identifier: UserScripts.chromeAPIs.identifier))
+            logger.debug("Added chrome APIs to content manager for background script")
         } else {
             // For user-facing webviews, add as user script
             contentManager.add(userScript: .init(
@@ -598,40 +782,6 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
         }
     }
     
-    // MARK: - Test Support Methods
-    
-    /// Inject chrome.runtime APIs for testing (bypasses normal activation flow)
-    /// - Parameters:
-    ///   - webView: The webview to inject APIs into
-    ///   - browserExtension: The extension to inject APIs for
-    ///   - contentWorld: The content world to inject into
-    internal func injectRuntimeAPIsForTesting(into webView: BrowserExtensionWKWebView,
-                                              contentManager: BrowserExtensionUserContentManager,
-                                              for browserExtension: BrowserExtension,
-                                              contentWorld: WKContentWorld) async {
-        logger.info("Injecting chrome.runtime APIs for testing")
-        addMessageHandlersToWebView(webView,
-                                    contentWorld: contentWorld,
-                                    for: browserExtension)
-
-        await injectChromeAPIs(browserExtension,
-                               webView: webView,
-                               contentManager: contentManager,
-                               contentWorld: contentWorld)
-    }
-    
-    /// Inject only the JavaScript part for testing (without registering handlers)
-    internal func injectJavaScriptOnlyForTesting(into webView: BrowserExtensionWKWebView,
-                                                 contentManager: BrowserExtensionUserContentManager,
-                                                 for browserExtension: BrowserExtension,
-                                                 contentWorld: WKContentWorld) async {
-        logger.info("Injecting chrome.runtime JavaScript for testing")
-        await injectChromeAPIs(browserExtension,
-                               webView: webView,
-                               contentManager: contentManager,
-                               contentWorld: contentWorld)
-    }
-
     // MARK: - BrowserExtensionRouterDataSource
     
     /// Get the content world for a given extension ID
@@ -659,44 +809,13 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
                                                userContentManager: BrowserExtensionUserContentManager,
                                                extensionId: UUID,
                                                contentWorld: WKContentWorld) {
-        // Add console.log message handler for this specific extension
-        let consoleHandler = BrowserExtensionConsoleLogHandler(
-            extensionId: extensionId,
-            logger: logger
-        )
-        
-        // Add console handler to both .page world and extension's content world
-        // .page world for compatibility with existing web content
-        webView.be_configuration.be_userContentController.be_add(
-            consoleHandler,
-            name: "consoleLog",
-            contentWorld: .page
-        )
-        
-        // Extension's content world for background scripts
-        webView.be_configuration.be_userContentController.be_add(
-            consoleHandler,
-            name: "consoleLog",
-            contentWorld: contentWorld
-        )
-
-        userContentManager.performAtomicUpdate {
-            // DOM Nuke
-            userContentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
-                code: generateDOMNukeScript(),
-                injectionTime: .atDocumentStart,
-                forMainFrameOnly: false,
-                worlds: [.defaultClient, contentWorld],
-                identifier: UserScriptIdentifier.domNuke.rawValue))
-
-            // console.log handler
-            userContentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
-                code: generateConsoleOverrideScript(),
-                injectionTime: .atDocumentStart,
-                forMainFrameOnly: false,
-                worlds: [.page, contentWorld],
-                identifier: UserScriptIdentifier.consoleLog.rawValue))
-        }
+        // DOM Nuke
+        userContentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
+            code: generateDOMNukeScript(),
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: false,
+            worlds: [.defaultClient, contentWorld],
+            identifier: UserScriptIdentifier.domNuke.rawValue))
     }
     
     /// Execute DOM nuke script directly in the extension's content world

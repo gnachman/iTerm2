@@ -14,7 +14,7 @@ We are building a Swift framework to enable a web browser I'm adding to iTerm2 t
 * Use BrowserExtensionLogger for logging, not print.
 * Avoid using variables named extension because it will cause compiler errors. Use browserExtension instead.
 * After completing a task, ensure tests pass.
-* Do not use Task.sleep in tests, even if it would be convenience. There is always a better way. You are FORBIDDEN from using Task.sleep unless you have express written permission.
+* Do not use Task.sleep in tests, even if it would be convenient. There is always a better way. You are FORBIDDEN from using Task.sleep unless you have express written permission.
 * Do not use default values in function parameters.
 * Assume macOS 14. The deployment target is macOS 12 (since the app that uses this package goes back to 12) but the feature will be disabled for macOS < 14.
 * Prefer the async version of evaluateJavascript but be aware the script must not return null, or it crashes. Just add `true` to the end to make it happy.

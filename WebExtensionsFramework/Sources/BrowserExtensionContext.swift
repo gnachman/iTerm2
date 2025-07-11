@@ -9,6 +9,7 @@ import Foundation
 import WebKit
 
 /// Each message sender has their own context.
+@MainActor
 class BrowserExtensionContext {
     struct MessageSender: Codable {
         // always present for extension→extension messages
@@ -57,19 +58,22 @@ class BrowserExtensionContext {
     var browserExtension: BrowserExtension
     var tab: MessageSender.Tab?
     var frameId: Int?
+    var contextType: BrowserExtensionStorageContextType
 
     init(logger: BrowserExtensionLogger,
          router: BrowserExtensionRouter,
          webView: BrowserExtensionWKWebView?,
          browserExtension: BrowserExtension,
          tab: MessageSender.Tab?,
-         frameId: Int?) {
+         frameId: Int?,
+         contextType: BrowserExtensionStorageContextType) {
         self.logger = logger
         self.router = router
         self.webView = webView
         self.browserExtension = browserExtension
         self.tab = tab
         self.frameId = frameId
+        self.contextType = contextType
     }
     
     // MARK: - Permission Checking

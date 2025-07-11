@@ -6,14 +6,8 @@
 //
 
 extension iTermDatabase {
-    @discardableResult
-    func executeUpdate(_ sql: String, withArguments args: [Any]) -> Bool {
-        return executeUpdate(sql, withNonOptionalArguments: args)
-    }
-
-    @discardableResult
-    func executeUpdate(_ sql: String, withArguments args: [Any?]) -> Bool {
-        return executeUpdate(sql, withNonOptionalArguments: args.map {
+    func executeUpdate(_ sql: String, withArguments args: [Any?]) throws {
+        try executeUpdate(sql, withNonOptionalArguments: args.map {
             if let value = $0 {
                 value
             } else {
@@ -23,13 +17,8 @@ extension iTermDatabase {
     }
 
     @discardableResult
-    func executeQuery(_ sql: String, withArguments args: [Any]) -> iTermDatabaseResultSet? {
-        return executeQuery(sql, withNonOptionalArguments: args)
-    }
-
-    @discardableResult
-    func executeQuery(_ sql: String, withArguments args: [Any?]) -> iTermDatabaseResultSet? {
-        return executeQuery(sql, withNonOptionalArguments: args.map {
+    func executeQuery(_ sql: String, withArguments args: [Any?]) throws -> iTermDatabaseResultSet? {
+        return try executeQuery(sql, withNonOptionalArguments: args.map {
             if let value = $0 {
                 value
             } else {

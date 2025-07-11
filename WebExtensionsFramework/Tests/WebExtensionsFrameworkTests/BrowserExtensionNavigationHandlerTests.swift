@@ -95,7 +95,8 @@ final class BrowserExtensionNavigationHandlerTests: XCTestCase {
 
 // MARK: - Mock Objects
 
-private class MockWebView: @preconcurrency BrowserExtensionWKWebView {
+private class MockWebView: BrowserExtensionWKWebView {
+    
     var be_url: URL? = URL(string: "https://example.com")
     var be_configuration: BrowserExtensionWKWebViewConfiguration = MockWebViewConfiguration()
     
@@ -110,6 +111,12 @@ private class MockWebView: @preconcurrency BrowserExtensionWKWebView {
     func be_evaluateJavaScript(_ javaScriptString: String, in frame: WKFrameInfo?, in contentWorld: WKContentWorld, completionHandler: @escaping @MainActor @Sendable (Result<Any, Error>) -> Void) {
         evaluatedScripts.append(javaScriptString)
         completionHandler(.success(NSNull()))
+    }
+
+    func be_callAsyncJavaScript(_ functionBody: String, arguments: [String : Any], in frame: WKFrameInfo?, in contentWorld: WKContentWorld) async throws -> Any? {
+        assert(arguments.isEmpty)
+        evaluatedScripts.append(functionBody)
+        return nil
     }
 }
 

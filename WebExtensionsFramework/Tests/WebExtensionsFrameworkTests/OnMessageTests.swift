@@ -21,7 +21,7 @@ class OnMessageTests: XCTestCase {
     override func setUp() async throws {
         try await super.setUp()
         
-        mockLogger = createTestLogger(verbose: true)
+        mockLogger = createTestLogger(verbose: false)
         
         // Create mock browser extension
         let manifest = ExtensionManifest(
@@ -76,8 +76,8 @@ class OnMessageTests: XCTestCase {
             };
             true;
         """
-        try await senderWebView.evaluateJavaScript(consoleScript)
-        try await receiverWebView.evaluateJavaScript(consoleScript)
+        _ = try await senderWebView.evaluateJavaScript(consoleScript)
+        _ = try await receiverWebView.evaluateJavaScript(consoleScript)
     }
     
     override func tearDown() async throws {

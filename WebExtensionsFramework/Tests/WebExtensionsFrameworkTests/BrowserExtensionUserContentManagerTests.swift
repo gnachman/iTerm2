@@ -311,6 +311,10 @@ class MockUserContentWebView: BrowserExtensionWKWebView {
     func be_evaluateJavaScript(_ javaScriptString: String, in frame: WKFrameInfo?, in contentWorld: WKContentWorld) async throws -> Any? {
         return nil
     }
+
+    func be_callAsyncJavaScript(_ functionBody: String, arguments: [String : Any], in frame: WKFrameInfo?, in contentWorld: WKContentWorld) async throws -> Any? {
+        return nil
+    }
 }
 
 @MainActor

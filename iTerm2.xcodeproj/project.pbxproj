@@ -3052,6 +3052,8 @@
 		A69D6AE527B649B5006E3991 /* RunLengthEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69D6AE427B649B5006E3991 /* RunLengthEncoder.swift */; };
 		A69D721B264716FC009D6EAC /* UnselectedTabShadow.png in Resources */ = {isa = PBXBuildFile; fileRef = A69D721A264716FC009D6EAC /* UnselectedTabShadow.png */; };
 		A69D721C264716FC009D6EAC /* UnselectedTabShadow.png in Resources */ = {isa = PBXBuildFile; fileRef = A69D721A264716FC009D6EAC /* UnselectedTabShadow.png */; };
+		A69F59382E21C2C500B96E1B /* BrowserKeyValueStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69F59372E21C2C200B96E1B /* BrowserKeyValueStore.swift */; };
+		A69F593E2E21CBF900B96E1B /* BrowserStorageProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69F593A2E21CB9B00B96E1B /* BrowserStorageProvider.swift */; };
 		A69FEECD2E123B8700AFF7A8 /* iTermSwiftPackages.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A69FEEBA2E123B8700AFF7A8 /* iTermSwiftPackages.framework */; };
 		A69FEECE2E123B8700AFF7A8 /* iTermSwiftPackages.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A69FEEBA2E123B8700AFF7A8 /* iTermSwiftPackages.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A69FEEDB2E12400900AFF7A8 /* NIOCore in Frameworks */ = {isa = PBXBuildFile; productRef = A69FEEDA2E12400900AFF7A8 /* NIOCore */; };
@@ -7760,6 +7762,8 @@
 		A69D559A232A0CF3002E0F99 /* iTermSessionLauncher.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSessionLauncher.m; sourceTree = "<group>"; };
 		A69D6AE427B649B5006E3991 /* RunLengthEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunLengthEncoder.swift; sourceTree = "<group>"; };
 		A69D721A264716FC009D6EAC /* UnselectedTabShadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = UnselectedTabShadow.png; sourceTree = "<group>"; };
+		A69F59372E21C2C200B96E1B /* BrowserKeyValueStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserKeyValueStore.swift; sourceTree = "<group>"; };
+		A69F593A2E21CB9B00B96E1B /* BrowserStorageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserStorageProvider.swift; sourceTree = "<group>"; };
 		A69FEEBA2E123B8700AFF7A8 /* iTermSwiftPackages.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = iTermSwiftPackages.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		A69FF3882E12FC3500AFF7A8 /* iTermBrowserContextMenuHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserContextMenuHelper.swift; sourceTree = "<group>"; };
 		A69FF38A2E13012900AFF7A8 /* iTermContextMenuUtilities.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermContextMenuUtilities.h; sourceTree = "<group>"; };
@@ -12631,6 +12635,14 @@
 			name = "Powerline Extended Symbols";
 			sourceTree = "<group>";
 		};
+		A69F59392E21CB9100B96E1B /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				A69F593A2E21CB9B00B96E1B /* BrowserStorageProvider.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
 		A6A2698B18FF850E00437DA9 /* Misc View Controllers */ = {
 			isa = PBXGroup;
 			children = (
@@ -13118,14 +13130,15 @@
 		A6CBB8142E0A16CB00B2CCCB /* Database */ = {
 			isa = PBXGroup;
 			children = (
-				A6FE7A762E0DF1D900BEBCE4 /* iTermBrowserBookmarkFinder.swift */,
-				A6AF79C92E06593C008D77BA /* BrowserBookmarkTags.swift */,
 				A6AF79C52E06586A008D77BA /* BrowserBookmarks.swift */,
+				A6AF79C92E06593C008D77BA /* BrowserBookmarkTags.swift */,
 				A6F7D4F32E0537710065D09C /* BrowserDatabase.swift */,
 				A6F7D4F12E0536530065D09C /* BrowserHistory.swift */,
+				A69F59372E21C2C200B96E1B /* BrowserKeyValueStore.swift */,
 				A69FF3C22E13A54100AFF7A8 /* BrowserNamedMarks.swift */,
 				A6D16EB82E087A4F0099139D /* BrowserPermissions.swift */,
 				A6F7D4F42E0537710065D09C /* BrowserVisits.swift */,
+				A6FE7A762E0DF1D900BEBCE4 /* iTermBrowserBookmarkFinder.swift */,
 			);
 			path = Database;
 			sourceTree = "<group>";
@@ -13615,6 +13628,7 @@
 				A6CBB8202E0A1CE000B2CCCB /* Core */,
 				A6CBB8142E0A16CB00B2CCCB /* Database */,
 				A6CBB81E2E0A1CB000B2CCCB /* Demos */,
+				A69F59392E21CB9100B96E1B /* Extensions */,
 				A6CBB81F2E0A1CC200B2CCCB /* Favicon */,
 				A6CBB8172E0A1BBE00B2CCCB /* History */,
 				A6CBB8162E0A1B7400B2CCCB /* Local Pages */,
@@ -18335,6 +18349,7 @@
 				A6FF3F332435C8E5003CCB03 /* iTermSplitViewAnimation.m in Sources */,
 				A6D1784021BC599900FE499C /* iTermSavePanel.m in Sources */,
 				A65618682D670D300059CD35 /* ChatInputTextFieldContainer.swift in Sources */,
+				A69F593E2E21CBF900B96E1B /* BrowserStorageProvider.swift in Sources */,
 				A6A4867820B67C9500493302 /* ProfilesColorsPreferencesViewController.m in Sources */,
 				A682273C2801F355005DF0B4 /* SavePanelBuiltInFunction.swift in Sources */,
 				A60E045D26DED32A00DD162B /* StatusBarFilterComponent.swift in Sources */,
@@ -18370,6 +18385,7 @@
 				A6B836132D38802400B5993C /* NonDefaultIndicator.swift in Sources */,
 				A662B2472D937C6D00C3D79A /* NSTableView+iTerm.swift in Sources */,
 				A6A4B2A32418977300184EAC /* iTermDynamicProfileManager.m in Sources */,
+				A69F59382E21C2C500B96E1B /* BrowserKeyValueStore.swift in Sources */,
 				A667C26227799447006B4DEF /* PTYNoteViewController.m in Sources */,
 				A619DC442CD595FD004B8996 /* iTermBijection.m in Sources */,
 				A63011AA20E7EDFC008114B7 /* iTermStatusBarKnobCheckboxViewController.m in Sources */,

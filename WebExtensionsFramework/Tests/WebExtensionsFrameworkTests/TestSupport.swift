@@ -27,7 +27,9 @@ public class MockBackgroundService: BrowserExtensionBackgroundServiceProtocol {
         activeBackgroundScriptExtensionIds.insert(browserExtension.id)
         return nil
     }
-    
+
+    public func run(extensionId: UUID) async throws {
+    }
     public func stopBackgroundScript(for extensionId: UUID) {
         activeBackgroundScriptExtensionIds.remove(extensionId)
     }
@@ -42,6 +44,12 @@ public class MockBackgroundService: BrowserExtensionBackgroundServiceProtocol {
     
     public func evaluateJavaScript(_ javascript: String, in extensionId: UUID) async throws -> Any? {
         return nil
+    }
+}
+
+public class MockStorageManager: BrowserExtensionStorageManager {
+    public convenience init() {
+        self.init(logger: createTestLogger())
     }
 }
 
@@ -118,19 +126,35 @@ public func createTestBrowserExtension(name: String = "Test Extension", logger: 
     return BrowserExtension(manifest: manifest, baseURL: extensionURL, logger: logger ?? createTestLogger())
 }
 
+// MARK: - Dependencies Extension
+
+extension BrowserExtensionActiveManager.Dependencies {
+    @MainActor
+    public static var defaultInstance: Self {
+        let testLogger = createTestLogger()
+        let network = BrowserExtensionNetwork()
+        let router = BrowserExtensionRouter(network: network, logger: testLogger)
+        return Self(
+            injectionScriptGenerator: BrowserExtensionContentScriptInjectionGenerator(logger: testLogger),
+            userScriptFactory: BrowserExtensionUserScriptFactory(),
+            backgroundService: MockBackgroundService(),
+            network: network,
+            router: router,
+            logger: testLogger,
+            storageManager: MockStorageManager()
+        )
+    }
+}
+
 @MainActor
 public func createTestActiveManager(logger: BrowserExtensionLogger? = nil) -> BrowserExtensionActiveManager {
-    let testLogger = logger ?? createTestLogger()
-    let network = BrowserExtensionNetwork()
-    let router = BrowserExtensionRouter(network: network, logger: testLogger)
-    return BrowserExtensionActiveManager(
-        injectionScriptGenerator: BrowserExtensionContentScriptInjectionGenerator(logger: testLogger),
-        userScriptFactory: BrowserExtensionUserScriptFactory(),
-        backgroundService: MockBackgroundService(),
-        network: network,
-        router: router,
-        logger: testLogger
-    )
+    if let logger = logger {
+        var deps = BrowserExtensionActiveManager.Dependencies.defaultInstance
+        deps.logger = logger
+        return BrowserExtensionActiveManager(dependencies: deps)
+    } else {
+        return BrowserExtensionActiveManager(dependencies: .defaultInstance)
+    }
 }
 
 @MainActor

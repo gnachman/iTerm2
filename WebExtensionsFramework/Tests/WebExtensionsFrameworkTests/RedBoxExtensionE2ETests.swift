@@ -19,7 +19,7 @@ final class RedBoxExtensionE2ETests: XCTestCase {
         
         // Set up extension framework components
         registry = createTestRegistry()
-        activeManager = BrowserExtensionActiveManager()
+        activeManager = createTestActiveManager()
         
         // Register the webview with the active manager
         try await activeManager.registerWebView(

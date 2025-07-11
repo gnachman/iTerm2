@@ -89,3 +89,7 @@ public struct PlatformInfo: Codable, BrowserExtensionJSONRepresentable {
         self.nacl_arch = nacl_arch
     }
 }
+
+public struct NoObjectPlaceholder: Equatable {
+    public static let instance = NoObjectPlaceholder()
+}

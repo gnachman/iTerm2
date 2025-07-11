@@ -7,8 +7,6 @@
     const extensionScripts = {{SCRIPTS_JSON}};
     const extensionId = '{{EXTENSION_ID}}';
 
-    console.log('Extension', extensionId, 'injection script loaded with', extensionScripts.length, 'content scripts');
-
     // URL pattern matching functions
     function matchesPattern(url, pattern) {
         if (pattern === '<all_urls>') {
@@ -42,12 +40,9 @@
 
     function executeScriptsAtTiming(timing) {
         const currentURL = window.location.href;
-        console.log('Extension', extensionId, 'checking scripts for timing:', timing, 'URL:', currentURL);
 
         extensionScripts.forEach(script => {
             if (shouldExecuteScript(script, currentURL, timing)) {
-                console.log('Extension', extensionId, 'executing script at', timing);
-
                 script.scripts.forEach((scriptCode, index) => {
                     try {
                         // Execute the script in a function to provide some isolation

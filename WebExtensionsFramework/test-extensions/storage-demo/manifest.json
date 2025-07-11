@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Storage Demo",
+  "version": "1.0",
+  "description": "Demonstrates chrome.storage API functionality between background and content scripts",
+  
+  "permissions": [
+    "storage"
+  ],
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": ["content.js"],
+    "run_at": "document_end"
+  }]
+}

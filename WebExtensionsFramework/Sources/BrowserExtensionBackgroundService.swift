@@ -2,6 +2,7 @@
 // Background script service for running extension background scripts in hidden WKWebViews
 
 import Foundation
+import BrowserExtensionShared
 import WebKit
 
 /// Protocol for managing background script execution in extensions
@@ -12,7 +13,13 @@ public protocol BrowserExtensionBackgroundServiceProtocol {
     /// - Returns: Tuple of (webview, contentManager) or nil if no background script exists
     /// - Throws: Error if background script cannot be started
     func startBackgroundScript(for browserExtension: BrowserExtension) async throws -> (BrowserExtensionWKWebView, BrowserExtensionUserContentManager)?
-    
+
+    /// Load the document for this extension, causing user scripts to run.
+    /// Only call this once.
+    /// - Parameter extensionId: The extension id to start.
+    /// - Throws: Error if the extension ID is unknown or something goes wrong in loading the page.
+    func run(extensionId: UUID) async throws
+
     /// Stop background script for the given extension ID
     /// - Parameter extensionId: The extension ID to stop background script for
     func stopBackgroundScript(for extensionId: UUID)
@@ -50,6 +57,7 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         let uiDelegate: BackgroundScriptUIDelegate
         let consoleMessageHandler: ConsoleMessageHandler
         let timer: Timer
+        var launched = false
 
         init(id: UUID,
              webView: WKWebView,
@@ -93,7 +101,10 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
     
     /// Delegate to access active extension content worlds
     public weak var activeManagerDelegate: BrowserExtensionActiveManagerProtocol?
-    
+
+    var debugScripts = [BrowserExtensionUserContentManager.UserScript]()
+    var debugHandlers = [DebugHandler]()
+
     /// Initialize background service
     /// - Parameters:
     ///   - hiddenContainer: Hidden container view for WKWebViews
@@ -143,19 +154,27 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
             userContentController: webView.be_configuration.be_userContentController,
             userScriptFactory: BrowserExtensionUserScriptFactory()
         )
-        
-        // Console handler will be added by BrowserExtensionActiveManager when registering the webview
+        contentManager.add(userScript: .init(
+            code: BrowserExtensionTemplateLoader.loadTemplate(named: "console-override", type: "js"),
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: false,
+            worlds: [.page],
+            identifier: "consoleLog"))
+
+        // Create and register console handler
         let consoleHandler = ConsoleMessageHandler(logger: logger, extensionId: extensionId)
+        webView.be_configuration.be_userContentController.be_add(
+            consoleHandler,
+            name: "consoleLog",
+            contentWorld: .page)
         
         // Inject extension background script in .page world (where webkit.messageHandlers is available)
-        if let backgroundResource = browserExtension.backgroundScriptResource {
-            contentManager.add(userScript: .init(
-                code: backgroundResource.jsContent,
-                injectionTime: .atDocumentEnd,
-                forMainFrameOnly: false,
-                worlds: [.page],
-                identifier: "backgroundServiceContent"))
-        }
+        contentManager.add(userScript: .init(
+            code: backgroundResource.jsContent,
+            injectionTime: .atDocumentEnd,
+            forMainFrameOnly: false,
+            worlds: [.page],
+            identifier: "backgroundServiceContent"))
 
         // Register the background script with the URL scheme handler
         urlSchemeHandler.registerBackgroundScript(backgroundResource, for: extensionId)
@@ -173,7 +192,21 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
             logger: logger,
             extensionId: extensionId
         )
-        
+
+        for handler in debugHandlers {
+            webView.be_configuration.be_userContentController.be_add(handler.scriptMessageHandler,
+                                                                     name: handler.name,
+                                                                     contentWorld: .page)
+            logger.debug("Add debug handler \(handler.scriptMessageHandler)")
+        }
+        for script in debugScripts {
+            var temp = script
+            temp.code = temp.code.replacingOccurrences(of: "{{LABEL}}", with: "background service")
+            temp.worlds = [WKContentWorld.page]
+            contentManager.add(userScript: temp)
+            logger.debug("Add debug user script:\n\(temp.code)")
+        }
+
         // Store strong references to delegates
         jobs[extensionId] = .init(id: extensionId,
                                   webView: webView,
@@ -187,19 +220,33 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         webView.navigationDelegate = navigationDelegate
         webView.uiDelegate = uiDelegate
 
+        logger.info("Background script loaded for: \(extensionId)")
+        return (webView, contentManager)
+    }
+
+    public func run(extensionId: UUID) async throws {
+        guard let job = jobs[extensionId] else {
+            throw BrowserExtensionError.internalError("Invalid extension id \(extensionId.uuidString)")
+        }
+        if job.launched {
+            return
+        }
+        job.launched = true
         do {
+            let backgroundURL = BrowserExtensionURLSchemeHandler.backgroundPageURL(for: extensionId)
+            let webView = job.webView
             // Load the background page
             let request = URLRequest(url: backgroundURL)
             _ = webView.load(request)
 
             // Wait for navigation to complete with cancellation support
             try await withTaskCancellationHandler {
-                try await navigationDelegate.waitForLoad()
+                try await job.navigationDelegate.waitForLoad()
             } onCancel: {
                 // Cancel the navigation if the Task is cancelled
                 Task { @MainActor in
                     webView.stopLoading()
-                    navigationDelegate.cancelWaitForLoad()
+                    job.navigationDelegate.cancelWaitForLoad()
                 }
             }
         } catch {
@@ -207,11 +254,8 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
             stopBackgroundScript(for: extensionId)
             throw error
         }
-        
-        logger.info("Background script loaded for: \(extensionId)")
-        return (webView, contentManager)
     }
-    
+
     public func stopBackgroundScript(for extensionId: UUID) {
         guard let job = jobs[extensionId] else {
             logger.debug("No background script running for extension: \(extensionId)")
@@ -228,7 +272,7 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
         webView.uiDelegate = nil
         
         // Remove console message handler
-        webView.configuration.userContentController.removeScriptMessageHandler(forName: "consoleLog")
+        webView.be_configuration.be_userContentController.be_removeScriptMessageHandler(forName: "consoleLog", contentWorld: .page)
 
         // Remove from container
         webView.removeFromSuperview()
@@ -268,14 +312,14 @@ public class BrowserExtensionBackgroundService: BrowserExtensionBackgroundServic
             ])
         }
         
-        // Get the extension's content world from the active manager
+        // Verify the extension is active
         guard let activeManager = activeManagerDelegate,
-              let activeExtension = activeManager.activeExtension(for: extensionId) else {
+              activeManager.activeExtension(for: extensionId) != nil else {
             throw BrowserExtensionError.internalError("Extension not active or no active manager: \(extensionId)")
         }
         
-        // Evaluate in the extension's content world where Chrome APIs are injected
-        return try await webView.be_evaluateJavaScript(javascript, in: nil, in: activeExtension.contentWorld)
+        // Evaluate in the .page world where background scripts are injected
+        return try await webView.be_evaluateJavaScript(javascript, in: nil, in: .page)
     }
 }
 

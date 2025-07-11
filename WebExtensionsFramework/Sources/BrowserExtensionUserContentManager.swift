@@ -9,7 +9,10 @@
 import WebKit
 
 @MainActor
-public class BrowserExtensionUserContentManager {
+public class BrowserExtensionUserContentManager: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        "BrowserExtensionUserContentManager\nJournal:\(journal)\nAlready installed:\(installedUserScripts)"
+    }
     public weak var userContentController: BrowserExtensionWKUserContentController? {
         didSet {
             update()
@@ -145,7 +148,6 @@ public class BrowserExtensionUserContentManager {
             if worldsToExclude.contains(world) || added.contains(world) {
                 continue
             }
-            print("Install in world \(world) - \(name(of: world)) \(userScript.identifier)")
             userContentController.be_addUserScript(
                 userScriptFactory.createUserScript(
                     source: userScript.code,

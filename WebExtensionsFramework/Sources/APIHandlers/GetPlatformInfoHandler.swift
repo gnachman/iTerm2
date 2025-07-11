@@ -1,13 +1,15 @@
 import Foundation
 import BrowserExtensionShared
 
-class GetPlatformInfoHandler: GetPlatformInfoHandlerProtocol {
+class RuntimeGetPlatformInfoHandler: RuntimeGetPlatformInfoHandlerProtocol {
     
     /// getPlatformInfo requires no permissions
     var requiredPermissions: [BrowserExtensionAPIPermission] { [] }
     
-    func handle(request: GetPlatformInfoRequest,
-                context: BrowserExtensionContext) async throws -> PlatformInfo {
+    @MainActor
+    func handle(request: RuntimeGetPlatformInfoRequest,
+                context: BrowserExtensionContext,
+                namespace: String?) async throws -> PlatformInfo {
         let arch: String
         #if arch(x86_64)
         arch = "x86-64"

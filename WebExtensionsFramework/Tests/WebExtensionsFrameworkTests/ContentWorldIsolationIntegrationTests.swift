@@ -20,7 +20,7 @@ final class ContentWorldIsolationIntegrationTests: XCTestCase {
         // Set up extension framework components
         let logger = createTestLogger()
         registry = createTestRegistry(logger: logger)
-        activeManager = BrowserExtensionActiveManager() // Use convenience init with real implementations
+        activeManager = createTestActiveManager(logger: logger)
         
         // Register the webview with the active manager
         try await activeManager.registerWebView(
@@ -42,6 +42,18 @@ final class ContentWorldIsolationIntegrationTests: XCTestCase {
         activeManager = nil
         navigationHandler = nil
         try await super.tearDown()
+    }
+    
+    /// Helper function to wait for a condition to be true with polling
+    private func waitForCondition(timeout: TimeInterval, condition: @escaping () async -> Bool) async {
+        let startTime = Date()
+        while Date().timeIntervalSince(startTime) < timeout {
+            if await condition() {
+                return
+            }
+            // Small delay between polls to avoid overwhelming the system
+            try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
+        }
     }
     
     /// Integration test: Verify that multiple extensions run in isolated content worlds
@@ -120,8 +132,22 @@ final class ContentWorldIsolationIntegrationTests: XCTestCase {
         webView.loadHTMLString(htmlContent, baseURL: URL(string: "https://isolation-test.com"))
         await fulfillment(of: [expectation], timeout: 5.0)
         
-        // 7. Give content scripts time to execute
-        try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+        // 7. Wait for content scripts to execute and modify DOM
+        await waitForCondition(timeout: 5.0) {
+            let domCheckScript = """
+            ({
+                redBoxExists: document.querySelector('div[style*="background: red"]') !== null,
+                blueCircleExists: document.querySelector('#blue-circle-extension') !== null
+            })
+            """
+            
+            do {
+                let result = try await self.webView.evaluateJavaScript(domCheckScript) as! [String: Any]
+                return (result["redBoxExists"] as! Bool) && (result["blueCircleExists"] as! Bool)
+            } catch {
+                return false
+            }
+        }
         
         // 8. Verify both extensions modified the DOM in the main world
         let domCheckScript = """
@@ -243,7 +269,21 @@ final class ContentWorldIsolationIntegrationTests: XCTestCase {
         
         webView.loadHTMLString(htmlContent, baseURL: URL(string: "https://deactivation-test.com"))
         await fulfillment(of: [expectation], timeout: 5.0)
-        try await Task.sleep(nanoseconds: 500_000_000)
+        
+        // Wait for both extensions to inject their content
+        await waitForCondition(timeout: 3.0) {
+            do {
+                let initialCheck = try await self.webView.evaluateJavaScript("""
+                ({
+                    redBox: document.querySelector('div[style*="background: red"]') !== null,
+                    blueCircle: document.querySelector('#blue-circle-extension') !== null
+                })
+                """) as! [String: Any]
+                return (initialCheck["redBox"] as! Bool) && (initialCheck["blueCircle"] as! Bool)
+            } catch {
+                return false
+            }
+        }
         
         // Verify both are active initially
         let initialCheck = try await webView.evaluateJavaScript("""
@@ -271,7 +311,22 @@ final class ContentWorldIsolationIntegrationTests: XCTestCase {
         
         webView.loadHTMLString(htmlContent, baseURL: URL(string: "https://deactivation-test.com"))
         await fulfillment(of: [reloadExpectation], timeout: 5.0)
-        try await Task.sleep(nanoseconds: 500_000_000)
+        
+        // Wait for blue circle extension to inject (red box should no longer appear)
+        await waitForCondition(timeout: 3.0) {
+            do {
+                let afterDeactivationCheck = try await self.webView.evaluateJavaScript("""
+                ({
+                    redBox: document.querySelector('div[style*="background: red"]') !== null,
+                    blueCircle: document.querySelector('#blue-circle-extension') !== null
+                })
+                """) as! [String: Any]
+                // We want red box to be absent and blue circle to be present
+                return !(afterDeactivationCheck["redBox"] as! Bool) && (afterDeactivationCheck["blueCircle"] as! Bool)
+            } catch {
+                return false
+            }
+        }
         
         // Verify only blue circle extension is still active
         let afterDeactivationCheck = try await webView.evaluateJavaScript("""

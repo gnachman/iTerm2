@@ -50,21 +50,24 @@ class BrowserExtensionSecureCallbackHandler {
                                 error: Error?,
                                 in webView: WKWebView?,
                                 contentWorld: WKContentWorld) {
-        logger.info("Invoking secure callback for request: \(requestId)\(error != nil ? " with error" : "")")
         logger.debug("SecureCallbackHandler received result: \(result ?? "nil") type: \(type(of: result)) error: \(error?.localizedDescription ?? "nil")")
         
         // The result should already be a serialized BrowserExtensionEncodedValue from the dispatcher
         let resultString: String
         if let result {
-            // The dispatcher returns a [String: Any] that represents the encoded value
-            logger.debug("SecureCallbackHandler encoding result: \(result)")
-            do {
-                let jsonData = try JSONSerialization.data(withJSONObject: result, options: [])
-                resultString = String(data: jsonData, encoding: .utf8) ?? "undefined"
-                logger.debug("SecureCallbackHandler JSON string: \(resultString)")
-            } catch {
-                logger.error("Failed to serialize encoded result for request \(requestId): \(error)")
-                return
+            if result as? [String: NoObjectPlaceholder] == ["": NoObjectPlaceholder.instance] {
+                resultString = ""
+            } else {
+                // The dispatcher returns a [String: Any] that represents the encoded value
+                logger.debug("SecureCallbackHandler encoding result: \(result)")
+                do {
+                    let jsonData = try JSONSerialization.data(withJSONObject: result, options: [])
+                    resultString = String(data: jsonData, encoding: .utf8) ?? "undefined"
+                    logger.debug("SecureCallbackHandler JSON string: \(resultString)")
+                } catch {
+                    logger.error("Failed to serialize encoded result for request \(requestId): \(error)")
+                    return
+                }
             }
         } else {
             // No result provided (nil) - send undefined

@@ -30,6 +30,10 @@ actor BrowserDatabase {
         return instance
     }
 
+    static func makeEphemeralInstance() async -> BrowserDatabase {
+        return await BrowserDatabase(url: URL(string: "file::memory:?mode=memory&cache=shared")!, userID: nil)!
+    }
+
     static func url(for user: iTermBrowserUser) -> URL? {
         switch user {
         case .devNull:
@@ -83,7 +87,7 @@ actor BrowserDatabase {
     }
 
     private let _db: iTermDatabase
-    
+
     // Helper methods to run database operations on the same thread
     private func withDatabase<T>(_ operation: @escaping (iTermDatabase) throws -> T) async throws -> T {
         return try await withCheckedThrowingContinuation { continuation in
@@ -97,7 +101,7 @@ actor BrowserDatabase {
             }
         }
     }
-    
+
     private func withDatabase<T>(_ operation: @escaping (iTermDatabase) -> T) async -> T {
         return await withCheckedContinuation { continuation in
             databaseQueue.async {
@@ -106,7 +110,7 @@ actor BrowserDatabase {
             }
         }
     }
-    
+
     private init?(url: URL, userID: String?) async {
         self.userID = userID
         let lockName = userID.map { "browserdb-lock-\($0)" }
@@ -127,7 +131,7 @@ actor BrowserDatabase {
             }
             return true
         }
-        
+
         if !initResult {
             return nil
         }
@@ -168,108 +172,135 @@ actor BrowserDatabase {
         return results
     }
 
+    private func executeUpdate(db: iTermDatabase, sql: String, withArguments args: [Any?]) -> Bool {
+        do {
+            try db.executeUpdate(sql, withArguments: args)
+            return true
+        } catch {
+            DLog("\(sql): \(error)")
+            return false
+        }
+    }
+
+    @discardableResult
+    private func executeQuery(db: iTermDatabase, sql: String, withArguments args: [Any?]) -> iTermDatabaseResultSet? {
+        do {
+            return try db.executeQuery(sql, withArguments: args)
+        } catch {
+            DLog("\(sql): \(error)")
+            return nil
+        }
+    }
+
     private func createTables(db: iTermDatabase) -> Bool {
         // Create BrowserHistory table
-        if !db.executeUpdate(BrowserHistory.schema(), withArguments: []) {
+        if !executeUpdate(db: db, sql: BrowserHistory.schema(), withArguments: []) {
             return false
         }
-        
+
         let historyMigrations = BrowserHistory.migrations(existingColumns:
-            listColumns(
-                resultSet: db.executeQuery(
-                    BrowserHistory.tableInfoQuery(),
-                    withArguments: [])))
+            listColumns(resultSet: executeQuery(db: db,
+                                                sql: BrowserHistory.tableInfoQuery(),
+                                                withArguments: [])))
         for migration in historyMigrations {
-            if !db.executeUpdate(migration.query, withArguments: migration.args) {
+            if !executeUpdate(db: db, sql: migration.query, withArguments: migration.args) {
                 return false
             }
         }
-        
+
         // Create BrowserVisits table
-        if !db.executeUpdate(BrowserVisits.schema(), withArguments: []) {
+        if !executeUpdate(db: db, sql: BrowserVisits.schema(), withArguments: []) {
             return false
         }
-        
-        let visitsMigrations = BrowserVisits.migrations(existingColumns:
-            listColumns(
-                resultSet: db.executeQuery(
-                    BrowserVisits.tableInfoQuery(),
-                    withArguments: [])))
+
+        let visitsMigrations = BrowserVisits.migrations(existingColumns:listColumns(resultSet: executeQuery(
+            db: db,
+            sql: BrowserVisits.tableInfoQuery(),
+            withArguments: [])))
         for migration in visitsMigrations {
-            if !db.executeUpdate(migration.query, withArguments: migration.args) {
+            if !executeUpdate(db: db, sql: migration.query, withArguments: migration.args) {
                 return false
             }
         }
-        
+
         // Create BrowserBookmarks table
-        if !db.executeUpdate(BrowserBookmarks.schema(), withArguments: []) {
+        if !executeUpdate(db: db, sql: BrowserBookmarks.schema(), withArguments: []) {
             return false
         }
-        
-        let bookmarksMigrations = BrowserBookmarks.migrations(existingColumns:
-            listColumns(
-                resultSet: db.executeQuery(
-                    BrowserBookmarks.tableInfoQuery(),
-                    withArguments: [])))
+
+        let bookmarksMigrations = BrowserBookmarks.migrations(existingColumns: listColumns(
+            resultSet: executeQuery(db: db,
+                                    sql: BrowserBookmarks.tableInfoQuery(),
+                                    withArguments: [])))
         for migration in bookmarksMigrations {
-            if !db.executeUpdate(migration.query, withArguments: migration.args) {
+            if !executeUpdate(db: db, sql: migration.query, withArguments: migration.args) {
                 return false
             }
         }
-        
+
         // Create BrowserBookmarkTags table
-        if !db.executeUpdate(BrowserBookmarkTags.schema(), withArguments: []) {
+        if !executeUpdate(db: db, sql: BrowserBookmarkTags.schema(), withArguments: []) {
             return false
         }
-        
-        let tagsMigrations = BrowserBookmarkTags.migrations(existingColumns:
-            listColumns(
-                resultSet: db.executeQuery(
-                    BrowserBookmarkTags.tableInfoQuery(),
-                    withArguments: [])))
+
+        let tagsMigrations = BrowserBookmarkTags.migrations(existingColumns: listColumns(
+            resultSet: executeQuery(db: db,
+                                    sql: BrowserBookmarkTags.tableInfoQuery(),
+                                    withArguments: [])))
         for migration in tagsMigrations {
-            if !db.executeUpdate(migration.query, withArguments: migration.args) {
+            if !executeUpdate(db: db, sql: migration.query, withArguments: migration.args) {
                 return false
             }
         }
-        
+
         // Create BrowserPermissions table
-        if !db.executeUpdate(BrowserPermissions.schema(), withArguments: []) {
+        if !executeUpdate(db: db, sql: BrowserPermissions.schema(), withArguments: []) {
             return false
         }
-        
-        let permissionsMigrations = BrowserPermissions.migrations(existingColumns:
-            listColumns(
-                resultSet: db.executeQuery(
-                    BrowserPermissions.tableInfoQuery(),
-                    withArguments: [])))
+
+        let permissionsMigrations = BrowserPermissions.migrations(existingColumns: listColumns(
+            resultSet: executeQuery(db: db,
+                                    sql: BrowserPermissions.tableInfoQuery(),
+                                    withArguments: [])))
         for migration in permissionsMigrations {
-            if !db.executeUpdate(migration.query, withArguments: migration.args) {
+            if !executeUpdate(db: db, sql: migration.query, withArguments: migration.args) {
                 return false
             }
         }
 
         // Create BrowserNamedMarks table
-        if !db.executeUpdate(BrowserNamedMarks.schema(), withArguments: []) {
+        if !executeUpdate(db: db, sql: BrowserNamedMarks.schema(), withArguments: []) {
             return false
         }
-        
-        let namedMarksMigrations = BrowserNamedMarks.migrations(existingColumns:
-            listColumns(
-                resultSet: db.executeQuery(
-                    BrowserNamedMarks.tableInfoQuery(),
-                    withArguments: [])))
+
+        let namedMarksMigrations = BrowserNamedMarks.migrations(existingColumns:listColumns(
+            resultSet: executeQuery(db: db,
+                                    sql: BrowserNamedMarks.tableInfoQuery(),
+                                    withArguments: [])))
         for migration in namedMarksMigrations {
-            if !db.executeUpdate(migration.query, withArguments: migration.args) {
+            if !executeUpdate(db: db, sql: migration.query, withArguments: migration.args) {
                 return false
             }
         }
 
+        // Create BrowserKeyValueStore table
+        if !executeUpdate(db: db, sql: BrowserKeyValueStoreEntry.schema(), withArguments: []) {
+            return false
+        }
+        let keyValueStoreMigrations = BrowserKeyValueStoreEntry.migration(existingColumns:listColumns(
+            resultSet: executeQuery(db: db,
+                                    sql: BrowserKeyValueStoreEntry.tableInfoQuery(),
+                                    withArguments: [])))
+        for migration in keyValueStoreMigrations {
+            if !executeUpdate(db: db, sql: migration.query, withArguments: migration.args) {
+                return false
+            }
+        }
         return true
     }
-    
+
     // MARK: - Recording Visits
-    
+
     func recordVisit(url: String,
                      title: String?,
                      sessionGuid: String?,
@@ -286,24 +317,24 @@ actor BrowserDatabase {
                 referrerUrl: referrerUrl,
                 transitionType: transitionType
             )
-            
+
             let (historyQuery, historyArgs) = historyEntry.appendQuery()
-            _ = db.executeUpdate(historyQuery, withArguments: historyArgs)
-            
+            _ = self.executeUpdate(db: db, sql: historyQuery, withArguments: historyArgs)
+
             // Update or create entry in BrowserVisits
             self.updateVisitCount(db: db, url: url, title: title)
         }
     }
-    
+
     private func updateVisitCount(db: iTermDatabase, url: String, title: String?) {
         let (hostname, path) = BrowserVisits.parseUrl(url)
-        
+
         // Try to get existing visit record
         let selectQuery = "SELECT * FROM BrowserVisits WHERE hostname = ? AND path = ?"
-        guard let resultSet = db.executeQuery(selectQuery, withArguments: [hostname, path]) else {
+        guard let resultSet = executeQuery(db: db, sql: selectQuery, withArguments: [hostname, path]) else {
             return
         }
-        
+
         if resultSet.next() {
             // Update existing record
             if let existingVisit = BrowserVisits(dbResultSet: resultSet) {
@@ -314,56 +345,56 @@ actor BrowserDatabase {
                     updatedVisit.title = title
                 }
                 let (updateQuery, updateArgs) = updatedVisit.updateQuery()
-                _ = db.executeUpdate(updateQuery, withArguments: updateArgs)
+                _ = executeUpdate(db: db, sql: updateQuery, withArguments: updateArgs)
             }
         } else {
             // Create new record
             let newVisit = BrowserVisits(hostname: hostname, path: path, title: title == "" ? nil : title)
             let (insertQuery, insertArgs) = newVisit.appendQuery()
-            _ = db.executeUpdate(insertQuery, withArguments: insertArgs)
+            _ = executeUpdate(db: db, sql: insertQuery, withArguments: insertArgs)
         }
-        
+
         resultSet.close()
     }
-    
+
     // MARK: - Updating Titles
-    
+
     func updateTitle(_ title: String, forUrl url: String) async {
         await withDatabase { db in
             do {
                 let (sql, args) = BrowserHistory.updateTitleQuery(title, forUrl: url)
-                _ = db.executeUpdate(sql, withArguments: args)
+                _ = self.executeUpdate(db: db, sql: sql, withArguments: args)
             }
             do {
                 let (sql, args) = BrowserVisits.updateTitleQuery(title, forUrl: url)
-                _ = db.executeUpdate(sql, withArguments: args)
+                _ = self.executeUpdate(db: db, sql: sql, withArguments: args)
             }
         }
     }
-    
+
     // MARK: - Search and Suggestions
-    
+
     func searchHistory(terms: String) async -> [BrowserHistory] {
         return await withDatabase { db in
             let (query, args) = BrowserHistory.basicSearchQuery(terms: terms)
             return self.executeHistoryQuery(db: db, query: query, args: args)
         }
     }
-    
+
     func historyForSession(_ sessionGuid: String) async -> [BrowserHistory] {
         return await withDatabase { db in
             let (query, args) = BrowserHistory.historyForSession(sessionGuid)
             return self.executeHistoryQuery(db: db, query: query, args: args)
         }
     }
-    
+
     func urlSuggestions(forPrefix prefix: String, limit: Int = 10) async -> [String] {
         return await withDatabase { db in
             let (query, args) = BrowserVisits.suggestionsQuery(prefix: prefix, limit: limit)
-            guard let resultSet = db.executeQuery(query, withArguments: args) else {
+            guard let resultSet = self.executeQuery(db: db, sql: query, withArguments: args) else {
                 return []
             }
-            
+
             var results: [String] = []
             while resultSet.next() {
                 if let visit = BrowserVisits(dbResultSet: resultSet) {
@@ -374,14 +405,14 @@ actor BrowserDatabase {
             return results
         }
     }
-    
+
     func getVisitSuggestions(forPrefix prefix: String, limit: Int = 10) async -> [BrowserVisits] {
         return await withDatabase { db in
             let (query, args) = BrowserVisits.suggestionsQuery(prefix: prefix, limit: limit)
-            guard let resultSet = db.executeQuery(query, withArguments: args) else {
+            guard let resultSet = self.executeQuery(db: db, sql: query, withArguments: args) else {
                 return []
             }
-            
+
             var results: [BrowserVisits] = []
             while resultSet.next() {
                 if let visit = BrowserVisits(dbResultSet: resultSet) {
@@ -392,14 +423,14 @@ actor BrowserDatabase {
             return results
         }
     }
-    
+
     func topVisitedUrls(limit: Int = 20) async -> [BrowserVisits] {
         return await withDatabase { db in
             let (query, args) = BrowserVisits.topVisitedQuery(limit: limit)
-            guard let resultSet = db.executeQuery(query, withArguments: args) else {
+            guard let resultSet = self.executeQuery(db: db, sql: query, withArguments: args) else {
                 return []
             }
-            
+
             var results: [BrowserVisits] = []
             while resultSet.next() {
                 if let visit = BrowserVisits(dbResultSet: resultSet) {
@@ -410,14 +441,14 @@ actor BrowserDatabase {
             return results
         }
     }
-    
+
     // MARK: - Maintenance
-    
+
     func deleteHistoryBefore(date: Date) async {
         await withDatabase { db in
             let deleteHistoryQuery = "DELETE FROM BrowserHistory WHERE visitDate < ?"
-            _ = db.executeUpdate(deleteHistoryQuery, withArguments: [date.timeIntervalSince1970])
-            
+            _ = self.executeUpdate(db: db, sql: deleteHistoryQuery, withArguments: [date.timeIntervalSince1970])
+
             // Clean up orphaned visits (visits with no recent history)
             let cleanupVisitsQuery = """
             DELETE FROM BrowserVisits 
@@ -427,45 +458,45 @@ actor BrowserDatabase {
                 WHERE visitDate >= ?
             )
             """
-            _ = db.executeUpdate(cleanupVisitsQuery, withArguments: [date.timeIntervalSince1970])
+            _ = self.executeUpdate(db: db, sql: cleanupVisitsQuery, withArguments: [date.timeIntervalSince1970])
         }
     }
-    
+
     func deleteAllHistory() async {
         await withDatabase { db in
-            _ = db.executeUpdate("DELETE FROM BrowserHistory", withArguments: [])
-            _ = db.executeUpdate("DELETE FROM BrowserVisits", withArguments: [])
+            _ = self.executeUpdate(db: db, sql: "DELETE FROM BrowserHistory", withArguments: [])
+            _ = self.executeUpdate(db: db, sql: "DELETE FROM BrowserVisits", withArguments: [])
         }
     }
-    
+
     func deleteHistoryEntry(id: String) async {
         await withDatabase { db in
             let (query, args) = BrowserHistory.deleteEntryQuery(id: id)
-            _ = db.executeUpdate(query, withArguments: args)
+            _ = self.executeUpdate(db: db, sql: query, withArguments: args)
         }
     }
-    
+
     func getRecentHistory(offset: Int = 0, limit: Int = 50) async -> [BrowserHistory] {
         return await withDatabase { db in
             let (query, args) = BrowserHistory.recentHistoryQuery(offset: offset, limit: limit)
             return self.executeHistoryQuery(db: db, query: query, args: args)
         }
     }
-    
+
     func searchHistory(terms: String, offset: Int = 0, limit: Int = 50) async -> [BrowserHistory] {
         return await withDatabase { db in
             let (query, args) = BrowserHistory.searchQuery(terms: terms, offset: offset, limit: limit)
             return self.executeHistoryQuery(db: db, query: query, args: args)
         }
     }
-    
+
     // MARK: - Helper Methods
-    
+
     private func executeHistoryQuery(db: iTermDatabase, query: String, args: [Any?]) -> [BrowserHistory] {
-        guard let resultSet = db.executeQuery(query, withArguments: args) else {
+        guard let resultSet = executeQuery(db: db, sql: query, withArguments: args) else {
             return []
         }
-        
+
         var results: [BrowserHistory] = []
         while resultSet.next() {
             if let history = BrowserHistory(dbResultSet: resultSet) {
@@ -475,28 +506,28 @@ actor BrowserDatabase {
         resultSet.close()
         return results
     }
-    
+
     // MARK: - Bookmark Management
-    
+
     func addBookmark(url: String, title: String? = nil) async -> Bool {
         return await withDatabase { db in
             let bookmark = BrowserBookmarks(url: url, title: title)
             let (query, args) = bookmark.appendQuery()
-            return db.executeUpdate(query, withArguments: args)
+            return self.executeUpdate(db: db, sql: query, withArguments: args)
         }
     }
-    
+
     func removeBookmark(url: String) async -> Bool {
         return await withDatabase { db in
             let (query, args) = BrowserBookmarks.deleteBookmarkQuery(url: url)
-            return db.executeUpdate(query, withArguments: args)
+            return self.executeUpdate(db: db, sql: query, withArguments: args)
         }
     }
-    
+
     func isBookmarked(url: String) async -> Bool {
         return await withDatabase { db in
             let (query, args) = BrowserBookmarks.getBookmarkQuery(url: url)
-            guard let resultSet = db.executeQuery(query, withArguments: args) else {
+            guard let resultSet = self.executeQuery(db: db, sql: query, withArguments: args) else {
                 return false
             }
             let exists = resultSet.next()
@@ -504,14 +535,14 @@ actor BrowserDatabase {
             return exists
         }
     }
-    
+
     func getBookmark(url: String) async -> BrowserBookmarks? {
         return await withDatabase { db in
             let (query, args) = BrowserBookmarks.getBookmarkQuery(url: url)
-            guard let resultSet = db.executeQuery(query, withArguments: args) else {
+            guard let resultSet = self.executeQuery(db: db, sql: query, withArguments: args) else {
                 return nil
             }
-            
+
             var bookmark: BrowserBookmarks?
             if resultSet.next() {
                 bookmark = BrowserBookmarks(dbResultSet: resultSet)
@@ -520,66 +551,66 @@ actor BrowserDatabase {
             return bookmark
         }
     }
-    
+
     func getAllBookmarks(sortBy: BookmarkSortOption = .dateAdded, offset: Int = 0, limit: Int = 50) async -> [BrowserBookmarks] {
         return await withDatabase { db in
             let (query, args) = BrowserBookmarks.getAllBookmarksQuery(sortBy: sortBy, offset: offset, limit: limit)
             return self.executeBookmarkQuery(db: db, query: query, args: args)
         }
     }
-    
+
     func searchBookmarks(terms: String, offset: Int = 0, limit: Int = 50) async -> [BrowserBookmarks] {
         return await withDatabase { db in
             let (query, args) = BrowserBookmarks.searchQuery(terms: terms, offset: offset, limit: limit)
             return self.executeBookmarkQuery(db: db, query: query, args: args)
         }
     }
-    
+
     func getBookmarkSuggestions(forPrefix prefix: String, limit: Int = 10) async -> [BrowserBookmarks] {
         return await withDatabase { db in
             let (query, args) = BrowserBookmarks.bookmarkSuggestionsQuery(prefix: prefix, limit: limit)
             return self.executeBookmarkQuery(db: db, query: query, args: args)
         }
     }
-    
+
     // MARK: - Bookmark Tags Management
-    
+
     func addTagToBookmark(url: String, tag: String) async -> Bool {
         return await withDatabase { db in
             // First get the bookmark's rowid
             guard let rowId = self.getBookmarkRowId(db: db, url: url) else {
                 return false
             }
-            
+
             let bookmarkTag = BrowserBookmarkTags(bookmarkRowId: rowId, tag: tag)
             let (query, args) = bookmarkTag.appendQuery()
-            return db.executeUpdate(query, withArguments: args)
+            return self.executeUpdate(db: db, sql: query, withArguments: args)
         }
     }
-    
+
     func removeTagFromBookmark(url: String, tag: String) async -> Bool {
         return await withDatabase { db in
             guard let rowId = self.getBookmarkRowId(db: db, url: url) else {
                 return false
             }
-            
+
             let bookmarkTag = BrowserBookmarkTags(bookmarkRowId: rowId, tag: tag)
             let (query, args) = bookmarkTag.removeQuery()
-            return db.executeUpdate(query, withArguments: args)
+            return self.executeUpdate(db: db, sql: query, withArguments: args)
         }
     }
-    
+
     func getTagsForBookmark(url: String) async -> [String] {
         return await withDatabase { db in
             guard let rowId = self.getBookmarkRowId(db: db, url: url) else {
                 return []
             }
-            
+
             let (query, args) = BrowserBookmarkTags.getTagsForBookmarkQuery(bookmarkRowId: rowId)
-            guard let resultSet = db.executeQuery(query, withArguments: args) else {
+            guard let resultSet = self.executeQuery(db: db, sql: query, withArguments: args) else {
                 return []
             }
-            
+
             var tags: [String] = []
             while resultSet.next() {
                 if let tag = BrowserBookmarkTags(dbResultSet: resultSet) {
@@ -590,14 +621,14 @@ actor BrowserDatabase {
             return tags
         }
     }
-    
+
     func getAllTags() async -> [String] {
         return await withDatabase { db in
             let (query, args) = BrowserBookmarkTags.getAllTagsQuery()
-            guard let resultSet = db.executeQuery(query, withArguments: args) else {
+            guard let resultSet = self.executeQuery(db: db, sql: query, withArguments: args) else {
                 return []
             }
-            
+
             var tags: [String] = []
             while resultSet.next() {
                 if let tagName = resultSet.string(forColumn: "tag") {
@@ -608,28 +639,28 @@ actor BrowserDatabase {
             return tags
         }
     }
-    
+
     func searchBookmarksWithTags(searchTerms: String, tags: [String], offset: Int = 0, limit: Int = 50) async -> [BrowserBookmarks] {
         return await withDatabase { db in
             let (query, args) = BrowserBookmarkTags.searchBookmarksWithTagsQuery(searchTerms: searchTerms, tags: tags, offset: offset, limit: limit)
             return self.executeBookmarkQuery(db: db, query: query, args: args)
         }
     }
-    
+
     func deleteAllBookmarks() async {
         await withDatabase { db in
-            _ = db.executeUpdate("DELETE FROM BrowserBookmarks", withArguments: [])
-            _ = db.executeUpdate("DELETE FROM BrowserBookmarkTags", withArguments: [])
+            _ = self.executeUpdate(db: db, sql: "DELETE FROM BrowserBookmarks", withArguments: [])
+            _ = self.executeUpdate(db: db, sql: "DELETE FROM BrowserBookmarkTags", withArguments: [])
         }
     }
-    
+
     // MARK: - Helper Methods
-    
+
     private func executeBookmarkQuery(db: iTermDatabase, query: String, args: [Any?]) -> [BrowserBookmarks] {
-        guard let resultSet = db.executeQuery(query, withArguments: args) else {
+        guard let resultSet = executeQuery(db: db, sql: query, withArguments: args) else {
             return []
         }
-        
+
         var results: [BrowserBookmarks] = []
         while resultSet.next() {
             if let bookmark = BrowserBookmarks(dbResultSet: resultSet) {
@@ -639,13 +670,13 @@ actor BrowserDatabase {
         resultSet.close()
         return results
     }
-    
+
     private func getBookmarkRowId(db: iTermDatabase, url: String) -> Int64? {
         let query = "SELECT rowid FROM BrowserBookmarks WHERE url = ?"
-        guard let resultSet = db.executeQuery(query, withArguments: [url]) else {
+        guard let resultSet = executeQuery(db: db, sql: query, withArguments: [url]) else {
             return nil
         }
-        
+
         var rowId: Int64?
         if resultSet.next() {
             rowId = resultSet.longLongInt(forColumn: "rowid")
@@ -653,16 +684,16 @@ actor BrowserDatabase {
         resultSet.close()
         return rowId
     }
-    
+
     func getVisitCount(for url: String) async -> Int {
         return await withDatabase { db in
             let (hostname, path) = BrowserVisits.parseUrl(url)
             let query = "SELECT visitCount FROM BrowserVisits WHERE hostname = ? AND path = ?"
-            
-            guard let resultSet = db.executeQuery(query, withArguments: [hostname, path]) else {
+
+            guard let resultSet = self.executeQuery(db: db, sql: query, withArguments: [hostname, path]) else {
                 return 0
             }
-            
+
             var visitCount = 0
             if resultSet.next() {
                 visitCount = Int(resultSet.longLongInt(forColumn: "visitCount"))
@@ -671,36 +702,36 @@ actor BrowserDatabase {
             return visitCount
         }
     }
-    
+
     // MARK: - Permission Management
-    
+
     func savePermission(origin: String, permissionType: BrowserPermissionType, decision: BrowserPermissionDecision) async -> Bool {
         return await withDatabase { db in
             var permission = BrowserPermissions(origin: origin, permissionType: permissionType, decision: decision)
-            
+
             // Check if permission already exists
             let (checkQuery, checkArgs) = BrowserPermissions.getPermissionQuery(origin: origin, permissionType: permissionType)
-            if let resultSet = db.executeQuery(checkQuery, withArguments: checkArgs), resultSet.next() {
+            if let resultSet = self.executeQuery(db: db, sql: checkQuery, withArguments: checkArgs), resultSet.next() {
                 // Update existing permission
                 permission.updatedAt = Date()
                 let (updateQuery, updateArgs) = permission.updateQuery()
                 resultSet.close()
-                return db.executeUpdate(updateQuery, withArguments: updateArgs)
+                return self.executeUpdate(db: db, sql: updateQuery, withArguments: updateArgs)
             } else {
                 // Insert new permission
                 let (insertQuery, insertArgs) = permission.appendQuery()
-                return db.executeUpdate(insertQuery, withArguments: insertArgs)
+                return self.executeUpdate(db: db, sql: insertQuery, withArguments: insertArgs)
             }
         }
     }
-    
+
     func getPermission(origin: String, permissionType: BrowserPermissionType) async -> BrowserPermissions? {
         return await withDatabase { db in
             let (query, args) = BrowserPermissions.getPermissionQuery(origin: origin, permissionType: permissionType)
-            guard let resultSet = db.executeQuery(query, withArguments: args) else {
+            guard let resultSet = self.executeQuery(db: db, sql: query, withArguments: args) else {
                 return nil
             }
-            
+
             var permission: BrowserPermissions?
             if resultSet.next() {
                 permission = BrowserPermissions(dbResultSet: resultSet)
@@ -709,54 +740,54 @@ actor BrowserDatabase {
             return permission
         }
     }
-    
+
     func getPermissions(for origin: String) async -> [BrowserPermissions] {
         return await withDatabase { db in
             let (query, args) = BrowserPermissions.getPermissionsForOriginQuery(origin: origin)
             return self.executePermissionQuery(db: db, query: query, args: args)
         }
     }
-    
+
     func getPermissions(for permissionType: BrowserPermissionType) async -> [BrowserPermissions] {
         return await withDatabase { db in
             let (query, args) = BrowserPermissions.getPermissionsByTypeQuery(permissionType: permissionType)
             return self.executePermissionQuery(db: db, query: query, args: args)
         }
     }
-    
+
     func getGrantedPermissions(for permissionType: BrowserPermissionType) async -> [BrowserPermissions] {
         return await withDatabase { db in
             let (query, args) = BrowserPermissions.getGrantedPermissionsQuery(permissionType: permissionType)
             return self.executePermissionQuery(db: db, query: query, args: args)
         }
     }
-    
+
     func getAllPermissions() async -> [BrowserPermissions] {
         return await withDatabase { db in
             let (query, args) = BrowserPermissions.getAllPermissionsQuery()
             return self.executePermissionQuery(db: db, query: query, args: args)
         }
     }
-    
+
     func revokePermission(origin: String, permissionType: BrowserPermissionType) async -> Bool {
         return await withDatabase { db in
             let (query, args) = BrowserPermissions.deletePermissionQuery(origin: origin, permissionType: permissionType)
-            return db.executeUpdate(query, withArguments: args)
+            return self.executeUpdate(db: db, sql: query, withArguments: args)
         }
     }
-    
+
     func revokeAllPermissions(for origin: String) async -> Bool {
         return await withDatabase { db in
             let (query, args) = BrowserPermissions.deleteAllPermissionsForOriginQuery(origin: origin)
-            return db.executeUpdate(query, withArguments: args)
+            return self.executeUpdate(db: db, sql: query, withArguments: args)
         }
     }
-    
+
     private func executePermissionQuery(db: iTermDatabase, query: String, args: [Any?]) -> [BrowserPermissions] {
-        guard let resultSet = db.executeQuery(query, withArguments: args) else {
+        guard let resultSet = executeQuery(db: db, sql: query, withArguments: args) else {
             return []
         }
-        
+
         var results: [BrowserPermissions] = []
         while resultSet.next() {
             if let permission = BrowserPermissions(dbResultSet: resultSet) {
@@ -766,31 +797,31 @@ actor BrowserDatabase {
         resultSet.close()
         return results
     }
-    
+
     // MARK: - Named Marks Management
-    
+
     func addNamedMark(guid: String, url: String, name: String, text: String = "") async -> Bool {
         return await withDatabase { db in
             let namedMark = BrowserNamedMarks(guid: guid, url: url, name: name, text: text)
             let (query, args) = namedMark.appendQuery()
-            return db.executeUpdate(query, withArguments: args)
+            return self.executeUpdate(db: db, sql: query, withArguments: args)
         }
     }
-    
+
     func removeNamedMark(guid: String) async -> Bool {
         return await withDatabase { db in
             let (query, args) = BrowserNamedMarks.deleteNamedMarkQuery(guid: guid)
-            return db.executeUpdate(query, withArguments: args)
+            return self.executeUpdate(db: db, sql: query, withArguments: args)
         }
     }
-    
+
     func getNamedMark(guid: String) async -> BrowserNamedMarks? {
         return await withDatabase { db in
             let (query, args) = BrowserNamedMarks.getNamedMarkQuery(guid: guid)
-            guard let resultSet = db.executeQuery(query, withArguments: args) else {
+            guard let resultSet = self.executeQuery(db: db, sql: query, withArguments: args) else {
                 return nil
             }
-            
+
             var namedMark: BrowserNamedMarks?
             if resultSet.next() {
                 namedMark = BrowserNamedMarks(dbResultSet: resultSet)
@@ -799,54 +830,54 @@ actor BrowserDatabase {
             return namedMark
         }
     }
-    
+
     func getAllNamedMarks(sortBy currentPageUrl: String? = nil, offset: Int = 0, limit: Int = 100) async -> [BrowserNamedMarks] {
         return await withDatabase { db in
             let (query, args) = BrowserNamedMarks.getAllNamedMarksQuery(sortBy: currentPageUrl, offset: offset, limit: limit)
             return self.executeNamedMarksQuery(db: db, query: query, args: args)
         }
     }
-    
+
     func getNamedMarksForUrl(_ url: String) async -> [BrowserNamedMarks] {
         return await withDatabase { db in
             let (query, args) = BrowserNamedMarks.getNamedMarksForUrlQuery(url: url)
             return self.executeNamedMarksQuery(db: db, query: query, args: args)
         }
     }
-    
+
     func searchNamedMarks(terms: String, offset: Int = 0, limit: Int = 50) async -> [BrowserNamedMarks] {
         return await withDatabase { db in
             let (query, args) = BrowserNamedMarks.searchNamedMarksQuery(terms: terms, offset: offset, limit: limit)
             return self.executeNamedMarksQuery(db: db, query: query, args: args)
         }
     }
-    
+
     func updateNamedMarkName(guid: String, name: String) async -> Bool {
         return await withDatabase { db in
             let (query, args) = BrowserNamedMarks.updateNamedMarkNameQuery(guid: guid, name: name)
-            return db.executeUpdate(query, withArguments: args)
+            return self.executeUpdate(db: db, sql: query, withArguments: args)
         }
     }
-    
+
     func updateNamedMarkText(guid: String, text: String) async -> Bool {
         return await withDatabase { db in
             let (query, args) = BrowserNamedMarks.updateNamedMarkTextQuery(guid: guid, text: text)
-            return db.executeUpdate(query, withArguments: args)
+            return self.executeUpdate(db: db, sql: query, withArguments: args)
         }
     }
-    
-    
+
+
     func deleteAllNamedMarks() async {
         await withDatabase { db in
-            _ = db.executeUpdate("DELETE FROM BrowserNamedMarks", withArguments: [])
+            _ = self.executeUpdate(db: db, sql: "DELETE FROM BrowserNamedMarks", withArguments: [])
         }
     }
-    
+
     private func executeNamedMarksQuery(db: iTermDatabase, query: String, args: [Any?]) -> [BrowserNamedMarks] {
-        guard let resultSet = db.executeQuery(query, withArguments: args) else {
+        guard let resultSet = executeQuery(db: db, sql: query, withArguments: args) else {
             return []
         }
-        
+
         var results: [BrowserNamedMarks] = []
         while resultSet.next() {
             if let namedMark = BrowserNamedMarks(dbResultSet: resultSet) {
@@ -855,5 +886,127 @@ actor BrowserDatabase {
         }
         resultSet.close()
         return results
+    }
+
+    // MARK: - Key-value store
+
+    func getKeyValueStoreEntries(area: String?, extensionId: String?, keys: Set<String>) async throws -> [String: String] {
+        return try await withDatabase { db in
+            let (query, args) = BrowserKeyValueStoreEntry.getQuery(area: area, extensionId: extensionId, keys: Array(keys))
+            guard let resultSet = try db.executeQuery(query, withArguments: args) else {
+                return [:]
+            }
+
+            var result = [String: String]()
+            while resultSet.next() {
+                if let entry = BrowserKeyValueStoreEntry(dbResultSet: resultSet) {
+                    result[entry.key] = entry.value
+                }
+            }
+            resultSet.close()
+            return result
+        }
+    }
+
+    func getKeyValueStoreEntries(area: String, extensionId: String) async throws -> [String: String] {
+        return try await withDatabase { db in
+            let (query, args) = BrowserKeyValueStoreEntry.getQuery(area: area, extensionId: extensionId)
+            guard let resultSet = try db.executeQuery(query, withArguments: args) else {
+                return [:]
+            }
+
+            var result = [String: String]()
+            while resultSet.next() {
+                if let entry = BrowserKeyValueStoreEntry(dbResultSet: resultSet) {
+                    result[entry.key] = entry.value
+                }
+            }
+            resultSet.close()
+            return result
+        }
+    }
+
+    func setKeyValueStoreEntries(area: String?, extensionId: String?, newValues: [String: String]) async throws -> [String: String] {
+        return try await withDatabase { db in
+            let (query, args) = BrowserKeyValueStoreEntry.upsertAndReturnOriginalQuery(
+                area: area, extensionId: extensionId, kvps: newValues)
+            guard let resultSet = try db.executeQuery(query, withArguments: args) else {
+                return [:]
+            }
+
+            var result = [String: String]()
+            while resultSet.next() {
+                if let entry = BrowserKeyValueStoreEntry(dbResultSet: resultSet) {
+                    result[entry.key] = entry.value
+                }
+            }
+            resultSet.close()
+            return result
+        }
+    }
+
+    func clearKeyValueStore(area: String?, extensionId: String?, keys: Set<String>) async throws -> [String: String] {
+        return try await withDatabase { db in
+            let (query, args) = BrowserKeyValueStoreEntry.removeQuery(
+                area: area, extensionId: extensionId, keys: Array(keys))
+            guard let resultSet = try db.executeQuery(query, withArguments: args) else {
+                return [:]
+            }
+            var result = [String: String]()
+            while resultSet.next() {
+                if let key = resultSet.string(forColumn: "key"),
+                   let value = resultSet.string(forColumn: "value") {
+                    result[key] = value
+                }
+            }
+            return result
+        }
+    }
+
+    func clearKeyValueStore(area: String?, extensionId: String?) async throws -> [String: String] {
+        return try await withDatabase { db in
+            let (query, args) = BrowserKeyValueStoreEntry.removeQuery(
+                area: area, extensionId: extensionId)
+            guard let resultSet = try db.executeQuery(query, withArguments: args) else {
+                return [:]
+            }
+            var result = [String: String]()
+            while resultSet.next() {
+                if let key = resultSet.string(forColumn: "key"),
+                   let value = resultSet.string(forColumn: "value") {
+                    result[key] = value
+                }
+            }
+            return result
+        }
+    }
+
+    func clearKeyValueStore(extensionId: String?) async throws {
+        return try await withDatabase { db in
+            let (query, args) = BrowserKeyValueStoreEntry.removeQuery(extensionId: extensionId)
+            _ = try db.executeUpdate(query, withArguments: args)
+        }
+    }
+
+    struct KeyValueUsage {
+        var bytesUsed: Int
+        var itemCount: Int
+    }
+    func keyValueUsage(area: String,
+                       extensionId: String) async -> KeyValueUsage {
+        return await withDatabase { db in
+            let (query, args) = BrowserKeyValueStoreEntry.usageQuery(area: area, extensionId: extensionId)
+            var result = KeyValueUsage(bytesUsed: 0, itemCount: 0)
+            guard let resultSet = self.executeQuery(db: db, sql: query, withArguments: args) else {
+                return result
+            }
+
+            while resultSet.next() {
+                result.bytesUsed = Int(resultSet.longLongInt(forColumn: "bytesUsed"))
+                result.itemCount = Int(resultSet.longLongInt(forColumn: "itemCount"))
+            }
+            resultSet.close()
+            return result
+        }
     }
 }

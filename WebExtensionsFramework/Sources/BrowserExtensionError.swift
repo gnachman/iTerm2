@@ -8,7 +8,11 @@ public enum BrowserExtensionError: Error, LocalizedError, Equatable {
     case unknownAPI(String)
     case internalError(String)
     case insufficientPermissions(String)
-    
+    case quotaExceeded
+    case valueError(String)
+    case permissionDenied
+    case notAvailable
+
     public var errorDescription: String? {
         switch self {
         case .noMessageReceiver:
@@ -23,6 +27,14 @@ public enum BrowserExtensionError: Error, LocalizedError, Equatable {
             return "Internal error: \(message)"
         case .insufficientPermissions(let permission):
             return "This extension does not have permission to use \(permission). Add \"\(permission)\" to the \"permissions\" array in the manifest."
+        case .quotaExceeded:
+            return "Quota exceeded"
+        case .valueError(let message):
+            return "Value error: \(message)"
+        case .permissionDenied:
+            return "Permission denied"
+        case .notAvailable:
+            return "Operation not available"
         }
     }
 }

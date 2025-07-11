@@ -4,7 +4,9 @@ import BrowserExtensionShared
 if CommandLine.arguments.contains("--dumpjs") {
     // To see the JS we would generate run:
     // swift run APIGenerator -- --dumpjs
-    print(generatedAPIJavascript(.init(extensionId: "extension id goes here")))
+    print(generatedAPIJavascript(.init(extensionId: "extension id goes here",
+                                       trusted: !CommandLine.arguments.contains("--untrusted"),
+                                       setAccessLevelToken: "<secret token goes here>")))
 } else if CommandLine.arguments.contains("--dumpdispatch") {
     print(generatedDispatchSwift())
 } else if CommandLine.arguments.contains("--dumpswift") {

@@ -11,6 +11,10 @@ public protocol BrowserExtensionWKWebView: AnyObject {
     var be_url: URL? { get }
     var be_configuration: BrowserExtensionWKWebViewConfiguration { get }
     func be_evaluateJavaScript(_ javaScriptString: String, in frame: WKFrameInfo?, in contentWorld: WKContentWorld) async throws -> Any?
+    func be_callAsyncJavaScript(_ functionBody: String,
+                                arguments: [String: Any],
+                                in frame: WKFrameInfo?,
+                                in contentWorld: WKContentWorld) async throws -> Any?
 }
 
 // MARK: - Configuration Protocol
@@ -77,11 +81,16 @@ public protocol BrowserExtensionWKNavigationDelegate: AnyObject {
 extension WKWebView: BrowserExtensionWKWebView {
     public var be_url: URL? { url }
     public var be_configuration: BrowserExtensionWKWebViewConfiguration { configuration }
-    
     public func be_evaluateJavaScript(_ javaScriptString: String, in frame: WKFrameInfo?, in contentWorld: WKContentWorld) async throws -> Any? {
         return try await evaluateJavaScript(javaScriptString, in: frame, contentWorld: contentWorld)
     }
+    public func be_callAsyncJavaScript(_ functionBody: String,
+                                       arguments: [String: Any],
+                                       in frame: WKFrameInfo?,
+                                       in contentWorld: WKContentWorld) async throws -> Any? {
+        return try await callAsyncJavaScript(functionBody, arguments: arguments, in: frame, contentWorld: contentWorld)
     }
+}
 
 @MainActor
 extension WKWebViewConfiguration: BrowserExtensionWKWebViewConfiguration {

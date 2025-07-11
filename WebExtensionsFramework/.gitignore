@@ -14,3 +14,4 @@ Build/
 # IDE
 .vscode/
 .idea/firefox
+.build-test

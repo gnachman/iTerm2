@@ -1,58 +1,12 @@
 ;(function() {
   'use strict';
-  const __ext_callbackMap = new Map();
-  const __ext_listeners = [];
-
-  function __ext_randomString(len = 16) {
-    const bytes = crypto.getRandomValues(new Uint8Array(len));
-    return Array.from(bytes)
-      .map(b => b.toString(36).padStart(2, '0'))
-      .join('')
-      .substring(0, len);
-  }
-
-  // Encode values for messaging (handles null, undefined, and everything else)
-  function __ext_encodeForMessaging(value) {
-    if (value === null) {
-      return { value: "null" };
-    }
-    if (value === undefined) {
-      return { value: "undefined" };
-    }
-    // Everything else gets JSON stringified
-    // This handles Date, RegExp, objects, arrays, primitives, etc.
-    return { json: JSON.stringify(value) };
-  }
-
-  // Decode values from messaging
-  function __ext_decodeFromMessaging(encoded) {
-    if (!encoded || typeof encoded !== 'object') {
-      console.error('Invalid message encoding: expected object, got', typeof encoded, encoded);
-      throw new Error('Invalid message encoding: expected object');
-    }
-    
-    if ('value' in encoded) {
-      if (encoded.value === "null") return null;
-      if (encoded.value === "undefined") return undefined;
-      
-      console.error('Invalid message encoding: unknown value type', encoded.value);
-      throw new Error(`Invalid message encoding: unknown value type "${encoded.value}"`);
-    }
-    
-    if ('json' in encoded) {
-      try {
-        return JSON.parse(encoded.json);
-      } catch (e) {
-        console.error('Invalid message encoding: JSON parse error', e, encoded.json);
-        throw new Error(`Invalid message encoding: JSON parse error - ${e.message}`);
-      }
-    }
-    
-    console.error('Invalid message encoding: missing required field (value or json)', encoded);
-    throw new Error('Invalid message encoding: missing required field (value or json)');
-  }
-
-  const __ext_post = window.webkit.messageHandlers;
+  // Use the global shared helper functions and variables
+  const __ext_callbackMap = window.__ext_callbackMap;
+  const __ext_listeners = window.__ext_listeners;
+  const __ext_randomString = window.__ext_randomString;
+  const __ext_encodeForMessaging = window.__ext_encodeForMessaging;
+  const __ext_decodeFromMessaging = window.__ext_decodeFromMessaging;
+  const __ext_post = window.__ext_post;
 
   {{RUNTIME_BODY}}
 
@@ -73,18 +27,20 @@
       enumerable: originalDesc.enumerable
     });
 
-    try {
-      // Handle both encoded responses (from real API calls) and raw values (from direct test calls)
-      let decodedResponse;
-      if (typeof response === 'string') {
-        // This is a JSON-encoded response from the real API system
-        const parsedResponse = JSON.parse(response);
-        decodedResponse = __ext_decodeFromMessaging(parsedResponse);
-      } else {
-        // This is a raw value (e.g., from direct test calls)
-        decodedResponse = response;
-      }
-      callback(decodedResponse);
+      try {
+          // Handle both encoded responses (from real API calls) and raw values (from direct test calls)
+          let decodedResponse;
+          if (typeof response === 'string') {
+              // This is a JSON-encoded response from the real API system
+              const parsedResponse = JSON.parse(response);
+              decodedResponse = __ext_decodeFromMessaging(parsedResponse);
+          } else {
+              // This is a raw value (e.g., from direct test calls)
+              decodedResponse = response;
+          }
+          callback(decodedResponse);
+      } catch (e) {
+        // Error in callback execution
     } finally {
       Object.defineProperty(chrome.runtime, "lastError", originalDesc);
 
@@ -99,14 +55,18 @@
     value(requestId, result, error) {
       const cb = __ext_callbackMap.get(requestId);
       if (cb) {
-        try { 
+        try {
           if (error) {
             window.__ext_injectLastError(error, cb, result);
           } else {
-            // Result comes as a JSON string from Swift, parse it first
-            const parsedResult = JSON.parse(result);
-            const decoded = __ext_decodeFromMessaging(parsedResult);
-            cb(decoded);
+            if (result === '') {
+              cb()
+            } else {
+              // Result comes as a JSON string from Swift, parse it first
+              const parsedResult = JSON.parse(result);
+              const decoded = __ext_decodeFromMessaging(parsedResult);
+              cb(decoded);
+            }
           }
         }
         finally { __ext_callbackMap.delete(requestId) }
@@ -151,13 +111,12 @@
     configurable: false,
     enumerable: false
   });
-  Object.defineProperty(window, 'chrome', {
-    value: { runtime },
+  // Add runtime to the existing chrome object
+  Object.defineProperty(window.chrome, 'runtime', {
+    value: runtime,
     writable: false,
     configurable: false,
-    enumerable: false
+    enumerable: true
   });
-
-  Object.freeze(window.chrome);
   true;
 })();

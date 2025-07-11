@@ -1,0 +1,439 @@
+This file specifies the tests that must be written to ensure apis under chrome.storage work correctly.
+
+TEST: Verify that chrome.storage.local.set and chrome.storage.local.get work for simple key–value pairs
+Steps:
+	1.	In a background script, call chrome.storage.local.set({ foo: "bar" }, callback).
+	2.	In the callback, call chrome.storage.local.get("foo", callback2).
+Assertions:
+	•	In callback2, the returned object is { foo: "bar" }.
+	•	No chrome.runtime.lastError is set.
+
+TEST: Ensure that getting a non-existent key returns undefined (or default) rather than throwing
+Steps:
+	1.	Call chrome.storage.local.get("noSuchKey", callback).
+Assertions:
+	•	The returned object has { noSuchKey: undefined }.
+	•	No exception is thrown.
+
+TEST: Test that chrome.storage.local.get with an object of defaults merges defaults correctly
+Steps:
+	1.	Ensure storage is empty (chrome.storage.local.clear).
+	2.	Call chrome.storage.local.get({ a: 1, b: 2 }, callback).
+Assertions:
+	•	The returned object is { a: 1, b: 2 }.
+
+TEST: Verify that chrome.storage.local.remove deletes a key but leaves others intact
+Steps:
+	1.	Set { x: 1, y: 2 }.
+	2.	Call chrome.storage.local.remove("x", callback).
+	3.	Get both keys.
+Assertions:
+	•	The returned object is { x: undefined, y: 2 }.
+
+TEST: Confirm that chrome.storage.local.clear wipes all stored data
+Steps:
+	1.	Set several keys.
+	2.	Call chrome.storage.local.clear(callback).
+	3.	Call chrome.storage.local.get(null, callback2).
+Assertions:
+	•	The returned object is {}.
+
+TEST: Ensure that only string keys are accepted
+Steps:
+	1.	Attempt chrome.storage.local.set({ 123: "num" }, callback).
+Assertions:
+	•	The API throws or invokes lastError.
+	•	Integer key is coerced to "123" if spec allows, or error otherwise.
+
+TEST: Reject unsupported value types (functions, DOM nodes, undefined)
+Steps:
+	1.	Call chrome.storage.local.set({ bad: () => {} }, callback).
+	2.	Call chrome.storage.local.set({ node: document.body }, callback).
+Assertions:
+	•	chrome.runtime.lastError is set for each.
+	•	Stored data remains unchanged.
+
+TEST: Store and retrieve nested plain objects and arrays correctly
+Steps:
+	1.	Set { obj: { a:1, b:[2,3] } }.
+	2.	Get "obj".
+Assertions:
+	•	Returned value deeply equals original.
+
+TEST: Confirm that setting the same value twice does not fire onChanged
+Steps:
+	1.	Set { dup: 5 }.
+	2.	Add chrome.storage.onChanged listener.
+	3.	Set { dup: 5 } again.
+Assertions:
+	•	Listener is not invoked on the second set.
+
+TEST: Verify that chrome.storage.onChanged fires with correct oldValue and newValue
+Steps:
+	1.	Set { key: "old" }.
+	2.	Add listener.
+	3.	Set { key: "new" }.
+Assertions:
+	•	Listener receives { key: { oldValue: "old", newValue: "new" } }.
+
+TEST: Verify deep-merge vs overwrite semantics
+Steps:
+	1.	Set { obj: { x:1, y:2 } }.
+	2.	Set { obj: { z:3 } }.
+	3.	Get "obj".
+Assertions:
+	•	Returned object is { z:3 } (not { x:1, y:2, z:3 }).
+
+TEST: Test behavior of get(null) and get(undefined)
+Steps:
+	1.	Populate some keys.
+	2.	Call get(null, cb) and get(undefined, cb).
+Assertions:
+	•	Both return the same as get(null): all keys.
+
+TEST: Ensure remove on non-existent key is a no-op
+Steps:
+	1.	Ensure key "foo" does not exist.
+	2.	Remove "foo".
+	3.	Get "foo".
+Assertions:
+	•	No error; "foo" is undefined.
+
+TEST: Confirm storage persistence across extension reloads
+Steps:
+	1.	Set { persist: true }.
+	2.	Reload extension background script.
+	3.	Get "persist".
+Assertions:
+	•	Value remains true.
+
+TEST: Verify chrome.storage.local is available in content scripts but not in untrusted pages
+Steps:
+	1.	In a content script, check typeof chrome.storage.local.
+	2.	In an injected iframe from a non-extension page, check same.
+Assertions:
+	•	Content script: object.
+	•	Untrusted page: undefined.
+
+TEST: Test that chrome.storage.sync requires "storage" permission in manifest
+Steps:
+	1.	Load extension without "storage" permission.
+	2.	In background, call chrome.storage.sync.set({ a:1 }).
+Assertions:
+	•	chrome.runtime.lastError indicates missing permission.
+
+TEST: Validate getBytesInUse for sync namespace
+Steps:
+	1.	Set several keys.
+	2.	Measure bytes in use for all keys.
+Assertions:
+	•	Matches sum of serialized sizes.
+
+TEST: Confirm onChanged events fire across contexts for sync
+Steps:
+	1.	In content script, add listener.
+	2.	In background, set a key in sync.
+Assertions:
+	•	Content listener invoked with correct change.
+
+TEST: Test error when passing non-function as callback
+Steps:
+	1.	Call chrome.storage.local.get("foo", "notAFunction").
+Assertions:
+	•	API throws a synchronous TypeError.
+
+TEST: Ensure chrome.runtime.lastError does not prevent callback invocation
+Steps:
+	1.	Force a quota error in sync.set.
+	2.	In the callback, check invocation.
+Assertions:
+	•	Callback is called once, and chrome.runtime.lastError is set.
+
+TEST: Verify that calling set() with an empty object is a no-op but still invokes callback
+Steps:
+	1.	Call chrome.storage.local.set({}, callback).
+Assertions:
+	•	Callback is invoked, no error, storage unchanged.
+
+TEST: Test handling of keys named __proto__ and other special identifiers
+Steps:
+	1.	Set { "__proto__": "value" }.
+	2.	Get "__proto__".
+Assertions:
+	•	Returns correct value, no prototype pollution.
+
+TEST: Confirm that deeply nested structures up to reasonable depth work
+Steps:
+	1.	Create object nested 50 levels deep.
+	2.	Set and get it.
+Assertions:
+	•	No stack overflow; returned structure matches.
+
+TEST: Validate support (or rejection) of Date objects
+Steps:
+	1.	Set { d: new Date(2025,6,11) }.
+	2.	Get "d".
+Assertions:
+	•	Either returns ISO string or throws; behavior is spec-compliant.
+
+TEST: Verify that chrome.storage area names (local, sync, session) exist and are distinct
+Steps:
+	1.	Check Object.keys(chrome.storage).
+	2.	Set same key in each namespace.
+	3.	Get key from each.
+Assertions:
+	•	Namespaces do not leak values to each other.
+
+TEST: Test concurrent get and set calls for race conditions
+Steps:
+	1.	Fire get("x") and immediately set({ x: 42 }).
+Assertions:
+	•	get callback returns old value or undefined, never partial state.
+
+TEST: Ensure callbacks always run asynchronously
+Steps:
+	1.	After calling set, immediately check if callback has run.
+Assertions:
+	•	Callback runs after current call stack returns.
+
+TEST: Test that get with array of keys returns only those keys
+Steps:
+	1.	Set { a:1, b:2, c:3 }.
+	2.	Call get(["a","c"], callback).
+Assertions:
+	•	Returned object is { a:1, c:3 }.
+
+TEST: Confirm that get with duplicate keys in array deduplicates results
+Steps:
+	1.	Call get(["a","a","b"], callback).
+Assertions:
+	•	No duplicates in result.
+
+TEST: Test removal of multiple keys in one call
+Steps:
+	1.	Set { a:1, b:2, c:3 }.
+	2.	Call remove(["a","c"], callback).
+	3.	Get all keys.
+Assertions:
+	•	Only b remains.
+
+TEST: Verify that storage changes are immediately visible in subsequent JS evaluations
+Steps:
+	1.	In native test, inject JS to set { foo: "bar" }.
+	2.	Immediately inject JS to get "foo".
+Assertions:
+	•	Retrieved value is "bar".
+
+TEST: Confirm that storage APIs exist but throw in a non-extension iframe
+Steps:
+	1.	Inject an <iframe src="chrome-extension://.../page.html"> in a web page.
+	2.	In the iframe’s script, call storage.
+Assertions:
+	•	Calls succeed only if context has extension origin.
+
+TEST: Test that storage.onChanged listener can be removed correctly
+Steps:
+	1.	Add listener A and B.
+	2.	Remove A.
+	3.	Trigger a change.
+Assertions:
+	•	Only B is invoked.
+
+TEST: Confirm that storage operations in one namespace do not fire events in another
+Steps:
+	1.	Add onChanged for both local and sync.
+	2.	Change only local.
+Assertions:
+	•	Only local.onChanged fires.
+
+TEST: Ensure JSON-safe cloning (no shared references)
+Steps:
+	1.	Set { arr: [ { x:1 } ] }.
+	2.	Mutate the object in memory after set, then get.
+Assertions:
+	•	Retrieved object is unaffected by mutations.
+
+TEST: Verify that extremely large values in local (e.g. >1 MB) either succeed or fail predictably
+Steps:
+	1.	Create a 2 MB string, attempt to store in local.
+Assertions:
+	•	Operation either succeeds or fails with documented error.
+
+TEST: Test chrome.storage error messages for clarity and consistency
+Steps:
+	1.	Force various errors (invalid args, quotas, permissions).
+Assertions:
+	•	lastError.message describes the error.
+
+TEST: Validate that listeners added before extension load do not fire after unload
+Steps:
+	1.	Add listener, then programmatically disable extension API.
+	2.	Change storage.
+Assertions:
+	•	Listener does not fire after API is disabled.
+
+TEST: Ensure that nested arrays of objects round-trip correctly
+Steps:
+	1.	Set a complex nested array/object mix.
+	2.	Get it back.
+Assertions:
+	•	Deep equality with original.
+
+TEST: Test that simultaneous multi-namespace operations do not interfere
+Steps:
+	1.	In parallel, set keys in local, sync, and session.
+	2.	Get each namespace separately.
+Assertions:
+	•	Each namespace contains only its own data.
+
+TEST: Ensure that invalid JSON in stored values is never returned
+Steps:
+	1.	Corrupt underlying storage file (native).
+	2.	Call get.
+Assertions:
+	•	Returns error rather than invalid data.
+
+TEST: Test integration with web-accessible resources (e.g., pages that use storage)
+Steps:
+	1.	In a web-accessible content page, use chrome.storage.local.
+Assertions:
+	•	Works if proper permissions; otherwise undefined.
+
+TEST: Ensure that storage APIs are stubbed out or disabled when extension is disabled
+Steps:
+	1.	Disable extension via native test.
+	2.	Attempt storage calls.
+Assertions:
+	•	APIs throw or callbacks are never invoked.
+
+TEST: Test that storage data is UTF-8 safe (e.g., emojis, non-Latin scripts)
+Steps:
+	1.	Set { emoji: "😊", cyrillic: "привет" }.
+	2.	Get both keys.
+Assertions:
+	•	Returned strings match exactly.
+
+TEST: Test correct behavior when storage API is called during shutdown
+Steps:
+	1.	Deactivate the extension
+	2.	Issue a storage call.
+Assertions:
+	•	Call fails fast or is queued, never deadlocks.
+
+TEST: Verify that API surfaces (get, set, remove, clear, getBytesInUse, onChanged) match spec exactly
+Steps:
+	1.	Reflect on Object.keys(chrome.storage.local).
+Assertions:
+	•	No extra or missing methods.
+
+
+
+
+
+TEST: Verify that each storage area exposes a setAccessLevel method per spec
+Steps:
+	1.	In a trusted context (background script), inspect chrome.storage.local.setAccessLevel,
+chrome.storage.sync.setAccessLevel, and chrome.storage.session.setAccessLevel.
+Assertions:
+	•	typeof chrome.storage.local.setAccessLevel === "function"
+	•	typeof chrome.storage.sync.setAccessLevel === "function"
+	•	typeof chrome.storage.session.setAccessLevel === "function"  ￼
+TEST: Confirm default access levels for each area
+Steps:
+	1.	In a content script, test availability of each area:
+
+"local" in chrome.storage   // should be true
+Assertions:
+	•	local and sync are present (exposed by default)
+	•	session is not present by default  ￼ ￼
+
+TEST: Test making session available to content scripts
+Steps:
+	1.	In background script (trusted), call
+
+chrome.storage.session.setAccessLevel({ accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS" });
+
+	2.	Reload the extension, then in a content script:
+
+"session" in chrome.storage
+
+Assertions:
+	•	After setAccessLevel, chrome.storage.session is defined in content scripts  ￼
+
+
+TEST: Test restricting sync (or local) to only trusted contexts
+Steps:
+	1.	In background, call
+
+chrome.storage.sync.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" });
+chrome.storage.local.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" });
+
+
+	2.	Reload, then in a content script check:
+
+chrome.storage.sync  // expect undefined
+chrome.storage.local // expect undefined
+
+
+Assertions:
+	•	Both sync and local are no longer available in content scripts
+
+
+TEST: Ensure invalid accessLevel values are rejected
+Steps:
+	1.	In background, call
+
+chrome.storage.session.setAccessLevel({ accessLevel: "NOT_A_REAL_LEVEL" }, cb);
+
+Assertions:
+	•	cb is invoked with chrome.runtime.lastError set
+	•	No change in visibility of session
+
+TEST: Verify that setAccessLevel can only be called in trusted contexts
+Steps:
+	1.	In a content script, call
+
+chrome.storage.session.setAccessLevel({ accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS" }, cb);
+
+Assertions:
+	•	cb sees a lastError indicating “not allowed in this context”
+	•	session remains unavailable
+
+
+TEST: Test that changing access levels fires no spurious onChanged events
+Steps:
+	1.	In background, add a chrome.storage.onChanged listener.
+	2.	Call each area’s setAccessLevel.
+Assertions:
+	•	No onChanged events are emitted when you only change access levels
+TEST: Confirm persistence of access level across extension reloads
+Steps:
+	1.	In background, call
+
+chrome.storage.local.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" });
+
+	2.	Reload extension.
+	3.	In content script, check availability of local.
+Assertions:
+	•	local is still unavailable in the content script after reload
+
+
+TEST: Validate that access-level changes apply immediately (no need to restart contexts)
+Steps:
+	1.	In background, call
+
+chrome.storage.session.setAccessLevel({ accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS" });
+
+	2.	Immediately inject a content script into an already-open tab and check for session.
+Assertions:
+	•	Injected script sees chrome.storage.session without requiring a browser reload
+
+TEST: Test error when calling setAccessLevel on non-existent areas (e.g., managed)
+Steps:
+	1.	In background, call
+
+chrome.storage.managed.setAccessLevel({ accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS" }, cb);
+
+Assertions:
+	•	cb receives lastError indicating “method not found” or “read-only area”
+

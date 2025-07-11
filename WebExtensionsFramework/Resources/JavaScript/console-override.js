@@ -1,6 +1,6 @@
 (() => {
     'use strict';
-    
+    // console-override.js
     // Get the proper global object reference
     const global = (function() {
         if (typeof globalThis !== 'undefined') return globalThis;

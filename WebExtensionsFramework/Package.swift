@@ -41,7 +41,7 @@ let package = Package(
         ),
         .testTarget(
             name: "WebExtensionsFrameworkTests",
-            dependencies: ["WebExtensionsFramework"],
+            dependencies: ["WebExtensionsFramework", "BrowserExtensionShared"],
             resources: [
                 .copy("Resources")
             ]

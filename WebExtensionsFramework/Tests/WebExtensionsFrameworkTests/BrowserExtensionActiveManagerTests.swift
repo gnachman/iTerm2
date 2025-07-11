@@ -321,14 +321,16 @@ extension BrowserExtensionActiveManager {
         let network = BrowserExtensionNetwork()
         let router = BrowserExtensionRouter(network: network, logger: logger)
         
-        self.init(
+        let dependencies = Dependencies(
             injectionScriptGenerator: BrowserExtensionContentScriptInjectionGenerator(logger: logger),
             userScriptFactory: BrowserExtensionUserScriptFactory(),
             backgroundService: backgroundService,
             network: network,
             router: router,
-            logger: logger
+            logger: logger,
+            storageManager: MockStorageManager()
         )
+        self.init(dependencies: dependencies)
     }
 }
 

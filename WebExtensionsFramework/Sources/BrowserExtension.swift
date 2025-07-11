@@ -58,14 +58,16 @@ public class BrowserExtension {
     public let id: UUID
     
     /// Loaded content script resources
-    public private(set) var contentScriptResources: [ContentScriptResource] = []
+    public var contentScriptResources: [ContentScriptResource] = []
     
     /// Loaded background script resource
-    public private(set) var backgroundScriptResource: BackgroundScriptResource?
+    public var backgroundScriptResource: BackgroundScriptResource?
     
     /// Logger for debugging and error reporting
     private let logger: BrowserExtensionLogger
-    
+
+    var mockFilesystem = [String: String]()
+
     /// Initialize a browser extension
     /// - Parameters:
     ///   - manifest: The extension's manifest
@@ -75,6 +77,19 @@ public class BrowserExtension {
         self.manifest = manifest
         self.baseURL = baseURL
         self.id = UUID()
+        self.logger = logger
+    }
+    
+    /// Initialize a browser extension with a specific ID
+    /// - Parameters:
+    ///   - id: The extension's unique identifier
+    ///   - manifest: The extension's manifest
+    ///   - baseURL: Base URL for the extension's files
+    ///   - logger: Logger for debugging and error reporting
+    public init(id: UUID, manifest: ExtensionManifest, baseURL: URL, logger: BrowserExtensionLogger) {
+        self.manifest = manifest
+        self.baseURL = baseURL
+        self.id = id
         self.logger = logger
     }
 
@@ -166,6 +181,9 @@ public class BrowserExtension {
     
     /// Load content from a file relative to the extension's base URL
     private func loadFileContent(_ relativePath: String) throws -> String {
+        if let content = mockFilesystem[relativePath] {
+            return content
+        }
         let fileURL = baseURL.appendingPathComponent(relativePath)
         
         do {
