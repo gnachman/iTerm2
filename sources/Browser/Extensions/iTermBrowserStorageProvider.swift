@@ -1,5 +1,5 @@
 //
-//  BrowserStorageProvider.swift
+//  iTermBrowserStorageProvider.swift
 //  iTerm2
 //
 //  Created by George Nachman on 7/11/25.
@@ -7,7 +7,7 @@
 
 import WebExtensionsFramework
 
-class BrowserStorageProvider: BrowserExtensionStorageProvider {
+class iTermBrowserStorageProvider: BrowserExtensionStorageProvider {
     private let _database: BrowserDatabase
     private var ephemeralDatabases = [StorageKey: BrowserDatabase]()
     private var accessLevels = [StorageKey: BrowserExtensionStorageAccessLevel]()

@@ -2159,6 +2159,7 @@
 		A667F3901B49FC2E00705186 /* iTermToolbeltSplitView.m in Sources */ = {isa = PBXBuildFile; fileRef = A667F38E1B49FC2E00705186 /* iTermToolbeltSplitView.m */; };
 		A667F3931B4CC8BA00705186 /* iTermBadgeLabel.h in Headers */ = {isa = PBXBuildFile; fileRef = A667F3911B4CC8BA00705186 /* iTermBadgeLabel.h */; };
 		A667F3971B4F71AE00705186 /* iTermSavePanel.h in Headers */ = {isa = PBXBuildFile; fileRef = A667F3951B4F71AE00705186 /* iTermSavePanel.h */; };
+		A668E5102E2616BF00EE1627 /* iTermBrowserExtensionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A668E50F2E2616BE00EE1627 /* iTermBrowserExtensionManager.swift */; };
 		A668E8A21E7EFEA5005F8758 /* iTermURLStore.h in Headers */ = {isa = PBXBuildFile; fileRef = A668E8A01E7EFEA5005F8758 /* iTermURLStore.h */; };
 		A668E8A31E7EFEA5005F8758 /* iTermURLStore.m in Sources */ = {isa = PBXBuildFile; fileRef = A668E8A11E7EFEA5005F8758 /* iTermURLStore.m */; };
 		A66A1EE02B6EB7F10083FC3B /* AppSwitchingPreventionDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = A66A1EDF2B6EB7F10083FC3B /* AppSwitchingPreventionDetector.swift */; };
@@ -3053,7 +3054,7 @@
 		A69D721B264716FC009D6EAC /* UnselectedTabShadow.png in Resources */ = {isa = PBXBuildFile; fileRef = A69D721A264716FC009D6EAC /* UnselectedTabShadow.png */; };
 		A69D721C264716FC009D6EAC /* UnselectedTabShadow.png in Resources */ = {isa = PBXBuildFile; fileRef = A69D721A264716FC009D6EAC /* UnselectedTabShadow.png */; };
 		A69F59382E21C2C500B96E1B /* BrowserKeyValueStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69F59372E21C2C200B96E1B /* BrowserKeyValueStore.swift */; };
-		A69F593E2E21CBF900B96E1B /* BrowserStorageProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69F593A2E21CB9B00B96E1B /* BrowserStorageProvider.swift */; };
+		A69F593E2E21CBF900B96E1B /* iTermBrowserStorageProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69F593A2E21CB9B00B96E1B /* iTermBrowserStorageProvider.swift */; };
 		A69FEECD2E123B8700AFF7A8 /* iTermSwiftPackages.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A69FEEBA2E123B8700AFF7A8 /* iTermSwiftPackages.framework */; };
 		A69FEECE2E123B8700AFF7A8 /* iTermSwiftPackages.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A69FEEBA2E123B8700AFF7A8 /* iTermSwiftPackages.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A69FEEDB2E12400900AFF7A8 /* NIOCore in Frameworks */ = {isa = PBXBuildFile; productRef = A69FEEDA2E12400900AFF7A8 /* NIOCore */; };
@@ -7118,6 +7119,7 @@
 		A667F3921B4CC8BA00705186 /* iTermBadgeLabel.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermBadgeLabel.m; sourceTree = "<group>"; };
 		A667F3951B4F71AE00705186 /* iTermSavePanel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSavePanel.h; sourceTree = "<group>"; };
 		A667F3961B4F71AE00705186 /* iTermSavePanel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSavePanel.m; sourceTree = "<group>"; };
+		A668E50F2E2616BE00EE1627 /* iTermBrowserExtensionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserExtensionManager.swift; sourceTree = "<group>"; };
 		A668E8A01E7EFEA5005F8758 /* iTermURLStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermURLStore.h; sourceTree = "<group>"; };
 		A668E8A11E7EFEA5005F8758 /* iTermURLStore.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermURLStore.m; sourceTree = "<group>"; };
 		A66A1EDF2B6EB7F10083FC3B /* AppSwitchingPreventionDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSwitchingPreventionDetector.swift; sourceTree = "<group>"; };
@@ -7763,7 +7765,7 @@
 		A69D6AE427B649B5006E3991 /* RunLengthEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunLengthEncoder.swift; sourceTree = "<group>"; };
 		A69D721A264716FC009D6EAC /* UnselectedTabShadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = UnselectedTabShadow.png; sourceTree = "<group>"; };
 		A69F59372E21C2C200B96E1B /* BrowserKeyValueStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserKeyValueStore.swift; sourceTree = "<group>"; };
-		A69F593A2E21CB9B00B96E1B /* BrowserStorageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserStorageProvider.swift; sourceTree = "<group>"; };
+		A69F593A2E21CB9B00B96E1B /* iTermBrowserStorageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserStorageProvider.swift; sourceTree = "<group>"; };
 		A69FEEBA2E123B8700AFF7A8 /* iTermSwiftPackages.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = iTermSwiftPackages.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		A69FF3882E12FC3500AFF7A8 /* iTermBrowserContextMenuHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserContextMenuHelper.swift; sourceTree = "<group>"; };
 		A69FF38A2E13012900AFF7A8 /* iTermContextMenuUtilities.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermContextMenuUtilities.h; sourceTree = "<group>"; };
@@ -12638,7 +12640,8 @@
 		A69F59392E21CB9100B96E1B /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
-				A69F593A2E21CB9B00B96E1B /* BrowserStorageProvider.swift */,
+				A668E50F2E2616BE00EE1627 /* iTermBrowserExtensionManager.swift */,
+				A69F593A2E21CB9B00B96E1B /* iTermBrowserStorageProvider.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -13252,8 +13255,6 @@
 		A6CBB8202E0A1CE000B2CCCB /* Core */ = {
 			isa = PBXGroup;
 			children = (
-				A6C7C9702E18F26E00AA7668 /* iTermBrowserWebViewHandlerProxy.swift */,
-				A6C7C96E2E1730A400AA7668 /* iTermBrowserUserState.swift */,
 				A6CBB7FD2E09163A00B2CCCB /* check-iframe-origins.js */,
 				A6FE7A862E0E252300BEBCE4 /* hover-link-detector.js */,
 				A69FF3B62E1316CD00AFF7A8 /* monitor-context-menu.js */,
@@ -13273,8 +13274,10 @@
 				A6FE7AA82E0F121F00BEBCE4 /* iTermBrowserRestorableState.swift */,
 				A69FF3AE2E1311F500AFF7A8 /* iTermBrowserSelectionMonitor.swift */,
 				A6FE7A742E0DF12600BEBCE4 /* iTermBrowserUser.swift */,
+				A6C7C96E2E1730A400AA7668 /* iTermBrowserUserState.swift */,
 				A6F7D4B42E0340A80065D09C /* iTermBrowserViewController.swift */,
 				A6F7D4D82E03DB420065D09C /* iTermBrowserWebView.swift */,
+				A6C7C9702E18F26E00AA7668 /* iTermBrowserWebViewHandlerProxy.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -18349,7 +18352,7 @@
 				A6FF3F332435C8E5003CCB03 /* iTermSplitViewAnimation.m in Sources */,
 				A6D1784021BC599900FE499C /* iTermSavePanel.m in Sources */,
 				A65618682D670D300059CD35 /* ChatInputTextFieldContainer.swift in Sources */,
-				A69F593E2E21CBF900B96E1B /* BrowserStorageProvider.swift in Sources */,
+				A69F593E2E21CBF900B96E1B /* iTermBrowserStorageProvider.swift in Sources */,
 				A6A4867820B67C9500493302 /* ProfilesColorsPreferencesViewController.m in Sources */,
 				A682273C2801F355005DF0B4 /* SavePanelBuiltInFunction.swift in Sources */,
 				A60E045D26DED32A00DD162B /* StatusBarFilterComponent.swift in Sources */,
@@ -18799,6 +18802,7 @@
 				A6BC9B1F214A2AE900F50C09 /* iTermVariableReference.m in Sources */,
 				A64B68DB2337314E009DA064 /* ToolCapturedOutputView.m in Sources */,
 				530098512259A44D00A69348 /* iTermSoundPlayer.m in Sources */,
+				A668E5102E2616BF00EE1627 /* iTermBrowserExtensionManager.swift in Sources */,
 				A6CBB8122E0A16A700B2CCCB /* iTermBookmarkTagEditorWindowController.swift in Sources */,
 				A621F10726F53071001DD3A6 /* iTermExternalAttributeIndex.m in Sources */,
 				A6D1784721BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.m in Sources */,
