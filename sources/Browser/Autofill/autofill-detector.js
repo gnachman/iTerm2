@@ -3,15 +3,15 @@
     
     // Prevent multiple script executions
     if (window.iTermAutofillDetectorLoaded) {
-        console.log("autofill detector already loaded, skipping");
+        console.debug("autofill detector already loaded, skipping");
         return;
     }
     window.iTermAutofillDetectorLoaded = true;
     
     const handlerName = 'iTermAutofillHandler';
     const sessionSecret = "{{SECRET}}";
-    console.log("autofill detector running");
-    
+    console.debug("autofill detector running");
+
     // Map to track which fields have buttons
     const fieldButtons = new WeakMap();
     
@@ -322,7 +322,7 @@
             });
             
             if (fieldRemoved) {
-                console.log(`Field ${field.id || field.name} was removed or hidden, cleaning up button`);
+                console.debug(`Field ${field.id || field.name} was removed or hidden, cleaning up button`);
                 observer.disconnect();
                 fieldButtons.delete(field);
                 if (btn.parentNode) {
@@ -373,7 +373,7 @@
         btn.style.display = 'flex';
         
         // Debug log
-        console.log(`Button positioned for ${field.id || field.name}: top=${window.scrollY + topPosition} (scrollY=${window.scrollY} + ${topPosition}), left=${window.scrollX + leftPosition} (scrollX=${window.scrollX} + ${leftPosition}), size=${side}`);
+        console.debug(`Button positioned for ${field.id || field.name}: top=${window.scrollY + topPosition} (scrollY=${window.scrollY} + ${topPosition}), left=${window.scrollX + leftPosition} (scrollX=${window.scrollX} + ${leftPosition}), size=${side}`);
     }
     
     // Check if field is truly visible and user-interactable
@@ -422,7 +422,7 @@
         if (fieldType && isInteractable) {
             let btn = fieldButtons.get(field);
             if (!btn) {
-                console.log(`Creating button for ${field.id || field.name} (type: ${fieldType})`);
+                console.debug(`Creating button for ${field.id || field.name} (type: ${fieldType})`);
                 btn = createAutofillButton(field, fieldType);
                 fieldButtons.set(field, btn);
             }
@@ -431,7 +431,7 @@
             // Debug why field is being rejected
             if (fieldType && !isInteractable) {
                 const rect = field.getBoundingClientRect();
-                console.log(`Field ${field.id || field.name} rejected: type=${fieldType}, rect=${rect.width}x${rect.height}, visible=${field.offsetParent !== null}`);
+                console.debug(`Field ${field.id || field.name} rejected: type=${fieldType}, rect=${rect.width}x${rect.height}, visible=${field.offsetParent !== null}`);
             }
             
             const btn = fieldButtons.get(field);
@@ -451,8 +451,8 @@
     // Show buttons on all autofillable fields
     function showAllButtons() {
         const inputs = document.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]), select');
-        console.log(`showAllButtons: checking ${inputs.length} inputs`);
-        
+        console.debug(`showAllButtons: checking ${inputs.length} inputs`);
+
         let buttonCount = 0;
         inputs.forEach(input => {
             const fieldType = detectFieldType(input);
@@ -461,7 +461,7 @@
                 buttonCount++;
             }
         });
-        console.log(`showAllButtons: updated ${buttonCount} buttons`);
+        console.debug(`showAllButtons: updated ${buttonCount} buttons`);
     }
     
     // Event listeners
@@ -482,7 +482,7 @@
             // Check if this field is newly detectable (for dynamically loaded content)
             const fieldType = detectFieldType(field);
             if (fieldType && isFieldInteractable(field) && !fieldButtons.has(field)) {
-                console.log(`Focused field ${field.id || field.name} is newly detectable, adding button`);
+                console.debug(`Focused field ${field.id || field.name} is newly detectable, adding button`);
                 updateFieldButton(field);
             }
         } else {
@@ -525,18 +525,18 @@
             }
         });
         
-        console.log(`Found ${autofillableFields.length} autofillable fields`);
-        
+        console.debug(`Found ${autofillableFields.length} autofillable fields`);
+
         // Show buttons on all autofillable fields
         showAllButtons();
     }
     
     // Debug function to log all field detection and button status
     window.debugAutofillFields = function() {
-        console.log('=== AUTOFILL DEBUG ===');
+        console.debug('=== AUTOFILL DEBUG ===');
         const inputs = document.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]), select');
-        console.log(`Found ${inputs.length} total input/select elements`);
-        
+        console.debug(`Found ${inputs.length} total input/select elements`);
+
         // Remove any existing debug outlines
         document.querySelectorAll('.iterm-debug-outline').forEach(el => el.remove());
         
@@ -611,32 +611,32 @@
                 buttonVisible: button ? button.style.display : 'N/A',
                 buttonPosition: button ? `top:${button.style.top} left:${button.style.left}` : 'N/A'
             };
-            console.log(`Field ${index + 1}:`, JSON.stringify(fieldInfo, null, 2));
+            console.debug(`Field ${index + 1}:`, JSON.stringify(fieldInfo, null, 2));
         });
         
-        console.log(`\nSUMMARY:`);
-        console.log(`- Total fields: ${inputs.length}`);
-        console.log(`- Detected as autofillable: ${detectedCount}`);
-        console.log(`- Have buttons created: ${buttonCount}`);
-        console.log(`- Buttons visible: ${visibleButtonCount}`);
-        
+        console.debug(`\nSUMMARY:`);
+        console.debug(`- Total fields: ${inputs.length}`);
+        console.debug(`- Detected as autofillable: ${detectedCount}`);
+        console.debug(`- Have buttons created: ${buttonCount}`);
+        console.debug(`- Buttons visible: ${visibleButtonCount}`);
+
         // Check for existing buttons in DOM
         const allButtons = document.querySelectorAll('[data-iterm-autofill]');
-        console.log(`- Autofill buttons in DOM: ${allButtons.length}`);
-        
+        console.debug(`- Autofill buttons in DOM: ${allButtons.length}`);
+
         allButtons.forEach((btn, index) => {
             const rect = btn.getBoundingClientRect();
-            console.log(`Button ${index + 1}: display=${btn.style.display}, position=${btn.style.top},${btn.style.left}, rect=${rect.top},${rect.left},${rect.width},${rect.height}`);
+            console.debug(`Button ${index + 1}: display=${btn.style.display}, position=${btn.style.top},${btn.style.left}, rect=${rect.top},${rect.left},${rect.width},${rect.height}`);
         });
         
-        console.log('=== END AUTOFILL DEBUG ===');
-        console.log('Red outlines show all form fields. Use window.clearAutofillDebug() to remove them.');
+        console.debug('=== END AUTOFILL DEBUG ===');
+        console.debug('Red outlines show all form fields. Use window.clearAutofillDebug() to remove them.');
     };
     
     // Function to clear debug outlines
     window.clearAutofillDebug = function() {
         document.querySelectorAll('.iterm-debug-outline').forEach(el => el.remove());
-        console.log('Debug outlines cleared.');
+        console.debug('Debug outlines cleared.');
     };
     
     // Clean up orphaned buttons (buttons whose fields no longer exist)
@@ -656,7 +656,7 @@
                     } else {
                         // Field is gone or hidden, mark for cleanup
                         fieldsToDelete.push(field);
-                        console.log(`Cleaning up orphaned button for field ${field.id || field.name}`);
+                        console.debug(`Cleaning up orphaned button for field ${field.id || field.name}`);
                         cleanedCount++;
                     }
                     break;
@@ -668,7 +668,7 @@
                 if (btn.parentNode) {
                     btn.parentNode.removeChild(btn);
                     cleanedCount++;
-                    console.log('Removed orphaned button with no associated field');
+                    console.debug('Removed orphaned button with no associated field');
                 }
             }
         });
@@ -683,7 +683,7 @@
         });
         
         if (cleanedCount > 0) {
-            console.log(`Cleaned up ${cleanedCount} orphaned buttons`);
+            console.debug(`Cleaned up ${cleanedCount} orphaned buttons`);
         }
     }
     
@@ -708,13 +708,13 @@
         });
         
         if (majorChange) {
-            console.log('Major DOM change detected, cleaning up and rescanning');
-            
+            console.debug('Major DOM change detected, cleaning up and rescanning');
+
             // More aggressive cleanup - remove all buttons and clear the map
             try {
                 const allButtons = document.querySelectorAll('[data-iterm-autofill]');
-                console.log(`Removing ${allButtons.length} existing autofill buttons`);
-                
+                console.debug(`Removing ${allButtons.length} existing autofill buttons`);
+
                 // First, clear the WeakMap by finding all fields that have buttons
                 const fieldsWithButtons = [];
                 const allInputs = document.querySelectorAll('input, select');
@@ -724,8 +724,8 @@
                     }
                 });
                 
-                console.log(`Found ${fieldsWithButtons.length} fields with buttons in WeakMap`);
-                
+                console.debug(`Found ${fieldsWithButtons.length} fields with buttons in WeakMap`);
+
                 // Remove buttons from DOM and clear WeakMap entries
                 allButtons.forEach(btn => {
                     if (btn.parentNode) {
@@ -738,15 +738,15 @@
                     fieldButtons.delete(field);
                 });
                 
-                console.log(`Cleared ${fieldsWithButtons.length} entries from fieldButtons WeakMap`);
-                
+                console.debug(`Cleared ${fieldsWithButtons.length} entries from fieldButtons WeakMap`);
+
             } catch (error) {
-                console.log('Error during cleanup:', error);
+                console.debug('Error during cleanup:', error);
             }
             
             // Small delay to let DOM stabilize, then rescan
             setTimeout(() => {
-                console.log('Rescanning for new fields after DOM change');
+                console.debug('Rescanning for new fields after DOM change');
                 showAllButtons();
             }, 200);
         }
@@ -768,14 +768,14 @@
     // Do a one-time rescan after 2 seconds to catch dynamically loaded fields
     if (!delayedRescanScheduled) {
         delayedRescanScheduled = true;
-        console.log(`Scheduling one-time rescan for URL: ${window.location.href}`);
+        console.debug(`Scheduling one-time rescan for URL: ${window.location.href}`);
         setTimeout(() => {
-            console.log(`Performing one-time rescan for URL: ${window.location.href}`);
-            console.log('This will reposition all existing buttons to handle layout changes');
+            console.debug(`Performing one-time rescan for URL: ${window.location.href}`);
+            console.debug('This will reposition all existing buttons to handle layout changes');
             try {
                 showAllButtons();
             } catch (error) {
-                console.log('Error during delayed rescan:', error);
+                console.debug('Error during delayed rescan:', error);
             }
         }, 2000);
     }
