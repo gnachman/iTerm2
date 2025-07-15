@@ -795,11 +795,11 @@ class ChromeStorageTests: XCTestCase {
     // TEST 14: Confirm storage persistence across extension reloads
     func testStoragePersistence() async throws {
         let end = "End"
-        let uuid = UUID()
+        let extensionId = ExtensionID()
         // First test runner - set the value
         do {
             let testExtension = ExtensionTestingInfrastructure.TestExtension(
-                id: uuid,
+                id: extensionId,
                 permissions: ["storage"],
                 backgroundScripts: [
                     "background.js": """
@@ -829,7 +829,7 @@ class ChromeStorageTests: XCTestCase {
         do {
             // Verify the value persists
             let testExtension = ExtensionTestingInfrastructure.TestExtension(
-                id: uuid,
+                id: extensionId,
                 permissions: ["storage"],
                 backgroundScripts: [
                     "background.js": """

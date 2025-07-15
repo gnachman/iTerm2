@@ -21,7 +21,7 @@ final class BrowserExtensionTests: XCTestCase {
         XCTAssertEqual(actualManifest.name, "Test Extension")
         XCTAssertEqual(actualBaseURL, extensionURL)
         // ID should be a valid UUID, not empty
-        XCTAssertNotEqual(actualID.uuidString, "")
+        XCTAssertNotEqual(actualID.stringValue, "")
     }
     
     func testExtensionUniqueIDs() async {

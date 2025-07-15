@@ -17,13 +17,13 @@ class ExtensionTestingInfrastructure {
     
     /// A test extension configuration
     struct TestExtension {
-        let id: UUID
+        let id: ExtensionID
         let manifest: [String: Any]
         let contentScripts: [String: String] // filename -> script content
         let backgroundScripts: [String: String] // filename -> script content
         let webPages: [String: String] // filename -> HTML content
         
-        init(id: UUID = UUID(), 
+        init(id: ExtensionID = ExtensionID(), 
              permissions: [String] = [],
              contentScripts: [String: String] = [:],
              backgroundScripts: [String: String] = [:],
@@ -89,8 +89,8 @@ class ExtensionTestingInfrastructure {
         private var activeManager: BrowserExtensionActiveManager
         private let logger: BrowserExtensionLogger
         private var webViews: [TestContextType: AsyncWKWebView] = [:]
-        private var extensions: [UUID: TestExtension] = [:]
-        private var activatedExtensions: [UUID: BrowserExtension] = [:]
+        private var extensions: [ExtensionID: TestExtension] = [:]
+        private var activatedExtensions: [ExtensionID: BrowserExtension] = [:]
         private var assertions: [JavaScriptAssertion] = []
         private var expectedReached: [String] = []
         private var reached: [JavaScriptReached] = []
@@ -141,7 +141,7 @@ class ExtensionTestingInfrastructure {
                                                                      forMainFrameOnly: false,
                                                                      worlds: [],
                                                                      identifier: "resolveContentScriptComplete")]
-            activeManager.debugHandlers = [.init(scriptMessageHandler: BrowserExtensionConsoleLogHandler(extensionId: UUID(), logger: logger),
+            activeManager.debugHandlers = [.init(scriptMessageHandler: BrowserExtensionConsoleLogHandler(extensionId: ExtensionID(), logger: logger),
                                                  name: "consoleLog"),
                                            .init(scriptMessageHandler: AssertionMessageHandler(testRunner: self),
                                                  name: "assertions"),]
@@ -266,7 +266,7 @@ class ExtensionTestingInfrastructure {
             return (webView, userContentManager)
         }
 
-        func unblockBackgroundScript(extensionId: UUID, blockName: String) async {
+        func unblockBackgroundScript(extensionId: ExtensionID, blockName: String) async {
             let iife = """
             (async () => {
                 console.debug('Waiting for \(blockName) to complete in background script');
@@ -278,7 +278,7 @@ class ExtensionTestingInfrastructure {
             _ = try! await activeManager.backgroundScriptWebView(in: extensionId)!.be_evaluateJavaScript(iife, in: nil, in: .page)
         }
 
-        func waitForBackgroundScriptCompletion(_ extensionId: UUID, name: String = "Complete") async {
+        func waitForBackgroundScriptCompletion(_ extensionId: ExtensionID, name: String = "Complete") async {
             let js = """
             console.debug('Waiting for background script \(name)');
             await __promiseFor\(name);
@@ -300,7 +300,7 @@ class ExtensionTestingInfrastructure {
             logger.debug("Swift done waiting on \(name)")
         }
 
-        func unblockContentScript(_ id: UUID, webView: BrowserExtensionWKWebView, name: String) async {
+        func unblockContentScript(_ id: ExtensionID, webView: BrowserExtensionWKWebView, name: String) async {
             let iife = """
             (async () => {
                 console.debug('Waiting for \(name) to complete in content script');
@@ -312,16 +312,16 @@ class ExtensionTestingInfrastructure {
             _ = try! await webView.be_evaluateJavaScript(
                 iife,
                 in: nil,
-                in: activeManager.contentWorld(for: id.uuidString)!)
+                in: activeManager.contentWorld(for: id.stringValue)!)
         }
 
-        func waitForContentScriptCompletion(_ id: UUID, webView: BrowserExtensionWKWebView, name: String="Complete") async {
+        func waitForContentScriptCompletion(_ id: ExtensionID, webView: BrowserExtensionWKWebView, name: String="Complete") async {
             let js = """
             console.debug('Waiting for \(name) completion');
             await __promiseFor\(name);
             console.debug('\(name) complete');
             """
-            _ = try! await webView.be_callAsyncJavaScript(js, arguments: [:], in: nil, in: activeManager.contentWorld(for: id.uuidString)!)
+            _ = try! await webView.be_callAsyncJavaScript(js, arguments: [:], in: nil, in: activeManager.contentWorld(for: id.stringValue)!)
         }
 
         private var currentPageView: AsyncWKWebView?
@@ -340,7 +340,7 @@ class ExtensionTestingInfrastructure {
             browserExtension = BrowserExtension(
                 id: extensionId,
                 manifest: manifest,
-                baseURL: URL(string: "chrome-extension://\(extensionId.uuidString)/")!,
+                baseURL: URL(string: "chrome-extension://\(extensionId.stringValue)/")!,
                 logger: logger
             )
             browserExtension.mockFilesystem = filesystem
@@ -422,7 +422,7 @@ class ExtensionTestingInfrastructure {
         }
         
         /// Load a web page into a web view
-        func loadWebPage(extensionId: UUID, pageName: String, into webView: AsyncWKWebView) async throws {
+        func loadWebPage(extensionId: ExtensionID, pageName: String, into webView: AsyncWKWebView) async throws {
             guard let testExtension = extensions[extensionId],
                   let htmlContent = testExtension.webPages[pageName] else {
                 throw TestError.webPageNotFound(pageName)
@@ -434,7 +434,7 @@ class ExtensionTestingInfrastructure {
         /// Execute JavaScript in a web view and return the result
         func executeJavaScript(_ script: String,
                                contextType: TestContextType,
-                               extensionId: UUID,
+                               extensionId: ExtensionID,
                                contentWebView: BrowserExtensionWKWebView?) async throws -> Any? {
             switch contextType {
             case .backgroundScript:
@@ -444,7 +444,7 @@ class ExtensionTestingInfrastructure {
                 return try await contentWebView!.be_evaluateJavaScript(
                     script,
                     in: nil,
-                    in: activeManager.contentWorld(for: extensionId.uuidString)!)
+                    in: activeManager.contentWorld(for: extensionId.stringValue)!)
             case .untrustedWebPage:
                 return try await contentWebView!.be_evaluateJavaScript(
                     script,
@@ -455,7 +455,7 @@ class ExtensionTestingInfrastructure {
 
         func callAsyncJavaScript(_ script: String,
                                contextType: TestContextType,
-                               extensionId: UUID,
+                               extensionId: ExtensionID,
                                contentWebView: BrowserExtensionWKWebView?) async throws -> Any? {
             switch contextType {
             case .backgroundScript:
@@ -470,7 +470,7 @@ class ExtensionTestingInfrastructure {
                     script,
                     arguments: [:],
                     in: nil,
-                    in: activeManager.contentWorld(for: extensionId.uuidString)!)
+                    in: activeManager.contentWorld(for: extensionId.stringValue)!)
             case .untrustedWebPage:
                 return try await contentWebView!.be_callAsyncJavaScript(
                     script,
@@ -530,12 +530,12 @@ class ExtensionTestingInfrastructure {
         // MARK: - Extension Lifecycle Control
         
         /// Disable an extension (makes storage APIs non-functional)
-        func disableExtension(_ extensionId: UUID) async {
+        func disableExtension(_ extensionId: ExtensionID) async {
             await activeManager.deactivate(extensionId)
         }
         
         /// Re-enable a previously disabled extension
-        func enableExtension(_ extensionId: UUID) async throws {
+        func enableExtension(_ extensionId: ExtensionID) async throws {
             guard let testExtension = extensions[extensionId] else {
                 throw TestError.extensionNotFound(extensionId)
             }
@@ -544,7 +544,7 @@ class ExtensionTestingInfrastructure {
             let manifest = try createManifest(from: testExtension, filesystem: &filesystem)
             let browserExtension = BrowserExtension(
                 manifest: manifest,
-                baseURL: URL(string: "chrome-extension://\(extensionId.uuidString)/")!,
+                baseURL: URL(string: "chrome-extension://\(extensionId.stringValue)/")!,
                 logger: logger
             )
             
@@ -552,13 +552,13 @@ class ExtensionTestingInfrastructure {
         }
         
         /// Unload an extension completely (removes it from the system)
-        func unloadExtension(_ extensionId: UUID) async {
+        func unloadExtension(_ extensionId: ExtensionID) async {
             await activeManager.deactivate(extensionId)
             extensions.removeValue(forKey: extensionId)
         }
         
         /// Reload an extension (simulates extension reload in browser)
-        func reloadExtension(_ extensionId: UUID) async throws {
+        func reloadExtension(_ extensionId: ExtensionID) async throws {
             // Deactivate first
             await activeManager.deactivate(extensionId)
             
@@ -582,7 +582,7 @@ class ExtensionTestingInfrastructure {
         }
         
         /// Simulate extension shutdown
-        func simulateShutdown(_ extensionId: UUID) async {
+        func simulateShutdown(_ extensionId: ExtensionID) async {
             // Mark extension as shutting down - future API calls should fail fast
             await activeManager.deactivate(extensionId)
             
@@ -591,12 +591,12 @@ class ExtensionTestingInfrastructure {
         }
         
         /// Corrupt storage data for testing error handling
-        func corruptStorageData(for extensionId: UUID) {
+        func corruptStorageData(for extensionId: ExtensionID) {
             storageProvider.corruptData(for: extensionId)
         }
         
         /// Check if an extension is currently active
-        func isExtensionActive(_ extensionId: UUID) -> Bool {
+        func isExtensionActive(_ extensionId: ExtensionID) -> Bool {
             return activeManager.activeExtension(for: extensionId) != nil
         }
         
@@ -640,7 +640,7 @@ class ExtensionTestingInfrastructure {
     
     /// Test-specific errors
     enum TestError: Error, LocalizedError {
-        case extensionNotFound(UUID)
+        case extensionNotFound(ExtensionID)
         case webPageNotFound(String)
         case scriptExecutionFailed(String)
         
@@ -659,7 +659,7 @@ class ExtensionTestingInfrastructure {
 
 /// Mock browser extension for testing
 struct MockBrowserExtension {
-    let id: UUID
+    let id: ExtensionID
     let permissions: [BrowserExtensionAPIPermission]
     let manifest: [String: Any]
     

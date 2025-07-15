@@ -152,7 +152,7 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
     /// Test stopping non-existent background script doesn't crash
     func testStopNonExistentBackgroundScript() {
         XCTAssertNoThrow {
-            self.backgroundService.stopBackgroundScript(for: UUID())
+            self.backgroundService.stopBackgroundScript(for: ExtensionID())
         }
     }
     
@@ -660,8 +660,8 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
         if let origin1 = ext1Origin as? String, let origin2 = ext2Origin as? String {
             XCTAssertTrue(origin1.hasPrefix("extension://"), "Extension 1 origin should start with extension://")
             XCTAssertTrue(origin2.hasPrefix("extension://"), "Extension 2 origin should start with extension://")
-            XCTAssertTrue(origin1.lowercased().contains(testExtension1.id.uuidString.lowercased()), "Extension 1 origin should contain its ID")
-            XCTAssertTrue(origin2.lowercased().contains(testExtension2.id.uuidString.lowercased()), "Extension 2 origin should contain its ID")
+            XCTAssertTrue(origin1.lowercased().contains(testExtension1.id.stringValue.lowercased()), "Extension 1 origin should contain its ID")
+            XCTAssertTrue(origin2.lowercased().contains(testExtension2.id.stringValue.lowercased()), "Extension 2 origin should contain its ID")
         } else {
             XCTFail("Origins should be strings, got ext1: \(type(of: ext1Origin)), ext2: \(type(of: ext2Origin))")
         }
@@ -810,8 +810,8 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
         if let origin1 = ext1Origin as? String, let origin2 = ext2Origin as? String {
             XCTAssertTrue(origin1.hasPrefix("extension://"), "Ephemeral Extension 1 origin should start with extension://")
             XCTAssertTrue(origin2.hasPrefix("extension://"), "Ephemeral Extension 2 origin should start with extension://")
-            XCTAssertTrue(origin1.lowercased().contains(testExtension1.id.uuidString.lowercased()), "Ephemeral Extension 1 origin should contain its ID")
-            XCTAssertTrue(origin2.lowercased().contains(testExtension2.id.uuidString.lowercased()), "Ephemeral Extension 2 origin should contain its ID")
+            XCTAssertTrue(origin1.lowercased().contains(testExtension1.id.stringValue.lowercased()), "Ephemeral Extension 1 origin should contain its ID")
+            XCTAssertTrue(origin2.lowercased().contains(testExtension2.id.stringValue.lowercased()), "Ephemeral Extension 2 origin should contain its ID")
         } else {
             XCTFail("Ephemeral origins should be strings, got ext1: \(type(of: ext1Origin)), ext2: \(type(of: ext2Origin))")
         }

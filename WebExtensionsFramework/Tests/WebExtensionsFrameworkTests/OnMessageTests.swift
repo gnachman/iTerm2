@@ -563,7 +563,7 @@ class OnMessageTests: XCTestCase {
         XCTAssertEqual(echo?["type"] as? String, "complex")
         
         let sender = response?["sender"] as? [String: Any]
-        XCTAssertEqual(sender?["id"] as? String, mockBrowserExtension.id.uuidString)
+        XCTAssertEqual(sender?["id"] as? String, mockBrowserExtension.id.stringValue)
     }
 }
 

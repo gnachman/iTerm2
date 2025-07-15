@@ -110,7 +110,7 @@ public protocol BrowserExtensionStorageProvider: AnyObject {
     ///   - extensionId: The extension requesting the data
     /// - Returns: A dictionary of key-value pairs. Values are JSON strings.
     /// - Throws: BrowserExtensionStorageProviderError if the operation fails
-    func get(keys: [String]?, area: BrowserExtensionStorageArea, extensionId: UUID) async throws -> [String: String]
+    func get(keys: [String]?, area: BrowserExtensionStorageArea, extensionId: ExtensionID) async throws -> [String: String]
     
     /// Set values in storage and return original values for change detection
     /// - Parameters:
@@ -120,7 +120,7 @@ public protocol BrowserExtensionStorageProvider: AnyObject {
     ///   - hasUnlimitedStorage: Whether the extension has the unlimitedStorage permission
     /// - Returns: Dictionary mapping each key to its original value (nil if key didn't exist)
     /// - Throws: BrowserExtensionStorageProviderError if the operation fails
-    func set(items: [String: String], area: BrowserExtensionStorageArea, extensionId: UUID, hasUnlimitedStorage: Bool) async throws -> [String: String?]
+    func set(items: [String: String], area: BrowserExtensionStorageArea, extensionId: ExtensionID, hasUnlimitedStorage: Bool) async throws -> [String: String?]
     
     /// Remove items from storage and return removed values for change detection
     /// - Parameters:
@@ -129,7 +129,7 @@ public protocol BrowserExtensionStorageProvider: AnyObject {
     ///   - extensionId: The extension requesting removal
     /// - Returns: Dictionary mapping each key to its removed value (nil if key didn't exist)
     /// - Throws: BrowserExtensionStorageProviderError if the operation fails
-    func remove(keys: [String], area: BrowserExtensionStorageArea, extensionId: UUID) async throws -> [String: String?]
+    func remove(keys: [String], area: BrowserExtensionStorageArea, extensionId: ExtensionID) async throws -> [String: String?]
     
     /// Clear all items from storage and return removed values for change detection
     /// - Parameters:
@@ -137,7 +137,7 @@ public protocol BrowserExtensionStorageProvider: AnyObject {
     ///   - extensionId: The extension requesting the clear
     /// - Returns: Dictionary of all removed key-value pairs
     /// - Throws: BrowserExtensionStorageProviderError if the operation fails
-    func clear(area: BrowserExtensionStorageArea, extensionId: UUID) async throws -> [String: String]
+    func clear(area: BrowserExtensionStorageArea, extensionId: ExtensionID) async throws -> [String: String]
     
     /// Get the current storage usage information
     /// - Parameters:
@@ -145,7 +145,7 @@ public protocol BrowserExtensionStorageProvider: AnyObject {
     ///   - extensionId: The extension to check usage for
     /// - Returns: Current bytes used and item count
     /// - Throws: BrowserExtensionStorageProviderError if the operation fails
-    func getUsage(area: BrowserExtensionStorageArea, extensionId: UUID) async throws -> (bytesUsed: Int, itemCount: Int)
+    func getUsage(area: BrowserExtensionStorageArea, extensionId: ExtensionID) async throws -> (bytesUsed: Int, itemCount: Int)
     
     
     /// Get quota information for a storage area
@@ -160,7 +160,7 @@ public protocol BrowserExtensionStorageProvider: AnyObject {
     ///   - area: The storage area to check
     ///   - extensionId: The extension to check
     /// - Returns: The current access level (defaults to trustedContexts)
-    func getStorageAccessLevel(area: BrowserExtensionStorageArea, extensionId: UUID) async -> BrowserExtensionStorageAccessLevel
+    func getStorageAccessLevel(area: BrowserExtensionStorageArea, extensionId: ExtensionID) async -> BrowserExtensionStorageAccessLevel
     
     /// Set the storage access level for an extension and area
     /// - Parameters:
@@ -168,5 +168,5 @@ public protocol BrowserExtensionStorageProvider: AnyObject {
     ///   - area: The storage area to configure (local, sync, or session; not managed)
     ///   - extensionId: The extension to configure
     /// - Throws: BrowserExtensionStorageProviderError if the operation fails
-    func setStorageAccessLevel(_ accessLevel: BrowserExtensionStorageAccessLevel, area: BrowserExtensionStorageArea, extensionId: UUID) async throws
+    func setStorageAccessLevel(_ accessLevel: BrowserExtensionStorageAccessLevel, area: BrowserExtensionStorageArea, extensionId: ExtensionID) async throws
 }

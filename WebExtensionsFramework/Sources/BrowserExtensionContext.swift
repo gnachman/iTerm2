@@ -42,7 +42,7 @@ class BrowserExtensionContext {
              senderWebview: BrowserExtensionWKWebView,
              tab: MessageSender.Tab?,
              frameId: Int?) async {
-            id = sender.id.uuidString
+            id = sender.id.stringValue
             url = (try? await senderWebview.be_evaluateJavaScript(
                 "window.location.href", in: nil, in: WKContentWorld.page) as? String) ?? "about:empty"
             origin = try? await senderWebview.be_evaluateJavaScript("window.origin", in: nil, in: WKContentWorld.page) as? String

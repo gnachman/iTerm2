@@ -25,7 +25,7 @@ class WeakBox<T> {
 /// Defines the role/type of a webview for script injection customization
 public enum WebViewRole: Equatable {
     case userFacing     // User-visible webview - gets content scripts + Chrome APIs
-    case backgroundScript(UUID) // Background service worker - gets Chrome APIs + DOM nuke + console handler
+    case backgroundScript(ExtensionID) // Background service worker - gets Chrome APIs + DOM nuke + console handler
 }
 
 /// Per-webview state tracking
@@ -80,21 +80,21 @@ public protocol BrowserExtensionActiveManagerProtocol: AnyObject {
 
     /// Deactivate an extension and clean up its runtime objects
     /// - Parameter extensionId: The unique identifier for the extension
-    func deactivate(_ extensionId: UUID) async
+    func deactivate(_ extensionId: ExtensionID) async
     
     /// Get an active extension by ID
     /// - Parameter extensionId: The unique identifier for the extension
     /// - Returns: The active extension if found
-    func activeExtension(for extensionId: UUID) -> ActiveExtension?
+    func activeExtension(for extensionId: ExtensionID) -> ActiveExtension?
     
     /// Get all active extensions
     /// - Returns: Dictionary of extension IDs to active extensions
-    func allActiveExtensions() -> [UUID: ActiveExtension]
+    func allActiveExtensions() -> [ExtensionID: ActiveExtension]
     
     /// Check if an extension is active
     /// - Parameter extensionId: The unique identifier for the extension
     /// - Returns: True if the extension is active
-    func isActive(_ extensionId: UUID) -> Bool
+    func isActive(_ extensionId: ExtensionID) -> Bool
     
     /// Deactivate all extensions
     func deactivateAll() async
@@ -144,7 +144,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
         }
     }
     
-    private var activeExtensions: [UUID: ActiveExtension] = [:]
+    private var activeExtensions: [ExtensionID: ActiveExtension] = [:]
     private var webViewStates: [ObjectIdentifier: WebViewState] = [:]
     private var dependencies: Dependencies
     private let callbackHandler: BrowserExtensionSecureCallbackHandler
@@ -175,8 +175,8 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
         self.dependencies.backgroundService.activeManagerDelegate = self
     }
 
-    static func worldName(for extensionId: UUID) -> String {
-        return "Extension-\(extensionId.uuidString)"
+    static func worldName(for extensionId: ExtensionID) -> String {
+        return "Extension-\(extensionId.stringValue)"
     }
 
     /// Activate an extension with its runtime objects
@@ -244,7 +244,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     
     /// Deactivate an extension and clean up its runtime objects
     /// - Parameter extensionId: The unique identifier for the extension
-    public func deactivate(_ extensionId: UUID) async {
+    public func deactivate(_ extensionId: ExtensionID) async {
         await logger.inContext("Deactivate extension \(extensionId)") {
             logger.info("Deactivating extension with ID: \(extensionId)")
             
@@ -266,7 +266,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     }
     
     /// Remove scripts for a specific extension from all webviews
-    private func removeScriptsForExtension(_ extensionId: UUID) {
+    private func removeScriptsForExtension(_ extensionId: ExtensionID) {
         logger.debug("Removing scripts for extension: \(extensionId)")
         
         // Remove scripts from all webviews
@@ -290,20 +290,20 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     /// Get an active extension by ID
     /// - Parameter extensionId: The unique identifier for the extension
     /// - Returns: The active extension if found
-    public func activeExtension(for extensionId: UUID) -> ActiveExtension? {
+    public func activeExtension(for extensionId: ExtensionID) -> ActiveExtension? {
         return activeExtensions[extensionId]
     }
     
     /// Get all active extensions
     /// - Returns: Dictionary of extension IDs to active extensions
-    public func allActiveExtensions() -> [UUID: ActiveExtension] {
+    public func allActiveExtensions() -> [ExtensionID: ActiveExtension] {
         return activeExtensions
     }
     
     /// Check if an extension is active
     /// - Parameter extensionId: The unique identifier for the extension
     /// - Returns: True if the extension is active
-    public func isActive(_ extensionId: UUID) -> Bool {
+    public func isActive(_ extensionId: ExtensionID) -> Bool {
         return activeExtensions[extensionId] != nil
     }
     
@@ -385,7 +385,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
         }
     }
 
-    func backgroundScriptWebView(in extensionId: UUID) -> BrowserExtensionWKWebView? {
+    func backgroundScriptWebView(in extensionId: ExtensionID) -> BrowserExtensionWKWebView? {
         let state = webViewStates.values.first { state in
             switch state.role {
             case .userFacing: false
@@ -435,7 +435,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     /// - Parameters:
     ///   - webView: The webview to clean up console handlers for
     ///   - extensionId: The extension ID for logging purposes
-    private func cleanupConsoleHandlers(for webView: BrowserExtensionWKWebView, extensionId: UUID) {
+    private func cleanupConsoleHandlers(for webView: BrowserExtensionWKWebView, extensionId: ExtensionID) {
         logger.debug("Cleaning up console handlers for extension \(extensionId)")
         
         // Remove console handlers from both .page and extension content worlds
@@ -459,7 +459,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     
     /// Clean up console handlers for all background script webviews of a specific extension
     /// - Parameter extensionId: The extension ID to clean up console handlers for
-    private func cleanupConsoleHandlersForExtension(_ extensionId: UUID) {
+    private func cleanupConsoleHandlersForExtension(_ extensionId: ExtensionID) {
         logger.debug("Cleaning up console handlers for all webviews of extension \(extensionId)")
         
         for webViewState in webViewStates.values {
@@ -485,12 +485,12 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     }
 
     enum UserScripts {
-        case injectionScript(UUID)
+        case injectionScript(ExtensionID)
         case chromeAPIs
 
         var identifier: String {
             switch self {
-            case .injectionScript(let uuid): return "Injection(\(uuid.uuidString))"
+            case .injectionScript(let extensionId): return "Injection(\(extensionId.stringValue))"
             case .chromeAPIs: return "chromeAPIs"
             }
         }
@@ -701,7 +701,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     private func addConsoleLogHandler(to webView: BrowserExtensionWKWebView,
                                       in contentWorld: WKContentWorld) {
         let consoleHandler = BrowserExtensionConsoleLogHandler(
-            extensionId: UUID(),
+            extensionId: ExtensionID(),
             logger: logger
         )
         webView.be_configuration.be_userContentController.be_add(
@@ -753,7 +753,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
                                   setAccessLevelToken: String) async {
         // Generate the JavaScript API code
         let trusted = isBackgroundScript
-        let injectionScript = generatedAPIJavascript(.init(extensionId: browserExtension.id.uuidString,
+        let injectionScript = generatedAPIJavascript(.init(extensionId: browserExtension.id.stringValue,
                                                            trusted: trusted,
                                                            setAccessLevelToken: trusted ? "invalid - sessionalready trusted" : setAccessLevelToken))
 
@@ -787,7 +787,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     /// Get the content world for a given extension ID
     public func contentWorld(for extensionId: String) async -> WKContentWorld? {
         logger.debug("ActiveManager asked for content world for extension: \(extensionId)")
-        guard let extensionUUID = UUID(uuidString: extensionId),
+        guard let extensionUUID = ExtensionID(uuidString: extensionId),
               let activeExtension = activeExtensions[extensionUUID] else {
             logger.debug("No active extension found for ID: \(extensionId)")
             return nil
@@ -807,7 +807,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     /// Inject background script-specific scripts (DOM nuke + console handler)
     private func injectBackgroundScriptSupport(_ webView: BrowserExtensionWKWebView,
                                                userContentManager: BrowserExtensionUserContentManager,
-                                               extensionId: UUID,
+                                               extensionId: ExtensionID,
                                                contentWorld: WKContentWorld) {
         // DOM Nuke
         userContentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
@@ -843,10 +843,10 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
 
 /// Message handler for console.log messages from background scripts
 class BrowserExtensionConsoleLogHandler: NSObject, WKScriptMessageHandler {
-    private let extensionId: UUID
+    private let extensionId: ExtensionID
     private let logger: BrowserExtensionLogger
     
-    init(extensionId: UUID, logger: BrowserExtensionLogger) {
+    init(extensionId: ExtensionID, logger: BrowserExtensionLogger) {
         self.extensionId = extensionId
         self.logger = logger
         super.init()

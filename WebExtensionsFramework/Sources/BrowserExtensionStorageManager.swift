@@ -26,7 +26,7 @@ public class BrowserExtensionStorageManager {
     ///   - hasUnlimitedStorage: Whether extension has unlimited storage permission
     ///   - contextType: Trusted or untrusted context
     /// - Returns: Dictionary of key-value pairs (values are JSON strings)
-    public func get(keys: [String]?, area: BrowserExtensionStorageArea, extensionId: UUID, hasUnlimitedStorage: Bool, contextType: BrowserExtensionStorageContextType) async throws -> [String: String] {
+    public func get(keys: [String]?, area: BrowserExtensionStorageArea, extensionId: ExtensionID, hasUnlimitedStorage: Bool, contextType: BrowserExtensionStorageContextType) async throws -> [String: String] {
         guard let provider = storageProvider else {
             throw BrowserExtensionError.internalError("Storage provider not configured")
         }
@@ -48,7 +48,7 @@ public class BrowserExtensionStorageManager {
     ///   - extensionId: Extension storing the data
     ///   - hasUnlimitedStorage: Whether extension has unlimited storage permission
     ///   - contextType: Trusted or untrusted context
-    public func set(items: [String: String], area: BrowserExtensionStorageArea, extensionId: UUID, hasUnlimitedStorage: Bool, contextType: BrowserExtensionStorageContextType) async throws {
+    public func set(items: [String: String], area: BrowserExtensionStorageArea, extensionId: ExtensionID, hasUnlimitedStorage: Bool, contextType: BrowserExtensionStorageContextType) async throws {
         guard let provider = storageProvider else {
             throw BrowserExtensionError.internalError("Storage provider not configured")
         }
@@ -95,7 +95,7 @@ public class BrowserExtensionStorageManager {
     ///   - extensionId: Extension requesting removal
     ///   - hasUnlimitedStorage: Whether extension has unlimited storage permission
     ///   - contextType: Trusted or untrusted context
-    public func remove(keys: [String], area: BrowserExtensionStorageArea, extensionId: UUID, hasUnlimitedStorage: Bool, contextType: BrowserExtensionStorageContextType) async throws {
+    public func remove(keys: [String], area: BrowserExtensionStorageArea, extensionId: ExtensionID, hasUnlimitedStorage: Bool, contextType: BrowserExtensionStorageContextType) async throws {
         guard let provider = storageProvider else {
             throw BrowserExtensionError.internalError("Storage provider not configured")
         }
@@ -135,7 +135,7 @@ public class BrowserExtensionStorageManager {
     ///   - extensionId: Extension requesting the clear
     ///   - hasUnlimitedStorage: Whether extension has unlimited storage permission
     ///   - contextType: Trusted or untrusted context
-    public func clear(area: BrowserExtensionStorageArea, extensionId: UUID, hasUnlimitedStorage: Bool, contextType: BrowserExtensionStorageContextType) async throws {
+    public func clear(area: BrowserExtensionStorageArea, extensionId: ExtensionID, hasUnlimitedStorage: Bool, contextType: BrowserExtensionStorageContextType) async throws {
         guard let provider = storageProvider else {
             throw BrowserExtensionError.internalError("Storage provider not configured")
         }
@@ -173,7 +173,7 @@ public class BrowserExtensionStorageManager {
     ///   - hasUnlimitedStorage: Whether extension has unlimited storage permission
     ///   - contextType: Trusted or untrusted context
     /// - Returns: Bytes used and item count
-    public func getUsage(area: BrowserExtensionStorageArea, extensionId: UUID, hasUnlimitedStorage: Bool, contextType: BrowserExtensionStorageContextType) async throws -> (bytesUsed: Int, itemCount: Int) {
+    public func getUsage(area: BrowserExtensionStorageArea, extensionId: ExtensionID, hasUnlimitedStorage: Bool, contextType: BrowserExtensionStorageContextType) async throws -> (bytesUsed: Int, itemCount: Int) {
         guard let provider = storageProvider else {
             throw BrowserExtensionError.internalError("Storage provider not configured")
         }
@@ -193,7 +193,7 @@ public class BrowserExtensionStorageManager {
     ///   - accessLevel: Access level to set
     ///   - area: Storage area to configure (local, sync, or session; not managed)
     ///   - extensionId: Extension to configure
-    public func setStorageAccessLevel(_ accessLevel: BrowserExtensionStorageAccessLevel, area: BrowserExtensionStorageArea, extensionId: UUID) async throws {
+    public func setStorageAccessLevel(_ accessLevel: BrowserExtensionStorageAccessLevel, area: BrowserExtensionStorageArea, extensionId: ExtensionID) async throws {
         guard let provider = storageProvider else {
             throw BrowserExtensionError.internalError("Storage provider not configured")
         }
@@ -218,7 +218,7 @@ public class BrowserExtensionStorageManager {
     ///   - extensionId: The extension requesting access
     ///   - contextType: Whether this is from a trusted or untrusted context
     /// - Throws: BrowserExtensionStorageError if access is denied
-    private func validateStorageAccess(area: BrowserExtensionStorageArea, extensionId: UUID, contextType: BrowserExtensionStorageContextType) async throws {
+    private func validateStorageAccess(area: BrowserExtensionStorageArea, extensionId: ExtensionID, contextType: BrowserExtensionStorageContextType) async throws {
         // Check access control based on storage area
         switch area {
         case .local, .sync, .session:
@@ -245,7 +245,7 @@ public class BrowserExtensionStorageManager {
     ///   - changes: Dictionary of key to change information.
     ///   - area: The storage area that changed
     ///   - extensionId: The extension whose storage changed
-    private func fireOnChangedEvent(changes: [String: BrowserExtensionStorageChange], area: BrowserExtensionStorageArea, extensionId: UUID) async {
+    private func fireOnChangedEvent(changes: [String: BrowserExtensionStorageChange], area: BrowserExtensionStorageArea, extensionId: ExtensionID) async {
         guard let router = router else {
             logger.error("No router configured - skipping onChanged event for extension \(extensionId)", 
                         file: #file, line: #line, function: #function)
@@ -260,7 +260,7 @@ public class BrowserExtensionStorageManager {
         await router.broadcastEvent(
             functionName: "__EXT_fireStorageChanged__",
             arguments: [encodedChanges, area.rawValue.asJSONFragment],
-            extensionId: extensionId.uuidString
+            extensionId: extensionId.stringValue
         )
     }
     

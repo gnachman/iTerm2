@@ -18,7 +18,7 @@ public class MockInjectionScriptGenerator: BrowserExtensionContentScriptInjectio
 // MockUserScriptFactory already exists in BrowserExtensionUserScriptFactoryTests.swift
 
 public class MockBackgroundService: BrowserExtensionBackgroundServiceProtocol {
-    public var activeBackgroundScriptExtensionIds: Set<UUID> = []
+    public var activeBackgroundScriptExtensionIds: Set<ExtensionID> = []
     public weak var activeManagerDelegate: BrowserExtensionActiveManagerProtocol?
     
     public init() {}
@@ -28,9 +28,9 @@ public class MockBackgroundService: BrowserExtensionBackgroundServiceProtocol {
         return nil
     }
 
-    public func run(extensionId: UUID) async throws {
+    public func run(extensionId: ExtensionID) async throws {
     }
-    public func stopBackgroundScript(for extensionId: UUID) {
+    public func stopBackgroundScript(for extensionId: ExtensionID) {
         activeBackgroundScriptExtensionIds.remove(extensionId)
     }
     
@@ -38,11 +38,11 @@ public class MockBackgroundService: BrowserExtensionBackgroundServiceProtocol {
         activeBackgroundScriptExtensionIds.removeAll()
     }
     
-    public func isBackgroundScriptActive(for extensionId: UUID) -> Bool {
+    public func isBackgroundScriptActive(for extensionId: ExtensionID) -> Bool {
         return activeBackgroundScriptExtensionIds.contains(extensionId)
     }
     
-    public func evaluateJavaScript(_ javascript: String, in extensionId: UUID) async throws -> Any? {
+    public func evaluateJavaScript(_ javascript: String, in extensionId: ExtensionID) async throws -> Any? {
         return nil
     }
 }

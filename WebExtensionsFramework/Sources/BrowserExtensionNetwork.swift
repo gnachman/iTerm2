@@ -39,11 +39,11 @@ public class BrowserExtensionNetwork {
                     trusted: Bool,
                     setAccessLevelToken: String) {
         nodes.removeAll {
-            $0.webView == nil || ($0.webView === webView && $0.extensionId == browserExtension.id.uuidString)
+            $0.webView == nil || ($0.webView === webView && $0.extensionId == browserExtension.id.stringValue)
         }
         nodes.append(.init(webView: webView,
                            world: world,
-                           extensionId: browserExtension.id.uuidString,
+                           extensionId: browserExtension.id.stringValue,
                            trusted: trusted,
                            setAccessLevelToken: setAccessLevelToken))
     }

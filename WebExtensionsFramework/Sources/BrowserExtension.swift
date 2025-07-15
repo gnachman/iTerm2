@@ -55,7 +55,7 @@ public class BrowserExtension {
     public let baseURL: URL
     
     /// Unique identifier for this extension instance
-    public let id: UUID
+    public let id: ExtensionID
     
     /// Loaded content script resources
     public var contentScriptResources: [ContentScriptResource] = []
@@ -76,7 +76,7 @@ public class BrowserExtension {
     public init(manifest: ExtensionManifest, baseURL: URL, logger: BrowserExtensionLogger) {
         self.manifest = manifest
         self.baseURL = baseURL
-        self.id = UUID()
+        self.id = ExtensionID()
         self.logger = logger
     }
     
@@ -86,7 +86,7 @@ public class BrowserExtension {
     ///   - manifest: The extension's manifest
     ///   - baseURL: Base URL for the extension's files
     ///   - logger: Logger for debugging and error reporting
-    public init(id: UUID, manifest: ExtensionManifest, baseURL: URL, logger: BrowserExtensionLogger) {
+    public init(id: ExtensionID, manifest: ExtensionManifest, baseURL: URL, logger: BrowserExtensionLogger) {
         self.manifest = manifest
         self.baseURL = baseURL
         self.id = id

@@ -159,13 +159,13 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
     
     /// Test checking if non-existent extension is active
     func testIsActiveForNonExistentExtension() {
-        let isActive = manager.isActive(UUID())
+        let isActive = manager.isActive(ExtensionID())
         XCTAssertFalse(isActive)
     }
     
     /// Test getting non-existent active extension
     func testGetNonExistentActiveExtension() {
-        let activeExtension = manager.activeExtension(for: UUID())
+        let activeExtension = manager.activeExtension(for: ExtensionID())
         XCTAssertNil(activeExtension)
     }
     
@@ -201,7 +201,7 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
             };
         """, contentWorld: contentWorld) as? [String: Any]
         
-        XCTAssertEqual(result?["id"] as? String, testExtension.id.uuidString)
+        XCTAssertEqual(result?["id"] as? String, testExtension.id.stringValue)
         XCTAssertEqual(result?["idType"] as? String, "string")
         
         // Cleanup
@@ -252,8 +252,8 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
             return chrome.runtime.id;
         """, contentWorld: contentWorld2) as? String
         
-        XCTAssertEqual(result1, extension1.id.uuidString)
-        XCTAssertEqual(result2, extension2.id.uuidString)
+        XCTAssertEqual(result1, extension1.id.stringValue)
+        XCTAssertEqual(result2, extension2.id.stringValue)
         XCTAssertNotEqual(result1, result2)
         
         // Cleanup

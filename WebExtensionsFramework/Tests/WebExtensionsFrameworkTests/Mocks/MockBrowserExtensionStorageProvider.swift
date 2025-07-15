@@ -6,10 +6,10 @@ import Foundation
 class MockBrowserExtensionStorageProvider: BrowserExtensionStorageProvider {
     
     // Storage: [extensionId][area][key] = jsonValue
-    private var storage: [UUID: [BrowserExtensionStorageArea: [String: String]]] = [:]
+    private var storage: [ExtensionID: [BrowserExtensionStorageArea: [String: String]]] = [:]
     
     // Storage access levels: [extensionId][area] = accessLevel
-    private var accessLevels: [UUID: [BrowserExtensionStorageArea: BrowserExtensionStorageAccessLevel]] = [:]
+    private var accessLevels: [ExtensionID: [BrowserExtensionStorageArea: BrowserExtensionStorageAccessLevel]] = [:]
     private let defaultAccessLevels: [BrowserExtensionStorageArea: BrowserExtensionStorageAccessLevel] =
     [.local: .trustedAndUntrustedContexts,
      .sync: .trustedAndUntrustedContexts,
@@ -27,11 +27,11 @@ class MockBrowserExtensionStorageProvider: BrowserExtensionStorageProvider {
     // Last call parameters for verification
     var lastGetKeys: [String]?
     var lastGetArea: BrowserExtensionStorageArea?
-    var lastGetExtensionId: UUID?
+    var lastGetExtensionId: ExtensionID?
     
     var lastSetItems: [String: String]?
     var lastSetArea: BrowserExtensionStorageArea?
-    var lastSetExtensionId: UUID?
+    var lastSetExtensionId: ExtensionID?
     var lastSetHasUnlimitedStorage: Bool?
     
     // Configurable behaviors for testing
@@ -45,7 +45,7 @@ class MockBrowserExtensionStorageProvider: BrowserExtensionStorageProvider {
     var isSessionStorageUnavailable = false
     var isSyncStorageUnavailable = false
     
-    func get(keys: [String]?, area: BrowserExtensionStorageArea, extensionId: UUID) async throws -> [String: String] {
+    func get(keys: [String]?, area: BrowserExtensionStorageArea, extensionId: ExtensionID) async throws -> [String: String] {
         getCallCount += 1
         lastGetKeys = keys
         lastGetArea = area
@@ -73,7 +73,7 @@ class MockBrowserExtensionStorageProvider: BrowserExtensionStorageProvider {
         }
     }
     
-    func set(items: [String: String], area: BrowserExtensionStorageArea, extensionId: UUID, hasUnlimitedStorage: Bool) async throws -> [String: String?] {
+    func set(items: [String: String], area: BrowserExtensionStorageArea, extensionId: ExtensionID, hasUnlimitedStorage: Bool) async throws -> [String: String?] {
         setCallCount += 1
         lastSetItems = items
         lastSetArea = area
@@ -120,7 +120,7 @@ class MockBrowserExtensionStorageProvider: BrowserExtensionStorageProvider {
         return originalValues
     }
     
-    func remove(keys: [String], area: BrowserExtensionStorageArea, extensionId: UUID) async throws -> [String: String?] {
+    func remove(keys: [String], area: BrowserExtensionStorageArea, extensionId: ExtensionID) async throws -> [String: String?] {
         removeCallCount += 1
         
         if shouldThrowOnRemove, let error = throwError {
@@ -150,7 +150,7 @@ class MockBrowserExtensionStorageProvider: BrowserExtensionStorageProvider {
         return removedValues
     }
     
-    func clear(area: BrowserExtensionStorageArea, extensionId: UUID) async throws -> [String: String] {
+    func clear(area: BrowserExtensionStorageArea, extensionId: ExtensionID) async throws -> [String: String] {
         clearCallCount += 1
         
         if shouldThrowOnClear, let error = throwError {
@@ -173,7 +173,7 @@ class MockBrowserExtensionStorageProvider: BrowserExtensionStorageProvider {
         return clearedValues
     }
     
-    func getUsage(area: BrowserExtensionStorageArea, extensionId: UUID) async throws -> (bytesUsed: Int, itemCount: Int) {
+    func getUsage(area: BrowserExtensionStorageArea, extensionId: ExtensionID) async throws -> (bytesUsed: Int, itemCount: Int) {
         getUsageCallCount += 1
         
         guard let extensionStorage = storage[extensionId],
@@ -203,11 +203,11 @@ class MockBrowserExtensionStorageProvider: BrowserExtensionStorageProvider {
         }
     }
     
-    func getStorageAccessLevel(area: BrowserExtensionStorageArea, extensionId: UUID) async -> BrowserExtensionStorageAccessLevel {
+    func getStorageAccessLevel(area: BrowserExtensionStorageArea, extensionId: ExtensionID) async -> BrowserExtensionStorageAccessLevel {
         return accessLevels[extensionId]?[area] ?? defaultAccessLevels[area] ?? .trustedContexts
     }
     
-    func setStorageAccessLevel(_ accessLevel: BrowserExtensionStorageAccessLevel, area: BrowserExtensionStorageArea, extensionId: UUID) async throws {
+    func setStorageAccessLevel(_ accessLevel: BrowserExtensionStorageAccessLevel, area: BrowserExtensionStorageArea, extensionId: ExtensionID) async throws {
         if shouldThrowOnSetAccessLevel, let error = throwError {
             throw error
         }
@@ -238,14 +238,14 @@ class MockBrowserExtensionStorageProvider: BrowserExtensionStorageProvider {
         isSyncStorageUnavailable = false
     }
     
-    func setStorageData(_ data: [String: String], area: BrowserExtensionStorageArea, extensionId: UUID) {
+    func setStorageData(_ data: [String: String], area: BrowserExtensionStorageArea, extensionId: ExtensionID) {
         if storage[extensionId] == nil {
             storage[extensionId] = [:]
         }
         storage[extensionId]![area] = data
     }
     
-    private func getCurrentSize(extensionId: UUID, area: BrowserExtensionStorageArea) -> Int {
+    private func getCurrentSize(extensionId: ExtensionID, area: BrowserExtensionStorageArea) -> Int {
         guard let extensionStorage = storage[extensionId],
               let areaStorage = extensionStorage[area] else {
             return 0
@@ -256,13 +256,13 @@ class MockBrowserExtensionStorageProvider: BrowserExtensionStorageProvider {
     // MARK: - Additional Testing Methods
     
     /// Clear all storage data for a specific extension
-    func clearStorageData(for extensionId: UUID) {
+    func clearStorageData(for extensionId: ExtensionID) {
         storage.removeValue(forKey: extensionId)
         accessLevels.removeValue(forKey: extensionId)
     }
     
     /// Corrupt storage data for testing error scenarios
-    func corruptData(for extensionId: UUID) {
+    func corruptData(for extensionId: ExtensionID) {
         // Simulate corruption by setting invalid JSON or missing data
         if storage[extensionId] == nil {
             storage[extensionId] = [:]

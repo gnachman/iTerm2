@@ -166,7 +166,7 @@ class BrowserExtensionRouterTests: XCTestCase {
             frameId: 0
         )
         
-        XCTAssertEqual(sender.id, mockBrowserExtension.id.uuidString)
+        XCTAssertEqual(sender.id, mockBrowserExtension.id.stringValue)
         XCTAssertEqual(sender.tab?.id, 123)
         XCTAssertEqual(sender.tab?.url, "https://example.com")
         XCTAssertEqual(sender.frameId, 0)
@@ -186,7 +186,7 @@ class BrowserExtensionRouterTests: XCTestCase {
             frameId: nil
         )
         
-        XCTAssertEqual(sender.id, mockBrowserExtension.id.uuidString)
+        XCTAssertEqual(sender.id, mockBrowserExtension.id.stringValue)
         XCTAssertNil(sender.tab)
         XCTAssertNil(sender.frameId)
     }

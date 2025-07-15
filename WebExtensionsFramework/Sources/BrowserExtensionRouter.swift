@@ -167,8 +167,8 @@ public class BrowserExtensionRouter {
         }
     }
 
-    func setStorageAreaAllowedInUntrustedContexts(allowed: Bool, in area: BrowserExtensionStorageArea, extensionId: UUID) async {
-        for node in network.nodes(for: extensionId.uuidString) {
+    func setStorageAreaAllowedInUntrustedContexts(allowed: Bool, in area: BrowserExtensionStorageArea, extensionId: ExtensionID) async {
+        for node in network.nodes(for: extensionId.stringValue) {
             guard let webView = node.webView else {
                 continue
             }
