@@ -57,45 +57,49 @@ class ChatService {
                 // it.
                 newAgent(forChatID: chatID, messages: messages(chatID: chatID).dropLast())
             }
-            if agent.supportsStreaming {
-                agent.fetchCompletion(userMessage: message,
-                                      history: messages(chatID: chatID).dropLast(),
-                                      streaming: { [weak self] update in
-                    switch update {
-                    case .begin(let message):
-                        self?.broker.publish(message: message, toChatID: chatID, partial: true)
-                    case .append(let chunk, let uuid):
-                        self?.broker.publish(message: Message(chatID: chatID,
-                                                              author: .agent,
-                                                              content: .append(string: chunk, uuid: uuid),
-                                                              sentDate: Date(),
-                                                              uniqueID: UUID()),
-                                             toChatID: chatID,
-                                             partial: true)
-                    case .appendAttachment(let attachment, let uuid):
-                        self?.broker.publish(message: Message(chatID: chatID,
-                                                              author: .agent,
-                                                              content: .appendAttachment(attachment: attachment, uuid: uuid),
-                                                              sentDate: Date(),
-                                                              uniqueID: UUID()),
-                                             toChatID: chatID,
-                                             partial: true)
-                    }
-                }, completion: { [weak self] replyMessage in
-                    stopTyping()
-                    if let replyMessage {
-                        self?.broker.publish(message: replyMessage, toChatID: chatID, partial: false)
-                    }
-                })
-            } else {
-                agent.fetchCompletion(userMessage: message,
-                                      history: messages(chatID: chatID).dropLast(),
-                                      streaming: nil) { [weak self] replyMessage in
-                    stopTyping()
-                    if let replyMessage {
-                        self?.broker.publish(message: replyMessage, toChatID: chatID, partial: false)
+            do {
+                if agent.supportsStreaming {
+                    try agent.fetchCompletion(userMessage: message,
+                                              history: messages(chatID: chatID).dropLast(),
+                                              streaming: { [weak self] update in
+                        switch update {
+                        case .begin(let message):
+                            try? self?.broker.publish(message: message, toChatID: chatID, partial: true)
+                        case .append(let chunk, let uuid):
+                            try? self?.broker.publish(message: Message(chatID: chatID,
+                                                                       author: .agent,
+                                                                       content: .append(string: chunk, uuid: uuid),
+                                                                       sentDate: Date(),
+                                                                       uniqueID: UUID()),
+                                                      toChatID: chatID,
+                                                      partial: true)
+                        case .appendAttachment(let attachment, let uuid):
+                            try? self?.broker.publish(message: Message(chatID: chatID,
+                                                                       author: .agent,
+                                                                       content: .appendAttachment(attachment: attachment, uuid: uuid),
+                                                                       sentDate: Date(),
+                                                                       uniqueID: UUID()),
+                                                      toChatID: chatID,
+                                                      partial: true)
+                        }
+                    }, completion: { [weak self] replyMessage in
+                        stopTyping()
+                        if let replyMessage {
+                            try? self?.broker.publish(message: replyMessage, toChatID: chatID, partial: false)
+                        }
+                    })
+                } else {
+                    try agent.fetchCompletion(userMessage: message,
+                                              history: messages(chatID: chatID).dropLast(),
+                                              streaming: nil) { [weak self] replyMessage in
+                        stopTyping()
+                        if let replyMessage {
+                            try? self?.broker.publish(message: replyMessage, toChatID: chatID, partial: false)
+                        }
                     }
                 }
+            } catch {
+                DLog("\(error)")
             }
         }
     }

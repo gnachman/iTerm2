@@ -387,7 +387,7 @@ extension ChatViewController {
             showTypingIndicator = false
         }
         if let chatID, let model, model.lastStreamingState == .active {
-            ChatClient.instance?.publishClientLocalMessage(
+            try? ChatClient.instance?.publishClientLocalMessage(
                 chatID: chatID,
                 action: .streamingChanged(.stoppedAutomatically))
             model.lastStreamingState = .stoppedAutomatically
@@ -530,14 +530,18 @@ extension ChatViewController {
             case .never: .ask
             case .ask: .always
             }
-            listModel.setPermission(chat: chatID,
-                                    permission: newPermission,
-                                    guid: guid,
-                                    category: category)
-            let rce = RemoteCommandExecutor.instance
-            ChatClient.instance?.publishUserMessage(
-                chatID: chatID,
-                content: .setPermissions(rce.allowedCategories(chatID: chatID, for: guid)))
+            do {
+                try listModel.setPermission(chat: chatID,
+                                            permission: newPermission,
+                                            guid: guid,
+                                            category: category)
+                let rce = RemoteCommandExecutor.instance
+                try ChatClient.instance?.publishUserMessage(
+                    chatID: chatID,
+                    content: .setPermissions(rce.allowedCategories(chatID: chatID, for: guid)))
+            } catch {
+                DLog("\(error)")
+            }
         }
     }
 
@@ -560,15 +564,21 @@ extension ChatViewController {
                                      sentDate: Date(),
                                      uniqueID: UUID())
         if let pickSessionPromise {
-            pickSessionPromise.then {  [weak self] session in
+            pickSessionPromise.then { [weak self] session in
                 if let self, let model = self.model {
-                    model.sessionGuid = session.guid
-                    ChatClient.instance?.publishNotice(
-                        chatID: chatID,
-                        notice: "This chat has been linked to terminal session `\(session.name?.escapedForMarkdownCode ?? "(Unnamed session)")`")
-                    completion(session)
-                    self.pickSessionPromise = nil
-                    reloadCell(forMessageID: waitingMessage.uniqueID)
+                    do {
+                        try model.setSessionGuid(session.guid)
+                        try ChatClient.instance?.publishNotice(
+                            chatID: chatID,
+                            notice: "This chat has been linked to terminal session `\(session.name?.escapedForMarkdownCode ?? "(Unnamed session)")`")
+                        completion(session)
+                        self.pickSessionPromise = nil
+                        reloadCell(forMessageID: waitingMessage.uniqueID)
+                    } catch {
+                        self.pickSessionPromise = nil
+                        completion(nil)
+                        self.reloadCell(forMessageID: waitingMessage.uniqueID)
+                    }
                 }
             }
 
@@ -578,9 +588,15 @@ extension ChatViewController {
                 self?.reloadCell(forMessageID: waitingMessage.uniqueID)
             }
         }
-        ChatClient.instance?.publish(message: waitingMessage,
-                                     toChatID: chatID,
-                                     partial: false)
+        do {
+            try ChatClient.instance?.publish(message: waitingMessage,
+                                             toChatID: chatID,
+                                             partial: false)
+        } catch {
+            DLog("\(error)")
+            pickSessionPromise = nil
+            completion(nil)
+        }
     }
 
     private var haveLinkedSession: Bool {
@@ -594,7 +610,7 @@ extension ChatViewController {
 
     func stopStreaming() {
         if let chatID, streaming {
-            ChatClient.instance?.publishMessageFromAgent(
+            try? ChatClient.instance?.publishMessageFromAgent(
                 chatID: chatID,
                 content: .clientLocal(.init(action: .streamingChanged(.stopped))))
         }
@@ -620,7 +636,7 @@ extension ChatViewController {
         if selection == .kiTermWarningSelection0 {
             streaming = true
             tableView.reloadData()
-            ChatClient.instance?.publishMessageFromAgent(
+            try? ChatClient.instance?.publishMessageFromAgent(
                 chatID: chatID,
                 content: .clientLocal(.init(action: .streamingChanged(.active))))
         }
@@ -641,10 +657,14 @@ extension ChatViewController {
 
     @objc private func unlinkSession(_ sender: Any) {
         if let chatID {
-            listModel.setGuid(for: chatID, to: nil)
-            ChatClient.instance?.publishNotice(
-                chatID: chatID,
-                notice: "This chat is no longer linked to a terminal session.")
+            do {
+                try listModel.setGuid(for: chatID, to: nil)
+                try? ChatClient.instance?.publishNotice(
+                    chatID: chatID,
+                    notice: "This chat is no longer linked to a terminal session.")
+            } catch {
+                DLog("\(error)")
+            }
         }
     }
 
@@ -822,7 +842,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                         self.pickSessionPromise = nil
                     }
                     if let chatID {
-                        self.client.respondSuccessfullyToRemoteCommandRequest(
+                        try? self.client.respondSuccessfullyToRemoteCommandRequest(
                             inChat: chatID,
                             requestUUID: originalMessage.uniqueID,
                             message: "The user declined to allow this function call to execute.",
@@ -839,11 +859,11 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 linkSession { session in
                     if let chatID {
                         if session != nil {
-                            self.client.publish(message: originalMessage,
-                                                toChatID: chatID,
-                                                partial: false)
+                            try? self.client.publish(message: originalMessage,
+                                                     toChatID: chatID,
+                                                     partial: false)
                         } else {
-                            self.client.respondSuccessfullyToRemoteCommandRequest(
+                            try? self.client.respondSuccessfullyToRemoteCommandRequest(
                                 inChat: chatID,
                                 requestUUID: originalMessage.uniqueID,
                                 message: "The user declined to allow this function call to execute.",
@@ -866,8 +886,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 }
                 guard let guid = self.listModel.chat(id: chatID)?.sessionGuid,
                       let session = iTermController.sharedInstance().session(withGUID: guid) else {
-                    ChatClient.instance?.publishNotice(chatID: chatID, notice: "This chat is not linked to any terminal session.")
-                    client.respondSuccessfullyToRemoteCommandRequest(
+                    try? ChatClient.instance?.publishNotice(chatID: chatID, notice: "This chat is not linked to any terminal session.")
+                    try? client.respondSuccessfullyToRemoteCommandRequest(
                         inChat: chatID,
                         requestUUID: messageID,
                         message: "The user did not link a terminal session to chat, so the function could not be run.",
@@ -881,29 +901,38 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 case .allowOnce:
                     allowed = true
                 case .allowAlways:
-                    listModel.setPermission(chat: chatID,
-                                            permission: .always,
-                                            guid: guid,
-                                            category: remoteCommand.content.permissionCategory)
-                    allowed = true
+                    do {
+                        try listModel.setPermission(chat: chatID,
+                                                    permission: .always,
+                                                    guid: guid,
+                                                    category: remoteCommand.content.permissionCategory)
+                        allowed = true
+                    } catch {
+                        DLog("\(error)")
+                        allowed = false
+                    }
                 case .denyOnce:
                     allowed = false
                 case .denyAlways:
-                    listModel.setPermission(chat: chatID,
-                                            permission: .never,
-                                            guid: guid,
-                                            category: remoteCommand.content.permissionCategory)
+                    do {
+                        try listModel.setPermission(chat: chatID,
+                                                    permission: .never,
+                                                    guid: guid,
+                                                    category: remoteCommand.content.permissionCategory)
+                    } catch {
+                        DLog("\(error)")
+                    }
                     allowed = false
                 case .none:
                     return
                 }
                 if allowed {
-                    self.client.performRemoteCommand(remoteCommand,
-                                                     in: session,
-                                                     chatID: chatID,
-                                                     messageUniqueID: messageID)
+                    try? self.client.performRemoteCommand(remoteCommand,
+                                                          in: session,
+                                                          chatID: chatID,
+                                                          messageUniqueID: messageID)
                 } else {
-                    self.client.respondSuccessfullyToRemoteCommandRequest(
+                    try? self.client.respondSuccessfullyToRemoteCommandRequest(
                         inChat: chatID,
                         requestUUID: messageID,
                         message: "The user declined to allow function calling. Try to find another way to assist.",
@@ -1203,13 +1232,17 @@ extension ChatViewController: ChatInputViewDelegate {
                     configuration: configuration)
         }
 
-        ChatClient.instance?.publish(
-            message: message,
-            toChatID: chatID,
-            partial: false)
+        do {
+            try ChatClient.instance?.publish(
+                message: message,
+                toChatID: chatID,
+                partial: false)
 
-        inputView.clear()
-        eligibleForAutoPaste = true
+            inputView.clear()
+            eligibleForAutoPaste = true
+        } catch {
+            DLog("\(error)")
+        }
     }
 }
 
@@ -1256,8 +1289,8 @@ extension ChatViewController {
                                   output: content,
                                   exitCode: exitCode,
                                   url: url)
-        ChatClient.instance?.publishMessageFromUser(chatID: chatID,
-                                                    content: .terminalCommand(cmd))
+        try? ChatClient.instance?.publishMessageFromUser(chatID: chatID,
+                                                         content: .terminalCommand(cmd))
     }
 }
 

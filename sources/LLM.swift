@@ -324,11 +324,11 @@ enum LLM {
         var decl: ChatGPTFunctionDeclaration { get }
         func invoke(message: LLM.Message,
                     json: Data,
-                    completion: @escaping (Result<String, Error>) -> ())
+                    completion: @escaping (Result<String, Error>) throws -> ())
     }
 
     struct Function<T: Codable>: AnyFunction {
-        typealias Impl = (LLM.Message, T, @escaping (Result<String, Error>) -> ()) -> ()
+        typealias Impl = (LLM.Message, T, @escaping (Result<String, Error>) throws -> ()) throws -> ()
 
         var decl: ChatGPTFunctionDeclaration
         var call: Impl
@@ -337,7 +337,7 @@ enum LLM {
         var typeErasedParameterType: Any.Type { parameterType }
         func invoke(message: Message,
                     json: Data,
-                    completion: @escaping (Result<String, Error>) -> ()) {
+                    completion: @escaping (Result<String, Error>) throws -> ()) {
             do {
                 var jsonString = json.lossyString
                 if jsonString.isEmpty {
@@ -345,10 +345,10 @@ enum LLM {
                     jsonString = "{}"
                 }
                 let value = try JSONSerialization.parseTruncatedJSON(jsonString, as: parameterType)
-                call(message, value, completion)
+                try call(message, value, completion)
             } catch {
                 DLog("\(error.localizedDescription)")
-                completion(.failure(AIError.wrapping(
+                try? completion(.failure(AIError.wrapping(
                     error: error,
                     context: "While parsing a function call request")))
             }

@@ -108,13 +108,13 @@ extension PTYSession {
         return components.url
     }
 
-    @objc(explainSelectionWithAI:truncated:snapshot:command:subjectMatter:title:)
+    @objc(explainSelectionWithAI:truncated:snapshot:command:subjectMatter:title:error:)
     func explainWithAI(selection: iTermSelection,
                        truncated: Bool,
                        snapshot: TerminalContentSnapshot,
                        command: String?,
                        subjectMatter: String,
-                       title: String) {
+                       title: String) throws {
         let request = AIExplanationRequest(command: command,
                                            snapshot: snapshot,
                                            selection: selection,
@@ -135,72 +135,72 @@ extension PTYSession {
                               window: self.genericView.window)
             return
         }
-        client.explain(request,
-                       title: title,
-                       scope: genericScope)
+        try client.explain(request,
+                           title: title,
+                           scope: genericScope)
     }
 
-    func execute(_ command: RemoteCommand, completion: @escaping (String, String) -> ()) {
+    func execute(_ command: RemoteCommand, completion: @escaping (String, String) throws -> ()) rethrows {
         DLog("\(command)")
         cancelRemoteCommand()
         switch command.content {
         case .isAtPrompt(let isAtPrompt):
-            isAtPromptRemoteCommand(isAtPrompt: isAtPrompt,
-                                    completion: completion)
+            try isAtPromptRemoteCommand(isAtPrompt: isAtPrompt,
+                                        completion: completion)
         case .executeCommand(let executeCommand):
-            executeCommandRemoteCommand(executeCommand: executeCommand,
-                                        completion: completion)
-        case .getLastExitStatus(let getLastExitStatus):
-            getLastExitStatusRemoteCommand(getLastExitStatus: getLastExitStatus,
-                                           completion: completion)
-        case .getCommandHistory(let getCommandHistory):
-            getCommandHistoryRemoteCommand(getCommandHistory: getCommandHistory,
-                                           completion: completion)
-        case .getLastCommand(let getLastCommand):
-            getLastCommandRemoteCommand(getLastCommand: getLastCommand,
-                                        completion: completion)
-        case .getCommandBeforeCursor(let getCommandBeforeCursor):
-            getCommandBeforeCursorRemoteCommand(getCommandBeforeCursor: getCommandBeforeCursor,
-                                                completion: completion)
-        case .searchCommandHistory(let searchCommandHistory):
-            searchCommandHistoryRemoteCommand(searchCommandHistory: searchCommandHistory,
-                                              completion: completion)
-        case .getCommandOutput(let getCommandOutput):
-            getCommandOutputRemoteCommand(getCommandOutput: getCommandOutput,
-                                          completion: completion)
-        case .getTerminalSize(let getTerminalSize):
-            getTerminalSizeRemoteCommand(getTerminalSize: getTerminalSize,
-                                         completion: completion)
-        case .getShellType(let getShellType):
-            getShellTypeRemoteCommand(getShellType: getShellType,
-                                      completion: completion)
-        case .detectSSHSession(let detectSSHSession):
-            detectSSHSessionRemoteCommand(detectSSHSession: detectSSHSession,
-                                          completion: completion)
-        case .getRemoteHostname(let getRemoteHostname):
-            getRemoteHostnameRemoteCommand(getRemoteHostname: getRemoteHostname,
-                                           completion: completion)
-        case .getUserIdentity(let getUserIdentity):
-            getUserIdentityRemoteCommand(getUserIdentity: getUserIdentity,
-                                         completion: completion)
-        case .getCurrentDirectory(let getCurrentDirectory):
-            getCurrentDirectoryRemoteCommand(getCurrentDirectory: getCurrentDirectory,
-                                             completion: completion)
-        case .setClipboard(let setClipboard):
-            setClipboardRemoteCommand(setClipboard: setClipboard,
-                                      completion: completion)
-        case .insertTextAtCursor(let insertTextAtCursor):
-            insertTextAtCursorRemoteCommand(insertTextAtCursor: insertTextAtCursor,
+            try executeCommandRemoteCommand(executeCommand: executeCommand,
                                             completion: completion)
+        case .getLastExitStatus(let getLastExitStatus):
+            try getLastExitStatusRemoteCommand(getLastExitStatus: getLastExitStatus,
+                                               completion: completion)
+        case .getCommandHistory(let getCommandHistory):
+            try getCommandHistoryRemoteCommand(getCommandHistory: getCommandHistory,
+                                               completion: completion)
+        case .getLastCommand(let getLastCommand):
+            try getLastCommandRemoteCommand(getLastCommand: getLastCommand,
+                                            completion: completion)
+        case .getCommandBeforeCursor(let getCommandBeforeCursor):
+            try getCommandBeforeCursorRemoteCommand(getCommandBeforeCursor: getCommandBeforeCursor,
+                                                    completion: completion)
+        case .searchCommandHistory(let searchCommandHistory):
+            try searchCommandHistoryRemoteCommand(searchCommandHistory: searchCommandHistory,
+                                                  completion: completion)
+        case .getCommandOutput(let getCommandOutput):
+            try getCommandOutputRemoteCommand(getCommandOutput: getCommandOutput,
+                                              completion: completion)
+        case .getTerminalSize(let getTerminalSize):
+            try getTerminalSizeRemoteCommand(getTerminalSize: getTerminalSize,
+                                             completion: completion)
+        case .getShellType(let getShellType):
+            try getShellTypeRemoteCommand(getShellType: getShellType,
+                                          completion: completion)
+        case .detectSSHSession(let detectSSHSession):
+            try detectSSHSessionRemoteCommand(detectSSHSession: detectSSHSession,
+                                              completion: completion)
+        case .getRemoteHostname(let getRemoteHostname):
+            try getRemoteHostnameRemoteCommand(getRemoteHostname: getRemoteHostname,
+                                               completion: completion)
+        case .getUserIdentity(let getUserIdentity):
+            try getUserIdentityRemoteCommand(getUserIdentity: getUserIdentity,
+                                             completion: completion)
+        case .getCurrentDirectory(let getCurrentDirectory):
+            try getCurrentDirectoryRemoteCommand(getCurrentDirectory: getCurrentDirectory,
+                                                 completion: completion)
+        case .setClipboard(let setClipboard):
+            try setClipboardRemoteCommand(setClipboard: setClipboard,
+                                          completion: completion)
+        case .insertTextAtCursor(let insertTextAtCursor):
+            try insertTextAtCursorRemoteCommand(insertTextAtCursor: insertTextAtCursor,
+                                                completion: completion)
         case .deleteCurrentLine(let deleteCurrentLine):
-            deleteCurrentLineRemoteCommand(deleteCurrentLine: deleteCurrentLine,
-                                           completion: completion)
+            try deleteCurrentLineRemoteCommand(deleteCurrentLine: deleteCurrentLine,
+                                               completion: completion)
         case .getManPage(let getManPage):
-            getManPageRemoteCommand(getManPage: getManPage,
-                                    completion: completion)
+            try getManPageRemoteCommand(getManPage: getManPage,
+                                        completion: completion)
         case .createFile(let createFile):
-            createFileCommand(createFile: createFile,
-                              completion: completion)
+            try createFileCommand(createFile: createFile,
+                                  completion: completion)
         }
     }
 }
@@ -261,29 +261,29 @@ extension PTYSession {
     }
 
     func isAtPromptRemoteCommand(isAtPrompt: RemoteCommand.IsAtPrompt,
-                                 completion: @escaping (String, String) -> ()) {
+                                 completion: @escaping (String, String) throws -> ()) rethrows {
         guard iTermShellHistoryController.sharedInstance().commandHistoryHasEverBeenUsed() else {
-            completion("Tell the user they need to install Shell Integration to access this information.", "Failed to check if you’re at the prompt because Shell Integration is not installed.")
+            try completion("Tell the user they need to install Shell Integration to access this information.", "Failed to check if you’re at the prompt because Shell Integration is not installed.")
             return
         }
-        completion(currentCommand != nil ? "true" : "false", "Notified AI that you are \(currentCommand != nil ? "at" : "not at") the a prompt.")
+        try completion(currentCommand != nil ? "true" : "false", "Notified AI that you are \(currentCommand != nil ? "at" : "not at") the a prompt.")
     }
 
     func executeCommandRemoteCommand(executeCommand: RemoteCommand.ExecuteCommand,
-                                     completion: @escaping (String, String) -> ()) {
+                                     completion: @escaping (String, String) throws -> ()) rethrows {
         if !iTermShellHistoryController.sharedInstance().commandHistoryHasEverBeenUsed() || currentCommand == nil {
-            jankyExecuteCommand(executeCommand, completion: completion)
+            try jankyExecuteCommand(executeCommand, completion: completion)
         } else {
-            goodExecuteCommand(executeCommand, completion: completion)
+            try goodExecuteCommand(executeCommand, completion: completion)
         }
     }
 
     private func goodExecuteCommand(_ executeCommand: RemoteCommand.ExecuteCommand,
-                                    completion: @escaping (String, String) -> ()) {
+                                    completion: @escaping (String, String) throws -> ()) rethrows {
         let start = Int64(screen.numberOfScrollbackLines() + screen.cursorY() - 1) + screen.totalScrollbackOverflow()
         let uuid = UUID()
         let otsc = OneTimeStringClosure { message in
-            completion(message, "Ran \(executeCommand.command)")
+            try? completion(message, "Ran \(executeCommand.command)")
         }
         runningRemoteCommand.state = .waitingForMark(uuid, otsc)
         writeTaskNoBroadcast(executeCommand.command + "\r")
@@ -300,7 +300,7 @@ extension PTYSession {
     }
 
     private func jankyExecuteCommand(_ executeCommand: RemoteCommand.ExecuteCommand,
-                                     completion: @escaping (String, String) -> ()) {
+                                     completion: @escaping (String, String) throws -> ()) rethrows {
         let uuid = UUID().uuidString
         let start = Int64(screen.numberOfScrollbackLines() + screen.cursorY() - 1) + screen.totalScrollbackOverflow()
         writeTaskNoBroadcast(executeCommand.command + ";echo '-- FINISHED' \(uuid)\r")
@@ -312,10 +312,10 @@ extension PTYSession {
                     // Normal case
                     content = String(content[ranges[0].upperBound..<ranges[1].lowerBound])
                     content.removeSuffix("-- FINISHED ")
-                    completion(content, "Ran \(executeCommand.command)")
+                    try? completion(content, "Ran \(executeCommand.command)")
                 } else {
                     // Something weird happened, probably the start fell off the end of scrollback history.
-                    completion(
+                    try? completion(
                         content
                             .replacingOccurrences(of: "-- FINISHED \(uuid)",
                                                   with: "")
@@ -324,11 +324,13 @@ extension PTYSession {
                         "Ran \(executeCommand.command) but its output could not be located. Did you run out of scrollback history lines?")
                 }
             } else {
-                completion("The executeCommand function call failed because the output of the command is not available. The buffer may have been cleared or some other technical issue occurred.",
-                           "Ran \(executeCommand.command) but its output was unavailable. Did you run out of scrollback history lines?")
+                try? completion("The executeCommand function call failed because the output of the command is not available. The buffer may have been cleared or some other technical issue occurred.",
+                                "Ran \(executeCommand.command) but its output was unavailable. Did you run out of scrollback history lines?")
             }
         }
-        runningRemoteCommand.state = .expectation(expectation, { output in completion(output, "Ran \(executeCommand.command)")})
+        runningRemoteCommand.state = .expectation(expectation, { output in
+            try? completion(output, "Ran \(executeCommand.command)")}
+        )
     }
 
     private func contentAfter(_ absLine: Int64) -> String? {
@@ -350,24 +352,24 @@ extension PTYSession {
     }
 
     func getLastExitStatusRemoteCommand(getLastExitStatus: RemoteCommand.GetLastExitStatus,
-                                        completion: @escaping (String, String) -> ()) {
+                                        completion: @escaping (String, String) throws -> ()) rethrows {
         guard iTermShellHistoryController.sharedInstance().commandHistoryHasEverBeenUsed() else {
-            completion("Tell the user they need to install Shell Integration to access this information.",
+            try completion("Tell the user they need to install Shell Integration to access this information.",
                        "Failed to get the last command’s exit status because shell integration is not installed.")
             return
         }
         guard let promise = screen.lastCommandMark()?.returnCodePromise, let value = promise.maybeValue  else {
-            completion("The last command is still running and has not exited yet.",
+            try completion("The last command is still running and has not exited yet.",
                        "The last command seems to still be running so its exit status cannot be retrieved.")
             return
         }
-        completion(value.stringValue, "The exit status of the last command provided to AI.")
+        try completion(value.stringValue, "The exit status of the last command provided to AI.")
     }
 
     func getCommandHistoryRemoteCommand(getCommandHistory: RemoteCommand.GetCommandHistory,
-                                        completion: @escaping (String, String) -> ()) {
+                                        completion: @escaping (String, String) throws -> ()) rethrows {
         guard iTermShellHistoryController.sharedInstance().commandHistoryHasEverBeenUsed() else {
-            completion("Tell the user they need to install Shell Integration to access this information.",
+            try completion("Tell the user they need to install Shell Integration to access this information.",
                        "Command history isn’t available because Shell Integration isn’t installed.")
             return
         }
@@ -377,44 +379,44 @@ extension PTYSession {
                 commands.append(command)
             }
         }
-        completion(commands.joined(separator: "\n"), "Command history provided to AI.")
+        try completion(commands.joined(separator: "\n"), "Command history provided to AI.")
     }
 
     func getLastCommandRemoteCommand(getLastCommand: RemoteCommand.GetLastCommand,
-                                     completion: @escaping (String, String) -> ()) {
+                                     completion: @escaping (String, String) throws -> ()) rethrows {
         guard iTermShellHistoryController.sharedInstance().commandHistoryHasEverBeenUsed() else {
-            completion("Tell the user they need to install Shell Integration to access this information.",
+            try completion("Tell the user they need to install Shell Integration to access this information.",
                        "The last command execute can’t be provided because Shell Integration isn’t installed.")
             return
         }
         guard let command = screen.lastCommandMark()?.command else {
-            completion("There are no previous command in history", "No previous command is available in this session}s history.")
+            try completion("There are no previous command in history", "No previous command is available in this session}s history.")
             return
         }
-        completion(command, "Last command provided to AI.")
+        try completion(command, "Last command provided to AI.")
     }
 
     func getCommandBeforeCursorRemoteCommand(getCommandBeforeCursor: RemoteCommand.GetCommandBeforeCursor,
-                                             completion: @escaping (String, String) -> ()) {
+                                             completion: @escaping (String, String) throws -> ()) rethrows {
         guard iTermShellHistoryController.sharedInstance().commandHistoryHasEverBeenUsed() else {
-            completion("Tell the user they need to install Shell Integration to access this information.",
+            try completion("Tell the user they need to install Shell Integration to access this information.",
             "The contents of the shell prompt could not be determined because Shell Integration isn’t installed.")
             return
         }
         guard let currentCommandUpToCursor else {
-            completion("The user is not at the prompt.",
+            try completion("The user is not at the prompt.",
             "The contents of the shell prompt could not be provided because it appears the session is not currently at a prompt.")
             return
         }
         #warning("TODO: Test this")
-        completion(currentCommandUpToCursor, "Current command provided to AI.")
+        try completion(currentCommandUpToCursor, "Current command provided to AI.")
 
     }
 
     func searchCommandHistoryRemoteCommand(searchCommandHistory: RemoteCommand.SearchCommandHistory,
-                                           completion: @escaping (String, String) -> ()) {
+                                           completion: @escaping (String, String) throws -> ()) rethrows {
         guard iTermShellHistoryController.sharedInstance().commandHistoryHasEverBeenUsed() else {
-            completion("Tell the user they need to install Shell Integration to access this information.",
+            try completion("Tell the user they need to install Shell Integration to access this information.",
                        "Command history is not available because Shell Integration isn’t installed.")
             return
         }
@@ -424,15 +426,15 @@ extension PTYSession {
                 commands.append(command)
             }
         }
-        completion(commands.joined(separator: "\n"), "Command history provided to AI.")
+        try completion(commands.joined(separator: "\n"), "Command history provided to AI.")
     }
 
     func getCommandOutputRemoteCommand(getCommandOutput: RemoteCommand.GetCommandOutput,
-                                       completion: @escaping (String, String) -> ()) {
+                                       completion: @escaping (String, String) throws -> ()) rethrows {
         let absRange = textViewRangeOfLastCommandOutput()
         let range = VT100GridCoordRangeFromAbsCoordRange(absRange, screen.totalScrollbackOverflow())
         if range.start.x < 0 {
-            completion("The output is no longer available.", "The output of the last command wasn’t provided because it is no longer available.")
+            try completion("The output is no longer available.", "The output of the last command wasn’t provided because it is no longer available.")
             return
         }
         let extractor = iTermTextExtractor(dataSource: screen)
@@ -447,72 +449,72 @@ extension PTYSession {
                           continuationChars: nil,
                           coords: nil)
         if let string = content as? String {
-            completion(string, "Last command’s output provided to AI.")
+            try completion(string, "Last command’s output provided to AI.")
         } else {
-            completion("The content could not be retrieved because of an unexpected error",
+            try completion("The content could not be retrieved because of an unexpected error",
             "The output of the last command wasn’t provided because of an unexpected error.")
         }
     }
 
     func getTerminalSizeRemoteCommand(getTerminalSize: RemoteCommand.GetTerminalSize,
-                                      completion: @escaping (String, String) -> ()) {
-        completion("\(screen.width()) columns wide by \(screen.height()) rows tall",
+                                      completion: @escaping (String, String) throws -> ()) rethrows {
+        try completion("\(screen.width()) columns wide by \(screen.height()) rows tall",
                    "Session size provided to AI.")
     }
 
     func getShellTypeRemoteCommand(getShellType: RemoteCommand.GetShellType,
-                                   completion: @escaping (String, String) -> ()) {
-        completion(genericScope.stringValue(forVariableName: iTermVariableKeyShell),
+                                   completion: @escaping (String, String) throws -> ()) rethrows {
+        try completion(genericScope.stringValue(forVariableName: iTermVariableKeyShell),
                    "Shell type provided to AI")
     }
 
     func detectSSHSessionRemoteCommand(detectSSHSession: RemoteCommand.DetectSSHSession,
-                                       completion: @escaping (String, String) -> ()) {
+                                       completion: @escaping (String, String) throws -> ()) rethrows {
         let value = screen.lastRemoteHost()?.isLocalhost ?? false
-        completion("\(value)", "SSH status provided to AI.")
+        try completion("\(value)", "SSH status provided to AI.")
     }
 
     func getRemoteHostnameRemoteCommand(getRemoteHostname: RemoteCommand.GetRemoteHostname,
-                                        completion: @escaping (String, String) -> ()) {
-        completion(screen.lastRemoteHost()?.hostname ?? "Unknown",
+                                        completion: @escaping (String, String) throws -> ()) rethrows {
+        try completion(screen.lastRemoteHost()?.hostname ?? "Unknown",
                    "Hostname provided to AI")
     }
 
     func getUserIdentityRemoteCommand(getUserIdentity: RemoteCommand.GetUserIdentity,
-                                      completion: @escaping (String, String) -> ()) {
-        completion(screen.lastRemoteHost()?.username ?? NSUserName(),
+                                      completion: @escaping (String, String) throws -> ()) rethrows {
+        try completion(screen.lastRemoteHost()?.username ?? NSUserName(),
                    "User name provided to AI.")
     }
 
     func getCurrentDirectoryRemoteCommand(getCurrentDirectory: RemoteCommand.GetCurrentDirectory,
-                                          completion: @escaping (String, String) -> ()) {
-        completion(genericScope.stringValue(forVariableName: iTermVariableKeySessionPath),
+                                          completion: @escaping (String, String) throws -> ()) rethrows {
+        try completion(genericScope.stringValue(forVariableName: iTermVariableKeySessionPath),
                    "Current directory provided to AI.")
     }
 
     func setClipboardRemoteCommand(setClipboard: RemoteCommand.SetClipboard,
-                                   completion: @escaping (String, String) -> ()) {
+                                   completion: @escaping (String, String) throws -> ()) rethrows {
         NSPasteboard.general.declareTypes([.string], owner: NSApp)
         NSPasteboard.general.setString(setClipboard.text, forType: .string)
-        completion("Copied", "Clipboard contents changed by AI.")
+        try completion("Copied", "Clipboard contents changed by AI.")
     }
 
     func insertTextAtCursorRemoteCommand(insertTextAtCursor: RemoteCommand.InsertTextAtCursor,
-                                         completion: @escaping (String, String) -> ()) {
+                                         completion: @escaping (String, String) throws -> ()) rethrows {
         writeTaskNoBroadcast(insertTextAtCursor.text)
-        completion("Inserted", "Text inserted by AI.")
+        try completion("Inserted", "Text inserted by AI.")
     }
 
     func deleteCurrentLineRemoteCommand(deleteCurrentLine: RemoteCommand.DeleteCurrentLine,
-                                        completion: @escaping (String, String) -> ()) {
+                                        completion: @escaping (String, String) throws -> ()) rethrows {
         writeTaskNoBroadcast("\u{15}")
-        completion("Done", "Current line deleted by AI.")
+        try completion("Done", "Current line deleted by AI.")
     }
 
     func getManPageRemoteCommand(getManPage: RemoteCommand.GetManPage,
-                                 completion: @escaping (String, String) -> ()) {
+                                 completion: @escaping (String, String) throws -> ()) rethrows {
         let otsc = OneTimeStringClosure { message in
-            completion(message, "manpage provided to AI.")
+            try? completion(message, "manpage provided to AI.")
         }
         runningRemoteCommand.state = .futureString(otsc)
         if let conductor, conductor.framing {
@@ -523,35 +525,35 @@ extension PTYSession {
     }
 
     func createFileCommand(createFile: RemoteCommand.CreateFile,
-                           completion: @escaping (String, String) -> ()) {
+                           completion: @escaping (String, String) throws -> ()) rethrows {
         DLog("\(createFile)")
         if #available(macOS 11, *) {
             if let conductor, conductor.framing {
-                createRemoteFile(createFile, conductor: conductor, completion: completion)
+                try createRemoteFile(createFile, conductor: conductor, completion: completion)
                 return
             }
         }
-        createLocalFile(createFile, completion: completion)
+        try createLocalFile(createFile, completion: completion)
     }
 
     @available(macOS 11.0, *)
     private func createRemoteFile(_ createFile: RemoteCommand.CreateFile,
                                   conductor: Conductor,
-                                  completion: @escaping (String, String) -> ()) {
+                                  completion: @escaping (String, String) throws -> ()) rethrows {
         DLog("Send to composer")
         conductor.create(file: createFile.filename, content: createFile.content.lossyData) { error in
             if let error {
-                completion("Error creating \(createFile.filename): " + error.localizedDescription,
+                try? completion("Error creating \(createFile.filename): " + error.localizedDescription,
                            "Failed to create \(createFile) on remote host: \(error.localizedDescription)")
             } else {
-                completion("Done", "AI created \(createFile.filename) on remote host.")
+                try? completion("Done", "AI created \(createFile.filename) on remote host.")
             }
         }
     }
     
 
     private func createLocalFile(_ createFile: RemoteCommand.CreateFile,
-                                 completion: @escaping (String, String) -> ()) {
+                                 completion: @escaping (String, String) throws -> ()) rethrows {
         do {
             let abs = if createFile.filename.hasPrefix("/") {
                 createFile.filename
@@ -563,9 +565,9 @@ extension PTYSession {
                                          atomically: false,
                                          encoding: .utf8)
             NSWorkspace.shared.activateFileViewerSelecting([fileURL])
-            completion("Ok", "Created \(createFile.filename) and revealed in Finder.")
+            try completion("Ok", "Created \(createFile.filename) and revealed in Finder.")
         } catch {
-            completion("Error: \(error.localizedDescription)", "Failed to create \(createFile.filename): \(error.localizedDescription)")
+            try completion("Error: \(error.localizedDescription)", "Failed to create \(createFile.filename): \(error.localizedDescription)")
         }
     }
 

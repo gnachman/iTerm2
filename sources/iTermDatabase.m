@@ -365,19 +365,22 @@ typedef enum {
     return [_db lastError];
 }
 
+- (void)beginDeferredTransaction {
+    [_db beginDeferredTransaction];
+}
+
+- (void)commit {
+    [_db commit];
+}
+
+- (void)rollback {
+    [_db rollback];
+}
+
 - (BOOL)transaction:(BOOL (^ NS_NOESCAPE)(void))block {
     [_db beginDeferredTransaction];
     DLog(@"Begin transaction");
     BOOL result;
-#if BETA
-    {
-        FMResultSet *rs = [_db executeQuery:@"select count(*) as c from Node where parent=0"];
-        if ([rs next]) {
-            NSString *count = [rs stringForColumn:@"c"];
-            ITBetaAssert(count.integerValue < 2, @"PRE: %@", count);
-        }
-    }
-#endif
     if (block()) {
         DLog(@"Commit");
         result = [_db commit];
@@ -385,15 +388,6 @@ typedef enum {
         DLog(@"Rollback");
         result = [_db rollback];
     }
-#if BETA
-    {
-        FMResultSet *rs = [_db executeQuery:@"select count(*) as c from Node where parent=0"];
-        if ([rs next]) {
-            NSString *count = [rs stringForColumn:@"c"];
-            ITBetaAssert(count.integerValue == 1, @"POST: %@", count);
-        }
-    }
-#endif
     if (!result) {
         DLog(@"error=%@", _db.lastError);
     }
@@ -404,5 +398,37 @@ typedef enum {
     return _url;
 }
 
+- (id<iTermDatabaseResultSet> _Nullable)executeQuery:(nonnull NSString *)sql
+                            withNonOptionalArguments:(nonnull NSArray *)arguments
+                                               error:(NSError * _Nullable __autoreleasing * _Nullable)error { 
+    FMResultSet * _Nullable result = [_db executeQuery:sql withArgumentsInArray:arguments];
+
+    if (gDebugLogging) {
+        [self logStatement:sql arguments:arguments];
+    }
+    if (error) {
+        if (result) {
+            *error = nil;
+        } else {
+            *error = [_db lastError];
+        }
+    }
+    return result;
+}
+
+
+- (BOOL)executeUpdate:(nonnull NSString *)sql
+withNonOptionalArguments:(nonnull NSArray *)arguments
+                error:(out NSError * _Nullable __autoreleasing * _Nullable)error {
+    BOOL result = [_db executeUpdate:sql values:arguments error:error];
+    if (error && *error) {
+        XLog(@"%@ failed: %@", sql, *error);
+    }
+
+    if (gDebugLogging) {
+        [self logStatement:sql arguments:arguments];
+    }
+    return result;
+}
 
 @end

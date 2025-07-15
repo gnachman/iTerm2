@@ -20,7 +20,7 @@ class PipelineBuilder<T> {
 
     @discardableResult
     func add(description: String,
-             actionClosure: @escaping Pipeline<T>.Action.Closure) -> UUID {
+             actionClosure: @escaping Pipeline<T>.Action.Closure) throws -> UUID {
         let action = Pipeline<T>.Action(description: description,
                                         dependencies: deps,
                                         closure: actionClosure)
@@ -113,7 +113,7 @@ class Pipeline<T>: CustomDebugStringConvertible {
     }
 
     struct Action {
-        typealias Closure = ([UUID: T], @escaping (Result<T, Error>) -> ()) -> ()
+        typealias Closure = ([UUID: T], @escaping (Result<T, Error>) throws -> ()) throws -> ()
         var id = UUID()
         var description: String
         // Begins the action. The passed-in closure must be called eventually. If
@@ -199,16 +199,20 @@ class Pipeline<T>: CustomDebugStringConvertible {
             let actionToRun = eligibleActions.removeFirst()
             runningActions.append(actionToRun)
             DLog("Run pipeline action \(actionToRun.description)")
-            actionToRun.closure(values) { [weak self] result in
-                dispatchPrecondition(condition: .onQueue(.main))
-                switch result {
-                case .success(let value):
-                    DLog("Pipeline action \(actionToRun.description) completed successfuly with value \(value)")
-                    self?.actionDidComplete(actionToRun.id, value: value)
-                case .failure(let error):
-                    DLog("Pipeline action \(actionToRun.description) failed with error \(error.localizedDescription)")
-                    self?.finish(.failure(error))
+            do {
+                try actionToRun.closure(values) { [weak self] result in
+                    dispatchPrecondition(condition: .onQueue(.main))
+                    switch result {
+                    case .success(let value):
+                        DLog("Pipeline action \(actionToRun.description) completed successfuly with value \(value)")
+                        self?.actionDidComplete(actionToRun.id, value: value)
+                    case .failure(let error):
+                        DLog("Pipeline action \(actionToRun.description) failed with error \(error.localizedDescription)")
+                        self?.finish(.failure(error))
+                    }
                 }
+            } catch {
+                DLog("\(error)")
             }
         }
     }

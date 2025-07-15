@@ -22,13 +22,13 @@ class DatabaseBackedArray<Element> where Element: iTermDatabaseElement {
     }
     var isEmpty: Bool { count == 0 }
 
-    convenience init(db: iTermDatabase, query: String) {
-        self.init(db: db, query: query, args: [])
+    convenience init(db: iTermDatabase, query: String) throws {
+        try self.init(db: db, query: query, args: [])
     }
 
-    init(db: iTermDatabase, query: String, args: [Any?]) {
+    init(db: iTermDatabase, query: String, args: [Any?]) throws {
         self.db = db
-        if let resultSet = db.executeQuery(query, withArguments: args) {
+        if let resultSet = try db.executeQuery(query, withArguments: args) {
             while resultSet.next() {
                 if let element = Element(dbResultSet: resultSet) {
                     elements.append(element)
@@ -42,34 +42,41 @@ class DatabaseBackedArray<Element> where Element: iTermDatabaseElement {
         get {
             elements[i]
         }
-        set {
-            let oldValue = elements[i]
-            elements[i] = newValue
-            let (query, args) = newValue.updateQuery()
-            db.executeUpdate(query, withArguments: args)
-            delegate?.databaseBackedArray(didModifyElement: newValue, oldValue: oldValue)
-        }
     }
 
-    func append(_ element: Element) {
-        insert(element, atIndex: elements.count)
+    func modify(at i: Int, closure: (inout Element) -> ()) throws {
+        var value = elements[i]
+        closure(&value)
+        try set(at: i, value)
     }
 
-    func prepend(_ element: Element) {
-        insert(element, atIndex: 0)
+    func set(at i: Int, _ newValue: Element) throws {
+        let oldValue = elements[i]
+        elements[i] = newValue
+        let (query, args) = newValue.updateQuery()
+        try? db.executeUpdate(query, withArguments: args)
+        delegate?.databaseBackedArray(didModifyElement: newValue, oldValue: oldValue)
     }
 
-    func remove(at i: Int) {
+    func append(_ element: Element) throws {
+        try insert(element, atIndex: elements.count)
+    }
+
+    func prepend(_ element: Element) throws {
+        try insert(element, atIndex: 0)
+    }
+
+    func remove(at i: Int) throws {
         let element = elements[i]
         let (query, args) = element.removeQuery()
-        db.executeUpdate(query, withArguments: args)
+        try db.executeUpdate(query, withArguments: args)
         elements.remove(at: i)
         delegate?.databaseBackedArray(didRemoveElement: element)
     }
 
-    func insert(_ element: Element, atIndex i: Int) {
+    func insert(_ element: Element, atIndex i: Int) throws {
         let (query, args) = element.appendQuery()
-        db.executeUpdate(query, withArguments: args)
+        try db.executeUpdate(query, withArguments: args)
         elements.insert(element, at: i)
         delegate?.databaseBackedArray(didInsertElement: element)
     }

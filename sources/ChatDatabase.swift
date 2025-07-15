@@ -28,10 +28,14 @@ class ObjCChatDatabase: NSObject {
             if chat.sessionGuid == sessionGuid {
                 var temp = chats[i]
                 temp.sessionGuid = nil
-                chats[i] = temp
-                ChatBroker.instance?.publishNotice(
-                    chatID: temp.id,
-                    notice: "This chat is no longer linked to a terminal session.")
+                do {
+                    try chats.set(at: i, temp)
+                    try? ChatBroker.instance?.publishNotice(
+                        chatID: temp.id,
+                        notice: "This chat is no longer linked to a terminal session.")
+                } catch {
+                    DLog("\(error)")
+                }
             }
         }
     }
@@ -93,24 +97,24 @@ class ChatDatabase {
     }
 
     private func createTables() -> Bool {
-        if !db.executeUpdate(Chat.schema(), withArguments: []) {
-            return false
-        }
-        let migrations = Chat.migrations(existingColumns:
-            listColumns(
-                resultSet: db.executeQuery(
-                    Chat.tableInfoQuery(),
-                    withArguments: [])))
-        for migration in migrations {
-            if !db.executeUpdate(migration.query, withArguments: migration.args) {
-                return false
-            }
-        }
-        if !db.executeUpdate(Message.schema(), withArguments: []) {
-            return false
-        }
+        do {
+            try db.executeUpdate(Chat.schema(), withArguments: [])
 
-        return true
+            let migrations = Chat.migrations(existingColumns:
+                                                listColumns(
+                                                    resultSet: try db.executeQuery(
+                                                        Chat.tableInfoQuery(),
+                                                        withArguments: [])))
+            for migration in migrations {
+                try db.executeUpdate(migration.query, withArguments: migration.args)
+            }
+            try db.executeUpdate(Message.schema(), withArguments: [])
+
+            return true
+        } catch {
+            DLog("\(error)")
+            return false
+        }
     }
 
     private func popuplateSessionToChatMap() {
@@ -123,22 +127,29 @@ class ChatDatabase {
         WHERE
             \(Chat.Columns.sessionGuid.rawValue) IS NOT NULL
         """
-        guard let resultSet = db.executeQuery(sql, withArguments: []) else {
-            return
-        }
-        while resultSet.next() {
-            guard let guid = resultSet.string(forColumn: Chat.Columns.sessionGuid.rawValue),
-                  let chatID = resultSet.string(forColumn: Chat.Columns.uuid.rawValue) else {
-                continue
+        do {
+            guard let resultSet = try db.executeQuery(sql, withArguments: []) else {
+                return
             }
-            sessionToChatMap[guid, default: Set()].insert(chatID)
+            while resultSet.next() {
+                guard let guid = resultSet.string(forColumn: Chat.Columns.sessionGuid.rawValue),
+                      let chatID = resultSet.string(forColumn: Chat.Columns.uuid.rawValue) else {
+                    continue
+                }
+                sessionToChatMap[guid, default: Set()].insert(chatID)
+            }
+        } catch {
+            DLog("\(error)")
+            return
         }
     }
 
     private var _chats: DatabaseBackedArray<Chat>?
     var chats: DatabaseBackedArray<Chat>? {
         if _chats == nil {
-            let dba = DatabaseBackedArray<Chat>(db: db, query: Chat.fetchAllQuery())
+            guard let dba = try? DatabaseBackedArray<Chat>(db: db, query: Chat.fetchAllQuery()) else {
+                return nil
+            }
             dba.delegate = self
             _chats = dba
         }
@@ -147,9 +158,9 @@ class ChatDatabase {
 
     func messages(inChat chatID: String) -> DatabaseBackedArray<Message>? {
         let (query, args) = Message.query(forChatID: chatID)
-        return DatabaseBackedArray(db: db,
-                                   query: query,
-                                   args: args)
+        return try? DatabaseBackedArray(db: db,
+                                        query: query,
+                                        args: args)
     }
 
     struct QueryIterator<T>: Sequence, IteratorProtocol where T: iTermDatabaseInitializable {
@@ -173,10 +184,15 @@ class ChatDatabase {
 
     func messageReverseIterator(inChat chatID: String) -> MessageIterator {
         let query = "SELECT * FROM Message WHERE chatID=? ORDER BY sentDate DESC"
-        guard let resultSet = db.executeQuery(query, withArguments: [chatID]) else {
+        do {
+            guard let resultSet = try db.executeQuery(query, withArguments: [chatID]) else {
+                return MessageIterator(resultSet: nil)
+            }
+            return MessageIterator(resultSet: resultSet)
+        } catch {
+            DLog("\(error)")
             return MessageIterator(resultSet: nil)
         }
-        return MessageIterator(resultSet: resultSet)
     }
 
     func searchResultSequence(forQuery query: String) -> AnySequence<ChatSearchResult> {
@@ -187,8 +203,13 @@ class ChatDatabase {
 
             let conditions = tokens.map { "content LIKE '%\($0)%'" }
             let whereClause = "WHERE " + conditions.joined(separator: " AND ")
-            let resultSet = self.db.executeQuery("SELECT * from MESSAGE \(whereClause)", withArguments: tokens)
-            return QueryIterator<ChatSearchResult>(resultSet: resultSet)
+            do {
+                let resultSet = try self.db.executeQuery("SELECT * from MESSAGE \(whereClause)", withArguments: tokens)
+                return QueryIterator<ChatSearchResult>(resultSet: resultSet)
+            } catch {
+                DLog("\(error)")
+                return QueryIterator<ChatSearchResult>(resultSet: nil)
+            }
         }
     }
 }

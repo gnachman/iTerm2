@@ -59,8 +59,8 @@ class ChatBroker {
         self.listModel = listModel
     }
 
-    func delete(chatID: String) {
-        listModel.delete(chatID: chatID)
+    func delete(chatID: String) throws {
+        try listModel.delete(chatID: chatID)
     }
 
     private var defaultPermissions: Set<RemoteCommand.Content.PermissionCategory> {
@@ -73,23 +73,23 @@ class ChatBroker {
         })
     }
 
-    func create(chatWithTitle title: String, sessionGuid: String?) -> String {
+    func create(chatWithTitle title: String, sessionGuid: String?) throws -> String {
         // Ensure the service is running
         _ = ChatService.instance
 
         let chat = Chat(title: title, sessionGuid: sessionGuid, permissions: "")
-        listModel.add(chat: chat)
-        publish(message: Message(chatID: chat.id,
-                                 author: .user,
-                                 content: .setPermissions(defaultPermissions),
-                                 sentDate: Date(),
-                                 uniqueID: UUID()),
-                toChatID: chat.id,
-                partial: false)
+        try listModel.add(chat: chat)
+        try publish(message: Message(chatID: chat.id,
+                                     author: .user,
+                                     content: .setPermissions(defaultPermissions),
+                                     sentDate: Date(),
+                                     uniqueID: UUID()),
+                    toChatID: chat.id,
+                    partial: false)
         return chat.id
     }
 
-    func publish(message: Message, toChatID chatID: String, partial: Bool) {
+    func publish(message: Message, toChatID chatID: String, partial: Bool) throws {
         DLog("Publish \(message.shortDescription)")
         // Ensure the service is running
         _ = ChatService.instance
@@ -103,7 +103,7 @@ class ChatBroker {
                 return
             }
         }
-        listModel.append(message: processed, toChatID: chatID)
+        try listModel.append(message: processed, toChatID: chatID)
         for sub in subs {
             if sub.chatID == chatID || sub.chatID == nil {
                 sub.closure?(.delivery(processed, chatID))
@@ -433,33 +433,33 @@ extension RemoteCommand.Content.PermissionCategory {
 }
 
 extension ChatBroker {
-    func publishMessageFromAgent(chatID: String, content: Message.Content) {
-        publish(message: Message(chatID: chatID,
-                                 author: .agent,
-                                 content: content,
-                                 sentDate: Date(),
-                                 uniqueID: UUID()),
-                toChatID: chatID,
-                partial: false)
+    func publishMessageFromAgent(chatID: String, content: Message.Content) throws {
+        try publish(message: Message(chatID: chatID,
+                                     author: .agent,
+                                     content: content,
+                                     sentDate: Date(),
+                                     uniqueID: UUID()),
+                    toChatID: chatID,
+                    partial: false)
     }
 
-    func publishMessageFromUser(chatID: String, content: Message.Content) {
-        publish(message: Message(chatID: chatID,
-                                 author: .user,
-                                 content: content,
-                                 sentDate: Date(),
-                                 uniqueID: UUID()),
-                toChatID: chatID,
-                partial: false)
+    func publishMessageFromUser(chatID: String, content: Message.Content) throws {
+        try publish(message: Message(chatID: chatID,
+                                     author: .user,
+                                     content: content,
+                                     sentDate: Date(),
+                                     uniqueID: UUID()),
+                    toChatID: chatID,
+                    partial: false)
     }
 
-    func publishNotice(chatID: String, notice: String) {
-        publish(message: Message(chatID: chatID,
-                                 author: .agent,
-                                 content: .clientLocal(.init(action: .notice(notice))),
-                                 sentDate: Date(),
-                                 uniqueID: UUID()),
-                toChatID: chatID,
-                partial: false)
+    func publishNotice(chatID: String, notice: String) throws {
+        try publish(message: Message(chatID: chatID,
+                                     author: .agent,
+                                     content: .clientLocal(.init(action: .notice(notice))),
+                                     sentDate: Date(),
+                                     uniqueID: UUID()),
+                    toChatID: chatID,
+                    partial: false)
     }
 }

@@ -94,9 +94,10 @@ class ChatViewControllerModel {
         get {
             listModel.chat(id: chatID)?.sessionGuid
         }
-        set {
-            listModel.setGuid(for: chatID, to: newValue)
-        }
+    }
+
+    func setSessionGuid(_ newValue: String?) throws {
+        try listModel.setGuid(for: chatID, to: newValue)
     }
 
     private let alwaysAppendDate = false

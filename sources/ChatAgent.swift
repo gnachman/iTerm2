@@ -180,7 +180,7 @@ class ChatAgent {
     private var renameConversation: AIConversation?
 
     struct PendingRemoteCommand {
-        var completion: (Result<String, Error>) -> ()
+        var completion: (Result<String, Error>) throws -> ()
         var responseID: String?
     }
 
@@ -277,8 +277,8 @@ class ChatAgent {
         return conversation.supportsStreaming
     }
 
-    private func publishNotice(chatID: String, message: String) {
-        broker.publishMessageFromAgent(
+    private func publishNotice(chatID: String, message: String) throws {
+        try broker.publishMessageFromAgent(
             chatID: chatID,
             content: .clientLocal(.init(action: .notice(message))))
     }
@@ -363,11 +363,11 @@ class ChatAgent {
             self?.conversation.uploadFile(
                 name: fileName,
                 content: fileContent) { result in
-                    self?.uploadFinished(chatID: chatID,
-                                         fileName: fileName,
-                                         description: fileName.lastPathComponent,
-                                         result: result,
-                                         completion: completion)
+                    try? self?.uploadFinished(chatID: chatID,
+                                              fileName: fileName,
+                                              description: fileName.lastPathComponent,
+                                              result: result,
+                                              completion: completion)
                 }
         }
     }
@@ -378,31 +378,31 @@ class ChatAgent {
                                 fileName: String,
                                 description: String,
                                 result: Result<String, Error>,
-                                completion: @escaping (Result<PipelineResult, Error>) -> Void) {
+                                completion: @escaping (Result<PipelineResult, Error>) throws -> Void) throws {
         switch result {
         case .success(let id):
-            publishNotice(
+            try publishNotice(
                 chatID: chatID,
                 message: "Upload of \(description) finished.")
-            completion(.success(.fileUploaded(id: id, name: fileName)))
+            try completion(.success(.fileUploaded(id: id, name: fileName)))
         case .failure(let error):
-            publishNotice(
+            try publishNotice(
                 chatID: chatID,
                 message: "Failed to upload \(fileName): \(error.localizedDescription)")
-            completion(.failure(error))
+            try completion(.failure(error))
         }
     }
 
-    private func createVectorStoreAction(chatID: String) -> Pipeline<PipelineResult>.Action.Closure {
+    private func createVectorStoreAction(chatID: String) throws -> Pipeline<PipelineResult>.Action.Closure {
         return { [weak self] _, completion in
             guard let self else {
-                completion(.failure(AIError("Chat agent no longer exists")))
+                try completion(.failure(AIError("Chat agent no longer exists")))
                 return
             }
             conversation.createVectorStore(
                 name: "iTerm2.\(chatID)") { [weak self, broker] result in
-                    result.handle { id in
-                        broker.publish(message: .init(
+                    try? result.handle { id in
+                        try broker.publish(message: .init(
                             chatID: chatID,
                             author: .agent,
                             content: .vectorStoreCreated(id: id),
@@ -410,12 +410,12 @@ class ChatAgent {
                             uniqueID: UUID()),
                                        toChatID: chatID,
                                        partial: false)
-                        completion(.success(.vectorStoreCreated(id: id)))
+                        try? completion(.success(.vectorStoreCreated(id: id)))
                     } failure: { error in
-                        self?.publishNotice(
+                        try self?.publishNotice(
                             chatID: chatID,
                             message: "There was a problem creating a vector store database: \(error.localizedDescription)")
-                        completion(.failure(error))
+                        try? completion(.failure(error))
                     }
                 }
         }
@@ -423,7 +423,7 @@ class ChatAgent {
 
     private func addFilesToVectorStoreAction(previousResults: [UUID: PipelineResult],
                                              vectorStoreID: String?,
-                                             completion: @escaping (Result<PipelineResult, Error>) -> ()) {
+                                             completion: @escaping (Result<PipelineResult, Error>) throws -> ()) {
         let fileIDs = previousResults.values.compactMap { value -> String? in
             switch value {
             case let .fileUploaded(id: fileID, name: _): return fileID
@@ -443,19 +443,19 @@ class ChatAgent {
         } else if let newVectorStoreID {
             justVectorStoreID = newVectorStoreID
         } else {
-            completion(.failure(AIError("Missing vector store ID")))
+            try? completion(.failure(AIError("Missing vector store ID")))
             return
         }
         conversation.addFilesToVectorStore(fileIDs: fileIDs,
                                            vectorStoreID: justVectorStoreID,
                                            completion: { [weak self, chatID] error in
             if let error {
-                self?.publishNotice(
+                try? self?.publishNotice(
                     chatID: chatID,
                     message: "There was a problem adding files to the vector store: \(error.localizedDescription)")
-                completion(.failure(error))
+                try? completion(.failure(error))
             } else {
-                completion(.success(.filesAddedToVectorStore))
+                try? completion(.success(.filesAddedToVectorStore))
             }
         })
     }
@@ -493,14 +493,14 @@ class ChatAgent {
                                    relativeTo: stagingDir,
                                    callbackQueue: .main) { ok in
                 if !ok {
-                    completion(.failure(AIError("Failed to zip attached files")))
+                    try? completion(.failure(AIError("Failed to zip attached files")))
                     return
                 }
                 do {
                     let data = try Data(contentsOf: zipURL)
-                    completion(.success(.zipCreated(zipURL, data)))
+                    try? completion(.success(.zipCreated(zipURL, data)))
                 } catch {
-                    completion(.failure(error))
+                    try? completion(.failure(error))
                 }
             }
         }
@@ -516,11 +516,11 @@ class ChatAgent {
             self?.conversation.uploadFile(
                 name: Self.zipName,
                 content: data) { result in
-                    self?.uploadFinished(chatID: chatID,
-                                         fileName: url.path,
-                                         description: "attachments",
-                                         result: result,
-                                         completion: completion)
+                    try? self?.uploadFinished(chatID: chatID,
+                                              fileName: url.path,
+                                              description: "attachments",
+                                              result: result,
+                                              completion: completion)
                 }
         }
     }
@@ -530,38 +530,38 @@ class ChatAgent {
                              chatID: String,
                              addToVectorStore: Bool,
                              vectorStoreID: String?,
-                             builder: PipelineBuilder<PipelineResult>) -> PipelineBuilder<PipelineResult> {
+                             builder: PipelineBuilder<PipelineResult>) throws -> PipelineBuilder<PipelineResult> {
         var currentBuilder = builder
         if addToVectorStore {
             if vectorStoreID == nil {
                 DLog("Need to create a vector store")
-                currentBuilder.add(description: "Create vector store",
-                                   actionClosure: createVectorStoreAction(chatID: chatID))
+                try currentBuilder.add(description: "Create vector store",
+                                       actionClosure: createVectorStoreAction(chatID: chatID))
                 currentBuilder = currentBuilder.makeChild()
             }
             for file in files {
                 DLog("Add upload action for \(file.name)")
-                currentBuilder.add(description: "Upload \(file.name)",
-                                   actionClosure: uploadAction(
-                    chatID: chatID,
-                    fileName: file.name,
-                    fileContent: file.content))
+                _ = try currentBuilder.add(description: "Upload \(file.name)",
+                                           actionClosure: uploadAction(
+                                            chatID: chatID,
+                                            fileName: file.name,
+                                            fileContent: file.content))
             }
             currentBuilder = currentBuilder.makeChild()
-            currentBuilder.add(description: "Add files to vector store") { [weak self] previousResults, completion in
+            try currentBuilder.add(description: "Add files to vector store") { [weak self] previousResults, completion in
                 self?.addFilesToVectorStoreAction(previousResults: previousResults,
                                                   vectorStoreID: vectorStoreID,
                                                   completion: completion)
             }
         } else {
             // Uploading for code interpreter. First zip the files, then upload them.
-            let zipID = currentBuilder.add(description: "Zip files",
-                                           actionClosure: makeZipAction(files: files))
+            let zipID = try currentBuilder.add(description: "Zip files",
+                                               actionClosure: makeZipAction(files: files))
             currentBuilder = currentBuilder.makeChild()
             DLog("Add upload action for zip file")
-            currentBuilder.add(description: "Upload zip file",
-                               actionClosure: uploadZipAction(zipID: zipID,
-                                                              chatID: chatID))
+            try currentBuilder.add(description: "Upload zip file",
+                                   actionClosure: uploadZipAction(zipID: zipID,
+                                                                  chatID: chatID))
         }
 
         return currentBuilder.makeChild()
@@ -575,7 +575,7 @@ class ChatAgent {
                                         parts: [Message.Subpart],
                                         vectorStoreID: String?,
                                         streaming: ((StreamingUpdate) -> ())?,
-                                        completion: @escaping (Message?) -> ()) {
+                                        completion: @escaping (Message?) -> ()) throws {
         DLog("scheduling multipart fetch")
         let rootBuilder = PipelineBuilder<PipelineResult>()
         var currentBuilder = rootBuilder
@@ -583,14 +583,14 @@ class ChatAgent {
         DLog("files=\(files.map(\.name).joined(separator: ", "))")
         DLog("text=\(text)")
         if !files.isEmpty {
-            publishNotice(chatID: chatID, message: "Uploading…")
-            currentBuilder = ingestFiles(files: files,
-                                         chatID: userMessage.chatID,
-                                         addToVectorStore: false,
-                                         vectorStoreID: vectorStoreID,
-                                         builder: currentBuilder)
+            try publishNotice(chatID: chatID, message: "Uploading…")
+            currentBuilder = try ingestFiles(files: files,
+                                             chatID: userMessage.chatID,
+                                             addToVectorStore: false,
+                                             vectorStoreID: vectorStoreID,
+                                             builder: currentBuilder)
         }
-        currentBuilder.add(description: "Send message") { [weak self] values, actionCompletion in
+        try currentBuilder.add(description: "Send message") { [weak self] values, actionCompletion in
             DLog("Ready to send the message now that all files are uploaded")
             let fileIDs = values.values.compactMap {
                 switch $0 {
@@ -607,7 +607,7 @@ class ChatAgent {
                                                                   id: UUID().uuidString,
                                                                   type: .file($0)))
             }
-            self?.fetchCompletion(
+            try self?.fetchCompletion(
                 userMessage: Message(chatID: userMessage.chatID,
                                      author: userMessage.author,
                                      content: .multipart([.plainText(text)] + attachments,
@@ -634,8 +634,8 @@ class ChatAgent {
     func fetchCompletion(userMessage: Message,
                          history: [Message],
                          streaming: ((StreamingUpdate) -> ())?,
-                         completion: @escaping (Message?) -> ()) {
-        fetchCompletion(userMessage: userMessage,
+                         completion: @escaping (Message?) -> ()) throws {
+        try fetchCompletion(userMessage: userMessage,
                         history: history,
                         cancelPendingUploads: true,
                         streaming: streaming,
@@ -651,7 +651,7 @@ class ChatAgent {
             let saved = pendingRemoteCommands.values
             pendingRemoteCommands.removeAll()
             for item in saved {
-                item.completion(.failure(PendingCommandCanceled()))
+                try? item.completion(.failure(PendingCommandCanceled()))
                 if let id = item.responseID {
                     conversation.deleteResponse(id) { error in
                         DLog("Deleted \(id): \(error.d)")
@@ -665,7 +665,7 @@ class ChatAgent {
                          history: [Message],
                          cancelPendingUploads: Bool,
                          streaming: ((StreamingUpdate) -> ())?,
-                         completion: @escaping (Message?) -> ()) {
+                         completion: @escaping (Message?) -> ()) throws {
         load(messages: history)
         if cancelPendingUploads {
             pipelineQueue.cancelAll()
@@ -677,15 +677,15 @@ class ChatAgent {
             if !uploads.isEmpty {
                 let text = textFromSubparts(parts)
                 let inlineFiles = inlineFilesFromSubparts(parts)
-                scheduleMultipartFetch(uploadFiles: uploads,
-                                       text: text,
-                                       inlineFiles: inlineFiles,
-                                       userMessage: userMessage,
-                                       history: history,
-                                       parts: parts,
-                                       vectorStoreID: maybeVectorStoreID,
-                                       streaming: streaming,
-                                       completion: completion)
+                try scheduleMultipartFetch(uploadFiles: uploads,
+                                           text: text,
+                                           inlineFiles: inlineFiles,
+                                           userMessage: userMessage,
+                                           history: history,
+                                           parts: parts,
+                                           vectorStoreID: maybeVectorStoreID,
+                                           streaming: streaming,
+                                           completion: completion)
                 return
             }
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
@@ -698,7 +698,7 @@ class ChatAgent {
             if let pending = pendingRemoteCommands[messageID] {
                 NSLog("Agent handling remote command response to message \(messageID)")
                 pendingRemoteCommands.removeValue(forKey: messageID)
-                pending.completion(Result(result))
+                try? pending.completion(Result(result))
                 return
             }
         case .setPermissions(let allowedCategories):
@@ -797,7 +797,7 @@ class ChatAgent {
         var failed = false
         renameConversation?.complete { [weak self] (result: Result<AIConversation, Error>) in
             if let newName = result.successValue?.messages.last?.body.content {
-                self?.renameChat(newName)
+                try? self?.renameChat(newName)
                 self?.renameConversation = nil
             } else {
                 failed = true
@@ -1086,7 +1086,7 @@ extension ChatAgent {
                     implementation: { [weak self] llmMessage, command, completion in
                         let remoteCommand = RemoteCommand(llmMessage: llmMessage,
                                                           content: .isAtPrompt(command))
-                        self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
                     })
             case .executeCommand(let args):
                 conversation.define(
@@ -1099,7 +1099,7 @@ extension ChatAgent {
                     implementation: { [weak self] llmMessage, command, completion in
                         let remoteCommand = RemoteCommand(llmMessage: llmMessage,
                                                           content: .executeCommand(command))
-                        self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
                     })
             case .getLastExitStatus(let args):
                 conversation.define(
@@ -1112,7 +1112,7 @@ extension ChatAgent {
                     implementation: { [weak self] llmMessage, command, completion in
                         let remoteCommand = RemoteCommand(llmMessage: llmMessage,
                                                           content: .getLastExitStatus(command))
-                        self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
                     })
             case .getCommandHistory(let args):
                 conversation.define(
@@ -1125,7 +1125,7 @@ extension ChatAgent {
                     implementation: { [weak self] llmMessage, command, completion in
                         let remoteCommand = RemoteCommand(llmMessage: llmMessage,
                                                           content: .getCommandHistory(command))
-                        self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
                     })
             case .getLastCommand(let args):
                 conversation.define(
@@ -1138,7 +1138,7 @@ extension ChatAgent {
                     implementation: { [weak self] llmMessage, command, completion in
                         let remoteCommand = RemoteCommand(llmMessage: llmMessage,
                                                           content: .getLastCommand(command))
-                        self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
                     })
             case .getCommandBeforeCursor(let args):
                 conversation.define(
@@ -1151,7 +1151,7 @@ extension ChatAgent {
                     implementation: { [weak self] llmMessage, command, completion in
                         let remoteCommand = RemoteCommand(llmMessage: llmMessage,
                                                           content: .getCommandBeforeCursor(command))
-                        self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
                     })
             case .searchCommandHistory(let args):
                 conversation.define(
@@ -1164,7 +1164,7 @@ extension ChatAgent {
                     implementation: { [weak self] llmMessage, command, completion in
                         let remoteCommand = RemoteCommand(llmMessage: llmMessage,
                                                           content: .searchCommandHistory(command))
-                        self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
                     })
             case .getCommandOutput(let args):
                 conversation.define(
@@ -1177,7 +1177,7 @@ extension ChatAgent {
                     implementation: { [weak self] llmMessage, command, completion in
                         let remoteCommand = RemoteCommand(llmMessage: llmMessage,
                                                           content: .getCommandOutput(command))
-                        self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
                     })
             case .getTerminalSize(let args):
                 conversation.define(
@@ -1190,7 +1190,7 @@ extension ChatAgent {
                     implementation: { [weak self] llmMessage, command, completion in
                         let remoteCommand = RemoteCommand(llmMessage: llmMessage,
                                                           content: .getTerminalSize(command))
-                        self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
                     })
             case .getShellType(let args):
                 conversation.define(
@@ -1203,7 +1203,7 @@ extension ChatAgent {
                     implementation: { [weak self] llmMessage, command, completion in
                         let remoteCommand = RemoteCommand(llmMessage: llmMessage,
                                                           content: .getShellType(command))
-                        self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
                     })
             case .detectSSHSession(let args):
                 conversation.define(
@@ -1216,7 +1216,7 @@ extension ChatAgent {
                     implementation: { [weak self] llmMessage, command, completion in
                         let remoteCommand = RemoteCommand(llmMessage: llmMessage,
                                                           content: .detectSSHSession(command))
-                        self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
                     })
             case .getRemoteHostname(let args):
                 conversation.define(
@@ -1229,7 +1229,7 @@ extension ChatAgent {
                     implementation: { [weak self] llmMessage, command, completion in
                         let remoteCommand = RemoteCommand(llmMessage: llmMessage,
                                                           content: .getRemoteHostname(command))
-                        self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
                     })
             case .getUserIdentity(let args):
                 conversation.define(
@@ -1242,7 +1242,7 @@ extension ChatAgent {
                     implementation: { [weak self] llmMessage, command, completion in
                         let remoteCommand = RemoteCommand(llmMessage: llmMessage,
                                                           content: .getUserIdentity(command))
-                        self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
                     })
             case .getCurrentDirectory(let args):
                 conversation.define(
@@ -1255,7 +1255,7 @@ extension ChatAgent {
                     implementation: { [weak self] llmMessage, command, completion in
                         let remoteCommand = RemoteCommand(llmMessage: llmMessage,
                                                           content: .getCurrentDirectory(command))
-                        self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
                     })
             case .setClipboard(let args):
                 conversation.define(
@@ -1268,7 +1268,7 @@ extension ChatAgent {
                     implementation: { [weak self] llmMessage, command, completion in
                         let remoteCommand = RemoteCommand(llmMessage: llmMessage,
                                                           content: .setClipboard(command))
-                        self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
                     })
             case .insertTextAtCursor(let args):
                 conversation.define(
@@ -1281,7 +1281,7 @@ extension ChatAgent {
                     implementation: { [weak self] llmMessage, command, completion in
                         let remoteCommand = RemoteCommand(llmMessage: llmMessage,
                                                           content: .insertTextAtCursor(command))
-                        self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
                     })
             case .deleteCurrentLine(let args):
                 conversation.define(
@@ -1294,7 +1294,7 @@ extension ChatAgent {
                     implementation: { [weak self] llmMessage, command, completion in
                         let remoteCommand = RemoteCommand(llmMessage: llmMessage,
                                                           content: .deleteCurrentLine(command))
-                        self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
                     })
             case .getManPage(let args):
                 conversation.define(
@@ -1307,7 +1307,7 @@ extension ChatAgent {
                     implementation: { [weak self] llmMessage, command, completion in
                         let remoteCommand = RemoteCommand(llmMessage: llmMessage,
                                                           content: .getManPage(command))
-                        self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
                     })
             case .createFile(let args):
                 conversation.define(
@@ -1320,7 +1320,7 @@ extension ChatAgent {
                     implementation: { [weak self] llmMessage, command, completion in
                         let remoteCommand = RemoteCommand(llmMessage: llmMessage,
                                                           content: .createFile(command))
-                        self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
                     })
             }
         }
@@ -1328,29 +1328,29 @@ extension ChatAgent {
 
     // MARK: - Function Calling Infra
 
-    private func renameChat(_ newName: String) {
-        broker.publish(message: .init(chatID: chatID,
-                                      author: .agent,
-                                      content: .renameChat(newName),
-                                      sentDate: Date(),
-                                      uniqueID: UUID()),
-                       toChatID: chatID,
-                       partial: false)
+    private func renameChat(_ newName: String) throws {
+        try broker.publish(message: .init(chatID: chatID,
+                                          author: .agent,
+                                          content: .renameChat(newName),
+                                          sentDate: Date(),
+                                          uniqueID: UUID()),
+                           toChatID: chatID,
+                           partial: false)
     }
 
     private func runRemoteCommand(_ remoteCommand: RemoteCommand,
                                   _ responseID: String?,
-                                  completion: @escaping (Result<String, Error>) -> ()) {
+                                  completion: @escaping (Result<String, Error>) throws -> ()) throws {
         let requestID = UUID()
         pendingRemoteCommands[requestID] = .init(completion: completion,
                                                  responseID: responseID)
-        broker.publish(message: .init(chatID: chatID,
-                                      author: .agent,
-                                      content: .remoteCommandRequest(remoteCommand),
-                                      sentDate: Date(),
-                                      uniqueID: requestID),
-                       toChatID: chatID,
-                       partial: false)
+        try broker.publish(message: .init(chatID: chatID,
+                                          author: .agent,
+                                          content: .remoteCommandRequest(remoteCommand),
+                                          sentDate: Date(),
+                                          uniqueID: requestID),
+                           toChatID: chatID,
+                           partial: false)
     }
 }
 

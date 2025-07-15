@@ -43,6 +43,10 @@ withNonOptionalArguments:(NSArray *)arguments
 - (void)unlink;
 - (NSURL *)url;
 
+- (void)beginDeferredTransaction;
+- (void)commit;
+- (void)rollback;
+
 // If set the timeout handler will be called and can return YES to erase the db when it takes
 // too long to initialize or NO to keep trying.
 @property (nonatomic, copy) BOOL (^timeoutHandler)(void);

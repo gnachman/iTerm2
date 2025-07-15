@@ -928,19 +928,16 @@ actor BrowserDatabase {
 
     func setKeyValueStoreEntries(area: String?, extensionId: String?, newValues: [String: String]) async throws -> [String: String] {
         return try await withDatabase { db in
-            let (query, args) = BrowserKeyValueStoreEntry.upsertAndReturnOriginalQuery(
+            let statements = BrowserKeyValueStoreEntry.upsertAndReturnOriginalQuery(
                 area: area, extensionId: extensionId, kvps: newValues)
-            guard let resultSet = try db.executeQuery(query, withArguments: args) else {
+            guard let rows: [BrowserKeyValueStoreEntry] = try db.executeStatements(statements) else {
                 return [:]
             }
 
             var result = [String: String]()
-            while resultSet.next() {
-                if let entry = BrowserKeyValueStoreEntry(dbResultSet: resultSet) {
-                    result[entry.key] = entry.value
-                }
+            for entry in rows {
+                result[entry.key] = entry.value
             }
-            resultSet.close()
             return result
         }
     }

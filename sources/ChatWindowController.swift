@@ -249,9 +249,13 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
     }
 
     private func createNewChat() {
-        let chatID = client.create(chatWithTitle: "New Chat", sessionGuid: nil)
-        chatViewController.load(chatID: chatID)
-        chatListViewController.select(chatID: chatID)
+        do {
+            let chatID = try client.create(chatWithTitle: "New Chat", sessionGuid: nil)
+            chatViewController.load(chatID: chatID)
+            chatListViewController.select(chatID: chatID)
+        } catch {
+            DLog("\(error)")
+        }
     }
 
     @objc func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
@@ -334,23 +338,31 @@ extension ChatWindowController: NSToolbarDelegate {
         if let chat = model.lastChat(guid: guid) {
             chatListViewController.select(chatID: chat.id)
         } else {
-            let chatID = client.create(chatWithTitle: "Chat about \(name)",
-                                       sessionGuid: guid)
-            chatViewController.load(chatID: chatID)
-            chatListViewController.select(chatID: chatID)
+            do {
+                let chatID = try client.create(chatWithTitle: "Chat about \(name)",
+                                               sessionGuid: guid)
+                chatViewController.load(chatID: chatID)
+                chatListViewController.select(chatID: chatID)
+            } catch {
+                DLog("\(error)")
+            }
         }
     }
 
     func createChat(name: String,
                     inject: String?) {
-        let chatID = client.create(chatWithTitle: name,
-                                   sessionGuid: nil)
-        chatViewController.load(chatID: chatID)
-        chatListViewController.select(chatID: chatID)
-        if let inject {
-            chatViewController.attach(filename: name + ".txt",
-                                      content: inject.lossyData,
-                                      mimeType: "text/plain")
+        do {
+            let chatID = try client.create(chatWithTitle: name,
+                                           sessionGuid: nil)
+            chatViewController.load(chatID: chatID)
+            chatListViewController.select(chatID: chatID)
+            if let inject {
+                chatViewController.attach(filename: name + ".txt",
+                                          content: inject.lossyData,
+                                          mimeType: "text/plain")
+            }
+        } catch {
+            DLog("\(error)")
         }
     }
 
@@ -400,8 +412,12 @@ extension ChatWindowController: ChatViewControllerDelegate {
             guard let self else {
                 return
             }
-            client.delete(chatID: chatID)
-            chatViewController.load(chatID: nil)
+            do {
+                try client.delete(chatID: chatID)
+                chatViewController.load(chatID: nil)
+            } catch {
+                DLog("\(error)")
+            }
         }
         action.destructive = true
         warning.warningActions = [ iTermWarningAction(label: "Cancel"), action ]

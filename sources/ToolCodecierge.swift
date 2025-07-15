@@ -71,7 +71,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
         var state: State = .uninitialized
         var history = History()
         var ghostRiding = false
-        var pendingCompletion: ((Result<String, Error>) -> ())?
+        var pendingCompletion: ((Result<String, Error>) throws -> ())?
 
         var goal: String? {
             didSet {
@@ -109,7 +109,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
                                 implementation: { [weak self] _, command, completion in
                                     guard let self,
                                           let session = iTermController.sharedInstance().session(withGUID: guid) else {
-                                        completion(.failure(AIError("The session no longer exists")))
+                                        try? completion(.failure(AIError("The session no longer exists")))
                                         return
                                     }
                                     session.writeTask(command.command.trimmingTrailingNewline + "\n")
@@ -136,7 +136,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
                                 implementation: { [weak self] _, command, completion in
                                     guard let self,
                                           let session = iTermController.sharedInstance().session(withGUID: guid) else {
-                                        completion(.failure(AIError("The session no longer exists")))
+                                        try? completion(.failure(AIError("The session no longer exists")))
                                         return
                                     }
                                     session.sendTextSlowly("cat > \(command.filename)\n")
@@ -149,9 +149,9 @@ class ToolCodecierge: NSView, ToolbeltTool {
                                     pendingCompletion = { result in
                                         switch result {
                                         case .success:
-                                            completion(.success("Done"))
+                                            try? completion(.success("Done"))
                                         case .failure(let error):
-                                            completion(.failure(error))
+                                            try? completion(.failure(error))
                                         }
                                     }
                                 })
@@ -278,7 +278,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
                 history.commands.append(newCommand)
                 if let pendingCompletion {
                     self.pendingCompletion = nil
-                    pendingCompletion(.success(message(forCommand: newCommand)))
+                    try? pendingCompletion(.success(message(forCommand: newCommand)))
                     return
                 }
             }

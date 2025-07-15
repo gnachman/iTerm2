@@ -71,12 +71,12 @@ class ChatClient {
         }
     }
 
-    func create(chatWithTitle title: String, sessionGuid: String?) -> String {
-        return broker.create(chatWithTitle: title, sessionGuid: sessionGuid)
+    func create(chatWithTitle title: String, sessionGuid: String?) throws -> String {
+        return try broker.create(chatWithTitle: title, sessionGuid: sessionGuid)
     }
 
-    func delete(chatID: String) {
-        broker.delete(chatID: chatID)
+    func delete(chatID: String) throws {
+        try broker.delete(chatID: chatID)
     }
 
     func subscribe(chatID: String?,
@@ -85,16 +85,16 @@ class ChatClient {
         broker.subscribe(chatID: chatID, registrationProvider: registrationProvider, closure: closure)
     }
 
-    func publish(message: Message, toChatID chatID: String, partial: Bool) {
-        broker.publish(message: message, toChatID: chatID, partial: partial)
+    func publish(message: Message, toChatID chatID: String, partial: Bool) throws {
+        try broker.publish(message: message, toChatID: chatID, partial: partial)
     }
 
-    func publishMessageFromUser(chatID: String, content: Message.Content) {
-        broker.publishMessageFromUser(chatID: chatID, content: content)
+    func publishMessageFromUser(chatID: String, content: Message.Content) throws {
+        try broker.publishMessageFromUser(chatID: chatID, content: content)
     }
 
-    func publishMessageFromAgent(chatID: String, content: Message.Content) {
-        broker.publishMessageFromAgent(chatID: chatID, content: content)
+    func publishMessageFromAgent(chatID: String, content: Message.Content) throws {
+        try broker.publishMessageFromAgent(chatID: chatID, content: content)
     }
     
     private func processRemoteCommandRequest(chatID: String,
@@ -112,7 +112,7 @@ class ChatClient {
                                                          inSessionGuid: guid,
                                                          category: request.content.permissionCategory) {
         case .never:
-            respondSuccessfullyToRemoteCommandRequest(
+            try? respondSuccessfullyToRemoteCommandRequest(
                 inChat: chatID,
                 requestUUID: message.uniqueID,
                 message: "The user denied permission to use function calling in this terminal session. Do not try again.",
@@ -121,10 +121,10 @@ class ChatClient {
                 userNotice: "AI will not execute this command.")
             return nil
         case .always:
-            performRemoteCommand(request,
-                                 in: session,
-                                 chatID: chatID,
-                                 messageUniqueID: message.uniqueID)
+            try? performRemoteCommand(request,
+                                      in: session,
+                                      chatID: chatID,
+                                      messageUniqueID: message.uniqueID)
             return nil
         case .ask:
             return message
@@ -132,37 +132,37 @@ class ChatClient {
     }
 
     func publishClientLocalMessage(chatID: String,
-                                   action: ClientLocal.Action) {
-        broker.publishMessageFromAgent(chatID: chatID,
-                                       content: .clientLocal(.init(action: action)))
+                                   action: ClientLocal.Action) throws {
+        try broker.publishMessageFromAgent(chatID: chatID,
+                                           content: .clientLocal(.init(action: action)))
     }
 
     func publishUserMessage(chatID: String,
-                            content: Message.Content) {
-        broker.publish(message: .init(chatID: chatID,
-                                      author: .user,
-                                      content: content,
-                                      sentDate: Date(),
-                                      uniqueID: UUID()),
-                       toChatID: chatID,
-                       partial: false)
+                            content: Message.Content) throws {
+        try broker.publish(message: .init(chatID: chatID,
+                                          author: .user,
+                                          content: content,
+                                          sentDate: Date(),
+                                          uniqueID: UUID()),
+                           toChatID: chatID,
+                           partial: false)
     }
 
-    func publishNotice(chatID: String, notice: String) {
-        broker.publishNotice(chatID: chatID, notice: notice)
+    func publishNotice(chatID: String, notice: String) throws {
+        try broker.publishNotice(chatID: chatID, notice: notice)
     }
 
     func performRemoteCommand(_ request: RemoteCommand,
                               in session: PTYSession,
                               chatID: String,
-                              messageUniqueID: UUID) {
+                              messageUniqueID: UUID) throws {
         var done = false
         if request.shouldPublishNotice {
-            broker.publishNotice(chatID: chatID, notice: "\(request.markdownDescription)…")
+            try broker.publishNotice(chatID: chatID, notice: "\(request.markdownDescription)…")
         }
-        session.execute(request) { [weak self] response, userNotice in
+        try session.execute(request) { [weak self] response, userNotice in
             done = true
-            self?.respondSuccessfullyToRemoteCommandRequest(inChat: chatID,
+            try self?.respondSuccessfullyToRemoteCommandRequest(inChat: chatID,
                                                             requestUUID: messageUniqueID,
                                                             message: response,
                                                             functionCallName: request.llmMessage.function_call?.name ?? "Unknown function call name",
@@ -170,13 +170,13 @@ class ChatClient {
                                                             userNotice: userNotice)
         }
         if !done {
-            publish(message: Message(chatID: chatID,
-                                     author: .agent,
-                                     content: .clientLocal(ClientLocal(action: .executingCommand(request))),
-                                     sentDate: Date(),
-                                     uniqueID: UUID()),
-                    toChatID: chatID,
-                    partial: false)
+            try publish(message: Message(chatID: chatID,
+                                         author: .agent,
+                                         content: .clientLocal(ClientLocal(action: .executingCommand(request))),
+                                         sentDate: Date(),
+                                         uniqueID: UUID()),
+                        toChatID: chatID,
+                        partial: false)
         }
     }
 
@@ -185,21 +185,21 @@ class ChatClient {
                                                    message: String,
                                                    functionCallName: String,
                                                    functionCallID: LLM.Message.FunctionCallID?,
-                                                   userNotice: String?) {
+                                                   userNotice: String?) throws {
         if let userNotice {
-            broker.publishNotice(chatID: chatID, notice: userNotice)
+            try broker.publishNotice(chatID: chatID, notice: userNotice)
         }
-        broker.publish(message: Message(chatID: chatID,
-                                        author: .user,
-                                        content: .remoteCommandResponse(
-                                            .success(message),
-                                            requestUUID,
-                                            functionCallName,
-                                            functionCallID),
-                                        sentDate: Date(),
-                                        uniqueID: UUID()),
-                       toChatID: chatID,
-                       partial: false)
+        try broker.publish(message: Message(chatID: chatID,
+                                            author: .user,
+                                            content: .remoteCommandResponse(
+                                                .success(message),
+                                                requestUUID,
+                                                functionCallName,
+                                                functionCallID),
+                                            sentDate: Date(),
+                                            uniqueID: UUID()),
+                           toChatID: chatID,
+                           partial: false)
     }
 
     private enum ExplainUserInfoKeys: String {
@@ -209,7 +209,7 @@ class ChatClient {
     // Request an AI explanation, create a chat, and reveal the chat window.
     func explain(_ request: AIExplanationRequest,
                  title: String,
-                 scope: iTermVariableScope) {
+                 scope: iTermVariableScope) throws {
         guard let chatWindowController = ChatWindowController.instance(showErrors: false) else {
             return
         }
@@ -220,21 +220,21 @@ class ChatClient {
         if AITermControllerRegistrationHelper.instance.registration == nil {
             AITermControllerRegistrationHelper.instance.requestRegistration(in: window) { [weak self] _ in
                 if (AITermControllerRegistrationHelper.instance.registration != nil) {
-                    self?.explain(request, title: title, scope: scope)
+                    try? self?.explain(request, title: title, scope: scope)
                 } else {
                     ChatWindowController.instance(showErrors: false)?.window?.performClose(nil)
                 }
             }
             return
         }
-        let chatID = broker.create(chatWithTitle: title,
-                                   sessionGuid: request.context.sessionID)
+        let chatID = try broker.create(chatWithTitle: title,
+                                       sessionGuid: request.context.sessionID)
         let initialMessage = Message(chatID: chatID,
                                      author: .user,
                                      content: .explanationRequest(request: request),
                                      sentDate: Date(),
                                      uniqueID: UUID())
-        broker.publish(message: initialMessage, toChatID: chatID, partial: false)
+        try broker.publish(message: initialMessage, toChatID: chatID, partial: false)
 
         chatWindowController.select(chatID: chatID)
     }

@@ -44,26 +44,26 @@ class ChatListModel: ChatListDataSource {
         return index(of: chatID)
     }
 
-    func delete(chatID: String) {
+    func delete(chatID: String) throws {
         let i = chatStorage.firstIndex(where: {
             $0.id == chatID
         })
         guard let i else {
             return
         }
-        chatStorage.remove(at: i)
+        try chatStorage.remove(at: i)
         NotificationCenter.default.post(name: Self.metadataDidChange, object: nil)
     }
 
-    func add(chat: Chat) {
-        chatStorage.prepend(chat)
+    func add(chat: Chat) throws {
+        try chatStorage.prepend(chat)
         NotificationCenter.default.post(name: Self.metadataDidChange, object: nil)
     }
 
     func setPermission(chat chatID: String,
                        permission: RemoteCommandExecutor.Permission,
                        guid: String,
-                       category: RemoteCommand.Content.PermissionCategory) {
+                       category: RemoteCommand.Content.PermissionCategory) throws {
         let rce = RemoteCommandExecutor.instance
         rce.setPermission(chatID: chatID,
                           permission: permission,
@@ -74,34 +74,34 @@ class ChatListModel: ChatListDataSource {
         }
         var chat = chatStorage[i]
         chat.permissions = rce.encodedPermissions(chatID: chatID)
-        chatStorage[i] = chat
+        try chatStorage.set(at: i, chat)
     }
 
 
-    private func bump(chatID: String) {
+    private func bump(chatID: String) throws {
         if let i = chatStorage.firstIndex(where: { $0.id == chatID }) {
             var temp = chatStorage[i]
-            chatStorage.remove(at: i)
+            try chatStorage.remove(at: i)
             temp.lastModifiedDate = Date()
-            chatStorage.prepend(temp)
+            try chatStorage.prepend(temp)
             NotificationCenter.default.post(name: Self.metadataDidChange, object: nil)
         }
     }
 
-    private func rename(chatID: String, newName: String) {
+    private func rename(chatID: String, newName: String) throws {
         if let i = chatStorage.firstIndex(where: { $0.id == chatID }) {
             var temp = chatStorage[i]
             temp.title = newName
-            chatStorage[i] = temp
+            try chatStorage.set(at: i, temp)
             NotificationCenter.default.post(name: Self.metadataDidChange, object: nil)
         }
     }
 
-    private func setVectorStore(chatID: String, vectorStoreID: String) {
+    private func setVectorStore(chatID: String, vectorStoreID: String) throws {
         if let i = chatStorage.firstIndex(where: { $0.id == chatID }) {
             var temp = chatStorage[i]
             temp.vectorStore = vectorStoreID
-            chatStorage[i] = temp
+            try chatStorage.set(at: i, temp)
             NotificationCenter.default.post(name: Self.metadataDidChange, object: nil)
         }
     }
@@ -153,9 +153,11 @@ class ChatListModel: ChatListDataSource {
         }
     }
 
-    func setGuid(for chatID: String, to guid: String?) {
+    func setGuid(for chatID: String, to guid: String?) throws {
         if let i = index(of: chatID) {
-            chatStorage[i].sessionGuid = guid
+            try chatStorage.modify(at: i) { chat in
+                chat.sessionGuid = guid
+            }
         }
     }
 
@@ -168,14 +170,14 @@ class ChatListModel: ChatListDataSource {
         return chat
     }
 
-    func append(message: Message, toChatID chatID: String) {
+    func append(message: Message, toChatID chatID: String) throws {
         switch message.content {
         case let .append(string: chunk, uuid: uuid):
             if let i = index(ofMessageID: uuid, inChat: chatID),
                let messages =  messages(forChat: chatID, createIfNeeded: false) {
                 var existing = messages[i]
                 existing.append(chunk, useMarkdownIfAmbiguous: true)
-                messages[i] = existing
+                try messages.set(at: i, existing)
                 return
             } else {
                 DLog("Drop append “\(chunk)” of nonexistent message \(uuid)")
@@ -187,7 +189,7 @@ class ChatListModel: ChatListDataSource {
                 var existing = messages[i]
                 existing.append(attachment,
                                 vectorStoreID: message.author == .user ? chat(id: chatID)?.vectorStore : nil)
-                messages[i] = existing
+                try messages.set(at: i, existing)
             } else {
                 DLog("Drop append “\(attachment)” of nonexistent message \(uuid)")
             }
@@ -202,7 +204,7 @@ class ChatListModel: ChatListDataSource {
                let messages =  messages(forChat: chatID, createIfNeeded: false) {
                 var existing = messages[i]
                 existing.content = message.content
-                messages[i] = existing
+                try messages.set(at: i, existing)
                 return
             } else {
                 DLog("Drop explanation response update \(update)")
@@ -215,17 +217,17 @@ class ChatListModel: ChatListDataSource {
                 .setPermissions, .terminalCommand, .multipart, .vectorStoreCreated:
             break
         }
-        messages(forChat: chatID, createIfNeeded: true)?.append(message)
+        try messages(forChat: chatID, createIfNeeded: true)?.append(message)
         switch message.content {
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
                 .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest, .clientLocal,
                 .append, .commit, .setPermissions, .terminalCommand, .appendAttachment,
                 .multipart:
-            bump(chatID: chatID)
+            try bump(chatID: chatID)
         case .renameChat(let string):
-            rename(chatID: chatID, newName: string)
+            try rename(chatID: chatID, newName: string)
         case .vectorStoreCreated(let id):
-            setVectorStore(chatID: chatID, vectorStoreID: id)
+            try setVectorStore(chatID: chatID, vectorStoreID: id)
         }
     }
 

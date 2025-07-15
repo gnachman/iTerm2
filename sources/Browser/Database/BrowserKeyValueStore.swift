@@ -15,7 +15,10 @@ struct BrowserKeyValueStoreEntry {
     var size: Int { key.utf8.count + value.utf8.count }
 }
 
-extension BrowserKeyValueStoreEntry: iTermDatabaseElement {
+extension BrowserKeyValueStoreEntry: iTermDatabaseElement, iTermDatabaseResultSetInitializable {
+    private static let table = "BrowserKeyValueStore"
+    private var table: String { Self.table }
+
     enum Columns: String {
         case area
         case extensionId
@@ -26,17 +29,18 @@ extension BrowserKeyValueStoreEntry: iTermDatabaseElement {
 
     static func schema() -> String {
         """
-        create table if not exists BrowserKeyValueStore
-            (\(Columns.area.rawValue) text,
+        create table if not exists \(table)
+            (\(Columns.area.rawValue) text not null,
              \(Columns.extensionId.rawValue) text,
              \(Columns.key.rawValue) text not null,
              \(Columns.value.rawValue) text not null,
-             \(Columns.size.rawValue) Int);
-        CREATE INDEX IF NOT EXISTS idx_browser_key_value_store_ext ON BrowserHistory
+             \(Columns.size.rawValue) Int,
+             PRIMARY KEY(area, extensionId, key));
+        CREATE INDEX IF NOT EXISTS idx_browser_key_value_store_ext ON \(table)
             (\(Columns.area.rawValue), 
              \(Columns.extensionId.rawValue), 
              \(Columns.key.rawValue));
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_bkv_area_ext_key ON BrowserKeyValueStore
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_bkv_area_ext_key ON \(table)
             (\(Columns.area.rawValue),
              \(Columns.extensionId.rawValue),
              \(Columns.key.rawValue));
@@ -48,12 +52,12 @@ extension BrowserKeyValueStoreEntry: iTermDatabaseElement {
     }
 
     static func tableInfoQuery() -> String {
-        "PRAGMA table_info(BrowserKeyValueStore)"
+        "PRAGMA table_info(\(table))"
     }
 
     func appendQuery() -> (String, [Any?]) {
         ("""
-            update BrowserKeyValueStore set
+            update \(table) set
                 (\(Columns.area.rawValue) = ?,
                  \(Columns.extensionId.rawValue) = ?,
                  \(Columns.key.rawValue) = ?,
@@ -75,7 +79,7 @@ extension BrowserKeyValueStoreEntry: iTermDatabaseElement {
 
     func updateQuery() -> (String, [Any?]) {
         ("""
-            insert into BrowserKeyValueStore
+            insert into \(table)
                 (\(Columns.area.rawValue),
                  \(Columns.extensionId.rawValue),
                  \(Columns.key.rawValue),
@@ -94,7 +98,7 @@ extension BrowserKeyValueStoreEntry: iTermDatabaseElement {
 
     func removeQuery() -> (String, [Any?]) {
         ("""
-         delete from BrowserKeyValueStore where 
+         delete from \(table) where 
              \(Columns.area.rawValue) = ? AND 
              \(Columns.extensionId.rawValue) = ? AND 
              \(Columns.key.rawValue) = ?
@@ -106,43 +110,50 @@ extension BrowserKeyValueStoreEntry: iTermDatabaseElement {
          ])
     }
 
+    static func placeholders<T>(_ array: Array<T>) -> String {
+        return "(" + Array(repeating: "?", count: array.count).joined(separator: ",") + ")"
+    }
+
+    static func placeholders(_ count: Int) -> String {
+        return "(" + Array(repeating: "?", count: count).joined(separator: ",") + ")"
+    }
+
     static func getQuery(area: String?, extensionId: String?, keys: [String]) -> (String, [Any?]) {
         ("""
-        select * from BrowserKeyValueStore where
+        select * from \(table) where
             (\(Columns.area.rawValue) = ? AND
              \(Columns.extensionId.rawValue) = ? AND
-             \(Columns.key.rawValue) in ?
+             \(Columns.key.rawValue) in \(placeholders(keys)))
         """,
-        [area ?? NSNull(), extensionId ?? NSNull(), keys])
+        [area ?? NSNull(), extensionId ?? NSNull()] + keys)
     }
 
     static func getQuery(area: String, extensionId: String) -> (String, [Any?]) {
         ("""
-        select * from BrowserKeyValueStore where
+        select * from \(table) where
             (\(Columns.area.rawValue) = ? AND
-             \(Columns.extensionId.rawValue) = ?
+             \(Columns.extensionId.rawValue) = ?)
         """,
         [area, extensionId])
     }
 
     static func removeQuery(area: String?, extensionId: String?, keys: [String]) -> (String, [Any?]) {
         ("""
-         delete from BrowserKeyValueStore where 
+         delete from \(table) where 
              \(Columns.area.rawValue) = ? AND 
              \(Columns.extensionId.rawValue) = ? AND 
-             \(Columns.key.rawValue) in ?
+             \(Columns.key.rawValue) in \(placeholders(keys))
          returning \(Columns.key.rawValue), \(Columns.value.rawValue)
          """,
          [
             area ?? NSNull(),
-            extensionId ?? NSNull(),
-            keys
-         ])
+            extensionId ?? NSNull()
+         ] + keys)
     }
 
     static func removeQuery(area: String?, extensionId: String?) -> (String, [Any?]) {
         ("""
-         delete from BrowserKeyValueStore where 
+         delete from \(table) where 
              \(Columns.area.rawValue) = ? AND 
              \(Columns.extensionId.rawValue) = ?
          returning \(Columns.key.rawValue), \(Columns.value.rawValue)
@@ -155,7 +166,7 @@ extension BrowserKeyValueStoreEntry: iTermDatabaseElement {
 
     static func removeQuery(extensionId: String?) -> (String, [Any?]) {
         ("""
-         delete from BrowserKeyValueStore where 
+         delete from \(table) where 
              \(Columns.extensionId.rawValue) = ?
          """,
          [
@@ -163,8 +174,10 @@ extension BrowserKeyValueStoreEntry: iTermDatabaseElement {
          ])
     }
 
-    static func upsertAndReturnOriginalQuery(area: String?, extensionId: String?, kvps: [String: String]) -> (String, [Any?]) {
-        let insertQuestionMarks = Array(Array(repeating: "(?, ?, ?, ?, ?)", count: kvps.count)).joined(separator: "\n")
+    static func upsertAndReturnOriginalQuery(area: String?, extensionId: String?, kvps: [String: String]) -> [iTermParameterizedSQLStatement] {
+        let keys = Array(kvps.keys)
+        let insertPlaceholders = Array(repeating: placeholders(5),
+                                       count: keys.count).joined(separator: ",\n  ")
         let insertArgs: [Any?] = kvps.keys.flatMap { key -> [Any?] in
             let value = kvps[key]!
             return [area,
@@ -173,53 +186,61 @@ extension BrowserKeyValueStoreEntry: iTermDatabaseElement {
                     value,
                     key.utf8.count + value.utf8.count]
         }
-        var allArgs = [Any]()
-        allArgs.append(area ?? NSNull())
-        allArgs.append(extensionId ?? NSNull())
-        allArgs.append(contentsOf: Array(kvps.keys))
-        allArgs.append(contentsOf: insertArgs.compactMap { $0 ?? NSNull() })
-
-        return ("""
-        BEGIN TRANSACTION;
-
-        CREATE TEMP TABLE original (
-          area         TEXT,
-          extensionId  TEXT,
-          key          TEXT,
-          old_value    TEXT
-        );
-
-        INSERT INTO original
-        SELECT
-          area,
-          extensionId,
-          key,
-          value
-        FROM
-          BrowserKeyValueStore
-        WHERE
-          area = ? AND extensionId = ? and key in ?;
-
-        INSERT INTO BrowserKeyValueStore (area, extensionId, key, value, size)
-        VALUES
-          \(insertQuestionMarks)
-        ON CONFLICT(area, extensionId, key) DO UPDATE
-        SET
-          value = excluded.value,
-          size  = excluded.size;
-
-        SELECT
-          key,
-          old_value
-        FROM
-          original;
-
-        DROP TABLE original;
-
-        COMMIT;
-        """,
-         allArgs
-        )
+        return [
+            iTermParameterizedSQLStatement(
+                sql: """
+                    CREATE TEMP TABLE original (
+                      area         TEXT,
+                      extensionId  TEXT,
+                      key          TEXT,
+                      old_value    TEXT
+                    );                   
+                    """,
+                args: []),
+            iTermParameterizedSQLStatement(
+                sql: """
+                INSERT INTO original
+                SELECT
+                  area,
+                  extensionId,
+                  key,
+                  value
+                FROM
+                  \(table)
+                WHERE
+                  area = ? AND extensionId = ? and key in \(placeholders(keys));
+                """,
+                args: [
+                    area ?? NSNull(),
+                    extensionId ?? NSNull()
+                ] + keys),
+            iTermParameterizedSQLStatement(
+                sql: """
+                INSERT INTO \(table) (area, extensionId, key, value, size)
+                VALUES
+                  \(insertPlaceholders)
+                ON CONFLICT(area, extensionId, key) DO UPDATE
+                SET
+                  value = excluded.value,
+                  size  = excluded.size;
+                """,
+                args: insertArgs.compactMap { $0 ?? NSNull() }),
+            iTermParameterizedSQLStatement(
+                sql: """
+                    SELECT
+                      key,
+                      old_value as value
+                    FROM
+                      original;
+                    """,
+                args: [],
+                isQuery: true),
+            iTermParameterizedSQLStatement(
+                sql: """
+                    DROP TABLE original;
+                    """,
+                args: [])
+        ]
     }
 
     static func usageQuery(area: String, extensionId: String) -> (String, [Any?]) {
