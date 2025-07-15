@@ -16,11 +16,15 @@ function displayStorageData() {
         console.log('Storage Demo: Session storage data:', sessionData);
         
         // Create a visual display of the data
-        displayDataOnPage({
-          local: localData,
-          sync: syncData,
-          session: sessionData
-        });
+        try {
+            displayDataOnPage({
+              local: localData,
+              sync: syncData,
+              session: sessionData
+            });
+        } catch(e) {
+            console.log('Storage Demo: Error displaying data:", e.toString());
+        }
       });
     });
   });

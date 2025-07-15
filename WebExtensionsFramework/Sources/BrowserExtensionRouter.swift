@@ -55,8 +55,9 @@ public class BrowserExtensionRouter {
 
     // Deliver a message from sendMessage to all webviews associated with a particular extension,
     // or, if none is given, the sender's extension. This returns the response, which comes
-    // asynchronously.
-    func publish(message: [String: Any],
+    // asynchronously. message is left in its JSON-encoded form to avoid dealing with weird JS
+    // stuff in Swift.
+    func publish(message: String,
                  requestId: String,  // Needed for recipient to respond
                  extensionId directedRecipient: String?,
                  sender: BrowserExtensionContext.MessageSender,
@@ -82,7 +83,7 @@ public class BrowserExtensionRouter {
         }
     }
 
-    private func reallyPublish(message: [String: Any],
+    private func reallyPublish(message: String,
                                requestId: String,
                                destinationID: String,
                                sender: BrowserExtensionContext.MessageSender,
@@ -106,7 +107,7 @@ public class BrowserExtensionRouter {
             let isExternal = destinationID != sender.id
             logger.debug("Invoke listener in webview \(webview)")
             do {
-                let messageJSON = try message.toJSONString()
+                let messageJSON = message
                 let senderJSON = try sender.toJSONString()
                 let requestIdJSON = try requestId.toJSONString()
                 

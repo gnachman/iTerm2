@@ -47,6 +47,13 @@ class BrowserExtensionRouterTests: XCTestCase {
         try await super.tearDown()
     }
     
+    // MARK: - Helper Methods
+    
+    private func encodeMessage(_ message: Any) throws -> String {
+        let data = try JSONSerialization.data(withJSONObject: message)
+        return String(data: data, encoding: .utf8)!
+    }
+    
     // MARK: - Basic Routing Tests
     
     func testPublishMessageToSameExtension() async throws {
@@ -64,8 +71,9 @@ class BrowserExtensionRouterTests: XCTestCase {
         
         // Test publishing a message to the same extension (extensionId is nil)
         do {
+            let messageString = try encodeMessage(["type": "greeting", "data": "hello"])
             _ = try await router.publish(
-                message: ["type": "greeting", "data": "hello"],
+                message: messageString,
                 requestId: "test-request-1",
                 extensionId: nil,
                 sender: sender,
@@ -93,8 +101,9 @@ class BrowserExtensionRouterTests: XCTestCase {
         
         // Test publishing a message to a specific extension
         do {
+            let messageString = try encodeMessage(["type": "greeting", "data": "hello"])
             _ = try await router.publish(
-                message: ["type": "greeting", "data": "hello"],
+                message: messageString,
                 requestId: "test-request-2",
                 extensionId: "other-extension-id",
                 sender: sender,
@@ -122,8 +131,9 @@ class BrowserExtensionRouterTests: XCTestCase {
         
         // Test publishing a message with options
         do {
+            let messageString = try encodeMessage(["type": "greeting", "data": "hello"])
             _ = try await router.publish(
-                message: ["type": "greeting", "data": "hello"],
+                message: messageString,
                 requestId: "test-request-3",
                 extensionId: nil,
                 sender: sender,
@@ -197,8 +207,9 @@ class BrowserExtensionRouterTests: XCTestCase {
         
         // Test publishing an empty message
         do {
+            let messageString = try encodeMessage([:])
             _ = try await router.publish(
-                message: [:],
+                message: messageString,
                 requestId: "test-request-4",
                 extensionId: nil,
                 sender: sender,
@@ -241,8 +252,9 @@ class BrowserExtensionRouterTests: XCTestCase {
         ]
         
         do {
+            let messageString = try encodeMessage(complexMessage)
             _ = try await router.publish(
-                message: complexMessage,
+                message: messageString,
                 requestId: "test-request-5",
                 extensionId: nil,
                 sender: sender,

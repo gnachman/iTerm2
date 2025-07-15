@@ -39,7 +39,6 @@ class BackgroundToContentMessagingTests: XCTestCase {
                     
                     (async function() {
                         console.log('Content script setting up message listener');
-                        
                         // Set up message listener in content script
                         chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
                             console.log('Content script received message:', message);
@@ -161,6 +160,103 @@ class BackgroundToContentMessagingTests: XCTestCase {
         
         // Wait for callback to be called
         await testRunner.waitForBackgroundScriptCompletion(testExtension.id, name: callbackCalled)
+        
+        testRunner.verifyAssertions()
+    }
+    
+    func testBackgroundScriptSendsNullMessageToContentScript() async throws {
+        let backgroundMessageSent = "BackgroundNullMessageSent"
+        let contentMessageReceived = "ContentNullMessageReceived"
+        let backgroundReceivedResponse = "BackgroundReceivedNullResponse"
+        let contentReady = "ContentNullReady"
+        
+        let testExtension = ExtensionTestingInfrastructure.TestExtension(
+            permissions: [],
+            contentScripts: [
+                "content.js": """
+                    \(testRunner.javascriptCreatingPromise(name: contentMessageReceived))
+                    \(testRunner.javascriptCreatingPromise(name: contentReady))
+                    
+                    (async function() {
+                        console.log('Content script setting up message listener for null message');
+                        // Set up message listener in content script
+                        chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
+                            console.log('Content script received message:', message);
+                            console.log('Message is null:', message === null);
+                            console.log('Message sender:', sender);
+                            
+                            // Check if the message is null
+                            assertTrue(message === null, 'Message should be null');
+                            
+                            // Store the received message for testing
+                            globalThis.receivedNullMessage = message;
+                            
+                            // Send response back to background script
+                            sendResponse({
+                                success: true,
+                                receivedNull: true,
+                                originalMessage: message
+                            });
+                            
+                            \(testRunner.javascriptResolvingPromise(name: contentMessageReceived))
+                            \(testRunner.expectReach("content received null message"))
+                            return true; // Keep message channel open
+                        });
+                        
+                        console.log('Content script listener ready for null message');
+                        globalThis.contentListenerReady = true;
+                        \(testRunner.javascriptResolvingPromise(name: contentReady))
+                    })();
+                """
+            ],
+            backgroundScripts: [
+                "background.js": """
+                    \(testRunner.javascriptCreatingPromise(name: backgroundMessageSent))
+                    \(testRunner.javascriptCreatingPromise(name: backgroundReceivedResponse))
+                    
+                    (async function() {
+                        console.log('Background script started - sending null message');
+                        
+                        // Wait a bit for content script to be ready
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        
+                        console.log('Background script sending null message to content script');
+                        chrome.runtime.sendMessage(null, (response) => {
+                            console.log('Background script received response:', response);
+                            assertFalse(chrome.runtime.lastError);
+                            if (chrome.runtime.lastError) {
+                                console.log('Background script error:', chrome.runtime.lastError.message);
+                                globalThis.backgroundError = chrome.runtime.lastError.message;
+                            } else {
+                                assertTrue(response !== undefined, 'Response should not be undefined');
+                                assertEqual(response.success, true, 'Response success should be true');
+                                assertEqual(response.receivedNull, true, 'Response should indicate null was received');
+                                assertTrue(response.originalMessage === null, 'Original message should be null');
+                                globalThis.backgroundResponse = response;
+                            }
+                            \(testRunner.javascriptResolvingPromise(name: backgroundReceivedResponse))
+                            \(testRunner.expectReach("background received response for null message"))
+                        });
+                        \(testRunner.javascriptResolvingPromise(name: backgroundMessageSent))
+                        \(testRunner.expectReach("background sent null message"))
+                    })();
+                """
+            ]
+        )
+        
+        _ = try await testRunner.run(testExtension)
+        
+        // Create an untrusted webview for content script
+        let (contentWebView, _) = try await testRunner.createUntrustedWebView(for: .contentScript)
+        try await contentWebView.loadHTMLStringAsync("<html><body>Test Page for Null Message</body></html>", baseURL: nil)
+        
+        // Wait for content script to be ready
+        await testRunner.waitForContentScriptCompletion(testExtension.id, webView: contentWebView, name: contentReady)
+        
+        // Wait for message processing
+        await testRunner.waitForBackgroundScriptCompletion(testExtension.id, name: backgroundMessageSent)
+        await testRunner.waitForContentScriptCompletion(testExtension.id, webView: contentWebView, name: contentMessageReceived)
+        await testRunner.waitForBackgroundScriptCompletion(testExtension.id, name: backgroundReceivedResponse)
         
         testRunner.verifyAssertions()
     }

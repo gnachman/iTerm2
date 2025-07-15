@@ -116,6 +116,7 @@ func makeChromeStorage(inputs: APIInputs) -> APISequence {
                 });
             """)
         }
+        #warning("TODO: Ensure impl is not visible")
         Namespace("storage", freeze: false, preventExtensions: true, jsname: inputs.trusted ? nil : "impl") {
             makeMutableStorageArea("local", hasSetAccessLevel: true)
             makeMutableStorageArea("sync", hasSetAccessLevel: true)

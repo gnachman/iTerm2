@@ -16,7 +16,8 @@
       "WebFetch(domain:developer.chrome.com)",
       "WebFetch(domain:chromium.googlesource.com)",
       "WebFetch(domain:searchfox.org)",
-      "Bash(swift run:*)"
+      "Bash(swift run:*)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }

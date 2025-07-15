@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Storage UI Demo",
+  "version": "1.0",
+  "description": "Interactive UI demo for chrome.storage APIs with quota tracking and all storage areas",
+  
+  "permissions": [
+    "storage"
+  ],
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": ["content.js"],
+    "run_at": "document_end"
+  }]
+}

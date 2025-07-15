@@ -92,6 +92,7 @@
     }
   };
   window.__EXT_jsonEncodeValues =  function transform(arg) {
+        window.console.log("encode", arg === null ? "null" : arg === undefined ? "undefined" : arg.toString(), "of type", (typeof arg));
         if (arg !== null && typeof arg === 'object' && !Array.isArray(arg)) {
             return Object.fromEntries(
                 Object.entries(arg).map(([key, value]) => [key, JSON.stringify(value)])

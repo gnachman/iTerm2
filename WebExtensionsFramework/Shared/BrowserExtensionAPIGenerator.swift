@@ -125,7 +125,7 @@ internal struct APISequence: StringConvertible {
 internal struct Namespace: StringConvertible {
     let statements: [StringConvertibleIndented]
     let all: [StringConvertible]
-    private let name: String
+    let name: String
     private let isTopLevel: Bool
     private let jsname: String?
 
@@ -813,7 +813,7 @@ internal struct VariableArgsFunction: StringConvertible, JavascriptNamedFunction
             __ext_post.requestBrowserExtension.postMessage({
                 requestId: id,
                 api: \(apiName(context: context).jsonEncoded),
-                args: args
+                args: args.map(arg => JSON.stringify(arg))
             });
         }
         """.indentingLines(by: indent)
@@ -990,7 +990,7 @@ public func generatedDispatchSwift() -> String {
 
         // Collect dependencies from all AsyncFunctions
         collectDependencies(from: namespace, into: &allDependencies)
-        
+
         if let swiftCode = namespace.swiftDispatch(indent: 8, context: nil) {
             allDispatchCode += swiftCode + "\n"
         }
@@ -1023,13 +1023,18 @@ public func generatedDispatchSwift() -> String {
 }
 
 // Helper function to collect all dependencies from a namespace
-private func collectDependencies(from namespace: StringConvertible, into dependencies: inout [String: String]) {
-    if let asyncFunc = namespace as? JavascriptDependentFunction {
+private func collectDependencies(from obj: StringConvertible,
+                                 into dependencies: inout [String: String]) {
+    if let asyncFunc = obj as? JavascriptDependentFunction {
         for dep in asyncFunc.dependencies {
             dependencies[dep.name] = dep.type
         }
-    } else if let ns = namespace as? Namespace {
+    } else if let ns = obj as? Namespace {
         for item in ns.all {
+            collectDependencies(from: item, into: &dependencies)
+        }
+    } else if let seq = obj as? APISequence {
+        for item in seq.all {
             collectDependencies(from: item, into: &dependencies)
         }
     }

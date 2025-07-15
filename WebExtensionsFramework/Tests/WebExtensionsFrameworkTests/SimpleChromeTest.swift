@@ -53,8 +53,6 @@ class SimpleChromeTest: XCTestCase {
         
         let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: contentWorld) as? [String: Any]
         
-        print("Chrome test result: \(result ?? [:])")
-        
         XCTAssertEqual(result?["chromeExists"] as? Bool, true, "chrome object should exist")
         
         // Cleanup
