@@ -19,6 +19,7 @@
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSFileManager+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
 #import "PreferencePanel.h"
 #import "Trigger.h"
@@ -201,7 +202,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_BACKGROUND_IMAGE_LOCATION, KEY_DYNAMIC_PROFILE_PARENT_NAME,
                              KEY_DYNAMIC_PROFILE_PARENT_GUID,
                              KEY_DYNAMIC_PROFILE_FILENAME, KEY_TMUX_PANE_TITLE,
-                             KEY_SUBTITLE, KEY_CUSTOM_LOCALE, KEY_INITIAL_URL];
+                             KEY_SUBTITLE, KEY_CUSTOM_LOCALE, KEY_INITIAL_URL,
+                             KEY_BROWSER_EXTENSIONS_ROOT];
 
         NSArray *color = @[ KEY_FOREGROUND_COLOR, KEY_BACKGROUND_COLOR, KEY_BOLD_COLOR,
                             KEY_LINK_COLOR, KEY_MATCH_COLOR, KEY_SELECTION_COLOR, KEY_SELECTED_TEXT_COLOR,
@@ -677,7 +679,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_SNIPPETS_FILTER: @[],
 
                   KEY_BROWSER_ZOOM: @100,
-                  KEY_BROWSER_DEV_NULL: @NO
+                  KEY_BROWSER_DEV_NULL: @NO,
+                  KEY_BROWSER_EXTENSIONS_ROOT: [NSNull null]
 
                   // NOTES:
                   //   * Remove deprecated values from this list.
@@ -836,6 +839,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_TREAT_OPTION_AS_ALT: PROFILE_BLOCK(treatOptionAsAlt),
                   KEY_TIMESTAMPS_STYLE: PROFILE_BLOCK(timestampsStyle),
                   KEY_TIMESTAMPS_VISIBLE: PROFILE_BLOCK(timestampsVisible),
+                  KEY_BROWSER_EXTENSIONS_ROOT: PROFILE_BLOCK(browserExtensionsRoot)
                 };
     }
     return dict;
@@ -998,6 +1002,18 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
         return @(iTermTimestampsModeOverlap);
     }
     return fallback;
+}
+
++ (id)browserExtensionsRoot:(Profile *)profile {
+    NSString *string = [NSString castFrom:profile[KEY_BROWSER_EXTENSIONS_ROOT]];
+    if (string) {
+        return string;
+    }
+    NSString *appSupport = [[NSFileManager defaultManager] applicationSupportDirectoryWithoutCreating];
+    if (!appSupport) {
+        return nil;
+    }
+    return [appSupport stringByAppendingPathComponent:@"BrowserExtensions"];
 }
 
 + (id)timestampsVisible:(Profile *)profile {

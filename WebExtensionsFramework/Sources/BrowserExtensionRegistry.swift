@@ -40,6 +40,9 @@ public class BrowserExtensionRegistry {
     /// Dictionary of extensions keyed by their path
     private var extensionsByPath: [String: BrowserExtension] = [:]
     
+    /// Base directory containing all extensions
+    private let baseDirectory: URL
+    
     /// Logger for debugging and error reporting
     private let logger: BrowserExtensionLogger
     
@@ -54,26 +57,31 @@ public class BrowserExtensionRegistry {
     }
 
     /// Initialize the registry
-    /// - Parameter logger: Logger for debugging and error reporting
-    public init(logger: BrowserExtensionLogger) {
+    /// - Parameters:
+    ///   - baseDirectory: The base directory containing all extensions
+    ///   - logger: Logger for debugging and error reporting
+    public init(baseDirectory: URL, logger: BrowserExtensionLogger) {
+        self.baseDirectory = baseDirectory
         self.logger = logger
     }
     
-    /// Add an extension from the given path
-    /// - Parameter extensionPath: Path to the extension directory
+    /// Add an extension from the given relative location
+    /// - Parameter extensionLocation: Relative path to the extension directory within the base directory
     /// - Throws: BrowserExtensionRegistryError if the extension cannot be added
-    public func add(extensionPath: String) throws {
-        try logger.inContext("Add extension from path \(extensionPath)") {
+    public func add(extensionLocation: String) throws {
+        let extensionURL = baseDirectory.appendingPathComponent(extensionLocation)
+        let extensionPath = extensionURL.path
+        
+        try logger.inContext("Add extension from location \(extensionLocation)") {
             // Check if extension already exists
             if extensionsByPath[extensionPath] != nil {
                 logger.error("Extension already exists at path: \(extensionPath)")
                 throw BrowserExtensionRegistryError.extensionAlreadyExists(extensionPath)
             }
             
-            logger.info("Adding extension from path: \(extensionPath)")
+            logger.info("Adding extension from location: \(extensionLocation) (full path: \(extensionPath))")
             
             // Validate path exists
-            let extensionURL = URL(fileURLWithPath: extensionPath)
             guard FileManager.default.fileExists(atPath: extensionPath) else {
                 logger.error("Extension path does not exist: \(extensionPath)")
                 throw BrowserExtensionRegistryError.invalidExtensionPath(extensionPath)
@@ -104,8 +112,6 @@ public class BrowserExtensionRegistry {
             }
             
             // Create BrowserExtension
-            let baseDirectory = extensionURL.deletingLastPathComponent()
-            let extensionLocation = extensionURL.lastPathComponent
             let browserExtension = BrowserExtension(manifest: manifest, baseDirectory: baseDirectory, extensionLocation: extensionLocation, logger: logger)
             
             // Load content scripts
@@ -155,5 +161,9 @@ public class BrowserExtensionRegistry {
                 object: self
             )
         }
+    }
+
+    public var allExtensions: [BrowserExtension] {
+        return Array(extensionsByPath.values)
     }
 }

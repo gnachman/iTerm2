@@ -58,14 +58,14 @@ function createUI() {
   `;
   
   container.innerHTML = `
-    <div style="padding: 8px; border-bottom: 1px solid #eee; background: #f8f9fa;border: 2px solid #000;">
-      <h3 style="margin: 0; font-size: 16px; color: #333;;border: 2px solid #f00;">Chrome Storage UI Demo</h3>
+    <div style="padding: 8px; border-bottom: 1px solid #eee; background: #f8f9fa;">
+      <h3 style="margin: 0; font-size: 16px; color: #333;;">Chrome Storage UI Demo</h3>
       <button id="close-demo" style="position: absolute; top: 8px; right: 8px; background: #dc3545; color: white; border: none; border-radius: 3px; padding: 4px 8px; cursor: pointer;">×</button>
     </div>
 
     <div style="padding: 0 !important; margin: 0 !important; border:1px solid #000f;">
       <!-- Storage Area Selection -->
-      <div style="margin: 0 !important; padding: 0 !important; border: 1px solid #0f0;">
+      <div style="margin: 0 !important; padding: 0 !important; ">
         <label style="display: block; margin: 0; padding: 0; font-weight: bold;">Storage Area:</label>
         <select id="storage-area-select" style="width: 100%; margin: 0; padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; line-height: 1.2;">
           <option value="local">Local Storage</option>
@@ -73,8 +73,8 @@ function createUI() {
           <option value="session">Session Storage ${trustedAccess ? '(Trusted)' : '(Limited)'}</option>
           <option value="managed">Managed Storage (Read-only)</option>
         </select>
-        <div style="margin: 0; padding: 0; font-size: 10px; color: #666; border: 1px solid #f00;">
-          <span style="font-weight: bold;border: 1px solid #888">Quota:</span> <span id="quota-bars" style="border: 1px solid #888"></span>
+        <div style="margin: 0; padding: 0; font-size: 10px; color: #666; ">
+          <span style="font-weight: bold;">Quota:</span> <span id="quota-bars" style=""></span>
         </div>
       </div>
       

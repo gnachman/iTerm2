@@ -118,7 +118,7 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
             name: "Test Extension",
             version: "1.0"
         )
-        let extensionWithoutBackground = BrowserExtension(manifest: manifestWithoutBackground, baseDirectory: URL(fileURLWithPath: "/test"), extensionLocation: "extension", logger: testLogger)
+        let extensionWithoutBackground = BrowserExtension(manifest: manifestWithoutBackground, baseDirectory: URL(fileURLWithPath: "/test"), extensionLocation: "extension-no-background", logger: testLogger)
         
         let result = try await backgroundService.startBackgroundScript(for: extensionWithoutBackground)
         XCTAssertNil(result)
@@ -1151,19 +1151,19 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
         XCTAssertFalse(backgroundService.isBackgroundScriptActive(for: extensionId), "Background script should be cleaned up")
     }
     
-    /// Test UUID validation in URL scheme handler
-    func testUUIDValidationInURLSchemeHandler() async throws {
+    /// Test ExtensionID validation in URL scheme handler
+    func testExtensionIDValidationInURLSchemeHandler() async throws {
         let urlSchemeHandler = BrowserExtensionURLSchemeHandler(logger: testLogger)
         
-        // Test with invalid UUID
-        let invalidURL = URL(string: "extension://not-a-uuid/background.html")!
+        // Test with invalid ExtensionID
+        let invalidURL = URL(string: "extension://not-a-valid-extension-id/background.html")!
         let mockTask = MockURLSchemeTask(url: invalidURL)
         
         urlSchemeHandler.webView(WKWebView(), start: mockTask)
         
-        // Should have failed with invalid UUID error
-        XCTAssertNotNil(mockTask.error, "Should have failed with invalid UUID")
-        XCTAssertTrue(mockTask.error?.localizedDescription.contains("not a UUID") == true, "Error should mention UUID validation")
+        // Should have failed with invalid extension ID error
+        XCTAssertNotNil(mockTask.error, "Should have failed with invalid extension ID")
+        XCTAssertTrue(mockTask.error?.localizedDescription.contains("Invalid extension ID") == true, "Error should mention extension ID validation")
     }
     
     /// Test console.log interception and logging

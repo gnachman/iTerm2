@@ -43,7 +43,12 @@ final class StorageIntegrationTests: XCTestCase {
             storageManager: storageManager
         )
         
-        registry = createTestRegistry(logger: logger)
+        // Get base directory for extensions
+        guard let resourceURL = Bundle.module.resourceURL else {
+            fatalError("Could not find test resources")
+        }
+        
+        registry = createTestRegistry(baseDirectory: resourceURL, logger: logger)
         activeManager = BrowserExtensionActiveManager(dependencies: dependencies)
         
         // Create AsyncWKWebView
@@ -73,7 +78,7 @@ final class StorageIntegrationTests: XCTestCase {
         }
         
         let storageDemoPath = resourceURL.appendingPathComponent("storage-demo").path
-        try registry.add(extensionPath: storageDemoPath)
+        try registry.add(extensionLocation: URL(fileURLWithPath: storageDemoPath).lastPathComponent)
         
         // Get the extension from the registry
         let browserExtension = registry.extensions.first!

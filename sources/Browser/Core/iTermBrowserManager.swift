@@ -96,10 +96,15 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
          navigationState: iTermBrowserNavigationState,
          profile: Profile,
          pointerController: PointerController) {
+        let baseExtensionDirectoryPath = iTermProfilePreferences.string(forKey: KEY_BROWSER_EXTENSIONS_ROOT,
+                                                                    inProfile: profile)
+        let baseExtensionDirectory = baseExtensionDirectoryPath.compactMap { URL(fileURLWithPath: $0) }
+
         self.user = user
         self.userState = iTermBrowserUserState.instance(
             for: user,
-            configuration: iTermBrowserUserState.Configuration(user: user))
+            configuration: iTermBrowserUserState.Configuration(user: user,
+                                                               baseExtensionDirectory: baseExtensionDirectory))
         self.sessionGuid = sessionGuid
         self.historyController = historyController
         self.navigationState = navigationState
@@ -1644,13 +1649,13 @@ extension iTermBrowserManager: iTermBrowserAutofillHandlerDelegate {
 }
 
 extension iTermBrowserUserState.Configuration {
-    init(user: iTermBrowserUser) {
+    init(user: iTermBrowserUser, baseExtensionDirectory: URL?) {
         switch user {
         case .devNull:
-            extensionsAllowed = false
+            self.baseExtensionDirectory = nil
             persistentStorageDisallowed = true
         default:
-            extensionsAllowed = true
+            self.baseExtensionDirectory = baseExtensionDirectory
             persistentStorageDisallowed = false
         }
     }

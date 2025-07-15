@@ -21,7 +21,7 @@ final class BrowserExtensionTests: XCTestCase {
         
         XCTAssertEqual(actualManifest.name, "Test Extension")
         XCTAssertEqual(actualBaseURL, baseDirectory.appendingPathComponent(extensionLocation))
-        // ID should be a valid UUID, not empty
+        // ID should be a valid id, not empty
         XCTAssertNotEqual(actualID.stringValue, "")
     }
     

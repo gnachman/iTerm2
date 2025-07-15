@@ -24,12 +24,13 @@ class iTermBrowserExtensionManager {
     private let logger: iTermLogger
 
     init(logger: iTermLogger,
+         baseDirectory: URL,
          persistentStorageDisallowed: Bool,
          user: iTermBrowserUser,
          hiddenContainer: NSView) {
         self.logger = logger
         userDefaultsObserver = iTermUserDefaultsObserver()
-        extensionRegistry = BrowserExtensionRegistry(logger: logger)
+        extensionRegistry = BrowserExtensionRegistry(baseDirectory: baseDirectory, logger: logger)
         let backgroundService = BrowserExtensionBackgroundService(
             hiddenContainer: hiddenContainer,
             logger: logger,
@@ -91,6 +92,10 @@ extension iTermBrowserExtensionManager: iTermBrowserExtensionManagerProtocol {
         activeExtensionManager.unregisterWebView(webView)
     }
 
+    var availableExtensions: [BrowserExtension] {
+        return extensionRegistry?.allExtensions ?? []
+    }
+
     private static func desiredLoadPaths() -> Set<String> {
         guard let string = iTermAdvancedSettingsModel.browserExtensionPaths() else {
             return Set()
@@ -128,7 +133,7 @@ extension iTermBrowserExtensionManager: iTermBrowserExtensionManagerProtocol {
         let toAdd = desired.subtracting(current)
         for path in toAdd {
             do {
-                try extensionRegistry.add(extensionPath: path)
+                try extensionRegistry.add(extensionLocation: path)
             } catch {
                 logger.debug("Failed to add \(path): \(error)")
             }

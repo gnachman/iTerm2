@@ -179,6 +179,7 @@
 // Web
 #define KEY_BROWSER_ZOOM           @"Browser Zoom"
 #define KEY_BROWSER_DEV_NULL       @"Dev Null Mode"
+#define KEY_BROWSER_EXTENSIONS_ROOT @"Browser Extensions Root"
 
 // Terminal
 #define KEY_DISABLE_WINDOW_RESIZING           @"Disable Window Resizing"

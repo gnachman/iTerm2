@@ -45,8 +45,10 @@ class iTermBrowserUserState {
     let hiddenContainer = iTermBrowserHiddenContainer()
 
     struct Configuration: Equatable {
-        var extensionsAllowed = true
         var persistentStorageDisallowed: Bool
+
+        // Set to nil to disable extensions altogether
+        var baseExtensionDirectory: URL?
     }
 
     init(_ configuration: Configuration, user: iTermBrowserUser) {
@@ -56,9 +58,10 @@ class iTermBrowserUserState {
         #endif
         self.user = user
         self.configuration = configuration
-        if #available(macOS 14, *, *), configuration.extensionsAllowed {
+        if #available(macOS 14, *, *), let baseExtensionDirectory = configuration.baseExtensionDirectory {
             extensionManager = iTermBrowserExtensionManager(
                 logger: logger,
+                baseDirectory: baseExtensionDirectory,
                 persistentStorageDisallowed: configuration.persistentStorageDisallowed,
                 user: user,
                 hiddenContainer: hiddenContainer)

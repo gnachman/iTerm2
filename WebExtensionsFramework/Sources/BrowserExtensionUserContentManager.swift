@@ -9,7 +9,7 @@
 import WebKit
 
 @MainActor
-public class BrowserExtensionUserContentManager: CustomDebugStringConvertible {
+public class BrowserExtensionUserContentManager: @preconcurrency CustomDebugStringConvertible {
     public var debugDescription: String {
         "BrowserExtensionUserContentManager\nJournal:\(journal)\nAlready installed:\(installedUserScripts)"
     }

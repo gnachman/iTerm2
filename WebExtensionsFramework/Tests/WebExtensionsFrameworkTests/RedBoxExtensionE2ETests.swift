@@ -18,7 +18,12 @@ final class RedBoxExtensionE2ETests: XCTestCase {
         webView = WKWebView(frame: CGRect(x: 0, y: 0, width: 800, height: 600), configuration: config)
         
         // Set up extension framework components
-        registry = createTestRegistry()
+        // Get base directory for extensions
+        guard let resourceURL = Bundle.module.resourceURL else {
+            fatalError("Could not find test resources")
+        }
+        
+        registry = createTestRegistry(baseDirectory: resourceURL)
         activeManager = createTestActiveManager()
         
         // Register the webview with the active manager
@@ -51,7 +56,7 @@ final class RedBoxExtensionE2ETests: XCTestCase {
             return
         }
         let redBoxPath = resourceURL.appendingPathComponent("red-box").path
-        try registry.add(extensionPath: redBoxPath)
+        try registry.add(extensionLocation: URL(fileURLWithPath: redBoxPath).lastPathComponent)
         
         // 2. Get the loaded extension
         let extensions = registry.extensions
@@ -139,7 +144,7 @@ final class RedBoxExtensionE2ETests: XCTestCase {
             return
         }
         let redBoxPath = resourceURL.appendingPathComponent("red-box").path
-        try registry.add(extensionPath: redBoxPath)
+        try registry.add(extensionLocation: URL(fileURLWithPath: redBoxPath).lastPathComponent)
         
         let extensions = registry.extensions
         let browserExtension = extensions.first!
@@ -178,7 +183,7 @@ final class RedBoxExtensionE2ETests: XCTestCase {
             return
         }
         let redBoxPath = resourceURL.appendingPathComponent("red-box").path
-        try registry.add(extensionPath: redBoxPath)
+        try registry.add(extensionLocation: URL(fileURLWithPath: redBoxPath).lastPathComponent)
         
         let extensions = registry.extensions
         let browserExtension = extensions.first!

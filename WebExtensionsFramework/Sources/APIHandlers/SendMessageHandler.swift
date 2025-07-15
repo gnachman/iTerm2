@@ -87,7 +87,7 @@ class RuntimeSendMessageHandler: RuntimeSendMessageHandlerProtocol {
             // sendMessage(extensionId, message, options)
             guard let extensionIdArg = decodedString(args[0].value),
                   let messageArg = args[1].value as? String,
-                  let optionsArg = decodedOptions(args[1].value) else {
+                  let optionsArg = decodedOptions(args[2].value) else {
                 throw BrowserExtensionError.internalError("Invalid argument types for sendMessage")
             }
             return SendMessageArguments(extensionId: extensionIdArg,

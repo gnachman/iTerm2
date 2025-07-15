@@ -255,7 +255,7 @@ class SendMessageHandlerTests: XCTestCase {
         let jsBody = """
             return await new Promise((resolve) => {
                 chrome.runtime.sendMessage(
-                    123, // Invalid - should be an object
+                    123, // This will be stringified and sent, but no listener exists
                     (response) => {
                         if (chrome.runtime.lastError) {
                             resolve({error: chrome.runtime.lastError.message});
@@ -269,9 +269,9 @@ class SendMessageHandlerTests: XCTestCase {
         
         let result = try await webView.callAsyncJavaScript(jsBody, contentWorld: extensionContentWorld) as? [String: Any]
         
-        // Should receive an error about invalid message type
+        // Should receive an error about no message receiver (since the string is passed through)
         XCTAssertNotNil(result?["error"])
-        XCTAssertTrue((result?["error"] as? String)?.contains("Message must be a JSON object") ?? false)
+        XCTAssertTrue((result?["error"] as? String)?.contains("Could not establish connection") ?? false)
     }
     
     // MARK: - Direct Handler Tests
@@ -294,7 +294,7 @@ class SendMessageHandlerTests: XCTestCase {
         // Test single argument: just message
         let request = RuntimeSendMessageRequestImpl(
             requestId: "test-1",
-            args: [AnyJSONCodable(["greeting": "hello"])]
+            args: [AnyJSONCodable("{\"greeting\":\"hello\"}")]
         )
         
         do {
@@ -324,8 +324,8 @@ class SendMessageHandlerTests: XCTestCase {
         let request = RuntimeSendMessageRequestImpl(
             requestId: "test-2",
             args: [
-                AnyJSONCodable("other-extension-id"),
-                AnyJSONCodable(["greeting": "hello"])
+                AnyJSONCodable("\"other-extension-id\""),
+                AnyJSONCodable("{\"greeting\":\"hello\"}")
             ]
         )
         
@@ -356,8 +356,8 @@ class SendMessageHandlerTests: XCTestCase {
         let request = RuntimeSendMessageRequestImpl(
             requestId: "test-3",
             args: [
-                AnyJSONCodable(["greeting": "hello"]),
-                AnyJSONCodable(["includeTlsChannelId": true])
+                AnyJSONCodable("{\"greeting\":\"hello\"}"),
+                AnyJSONCodable("{\"includeTlsChannelId\":true}")
             ]
         )
         
@@ -388,9 +388,9 @@ class SendMessageHandlerTests: XCTestCase {
         let request = RuntimeSendMessageRequestImpl(
             requestId: "test-4",
             args: [
-                AnyJSONCodable("other-extension-id"),
-                AnyJSONCodable(["greeting": "hello"]),
-                AnyJSONCodable(["includeTlsChannelId": true])
+                AnyJSONCodable("\"other-extension-id\""),
+                AnyJSONCodable("{\"greeting\":\"hello\"}"),
+                AnyJSONCodable("{\"includeTlsChannelId\":true}")
             ]
         )
         
@@ -450,21 +450,18 @@ class SendMessageHandlerTests: XCTestCase {
             contextType: .trusted
         )
         
-        // Test invalid message type (not an object)
+        // Test with string (not a JSON-encoded string) - the handler now accepts any string
         let request = RuntimeSendMessageRequestImpl(
             requestId: "test-6",
-            args: [AnyJSONCodable("not an object")]
+            args: [AnyJSONCodable("\"not an object\"")]  // JSON-encoded string
         )
         
         do {
             _ = try await handler.handle(request: request, context: context)
-            XCTFail("Should have thrown internalError")
+            XCTFail("Should have thrown noMessageReceiver error")
         } catch let error as BrowserExtensionError {
-            if case .internalError(let message) = error {
-                XCTAssertTrue(message.contains("Message must be a JSON object"))
-            } else {
-                XCTFail("Wrong error type: \(error)")
-            }
+            // Since the handler passes strings through, we expect noMessageReceiver
+            XCTAssertEqual(error, .noMessageReceiver)
         }
     }
 }

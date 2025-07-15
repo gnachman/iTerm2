@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 import WebKit
 
 /// Factory for creating configured WKWebViews for extension contexts
@@ -111,7 +112,7 @@ public class BrowserExtensionWebViewFactory {
             // Create a persistent data store with extension-specific identifier
             // This ensures each extension has completely separate storage
             if #available(macOS 14.0, *) {
-                webViewConfiguration.websiteDataStore = WKWebsiteDataStore(forIdentifier: UUID(uuidString: configuration.extensionId) ?? UUID())
+                webViewConfiguration.websiteDataStore = WKWebsiteDataStore(forIdentifier: UUID(fromArbitraryString: configuration.extensionId))
                 configuration.logger.debug("Using persistent data store for extension: \(configuration.extensionId)")
             } else {
                 fatalError("Extension storage isolation requires macOS 14.0 or later")
@@ -156,4 +157,24 @@ public class BrowserExtensionWebViewFactory {
         // Test scripts need a clean environment without DOM nuke or console override
         // This allows tests to have full control over the environment
     }
+}
+
+extension UUID {
+  init(fromArbitraryString string: String) {
+    let hash = SHA256.hash(data: Data(string.utf8))
+    var uuidBytes = [UInt8](hash.prefix(16))
+    
+    uuidBytes[6] &= 0x0F
+    uuidBytes[6] |= 0x40  // Set version to 4
+
+    uuidBytes[8] &= 0x3F
+    uuidBytes[8] |= 0x80  // Set variant to RFC 4122
+
+    self = UUID(uuid: (
+      uuidBytes[0], uuidBytes[1], uuidBytes[2], uuidBytes[3],
+      uuidBytes[4], uuidBytes[5], uuidBytes[6], uuidBytes[7],
+      uuidBytes[8], uuidBytes[9], uuidBytes[10], uuidBytes[11],
+      uuidBytes[12], uuidBytes[13], uuidBytes[14], uuidBytes[15]
+    ))
+  }
 }

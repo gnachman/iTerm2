@@ -159,6 +159,7 @@ public func createTestActiveManager(logger: BrowserExtensionLogger? = nil) -> Br
 }
 
 @MainActor
-public func createTestRegistry(logger: BrowserExtensionLogger? = nil) -> BrowserExtensionRegistry {
-    return BrowserExtensionRegistry(logger: logger ?? createTestLogger())
+public func createTestRegistry(baseDirectory: URL? = nil, logger: BrowserExtensionLogger? = nil) -> BrowserExtensionRegistry {
+    let baseDir = baseDirectory ?? URL(fileURLWithPath: "/test/extensions")
+    return BrowserExtensionRegistry(baseDirectory: baseDir, logger: logger ?? createTestLogger())
 }

@@ -19,7 +19,13 @@ final class ContentWorldIsolationIntegrationTests: XCTestCase {
         
         // Set up extension framework components
         let logger = createTestLogger()
-        registry = createTestRegistry(logger: logger)
+        
+        // Get base directory for extensions
+        guard let resourceURL = Bundle.module.resourceURL else {
+            fatalError("Could not find test resources")
+        }
+        
+        registry = createTestRegistry(baseDirectory: resourceURL, logger: logger)
         activeManager = createTestActiveManager(logger: logger)
         
         // Register the webview with the active manager
@@ -67,8 +73,8 @@ final class ContentWorldIsolationIntegrationTests: XCTestCase {
         let redBoxPath = resourceURL.appendingPathComponent("red-box").path
         let blueCirclePath = resourceURL.appendingPathComponent("blue-circle").path
         
-        try registry.add(extensionPath: redBoxPath)
-        try registry.add(extensionPath: blueCirclePath)
+        try registry.add(extensionLocation: URL(fileURLWithPath: redBoxPath).lastPathComponent)
+        try registry.add(extensionLocation: URL(fileURLWithPath: blueCirclePath).lastPathComponent)
         
         // 2. Verify both extensions loaded
         let extensions = registry.extensions
@@ -236,8 +242,8 @@ final class ContentWorldIsolationIntegrationTests: XCTestCase {
         let redBoxPath = resourceURL.appendingPathComponent("red-box").path
         let blueCirclePath = resourceURL.appendingPathComponent("blue-circle").path
         
-        try registry.add(extensionPath: redBoxPath)
-        try registry.add(extensionPath: blueCirclePath)
+        try registry.add(extensionLocation: URL(fileURLWithPath: redBoxPath).lastPathComponent)
+        try registry.add(extensionLocation: URL(fileURLWithPath: blueCirclePath).lastPathComponent)
         
         let extensions = registry.extensions
         var redBoxExtension: BrowserExtension?

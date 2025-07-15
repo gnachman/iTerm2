@@ -21,10 +21,11 @@ final class BrowserExtensionRegistryTests: XCTestCase {
         let manifestURL = tempURL.appendingPathComponent("manifest.json")
         try! manifestJSON.write(to: manifestURL, atomically: true, encoding: .utf8)
         
-        let registry = createTestRegistry()
+        let baseDirectory = tempURL.deletingLastPathComponent()
+        let registry = createTestRegistry(baseDirectory: baseDirectory)
         
         // Add extension
-        try! registry.add(extensionPath: tempURL.path)
+        try! registry.add(extensionLocation: tempURL.lastPathComponent)
         
         // Verify it was added
         let extensions = registry.extensions
@@ -52,14 +53,15 @@ final class BrowserExtensionRegistryTests: XCTestCase {
         let manifestURL = tempURL.appendingPathComponent("manifest.json")
         try! manifestJSON.write(to: manifestURL, atomically: true, encoding: .utf8)
         
-        let registry = createTestRegistry()
+        let baseDirectory = tempURL.deletingLastPathComponent()
+        let registry = createTestRegistry(baseDirectory: baseDirectory)
         
         // Add extension first time
-        try! registry.add(extensionPath: tempURL.path)
+        try! registry.add(extensionLocation: tempURL.lastPathComponent)
         
         // Try to add same path again
         do {
-            try registry.add(extensionPath: tempURL.path)
+            try registry.add(extensionLocation: tempURL.lastPathComponent)
             XCTFail("Expected error to be thrown")
         } catch BrowserExtensionRegistryError.extensionAlreadyExists(let path) {
             XCTAssertEqual(path, tempURL.path)
@@ -79,10 +81,11 @@ final class BrowserExtensionRegistryTests: XCTestCase {
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try! FileManager.default.createDirectory(at: tempURL, withIntermediateDirectories: true)
         
-        let registry = createTestRegistry()
+        let baseDirectory = tempURL.deletingLastPathComponent()
+        let registry = createTestRegistry(baseDirectory: baseDirectory)
         
         do {
-            try registry.add(extensionPath: tempURL.path)
+            try registry.add(extensionLocation: tempURL.lastPathComponent)
             XCTFail("Expected error to be thrown")
         } catch {
             // Should throw some error for missing manifest
@@ -98,7 +101,9 @@ final class BrowserExtensionRegistryTests: XCTestCase {
     }
     
     func testExtensionsCollection() async {
-        let registry = createTestRegistry()
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let baseDirectory = tempURL.deletingLastPathComponent()
+        let registry = createTestRegistry(baseDirectory: baseDirectory)
         
         // Initially empty
         let initialExtensions = registry.extensions
@@ -129,8 +134,8 @@ final class BrowserExtensionRegistryTests: XCTestCase {
         try! manifest1.write(to: tempURL1.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try! manifest2.write(to: tempURL2.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         
-        try! registry.add(extensionPath: tempURL1.path)
-        try! registry.add(extensionPath: tempURL2.path)
+        try! registry.add(extensionLocation: tempURL1.lastPathComponent)
+        try! registry.add(extensionLocation: tempURL2.lastPathComponent)
         
         let extensions = registry.extensions
         XCTAssertEqual(extensions.count, 2)
@@ -146,7 +151,9 @@ final class BrowserExtensionRegistryTests: XCTestCase {
     }
     
     func testNotificationPosting() async {
-        let registry = createTestRegistry()
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let baseDirectory = tempURL.deletingLastPathComponent()
+        let registry = createTestRegistry(baseDirectory: baseDirectory)
         
         // Set up notification expectation
         let expectation = XCTestExpectation(description: "Registry changed notification")
@@ -163,7 +170,6 @@ final class BrowserExtensionRegistryTests: XCTestCase {
         }
         
         // Create extension
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try! FileManager.default.createDirectory(at: tempURL, withIntermediateDirectories: true)
         
         let manifestJSON = """
@@ -176,7 +182,7 @@ final class BrowserExtensionRegistryTests: XCTestCase {
         try! manifestJSON.write(to: tempURL.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         
         // Add extension (should post notification)
-        try! registry.add(extensionPath: tempURL.path)
+        try! registry.add(extensionLocation: tempURL.lastPathComponent)
         
         // Wait for notification
         await fulfillment(of: [expectation], timeout: 1.0)
@@ -222,10 +228,11 @@ final class BrowserExtensionRegistryTests: XCTestCase {
         """
         try! contentJS.write(to: tempURL.appendingPathComponent("content.js"), atomically: true, encoding: .utf8)
         
-        let registry = createTestRegistry()
+        let baseDirectory = tempURL.deletingLastPathComponent()
+        let registry = createTestRegistry(baseDirectory: baseDirectory)
         
         // Add the red-box extension
-        try! registry.add(extensionPath: tempURL.path)
+        try! registry.add(extensionLocation: tempURL.lastPathComponent)
         
         // Verify it was added and has correct properties
         let extensions = registry.extensions
@@ -272,10 +279,11 @@ final class BrowserExtensionRegistryTests: XCTestCase {
         let manifestURL = tempURL.appendingPathComponent("manifest.json")
         try! manifestJSON.write(to: manifestURL, atomically: true, encoding: .utf8)
         
-        let registry = createTestRegistry()
+        let baseDirectory = tempURL.deletingLastPathComponent()
+        let registry = createTestRegistry(baseDirectory: baseDirectory)
         
         // Add extension
-        try! registry.add(extensionPath: tempURL.path)
+        try! registry.add(extensionLocation: tempURL.lastPathComponent)
         
         // Verify it was added
         let extensionsBeforeRemove = registry.extensions
@@ -293,7 +301,9 @@ final class BrowserExtensionRegistryTests: XCTestCase {
     }
     
     func testRemoveExtensionNotFound() async {
-        let registry = createTestRegistry()
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let baseDirectory = tempURL.deletingLastPathComponent()
+        let registry = createTestRegistry(baseDirectory: baseDirectory)
         
         // Try to remove extension that doesn't exist
         do {
@@ -311,10 +321,11 @@ final class BrowserExtensionRegistryTests: XCTestCase {
     }
     
     func testRemoveExtensionPostsNotification() async {
-        let registry = createTestRegistry()
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let baseDirectory = tempURL.deletingLastPathComponent()
+        let registry = createTestRegistry(baseDirectory: baseDirectory)
         
         // Create extension
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try! FileManager.default.createDirectory(at: tempURL, withIntermediateDirectories: true)
         
         let manifestJSON = """
@@ -327,7 +338,7 @@ final class BrowserExtensionRegistryTests: XCTestCase {
         try! manifestJSON.write(to: tempURL.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         
         // Add extension first
-        try! registry.add(extensionPath: tempURL.path)
+        try! registry.add(extensionLocation: tempURL.lastPathComponent)
         
         // Set up notification expectation for removal
         let expectation = XCTestExpectation(description: "Registry changed notification on removal")
@@ -354,7 +365,9 @@ final class BrowserExtensionRegistryTests: XCTestCase {
     }
     
     func testRemoveOneOfMultipleExtensions() async {
-        let registry = createTestRegistry()
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let baseDirectory = tempURL.deletingLastPathComponent()
+        let registry = createTestRegistry(baseDirectory: baseDirectory)
         
         // Create two extensions
         let tempURL1 = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
@@ -382,8 +395,8 @@ final class BrowserExtensionRegistryTests: XCTestCase {
         try! manifest2.write(to: tempURL2.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         
         // Add both extensions
-        try! registry.add(extensionPath: tempURL1.path)
-        try! registry.add(extensionPath: tempURL2.path)
+        try! registry.add(extensionLocation: tempURL1.lastPathComponent)
+        try! registry.add(extensionLocation: tempURL2.lastPathComponent)
         
         // Verify both are added
         let extensionsBeforeRemove = registry.extensions
