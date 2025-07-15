@@ -787,7 +787,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
     /// Get the content world for a given extension ID
     public func contentWorld(for extensionId: String) async -> WKContentWorld? {
         logger.debug("ActiveManager asked for content world for extension: \(extensionId)")
-        guard let extensionUUID = ExtensionID(uuidString: extensionId),
+        guard let extensionUUID = ExtensionID(extensionId),
               let activeExtension = activeExtensions[extensionUUID] else {
             logger.debug("No active extension found for ID: \(extensionId)")
             return nil

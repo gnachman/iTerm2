@@ -112,8 +112,7 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
             version: "1.0.0"
         )
         
-        let extensionURL2 = URL(fileURLWithPath: "/test/extension2")
-        let testExtension2 = BrowserExtension(manifest: manifest2, baseURL: extensionURL2, logger: createTestLogger())
+        let testExtension2 = BrowserExtension(manifest: manifest2, baseDirectory: URL(fileURLWithPath: "/test"), extensionLocation: "extension2", logger: createTestLogger())
         
         await manager.activate(testExtension)
         await manager.activate(testExtension2)
@@ -135,8 +134,7 @@ final class BrowserExtensionActiveManagerTests: XCTestCase {
             version: "1.0.0"
         )
         
-        let extensionURL2 = URL(fileURLWithPath: "/test/extension2")
-        let testExtension2 = BrowserExtension(manifest: manifest2, baseURL: extensionURL2, logger: createTestLogger())
+        let testExtension2 = BrowserExtension(manifest: manifest2, baseDirectory: URL(fileURLWithPath: "/test"), extensionLocation: "extension2", logger: createTestLogger())
         
         await manager.activate(testExtension)
         await manager.activate(testExtension2)

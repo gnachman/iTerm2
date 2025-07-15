@@ -12,7 +12,7 @@ class iTermBrowserStorageProvider: BrowserExtensionStorageProvider {
     private var ephemeralDatabases = [StorageKey: BrowserDatabase]()
     private var accessLevels = [StorageKey: BrowserExtensionStorageAccessLevel]()
 
-    private func database(area: BrowserExtensionStorageArea, extensionId: UUID) async -> BrowserDatabase? {
+    private func database(area: BrowserExtensionStorageArea, extensionId: ExtensionID) async -> BrowserDatabase? {
         switch area {
         case .session:
             let key = StorageKey(area: area, extenstionId: extensionId)
@@ -31,7 +31,7 @@ class iTermBrowserStorageProvider: BrowserExtensionStorageProvider {
 
     private struct StorageKey: Hashable {
         var area: BrowserExtensionStorageArea
-        var extenstionId: UUID
+        var extenstionId: ExtensionID
     }
 
     init(database: BrowserDatabase) {
@@ -40,27 +40,27 @@ class iTermBrowserStorageProvider: BrowserExtensionStorageProvider {
 
     func get(keys: [String]?,
              area: BrowserExtensionStorageArea,
-             extensionId: UUID) async throws -> [String : String] {
+             extensionId: ExtensionID) async throws -> [String : String] {
         guard let database = await database(area: area, extensionId: extensionId) else {
             return [:]
         }
         if let keys {
             return try await database.getKeyValueStoreEntries(area: area.rawValue,
-                                                              extensionId: extensionId.uuidString,
+                                                              extensionId: extensionId.stringValue,
                                                               keys: Set(keys))
         }
         return try await database.getKeyValueStoreEntries(area: area.rawValue,
-                                                          extensionId: extensionId.uuidString)
+                                                          extensionId: extensionId.stringValue)
     }
 
     func set(items: [String : String],
              area: BrowserExtensionStorageArea,
-             extensionId: UUID, hasUnlimitedStorage: Bool) async throws -> [String: String?] {
+             extensionId: ExtensionID, hasUnlimitedStorage: Bool) async throws -> [String: String?] {
         guard let database = await database(area: area, extensionId: extensionId) else {
             return [:]
         }
         let oldValues = try await database.setKeyValueStoreEntries(area: area.rawValue,
-                                                                   extensionId: extensionId.uuidString,
+                                                                   extensionId: extensionId.stringValue,
                                                                    newValues: items)
 
         var result = [String: String?]()
@@ -72,14 +72,14 @@ class iTermBrowserStorageProvider: BrowserExtensionStorageProvider {
     
     func remove(keys: [String],
                 area: BrowserExtensionStorageArea,
-                extensionId: UUID) async throws -> [String: String?] {
+                extensionId: ExtensionID) async throws -> [String: String?] {
         guard let database = await database(area: area, extensionId: extensionId) else {
             return keys.reduce(into: [:]) { $0[$1] = nil }
         }
         
         // Remove the keys
         var result = try await database.clearKeyValueStore(area: area.rawValue,
-                                                           extensionId: extensionId.uuidString,
+                                                           extensionId: extensionId.stringValue,
                                                            keys: Set(keys))
 
         // Return original values (nil for keys that didn't exist)
@@ -92,22 +92,22 @@ class iTermBrowserStorageProvider: BrowserExtensionStorageProvider {
     }
     
     func clear(area: BrowserExtensionStorageArea,
-               extensionId: UUID) async throws -> [String: String] {
+               extensionId: ExtensionID) async throws -> [String: String] {
         guard let database = await database(area: area, extensionId: extensionId) else {
             return [:]
         }
         
         // Clear all storage
         return try await database.clearKeyValueStore(area: area.rawValue,
-                                                     extensionId: extensionId.uuidString)
+                                                     extensionId: extensionId.stringValue)
     }
     
     func getUsage(area: BrowserExtensionStorageArea,
-                  extensionId: UUID) async throws -> (bytesUsed: Int, itemCount: Int) {
+                  extensionId: ExtensionID) async throws -> (bytesUsed: Int, itemCount: Int) {
         guard let database = await database(area: area, extensionId: extensionId) else {
             return (bytesUsed: 0, itemCount: 0)
         }
-        let usage = await database.keyValueUsage(area: area.rawValue, extensionId: extensionId.uuidString)
+        let usage = await database.keyValueUsage(area: area.rawValue, extensionId: extensionId.stringValue)
         return (bytesUsed: usage.bytesUsed, itemCount: usage.itemCount)
     }
     
@@ -126,7 +126,7 @@ class iTermBrowserStorageProvider: BrowserExtensionStorageProvider {
         }
     }
     
-    func getStorageAccessLevel(area: BrowserExtensionStorageArea, extensionId: UUID) async -> BrowserExtensionStorageAccessLevel {
+    func getStorageAccessLevel(area: BrowserExtensionStorageArea, extensionId: ExtensionID) async -> BrowserExtensionStorageAccessLevel {
         if let existing = accessLevels[.init(area: area, extenstionId: extensionId)] {
             return existing
         }
@@ -139,7 +139,7 @@ class iTermBrowserStorageProvider: BrowserExtensionStorageProvider {
     
     func setStorageAccessLevel(_ accessLevel: BrowserExtensionStorageAccessLevel,
                                area: BrowserExtensionStorageArea,
-                               extensionId: UUID) async throws {
+                               extensionId: ExtensionID) async throws {
         accessLevels[.init(area: area, extenstionId: extensionId)] = accessLevel
     }
     

@@ -22,10 +22,10 @@ class BrowserExtensionRouterTests: XCTestCase {
             name: "Test Extension",
             version: "1.0.0"
         )
-        let baseURL = URL(fileURLWithPath: "/tmp/test-extension")
         mockBrowserExtension = BrowserExtension(
             manifest: manifest,
-            baseURL: baseURL,
+            baseDirectory: URL(fileURLWithPath: "/tmp"),
+            extensionLocation: "test-extension",
             logger: mockLogger
         )
         

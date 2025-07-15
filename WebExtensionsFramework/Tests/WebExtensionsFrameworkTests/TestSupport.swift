@@ -122,8 +122,9 @@ public func createTestBrowserExtension(name: String = "Test Extension", logger: 
         name: name,
         version: "1.0.0"
     )
-    let extensionURL = URL(fileURLWithPath: "/test/extension")
-    return BrowserExtension(manifest: manifest, baseURL: extensionURL, logger: logger ?? createTestLogger())
+    let baseDirectory = URL(fileURLWithPath: "/test")
+    let extensionLocation = "extension-\(UUID().uuidString)"
+    return BrowserExtension(manifest: manifest, baseDirectory: baseDirectory, extensionLocation: extensionLocation, logger: logger ?? createTestLogger())
 }
 
 // MARK: - Dependencies Extension

@@ -12,11 +12,11 @@ class SimpleChromeTest: XCTestCase {
             version: "1.0.0",
             description: "Test extension"
         )
-        let baseURL = URL(fileURLWithPath: "/tmp/test-extension")
         let mockLogger = createTestLogger()
         let mockBrowserExtension = BrowserExtension(
             manifest: manifest,
-            baseURL: baseURL,
+            baseDirectory: URL(fileURLWithPath: "/tmp"),
+            extensionLocation: "test-extension",
             logger: mockLogger
         )
         

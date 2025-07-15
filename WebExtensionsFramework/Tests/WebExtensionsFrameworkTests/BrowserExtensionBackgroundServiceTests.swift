@@ -62,8 +62,7 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
             background: backgroundScript
         )
         
-        let extensionURL = URL(fileURLWithPath: "/test/extension")
-        testExtension = BrowserExtension(manifest: manifest, baseURL: extensionURL, logger: testLogger)
+        testExtension = BrowserExtension(manifest: manifest, baseDirectory: URL(fileURLWithPath: "/test"), extensionLocation: "extension", logger: testLogger)
         
         // Create mock background script resource using test helper
         let mockBackgroundResource = BackgroundScriptResource(
@@ -119,8 +118,7 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
             name: "Test Extension",
             version: "1.0"
         )
-        let extensionURL = URL(fileURLWithPath: "/test/extension")
-        let extensionWithoutBackground = BrowserExtension(manifest: manifestWithoutBackground, baseURL: extensionURL, logger: testLogger)
+        let extensionWithoutBackground = BrowserExtension(manifest: manifestWithoutBackground, baseDirectory: URL(fileURLWithPath: "/test"), extensionLocation: "extension", logger: testLogger)
         
         let result = try await backgroundService.startBackgroundScript(for: extensionWithoutBackground)
         XCTAssertNil(result)
@@ -174,8 +172,7 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
             background: backgroundScript2
         )
         
-        let extensionURL2 = URL(fileURLWithPath: "/test/extension2")
-        let testExtension2 = BrowserExtension(manifest: manifest2, baseURL: extensionURL2, logger: testLogger)
+        let testExtension2 = BrowserExtension(manifest: manifest2, baseDirectory: URL(fileURLWithPath: "/test"), extensionLocation: "extension2", logger: testLogger)
         
         let mockBackgroundResource2 = BackgroundScriptResource(
             config: backgroundScript2,
@@ -224,7 +221,7 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
 
         let backgroundScript2 = BackgroundScript(serviceWorker: "bg2.js", scripts: nil, persistent: nil, type: nil)
         let manifest2 = ExtensionManifest(manifestVersion: 3, name: "Test 2", version: "1.0", background: backgroundScript2)
-        let testExtension2 = BrowserExtension(manifest: manifest2, baseURL: URL(fileURLWithPath: "/test/ext2"), logger: testLogger)
+        let testExtension2 = BrowserExtension(manifest: manifest2, baseDirectory: URL(fileURLWithPath: "/test"), extensionLocation: "ext2", logger: testLogger)
         testExtension2.setBackgroundScriptResource(BackgroundScriptResource(config: backgroundScript2, jsContent: "test", isServiceWorker: true))
         
         _ = try await backgroundService.startBackgroundScript(for: testExtension2)
@@ -298,7 +295,7 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
             version: "1.0",
             background: backgroundScript1
         )
-        let testExtension1 = BrowserExtension(manifest: manifest1, baseURL: URL(fileURLWithPath: "/test/ext1"), logger: testLogger)
+        let testExtension1 = BrowserExtension(manifest: manifest1, baseDirectory: URL(fileURLWithPath: "/test"), extensionLocation: "ext1", logger: testLogger)
         let mockBackgroundResource1 = BackgroundScriptResource(
             config: backgroundScript1,
             jsContent: """
@@ -330,7 +327,7 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
             version: "1.0",
             background: backgroundScript1
         )
-        let testExtension1 = BrowserExtension(manifest: manifest1, baseURL: URL(fileURLWithPath: "/test/ext1"), logger: testLogger)
+        let testExtension1 = BrowserExtension(manifest: manifest1, baseDirectory: URL(fileURLWithPath: "/test"), extensionLocation: "ext1", logger: testLogger)
         let mockBackgroundResource1 = BackgroundScriptResource(
             config: backgroundScript1,
             jsContent: """
@@ -360,7 +357,7 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
             version: "1.0",
             background: backgroundScript2
         )
-        let testExtension2 = BrowserExtension(manifest: manifest2, baseURL: URL(fileURLWithPath: "/test/ext2"), logger: testLogger)
+        let testExtension2 = BrowserExtension(manifest: manifest2, baseDirectory: URL(fileURLWithPath: "/test"), extensionLocation: "ext2", logger: testLogger)
         let mockBackgroundResource2 = BackgroundScriptResource(
             config: backgroundScript2,
             jsContent: """
@@ -439,7 +436,7 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
             version: "1.0",
             background: backgroundScript1
         )
-        let testExtension1 = BrowserExtension(manifest: manifest1, baseURL: URL(fileURLWithPath: "/test/ext1"), logger: testLogger)
+        let testExtension1 = BrowserExtension(manifest: manifest1, baseDirectory: URL(fileURLWithPath: "/test"), extensionLocation: "ext1", logger: testLogger)
         let mockBackgroundResource1 = BackgroundScriptResource(
             config: backgroundScript1,
             jsContent: "globalThis.testVariable = 'extension1';",
@@ -463,7 +460,7 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
             version: "1.0",
             background: backgroundScript2
         )
-        let testExtension2 = BrowserExtension(manifest: manifest2, baseURL: URL(fileURLWithPath: "/test/ext2"), logger: testLogger)
+        let testExtension2 = BrowserExtension(manifest: manifest2, baseDirectory: URL(fileURLWithPath: "/test"), extensionLocation: "ext2", logger: testLogger)
         let mockBackgroundResource2 = BackgroundScriptResource(
             config: backgroundScript2,
             jsContent: """
@@ -540,7 +537,7 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
             version: "1.0",
             background: backgroundScript1
         )
-        let testExtension1 = BrowserExtension(manifest: manifest1, baseURL: URL(fileURLWithPath: "/test/ext1"), logger: testLogger)
+        let testExtension1 = BrowserExtension(manifest: manifest1, baseDirectory: URL(fileURLWithPath: "/test"), extensionLocation: "ext1", logger: testLogger)
         let mockBackgroundResource1 = BackgroundScriptResource(
             config: backgroundScript1,
             jsContent: """
@@ -578,7 +575,7 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
             version: "1.0",
             background: backgroundScript2
         )
-        let testExtension2 = BrowserExtension(manifest: manifest2, baseURL: URL(fileURLWithPath: "/test/ext2"), logger: testLogger)
+        let testExtension2 = BrowserExtension(manifest: manifest2, baseDirectory: URL(fileURLWithPath: "/test"), extensionLocation: "ext2", logger: testLogger)
         let mockBackgroundResource2 = BackgroundScriptResource(
             config: backgroundScript2,
             jsContent: """
@@ -693,7 +690,7 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
             version: "1.0",
             background: backgroundScript1
         )
-        let testExtension1 = BrowserExtension(manifest: manifest1, baseURL: URL(fileURLWithPath: "/test/ephemeral1"), logger: testLogger)
+        let testExtension1 = BrowserExtension(manifest: manifest1, baseDirectory: URL(fileURLWithPath: "/test"), extensionLocation: "ephemeral1", logger: testLogger)
         let mockBackgroundResource1 = BackgroundScriptResource(
             config: backgroundScript1,
             jsContent: """
@@ -729,7 +726,7 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
             version: "1.0",
             background: backgroundScript2
         )
-        let testExtension2 = BrowserExtension(manifest: manifest2, baseURL: URL(fileURLWithPath: "/test/ephemeral2"), logger: testLogger)
+        let testExtension2 = BrowserExtension(manifest: manifest2, baseDirectory: URL(fileURLWithPath: "/test"), extensionLocation: "ephemeral2", logger: testLogger)
         let mockBackgroundResource2 = BackgroundScriptResource(
             config: backgroundScript2,
             jsContent: """
@@ -835,7 +832,7 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
             version: "1.0",
             background: backgroundScript
         )
-        let testExtension = BrowserExtension(manifest: manifest, baseURL: URL(fileURLWithPath: "/test/nav-test"), logger: testLogger)
+        let testExtension = BrowserExtension(manifest: manifest, baseDirectory: URL(fileURLWithPath: "/test"), extensionLocation: "nav-test", logger: testLogger)
         let mockBackgroundResource = BackgroundScriptResource(
             config: backgroundScript,
             jsContent: """
@@ -920,7 +917,7 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
             version: "1.0",
             background: backgroundScript
         )
-        let testExtension = BrowserExtension(manifest: manifest, baseURL: URL(fileURLWithPath: "/test/redirect-test"), logger: testLogger)
+        let testExtension = BrowserExtension(manifest: manifest, baseDirectory: URL(fileURLWithPath: "/test"), extensionLocation: "redirect-test", logger: testLogger)
         let mockBackgroundResource = BackgroundScriptResource(
             config: backgroundScript,
             jsContent: """
@@ -1187,7 +1184,7 @@ final class BrowserExtensionBackgroundServiceTests: XCTestCase {
             version: "1.0",
             background: backgroundScript
         )
-        let consoleTestExtension = BrowserExtension(manifest: manifest, baseURL: URL(fileURLWithPath: "/test/console-test"), logger: testLogger)
+        let consoleTestExtension = BrowserExtension(manifest: manifest, baseDirectory: URL(fileURLWithPath: "/test"), extensionLocation: "console-test", logger: testLogger)
         let mockBackgroundResource = BackgroundScriptResource(
             config: backgroundScript,
             jsContent: """

@@ -28,10 +28,10 @@ final class StorageHandlerTests: XCTestCase {
             permissions: ["storage"]
         )
         
-        let baseURL = URL(fileURLWithPath: "/tmp/test-extension")
         mockBrowserExtension = BrowserExtension(
             manifest: manifest,
-            baseURL: baseURL,
+            baseDirectory: URL(fileURLWithPath: "/tmp"),
+            extensionLocation: "test-extension",
             logger: mockLogger
         )
         
@@ -183,7 +183,8 @@ final class StorageHandlerTests: XCTestCase {
         
         let extensionWithUnlimitedStorage = BrowserExtension(
             manifest: manifest,
-            baseURL: URL(fileURLWithPath: "/tmp/test"),
+            baseDirectory: URL(fileURLWithPath: "/tmp"),
+            extensionLocation: "test",
             logger: mockLogger
         )
         

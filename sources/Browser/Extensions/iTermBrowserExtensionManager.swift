@@ -137,7 +137,7 @@ extension iTermBrowserExtensionManager: iTermBrowserExtensionManagerProtocol {
 
     private func updateActivation() async {
         let active = activeExtensionManager.allActiveExtensions()
-        var pathToID = [String: UUID]()
+        var pathToID = [String: ExtensionID]()
         for (id, ext) in active {
             pathToID[ext.browserExtension.baseURL.path] = id
         }

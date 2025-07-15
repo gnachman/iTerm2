@@ -2,6 +2,7 @@
 // Represents a unique identifier for browser extensions
 
 import Foundation
+import CryptoKit
 
 /// Unique identifier for browser extensions
 public struct ExtensionID: Hashable, Codable, Sendable {
@@ -14,24 +15,53 @@ public struct ExtensionID: Hashable, Codable, Sendable {
         self.stringValue = stringValue
     }
     
-    /// Initialize with a new random UUID-based ID
+    /// Initialize with a new path-based ID using default paths
+    /// This is a convenience initializer that generates a unique ID
     public init() {
-        self.stringValue = UUID().uuidString
+        // Generate a unique temporary path for default initialization
+        self.init(baseDirectory: URL(fileURLWithPath: "/tmp/extensions"), extensionLocation: UUID().uuidString)
     }
     
-    /// Initialize from a UUID (for compatibility)
-    /// - Parameter uuid: The UUID to convert to an ExtensionID
-    public init(uuid: UUID) {
-        self.stringValue = uuid.uuidString
-    }
-    
-    /// Initialize from a UUID string (for compatibility)
-    /// - Parameter uuidString: The UUID string to convert to an ExtensionID
-    public init?(uuidString: String) {
-        guard UUID(uuidString: uuidString) != nil else {
-            return nil
-        }
-        self.stringValue = uuidString
+    /// Initialize from a base directory and relative extension location
+    /// - Parameters:
+    ///   - baseDirectory: The base directory containing extensions
+    ///   - extensionLocation: The relative path to the extension folder
+    public init(baseDirectory: URL, extensionLocation: String) {
+        // 1. Normalize & UTF-8-encode the absolute path to the extension folder
+        let absolutePath = baseDirectory.appendingPathComponent(extensionLocation).standardized.path
+        let pathData = absolutePath.data(using: .utf8)!
+        
+        // 2. SHA-256 that path string, but only keep the first 16 bytes
+        let hash = SHA256.hash(data: pathData)
+        let first16Bytes = hash.prefix(16)
+        
+        // 3. Hex-encode those 16 bytes into 32 hex characters (lower-case)
+        let hexString = first16Bytes.map { String(format: "%02x", $0) }.joined()
+        
+        // 4. Remap each hex digit (0–f) to the letters a–p (so the final ID never looks like an IP)
+        let remappedString = hexString.map { char in
+            switch char {
+            case "0": return "a"
+            case "1": return "b"
+            case "2": return "c"
+            case "3": return "d"
+            case "4": return "e"
+            case "5": return "f"
+            case "6": return "g"
+            case "7": return "h"
+            case "8": return "i"
+            case "9": return "j"
+            case "a": return "k"
+            case "b": return "l"
+            case "c": return "m"
+            case "d": return "n"
+            case "e": return "o"
+            case "f": return "p"
+            default: return String(char) // Should never happen with hex string
+            }
+        }.joined()
+        
+        self.stringValue = remappedString
     }
 }
 
@@ -44,11 +74,16 @@ extension ExtensionID: CustomStringConvertible {
 
 extension ExtensionID: LosslessStringConvertible {
     public init?(_ description: String) {
-        // For now, validate that it's a valid UUID string
-        guard UUID(uuidString: description) != nil else {
-            return nil
+        // Only accept path-based IDs (32 chars, only letters a-p)
+        if description.count == 32 && description.allSatisfy({ char in
+            char >= "a" && char <= "p"
+        }) {
+            self.stringValue = description
+            return
         }
-        self.stringValue = description
+        
+        // Invalid format
+        return nil
     }
 }
 

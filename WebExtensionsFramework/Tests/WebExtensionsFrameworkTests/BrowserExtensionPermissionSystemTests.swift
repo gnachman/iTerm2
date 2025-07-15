@@ -22,7 +22,8 @@ final class BrowserExtensionPermissionSystemTests: XCTestCase {
         let logger = createTestLogger()
         let browserExtension = BrowserExtension(
             manifest: manifest,
-            baseURL: URL(string: "extension://test")!,
+            baseDirectory: URL(fileURLWithPath: "/test"),
+            extensionLocation: "extension",
             logger: logger
         )
         let context = BrowserExtensionContext(
@@ -68,7 +69,8 @@ final class BrowserExtensionPermissionSystemTests: XCTestCase {
         let logger = createTestLogger()
         let browserExtension = BrowserExtension(
             manifest: manifest,
-            baseURL: URL(string: "extension://test")!,
+            baseDirectory: URL(fileURLWithPath: "/test"),
+            extensionLocation: "extension",
             logger: logger
         )
         let context = BrowserExtensionContext(
@@ -96,7 +98,8 @@ final class BrowserExtensionPermissionSystemTests: XCTestCase {
         let logger = createTestLogger()
         let browserExtension = BrowserExtension(
             manifest: manifest,
-            baseURL: URL(string: "extension://test")!,
+            baseDirectory: URL(fileURLWithPath: "/test"),
+            extensionLocation: "extension",
             logger: logger
         )
         let context = BrowserExtensionContext(

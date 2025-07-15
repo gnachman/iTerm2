@@ -19,11 +19,11 @@ class BrowserExtensionErrorInfrastructureTests: XCTestCase {
             version: "1.0.0",
             description: "Test extension for error infrastructure"
         )
-        let baseURL = URL(fileURLWithPath: "/tmp/test-extension")
         mockLogger = createTestLogger()
         mockBrowserExtension = BrowserExtension(
             manifest: manifest,
-            baseURL: baseURL,
+            baseDirectory: URL(fileURLWithPath: "/tmp"),
+            extensionLocation: "test-extension",
             logger: mockLogger
         )
         

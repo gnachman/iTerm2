@@ -71,12 +71,13 @@ public class BrowserExtension {
     /// Initialize a browser extension
     /// - Parameters:
     ///   - manifest: The extension's manifest
-    ///   - baseURL: Base URL for the extension's files
+    ///   - baseDirectory: Base directory containing extensions
+    ///   - extensionLocation: Relative path to the extension directory
     ///   - logger: Logger for debugging and error reporting
-    public init(manifest: ExtensionManifest, baseURL: URL, logger: BrowserExtensionLogger) {
+    public init(manifest: ExtensionManifest, baseDirectory: URL, extensionLocation: String, logger: BrowserExtensionLogger) {
         self.manifest = manifest
-        self.baseURL = baseURL
-        self.id = ExtensionID()
+        self.baseURL = baseDirectory.appendingPathComponent(extensionLocation)
+        self.id = ExtensionID(baseDirectory: baseDirectory, extensionLocation: extensionLocation)
         self.logger = logger
     }
     

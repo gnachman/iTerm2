@@ -104,7 +104,9 @@ public class BrowserExtensionRegistry {
             }
             
             // Create BrowserExtension
-            let browserExtension = BrowserExtension(manifest: manifest, baseURL: extensionURL, logger: logger)
+            let baseDirectory = extensionURL.deletingLastPathComponent()
+            let extensionLocation = extensionURL.lastPathComponent
+            let browserExtension = BrowserExtension(manifest: manifest, baseDirectory: baseDirectory, extensionLocation: extensionLocation, logger: logger)
             
             // Load content scripts
             do {

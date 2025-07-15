@@ -64,12 +64,12 @@ public class BrowserExtensionURLSchemeHandler: NSObject, WKURLSchemeHandler {
                 return
             }
             
-            guard let extensionId = ExtensionID(uuidString: host) else {
-                logger.error("Invalid extension ID (not a UUID): \(host)")
+            guard let extensionId = ExtensionID(host) else {
+                logger.error("Invalid extension ID: \(host)")
                 urlSchemeTask.didFailWithError(NSError(
                     domain: "BrowserExtensionURLSchemeHandler",
                     code: 1,
-                    userInfo: [NSLocalizedDescriptionKey: "Invalid extension ID (not a UUID): \(host)"]
+                    userInfo: [NSLocalizedDescriptionKey: "Invalid extension ID: \(host)"]
                 ))
                 return
             }

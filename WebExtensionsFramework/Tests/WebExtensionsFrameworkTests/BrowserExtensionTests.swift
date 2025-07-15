@@ -10,16 +10,17 @@ final class BrowserExtensionTests: XCTestCase {
             name: "Test Extension",
             version: "1.0"
         )
-        let extensionURL = URL(fileURLWithPath: "/test/path")
+        let baseDirectory = URL(fileURLWithPath: "/test")
+        let extensionLocation = "path"
         
-        let browserExtension = BrowserExtension(manifest: manifest, baseURL: extensionURL, logger: createTestLogger())
+        let browserExtension = BrowserExtension(manifest: manifest, baseDirectory: baseDirectory, extensionLocation: extensionLocation, logger: createTestLogger())
         
         let actualManifest = browserExtension.manifest
         let actualBaseURL = browserExtension.baseURL
         let actualID = browserExtension.id
         
         XCTAssertEqual(actualManifest.name, "Test Extension")
-        XCTAssertEqual(actualBaseURL, extensionURL)
+        XCTAssertEqual(actualBaseURL, baseDirectory.appendingPathComponent(extensionLocation))
         // ID should be a valid UUID, not empty
         XCTAssertNotEqual(actualID.stringValue, "")
     }
@@ -36,8 +37,9 @@ final class BrowserExtensionTests: XCTestCase {
             version: "1.0"
         )
         
-        let extension1 = BrowserExtension(manifest: manifest1, baseURL: URL(fileURLWithPath: "/test/path1"), logger: createTestLogger())
-        let extension2 = BrowserExtension(manifest: manifest2, baseURL: URL(fileURLWithPath: "/test/path2"), logger: createTestLogger())
+        let baseDirectory = URL(fileURLWithPath: "/test")
+        let extension1 = BrowserExtension(manifest: manifest1, baseDirectory: baseDirectory, extensionLocation: "path1", logger: createTestLogger())
+        let extension2 = BrowserExtension(manifest: manifest2, baseDirectory: baseDirectory, extensionLocation: "path2", logger: createTestLogger())
         
         let id1 = extension1.id
         let id2 = extension2.id
@@ -76,7 +78,9 @@ final class BrowserExtensionTests: XCTestCase {
             )]
         )
         
-        let browserExtension = BrowserExtension(manifest: manifest, baseURL: tempURL, logger: createTestLogger())
+        let baseDirectory = tempURL.deletingLastPathComponent()
+        let extensionLocation = tempURL.lastPathComponent
+        let browserExtension = BrowserExtension(manifest: manifest, baseDirectory: baseDirectory, extensionLocation: extensionLocation, logger: createTestLogger())
         
         // Load content scripts
         try! browserExtension.loadContentScripts()
@@ -118,7 +122,9 @@ final class BrowserExtensionTests: XCTestCase {
             )]
         )
         
-        let browserExtension = BrowserExtension(manifest: manifest, baseURL: tempURL, logger: createTestLogger())
+        let baseDirectory = tempURL.deletingLastPathComponent()
+        let extensionLocation = tempURL.lastPathComponent
+        let browserExtension = BrowserExtension(manifest: manifest, baseDirectory: baseDirectory, extensionLocation: extensionLocation, logger: createTestLogger())
         
         do {
             try browserExtension.loadContentScripts()
@@ -140,7 +146,9 @@ final class BrowserExtensionTests: XCTestCase {
             version: "1.0"
         )
         
-        let browserExtension = BrowserExtension(manifest: manifest, baseURL: URL(fileURLWithPath: "/tmp"), logger: createTestLogger())
+        let baseDirectory = URL(fileURLWithPath: "/")
+        let extensionLocation = "tmp"
+        let browserExtension = BrowserExtension(manifest: manifest, baseDirectory: baseDirectory, extensionLocation: extensionLocation, logger: createTestLogger())
         
         try! browserExtension.loadContentScripts()
         
@@ -176,7 +184,9 @@ final class BrowserExtensionTests: XCTestCase {
             background: backgroundScript
         )
         
-        let browserExtension = BrowserExtension(manifest: manifest, baseURL: tempURL, logger: createTestLogger())
+        let baseDirectory = tempURL.deletingLastPathComponent()
+        let extensionLocation = tempURL.lastPathComponent
+        let browserExtension = BrowserExtension(manifest: manifest, baseDirectory: baseDirectory, extensionLocation: extensionLocation, logger: createTestLogger())
         
         // Load background script
         try! browserExtension.loadBackgroundScript()
@@ -222,7 +232,9 @@ final class BrowserExtensionTests: XCTestCase {
             background: backgroundScript
         )
         
-        let browserExtension = BrowserExtension(manifest: manifest, baseURL: tempURL, logger: createTestLogger())
+        let baseDirectory = tempURL.deletingLastPathComponent()
+        let extensionLocation = tempURL.lastPathComponent
+        let browserExtension = BrowserExtension(manifest: manifest, baseDirectory: baseDirectory, extensionLocation: extensionLocation, logger: createTestLogger())
         
         // Load background script
         try! browserExtension.loadBackgroundScript()
@@ -247,7 +259,9 @@ final class BrowserExtensionTests: XCTestCase {
             version: "1.0"
         )
         
-        let browserExtension = BrowserExtension(manifest: manifest, baseURL: URL(fileURLWithPath: "/tmp"), logger: createTestLogger())
+        let baseDirectory = URL(fileURLWithPath: "/")
+        let extensionLocation = "tmp"
+        let browserExtension = BrowserExtension(manifest: manifest, baseDirectory: baseDirectory, extensionLocation: extensionLocation, logger: createTestLogger())
         
         try! browserExtension.loadBackgroundScript()
         
@@ -273,7 +287,9 @@ final class BrowserExtensionTests: XCTestCase {
             background: backgroundScript
         )
         
-        let browserExtension = BrowserExtension(manifest: manifest, baseURL: tempURL, logger: createTestLogger())
+        let baseDirectory = tempURL.deletingLastPathComponent()
+        let extensionLocation = tempURL.lastPathComponent
+        let browserExtension = BrowserExtension(manifest: manifest, baseDirectory: baseDirectory, extensionLocation: extensionLocation, logger: createTestLogger())
         
         do {
             try browserExtension.loadBackgroundScript()

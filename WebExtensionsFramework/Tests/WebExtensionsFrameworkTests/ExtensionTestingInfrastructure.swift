@@ -542,9 +542,12 @@ class ExtensionTestingInfrastructure {
 
             var filesystem = [String: String]()
             let manifest = try createManifest(from: testExtension, filesystem: &filesystem)
+            let baseDirectory = URL(fileURLWithPath: "/test/extensions")
+            let extensionLocation = extensionId.stringValue
             let browserExtension = BrowserExtension(
                 manifest: manifest,
-                baseURL: URL(string: "chrome-extension://\(extensionId.stringValue)/")!,
+                baseDirectory: baseDirectory,
+                extensionLocation: extensionLocation,
                 logger: logger
             )
             
