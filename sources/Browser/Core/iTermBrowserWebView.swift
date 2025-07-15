@@ -72,7 +72,9 @@ class iTermBrowserWebView: WKWebView {
         self.pointerController = pointerController
 
         super.init(frame: frame, configuration: configuration)
-
+        if #available(macOS 13.3, *) {
+            isInspectable = true
+        }
         contextMenuHelper.delegate = self
         focusFollowsMouse.delegate = self
         allowsMagnification = true

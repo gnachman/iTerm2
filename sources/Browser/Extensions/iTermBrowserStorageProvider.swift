@@ -77,11 +77,6 @@ class BrowserStorageProvider: BrowserExtensionStorageProvider {
             return keys.reduce(into: [:]) { $0[$1] = nil }
         }
         
-        // Get existing values before removing
-        let existingValues = try await database.getKeyValueStoreEntries(area: area.rawValue,
-                                                                        extensionId: extensionId.uuidString,
-                                                                        keys: Set(keys))
-
         // Remove the keys
         var result = try await database.clearKeyValueStore(area: area.rawValue,
                                                            extensionId: extensionId.uuidString,
