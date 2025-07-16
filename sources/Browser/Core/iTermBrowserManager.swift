@@ -54,8 +54,6 @@ protocol iTermBrowserManagerDelegate: AnyObject {
     func browserManagerCurrentTabHasMultipleSessions(_ browserManager: iTermBrowserManager) -> Bool
 }
 
-typealias Profile = [AnyHashable: Any]
-
 @available(macOS 11.0, *)
 @objc(iTermBrowserManager)
 class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler {
@@ -94,17 +92,15 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
          sessionGuid: String,
          historyController: iTermBrowserHistoryController,
          navigationState: iTermBrowserNavigationState,
-         profile: Profile,
+         profileObserver: iTermProfilePreferenceObserver,
+         profileMutator: iTermProfilePreferenceMutator,
          pointerController: PointerController) {
-        let baseExtensionDirectoryPath = iTermProfilePreferences.string(forKey: KEY_BROWSER_EXTENSIONS_ROOT,
-                                                                    inProfile: profile)
-        let baseExtensionDirectory = baseExtensionDirectoryPath.compactMap { URL(fileURLWithPath: $0) }
-
         self.user = user
         self.userState = iTermBrowserUserState.instance(
             for: user,
-            configuration: iTermBrowserUserState.Configuration(user: user,
-                                                               baseExtensionDirectory: baseExtensionDirectory))
+            configuration: iTermBrowserUserState.Configuration(user: user),
+            profileObserver: profileObserver,
+            profileMutator: profileMutator)
         self.sessionGuid = sessionGuid
         self.historyController = historyController
         self.navigationState = navigationState
@@ -115,7 +111,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         handlerProxy.delegate = self
         localPageManager.delegate = self
         setupWebView(configuration: configuration,
-                     profile: profile,
+                     profileObserver: profileObserver,
                      pointerController: pointerController)
         setupPermissionNotificationObserver()
     }
@@ -143,7 +139,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     }
 
     private func setupWebView(configuration preferredConfiguration: WKWebViewConfiguration?,
-                              profile: Profile,
+                              profileObserver: iTermProfilePreferenceObserver,
                               pointerController: PointerController) {
         // Setup adblocking. This has to be done early because it's needed when applying the proxy configuration.
         setupAdblocking()
@@ -335,7 +331,15 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
 
         webView.navigationDelegate = self
         webView.uiDelegate = self
-        webView.pageZoom = iTermProfilePreferences.double(forKey: KEY_BROWSER_ZOOM, inProfile: profile) / 100.0
+        webView.pageZoom = profileObserver.value(KEY_BROWSER_ZOOM) / 100
+        profileObserver.observeDouble(key: KEY_BROWSER_ZOOM) { [weak self] (_, newValue) in
+            guard let self else { return }
+            let existing = self.webView.pageZoom
+            let proposed = newValue / 100.0
+            if abs(existing - proposed) > 0.001 {
+                self.webView.pageZoom = proposed
+            }
+        }
         webView.browserDelegate = self
 
         // Start updates if needed
@@ -1450,6 +1454,10 @@ extension iTermBrowserManager: iTermBrowserLocalPageManagerDelegate {
     func localPageManagerWebView(_ manager: iTermBrowserLocalPageManager) -> WKWebView? {
         return webView
     }
+    
+    func localPageManagerExtensionManager(_ manager: iTermBrowserLocalPageManager) -> iTermBrowserExtensionManagerProtocol? {
+        return userState.extensionManager
+    }
 }
 
 @available(macOS 11.0, *)
@@ -1649,13 +1657,13 @@ extension iTermBrowserManager: iTermBrowserAutofillHandlerDelegate {
 }
 
 extension iTermBrowserUserState.Configuration {
-    init(user: iTermBrowserUser, baseExtensionDirectory: URL?) {
+    init(user: iTermBrowserUser) {
         switch user {
         case .devNull:
-            self.baseExtensionDirectory = nil
+            extensionsAllowed = false
             persistentStorageDisallowed = true
         default:
-            self.baseExtensionDirectory = baseExtensionDirectory
+            extensionsAllowed = true
             persistentStorageDisallowed = false
         }
     }

@@ -7,12 +7,15 @@
 
 import Foundation
 @preconcurrency import WebKit
+import WebExtensionsFramework
+import AppKit
 
 @available(macOS 11.0, *)
-@objc protocol iTermBrowserSettingsHandlerDelegate: AnyObject {
+protocol iTermBrowserSettingsHandlerDelegate: AnyObject {
     @MainActor func settingsHandlerDidUpdateAdblockSettings(_ handler: iTermBrowserSettingsHandler)
     @MainActor func settingsHandlerDidRequestAdblockUpdate(_ handler: iTermBrowserSettingsHandler)
     @MainActor func settingsHandlerWebView(_ handler: iTermBrowserSettingsHandler) -> WKWebView?
+    @MainActor func settingsHandlerExtensionManager(_ handler: iTermBrowserSettingsHandler) -> iTermBrowserExtensionManagerProtocol?
 }
 
 @available(macOS 11.0, *)
@@ -23,7 +26,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     weak var delegate: iTermBrowserSettingsHandlerDelegate?
     private let secret: String
     private let user: iTermBrowserUser
-
+    
     init(user: iTermBrowserUser) {
         self.user = user
         guard let secret = String.makeSecureHexString() else {
@@ -34,9 +37,9 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         
         // Observe Rust adblock stats changes
         NotificationCenter.default.addObserver(self, 
-                                             selector: #selector(rustAdblockStatsChanged), 
-                                             name: .rustAdblockStatsChanged, 
-                                             object: nil)
+                                               selector: #selector(rustAdblockStatsChanged), 
+                                               name: .rustAdblockStatsChanged, 
+                                               object: nil)
     }
     
     deinit {
@@ -47,17 +50,27 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         guard let webView = delegate?.settingsHandlerWebView(self) else { return }
         sendRustAdblockStats(to: webView)
     }
-
+    
     // MARK: - Public Interface
     
     func generateSettingsHTML() -> String {
         let isDevNull = (user == .devNull)
+        
+        // Check if extensions should be shown
+        var showExtensions = false
+#if ITERM_DEBUG
+        if #available(macOS 14, *) {
+            showExtensions = true
+        }
+#endif
+        
         let substitutions = ["ADBLOCK_ENABLED": iTermAdvancedSettingsModel.adblockEnabled() ? "checked" : "",
                              "ADBLOCK_URL": iTermAdvancedSettingsModel.adblockListURL().replacingOccurrences(of: "&", with: "&amp;").replacingOccurrences(of: "\"", with: "&quot;"),
                              "RUST_ADBLOCK_ENABLED": iTermAdvancedSettingsModel.adblockEnabled() ? "checked" : "",
                              "SECRET": secret,
-                             "DEV_NULL_NOTE": isDevNull ? "" : "display: none;"]
-
+                             "DEV_NULL_NOTE": isDevNull ? "" : "display: none;",
+                             "SHOW_EXTENSIONS": showExtensions ? "" : "display: none;"]
+        
         return iTermBrowserTemplateLoader.loadTemplate(named: "settings-page",
                                                        type: "html",
                                                        substitutions: substitutions)
@@ -162,6 +175,27 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             if let url = message["value"] as? String {
                 setRustAdblockURL(url, webView: webView)
             }
+        case "getExtensions":
+#if ITERM_DEBUG
+            if #available(macOS 14, *) {
+                sendExtensions(to: webView)
+            }
+#endif
+        case "setExtensionEnabled":
+#if ITERM_DEBUG
+            if #available(macOS 14, *) {
+                if let extensionId = message["extensionId"] as? String,
+                   let enabled = message["enabled"] as? Bool {
+                    setExtensionEnabled(extensionId, enabled: enabled, webView: webView)
+                }
+            }
+#endif
+        case "revealExtensionsDirectory":
+#if ITERM_DEBUG
+            if #available(macOS 14, *) {
+                revealExtensionsDirectory(webView: webView)
+            }
+#endif
         default:
             break
         }
@@ -181,7 +215,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     private func clearAllWebsiteData(webView: WKWebView) {
         let websiteDataStore = webView.configuration.websiteDataStore
         let dataTypes = WKWebsiteDataStore.allWebsiteDataTypes()
-
+        
         websiteDataStore.removeData(ofTypes: dataTypes, modifiedSince: Date(timeIntervalSince1970: 0)) {
             let user = self.user
             Task {
@@ -476,6 +510,120 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         }
     }
     
+    // MARK: - Extension Settings
+    
+    private func sendExtensions(to webView: WKWebView) {
+        if #available(macOS 14, *) {
+            sendExtensionsForMacOS14(to: webView)
+        } else {
+            // Extensions not supported on macOS < 14
+            let script = "updateExtensionsUI([]);"
+            webView.evaluateJavaScript(script, completionHandler: nil)
+        }
+    }
+    
+    @available(macOS 14, *)
+    private func sendExtensionsForMacOS14(to webView: WKWebView) {
+        guard let extensionManager = delegate?.settingsHandlerExtensionManager(self) else {
+            // Send empty array if extension manager is not available
+            let script = "updateExtensionsUI([]);"
+            webView.evaluateJavaScript(script, completionHandler: nil)
+            return
+        }
+        
+        let availableExtensions = extensionManager.availableExtensions
+        
+        let extensionsData = availableExtensions.map { browserExtension in
+            let manifest = browserExtension.manifest
+            return [
+                "id": browserExtension.id.stringValue,
+                "name": manifest.name,
+                "description": manifest.description ?? "No description available",
+                "version": manifest.version,
+                "permissions": manifest.permissions ?? [],
+                "hostPermissions": manifest.hostPermissions ?? [],
+                "enabled": extensionManager.extensionEnabled(id: browserExtension.id)
+            ] as [String: Any]
+        }
+        
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: extensionsData)
+            let jsonString = String(data: jsonData, encoding: .utf8)!
+            
+            let script = "updateExtensionsUI(\(jsonString));"
+            webView.evaluateJavaScript(script, completionHandler: nil)
+        } catch {
+            DLog("Failed to encode extensions data: \(error)")
+            let script = "updateExtensionsUI([]);"
+            webView.evaluateJavaScript(script, completionHandler: nil)
+        }
+    }
+    
+    private func setExtensionEnabled(_ extensionIdString: String, enabled: Bool, webView: WKWebView) {
+        if #available(macOS 14, *) {
+            setExtensionEnabledForMacOS14(extensionIdString, enabled: enabled, webView: webView)
+        } else {
+            showStatusMessage("Extensions not supported on this macOS version", type: "error", in: webView)
+        }
+    }
+    
+    @available(macOS 14, *)
+    private func setExtensionEnabledForMacOS14(_ extensionIdString: String, enabled: Bool, webView: WKWebView) {
+        guard let extensionManager = delegate?.settingsHandlerExtensionManager(self) else {
+            showStatusMessage("Extension management not available", type: "error", in: webView)
+            return
+        }
+        
+        let extensionId = ExtensionID(stringValue: extensionIdString)
+        extensionManager.set(id: extensionId, enabled: enabled)
+        
+        DLog("Extension \(extensionIdString) \(enabled ? "enabled" : "disabled")")
+        
+        let message = enabled ? "Extension enabled" : "Extension disabled"
+        showStatusMessage(message, type: "success", in: webView)
+        
+        // Note: Extensions list will be automatically refreshed via delegate callback
+        // when the profile observer detects the change
+    }
+    
+    private func revealExtensionsDirectory(webView: WKWebView) {
+        if #available(macOS 14, *) {
+            revealExtensionsDirectoryForMacOS14(webView: webView)
+        } else {
+            showStatusMessage("Extensions not supported on this macOS version", type: "error", in: webView)
+        }
+    }
+    
+    @available(macOS 14, *)
+    private func revealExtensionsDirectoryForMacOS14(webView: WKWebView) {
+        guard let extensionManager = delegate?.settingsHandlerExtensionManager(self) else {
+            showStatusMessage("Extension management not available", type: "error", in: webView)
+            return
+        }
+        
+        // Get the extensions directory from the extension manager
+        guard let extensionsURL = extensionManager.extensionsDirectory else {
+            showStatusMessage("Extensions directory not configured in profile preferences", type: "error", in: webView)
+            return
+        }
+        
+        // Create the directory if it doesn't exist
+        let fileManager = FileManager.default
+        do {
+            try fileManager.createDirectory(at: extensionsURL, withIntermediateDirectories: true, attributes: nil)
+            
+            // Reveal in Finder
+            NSWorkspace.shared.activateFileViewerSelecting([extensionsURL])
+            
+            DLog("Revealed extensions directory in Finder: \(extensionsURL.path)")
+            showStatusMessage("Extensions directory revealed in Finder", type: "success", in: webView)
+            
+        } catch {
+            DLog("Failed to create or reveal extensions directory: \(error)")
+            showStatusMessage("Failed to create extensions directory: \(error.localizedDescription)", type: "error", in: webView)
+        }
+    }
+    
     // MARK: - iTermBrowserPageHandler Protocol
     
     func injectJavaScript(into webView: WKWebView) {
@@ -484,5 +632,16 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     
     func resetState() {
         // Settings handler doesn't maintain state that needs resetting
+    }
+}
+
+// MARK: - iTermBrowserExtensionManagerDelegate
+
+@available(macOS 11.0, *)
+extension iTermBrowserSettingsHandler: iTermBrowserExtensionManagerDelegate {
+    func extensionManagerDidUpdateExtensions(_ manager: iTermBrowserExtensionManagerProtocol) {
+        // Refresh the extensions list in the settings UI
+        guard let webView = delegate?.settingsHandlerWebView(self) else { return }
+        sendExtensions(to: webView)
     }
 }

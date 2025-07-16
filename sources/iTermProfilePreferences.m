@@ -203,7 +203,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_DYNAMIC_PROFILE_PARENT_GUID,
                              KEY_DYNAMIC_PROFILE_FILENAME, KEY_TMUX_PANE_TITLE,
                              KEY_SUBTITLE, KEY_CUSTOM_LOCALE, KEY_INITIAL_URL,
-                             KEY_BROWSER_EXTENSIONS_ROOT];
+                             KEY_BROWSER_EXTENSIONS_ROOT, KEY_BROWSER_EXTENSION_ACTIVE_IDS];
 
         NSArray *color = @[ KEY_FOREGROUND_COLOR, KEY_BACKGROUND_COLOR, KEY_BOLD_COLOR,
                             KEY_LINK_COLOR, KEY_MATCH_COLOR, KEY_SELECTION_COLOR, KEY_SELECTED_TEXT_COLOR,
@@ -680,7 +680,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
 
                   KEY_BROWSER_ZOOM: @100,
                   KEY_BROWSER_DEV_NULL: @NO,
-                  KEY_BROWSER_EXTENSIONS_ROOT: [NSNull null]
+                  KEY_BROWSER_EXTENSIONS_ROOT: [NSNull null],
+                  KEY_BROWSER_EXTENSION_ACTIVE_IDS: @[]
 
                   // NOTES:
                   //   * Remove deprecated values from this list.

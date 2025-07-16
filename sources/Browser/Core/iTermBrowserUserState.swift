@@ -39,32 +39,37 @@ class iTermBrowserHiddenContainer: NSView {
 class iTermBrowserUserState {
     private static var _instances = [iTermBrowserUser: WeakBox<iTermBrowserUserState>]()
     private let configuration: Configuration
-    let user: iTermBrowserUser
+    private let profileObserver: iTermProfilePreferenceObserver
     private let logger = iTermLogger()
-    private let extensionManager: iTermBrowserExtensionManagerProtocol?
+
+    let user: iTermBrowserUser
+    let extensionManager: iTermBrowserExtensionManagerProtocol?
     let hiddenContainer = iTermBrowserHiddenContainer()
 
     struct Configuration: Equatable {
         var persistentStorageDisallowed: Bool
-
-        // Set to nil to disable extensions altogether
-        var baseExtensionDirectory: URL?
+        var extensionsAllowed: Bool
     }
 
-    init(_ configuration: Configuration, user: iTermBrowserUser) {
+    init(_ configuration: Configuration,
+         user: iTermBrowserUser,
+         profileObserver: iTermProfilePreferenceObserver,
+         profileMutator: iTermProfilePreferenceMutator) {
         logger.loggerPrefix = "[Browser] "
         #if DEBUG
         logger.verbosityLevel = .debug
         #endif
         self.user = user
         self.configuration = configuration
-        if #available(macOS 14, *, *), let baseExtensionDirectory = configuration.baseExtensionDirectory {
+        self.profileObserver = profileObserver
+        if #available(macOS 14, *, *) {
             extensionManager = iTermBrowserExtensionManager(
                 logger: logger,
-                baseDirectory: baseExtensionDirectory,
                 persistentStorageDisallowed: configuration.persistentStorageDisallowed,
                 user: user,
-                hiddenContainer: hiddenContainer)
+                hiddenContainer: hiddenContainer,
+                profileObserver: profileObserver,
+                profileMutator: profileMutator)
         } else {
             extensionManager = nil
         }
@@ -77,11 +82,17 @@ class iTermBrowserUserState {
 
 extension iTermBrowserUserState {
     @MainActor
-    static func instance(for user: iTermBrowserUser, configuration: Configuration) -> iTermBrowserUserState {
+    static func instance(for user: iTermBrowserUser,
+                         configuration: Configuration,
+                         profileObserver: iTermProfilePreferenceObserver,
+                         profileMutator: iTermProfilePreferenceMutator) -> iTermBrowserUserState {
         if let existing = _instances[user]?.value, existing.configuration == configuration {
             return existing
         }
-        let state = iTermBrowserUserState(configuration, user: user)
+        let state = iTermBrowserUserState(configuration,
+                                          user: user,
+                                          profileObserver: profileObserver,
+                                          profileMutator: profileMutator)
         _instances[user] = .init(state)
         return state
     }

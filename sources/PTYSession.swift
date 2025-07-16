@@ -1164,9 +1164,29 @@ extension PTYSession {
         if iTermProfilePreferences.bool(forKey: KEY_BROWSER_DEV_NULL, inProfile: self.profile) {
             setSessionSpecificProfileValues([KEY_UNDO_TIMEOUT: 0])
         }
-        let vc = iTermBrowserViewController(configuration: configuration,
-                                            sessionGuid: guid,
-                                            profile: profile)
+        let model: ProfileModel
+        let guid: String
+        let myGuid = profile[KEY_GUID]! as! String
+        if isDivorced {
+            if let originalGuid = profile[KEY_ORIGINAL_GUID] as? String,
+               ProfileModel.sharedInstance()!.bookmark(withGuid: originalGuid) != nil {
+                model = ProfileModel.sharedInstance()!
+                guid = originalGuid
+            } else {
+                model = ProfileModel.sessionsInstance()!
+                guid = myGuid
+            }
+        } else {
+            model = ProfileModel.sharedInstance()!
+            guid = myGuid
+        }
+        let vc = iTermBrowserViewController(
+            configuration: configuration,
+            sessionGuid: guid,
+            profileObserver: iTermProfilePreferenceObserver(
+                guid: profile[KEY_GUID]! as! String,
+                model: isDivorced ? ProfileModel.sessionsInstance() : ProfileModel.sharedInstance()),
+            profileMutator: iTermProfilePreferenceMutator(model: model, guid: guid))
         vc.delegate = self
         view.setBrowserViewController(
             vc, initialURL: iTermProfilePreferences.string(forKey: KEY_INITIAL_URL,

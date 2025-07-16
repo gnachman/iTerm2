@@ -9476,7 +9476,7 @@ instead of the system keyboard.</string>
                 </textField>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="TeY-77-4i8" customClass="iTermTerminalModeEnclosure">
                     <rect key="frame" x="77" y="408" width="468" height="29"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cIR-ir-rfq" userLabel="Name label">
                             <rect key="frame" x="-2" y="11" width="47" height="16"/>

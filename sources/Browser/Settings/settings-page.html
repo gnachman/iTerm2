@@ -149,6 +149,137 @@
             background: linear-gradient(135deg, #5856d6, #af52de);
         }
         
+        /* Extensions section specific styling */
+        .extensions-section .section h2::before {
+            background: linear-gradient(135deg, #34c759, #5ac8fa);
+        }
+        
+        /* Extension item styling */
+        .extension-box {
+            background: var(--section-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 16px;
+            transition: all 0.2s ease;
+        }
+        
+        .extension-box:hover {
+            border-color: var(--accent-color);
+            box-shadow: 0 4px 12px var(--shadow);
+            transform: translateY(-2px);
+        }
+        
+        .extension-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .extension-info h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-color);
+            margin: 0 0 4px 0;
+        }
+        
+        .extension-info p {
+            font-size: 14px;
+            color: var(--secondary-text);
+            margin: 0;
+            line-height: 1.4;
+        }
+        
+        .extension-details {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--secondary-text);
+        }
+        
+        .extension-detail {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .no-extensions {
+            text-align: center;
+            padding: 48px 24px;
+            color: var(--secondary-text);
+        }
+        
+        .no-extensions h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-color);
+        }
+        
+        .no-extensions p {
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        
+        /* Collapsible section styling */
+        .collapsible-section {
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .collapsible-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+        
+        .collapsible-header:hover {
+            background: var(--accent-color)08;
+        }
+        
+        .collapsible-title {
+            flex: 1;
+        }
+        
+        .collapsible-title h2 {
+            margin-bottom: 8px !important;
+        }
+        
+        .collapsible-subtitle {
+            font-size: 15px;
+            color: var(--secondary-text);
+            opacity: 0.8;
+            font-style: italic;
+        }
+        
+        .collapse-indicator {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--secondary-text);
+            transition: transform 0.3s ease;
+        }
+        
+        .collapsible-section.expanded .collapse-indicator {
+            transform: rotate(90deg);
+        }
+        
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .collapsible-section.expanded .collapsible-content {
+            max-height: 2000px;
+        }
+        
         /* Input styling */
         .input-group input[type="text"],
         .input-group input[type="number"],
@@ -565,6 +696,34 @@
             </div>
         </div>
         
+        <div class="extensions-section" style="{{SHOW_EXTENSIONS}}">
+            <div class="section collapsible-section" id="extensionsSection">
+                <div class="collapsible-header" onclick="toggleExtensionsSection()">
+                    <div class="collapsible-title">
+                        <h2>Browser Extensions</h2>
+                        <p class="collapsible-subtitle">This feature is still in development. It is not intended for general use yet.</p>
+                    </div>
+                    <div class="collapse-indicator">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </div>
+                </div>
+                <div class="collapsible-content">
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h3>Extensions Directory</h3>
+                            <p>Manage your browser extensions directory location and install new extensions</p>
+                        </div>
+                        <button class="button small" onclick="revealExtensionsDirectory()">Reveal in Finder</button>
+                    </div>
+                    <div id="extensionsContainer">
+                        <!-- Extensions will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
     </div>
     
     <script>
@@ -834,6 +993,16 @@
                 action: 'getProxySettings',
                 sessionSecret: sessionSecret
             });
+            window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                action: 'getExtensions',
+                sessionSecret: sessionSecret
+            });
+            
+            // Restore extensions section expanded state
+            const extensionsSectionExpanded = localStorage.getItem('extensionsSectionExpanded');
+            if (extensionsSectionExpanded === 'true') {
+                document.getElementById('extensionsSection').classList.add('expanded');
+            }
         });
         
         // Function to update UI with current settings (called from Swift)
@@ -1005,6 +1174,92 @@
             document.getElementById('proxyHost').value = settings.host;
             document.getElementById('proxyPort').value = settings.port;
             updateProxyFieldsState(settings.enabled);
+        }
+        
+        // Extension management functions
+        function toggleExtension(extensionId, enabled) {
+            window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                action: 'setExtensionEnabled',
+                extensionId: extensionId,
+                enabled: enabled,
+                sessionSecret: sessionSecret
+            });
+        }
+        
+        function revealExtensionsDirectory() {
+            window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                action: 'revealExtensionsDirectory',
+                sessionSecret: sessionSecret
+            });
+        }
+        
+        function toggleExtensionsSection() {
+            const section = document.getElementById('extensionsSection');
+            section.classList.toggle('expanded');
+            
+            // Save the expanded state to localStorage
+            const isExpanded = section.classList.contains('expanded');
+            localStorage.setItem('extensionsSectionExpanded', isExpanded);
+        }
+        
+        function updateExtensionsUI(extensions) {
+            const container = document.getElementById('extensionsContainer');
+            
+            if (!extensions || extensions.length === 0) {
+                container.innerHTML = `
+                    <div class="no-extensions">
+                        <h4>No Extensions Found</h4>
+                        <p>No browser extensions are currently installed. Extensions should be placed in your extensions directory as configured in your profile preferences.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            extensions.forEach(extension => {
+                const extensionBox = document.createElement('div');
+                extensionBox.className = 'extension-box';
+                
+                const description = extension.description || 'No description available';
+                const version = extension.version || 'Unknown version';
+                const permissions = extension.permissions || [];
+                const hostPermissions = extension.hostPermissions || [];
+                
+                extensionBox.innerHTML = `
+                    <div class="extension-header">
+                        <div class="extension-info">
+                            <h4>${extension.name}</h4>
+                            <p>${description}</p>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" ${extension.enabled ? 'checked' : ''} 
+                                   onchange="toggleExtension('${extension.id}', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="extension-details">
+                        <div class="extension-detail">
+                            <span>📦</span>
+                            <span>Version ${version}</span>
+                        </div>
+                        ${permissions.length > 0 ? `
+                        <div class="extension-detail">
+                            <span>🔑</span>
+                            <span>${permissions.length} permissions</span>
+                        </div>
+                        ` : ''}
+                        ${hostPermissions.length > 0 ? `
+                        <div class="extension-detail">
+                            <span>🌐</span>
+                            <span>${hostPermissions.length} host permissions</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+                
+                container.appendChild(extensionBox);
+            });
         }
     </script>
 </body>

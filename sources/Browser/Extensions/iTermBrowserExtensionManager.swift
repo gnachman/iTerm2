@@ -10,27 +10,46 @@ import WebKit
 import WebExtensionsFramework
 
 @MainActor
-protocol iTermBrowserExtensionManagerProtocol {
+protocol iTermBrowserExtensionManagerDelegate: AnyObject {
+    func extensionManagerDidUpdateExtensions(_ manager: iTermBrowserExtensionManagerProtocol)
+}
+
+@MainActor
+protocol iTermBrowserExtensionManagerProtocol: AnyObject {
     func addWebView(_ webView: WKWebView, contentManager: BrowserExtensionUserContentManager) async
     func removeWebView(_ webView: WKWebView)
+    var availableExtensions: [BrowserExtension] { get }
+    func extensionEnabled(id: ExtensionID) -> Bool
+    func set(id: ExtensionID, enabled: Bool)
+    var extensionsDirectory: URL? { get }
+    var delegate: iTermBrowserExtensionManagerDelegate? { get set }
 }
 
 @MainActor
 @available(macOS 14, *)
 class iTermBrowserExtensionManager {
-    private let extensionRegistry: BrowserExtensionRegistry?
+    private let extensionRegistry: BrowserExtensionRegistry
     private let activeExtensionManager: BrowserExtensionActiveManager
-    private let userDefaultsObserver: iTermUserDefaultsObserver
     private let logger: iTermLogger
+    private let profileObserver: iTermProfilePreferenceObserver
+    private let profileMutator: iTermProfilePreferenceMutator
+    private let scevents: SCEvents
+    private let scDelegate = ListenerDelegate()
+    weak var delegate: iTermBrowserExtensionManagerDelegate?
 
     init(logger: iTermLogger,
-         baseDirectory: URL,
          persistentStorageDisallowed: Bool,
          user: iTermBrowserUser,
-         hiddenContainer: NSView) {
+         hiddenContainer: NSView,
+         profileObserver: iTermProfilePreferenceObserver,
+         profileMutator: iTermProfilePreferenceMutator) {
         self.logger = logger
-        userDefaultsObserver = iTermUserDefaultsObserver()
-        extensionRegistry = BrowserExtensionRegistry(baseDirectory: baseDirectory, logger: logger)
+        self.profileObserver = profileObserver
+        self.profileMutator = profileMutator
+        let baseDirectoryPath: String? = profileObserver.value(KEY_BROWSER_EXTENSIONS_ROOT)
+        extensionRegistry = BrowserExtensionRegistry(
+            baseDirectory: nil,
+            logger: logger)
         let backgroundService = BrowserExtensionBackgroundService(
             hiddenContainer: hiddenContainer,
             logger: logger,
@@ -47,19 +66,14 @@ class iTermBrowserExtensionManager {
             logger: logger,
             storageManager: storageManager)
         activeExtensionManager = BrowserExtensionActiveManager(dependencies: deps)
-
-        // Advanced settings use a UD observer so to avoid winning a race and seeing an outdated
-        // setting, wait a spin of the mainloop so it gets to run first.
-        userDefaultsObserver.observeKey("BrowserExtensionPaths") { [weak self] in
-            DispatchQueue.main.async {
+        scevents = SCEvents()
+        scevents._notificationLatency = 1.0
+        scevents._delegate = scDelegate
+        scDelegate.callback = { [weak self] event in
+            Task {
                 self?.updateLoaded()
-            }
-        }
-        userDefaultsObserver.observeKey("ActiveBrowserExtensionPaths") { [weak self] in
-            DispatchQueue.main.async {
-                Task {
-                    await self?.updateActivation()
-                }
+                await self?.updateActivation()
+                self?.refreshSettings()
             }
         }
 
@@ -68,15 +82,52 @@ class iTermBrowserExtensionManager {
                 storageManager.storageProvider = iTermBrowserStorageProvider(
                     database: db)
             }
+            self?.root = self?.extensionsDirectory
             self?.updateLoaded()
             await self?.updateActivation()
+
+            profileObserver.observeString(key: KEY_BROWSER_EXTENSIONS_ROOT) { [weak self] _, newValue in
+                self?.root = newValue.map { URL(fileURLWithPath: $0) }
+            }
+            profileObserver.observeStringArray(key: KEY_BROWSER_EXTENSION_ACTIVE_IDS) { [weak self] _, _ in
+                Task {
+                    await self?.updateActivation()
+                    self?.refreshSettings()
+                }
+            }
         }
     }
+
+    @objc
+    class ListenerDelegate: NSObject, SCEventListenerProtocol {
+        var callback: ((SCEvent) -> ())?
+        func pathWatcher(_ pathWatcher: SCEvents!, eventOccurred event: SCEvent!) {
+            callback?(event)
+        }
+    }
+
 }
 
 @MainActor
 @available(macOS 14, *)
 extension iTermBrowserExtensionManager: iTermBrowserExtensionManagerProtocol {
+    private var root: URL? {
+        set {
+            scevents.stopWatchingPaths()
+            extensionRegistry.set(baseDirectory: newValue)
+            Task {
+                updateLoaded()
+                await updateActivation()
+                refreshSettings()
+            }
+            if let newValue {
+                scevents.startWatchingPaths([newValue.path])
+            }
+        }
+        get {
+            extensionRegistry.baseDirectory
+        }
+    }
     func addWebView(_ webView: WKWebView, contentManager: BrowserExtensionUserContentManager) async {
         do {
             try await activeExtensionManager.registerWebView(
@@ -93,31 +144,73 @@ extension iTermBrowserExtensionManager: iTermBrowserExtensionManagerProtocol {
     }
 
     var availableExtensions: [BrowserExtension] {
-        return extensionRegistry?.allExtensions ?? []
+        return extensionRegistry.allExtensions
     }
 
-    private static func desiredLoadPaths() -> Set<String> {
-        guard let string = iTermAdvancedSettingsModel.browserExtensionPaths() else {
-            return Set()
-        }
-        let paths = string.components(separatedBy: " ").filter { !$0.isEmpty }
-        return Set(paths)
+    func extensionEnabled(id: ExtensionID) -> Bool {
+        return activeExtensionManager.isActive(id)
     }
 
-    private static func desiredActivePaths() -> Set<String> {
-        guard let string = iTermAdvancedSettingsModel.activeBrowserExtensionPaths() else {
+    func set(id: ExtensionID, enabled: Bool) {
+        var ids: [String] = profileObserver.value(KEY_BROWSER_EXTENSION_ACTIVE_IDS) ?? []
+        let idString = id.stringValue
+        
+        if enabled {
+            // Add to active list if not already there
+            if !ids.contains(idString) {
+                ids.append(idString)
+            }
+        } else {
+            // Remove from active list if present
+            if let index = ids.firstIndex(of: idString) {
+                ids.remove(at: index)
+            }
+        }
+        
+        profileMutator.set(key: KEY_BROWSER_EXTENSION_ACTIVE_IDS, value: ids)
+    }
+
+    var extensionsDirectory: URL? {
+        let baseDirectoryPath: String? = profileObserver.value(KEY_BROWSER_EXTENSIONS_ROOT)
+        return baseDirectoryPath.map { URL(fileURLWithPath: $0) }
+    }
+
+    private func directoryNames(in directoryPath: String) -> [String] {
+        let fileManager = FileManager.default
+        guard let items = try? fileManager.contentsOfDirectory(atPath: directoryPath) else {
+            return []
+        }
+        var directories = [String]()
+        for item in items {
+            let fullPath = (directoryPath as NSString).appendingPathComponent(item)
+            var isDirectory: ObjCBool = false
+            if fileManager.fileExists(atPath: fullPath, isDirectory: &isDirectory) {
+                if isDirectory.boolValue {
+                    directories.append(item)
+                }
+            }
+        }
+        return directories
+    }
+
+    private func desiredLoadPaths() -> Set<String> {
+        guard let base = extensionRegistry.baseDirectory?.path else {
             return Set()
         }
-        let paths = string.components(separatedBy: " ").filter { !$0.isEmpty }
-        return Set(paths)
+        return Set(directoryNames(in: base))
+    }
+
+    private func desiredIDs() -> Set<ExtensionID> {
+        let ids: [String]? = profileObserver.value(KEY_BROWSER_EXTENSION_ACTIVE_IDS)
+        if let ids {
+            return Set(ids.map { ExtensionID(stringValue: $0) })
+        }
+        return Set()
     }
 
     private func updateLoaded() {
-        guard let extensionRegistry else {
-            return
-        }
         let current = extensionRegistry.extensionPaths
-        let desired = Self.desiredLoadPaths()
+        let desired = desiredLoadPaths()
         logger.debug("Currently loaded: \(Array(current).joined(separator: ";a"))")
         logger.debug("Desired: \(Array(desired).joined(separator: ";a"))")
 
@@ -142,32 +235,30 @@ extension iTermBrowserExtensionManager: iTermBrowserExtensionManagerProtocol {
 
     private func updateActivation() async {
         let active = activeExtensionManager.allActiveExtensions()
-        var pathToID = [String: ExtensionID]()
-        for (id, ext) in active {
-            pathToID[ext.browserExtension.baseURL.path] = id
+
+        let currentIDs = Set(active.values.map { $0.browserExtension.id })
+        let desiredIDs = desiredIDs()
+        logger.debug("Current IDs: \(Array(currentIDs.map { $0.stringValue }).sorted().joined(separator: "; "))")
+        logger.debug("Desired IDs: \(Array(desiredIDs.map { $0.stringValue }).sorted().joined(separator: "; "))")
+        let idsToRemove = currentIDs.subtracting(desiredIDs)
+        for id in idsToRemove {
+            await activeExtensionManager.deactivate(id)
         }
 
-        let currentPaths = Set(active.values.map { $0.browserExtension.baseURL.path })
-        let desiredPaths = Self.desiredActivePaths()
-        logger.debug("Current paths: \(currentPaths.joined(separator: "; "))")
-        logger.debug("Desired paths: \(desiredPaths.joined(separator: "; "))")
-        let pathsToRemove = currentPaths.subtracting(desiredPaths)
-        for path in pathsToRemove {
-            if let id = pathToID[path] {
-                await activeExtensionManager.deactivate(id)
-            }
-        }
-
-        let toAdd = desiredPaths.subtracting(currentPaths)
-        logger.debug("Extension registry contains \(extensionRegistry!.extensions.map { "\($0.baseURL.path) with ID \($0.id)" }.joined(separator: "; "))")
-        for path in toAdd {
-            if let browserExtension = extensionRegistry?.extensions.first(where: { $0.baseURL.path == path }) {
+        let toAdd = desiredIDs.subtracting(currentIDs)
+        logger.debug("Extension registry contains \(extensionRegistry.extensions.map { "\($0.baseURL.path) with ID \($0.id)" }.joined(separator: "; "))")
+        for id in toAdd {
+            if let browserExtension = extensionRegistry.extensions.first(where: { $0.id == id }) {
                 logger.info("Will activate \(browserExtension.id)")
                 await activeExtensionManager.activate(browserExtension)
             } else {
-                logger.error("Failed to find extension at \(path)")
+                logger.error("Failed to find extension with id \(id.stringValue)")
             }
         }
+    }
+
+    private func refreshSettings() {
+        delegate?.extensionManagerDidUpdateExtensions(self)
     }
 }
 

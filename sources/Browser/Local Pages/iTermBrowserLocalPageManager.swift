@@ -40,6 +40,7 @@ protocol iTermBrowserLocalPageManagerDelegate: AnyObject {
     func localPageManagerDidRequestAdblockUpdate(_ manager: iTermBrowserLocalPageManager)
     func localPageManagerDidNavigateToURL(_ manager: iTermBrowserLocalPageManager, url: String)
     func localPageManagerWebView(_ manager: iTermBrowserLocalPageManager) -> WKWebView?
+    func localPageManagerExtensionManager(_ manager: iTermBrowserLocalPageManager) -> iTermBrowserExtensionManagerProtocol?
 }
 
 // MARK: - Local Page Manager
@@ -241,6 +242,10 @@ private extension iTermBrowserLocalPageManager {
         case iTermBrowserSettingsHandler.settingsURL.absoluteString:
             let handler = iTermBrowserSettingsHandler(user: user)
             handler.delegate = self
+            // Set up extension manager delegate for automatic refresh
+            if let extensionManager = delegate?.localPageManagerExtensionManager(self) {
+                extensionManager.delegate = handler
+            }
             context = iTermBrowserPageContext(handler: handler, requiresMessageHandler: true)
             
         case iTermBrowserHistoryViewHandler.historyURL.absoluteString:
@@ -357,6 +362,10 @@ extension iTermBrowserLocalPageManager: iTermBrowserSettingsHandlerDelegate {
     
     func settingsHandlerWebView(_ handler: iTermBrowserSettingsHandler) -> WKWebView? {
         return delegate?.localPageManagerWebView(self)
+    }
+    
+    func settingsHandlerExtensionManager(_ handler: iTermBrowserSettingsHandler) -> iTermBrowserExtensionManagerProtocol? {
+        return delegate?.localPageManagerExtensionManager(self)
     }
 }
 

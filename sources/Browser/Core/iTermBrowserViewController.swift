@@ -124,10 +124,12 @@ class iTermBrowserViewController: NSViewController {
         toolbar?.cleanup()
     }
 
-    @objc(initWithConfiguration:sessionGuid:profile:)
-    init(configuration: WKWebViewConfiguration?, sessionGuid: String, profile: Profile)  {
+    init(configuration: WKWebViewConfiguration?,
+         sessionGuid: String,
+         profileObserver: iTermProfilePreferenceObserver,
+         profileMutator: iTermProfilePreferenceMutator)  {
         self.sessionGuid = sessionGuid
-        let user: iTermBrowserUser = if iTermProfilePreferences.bool(forKey: KEY_BROWSER_DEV_NULL, inProfile: profile) {
+        let user: iTermBrowserUser = if profileObserver.value(KEY_BROWSER_DEV_NULL) == true {
             .devNull
         } else {
             .regular(id: UUID(uuidString: "00000000-0000-4000-8000-000000000000")!)
@@ -140,7 +142,8 @@ class iTermBrowserViewController: NSViewController {
                                              sessionGuid: sessionGuid,
                                              historyController: historyController,
                                              navigationState: navigationState,
-                                             profile: profile,
+                                             profileObserver: profileObserver,
+                                             profileMutator: profileMutator,
                                              pointerController: pointerController)
         suggestionsController = iTermBrowserSuggestionsController(user: user,
                                                                   historyController: historyController,

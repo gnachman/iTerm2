@@ -1719,6 +1719,8 @@
 		A64BD0DB296FDBF4001F3F7E /* conductor.sh in Resources */ = {isa = PBXBuildFile; fileRef = A64BD0DA296FDBF4001F3F7E /* conductor.sh */; };
 		A64BD0DC296FDBF4001F3F7E /* conductor.sh in Resources */ = {isa = PBXBuildFile; fileRef = A64BD0DA296FDBF4001F3F7E /* conductor.sh */; };
 		A64BD0DD296FDBF4001F3F7E /* conductor.sh in Resources */ = {isa = PBXBuildFile; fileRef = A64BD0DA296FDBF4001F3F7E /* conductor.sh */; };
+		A64D10B12E26FE310065F267 /* iTermProfilePreferenceObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A64D10AF2E26FE1C0065F267 /* iTermProfilePreferenceObserver.swift */; };
+		A64D10B42E271C430065F267 /* iTermProfilePreferenceMutator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A64D10B22E271C340065F267 /* iTermProfilePreferenceMutator.swift */; };
 		A64D6A042495608500FC0CDE /* iTermAboutWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A663011619CFE450004AF81C /* iTermAboutWindowController.m */; };
 		A64DE9AA237A8555002E390C /* iTermFakeWindowTitleLabel.h in Headers */ = {isa = PBXBuildFile; fileRef = A64DE9A8237A8555002E390C /* iTermFakeWindowTitleLabel.h */; };
 		A64DE9AB237A8555002E390C /* iTermFakeWindowTitleLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = A64DE9A9237A8555002E390C /* iTermFakeWindowTitleLabel.m */; };
@@ -6873,6 +6875,8 @@
 		A64AE5162084128500D02F06 /* NSThread+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSThread+iTerm.m"; sourceTree = "<group>"; };
 		A64BD0CF296264C4001F3F7E /* iTermLatestVersionByShell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermLatestVersionByShell.h; sourceTree = "<group>"; };
 		A64BD0DA296FDBF4001F3F7E /* conductor.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; name = conductor.sh; path = "submodules/iTerm2-shell-integration/ssh-helpers/conductor.sh"; sourceTree = "<group>"; };
+		A64D10AF2E26FE1C0065F267 /* iTermProfilePreferenceObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermProfilePreferenceObserver.swift; sourceTree = "<group>"; };
+		A64D10B22E271C340065F267 /* iTermProfilePreferenceMutator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermProfilePreferenceMutator.swift; sourceTree = "<group>"; };
 		A64DE9A8237A8555002E390C /* iTermFakeWindowTitleLabel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermFakeWindowTitleLabel.h; sourceTree = "<group>"; };
 		A64DE9A9237A8555002E390C /* iTermFakeWindowTitleLabel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermFakeWindowTitleLabel.m; sourceTree = "<group>"; };
 		A64F32132B853CED008EFDC9 /* dice.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = dice.png; path = images/dice.png; sourceTree = "<group>"; };
@@ -9624,6 +9628,8 @@
 		1D06E7D014BC04110097C0ED /* Profiles */ = {
 			isa = PBXGroup;
 			children = (
+				A64D10B22E271C340065F267 /* iTermProfilePreferenceMutator.swift */,
+				A64D10AF2E26FE1C0065F267 /* iTermProfilePreferenceObserver.swift */,
 				A65B72771B2BF2D200F947A7 /* iTermProfilesPanel.m */,
 				1DE5EBE7122B892900C736B0 /* iTermProfilesWindowController.m */,
 				1D6C50A61226EEFB00E0AA3E /* ProfileListView.m */,
@@ -15605,6 +15611,7 @@
 					};
 					A6C7603F1B45C4CF00E3C992 = {
 						DevelopmentTeam = H7V7XYVQ7D;
+						LastSwiftMigration = 1640;
 					};
 					A6C7641B1B45CB2800E3C992 = {
 						CreatedOnToolsVersion = 6.3;
@@ -18132,6 +18139,7 @@
 				A678C50E279B3C3900C59927 /* charmaps.m in Sources */,
 				A653F66824CD6A8C0062377E /* iTermRestorableStateRestorer.m in Sources */,
 				A653B6CF20AD3C4100B481F1 /* iTermSessionNameController.m in Sources */,
+				A64D10B42E271C430065F267 /* iTermProfilePreferenceMutator.swift in Sources */,
 				A64AE5182084128500D02F06 /* NSThread+iTerm.m in Sources */,
 				53B93DFE21F640B0001EC59C /* iTermBadgeConfigurationWindowController.m in Sources */,
 				A67875DB21D80363005AB938 /* iTermKeyboardHandler.m in Sources */,
@@ -19131,6 +19139,7 @@
 				A667C23D276C7859006B4DEF /* PSMTabBarCell.m in Sources */,
 				53BCAAFB22668A1E00949829 /* iTermCachingFileManager.m in Sources */,
 				A6D10E3227F7C2BC0026DB56 /* Array+MultiCursor.swift in Sources */,
+				A64D10B12E26FE310065F267 /* iTermProfilePreferenceObserver.swift in Sources */,
 				A635F1E2250761F9008C3038 /* iTermActionsEditingViewController.m in Sources */,
 				7577E2A22593B88700905402 /* iTermSandboxedWorkerClient.m in Sources */,
 				A6FE614C2AC252940078A66D /* BlockMark.swift in Sources */,
@@ -21269,6 +21278,7 @@
 				PRODUCT_NAME = iTerm2Shared;
 				SDKROOT = macosx;
 				SKIP_INSTALL = NO;
+				SWIFT_VERSION = 6.0;
 				USER_HEADER_SEARCH_PATHS = (
 					"$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources",
 					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
@@ -21735,7 +21745,7 @@
 					"-Wno-vla-cxx-extension",
 				);
 				OTHER_LDFLAGS = "";
-				"OTHER_SWIFT_FLAGS[arch=*]" = "-D DEBUG";
+				"OTHER_SWIFT_FLAGS[arch=*]" = "-DITERM_DEBUG";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = NO;
@@ -23227,6 +23237,8 @@
 				PRODUCT_NAME = iTerm2Shared;
 				SDKROOT = macosx;
 				SKIP_INSTALL = NO;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
 				USER_HEADER_SEARCH_PATHS = (
 					"$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources",
 					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
@@ -23288,6 +23300,7 @@
 				PRODUCT_NAME = iTerm2Shared;
 				SDKROOT = macosx;
 				SKIP_INSTALL = NO;
+				SWIFT_VERSION = 6.0;
 				USER_HEADER_SEARCH_PATHS = (
 					"$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources",
 					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
@@ -23349,6 +23362,7 @@
 				PRODUCT_NAME = iTerm2Shared;
 				SDKROOT = macosx;
 				SKIP_INSTALL = NO;
+				SWIFT_VERSION = 6.0;
 				USER_HEADER_SEARCH_PATHS = (
 					"$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources",
 					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
