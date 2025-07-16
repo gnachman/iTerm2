@@ -121,7 +121,8 @@ class RuntimeSendMessageHandler: RuntimeSendMessageHandlerProtocol {
             sender: context.browserExtension,
             senderWebview: webView,
             tab: context.tab,
-            frameId: context.frameId)
+            frameId: context.frameId,
+            role: context.role)
         context.logger.info("Will publish \(arguments.message) to \(arguments.extensionId ?? "(nil)") from \(messageSender) with options \(arguments.options)")
         let obj = try await context.router.publish(message: arguments.message,
                                                    requestId: request.requestId,

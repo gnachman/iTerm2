@@ -15,17 +15,20 @@ public class BrowserExtensionNetwork {
         let world: WKContentWorld
         let extensionId: String
         let trusted: Bool
+        let role: WebViewRole
         var setAccessLevelToken: String
 
         init(webView: BrowserExtensionWKWebView,
              world: WKContentWorld,
              extensionId: String,
              trusted: Bool,
+             role: WebViewRole,
              setAccessLevelToken: String) {
             self.webView = webView
             self.world = world
             self.extensionId = extensionId
             self.trusted = trusted
+            self.role = role
             self.setAccessLevelToken = setAccessLevelToken
         }
     }
@@ -37,6 +40,7 @@ public class BrowserExtensionNetwork {
                     world: WKContentWorld,
                     browserExtension: BrowserExtension,
                     trusted: Bool,
+                    role: WebViewRole,
                     setAccessLevelToken: String) {
         nodes.removeAll {
             $0.webView == nil || ($0.webView === webView && $0.extensionId == browserExtension.id.stringValue)
@@ -45,6 +49,7 @@ public class BrowserExtensionNetwork {
                            world: world,
                            extensionId: browserExtension.id.stringValue,
                            trusted: trusted,
+                           role: role,
                            setAccessLevelToken: setAccessLevelToken))
     }
 

@@ -83,6 +83,26 @@ public class BrowserExtensionRouter {
         }
     }
 
+    /// Determines if a message is allowed to be sent from one role to another based on MV3 restrictions
+    private func allow(sendingRole: WebViewRole, receivingRole: WebViewRole) -> Bool {
+        switch sendingRole {
+        case .backgroundScript(_):
+            switch receivingRole {
+            case .backgroundScript(_):
+                return true  // Background to background is allowed
+            case .userFacing:
+                return false // MV3 Restriction: Background service workers cannot send messages to content scripts
+            }
+        case .userFacing:
+            switch receivingRole {
+            case .backgroundScript(_):
+                return true  // Content script to background is allowed
+            case .userFacing:
+                return true  // Content script to content script is allowed
+            }
+        }
+    }
+    
     private func reallyPublish(message: String,
                                requestId: String,
                                destinationID: String,
@@ -91,9 +111,11 @@ public class BrowserExtensionRouter {
                                options: [String: Any]) async {
         logger.debug("publish \(message) to extension \(destinationID) from \(sender)")
 
-        let receiveNodes = network.nodes(for: destinationID)
+        let allReceiveNodes = network.nodes(for: destinationID)
+        let receiveNodes = allReceiveNodes.filter { allow(sendingRole: sender.role, receivingRole: $0.role) }
+        
         guard !receiveNodes.isEmpty else {
-            logger.error("There are no webviews for extension \(destinationID) registered in the network. Throw noMessageReceiver")
+            logger.error("No eligible receivers for message. Throw noMessageReceiver")
             outstandingRequests.removeValue(forKey: requestId)?.continuation?.resume(throwing: BrowserExtensionError.noMessageReceiver)
             return
         }

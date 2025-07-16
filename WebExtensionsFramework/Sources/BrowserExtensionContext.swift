@@ -16,6 +16,9 @@ class BrowserExtensionContext {
         var id: String  // the extensionId that called sendMessage
         var url: String?  // the URL of the context that called sendMessage
         var tlsChannelId: String?
+        
+        // Role of the sender webview for MV3 messaging restrictions
+        var role: WebViewRole
 
         struct Tab: Codable {
             var id: Int?
@@ -41,7 +44,8 @@ class BrowserExtensionContext {
         init(sender: BrowserExtension,
              senderWebview: BrowserExtensionWKWebView,
              tab: MessageSender.Tab?,
-             frameId: Int?) async {
+             frameId: Int?,
+             role: WebViewRole) async {
             id = sender.id.stringValue
             url = (try? await senderWebview.be_evaluateJavaScript(
                 "window.location.href", in: nil, in: WKContentWorld.page) as? String) ?? "about:empty"
@@ -49,6 +53,7 @@ class BrowserExtensionContext {
             tlsChannelId = nil  // not supported
             self.tab = tab
             self.frameId = frameId
+            self.role = role
         }
     }
 
@@ -59,6 +64,7 @@ class BrowserExtensionContext {
     var tab: MessageSender.Tab?
     var frameId: Int?
     var contextType: BrowserExtensionStorageContextType
+    var role: WebViewRole
 
     init(logger: BrowserExtensionLogger,
          router: BrowserExtensionRouter,
@@ -66,7 +72,8 @@ class BrowserExtensionContext {
          browserExtension: BrowserExtension,
          tab: MessageSender.Tab?,
          frameId: Int?,
-         contextType: BrowserExtensionStorageContextType) {
+         contextType: BrowserExtensionStorageContextType,
+         role: WebViewRole) {
         self.logger = logger
         self.router = router
         self.webView = webView
@@ -74,6 +81,7 @@ class BrowserExtensionContext {
         self.tab = tab
         self.frameId = frameId
         self.contextType = contextType
+        self.role = role
     }
     
     // MARK: - Permission Checking

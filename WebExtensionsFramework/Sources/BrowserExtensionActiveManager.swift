@@ -23,7 +23,7 @@ class WeakBox<T> {
 }
 
 /// Defines the role/type of a webview for script injection customization
-public enum WebViewRole: Equatable {
+public enum WebViewRole: Equatable, Codable {
     case userFacing     // User-visible webview - gets content scripts + Chrome APIs
     case backgroundScript(ExtensionID) // Background service worker - gets Chrome APIs + DOM nuke + console handler
 }
@@ -187,7 +187,8 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
             
             // Check if already active
             if activeExtensions[extensionId] != nil {
-                logger.fatalError("Extension with ID \(extensionId) is already active")
+                logger.error("Extension with ID \(extensionId) is already active")
+                return
             }
             logger.info("Activating extension with ID: \(extensionId)")
             
@@ -209,6 +210,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
                                     world: .page,
                                     browserExtension: browserExtension,
                                     trusted: true,
+                                    role: state.role,
                                     setAccessLevelToken: "no token - this is a trusted background script")
                     case .userFacing:
                         assert(!state.setAccessLevelToken.isEmpty)
@@ -216,6 +218,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
                                     world: activeExtension.contentWorld,
                                     browserExtension: browserExtension,
                                     trusted: false,
+                                    role: state.role,
                                     setAccessLevelToken: state.setAccessLevelToken)
                     }
                 }
@@ -366,6 +369,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
                             world: .page,
                             browserExtension: activeExtension(for: extensionId)!.browserExtension,
                             trusted: true,
+                            role: role,
                             setAccessLevelToken: "no token - this is a secure background script")
             case .userFacing:
                 for activeExtension in activeExtensions.values {
@@ -374,6 +378,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
                                 world: activeExtension.contentWorld,
                                 browserExtension: activeExtension.browserExtension,
                                 trusted: false,
+                                role: role,
                                 setAccessLevelToken: state.setAccessLevelToken)
                 }
             }
@@ -717,11 +722,13 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
                          browserExtension: BrowserExtension,
                          tab: BrowserExtensionContext.MessageSender.Tab?,
                          frameId: Int?) -> BrowserExtensionContext {
-        // Determine context type based on webview role
+        // Determine context type and role based on webview role
         let webViewId = ObjectIdentifier(webView)
         let contextType: BrowserExtensionStorageContextType
+        let role: WebViewRole
         
         if let webViewState = webViewStates[webViewId] {
+            role = webViewState.role
             switch webViewState.role {
             case .backgroundScript:
                 contextType = .trusted
@@ -731,6 +738,7 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
         } else {
             // Default to untrusted if we can't determine the role
             contextType = .untrusted
+            role = .userFacing
         }
         
         return BrowserExtensionContext(
@@ -740,7 +748,8 @@ public class BrowserExtensionActiveManager: BrowserExtensionActiveManagerProtoco
             browserExtension: browserExtension,
             tab: tab,
             frameId: frameId,
-            contextType: contextType
+            contextType: contextType,
+            role: role
         )
     }
     

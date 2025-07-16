@@ -35,6 +35,7 @@ class BrowserExtensionRouterTests: XCTestCase {
                     world: .page,
                     browserExtension: mockBrowserExtension,
                     trusted: true,
+                    role: .backgroundScript(mockBrowserExtension.id),
                     setAccessLevelToken: "")
         router = BrowserExtensionRouter(network: network, logger: mockLogger)
     }
@@ -66,7 +67,8 @@ class BrowserExtensionRouterTests: XCTestCase {
             sender: mockBrowserExtension,
             senderWebview: webView,
             tab: nil,
-            frameId: nil
+            frameId: nil,
+            role: .backgroundScript(mockBrowserExtension.id)
         )
         
         // Test publishing a message to the same extension (extensionId is nil)
@@ -96,7 +98,8 @@ class BrowserExtensionRouterTests: XCTestCase {
             sender: mockBrowserExtension,
             senderWebview: webView,
             tab: nil,
-            frameId: nil
+            frameId: nil,
+            role: .backgroundScript(mockBrowserExtension.id)
         )
         
         // Test publishing a message to a specific extension
@@ -126,7 +129,8 @@ class BrowserExtensionRouterTests: XCTestCase {
             sender: mockBrowserExtension,
             senderWebview: webView,
             tab: nil,
-            frameId: nil
+            frameId: nil,
+            role: .backgroundScript(mockBrowserExtension.id)
         )
         
         // Test publishing a message with options
@@ -163,7 +167,8 @@ class BrowserExtensionRouterTests: XCTestCase {
             sender: mockBrowserExtension,
             senderWebview: webView,
             tab: tabInfo,
-            frameId: 0
+            frameId: 0,
+            role: .backgroundScript(mockBrowserExtension.id)
         )
         
         XCTAssertEqual(sender.id, mockBrowserExtension.id.stringValue)
@@ -183,7 +188,8 @@ class BrowserExtensionRouterTests: XCTestCase {
             sender: mockBrowserExtension,
             senderWebview: webView,
             tab: nil,
-            frameId: nil
+            frameId: nil,
+            role: .backgroundScript(mockBrowserExtension.id)
         )
         
         XCTAssertEqual(sender.id, mockBrowserExtension.id.stringValue)
@@ -202,7 +208,8 @@ class BrowserExtensionRouterTests: XCTestCase {
             sender: mockBrowserExtension,
             senderWebview: webView,
             tab: nil,
-            frameId: nil
+            frameId: nil,
+            role: .backgroundScript(mockBrowserExtension.id)
         )
         
         // Test publishing an empty message
@@ -231,7 +238,8 @@ class BrowserExtensionRouterTests: XCTestCase {
             sender: mockBrowserExtension,
             senderWebview: webView,
             tab: nil,
-            frameId: nil
+            frameId: nil,
+            role: .backgroundScript(mockBrowserExtension.id)
         )
         
         // Test publishing a complex nested message

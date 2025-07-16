@@ -43,7 +43,8 @@ final class StorageHandlerTests: XCTestCase {
             browserExtension: mockBrowserExtension,
             tab: nil,
             frameId: nil,
-            contextType: .trusted
+            contextType: .trusted,
+            role: .backgroundScript(mockBrowserExtension.id)
         )
     }
     
@@ -195,7 +196,8 @@ final class StorageHandlerTests: XCTestCase {
             browserExtension: extensionWithUnlimitedStorage,
             tab: nil,
             frameId: nil,
-            contextType: .trusted
+            contextType: .trusted,
+            role: .backgroundScript(mockBrowserExtension.id)
         )
         
         let handler = StorageLocalSetHandler(storageManager: storageManager)
@@ -264,7 +266,8 @@ final class StorageHandlerTests: XCTestCase {
             browserExtension: mockBrowserExtension,
             tab: nil,
             frameId: nil,
-            contextType: .untrusted
+            contextType: .untrusted,
+            role: .userFacing
         )
         
         let handler = StorageSessionGetHandler(storageManager: storageManager)

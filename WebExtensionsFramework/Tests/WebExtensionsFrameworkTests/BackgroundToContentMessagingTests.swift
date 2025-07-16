@@ -24,7 +24,7 @@ class BackgroundToContentMessagingTests: XCTestCase {
     
     // MARK: - Integration Tests
     
-    func testBackgroundScriptSendsMessageToContentScript() async throws {
+    func testBackgroundScriptCannotSendMessageToContentScriptInMV3() async throws {
         let backgroundMessageSent = "BackgroundMessageSent"
         let contentMessageReceived = "ContentMessageReceived"
         let backgroundReceivedResponse = "BackgroundReceivedResponse"
@@ -44,24 +44,9 @@ class BackgroundToContentMessagingTests: XCTestCase {
                             console.log('Content script received message:', message);
                             console.log('Message sender:', sender);
                             
-                            if (message.type === 'background_to_content') {
-                                assertTrue(message.message === 'Hello from background script!', 'Message content should match expected');
-                                assertTrue(typeof message.timestamp === 'number', 'Timestamp should be a number');
-                                
-                                // Store the received message for testing
-                                globalThis.receivedMessage = message;
-                                
-                                // Send response back to background script
-                                sendResponse({
-                                    success: true,
-                                    reply: 'Hello back from content script!',
-                                    originalMessage: message.message
-                                });
-                                
-                                \(testRunner.javascriptResolvingPromise(name: contentMessageReceived))
-                                \(testRunner.expectReach("content received message"))
-                                return true; // Keep message channel open
-                            }
+                            // In MV3, this listener should never be called from background scripts
+                            assertTrue(false, 'Content script should not receive messages from background service workers in MV3');
+                            return true;
                         });
                         
                         console.log('Content script listener ready');
@@ -81,25 +66,20 @@ class BackgroundToContentMessagingTests: XCTestCase {
                         // Wait a bit for content script to be ready
                         await new Promise(resolve => setTimeout(resolve, 1000));
                         
-                        console.log('Background script sending message to content script');
+                        console.log('Background script attempting to send message to content script (should fail in MV3)');
                         chrome.runtime.sendMessage({
                             type: 'background_to_content',
-                            message: 'Hello from background script!',
-                            timestamp: Date.now()
+                            message: 'This should not reach content scripts in MV3'
                         }, (response) => {
-                            console.log('Background script received response:', response);
-                            if (chrome.runtime.lastError) {
-                                console.log('Background script error:', chrome.runtime.lastError.message);
-                                globalThis.backgroundError = chrome.runtime.lastError.message;
-                            } else {
-                                assertTrue(response !== undefined, 'Response should not be undefined');
-                                assertEqual(response.success, true, 'Response success should be true');
-                                assertEqual(response.reply, 'Hello back from content script!', 'Response reply should match expected');
-                                assertEqual(response.originalMessage, 'Hello from background script!', 'Original message should be echoed back');
-                                globalThis.backgroundResponse = response;
-                            }
+                            console.log('Background script callback called');
+                            // In MV3, background scripts cannot send to content scripts
+                            assertTrue(chrome.runtime.lastError !== undefined, 'Background script should get error when trying to send to content script');
+                            assertTrue(chrome.runtime.lastError.message.includes('Could not establish connection') || 
+                                      chrome.runtime.lastError.message.includes('Receiving end does not exist'), 
+                                      'Error message should indicate no eligible receivers');
+                            globalThis.backgroundError = chrome.runtime.lastError.message;
                             \(testRunner.javascriptResolvingPromise(name: backgroundReceivedResponse))
-                            \(testRunner.expectReach("background received response"))
+                            \(testRunner.expectReach("background received MV3 restriction error"))
                         });
                         \(testRunner.javascriptResolvingPromise(name: backgroundMessageSent))
                         \(testRunner.expectReach("background sent message"))
@@ -117,9 +97,8 @@ class BackgroundToContentMessagingTests: XCTestCase {
         // Wait for content script to be ready
         await testRunner.waitForContentScriptCompletion(testExtension.id, webView: contentWebView, name: contentReady)
         
-        // Wait for message processing
+        // Wait for message processing (content script should not receive anything in MV3)
         await testRunner.waitForBackgroundScriptCompletion(testExtension.id, name: backgroundMessageSent)
-        await testRunner.waitForContentScriptCompletion(testExtension.id, webView: contentWebView, name: contentMessageReceived)
         await testRunner.waitForBackgroundScriptCompletion(testExtension.id, name: backgroundReceivedResponse)
         
         testRunner.verifyAssertions()
@@ -164,7 +143,7 @@ class BackgroundToContentMessagingTests: XCTestCase {
         testRunner.verifyAssertions()
     }
     
-    func testBackgroundScriptSendsNullMessageToContentScript() async throws {
+    func testBackgroundScriptCannotSendNullMessageToContentScriptInMV3() async throws {
         let backgroundMessageSent = "BackgroundNullMessageSent"
         let contentMessageReceived = "ContentNullMessageReceived"
         let backgroundReceivedResponse = "BackgroundReceivedNullResponse"
@@ -182,25 +161,11 @@ class BackgroundToContentMessagingTests: XCTestCase {
                         // Set up message listener in content script
                         chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
                             console.log('Content script received message:', message);
-                            console.log('Message is null:', message === null);
                             console.log('Message sender:', sender);
                             
-                            // Check if the message is null
-                            assertTrue(message === null, 'Message should be null');
-                            
-                            // Store the received message for testing
-                            globalThis.receivedNullMessage = message;
-                            
-                            // Send response back to background script
-                            sendResponse({
-                                success: true,
-                                receivedNull: true,
-                                originalMessage: message
-                            });
-                            
-                            \(testRunner.javascriptResolvingPromise(name: contentMessageReceived))
-                            \(testRunner.expectReach("content received null message"))
-                            return true; // Keep message channel open
+                            // In MV3, this listener should never be called from background scripts
+                            assertTrue(false, 'Content script should not receive messages from background service workers in MV3');
+                            return true;
                         });
                         
                         console.log('Content script listener ready for null message');
@@ -220,22 +185,17 @@ class BackgroundToContentMessagingTests: XCTestCase {
                         // Wait a bit for content script to be ready
                         await new Promise(resolve => setTimeout(resolve, 1000));
                         
-                        console.log('Background script sending null message to content script');
+                        console.log('Background script attempting to send null message to content script (should fail in MV3)');
                         chrome.runtime.sendMessage(null, (response) => {
-                            console.log('Background script received response:', response);
-                            assertFalse(chrome.runtime.lastError);
-                            if (chrome.runtime.lastError) {
-                                console.log('Background script error:', chrome.runtime.lastError.message);
-                                globalThis.backgroundError = chrome.runtime.lastError.message;
-                            } else {
-                                assertTrue(response !== undefined, 'Response should not be undefined');
-                                assertEqual(response.success, true, 'Response success should be true');
-                                assertEqual(response.receivedNull, true, 'Response should indicate null was received');
-                                assertTrue(response.originalMessage === null, 'Original message should be null');
-                                globalThis.backgroundResponse = response;
-                            }
+                            console.log('Background script callback called');
+                            // In MV3, background scripts cannot send to content scripts
+                            assertTrue(chrome.runtime.lastError !== undefined, 'Background script should get error when trying to send to content script');
+                            assertTrue(chrome.runtime.lastError.message.includes('Could not establish connection') || 
+                                      chrome.runtime.lastError.message.includes('Receiving end does not exist'), 
+                                      'Error message should indicate no eligible receivers');
+                            globalThis.backgroundError = chrome.runtime.lastError.message;
                             \(testRunner.javascriptResolvingPromise(name: backgroundReceivedResponse))
-                            \(testRunner.expectReach("background received response for null message"))
+                            \(testRunner.expectReach("background received MV3 restriction error for null message"))
                         });
                         \(testRunner.javascriptResolvingPromise(name: backgroundMessageSent))
                         \(testRunner.expectReach("background sent null message"))
@@ -253,9 +213,8 @@ class BackgroundToContentMessagingTests: XCTestCase {
         // Wait for content script to be ready
         await testRunner.waitForContentScriptCompletion(testExtension.id, webView: contentWebView, name: contentReady)
         
-        // Wait for message processing
+        // Wait for message processing (content script should not receive anything in MV3)
         await testRunner.waitForBackgroundScriptCompletion(testExtension.id, name: backgroundMessageSent)
-        await testRunner.waitForContentScriptCompletion(testExtension.id, webView: contentWebView, name: contentMessageReceived)
         await testRunner.waitForBackgroundScriptCompletion(testExtension.id, name: backgroundReceivedResponse)
         
         testRunner.verifyAssertions()

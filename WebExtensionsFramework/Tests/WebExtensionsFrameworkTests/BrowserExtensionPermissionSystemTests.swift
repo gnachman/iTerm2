@@ -33,7 +33,8 @@ final class BrowserExtensionPermissionSystemTests: XCTestCase {
             browserExtension: browserExtension,
             tab: nil,
             frameId: nil,
-            contextType: .trusted
+            contextType: .trusted,
+            role: .backgroundScript(browserExtension.id)
         )
         
         // Should succeed for permissions the extension has
@@ -80,7 +81,8 @@ final class BrowserExtensionPermissionSystemTests: XCTestCase {
             browserExtension: browserExtension,
             tab: nil,
             frameId: nil,
-            contextType: .trusted
+            contextType: .trusted,
+            role: .backgroundScript(browserExtension.id)
         )
         
         XCTAssertTrue(context.hasPermission(BrowserExtensionAPIPermission.storage))
@@ -109,7 +111,8 @@ final class BrowserExtensionPermissionSystemTests: XCTestCase {
             browserExtension: browserExtension,
             tab: nil,
             frameId: nil,
-            contextType: .trusted
+            contextType: .trusted,
+            role: .backgroundScript(browserExtension.id)
         )
         
         // Should succeed for empty permissions array

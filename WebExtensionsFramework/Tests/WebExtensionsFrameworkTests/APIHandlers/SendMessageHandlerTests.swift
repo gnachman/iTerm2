@@ -279,7 +279,7 @@ class SendMessageHandlerTests: XCTestCase {
     func testSendMessageHandlerParsingSingleArgument() async throws {
         let handler = RuntimeSendMessageHandler()
         let network = BrowserExtensionNetwork()
-        network.add(webView: webView, world: .page, browserExtension: mockBrowserExtension, trusted: true, setAccessLevelToken: "")
+        network.add(webView: webView, world: .page, browserExtension: mockBrowserExtension, trusted: true, role: .backgroundScript(mockBrowserExtension.id), setAccessLevelToken: "")
         let router = BrowserExtensionRouter(network: network, logger: mockLogger)
         let context = BrowserExtensionContext(
             logger: mockLogger,
@@ -288,7 +288,8 @@ class SendMessageHandlerTests: XCTestCase {
             browserExtension: mockBrowserExtension,
             tab: nil,
             frameId: nil,
-            contextType: .trusted
+            contextType: .trusted,
+            role: .backgroundScript(mockBrowserExtension.id)
         )
         
         // Test single argument: just message
@@ -308,7 +309,7 @@ class SendMessageHandlerTests: XCTestCase {
     func testSendMessageHandlerParsingTwoArgumentsExtensionIdAndMessage() async throws {
         let handler = RuntimeSendMessageHandler()
         let network = BrowserExtensionNetwork()
-        network.add(webView: webView, world: .page, browserExtension: mockBrowserExtension, trusted: true, setAccessLevelToken: "")
+        network.add(webView: webView, world: .page, browserExtension: mockBrowserExtension, trusted: true, role: .backgroundScript(mockBrowserExtension.id), setAccessLevelToken: "")
         let router = BrowserExtensionRouter(network: network, logger: mockLogger)
         let context = BrowserExtensionContext(
             logger: mockLogger,
@@ -317,7 +318,8 @@ class SendMessageHandlerTests: XCTestCase {
             browserExtension: mockBrowserExtension,
             tab: nil,
             frameId: nil,
-            contextType: .trusted
+            contextType: .trusted,
+            role: .backgroundScript(mockBrowserExtension.id)
         )
         
         // Test two arguments: extensionId and message
@@ -340,7 +342,7 @@ class SendMessageHandlerTests: XCTestCase {
     func testSendMessageHandlerParsingTwoArgumentsMessageAndOptions() async throws {
         let handler = RuntimeSendMessageHandler()
         let network = BrowserExtensionNetwork()
-        network.add(webView: webView, world: .page, browserExtension: mockBrowserExtension, trusted: true, setAccessLevelToken: "")
+        network.add(webView: webView, world: .page, browserExtension: mockBrowserExtension, trusted: true, role: .backgroundScript(mockBrowserExtension.id), setAccessLevelToken: "")
         let router = BrowserExtensionRouter(network: network, logger: mockLogger)
         let context = BrowserExtensionContext(
             logger: mockLogger,
@@ -349,7 +351,8 @@ class SendMessageHandlerTests: XCTestCase {
             browserExtension: mockBrowserExtension,
             tab: nil,
             frameId: nil,
-            contextType: .trusted
+            contextType: .trusted,
+            role: .backgroundScript(mockBrowserExtension.id)
         )
         
         // Test two arguments: message and options
@@ -372,7 +375,7 @@ class SendMessageHandlerTests: XCTestCase {
     func testSendMessageHandlerParsingThreeArguments() async throws {
         let handler = RuntimeSendMessageHandler()
         let network = BrowserExtensionNetwork()
-        network.add(webView: webView, world: .page, browserExtension: mockBrowserExtension, trusted: true, setAccessLevelToken: "")
+        network.add(webView: webView, world: .page, browserExtension: mockBrowserExtension, trusted: true, role: .backgroundScript(mockBrowserExtension.id), setAccessLevelToken: "")
         let router = BrowserExtensionRouter(network: network, logger: mockLogger)
         let context = BrowserExtensionContext(
             logger: mockLogger,
@@ -381,7 +384,8 @@ class SendMessageHandlerTests: XCTestCase {
             browserExtension: mockBrowserExtension,
             tab: nil,
             frameId: nil,
-            contextType: .trusted
+            contextType: .trusted,
+            role: .backgroundScript(mockBrowserExtension.id)
         )
         
         // Test three arguments: extensionId, message, and options
@@ -405,7 +409,7 @@ class SendMessageHandlerTests: XCTestCase {
     func testSendMessageHandlerNoArguments() async throws {
         let handler = RuntimeSendMessageHandler()
         let network = BrowserExtensionNetwork()
-        network.add(webView: webView, world: .page, browserExtension: mockBrowserExtension, trusted: true, setAccessLevelToken: "")
+        network.add(webView: webView, world: .page, browserExtension: mockBrowserExtension, trusted: true, role: .backgroundScript(mockBrowserExtension.id), setAccessLevelToken: "")
         let router = BrowserExtensionRouter(network: network, logger: mockLogger)
         let context = BrowserExtensionContext(
             logger: mockLogger,
@@ -414,7 +418,8 @@ class SendMessageHandlerTests: XCTestCase {
             browserExtension: mockBrowserExtension,
             tab: nil,
             frameId: nil,
-            contextType: .trusted
+            contextType: .trusted,
+            role: .backgroundScript(mockBrowserExtension.id)
         )
         
         // Test no arguments
@@ -438,7 +443,7 @@ class SendMessageHandlerTests: XCTestCase {
     func testSendMessageHandlerInvalidMessageType() async throws {
         let handler = RuntimeSendMessageHandler()
         let network = BrowserExtensionNetwork()
-        network.add(webView: webView, world: .page, browserExtension: mockBrowserExtension, trusted: true, setAccessLevelToken: "")
+        network.add(webView: webView, world: .page, browserExtension: mockBrowserExtension, trusted: true, role: .backgroundScript(mockBrowserExtension.id), setAccessLevelToken: "")
         let router = BrowserExtensionRouter(network: network, logger: mockLogger)
         let context = BrowserExtensionContext(
             logger: mockLogger,
@@ -447,7 +452,8 @@ class SendMessageHandlerTests: XCTestCase {
             browserExtension: mockBrowserExtension,
             tab: nil,
             frameId: nil,
-            contextType: .trusted
+            contextType: .trusted,
+            role: .backgroundScript(mockBrowserExtension.id)
         )
         
         // Test with string (not a JSON-encoded string) - the handler now accepts any string
@@ -463,6 +469,96 @@ class SendMessageHandlerTests: XCTestCase {
             // Since the handler passes strings through, we expect noMessageReceiver
             XCTAssertEqual(error, .noMessageReceiver)
         }
+    }
+    
+    // MARK: - MV3 Messaging Restriction Tests
+    
+    func testBackgroundServiceWorkerCannotSendMessageToContentScript() async throws {
+        let backgroundMessageSent = "BackgroundMessageSent"
+        let backgroundReceivedError = "BackgroundReceivedError"
+        let contentReady = "ContentReady"
+        
+        let testExtension = ExtensionTestingInfrastructure.TestExtension(
+            permissions: [],
+            contentScripts: [
+                "content.js": """
+                    \(testRunner.javascriptCreatingPromise(name: contentReady))
+                    
+                    (async function() {
+                        console.log('Content script setting up message listener');
+                        // Set up message listener in content script
+                        chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
+                            console.log('Content script received message:', message);
+                            console.log('Message sender:', sender);
+                            
+                            // This should never be reached in MV3 when sent from background service worker
+                            assertTrue(false, 'Content script should not receive messages from background service worker in MV3');
+                            return true;
+                        });
+                        
+                        console.log('Content script listener ready');
+                        globalThis.contentListenerReady = true;
+                        \(testRunner.javascriptResolvingPromise(name: contentReady))
+                    })();
+                """
+            ],
+            backgroundScripts: [
+                "background.js": """
+                    \(testRunner.javascriptCreatingPromise(name: backgroundMessageSent))
+                    \(testRunner.javascriptCreatingPromise(name: backgroundReceivedError))
+                    
+                    (async function() {
+                        console.log('Background service worker started');
+                        
+                        console.log('Background service worker attempting to send message to content script');
+                        chrome.runtime.sendMessage({
+                            type: 'background_to_content',
+                            message: 'This should not be allowed in MV3'
+                        }, (response) => {
+                            console.log('Background service worker callback called');
+                            // In MV3, background service workers cannot send messages to content scripts
+                            // The framework filters out content script receivers, so we get "no message receiver" error
+                            assertTrue(chrome.runtime.lastError !== undefined, 'Background service worker should get error when trying to send to content script');
+                            assertTrue(chrome.runtime.lastError.message.includes('Could not establish connection') || 
+                                      chrome.runtime.lastError.message.includes('Receiving end does not exist'), 
+                                      'Error message should indicate no eligible receivers');
+                            globalThis.backgroundError = chrome.runtime.lastError.message;
+                            \(testRunner.javascriptResolvingPromise(name: backgroundReceivedError))
+                            \(testRunner.expectReach("background received no receiver error"))
+                        });
+                        \(testRunner.javascriptResolvingPromise(name: backgroundMessageSent))
+                        \(testRunner.expectReach("background attempted to send message"))
+                    })();
+                """
+            ]
+        )
+        
+        _ = try await testRunner.run(testExtension)
+        
+        // Create an untrusted webview for content script
+        let (contentWebView, _) = try await testRunner.createUntrustedWebView(for: .contentScript)
+        try await contentWebView.loadHTMLStringAsync("<html><body>Test Page</body></html>", baseURL: nil)
+        
+        // Wait for content script to be ready
+        await testRunner.waitForContentScriptCompletion(testExtension.id, webView: contentWebView, name: contentReady)
+        
+        // Wait for background script to attempt message sending
+        await testRunner.waitForBackgroundScriptCompletion(testExtension.id, name: backgroundMessageSent)
+        await testRunner.waitForBackgroundScriptCompletion(testExtension.id, name: backgroundReceivedError)
+        
+        testRunner.verifyAssertions()
+    }
+    
+    // MARK: - Helper Setup for TestRunner
+    
+    private var testRunner: ExtensionTestingInfrastructure.TestRunner!
+    
+    override func setUpWithError() throws {
+        testRunner = ExtensionTestingInfrastructure.TestRunner(verbose: false)
+    }
+    
+    override func tearDownWithError() throws {
+        testRunner = nil
     }
 }
 
