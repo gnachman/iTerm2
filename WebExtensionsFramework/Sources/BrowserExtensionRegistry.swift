@@ -41,8 +41,8 @@ public class BrowserExtensionRegistry {
     private var extensionsByPath: [String: BrowserExtension] = [:]
     
     /// Base directory containing all extensions
-    private let baseDirectory: URL
-    
+    private(set) public var baseDirectory: URL?
+
     /// Logger for debugging and error reporting
     private let logger: BrowserExtensionLogger
     
@@ -60,15 +60,29 @@ public class BrowserExtensionRegistry {
     /// - Parameters:
     ///   - baseDirectory: The base directory containing all extensions
     ///   - logger: Logger for debugging and error reporting
-    public init(baseDirectory: URL, logger: BrowserExtensionLogger) {
+    public init(baseDirectory: URL?, logger: BrowserExtensionLogger) {
         self.baseDirectory = baseDirectory
         self.logger = logger
     }
-    
+
+    /// Change the base directory
+    public func set(baseDirectory: URL?) {
+        logger.info("Will set base directory to \(baseDirectory?.path ?? "(nil)"). Unloading all extensions.")
+        self.baseDirectory = baseDirectory
+        extensionsByPath.removeAll()
+        NotificationCenter.default.post(
+            name: Self.registryDidChangeNotification,
+            object: self
+        )
+    }
+
     /// Add an extension from the given relative location
     /// - Parameter extensionLocation: Relative path to the extension directory within the base directory
     /// - Throws: BrowserExtensionRegistryError if the extension cannot be added
     public func add(extensionLocation: String) throws {
+        guard let baseDirectory else {
+            throw BrowserExtensionRegistryError.extensionNotFound("No base directory specified")
+        }
         let extensionURL = baseDirectory.appendingPathComponent(extensionLocation)
         let extensionPath = extensionURL.path
         
