@@ -46,3 +46,6 @@
 [submodule "submodules/adblock-rust"]
 	path = submodules/adblock-rust
         url = https://github.com/gnachman/adblock-rust
+[submodule "submodules/hudsucker"]
+	path = submodules/hudsucker
+	url = https://github.com/omjadas/hudsucker

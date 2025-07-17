@@ -7,7 +7,6 @@
 
 import Foundation
 import WebKit
-import iTermSwiftPackages
 
 @available(macOS 11.0, *)
 @objc(iTermBrowserAdblockManager)

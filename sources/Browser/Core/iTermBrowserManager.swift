@@ -8,7 +8,6 @@
 @preconcurrency import WebKit
 import Network
 import WebExtensionsFramework
-import iTermSwiftPackages
 
 @available(macOS 11.0, *)
 protocol iTermBrowserManagerDelegate: AnyObject {
@@ -149,8 +148,9 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
 
         let configuration: WKWebViewConfiguration
         let contentManager: BrowserExtensionUserContentManager
+        var rootCert: SecCertificate?
         if let preferredConfiguration {
-            #warning("TODO: Somehow deal with this and content managers")
+            #warning("TODO: Somehow deal with this and content managers and root certs")
             configuration = preferredConfiguration
             contentManager = BrowserExtensionUserContentManager(
                 userContentController: configuration.userContentController,
@@ -177,7 +177,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
             }
             
             // Configure proxy if enabled
-            applyProxyConfiguration(to: configuration.websiteDataStore)
+            rootCert = applyProxyConfiguration(to: configuration.websiteDataStore)
 
             var js = """
                 let oldLog = console.log;
@@ -316,8 +316,8 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
 
         webView = iTermBrowserWebView(frame: .zero,
                                       configuration: configuration,
-                                      pointerController: pointerController)
-
+                                      pointerController: pointerController,
+                                      rootCert: rootCert)
         if let safariBundle = Bundle(path: "/Applications/Safari.app"),
            let safariVersion = safariBundle.infoDictionary?["CFBundleShortVersionString"] as? String {
             webView.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " +
@@ -955,6 +955,45 @@ extension iTermBrowserManager {
 
 @available(macOS 11.0, *)
 extension iTermBrowserManager: WKNavigationDelegate {
+    func webView(_ webView: WKWebView, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping @MainActor (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        NSLog("Did receive auth challenge")
+        if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust {
+            guard let serverTrust = challenge.protectionSpace.serverTrust else {
+                completionHandler(.performDefaultHandling, nil)
+                return
+            }
+            guard let ca = self.webView.rootCert else {
+                completionHandler(.performDefaultHandling, nil)
+                return
+            }
+            // 1. Ignore EKU/SSL-specific policy
+            #warning("REMOVE THIS AND FIX THE CERT")
+            let basicPolicy = SecPolicyCreateBasicX509()
+            SecTrustSetPolicies(serverTrust, basicPolicy as CFTypeRef)
+
+
+            SecTrustSetAnchorCertificates(serverTrust, [ca] as CFArray)
+            SecTrustSetAnchorCertificatesOnly(serverTrust, true)
+            var trustError: CFError?
+            let trusted = SecTrustEvaluateWithError(serverTrust, &trustError)
+
+            if !trusted {
+                if let error = trustError {
+                    DLog("SecTrustEvaluateWithError failed: \(error)")
+                } else {
+                    DLog("SecTrustEvaluateWithError failed with unknown error")
+                }
+                completionHandler(.cancelAuthenticationChallenge, nil)
+                return
+            }
+
+            let credential = URLCredential(trust: serverTrust)
+            completionHandler(.useCredential, credential)
+            return
+        }
+        completionHandler(.performDefaultHandling, nil)
+    }
+
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         navigationCount += 1
         readerModeManager.resetForNavigation()
@@ -1028,6 +1067,8 @@ extension iTermBrowserManager: WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        let nsError = error as NSError
+        DLog("🔌 didFailNavigation: domain=\(nsError.domain) code=\(nsError.code) — \(nsError.localizedDescription)")
         let failedURL = navigationState.lastRequestedURL
 
         // Clean up any pre-registered message handlers for failed navigation
@@ -1049,6 +1090,8 @@ extension iTermBrowserManager: WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        let nsError = error as NSError
+        DLog("didFailProvisionalNavigation: domain=\(nsError.domain) code=\(nsError.code) — \(nsError.localizedDescription)")
         let failedURL = navigationState.lastRequestedURL
 
         // Clean up any pre-registered message handlers for failed navigation
@@ -1476,12 +1519,17 @@ extension iTermBrowserManager {
     }
     
     func updateProxyConfiguration() {
-        applyProxyConfiguration(to: webView.configuration.websiteDataStore)
+        let rootCert = applyProxyConfiguration(to: webView.configuration.websiteDataStore)
+        if let rootCert {
+            webView.startMITM(rootCert: rootCert)
+        } else {
+            webView.stopMITM()
+        }
     }
     
-    private func applyProxyConfiguration(to dataStore: WKWebsiteDataStore) {
-        guard #available(macOS 14.0, *) else { return }
-        
+    private func applyProxyConfiguration(to dataStore: WKWebsiteDataStore) -> SecCertificate? {
+        guard #available(macOS 14.0, *) else { return nil }
+
         if iTermAdvancedSettingsModel.browserProxyEnabled() {
             let proxyHost = iTermAdvancedSettingsModel.browserProxyHost() ?? "127.0.0.1"
             let proxyPort = iTermAdvancedSettingsModel.browserProxyPort()
@@ -1491,29 +1539,27 @@ extension iTermBrowserManager {
             dataStore.proxyConfigurations = [proxyConfig]
             adblockManager?.internalProxyDidStop()
             DLog("Configured browser proxy: \(proxyHost):\(proxyPort)")
+            return nil
         } else {
             // Use the internal proxy
             dataStore.proxyConfigurations = []
-            Task {
-                do {
-                    let proxyPort = try await iTermSwiftPackages.Server.instance.ensureRunning()
-                    await MainActor.run { [weak self] in
-                        self?.startUsingInternalProxy(onPort: proxyPort)
-                    }
-                } catch {
-                    DLog("Failed to start server")
-                }
+            if let proxy = HudsuckerProxy.standard {
+                let proxyPort = proxy.port!
+                startUsingInternalProxy(onPort: proxyPort, dataStore: dataStore)
+                return proxy.caCert
             }
+            return nil
         }
     }
 
     @available(macOS 14, *)
     @MainActor
-    private func startUsingInternalProxy(onPort proxyPort: Int) {
+    private func startUsingInternalProxy(onPort proxyPort: Int, dataStore: WKWebsiteDataStore) {
+        DLog("begin")
         let proxyHost = "127.0.0.1"
         let endpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(proxyHost), port: NWEndpoint.Port(integerLiteral: UInt16(proxyPort)))
         let proxyConfig = ProxyConfiguration(httpCONNECTProxy: endpoint)
-        webView.configuration.websiteDataStore.proxyConfigurations = [proxyConfig]
+        dataStore.proxyConfigurations = [proxyConfig]
         adblockManager?.internalProxyDidStart()
     }
 }

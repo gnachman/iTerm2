@@ -1,5 +1,4 @@
 import Foundation
-import iTermSwiftPackages
 
 extension Notification.Name {
     static let rustAdblockStatsChanged = Notification.Name("rustAdblockStatsChanged")
@@ -161,35 +160,32 @@ class iTermBrowserAdblockRustManager {
     }
 
     func updateInternalProxyInstalled(desired: Bool) {
-        let server = iTermSwiftPackages.Server.instance
         if desired {
-            if server.portIfRunning != nil && server.monitor == nil {
-                server.monitor = self
+            HudsuckerProxy.filterCallback = { [weak self] urlString, method in
+                let urlStringWithScheme: String
+                let scheme: String
+                if urlString.hasPrefix("http:") {
+                    scheme = "http"
+                    urlStringWithScheme = urlString
+                } else if urlString.hasPrefix("https:") {
+                    scheme = "https"
+                    urlStringWithScheme = urlString
+                } else {
+                    switch method {
+                    case "CONNECT":
+                        scheme = "https"
+                    default:
+                        scheme = "http"
+                    }
+                    urlStringWithScheme = scheme + "://" + urlString
+                }
+                guard let self, let url = URL(string: urlStringWithScheme) else {
+                    return true
+                }
+                return !shouldBlockRequest(url: url)
             }
         } else {
-            server.monitor = nil
+            HudsuckerProxy.filterCallback = nil
         }
-    }
-}
-
-extension iTermBrowserAdblockRustManager: ConnectionMonitor {
-    func connectionMonitorShouldConnect(method: String, host: String, port: Int, headers: [String : String]) -> Bool {
-        let hostHeaderKey = headers.keys.first(where: { $0.lowercased() == "host"})
-        let hostHeaderValue = hostHeaderKey.compactMap { headers[$0] }
-        let host = hostHeaderValue ?? host
-        let scheme = switch method {
-        case "CONNECT":
-            "https"
-        default:
-            "http"
-        }
-        var components = URLComponents()
-        components.scheme = scheme
-        components.host = host
-        components.port = port
-        guard let url = components.url else {
-            return false
-        }
-        return !shouldBlockRequest(url: url)
     }
 }

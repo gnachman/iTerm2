@@ -4,6 +4,8 @@
 <dict>
         <key>NSAppTransportSecurity</key>  
         <dict>  
+            <key>NSAllowsArbitraryLoadsInWebContent</key>
+            <true/>
             <key>NSExceptionDomains</key>  
             <dict>  
                 <key>127.0.0.1</key>  

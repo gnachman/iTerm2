@@ -22,7 +22,9 @@
       "Bash(swiftc:*)",
       "Bash(otool:*)",
       "Bash(nm:*)",
-      "Bash(objdump:*)"
+      "Bash(objdump:*)",
+      "Bash(export:*)",
+      "Bash(cargo:*)"
     ],
     "deny": []
   }
