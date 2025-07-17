@@ -442,10 +442,25 @@ pub extern "C" fn hudsucker_remove_bypassed_domain(
 
     let proxy_id = proxy as usize;
     
-    // Note: This is a placeholder implementation
-    eprintln!("DEBUG: Would remove domain '{}' from bypass list for proxy {}", domain_str, proxy_id);
-    
-    HudsuckerError::Success
+    // Get the proxy state and certificate handler
+    let registry = PROXY_REGISTRY.lock().unwrap();
+    if let Some(proxy_state) = registry.get(&proxy_id) {
+        if let Some(cert_handler) = &proxy_state.cert_handler {
+            // Remove domain from bypass list
+            if let Ok(mut bypassed) = cert_handler.bypassed_hosts.lock() {
+                bypassed.remove(domain_str);
+            }
+            
+            eprintln!("DEBUG: Removed domain '{}' from bypass list for proxy {}", domain_str, proxy_id);
+            return HudsuckerError::Success;
+        } else {
+            eprintln!("DEBUG: Proxy {} does not have certificate error handling enabled", proxy_id);
+            return HudsuckerError::InvalidParameter;
+        }
+    } else {
+        eprintln!("DEBUG: Proxy {} not found", proxy_id);
+        return HudsuckerError::InvalidParameter;
+    }
 }
 
 /// Check if a domain is in the certificate bypass list
@@ -474,10 +489,31 @@ pub extern "C" fn hudsucker_is_domain_bypassed(
 
     let proxy_id = proxy as usize;
     
-    // Note: This is a placeholder implementation
-    eprintln!("DEBUG: Would check if domain '{}' is bypassed for proxy {}", domain_str, proxy_id);
-    
-    0 // Return false for now
+    // Get the proxy state and certificate handler
+    let registry = PROXY_REGISTRY.lock().unwrap();
+    if let Some(proxy_state) = registry.get(&proxy_id) {
+        if let Some(cert_handler) = &proxy_state.cert_handler {
+            // Check if domain is in bypass list
+            if let Ok(bypassed) = cert_handler.bypassed_hosts.lock() {
+                if bypassed.contains(domain_str) {
+                    eprintln!("DEBUG: Domain '{}' is bypassed for proxy {}", domain_str, proxy_id);
+                    return 1;
+                } else {
+                    eprintln!("DEBUG: Domain '{}' is not bypassed for proxy {}", domain_str, proxy_id);
+                    return 0;
+                }
+            } else {
+                eprintln!("DEBUG: Failed to lock bypassed hosts for proxy {}", proxy_id);
+                return HudsuckerError::InvalidParameter as i32;
+            }
+        } else {
+            eprintln!("DEBUG: Proxy {} does not have certificate error handling enabled", proxy_id);
+            return HudsuckerError::InvalidParameter as i32;
+        }
+    } else {
+        eprintln!("DEBUG: Proxy {} not found", proxy_id);
+        return HudsuckerError::InvalidParameter as i32;
+    }
 }
 
 /// Clear all domains from the certificate bypass list
@@ -498,10 +534,25 @@ pub extern "C" fn hudsucker_clear_bypassed_domains(
 
     let proxy_id = proxy as usize;
     
-    // Note: This is a placeholder implementation
-    eprintln!("DEBUG: Would clear all bypassed domains for proxy {}", proxy_id);
-    
-    HudsuckerError::Success
+    // Get the proxy state and certificate handler
+    let registry = PROXY_REGISTRY.lock().unwrap();
+    if let Some(proxy_state) = registry.get(&proxy_id) {
+        if let Some(cert_handler) = &proxy_state.cert_handler {
+            // Clear all bypassed domains
+            if let Ok(mut bypassed) = cert_handler.bypassed_hosts.lock() {
+                bypassed.clear();
+            }
+            
+            eprintln!("DEBUG: Cleared all bypassed domains for proxy {}", proxy_id);
+            return HudsuckerError::Success;
+        } else {
+            eprintln!("DEBUG: Proxy {} does not have certificate error handling enabled", proxy_id);
+            return HudsuckerError::InvalidParameter;
+        }
+    } else {
+        eprintln!("DEBUG: Proxy {} not found", proxy_id);
+        return HudsuckerError::InvalidParameter;
+    }
 }
 
 /// Create a new proxy instance with certificate error handling
@@ -618,6 +669,9 @@ pub extern "C" fn hudsucker_create_proxy_with_cert_errors(
     // Create the certificate error handler
     // This handler wraps the basic callback handler with certificate error handling
     let cert_handler = CertErrorHandler::new(proxy_id, template_str.to_string());
+    
+    // Store the certificate handler in the proxy state
+    proxy_state.cert_handler = Some(cert_handler.clone());
     
     // Build the proxy with the certificate error handler
     // When you call .with_http_handler(), you're telling hudsucker to use this

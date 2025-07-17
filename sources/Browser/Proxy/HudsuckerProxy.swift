@@ -208,6 +208,23 @@ public class HudsuckerProxy {
         return certificateErrorHTMLTemplate != nil
     }
     
+    /// Add a domain to the certificate bypass list
+    /// - Parameters:
+    ///   - domain: The domain to bypass certificate validation for (e.g., "example.com")
+    ///   - token: Valid bypass token from certificate error page
+    /// - Throws: ProxyError if the operation fails or token is invalid
+    public func addBypassedDomain(_ domain: String, token: String) throws {
+        guard let handle = proxyHandle else {
+            throw ProxyError.runtimeError
+        }
+        
+        let result = hudsucker_add_bypassed_domain(handle, domain, token)
+        
+        guard let error = ProxyError(rawValue: result), error == .success else {
+            throw ProxyError(rawValue: result) ?? .runtimeError
+        }
+    }
+    
     // MARK: - Static Methods
     
     /// Generate a new CA certificate and private key pair
@@ -298,3 +315,6 @@ private func hudsucker_generate_ca_cert(
 
 @_silgen_name("hudsucker_free_string")
 private func hudsucker_free_string(_ ptr: UnsafeMutablePointer<CChar>?)
+
+@_silgen_name("hudsucker_add_bypassed_domain")
+private func hudsucker_add_bypassed_domain(_ proxy: OpaquePointer?, _ domain: UnsafePointer<CChar>, _ token: UnsafePointer<CChar>) -> Int32

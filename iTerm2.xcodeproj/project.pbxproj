@@ -3309,6 +3309,7 @@
 		A6AA2F8E2E296849002998B3 /* cert-error.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AA2F8D2E296849002998B3 /* cert-error.html */; };
 		A6AA2F8F2E296849002998B3 /* cert-error.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AA2F8D2E296849002998B3 /* cert-error.html */; };
 		A6AA2F902E296849002998B3 /* cert-error.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AA2F8D2E296849002998B3 /* cert-error.html */; };
+		A6AA2F922E2976DC002998B3 /* iTermBrowserSSLBypassHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AA2F912E2976D2002998B3 /* iTermBrowserSSLBypassHandler.swift */; };
 		A6AAD5EE22F4A1DD002DD12C /* iTermCommandRunnerPool.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AAD5EC22F4A1DD002DD12C /* iTermCommandRunnerPool.h */; };
 		A6AAD5EF22F4A1DD002DD12C /* iTermCommandRunnerPool.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AAD5ED22F4A1DD002DD12C /* iTermCommandRunnerPool.m */; };
 		A6AAD5F322F7EB61002DD12C /* iTermWindowSizeView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AAD5F122F7EB61002DD12C /* iTermWindowSizeView.h */; };
@@ -7946,6 +7947,7 @@
 		A6AA2F662E28B257002998B3 /* iTermProfilePreferenceMutator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermProfilePreferenceMutator.swift; sourceTree = "<group>"; };
 		A6AA2F672E28B257002998B3 /* iTermProfilePreferenceObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermProfilePreferenceObserver.swift; sourceTree = "<group>"; };
 		A6AA2F8D2E296849002998B3 /* cert-error.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "cert-error.html"; sourceTree = "<group>"; };
+		A6AA2F912E2976D2002998B3 /* iTermBrowserSSLBypassHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserSSLBypassHandler.swift; sourceTree = "<group>"; };
 		A6AAD5EC22F4A1DD002DD12C /* iTermCommandRunnerPool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCommandRunnerPool.h; sourceTree = "<group>"; };
 		A6AAD5ED22F4A1DD002DD12C /* iTermCommandRunnerPool.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCommandRunnerPool.m; sourceTree = "<group>"; };
 		A6AAD5F122F7EB61002DD12C /* iTermWindowSizeView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermWindowSizeView.h; sourceTree = "<group>"; };
@@ -12932,6 +12934,7 @@
 		A6AA2F5D2E28B1AE002998B3 /* Proxy */ = {
 			isa = PBXGroup;
 			children = (
+				A6AA2F912E2976D2002998B3 /* iTermBrowserSSLBypassHandler.swift */,
 				A6AA2F602E28B1E1002998B3 /* HudsuckerProxy.swift */,
 			);
 			path = Proxy;
@@ -18654,6 +18657,7 @@
 				A6F718B22263E8A20053488E /* iTermInitialDirectory.m in Sources */,
 				A65AEDED2CC1B625007F4A11 /* SearchEngine.swift in Sources */,
 				A62132D327862A4800B80724 /* TokenExecutor.swift in Sources */,
+				A6AA2F922E2976DC002998B3 /* iTermBrowserSSLBypassHandler.swift in Sources */,
 				A6566754219EA582005FE60E /* NSNull+iTerm.m in Sources */,
 				A6F66BA42C2E2C0700DC3569 /* iTermMutableOrderedSet.m in Sources */,
 				A629C706221016AA00E7D4AE /* iTermMoveTabToWindowBuiltInFunction.m in Sources */,

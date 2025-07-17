@@ -7,7 +7,7 @@ edition = "2021"
 crate-type = ["cdylib", "staticlib"]
 
 [dependencies]
-hudsucker = { path = "../submodules/hudsucker", features = ["decoder", "rcgen-ca", "rustls-client", "native-tls-client"] }
+hudsucker = { version = "0.23.0", features = ["decoder", "rcgen-ca", "rustls-client", "native-tls-client"] }
 tokio = { version = "1.24.2", features = ["full"] }
 hyper = "1.1.0"
 http = "1.1.0"

@@ -301,6 +301,8 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                     identifier: UserScripts.hoverLinkHandler.rawValue))
             }
 
+            configuration.userContentController.add(handlerProxy, name: iTermBrowserSSLBypassHandler.messageHandlerName)
+
             // Setup reader mode
             readerModeManager.delegate = self
             configuration.userContentController.add(readerModeManager, name: "readerMode")
@@ -916,6 +918,9 @@ extension iTermBrowserManager {
             
         case iTermBrowserNamedMarkManager.layoutUpdateHandlerName:
             namedMarkManager?.handleLayoutUpdateMessage(webView: webView, message: message)
+
+        case iTermBrowserSSLBypassHandler.messageHandlerName:
+            iTermBrowserSSLBypassHandler.offerBypass(webView: webView, message: message)
 
         default:
             DLog(message.name)
