@@ -607,6 +607,10 @@ static int gSignalsToList[] = {
     } else {
         string = [@(info.pid) stringValue];
     }
+    if (string.length > 256) {
+        string = [string substringToIndex:256];
+    }
+    string = [string stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
     return [self tableCellViewWithString:string image:image isJob:isJob];
 }
 
