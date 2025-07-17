@@ -374,6 +374,7 @@ pub extern "C" fn hudsucker_free_string(ptr: *mut c_char) {
 /// * `ca_key_pem` - PEM-encoded CA private key
 /// * `callback` - Callback function for request filtering (ad blocking)
 /// * `user_data` - User data pointer passed to callback
+/// * `html_template` - Optional HTML template for error pages (can be NULL for default)
 /// * `proxy_out` - Output parameter for proxy handle
 /// 
 /// # Returns
@@ -386,6 +387,7 @@ pub extern "C" fn hudsucker_create_proxy_with_cert_errors(
     ca_key_pem: *const c_char,
     callback: HudsuckerRequestCallback,
     user_data: *mut c_void,
+    html_template: *const c_char,
     proxy_out: *mut *mut HudsuckerProxy,
 ) -> HudsuckerError {
     if addr.is_null() || ca_cert_pem.is_null() || ca_key_pem.is_null() || proxy_out.is_null() {
@@ -450,9 +452,19 @@ pub extern "C" fn hudsucker_create_proxy_with_cert_errors(
 
     let ca = RcgenAuthority::new(key_pair, ca_cert, 1_000, aws_lc_rs::default_provider());
 
+    // HTML template is required for certificate error handling
+    if html_template.is_null() {
+        return HudsuckerError::InvalidParameter;
+    }
+    
+    let template_str = match unsafe { CStr::from_ptr(html_template) }.to_str() {
+        Ok(s) => s,
+        Err(_) => return HudsuckerError::InvalidParameter,
+    };
+    
     // Create the certificate error handler
     // This handler wraps the basic callback handler with certificate error handling
-    let cert_handler = CertErrorHandler::new(proxy_id);
+    let cert_handler = CertErrorHandler::new(proxy_id, template_str.to_string());
     
     // Build the proxy with the certificate error handler
     // When you call .with_http_handler(), you're telling hudsucker to use this

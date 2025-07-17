@@ -101,6 +101,7 @@ void hudsucker_free_string(char *ptr);
  * * `ca_key_pem` - PEM-encoded CA private key
  * * `callback` - Callback function for request filtering (ad blocking)
  * * `user_data` - User data pointer passed to callback
+ * * `html_template` - Optional HTML template for error pages (can be NULL for default)
  * * `proxy_out` - Output parameter for proxy handle
  *
  * # Returns
@@ -112,6 +113,7 @@ enum HudsuckerError hudsucker_create_proxy_with_cert_errors(const char *addr,
                                                             const char *ca_key_pem,
                                                             HudsuckerRequestCallback callback,
                                                             void *user_data,
+                                                            const char *html_template,
                                                             struct HudsuckerProxy **proxy_out);
 
 #endif  /* HUDSUCKER_FFI_H */

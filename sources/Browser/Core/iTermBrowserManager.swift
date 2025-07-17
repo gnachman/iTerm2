@@ -1543,13 +1543,29 @@ extension iTermBrowserManager {
         } else {
             // Use the internal proxy
             dataStore.proxyConfigurations = []
-            if let proxy = HudsuckerProxy.standard {
+            if let proxy = Self.makeProxy() {
                 let proxyPort = proxy.port!
                 startUsingInternalProxy(onPort: proxyPort, dataStore: dataStore)
                 return proxy.caCert
             }
             return nil
         }
+    }
+
+    private static func makeProxy() -> HudsuckerProxy? {
+        if let existing = HudsuckerProxy.standard {
+            return existing
+        }
+        let proxy = try? HudsuckerProxy.withCertificateErrorHandling(
+            address: "127.0.0.1",
+            ports: [1912, 1913, 1914, 1915],
+            requestFilter: HudsuckerProxy.filterRequest(url:method:),
+            htmlTemplate: iTermBrowserTemplateLoader.loadTemplate(
+                named: "cert-error",
+                type: "html",
+                substitutions: [:]))
+        HudsuckerProxy.standard = proxy
+        return proxy
     }
 
     @available(macOS 14, *)

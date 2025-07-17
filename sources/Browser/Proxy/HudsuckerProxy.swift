@@ -3,9 +3,7 @@ import Security
 
 /// Swift wrapper for the Hudsucker MITM proxy C FFI
 public class HudsuckerProxy {
-    static let standard = try? HudsuckerProxy.withCertificateErrorHandling(address: "127.0.0.1",
-                                                                           ports: [1912, 1913, 1914, 1915],
-                                                                           requestFilter: filterRequest(url:method:))
+    static var standard: HudsuckerProxy?
     static var filterCallback: ((String, String) -> Bool)?
     private(set) var port: Int!
 
@@ -52,23 +50,6 @@ public class HudsuckerProxy {
     /// - Returns: true to allow the request, false to block it
     public typealias RequestFilterCallback = (String, String) -> Bool
     
-    /// Configuration options for certificate error handling
-    public struct CertificateErrorOptions {
-        /// Whether to enable custom certificate error pages
-        public let enableCustomErrorPages: Bool
-        /// Custom branding text to show on error pages
-        public let brandingText: String?
-        /// Custom CSS styles for error pages
-        public let customCSS: String?
-        
-        public init(enableCustomErrorPages: Bool = true, 
-                   brandingText: String? = nil, 
-                   customCSS: String? = nil) {
-            self.enableCustomErrorPages = enableCustomErrorPages
-            self.brandingText = brandingText
-            self.customCSS = customCSS
-        }
-    }
     
     // MARK: - Properties
     
@@ -77,7 +58,7 @@ public class HudsuckerProxy {
     private let address: String
     private let caCertPEM: String
     private let caKeyPEM: String
-    private let certificateErrorOptions: CertificateErrorOptions?
+    private let certificateErrorHTMLTemplate: String?
     
     // MARK: - Initialization
     
@@ -88,18 +69,18 @@ public class HudsuckerProxy {
     ///   - caCertPEM: PEM-encoded CA certificate
     ///   - caKeyPEM: PEM-encoded CA private key
     ///   - requestFilter: Callback to filter requests
-    ///   - certificateErrorOptions: Optional configuration for certificate error handling
+    ///   - certificateErrorHTMLTemplate: HTML template for certificate error pages (nil for default)
     public init(address: String,
                 ports: [Int],
                 caCertPEM: String,
                 caKeyPEM: String, 
                 requestFilter: @escaping RequestFilterCallback,
-                certificateErrorOptions: CertificateErrorOptions? = nil) throws {
+                certificateErrorHTMLTemplate: String?) throws {
         self.address = address
         self.caCertPEM = caCertPEM
         self.caKeyPEM = caKeyPEM
         self.filterCallback = requestFilter
-        self.certificateErrorOptions = certificateErrorOptions
+        self.certificateErrorHTMLTemplate = certificateErrorHTMLTemplate
         for port in ports {
             do {
                 try start(port: port)
@@ -121,18 +102,18 @@ public class HudsuckerProxy {
     ///   - address: The address to bind to (e.g., "127.0.0.1:8080")
     ///   - ports: Array of ports to try binding to
     ///   - requestFilter: Callback to filter requests
-    ///   - certificateErrorOptions: Optional configuration for certificate error handling
+    ///   - certificateErrorHTMLTemplate: HTML template for certificate error pages (nil for default)
     public convenience init(address: String,
                             ports: [Int],
                             requestFilter: @escaping RequestFilterCallback,
-                            certificateErrorOptions: CertificateErrorOptions? = nil) throws {
+                            certificateErrorHTMLTemplate: String?) throws {
         let (cert, key) = try Self.generateCACertificate()
         try self.init(address: address,
                       ports: ports,
                       caCertPEM: cert,
                       caKeyPEM: key,
                       requestFilter: requestFilter,
-                      certificateErrorOptions: certificateErrorOptions)
+                      certificateErrorHTMLTemplate: certificateErrorHTMLTemplate)
     }
     
     deinit {
@@ -180,14 +161,15 @@ public class HudsuckerProxy {
         var handle: OpaquePointer?
         let result: Int32
         
-        // Use certificate error handling if enabled
-        if let certOptions = certificateErrorOptions, certOptions.enableCustomErrorPages {
+        // Use certificate error handling if template is provided
+        if let htmlTemplate = certificateErrorHTMLTemplate {
             result = hudsucker_create_proxy_with_cert_errors(
                 "\(address):\(port)",
                 caCertPEM,
                 caKeyPEM,
                 cCallback,
                 selfPtr,
+                htmlTemplate,
                 &handle
             )
         } else {
@@ -223,7 +205,7 @@ public class HudsuckerProxy {
     
     /// Check if certificate error handling is enabled
     public var isCertificateErrorHandlingEnabled: Bool {
-        return certificateErrorOptions?.enableCustomErrorPages ?? false
+        return certificateErrorHTMLTemplate != nil
     }
     
     // MARK: - Static Methods
@@ -259,28 +241,20 @@ public class HudsuckerProxy {
     ///   - address: The address to bind to (e.g., "127.0.0.1")
     ///   - ports: Array of ports to try binding to
     ///   - requestFilter: Callback to filter requests
-    ///   - brandingText: Optional custom branding text for error pages
-    ///   - customCSS: Optional custom CSS for error pages
+    ///   - htmlTemplate: Custom HTML template for error pages (nil for default)
     /// - Returns: A configured HudsuckerProxy instance
     /// - Throws: ProxyError if the proxy cannot be created
     public static func withCertificateErrorHandling(
         address: String,
         ports: [Int],
         requestFilter: @escaping RequestFilterCallback,
-        brandingText: String? = nil,
-        customCSS: String? = nil
+        htmlTemplate: String?
     ) throws -> HudsuckerProxy {
-        let certOptions = CertificateErrorOptions(
-            enableCustomErrorPages: true,
-            brandingText: brandingText,
-            customCSS: customCSS
-        )
-        
         return try HudsuckerProxy(
             address: address,
             ports: ports,
             requestFilter: requestFilter,
-            certificateErrorOptions: certOptions
+            certificateErrorHTMLTemplate: htmlTemplate
         )
     }
 }
@@ -306,6 +280,7 @@ private func hudsucker_create_proxy_with_cert_errors(
     _ caKeyPem: UnsafePointer<CChar>,
     _ callback: @convention(c) (UnsafePointer<CChar>?, UnsafePointer<CChar>?, UnsafeMutableRawPointer?) -> Bool,
     _ userData: UnsafeMutableRawPointer?,
+    _ htmlTemplate: UnsafePointer<CChar>?,
     _ proxyOut: UnsafeMutablePointer<OpaquePointer?>
 ) -> Int32
 

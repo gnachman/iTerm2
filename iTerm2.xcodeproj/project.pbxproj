@@ -3306,6 +3306,9 @@
 		A6AA2F692E28B257002998B3 /* iTermProfilePreferenceObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AA2F672E28B257002998B3 /* iTermProfilePreferenceObserver.swift */; };
 		A6AA2F6B2E28B615002998B3 /* HudsuckerProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AA2F602E28B1E1002998B3 /* HudsuckerProxy.swift */; };
 		A6AA2F8C2E28BC84002998B3 /* libhudsucker_ffi.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6AA2F582E28B185002998B3 /* libhudsucker_ffi.a */; };
+		A6AA2F8E2E296849002998B3 /* cert-error.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AA2F8D2E296849002998B3 /* cert-error.html */; };
+		A6AA2F8F2E296849002998B3 /* cert-error.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AA2F8D2E296849002998B3 /* cert-error.html */; };
+		A6AA2F902E296849002998B3 /* cert-error.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AA2F8D2E296849002998B3 /* cert-error.html */; };
 		A6AAD5EE22F4A1DD002DD12C /* iTermCommandRunnerPool.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AAD5EC22F4A1DD002DD12C /* iTermCommandRunnerPool.h */; };
 		A6AAD5EF22F4A1DD002DD12C /* iTermCommandRunnerPool.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AAD5ED22F4A1DD002DD12C /* iTermCommandRunnerPool.m */; };
 		A6AAD5F322F7EB61002DD12C /* iTermWindowSizeView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AAD5F122F7EB61002DD12C /* iTermWindowSizeView.h */; };
@@ -7942,6 +7945,7 @@
 		A6AA2F602E28B1E1002998B3 /* HudsuckerProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HudsuckerProxy.swift; sourceTree = "<group>"; };
 		A6AA2F662E28B257002998B3 /* iTermProfilePreferenceMutator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermProfilePreferenceMutator.swift; sourceTree = "<group>"; };
 		A6AA2F672E28B257002998B3 /* iTermProfilePreferenceObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermProfilePreferenceObserver.swift; sourceTree = "<group>"; };
+		A6AA2F8D2E296849002998B3 /* cert-error.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "cert-error.html"; sourceTree = "<group>"; };
 		A6AAD5EC22F4A1DD002DD12C /* iTermCommandRunnerPool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCommandRunnerPool.h; sourceTree = "<group>"; };
 		A6AAD5ED22F4A1DD002DD12C /* iTermCommandRunnerPool.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCommandRunnerPool.m; sourceTree = "<group>"; };
 		A6AAD5F122F7EB61002DD12C /* iTermWindowSizeView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermWindowSizeView.h; sourceTree = "<group>"; };
@@ -13171,6 +13175,7 @@
 		A6CBB8162E0A1B7400B2CCCB /* Local Pages */ = {
 			isa = PBXGroup;
 			children = (
+				A6AA2F8D2E296849002998B3 /* cert-error.html */,
 				A671D6D32E1E37200087348B /* dev.html */,
 				A6F7D4C22E037BC80065D09C /* iTermBrowserCSSLoader.swift */,
 				A6F7D4BA2E0373110065D09C /* iTermBrowserErrorHandler.swift */,
@@ -16174,6 +16179,7 @@
 				A64F32162B853CEE008EFDC9 /* dice.png in Resources */,
 				A697CE082D9763480031583F /* FoldMenuTip@2x.png in Resources */,
 				A697CE092D9763480031583F /* FoldMenuTip.png in Resources */,
+				A6AA2F902E296849002998B3 /* cert-error.html in Resources */,
 				A671D6D62E1E372E0087348B /* dev.html in Resources */,
 				1D6ED9E019AEA20D005A7799 /* PrefsAppearance.png in Resources */,
 				A6A64E6B2508C5B50040490B /* OpenQuicklySnippetIcon.png in Resources */,
@@ -16303,6 +16309,7 @@
 				A697CDEB2D975E680031583F /* ActionsMenuTip@2x.jpg in Resources */,
 				A6F7A744213CB143004DE961 /* StatusBarIconPaste.png in Resources */,
 				A697CE802D97C5950031583F /* BurySessionMenuTip@2x.png in Resources */,
+				A6AA2F8F2E296849002998B3 /* cert-error.html in Resources */,
 				A6F7D4C82E037E780065D09C /* error-page.html in Resources */,
 				A697CE812D97C5950031583F /* BurySessionMenuTip.png in Resources */,
 				A66C8189294E751800452A11 /* AITerm.xib in Resources */,
@@ -17216,6 +17223,7 @@
 				A6CB24AA2C68149100005824 /* it2check in Resources */,
 				A6E7AE80214394DD00DE9F3B /* graphic_curl@2x.png in Resources */,
 				A6CBB90D2E0A832C00B2CCCB /* distraction-removal.js in Resources */,
+				A6AA2F8E2E296849002998B3 /* cert-error.html in Resources */,
 				A6F18B442AE2F39C006C08EE /* uniE0A3_column-number.pdf in Resources */,
 				A6F18B502AE2F39C006C08EE /* uniE0B2_Powerline_normal-right.pdf in Resources */,
 				A67F6164214395990093940A /* graphic_monitor.png in Resources */,
