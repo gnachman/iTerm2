@@ -11,6 +11,18 @@ use hudsucker::{
 use std::collections::HashSet;
 use std::sync::{Arc, Mutex};
 use std::error::Error;
+use std::time::{SystemTime, Duration};
+
+/// Information about the current valid bypass token
+#[derive(Clone, Debug)]
+struct BypassToken {
+    /// The token string
+    token: String,
+    /// The domain this token is bound to
+    domain: String,
+    /// When this token expires
+    expires_at: SystemTime,
+}
 
 /// Handler that extends the base CallbackHandler with certificate error handling
 /// 
@@ -38,23 +50,128 @@ pub struct CertErrorHandler {
     pub bypassed_hosts: Arc<Mutex<HashSet<String>>>,
     
     /// Custom HTML template for certificate error pages
-    /// The template should contain placeholders: {host} and {error_type}
+    /// The template should contain placeholders: {error_type}
     pub html_template: String,
+    
+    /// Insecure HTTP client that accepts all certificates
+    /// Used for domains that have been added to the bypass list
+    pub insecure_client: Arc<hyper_util::client::legacy::Client<hyper_tls::HttpsConnector<hyper_util::client::legacy::connect::HttpConnector>, Body>>,
+    
+    /// Current valid bypass token (only one at a time for security)
+    pub current_bypass_token: Arc<Mutex<Option<BypassToken>>>,
+    
+    /// Store the current request URI for hostname extraction during error handling
+    pub current_request_uri: Arc<Mutex<Option<hudsucker::hyper::Uri>>>,
 }
 
 impl CertErrorHandler {
     pub fn new(proxy_id: usize, html_template: String) -> Self {
+        // Create insecure HTTP client that accepts all certificates
+        let insecure_client = {
+            use hyper_util::client::legacy::connect::HttpConnector;
+            use hyper_util::rt::TokioExecutor;
+            
+            let mut http = HttpConnector::new();
+            http.enforce_http(false);
+            
+            // Create TLS connector that accepts invalid certificates
+            let tls = hyper_tls::native_tls::TlsConnector::builder()
+                .danger_accept_invalid_certs(true)
+                .danger_accept_invalid_hostnames(true)
+                .build()
+                .expect("Failed to create insecure TLS connector");
+            
+            let https = hyper_tls::HttpsConnector::from((http, tls.into()));
+            Arc::new(hyper_util::client::legacy::Client::builder(TokioExecutor::new()).build(https))
+        };
+        
         Self {
             base_handler: crate::CallbackHandler { proxy_id },
             bypassed_hosts: Arc::new(Mutex::new(HashSet::new())),
             html_template,
+            insecure_client,
+            current_bypass_token: Arc::new(Mutex::new(None)),
+            current_request_uri: Arc::new(Mutex::new(None)),
         }
     }
 
     /// Generate the certificate error page by substituting placeholders in the template
-    fn generate_cert_error_page(&self, error_type: &str) -> String {
-        self.html_template
-            .replace("{error_type}", error_type)
+    fn generate_cert_error_page(&self, error_type: &str, domain: &str) -> String {
+        // Generate a cryptographically secure random secret for this error page
+        if let Some(bypass_secret) = self.generate_bypass_secret() {
+            // Store the token with expiration (10 minutes from now)
+            // This replaces any existing token (only one active at a time)
+            let expires_at = SystemTime::now() + Duration::from_secs(10 * 60);
+            let token_info = BypassToken { 
+                token: bypass_secret.clone(),
+                domain: domain.to_string(),
+                expires_at,
+            };
+            
+            if let Ok(mut current_token) = self.current_bypass_token.lock() {
+                *current_token = Some(token_info);
+            }
+            
+            self.html_template
+                .replace("{error_type}", error_type)
+                .replace("{bypass_secret}", &bypass_secret)
+        } else {
+            // Security failure - return error page without bypass option
+            self.html_template
+                .replace("{error_type}", error_type)
+                .replace("{bypass_secret}", "")
+        }
+    }
+    
+    /// Generate a cryptographically secure random bypass secret for authentication
+    /// Returns None if secure random generation fails (disables bypass behavior)
+    fn generate_bypass_secret(&self) -> Option<String> {
+        use getrandom::getrandom;
+        
+        // Generate 32 bytes (256 bits) of cryptographically secure random data
+        let mut bytes = [0u8; 32];
+        match getrandom(&mut bytes) {
+            Ok(()) => {
+                // Convert to hex string
+                Some(hex::encode(bytes))
+            }
+            Err(_) => {
+                // Security failure - disable bypass behavior entirely
+                eprintln!("SECURITY ERROR: Failed to generate cryptographically secure random token. Certificate bypass disabled.");
+                None
+            }
+        }
+    }
+    
+    /// Validate and consume a bypass token (one-time use)
+    /// Returns true if the token is valid, not expired, and bound to the correct domain
+    pub fn validate_and_consume_bypass_token(&self, token: &str, domain: &str) -> bool {
+        let now = SystemTime::now();
+        
+        if let Ok(mut current_token) = self.current_bypass_token.lock() {
+            if let Some(token_info) = current_token.as_ref() {
+                // Check if token matches, domain matches, and hasn't expired
+                if token_info.token == token && 
+                   token_info.domain == domain &&
+                   token_info.expires_at > now {
+                    // Consume the token (remove it)
+                    *current_token = None;
+                    return true;
+                }
+            }
+            
+            // If token is expired, doesn't match, or domain doesn't match, clear it
+            *current_token = None;
+        }
+        
+        false
+    }
+    
+    /// Clear the current bypass token (if any)
+    pub fn clear_bypass_token(&self) {
+        if let Ok(mut current_token) = self.current_bypass_token.lock() {
+            *current_token = None;
+        }
     }
 
     /// Parse the error from hyper/rustls/native-tls to determine if it's a certificate error
@@ -145,27 +262,28 @@ impl HttpHandler for CertErrorHandler {
         ctx: &HttpContext,
         req: Request<Body>,
     ) -> RequestOrResponse {
-        // IMPORTANT: How the bypass mechanism works
-        // 
-        // When the user clicks "Continue Anyway" on our error page, it submits a POST
-        // to /__hudsucker_bypass_cert/{hostname}. We intercept this special URL here.
-        // 
-        // The bypass is stored in memory (bypassed_hosts) but does NOT actually disable
-        // certificate validation. Instead:
-        // 
-        // 1. We remember that the user wants to visit this host
-        // 2. We redirect them back to the original site
-        // 3. The browser will try to connect again
-        // 4. Certificate validation will STILL FAIL (we can't disable it per-request)
-        // 5. Our handle_error will be called again
-        // 6. This time, we check if the host is in bypassed_hosts
-        // 7. If it is, we'd need a different strategy (see note below)
+        // Store the current request URI for hostname extraction during error handling
+        if let Ok(mut current_uri) = self.current_request_uri.lock() {
+            *current_uri = Some(req.uri().clone());
+        }
         
-        if req.uri().path().starts_with("/__hudsucker_bypass_cert/") {
+        // Handle bypass certificate requests
+        if req.uri().path().starts_with("/__hudsucker_bypass_cert") {
             if req.method() == Method::POST {
-                let host = req.uri().path()
-                    .trim_start_matches("/__hudsucker_bypass_cert/")
-                    .to_string();
+                // Extract hostname from the Referer header if available
+                let host = if let Some(referer) = req.headers().get("referer") {
+                    if let Ok(referer_str) = referer.to_str() {
+                        if let Ok(referer_uri) = referer_str.parse::<hudsucker::hyper::Uri>() {
+                            referer_uri.host().unwrap_or("unknown").to_string()
+                        } else {
+                            "unknown".to_string()
+                        }
+                    } else {
+                        "unknown".to_string()
+                    }
+                } else {
+                    "unknown".to_string()
+                };
                 
                 // Add host to bypass list
                 if let Ok(mut bypassed) = self.bypassed_hosts.lock() {
@@ -180,6 +298,50 @@ impl HttpHandler for CertErrorHandler {
                     .expect("Failed to build response");
                 
                 return response.into();
+            }
+        }
+        
+        // Check if this request is for a bypassed host
+        if let Some(host) = req.uri().host() {
+            let host_string = host.to_string();
+            let is_bypassed = self.bypassed_hosts
+                .lock()
+                .map(|hosts| hosts.contains(&host_string))
+                .unwrap_or(false);
+            
+            if is_bypassed {
+                // Make the request using the insecure client
+                eprintln!("DEBUG: Making insecure request to bypassed host: {}", host_string);
+                
+                // Create new request for the insecure client
+                let mut new_req = Request::builder()
+                    .method(req.method())
+                    .uri(req.uri().clone());
+                
+                // Copy headers
+                for (key, value) in req.headers() {
+                    new_req = new_req.header(key, value);
+                }
+                
+                let new_req = new_req.body(req.into_body()).expect("Failed to build request");
+                
+                // Make the request with the insecure client
+                match self.insecure_client.request(new_req).await {
+                    Ok(response) => {
+                        eprintln!("DEBUG: Insecure request succeeded for {}", host_string);
+                        return response.map(Body::from).into();
+                    }
+                    Err(e) => {
+                        eprintln!("DEBUG: Insecure request failed for {}: {}", host_string, e);
+                        // Fall through to normal handling - but we consumed the request!
+                        // Return an error response instead
+                        let error_response = Response::builder()
+                            .status(StatusCode::BAD_GATEWAY)
+                            .body(Body::from("Insecure request failed"))
+                            .expect("Failed to build error response");
+                        return error_response.into();
+                    }
+                }
             }
         }
         
@@ -211,8 +373,20 @@ impl HttpHandler for CertErrorHandler {
         if let Some(error_type) = Self::parse_cert_error(&err) {
             eprintln!("DEBUG: Parsed as cert error - type: {}", error_type);
             
-            // Generate custom error page
-            let html = self.generate_cert_error_page(&error_type);
+            // Extract hostname from the stored request URI
+            let hostname = if let Ok(current_uri) = self.current_request_uri.lock() {
+                current_uri.as_ref()
+                    .and_then(|uri| uri.authority())
+                    .map(|auth| auth.host().to_string())
+                    .unwrap_or_else(|| "unknown".to_string())
+            } else {
+                "unknown".to_string()
+            };
+            
+            eprintln!("DEBUG: Certificate error for hostname: {}", hostname);
+            
+            // Generate custom error page with domain binding
+            let html = self.generate_cert_error_page(&error_type, &hostname);
             
             return Response::builder()
                 .status(StatusCode::BAD_GATEWAY)

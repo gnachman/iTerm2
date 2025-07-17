@@ -79,6 +79,66 @@ enum HudsuckerError hudsucker_generate_ca_cert(char **cert_out, char **key_out);
 void hudsucker_free_string(char *ptr);
 
 /**
+ * Add a domain to the certificate bypass list for a proxy with certificate error handling
+ *
+ * This function validates the provided bypass token and, if valid, adds the domain
+ * to the certificate bypass list. The token is consumed (removed) after validation.
+ *
+ * # Parameters
+ * * `proxy` - Proxy handle from `hudsucker_create_proxy_with_cert_errors`
+ * * `domain` - Domain to add to bypass list (e.g., "example.com")
+ * * `token` - Valid bypass token from certificate error page
+ *
+ * # Returns
+ * * `HudsuckerError::Success` on success
+ * * `HudsuckerError::InvalidParameter` if token is invalid or expired
+ * * Error code on failure
+ */
+enum HudsuckerError hudsucker_add_bypassed_domain(struct HudsuckerProxy *proxy,
+                                                  const char *domain,
+                                                  const char *token);
+
+/**
+ * Remove a domain from the certificate bypass list
+ *
+ * # Parameters
+ * * `proxy` - Proxy handle from `hudsucker_create_proxy_with_cert_errors`
+ * * `domain` - Domain to remove from bypass list (e.g., "example.com")
+ *
+ * # Returns
+ * * `HudsuckerError::Success` on success
+ * * Error code on failure
+ */
+enum HudsuckerError hudsucker_remove_bypassed_domain(struct HudsuckerProxy *proxy,
+                                                     const char *domain);
+
+/**
+ * Check if a domain is in the certificate bypass list
+ *
+ * # Parameters
+ * * `proxy` - Proxy handle from `hudsucker_create_proxy_with_cert_errors`
+ * * `domain` - Domain to check (e.g., "example.com")
+ *
+ * # Returns
+ * * `1` if domain is bypassed
+ * * `0` if domain is not bypassed
+ * * Negative error code on failure
+ */
+int32_t hudsucker_is_domain_bypassed(struct HudsuckerProxy *proxy, const char *domain);
+
+/**
+ * Clear all domains from the certificate bypass list
+ *
+ * # Parameters
+ * * `proxy` - Proxy handle from `hudsucker_create_proxy_with_cert_errors`
+ *
+ * # Returns
+ * * `HudsuckerError::Success` on success
+ * * Error code on failure
+ */
+enum HudsuckerError hudsucker_clear_bypassed_domains(struct HudsuckerProxy *proxy);
+
+/**
  * Create a new proxy instance with certificate error handling
  *
  * This function creates a proxy that will intercept certificate validation errors

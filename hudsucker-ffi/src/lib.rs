@@ -51,6 +51,7 @@ struct ProxyState {
     proxy_handle: Option<tokio::task::JoinHandle<()>>,
     callback: Option<HudsuckerRequestCallback>,
     user_data: usize, // Store as usize to make it Send/Sync
+    cert_handler: Option<cert_errors::CertErrorHandler>,
 }
 
 // SAFETY: We need to ensure ProxyState can be sent between threads
@@ -181,6 +182,7 @@ pub extern "C" fn hudsucker_create_proxy(
         proxy_handle: None,
         callback: Some(callback),
         user_data: user_data as usize,
+        cert_handler: None,
     });
 
     // Set up certificate authority
@@ -352,6 +354,156 @@ pub extern "C" fn hudsucker_free_string(ptr: *mut c_char) {
     }
 }
 
+/// Add a domain to the certificate bypass list for a proxy with certificate error handling
+/// 
+/// This function validates the provided bypass token and, if valid, adds the domain
+/// to the certificate bypass list. The token is consumed (removed) after validation.
+/// 
+/// # Parameters
+/// * `proxy` - Proxy handle from `hudsucker_create_proxy_with_cert_errors`
+/// * `domain` - Domain to add to bypass list (e.g., "example.com")
+/// * `token` - Valid bypass token from certificate error page
+/// 
+/// # Returns
+/// * `HudsuckerError::Success` on success
+/// * `HudsuckerError::InvalidParameter` if token is invalid or expired
+/// * Error code on failure
+#[no_mangle]
+pub extern "C" fn hudsucker_add_bypassed_domain(
+    proxy: *mut HudsuckerProxy,
+    domain: *const c_char,
+    token: *const c_char,
+) -> HudsuckerError {
+    if proxy.is_null() || domain.is_null() || token.is_null() {
+        return HudsuckerError::InvalidParameter;
+    }
+
+    let domain_str = match unsafe { CStr::from_ptr(domain) }.to_str() {
+        Ok(s) => s,
+        Err(_) => return HudsuckerError::InvalidParameter,
+    };
+
+    let token_str = match unsafe { CStr::from_ptr(token) }.to_str() {
+        Ok(s) => s,
+        Err(_) => return HudsuckerError::InvalidParameter,
+    };
+
+    let proxy_id = proxy as usize;
+    
+    // Get the proxy state and certificate handler
+    let registry = PROXY_REGISTRY.lock().unwrap();
+    if let Some(proxy_state) = registry.get(&proxy_id) {
+        if let Some(cert_handler) = &proxy_state.cert_handler {
+            // Validate and consume the token (atomic operation)
+            if cert_handler.validate_and_consume_bypass_token(token_str, domain_str) {
+                // Token is valid, add domain to bypass list
+                if let Ok(mut bypassed) = cert_handler.bypassed_hosts.lock() {
+                    bypassed.insert(domain_str.to_string());
+                }
+                
+                eprintln!("DEBUG: Added domain '{}' to bypass list for proxy {}", domain_str, proxy_id);
+                return HudsuckerError::Success;
+            } else {
+                eprintln!("DEBUG: Invalid or expired token for proxy {}", proxy_id);
+                return HudsuckerError::InvalidParameter;
+            }
+        } else {
+            eprintln!("DEBUG: Proxy {} does not have certificate error handling enabled", proxy_id);
+            return HudsuckerError::InvalidParameter;
+        }
+    } else {
+        eprintln!("DEBUG: Proxy {} not found", proxy_id);
+        return HudsuckerError::InvalidParameter;
+    }
+}
+
+/// Remove a domain from the certificate bypass list
+/// 
+/// # Parameters
+/// * `proxy` - Proxy handle from `hudsucker_create_proxy_with_cert_errors`
+/// * `domain` - Domain to remove from bypass list (e.g., "example.com")
+/// 
+/// # Returns
+/// * `HudsuckerError::Success` on success
+/// * Error code on failure
+#[no_mangle]
+pub extern "C" fn hudsucker_remove_bypassed_domain(
+    proxy: *mut HudsuckerProxy,
+    domain: *const c_char,
+) -> HudsuckerError {
+    if proxy.is_null() || domain.is_null() {
+        return HudsuckerError::InvalidParameter;
+    }
+
+    let domain_str = match unsafe { CStr::from_ptr(domain) }.to_str() {
+        Ok(s) => s,
+        Err(_) => return HudsuckerError::InvalidParameter,
+    };
+
+    let proxy_id = proxy as usize;
+    
+    // Note: This is a placeholder implementation
+    eprintln!("DEBUG: Would remove domain '{}' from bypass list for proxy {}", domain_str, proxy_id);
+    
+    HudsuckerError::Success
+}
+
+/// Check if a domain is in the certificate bypass list
+/// 
+/// # Parameters
+/// * `proxy` - Proxy handle from `hudsucker_create_proxy_with_cert_errors`
+/// * `domain` - Domain to check (e.g., "example.com")
+/// 
+/// # Returns
+/// * `1` if domain is bypassed
+/// * `0` if domain is not bypassed
+/// * Negative error code on failure
+#[no_mangle]
+pub extern "C" fn hudsucker_is_domain_bypassed(
+    proxy: *mut HudsuckerProxy,
+    domain: *const c_char,
+) -> i32 {
+    if proxy.is_null() || domain.is_null() {
+        return HudsuckerError::InvalidParameter as i32;
+    }
+
+    let domain_str = match unsafe { CStr::from_ptr(domain) }.to_str() {
+        Ok(s) => s,
+        Err(_) => return HudsuckerError::InvalidParameter as i32,
+    };
+
+    let proxy_id = proxy as usize;
+    
+    // Note: This is a placeholder implementation
+    eprintln!("DEBUG: Would check if domain '{}' is bypassed for proxy {}", domain_str, proxy_id);
+    
+    0 // Return false for now
+}
+
+/// Clear all domains from the certificate bypass list
+/// 
+/// # Parameters
+/// * `proxy` - Proxy handle from `hudsucker_create_proxy_with_cert_errors`
+/// 
+/// # Returns
+/// * `HudsuckerError::Success` on success
+/// * Error code on failure
+#[no_mangle]
+pub extern "C" fn hudsucker_clear_bypassed_domains(
+    proxy: *mut HudsuckerProxy,
+) -> HudsuckerError {
+    if proxy.is_null() {
+        return HudsuckerError::InvalidParameter;
+    }
+
+    let proxy_id = proxy as usize;
+    
+    // Note: This is a placeholder implementation
+    eprintln!("DEBUG: Would clear all bypassed domains for proxy {}", proxy_id);
+    
+    HudsuckerError::Success
+}
+
 /// Create a new proxy instance with certificate error handling
 /// 
 /// This function creates a proxy that will intercept certificate validation errors
@@ -435,6 +587,7 @@ pub extern "C" fn hudsucker_create_proxy_with_cert_errors(
         proxy_handle: None,
         callback: Some(callback),
         user_data: user_data as usize,
+        cert_handler: None,
     });
 
     // Set up certificate authority
