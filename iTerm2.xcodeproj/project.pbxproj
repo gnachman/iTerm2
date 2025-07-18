@@ -8909,8 +8909,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		A69FEEBB2E123B8700AFF7A8 /* iTermSwiftProxy */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = iTermSwiftProxy; sourceTree = "<group>"; };
-		A69FEEC82E123B8700AFF7A8 /* iTermSwiftPackagesTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = iTermSwiftPackagesTests; sourceTree = "<group>"; };
 		A6A723AF2DC04C2200A8115D /* ModernTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ModernTests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
@@ -9104,8 +9102,6 @@
 				A6822778280E26CD005DF0B4 /* SwiftyMarkdown */,
 				A6A5BDF82A070C3C00F5FD44 /* iTerm2ImportStatus */,
 				A6A723AF2DC04C2200A8115D /* ModernTests */,
-				A69FEEBB2E123B8700AFF7A8 /* iTermSwiftProxy */,
-				A69FEEC82E123B8700AFF7A8 /* iTermSwiftPackagesTests */,
 				1DD39AD5180B8118004E56D5 /* Frameworks */,
 				0464AB32006CD2EC7F000001 /* Products */,
 			);
@@ -15477,9 +15473,6 @@
 			buildRules = (
 			);
 			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				A69FEEBB2E123B8700AFF7A8 /* iTermSwiftProxy */,
 			);
 			name = iTermSwiftPackages;
 			packageProductDependencies = (

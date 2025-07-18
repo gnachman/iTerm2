@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate Security Warning</title>
+    <style>
+        {{COMMON_CSS}}
+        
+        body {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .error-container {
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        .error-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 32px;
+            background: linear-gradient(135deg, #ff6b6b, #ffa500);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 25px var(--shadow);
+        }
+        
+        .error-icon::before {
+            content: "⚠";
+            font-size: 36px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .error-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-color);
+        }
+        
+        .error-message {
+            font-size: 16px;
+            color: var(--secondary-text);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+        
+        .error-url {
+            font-size: 14px;
+            color: var(--secondary-text);
+            background: var(--border-color);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+            word-break: break-word;
+            border: 1px solid var(--border-color);
+        }
+        
+        
+        
+        .retry-button {
+            margin-top: 16px;
+        }
+        
+        .details {
+            margin-top: 32px;
+            font-size: 14px;
+            color: var(--secondary-text);
+            line-height: 1.5;
+        }
+        
+        .bypass-form {
+            display: inline;
+        }
+        
+        @media (max-width: 480px) {
+            .error-title {
+                font-size: 24px;
+            }
+            
+            .error-message {
+                font-size: 15px;
+            }
+            
+            .error-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-icon"></div>
+        <h1 class="error-title">Certificate Security Warning</h1>
+        
+        <p class="error-message">The security certificate for this site has a problem. This could mean that someone is trying to impersonate the site, and you shouldn't continue.</p>
+        <div class="error-url">Problem: {error_type}</div>
+        
+        <button class="button retry-button" onclick="goBack()">Go Back to Safety</button>
+        <script>
+            // Only show bypass button if we have a valid token
+            if ('{bypass_secret}' && '{bypass_secret}' !== '') {
+                document.write('<button class="button retry-button" onclick="continueAnyway()" style="margin-top: 16px; background: transparent; color: #e74c3c; border: 2px solid #e74c3c;">Continue Anyway (Unsafe)</button>');
+            }
+        </script>
+        
+        <div class="details">
+            Go back to aafety unless you’re absolutely sure it is safe to view the page.
+        </div>
+    </div>
+    
+    <script>
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.close();
+            }
+        }
+        
+        function continueAnyway() {
+            const currentUrl = window.location.href;
+            const hostname = new URL(currentUrl).hostname;
+            
+            // Send message to native app with bypass secret for authentication
+            window.webkit.messageHandlers.iTerm2SSLBypass.postMessage({
+                action: 'bypass-certificate',
+                hostname: hostname,
+                url: currentUrl,
+                secret: '{bypass_secret}'
+            });
+        }
+        
+        // Add keyboard support
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                goBack();
+            }
+        });
+    </script>
+</body>
+</html>

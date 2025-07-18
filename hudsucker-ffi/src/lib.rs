@@ -3,7 +3,7 @@ use std::ffi::{CStr, CString};
 use std::net::SocketAddr;
 use std::os::raw::{c_char, c_void};
 use std::ptr;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use hudsucker::{
     certificate_authority::RcgenAuthority,
@@ -198,15 +198,20 @@ pub extern "C" fn hudsucker_create_proxy(
         Err(_) => return HudsuckerError::ProxyCreationFailed,
     };
 
-    let ca = RcgenAuthority::new(key_pair, ca_cert, 1_000, aws_lc_rs::default_provider());
+    // Use our custom certificate authority that includes Extended Key Usage
+    let ca = cert_errors::EKUFixedRcgenAuthority::new(key_pair, ca_cert, 1_000, aws_lc_rs::default_provider());
 
-    // Create the proxy
+    // Create the proxy with modern TLS configuration
     let handler = CallbackHandler { proxy_id };
+    
+    // Create modern crypto provider
+    let modern_crypto_provider = cert_errors::create_modern_crypto_provider();
+    eprintln!("DEBUG: Successfully created modern crypto provider");
     
     let proxy = match Proxy::builder()
         .with_addr(socket_addr)
         .with_ca(ca)
-        .with_rustls_client(aws_lc_rs::default_provider())
+        .with_rustls_client(modern_crypto_provider)
         .with_http_handler(handler.clone())
         .with_websocket_handler(handler)
         .build()
@@ -293,7 +298,7 @@ pub extern "C" fn hudsucker_generate_ca_cert(
         return HudsuckerError::InvalidParameter;
     }
 
-    use rcgen::{BasicConstraints, CertificateParams, DistinguishedName, IsCa, KeyPair, KeyUsagePurpose};
+    use rcgen::{BasicConstraints, CertificateParams, DistinguishedName, ExtendedKeyUsagePurpose, IsCa, KeyPair, KeyUsagePurpose};
 
     // Generate key pair
     let key_pair = match KeyPair::generate() {
@@ -307,6 +312,11 @@ pub extern "C" fn hudsucker_generate_ca_cert(
     params.key_usages = vec![
         KeyUsagePurpose::KeyCertSign,
         KeyUsagePurpose::CrlSign,
+    ];
+    // Add Extended Key Usage for SSL/TLS server authentication
+    // This allows certificates signed by this CA to be used for HTTPS servers
+    params.extended_key_usages = vec![
+        ExtendedKeyUsagePurpose::ServerAuth,
     ];
 
     let mut dn = DistinguishedName::new();
@@ -398,10 +408,12 @@ pub extern "C" fn hudsucker_add_bypassed_domain(
             if cert_handler.validate_and_consume_bypass_token(token_str, domain_str) {
                 // Token is valid, add domain to bypass list
                 if let Ok(mut bypassed) = cert_handler.bypassed_hosts.lock() {
+                    eprintln!("DEBUG: Current bypassed hosts before adding: {:?}", bypassed);
                     bypassed.insert(domain_str.to_string());
+                    eprintln!("DEBUG: Bypassed hosts after adding '{}': {:?}", domain_str, bypassed);
                 }
                 
-                eprintln!("DEBUG: Added domain '{}' to bypass list for proxy {}", domain_str, proxy_id);
+                eprintln!("DEBUG: Successfully added domain '{}' to bypass list for proxy {}", domain_str, proxy_id);
                 return HudsuckerError::Success;
             } else {
                 eprintln!("DEBUG: Invalid or expired token for proxy {}", proxy_id);
@@ -654,7 +666,8 @@ pub extern "C" fn hudsucker_create_proxy_with_cert_errors(
         Err(_) => return HudsuckerError::ProxyCreationFailed,
     };
 
-    let ca = RcgenAuthority::new(key_pair, ca_cert, 1_000, aws_lc_rs::default_provider());
+    // Use our custom certificate authority that includes Extended Key Usage
+    let ca = cert_errors::EKUFixedRcgenAuthority::new(key_pair, ca_cert, 1_000, aws_lc_rs::default_provider());
 
     // HTML template is required for certificate error handling
     if html_template.is_null() {
@@ -673,13 +686,19 @@ pub extern "C" fn hudsucker_create_proxy_with_cert_errors(
     // Store the certificate handler in the proxy state
     proxy_state.cert_handler = Some(cert_handler.clone());
     
-    // Build the proxy with the certificate error handler
-    // When you call .with_http_handler(), you're telling hudsucker to use this
-    // implementation for all HTTP-related operations (requests, responses, errors)
+    // Use modern TLS client configuration for better compatibility
+    eprintln!("DEBUG: Creating modern TLS client for certificate error handler");
+    
+    // Create modern crypto provider for certificate error handler
+    let modern_crypto_provider = cert_errors::create_modern_crypto_provider();
+    eprintln!("DEBUG: Successfully created modern crypto provider for cert handler");
+    
+    // Build the proxy with modern TLS configuration
+    eprintln!("DEBUG: Building proxy with certificate error handler and modern TLS");
     let proxy = match Proxy::builder()
         .with_addr(socket_addr)
         .with_ca(ca)
-        .with_rustls_client(aws_lc_rs::default_provider())
+        .with_rustls_client(modern_crypto_provider)
         .with_http_handler(cert_handler.clone())
         .with_websocket_handler(cert_handler)
         .build()

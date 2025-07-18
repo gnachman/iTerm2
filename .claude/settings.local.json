@@ -24,7 +24,13 @@
       "Bash(nm:*)",
       "Bash(objdump:*)",
       "Bash(export:*)",
-      "Bash(cargo:*)"
+      "Bash(cargo:*)",
+      "WebFetch(domain:docs.rs)",
+      "WebFetch(domain:stackoverflow.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(make:*)",
+      "Bash(~/.cargo/bin/cargo build --release)",
+      "Bash(~/.cargo/bin/cargo tree)"
     ],
     "deny": []
   }

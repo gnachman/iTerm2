@@ -866,71 +866,14 @@ extension iTermBrowserWebView {
         }
     }
 }
-#warning("TODO: Remove kvo stuff")
-fileprivate var serverTrustKVOContext = 0
 
 @available(macOS 11.0, *)
 extension iTermBrowserWebView {
     func startMITM(rootCert: SecCertificate) {
         self.rootCert = rootCert
-        // observe the serverTrust SecTrustRef whenever it changes
-
-        addObserver(self,
-                    forKeyPath: #keyPath(WKWebView.serverTrust),
-                    options: [.initial, .new],
-                    context: &serverTrustKVOContext)
     }
 
     func stopMITM() {
-        if rootCert != nil {
-            rootCert = nil
-            removeObserver(self,
-                           forKeyPath: #keyPath(WKWebView.serverTrust),
-                           context: &serverTrustKVOContext)
-        }
-    }
-
-    override var serverTrust: SecTrust? {
-        get {
-            let value = super.serverTrust
-            print("Getting value \(value)")
-            return value
-        }
-    }
-
-    // KVO callback
-    override func observeValue(forKeyPath keyPath: String?,
-                               of object: Any?,
-                               change: [NSKeyValueChangeKey : Any]?,
-                               context: UnsafeMutableRawPointer?) {
-        guard context == &serverTrustKVOContext else {
-            super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
-            return
-        }
-        guard keyPath == #keyPath(WKWebView.serverTrust) else {
-            print("qqq kvo for wrong keypath")
-            return
-        }
-        guard let trust = serverTrust else {
-            print("qqq nil serverTrust in kvo")
-            return
-        }
-        guard let rootCert else {
-            print("qqq nil rootCert in kvo")
-            return
-        }
-
-        // inject your CA as an anchor
-        SecTrustSetAnchorCertificates(trust, [rootCert] as CFArray)
-        SecTrustSetAnchorCertificatesOnly(trust, false)
-        print("qqq injecting root cert")
-
-        // evaluate
-        var cferror: CFError?
-        guard SecTrustEvaluateWithError(trust, &cferror) else {
-            DLog("Failed: \(String(describing: cferror))")
-            print("qqq \(cferror!)")
-            return
-        }
+        rootCert = nil
     }
 }
