@@ -40,6 +40,7 @@
       "Bash(ffmpeg:*)",
       "Bash(swift:*)",
       "Bash(sed:*)"
+      "Bash(~/.cargo/bin/cargo tree)"
     ],
     "deny": []
   }
