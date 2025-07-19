@@ -64,9 +64,9 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         }
 #endif
         
-        let substitutions = ["ADBLOCK_ENABLED": iTermAdvancedSettingsModel.adblockEnabled() ? "checked" : "",
+        let substitutions = ["ADBLOCK_ENABLED": iTermAdvancedSettingsModel.webKitAdblockEnabled() ? "checked" : "",
                              "ADBLOCK_URL": iTermAdvancedSettingsModel.adblockListURL().replacingOccurrences(of: "&", with: "&amp;").replacingOccurrences(of: "\"", with: "&quot;"),
-                             "RUST_ADBLOCK_ENABLED": iTermAdvancedSettingsModel.adblockEnabled() ? "checked" : "",
+                             "RUST_ADBLOCK_ENABLED": iTermAdvancedSettingsModel.rustAdblockEnabled() ? "checked" : "",
                              "SECRET": secret,
                              "DEV_NULL_NOTE": isDevNull ? "" : "display: none;",
                              "SHOW_EXTENSIONS": showExtensions ? "" : "display: none;"]
@@ -123,7 +123,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             clearCookies(webView: webView)
         case "clearAllData":
             clearAllWebsiteData(webView: webView)
-        case "setAdblockEnabled":
+        case "setAdblockEnabled":  // webkit
             if let enabled = message["value"] as? Bool {
                 setAdblockEnabled(enabled, webView: webView)
             }
@@ -237,9 +237,10 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     }
     
     // MARK: - Adblock Settings
-    
+
+    // This is for webkit adblocking, not rust
     private func setAdblockEnabled(_ enabled: Bool, webView: WKWebView) {
-        iTermAdvancedSettingsModel.setAdblockEnabled(enabled)
+        iTermAdvancedSettingsModel.setWebKitAdblockEnabled(enabled)
         delegate?.settingsHandlerDidUpdateAdblockSettings(self)
         
         DLog("Ad blocking \(enabled ? "enabled" : "disabled")")
@@ -264,7 +265,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     }
     
     private func sendAdblockSettings(to webView: WKWebView) {
-        let enabled = iTermAdvancedSettingsModel.adblockEnabled()
+        let enabled = iTermAdvancedSettingsModel.webKitAdblockEnabled()
         let url = iTermAdvancedSettingsModel.adblockListURL() ?? ""
         
         let settings = [
@@ -320,8 +321,8 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     // MARK: - Rust Adblock Settings
     
     private func setRustAdblockEnabled(_ enabled: Bool, webView: WKWebView) {
-        iTermAdvancedSettingsModel.setAdblockEnabled(enabled)
-        
+        iTermAdvancedSettingsModel.setRustAdblockEnabled(enabled)
+
         DLog("Rust ad blocking \(enabled ? "enabled" : "disabled")")
         
         let message = enabled ? "Rust ad blocking enabled" : "Rust ad blocking disabled"
@@ -333,6 +334,8 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
                 await iTermBrowserAdblockRustManager.shared.reload()
             }
         }
+
+        delegate?.settingsHandlerDidUpdateAdblockSettings(self)
     }
     
     private func forceRustAdblockUpdate(webView: WKWebView) {
@@ -356,7 +359,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     }
     
     private func sendRustAdblockSettings(to webView: WKWebView) {
-        let enabled = iTermAdvancedSettingsModel.adblockEnabled()
+        let enabled = iTermAdvancedSettingsModel.rustAdblockEnabled()
         let url = iTermAdvancedSettingsModel.rustAdblockListURL() ?? "https://easylist.to/easylist/easylist.txt"
         
         let settings = [
@@ -376,7 +379,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     }
     
     private func sendRustAdblockStats(to webView: WKWebView) {
-        let enabled = iTermAdvancedSettingsModel.adblockEnabled()
+        let enabled = iTermAdvancedSettingsModel.rustAdblockEnabled()
         let manager = iTermBrowserAdblockRustManager.shared
         
         let stats = [

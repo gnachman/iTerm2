@@ -55,7 +55,6 @@ class iTermBrowserWebView: WKWebView {
     private var trackingArea: NSTrackingArea?
     private let focusFollowsMouse = iTermFocusFollowsMouse()
     private let contextMenuHelper = iTermBrowserContextMenuHelper()
-    private(set) var rootCert: SecCertificate?
 
     var currentSelection: String? {
         didSet {
@@ -70,8 +69,7 @@ class iTermBrowserWebView: WKWebView {
 
     init(frame: CGRect,
          configuration: WKWebViewConfiguration,
-         pointerController: PointerController,
-         rootCert: SecCertificate?) {
+         pointerController: PointerController) {
         self.pointerController = pointerController
 
         super.init(frame: frame, configuration: configuration)
@@ -92,9 +90,6 @@ class iTermBrowserWebView: WKWebView {
                                                selector: #selector(applicationDidResignActive(_:)),
                                                name: NSApplication.didResignActiveNotification,
                                                object: nil)
-        if let rootCert {
-            startMITM(rootCert: rootCert)
-        }
     }
 
     required init?(coder: NSCoder) {
@@ -864,16 +859,5 @@ extension iTermBrowserWebView {
                 return nil
             }
         }
-    }
-}
-
-@available(macOS 11.0, *)
-extension iTermBrowserWebView {
-    func startMITM(rootCert: SecCertificate) {
-        self.rootCert = rootCert
-    }
-
-    func stopMITM() {
-        rootCert = nil
     }
 }

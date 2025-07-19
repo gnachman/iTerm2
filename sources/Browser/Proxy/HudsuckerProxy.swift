@@ -3,6 +3,7 @@ import Security
 
 /// Swift wrapper for the Hudsucker MITM proxy C FFI
 public class HudsuckerProxy {
+    private static let caKeyLabel = "iTerm2 Proxy CA Key"
     static var standard: HudsuckerProxy?
     static var filterCallback: ((String, String) -> Bool)?
     private(set) var port: Int!
@@ -24,7 +25,8 @@ public class HudsuckerProxy {
         case proxyStartFailed = -3
         case runtimeError = -4
         case memoryError = -5
-        
+        case noConsent  = -6
+
         var localizedDescription: String {
             switch self {
             case .success:
@@ -39,6 +41,8 @@ public class HudsuckerProxy {
                 return "Runtime error"
             case .memoryError:
                 return "Memory error"
+            case .noConsent:
+                return "User declined permission"
             }
         }
     }
@@ -96,26 +100,86 @@ public class HudsuckerProxy {
         }
         throw ProxyError.proxyCreationFailed
     }
-    
-    /// Convenience initializer that generates a new CA certificate
-    /// - Parameters:
-    ///   - address: The address to bind to (e.g., "127.0.0.1:8080")
-    ///   - ports: Array of ports to try binding to
-    ///   - requestFilter: Callback to filter requests
-    ///   - certificateErrorHTMLTemplate: HTML template for certificate error pages (nil for default)
-    public convenience init(address: String,
-                            ports: [Int],
-                            requestFilter: @escaping RequestFilterCallback,
-                            certificateErrorHTMLTemplate: String?) throws {
-        let (cert, key) = try Self.generateCACertificate()
-        try self.init(address: address,
-                      ports: ports,
-                      caCertPEM: cert,
-                      caKeyPEM: key,
-                      requestFilter: requestFilter,
-                      certificateErrorHTMLTemplate: certificateErrorHTMLTemplate)
+
+    private static func userConsentsToAddCACert() -> Bool {
+        let alert = NSAlert()
+        alert.messageText = "Permission Needed"
+        alert.informativeText = "To enable advanced ad blocking, a trusted root certificate must be added to the system. This is scary and you should understand what you’re doing before allowing this."
+
+        class LinkTextField: NSTextField {
+            override func resetCursorRects() {
+                super.resetCursorRects()
+                addCursorRect(bounds, cursor: .pointingHand)
+            }
+        }
+        let linkField = LinkTextField(labelWithString: "")
+        linkField.isEditable = false
+        linkField.isBordered = false
+        linkField.drawsBackground = false
+        linkField.allowsEditingTextAttributes = true
+        linkField.isSelectable = true
+
+        let title = "Learn more"
+        let attributed = NSMutableAttributedString(string: title)
+        guard let url = URL(string: "https://iterm2.com/documentation-proxy-adblocking.html") else {
+            return false
+        }
+        attributed.addAttribute(.link,
+                                value: url,
+                                range: NSRange(location: 0, length: title.count))
+        attributed.addAttribute(.underlineStyle,
+                                value: NSUnderlineStyle.single.rawValue,
+                                range: NSRange(location: 0, length: title.count))
+        attributed.addAttribute(.foregroundColor,
+                                value: NSColor.linkColor,
+                                range: NSRange(location: 0, length: title.count))
+
+        linkField.attributedStringValue = attributed
+        linkField.sizeToFit()
+        alert.accessoryView = linkField
+        alert.alertStyle = .critical
+        let allow = alert.addButton(withTitle: "Allow")
+        allow.keyEquivalent = ""
+        alert.addButton(withTitle: "Cancel").keyEquivalent = "\r"
+        return alert.runModal() == .alertFirstButtonReturn
     }
-    
+
+    private static let identifier = "com.googlecode.iterm2.proxy-cert-and-key"
+    private static func addCACert(certManager: iTermBrowserProxyCertificateManager) throws -> iTermBrowserProxyCertificateManager.PEMCertAndKey {
+        guard userConsentsToAddCACert() else {
+            throw ProxyError.noConsent
+        }
+        let certAndKey = try generateCACertificate()
+        try certManager.saveCertificateAndPrivateKey(certAndKey: certAndKey, identifier: identifier)
+        return certAndKey
+    }
+
+    private static func loadCACertAndKey(certManager: iTermBrowserProxyCertificateManager) -> iTermBrowserProxyCertificateManager.PEMCertAndKey? {
+        return try? certManager.retrieveCertificateAndPrivateKey(identifier: identifier)
+    }
+
+    private static func loadOrAddCertAndKey() throws -> iTermBrowserProxyCertificateManager.PEMCertAndKey {
+        let certManager = iTermBrowserProxyCertificateManager()
+        if let certAndKey = loadCACertAndKey(certManager: certManager) {
+            return certAndKey
+        } else {
+            return try addCACert(certManager: certManager)
+        }
+    }
+
+    public static func createAddingCertIfNeeded(address: String,
+                                                ports: [Int],
+                                                requestFilter: @escaping RequestFilterCallback,
+                                                certificateErrorHTMLTemplate: String?) throws -> HudsuckerProxy {
+        let certAndKey = try loadOrAddCertAndKey()
+        return try HudsuckerProxy(address: address,
+                                  ports: ports,
+                                  caCertPEM: certAndKey.cert,
+                                  caKeyPEM: certAndKey.key,
+                                  requestFilter: requestFilter,
+                                  certificateErrorHTMLTemplate: certificateErrorHTMLTemplate)
+    }
+
     deinit {
         stop()
     }
@@ -229,7 +293,7 @@ public class HudsuckerProxy {
     
     /// Generate a new CA certificate and private key pair
     /// - Returns: A tuple containing (certificate PEM, private key PEM)
-    public static func generateCACertificate() throws -> (String, String) {
+    private static func generateCACertificate() throws -> iTermBrowserProxyCertificateManager.PEMCertAndKey {
         var certPtr: UnsafeMutablePointer<CChar>?
         var keyPtr: UnsafeMutablePointer<CChar>?
         
@@ -250,29 +314,7 @@ public class HudsuckerProxy {
         hudsucker_free_string(certPtr)
         hudsucker_free_string(keyPtr)
         
-        return (cert, key)
-    }
-    
-    /// Create a proxy with certificate error handling enabled
-    /// - Parameters:
-    ///   - address: The address to bind to (e.g., "127.0.0.1")
-    ///   - ports: Array of ports to try binding to
-    ///   - requestFilter: Callback to filter requests
-    ///   - htmlTemplate: Custom HTML template for error pages (nil for default)
-    /// - Returns: A configured HudsuckerProxy instance
-    /// - Throws: ProxyError if the proxy cannot be created
-    public static func withCertificateErrorHandling(
-        address: String,
-        ports: [Int],
-        requestFilter: @escaping RequestFilterCallback,
-        htmlTemplate: String?
-    ) throws -> HudsuckerProxy {
-        return try HudsuckerProxy(
-            address: address,
-            ports: ports,
-            requestFilter: requestFilter,
-            certificateErrorHTMLTemplate: htmlTemplate
-        )
+        return iTermBrowserProxyCertificateManager.PEMCertAndKey(cert: cert, key: key)
     }
 }
 

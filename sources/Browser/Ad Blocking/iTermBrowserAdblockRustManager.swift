@@ -17,7 +17,7 @@ class iTermBrowserAdblockRustManager {
         init() {
             dispatchPrecondition(condition: .onQueue(.main))
             url = iTermAdvancedSettingsModel.rustAdblockListURL()
-            enabled = iTermAdvancedSettingsModel.adblockEnabled()
+            enabled = iTermAdvancedSettingsModel.rustAdblockEnabled()
         }
     }
     private var configuration: MutableAtomicObject<Configuration>
@@ -42,7 +42,7 @@ class iTermBrowserAdblockRustManager {
         userDefaultsObserver.observeKey("rustAdblockListURL") { [weak self] in
             self?.updateConfiguration()
         }
-        userDefaultsObserver.observeKey("adblockEnabled") { [weak self] in
+        userDefaultsObserver.observeKey("rustAdblockEnabled") { [weak self] in
             self?.updateConfiguration()
         }
         if configuration.value.enabled {

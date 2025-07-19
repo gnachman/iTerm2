@@ -56,6 +56,8 @@ protocol iTermBrowserManagerDelegate: AnyObject {
 @available(macOS 11.0, *)
 @objc(iTermBrowserManager)
 class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler {
+    private static let adblockSettingsDidChange = NSNotification.Name("iTermBrowserManagerAdblockSettingsDidChange")
+
     weak var delegate: iTermBrowserManagerDelegate?
     private(set) var webView: iTermBrowserWebView!
     private var lastFailedURL: URL?
@@ -113,6 +115,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                      profileObserver: profileObserver,
                      pointerController: pointerController)
         setupPermissionNotificationObserver()
+        setupAdblockNotificationObserver()
     }
     
     deinit {
@@ -148,7 +151,6 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
 
         let configuration: WKWebViewConfiguration
         let contentManager: BrowserExtensionUserContentManager
-        var rootCert: SecCertificate?
         if let preferredConfiguration {
             #warning("TODO: Somehow deal with this and content managers and root certs")
             configuration = preferredConfiguration
@@ -177,7 +179,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
             }
             
             // Configure proxy if enabled
-            rootCert = applyProxyConfiguration(to: configuration.websiteDataStore)
+            applyProxyConfiguration(to: configuration.websiteDataStore)
 
             var js = """
                 let oldLog = console.log;
@@ -318,8 +320,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
 
         webView = iTermBrowserWebView(frame: .zero,
                                       configuration: configuration,
-                                      pointerController: pointerController,
-                                      rootCert: rootCert)
+                                      pointerController: pointerController)
         if let safariBundle = Bundle(path: "/Applications/Safari.app"),
            let safariVersion = safariBundle.infoDictionary?["CFBundleShortVersionString"] as? String {
             webView.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " +
@@ -383,7 +384,15 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
             }
         }
     }
-    
+
+    private func setupAdblockNotificationObserver() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(adblockSettingsDidChange(_:)),
+            name: iTermBrowserManager.adblockSettingsDidChange,
+            object: nil)
+    }
+
     @MainActor
     private func handlePermissionRevoked(for origin: String) async {
         // Check if this WebView contains content from the revoked origin
@@ -670,8 +679,6 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private func cleanupMessageHandlersForFailedNavigation() {
         localPageManager.cleanupAfterFailedNavigation(currentURL: webView.url?.absoluteString)
     }
-    
-    
 }
 
 // MARK: - iTermBrowserWebViewDelegate
@@ -960,42 +967,42 @@ extension iTermBrowserManager {
 
 @available(macOS 11.0, *)
 extension iTermBrowserManager: WKNavigationDelegate {
-    func webView(_ webView: WKWebView, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping @MainActor (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-        NSLog("Did receive auth challenge")
-        if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust {
-            guard let serverTrust = challenge.protectionSpace.serverTrust else {
-                completionHandler(.performDefaultHandling, nil)
-                return
-            }
-            guard let ca = self.webView.rootCert else {
-                completionHandler(.performDefaultHandling, nil)
-                return
-            }
-            // 1. Ignore EKU/SSL-specific policy
-            #warning("REMOVE THIS AND FIX THE CERT")
-            let basicPolicy = SecPolicyCreateBasicX509()
-            SecTrustSetPolicies(serverTrust, basicPolicy as CFTypeRef)
+    private func trustUsesProxyCA(_ serverTrust: SecTrust, proxyRoot: SecCertificate) -> Bool {
+        SecTrustSetAnchorCertificates(serverTrust, [proxyRoot] as CFArray)
+        SecTrustSetAnchorCertificatesOnly(serverTrust, false)
 
+        var error: CFError?
 
-            SecTrustSetAnchorCertificates(serverTrust, [ca] as CFArray)
-            SecTrustSetAnchorCertificatesOnly(serverTrust, true)
-            var trustError: CFError?
-            let trusted = SecTrustEvaluateWithError(serverTrust, &trustError)
+        if SecTrustEvaluateWithError(serverTrust, &error) {
+            return true
+        }
+        if let error {
+            DLog("Proxy CA trust eval failed: \(error)")
+        }
+        return false
+    }
 
-            if !trusted {
-                if let error = trustError {
-                    DLog("SecTrustEvaluateWithError failed: \(error)")
-                } else {
-                    DLog("SecTrustEvaluateWithError failed with unknown error")
-                }
-                completionHandler(.cancelAuthenticationChallenge, nil)
-                return
-            }
+    func webView(_ webView: WKWebView,
+                 didReceive challenge: URLAuthenticationChallenge,
+                 completionHandler: @escaping @MainActor (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        guard #available(macOS 14, *),
+              let serverTrust = challenge.protectionSpace.serverTrust,
+              challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+              !webView.configuration.websiteDataStore.proxyConfigurations.isEmpty,
+              shouldUseBuiltInAdblockingProxy,
+              let proxy = HudsuckerProxy.standard,
+              proxy.isRunning,
+              let proxyRoot = proxy.caCert else {
+            completionHandler(.performDefaultHandling, nil)
+            return
+        }
 
+        if trustUsesProxyCA(serverTrust, proxyRoot: proxyRoot) {
             let credential = URLCredential(trust: serverTrust)
             completionHandler(.useCredential, credential)
             return
         }
+
         completionHandler(.performDefaultHandling, nil)
     }
 
@@ -1483,12 +1490,9 @@ extension iTermBrowserManager: WKUIDelegate {
 @available(macOS 11.0, *)
 extension iTermBrowserManager: iTermBrowserLocalPageManagerDelegate {
     func localPageManagerDidUpdateAdblockSettings(_ manager: iTermBrowserLocalPageManager) {
-        // Update adblock rules when settings change
-        updateAdblockSettings()
-        // Also update proxy configuration since the delegate is shared
-        updateProxyConfiguration()
+        NotificationCenter.default.post(name: Self.adblockSettingsDidChange, object: nil)
     }
-    
+
     func localPageManagerDidRequestAdblockUpdate(_ manager: iTermBrowserLocalPageManager) {
         // Force update of adblock rules
         forceAdblockUpdate()
@@ -1524,16 +1528,15 @@ extension iTermBrowserManager {
     }
     
     func updateProxyConfiguration() {
-        let rootCert = applyProxyConfiguration(to: webView.configuration.websiteDataStore)
-        if let rootCert {
-            webView.startMITM(rootCert: rootCert)
-        } else {
-            webView.stopMITM()
-        }
+        applyProxyConfiguration(to: webView.configuration.websiteDataStore)
     }
-    
-    private func applyProxyConfiguration(to dataStore: WKWebsiteDataStore) -> SecCertificate? {
-        guard #available(macOS 14.0, *) else { return nil }
+
+    private var shouldUseBuiltInAdblockingProxy: Bool {
+        return !iTermAdvancedSettingsModel.browserProxyEnabled() && iTermAdvancedSettingsModel.rustAdblockEnabled()
+    }
+
+    private func applyProxyConfiguration(to dataStore: WKWebsiteDataStore) {
+        guard #available(macOS 14.0, *) else { return }
 
         if iTermAdvancedSettingsModel.browserProxyEnabled() {
             let proxyHost = iTermAdvancedSettingsModel.browserProxyHost() ?? "127.0.0.1"
@@ -1544,31 +1547,36 @@ extension iTermBrowserManager {
             dataStore.proxyConfigurations = [proxyConfig]
             adblockManager?.internalProxyDidStop()
             DLog("Configured browser proxy: \(proxyHost):\(proxyPort)")
-            return nil
-        } else {
-            // Use the internal proxy
+            return
+        }
+        if shouldUseBuiltInAdblockingProxy {
+            // Use the built-in adblocking proxy
             dataStore.proxyConfigurations = []
-            if let proxy = Self.makeProxy() {
-                let proxyPort = proxy.port!
-                startUsingInternalProxy(onPort: proxyPort, dataStore: dataStore)
-                return proxy.caCert
+            do {
+                if let proxy = try Self.makeProxy() {
+                    let proxyPort = proxy.port!
+                    startUsingInternalProxy(onPort: proxyPort, dataStore: dataStore)
+                }
+            } catch {
+                iTermAdvancedSettingsModel.setRustAdblockEnabled(false)
+                // TODO: Update any open settings pages
             }
-            return nil
         }
     }
 
-    private static func makeProxy() -> HudsuckerProxy? {
+    private static func makeProxy() throws -> HudsuckerProxy? {
         if let existing = HudsuckerProxy.standard {
             return existing
         }
-        let proxy = try? HudsuckerProxy.withCertificateErrorHandling(
+        let certErrorTemplate = iTermBrowserTemplateLoader.loadTemplate(
+            named: "cert-error",
+            type: "html",
+            substitutions: [:])
+        let proxy = try? HudsuckerProxy.createAddingCertIfNeeded(
             address: "127.0.0.1",
-            ports: [1912, 1913, 1914, 1915],
+            ports: Array(1912..<2012),
             requestFilter: HudsuckerProxy.filterRequest(url:method:),
-            htmlTemplate: iTermBrowserTemplateLoader.loadTemplate(
-                named: "cert-error",
-                type: "html",
-                substitutions: [:]))
+            certificateErrorHTMLTemplate: certErrorTemplate)
         HudsuckerProxy.standard = proxy
         return proxy
     }
@@ -1637,7 +1645,20 @@ extension iTermBrowserManager {
     }
 
     // MARK: - Adblock Notification Handlers
-    
+
+    @objc private func adblockSettingsDidChange(_ notification: Notification) {
+        // Update adblock rules when settings change
+        updateAdblockSettings()
+        // Also update proxy configuration since the delegate is shared
+        updateProxyConfiguration()
+
+        if !shouldUseBuiltInAdblockingProxy,
+            let existing = HudsuckerProxy.standard {
+            existing.stop()
+            HudsuckerProxy.standard = nil
+        }
+    }
+
     @objc private func adblockRulesDidUpdate() {
         // Apply or remove rules based on settings
         updateWebViewContentRules()
@@ -1668,7 +1689,7 @@ extension iTermBrowserManager {
         userContentController.removeAllContentRuleLists()
 
         // Add new rules if adblock is enabled
-        if iTermAdvancedSettingsModel.adblockEnabled(),
+        if iTermAdvancedSettingsModel.webKitAdblockEnabled(),
            let ruleList = adblockManager?.getRuleList() {
             userContentController.add(ruleList)
         }

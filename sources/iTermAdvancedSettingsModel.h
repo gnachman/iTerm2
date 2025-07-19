@@ -35,8 +35,10 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 
 + (BOOL)aboutToPasteTabsWithCancel;
 + (BOOL)accelerateUploads;
-+ (BOOL)adblockEnabled;
-+ (void)setAdblockEnabled:(BOOL)value;
++ (BOOL)webKitAdblockEnabled;
++ (BOOL)rustAdblockEnabled;
++ (void)setWebKitAdblockEnabled:(BOOL)value;
++ (void)setRustAdblockEnabled:(BOOL)value;
 + (NSString *)adblockListURL;
 + (void)setAdblockListURL:(NSString *)value;
 + (NSString *)rustAdblockListURL;

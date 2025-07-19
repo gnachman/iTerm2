@@ -3929,6 +3929,7 @@
 		A6D3205729C492410088BBE1 /* nerd.itse in Resources */ = {isa = PBXBuildFile; fileRef = A6D3205629C492410088BBE1 /* nerd.itse */; };
 		A6D3205829C492410088BBE1 /* nerd.itse in Resources */ = {isa = PBXBuildFile; fileRef = A6D3205629C492410088BBE1 /* nerd.itse */; };
 		A6D3205929C492410088BBE1 /* nerd.itse in Resources */ = {isa = PBXBuildFile; fileRef = A6D3205629C492410088BBE1 /* nerd.itse */; };
+		A6D38AC92E2C014E00EEE5CA /* iTermBrowserProxyCertificateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D38AC82E2C014500EEE5CA /* iTermBrowserProxyCertificateManager.swift */; };
 		A6D3985E2BDACC1300C4C1AD /* SFSymbolsHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D3985D2BDACC1300C4C1AD /* SFSymbolsHelpers.swift */; };
 		A6D441C72A91306400CA76E9 /* ProfileDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D441C62A91306400CA76E9 /* ProfileDocument.swift */; };
 		A6D463E6240447AF005D073D /* iTermBackgroundColorView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D463E4240447AF005D073D /* iTermBackgroundColorView.h */; };
@@ -8294,6 +8295,7 @@
 		A6D24D3C26BC5FA600CCE211 /* SwiftDebugLogging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDebugLogging.swift; sourceTree = "<group>"; };
 		A6D3205429C29EE30088BBE1 /* NerdFontInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NerdFontInstaller.swift; sourceTree = "<group>"; };
 		A6D3205629C492410088BBE1 /* nerd.itse */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = nerd.itse; path = OtherResources/nerd.itse; sourceTree = "<group>"; };
+		A6D38AC82E2C014500EEE5CA /* iTermBrowserProxyCertificateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserProxyCertificateManager.swift; sourceTree = "<group>"; };
 		A6D3985D2BDACC1300C4C1AD /* SFSymbolsHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSymbolsHelpers.swift; sourceTree = "<group>"; };
 		A6D441C62A91306400CA76E9 /* ProfileDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileDocument.swift; sourceTree = "<group>"; };
 		A6D463E4240447AF005D073D /* iTermBackgroundColorView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBackgroundColorView.h; sourceTree = "<group>"; };
@@ -12930,6 +12932,7 @@
 		A6AA2F5D2E28B1AE002998B3 /* Proxy */ = {
 			isa = PBXGroup;
 			children = (
+				A6D38AC82E2C014500EEE5CA /* iTermBrowserProxyCertificateManager.swift */,
 				A6AA2F912E2976D2002998B3 /* iTermBrowserSSLBypassHandler.swift */,
 				A6AA2F602E28B1E1002998B3 /* HudsuckerProxy.swift */,
 			);
@@ -19082,6 +19085,7 @@
 				A66F52AA210458CA00571168 /* iTermNetworkUtilization.m in Sources */,
 				A63011CE20E85B16008114B7 /* SessionTitleView.m in Sources */,
 				53E9DFE8220D53980070C9C0 /* iTermHyperlinkTrigger.m in Sources */,
+				A6D38AC92E2C014E00EEE5CA /* iTermBrowserProxyCertificateManager.swift in Sources */,
 				53FF982B2093C823008688D7 /* iTermSignatureVerifier.m in Sources */,
 				535EA4FD20D0EBD300FC81E0 /* iTermSwiftyStringRecognizer.m in Sources */,
 				534B6C6823DC165D0031FED2 /* PasteContext.m in Sources */,

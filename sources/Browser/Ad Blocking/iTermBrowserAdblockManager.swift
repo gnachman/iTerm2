@@ -60,7 +60,7 @@ class iTermBrowserAdblockManager: NSObject {
     }
 
     @objc func updateRulesIfNeeded() {
-        guard iTermAdvancedSettingsModel.adblockEnabled() else {
+        guard iTermAdvancedSettingsModel.webKitAdblockEnabled() else {
             clearRules()
             return
         }
@@ -75,7 +75,7 @@ class iTermBrowserAdblockManager: NSObject {
     }
     
     @objc func forceUpdate() {
-        guard iTermAdvancedSettingsModel.adblockEnabled() else {
+        guard iTermAdvancedSettingsModel.webKitAdblockEnabled() else {
             clearRules()
             return
         }
