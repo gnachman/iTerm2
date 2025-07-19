@@ -39,10 +39,10 @@ class iTermBrowserAdblockRustManager {
         configuration = .init(Configuration())
 
         userDefaultsObserver = iTermUserDefaultsObserver()
-        userDefaultsObserver.observeKey("rustAdblockListURL") { [weak self] in
+        userDefaultsObserver.observeKey("RustAdblockListURL") { [weak self] in
             self?.updateConfiguration()
         }
-        userDefaultsObserver.observeKey("rustAdblockEnabled") { [weak self] in
+        userDefaultsObserver.observeKey("RustAdblockEnabled") { [weak self] in
             self?.updateConfiguration()
         }
         if configuration.value.enabled {

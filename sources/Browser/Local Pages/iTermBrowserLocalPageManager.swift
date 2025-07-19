@@ -87,25 +87,13 @@ class iTermBrowserLocalPageManager: NSObject {
         }
         
         context.handler.start(urlSchemeTask: urlSchemeTask, url: url)
-        
-        // Clean up stateless handlers after serving (like error and source pages)
-        if !context.requiresMessageHandler {
-            cleanupPageContext(urlString)
-        }
-        
+
         return true
     }
     
     /// Setup message handlers for current page
     func setupMessageHandlers(for webView: WKWebView, currentURL: String?) {
         guard let currentURL = currentURL else { return }
-        
-        // Clean up contexts for pages we're no longer on
-        let contextsToRemove = activePageContexts.keys.filter { $0 != currentURL }
-        for contextURL in contextsToRemove {
-            removeMessageHandler(for: contextURL, webView: webView)
-            cleanupPageContext(contextURL)
-        }
         
         // Setup context for current page if needed
         setupPageContext(for: currentURL)
@@ -137,18 +125,6 @@ class iTermBrowserLocalPageManager: NSObject {
         }
         
         return handleMessageForContext(context, messageURL: messageURL, messageDict: messageDict, message: message, webView: webView)
-    }
-    
-    /// Clean up message handlers for failed navigation
-    func cleanupAfterFailedNavigation(currentURL: String?) {
-        let currentURL = currentURL ?? ""
-        
-        // Clean up contexts for pages we're not actually on
-        let contextsToRemove = activePageContexts.keys.filter { $0 != currentURL }
-        for contextURL in contextsToRemove {
-            DLog("Cleaning up message handler for \(contextURL) after failed navigation")
-            cleanupPageContext(contextURL)
-        }
     }
     
     /// Reset state for all active handlers
@@ -285,21 +261,6 @@ private extension iTermBrowserLocalPageManager {
         }
     }
     
-    
-    func cleanupPageContext(_ urlString: String) {
-        activePageContexts.removeValue(forKey: urlString)
-    }
-    
-    func removeMessageHandler(for urlString: String, webView: WKWebView) {
-        guard let context = activePageContexts[urlString], context.messageHandlerRegistered else { return }
-        
-        webView.configuration.userContentController.removeScriptMessageHandler(forName: urlString)
-        DLog("Removed message handler for \(urlString)")
-        
-        var updatedContext = context
-        updatedContext.messageHandlerRegistered = false
-        activePageContexts[urlString] = updatedContext
-    }
     
     func handleMessageForContext(_ context: iTermBrowserPageContext, messageURL: String, messageDict: [String: Any], message: WKScriptMessage, webView: WKWebView) -> Bool {
         switch messageURL {

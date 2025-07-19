@@ -675,10 +675,6 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
             DLog("Registered message handler for \(currentURL)")
         }
     }
-    
-    private func cleanupMessageHandlersForFailedNavigation() {
-        localPageManager.cleanupAfterFailedNavigation(currentURL: webView.url?.absoluteString)
-    }
 }
 
 // MARK: - iTermBrowserWebViewDelegate
@@ -985,14 +981,44 @@ extension iTermBrowserManager: WKNavigationDelegate {
     func webView(_ webView: WKWebView,
                  didReceive challenge: URLAuthenticationChallenge,
                  completionHandler: @escaping @MainActor (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-        guard #available(macOS 14, *),
-              let serverTrust = challenge.protectionSpace.serverTrust,
-              challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
-              !webView.configuration.websiteDataStore.proxyConfigurations.isEmpty,
-              shouldUseBuiltInAdblockingProxy,
-              let proxy = HudsuckerProxy.standard,
-              proxy.isRunning,
-              let proxyRoot = proxy.caCert else {
+        guard #available(macOS 14, *) else {
+            DLog("No proxy because not macos 14")
+            completionHandler(.performDefaultHandling, nil)
+            return
+        }
+
+        guard let serverTrust = challenge.protectionSpace.serverTrust else {
+            DLog("No proxy because no server trust")
+            completionHandler(.performDefaultHandling, nil)
+            return
+        }
+        guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust else {
+            DLog("No proxy because auth is not server trust")
+            completionHandler(.performDefaultHandling, nil)
+            return
+        }
+        guard !webView.configuration.websiteDataStore.proxyConfigurations.isEmpty else {
+            DLog("No proxy because no proxy config")
+            completionHandler(.performDefaultHandling, nil)
+            return
+        }
+        guard shouldUseBuiltInAdblockingProxy else {
+            DLog("No proxy because adblocking proxy disabled in settings")
+            completionHandler(.performDefaultHandling, nil)
+            return
+        }
+        guard let proxy = HudsuckerProxy.standard else {
+            DLog("No proxy because standard proxy is unset")
+            completionHandler(.performDefaultHandling, nil)
+            return
+        }
+        guard proxy.isRunning else {
+            DLog("No proxy because not running")
+            completionHandler(.performDefaultHandling, nil)
+            return
+        }
+        guard let proxyRoot = proxy.caCert else {
+            DLog("No proxy because no ca cert")
             completionHandler(.performDefaultHandling, nil)
             return
         }
@@ -1083,9 +1109,6 @@ extension iTermBrowserManager: WKNavigationDelegate {
         DLog("🔌 didFailNavigation: domain=\(nsError.domain) code=\(nsError.code) — \(nsError.localizedDescription)")
         let failedURL = navigationState.lastRequestedURL
 
-        // Clean up any pre-registered message handlers for failed navigation
-        cleanupMessageHandlersForFailedNavigation()
-
         // Don't show error page for download-related cancellations
         if isDownloadRelatedError(error) {
             delegate?.browserManager(self, didFailNavigation: navigation, withError: error)
@@ -1105,9 +1128,6 @@ extension iTermBrowserManager: WKNavigationDelegate {
         let nsError = error as NSError
         DLog("didFailProvisionalNavigation: domain=\(nsError.domain) code=\(nsError.code) — \(nsError.localizedDescription)")
         let failedURL = navigationState.lastRequestedURL
-
-        // Clean up any pre-registered message handlers for failed navigation
-        cleanupMessageHandlersForFailedNavigation()
 
         // Don't show error page for download-related cancellations
         if isDownloadRelatedError(error) {
