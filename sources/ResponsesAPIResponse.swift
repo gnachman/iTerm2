@@ -347,16 +347,12 @@ struct ResponsesResponseBody: Codable {
     // MARK: - Output Text
     struct OutputText: Codable {
         let annotations: [TextAnnotation]
-        let logprobs: LogprobsData?
         let text: String
-        let topLogprobs: [TopLogprob]?
         let type: String
 
         enum CodingKeys: String, CodingKey {
             case annotations
-            case logprobs
             case text
-            case topLogprobs = "top_logprobs"
             case type
         }
     }
@@ -437,18 +433,6 @@ struct ResponsesResponseBody: Codable {
             case index
             case type
         }
-    }
-
-    struct LogprobsData: Codable {
-        let bytes: [Int]
-        let logprob: Double
-        let token: String
-    }
-
-    struct TopLogprob: Codable {
-        let bytes: [Int]
-        let logprob: Double
-        let token: String
     }
 
     struct RefusalContent: Codable {
