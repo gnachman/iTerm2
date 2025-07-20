@@ -133,7 +133,7 @@ class iTermBrowserAdblockRustManager {
         NotificationCenter.default.post(name: .rustAdblockStatsChanged, object: nil)
     }
 
-    func shouldBlockRequest(url: URL, tabHost: String? = nil) -> Bool {
+    func shouldBlockRequest(url: URL, tabHost: String?, requestType: String) -> Bool {
         guard configuration.value.enabled,
               let engine = engine,
               let host = url.host else {
@@ -143,7 +143,7 @@ class iTermBrowserAdblockRustManager {
         let urlString = url.absoluteString
         let effectiveTabHost = tabHost ?? host
 
-        return engine.shouldBlockRequest(url: urlString, host: host, tabHost: effectiveTabHost)
+        return engine.shouldBlockRequest(url: urlString, host: host, tabHost: effectiveTabHost, requestType: requestType)
     }
 
     func getCosmeticResources(for url: URL) async -> (hideSelectors: [String], injectedScript: String?) {
@@ -182,7 +182,12 @@ class iTermBrowserAdblockRustManager {
                 guard let self, let url = URL(string: urlStringWithScheme) else {
                     return true
                 }
-                return !shouldBlockRequest(url: url)
+
+                // We can't tell the type so block if it would be blocked for any type.
+                let block = ["script", "stylesheet", "image", "font", "media", "document"].anySatisfies({ requestType in
+                    self.shouldBlockRequest(url: url, tabHost: nil, requestType: requestType)
+                })
+                return !block
             }
         } else {
             HudsuckerProxy.filterCallback = nil

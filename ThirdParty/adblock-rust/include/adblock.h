@@ -57,7 +57,8 @@ void engine_destroy(struct CEngine *engine);
 bool engine_match(const struct CEngine *engine,
                   const char *url,
                   const char *host,
-                  const char *tab_host);
+                  const char *tab_host,
+                  const char *request_type);
 
 struct AdblockUrlSpecificResources *engine_url_cosmetic_resources(const struct CEngine *engine,
                                                                   const char *url);

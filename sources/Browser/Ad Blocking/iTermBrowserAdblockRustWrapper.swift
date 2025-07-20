@@ -20,14 +20,16 @@ class iTermBrowserAdblockRustWrapper {
         }
     }
     
-    func shouldBlockRequest(url: String, host: String, tabHost: String) -> Bool {
+    func shouldBlockRequest(url: String, host: String, tabHost: String, requestType: String) -> Bool {
         return mutex.sync {
             guard let engine = engine else { return false }
 
             return url.withCString { urlCString in
                 host.withCString { hostCString in
                     tabHost.withCString { tabHostCString in
-                        engine_match(engine, urlCString, hostCString, tabHostCString)
+                        requestType.withCString { requestTypeCString in
+                            engine_match(engine, urlCString, hostCString, tabHostCString, requestTypeCString)
+                        }
                     }
                 }
             }
