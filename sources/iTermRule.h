@@ -19,6 +19,7 @@
 - (double)scoreForHostname:(NSString *)hostname
                   username:(NSString *)username
                       path:(NSString *)path
-                       job:(NSString *)job;
+                       job:(NSString *)job
+               commandLine:(NSString *)commandLine;
 
 @end

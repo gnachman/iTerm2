@@ -70,6 +70,7 @@ static NSString *const kStackKey = @"Profile Stack";
     NSString *_lastUsername;
     NSString *_lastPath;
     NSString *_lastJob;
+    NSString *_lastCommandLine;
     NSString *_lastProfileGUID;
     BOOL _dirty;
     BOOL _switching;
@@ -118,9 +119,10 @@ static NSString *const kStackKey = @"Profile Stack";
 - (void)setHostname:(nullable NSString *)hostname
            username:(nullable NSString *)username
                path:(nullable NSString *)path
-                job:(nullable NSString *)job {
-    APSLog(@"APS: Updating configuration to hostname=%@, username=%@, path=%@, job=%@",
-           hostname, username, path, job);
+                job:(nullable NSString *)job
+        commandLine:(nullable NSString *)commandLine {
+    APSLog(@"APS: Updating configuration to hostname=%@, username=%@, path=%@, job=%@, commandLine=%@",
+           hostname, username, path, job, commandLine);
     if (_switching) {
         APSLog(@"Already switching so ignore the change");
         return;
@@ -131,6 +133,7 @@ static NSString *const kStackKey = @"Profile Stack";
         [username isEqualToString:_lastUsername] &&
         [path isEqualToString:_lastPath] &&
         [job isEqualToString:_lastJob] &&
+        [commandLine isEqualToString:_lastCommandLine] &&
         [_lastProfileGUID isEqualToString:guid]) {
         APSLog(@"Nothing changed.");
         return;
@@ -139,6 +142,7 @@ static NSString *const kStackKey = @"Profile Stack";
     _lastUsername = [username copy];
     _lastPath = [path copy];
     _lastJob = [job copy];
+    _lastCommandLine = [commandLine copy];
     _lastProfileGUID = [guid copy];
     _dirty = NO;
 
@@ -149,13 +153,15 @@ static NSString *const kStackKey = @"Profile Stack";
                                                         hostname:hostname
                                                         username:username
                                                             path:path
-                                                             job:job];
+                                                             job:job
+                                                     commandLine:commandLine];
     double scoreForTopmostMatchingSavedProfile = 0;
     iTermSavedProfile *topmostMatchingSavedProfile =
         [self topmostSavedProfileMatchingHostname:hostname
                                          username:username
                                              path:path
                                               job:job
+                                      commandLine:commandLine
                                             score:&scoreForTopmostMatchingSavedProfile];
     APSLog(@"The current profile is %@ with a score of %0.2f. The highest-ranking profile in the stack is %@, with score of %0.2f",
            currentProfile[KEY_NAME],
@@ -181,6 +187,7 @@ static NSString *const kStackKey = @"Profile Stack";
                                                                        username:username
                                                                            path:path
                                                                             job:job
+                                                                    commandLine:commandLine
                                                                          sticky:&sticky
                                                                           score:&scoreOfHighestScoringProfile];
         APSLog(@"The highest scoring profile is %@ with a score of %@",
@@ -258,6 +265,7 @@ static NSString *const kStackKey = @"Profile Stack";
                                               username:(NSString *)username
                                                   path:(NSString *)path
                                                    job:(NSString *)job
+                                           commandLine:(NSString *)commandLine
                                                 sticky:(BOOL *)sticky
                                                  score:(double *)scorePtr {
     // Construct a map from host binding to profile. This could be expensive with a lot of profiles
@@ -276,7 +284,7 @@ static NSString *const kStackKey = @"Profile Stack";
 
     for (NSString *ruleString in ruleToProfileMap) {
         iTermRule *rule = [iTermRule ruleWithString:ruleString];
-        double score = [rule scoreForHostname:hostname username:username path:path job:job];
+        double score = [rule scoreForHostname:hostname username:username path:path job:job commandLine:commandLine];
         if (score > bestScore) {
             bestScore = score;
             bestProfile = ruleToProfileMap[ruleString];
@@ -310,11 +318,12 @@ static NSString *const kStackKey = @"Profile Stack";
                         hostname:(NSString *)hostname
                         username:(NSString *)username
                             path:(NSString *)path
-                             job:(NSString *)job {
+                             job:(NSString *)job
+                     commandLine:(NSString *)commandLine {
     double highestScore = 0;
     for (NSString *ruleString in candidate[KEY_BOUND_HOSTS]) {
         iTermRule *rule = [iTermRule ruleWithString:ruleString];
-        double score = [rule scoreForHostname:hostname username:username path:path job:job];
+        double score = [rule scoreForHostname:hostname username:username path:path job:job commandLine:commandLine];
         highestScore = MAX(highestScore, score);
     }
     return highestScore;
@@ -326,9 +335,10 @@ static NSString *const kStackKey = @"Profile Stack";
                                                            username:(NSString *)username
                                                                path:(NSString *)path
                                                                 job:(NSString *)job
+                                                        commandLine:(NSString *)commandLine
                                                               score:(double *)scorePtr {
     for (iTermSavedProfile *savedProfile in [_profileStack reverseObjectEnumerator]) {
-        double score = [self highestScoreForProfile:savedProfile.profile hostname:hostname username:username path:path job:job];
+        double score = [self highestScoreForProfile:savedProfile.profile hostname:hostname username:username path:path job:job commandLine:commandLine];
         if (score > 0) {
             if (scorePtr) {
                 *scorePtr = score;

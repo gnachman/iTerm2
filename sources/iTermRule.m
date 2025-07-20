@@ -111,7 +111,8 @@
 - (double)scoreForHostname:(NSString *)hostname
                   username:(NSString *)username
                       path:(NSString *)path
-                       job:(NSString *)job {
+                       job:(NSString *)job
+               commandLine:(NSString *)commandLine {
     int acc = 1;
     const int kPathPartialMatchScore = 0;
     const int kCatchallRuleScore = acc;
@@ -129,7 +130,8 @@
     double score = 0;
 
     if (self.job) {
-        if (![job stringMatchesGlobPattern:self.job caseSensitive:YES]) {
+        if (![job stringMatchesGlobPattern:self.job caseSensitive:YES] &&
+            ![commandLine stringMatchesGlobPattern:self.job caseSensitive:YES]) {
             return 0;
         }
         score += kJobMatchScore;

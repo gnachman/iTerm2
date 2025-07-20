@@ -57,7 +57,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setHostname:(nullable NSString *)hostname
            username:(nullable NSString *)username
                path:(nullable NSString *)path
-                job:(nullable NSString *)job;
+                job:(nullable NSString *)job
+        commandLine:(nullable NSString *)commandLine;
 
 @end
 

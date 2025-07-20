@@ -6379,7 +6379,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         [weakSelf tryAutoProfileSwitchWithHostname:weakSelf.variablesScope.hostname
                                           username:weakSelf.variablesScope.username
                                               path:weakSelf.variablesScope.path
-                                               job:processInfo.name];
+                                               job:processInfo.name
+                                       commandLine:processInfo.commandLine];
     });
 }
 
@@ -14483,7 +14484,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [self tryAutoProfileSwitchWithHostname:host.hostname
                                   username:host.username
                                       path:workingDirectory
-                                       job:self.variablesScope.jobName];
+                                       job:self.variablesScope.jobName
+                               commandLine:self.variablesScope.commandLine];
 
     // Ignore changes to username; only update on hostname changes. See issue 8030.
     if (previousHostName && ![previousHostName isEqualToString:host.hostname] && !ssh) {
@@ -14719,11 +14721,16 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 - (void)tryAutoProfileSwitchWithHostname:(NSString *)hostname
                                 username:(NSString *)username
                                     path:(NSString *)path
-                                     job:(NSString *)job {
+                                     job:(NSString *)job
+                             commandLine:(NSString *)commandLine {
     if ([iTermProfilePreferences boolForKey:KEY_PREVENT_APS inProfile:self.profile]) {
         return;
     }
-    [_automaticProfileSwitcher setHostname:hostname username:username path:path job:job];
+    [_automaticProfileSwitcher setHostname:hostname
+                                  username:username
+                                      path:path
+                                       job:job
+                               commandLine:commandLine];
 }
 
 // This is called when we get a high-confidence working directory (e.g., CurrentDir=).
@@ -14736,7 +14743,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [self tryAutoProfileSwitchWithHostname:remoteHost.hostname
                                   username:remoteHost.username
                                       path:newPath
-                                       job:self.variablesScope.jobName];
+                                       job:self.variablesScope.jobName
+                               commandLine:self.variablesScope.commandLine];
     [self.variablesScope setValue:newPath forVariableNamed:iTermVariableKeySessionPath];
     [_pwdPoller invalidateOutstandingRequests];
     _workingDirectoryPollerDisabled = YES;
@@ -16829,9 +16837,14 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (BOOL)pasteHelperShouldWaitForPrompt {
     if (!_screen.shouldExpectPromptMarks) {
+        DLog(@"Shell integration is not installed. We may never get a command prompt so waiting is not advisable.");
         return NO;
     }
 
+    DLog(@"currentCommand=%@", self.currentCommand);
+    // currentCommand is nil when executing a command. If you are at a shell prompt it is
+    // a nonnil string with the command that the user has typed so far (which could be an
+    // empty string). Return true if we are not at a shell prompt.
     return self.currentCommand == nil;
 }
 
@@ -17281,7 +17294,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                             snapshot:self.screen.snapshotDataSource
                              command:[self commandForOutputToExplainWithAI]
                        subjectMatter:[self subjectMatterToExplainWithAI]
-                               title:[self titleForExplainWithAI]];
+                               title:[self titleForExplainWithAI]
+                               error:nil];
     }
 }
 
