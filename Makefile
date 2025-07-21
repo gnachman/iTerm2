@@ -202,6 +202,7 @@ libhudsucker: force
 	cd hudsucker-ffi && PATH=$(PATH):$(HOME)/.cargo/bin $(HOME)/.cargo/bin/cargo build --release --target x86_64-apple-darwin
 	cd hudsucker-ffi && lipo -create target/aarch64-apple-darwin/release/libhudsucker_ffi.a target/x86_64-apple-darwin/release/libhudsucker_ffi.a -output lib/libhudsucker_ffi.a
 	cd hudsucker-ffi && lipo -create target/aarch64-apple-darwin/release/libhudsucker_ffi.dylib target/x86_64-apple-darwin/release/libhudsucker_ffi.dylib -output lib/libhudsucker_ffi.dylib
+	cd hudsucker-ffi && install_name_tool -id @rpath/libhudsucker_ffi.dylib lib/libhudsucker_ffi.dylib
 	cp hudsucker-ffi/hudsucker_ffi.h ThirdParty/hudsucker-ffi/include/
 	cp hudsucker-ffi/lib/* ThirdParty/hudsucker-ffi/lib/
 
