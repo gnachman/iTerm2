@@ -992,6 +992,12 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
                  frameData:frameData
                       stat:iTermMetalFrameDataStatPqEnqueueDrawBlocks];
 
+    if (!frameData.perFrameState.shouldDrawCursorGuideBelowText) {
+        [self drawCellRenderer:_cursorGuideRenderer
+                     frameData:frameData
+                          stat:iTermMetalFrameDataStatPqEnqueueDrawCursorGuide];
+    }
+
     [self drawCursorAfterTextWithFrameData:frameData];
 
     if (_terminalButtonRenderer) {
@@ -2054,9 +2060,11 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
                  frameData:frameData
                       stat:iTermMetalFrameDataStatPqEnqueueBroadcastStripes];
 
-    [self drawCellRenderer:_cursorGuideRenderer
-                 frameData:frameData
-                      stat:iTermMetalFrameDataStatPqEnqueueDrawCursorGuide];
+    if (frameData.perFrameState.shouldDrawCursorGuideBelowText) {
+        [self drawCellRenderer:_cursorGuideRenderer
+                     frameData:frameData
+                          stat:iTermMetalFrameDataStatPqEnqueueDrawCursorGuide];
+    }
 
     [self drawCursorBeforeTextWithFrameData:frameData];
 

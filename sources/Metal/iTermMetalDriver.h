@@ -104,6 +104,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) const vector_float4 *selectedCommandOutlineColors;  // array of length 2
 @property (nonatomic, readonly) long long totalScrollbackOverflow;
 @property (nonatomic, readonly) iTermRectArray *buttonsBackgroundRects;
+@property (nonatomic, readonly) BOOL shouldDrawCursorGuideBelowText;
 
 // When a command is selected this color is drawn over other regions.
 @property (nonatomic, readonly) vector_float4 shadeColor;

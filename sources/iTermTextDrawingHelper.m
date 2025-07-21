@@ -482,7 +482,11 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     // Draw other background-like stuff that goes behind text.
     [self drawAccessoriesInRect:boundingRect
                   virtualOffset:virtualOffset];
-
+    const BOOL shouldDrawCursorGuideBelowText = !self.useNativePowerlineGlyphs;
+    if (shouldDrawCursorGuideBelowText) {
+        [self drawCursrGuideIfNeededInRect:boundingRect
+                             virtualOffset:virtualOffset];
+    }
     CGContextRef ctx = [[NSGraphicsContext currentContext] CGContext];
 
     const BOOL drawCursorBeforeText = (_cursorType == CURSOR_UNDERLINE || _cursorType == CURSOR_VERTICAL);
@@ -525,6 +529,12 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                   ctx:ctx
                         virtualOffset:virtualOffset];
     _blinkingFound |= self.cursorBlinking;
+
+    if (!shouldDrawCursorGuideBelowText) {
+        [self drawCursrGuideIfNeededInRect:boundingRect
+                             virtualOffset:virtualOffset];
+    }
+
     if (drawCursorBeforeText) {
         if ([iTermAdvancedSettingsModel drawOutlineAroundCursor]) {
             [self drawCursor:YES
@@ -1065,7 +1075,11 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     if (_showStripes) {
         [self drawStripesInRect:bgRect virtualOffset:virtualOffset];
     }
+}
 
+- (void)drawCursrGuideIfNeededInRect:(NSRect)bgRect
+                       virtualOffset:(CGFloat)virtualOffset {
+    const VT100GridCoordRange coordRange = [self safeCoordRange:[self coordRangeForRect:bgRect]];
     // Highlight cursor line if the cursor is on this line and it's on.
     int cursorLine = _cursorCoord.y + _numberOfScrollbackLines;
     const BOOL drawCursorGuide = (self.highlightCursorLine &&

@@ -784,6 +784,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     return _configuration->_buttonsBackgroundRects;
 }
 
+- (BOOL)shouldDrawCursorGuideBelowText {
+    return !_configuration->_useNativePowerlineGlyphs;
+}
+
 - (vector_float4)shadeColor {
     return _configuration->_shadeColor;
 }
