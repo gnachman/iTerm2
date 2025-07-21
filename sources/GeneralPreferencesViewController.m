@@ -697,15 +697,23 @@ enum {
                            key:kPreferenceKeyOpenAIAPIKey
                    relatedView:_openAIAPIKeyLabel
                           type:kPreferenceInfoTypePasswordTextField];
+    __block BOOL apiKeyHasBecomeFirstResponder = NO;
     info.syntheticGetter = ^id{
-        return [AITermControllerObjC apiKey];
+        if (!apiKeyHasBecomeFirstResponder) {
+            return @"";
+        }
+        NSString *key = [AITermControllerObjC apiKey];
+        return key;
     };
     info.syntheticSetter = ^(id newValue) {
-        NSString *key = [NSString castFrom:newValue];
-        [AITermControllerObjC setAPIKeyAsync:key];
+        if (apiKeyHasBecomeFirstResponder) {
+            NSString *key = [NSString castFrom:newValue];
+            [AITermControllerObjC setAPIKeyAsync:key];
+        }
     };
     __weak PreferenceInfo *apiKeyInfo = info;
     _openAIAPIKey.textFieldDidBecomeFirstResponder = ^(iTermSettingsSecureTextField *textfield) {
+        apiKeyHasBecomeFirstResponder = YES;
         if (apiKeyInfo) {
             [weakSelf updateValueForInfo:apiKeyInfo];
         }
