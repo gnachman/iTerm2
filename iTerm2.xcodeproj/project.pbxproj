@@ -4327,6 +4327,7 @@
 		A6E1524727602FFE00D0F41C /* iTermWeakBox.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E1524527602FFE00D0F41C /* iTermWeakBox.m */; };
 		A6E1524C27613BF100D0F41C /* LineBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D72438C11F416E500BD4924 /* LineBuffer.m */; };
 		A6E152612762CE2300D0F41C /* VT100Screen.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF7562026DDA6303A80106 /* VT100Screen.m */; };
+		A6E156182E2EC1EC00C2CE21 /* libhudsucker_ffi.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6E156172E2EC1EC00C2CE21 /* libhudsucker_ffi.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A6E16C5F24A85D5F00C6DB06 /* BigSurAddTab@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C5D24A85D5E00C6DB06 /* BigSurAddTab@2x.png */; };
 		A6E16C6024A85D5F00C6DB06 /* BigSurAddTab@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C5D24A85D5E00C6DB06 /* BigSurAddTab@2x.png */; };
 		A6E16C6124A85D5F00C6DB06 /* BigSurAddTab@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E16C5D24A85D5E00C6DB06 /* BigSurAddTab@2x.png */; };
@@ -5258,6 +5259,7 @@
 				A69FEECE2E123B8700AFF7A8 /* iTermSwiftPackages.framework in CopyFiles */,
 				A6FB633423DE802900026D52 /* SearchableComboListView.framework in CopyFiles */,
 				A68BE9512DE51591002DD513 /* librailroad_dsl.dylib in CopyFiles */,
+				A6E156182E2EC1EC00C2CE21 /* libhudsucker_ffi.dylib in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -8383,6 +8385,7 @@
 		A6E1524527602FFE00D0F41C /* iTermWeakBox.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermWeakBox.m; sourceTree = "<group>"; };
 		A6E1524D27613EEC00D0F41C /* iTerm2XCTests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTerm2XCTests-Bridging-Header.h"; sourceTree = "<group>"; };
 		A6E1525D2762AFBD00D0F41C /* VT100Screen+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VT100Screen+Private.h"; sourceTree = "<group>"; };
+		A6E156172E2EC1EC00C2CE21 /* libhudsucker_ffi.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libhudsucker_ffi.dylib; path = "hudsucker-ffi/lib/libhudsucker_ffi.dylib"; sourceTree = "<group>"; };
 		A6E16C5D24A85D5E00C6DB06 /* BigSurAddTab@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "BigSurAddTab@2x.png"; path = "images/BigSurAddTab@2x.png"; sourceTree = SOURCE_ROOT; };
 		A6E16C5E24A85D5F00C6DB06 /* BigSurAddTab.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = BigSurAddTab.png; path = images/BigSurAddTab.png; sourceTree = SOURCE_ROOT; };
 		A6E16C6524A866F300C6DB06 /* WindowCornerFull_BigSur@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "WindowCornerFull_BigSur@2x.png"; path = "images/WindowCornerFull_BigSur@2x.png"; sourceTree = SOURCE_ROOT; };
@@ -9086,6 +9089,7 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A6E156172E2EC1EC00C2CE21 /* libhudsucker_ffi.dylib */,
 				A6B1C69D2DC15898008AD3CA /* ModernTests.xctestplan */,
 				A63F2A3A23FA5951008DDEA4 /* it2run */,
 				5370676121C9D2390088D0F3 /* SignedArchive */,
