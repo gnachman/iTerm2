@@ -113,7 +113,8 @@ extern NSString *const kPreferenceKeyCheckForUpdatesAutomatically;
 extern NSString *const kPreferenceKeyCheckForTestReleases;
 extern NSString *const kPreferenceKeyLoadPrefsFromCustomFolder;
 extern NSString *const kPreferenceKeyUseCustomScriptsFolder;  // Bool
-extern NSString *const kPreferenceKeyOpenAIAPIKey;
+extern NSString *const kPreferenceKeyOpenAIAPIKey;  // deprecated
+extern NSString *const kPreferenceKeyAIAPIKey;
 extern NSString *const kPreferenceKeyAIPrompt;
 extern NSString *const kPreferenceKeyAIModel;
 extern NSString *const kPreferenceKeyAITokenLimit;

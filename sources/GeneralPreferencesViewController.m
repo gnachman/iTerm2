@@ -165,7 +165,7 @@ enum {
 
     IBOutlet NSButton *_disableConfirmationOnShutdown;
 
-    IBOutlet iTermSettingsSecureTextField *_openAIAPIKey;
+    IBOutlet NSButton *_openAIAPIKey;
     IBOutlet NSTextField *_openAIAPIKeyLabel;
 
     IBOutlet NSTextField *_aiPrompt;
@@ -693,31 +693,10 @@ enum {
 
     /// -------
 
-    info = [self defineControl:_openAIAPIKey
-                           key:kPreferenceKeyOpenAIAPIKey
-                   relatedView:_openAIAPIKeyLabel
-                          type:kPreferenceInfoTypePasswordTextField];
-    __block BOOL apiKeyHasBecomeFirstResponder = NO;
-    info.syntheticGetter = ^id{
-        if (!apiKeyHasBecomeFirstResponder) {
-            return @"";
-        }
-        NSString *key = [AITermControllerObjC apiKey];
-        return key;
-    };
-    info.syntheticSetter = ^(id newValue) {
-        if (apiKeyHasBecomeFirstResponder) {
-            NSString *key = [NSString castFrom:newValue];
-            [AITermControllerObjC setAPIKeyAsync:key];
-        }
-    };
-    __weak PreferenceInfo *apiKeyInfo = info;
-    _openAIAPIKey.textFieldDidBecomeFirstResponder = ^(iTermSettingsSecureTextField *textfield) {
-        apiKeyHasBecomeFirstResponder = YES;
-        if (apiKeyInfo) {
-            [weakSelf updateValueForInfo:apiKeyInfo];
-        }
-    };
+    [self addViewToSearchIndex:_openAIAPIKey
+                   displayName:@"Set API Key"
+                       phrases:@[ @"Set API key for AI" ]
+                           key:kPreferenceKeyAIAPIKey];
 
     info = [self defineControl:_aiPrompt
                            key:kPreferenceKeyAIPrompt
@@ -920,9 +899,6 @@ enum {
     [self commitControls];
     [self updateValueForInfo:allowSendingClipboardInfo];
     [self updateValueForInfo:enableAIInfo];
-    if ([AITermControllerObjC haveCachedAPIKey]) {
-        [self updateValueForInfo:apiKeyInfo];
-    }
     [self updateAIEnabled];
 }
 
@@ -1176,6 +1152,31 @@ enum {
 }
 
 #pragma mark - Actions
+
+- (IBAction)changeAPIKey:(id)sender {
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = [NSString stringWithFormat:@"Enter the API key for your AI provider. The key will be stored securely in the Keychain."];
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+
+    NSSecureTextField *apiKey = [[NSSecureTextField alloc] initWithFrame:NSMakeRect(0, 0, 500, 24)];
+    apiKey.editable = YES;
+    apiKey.selectable = YES;
+    apiKey.stringValue = [AITermControllerObjC apiKey] ?: @"";
+    alert.accessoryView = apiKey;
+    [alert layout];
+    [[alert window] makeFirstResponder:apiKey];
+
+    switch ([alert runSheetModalForWindow:self.view.window]) {
+        case NSAlertFirstButtonReturn: {
+            [AITermControllerObjC setAPIKeyAsync:apiKey.stringValue];
+            break;
+        }
+        case NSAlertSecondButtonReturn: {
+            break;
+        }
+    }
+}
 
 - (IBAction)showManualAIConfigurationPanel:(NSButton *)button {
     NSViewController *vc = [[NSViewController alloc] init];

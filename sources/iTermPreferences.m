@@ -199,7 +199,8 @@ NSString *const kPreferenceKeyHTMLTabTitles = @"HTMLTabTitles";
 NSString *const kPreferenceKeyDisableTransparencyForKeyWindow = @"DisableTransparencyForKeyWindow";
 NSString *const kPreferenceKeyNeverBlockSystemShutdown = @"NeverBlockSystemShutdown";
 
-NSString *const kPreferenceKeyOpenAIAPIKey = @"NoSyncOpenAIAPIKey";
+NSString *const kPreferenceKeyOpenAIAPIKey = @"NoSyncOpenAIAPIKey";  // deprecated
+NSString *const kPreferenceKeyAIAPIKey = @"NoUserDefaultAIAPIKey";
 NSString *const kPreferenceKeyAIPrompt = @"AI Prompt";
 NSString *const kPreferenceKeyAlertOnMarksInOffscreenSessions = @"Alert On Marks in Offscreen Sessions";
 NSString *const kPreferenceKeyAIModel = @"AiModel";
@@ -475,6 +476,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyBidi: @NO,
                   kPreferenceKeySshIntegrationForURLs: @NO,
                   kPreferenceKeyOpenAIAPIKey: @"",
+                  kPreferenceKeyAIAPIKey: @"",
                   kPreferenceKeyAIPrompt: iTermDefaultAIPrompt,
                   kPreferenceKeyAlertOnMarksInOffscreenSessions: @NO,
                   kPreferenceKeyAIModel: @"gpt-4o-mini",
