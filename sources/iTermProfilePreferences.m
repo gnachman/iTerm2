@@ -145,6 +145,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
         case kPreferenceInfoTypeTokenField:
             return ([defaultValue isKindOfClass:[NSNull class]] ||
                     [defaultValue isKindOfClass:[NSArray class]]);
+        case kPreferenceInfoTypeStringTextView:
+            return [defaultValue isKindOfClass:[NSString class]];
         case kPreferenceInfoTypeMatrix:
             return [defaultValue isKindOfClass:[NSString class]];
         case kPreferenceInfoTypeRadioButton:

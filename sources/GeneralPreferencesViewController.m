@@ -168,8 +168,8 @@ enum {
     IBOutlet NSButton *_openAIAPIKey;
     IBOutlet NSTextField *_openAIAPIKeyLabel;
 
-    IBOutlet NSTextField *_aiPrompt;
-    IBOutlet NSTextField *_aiPromptLabel;
+    IBOutlet NSPopUpButton *_promptSelector;
+    IBOutlet NSTextView *_aiPrompt;
     IBOutlet NSImageView *_aiPromptWarning;  // Image shown when prompt lacks \(ai.prompt)
 
     BOOL _customScriptsFolderDidChange;
@@ -217,6 +217,8 @@ enum {
     IBOutlet NSPopUpButton *_viewManpagesButton;
     IBOutlet NSTextField *_writeToFilesystemLabel; // View Manpages
     IBOutlet NSPopUpButton *_writeToFilesystemButton;
+    IBOutlet NSTextField *_actInWebBrowserLabel; // Act in web browser
+    IBOutlet NSPopUpButton *_actInWebBrowserButton;
     IBOutlet NSButton *_aiCompletions;
 
     IBOutlet NSButton *_enableRTL;
@@ -699,11 +701,19 @@ enum {
                            key:kPreferenceKeyAIAPIKey];
 
     info = [self defineControl:_aiPrompt
-                           key:kPreferenceKeyAIPrompt
-                   relatedView:_aiPromptLabel
-                          type:kPreferenceInfoTypeStringTextField];
+                           key:kPreferenceKeyAIPromptPlaceholder
+                   relatedView:_promptSelector
+                          type:kPreferenceInfoTypeStringTextView];
     info.observer = ^{
         [weakSelf updateAIPromptWarning];
+    };
+    info.syntheticGetter = ^id{
+        NSString *key = [weakSelf keyForCurrentlySelectedAIPrompt];
+        return [iTermPreferences stringForKey:key];
+    };
+    info.syntheticSetter = ^(id newValue) {
+        NSString *key = [weakSelf keyForCurrentlySelectedAIPrompt];
+        [iTermPreferences setString:newValue forKey:key];
     };
 
     [AIMetadata.instance enumerateModels:^(NSString * _Nonnull name, NSInteger context, NSString *url) {
@@ -762,6 +772,11 @@ enum {
     info = [self defineControl:_writeToFilesystemButton
                            key:kPreferenceKeyAIPermissionWriteToFilesystem
                    relatedView:_writeToFilesystemLabel
+                          type:kPreferenceInfoTypeUnsignedIntegerPopup];
+
+    info = [self defineControl:_actInWebBrowserButton
+                           key:kPreferenceKeyAIPermissionActInWebBrowser
+                   relatedView:_actInWebBrowserLabel
                           type:kPreferenceInfoTypeUnsignedIntegerPopup];
 
     NSMutableArray<PreferenceInfo *> *aiFeatureInfos = [NSMutableArray array];
@@ -902,6 +917,25 @@ enum {
     [self updateAIEnabled];
 }
 
+- (NSString *)keyForCurrentlySelectedAIPrompt {
+    switch ((iTermAIPrompt)_promptSelector.selectedTag) {
+        case iTermAIPromptEngageAI:
+            return kPreferenceKeyAIPrompt;
+        case iTermAIPromptAIChat:
+            return kPreferenceKeyAIPromptAIChat;
+        case iTermAIPromptAIChatReadOnlyTerminal:
+            return kPreferenceKeyAIPromptAIChatReadOnlyTerminal;
+        case iTermAIPromptAIChatReadWriteTerminal:
+            return kPreferenceKeyAIPromptAIChatReadWriteTerminal;
+        case iTermAIPromptAIChatBrowser:
+            return kPreferenceKeyAIPromptAIChatBrowser;
+        case iTermAIPromptAIChatReadOnlyTerminalBrowser:
+            return kPreferenceKeyAIPromptAIChatReadOnlyTerminalBrowser;
+        case iTermAIPromptAIChatReadWriteTerminalBrowser:
+            return kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser;
+    }
+}
+
 - (BOOL)canCustomizeAPI {
     // Only allow customization for non-default settings.
     if ([self valueOfKeyEqualsDefaultValue:kPreferenceKeyAITermURL]) {
@@ -1020,7 +1054,7 @@ enum {
 
     const BOOL allowed = _pluginOK && [iTermAITermGatekeeper allowed];
     _openAIAPIKey.enabled = allowed;
-    _aiPrompt.enabled = allowed;
+    _aiPrompt.editable = allowed;
     _aiModel.enabled = allowed;
     _aiTokenLimit.enabled = allowed;
     _resetAIPrompt.enabled = allowed;
@@ -1064,10 +1098,14 @@ enum {
 }
 
 - (void)updateAIPromptWarning {
-    if ([[self stringForKey:kPreferenceKeyAIPrompt] containsString:@"\\(ai.prompt)"]) {
-        _aiPromptWarning.alphaValue = 0.0;
+    if ([[self keyForCurrentlySelectedAIPrompt] isEqualToString:kPreferenceKeyAIPrompt]) {
+        if ([[self stringForKey:kPreferenceKeyAIPrompt] containsString:@"\\(ai.prompt)"]) {
+            _aiPromptWarning.alphaValue = 0.0;
+        } else {
+            _aiPromptWarning.alphaValue = 1.0;
+        }
     } else {
-        _aiPromptWarning.alphaValue = 1.0;
+        _aiPromptWarning.alphaValue = 0.0;
     }
 }
 
@@ -1152,6 +1190,13 @@ enum {
 }
 
 #pragma mark - Actions
+
+- (IBAction)selectedPromptDidChange:(id)sender {
+    NSString *string = [self stringForKey:kPreferenceKeyAIPromptPlaceholder];
+    [_aiPrompt.textStorage setAttributedString:[NSAttributedString attributedStringWithString:string
+                                                                                   attributes:_aiPrompt.typingAttributes]];
+    [self updateAIPromptWarning];
+}
 
 - (IBAction)changeAPIKey:(id)sender {
     NSAlert *alert = [[NSAlert alloc] init];
@@ -1285,12 +1330,21 @@ enum {
 }
 
 - (IBAction)resetAIPrompt:(id)sender {
-    [self setString:iTermDefaultAIPrompt forKey:kPreferenceKeyAIPrompt];
-    _aiPrompt.stringValue = iTermDefaultAIPrompt;
+    NSString *key = [self keyForCurrentlySelectedAIPrompt];
+    [self setString:[iTermPreferences defaultObjectForKey:key]
+             forKey:key];
+    [_aiPrompt.textStorage setAttributedString:[NSAttributedString attributedStringWithString:iTermDefaultAIPrompt
+                                                                                   attributes:_aiPrompt.typingAttributes]];
 }
 
 - (IBAction)aiPromptHelp:(id)sender {
-    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/ai-prompt-help"]];
+    NSString *text =
+        [NSString stringWithContentsOfFile:[[NSBundle bundleForClass:[self class]] pathForResource:@"ai-prompt-help"
+                                                                                            ofType:@"md"]
+                                  encoding:NSUTF8StringEncoding
+                                     error:nil];
+
+    [(NSView *)sender it_showInformativeMessageWithMarkdown:text];
 }
 
 #pragma mark - Notifications

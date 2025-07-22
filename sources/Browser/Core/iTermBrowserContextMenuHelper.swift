@@ -14,6 +14,7 @@ enum iTermBrowserSplitPaneAction {
     case swapSessions
 }
 
+@MainActor
 protocol iTermBrowserContextMenuHelperDelegate: AnyObject {
     func contextMenuAddNamedMark(at: NSPoint)
     func contextMenuConvertPointFromWindowToView(_ point: NSPoint) -> NSPoint
@@ -51,6 +52,7 @@ class SmartSelectionActionPayload: NSObject {
     }
 }
 
+@MainActor
 class iTermBrowserContextMenuHelper: NSObject {
     private(set) var contextMenuClickLocation: NSPoint?
     weak var delegate: iTermBrowserContextMenuHelperDelegate?

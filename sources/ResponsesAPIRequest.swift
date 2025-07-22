@@ -1770,7 +1770,8 @@ struct ResponsesBodyRequestBuilder {
         schema.additionalProperties = false
         return .function(.init(name: function.decl.name,
                                parameters: schema,
-                               strict: true))
+                               strict: true,
+                               description: function.decl.description))
     }
     func body() throws -> Data {
         // Tokens are about 4 letters each. Allow enough tokens to include both the query and an

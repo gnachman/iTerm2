@@ -45,6 +45,7 @@
 #import "iTermPasteHelper.h"
 #import "iTermPasteSpecialViewController.h"
 #import "iTermPreciseTimer.h"
+#import "iTermPreferences.h"
 #import "iTermProcess.h"
 #import "iTermProfilePreferencesBaseViewController.h"
 #import "iTermPromise.h"

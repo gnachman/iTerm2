@@ -7,6 +7,7 @@
 
 // The delegate, an NSResponder, should forward refuseFirstResponderAtCurrentMouseLocation to us.
 @objc
+@MainActor
 protocol iTermFocusFollowsMouseDelegate: AnyObject, iTermFocusFollowsMouseFocusReceiver {
     var window: NSWindow? { get }
     func focusFollowsMouseDidBecomeFirstResponder()
@@ -15,11 +16,13 @@ protocol iTermFocusFollowsMouseDelegate: AnyObject, iTermFocusFollowsMouseFocusR
 }
 
 @objc
+@MainActor
 protocol iTermFocusFollowsMouseDisabling: AnyObject {
     func disableFocusFollowsMouse() -> Bool
     func implementsDisableFocusFollowsMouse() -> Bool
 }
 
+@MainActor
 extension NSWindow: iTermFocusFollowsMouseDisabling {
     func disableFocusFollowsMouse() -> Bool {
         return false
@@ -29,6 +32,7 @@ extension NSWindow: iTermFocusFollowsMouseDisabling {
     }
 }
 
+@MainActor
 extension NSWindowController: iTermFocusFollowsMouseDisabling {
     func disableFocusFollowsMouse() -> Bool {
         return false
@@ -39,6 +43,7 @@ extension NSWindowController: iTermFocusFollowsMouseDisabling {
 }
 
 @objc
+@MainActor
 class iTermFocusFollowsMouse: NSObject {
     @objc weak var delegate: iTermFocusFollowsMouseDelegate?
     private var mouseLocationToRefuseFirstResponderAt: NSPoint? = NSEvent.mouseLocation

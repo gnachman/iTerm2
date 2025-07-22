@@ -2,6 +2,7 @@ import Foundation
 import WebKit
 
 @available(macOS 11.0, *)
+@MainActor
 protocol iTermBrowserAutofillHandlerDelegate: AnyObject {
     func autoFillHandler(_ handler: iTermBrowserAutofillHandler,
                          requestAutofillForHost host: String,

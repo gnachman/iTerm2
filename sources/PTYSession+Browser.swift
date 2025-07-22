@@ -82,7 +82,7 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
             return
         }
         windowController.showChatWindow()
-        windowController.createChat(name: title, inject: content)
+        windowController.createChat(name: title, inject: content, linkToBrowserSessionGuid: guid)
     }
 
     func browserViewControllerSetMouseInfo(_ controller: iTermBrowserViewController,

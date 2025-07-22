@@ -25,7 +25,8 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
     kPreferenceInfoTypeRadioButton,
     kPreferenceInfoTypeStringPopup,
     kPreferenceInfoTypePasswordTextField,
-    kPreferenceInfoTypeSegmentedControl  // tag
+    kPreferenceInfoTypeSegmentedControl,  // tag
+    kPreferenceInfoTypeStringTextView
 };
 
 @class iTermPreferencesSearchDocument;

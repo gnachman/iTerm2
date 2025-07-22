@@ -240,15 +240,25 @@ class ChatAgent {
     private func updateSystemMessage(_ permissions: Set<RemoteCommand.Content.PermissionCategory>) {
         self.permissions = permissions
         var parts = [String]()
-        parts.append("You help the user in a terminal emulator.")
-        if AITermController.provider?.functionsSupported == true {
-            if permissions.contains(.runCommands) || permissions.contains(.typeForYou) {
-                parts.append("You have the ability to run commands on their behalf and perform various other operations in terminal sessions.")
+
+        let key = if AITermController.provider?.functionsSupported != true || permissions.isEmpty {
+            kPreferenceKeyAIPromptAIChat
+        } else {
+            if permissions.contains(.actInWebBrowser) {
+                if permissions.contains(.runCommands) || permissions.contains(.typeForYou) {
+                    kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser
+                } else {
+                    kPreferenceKeyAIPromptAIChatReadOnlyTerminalBrowser
+                }
             } else {
-                parts.append("You have some access to the user's state with function calling.")
+                if permissions.contains(.runCommands) || permissions.contains(.typeForYou) {
+                    kPreferenceKeyAIPromptAIChatReadWriteTerminal
+                } else {
+                    kPreferenceKeyAIPromptAIChatReadOnlyTerminal
+                }
             }
-            parts.append("Don't be shy about using it because the user must always grant permission for functions to run. You don't need to request permission: the app will do that for you.")
         }
+        parts.append(iTermPreferences.string(forKey: key))
         parts.append("If a zip file is provided (this is rare), you should extract it and analyze the contents in the context of the accompanying messages.")
 
         conversation.systemMessage = parts.joined(separator: " ")
@@ -975,6 +985,16 @@ extension RemoteCommand.Content {
             "get_man_page"
         case .createFile:
             "create_file"
+        case .searchBrowser:
+            "find_on_page"
+        case .loadURL:
+            "load_url"
+        case .webSearch:
+            "web_search_in_browser"
+        case .getURL:
+            "get_current_url"
+        case .readWebPage:
+            "read_web_page_section"
         }
     }
 
@@ -1019,6 +1039,17 @@ extension RemoteCommand.Content {
         case .createFile:
             ["filename": "The name of the file you wish to create. It will be replaced if it already exists.",
              "content": "The content that will be written to the file."]
+        case .searchBrowser(_):
+            ["query": "The text to search for on the current page."]
+        case .loadURL(_):
+            ["url": "The URL to load. Must use https scheme."]
+        case .webSearch(_):
+            ["query": "The web search query"]
+        case .getURL(_):
+            [:]
+        case .readWebPage(_):
+            ["startingLineNumber": "The line number to start reading at.",
+             "numberOfLines": "The number of lines to return."]
         }
     }
 
@@ -1062,6 +1093,16 @@ extension RemoteCommand.Content {
             "Returns the content of a command's man page."
         case .createFile:
             "Creates a file containing a specified string on the user's computer and then reveals it in Finder."
+        case .loadURL:
+            "Loads the specified URL in the associated web browser"
+        case .webSearch:
+            "Performs a web search using the currently configured search engine in the associated web browser"
+        case .getURL:
+            "Returns the current URL of the associated web browser"
+        case .readWebPage:
+            "Returns some of the content (in markdown format) of the page visible in the associated web browser."
+        case .searchBrowser(_):
+            "Searches the current web page in the associated web browser (after converting to markdown format) for a substring."
         }
     }
 }
@@ -1320,6 +1361,71 @@ extension ChatAgent {
                     implementation: { [weak self] llmMessage, command, completion in
                         let remoteCommand = RemoteCommand(llmMessage: llmMessage,
                                                           content: .createFile(command))
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                    })
+            case .searchBrowser(let args):
+                conversation.define(
+                    function: ChatGPTFunctionDeclaration(
+                        name: content.functionName,
+                        description: content.functionDescription,
+                        parameters: JSONSchema(for: args,
+                                               descriptions: content.argDescriptions)),
+                    arguments: type(of: args),
+                    implementation: { [weak self] llmMessage, command, completion in
+                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
+                                                          content: .searchBrowser(command))
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                    })
+            case .loadURL(let args):
+                conversation.define(
+                    function: ChatGPTFunctionDeclaration(
+                        name: content.functionName,
+                        description: content.functionDescription,
+                        parameters: JSONSchema(for: args,
+                                               descriptions: content.argDescriptions)),
+                    arguments: type(of: args),
+                    implementation: { [weak self] llmMessage, command, completion in
+                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
+                                                          content: .loadURL(command))
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                    })
+            case .webSearch(let args):
+                conversation.define(
+                    function: ChatGPTFunctionDeclaration(
+                        name: content.functionName,
+                        description: content.functionDescription,
+                        parameters: JSONSchema(for: args,
+                                               descriptions: content.argDescriptions)),
+                    arguments: type(of: args),
+                    implementation: { [weak self] llmMessage, command, completion in
+                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
+                                                          content: .webSearch(command))
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                    })
+            case .getURL(let args):
+                conversation.define(
+                    function: ChatGPTFunctionDeclaration(
+                        name: content.functionName,
+                        description: content.functionDescription,
+                        parameters: JSONSchema(for: args,
+                                               descriptions: content.argDescriptions)),
+                    arguments: type(of: args),
+                    implementation: { [weak self] llmMessage, command, completion in
+                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
+                                                          content: .getURL(command))
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                    })
+            case .readWebPage(let args):
+                conversation.define(
+                    function: ChatGPTFunctionDeclaration(
+                        name: content.functionName,
+                        description: content.functionDescription,
+                        parameters: JSONSchema(for: args,
+                                               descriptions: content.argDescriptions)),
+                    arguments: type(of: args),
+                    implementation: { [weak self] llmMessage, command, completion in
+                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
+                                                          content: .readWebPage(command))
                         try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
                     })
             }

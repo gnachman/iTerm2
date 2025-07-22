@@ -10,7 +10,8 @@ struct Chat {
     var title: String
     var creationDate = Date()
     var lastModifiedDate = Date()
-    var sessionGuid: String?
+    var terminalSessionGuid: String?
+    var browserSessionGuid: String?
     var permissions: String
     var vectorStore: String?
 }
@@ -21,7 +22,8 @@ extension Chat: iTermDatabaseElement {
         case title
         case creationDate
         case lastModifiedDate
-        case sessionGuid
+        case terminalSessionGuid = "sessionGuid"
+        case browserSessionGuid
         case permissions
         case vectorStore
     }
@@ -32,7 +34,8 @@ extension Chat: iTermDatabaseElement {
              \(Columns.title.rawValue) text not null,
              \(Columns.creationDate.rawValue) integer not null,
              \(Columns.lastModifiedDate.rawValue) integer not null,
-             \(Columns.sessionGuid.rawValue) text,
+             \(Columns.terminalSessionGuid.rawValue) text,
+             \(Columns.browserSessionGuid.rawValue) text,
              \(Columns.permissions.rawValue) text,
              \(Columns.vectorStore.rawValue) text)
         """
@@ -41,6 +44,9 @@ extension Chat: iTermDatabaseElement {
         var result = [Migration]()
         if !existingColumns.contains(Columns.vectorStore.rawValue) {
             result.append(.init(query: "ALTER TABLE Chat ADD COLUMN \(Columns.vectorStore.rawValue) text", args: []))
+        }
+        if !existingColumns.contains(Columns.browserSessionGuid.rawValue) {
+            result.append(.init(query: "ALTER TABLE Chat ADD COLUMN \(Columns.browserSessionGuid.rawValue) text", args: []))
         }
         return result
     }
@@ -64,17 +70,19 @@ extension Chat: iTermDatabaseElement {
              \(Columns.title.rawValue), 
              \(Columns.creationDate.rawValue), 
              \(Columns.lastModifiedDate.rawValue), 
-             \(Columns.sessionGuid.rawValue),
+             \(Columns.terminalSessionGuid.rawValue),
+             \(Columns.browserSessionGuid.rawValue),
              \(Columns.permissions.rawValue),
              \(Columns.vectorStore.rawValue))
-        values (?, ?, ?, ?, ?, ?, ?)
+        values (?, ?, ?, ?, ?, ?, ?, ?)
         """,
          [
             id,
             title,
             creationDate.timeIntervalSince1970,
             lastModifiedDate.timeIntervalSince1970,
-            sessionGuid ?? NSNull(),
+            terminalSessionGuid ?? NSNull(),
+            browserSessionGuid ?? NSNull(),
             permissions,
             vectorStore ?? NSNull()
          ])
@@ -85,7 +93,8 @@ extension Chat: iTermDatabaseElement {
         update Chat set \(Columns.title.rawValue) = ?,
                         \(Columns.creationDate.rawValue) = ?,
                         \(Columns.lastModifiedDate.rawValue) = ?,
-                        \(Columns.sessionGuid.rawValue) = ?,
+                        \(Columns.terminalSessionGuid.rawValue) = ?,
+                        \(Columns.browserSessionGuid.rawValue) = ?,
                         \(Columns.permissions.rawValue) = ?,
                         \(Columns.vectorStore.rawValue) = ?
         where \(Columns.uuid.rawValue) = ?
@@ -94,7 +103,8 @@ extension Chat: iTermDatabaseElement {
             title,
             creationDate.timeIntervalSince1970,
             lastModifiedDate.timeIntervalSince1970,
-            sessionGuid ?? NSNull(),
+            terminalSessionGuid ?? NSNull(),
+            browserSessionGuid ?? NSNull(),
             permissions,
             vectorStore ?? NSNull(),
 
@@ -115,7 +125,8 @@ extension Chat: iTermDatabaseElement {
         self.title = title
         self.creationDate = creationDate
         self.lastModifiedDate = lastModifiedDate
-        self.sessionGuid = result.string(forColumn: Columns.sessionGuid.rawValue)
+        self.terminalSessionGuid = result.string(forColumn: Columns.terminalSessionGuid.rawValue)
+        self.browserSessionGuid = result.string(forColumn: Columns.browserSessionGuid.rawValue)
         self.permissions = result.string(forColumn: Columns.permissions.rawValue) ?? ""
         self.vectorStore = result.string(forColumn: Columns.vectorStore.rawValue)
     }

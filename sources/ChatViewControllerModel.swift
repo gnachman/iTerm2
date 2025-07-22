@@ -90,14 +90,24 @@ class ChatViewControllerModel {
         }
     }
 
-    var sessionGuid: String? {
+    var terminalSessionGuid: String? {
         get {
-            listModel.chat(id: chatID)?.sessionGuid
+            listModel.chat(id: chatID)?.terminalSessionGuid
         }
     }
 
-    func setSessionGuid(_ newValue: String?) throws {
-        try listModel.setGuid(for: chatID, to: newValue)
+    var browserSessionGuid: String? {
+        get {
+            listModel.chat(id: chatID)?.browserSessionGuid
+        }
+    }
+
+    func setTerminalSessionGuid(_ newValue: String?) throws {
+        try listModel.setTerminalGuid(for: chatID, to: newValue)
+    }
+
+    func setBrowserSessionGuid(_ newValue: String?) throws {
+        try listModel.setBrowserGuid(for: chatID, to: newValue)
     }
 
     private let alwaysAppendDate = false

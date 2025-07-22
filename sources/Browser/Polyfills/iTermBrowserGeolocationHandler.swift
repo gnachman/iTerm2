@@ -9,6 +9,7 @@ import CoreLocation
 import WebKit
 
 @available(macOS 11.0, *)
+@MainActor
 class iTermBrowserGeolocationHandler: NSObject {
     private static var instances = [iTermBrowserUser: iTermBrowserGeolocationHandler]()
     static func instance(for user: iTermBrowserUser) -> iTermBrowserGeolocationHandler? {
@@ -161,6 +162,7 @@ class iTermBrowserGeolocationHandler: NSObject {
 // MARK: - Location Request Handling
 
 @available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserGeolocationHandler {
     private func handleGetCurrentPosition(webView: WKWebView, messageDict: [String: Any]) async {
         guard let operationId = messageDict["operationId"] as? Int else {
@@ -365,95 +367,101 @@ extension iTermBrowserGeolocationHandler {
 
 @available(macOS 11.0, *)
 extension iTermBrowserGeolocationHandler: CLLocationManagerDelegate {
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        let requests = pendingPermissionRequests
-        pendingPermissionRequests.removeAll()
-        let authorized = systemAuthorizationStatus == .systemAuthorized
-        for (origin, continuation) in requests {
-            continuation.resume(returning: authorized)
-            DLog("Authorization result for \(origin): \(authorized)")
+    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        Task { @MainActor in
+            let requests = pendingPermissionRequests
+            pendingPermissionRequests.removeAll()
+            let authorized = systemAuthorizationStatus == .systemAuthorized
+            for (origin, continuation) in requests {
+                continuation.resume(returning: authorized)
+                DLog("Authorization result for \(origin): \(authorized)")
+            }
         }
     }
     
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let location = locations.last else { return }
-        
-        // Update cache
-        lastKnownLocation = location
-        locationTimestamp = Date()
-        
-        // Handle pending single requests
-        let requests = Array(pendingLocationRequests.values)
-        pendingLocationRequests.removeAll()
-        
-        for request in requests {
-            if let webView = request.webView {
-                Task {
-                    await sendPositionSuccess(webView: webView, operationId: request.operationId, location: location)
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        Task { @MainActor in
+            guard let location = locations.last else { return }
+
+            // Update cache
+            lastKnownLocation = location
+            locationTimestamp = Date()
+
+            // Handle pending single requests
+            let requests = Array(pendingLocationRequests.values)
+            pendingLocationRequests.removeAll()
+
+            for request in requests {
+                if let webView = request.webView {
+                    Task {
+                        await sendPositionSuccess(webView: webView, operationId: request.operationId, location: location)
+                    }
                 }
             }
-        }
-        
-        // Handle active watches
-        for watch in activeWatches.values {
-            if let webView = watch.webView {
-                Task {
-                    await sendWatchPositionUpdate(webView: webView, watchId: watch.watchId, location: location)
+
+            // Handle active watches
+            for watch in activeWatches.values {
+                if let webView = watch.webView {
+                    Task {
+                        await sendWatchPositionUpdate(webView: webView, watchId: watch.watchId, location: location)
+                    }
                 }
             }
+
+            // Stop location updates if no more active watches
+            if activeWatches.isEmpty {
+                locationManager.stopUpdatingLocation()
+            }
         }
-        
-        // Stop location updates if no more active watches
-        if activeWatches.isEmpty {
+    }
+    
+    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        Task { @MainActor in
+            let code: Int
+            let message: String
+
+            if let clError = error as? CLError {
+                switch clError.code {
+                case .denied:
+                    code = 1
+                    message = "User denied the request for Geolocation."
+                case .network:
+                    code = 2
+                    message = "Network error while retrieving location."
+                case .locationUnknown:
+                    code = 2
+                    message = "Location information is unavailable."
+                default:
+                    code = 2
+                    message = "An error occurred while retrieving location: \(clError.localizedDescription)"
+                }
+            } else {
+                code = 2
+                message = "An error occurred while retrieving location: \(error.localizedDescription)"
+            }
+
+            // Handle pending single requests
+            let requests = Array(pendingLocationRequests.values)
+            pendingLocationRequests.removeAll()
+
+            for request in requests {
+                if let webView = request.webView {
+                    Task {
+                        await sendPositionError(webView: webView, operationId: request.operationId, code: code, message: message)
+                    }
+                }
+            }
+
+            // Handle active watches
+            for watch in activeWatches.values {
+                if let webView = watch.webView {
+                    Task {
+                        await sendWatchError(webView: webView, watchId: watch.watchId, code: code, message: message)
+                    }
+                }
+            }
+
             locationManager.stopUpdatingLocation()
         }
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        let code: Int
-        let message: String
-        
-        if let clError = error as? CLError {
-            switch clError.code {
-            case .denied:
-                code = 1
-                message = "User denied the request for Geolocation."
-            case .network:
-                code = 2
-                message = "Network error while retrieving location."
-            case .locationUnknown:
-                code = 2
-                message = "Location information is unavailable."
-            default:
-                code = 2
-                message = "An error occurred while retrieving location: \(clError.localizedDescription)"
-            }
-        } else {
-            code = 2
-            message = "An error occurred while retrieving location: \(error.localizedDescription)"
-        }
-        
-        // Handle pending single requests
-        let requests = Array(pendingLocationRequests.values)
-        pendingLocationRequests.removeAll()
-        
-        for request in requests {
-            if let webView = request.webView {
-                Task {
-                    await sendPositionError(webView: webView, operationId: request.operationId, code: code, message: message)
-                }
-            }
-        }
-        
-        // Handle active watches
-        for watch in activeWatches.values {
-            if let webView = watch.webView {
-                Task {
-                    await sendWatchError(webView: webView, watchId: watch.watchId, code: code, message: message)
-                }
-            }
-        }
-        
-        locationManager.stopUpdatingLocation()
     }
 }

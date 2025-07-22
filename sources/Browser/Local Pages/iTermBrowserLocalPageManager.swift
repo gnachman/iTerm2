@@ -35,6 +35,7 @@ private struct iTermBrowserPageContext {
 // MARK: - Local Page Manager Delegate
 
 @available(macOS 11.0, *)
+@MainActor
 protocol iTermBrowserLocalPageManagerDelegate: AnyObject {
     func localPageManagerDidUpdateAdblockSettings(_ manager: iTermBrowserLocalPageManager)
     func localPageManagerDidRequestAdblockUpdate(_ manager: iTermBrowserLocalPageManager)

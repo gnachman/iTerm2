@@ -33,6 +33,7 @@
 @class iTermFindCursorView;
 @class iTermFindOnPageHelper;
 @class iTermFocusFollowsMouse;
+@protocol iTermFocusFollowsMouseFocusReceiver;
 @class iTermFontTable;
 @class iTermImageWrapper;
 @protocol iTermPathMarkReading;
@@ -56,7 +57,6 @@
 @class ThreeFingerTapGestureRecognizer;
 @class VT100Screen;
 @class VT100Terminal;
-
 
 // Types of characters. Used when classifying characters for word selection.
 typedef NS_ENUM(NSInteger, PTYCharType) {
@@ -343,7 +343,6 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 
 @interface PTYTextView : NSView <
   iTermImmutableColorMapDelegate,
-  iTermFocusFollowsMouseFocusReceiver,
   iTermIndicatorsHelperDelegate,
   iTermSemanticHistoryControllerDelegate,
   iTermSpecialHandlerForAPIKeyDownNotifications,

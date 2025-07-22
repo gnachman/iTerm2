@@ -7,13 +7,9 @@
 
 #import <Cocoa/Cocoa.h>
 
-NS_ASSUME_NONNULL_BEGIN
+@protocol iTermFocusFollowsMouseFocusReceiver;
 
-@protocol iTermFocusFollowsMouseFocusReceiver<NSObject>
-// Allows a new split pane to become focused even though the mouse pointer is elsewhere.
-// Records the mouse position. Refuses first responder as long as the mouse doesn't move.
-- (void)refuseFirstResponderAtCurrentMouseLocation;
-@end
+NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermFocusFollowsMouseController : NSObject
 

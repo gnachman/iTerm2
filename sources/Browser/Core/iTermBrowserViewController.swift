@@ -413,6 +413,111 @@ extension iTermBrowserViewController {
             }
         }
     }
+
+    // MARK: - AI Helpers
+
+    func loadURL(_ url: URL, completion: @escaping @MainActor (Error?) -> ()) {
+        Task {
+            do {
+                try await browserManager.loadURL(url)
+                completion(nil)
+            } catch {
+                DLog("\(error)")
+                completion(error)
+            }
+        }
+    }
+
+    func doWebSearch(for query:String, completion: @escaping @MainActor (Error?) -> ()) {
+        if let url = browserManager.urlForWebSearch(query: query) {
+            Task {
+                do {
+                    try await browserManager.loadURL(url)
+                    completion(nil)
+                } catch {
+                    DLog("\(error)")
+                    completion(error)
+                }
+            }
+        }
+    }
+
+    func convertToMarkdown(skipChrome: Bool, completion: @escaping @MainActor (Result<String, Error>) -> ()) {
+        Task {
+            do {
+                let result = try await browserManager.convertToMarkdown(skipChrome: skipChrome)
+                completion(.success(result))
+            } catch {
+                completion(.failure(error))
+            }
+        }
+    }
+
+    struct FindOnPageResult: Codable {
+        var line: Int
+        var contextBefore: String?
+        var matchingLine: String
+        var contextAfter: String?
+    }
+
+    struct FindOnPageOutput: Codable {
+        var results: [FindOnPageResult]
+        var excessiveResultsDropped: Int
+    }
+
+    func findOnPage(query: String,
+                    maxResults: Int,
+                    contextLength: Int,
+                    completion: @escaping @MainActor (Result<FindOnPageOutput, Error>) -> ()) {
+        Task {
+            do {
+                let markdown = try await browserManager.convertToMarkdown(skipChrome: false)
+                let lines = markdown.components(separatedBy: "\n")
+                var results = [FindOnPageResult]()
+                var dropped = 0
+                for i in 0..<lines.count {
+                    if lines[i].containsCaseInsensitive(query) {
+                        var contextBefore = [String]()
+                        do {
+                            var j = i - 1
+                            var length = 0
+                            while length < contextLength && j >= 0 {
+                                length += lines[j].count
+                                contextBefore.insert(lines[j], at: 0)
+                                j -= 1
+                            }
+                        }
+                        var contextAfter = [String]()
+                        do {
+                            var j = i + 1
+                            var length = 0
+                            while length < contextLength && j < lines.count {
+                                length += lines[j].count
+                                contextAfter.append(lines[j])
+                                j += 1
+                            }
+                        }
+                        if results.count < maxResults {
+                            results.append(FindOnPageResult(line: i,
+                                                            contextBefore: contextBefore.joined(separator: "\n"),
+                                                            matchingLine: lines[i],
+                                                            contextAfter: contextAfter.joined(separator: "\n")))
+                        } else {
+                            dropped += 1
+                        }
+                    }
+                }
+                completion(.success(FindOnPageOutput(results: results,
+                                                     excessiveResultsDropped: dropped)))
+            } catch {
+                completion(.failure(BrowserManagerError(errorDescription: "The page could not be converted to markdown for processing")))
+            }
+        }
+    }
+}
+
+public struct BrowserManagerError: Error, LocalizedError {
+    var errorDescription: String
 }
 
 // MARK: -  Overrides

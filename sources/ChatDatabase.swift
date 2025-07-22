@@ -14,7 +14,7 @@ class ObjCChatDatabase: NSObject {
         guard let instance = ChatDatabase.instanceIfExists else {
             return []
         }
-        return instance.sessionToChatMap[guid] ?? Set()
+        return instance.terminalSessionToChatMap[guid] ?? Set()
     }
 
     @objc(unlinkSessionGuid:)
@@ -25,14 +25,16 @@ class ObjCChatDatabase: NSObject {
         }
         for i in 0..<chats.count {
             let chat = chats[i]
-            if chat.sessionGuid == sessionGuid {
+            if chat.terminalSessionGuid == sessionGuid || chat.browserSessionGuid == sessionGuid {
                 var temp = chats[i]
-                temp.sessionGuid = nil
+                let wasTerminal = temp.terminalSessionGuid != nil
+                temp.terminalSessionGuid = nil
+                temp.browserSessionGuid = nil
                 do {
                     try chats.set(at: i, temp)
                     try? ChatBroker.instance?.publishNotice(
                         chatID: temp.id,
-                        notice: "This chat is no longer linked to a terminal session.")
+                        notice: "This chat is no longer linked to a \(wasTerminal ? "terminal" : "web browser") session.")
                 } catch {
                     DLog("\(error)")
                 }
@@ -42,7 +44,7 @@ class ObjCChatDatabase: NSObject {
 
     @objc(firstChatIDForSessionGuid:)
     static func firstChatID(forSessionGuid sessionGuid: String) -> String? {
-        return ChatDatabase.instance?.chats?.first { $0.sessionGuid == sessionGuid }?.id
+        return ChatDatabase.instance?.chats?.first { $0.terminalSessionGuid == sessionGuid }?.id
     }
 }
 
@@ -64,7 +66,8 @@ class ChatDatabase {
     }
 
     let db: iTermDatabase
-    fileprivate var sessionToChatMap = [String: Set<String>]()
+    fileprivate var terminalSessionToChatMap = [String: Set<String>]()
+    fileprivate var browserSessionToChatMap = [String: Set<String>]()
 
     init?(url: URL){
         db = iTermSqliteDatabaseImpl(url: url, lockName: "chatdb-lock")
@@ -121,22 +124,27 @@ class ChatDatabase {
         let sql =
         """
         SELECT
-            \(Chat.Columns.sessionGuid),
+            \(Chat.Columns.terminalSessionGuid),
+            \(Chat.Columns.browserSessionGuid),
             \(Chat.Columns.uuid.rawValue)
         FROM Chat
         WHERE
-            \(Chat.Columns.sessionGuid.rawValue) IS NOT NULL
+            \(Chat.Columns.terminalSessionGuid.rawValue) IS NOT NULL OR
+            \(Chat.Columns.browserSessionGuid.rawValue) IS NOT NULL
         """
         do {
             guard let resultSet = try db.executeQuery(sql, withArguments: []) else {
                 return
             }
             while resultSet.next() {
-                guard let guid = resultSet.string(forColumn: Chat.Columns.sessionGuid.rawValue),
-                      let chatID = resultSet.string(forColumn: Chat.Columns.uuid.rawValue) else {
-                    continue
+                if let terminalGuid = resultSet.string(forColumn: Chat.Columns.terminalSessionGuid.rawValue),
+                      let chatID = resultSet.string(forColumn: Chat.Columns.uuid.rawValue) {
+                    terminalSessionToChatMap[terminalGuid, default: Set()].insert(chatID)
                 }
-                sessionToChatMap[guid, default: Set()].insert(chatID)
+                if let browserGuid = resultSet.string(forColumn: Chat.Columns.browserSessionGuid.rawValue),
+                      let chatID = resultSet.string(forColumn: Chat.Columns.uuid.rawValue) {
+                    browserSessionToChatMap[browserGuid, default: Set()].insert(chatID)
+                }
             }
         } catch {
             DLog("\(error)")
@@ -227,26 +235,26 @@ extension ChatSearchResult: iTermDatabaseInitializable {
 
 extension ChatDatabase: DatabaseBackedArrayDelegate {
     func databaseBackedArray(didInsertElement chat: Chat) {
-        if let guid = chat.sessionGuid {
-            sessionToChatMap[guid, default: Set()].insert(chat.id)
+        if let guid = chat.terminalSessionGuid {
+            terminalSessionToChatMap[guid, default: Set()].insert(chat.id)
             NotificationCenter.default.post(name: ObjCChatDatabase.redrawTerminalsNotification, object: nil)
         }
     }
     
     func databaseBackedArray(didRemoveElement chat: Chat) {
-        if let guid = chat.sessionGuid {
-            sessionToChatMap[guid]?.remove(chat.id)
+        if let guid = chat.terminalSessionGuid {
+            terminalSessionToChatMap[guid]?.remove(chat.id)
             NotificationCenter.default.post(name: ObjCChatDatabase.redrawTerminalsNotification, object: nil)
         }
     }
     
     func databaseBackedArray(didModifyElement newValue: Chat, oldValue: Chat) {
-        if let guid = oldValue.sessionGuid {
-            sessionToChatMap[guid]?.remove(oldValue.id)
+        if let guid = oldValue.terminalSessionGuid {
+            terminalSessionToChatMap[guid]?.remove(oldValue.id)
             NotificationCenter.default.post(name: ObjCChatDatabase.redrawTerminalsNotification, object: nil)
         }
-        if let guid = newValue.sessionGuid {
-            sessionToChatMap[guid, default: Set()].insert(newValue.id)
+        if let guid = newValue.terminalSessionGuid {
+            terminalSessionToChatMap[guid, default: Set()].insert(newValue.id)
             NotificationCenter.default.post(name: ObjCChatDatabase.redrawTerminalsNotification, object: nil)
         }
     }

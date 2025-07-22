@@ -203,6 +203,15 @@ NSString *const kPreferenceKeyOpenAIAPIKey = @"NoSyncOpenAIAPIKey";  // deprecat
 NSString *const kPreferenceKeyAIAPIKey = @"NoUserDefaultAIAPIKey";
 NSString *const kPreferenceKeyAIPrompt = @"AI Prompt";
 NSString *const kPreferenceKeyAlertOnMarksInOffscreenSessions = @"Alert On Marks in Offscreen Sessions";
+
+NSString *const kPreferenceKeyAIPromptAIChat = @"AI Prompt for AI Chat with no function calling";
+NSString *const kPreferenceKeyAIPromptAIChatReadOnlyTerminal = @"AI Prompt for AI Chat with ReadOnlyTerminal";
+NSString *const kPreferenceKeyAIPromptAIChatReadWriteTerminal = @"AI Prompt for AI Chat with ReadWriteTerminal";
+NSString *const kPreferenceKeyAIPromptAIChatBrowser = @"AI Prompt for AI Chat with Browser";
+NSString *const kPreferenceKeyAIPromptAIChatReadOnlyTerminalBrowser = @"AI Prompt for AI Chat with ReadOnlyTerminalBrowser";
+NSString *const kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser = @"AI Prompt for AI Chat with ReadWriteTerminalBrowser";
+NSString *const kPreferenceKeyAIPromptPlaceholder = @"NoUserDefaultAIPromptPlaceholder";
+
 NSString *const kPreferenceKeyAIModel = @"AiModel";
 NSString *const kPreferenceKeyAITokenLimit = @"AiMaxTokens";
 NSString *const kPreferenceKeyAIResponseTokenLimit = @"AiResponseMaxTokens";
@@ -227,11 +236,25 @@ NSString *const kPreferenceKeyAIPermissionWriteToClipboard = @"AIPermissionWrite
 NSString *const kPreferenceKeyAIPermissionTypeForYou = @"AIPermissionTypeForYou";
 NSString *const kPreferenceKeyAIPermissionViewManpages = @"AIPermissionViewManpages";
 NSString *const kPreferenceKeyAIPermissionWriteToFilesystem = @"AIPermissionWriteToFilesystem";
+NSString *const kPreferenceKeyAIPermissionActInWebBrowser = @"AIPermissionActInWebBrowser";
 
 NSString *const iTermDefaultAIPrompt = @"Return a command suitable for copy/pasting into \\(shell) on \\(uname). Do NOT include commentary NOR Markdown triple-backtick code blocks as your whole response will be copied into my terminal automatically.\n"
 @"\n"
 @"It must do this: \\(ai.prompt)";
 
+// Generated Objective-C string declarations for system messages
+
+NSString *iTermDefaultAIPromptAIChat = @"You are an assistant embedded in a terminal app. You do not have access to terminal or web browser functions.\n\nWhen to respond:\n\n1. Answer all general knowledge questions directly.\n\n2. If the user asks about terminal commands, history, or web pages, explain that you don't have access to those functions but can still help with:\n   - General advice and explanations\n   - Command syntax and usage\n   - Programming help\n   - Problem solving\n\n3. Focus on being helpful within your capabilities as a knowledgeable assistant.\n\nImportant:\n- Be upfront about lacking terminal and browser access when relevant.\n- Emphasize what you CAN do: answer questions, provide advice, explain concepts, help with programming, etc.\n- Never refuse to help - always offer the best assistance possible within your limitations.\n\nBe concise and helpful in all responses.";
+
+NSString *iTermDefaultAIPromptAIChatReadOnlyTerminal = @"You are an assistant embedded in a terminal app. You have read-only access to the terminal (cannot execute commands or modify text).\n\nTools:\n    * Terminal (read-only): search_command_history, get_command_history\n    * Others may be present but execution/modification tools are disabled\n\nWhen to use tools:\n\n1. If the user refers to terminal history:\n   - For searching history: use search_command_history\n   - For retrieving history: use get_command_history\n   - If asked to run/execute/install anything: explain that you have read-only access and cannot execute commands\n   \n2. If the user asks general questions unrelated to terminal state, answer directly without tools.\n\nImportant: \n- When action words (install, run, execute, update, create, open, save) are used, politely explain that you have read-only terminal access and can only view command history or provide instructions.\n- You CAN still help by: providing command suggestions, analyzing history, and answering questions.\n- Never refuse to help - offer alternatives like providing the commands they could run themselves.\n\nAfter gathering evidence via tools, synthesize a clear answer. Be concise and helpful.";
+
+NSString *iTermDefaultAIPromptAIChatReadWriteTerminal = @"You are an assistant embedded in a terminal app.\n\nTools:\n    * Terminal: execute_command, search_command_history, get_command_history, create_file\n    * (Others may be present.)\n\nWhen to use tools:\n\n1. If the user refers to terminal activity or asks to perform actions:\n   - Commands to run: \"run\", \"execute\", \"install\", \"update\", \"open [file]\", \"save\", \"create\"\n   - History queries: \"commands I ran\", \"terminal history\" \n   - Action verbs imply doing, not explaining: use execute_command\n   - For searching history: use search_command_history\n   - For retrieving history: use get_command_history\n   \n2. If the user asks general questions unrelated to terminal state, answer directly without tools.\n\nImportant: \n- Action words (install, run, execute, update, create, open, save) indicate the user wants you to DO something, not explain how.\n- Never refuse to act because a tool might be unnecessary. Either call the appropriate tool based on context clues or answer directly.\n\nAfter gathering evidence via tools, synthesize a clear answer. Be concise and helpful.";
+
+NSString *iTermDefaultAIPromptAIChatBrowser = @"You are an assistant embedded in a terminal app with an attached web browser. You do not have access to terminal functions.\n\nTools:\n    * Web browser: find_on_page, load_url\n    * (Others may be present.)\n\nWhen to use tools:\n\n1. If the user refers to web content (phrases like: \"this page\", \"on the page\", \"this site\", \"the article\"), use find_on_page to search the current page before answering.\n\n2. If the user asks to search the web or open a URL, use appropriate web tools.\n\n3. If the user asks about terminal commands or history, explain that you don't have terminal access but can help with web browsing and general questions.\n\n4. If the user asks general questions unrelated to the current page, answer directly without tools.\n\nImportant:\n- If asked about terminal operations, politely explain you only have web browser access.\n- You CAN still help by: searching web pages, opening URLs, and answering general questions.\n- Never refuse to help - offer alternatives within your capabilities.\n\nAfter gathering evidence via tools, synthesize a clear answer. Be concise and helpful.";
+
+NSString *iTermDefaultAIPromptAIChatReadOnlyTerminalBrowser = @"You are an assistant embedded in a terminal app with an attached web browser. You have read-only access to the terminal (cannot execute commands or modify text).\n\nTools:\n    * Web browser: find_on_page, load_url  \n    * Terminal (read-only): search_command_history, get_command_history\n    * Others may be present but execution/modification tools are disabled\n\nWhen to use tools:\n\n1. If the user refers to web content (phrases like: \"this page\", \"on the page\", \"this site\", \"the article\"), use find_on_page to search the current page before answering.\n   \n2. If the user refers to terminal history:\n   - For searching history: use search_command_history\n   - For retrieving history: use get_command_history\n   - If asked to run/execute/install anything: explain that you have read-only access and cannot execute commands\n   \n3. If the user asks to search the web or open a URL, use appropriate web tools.\n\n4. If the user asks general questions unrelated to the current page or terminal state, answer directly without tools.\n\nImportant: \n- When action words (install, run, execute, update, create, open, save) are used, politely explain that you have read-only terminal access and can only view command history or provide instructions.\n- You CAN still help by: providing command suggestions, analyzing history, searching web pages, and answering questions.\n- Never refuse to help - offer alternatives like providing the commands they could run themselves.\n\nAfter gathering evidence via tools, synthesize a clear answer. Be concise and helpful.";
+
+NSString *iTermDefaultAIPromptAIChatReadWriteTerminalBrowser = @"You are an assistant embedded in a terminal app with an attached web browser.\n\nTools:\n    * Web browser: find_on_page, load_url  \n    * Terminal: execute_command, search_command_history, get_command_history, create_file\n    * (Others may be present.)\n\nWhen to use tools:\n\n1. If the user refers to web content (phrases like: \"this page\", \"on the page\", \"this site\", \"the article\"), use find_on_page to search the current page before answering.\n   \n2. If the user refers to terminal activity or asks to perform actions:\n   - Commands to run: \"run\", \"execute\", \"install\", \"update\", \"open [file]\", \"save\", \"create\"\n   - History queries: \"commands I ran\", \"terminal history\" \n   - Action verbs imply doing, not explaining: use execute_command\n   - For searching history: use search_command_history\n   - For retrieving history: use get_command_history\n   \n3. If the user asks to search the web or open a URL, use appropriate web tools.\n\n4. If the user asks general questions unrelated to the current page or terminal state, answer directly without tools.\n\nImportant: \n- Action words (install, run, execute, update, create, open, save) indicate the user wants you to DO something, not explain how.\n- Never refuse to act because a tool might be unnecessary. Either call the appropriate tool based on context clues or answer directly.\n\nAfter gathering evidence via tools, synthesize a clear answer. Be concise and helpful.";
 
 // NOTE: If you update this list, also update preferences.py.
 
@@ -478,6 +501,13 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyOpenAIAPIKey: @"",
                   kPreferenceKeyAIAPIKey: @"",
                   kPreferenceKeyAIPrompt: iTermDefaultAIPrompt,
+                  kPreferenceKeyAIPromptAIChat: iTermDefaultAIPromptAIChat,
+                  kPreferenceKeyAIPromptAIChatReadOnlyTerminal: iTermDefaultAIPromptAIChatReadOnlyTerminal,
+                  kPreferenceKeyAIPromptAIChatReadWriteTerminal: iTermDefaultAIPromptAIChatReadWriteTerminal,
+                  kPreferenceKeyAIPromptAIChatBrowser: iTermDefaultAIPromptAIChatBrowser,
+                  kPreferenceKeyAIPromptAIChatReadOnlyTerminalBrowser: iTermDefaultAIPromptAIChatReadOnlyTerminalBrowser,
+                  kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser: iTermDefaultAIPromptAIChatReadWriteTerminalBrowser,
+                  kPreferenceKeyAIPromptPlaceholder: @"",
                   kPreferenceKeyAlertOnMarksInOffscreenSessions: @NO,
                   kPreferenceKeyAIModel: @"gpt-4o-mini",
                   kPreferenceKeyAITokenLimit: @128000,
@@ -503,6 +533,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyAIPermissionTypeForYou: @(iTermAIPermissionAsk),
                   kPreferenceKeyAIPermissionViewManpages: @(iTermAIPermissionAsk),
                   kPreferenceKeyAIPermissionWriteToFilesystem: @(iTermAIPermissionAsk),
+                  kPreferenceKeyAIPermissionActInWebBrowser: @(iTermAIPermissionAsk),
 
                   kPreferenceKeyTabStyle_Deprecated: @(TAB_STYLE_LIGHT),
                   kPreferenceKeyTabStyle: @(TAB_STYLE_LIGHT),
@@ -649,6 +680,8 @@ static NSString *sPreviousVersion;
         case kPreferenceInfoTypePasswordTextField:
             return ([defaultValue isKindOfClass:[NSString class]] ||
                     [defaultValue isKindOfClass:[NSNull class]]);
+        case kPreferenceInfoTypeStringTextView:
+            return [defaultValue isKindOfClass:[NSString class]];
         case kPreferenceInfoTypeMatrix:
             return [defaultValue isKindOfClass:[NSString class]];
         case kPreferenceInfoTypeRadioButton:

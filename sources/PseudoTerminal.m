@@ -8132,7 +8132,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (IBAction)openAIChat:(id)sender {
     [[iTermChatWindowController instanceShowingErrors:YES] showChatWindow];
     [[iTermChatWindowController instanceShowingErrors:NO] revealOrCreateChatAboutSessionGuid:self.currentSession.guid
-                                                                                        name:self.currentSession.name];
+                                                                                        name:self.currentSession.name
+                                                                                  isTerminal:!self.currentSession.isBrowserSession];
 }
 
 - (IBAction)openPasteHistory:(id)sender {

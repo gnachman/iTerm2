@@ -10,6 +10,7 @@ import Network
 import WebExtensionsFramework
 
 @available(macOS 11.0, *)
+@MainActor
 protocol iTermBrowserManagerDelegate: AnyObject {
     func browserManager(_ manager: iTermBrowserManager, didUpdateURL url: String?)
     func browserManager(_ manager: iTermBrowserManager, didUpdateTitle title: String?)
@@ -55,6 +56,7 @@ protocol iTermBrowserManagerDelegate: AnyObject {
 
 @available(macOS 11.0, *)
 @objc(iTermBrowserManager)
+@MainActor
 class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler {
     private static let adblockSettingsDidChange = NSNotification.Name("iTermBrowserManagerAdblockSettingsDidChange")
 
@@ -367,15 +369,16 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         // Setup settings delegate
         setupSettingsDelegate()
     }
-    
+
     private func setupPermissionNotificationObserver() {
+        let key = iTermBrowserPermissionManager.permissionRevokedOriginKey
         NotificationCenter.default.addObserver(
             forName: iTermBrowserPermissionManager.permissionRevokedNotification,
             object: nil,
             queue: .main
         ) { [weak self] notification in
             guard let self = self,
-                  let origin = notification.userInfo?[iTermBrowserPermissionManager.permissionRevokedOriginKey] as? String else {
+                  let origin = notification.userInfo?[key] as? String else {
                 return
             }
             
@@ -484,15 +487,28 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
             // TODO: Handle invalid URL
             return
         }
-        
-        navigationState.willLoadURL(url)
+        loadURL(url, continuation: nil)
+    }
+
+    func loadURL(_ url: URL, continuation: CheckedContinuation<Void, Error>?) {
+        if let continuation {
+            navigationState.willLoadURL(url, continuation: continuation)
+        } else {
+            navigationState.willLoadURL(url)
+        }
         localPageManager.resetAllHandlerState()
         lastFailedURL = nil  // Reset failed URL when loading new URL
         favicon = nil  // Clear favicon when loading new URL
         let request = URLRequest(url: url)
         webView.load(request)
     }
-    
+
+    func loadURL(_ url: URL) async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            loadURL(url, continuation: continuation)
+        }
+    }
+
     func goBack() {
         if webView.canGoBack {
             favicon = nil  // Clear favicon when navigating
@@ -623,7 +639,13 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         
         return false
     }
-    
+
+    // MARK: - AI Helpers
+
+    func convertToMarkdown(skipChrome: Bool) async throws -> String {
+        return try await readerModeManager.markdown(fromContentsOf: webView, skipChrome: skipChrome)
+    }
+
     // MARK: - Private Helpers
 
     private func notifyDelegateOfUpdates() {
@@ -680,6 +702,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
 // MARK: - iTermBrowserWebViewDelegate
 
 @available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserManager: iTermBrowserWebViewDelegate {
     func webViewSetMouseInfo(_ webView: iTermBrowserWebView,
                              pointInView: NSPoint,
@@ -798,12 +821,18 @@ extension iTermBrowserManager: iTermBrowserWebViewDelegate {
         }
     }
 
-    func webViewPerformWebSearch(_ webView: iTermBrowserWebView, query: String) {
+    func urlForWebSearch(query: String) -> URL? {
         guard let escapedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
               let url = URL(string: iTermAdvancedSettingsModel.searchCommand().replacingOccurrences(of: "%@", with: escapedQuery)) else {
-            return
+            return nil
         }
-        delegate?.browserManager(self, openNewTabForURL: url)
+        return url
+    }
+
+    func webViewPerformWebSearch(_ webView: iTermBrowserWebView, query: String) {
+        if let url = urlForWebSearch(query: query) {
+            delegate?.browserManager(self, openNewTabForURL: url)
+        }
     }
 
     func webViewSmartSelectionRules(_ webView: iTermBrowserWebView) -> [SmartSelectRule] {
@@ -1102,12 +1131,15 @@ extension iTermBrowserManager: WKNavigationDelegate {
         adblockHandler?.applyCosmeticFiltering()
 
         delegate?.browserManager(self, didFinishNavigation: navigation)
+        navigationState.didCompleteLoading(error: nil)
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
         let nsError = error as NSError
         DLog("🔌 didFailNavigation: domain=\(nsError.domain) code=\(nsError.code) — \(nsError.localizedDescription)")
         let failedURL = navigationState.lastRequestedURL
+
+        navigationState.didCompleteLoading(error: error)
 
         // Don't show error page for download-related cancellations
         if isDownloadRelatedError(error) {
@@ -1128,6 +1160,8 @@ extension iTermBrowserManager: WKNavigationDelegate {
         let nsError = error as NSError
         DLog("didFailProvisionalNavigation: domain=\(nsError.domain) code=\(nsError.code) — \(nsError.localizedDescription)")
         let failedURL = navigationState.lastRequestedURL
+
+        navigationState.didCompleteLoading(error: error)
 
         // Don't show error page for download-related cancellations
         if isDownloadRelatedError(error) {
@@ -1508,6 +1542,7 @@ extension iTermBrowserManager: WKUIDelegate {
 }
 
 @available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserManager: iTermBrowserLocalPageManagerDelegate {
     func localPageManagerDidUpdateAdblockSettings(_ manager: iTermBrowserLocalPageManager) {
         NotificationCenter.default.post(name: Self.adblockSettingsDidChange, object: nil)
@@ -1533,6 +1568,7 @@ extension iTermBrowserManager: iTermBrowserLocalPageManagerDelegate {
 }
 
 @available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserManager {
     // MARK: - Settings Integration
 
@@ -1614,6 +1650,7 @@ extension iTermBrowserManager {
 }
 
 @available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserManager {
 
     // MARK: - Key-Value Observing
@@ -1719,6 +1756,7 @@ extension iTermBrowserManager {
 // MARK: - iTermBrowserReaderModeManagerDelegate
 
 @available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserManager: iTermBrowserReaderModeManagerDelegate {
     func readerModeManager(_ manager: iTermBrowserReaderModeManager, didChangeActiveState isActive: Bool) {
         delegate?.browserManager(self, didChangeReaderModeState: isActive)
@@ -1730,6 +1768,7 @@ extension iTermBrowserManager: iTermBrowserReaderModeManagerDelegate {
 }
 
 @available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserManager: iTermBrowserAutofillHandlerDelegate {
     func autoFillHandler(_ handler: iTermBrowserAutofillHandler,
                          requestAutofillForHost host: String,
@@ -1764,6 +1803,7 @@ extension iTermBrowserManager: iTermBrowserAutofillHandlerDelegate {
     #endif
 }
 
+@MainActor
 extension iTermBrowserUserState.Configuration {
     init(user: iTermBrowserUser) {
         switch user {

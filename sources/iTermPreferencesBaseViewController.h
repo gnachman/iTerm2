@@ -27,7 +27,7 @@ extern NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues;
 // abstract. The pattern is to call -defineControl:key:type: in -awakeFromNib for each control.
 // In IB, assign all controls the -settingChanged: selector, and for text fields, make your view
 // controller the delegate.
-@interface iTermPreferencesBaseViewController : NSViewController<iTermSearchableViewController, PreferenceController, NSTabViewDelegate>
+@interface iTermPreferencesBaseViewController : NSViewController<iTermSearchableViewController, PreferenceController, NSTabViewDelegate, NSTextViewDelegate>
 
 @property(nonatomic, readonly) NSMapTable *keyMap;
 @property(nonatomic, readonly) NSArray<NSString *> *keysForBulkCopy;
@@ -41,17 +41,17 @@ extern NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues;
 - (void)commonInit;
 
 // Bind a preference control to a key defined in iTermPreferences.
-- (PreferenceInfo *)defineControl:(NSControl *)control
+- (PreferenceInfo *)defineControl:(NSView *)control
                               key:(NSString *)key
                       relatedView:(NSView *)relatedView
                              type:(PreferenceInfoType)type;
 
-- (PreferenceInfo *)defineControl:(NSControl *)control
+- (PreferenceInfo *)defineControl:(NSView *)control
                               key:(NSString *)key
                       displayName:(NSString *)displayName // for search
                              type:(PreferenceInfoType)type;
 
-- (PreferenceInfo *)defineUnsearchableControl:(NSControl *)control
+- (PreferenceInfo *)defineUnsearchableControl:(NSView *)control
                                           key:(NSString *)key
                                          type:(PreferenceInfoType)type;
 
@@ -59,21 +59,21 @@ extern NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues;
 
 // Define a control with a custom settingChanged and update handler. If they're both not null then
 // the default value is not type checked.
-- (PreferenceInfo *)defineControl:(NSControl *)control
+- (PreferenceInfo *)defineControl:(NSView *)control
                               key:(NSString *)key
                       relatedView:(NSView *)relatedView
                              type:(PreferenceInfoType)type
                    settingChanged:(void (^)(id))settingChanged
                            update:(BOOL (^)(void))update;
 
-- (PreferenceInfo *)defineControl:(NSControl *)control
+- (PreferenceInfo *)defineControl:(NSView *)control
                               key:(NSString *)key
                       displayName:(NSString *)displayName // for search
                              type:(PreferenceInfoType)type
                    settingChanged:(void (^)(id))settingChanged
                            update:(BOOL (^)(void))update;
 
-- (PreferenceInfo *)defineControl:(NSControl *)control
+- (PreferenceInfo *)defineControl:(NSView *)control
                               key:(NSString *)key
                       relatedView:(NSView *)relatedView
                       displayName:(NSString *)forceDisplayName
@@ -83,7 +83,7 @@ extern NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues;
                        searchable:(BOOL)searchable;
 
 // This can be useful for synthetic values.
-- (PreferenceInfo *)unsafeDefineControl:(NSControl *)control
+- (PreferenceInfo *)unsafeDefineControl:(NSView *)control
                                     key:(NSString *)key
                             relatedView:(NSView *)relatedView
                             displayName:(NSString *)forceDisplayName
@@ -92,7 +92,7 @@ extern NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues;
                                  update:(BOOL (^)(void))update
                              searchable:(BOOL)searchable;
 
-- (void)setControl:(NSControl *)control inPreference:(PreferenceInfo *)info;
+- (void)setControl:(NSView *)control inPreference:(PreferenceInfo *)info;
 
 - (void)addViewToSearchIndex:(NSView *)control
                  displayName:(NSString *)displayName
@@ -119,8 +119,8 @@ extern NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues;
 - (void)updateEnabledStateForInfo:(PreferenceInfo *)info;
 
 // Returns PreferenceInfo for a control bound with defineControl:key:type:.
-- (PreferenceInfo *)infoForControl:(NSControl *)control;
-- (PreferenceInfo *)safeInfoForControl:(NSControl *)control;
+- (PreferenceInfo *)infoForControl:(NSView *)control;
+- (PreferenceInfo *)safeInfoForControl:(NSView *)control;
 
 - (void)postRefreshNotification;
 

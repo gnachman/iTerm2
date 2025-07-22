@@ -73,11 +73,14 @@ class ChatBroker {
         })
     }
 
-    func create(chatWithTitle title: String, sessionGuid: String?) throws -> String {
+    func create(chatWithTitle title: String, terminalSessionGuid: String?, browserSessionGuid: String?) throws -> String {
         // Ensure the service is running
         _ = ChatService.instance
 
-        let chat = Chat(title: title, sessionGuid: sessionGuid, permissions: "")
+        let chat = Chat(title: title,
+                        terminalSessionGuid: terminalSessionGuid,
+                        browserSessionGuid: browserSessionGuid,
+                        permissions: "")
         try listModel.add(chat: chat)
         try publish(message: Message(chatID: chat.id,
                                      author: .user,
@@ -207,11 +210,18 @@ struct RemoteCommand: Codable {
     struct SetClipboard: Codable { var text: String = "" }
     struct InsertTextAtCursor: Codable { var text: String = "" }
     struct DeleteCurrentLine: Codable {}
-
     struct GetManPage: Codable { var cmd: String = "" }
     struct CreateFile: Codable {
         var filename: String=""
         var content: String=""
+    }
+    struct SearchBrowser: Codable { var query: String = "" }
+    struct LoadURL: Codable { var url: String = "" }
+    struct WebSearch: Codable { var query: String = "" }
+    struct GetURL: Codable {}
+    struct ReadWebPage: Codable {
+        var startingLineNumber: Int = 0
+        var numberOfLines: Int = 0
     }
     enum Content: Codable, CaseIterable {
         static var allCases: [RemoteCommand.Content] {
@@ -233,7 +243,12 @@ struct RemoteCommand: Codable {
                     .insertTextAtCursor(InsertTextAtCursor()),
                     .deleteCurrentLine(DeleteCurrentLine()),
                     .getManPage(GetManPage()),
-                    .createFile(CreateFile())
+                    .createFile(CreateFile()),
+                    .searchBrowser(SearchBrowser()),
+                    .loadURL(LoadURL()),
+                    .webSearch(WebSearch()),
+                    .getURL(GetURL()),
+                    .readWebPage(ReadWebPage())
             ]
         }
 
@@ -256,6 +271,11 @@ struct RemoteCommand: Codable {
         case deleteCurrentLine(DeleteCurrentLine)
         case getManPage(GetManPage)
         case createFile(CreateFile)
+        case searchBrowser(SearchBrowser)
+        case loadURL(LoadURL)
+        case webSearch(WebSearch)
+        case getURL(GetURL)
+        case readWebPage(ReadWebPage)
         // When adding a new command be sure to update allCases.
 
         enum PermissionCategory: String, Codable, CaseIterable {
@@ -266,6 +286,17 @@ struct RemoteCommand: Codable {
             case typeForYou = "Type for You"
             case viewManpages = "View Manpages"
             case writeToFilesystem = "Write to the File System"
+            case actInWebBrowser = "Act in Web Browser"
+
+            var isBrowserSpecific: Bool {
+                switch self {
+                case .checkTerminalState, .runCommands, .viewHistory, .writeToClipboard,
+                        .typeForYou, .viewManpages, .writeToFilesystem:
+                    false
+                case .actInWebBrowser:
+                    true
+                }
+            }
         }
 
         var permissionCategory: PermissionCategory {
@@ -286,6 +317,8 @@ struct RemoteCommand: Codable {
                     .viewManpages
             case .createFile:
                     .writeToFilesystem
+            case .searchBrowser, .loadURL, .webSearch, .getURL, .readWebPage:
+                    .actInWebBrowser
             }
         }
 
@@ -310,6 +343,11 @@ struct RemoteCommand: Codable {
             case .deleteCurrentLine(let args): args
             case .getManPage(let args): args
             case .createFile(let args): args
+            case .searchBrowser(let args): args
+            case .loadURL(let args): args
+            case .webSearch(let args): args
+            case .getURL(let args): args
+            case .readWebPage(let args): args
             }
         }
     }
@@ -358,6 +396,16 @@ struct RemoteCommand: Codable {
             "Checking the manpage for `\(args.cmd.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 32))`"
         case let .createFile(args):
             "Creating \(args.filename)"
+        case let .searchBrowser(args):
+            "Search in browser for \(args.query)"
+        case let .loadURL(args):
+            "Navigate to \(args.url)"
+        case let .webSearch(args):
+            "Search the web for “\(args.query)”"
+        case .getURL:
+            "Get the current URL"
+        case .readWebPage:
+            "View the current web page"
         }
     }
 
@@ -401,6 +449,16 @@ struct RemoteCommand: Codable {
             "The AI Agent would like to check the manpage for `\(args.cmd.escapedForMarkdownCode)`"
         case let .createFile(args):
             "The AI Agent would like to create a file named `\(args.filename)`"
+        case let .searchBrowser(args):
+            "The AI agent would like to search the current web page for “\(args.query)”"
+        case let .loadURL(args):
+            "The AI agent would like to navigate to \(args.url)"
+        case let .webSearch(args):
+            "The AI agent would like to write to search the web for “\(args.query)”"
+        case .getURL:
+            "The AI agent would like to write to get the current URL"
+        case .readWebPage:
+            "The AI agent would like to write to view the current web page"
         }
     }
 
@@ -412,7 +470,8 @@ struct RemoteCommand: Codable {
                 .getCommandBeforeCursor, .searchCommandHistory, .getCommandOutput, .getTerminalSize,
                 .getShellType, .detectSSHSession, .getRemoteHostname, .getUserIdentity,
                 .getCurrentDirectory, .setClipboard, .insertTextAtCursor, .deleteCurrentLine,
-                .getManPage, .createFile:
+                .getManPage, .createFile, .searchBrowser, .loadURL,
+                .webSearch, .getURL, .readWebPage:
             true
         }
     }
@@ -428,6 +487,7 @@ extension RemoteCommand.Content.PermissionCategory {
         case .typeForYou: kPreferenceKeyAIPermissionTypeForYou
         case .viewManpages: kPreferenceKeyAIPermissionViewManpages
         case .writeToFilesystem: kPreferenceKeyAIPermissionWriteToFilesystem
+        case .actInWebBrowser: kPreferenceKeyAIPermissionActInWebBrowser
         }
     }
 }

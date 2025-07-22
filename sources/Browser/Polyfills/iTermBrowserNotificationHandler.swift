@@ -11,6 +11,7 @@ import Security
 import WebKit
 
 @available(macOS 11.0, *)
+@MainActor
 class iTermBrowserNotificationHandler {
     static let messageHandlerName = "iTermNotification"
     private let secret: String

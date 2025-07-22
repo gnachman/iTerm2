@@ -153,10 +153,18 @@ class ChatListModel: ChatListDataSource {
         }
     }
 
-    func setGuid(for chatID: String, to guid: String?) throws {
+    func setTerminalGuid(for chatID: String, to guid: String?) throws {
         if let i = index(of: chatID) {
             try chatStorage.modify(at: i) { chat in
-                chat.sessionGuid = guid
+                chat.terminalSessionGuid = guid
+            }
+        }
+    }
+
+    func setBrowserGuid(for chatID: String, to guid: String?) throws {
+        if let i = index(of: chatID) {
+            try chatStorage.modify(at: i) { chat in
+                chat.browserSessionGuid = guid
             }
         }
     }
@@ -233,7 +241,7 @@ class ChatListModel: ChatListDataSource {
 
     func lastChat(guid: String) -> Chat? {
         return chatStorage.last { chat in
-            chat.sessionGuid == guid
+            (chat.terminalSessionGuid == guid || chat.browserSessionGuid == guid)
         }
     }
 }

@@ -71,8 +71,10 @@ class ChatClient {
         }
     }
 
-    func create(chatWithTitle title: String, sessionGuid: String?) throws -> String {
-        return try broker.create(chatWithTitle: title, sessionGuid: sessionGuid)
+    func create(chatWithTitle title: String, terminalSessionGuid: String?, browserSessionGuid: String?) throws -> String {
+        return try broker.create(chatWithTitle: title,
+                                 terminalSessionGuid: terminalSessionGuid,
+                                 browserSessionGuid: browserSessionGuid)
     }
 
     func delete(chatID: String) throws {
@@ -100,11 +102,16 @@ class ChatClient {
     private func processRemoteCommandRequest(chatID: String,
                                              message: Message,
                                              request: RemoteCommand) -> Message? {
-        guard let guid = model.chat(id: chatID)?.sessionGuid,
+        let maybeGuid = if request.content.permissionCategory.isBrowserSpecific {
+            model.chat(id: chatID)?.browserSessionGuid
+        } else {
+            model.chat(id: chatID)?.terminalSessionGuid
+        }
+        guard let guid = maybeGuid,
               let session = iTermController.sharedInstance().session(withGUID: guid) else {
             return Message(chatID: chatID,
                            author: .agent,
-                           content: .selectSessionRequest(message),
+                           content: .selectSessionRequest(message, terminal: !request.content.permissionCategory.isBrowserSpecific),
                            sentDate: Date(),
                            uniqueID: UUID())
         }
@@ -228,7 +235,8 @@ class ChatClient {
             return
         }
         let chatID = try broker.create(chatWithTitle: title,
-                                       sessionGuid: request.context.sessionID)
+                                       terminalSessionGuid: request.context.sessionID,
+                                       browserSessionGuid: nil)
         let initialMessage = Message(chatID: chatID,
                                      author: .user,
                                      content: .explanationRequest(request: request),

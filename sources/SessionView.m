@@ -990,9 +990,11 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
 - (void)updateSessionSelectorButton {
     NSString *reason = iTermSessionSelector.currentReason;
-    if (reason != nil && _sessionSelectorButton.superview == nil) {
+    const BOOL isTerminal = !self.isBrowser;
+    if (reason != nil && _sessionSelectorButton.superview == nil && iTermSessionSelector.wantsTerminal == isTerminal) {
         [self addSessionSelectorButtonWithReason:reason];
-    } else if (!iTermSessionSelector.isActive && _sessionSelectorButton.superview != nil) {
+    } else if ((!iTermSessionSelector.isActive || iTermSessionSelector.wantsTerminal != isTerminal) &&
+               _sessionSelectorButton.superview != nil) {
         [_sessionSelectorButton removeFromSuperview];
         _sessionSelectorButton = nil;
     }

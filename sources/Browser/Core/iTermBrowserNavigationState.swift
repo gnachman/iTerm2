@@ -11,9 +11,51 @@ import WebKit
 class iTermBrowserNavigationState {
     private(set) var lastTransitionType: BrowserTransitionType = .other
     private(set) var lastRequestedURL: URL?
+    private enum State {
+        case ground
+        case loading(URL, CheckedContinuation<Void, Error>?)
+        case loaded(URL)
+    }
+    enum NavigationError: Error {
+        case interrupted
+    }
+    private var state = State.ground
+
+    func willLoadURL(_ url: URL, continuation: CheckedContinuation<Void, Error>) {
+        switch state {
+        case .loading(_, let continuation):
+            continuation?.resume(throwing: NavigationError.interrupted)
+        case .loaded, .ground:
+            break
+        }
+
+        lastRequestedURL = url
+        state = .loading(url, continuation)
+    }
 
     func willLoadURL(_ url: URL) {
         lastRequestedURL = url
+        switch state {
+        case .loading:
+            // No change. Assume the URL did not change.
+            break
+        case .loaded, .ground:
+            state = .loading(url, nil)
+        }
+    }
+
+    func didCompleteLoading(error: Error?) {
+        switch state {
+        case .ground, .loaded:
+            break
+        case .loading(let url, let continuation):
+            if let error, let continuation {
+                continuation.resume(throwing: error)
+            } else {
+                continuation?.resume(with: .success(()))
+            }
+            state = .loaded(url)
+        }
     }
 
     func willNavigate(action navigationAction: WKNavigationAction) {

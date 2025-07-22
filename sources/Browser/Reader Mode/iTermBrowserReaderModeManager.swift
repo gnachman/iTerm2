@@ -8,6 +8,7 @@
 import WebKit
 
 @available(macOS 11.0, *)
+@MainActor
 @objc protocol iTermBrowserReaderModeManagerDelegate: AnyObject {
     func readerModeManager(_ manager: iTermBrowserReaderModeManager, didChangeActiveState isActive: Bool)
     func readerModeManager(_ manager: iTermBrowserReaderModeManager, didChangeDistractionRemovalState isActive: Bool)
@@ -15,6 +16,7 @@ import WebKit
 
 @available(macOS 11.0, *)
 @objc(iTermBrowserReaderModeManager)
+@MainActor
 class iTermBrowserReaderModeManager: NSObject {
     weak var delegate: iTermBrowserReaderModeManagerDelegate?
     private var isReaderModeActive = false
@@ -60,6 +62,13 @@ class iTermBrowserReaderModeManager: NSObject {
         }
     }
 
+    func markdown(fromContentsOf webView: WKWebView, skipChrome: Bool) async throws -> String {
+        let turndown = iTermBrowserTemplateLoader.loadTemplate(named: "convert-to-markdown",
+                                                               type: "js",
+                                                               substitutions: ["SKIP_CHROME": skipChrome ? "true" : "false"])
+        return try await webView.evaluateJavaScript(turndown) as? String ?? "No content found on page"
+    }
+
     private func toggleReaderMode(webView: WKWebView) async {
         if isReaderModeActive {
             await exitReaderMode(webView: webView)
@@ -77,7 +86,7 @@ class iTermBrowserReaderModeManager: NSObject {
                                                                substitutions: [:])
             if let result = try await webView.evaluateJavaScript(script) as? Bool,
                result {
-                await updateReaderModeState(true)
+                updateReaderModeState(true)
             }
         } catch {
             DLog("Error entering reader mode: \(error)")
@@ -90,7 +99,7 @@ class iTermBrowserReaderModeManager: NSObject {
                                                                type: "js",
                                                                substitutions: [:])
             try await webView.evaluateJavaScript(script)
-            await updateReaderModeState(false)
+            updateReaderModeState(false)
         } catch {
             DLog("Error exiting reader mode: \(error)")
         }
@@ -136,7 +145,7 @@ class iTermBrowserReaderModeManager: NSObject {
                                                                substitutions: [:])
             if let result = try await webView.evaluateJavaScript(script) as? Bool,
                result {
-                await updateDistractionRemovalState(true)
+                updateDistractionRemovalState(true)
             }
         } catch {
             DLog("Error entering distraction removal mode: \(error)")
@@ -149,13 +158,12 @@ class iTermBrowserReaderModeManager: NSObject {
                                                                type: "js",
                                                                substitutions: [:])
             try await webView.evaluateJavaScript(script)
-            await updateDistractionRemovalState(false)
+            updateDistractionRemovalState(false)
         } catch {
             DLog("Error exiting distraction removal mode: \(error)")
         }
     }
 
-    @MainActor
     private func ensureScriptsInjected(webView: WKWebView) async -> Bool {
         if scriptsInjected {
             return true
@@ -193,13 +201,11 @@ class iTermBrowserReaderModeManager: NSObject {
         }
     }
     
-    @MainActor
     private func updateReaderModeState(_ isActive: Bool) {
         isReaderModeActive = isActive
         delegate?.readerModeManager(self, didChangeActiveState: isActive)
     }
     
-    @MainActor
     private func updateDistractionRemovalState(_ isActive: Bool) {
         isDistractionRemovalActive = isActive
         delegate?.readerModeManager(self, didChangeDistractionRemovalState: isActive)
@@ -217,6 +223,7 @@ class iTermBrowserReaderModeManager: NSObject {
 // MARK: - WKScriptMessageHandler
 
 @available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserReaderModeManager: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.name == "readerMode",

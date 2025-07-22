@@ -156,12 +156,12 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
 
     @objc(isStreamingToGuid:)
     func isStreaming(to guid: String) -> Bool {
-        return chatViewController.streaming && chatViewController.sessionGuid == guid
+        return chatViewController.streaming && chatViewController.terminalSessionGuid == guid
     }
 
     @objc(stopStreamingSession:)
     func stopStreaming(guid: String) {
-        if chatViewController.sessionGuid == guid && chatViewController.streaming {
+        if chatViewController.terminalSessionGuid == guid && chatViewController.streaming {
             chatViewController.stopStreaming()
         }
     }
@@ -250,7 +250,9 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
 
     private func createNewChat() {
         do {
-            let chatID = try client.create(chatWithTitle: "New Chat", sessionGuid: nil)
+            let chatID = try client.create(chatWithTitle: "New Chat",
+                                           terminalSessionGuid: nil,
+                                           browserSessionGuid: nil)
             chatViewController.load(chatID: chatID)
             chatListViewController.select(chatID: chatID)
         } catch {
@@ -328,19 +330,20 @@ extension ChatWindowController: NSToolbarDelegate {
 
     @objc(setSelectionText:forSession:)
     func setSelectedText(_ text: String, forSession guid: String) {
-        if currentChat?.sessionGuid == guid {
+        if currentChat?.terminalSessionGuid == guid {
             chatViewController.offerSelectedText(text)
         }
     }
 
-    @objc(revealOrCreateChatAboutSessionGuid:name:)
-    func revealOrCreateChat(aboutGuid guid: String, name: String) {
+    @objc(revealOrCreateChatAboutSessionGuid:name:isTerminal:)
+    func revealOrCreateChat(aboutGuid guid: String, name: String, terminal: Bool) {
         if let chat = model.lastChat(guid: guid) {
             chatListViewController.select(chatID: chat.id)
         } else {
             do {
                 let chatID = try client.create(chatWithTitle: "Chat about \(name)",
-                                               sessionGuid: guid)
+                                               terminalSessionGuid: terminal ? guid : nil,
+                                               browserSessionGuid: terminal ? nil : guid)
                 chatViewController.load(chatID: chatID)
                 chatListViewController.select(chatID: chatID)
             } catch {
@@ -350,10 +353,12 @@ extension ChatWindowController: NSToolbarDelegate {
     }
 
     func createChat(name: String,
-                    inject: String?) {
+                    inject: String?,
+                    linkToBrowserSessionGuid guid: String) {
         do {
             let chatID = try client.create(chatWithTitle: name,
-                                           sessionGuid: nil)
+                                           terminalSessionGuid: nil,
+                                           browserSessionGuid: guid)
             chatViewController.load(chatID: chatID)
             chatListViewController.select(chatID: chatID)
             if let inject {

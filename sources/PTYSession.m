@@ -167,6 +167,7 @@
 #import "PTYTask.h"
 #import "PTYTask+ProcessInfo.h"
 #import "PTYTextView.h"
+#import "PTYTextView+MouseHandler.h"
 #import "PTYTextView+ARC.h"
 #import "PTYWindow.h"
 #import "RegexKitLite.h"

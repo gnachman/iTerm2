@@ -20,16 +20,16 @@ class ProfilesWebPreferencesViewController: iTermProfilePreferencesBaseViewContr
 
     override func awakeFromNib() {
         do {
-            let _ = define(browserPageZoom,
-                           key: KEY_BROWSER_ZOOM,
-                           relatedView: nil,
-                           type: .slider)
+            let _ = defineControl(browserPageZoom,
+                                  key: KEY_BROWSER_ZOOM,
+                                  relatedView: nil,
+                                  type: .slider)
         }
         do {
-            let _ = define(devNullMode,
-                           key: KEY_BROWSER_DEV_NULL,
-                           relatedView: nil,
-                           type: .checkbox)
+            let _ = defineControl(devNullMode,
+                                  key: KEY_BROWSER_DEV_NULL,
+                                  relatedView: nil,
+                                  type: .checkbox)
         }
     }
 }

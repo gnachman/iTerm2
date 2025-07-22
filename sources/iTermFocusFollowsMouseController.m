@@ -8,6 +8,7 @@
 #import "iTermFocusFollowsMouseController.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermPreferences.h"
 #import "NSObject+iTerm.h"

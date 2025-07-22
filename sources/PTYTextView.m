@@ -1,4 +1,5 @@
 #import "PTYTextView.h"
+#import "PTYTextView+MouseHandler.h"
 
 #import "charmaps.h"
 #import "FileTransferManager.h"
@@ -120,9 +121,6 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     return self;
 }
 
-@end
-
-@interface PTYTextView(MouseHandler)<iTermFocusFollowsMouseDelegate, iTermSecureInputRequesting, PTYMouseHandlerDelegate>
 @end
 
 @implementation PTYTextView {
@@ -1874,10 +1872,6 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 - (void)useBackgroundIndicatorChanged:(NSNotification *)notification {
     _showStripesWhenBroadcastingInput = [iTermApplication.sharedApplication delegate].useBackgroundPatternIndicator;
     [self requestDelegateRedraw];
-}
-
-- (void)refuseFirstResponderAtCurrentMouseLocation {
-    [_focusFollowsMouse refuseFirstResponderAtCurrentMouseLocation];
 }
 
 #pragma mark - Geometry
@@ -6463,6 +6457,10 @@ static NSString *iTermStringFromRange(NSRange range) {
 @end
 
 @implementation PTYTextView(MouseHandler)
+
+- (void)refuseFirstResponderAtCurrentMouseLocation {
+    [_focusFollowsMouse refuseFirstResponderAtCurrentMouseLocation];
+}
 
 - (BOOL)mouseHandlerViewHasFocus:(PTYMouseHandler *)handler {
     return [[iTermController sharedInstance] frontTextView] == self;

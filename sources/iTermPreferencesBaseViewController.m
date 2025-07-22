@@ -51,7 +51,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
 @end
 
 @implementation iTermPreferencesBaseViewController {
-    NSMapTable<NSControl *, PreferenceInfo *> *_keyMap;
+    NSMapTable<NSView *, PreferenceInfo *> *_keyMap;
     // Set of all defined keys (KEY_XXX).
     NSMutableSet *_keys;
     NSMutableSet *_keysWithSyntheticGetters;
@@ -112,7 +112,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
 }
 
 - (PreferenceInfo *)infoForKey:(NSString *)key {
-    for (NSControl *control in _keyMap) {
+    for (NSView *control in _keyMap) {
         PreferenceInfo *info = [self infoForControl:control];
         if ([info.key isEqualToString:key]) {
             return info;
@@ -353,7 +353,9 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
             case kPreferenceInfoTypePasswordTextField:
                 [self setString:[sender stringValue] forKey:info.key];
                 break;
-
+            case kPreferenceInfoTypeStringTextView:
+                [self setString:[[sender textStorage] string] forKey:info.key];
+                break;
             case kPreferenceInfoTypeTokenField:
                 [self setObject:[sender objectValue] forKey:info.key];
                 break;
@@ -405,7 +407,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
     [self updateNonDefaultIndicatorVisibleForInfo:info];
 }
 
-- (PreferenceInfo *)defineControl:(NSControl *)control
+- (PreferenceInfo *)defineControl:(NSView *)control
                               key:(NSString *)key
                       displayName:(NSString *)displayName
                              type:(PreferenceInfoType)type {
@@ -419,7 +421,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
                     searchable:YES];
 }
 
-- (PreferenceInfo *)defineControl:(NSControl *)control
+- (PreferenceInfo *)defineControl:(NSView *)control
                               key:(NSString *)key
                       relatedView:(NSView *)relatedView
                              type:(PreferenceInfoType)type {
@@ -433,7 +435,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
                     searchable:YES];
 }
 
-- (PreferenceInfo *)defineControl:(NSControl *)control
+- (PreferenceInfo *)defineControl:(NSView *)control
                               key:(NSString *)key
                       displayName:(NSString *)displayName
                              type:(PreferenceInfoType)type
@@ -449,7 +451,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
                     searchable:YES];
 }
 
-- (PreferenceInfo *)defineControl:(NSControl *)control
+- (PreferenceInfo *)defineControl:(NSView *)control
                               key:(NSString *)key
                       relatedView:(NSView *)relatedView
                              type:(PreferenceInfoType)type
@@ -465,7 +467,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
                     searchable:YES];
 }
 
-- (PreferenceInfo *)defineUnsearchableControl:(NSControl *)control key:(NSString *)key type:(PreferenceInfoType)type {
+- (PreferenceInfo *)defineUnsearchableControl:(NSView *)control key:(NSString *)key type:(PreferenceInfoType)type {
     return [self defineControl:control
                            key:key
                    relatedView:nil
@@ -505,7 +507,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
     }
 }
 
-- (PreferenceInfo *)defineControl:(NSControl *)control
+- (PreferenceInfo *)defineControl:(NSView *)control
                               key:(NSString *)key
                       relatedView:(NSView *)relatedView
                       displayName:(NSString *)forceDisplayName
@@ -533,7 +535,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
                           searchable:searchable];
 }
 
-- (PreferenceInfo *)unsafeDefineControl:(NSControl *)control
+- (PreferenceInfo *)unsafeDefineControl:(NSView *)control
                                     key:(NSString *)key
                             relatedView:(NSView *)relatedView
                             displayName:(NSString *)forceDisplayName
@@ -568,13 +570,13 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
     return info;
 }
 
-- (void)setControl:(NSControl *)control inPreference:(PreferenceInfo *)info {
+- (void)setControl:(NSView *)control inPreference:(PreferenceInfo *)info {
     [_keyMap removeObjectForKey:info.control];
     info.control = control;
     [_keyMap setObject:info forKey:control];
 }
 
-- (NSString *)displayNameForControl:(NSControl *)control
+- (NSString *)displayNameForControl:(NSView *)control
                         relatedView:(NSView *)relatedView
                                type:(PreferenceInfoType)type
                             phrases:(NSMutableArray<NSString *> *)phrases {
@@ -637,6 +639,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
         case kPreferenceInfoTypeTokenField:
         case kPreferenceInfoTypeDoubleTextField:
         case kPreferenceInfoTypeStringTextField:
+        case kPreferenceInfoTypeStringTextView:
         case kPreferenceInfoTypeIntegerTextField:
         case kPreferenceInfoTypeUnsignedIntegerPopup:
         case kPreferenceInfoTypeUnsignedIntegerTextField:
@@ -731,6 +734,15 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
             break;
         }
 
+        case kPreferenceInfoTypeStringTextView: {
+            NSTextView *textView = [NSTextView castFrom:info.control];
+            assert(textView != nil);
+            NSString *string = [self stringForKey:info.key] ?: @"";
+            [textView.textStorage setAttributedString:[NSAttributedString attributedStringWithString:string
+                                                                                          attributes:textView.typingAttributes]];
+            break;
+        }
+
         case kPreferenceInfoTypeTokenField: {
             assert([info.control isKindOfClass:[NSTokenField class]]);
             NSTokenField *field = (NSTokenField *)info.control;
@@ -816,7 +828,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
 }
 
 - (void)updateEnabledState {
-    for (NSControl *control in _keyMap) {
+    for (NSView *control in _keyMap) {
         PreferenceInfo *info = [self infoForControl:control];
         [self updateEnabledStateForInfo:info];
     }
@@ -828,13 +840,13 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
     }
 }
 
-- (PreferenceInfo *)infoForControl:(NSControl *)control {
+- (PreferenceInfo *)infoForControl:(NSView *)control {
     PreferenceInfo *info = [self safeInfoForControl:control];
     assert(info);
     return info;
 }
 
-- (PreferenceInfo *)safeInfoForControl:(NSControl *)control {
+- (PreferenceInfo *)safeInfoForControl:(NSView *)control {
     PreferenceInfo *info = [_keyMap objectForKey:control];
     return info;
 }
@@ -901,6 +913,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
                 case kPreferenceInfoTypeUnsignedIntegerTextField:
                 case kPreferenceInfoTypeDoubleTextField:
                 case kPreferenceInfoTypeStringTextField:
+                case kPreferenceInfoTypeStringTextView:
                 case kPreferenceInfoTypePasswordTextField:
                 case kPreferenceInfoTypePopup:
                 case kPreferenceInfoTypeSegmentedControl:
@@ -966,6 +979,16 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
     }
 }
 
+#pragma mark - NSTextViewDelegate
+
+- (void)textDidChange:(NSNotification *)notification {
+    [self controlTextDidChange:notification];
+}
+
+- (void)textDidEndEditing:(NSNotification *)notification {
+    [self controlTextDidEndEditing:notification];
+}
+
 #pragma mark - NSControlTextEditingDelegate
 
 // This is a notification signature but it gets called because we're the delegate of text fields.
@@ -995,6 +1018,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
             case kPreferenceInfoTypeStringPopup:
             case kPreferenceInfoTypeSlider:
             case kPreferenceInfoTypeStringTextField:
+            case kPreferenceInfoTypeStringTextView:
             case kPreferenceInfoTypePasswordTextField:
             case kPreferenceInfoTypeTokenField:
             case kPreferenceInfoTypeUnsignedIntegerPopup:
@@ -1025,7 +1049,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
 }
 
 - (void)updateNonDefaultIndicators {
-    for (NSControl *key in _keyMap.keyEnumerator) {
+    for (NSView *key in _keyMap.keyEnumerator) {
         if (!key) {
             continue;
         }
@@ -1154,7 +1178,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
     return _docs;
 }
 
-- (BOOL)revealControl:(NSControl *)control {
+- (BOOL)revealControl:(NSView *)control {
     // Is there an inner tab container view?
     for (NSTabViewItem *item in self.tabView.tabViewItems) {
         NSView *view = item.view;
@@ -1175,7 +1199,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
                                             willChangeTab:(BOOL *)willChangeTab {
     *willChangeTab = NO;
     NSString *key = document.identifier;
-    for (NSControl *control in _keyMap) {
+    for (NSView *control in _keyMap) {
         if ([control isKindOfClass:[NSStepper class]]) {
             continue;
         }
@@ -1185,7 +1209,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
             return control;
         }
     }
-    for (NSControl *control in _otherSearchableViews) {
+    for (NSView *control in _otherSearchableViews) {
         if ([control.accessibilityIdentifier isEqualToString:document.identifier]) {
             *willChangeTab = [self revealControl:control];
             return control;

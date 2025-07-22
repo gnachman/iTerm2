@@ -140,67 +140,120 @@ extension PTYSession {
                            scope: genericScope)
     }
 
-    func execute(_ command: RemoteCommand, completion: @escaping (String, String) throws -> ()) rethrows {
+    struct NotABrowserError: LocalizedError {
+        var errorDescription: String? { "The associated session is a terminal emulator, not a web browser" }
+    }
+    struct NotATerminalError: LocalizedError {
+        var errorDescription: String? { "The associated session is a web browser, not a terminal emulator" }
+    }
+
+    func ensureIsTerminal() throws {
+        if isBrowserSession() {
+            throw NotATerminalError()
+        }
+    }
+
+    func ensureIsBrowser() throws {
+        if !isBrowserSession() {
+            throw NotABrowserError()
+        }
+    }
+
+    func execute(_ command: RemoteCommand, completion: @escaping (String, String) throws -> ()) throws {
         DLog("\(command)")
         cancelRemoteCommand()
         switch command.content {
         case .isAtPrompt(let isAtPrompt):
+            try ensureIsTerminal()
             try isAtPromptRemoteCommand(isAtPrompt: isAtPrompt,
                                         completion: completion)
         case .executeCommand(let executeCommand):
+            try ensureIsTerminal()
             try executeCommandRemoteCommand(executeCommand: executeCommand,
                                             completion: completion)
         case .getLastExitStatus(let getLastExitStatus):
+            try ensureIsTerminal()
             try getLastExitStatusRemoteCommand(getLastExitStatus: getLastExitStatus,
                                                completion: completion)
         case .getCommandHistory(let getCommandHistory):
+            try ensureIsTerminal()
             try getCommandHistoryRemoteCommand(getCommandHistory: getCommandHistory,
                                                completion: completion)
         case .getLastCommand(let getLastCommand):
+            try ensureIsTerminal()
             try getLastCommandRemoteCommand(getLastCommand: getLastCommand,
                                             completion: completion)
         case .getCommandBeforeCursor(let getCommandBeforeCursor):
+            try ensureIsTerminal()
             try getCommandBeforeCursorRemoteCommand(getCommandBeforeCursor: getCommandBeforeCursor,
                                                     completion: completion)
         case .searchCommandHistory(let searchCommandHistory):
+            try ensureIsTerminal()
             try searchCommandHistoryRemoteCommand(searchCommandHistory: searchCommandHistory,
                                                   completion: completion)
         case .getCommandOutput(let getCommandOutput):
+            try ensureIsTerminal()
             try getCommandOutputRemoteCommand(getCommandOutput: getCommandOutput,
                                               completion: completion)
         case .getTerminalSize(let getTerminalSize):
+            try ensureIsTerminal()
             try getTerminalSizeRemoteCommand(getTerminalSize: getTerminalSize,
                                              completion: completion)
         case .getShellType(let getShellType):
+            try ensureIsTerminal()
             try getShellTypeRemoteCommand(getShellType: getShellType,
                                           completion: completion)
         case .detectSSHSession(let detectSSHSession):
+            try ensureIsTerminal()
             try detectSSHSessionRemoteCommand(detectSSHSession: detectSSHSession,
                                               completion: completion)
         case .getRemoteHostname(let getRemoteHostname):
+            try ensureIsTerminal()
             try getRemoteHostnameRemoteCommand(getRemoteHostname: getRemoteHostname,
                                                completion: completion)
         case .getUserIdentity(let getUserIdentity):
+            try ensureIsTerminal()
             try getUserIdentityRemoteCommand(getUserIdentity: getUserIdentity,
                                              completion: completion)
         case .getCurrentDirectory(let getCurrentDirectory):
+            try ensureIsTerminal()
             try getCurrentDirectoryRemoteCommand(getCurrentDirectory: getCurrentDirectory,
                                                  completion: completion)
         case .setClipboard(let setClipboard):
+            try ensureIsTerminal()
             try setClipboardRemoteCommand(setClipboard: setClipboard,
                                           completion: completion)
         case .insertTextAtCursor(let insertTextAtCursor):
+            try ensureIsTerminal()
             try insertTextAtCursorRemoteCommand(insertTextAtCursor: insertTextAtCursor,
                                                 completion: completion)
         case .deleteCurrentLine(let deleteCurrentLine):
+            try ensureIsTerminal()
             try deleteCurrentLineRemoteCommand(deleteCurrentLine: deleteCurrentLine,
                                                completion: completion)
         case .getManPage(let getManPage):
+            try ensureIsTerminal()
             try getManPageRemoteCommand(getManPage: getManPage,
                                         completion: completion)
         case .createFile(let createFile):
+            try ensureIsTerminal()
             try createFileCommand(createFile: createFile,
                                   completion: completion)
+        case .searchBrowser(let args):
+            try ensureIsBrowser()
+            try searchBrowser(args: args, completion: completion)
+        case .loadURL(let args):
+            try ensureIsBrowser()
+            try loadURL(args: args, completion: completion)
+        case .webSearch(let args):
+            try ensureIsBrowser()
+            try webSearch(args: args, completion: completion)
+        case .getURL(let args):
+            try ensureIsBrowser()
+            try getURL(args: args, completion: completion)
+        case .readWebPage(let args):
+            try ensureIsBrowser()
+            try readWebPage(args: args, completion: completion)
         }
     }
 }
@@ -621,6 +674,78 @@ extension PTYSession {
                 completion("There was a problem running man on the remote host. It exited with status \(status)")
             } else {
                 completion(data.stringOrHex)
+            }
+        }
+    }
+    private func searchBrowser(args: RemoteCommand.SearchBrowser, completion: @escaping (String, String) throws -> ()) rethrows {
+        view.browserViewController.findOnPage(query: args.query, maxResults: 20, contextLength: 100) { result in
+            switch result {
+            case .success(let results):
+                let json = try! JSONEncoder().encode(results).lossyString
+                try? completion(json, "Find on page complete")
+            case .failure(let error as LocalizedError):
+                try? completion(error.errorDescription ?? "An unknown error occurred", "Find on page failed")
+            case .failure:
+                try? completion("An unknown error occurred", "Find on page failed")
+            }
+        }
+    }
+
+    private func loadURL(args: RemoteCommand.LoadURL, completion: @escaping (String, String) throws -> ()) rethrows {
+        guard let url = URL(string: args.url) else {
+            try completion("The URL \(args.url) is not well formed", "Navigation failed")
+            return
+        }
+        view.browserViewController.loadURL(url) { error in
+            if let error {
+                try? completion("The web page could not be loaded: " + error.localizedDescription, "Navigation failed")
+            } else {
+                try? completion("The web page was loaded successfully.", "Navigation complete")
+            }
+        }
+    }
+
+    private func webSearch(args: RemoteCommand.WebSearch, completion: @escaping (String, String) throws -> ()) rethrows {
+        view.browserViewController.doWebSearch(for: args.query) { [weak self] error in
+            if let error {
+                DLog("\(error)")
+                try? completion("Web search is not currently available", "Web search failed")
+                return
+            }
+            self?.view.browserViewController.convertToMarkdown(skipChrome: true) { (result: Result<String, Error>) in
+                if let markdown = result.successValue {
+                    try? completion(markdown, "Web search complete")
+                } else {
+                    try? completion("Web search is not currently availble", "Web search failed")
+                }
+            }
+        }
+    }
+
+    private func getURL(args: RemoteCommand.GetURL, completion: @escaping (String, String) throws -> ()) rethrows {
+        if let url = view.browserViewController.webView.url {
+            try completion(url.absoluteString, "URL provided")
+        } else {
+            try completion("about:blank", "URL provided")
+        }
+    }
+
+    private func readWebPage(args: RemoteCommand.ReadWebPage, completion: @escaping (String, String) throws -> ()) rethrows {
+        view.browserViewController.convertToMarkdown(skipChrome: false) { (result: Result<String, Error>) in
+            switch result {
+            case .success(let text):
+                let lines = text.components(separatedBy: "\n")
+                guard args.startingLineNumber < lines.count else {
+                    try? completion("The page contains \(lines.count) lines. Your request was out of bounds.",
+                                   "AI attempted to read past the end of the page")
+                    return
+                }
+                let sub = lines[args.startingLineNumber..<min(lines.count, args.startingLineNumber + args.numberOfLines)]
+                let combined = sub.joined(separator: "\n")
+                try? completion(combined, "Contents provided")
+            case .failure(let error):
+                try? completion("The page could not be converted to markdown for reading: " + error.localizedDescription,
+                               "Page content could not be read")
             }
         }
     }

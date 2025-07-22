@@ -8,6 +8,7 @@
 import WebKit
 
 @available(macOS 11, *)
+@MainActor
 class iTermBrowserContextMenuMonitor {
     static let messageHandlerName = "iTermContextMenuMonitor"
     private let secret: String

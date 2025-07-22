@@ -54,7 +54,7 @@ class ChatViewController: NSViewController {
                 NotificationCenter.default.removeObserver(_commandDidExitObserver)
                 self._commandDidExitObserver = nil
             }
-            if streaming, let model, model.sessionGuid != nil {
+            if streaming, let model, model.terminalSessionGuid != nil {
                 _commandDidExitObserver = NotificationCenter.default.addObserver(
                     forName: Notification.Name.PTYCommandDidExit,
                     object: nil,
@@ -62,7 +62,7 @@ class ChatViewController: NSViewController {
                         if let self,
                            self.streaming,
                            let userInfo = notif.userInfo,
-                           let guid = self.model?.sessionGuid,
+                           let guid = self.model?.terminalSessionGuid,
                            notif.object as? String == guid {
                             self.streamLastCommand(userInfo)
                     }
@@ -70,7 +70,8 @@ class ChatViewController: NSViewController {
             }
         }
     }
-    var sessionGuid: String? { model?.sessionGuid }
+    var terminalSessionGuid: String? { model?.terminalSessionGuid }
+    var browserSessionGuid: String? { model?.browserSessionGuid }
     private let userDefaultsObserver = iTermUserDefaultsObserver()
 
     init(listModel: ChatListModel, client: ChatClient) {
@@ -441,7 +442,6 @@ extension ChatViewController {
         })
     }
 
-
     @objc private func showSessionButtonMenu(_ sender: NSButton) {
         guard let chatID else {
             return
@@ -449,15 +449,20 @@ extension ChatViewController {
         let menu = NSMenu()
         menu.addItem(withTitle: "Delete Chat", action: #selector(deleteChat(_:)), target: self)
         menu.addItem(NSMenuItem.separator())
-        if let guid = model?.sessionGuid,
+
+        // Terminal session items
+        if let guid = model?.terminalSessionGuid,
            iTermController.sharedInstance().session(withGUID: guid) != nil {
 
-            menu.addItem(withTitle: "Reveal Linked Session", action: #selector(revealLinkedSession(_:)), target: self)
-            menu.addItem(withTitle: "Unlink Session", action: #selector(unlinkSession(_:)), target: self)
+            menu.addItem(withTitle: "Reveal Linked Terminal Session", action: #selector(revealLinkedTerminalSession(_:)), target: self)
+            menu.addItem(withTitle: "Unlink Terminal Session", action: #selector(unlinkTerminalSession(_:)), target: self)
             menu.addItem(NSMenuItem.separator())
-
+            
             let rce = RemoteCommandExecutor.instance
             for category in RemoteCommand.Content.PermissionCategory.allCases {
+                if category.isBrowserSpecific {
+                    continue
+                }
                 menu.addItem(withTitle: "AI can \(category.rawValue)",
                              action: #selector(toggleAlwaysAllow(_:)),
                              target: self,
@@ -469,7 +474,7 @@ extension ChatViewController {
             }
             menu.addItem(NSMenuItem.separator())
 
-            if haveLinkedSession {
+            if haveLinkedTerminalSession {
                 menu.addItem(withTitle: "Send Commands & Output to AI Automatically",
                              action: #selector(toggleStream(_:)),
                              target: self,
@@ -477,21 +482,45 @@ extension ChatViewController {
                              object: nil)
                 menu.addItem(NSMenuItem.separator())
             }
-
-            menu.addItem(withTitle: "Help", action: #selector(showLinkedSessionHelp(_:)), target: self)
-
-            // Position the menu just below the button
-            let location = NSPoint(x: 0, y: sender.bounds.height)
-            menu.popUp(positioning: nil, at: location, in: sender)
         } else {
-            menu.addItem(withTitle: "Link Session", action: #selector(objcLinkSession(_:)), target: self)
+            menu.addItem(withTitle: "Link Terminal Session", action: #selector(objcLinkTerminalSession(_:)), target: self)
             menu.addItem(NSMenuItem.separator())
-            menu.addItem(withTitle: "Help", action: #selector(showLinkedSessionHelp(_:)), target: self)
-
-            // Position the menu just below the button
-            let location = NSPoint(x: 0, y: sender.bounds.height)
-            menu.popUp(positioning: nil, at: location, in: sender)
         }
+
+        // Browser session items
+        if let guid = model?.browserSessionGuid,
+           iTermController.sharedInstance().session(withGUID: guid) != nil {
+
+            menu.addItem(withTitle: "Reveal Linked Web Browser Session", action: #selector(revealLinkedBrowserSession(_:)), target: self)
+            menu.addItem(withTitle: "Unlink Web Browser Session", action: #selector(unlinkBrowserSession(_:)), target: self)
+            menu.addItem(NSMenuItem.separator())
+
+            let rce = RemoteCommandExecutor.instance
+            for category in RemoteCommand.Content.PermissionCategory.allCases {
+                if !category.isBrowserSpecific {
+                    continue
+                }
+                menu.addItem(withTitle: "AI can \(category.rawValue)",
+                             action: #selector(toggleAlwaysAllow(_:)),
+                             target: self,
+                             state: rce.controlState(chatID: chatID,
+                                                     guid: guid,
+                                                     category: category),
+                             object: category)
+
+            }
+            menu.addItem(NSMenuItem.separator())
+        } else {
+            menu.addItem(withTitle: "Link Browser Session", action: #selector(objcLinkBrowserSession(_:)), target: self)
+            menu.addItem(NSMenuItem.separator())
+        }
+
+
+        menu.addItem(withTitle: "Help", action: #selector(showLinkedSessionHelp(_:)), target: self)
+
+        // Position the menu just below the button
+        let location = NSPoint(x: 0, y: sender.bounds.height)
+        menu.popUp(positioning: nil, at: location, in: sender)
     }
 
     private static let webSearchUserDefaultsKey = "AI Web Search Enabled"
@@ -519,37 +548,50 @@ extension ChatViewController {
     }
 
     @objc private func toggleAlwaysAllow(_ sender: Any) {
-        if let chatID, let guid = model?.sessionGuid,
-            let menuItem = sender as? NSMenuItem,
-            let category = menuItem.representedObject as? RemoteCommand.Content.PermissionCategory {
-            let existing = RemoteCommandExecutor.instance.permission(chatID: chatID,
-                                                                     inSessionGuid: guid,
-                                                                     category: category)
-            let newPermission: RemoteCommandExecutor.Permission = switch existing {
-            case .always: .never
-            case .never: .ask
-            case .ask: .always
-            }
-            do {
-                try listModel.setPermission(chat: chatID,
-                                            permission: newPermission,
-                                            guid: guid,
-                                            category: category)
-                let rce = RemoteCommandExecutor.instance
-                try ChatClient.instance?.publishUserMessage(
-                    chatID: chatID,
-                    content: .setPermissions(rce.allowedCategories(chatID: chatID, for: guid)))
-            } catch {
-                DLog("\(error)")
-            }
+        guard let chatID,
+              let menuItem = sender as? NSMenuItem,
+              let category = menuItem.representedObject as? RemoteCommand.Content.PermissionCategory else {
+            return
+        }
+        let maybeGuid = if category.isBrowserSpecific {
+            model?.browserSessionGuid
+        } else {
+            model?.terminalSessionGuid
+        }
+        guard let guid = maybeGuid else {
+            return
+        }
+        let existing = RemoteCommandExecutor.instance.permission(chatID: chatID,
+                                                                 inSessionGuid: guid,
+                                                                 category: category)
+        let newPermission: RemoteCommandExecutor.Permission = switch existing {
+        case .always: .never
+        case .never: .ask
+        case .ask: .always
+        }
+        do {
+            try listModel.setPermission(chat: chatID,
+                                        permission: newPermission,
+                                        guid: guid,
+                                        category: category)
+            let rce = RemoteCommandExecutor.instance
+            try ChatClient.instance?.publishUserMessage(
+                chatID: chatID,
+                content: .setPermissions(rce.allowedCategories(chatID: chatID, for: guid)))
+        } catch {
+            DLog("\(error)")
         }
     }
 
-    @objc private func objcLinkSession(_ sender: Any) {
-        linkSession { _ in }
+    @objc private func objcLinkTerminalSession(_ sender: Any) {
+        linkSession(terminal: true) { _ in }
     }
 
-    private func linkSession(_ completion: @escaping (PTYSession?) -> ()) {
+    @objc private func objcLinkBrowserSession(_ sender: Any) {
+        linkSession(terminal: false) { _ in }
+    }
+
+    private func linkSession(terminal: Bool, _ completion: @escaping (PTYSession?) -> ()) {
         if let pickSessionPromise {
             SessionSelector.cancel(pickSessionPromise)
         }
@@ -557,7 +599,7 @@ extension ChatViewController {
             completion(nil)
             return
         }
-        pickSessionPromise = SessionSelector.select(reason: "Link this session to AI chat?")
+        pickSessionPromise = SessionSelector.select(terminal: terminal, reason: "Link this session to AI chat?")
         let waitingMessage = Message(chatID: chatID,
                                      author: .agent,
                                      content: .clientLocal(ClientLocal(action: .pickingSession)),
@@ -567,10 +609,14 @@ extension ChatViewController {
             pickSessionPromise.then { [weak self] session in
                 if let self, let model = self.model {
                     do {
-                        try model.setSessionGuid(session.guid)
+                        if terminal {
+                            try model.setTerminalSessionGuid(session.guid)
+                        } else {
+                            try model.setBrowserSessionGuid(session.guid)
+                        }
                         try ChatClient.instance?.publishNotice(
                             chatID: chatID,
-                            notice: "This chat has been linked to terminal session `\(session.name?.escapedForMarkdownCode ?? "(Unnamed session)")`")
+                            notice: "This chat has been linked to \(terminal ? "terminal" : "web browser") session “\(session.name?.escapedForMarkdownCode ?? "(Unnamed session)")”")
                         completion(session)
                         self.pickSessionPromise = nil
                         reloadCell(forMessageID: waitingMessage.uniqueID)
@@ -599,9 +645,18 @@ extension ChatViewController {
         }
     }
 
-    private var haveLinkedSession: Bool {
+    private var haveLinkedTerminalSession: Bool {
         guard let model,
-              let guid = model.sessionGuid,
+              let guid = model.terminalSessionGuid,
+              iTermController.sharedInstance().session(withGUID: guid) != nil else {
+            return false
+        }
+        return true
+    }
+
+    private var haveLinkedBrowserSession: Bool {
+        guard let model,
+              let guid = model.browserSessionGuid,
               iTermController.sharedInstance().session(withGUID: guid) != nil else {
             return false
         }
@@ -619,7 +674,7 @@ extension ChatViewController {
     }
 
     @objc private func toggleStream(_ sender: Any) {
-        guard haveLinkedSession, let chatID else {
+        guard haveLinkedTerminalSession, let chatID else {
             return
         }
         if streaming {
@@ -649,19 +704,39 @@ extension ChatViewController {
     @objc private func deleteChat(_ sender: Any) {
         delegate?.chatViewControllerDeleteSession(self)
     }
-    @objc private func revealLinkedSession(_ sender: Any) {
-        if let guid = model?.sessionGuid {
+
+    @objc private func revealLinkedTerminalSession(_ sender: Any) {
+        if let guid = model?.terminalSessionGuid {
             _ = delegate?.chatViewController(self, revealSessionWithGuid: guid)
         }
     }
 
-    @objc private func unlinkSession(_ sender: Any) {
+    @objc private func revealLinkedBrowserSession(_ sender: Any) {
+        if let guid = model?.browserSessionGuid {
+            _ = delegate?.chatViewController(self, revealSessionWithGuid: guid)
+        }
+    }
+
+    @objc private func unlinkTerminalSession(_ sender: Any) {
         if let chatID {
             do {
-                try listModel.setGuid(for: chatID, to: nil)
+                try listModel.setTerminalGuid(for: chatID, to: nil)
                 try? ChatClient.instance?.publishNotice(
                     chatID: chatID,
                     notice: "This chat is no longer linked to a terminal session.")
+            } catch {
+                DLog("\(error)")
+            }
+        }
+    }
+
+    @objc private func unlinkBrowserSession(_ sender: Any) {
+        if let chatID {
+            do {
+                try listModel.setBrowserGuid(for: chatID, to: nil)
+                try? ChatClient.instance?.publishNotice(
+                    chatID: chatID,
+                    notice: "This chat is no longer linked to a web browser session.")
             } catch {
                 DLog("\(error)")
             }
@@ -805,7 +880,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 }
             case .executingCommand:
                 cell.buttonClicked = { [weak self] identifier, messageID in
-                    if let model = self?.model, let guid = model.sessionGuid,
+                    if let model = self?.model, let guid = model.terminalSessionGuid,
                        let session = iTermController.sharedInstance().session(withGUID: guid) {
                         session.cancelRemoteCommand()
                     }
@@ -827,7 +902,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
             }
         case .vectorStoreCreated:
             it_fatalError()
-        case .selectSessionRequest(let originalMessage):
+        case .selectSessionRequest(let originalMessage, let terminal):
             cell.buttonClicked = { [weak self] identifier, messageID in
                 guard let self else {
                     return
@@ -856,7 +931,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 case .pickSession:
                     break
                 }
-                linkSession { session in
+
+                linkSession(terminal: terminal) { session in
                     if let chatID {
                         if session != nil {
                             try? self.client.publish(message: originalMessage,
@@ -884,16 +960,22 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 guard let chatID else {
                     return
                 }
-                guard let guid = self.listModel.chat(id: chatID)?.sessionGuid,
+                let browser = remoteCommand.content.permissionCategory.isBrowserSpecific
+                let guid = if browser {
+                    self.listModel.chat(id: chatID)?.browserSessionGuid
+                } else {
+                    self.listModel.chat(id: chatID)?.terminalSessionGuid
+                }
+                guard let guid,
                       let session = iTermController.sharedInstance().session(withGUID: guid) else {
-                    try? ChatClient.instance?.publishNotice(chatID: chatID, notice: "This chat is not linked to any terminal session.")
+                    try? ChatClient.instance?.publishNotice(chatID: chatID, notice: "This chat is not linked to any \(browser ? "web browser" : "terminal") session.")
                     try? client.respondSuccessfullyToRemoteCommandRequest(
                         inChat: chatID,
                         requestUUID: messageID,
-                        message: "The user did not link a terminal session to chat, so the function could not be run.",
+                        message: "The user did not link a \(browser ? "web browser" : "terminal") session to chat, so the function could not be run.",
                         functionCallName: functionCallName,
                         functionCallID: functionCallID,
-                        userNotice: "AI attempted to perform an action, but no session is linked to this chat so it failed.")
+                        userNotice: "AI attempted to perform an action, but no \(browser ? "web browser" : "terminal") session is linked to this chat so it failed.")
                     return
                 }
                 let allowed: Bool
@@ -980,9 +1062,14 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 if pickSessionPromise == nil {
                     enableButtons = false
                 }
-            case .executingCommand:
-                if let model,
-                   let guid = model.sessionGuid,
+            case .executingCommand(let remoteCommand):
+                let browser = remoteCommand.content.permissionCategory.isBrowserSpecific
+                let guid = if browser {
+                    model?.browserSessionGuid
+                } else {
+                    model?.terminalSessionGuid
+                }
+                if let guid,
                    let session = iTermController.sharedInstance().session(withGUID: guid) {
                     if !session.isExecutingRemoteCommand {
                         enableButtons = false
@@ -1249,7 +1336,7 @@ extension ChatViewController: ChatInputViewDelegate {
 extension ChatViewController {
     func streamLastCommand(_ userInfo: [AnyHashable: Any]) {
         it_assert(streaming)
-        guard haveLinkedSession else {
+        guard haveLinkedTerminalSession else {
             return
         }
         guard let command = userInfo[PTYCommandDidExitUserInfoKeyCommand] as? String else {
@@ -1435,9 +1522,9 @@ extension Message.Content {
                 }
             }
 
-        case .selectSessionRequest:
+        case .selectSessionRequest(_, terminal: let terminal):
             return AttributedStringForGPTMarkdown(
-                "The AI agent needs to run commands in a live terminal session, but none is attached to this chat.",
+                "The AI agent needs to run commands in a live \(terminal ? "terminal" : "web browser") session, but none is attached to this chat.",
                 linkColor: linkColor,
                 textColor: textColor,
                 didCopy: {})

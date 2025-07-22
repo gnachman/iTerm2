@@ -449,3 +449,18 @@ extension String {
     }
 }
 
+extension String {
+    func split(maxWidth: Int) -> [String] {
+        guard maxWidth > 0 else {
+            return [self]
+        }
+        var result: [String] = []
+        var start = startIndex
+        while start < endIndex {
+            let end = index(start, offsetBy: maxWidth, limitedBy: endIndex) ?? endIndex
+            result.append(String(self[start..<end]))
+            start = end
+        }
+        return result
+    }
+}

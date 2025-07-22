@@ -9,11 +9,13 @@
 class SessionSelector: NSObject {
     @objc static let statusDidChange = NSNotification.Name("SessionSelectorStatusDidChange")
     private struct Entry {
+        var terminal: Bool
         var reason: String
         var promise: iTermPromise<PTYSession>
         var seal: iTermPromiseSeal
 
-        init(reason: String) {
+        init(terminal: Bool, reason: String) {
+            self.terminal = terminal
             self.reason = reason
             var promiseSeal: iTermPromiseSeal?
             self.promise = iTermPromise { promiseSeal = $0 }
@@ -26,9 +28,12 @@ class SessionSelector: NSObject {
     @objc static var currentReason: String? {
         return entries.last?.reason
     }
+    @objc static var wantsTerminal: Bool {
+        return entries.last?.terminal == true
+    }
 
-    static func select(reason: String) -> iTermPromise<PTYSession> {
-        let entry = Entry(reason: reason)
+    static func select(terminal: Bool, reason: String) -> iTermPromise<PTYSession> {
+        let entry = Entry(terminal: terminal, reason: reason)
         entries.append(entry)
         NotificationCenter.default.post(name: statusDidChange, object: reason)
         return entry.promise

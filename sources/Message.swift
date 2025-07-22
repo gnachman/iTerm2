@@ -49,7 +49,7 @@ struct Message: Codable {
         case remoteCommandRequest(RemoteCommand)
         // Output/Error, message unique ID, function name, function call ID (used by Responses API but not older APIs)
         case remoteCommandResponse(Result<String, AIError>, UUID, String, LLM.Message.FunctionCallID?)
-        case selectSessionRequest(Message)  // carries the original message that needs a session
+        case selectSessionRequest(Message, terminal: Bool)  // carries the original message that needs a session
         case clientLocal(ClientLocal)
         case renameChat(String)
         case append(string: String, uuid: UUID)  // for streaming responses
@@ -81,7 +81,7 @@ struct Message: Codable {
             case .remoteCommandResponse(let result, _, let name, _):
                 return "Response to remote command \(name): " + result.map(success: { $0.truncatedWithTrailingEllipsis(to: maxLength)},
                                                                            failure: { $0.localizedDescription.truncatedWithTrailingEllipsis(to: maxLength)})
-            case .selectSessionRequest(let message):
+            case .selectSessionRequest(let message, _):
                 return "Select session: \(message)"
             case .clientLocal(let cl):
                 switch cl.action {

@@ -8,6 +8,7 @@
 import WebKit
 
 @available(macOS 11.0, *)
+@MainActor
 protocol iTermBrowserWebViewDelegate: AnyObject {
     func webViewDidRequestViewSource(_ webView: iTermBrowserWebView)
     func webViewDidRequestSavePageAs(_ webView: iTermBrowserWebView)
@@ -42,6 +43,7 @@ protocol iTermBrowserWebViewDelegate: AnyObject {
 }
 
 @available(macOS 11.0, *)
+@MainActor
 class iTermBrowserWebView: WKWebView {
     weak var browserDelegate: iTermBrowserWebViewDelegate?
     var deferrableInteractionState: Any?
@@ -709,24 +711,29 @@ class iTermBrowserWebView: WKWebView {
 }
 
 @available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserWebView: iTermFocusFollowsMouseDelegate {
     func focusFollowsMouseDidBecomeFirstResponder() {
         browserDelegate?.webViewDidBecomeFirstResponder(self)
     }
-    
+
     func focusFollowsMouseDesiredFirstResponder() -> NSResponder {
         return self
     }
-    
+
     func focusFollowsMouseDidChangeMouseLocationToRefusFirstResponderAt() {
     }
-    
+}
+
+@MainActor
+extension iTermBrowserWebView {
     func refuseFirstResponderAtCurrentMouseLocation() {
         focusFollowsMouse.refuseFirstResponderAtCurrentMouseLocation()
     }
 }
 
 @available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserWebView: iTermBrowserContextMenuHelperDelegate {
     func contextMenuCurrentSelection() -> String? {
         return currentSelection
@@ -835,6 +842,7 @@ extension iTermBrowserWebView: iTermBrowserContextMenuHelperDelegate {
 // MARK: - Internal methods
 
 @available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserWebView {
     func copy(string: String) {
         let pasteboard = NSPasteboard.general

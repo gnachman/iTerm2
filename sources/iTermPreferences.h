@@ -95,6 +95,16 @@ typedef NS_ENUM(NSUInteger, iTermAIVendor) {
     iTermAIVendorAnthropic = 4
 };
 
+typedef NS_ENUM(NSUInteger, iTermAIPrompt) {
+    iTermAIPromptEngageAI = 0,
+    iTermAIPromptAIChat = 1,
+    iTermAIPromptAIChatReadOnlyTerminal = 2,
+    iTermAIPromptAIChatReadWriteTerminal = 3,
+    iTermAIPromptAIChatBrowser = 4,
+    iTermAIPromptAIChatReadOnlyTerminalBrowser = 5,
+    iTermAIPromptAIChatReadWriteTerminalBrowser = 6,
+};
+
 // General
 extern NSString *const kPreferenceKeyOpenBookmark;
 extern NSString *const kPreferenceKeyOpenArrangementAtStartup;
@@ -116,6 +126,13 @@ extern NSString *const kPreferenceKeyUseCustomScriptsFolder;  // Bool
 extern NSString *const kPreferenceKeyOpenAIAPIKey;  // deprecated
 extern NSString *const kPreferenceKeyAIAPIKey;
 extern NSString *const kPreferenceKeyAIPrompt;
+extern NSString *const kPreferenceKeyAIPromptAIChat;
+extern NSString *const kPreferenceKeyAIPromptAIChatReadOnlyTerminal;
+extern NSString *const kPreferenceKeyAIPromptAIChatReadWriteTerminal;
+extern NSString *const kPreferenceKeyAIPromptAIChatBrowser;
+extern NSString *const kPreferenceKeyAIPromptAIChatReadOnlyTerminalBrowser;
+extern NSString *const kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser;
+extern NSString *const kPreferenceKeyAIPromptPlaceholder;  // not a real setting, just there to make the prefs UI infra happy
 extern NSString *const kPreferenceKeyAIModel;
 extern NSString *const kPreferenceKeyAITokenLimit;
 extern NSString *const kPreferenceKeyAIResponseTokenLimit;
@@ -178,6 +195,7 @@ extern NSString *const kPreferenceKeyAIPermissionWriteToClipboard;
 extern NSString *const kPreferenceKeyAIPermissionTypeForYou;
 extern NSString *const kPreferenceKeyAIPermissionViewManpages;
 extern NSString *const kPreferenceKeyAIPermissionWriteToFilesystem;
+extern NSString *const kPreferenceKeyAIPermissionActInWebBrowser;
 
 // Appearance
 extern NSString *const kPreferenceKeyTabStyle_Deprecated;
