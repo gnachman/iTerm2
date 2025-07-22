@@ -224,6 +224,25 @@ class iTermBrowserWebView: WKWebView {
         }
     }
 
+    override var description: String {
+        "<\(NSStringFromClass(Self.self)): \(it_addressString) url=\(url.d)>)"
+    }
+    override var acceptsFirstResponder: Bool {
+        DLog("acceptsFirstResponder \(url.d)")
+        return true
+    }
+
+    override func becomeFirstResponder() -> Bool {
+        DLog("becomeFirstResponder \(url.d)")
+        browserDelegate?.webViewDidBecomeFirstResponder(self)
+        return true
+    }
+
+    override func resignFirstResponder() -> Bool {
+        DLog("Resign first responder \(url.d)")
+        return true
+    }
+
     private func mouseDownImpl(event: NSEvent) -> (Bool, iTermClickSideEffects) {
         var sideEffects: iTermClickSideEffects = []
         pointerController.notifyLeftMouseDown()

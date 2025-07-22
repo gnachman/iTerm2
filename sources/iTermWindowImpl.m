@@ -539,9 +539,11 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)makeFirstResponder:(nullable NSResponder *)responder {
-    DLog(@"%p makeFirstResponder:%@", self, responder);
+    DLog(@"%p makeFirstResponder:%@", self, responder.description);
     DLog(@"%@", [NSThread callStackSymbols]);
-    return [super makeFirstResponder:responder];
+    const BOOL result = [super makeFirstResponder:responder];
+    DLog(@"After call to make %@ first responder, the actual first responder is %@", [responder description], self.firstResponder.description);
+    return result;
 }
 
 - (NSWindowTabbingMode)tabbingMode {
