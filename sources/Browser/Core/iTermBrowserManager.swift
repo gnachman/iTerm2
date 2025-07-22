@@ -360,7 +360,11 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         
         // Initialize find manager for macOS 13+
         if #available(macOS 13.0, *) {
-            _findManager = iTermBrowserFindManager(webView: webView)
+            if let findManager = iTermBrowserFindManager(webView: webView) {
+                _findManager = findManager
+            } else {
+                DLog("Failed to initialize find manager")
+            }
         }
         
         // Initialize adblock handler

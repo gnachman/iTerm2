@@ -3969,6 +3969,9 @@
 		A6D90D612E2F5F4900BA9F4F /* ai-prompt-help.md in Resources */ = {isa = PBXBuildFile; fileRef = A6D90D5F2E2F5F3B00BA9F4F /* ai-prompt-help.md */; };
 		A6D90D622E2F5F4900BA9F4F /* ai-prompt-help.md in Resources */ = {isa = PBXBuildFile; fileRef = A6D90D5F2E2F5F3B00BA9F4F /* ai-prompt-help.md */; };
 		A6D90D642E2F627B00BA9F4F /* ImageViewWithPopoverMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D90D632E2F626700BA9F4F /* ImageViewWithPopoverMessage.swift */; };
+		A6D90D662E2FF7E100BA9F4F /* custom-find.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D90D652E2FF7E100BA9F4F /* custom-find.js */; };
+		A6D90D672E2FF7E100BA9F4F /* custom-find.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D90D652E2FF7E100BA9F4F /* custom-find.js */; };
+		A6D90D682E2FF7E100BA9F4F /* custom-find.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D90D652E2FF7E100BA9F4F /* custom-find.js */; };
 		A6DB145A2D6CE22400266394 /* CommandIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DB14592D6CE22400266394 /* CommandIcon.png */; };
 		A6DB145B2D6CE22400266394 /* CommandIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DB14592D6CE22400266394 /* CommandIcon.png */; };
 		A6DB145C2D6CE22400266394 /* CommandIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DB14592D6CE22400266394 /* CommandIcon.png */; };
@@ -8340,6 +8343,7 @@
 		A6D90D5D2E2F4F7800BA9F4F /* PTYTextView+MouseHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PTYTextView+MouseHandler.h"; sourceTree = "<group>"; };
 		A6D90D5F2E2F5F3B00BA9F4F /* ai-prompt-help.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "ai-prompt-help.md"; sourceTree = "<group>"; };
 		A6D90D632E2F626700BA9F4F /* ImageViewWithPopoverMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewWithPopoverMessage.swift; sourceTree = "<group>"; };
+		A6D90D652E2FF7E100BA9F4F /* custom-find.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "custom-find.js"; sourceTree = "<group>"; };
 		A6DB14592D6CE22400266394 /* CommandIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = CommandIcon.png; sourceTree = "<group>"; };
 		A6DB145D2D6CEDEE00266394 /* SystemMessageCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemMessageCellView.swift; sourceTree = "<group>"; };
 		A6DB14632D6D09C800266394 /* AIStreaming.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AIStreaming.png; sourceTree = "<group>"; };
@@ -13310,6 +13314,7 @@
 		A6CBB8202E0A1CE000B2CCCB /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				A6D90D652E2FF7E100BA9F4F /* custom-find.js */,
 				A6CBB7FD2E09163A00B2CCCB /* check-iframe-origins.js */,
 				A6FE7A862E0E252300BEBCE4 /* hover-link-detector.js */,
 				A69FF3B62E1316CD00AFF7A8 /* monitor-context-menu.js */,
@@ -15962,6 +15967,7 @@
 				A67D0D671A2EE12A003A8B35 /* iTermPasswordManager.xib in Resources */,
 				A67F61E0214395D50093940A /* graphic_yarn.png in Resources */,
 				A65FF3C520F18552008BD0AE /* iTermMiniSearchFieldViewController.xib in Resources */,
+				A6D90D662E2FF7E100BA9F4F /* custom-find.js in Resources */,
 				5308BF92228283CE004BECAC /* StatusBarIconBattery@2x.png in Resources */,
 				A61BB46621CA2D5A0027F47D /* iTerm2Script.icns in Resources */,
 				A6E16C7424A8696D00C6DB06 /* WindowCorner_BigSur.png in Resources */,
@@ -16795,6 +16801,7 @@
 				A697CE7C2D97C3FA0031583F /* TriggersMenuTip.png in Resources */,
 				A697CE7D2D97C3FA0031583F /* TriggersMenuTip@2x.png in Resources */,
 				A697CEB82D987C5A0031583F /* OpenQuicklyNamedMark.png in Resources */,
+				A6D90D682E2FF7E100BA9F4F /* custom-find.js in Resources */,
 				A697CEB92D987C5A0031583F /* OpenQuicklyNamedMark@2x.png in Resources */,
 				A6F7A732213CB143004DE961 /* StatusBarIconGitBranch.png in Resources */,
 				A67F61C8214395C60093940A /* graphic_search.png in Resources */,
@@ -17360,6 +17367,7 @@
 				A697CE1C2D9765B70031583F /* CodeciergeMenuTip@2x.png in Resources */,
 				A697CE1D2D9765B70031583F /* CodeciergeMenuTip.png in Resources */,
 				A66F52CA2106F6F100571168 /* gitup.png in Resources */,
+				A6D90D672E2FF7E100BA9F4F /* custom-find.js in Resources */,
 				A6A3D190281663EE00C0C9E0 /* extensions.json in Resources */,
 				A6F7D4C92E037E780065D09C /* error-page.html in Resources */,
 				5308BF90228283CE004BECAC /* StatusBarIconBattery@2x.png in Resources */,
