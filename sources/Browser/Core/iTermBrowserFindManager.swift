@@ -8,12 +8,14 @@
 import WebKit
 
 @available(macOS 13.0, *)
+@MainActor
 @objc protocol iTermBrowserFindManagerDelegate: AnyObject {
     func browserFindManager(_ manager: iTermBrowserFindManager, didUpdateResult result: iTermBrowserFindResult)
 }
 
 @available(macOS 13.0, *)
 @objc(iTermBrowserFindResult)
+@MainActor
 class iTermBrowserFindResult: NSObject {
     @objc let matchFound: Bool
     @objc let searchTerm: String
@@ -26,6 +28,7 @@ class iTermBrowserFindResult: NSObject {
 
 @available(macOS 13.0, *)
 @objc(iTermBrowserFindManager)
+@MainActor
 class iTermBrowserFindManager: NSObject {
     @objc weak var delegate: iTermBrowserFindManagerDelegate?
     private weak var webView: WKWebView?
