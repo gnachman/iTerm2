@@ -14,7 +14,7 @@ struct SmartSelectRule {
 }
 
 @available(macOS 11.0, *)
-protocol iTermBrowserViewControllerDelegate: AnyObject {
+protocol iTermBrowserViewControllerDelegate: AnyObject, iTermBrowserFindManagerDelegate {
     func browserViewController(_ controller: iTermBrowserViewController,
                                didUpdateTitle title: String?)
     func browserViewController(_ controller: iTermBrowserViewController,
@@ -225,14 +225,6 @@ extension iTermBrowserViewController {
         return browserManager.webView
     }
 
-    var activeSearchTerm: String? {
-        if #available (macOS 13.0, *) {
-            browserManager.browserFindManager?.activeSearchTerm
-        } else {
-            nil
-        }
-    }
-
     @objc(sendData:)
     func send(data: Data) {
         let string = data.lossyString
@@ -262,28 +254,50 @@ extension iTermBrowserViewController {
 
     // MARK: - Search
 
-    func startFind(_ string: String, caseSensitive: Bool) {
-        if #available (macOS 13.0, *) {
-            browserManager.browserFindManager?.startFind(string, caseSensitive: caseSensitive)
-        }
+    func startFind(_ string: String, mode: iTermBrowserFindMode) {
+        browserManager.browserFindManager?.startFind(string, mode: mode)
     }
 
     @objc func findNext(_ sender: Any?) {
-        if #available(macOS 13.0, *) {
-            browserManager.browserFindManager?.findNext()
-        }
+        browserManager.browserFindManager?.findNext()
     }
 
     @objc func findPrevious(_ sender: Any?) {
-        if #available(macOS 13.0, *) {
-            browserManager.browserFindManager?.findPrevious()
-        }
+        browserManager.browserFindManager?.findPrevious()
     }
 
     @objc func clearFindString(_ sender: Any?) {
-        if #available(macOS 13.0, *) {
-            browserManager.browserFindManager?.clearFind()
-        }
+        browserManager.browserFindManager?.clearFind()
+    }
+    
+    // Additional find methods for integration with iTerm2's find system
+    
+    var activeSearchTerm: String? {
+        return browserManager.browserFindManager?.activeSearchTerm
+    }
+    
+    var hasActiveSearch: Bool {
+        return browserManager.browserFindManager?.hasActiveSearch ?? false
+    }
+    
+    var numberOfSearchResults: Int {
+        return browserManager.browserFindManager?.numberOfSearchResults ?? 0
+    }
+    
+    var currentIndex: Int {
+        return browserManager.browserFindManager?.currentIndex ?? 0
+    }
+    
+    var findInProgress: Bool {
+        return browserManager.browserFindManager?.findInProgress ?? false
+    }
+    
+    func resetFindCursor() {
+        browserManager.browserFindManager?.resetFindCursor()
+    }
+    
+    func continueFind(progress: UnsafeMutablePointer<Double>, range: NSRangePointer) -> Bool {
+        return browserManager.browserFindManager?.continueFind(progress: progress, range: range) ?? false
     }
 
     @objc func loadURL(_ urlString: String) {
@@ -1206,3 +1220,9 @@ extension iTermBrowserViewController: iTermBrowserActionPerforming {
     }
 }
 
+@MainActor
+extension iTermBrowserViewController: iTermBrowserFindManagerDelegate {
+    func browserFindManager(_ manager: iTermBrowserFindManager, didUpdateResult result: iTermBrowserFindResult) {
+        delegate?.browserFindManager(manager, didUpdateResult: result)
+    }
+}

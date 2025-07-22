@@ -7089,14 +7089,30 @@ DLog(args); \
 }
 
 - (void)resetFindCursor {
+    // Check if we're in browser mode
+    if ([_view isBrowser]) {
+        [self browserResetFindCursor];
+        return;
+    }
+    
     [_textview resetFindCursor];
 }
 
 - (BOOL)findInProgress {
+    // Check if we're in browser mode
+    if ([_view isBrowser]) {
+        return [self browserFindInProgress];
+    }
+    
     return [_textview findInProgress];
 }
 
 - (BOOL)continueFind:(double *)progress range:(NSRange *)rangePtr {
+    // Check if we're in browser mode
+    if ([_view isBrowser]) {
+        return [self browserContinueFind:progress range:rangePtr];
+    }
+    
     return [_textview continueFind:progress range:rangePtr];
 }
 
@@ -7126,14 +7142,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     
     // Check if we're in browser mode
     if ([_view isBrowser]) {
-        if (@available(macOS 13.0, *)) {
-            [self browserFindString:aString
-                   forwardDirection:direction
-                               mode:mode
-                         withOffset:offset
-                scrollToFirstResult:scrollToFirstResult
-                              force:force];
-        }
+        [self browserFindString:aString
+               forwardDirection:direction
+                           mode:mode
+                     withOffset:offset
+            scrollToFirstResult:scrollToFirstResult
+                          force:force];
         return;
     }
     
@@ -7309,10 +7323,24 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 }
 
 - (NSInteger)findDriverNumberOfSearchResults {
+    // Check if we're in browser mode
+    if ([_view isBrowser]) {
+        return [self browserNumberOfSearchResults];
+    }
+    
     return _textview.findOnPageHelper.numberOfSearchResults;
 }
 
+- (BOOL)findDriverEnterInFindPanelPerformsForwardSearch {
+    return self.isBrowserSession;
+}
+
 - (NSInteger)findDriverCurrentIndex {
+    // Check if we're in browser mode
+    if ([_view isBrowser]) {
+        return [self browserCurrentIndex];
+    }
+    
     return _textview.findOnPageHelper.currentIndex;
 }
 

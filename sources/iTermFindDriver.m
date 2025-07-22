@@ -602,6 +602,19 @@ static NSString *gSearchString;
                   force:NO];
 }
 
+- (void)enterPressedWithShift:(BOOL)shiftPressed {
+    if ([self.delegate findDriverEnterInFindPanelPerformsForwardSearch]) {
+        [self searchNext];
+        return;
+    }
+    const BOOL swap = [iTermAdvancedSettingsModel swapFindNextPrevious];
+    if  (!shiftPressed ^ swap) {
+        [self searchNext];
+    } else {
+        [self searchPrevious];
+    }
+}
+
 - (void)startDelay {
     _delayState = kFindViewDelayStateDelaying;
     NSTimeInterval delay = [iTermAdvancedSettingsModel findDelaySeconds];

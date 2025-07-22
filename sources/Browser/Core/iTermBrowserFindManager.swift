@@ -8,21 +8,18 @@
 import WebKit
 import Combine
 
-@available(macOS 13.0, *)
 @MainActor
 @objc protocol iTermBrowserFindManagerDelegate: AnyObject {
     func browserFindManager(_ manager: iTermBrowserFindManager, didUpdateResult result: iTermBrowserFindResult)
 }
 
-@available(macOS 13.0, *)
-@objc enum iTermBrowserFindMode: Int {
-    case substring = 0
-    case caseSensitive = 1
-    case caseInsensitive = 2
-    case regex = 3
+enum iTermBrowserFindMode: String {
+    case caseSensitive = "caseSensitive"
+    case caseInsensitive = "caseInsensitive"
+    case caseSensitiveRegex = "caseSensitiveRegex"
+    case caseInsensitiveRegex = "caseInsensitiveRegex"
 }
 
-@available(macOS 13.0, *)
 @objc(iTermBrowserFindResult)
 @MainActor
 class iTermBrowserFindResult: NSObject {
@@ -39,7 +36,6 @@ class iTermBrowserFindResult: NSObject {
     }
 }
 
-@available(macOS 13.0, *)
 @objc(iTermBrowserFindManager)
 @MainActor
 class iTermBrowserFindManager: NSObject {
@@ -47,9 +43,15 @@ class iTermBrowserFindManager: NSObject {
     private weak var webView: WKWebView?
     private var currentSearchTerm: String?
     private var isSearchActive = false
-    private var findMode: iTermBrowserFindMode = .substring
+    private var findMode: iTermBrowserFindMode = .caseSensitive
     private let secret: String
     private var isJavaScriptInjected = false
+    
+    // Incremental search state
+    private var totalMatches: Int = 0
+    private var currentMatchIndex: Int = 0
+    private var searchProgress: Double = 0.0
+    private var searchComplete: Bool = false
     
     @objc init?(webView: WKWebView) {
         guard let secret = String.makeSecureHexString() else {
@@ -63,24 +65,7 @@ class iTermBrowserFindManager: NSObject {
     
     // MARK: - Public Interface
     
-    @objc func startFind(_ searchTerm: String, caseSensitive: Bool = false) {
-        guard !searchTerm.isEmpty else {
-            clearFind()
-            return
-        }
-        
-        currentSearchTerm = searchTerm
-        self.findMode = caseSensitive ? .caseSensitive : .caseInsensitive
-        isSearchActive = true
-        
-        executeJavaScript(command: [
-            "action": "startFind",
-            "searchTerm": searchTerm,
-            "searchMode": searchModeString(for: findMode)
-        ])
-    }
-    
-    @objc func startFind(_ searchTerm: String, mode: iTermBrowserFindMode) {
+    func startFind(_ searchTerm: String, mode: iTermBrowserFindMode) {
         guard !searchTerm.isEmpty else {
             clearFind()
             return
@@ -88,12 +73,12 @@ class iTermBrowserFindManager: NSObject {
         
         currentSearchTerm = searchTerm
         self.findMode = mode
-        isSearchActive = true
+        resetSearchState()
         
         executeJavaScript(command: [
             "action": "startFind",
             "searchTerm": searchTerm,
-            "searchMode": searchModeString(for: mode)
+            "searchMode": mode.rawValue
         ])
     }
     
@@ -113,7 +98,7 @@ class iTermBrowserFindManager: NSObject {
         executeJavaScript(command: ["action": "clearFind"])
         
         currentSearchTerm = nil
-        isSearchActive = false
+        resetSearchState(active: false)
         
         // Notify delegate that find was cleared
         let result = iTermBrowserFindResult(matchFound: false, searchTerm: "")
@@ -126,6 +111,53 @@ class iTermBrowserFindManager: NSObject {
     
     @objc var activeSearchTerm: String? {
         return isSearchActive ? currentSearchTerm : nil
+    }
+    
+    // MARK: - Incremental Search Support
+    
+    @objc var numberOfSearchResults: Int {
+        return totalMatches
+    }
+    
+    @objc var currentIndex: Int {
+        return currentMatchIndex
+    }
+    
+    @objc var findInProgress: Bool {
+        return isSearchActive && !searchComplete
+    }
+    
+    @objc func continueFind(progress: UnsafeMutablePointer<Double>, range: NSRangePointer) -> Bool {
+        guard isSearchActive else {
+            progress.pointee = 1.0
+            range.pointee = NSRange(location: 100, length: 100)
+            return false
+        }
+        
+        // Update progress based on search state
+        progress.pointee = searchProgress
+        
+        // For browser, range represents search progress as percentage
+        // location = current progress (0-100), length = total (100)
+        let progressPercent = Int(searchProgress * 100)
+        range.pointee = NSRange(location: progressPercent, length: 100)
+        
+        // If search is complete, no more work to do
+        if searchComplete {
+            progress.pointee = 1.0
+            range.pointee = NSRange(location: 100, length: 100)
+            return false
+        }
+        
+        // For now, browser search completes immediately
+        // In the future, this could be enhanced for incremental search
+        searchComplete = true
+        searchProgress = 1.0
+        return false
+    }
+    
+    @objc func resetFindCursor() {
+        clearFind()
     }
     
     // MARK: - Private Methods
@@ -175,23 +207,17 @@ class iTermBrowserFindManager: NSObject {
         }
     }
     
-    private func searchModeString(for mode: iTermBrowserFindMode) -> String {
-        switch mode {
-        case .substring:
-            return "substring"
-        case .caseSensitive:
-            return "caseSensitive"
-        case .caseInsensitive:
-            return "caseInsensitive"
-        case .regex:
-            return "regex"
-        }
+    private func resetSearchState(active: Bool = true) {
+        isSearchActive = active
+        totalMatches = 0
+        currentMatchIndex = 0
+        searchProgress = 0.0
+        searchComplete = false
     }
 }
 
 // MARK: - WKScriptMessageHandler
 
-@available(macOS 13.0, *)
 extension iTermBrowserFindManager: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController,
                              didReceive message: WKScriptMessage) {
@@ -213,6 +239,16 @@ extension iTermBrowserFindManager: WKScriptMessageHandler {
         let searchTerm = data["searchTerm"] as? String ?? ""
         let totalMatches = data["totalMatches"] as? Int ?? 0
         let currentMatch = data["currentMatch"] as? Int ?? 0
+        
+        // Update internal state
+        self.totalMatches = totalMatches
+        self.currentMatchIndex = currentMatch
+        
+        // Mark search as complete when we get results
+        if !searchComplete {
+            searchComplete = true
+            searchProgress = 1.0
+        }
         
         let result = iTermBrowserFindResult(
             matchFound: totalMatches > 0,

@@ -10,6 +10,10 @@ import WebKit
 
 @available(macOS 11.0, *)
 extension PTYSession: iTermBrowserViewControllerDelegate {
+    func browserFindManager(_ manager: iTermBrowserFindManager, didUpdateResult result: iTermBrowserFindResult) {
+        view.findDriver.viewController.countDidChange()
+    }
+    
     func browserViewController(_ controller: iTermBrowserViewController, didUpdateTitle title: String?) {
         if let title {
             setUntrustedIconName(title)
@@ -244,7 +248,6 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
 
 // MARK: - Browser Find Support
 
-@available(macOS 13.0, *)
 extension PTYSession {
     @objc func browserFindString(_ aString: String,
                                 forwardDirection direction: Bool,
@@ -261,8 +264,21 @@ extension PTYSession {
         
         if force || aString != vc.activeSearchTerm {
             // Start new search (force=true or different search string)
-            let caseSensitive = (mode == .caseSensitiveSubstring || mode == .caseSensitiveRegex)
-            vc.startFind(aString, caseSensitive: caseSensitive)
+            let browserMode: iTermBrowserFindMode = switch mode {
+            case .smartCaseSensitivity:
+                (aString.rangeOfCharacter(from: CharacterSet.uppercaseLetters) != nil) ? .caseSensitive : .caseInsensitive
+            case .caseSensitiveSubstring:
+                    .caseSensitive
+            case .caseInsensitiveSubstring:
+                    .caseInsensitive
+            case .caseSensitiveRegex:
+                    .caseSensitiveRegex
+            case .caseInsensitiveRegex:
+                    .caseInsensitiveRegex
+            @unknown default:
+                it_fatalError()
+            }
+            vc.startFind(aString, mode: browserMode)
         } else {
             // Continue existing search (move to next/previous result)
             if direction {
@@ -271,5 +287,42 @@ extension PTYSession {
                 vc.findPrevious(nil)
             }
         }
+    }
+    
+    @objc func browserResetFindCursor() {
+        guard let vc = view.browserViewController else {
+            return
+        }
+        vc.resetFindCursor()
+    }
+    
+    @objc func browserFindInProgress() -> Bool {
+        guard let vc = view.browserViewController else {
+            return false
+        }
+        return vc.findInProgress
+    }
+    
+    @objc func browserContinueFind(_ progress: UnsafeMutablePointer<Double>, range: NSRangePointer) -> Bool {
+        guard let vc = view.browserViewController else {
+            progress.pointee = 1.0
+            range.pointee = NSRange(location: 100, length: 100)
+            return false
+        }
+        return vc.continueFind(progress: progress, range: range)
+    }
+    
+    @objc func browserNumberOfSearchResults() -> Int {
+        guard let vc = view.browserViewController else {
+            return 0
+        }
+        return vc.numberOfSearchResults
+    }
+    
+    @objc func browserCurrentIndex() -> Int {
+        guard let vc = view.browserViewController else {
+            return 0
+        }
+        return vc.currentIndex
     }
 }

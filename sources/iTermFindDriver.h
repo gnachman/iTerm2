@@ -71,6 +71,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (void)findDriverBottomUpPerformFindPanelAction:(id)sender;
 - (BOOL)findDriverBottomUpValidateMenuItem:(NSMenuItem *)menuItem;
 - (iTermSearchEngine *)findDriverSearchEngine;
+- (BOOL)findDriverEnterInFindPanelPerformsForwardSearch;
 
 @end
 
@@ -107,6 +108,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 // Find the next (above) or previous (below) match.
 - (void)searchNext;
 - (void)searchPrevious;
+
+- (void)enterPressedWithShift:(BOOL)shift;
 
 // Performs a "temporary" search. The current state (case sensitivity, regex)
 // is saved and the find view is hidden. A search is performed and the user can

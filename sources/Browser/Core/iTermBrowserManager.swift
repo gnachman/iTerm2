@@ -11,7 +11,7 @@ import WebExtensionsFramework
 
 @available(macOS 11.0, *)
 @MainActor
-protocol iTermBrowserManagerDelegate: AnyObject {
+protocol iTermBrowserManagerDelegate: AnyObject, iTermBrowserFindManagerDelegate {
     func browserManager(_ manager: iTermBrowserManager, didUpdateURL url: String?)
     func browserManager(_ manager: iTermBrowserManager, didUpdateTitle title: String?)
     func browserManager(_ manager: iTermBrowserManager, didUpdateFavicon favicon: NSImage?)
@@ -358,13 +358,12 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         // Observe title changes
         webView.addObserver(self, forKeyPath: "title", options: [.new], context: nil)
         
-        // Initialize find manager for macOS 13+
-        if #available(macOS 13.0, *) {
-            if let findManager = iTermBrowserFindManager(webView: webView) {
-                _findManager = findManager
-            } else {
-                DLog("Failed to initialize find manager")
-            }
+        // Initialize find manager
+        if let findManager = iTermBrowserFindManager(webView: webView) {
+            _findManager = findManager
+            findManager.delegate = self
+        } else {
+            DLog("Failed to initialize find manager")
         }
         
         // Initialize adblock handler
@@ -605,16 +604,12 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     
     // MARK: - Find Support
     
-    @available(macOS 13.0, *)
     @objc var browserFindManager: iTermBrowserFindManager? {
         return _findManager as? iTermBrowserFindManager
     }
     
     @objc var supportsFinding: Bool {
-        if #available(macOS 13.0, *) {
-            return _findManager != nil
-        }
-        return false
+        return _findManager != nil
     }
     
     private func showErrorPage(for error: Error, failedURL: URL?) {
@@ -881,7 +876,7 @@ extension iTermBrowserManager {
             } else {
                 message.body
             }
-#if DEBUG
+#if ITERM_DEBUG
             NSLog("%@", "Javascript Console: \(string)")
 #else
             XLog("Javascript Console: \(string)")
@@ -1821,3 +1816,9 @@ extension iTermBrowserUserState.Configuration {
     }
 }
 
+@MainActor
+extension iTermBrowserManager: iTermBrowserFindManagerDelegate {
+    func browserFindManager(_ manager: iTermBrowserFindManager, didUpdateResult result: iTermBrowserFindResult) {
+        delegate?.browserFindManager(manager, didUpdateResult: result)
+    }
+}

@@ -2422,6 +2422,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     return [self.delegate findDriverNumberOfSearchResults];
 }
 
+- (BOOL)findDriverEnterInFindPanelPerformsForwardSearch {
+    return [self.delegate findDriverEnterInFindPanelPerformsForwardSearch];
+}
+
 - (void)showUnobtrusiveMessage:(NSString *)message {
     [self showUnobtrusiveMessage:message duration:1];
 }
