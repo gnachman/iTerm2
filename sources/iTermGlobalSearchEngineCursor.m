@@ -284,7 +284,7 @@ typedef struct iTermGlobalSearchEngineCursorSearchOutput {
 }
 
 - (NSAttributedString *)snippetForResult:(iTermBrowserFindResult *)result {
-    NSAttributedString *matchString = [[NSAttributedString alloc] initWithString:self.query
+    NSAttributedString *matchString = [[NSAttributedString alloc] initWithString:result.matchedText
                                                                       attributes:[self matchAttributes]];
     NSString *prefix = [(result.contextBefore ?: @"") stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
     NSString *suffix = [(result.contextAfter ?: @"") stringByReplacingOccurrencesOfString:@"\n" withString:@" "];

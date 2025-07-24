@@ -2,10 +2,10 @@
     'use strict';
 
     // ==============================
-    //  Multi-instance Find Engine
+    //  Block-Based Find Engine
     // ==============================
 
-    const TAG = '[iTermCustomFind]';
+    const TAG = '[iTermCustomFind-BlockBased]';
     const sessionSecret = "{{SECRET}}";
     const DEFAULT_INSTANCE_ID = 'default';
 
@@ -28,14 +28,13 @@
              display: none !important;
          }
      `;
+
     function injectStyles() {
         if (document.getElementById('iterm-find-styles')) {
             return;
         }
-        
-        // Wait for document.head to exist
+
         if (!document.head) {
-            // If running at documentStart, defer until head is available
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', injectStyles, { once: true });
                 console.debug(TAG, 'Deferring style injection until DOMContentLoaded');
@@ -44,7 +43,7 @@
             console.debug(TAG, 'No document.head available');
             return;
         }
-        
+
         const styleElement = document.createElement('style');
         styleElement.id = 'iterm-find-styles';
         styleElement.textContent = highlightStyles;
@@ -54,8 +53,120 @@
     injectStyles();
 
     // ------------------------------
-    // Utility (instance-agnostic)
+    // Block-Based Data Structures
     // ------------------------------
+
+    class TextNodeMap {
+        constructor() {
+            // Maps text position → {node: TextNode, offset: number}
+            this.positionToNode = new Map();
+            // Maps text node → {start: number, end: number} in block text
+            this.nodeToPosition = new Map();
+        }
+
+        addTextNode(node, startPos) {
+            const text = node.textContent || '';
+            const endPos = startPos + text.length;
+
+            // Store node position range
+            this.nodeToPosition.set(node, { start: startPos, end: endPos, revealer: node._itermReveal || null });
+
+            // Store position to node mapping for each character
+            // For empty nodes, still create a mapping at the start position
+            if (text.length === 0) {
+                this.positionToNode.set(startPos, { node: node, offset: 0, revealer: node._itermReveal || null });
+            } else {
+                for (let i = 0; i < text.length; i++) {
+                    this.positionToNode.set(startPos + i, { node: node, offset: i, revealer: node._itermReveal || null });
+                }
+            }
+
+            return endPos;
+        }
+
+        getNodeAtPosition(position) {
+            return this.positionToNode.get(position);
+        }
+
+        getPositionRange(node) {
+            return this.nodeToPosition.get(node);
+        }
+    }
+
+    class BlockSegment {
+        constructor(element) {
+            this.element = element;           // The block DOM element
+            this.textContent = '';           // Concatenated text from all text nodes
+            this.textNodeMap = new TextNodeMap();
+            this.bounds = null;              // DOMRect - will be computed when needed
+            this.globalStart = 0;            // Start position in global buffer
+            this.globalEnd = 0;              // End position in global buffer
+        }
+
+        collectTextNodes(engine) {
+            this.textContent = '';
+            this.textNodeMap = new TextNodeMap();
+
+            let position = 0;
+            const walker = document.createTreeWalker(
+                this.element,
+                NodeFilter.SHOW_TEXT,
+                {
+                    acceptNode: (node) => {
+                        const parent = node.parentElement;
+                        if (!parent) return NodeFilter.FILTER_REJECT;
+
+                        // Skip script and style
+                        const tag = parent.tagName;
+                        if (tag === 'SCRIPT' || tag === 'STYLE') {
+                            return NodeFilter.FILTER_REJECT;
+                        }
+
+                        // Check if node is hidden and try to find revealer
+                        if (engine && engine.isHidden(parent)) {
+                            const rev = engine.firstRevealableAncestor(parent);
+                            if (!rev) {
+                                engine.hiddenSkippedCount++;
+                                engine.log('reject hidden node', node.textContent.slice(0, 40));
+                                return NodeFilter.FILTER_REJECT;
+                            } else {
+                                node._itermReveal = rev;
+                                engine.log('accept hidden via revealer', rev.tagName, node.textContent.slice(0, 40));
+                            }
+                        }
+
+                        // Skip completely empty text nodes, but keep whitespace-containing nodes
+                        if (!node.textContent || node.textContent.length === 0) {
+                            return NodeFilter.FILTER_REJECT;
+                        }
+
+                        return NodeFilter.FILTER_ACCEPT;
+                    }
+                }
+            );
+
+            let node;
+            while (node = walker.nextNode()) {
+                position = this.textNodeMap.addTextNode(node, position);
+                this.textContent += node.textContent;
+            }
+        }
+
+        updateBounds() {
+            this.bounds = this.element.getBoundingClientRect();
+        }
+
+        containsPoint(x, y) {
+            if (!this.bounds) this.updateBounds();
+            return x >= this.bounds.left && x <= this.bounds.right &&
+                   y >= this.bounds.top && y <= this.bounds.bottom;
+        }
+    }
+
+    // ------------------------------
+    // Utility Functions
+    // ------------------------------
+
     function safeStringify(obj) {
         try {
             return JSON.stringify(obj);
@@ -66,7 +177,9 @@
 
     const SAFE_REVEAL_SELECTORS = [
         'details:not([open])',
-        '.mw-collapsible',
+        '.mw-collapsible.mw-collapsed',
+        '.mw-collapsible:not(.mw-expanded)',
+        'tr[hidden="until-found"]',
         '.accordion',
         '[aria-expanded="false"]',
         '[data-collapsed="true"]'
@@ -80,9 +193,21 @@
         return arr;
     }
 
+    const BLOCK_ELEMENTS = new Set([
+        'ADDRESS', 'ARTICLE', 'ASIDE', 'BLOCKQUOTE', 'BR', 'DD', 'DIV',
+        'DL', 'DT', 'FIELDSET', 'FIGCAPTION', 'FIGURE', 'FOOTER', 'FORM',
+        'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'HEADER', 'HR', 'LI', 'MAIN',
+        'NAV', 'OL', 'P', 'PRE', 'SECTION', 'TABLE', 'TD', 'TH', 'TR', 'UL'
+    ]);
+
+    function isBlockElement(element) {
+        return BLOCK_ELEMENTS.has(element.tagName);
+    }
+
     // ==============================
-    //  Engine Class
+    //  Block-Based Find Engine Class
     // ==============================
+
     class FindEngine {
         constructor(instanceId) {
             this.instanceId = instanceId;
@@ -93,9 +218,10 @@
             this.searchMode = 'caseSensitive';
             this.contextLen = 0;
 
-            this.segments = [];     // [{ node: Text, start: number, length: number, revealer: Element|null }]
-            this.buffer = '';       // concatenated text
-            this.matches = [];      // [{ start, end, els: HTMLElement[], rects?, revealers?: Set<Element> }]
+            // Block-based storage
+            this.blocks = [];                // Array of BlockSegment instances
+            this.globalBuffer = '';          // Concatenated text from all blocks
+            this.matches = [];               // [{ blockIndex, blockStart, blockEnd, globalStart, globalEnd, els, revealers }]
             this.highlightedElements = [];
             this.hiddenSkippedCount = 0;
 
@@ -105,20 +231,23 @@
             // other elements we force-visible; array of restore records
             this.revealRestores = [];
 
-            // async token to ignore stale work
-            this.opToken = 0;
+            // Click tracking
+            this.lastClickLocation = null;   // { blockIndex, position }
+            this.useClickLocationForNext = false;
 
-            // scroll/resize debounce
-            this.updateTimer = null;
+            // Listeners
+            this.boundHandleClick = (event) => { this.handleClick(event); };
+            this.boundHandleNavigation = () => { this.clearClickLocation(); };
 
-            // listeners (once per instance)
-            this.boundScheduleUpdate = () => { this.schedulePositionUpdate(); };
-            window.addEventListener('scroll', this.boundScheduleUpdate, true);
-            window.addEventListener('resize', this.boundScheduleUpdate);
+            document.addEventListener('click', this.boundHandleClick, true);
+            window.addEventListener('beforeunload', this.boundHandleNavigation);
+            window.addEventListener('pagehide', this.boundHandleNavigation);
         }
 
         log(...args) {
-            console.debug(TAG, `[${this.instanceId}]`, ...args.map(a => (typeof a === 'object' ? safeStringify(a) : a)));
+            const message = `${TAG} [${this.instanceId}] ${args.map(a => (typeof a === 'object' ? safeStringify(a) : a)).join(' ')}`;
+            console.debug(message);
+            console.log(message); // Also log to regular console for visibility
         }
 
         // ---------- Visibility helpers ----------
@@ -134,8 +263,25 @@
 
         firstRevealableAncestor(el) {
             for (let e = el; e; e = e.parentElement) {
+                // Check static selectors first
                 if (SAFE_REVEAL_SELECTORS.some(sel => { try { return e.matches(sel); } catch (_) { return false; } })) {
                     return e;
+                }
+
+                // Check for CSS-hidden elements that can be revealed
+                try {
+                    const cs = getComputedStyle(e);
+                    if (cs.display === 'none' || cs.visibility === 'hidden') {
+                        return e;
+                    }
+                    if (e.hasAttribute('hidden')) {
+                        return e;
+                    }
+                    if (e.getAttribute('aria-hidden') === 'true') {
+                        return e;
+                    }
+                } catch (_) {
+                    // Ignore getComputedStyle errors
                 }
             }
             return null;
@@ -188,376 +334,397 @@
             }
         }
 
-        // ---------- Clear ----------
-        clearHighlights() {
-            this.log('clearHighlights begin');
-            const spans = document.querySelectorAll(`.iterm-find-highlight[data-iterm-id="${this.instanceId}"], .iterm-find-highlight-current[data-iterm-id="${this.instanceId}"]`);
-            const parents = new Set();
-            spans.forEach(span => {
-                const parent = span.parentNode;
-                if (!parent) {
-                    return;
+        // ---------- Block Collection ----------
+
+        collectBlocks(root) {
+            this.log('collectBlocks: starting block collection');
+            this.blocks = [];
+            this.globalBuffer = '';
+
+            // Find all block elements
+            const blockElements = this.findBlockElements(root);
+
+            let globalPosition = 0;
+
+            for (const element of blockElements) {
+                const block = new BlockSegment(element);
+                block.collectTextNodes(this);
+
+                if (block.textContent.length > 0) {
+                    // Set global positions - no spaces between blocks to preserve semantic boundaries
+                    block.globalStart = globalPosition;
+                    block.globalEnd = globalPosition + block.textContent.length;
+
+                    this.blocks.push(block);
+                    this.globalBuffer += block.textContent;
+                    globalPosition += block.textContent.length;
                 }
-                while (span.firstChild) {
-                    parent.insertBefore(span.firstChild, span);
-                }
-                parent.removeChild(span);
-                parents.add(parent);
-            });
+            }
 
-            parents.forEach(p => p.normalize());
+            this.log(`collectBlocks: found ${this.blocks.length} blocks, buffer length: ${this.globalBuffer.length}`);
+        }
 
-            this.globallyAutoOpenedDetails.forEach(d => {
-                d.open = false;
-            });
-            this.globallyAutoOpenedDetails.clear();
+        findBlockElements(root) {
+            const blocks = [];
+            const seen = new Set();
 
-            this.revealRestores.forEach(rec => {
-                const el = rec.el;
-                if (!el) { return; }
-                if (rec.type === 'style-display') {
-                    el.style.display = rec.oldValue;
-                } else if (rec.type === 'style-visibility') {
-                    el.style.visibility = rec.oldValue;
-                } else if (rec.type === 'attr') {
-                    if (rec.oldValue === null || rec.oldValue === '') {
-                        el.removeAttribute(rec.attr);
+            function traverse(element) {
+                if (seen.has(element)) return;
+                seen.add(element);
+
+                if (isBlockElement(element)) {
+                    // Check if this block contains any child blocks
+                    let hasChildBlocks = false;
+                    for (const child of element.children) {
+                        if (isBlockElement(child)) {
+                            hasChildBlocks = true;
+                            break;
+                        }
+                    }
+
+                    // Only add blocks that don't contain other blocks (leaf blocks)
+                    if (!hasChildBlocks) {
+                        blocks.push(element);
                     } else {
-                        el.setAttribute(rec.attr, rec.oldValue);
+                        // This block has child blocks, so traverse children instead
+                        for (const child of element.children) {
+                            traverse(child);
+                        }
                     }
-                } else if (rec.type === 'class-remove-add') {
-                    if (rec.removed) { el.classList.add(rec.removed); }
-                }
-            });
-            this.revealRestores = [];
-
-            this.log('clearHighlights removed spans:', spans.length, 'normalized parents:', parents.size);
-
-            this.highlightedElements = [];
-            this.matches = [];
-            this.segments = [];
-            this.buffer = '';
-            this.currentMatchIndex = -1;
-            this.hiddenSkippedCount = 0;
-        }
-
-        // ---------- Regex ----------
-        createSearchRegex(term) {
-            let flags = 'g';
-            let pattern = term;
-
-            console.debug(TAG, `[${this.instanceId}] createSearchRegex: input term="${term}" mode="${this.searchMode}"`);
-
-            switch (this.searchMode) {
-                case 'caseSensitiveRegex': {
-                    break;
-                }
-                case 'caseInsensitiveRegex': {
-                    flags += 'i';
-                    break;
-                }
-                case 'caseSensitive': {
-                    pattern = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    break;
-                }
-                case 'caseInsensitive':
-                default: {
-                    pattern = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    flags += 'i';
-                    break;
-                }
-            }
-
-            console.debug(TAG, `[${this.instanceId}] createSearchRegex: final pattern="${pattern}" flags="${flags}"`);
-
-            try {
-                const re = new RegExp(pattern, flags);
-                console.debug(TAG, `[${this.instanceId}] createSearchRegex: created regex=${re.toString()}`);
-                return re;
-            } catch (e) {
-                console.debug(TAG, `[${this.instanceId}] createSearchRegex: failed, fallback. err=`, e);
-                const fallback = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                const re = new RegExp(fallback, flags);
-                console.debug(TAG, `[${this.instanceId}] createSearchRegex: fallback regex=${re.toString()}`);
-                return re;
-            }
-        }
-
-        // ---------- Segments ----------
-        collectSegments(root) {
-            this.segments = [];
-            this.buffer = '';
-            this.hiddenSkippedCount = 0;
-
-            // Block elements that should introduce visual breaks
-            const BLOCK_ELEMENTS = new Set([
-                'ADDRESS', 'ARTICLE', 'ASIDE', 'BLOCKQUOTE', 'BR', 'DD', 'DIV',
-                'DL', 'DT', 'FIELDSET', 'FIGCAPTION', 'FIGURE', 'FOOTER', 'FORM',
-                'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'HEADER', 'HR', 'LI', 'MAIN',
-                'NAV', 'OL', 'P', 'PRE', 'SECTION', 'TABLE', 'TD', 'TH', 'TR', 'UL'
-            ]);
-
-            const walker = document.createTreeWalker(
-                                                     root,
-                                                     NodeFilter.SHOW_TEXT,
-                                                     {
-                                                         acceptNode: (node) => {
-                                                             const p = node.parentElement;
-                                                             if (!p) { return NodeFilter.FILTER_REJECT; }
-
-                                                             const tag = p.tagName;
-                                                             if (tag === 'SCRIPT' || tag === 'STYLE') { return NodeFilter.FILTER_REJECT; }
-
-                                                             if (this.isHidden(p)) {
-                                                                 const rev = this.firstRevealableAncestor(p);
-                                                                 if (!rev) {
-                                                                     this.hiddenSkippedCount++;
-                                                                     this.log('reject hidden node', node.textContent.slice(0, 40));
-                                                                     return NodeFilter.FILTER_REJECT;
-                                                                 } else {
-                                                                     node._itermReveal = rev;
-                                                                     this.log('accept hidden via revealer', rev.tagName, node.textContent.slice(0, 40));
-                                                                 }
-                                                             }
-
-                                                             if (!node.textContent || !node.textContent.trim()) {
-                                                                 return NodeFilter.FILTER_REJECT;
-                                                             }
-
-                                                             return NodeFilter.FILTER_ACCEPT;
-                                                         }
-                                                     }
-                                                     );
-
-            let n;
-            let lastNode = null;
-            while (n = walker.nextNode()) {
-                // Check if we should add a space between this node and the previous one
-                if (lastNode && this.hasBlockBoundaryBetween(lastNode, n, BLOCK_ELEMENTS)) {
-                    this.buffer += ' ';
-                }
-                
-                const start = this.buffer.length;
-                const text = n.textContent;
-                this.buffer += text;
-                this.segments.push({ node: n, start, length: text.length, revealer: n._itermReveal || null });
-                lastNode = n;
-            }
-
-            console.debug(TAG, `[${this.instanceId}] collectSegments: buffer="${this.buffer}"`);
-            
-            this.log('collectSegments done. segments:', this.segments.length, 'buffer length:', this.buffer.length, 'hiddenSkippedCount:', this.hiddenSkippedCount);
-        }
-
-        // Check if there's a block boundary between two text nodes in document order
-        hasBlockBoundaryBetween(node1, node2, blockElements) {
-            // Find the lowest common ancestor of both nodes
-            const commonAncestor = this.findCommonAncestor(node1, node2);
-            if (!commonAncestor) return false;
-            
-            // Get the ancestor chains from each node up to the common ancestor
-            const path1 = this.getPathToAncestor(node1, commonAncestor);
-            const path2 = this.getPathToAncestor(node2, commonAncestor);
-            
-            // Check if any block element appears in the path from node1 to common ancestor
-            // and node2 is not a descendant of that block element
-            for (let i = 0; i < path1.length - 1; i++) { // -1 to exclude common ancestor
-                const element = path1[i];
-                if (blockElements.has(element.tagName)) {
-                    // Check if node2 is outside this block element
-                    if (!this.isDescendant(node2, element)) {
-                        return true;
+                } else {
+                    // Not a block element, traverse children
+                    for (const child of element.children) {
+                        traverse(child);
                     }
                 }
             }
-            
-            // Check the reverse: any block element in path2 that doesn't contain node1
-            for (let i = 0; i < path2.length - 1; i++) { // -1 to exclude common ancestor
-                const element = path2[i];
-                if (blockElements.has(element.tagName)) {
-                    // Check if node1 is outside this block element
-                    if (!this.isDescendant(node1, element)) {
-                        return true;
-                    }
-                }
-            }
-            
-            return false;
+
+            traverse(root);
+            return blocks;
         }
-        
-        // Find the lowest common ancestor of two nodes
-        findCommonAncestor(node1, node2) {
-            const ancestors1 = [];
-            for (let n = node1; n; n = n.parentElement) {
-                ancestors1.push(n);
+
+        // ---------- Click Detection ----------
+
+        handleClick(event) {
+            this.log('handleClick: detected at', event.clientX, event.clientY);
+
+            const clickLocation = this.getClickLocation(event.clientX, event.clientY);
+            if (clickLocation) {
+                this.lastClickLocation = clickLocation;
+                this.useClickLocationForNext = true;
+                this.log('handleClick: recorded location', clickLocation);
             }
-            
-            for (let n = node2; n; n = n.parentElement) {
-                if (ancestors1.includes(n)) {
-                    return n;
+        }
+
+        getClickLocation(x, y) {
+            this.log('getClickLocation: called with coordinates', x, y);
+
+            // Find which block contains the click
+            for (let i = 0; i < this.blocks.length; i++) {
+                const block = this.blocks[i];
+                if (block.containsPoint(x, y)) {
+                    this.log('getClickLocation: click is in block', i);
+
+                    // Get caret position within block
+                    const range = document.caretRangeFromPoint(x, y);
+                    if (range && range.startContainer.nodeType === Node.TEXT_NODE) {
+                        const textNode = range.startContainer;
+                        const offset = range.startOffset;
+
+                        this.log('getClickLocation: caret found in text node, offset', offset);
+                        this.log('getClickLocation: text node content:', textNode.textContent);
+                        this.log('getClickLocation: text node parent element:', textNode.parentElement.tagName, textNode.parentElement.className);
+
+                        // Use DOM-invariant position finding instead of cached textNodeMap
+                        // This walks the current DOM state and works after highlighting
+                        const walker = document.createTreeWalker(
+                            block.element,
+                            NodeFilter.SHOW_TEXT,
+                            {
+                                acceptNode: (node) => {
+                                    const parent = node.parentElement;
+                                    if (!parent) return NodeFilter.FILTER_REJECT;
+
+                                    const tag = parent.tagName;
+                                    if (tag === 'SCRIPT' || tag === 'STYLE') {
+                                        return NodeFilter.FILTER_REJECT;
+                                    }
+
+                                    if (!node.textContent || node.textContent.length === 0) {
+                                        return NodeFilter.FILTER_REJECT;
+                                    }
+
+                                    return NodeFilter.FILTER_ACCEPT;
+                                }
+                            }
+                        );
+
+                        let currentPos = 0;
+                        let node;
+
+                        while (node = walker.nextNode()) {
+                            this.log('getClickLocation: walking text node at pos', currentPos, 'content:', node.textContent.substring(0, 20));
+                            if (node === textNode) {
+                                // Found our clicked text node
+                                const finalPosition = currentPos + offset;
+                                this.log('getClickLocation: found clicked text node at block position', finalPosition);
+                                return { blockIndex: i, position: finalPosition };
+                            }
+                            currentPos += node.textContent.length;
+                        }
+
+                        this.log('getClickLocation: ERROR - could not find clicked text node in walker');
+                    } else {
+                        this.log('getClickLocation: no valid caret range found');
+                    }
+                } else {
+                    this.log('getClickLocation: click not in block', i, 'bounds:', block.bounds);
                 }
             }
-            
+
+            this.log('getClickLocation: click not in any block');
             return null;
         }
-        
-        // Get path from node to ancestor (inclusive)
-        getPathToAncestor(node, ancestor) {
-            const path = [];
-            for (let n = node; n && n !== ancestor; n = n.parentElement) {
-                path.push(n);
-            }
-            if (ancestor) {
-                path.push(ancestor);
-            }
-            return path;
-        }
-        
-        // Check if node is a descendant of ancestor
-        isDescendant(node, ancestor) {
-            for (let n = node; n; n = n.parentElement) {
-                if (n === ancestor) {
-                    return true;
-                }
-            }
-            return false;
+
+        clearClickLocation() {
+            this.lastClickLocation = null;
+            this.useClickLocationForNext = false;
         }
 
-        // ---------- Search buffer ----------
-        findGlobalMatches(regex) {
-            console.debug(TAG, `[${this.instanceId}] findGlobalMatches: searching for ${regex.toString()} in buffer of length ${this.buffer.length}`);
+        getStartingMatchIndex() {
+            this.log('getStartingMatchIndex: called');
+            this.log('getStartingMatchIndex: lastClickLocation:', this.lastClickLocation);
+            this.log('getStartingMatchIndex: lastClickLocation type:', typeof this.lastClickLocation);
+            this.log('getStartingMatchIndex: lastClickLocation === null?', this.lastClickLocation === null);
+            this.log('getStartingMatchIndex: !lastClickLocation?', !this.lastClickLocation);
+            this.log('getStartingMatchIndex: matches.length:', this.matches.length);
 
-            const result = [];
-            let m;
-            let guard = 0;
-            while ((m = regex.exec(this.buffer)) !== null) {
-                const match = { start: m.index, end: m.index + m[0].length };
-                result.push(match);
-                if (m[0].length === 0) { regex.lastIndex++; }
-                if (++guard > 1e6) {
-                    this.log('findGlobalMatches bail-out: too many iterations');
-                    break;
-                }
-            }
-            console.debug(TAG, `[${this.instanceId}] findGlobalMatches: found ${result.length} matches`);
-            return result;
-        }
-
-        // ---------- Map global -> nodes ----------
-        binarySearchSegment(pos) {
-            let lo = 0;
-            let hi = this.segments.length - 1;
-            while (lo <= hi) {
-                const mid = (lo + hi) >>> 1;
-                const s = this.segments[mid];
-                if (pos < s.start) {
-                    hi = mid - 1;
-                } else if (pos >= s.start + s.length) {
-                    lo = mid + 1;
-                } else {
-                    return mid;
-                }
-            }
-            return lo;
-        }
-
-        mapToNodeRanges(globalMatch) {
-            const ranges = [];
-            let remainingStart = globalMatch.start;
-            const remainingEnd = globalMatch.end;
-
-            let i = this.binarySearchSegment(remainingStart);
-
-            while (i < this.segments.length && remainingStart < remainingEnd) {
-                const seg = this.segments[i];
-                const segEnd = seg.start + seg.length;
-
-                if (segEnd <= remainingStart) {
-                    i++;
-                    continue;
-                }
-
-                const localStart = Math.max(0, remainingStart - seg.start);
-                const localEnd = Math.min(seg.length, remainingEnd - seg.start);
-
-                if (localStart < localEnd) {
-                    ranges.push({ node: seg.node, startOffset: localStart, endOffset: localEnd, revealer: seg.revealer });
-                    remainingStart = seg.start + localEnd;
-                } else {
-                    remainingStart = segEnd;
-                }
-
-                i++;
+            if (!this.lastClickLocation || this.matches.length === 0) {
+                this.log('getStartingMatchIndex: no click location or no matches, returning 0');
+                return 0;
             }
 
-            return ranges;
+            const { blockIndex, position } = this.lastClickLocation;
+            this.log('getStartingMatchIndex: click was at block', blockIndex, 'position', position);
+
+            // Log some matches around the click position for context
+            this.log('getStartingMatchIndex: examining matches:');
+            for (let i = 0; i < Math.min(10, this.matches.length); i++) {
+                const match = this.matches[i];
+                this.log(`  match ${i}: block ${match.blockIndex}, positions ${match.blockStart}-${match.blockEnd} (global ${match.globalStart}-${match.globalEnd})`);
+            }
+
+            // Find first match after click position
+            for (let i = 0; i < this.matches.length; i++) {
+                const match = this.matches[i];
+                this.log(`getStartingMatchIndex: checking match ${i}: block ${match.blockIndex} pos ${match.blockStart}-${match.blockEnd}`);
+
+                if (match.blockIndex > blockIndex ||
+                    (match.blockIndex === blockIndex && match.blockStart >= position)) {
+                    this.log('getStartingMatchIndex: found first match after click at index', i);
+                    return i;
+                }
+            }
+
+            // No match after click, wrap to beginning
+            this.log('getStartingMatchIndex: no match after click, wrapping to 0');
+            return 0;
         }
 
-        // ---------- Highlight ----------
-        highlight(globalMatches) {
+        // ---------- Search ----------
+
+        findMatches(regex) {
             this.matches = [];
-            this.log('highlight begin. total global matches:', globalMatches.length);
 
-            for (let i = globalMatches.length - 1; i >= 0; i--) {
-                const gm = globalMatches[i];
-                const parts = this.mapToNodeRanges(gm);
-                const created = [];
-                const revs = new Set();
+            for (let blockIndex = 0; blockIndex < this.blocks.length; blockIndex++) {
+                const block = this.blocks[blockIndex];
+                const blockMatches = this.findMatchesInBlock(regex, block, blockIndex);
+                this.matches.push(...blockMatches);
+            }
 
-                parts.forEach(part => {
-                    try {
-                        const r = document.createRange();
-                        r.setStart(part.node, part.startOffset);
-                        r.setEnd(part.node, part.endOffset);
+            this.log(`findMatches: found ${this.matches.length} total matches`);
+        }
 
-                        const span = document.createElement('span');
-                        span.className = 'iterm-find-highlight';
-                        span.setAttribute('data-iterm-id', this.instanceId);
-                        r.surroundContents(span);
-                        created.push(span);
-                        this.highlightedElements.push(span);
+        findMatchesInBlock(regex, block, blockIndex) {
+            const matches = [];
+            regex.lastIndex = 0;
 
-                        if (part.revealer) {
-                            revs.add(part.revealer);
-                        }
-                    } catch (e) {
-                        this.log('highlight surroundContents failed:', e, 'part:', part);
-                    }
+            let match;
+            while ((match = regex.exec(block.textContent)) !== null) {
+                matches.push({
+                    blockIndex: blockIndex,
+                    blockStart: match.index,
+                    blockEnd: match.index + match[0].length,
+                    globalStart: block.globalStart + match.index,
+                    globalEnd: block.globalStart + match.index + match[0].length,
+                    els: [], // Will be filled during highlighting
+                    revealers: new Set() // Will be filled during highlighting
                 });
 
-                this.matches.unshift({ start: gm.start, end: gm.end, els: created, revealers: revs });
+                if (match[0].length === 0) {
+                    regex.lastIndex++;
+                }
             }
 
-            this.log('highlight done. match objects:', this.matches.length);
+            return matches;
         }
 
-        // ---------- Geometry ----------
-        updateMatchPositions() {
-            this.matches.forEach(m => {
-                m.rects = m.els.map(el => el.getBoundingClientRect());
-            });
-            this.log('updateMatchPositions done.');
-        }
+        // ---------- Highlighting ----------
 
-        sortMatchesTopToBottom() {
-            const curObj = (this.currentMatchIndex >= 0 && this.currentMatchIndex < this.matches.length)
-            ? this.matches[this.currentMatchIndex]
-            : null;
+        highlight() {
+            this.log('highlight: starting with', this.matches.length, 'matches');
 
-            this.matches.sort((a, b) => {
-                const ra = a.els[0].getBoundingClientRect();
-                const rb = b.els[0].getBoundingClientRect();
-
-                if (ra.top !== rb.top) { return ra.top - rb.top; }
-                if (ra.left !== rb.left) { return ra.left - rb.left; }
-                return a.start - b.start;
-            });
-
-            if (curObj) {
-                this.currentMatchIndex = this.matches.indexOf(curObj);
+            let highlightedCount = 0;
+            for (const match of this.matches) {
+                try {
+                    this.highlightMatch(match);
+                    highlightedCount++;
+                } catch (e) {
+                    this.log('highlight: error highlighting match', match, ':', e);
+                }
             }
 
-            this.log('sortMatchesTopToBottom done. currentMatchIndex:', this.currentMatchIndex);
+            this.log('highlight: completed,', highlightedCount, 'of', this.matches.length, 'matches highlighted');
+        }
+
+        highlightMatch(match) {
+            const block = this.blocks[match.blockIndex];
+            const elements = [];
+            const revealers = new Set();
+
+            this.log('highlightMatch: attempting to highlight match at block', match.blockIndex, 'positions', match.blockStart, '-', match.blockEnd);
+
+            // Collect revealers for this match range
+            for (let pos = match.blockStart; pos < match.blockEnd; pos++) {
+                const posResult = this.findPositionInBlock(block, pos);
+                if (posResult && posResult.revealer) {
+                    revealers.add(posResult.revealer);
+                }
+            }
+
+            // Use block-invariant approach: find position by walking the tree each time
+            const startResult = this.findPositionInBlock(block, match.blockStart);
+            const endResult = this.findPositionInBlock(block, match.blockEnd - 1); // -1 because end is exclusive
+
+            if (!startResult || !endResult) {
+                this.log('highlightMatch: could not find positions in block');
+                return;
+            }
+
+            // Collect revealers from start and end nodes too
+            if (startResult.revealer) {
+                revealers.add(startResult.revealer);
+            }
+            if (endResult.revealer) {
+                revealers.add(endResult.revealer);
+            }
+
+            try {
+                const range = document.createRange();
+                range.setStart(startResult.node, startResult.offset);
+                range.setEnd(endResult.node, endResult.offset + 1); // +1 because we want inclusive end
+
+                // Extract the content from the range
+                const contents = range.extractContents();
+
+                // Create the highlight span
+                const span = document.createElement('span');
+                span.className = 'iterm-find-highlight';
+                span.setAttribute('data-iterm-id', this.instanceId);
+                span.appendChild(contents);
+
+                // Insert the span at the range position
+                range.insertNode(span);
+
+                elements.push(span);
+                this.highlightedElements.push(span);
+
+                this.log('highlightMatch: successfully highlighted match');
+            } catch (e) {
+                this.log('highlightMatch: error highlighting match:', e);
+                // Fallback: try highlighting each character individually
+                for (let pos = match.blockStart; pos < match.blockEnd; pos++) {
+                    const charResult = this.findPositionInBlock(block, pos);
+                    if (charResult) {
+                        try {
+                            const range = document.createRange();
+                            range.setStart(charResult.node, charResult.offset);
+                            range.setEnd(charResult.node, charResult.offset + 1);
+
+                            const span = document.createElement('span');
+                            span.className = 'iterm-find-highlight';
+                            span.setAttribute('data-iterm-id', this.instanceId);
+
+                            const contents = range.extractContents();
+                            span.appendChild(contents);
+                            range.insertNode(span);
+
+                            elements.push(span);
+                            this.highlightedElements.push(span);
+
+                            // Collect revealer from individual char if present
+                            if (charResult.revealer) {
+                                revealers.add(charResult.revealer);
+                            }
+                        } catch (e2) {
+                            // Skip this character if it fails
+                            continue;
+                        }
+                    }
+                }
+            }
+
+            match.els = elements;
+            match.revealers = revealers;
+        }
+
+        findPositionInBlock(block, position) {
+            // Walk the block's DOM tree and count characters until we reach the position
+            const walker = document.createTreeWalker(
+                block.element,
+                NodeFilter.SHOW_TEXT,
+                {
+                    acceptNode: (node) => {
+                        const parent = node.parentElement;
+                        if (!parent) return NodeFilter.FILTER_REJECT;
+
+                        // Skip script and style
+                        const tag = parent.tagName;
+                        if (tag === 'SCRIPT' || tag === 'STYLE') {
+                            return NodeFilter.FILTER_REJECT;
+                        }
+
+                        // Skip completely empty text nodes, but keep whitespace-containing nodes
+                        if (!node.textContent || node.textContent.length === 0) {
+                            return NodeFilter.FILTER_REJECT;
+                        }
+
+                        return NodeFilter.FILTER_ACCEPT;
+                    }
+                }
+            );
+
+            let currentPos = 0;
+            let node;
+
+            while (node = walker.nextNode()) {
+                const nodeText = node.textContent || '';
+                const nodeStart = currentPos;
+                const nodeEnd = currentPos + nodeText.length;
+
+                if (position >= nodeStart && position < nodeEnd) {
+                    // Found the node containing this position
+                    return {
+                        node: node,
+                        offset: position - nodeStart,
+                        revealer: node._itermReveal || null
+                    };
+                }
+
+                currentPos = nodeEnd;
+            }
+
+            return null;
         }
 
         // ---------- Auto-reveal ----------
@@ -603,132 +770,106 @@
             });
         }
 
-        // ---------- Context ----------
-        // Returns {contextBefore, contextAfter} for a match or null if contextLen == 0
-        getContextsForMatch(match) {
-            if (this.contextLen === 0) {
-                return null;
-            }
-            const beforeStart = Math.max(0, match.start - this.contextLen);
-            const before = this.buffer.slice(beforeStart, match.start);
-            const afterEnd = Math.min(this.buffer.length, match.end + this.contextLen);
-            const after = this.buffer.slice(match.end, afterEnd);
-            return {
-                contextBefore: before,
-                contextAfter: after
-            };
+        // ---------- Clear ----------
+
+        clearHighlights() {
+            this.log('clearHighlights: starting');
+
+            const spans = document.querySelectorAll(
+                `.iterm-find-highlight[data-iterm-id="${this.instanceId}"], ` +
+                `.iterm-find-highlight-current[data-iterm-id="${this.instanceId}"]`
+            );
+
+            const parents = new Set();
+            spans.forEach(span => {
+                const parent = span.parentNode;
+                if (!parent) return;
+
+                while (span.firstChild) {
+                    parent.insertBefore(span.firstChild, span);
+                }
+                parent.removeChild(span);
+                parents.add(parent);
+            });
+
+            // Normalize text nodes
+            parents.forEach(p => p.normalize());
+
+            // Restore revealed elements
+            this.globallyAutoOpenedDetails.forEach(d => {
+                d.open = false;
+            });
+            this.globallyAutoOpenedDetails.clear();
+
+            this.revealRestores.forEach(rec => {
+                const el = rec.el;
+                if (!el) { return; }
+                if (rec.type === 'style-display') {
+                    el.style.display = rec.oldValue;
+                } else if (rec.type === 'style-visibility') {
+                    el.style.visibility = rec.oldValue;
+                } else if (rec.type === 'attr') {
+                    if (rec.oldValue === null || rec.oldValue === '') {
+                        el.removeAttribute(rec.attr);
+                    } else {
+                        el.setAttribute(rec.attr, rec.oldValue);
+                    }
+                } else if (rec.type === 'class-remove-add') {
+                    if (rec.removed) { el.classList.add(rec.removed); }
+                }
+            });
+            this.revealRestores = [];
+
+            this.highlightedElements = [];
+            this.matches = [];
+            this.blocks = [];
+            this.globalBuffer = '';
+            this.currentMatchIndex = -1;
+            this.hiddenSkippedCount = 0;
+
+            this.log('clearHighlights: completed');
         }
 
-        // ---------- Report ----------
-        reportResults(fullUpdate = false) {
-            // For navigation events, only send minimal data
-            if (!fullUpdate) {
-                const payload = {
-                    sessionSecret,
-                    action: 'currentChanged',
-                    data: {
-                        instanceId: this.instanceId,
-                        totalMatches: this.matches.length,
-                        currentMatch: this.currentMatchIndex + 1,
-                        opToken: this.opToken
-                    }
-                };
+        // ---------- Regex Creation ----------
 
-                this.log('reportResults (navigation) -> Swift:', {
-                    total: this.matches.length,
-                    current: this.currentMatchIndex + 1
-                });
+        createSearchRegex(term) {
+            let flags = 'g';
+            let pattern = term;
 
-                try {
-                    this.log('reportResults send:', payload);
-                    window.webkit?.messageHandlers?.iTermCustomFind?.postMessage(payload);
-                } catch (e) {
-                    this.log('reportResults postMessage failed:', e);
-                }
-                return;
+            switch (this.searchMode) {
+                case 'caseSensitiveRegex':
+                    break;
+                case 'caseInsensitiveRegex':
+                    flags += 'i';
+                    break;
+                case 'caseSensitive':
+                    pattern = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    break;
+                case 'caseInsensitive':
+                default:
+                    pattern = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    flags += 'i';
+                    break;
             }
-
-            // Full update for new searches
-            const matchIdentifiers = [];
-            
-            this.matches.forEach((m, index) => {
-                // Extract the actual matched text from the buffer
-                const matchedText = this.buffer.slice(m.start, m.end);
-                
-                // Create a stable identifier for this match
-                const identifier = {
-                    index: index,
-                    bufferStart: m.start,
-                    bufferEnd: m.end,
-                    text: matchedText,
-                    // Include a content fingerprint for validation
-                    // This helps detect if the page content has changed
-                    contextFingerprint: this.createContextFingerprint(m)
-                };
-                matchIdentifiers.push(identifier);
-            });
-
-            let contexts = undefined;
-            if (this.contextLen > 0) {
-                contexts = this.matches.map(m => this.getContextsForMatch(m));
-            }
-
-            const payload = {
-                sessionSecret,
-                action: 'resultsUpdated',
-                data: {
-                    instanceId: this.instanceId,
-                    searchTerm: this.currentSearchTerm,
-                    totalMatches: this.matches.length,
-                    currentMatch: this.currentMatchIndex + 1,
-                    matchIdentifiers: matchIdentifiers,
-                    hiddenSkipped: this.hiddenSkippedCount,
-                    opToken: this.opToken,
-                    contexts: contexts // array of {contextBefore, contextAfter} or undefined
-                }
-            };
-
-            this.log('reportResults (full) -> Swift:', {
-                term: this.currentSearchTerm,
-                total: this.matches.length,
-                current: this.currentMatchIndex + 1,
-                hiddenSkipped: this.hiddenSkippedCount,
-                identifiersSample: matchIdentifiers.slice(0, 3),
-                contextLen: this.contextLen
-            });
 
             try {
-                window.webkit?.messageHandlers?.iTermCustomFind?.postMessage(payload);
+                return new RegExp(pattern, flags);
             } catch (e) {
-                this.log('reportResults postMessage failed:', e);
+                this.log('createSearchRegex: failed, using fallback', e);
+                const fallback = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                return new RegExp(fallback, flags);
             }
-        }
-
-        // Helper method to create a content fingerprint for match validation
-        createContextFingerprint(match) {
-            // Use 20 chars before and after for fingerprinting
-            const fingerprintRadius = 20;
-            const beforeStart = Math.max(0, match.start - fingerprintRadius);
-            const afterEnd = Math.min(this.buffer.length, match.end + fingerprintRadius);
-            const contextString = this.buffer.slice(beforeStart, afterEnd);
-            
-            // Simple hash function for the fingerprint
-            let hash = 0;
-            for (let i = 0; i < contextString.length; i++) {
-                const char = contextString.charCodeAt(i);
-                hash = ((hash << 5) - hash) + char;
-                hash = hash & hash; // Convert to 32-bit integer
-            }
-            return hash.toString(16);
         }
 
         // ---------- Navigation ----------
+
         setCurrent(idx) {
             if (this.matches.length === 0) {
-                this.log('setCurrent called but no matches');
+                this.log('setCurrent: no matches');
                 return;
             }
 
+            // Clear previous current highlight
             if (this.currentMatchIndex >= 0 && this.currentMatchIndex < this.matches.length) {
                 this.matches[this.currentMatchIndex].els.forEach(e => {
                     e.className = 'iterm-find-highlight';
@@ -736,82 +877,146 @@
                 });
             }
 
+            // Set new current
             this.currentMatchIndex = ((idx % this.matches.length) + this.matches.length) % this.matches.length;
-            const cur = this.matches[this.currentMatchIndex];
+            const current = this.matches[this.currentMatchIndex];
 
-            this.ensureVisibleForMatch(cur);
+            this.ensureVisibleForMatch(current);
 
-            cur.els.forEach(e => {
+            current.els.forEach(e => {
                 e.className = 'iterm-find-highlight-current';
                 e.setAttribute('data-iterm-id', this.instanceId);
             });
 
-            this.log('setCurrent -> index:', this.currentMatchIndex, 'els:', cur.els.length);
-
-            requestAnimationFrame(() => {
-                cur.els[0].scrollIntoView({
-                    behavior: 'smooth',
+            // Scroll into view
+            if (current.els.length > 0) {
+                current.els[0].scrollIntoView({
+                    behavior: '{{SCROLL_BEHAVIOR}}',
                     block: 'center',
                     inline: 'center'
                 });
-                this.updateMatchPositions();
-                this.reportResults(false); // Navigation update - minimal data
-            });
+            }
+
+            this.reportResults(false);
         }
 
         // ---------- Commands ----------
+
         startFind(term, mode, contextLen) {
-            // bump token so stale async work can be ignored
-            this.opToken++;
+            this.log('=== START FIND ===');
+            this.log('startFind: term=' + term + ', mode=' + mode + ', contextLen=' + contextLen);
 
-            console.debug(TAG, `[${this.instanceId}] startFind: searching for "${term}" mode="${mode}" contextLen=${contextLen}`);
-            this.log('startFind term:', term, 'mode:', mode, 'contextLen:', contextLen);
             this.clearHighlights();
+            this.clearClickLocation(); // Force clear any persisting click location
+            this.useClickLocationForNext = false;
             this.currentSearchTerm = term;
-            this.searchMode = mode || 'substring';
-            this.contextLen = Number.isInteger(contextLen) && contextLen > 0 ? contextLen : 0;
+            this.searchMode = mode || 'caseInsensitive';
+            this.contextLen = contextLen || 0;
 
-            if (!term) {
-                this.log('startFind empty term');
-                this.reportResults(true); // Full update for cleared search
+            if (!term || typeof term !== 'string' || term.trim().length === 0) {
+                this.log('startFind: ERROR - No valid search term provided, term:', term);
+                this.matches = [];
+                this.currentMatchIndex = -1;
+                this.reportResults(true);
                 return;
             }
 
-            // Check if document.body exists (it won't at documentStart)
             if (!document.body) {
-                this.log('startFind: no document.body yet');
-                this.reportResults(true); // Full update even if no body
+                this.log('startFind: ERROR - No document.body found');
+                this.reportResults(true);
                 return;
             }
 
-            document.body.normalize();
-            this.log('document.body.normalize() done');
-
+            this.log('startFind: Creating regex for term:', term);
             const regex = this.createSearchRegex(term);
-            this.collectSegments(document.body);
-            const globalMatches = this.findGlobalMatches(regex);
-            this.highlight(globalMatches);
-            this.updateMatchPositions();
-            this.sortMatchesTopToBottom();
-            this.reportResults(true); // Full update for new search
+            this.log('startFind: Regex created:', regex);
 
-            if (this.matches.length > 0) {
-                this.setCurrent(0);
-            } else {
-                this.log('startFind no matches');
+            this.log('startFind: Collecting blocks from document.body');
+            this.collectBlocks(document.body);
+
+            this.log('startFind: Finding matches in', this.blocks.length, 'blocks');
+            this.findMatches(regex);
+
+            this.log('startFind: Found', this.matches.length, 'total matches');
+
+            try {
+                this.highlight();
+                this.log('startFind: Highlighting completed');
+            } catch (e) {
+                this.log('startFind: ERROR in highlighting, but continuing:', e);
             }
+
+            // Set current match before reporting results to ensure consistent state
+            if (this.matches.length > 0) {
+                const startIndex = this.getStartingMatchIndex();
+                this.log('startFind: Setting current match to index', startIndex);
+
+                // Set current match and ensure it's visible
+                this.currentMatchIndex = ((startIndex % this.matches.length) + this.matches.length) % this.matches.length;
+                const current = this.matches[this.currentMatchIndex];
+
+                // Ensure the match is visible (auto-reveal)
+                this.ensureVisibleForMatch(current);
+
+                current.els.forEach(e => {
+                    e.className = 'iterm-find-highlight-current';
+                    e.setAttribute('data-iterm-id', this.instanceId);
+                });
+
+                // Scroll into view
+                if (current.els.length > 0) {
+                    current.els[0].scrollIntoView({
+                        behavior: '{{SCROLL_BEHAVIOR}}',
+                        block: 'center',
+                        inline: 'center'
+                    });
+                }
+
+                this.log('startFind: Current match set to index', this.currentMatchIndex);
+            } else {
+                this.log('startFind: No matches found - not setting current');
+            }
+
+            this.log('startFind: Reporting results...');
+            this.reportResults(true);
+
+            this.log('=== START FIND COMPLETE ===');
         }
 
         findNext() {
-            this.log('findNext current:', this.currentMatchIndex, 'total:', this.matches.length);
-            if (this.matches.length === 0) { return; }
-            this.setCurrent(this.currentMatchIndex + 1);
+            this.log('findNext: called');
+            this.log('findNext: matches.length:', this.matches.length);
+            this.log('findNext: currentMatchIndex:', this.currentMatchIndex);
+            this.log('findNext: useClickLocationForNext:', this.useClickLocationForNext);
+
+            if (this.matches.length === 0) {
+                this.log('findNext: no matches, returning');
+                return;
+            }
+
+            if (this.useClickLocationForNext) {
+                this.log('findNext: using click location for next');
+                const startIndex = this.getStartingMatchIndex();
+                this.log('findNext: getStartingMatchIndex returned:', startIndex);
+                this.useClickLocationForNext = false;
+                this.log('findNext: setting current to:', startIndex);
+                this.setCurrent(startIndex);
+            } else {
+                this.log('findNext: normal next, going to:', this.currentMatchIndex + 1);
+                this.setCurrent(this.currentMatchIndex + 1);
+            }
         }
 
         findPrevious() {
-            this.log('findPrevious current:', this.currentMatchIndex, 'total:', this.matches.length);
-            if (this.matches.length === 0) { return; }
-            this.setCurrent(this.currentMatchIndex - 1);
+            if (this.matches.length === 0) return;
+
+            if (this.useClickLocationForNext) {
+                const startIndex = this.getStartingMatchIndex();
+                this.useClickLocationForNext = false;
+                this.setCurrent(startIndex - 1);
+            } else {
+                this.setCurrent(this.currentMatchIndex - 1);
+            }
         }
 
         // Reveal a specific match by its identifier
@@ -822,10 +1027,10 @@
             }
 
             // Find the match by comparing buffer positions and text
-            const matchIndex = this.matches.findIndex(m => 
-                m.start === identifier.bufferStart && 
-                m.end === identifier.bufferEnd &&
-                this.buffer.slice(m.start, m.end) === identifier.text
+            const matchIndex = this.matches.findIndex(m =>
+                m.globalStart === identifier.bufferStart &&
+                m.globalEnd === identifier.bufferEnd &&
+                this.globalBuffer.slice(m.globalStart, m.globalEnd) === identifier.text
             );
 
             if (matchIndex === -1) {
@@ -834,59 +1039,13 @@
             }
 
             this.log('reveal: found match at index', matchIndex);
-            
+
             // Make this the current match and scroll to it
             // setCurrent will handle scrolling and send currentChanged message
             this.setCurrent(matchIndex);
         }
 
-        handleFindCommand(command) {
-            this.log('handleFindCommand:', safeStringify(command));
-            switch (command.action) {
-                case 'startFind': {
-                    this.startFind(command.searchTerm,
-                                   command.searchMode,
-                                   command.contextLength ?? 0);
-                    break;
-                }
-                case 'findNext': {
-                    this.findNext();
-                    break;
-                }
-                case 'findPrevious': {
-                    this.findPrevious();
-                    break;
-                }
-                case 'clearFind': {
-                    this.log('clearFind command');
-                    this.clearHighlights();
-                    this.currentSearchTerm = '';
-                    this.reportResults(true); // Full update for cleared search
-                    break;
-                }
-                case 'updatePositions': {
-                    this.log('updatePositions command');
-                    if (this.matches.length > 0) {
-                        this.updateMatchPositions();
-                        this.sortMatchesTopToBottom();
-                        // No communication needed - Swift doesn't use positions
-                    }
-                    break;
-                }
-                case 'reveal': {
-                    this.reveal(command.identifier);
-                    break;
-                }
-                default: {
-                    this.log('Unknown action:', command.action);
-                    break;
-                }
-            }
-            return {};
-        }
-
         // Get current bounding box for a match using its stable identifier
-        // Returns {found: boolean, bounds?: {left, top, right, bottom, width, height}, isCurrent?: boolean}
         getMatchBounds(identifier) {
             if (!identifier) {
                 this.log('getMatchBounds: no identifier provided');
@@ -894,10 +1053,10 @@
             }
 
             // Find the match by comparing buffer positions and text
-            const match = this.matches.find(m => 
-                m.start === identifier.bufferStart && 
-                m.end === identifier.bufferEnd &&
-                this.buffer.slice(m.start, m.end) === identifier.text
+            const match = this.matches.find(m =>
+                m.globalStart === identifier.bufferStart &&
+                m.globalEnd === identifier.bufferEnd &&
+                this.globalBuffer.slice(m.globalStart, m.globalEnd) === identifier.text
             );
 
             if (!match) {
@@ -906,8 +1065,17 @@
             }
 
             // Get bounding boxes for all elements of this match
-            const elementBounds = match.els.map(el => el.getBoundingClientRect());
-            
+            const elementBounds = match.els.map(el => {
+                const rect = el.getBoundingClientRect();
+                // Convert viewport-relative coordinates to document-relative coordinates
+                return {
+                    left: rect.left + window.scrollX,
+                    top: rect.top + window.scrollY,
+                    right: rect.right + window.scrollX,
+                    bottom: rect.bottom + window.scrollY
+                };
+            });
+
             if (elementBounds.length === 0) {
                 this.log('getMatchBounds: match has no elements');
                 return {};
@@ -920,11 +1088,11 @@
             let bottom = elementBounds[0].bottom;
 
             for (let i = 1; i < elementBounds.length; i++) {
-                const rect = elementBounds[i];
-                left = Math.min(left, rect.left);
-                top = Math.min(top, rect.top);
-                right = Math.max(right, rect.right);
-                bottom = Math.max(bottom, rect.bottom);
+                const bounds = elementBounds[i];
+                left = Math.min(left, bounds.left);
+                top = Math.min(top, bounds.top);
+                right = Math.max(right, bounds.right);
+                bottom = Math.max(bottom, bounds.bottom);
             }
 
             const result = {
@@ -934,72 +1102,363 @@
                 height: bottom - top
             };
 
-            this.log('getMatchBounds: found match, union of', elementBounds.length, 'elements', result);
-            
+            this.log('getMatchBounds: returning bounds', result);
             return result;
         }
 
-        // ---------- Scroll/Resize ----------
-        schedulePositionUpdate() {
-            clearTimeout(this.updateTimer);
-            this.updateTimer = setTimeout(() => {
-                if (this.matches.length > 0) {
-                    this.log('scheduled position update');
-                    this.updateMatchPositions();
-                    this.sortMatchesTopToBottom();
-                    // No communication needed - Swift doesn't use positions
-                }
-            }, 100);
+        // ---------- Hide/Show Results ----------
+
+        hideResults() {
+            this.log('hideResults: hiding all search result highlights');
+            
+            // Hide both regular and current highlights for this instance
+            const highlights = document.querySelectorAll(
+                `.iterm-find-highlight[data-iterm-id="${this.instanceId}"], ` +
+                `.iterm-find-highlight-current[data-iterm-id="${this.instanceId}"]`
+            );
+            
+            highlights.forEach(highlight => {
+                // Add the hidden class to hide the highlight
+                highlight.classList.add('iterm-find-removed');
+            });
+            
+            this.log(`hideResults: hid ${highlights.length} highlight elements`);
         }
 
-        // ---------- Destroy ----------
+        showResults() {
+            this.log('showResults: showing all search result highlights');
+            
+            // Show both regular and current highlights for this instance
+            const highlights = document.querySelectorAll(
+                `.iterm-find-highlight[data-iterm-id="${this.instanceId}"], ` +
+                `.iterm-find-highlight-current[data-iterm-id="${this.instanceId}"]`
+            );
+            
+            highlights.forEach(highlight => {
+                // Remove the hidden class to show the highlight
+                highlight.classList.remove('iterm-find-removed');
+            });
+            
+            this.log(`showResults: showed ${highlights.length} highlight elements`);
+        }
+
+        // ---------- Context Extraction ----------
+
+        extractContext(match) {
+            this.log('extractContext: called for match at globalStart=' + match.globalStart + ', globalEnd=' + match.globalEnd);
+            
+            if (!this.contextLen || this.contextLen <= 0) {
+                this.log('extractContext: no context length set, returning empty context');
+                return {
+                    contextBefore: '',
+                    contextAfter: ''
+                };
+            }
+
+            const matchStart = match.globalStart;
+            const matchEnd = match.globalEnd;
+            const bufferLength = this.globalBuffer.length;
+
+            // Calculate context boundaries
+            const contextBeforeStart = Math.max(0, matchStart - this.contextLen);
+            const contextAfterEnd = Math.min(bufferLength, matchEnd + this.contextLen);
+
+            // Extract context text with block boundary spacing
+            let contextBefore = '';
+            let contextAfter = '';
+
+            if (contextBeforeStart < matchStart) {
+                contextBefore = this.extractContextWithBlockSpacing(contextBeforeStart, matchStart);
+                // Trim leading whitespace but preserve structure
+                contextBefore = contextBefore.replace(/^\s+/, '');
+            }
+
+            if (contextAfterEnd > matchEnd) {
+                contextAfter = this.extractContextWithBlockSpacing(matchEnd, contextAfterEnd);
+                // Trim trailing whitespace but preserve structure
+                contextAfter = contextAfter.replace(/\s+$/, '');
+            }
+
+            this.log('extractContext: contextBefore="' + contextBefore + '"');
+            this.log('extractContext: contextAfter="' + contextAfter + '"');
+
+            return {
+                contextBefore: contextBefore,
+                contextAfter: contextAfter
+            };
+        }
+
+        extractContextWithBlockSpacing(start, end) {
+            let result = '';
+            let currentPos = start;
+
+            // Find all block boundaries within the range
+            const blockBoundaries = [];
+            for (const block of this.blocks) {
+                if (block.globalStart > start && block.globalStart < end) {
+                    blockBoundaries.push(block.globalStart);
+                }
+            }
+
+            // Sort boundaries
+            blockBoundaries.sort((a, b) => a - b);
+
+            // Extract text, adding spaces at block boundaries
+            for (const boundary of blockBoundaries) {
+                if (currentPos < boundary) {
+                    result += this.globalBuffer.slice(currentPos, boundary);
+                    result += ' '; // Add space at block boundary
+                    currentPos = boundary;
+                }
+            }
+
+            // Add remaining text
+            if (currentPos < end) {
+                result += this.globalBuffer.slice(currentPos, end);
+            }
+
+            return result;
+        }
+
+        // ---------- Reporting ----------
+
+        reportResults(fullUpdate = false) {
+            this.log('reportResults: called with fullUpdate=' + fullUpdate);
+            this.log('reportResults: matches.length=' + this.matches.length);
+            this.log('reportResults: currentMatchIndex=' + this.currentMatchIndex);
+            this.log('reportResults: currentSearchTerm=' + this.currentSearchTerm);
+
+            const matchIdentifiers = this.matches.map((m, index) => ({
+                index: index,
+                bufferStart: m.globalStart,
+                bufferEnd: m.globalEnd,
+                text: this.globalBuffer.slice(m.globalStart, m.globalEnd)
+            }));
+
+            this.log('reportResults: created', matchIdentifiers.length, 'match identifiers');
+
+            // Extract contexts for each match (always create array for consistency)
+            let contexts = undefined;
+            if (fullUpdate) {
+                contexts = this.matches.map((match, index) => {
+                    const context = this.extractContext(match);
+                    this.log('reportResults: extracted context for match', index, ':', context);
+                    return context;
+                });
+                this.log('reportResults: created', contexts.length, 'contexts');
+            }
+
+            const payload = {
+                sessionSecret,
+                action: fullUpdate ? 'resultsUpdated' : 'currentChanged',
+                data: {
+                    instanceId: this.instanceId,
+                    searchTerm: this.currentSearchTerm,
+                    totalMatches: this.matches.length,
+                    currentMatch: this.currentMatchIndex + 1,
+                    matchIdentifiers: fullUpdate ? matchIdentifiers : undefined,
+                    contexts: fullUpdate ? contexts : undefined,
+                    hiddenSkipped: this.hiddenSkippedCount,
+                    opToken: 0
+                }
+            };
+
+            this.log('reportResults: payload action=' + payload.action);
+            this.log('reportResults: payload data keys=' + Object.keys(payload.data).join(','));
+            this.log('reportResults: sessionSecret=' + sessionSecret);
+
+            try {
+                this.log('reportResults: checking message handler...');
+                if (!window.webkit) {
+                    this.log('reportResults: ERROR - window.webkit not found');
+                    return;
+                }
+                if (!window.webkit.messageHandlers) {
+                    this.log('reportResults: ERROR - window.webkit.messageHandlers not found');
+                    return;
+                }
+                if (!window.webkit.messageHandlers.iTermCustomFind) {
+                    this.log('reportResults: ERROR - window.webkit.messageHandlers.iTermCustomFind not found');
+                    return;
+                }
+
+                this.log('reportResults: posting message to Swift...');
+                window.webkit.messageHandlers.iTermCustomFind.postMessage(payload);
+                this.log('reportResults: message posted successfully');
+            } catch (e) {
+                this.log('reportResults: ERROR posting message:', e);
+            }
+        }
+
+        handleFindCommand(command) {
+            this.log('handleFindCommand:', command);
+
+            switch (command.action) {
+                case 'startFind':
+                    this.startFind(command.searchTerm, command.searchMode, command.contextLength);
+                    break;
+                case 'findNext':
+                    this.findNext();
+                    break;
+                case 'findPrevious':
+                    this.findPrevious();
+                    break;
+                case 'clearFind':
+                    this.clearHighlights();
+                    this.currentSearchTerm = '';
+                    this.reportResults(true);
+                    break;
+                case 'reveal':
+                    this.reveal(command.identifier);
+                    break;
+                case 'hideResults':
+                    this.hideResults();
+                    break;
+                case 'showResults':
+                    this.showResults();
+                    break;
+                case 'updatePositions':
+                    this.log('updatePositions command');
+                    if (this.matches.length > 0) {
+                        // Update block bounds if needed
+                        this.blocks.forEach(block => block.updateBounds());
+                        // No communication needed - Swift doesn't use positions
+                    }
+                    break;
+                default:
+                    this.log('Unknown action:', command.action);
+            }
+        }
+
         destroy() {
             this.clearHighlights();
-            window.removeEventListener('scroll', this.boundScheduleUpdate, true);
-            window.removeEventListener('resize', this.boundScheduleUpdate);
+            document.removeEventListener('click', this.boundHandleClick, true);
+            window.removeEventListener('beforeunload', this.boundHandleNavigation);
+            window.removeEventListener('pagehide', this.boundHandleNavigation);
             INSTANCES.delete(this.instanceId);
-            this.log('Destroyed');
         }
     }
 
     // ==============================
     //  Public API
     // ==============================
+
     function getEngine(id) {
         const key = id || DEFAULT_INSTANCE_ID;
-        let eng = INSTANCES.get(key);
-        if (!eng) {
-            eng = new FindEngine(key);
-            INSTANCES.set(key, eng);
+        let engine = INSTANCES.get(key);
+        if (!engine) {
+            engine = new FindEngine(key);
+            INSTANCES.set(key, engine);
         }
-        return eng;
+        return engine;
     }
 
     function handleCommand(command) {
         const id = command.instanceId || DEFAULT_INSTANCE_ID;
-        const eng = getEngine(id);
-        return eng.handleFindCommand(command);
+        const engine = getEngine(id);
+        return engine.handleFindCommand(command);
+    }
+
+    function destroyInstance(id) {
+        const engine = INSTANCES.get(id);
+        if (engine) {
+            engine.destroy();
+        }
+    }
+
+    function getDebugState(id) {
+        const engine = INSTANCES.get(id || DEFAULT_INSTANCE_ID);
+        if (!engine) return { error: 'No engine found' };
+
+        // Create match identifiers with matched text
+        const matchIdentifiers = engine.matches.map((m, index) => ({
+            index: index,
+            bufferStart: m.globalStart,
+            bufferEnd: m.globalEnd,
+            text: engine.globalBuffer.slice(m.globalStart, m.globalEnd)
+        }));
+
+        // Extract contexts for each match
+        const contexts = engine.matches.map((match) => {
+            return engine.extractContext(match);
+        });
+
+        return {
+            lastClickLocation: engine.lastClickLocation,
+            useClickLocationForNext: engine.useClickLocationForNext,
+            currentMatchIndex: engine.currentMatchIndex,
+            totalMatches: engine.matches.length,
+            currentSearchTerm: engine.currentSearchTerm,
+            matchIdentifiers: matchIdentifiers,
+            contexts: contexts
+        };
+    }
+
+    function clearStateWithoutResponse(id) {
+        const engine = INSTANCES.get(id || DEFAULT_INSTANCE_ID);
+        if (!engine) return { error: 'No engine found' };
+
+        // Clear state without sending response to Swift
+        engine.clearHighlights();
+        engine.currentSearchTerm = '';
+        if (engine.clearClickLocation) {
+            engine.clearClickLocation();
+        }
+
+        return { cleared: true };
+    }
+
+    function refreshBlockBounds(id) {
+        const engine = INSTANCES.get(id || DEFAULT_INSTANCE_ID);
+        if (!engine) return { error: 'No engine found' };
+
+        // Update bounds for all blocks
+        let updatedCount = 0;
+        if (engine.blocks && engine.blocks.length > 0) {
+            engine.blocks.forEach(block => {
+                block.updateBounds();
+                updatedCount++;
+            });
+        }
+
+        return { updated: updatedCount };
+    }
+
+    function getBlocks(id) {
+        const engine = INSTANCES.get(id || DEFAULT_INSTANCE_ID);
+        if (!engine) return { error: 'No engine found' };
+
+        return {
+            count: engine.blocks ? engine.blocks.length : 0,
+            blocks: engine.blocks ? engine.blocks.map((block, index) => ({
+                index: index,
+                text: block.text ? block.text.substring(0, 50) : '',
+                element: block.element ? block.element.tagName : 'unknown'
+            })) : []
+        };
     }
 
     function getMatchBoundsInEngine(instanceId, identifier) {
         const id = instanceId || DEFAULT_INSTANCE_ID;
-        const eng = getEngine(id);
-        return eng.getMatchBounds(identifier);
-    }
-    function destroyInstance(id) {
-        const eng = INSTANCES.get(id);
-        if (eng) {
-            eng.destroy();
+        const engine = INSTANCES.get(id);
+        if (!engine) {
+            return { error: 'No engine found' };
         }
+        return engine.getMatchBounds ? engine.getMatchBounds(identifier) : { error: 'Method not implemented' };
     }
 
-    // Expose minimal API
+    {{TEST_IMPLS}}
+
+    // Expose API
     window.iTermCustomFind = {
         handleCommand,
         destroyInstance,
-        getMatchBoundsInEngine
+        getMatchBoundsInEngine,
+        clearStateWithoutResponse
+        {{TEST_FUNCTIONS}}
     };
 
     Object.freeze(window.iTermCustomFind);
-    console.debug(TAG, 'Initialized multi-instance version');
+    console.debug(TAG, 'Block-based find engine initialized');
+    console.log('Block-based find engine initialized - visible in console');
 })();

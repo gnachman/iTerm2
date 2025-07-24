@@ -1178,6 +1178,7 @@ enum {
             [iTermAPIHelper sharedInstance];
         } else {
             return NO;
+            
         }
     } else {
         [iTermAPIHelper setEnabled:NO];

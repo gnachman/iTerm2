@@ -30,7 +30,11 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(make:*)",
       "Bash(~/.cargo/bin/cargo build --release)",
-      "Bash(~/.cargo/bin/cargo tree)"
+      "Bash(~/.cargo/bin/cargo tree)",
+      "Bash(swift run:*)",
+      "Bash(timeout:*)",
+      "Bash(swift build)",
+      "Bash(pkill:*)"
     ],
     "deny": []
   }

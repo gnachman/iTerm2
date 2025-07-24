@@ -6,7 +6,6 @@
 //
 
 import WebKit
-import Combine
 
 @MainActor
 protocol iTermBrowserFindManagerDelegate: AnyObject {
@@ -24,10 +23,11 @@ enum iTermBrowserFindMode: String {
 @MainActor
 class iTermBrowserFindResult: NSObject {
     override var description: String {
-        return "<iTermBrowserFindResult: \(it_addressString) index=\(index) id=\(encodedMatchID) before=\(contextBefore ?? "") after=\(contextAfter ?? "")>"
+        return "<iTermBrowserFindResult: \(it_addressString) index=\(index) id=\(encodedMatchID) matched=\(matchedText ?? "") before=\(contextBefore ?? "") after=\(contextAfter ?? "")>"
     }
     @objc let index: Int
     @objc let matchIdentifier: [String: Any]?
+    @objc let matchedText: String?
     @objc let contextBefore: String?
     @objc let contextAfter: String?
 
@@ -39,10 +39,12 @@ class iTermBrowserFindResult: NSObject {
     }
     init(index: Int,
          matchIdentifier: [String: Any]?,
+         matchedText: String?,
          contextBefore: String?,
          contextAfter: String?) {
         self.index = index
         self.matchIdentifier = matchIdentifier
+        self.matchedText = matchedText
         self.contextBefore = contextBefore
         self.contextAfter = contextAfter
     }
@@ -88,8 +90,10 @@ class iTermBrowserFindManager: NSObject {
             let script = iTermBrowserTemplateLoader.loadTemplate(
                 named: "custom-find",
                 type: "js",
-                substitutions: ["SECRET": secret]
-            )
+                substitutions: ["SECRET": secret,
+                                "SCROLL_BEHAVIOR": "smooth",
+                                "TEST_FUNCTIONS": "",
+                                "TEST_IMPLS": "" ])
 
             let userScript = WKUserScript(
                 source: script,
@@ -165,8 +169,10 @@ class iTermBrowserFindManager: NSObject {
             let results = (0..<(matchIdentifiers?.count ?? 0)).map { i in
                 let matchIdentifier = matchIdentifiers![i]
                 let context = contextTuples?[i]
+                let matchedText = matchIdentifier["text"] as? String
                 return iTermBrowserFindResult(index: i,
                                               matchIdentifier: matchIdentifier,
+                                              matchedText: matchedText,
                                               contextBefore: context?.0,
                                               contextAfter: context?.1)
             }
@@ -304,11 +310,22 @@ class iTermBrowserFindManager: NSObject {
                                                       results: [])
             delegate?.browserFindManager(findManager, didUpdateResult: result)
         }
+
+        func hideResults(sharedState: Shared, findManager: iTermBrowserFindManager) async throws {
+            try await executeJavaScript(command: ["action": "hideResults"],
+                                        sharedState: sharedState)
+        }
+
+        func showResults(sharedState: Shared, findManager: iTermBrowserFindManager) async throws {
+            try await executeJavaScript(command: ["action": "showResults"],
+                                        sharedState: sharedState)
+        }
     }
 
     fileprivate var defaultState = State(instanceID: nil)
     fileprivate var globalState = State(instanceID: "global")
     private var sharedState: Shared!
+    private var lastSearchWasGlobal = false
 
     init?(webView: WKWebView) {
         guard let secret = String.makeSecureHexString() else {
@@ -323,6 +340,10 @@ class iTermBrowserFindManager: NSObject {
     func executeGlobalSearch(query: String, mode: iTermBrowserFindMode) -> iTermBrowserGlobalSearchResultStream {
         let stream = iTermBrowserGlobalSearchResultStream()
         Task {
+            if !lastSearchWasGlobal {
+                try? await defaultState.clearFind(sharedState: sharedState, findManager: self)
+            }
+            lastSearchWasGlobal = true
             do {
                 // The user script won't be installed until documentStart. If it isn't there now it may never arrive.
                 let myFunction = try await sharedState.webView?.evaluateJavaScript("typeof window.iTermCustomFind")
@@ -341,6 +362,9 @@ class iTermBrowserFindManager: NSObject {
     }
 
     func reveal(globalFindResultWithIdentifier identifier: [String: Any]) async throws -> NSRect {
+        if !lastSearchWasGlobal {
+            try await globalState.showResults(sharedState: sharedState, findManager: self)
+        }
         // Scroll to show findResult, highlight it, and rect in screen coords of the text.
         try await globalState.reveal(identifier, sharedState: sharedState)
         if let webView = sharedState.webView {
@@ -351,15 +375,27 @@ class iTermBrowserFindManager: NSObject {
 
     }
 
+    private func hideGlobalSearchResultsIfNeeded() {
+        if lastSearchWasGlobal {
+            Task {
+                try? await globalState.hideResults(sharedState: sharedState, findManager: self)
+            }
+            lastSearchWasGlobal = false
+        }
+    }
+
     func startFind(_ searchTerm: String, mode: iTermBrowserFindMode) {
+        hideGlobalSearchResultsIfNeeded()
         defaultState.startFind(searchTerm, mode: mode, contextLength: 0, sharedState: sharedState, findManager: self)
     }
 
     func findNext() {
+        hideGlobalSearchResultsIfNeeded()
         defaultState.findNext(sharedState: sharedState)
     }
 
     func findPrevious() {
+        hideGlobalSearchResultsIfNeeded()
         defaultState.findPrevious(sharedState: sharedState)
     }
 
@@ -396,6 +432,7 @@ class iTermBrowserFindManager: NSObject {
     }
     
     func continueFind(progress: UnsafeMutablePointer<Double>, range: NSRangePointer) -> Bool {
+        hideGlobalSearchResultsIfNeeded()
         guard defaultState.isSearchActive else {
             progress.pointee = 1.0
             range.pointee = NSRange(location: 100, length: 100)

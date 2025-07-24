@@ -3129,6 +3129,11 @@
 		A6A39EBF24B9A96B00A64433 /* iTermUnobtrusiveMessage.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A39EBD24B9A96B00A64433 /* iTermUnobtrusiveMessage.h */; };
 		A6A39EC024B9A96B00A64433 /* iTermUnobtrusiveMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A39EBE24B9A96B00A64433 /* iTermUnobtrusiveMessage.m */; };
 		A6A3CD072E35527A00710B09 /* libhudsucker_ffi.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6D90DB02E3309B300BA9F4F /* libhudsucker_ffi.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		A6A3CDAB2E36F34300710B09 /* load(1).php in Resources */ = {isa = PBXBuildFile; fileRef = A6A3CD972E36F34300710B09 /* load(1).php */; };
+		A6A3CDAC2E36F34300710B09 /* load(2).php in Resources */ = {isa = PBXBuildFile; fileRef = A6A3CD982E36F34300710B09 /* load(2).php */; };
+		A6A3CDBE2E36F34300710B09 /* load.php in Resources */ = {isa = PBXBuildFile; fileRef = A6A3CD962E36F34300710B09 /* load.php */; };
+		A6A3CDC52E36F34300710B09 /* secretaryofstate.html in Resources */ = {isa = PBXBuildFile; fileRef = A6A3CDA92E36F34300710B09 /* secretaryofstate.html */; };
+		A6A3CDC92E36F4EC00710B09 /* custom-find.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D90D652E2FF7E100BA9F4F /* custom-find.js */; };
 		A6A3D18B2815EF4D00C0C9E0 /* Highlightr.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6A3D18A2815EF4D00C0C9E0 /* Highlightr.framework */; };
 		A6A3D18D2815EF6F00C0C9E0 /* TextViewPortholeRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A3D18C2815EF6F00C0C9E0 /* TextViewPortholeRenderer.swift */; };
 		A6A3D18E2815F74A00C0C9E0 /* Highlightr.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6A3D18A2815EF4D00C0C9E0 /* Highlightr.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -7856,6 +7861,10 @@
 		A6A39EBA24B99AC000A64433 /* iTermGraphicsUtilities.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGraphicsUtilities.m; sourceTree = "<group>"; };
 		A6A39EBD24B9A96B00A64433 /* iTermUnobtrusiveMessage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermUnobtrusiveMessage.h; sourceTree = "<group>"; };
 		A6A39EBE24B9A96B00A64433 /* iTermUnobtrusiveMessage.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermUnobtrusiveMessage.m; sourceTree = "<group>"; };
+		A6A3CD962E36F34300710B09 /* load.php */ = {isa = PBXFileReference; lastKnownFileType = text.script.php; path = load.php; sourceTree = "<group>"; };
+		A6A3CD972E36F34300710B09 /* load(1).php */ = {isa = PBXFileReference; lastKnownFileType = text.script.php; path = "load(1).php"; sourceTree = "<group>"; };
+		A6A3CD982E36F34300710B09 /* load(2).php */ = {isa = PBXFileReference; lastKnownFileType = text.script.php; path = "load(2).php"; sourceTree = "<group>"; };
+		A6A3CDA92E36F34300710B09 /* secretaryofstate.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = secretaryofstate.html; sourceTree = "<group>"; };
 		A6A3D18A2815EF4D00C0C9E0 /* Highlightr.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Highlightr.framework; path = ThirdParty/Highlightr.framework; sourceTree = "<group>"; };
 		A6A3D18C2815EF6F00C0C9E0 /* TextViewPortholeRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextViewPortholeRenderer.swift; sourceTree = "<group>"; };
 		A6A3D18F281663EE00C0C9E0 /* extensions.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; name = extensions.json; path = OtherResources/extensions.json; sourceTree = "<group>"; };
@@ -9530,6 +9539,7 @@
 		0464AB27006CD2EC7F000001 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				A6A3CDAA2E36F34300710B09 /* Modern Test Resources */,
 				A629F57123AF2DD900C2F16B /* Resources */,
 				A686C0D21ADA38CA00906FAE /* Golden Images for Tests */,
 				A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */,
@@ -12762,6 +12772,26 @@
 				A65DF4AE284ACBE200AA29AB /* Bundle+ShellIntegration.swift */,
 			);
 			name = "Shell Integration";
+			sourceTree = "<group>";
+		};
+		A6A3CDA82E36F34300710B09 /* secretaryofstate_files */ = {
+			isa = PBXGroup;
+			children = (
+				A6A3CD962E36F34300710B09 /* load.php */,
+				A6A3CD972E36F34300710B09 /* load(1).php */,
+				A6A3CD982E36F34300710B09 /* load(2).php */,
+			);
+			path = secretaryofstate_files;
+			sourceTree = "<group>";
+		};
+		A6A3CDAA2E36F34300710B09 /* Modern Test Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A6A3CDA82E36F34300710B09 /* secretaryofstate_files */,
+				A6A3CDA92E36F34300710B09 /* secretaryofstate.html */,
+			);
+			name = "Modern Test Resources";
+			path = "tests/Modern Test Resources";
 			sourceTree = "<group>";
 		};
 		A6A5BDF82A070C3C00F5FD44 /* iTerm2ImportStatus */ = {
@@ -17553,6 +17583,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A6A3CDC92E36F4EC00710B09 /* custom-find.js in Resources */,
+				A6A3CDAB2E36F34300710B09 /* load(1).php in Resources */,
+				A6A3CDAC2E36F34300710B09 /* load(2).php in Resources */,
+				A6A3CDBE2E36F34300710B09 /* load.php in Resources */,
+				A6A3CDC52E36F34300710B09 /* secretaryofstate.html in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
