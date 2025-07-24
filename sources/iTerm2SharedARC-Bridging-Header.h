@@ -35,6 +35,7 @@
 #import "iTermFindPasteboard.h"
 #import "iTermFlippedView.h"
 #import "iTermGCD.h"
+#import "iTermGlobalSearchResult.h"
 #import "iTermHistogram.h"
 #import "iTermImageInfo.h"
 #import "iTermKeyboardNavigatableTableView.h"

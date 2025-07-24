@@ -185,7 +185,7 @@ NSAttributedStringKey iTermReplacementBaseCharacterAttributeName = @"iTermReplac
 - (NSAttributedString *)it_componentsJoinedBySeparator:(NSAttributedString *)separator {
     NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
     [self enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        if (idx > 0) {
+        if (idx > 0 && separator != nil) {
             [result appendAttributedString:separator];
         }
         [result appendAttributedString:obj];

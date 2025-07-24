@@ -35,7 +35,7 @@
 
 @implementation iTermGlobalSearchWindowController {
     iTermGlobalSearchEngine *_engine;
-    NSMutableDictionary<NSString *, NSMutableArray<iTermGlobalSearchResult *> *> *_results;
+    NSMutableDictionary<NSString *, NSMutableArray<id<iTermGlobalSearchResultProtocol>> *> *_results;
     IBOutlet iTermFocusReportingSearchField *_searchField;
     IBOutlet NSPopUpButton *_findType;
     IBOutlet NSOutlineView *_outlineView;
@@ -44,11 +44,15 @@
 
     // Fades out the progress indicator.
     NSTimer *_animationTimer;
-    NSMutableDictionary<NSString *, NSNumber *> *_sessionGuidsWithChangedScreens;
+    NSMutableDictionary<NSString *, NSNumber *> *_state;
 }
 
 - (instancetype)init {
-    return [super initWithWindowNibName:@"iTermGlobalSearch"];
+    self = [super initWithWindowNibName:@"iTermGlobalSearch"];
+    if (self) {
+        _state = [NSMutableDictionary dictionary];
+    }
+    return self;
 }
 
 - (void)windowDidLoad {
@@ -59,6 +63,17 @@
     [_findType selectItemWithTag:[iTermUserDefaults globalSearchMode]];
     _outlineView.target = self;
     _outlineView.action = @selector(didClick:);
+
+    // Make never-before-made-visible webviews load their URLs or interaction state so they will be searchable. This is a race
+    // because they won't be searchable until the document starts and they won't be usefully searchable until "enough" of the
+    // document loads (which could take infinite time, oh well)
+    [[[iTermController sharedInstance] terminals] enumerateObjectsUsingBlock:^(PseudoTerminal *term, NSUInteger idx, BOOL *stop) {
+        for (PTYSession *session in term.allSessions) {
+            if (session.isBrowserSession) {
+                [session.view.browserViewController performDeferredInitializationInWindow:term.window];
+            }
+        }
+    }];
 }
 
 - (void)windowWillClose:(NSNotification *)notification {
@@ -103,7 +118,7 @@
     [_searchField setNeedsDisplay:YES];
 }
 
-- (void)addResults:(NSArray<iTermGlobalSearchResult *> *)results
+- (void)addResults:(NSArray<id<iTermGlobalSearchResultProtocol>> *)results
         forSession:(PTYSession *)session
           progress:(double)progress {
     if (!session) {
@@ -118,7 +133,7 @@
     if (!_results) {
         _results = [NSMutableDictionary dictionary];
     }
-    NSMutableArray<iTermGlobalSearchResult *> *sessionResults = _results[session.guid];
+    NSMutableArray<id<iTermGlobalSearchResultProtocol>> *sessionResults = _results[session.guid];
     [_outlineView beginUpdates];
     BOOL isNew = (sessionResults == nil);
     if (!sessionResults) {
@@ -155,18 +170,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return sqrt(Square(p1.x - p2.x) + Square(p1.y - p2.y));
 }
 
-- (void)switchSessionToAlternateScreenIfNeededForResult:(iTermGlobalSearchResult *)result {
-    const BOOL shouldShowAlternateScreen = !result.onMainScreen;
-    if (shouldShowAlternateScreen != result.session.screen.showingAlternateScreen) {
-        if (!_sessionGuidsWithChangedScreens) {
-            _sessionGuidsWithChangedScreens = [NSMutableDictionary dictionary];
-        }
-        _sessionGuidsWithChangedScreens[result.session.guid] = @(result.session.screen.showingAlternateScreen);
-        [result.session setShowAlternateScreen:shouldShowAlternateScreen
-                                      announce:YES];
-    }
-}
-
 - (void)revealSelection {
     [_searchField setNeedsDisplay:YES];
     id item = [_outlineView itemAtRow:_outlineView.selectedRow];
@@ -177,40 +180,23 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [session reveal];
         return;
     }
-    iTermGlobalSearchResult *result = [iTermGlobalSearchResult castFrom:item];
-    if (!result) {
+    id<iTermGlobalSearchResultProtocol> result;
+    if (![item conformsToProtocol:@protocol(iTermGlobalSearchResultProtocol)]) {
         [self restoreAlternateScreensWithAnnouncement:YES];
         return;
     }
+    result = (id<iTermGlobalSearchResultProtocol>)item;
 
     [result.session reveal];
-    [self switchSessionToAlternateScreenIfNeededForResult:result];
-    if (result.isExternal) {
-        [result.session.externalSearchResultsController selectExternalSearchResult:result.result.externalResult
-                                                                          multiple:NO
-                                                                            scroll:YES];
-    } else {
-        const VT100GridCoordRange coordRange = [result internalCoordRange];
-        [result.session.textview selectCoordRange:coordRange];
-        [result.session.textview scrollToSelection];
-        [result highlightLines];
-        [self movePanelAwayFromResultInRange:coordRange session:result.session];
-    }
+    __weak __typeof(self) weakSelf = self;
+    [result revealWithState:_state completion:^(NSRect hull) {
+        if (hull.size.width > 0 && hull.size.height > 0) {
+            [weakSelf movePanelAwayFromRect:hull];
+        }
+    }];
 }
 
-- (NSRect)rectForCoordRange:(VT100GridCoordRange)coordRange session:(PTYSession *)session {
-    NSRect (^screenRect)(VT100GridCoord) = ^NSRect(VT100GridCoord coord) {
-        const NSRect viewRect = [session.textview frameForCoord:coord];
-        const NSRect windowRect = [session.textview convertRect:viewRect toView:nil];
-        return [session.textview.window convertRectToScreen:windowRect];
-    };
-    const NSRect firstRect = screenRect(coordRange.start);
-    const NSRect lastRect = screenRect(coordRange.end);
-    return NSUnionRect(firstRect, lastRect);
-}
-
-- (void)movePanelAwayFromResultInRange:(VT100GridCoordRange)coordRange session:(PTYSession *)session {
-    const NSRect hull = [self rectForCoordRange:coordRange session:session];
+- (void)movePanelAwayFromRect:(NSRect)hull {
     const NSRect windowRect = _panel.frame;
     if (!NSIntersectsRect(windowRect, hull)) {
         return;
@@ -306,7 +292,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                     sessions:self.sessions
                                                         mode:self.mode
                                                      handler:^(PTYSession *session,
-                                                               NSArray<iTermGlobalSearchResult *> *results,
+                                                               NSArray<id<iTermGlobalSearchResultProtocol>> *results,
                                                                double progress) {
         [weakSelf addResults:results forSession:session progress:progress];
     }];
@@ -326,7 +312,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (NSInteger)focusReportingSearchFieldNumberOfResults:(iTermFocusReportingSearchField *)sender {
     __block NSInteger count = 0;
-    [_results enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSMutableArray<iTermGlobalSearchResult *> * _Nonnull obj, BOOL * _Nonnull stop) {
+    [_results enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSMutableArray<id<iTermGlobalSearchResultProtocol>> * _Nonnull obj, BOOL * _Nonnull stop) {
         count += obj.count;
     }];
     return count;
@@ -338,7 +324,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return 0;
     }
     id item = [_outlineView itemAtRow:row];
-    iTermGlobalSearchResult *result = [iTermGlobalSearchResult castFrom:item];
+    id<iTermGlobalSearchResultProtocol>result = [iTermGlobalSearchResult castFrom:item];
     if (!result) {
         return 0;
     }
@@ -394,49 +380,40 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return view;
     }
 
-    iTermGlobalSearchResult *result = [iTermGlobalSearchResult castFrom:item];
-    if (result) {
-        // Search result
-        NSString *identifier = @"GlobalSearchResultIdentifier";
-        NSTableCellView *view = [outlineView makeViewWithIdentifier:identifier owner:self];
-        if (!view) {
-            view = [[NSTableCellView alloc] init];
+    ITAssertWithMessage([item conformsToProtocol:@protocol(iTermGlobalSearchResultProtocol)], @"Bad item %@", item);
+    id<iTermGlobalSearchResultProtocol> result = item;
 
-            NSTextField *textField = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
-            textField.translatesAutoresizingMaskIntoConstraints = NO;
-            view.textField = textField;
-            [view addSubview:textField];
-            [view addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-0-[textField]-0-|"
-                                                                         options:0
-                                                                         metrics:nil
-                                                                           views:@{ @"textField": textField }]];
-            [view addConstraint:[NSLayoutConstraint constraintWithItem:textField
-                                                             attribute:NSLayoutAttributeBottom
-                                                             relatedBy:NSLayoutRelationEqual
-                                                                toItem:view
-                                                             attribute:NSLayoutAttributeBottom
-                                                            multiplier:1
-                                                              constant:0]];
-            textField.frame = view.bounds;
-            textField.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
-        }
-        view.textField.attributedStringValue = result.snippet;
-        return view;
+    // Search result
+    NSString *identifier = @"GlobalSearchResultIdentifier";
+    NSTableCellView *view = [outlineView makeViewWithIdentifier:identifier owner:self];
+    if (!view) {
+        view = [[NSTableCellView alloc] init];
+
+        NSTextField *textField = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
+        textField.translatesAutoresizingMaskIntoConstraints = NO;
+        view.textField = textField;
+        [view addSubview:textField];
+        [view addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-0-[textField]-0-|"
+                                                                     options:0
+                                                                     metrics:nil
+                                                                       views:@{ @"textField": textField }]];
+        [view addConstraint:[NSLayoutConstraint constraintWithItem:textField
+                                                         attribute:NSLayoutAttributeBottom
+                                                         relatedBy:NSLayoutRelationEqual
+                                                            toItem:view
+                                                         attribute:NSLayoutAttributeBottom
+                                                        multiplier:1
+                                                          constant:0]];
+        textField.frame = view.bounds;
+        textField.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
     }
-
-    assert(NO);
-    return nil;
+    view.textField.attributedStringValue = result.snippet;
+    return view;
 
 }
 
 - (void)restoreAlternateScreensWithAnnouncement:(BOOL)announce {
-    [_sessionGuidsWithChangedScreens enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSNumber * _Nonnull obj, BOOL * _Nonnull stop) {
-        PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:key];
-        if (session) {
-            [session setShowAlternateScreen:obj.boolValue announce:announce];
-        }
-    }];
-    [_sessionGuidsWithChangedScreens removeAllObjects];
+    [iTermGlobalSearchResult restoreAlternateScreensWithAnnouncement:announce state:_state];
 }
 
 - (void)outlineViewSelectionDidChange:(NSNotification *)notification {
@@ -449,8 +426,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 #pragma mark -  NSOutlineViewDataSource
 
-- (NSDictionary<NSString *, NSMutableArray<iTermGlobalSearchResult *> *> *)nonEmptyResults {
-    return [_results filteredWithBlock:^BOOL(NSString *key, NSMutableArray<iTermGlobalSearchResult *> *value) {
+- (NSDictionary<NSString *, NSMutableArray<id<iTermGlobalSearchResultProtocol>> *> *)nonEmptyResults {
+    return [_results filteredWithBlock:^BOOL(NSString *key, NSMutableArray<id<iTermGlobalSearchResultProtocol>> *value) {
         return value.count > 0;
     }];
 }
@@ -475,7 +452,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return sortedKeys[index];
     }
     if ([item isKindOfClass:[NSString class]]) {
-        NSArray<iTermGlobalSearchResult *> *results = _results[item];
+        NSArray<id<iTermGlobalSearchResultProtocol>> *results = _results[item];
         assert(results);
         assert(index >= 0);
         assert(index < results.count);

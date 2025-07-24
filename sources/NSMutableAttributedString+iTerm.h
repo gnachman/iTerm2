@@ -37,7 +37,7 @@ extern NSAttributedStringKey iTermReplacementBaseCharacterAttributeName;
 @end
 
 @interface NSArray(iTermAttributedString)
-- (NSAttributedString *)it_componentsJoinedBySeparator:(NSAttributedString *)separator;
+- (NSAttributedString *)it_componentsJoinedBySeparator:(NSAttributedString * _Nullable)separator;
 @end
 
 NS_ASSUME_NONNULL_END

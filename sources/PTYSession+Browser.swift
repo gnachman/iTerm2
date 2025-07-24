@@ -10,7 +10,7 @@ import WebKit
 
 @available(macOS 11.0, *)
 extension PTYSession: iTermBrowserViewControllerDelegate {
-    func browserFindManager(_ manager: iTermBrowserFindManager, didUpdateResult result: iTermBrowserFindResult) {
+    func browserFindManager(_ manager: iTermBrowserFindManager, didUpdateResult result: iTermBrowserFindResultBundle) {
         view.findDriver.viewController.countDidChange()
     }
     
@@ -264,20 +264,7 @@ extension PTYSession {
         
         if force || aString != vc.activeSearchTerm {
             // Start new search (force=true or different search string)
-            let browserMode: iTermBrowserFindMode = switch mode {
-            case .smartCaseSensitivity:
-                (aString.rangeOfCharacter(from: CharacterSet.uppercaseLetters) != nil) ? .caseSensitive : .caseInsensitive
-            case .caseSensitiveSubstring:
-                    .caseSensitive
-            case .caseInsensitiveSubstring:
-                    .caseInsensitive
-            case .caseSensitiveRegex:
-                    .caseSensitiveRegex
-            case .caseInsensitiveRegex:
-                    .caseInsensitiveRegex
-            @unknown default:
-                it_fatalError()
-            }
+            let browserMode: iTermBrowserFindMode = mode.browserFindMode(query: aString)
             vc.startFind(aString, mode: browserMode)
         } else {
             // Continue existing search (move to next/previous result)
@@ -324,5 +311,24 @@ extension PTYSession {
             return 0
         }
         return vc.currentIndex
+    }
+}
+
+extension iTermFindMode {
+    func browserFindMode(query: String) -> iTermBrowserFindMode {
+        switch self {
+        case .smartCaseSensitivity:
+            (query.rangeOfCharacter(from: CharacterSet.uppercaseLetters) != nil) ? .caseSensitive : .caseInsensitive
+        case .caseSensitiveSubstring:
+                .caseSensitive
+        case .caseInsensitiveSubstring:
+                .caseInsensitive
+        case .caseSensitiveRegex:
+                .caseSensitiveRegex
+        case .caseInsensitiveRegex:
+                .caseInsensitiveRegex
+        @unknown default:
+            it_fatalError()
+        }
     }
 }

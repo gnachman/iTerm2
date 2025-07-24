@@ -254,6 +254,53 @@ extension iTermBrowserViewController {
 
     // MARK: - Search
 
+    @objc(performDeferredInitializationInWindow:)
+    func performDeferredInitialization(window: NSWindow) {
+        if let restorationDelegate = window.delegate as? iTermSessionRestorationStatusProtocol,
+           restorationDelegate.isPerformingSessionRestoration {
+            DLog("Not doing global search on \(self) becaue session restoration is underway")
+            return
+        }
+        loadDeferredURLIfNeeded()
+    }
+
+    @objc(executeGlobalSearch:mode:)
+    func executeGlobalSearch(query: String, mode: iTermFindMode) -> iTermBrowserGlobalSearchResultStream? {
+        return browserManager.browserFindManager?.executeGlobalSearch(
+            query: query,
+            mode: mode.browserFindMode(query: query))
+    }
+
+    @objc(revealFindResult:completion:)
+    func reveal(findResult: iTermBrowserFindResult,
+                completion: @escaping @MainActor (NSRect) -> ()) {
+        guard let findManager = browserManager.browserFindManager,
+              let matchIdentifier = findResult.matchIdentifier else {
+            completion(.zero)
+            return
+        }
+        Task {
+            do {
+                let jsrect = try await findManager.reveal(
+                    globalFindResultWithIdentifier: matchIdentifier)
+                let windowOrigin = browserManager.webView.convertFromJavascriptCoordinates(jsrect.origin)
+                let windowMaxima = browserManager.webView.convertFromJavascriptCoordinates(
+                    NSPoint(x: jsrect.maxX, y: jsrect.maxY)
+                )
+                let rect = NSRect(origin: windowOrigin, size: windowMaxima - windowOrigin)
+                if let screenRect = view.window?.convertToScreen(rect) {
+                    completion(screenRect)
+                } else {
+                    DLog("No window")
+                    completion(.zero)
+                }
+            } catch {
+                DLog("\(error)")
+                completion(.zero)
+            }
+        }
+    }
+
     func startFind(_ string: String, mode: iTermBrowserFindMode) {
         browserManager.browserFindManager?.startFind(string, mode: mode)
     }
@@ -1222,7 +1269,7 @@ extension iTermBrowserViewController: iTermBrowserActionPerforming {
 
 @MainActor
 extension iTermBrowserViewController: iTermBrowserFindManagerDelegate {
-    func browserFindManager(_ manager: iTermBrowserFindManager, didUpdateResult result: iTermBrowserFindResult) {
+    func browserFindManager(_ manager: iTermBrowserFindManager, didUpdateResult result: iTermBrowserFindResultBundle) {
         delegate?.browserFindManager(manager, didUpdateResult: result)
     }
 }

@@ -7,7 +7,9 @@
 
 #import "iTermGlobalSearchEngineCursor.h"
 #import "NSArray+iTerm.h"
+#import "NSMutableAttributedString+iTerm.h"
 #import "PTYSession.h"
+#import "SessionView.h"
 #import "VT100Screen.h"
 #import "VT100Screen+Search.h"
 #import "iTerm2SharedARC-Swift.h"
@@ -48,7 +50,7 @@
         switch (pass) {
             case iTermGlobalSearchEngineCursorPassMainScreen: {
                 const long long lastLineStart = [session.screen absLineNumberOfLastLineInLineBuffer];
-                const long long numberOfLines = session.screen.numberOfLines + session.screen.height;
+                const long long numberOfLines = session.screen.numberOfLines;
                 range = NSMakeRange(lastLineStart, numberOfLines - lastLineStart);
                 break;
             }
@@ -101,19 +103,19 @@
 #pragma mark - iTermGlobalSearchEngineCursorProtocol
 
 typedef struct iTermGlobalSearchEngineCursorSearchOutput {
-    NSArray<iTermGlobalSearchResult *> *results;
+    NSArray<id<iTermGlobalSearchResultProtocol>> *results;
     BOOL more;
     NSUInteger retiredLines;
 } iTermGlobalSearchEngineCursorSearchOutput;
 
-- (void)drainFully:(void (^ NS_NOESCAPE)(NSArray<iTermGlobalSearchResult *> *, NSUInteger))handler {
+- (void)drainFully:(void (^ NS_NOESCAPE)(NSArray<id<iTermGlobalSearchResultProtocol>> *, NSUInteger))handler {
     while (self.searchEngine.havePendingResults) {
         iTermGlobalSearchEngineCursorSearchOutput output = [self search];
         handler(output.results, output.retiredLines);
     }
 }
 
-- (BOOL)consumeAvailable:(void (^ NS_NOESCAPE)(NSArray<iTermGlobalSearchResult *> *, NSUInteger))handler {
+- (BOOL)consumeAvailable:(void (^ NS_NOESCAPE)(NSArray<id<iTermGlobalSearchResultProtocol>> *, NSUInteger))handler {
     iTermGlobalSearchEngineCursorSearchOutput output = [self search];
     handler(output.results, output.retiredLines);
     return output.more;
@@ -158,7 +160,7 @@ typedef struct iTermGlobalSearchEngineCursorSearchOutput {
     NSDictionary *matchAttributes = [self matchAttributes];
     NSDictionary *regularAttributes = [self regularAttributes];
     const long long gridStartAbsY = self.session.screen.numberOfScrollbackLines + self.session.screen.totalScrollbackOverflow;
-    NSArray<iTermGlobalSearchResult *> *mapped = [results mapWithBlock:^id(SearchResult *anObject) {
+    NSArray<id<iTermGlobalSearchResultProtocol>> *mapped = [results mapWithBlock:^id(SearchResult *anObject) {
         if (self.currentScreenIsAlternate &&
             self.pass == iTermGlobalSearchEngineCursorPassMainScreen &&
             anObject.safeAbsEndY < gridStartAbsY) {
@@ -232,4 +234,80 @@ typedef struct iTermGlobalSearchEngineCursorSearchOutput {
         self.willPause(self);
     }
 }
+@end
+
+@implementation iTermGlobalSearchEngineBrowserCursor {
+    BOOL _done;
+    iTermBrowserGlobalSearchResultStream *_stream;
+}
+
+- (instancetype)initWithQuery:(NSString *)query
+                         mode:(iTermFindMode)mode
+                      session:(PTYSession *)session {
+    self = [super init];
+    if (self) {
+        self.query = query;
+        self.mode = mode;
+        self.session = session;
+        _stream = [self.session.view.browserViewController executeGlobalSearch:self.query
+                                                                          mode:self.mode];
+    }
+    return self;
+}
+
+- (void)drainFully:(void (^ NS_NOESCAPE)(NSArray<id<iTermGlobalSearchResultProtocol>> *, NSUInteger))handler {
+    if (_done) {
+        return;
+    }
+    NSArray<id<iTermGlobalSearchResultProtocol>> *results = [_stream.consume mapWithBlock:^id _Nullable(iTermBrowserFindResult *findResult) {
+        iTermGlobalBrowserSearchResult *gsr = [[iTermGlobalBrowserSearchResult alloc] init];
+        gsr.session = self.session;
+        gsr.snippet = [self snippetForResult:findResult];
+        gsr.findResult = findResult;
+        return gsr;
+    }];
+    _done = _stream.done;
+    handler(results, 1000);
+}
+
+- (BOOL)consumeAvailable:(void (^ NS_NOESCAPE)(NSArray<id<iTermGlobalSearchResultProtocol>> *, NSUInteger))handler {
+    [self drainFully:handler];
+    return !_done;
+}
+
+- (id<iTermGlobalSearchEngineCursorProtocol> _Nullable)instanceForNextPass {
+    return nil;
+}
+
+- (long long)approximateLinesSearched {
+    return _done ? 0 : 1000;
+}
+
+- (NSAttributedString *)snippetForResult:(iTermBrowserFindResult *)result {
+    NSAttributedString *matchString = [[NSAttributedString alloc] initWithString:self.query
+                                                                      attributes:[self matchAttributes]];
+    NSString *prefix = [(result.contextBefore ?: @"") stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
+    NSString *suffix = [(result.contextAfter ?: @"") stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
+    NSAttributedString *attributedPrefix = [[NSAttributedString alloc] initWithString:prefix
+                                                                           attributes:self.regularAttributes];
+    NSAttributedString *attributedSuffix = [[NSAttributedString alloc] initWithString:suffix
+                                                                           attributes:self.regularAttributes];
+    return [@[attributedPrefix, matchString, attributedSuffix] it_componentsJoinedBySeparator:nil];
+}
+
+- (NSDictionary *)matchAttributes {
+    return @{
+        NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle),
+        NSBackgroundColorAttributeName: [NSColor colorWithRed:1 green:1 blue:0 alpha:0.35],
+        NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize]]
+    };
+}
+
+- (NSDictionary *)regularAttributes {
+    return @{
+        NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize]]
+    };
+}
+
+
 @end

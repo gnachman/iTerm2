@@ -21,8 +21,8 @@ typedef NS_ENUM(NSUInteger, iTermGlobalSearchEngineCursorPass) {
 };
 
 @protocol iTermGlobalSearchEngineCursorProtocol<NSObject>
-- (void)drainFully:(void (^ NS_NOESCAPE)(NSArray<iTermGlobalSearchResult *> *, NSUInteger))handler;
-- (BOOL)consumeAvailable:(void (^ NS_NOESCAPE)(NSArray<iTermGlobalSearchResult *> *, NSUInteger))handler;
+- (void)drainFully:(void (^ NS_NOESCAPE)(NSArray<id<iTermGlobalSearchResultProtocol>> *, NSUInteger))handler;
+- (BOOL)consumeAvailable:(void (^ NS_NOESCAPE)(NSArray<id<iTermGlobalSearchResultProtocol>> *, NSUInteger))handler;
 - (PTYSession *)session;
 - (id<iTermGlobalSearchEngineCursorProtocol> _Nullable)instanceForNextPass;
 - (long long)approximateLinesSearched;
@@ -43,6 +43,17 @@ typedef NS_ENUM(NSUInteger, iTermGlobalSearchEngineCursorPass) {
                       session:(PTYSession *)session;
 - (instancetype)init NS_UNAVAILABLE;
 
+@end
+
+@interface iTermGlobalSearchEngineBrowserCursor: NSObject<iTermGlobalSearchEngineCursorProtocol>
+@property (nonatomic, strong) PTYSession *session;
+@property (nonatomic) iTermFindMode mode;
+@property (nonatomic, copy) NSString *query;
+
+- (instancetype)initWithQuery:(NSString *)query
+                         mode:(iTermFindMode)mode
+                      session:(PTYSession *)session;
+- (instancetype)init NS_UNAVAILABLE;
 @end
 
 NS_ASSUME_NONNULL_END

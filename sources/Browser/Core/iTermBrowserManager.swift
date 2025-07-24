@@ -1818,7 +1818,7 @@ extension iTermBrowserUserState.Configuration {
 
 @MainActor
 extension iTermBrowserManager: iTermBrowserFindManagerDelegate {
-    func browserFindManager(_ manager: iTermBrowserFindManager, didUpdateResult result: iTermBrowserFindResult) {
+    func browserFindManager(_ manager: iTermBrowserFindManager, didUpdateResult result: iTermBrowserFindResultBundle) {
         delegate?.browserFindManager(manager, didUpdateResult: result)
     }
 }

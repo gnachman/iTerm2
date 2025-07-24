@@ -14,7 +14,15 @@ NS_ASSUME_NONNULL_BEGIN
 @class PTYSession;
 @class SearchResult;
 
-@interface iTermGlobalSearchResult: NSObject
+@protocol iTermGlobalSearchResultProtocol<NSObject>
+@property (nonatomic, weak) PTYSession *session;
+@property (nonatomic, copy) NSAttributedString *snippet;
+
+- (void)revealWithState:(NSMutableDictionary *)state
+             completion:(void (^)(NSRect))completion;
+@end
+
+@interface iTermGlobalSearchResult: NSObject<iTermGlobalSearchResultProtocol>
 @property (nonatomic, readonly) BOOL isExternal;
 @property (nonatomic, readonly) VT100GridCoordRange internalCoordRange;
 
@@ -23,7 +31,16 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) NSAttributedString *snippet;
 @property (nonatomic) BOOL onMainScreen;
 
++ (void)restoreAlternateScreensWithAnnouncement:(BOOL)announce state:(NSMutableDictionary *)state;
 - (void)highlightLines;
+@end
+
+@class iTermBrowserFindResult;
+
+@interface iTermGlobalBrowserSearchResult: NSObject<iTermGlobalSearchResultProtocol>
+@property (nonatomic, weak) PTYSession *session;
+@property (nonatomic, copy) NSAttributedString *snippet;
+@property (nonatomic, strong) iTermBrowserFindResult *findResult;
 @end
 
 NS_ASSUME_NONNULL_END

@@ -30,7 +30,7 @@
                      sessions:(NSArray<PTYSession *> *)sessions
                          mode:(iTermFindMode)mode
                       handler:(void (^)(PTYSession *,
-                                        NSArray<iTermGlobalSearchResult *> *,
+                                        NSArray<id<iTermGlobalSearchResultProtocol>> *,
                                         double))handler {
     self = [super init];
     if (self) {
@@ -39,12 +39,18 @@
         _mode = mode;
         __weak __typeof(self) weakSelf = self;
         _cursors = [[sessions mapWithBlock:^id(PTYSession *session) {
-            iTermGlobalSearchEngineCursor *cursor = [[iTermGlobalSearchEngineCursor alloc] initWithQuery:query mode:mode session:session];
-            cursor.willPause = ^(iTermGlobalSearchEngineCursor *cursor) {
-                [weakSelf drain:cursor];
-            };
-            _expectedLines += cursor.expectedLines;
-            return cursor;
+            if (session.isBrowserSession) {
+                iTermGlobalSearchEngineBrowserCursor *cursor = [[iTermGlobalSearchEngineBrowserCursor alloc] initWithQuery:query mode:mode session:session];
+                _expectedLines += 1000;
+                return cursor;
+            } else {
+                iTermGlobalSearchEngineCursor *cursor = [[iTermGlobalSearchEngineCursor alloc] initWithQuery:query mode:mode session:session];
+                cursor.willPause = ^(iTermGlobalSearchEngineCursor *cursor) {
+                    [weakSelf drain:cursor];
+                };
+                _expectedLines += cursor.expectedLines;
+                return cursor;
+            }
         }] mutableCopy];
         _timer = [NSTimer scheduledWeakTimerWithTimeInterval:0
                                                       target:self
@@ -56,7 +62,7 @@
 }
 
 - (void)drain:(id<iTermGlobalSearchEngineCursorProtocol>)cursor {
-    [cursor drainFully:^(NSArray<iTermGlobalSearchResult *> *results, NSUInteger retired) {
+    [cursor drainFully:^(NSArray<id<iTermGlobalSearchResultProtocol>> *results, NSUInteger retired) {
         _retiredLines += retired;
         self.handler(cursor.session, results, [self progressIncludingCursor:cursor]);
     }];
@@ -75,7 +81,7 @@
         return;
     }
     [_cursors removeObjectAtIndex:0];
-    const BOOL more = [cursor consumeAvailable:^(NSArray<iTermGlobalSearchResult *> *results, NSUInteger retired) {
+    const BOOL more = [cursor consumeAvailable:^(NSArray<id<iTermGlobalSearchResultProtocol>> *results, NSUInteger retired) {
         _retiredLines += retired;
         self.handler(cursor.session, results, [self progressIncludingCursor:cursor]);
     }];

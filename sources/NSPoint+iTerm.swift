@@ -11,6 +11,9 @@ extension NSPoint {
     static func -(lhs: NSPoint, rhs: NSPoint) -> NSPoint {
         return NSPoint(x: lhs.x - rhs.x, y: lhs.y - rhs.y)
     }
+    static func -(lhs: NSPoint, rhs: NSPoint) -> NSSize {
+        return NSSize(width: abs(lhs.x - rhs.x), height: abs(lhs.y - rhs.y))
+    }
     static func +(lhs: NSPoint, rhs: NSPoint) -> NSPoint {
         return NSPoint(x: lhs.x + rhs.x, y: lhs.y + rhs.y)
     }
