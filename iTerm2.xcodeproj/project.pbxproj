@@ -3972,6 +3972,7 @@
 		A6D90D662E2FF7E100BA9F4F /* custom-find.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D90D652E2FF7E100BA9F4F /* custom-find.js */; };
 		A6D90D672E2FF7E100BA9F4F /* custom-find.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D90D652E2FF7E100BA9F4F /* custom-find.js */; };
 		A6D90D682E2FF7E100BA9F4F /* custom-find.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D90D652E2FF7E100BA9F4F /* custom-find.js */; };
+		A6D90DB12E3309B300BA9F4F /* libhudsucker_ffi.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6D90DB02E3309B300BA9F4F /* libhudsucker_ffi.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A6DB145A2D6CE22400266394 /* CommandIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DB14592D6CE22400266394 /* CommandIcon.png */; };
 		A6DB145B2D6CE22400266394 /* CommandIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DB14592D6CE22400266394 /* CommandIcon.png */; };
 		A6DB145C2D6CE22400266394 /* CommandIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DB14592D6CE22400266394 /* CommandIcon.png */; };
@@ -5327,6 +5328,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 6;
 			files = (
+				A6D90DB12E3309B300BA9F4F /* libhudsucker_ffi.dylib in CopyFiles */,
 				A6A5BE0D2A070D4A00F5FD44 /* iTerm2ImportStatus.app in CopyFiles */,
 				A60593CC257DFAE400CACEE6 /* ShellLauncher in CopyFiles */,
 				A63F2A3923FA5698008DDEA4 /* iTermServer in CopyFiles */,
@@ -8342,6 +8344,7 @@
 		A6D90D5F2E2F5F3B00BA9F4F /* ai-prompt-help.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "ai-prompt-help.md"; sourceTree = "<group>"; };
 		A6D90D632E2F626700BA9F4F /* ImageViewWithPopoverMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewWithPopoverMessage.swift; sourceTree = "<group>"; };
 		A6D90D652E2FF7E100BA9F4F /* custom-find.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "custom-find.js"; sourceTree = "<group>"; };
+		A6D90DB02E3309B300BA9F4F /* libhudsucker_ffi.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libhudsucker_ffi.dylib; path = "ThirdParty/hudsucker-ffi/lib/libhudsucker_ffi.dylib"; sourceTree = "<group>"; };
 		A6DB14592D6CE22400266394 /* CommandIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = CommandIcon.png; sourceTree = "<group>"; };
 		A6DB145D2D6CEDEE00266394 /* SystemMessageCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemMessageCellView.swift; sourceTree = "<group>"; };
 		A6DB14632D6D09C800266394 /* AIStreaming.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AIStreaming.png; sourceTree = "<group>"; };
@@ -9108,6 +9111,7 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A6D90DB02E3309B300BA9F4F /* libhudsucker_ffi.dylib */,
 				A6B1C69D2DC15898008AD3CA /* ModernTests.xctestplan */,
 				A63F2A3A23FA5951008DDEA4 /* it2run */,
 				5370676121C9D2390088D0F3 /* SignedArchive */,
