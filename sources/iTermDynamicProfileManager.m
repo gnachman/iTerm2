@@ -690,7 +690,7 @@
             [stripped removeObjectForKey:key];
             continue;
         }
-        if ([@[KEY_GUID, KEY_NAME, KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE] containsObject:key]) {
+        if ([@[KEY_GUID, KEY_NAME, KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE, KEY_DYNAMIC_PROFILE_REWRITABLE] containsObject:key]) {
             // Always write these keys.
             stripped[key] = updatedProfile[key];
             continue;
