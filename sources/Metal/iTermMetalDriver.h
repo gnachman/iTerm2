@@ -63,7 +63,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) CGSize cellSizeWithoutSpacing;
 @property (nonatomic, readonly) vector_float4 defaultBackgroundColor;
 @property (nonatomic, readonly) vector_float4 processedDefaultBackgroundColor;
-@property (nonatomic, readonly) vector_float4 colorForMargins;
+@property (nonatomic, readonly) vector_float4 colorForHorizontalMargins;
+@property (nonatomic, readonly) vector_float4 colorForVerticalMargins;
 @property (nonatomic, readonly) vector_float4 processedDefaultTextColor;
 @property (nonatomic, readonly) vector_float4 defaultTextColor;
 @property (nonatomic, readonly) vector_float4 blockHoverColor;

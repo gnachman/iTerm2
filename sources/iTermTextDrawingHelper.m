@@ -597,6 +597,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                          drawingMode:(iTermBackgroundDrawingMode)drawingMode
                        virtualOffset:(CGFloat)virtualOffset {
     NSColor *cursorBackgroundColor = nil;
+    NSColor *defaultColor = [self colorForMarginsUsingDominant:NO];
+    const BOOL extend = [iTermAdvancedSettingsModel extendBackgroundColorIntoMargins];
     for (NSInteger i = 0; i < backgroundRunArrays.count; ) {
         iTermBackgroundColorRunsInLine *runArray = backgroundRunArrays[i];
         NSInteger rows = runArray.numberOfEquivalentRows;
@@ -618,8 +620,13 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                       virtualOffset:virtualOffset];
 
         for (NSInteger j = i; j < i + rows; j++) {
+            NSColor *leftColor = (!extend || runArray.array[0].isDefault) ? defaultColor : runArray.array[0].backgroundColor;
+            NSColor *rightColor = (!extend || runArray.array.lastObject.isDefault) ? defaultColor : runArray.array.lastObject.backgroundColor;
+            NSArray<NSColor *> *colors = @[ leftColor, rightColor ];
+
             [self drawMarginsForLine:backgroundRunArrays[j].line
                                    y:backgroundRunArrays[j].y
+                              colors:colors
                        virtualOffset:virtualOffset];
         }
         i += rows;
@@ -844,7 +851,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 - (void)drawExcessWithVirtualOffset:(CGFloat)virtualOffset {
     NSRect excessRect = [self excessRect];
 
-    NSColor *color = [self colorForMargins];
+    NSColor *color = [self colorForMarginsUsingDominant:YES];
     const BOOL enableBlending = !iTermTextIsMonochrome() || [NSView iterm_takingSnapshot];
 
     [self drawBackgroundColor:color inRect:excessRect enableBlending:enableBlending virtualOffset:virtualOffset];
@@ -871,7 +878,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
     topMarginRect.size.height = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
 
-    NSColor *color = [self colorForMargins];
+    NSColor *color = [self colorForMarginsUsingDominant:YES];
     const BOOL enableBlending = !iTermTextIsMonochrome() || [NSView iterm_takingSnapshot];
 
     [self drawBackgroundColor:color inRect:topMarginRect enableBlending:enableBlending virtualOffset:virtualOffset];
@@ -881,9 +888,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     }
 }
 
-- (NSColor *)colorForMargins {
+- (NSColor *)colorForMarginsUsingDominant:(BOOL)useDominant {
     iTermBackgroundColorRun run = { 0 };
-    if (_marginColor.enabled) {
+    if (_marginColor.enabled && useDominant) {
         run.bgColor = _marginColor.bgColorCode;
         run.bgBlue = _marginColor.bgBlue;
         run.bgGreen = _marginColor.bgGreen;
@@ -902,6 +909,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
 - (void)drawMarginsForLine:(int)line
                          y:(CGFloat)y
+                    colors:(NSArray<NSColor *> *)colors
              virtualOffset:(CGFloat)virtualOffset {
     NSRect leftMargin = [self leftMarginRectAt:y];
     NSRect rightMargin;
@@ -912,11 +920,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     rightMargin.size.height = _cellSize.height;
 
     // Draw background in margins
-    NSColor *color = [self colorForMargins];
     const BOOL enableBlending = !iTermTextIsMonochrome() || [NSView iterm_takingSnapshot];
-
-    [self drawBackgroundColor:color inRect:leftMargin enableBlending:enableBlending virtualOffset:virtualOffset];
-    [self drawBackgroundColor:color inRect:rightMargin enableBlending:enableBlending virtualOffset:virtualOffset];
+    [self drawBackgroundColor:colors[0] inRect:leftMargin enableBlending:enableBlending virtualOffset:virtualOffset];
+    [self drawBackgroundColor:colors[1] inRect:rightMargin enableBlending:enableBlending virtualOffset:virtualOffset];
 }
 
 - (void)drawMarkForLine:(int)line

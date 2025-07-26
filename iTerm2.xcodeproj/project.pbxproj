@@ -3468,8 +3468,7 @@
 		A6BF8D1A21EB188E003CF805 /* iTermDependencyEditorWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6BF8D1521EB188E003CF805 /* iTermDependencyEditorWindowController.xib */; };
 		A6C1207A1E39C3A4004021BB /* iTermBuriedSessions.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C120781E39C3A4004021BB /* iTermBuriedSessions.h */; };
 		A6C1FD4E1FC2A65E006B9A69 /* Licenses.txt in Resources */ = {isa = PBXBuildFile; fileRef = A6C1FD4D1FC2A65D006B9A69 /* Licenses.txt */; };
-		A6C1FD511FC2AC9B006B9A69 /* iTermMarginRenderer.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C1FD4F1FC2AC9B006B9A69 /* iTermMarginRenderer.h */; };
-		A6C1FD521FC2AC9B006B9A69 /* iTermMarginRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C1FD501FC2AC9B006B9A69 /* iTermMarginRenderer.m */; };
+		A6C1FD521FC2AC9B006B9A69 /* iTermMarginRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C1FD501FC2AC9B006B9A69 /* iTermMarginRenderer.swift */; };
 		A6C1FD541FC2B210006B9A69 /* iTermMargin.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6C1FD531FC2B210006B9A69 /* iTermMargin.metal */; };
 		A6C1FD551FC2B210006B9A69 /* iTermMargin.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6C1FD531FC2B210006B9A69 /* iTermMargin.metal */; };
 		A6C1FD561FC2B210006B9A69 /* iTermMargin.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6C1FD531FC2B210006B9A69 /* iTermMargin.metal */; };
@@ -8101,8 +8100,7 @@
 		A6C120781E39C3A4004021BB /* iTermBuriedSessions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermBuriedSessions.h; sourceTree = "<group>"; };
 		A6C120791E39C3A4004021BB /* iTermBuriedSessions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermBuriedSessions.m; sourceTree = "<group>"; };
 		A6C1FD4D1FC2A65D006B9A69 /* Licenses.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Licenses.txt; sourceTree = "<group>"; };
-		A6C1FD4F1FC2AC9B006B9A69 /* iTermMarginRenderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermMarginRenderer.h; path = Metal/Renderers/iTermMarginRenderer.h; sourceTree = "<group>"; };
-		A6C1FD501FC2AC9B006B9A69 /* iTermMarginRenderer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermMarginRenderer.m; path = Metal/Renderers/iTermMarginRenderer.m; sourceTree = "<group>"; };
+		A6C1FD501FC2AC9B006B9A69 /* iTermMarginRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = iTermMarginRenderer.swift; path = Metal/Renderers/iTermMarginRenderer.swift; sourceTree = "<group>"; };
 		A6C1FD531FC2B210006B9A69 /* iTermMargin.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermMargin.metal; path = Metal/Shaders/iTermMargin.metal; sourceTree = "<group>"; };
 		A6C1FD581FC2BD72006B9A69 /* GlyphKey.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = GlyphKey.h; path = Metal/Infrastructure/GlyphKey.h; sourceTree = "<group>"; };
 		A6C1FE5B284C1BF200EA8A3B /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UniformTypeIdentifiers.framework; path = System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = SDKROOT; };
@@ -11645,8 +11643,7 @@
 				A6DBC03B2003479400F1466D /* iTermImageRenderer.m */,
 				A68400A41FF82424008D3EE2 /* iTermIndicatorRenderer.h */,
 				A68400A51FF82424008D3EE2 /* iTermIndicatorRenderer.m */,
-				A6C1FD4F1FC2AC9B006B9A69 /* iTermMarginRenderer.h */,
-				A6C1FD501FC2AC9B006B9A69 /* iTermMarginRenderer.m */,
+				A6C1FD501FC2AC9B006B9A69 /* iTermMarginRenderer.swift */,
 				A679609B1F81FC9C008A42BC /* iTermMarkRenderer.h */,
 				A679609E1F81FC9C008A42BC /* iTermMarkRenderer.m */,
 				A67960A01F81FC9C008A42BC /* iTermTextRenderer.h */,
@@ -14784,7 +14781,6 @@
 				A6D7E0772C236D54007D0A37 /* LineBlockMetadataArray.h in Headers */,
 				A63011C420E85132008114B7 /* iTermStatusBarBaseComponent.h in Headers */,
 				A66719261DCE36C3000CE608 /* iTermCommandHistoryEntryMO.h in Headers */,
-				A6C1FD511FC2AC9B006B9A69 /* iTermMarginRenderer.h in Headers */,
 				A6A802E0226AD0D200BC70DC /* iTermSearchHistory.h in Headers */,
 				A66719271DCE36C3000CE608 /* SetHostnameTrigger.h in Headers */,
 				A6B1476421334D3900D0814F /* iTermTmuxStatusBarMonitor.h in Headers */,
@@ -19160,7 +19156,7 @@
 				A6A723602DB86B0D00A8115D /* iTermUniformString.swift in Sources */,
 				A667C23F276C7A69006B4DEF /* PSMDarkTabStyle.m in Sources */,
 				A62D43922328C63B0038F565 /* NSWindow+iTerm.m in Sources */,
-				A6C1FD521FC2AC9B006B9A69 /* iTermMarginRenderer.m in Sources */,
+				A6C1FD521FC2AC9B006B9A69 /* iTermMarginRenderer.swift in Sources */,
 				A621F11026F8E9E6001DD3A6 /* iTermTLVCodec.m in Sources */,
 				A6F66B8F2C2E2B7600DC3569 /* BTreeIndex.swift in Sources */,
 				A6F66B902C2E2B7600DC3569 /* BTreeIterator.swift in Sources */,

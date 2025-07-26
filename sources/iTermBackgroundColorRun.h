@@ -84,6 +84,7 @@ NS_INLINE BOOL iTermBackgroundColorRunsEqual(const iTermBackgroundColorRun *a,
 @property(nonatomic, readonly) iTermBackgroundColorRun *valuePointer;
 @property(nonatomic, retain) NSColor *backgroundColor;
 @property(nonatomic, retain) NSColor *unprocessedBackgroundColor;
+@property(nonatomic, readonly) BOOL isDefault;
 
 + (instancetype)boxedBackgroundColorRunWithValue:(iTermBackgroundColorRun)value;
 - (BOOL)isAdjacentToVisualColumn:(int)c;

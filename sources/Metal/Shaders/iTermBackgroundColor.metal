@@ -12,7 +12,7 @@ typedef struct {
 } iTermBackgroundColorVertexFunctionOutput;
 
 // Matches function in iTermOffscreenCommandLineBackgroundRenderer.m
-float4 iTermBlendColors(float4 src, float4 dst) {
+static float4 iTermBlendColors(float4 src, float4 dst) {
     float4 out;
     out.w = src.w + dst.w * (1 - src.w);
     if (out.w > 0) {
@@ -23,7 +23,7 @@ float4 iTermBlendColors(float4 src, float4 dst) {
     return out;
 }
 
-float4 iTermPremultiply(float4 color) {
+static float4 iTermPremultiply(float4 color) {
     float4 result = color;
     result.xyz *= color.w;
     return result;

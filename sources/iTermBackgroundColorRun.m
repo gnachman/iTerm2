@@ -245,6 +245,10 @@ static NSRange NSMakeRangeFromEndpointsInclusive(NSUInteger start, NSUInteger in
     [super dealloc];
 }
 
+- (BOOL)isDefault {
+    return _value.bgColorMode == ColorModeAlternate && _value.bgColor == ALTSEM_DEFAULT;
+}
+
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p findMatch=%@ selected=%@ modelRange=%@ visualRange=%@ backgroundColor=%@>",
             self.class,

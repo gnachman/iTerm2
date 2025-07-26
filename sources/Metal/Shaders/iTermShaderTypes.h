@@ -126,6 +126,12 @@ typedef struct {
 
 typedef struct {
     vector_float4 color;
+    vector_float4 defaultBackgroundColor;
+    float yOffset;
+} iTermMarginExtensionPIU;
+
+typedef struct {
+    vector_float4 color;
     vector_float2 origin;
 } iTermCursorDescription;
 

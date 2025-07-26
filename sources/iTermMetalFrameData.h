@@ -141,6 +141,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (atomic, strong) id<MTLDevice> device;
 @property (atomic, strong, readonly) iTermMetalView *view;
 @property (atomic, strong, nullable) NSColorSpace *colorSpace;
+@property (atomic) BOOL extendBackgroundColorIntoMargins;
 @property (nonatomic, readonly) NSInteger frameNumber;
 #if ENABLE_STATS
 @property (nonatomic, readonly) iTermPreciseTimerStats *stats;

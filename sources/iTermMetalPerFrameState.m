@@ -769,11 +769,15 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                             alpha);
 }
 
-- (vector_float4)colorForMargins {
+- (vector_float4)colorForHorizontalMargins {
     if (!_configuration->_marginColorEnabled) {
         return [self processedDefaultBackgroundColor];
     }
     return _configuration->_processedMarginColor;
+}
+
+- (vector_float4)colorForVerticalMargins {
+    return [self processedDefaultBackgroundColor];
 }
 
 - (const vector_float4 *)selectedCommandOutlineColors {

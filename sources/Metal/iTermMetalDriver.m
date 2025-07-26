@@ -22,7 +22,6 @@
 #import "iTermImageRenderer.h"
 #import "iTermIndicatorRenderer.h"
 #import "iTermLineStyleMarkRenderer.h"
-#import "iTermMarginRenderer.h"
 #import "iTermMetalDebugInfo.h"
 #import "iTermMetalFrameData.h"
 #import "iTermMarkRenderer.h"
@@ -94,6 +93,7 @@ typedef struct {
     CGFloat maximumExtendedDynamicRangeColorComponentValue NS_AVAILABLE_MAC(10_15);
     CGFloat legacyScrollbarWidth;
     CGFloat rightExtraPixels;
+    BOOL extendBackgroundColorIntoMargins;
 } iTermMetalDriverMainThreadState;
 
 @interface iTermMetalDriver()
@@ -352,6 +352,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
     self.mainThreadState->context = context;
     self.mainThreadState->legacyScrollbarWidth = legacyScrollbarWidth * scale;
     self.mainThreadState->rightExtraPixels = rightExtraPoints * scale;
+    self.mainThreadState->extendBackgroundColorIntoMargins = [iTermAdvancedSettingsModel extendBackgroundColorIntoMargins];
 
 }
 
@@ -598,6 +599,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
 
     [frameData measureTimeForStat:iTermMetalFrameDataStatMtExtractFromApp ofBlock:^{
         frameData.viewportSize = self.mainThreadState->viewportSize;
+        frameData.extendBackgroundColorIntoMargins = self.mainThreadState->extendBackgroundColorIntoMargins;
         frameData.legacyScrollbarWidth = self.mainThreadState->legacyScrollbarWidth;
         frameData.rightExtraPixels = self.mainThreadState->rightExtraPixels;
         frameData.asciiOffset = self.mainThreadState->asciiOffset;
@@ -1621,7 +1623,19 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
 
 - (void)populateMarginRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     iTermMarginRendererTransientState *tState = [frameData transientStateForRenderer:_marginRenderer];
-    tState.regularColor = frameData.perFrameState.colorForMargins;
+    tState.regularHorizontalColor = frameData.perFrameState.colorForHorizontalMargins;
+    tState.regularVerticalColor = frameData.perFrameState.colorForVerticalMargins;
+
+    if (frameData.extendBackgroundColorIntoMargins) {
+        [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData *rowData, NSUInteger idx, BOOL * _Nonnull stop) {
+            const iTermMetalBackgroundColorRLE *rles = (const iTermMetalBackgroundColorRLE *)rowData.backgroundColorRLEData.bytes;
+            const NSInteger count = rowData.numberOfBackgroundRLEs;
+            if (count > 0) {
+                [tState addExtensionWithColor:rles[0].color left:YES row:idx];
+                [tState addExtensionWithColor:rles[count - 1].color left:NO row:idx];
+            }
+        }];
+    }
     tState.suppressedTopHeight = [self offscreenCommandLineHeight:frameData];
 }
 
