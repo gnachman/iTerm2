@@ -3972,7 +3972,6 @@
 		A6D90D662E2FF7E100BA9F4F /* custom-find.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D90D652E2FF7E100BA9F4F /* custom-find.js */; };
 		A6D90D672E2FF7E100BA9F4F /* custom-find.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D90D652E2FF7E100BA9F4F /* custom-find.js */; };
 		A6D90D682E2FF7E100BA9F4F /* custom-find.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D90D652E2FF7E100BA9F4F /* custom-find.js */; };
-		A6D90DB12E3309B300BA9F4F /* libhudsucker_ffi.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6D90DB02E3309B300BA9F4F /* libhudsucker_ffi.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A6DB145A2D6CE22400266394 /* CommandIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DB14592D6CE22400266394 /* CommandIcon.png */; };
 		A6DB145B2D6CE22400266394 /* CommandIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DB14592D6CE22400266394 /* CommandIcon.png */; };
 		A6DB145C2D6CE22400266394 /* CommandIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DB14592D6CE22400266394 /* CommandIcon.png */; };
@@ -5079,6 +5078,7 @@
 		A6FFAE752CF682D60031FB21 /* iTermDoubleWidthCharacterCache.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FFAE742CF682D40031FB21 /* iTermDoubleWidthCharacterCache.m */; };
 		C6675EBC1C4FE96B0041173B /* iTermSelectorSwizzler.m in Sources */ = {isa = PBXBuildFile; fileRef = C6675EBB1C4FE96B0041173B /* iTermSelectorSwizzler.m */; };
 		D3CE2D4E1A00936F0098ED99 /* PSMDarkTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = D3CE2D4C1A00936F0098ED99 /* PSMDarkTabStyle.h */; };
+		DA5FE0032E346FBB006ACCEC /* libhudsucker_ffi.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6D90DB02E3309B300BA9F4F /* libhudsucker_ffi.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = DDF0FD63062916F70080EF74 /* iTermApplication.h */; };
 		FB4CEC973C7E9235362E3F26 /* iTermRemotePreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = FB4CECF4AC4392B21E87A07B /* iTermRemotePreferences.h */; };
 /* End PBXBuildFile section */
@@ -5264,6 +5264,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				DA5FE0032E346FBB006ACCEC /* libhudsucker_ffi.dylib in CopyFiles */,
 				A6EC8053281C4A6A00493544 /* SwiftyMarkdown.framework in CopyFiles */,
 				A6A3D18E2815F74A00C0C9E0 /* Highlightr.framework in CopyFiles */,
 				530AB89C20AFF23400D2AA08 /* CoreParse.framework in CopyFiles */,
@@ -5328,7 +5329,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 6;
 			files = (
-				A6D90DB12E3309B300BA9F4F /* libhudsucker_ffi.dylib in CopyFiles */,
 				A6A5BE0D2A070D4A00F5FD44 /* iTerm2ImportStatus.app in CopyFiles */,
 				A60593CC257DFAE400CACEE6 /* ShellLauncher in CopyFiles */,
 				A63F2A3923FA5698008DDEA4 /* iTermServer in CopyFiles */,
