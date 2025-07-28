@@ -183,51 +183,24 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
             // Configure proxy if enabled
             applyProxyConfiguration(to: configuration.websiteDataStore)
 
-            var js = """
-                let oldLog = console.log;
-                let oldError = console.error;
-                console.log = function() {
-                    oldLog.apply(console, arguments);
-                    window.webkit.messageHandlers.iTerm2ConsoleLog.postMessage(
-                        Array.from(arguments).join(" ")
-                    );
-                };
-                console.error = function() {
-                    oldError.apply(console, arguments);
-                    window.webkit.messageHandlers.iTerm2ConsoleLog.postMessage(
-                        Array.from(arguments).join(" ")
-                    );
-                };
-                console.log("console.log loaded");
-            """
+            var logErrors = ""
+#if DEBUG
+            logErrors = iTermBrowserTemplateLoader(named: "log-errors",
+                                                   type: "js",
+                                                   substitutions: [:])
+#endif
 
-            #if DEBUG
-            js.append("""
-              window.addEventListener('error', function(event) {
-                console.log(
-                  '[Injected JS Error]',
-                  'message:', event.message,
-                  'source:', event.filename + ':' + event.lineno + ':' + event.colno,
-                  'error object:', event.error,
-                  'stack:', event.error && event.error.stack
-                );
-              });
+            var js = iTermBrowserTemplateLoader.loadTemplate(named: "console-log",
+                                                             type: "js",
+                                                             substitutions: ["LOG_ERRORS": logErrors])
 
-              window.addEventListener('unhandledrejection', function(event) {
-                console.log(
-                  '[Unhandled Promise Rejection]',
-                  'reason:', event.reason,
-                  'stack:', event.reason && event.reason.stack
-                );
-              });
-            """)
-            #endif
-            configuration.userContentController.add(handlerProxy, name: "iTerm2ConsoleLog")
+            configuration.userContentController.add(handlerProxy, contentWorld: .page, name: "iTerm2ConsoleLog")
+            configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: "iTerm2ConsoleLog")
             contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
                 code: "(function() {" + js + "})();",
                 injectionTime: .atDocumentStart,
                 forMainFrameOnly: false,
-                worlds: [.page],
+                worlds: [.page, .defaultClient],
                 identifier: UserScripts.consoleLog.rawValue))
 
             // TODO: Ensure all of these handlers are stateless because related webviews (e.g., target=_blank) share them.

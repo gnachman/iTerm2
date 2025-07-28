@@ -107,8 +107,8 @@ class iTermBrowserFindManager: NSObject {
             // Add message handler
             webView.configuration.userContentController.add(
                 delegate,
-                name: "iTermCustomFind"
-            )
+                contentWorld: .defaultClient,
+                name: "iTermCustomFind")
 
             isJavaScriptInjected = true
         }

@@ -3134,6 +3134,12 @@
 		A6A3CDBE2E36F34300710B09 /* load.php in Resources */ = {isa = PBXBuildFile; fileRef = A6A3CD962E36F34300710B09 /* load.php */; };
 		A6A3CDC52E36F34300710B09 /* secretaryofstate.html in Resources */ = {isa = PBXBuildFile; fileRef = A6A3CDA92E36F34300710B09 /* secretaryofstate.html */; };
 		A6A3CDC92E36F4EC00710B09 /* custom-find.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D90D652E2FF7E100BA9F4F /* custom-find.js */; };
+		A6A3CE102E38313C00710B09 /* console-log.js in Resources */ = {isa = PBXBuildFile; fileRef = A6A3CE0E2E38307900710B09 /* console-log.js */; };
+		A6A3CE112E38313C00710B09 /* log-errors.js in Resources */ = {isa = PBXBuildFile; fileRef = A6A3CE0F2E3830D300710B09 /* log-errors.js */; };
+		A6A3CE122E38313C00710B09 /* console-log.js in Resources */ = {isa = PBXBuildFile; fileRef = A6A3CE0E2E38307900710B09 /* console-log.js */; };
+		A6A3CE132E38313C00710B09 /* log-errors.js in Resources */ = {isa = PBXBuildFile; fileRef = A6A3CE0F2E3830D300710B09 /* log-errors.js */; };
+		A6A3CE142E38313C00710B09 /* log-errors.js in Resources */ = {isa = PBXBuildFile; fileRef = A6A3CE0F2E3830D300710B09 /* log-errors.js */; };
+		A6A3CE152E38313C00710B09 /* console-log.js in Resources */ = {isa = PBXBuildFile; fileRef = A6A3CE0E2E38307900710B09 /* console-log.js */; };
 		A6A3D18B2815EF4D00C0C9E0 /* Highlightr.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6A3D18A2815EF4D00C0C9E0 /* Highlightr.framework */; };
 		A6A3D18D2815EF6F00C0C9E0 /* TextViewPortholeRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A3D18C2815EF6F00C0C9E0 /* TextViewPortholeRenderer.swift */; };
 		A6A3D18E2815F74A00C0C9E0 /* Highlightr.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6A3D18A2815EF4D00C0C9E0 /* Highlightr.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -7865,6 +7871,8 @@
 		A6A3CD972E36F34300710B09 /* load(1).php */ = {isa = PBXFileReference; lastKnownFileType = text.script.php; path = "load(1).php"; sourceTree = "<group>"; };
 		A6A3CD982E36F34300710B09 /* load(2).php */ = {isa = PBXFileReference; lastKnownFileType = text.script.php; path = "load(2).php"; sourceTree = "<group>"; };
 		A6A3CDA92E36F34300710B09 /* secretaryofstate.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = secretaryofstate.html; sourceTree = "<group>"; };
+		A6A3CE0E2E38307900710B09 /* console-log.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "console-log.js"; sourceTree = "<group>"; };
+		A6A3CE0F2E3830D300710B09 /* log-errors.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "log-errors.js"; sourceTree = "<group>"; };
 		A6A3D18A2815EF4D00C0C9E0 /* Highlightr.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Highlightr.framework; path = ThirdParty/Highlightr.framework; sourceTree = "<group>"; };
 		A6A3D18C2815EF6F00C0C9E0 /* TextViewPortholeRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextViewPortholeRenderer.swift; sourceTree = "<group>"; };
 		A6A3D18F281663EE00C0C9E0 /* extensions.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; name = extensions.json; path = OtherResources/extensions.json; sourceTree = "<group>"; };
@@ -13341,6 +13349,8 @@
 		A6CBB8202E0A1CE000B2CCCB /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				A6A3CE0F2E3830D300710B09 /* log-errors.js */,
+				A6A3CE0E2E38307900710B09 /* console-log.js */,
 				A6D90D652E2FF7E100BA9F4F /* custom-find.js */,
 				A6CBB7FD2E09163A00B2CCCB /* check-iframe-origins.js */,
 				A6FE7A862E0E252300BEBCE4 /* hover-link-detector.js */,
@@ -15841,6 +15851,8 @@
 				A6F31A32295BC41700C1A51E /* uniE0C8_PowerlineExtraSymbols.pdf in Resources */,
 				A67D0D4C1A2EE12A003A8B35 /* configPanel.strings in Resources */,
 				A63011B520E7EE6B008114B7 /* iTermStatusBarKnobNumericViewController.xib in Resources */,
+				A6A3CE142E38313C00710B09 /* log-errors.js in Resources */,
+				A6A3CE152E38313C00710B09 /* console-log.js in Resources */,
 				A6EC808B282A28CE00493544 /* SSHConfigurationWindow.xib in Resources */,
 				537A1FBE22169B2200FBEE5A /* MinimalPasteView.xib in Resources */,
 				1DA76A261B308AD000CB272A /* iTermTipCardViewController.xib in Resources */,
@@ -16367,6 +16379,8 @@
 				A6109B622B969B4100D8E4E9 /* graphic_neovim.png in Resources */,
 				A6E7AE68214394CA00DE9F3B /* graphic_bullhorn@2x.png in Resources */,
 				A6CEDA6019988A7300BB57EC /* LogoFrame.png in Resources */,
+				A6A3CE122E38313C00710B09 /* console-log.js in Resources */,
+				A6A3CE132E38313C00710B09 /* log-errors.js in Resources */,
 				A67F615F214395990093940A /* graphic_monitor@2x.png in Resources */,
 				A697CDEA2D975E680031583F /* ActionsMenuTip.jpg in Resources */,
 				A697CDEB2D975E680031583F /* ActionsMenuTip@2x.jpg in Resources */,
@@ -17537,6 +17551,8 @@
 				9DB3D6ED176CC47E0071CCF8 /* PrefsMouse@2x.png in Resources */,
 				A68E33331DE746F5003F1D8E /* Add Mark Touch Bar Icon.png in Resources */,
 				A6E7AE98214394DD00DE9F3B /* graphic_code.png in Resources */,
+				A6A3CE102E38313C00710B09 /* console-log.js in Resources */,
+				A6A3CE112E38313C00710B09 /* log-errors.js in Resources */,
 				A6CBB9E02E0B6EA200B2CCCB /* extend-selection-character.js in Resources */,
 				A6CBB9E12E0B6EA200B2CCCB /* extend-selection-word.js in Resources */,
 				A6CBB9E22E0B6EA200B2CCCB /* extend-selection-bigword.js in Resources */,
