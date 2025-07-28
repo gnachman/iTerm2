@@ -2,12 +2,110 @@
     'use strict';
 
     // ==============================
+    //  Security: Native API Capture
+    // ==============================
+
+    // Capture all native DOM APIs before any user code can tamper with them
+    const _createRange = document.createRange.bind(document);
+    const _createTreeWalker = document.createTreeWalker.bind(document);
+    const _createElement = document.createElement.bind(document);
+    const _querySelectorAll = document.querySelectorAll.bind(document);
+    const _getElementById = document.getElementById.bind(document);
+
+    // Range prototype methods
+    const _Range_setStart = Range.prototype.setStart;
+    const _Range_setEnd = Range.prototype.setEnd;
+    const _Range_extractContents = Range.prototype.extractContents;
+    const _Range_insertNode = Range.prototype.insertNode;
+
+    // TreeWalker/NodeFilter
+    const _TreeWalker_nextNode = TreeWalker.prototype.nextNode;
+    const _SHOW_TEXT = NodeFilter.SHOW_TEXT;
+    const _FILTER_ACCEPT = NodeFilter.FILTER_ACCEPT;
+    const _FILTER_REJECT = NodeFilter.FILTER_REJECT;
+
+    // Element methods
+    const _matches = Element.prototype.matches;
+    const _getBoundingClientRect = Element.prototype.getBoundingClientRect;
+    const _scrollIntoView = Element.prototype.scrollIntoView;
+    const _appendChild = Element.prototype.appendChild;
+    const _insertBefore = Element.prototype.insertBefore;
+    const _removeChild = Element.prototype.removeChild;
+    const _setAttribute = Element.prototype.setAttribute;
+    const _getAttribute = Element.prototype.getAttribute;
+    const _removeAttribute = Element.prototype.removeAttribute;
+    const _hasAttribute = Element.prototype.hasAttribute;
+
+    // Node methods
+    const _normalize = Node.prototype.normalize;
+
+    // Window/Document methods
+    const _getComputedStyle = window.getComputedStyle;
+    const _addEventListener = EventTarget.prototype.addEventListener;
+    const _removeEventListener = EventTarget.prototype.removeEventListener;
+    const _caretRangeFromPoint = document.caretRangeFromPoint ? document.caretRangeFromPoint.bind(document) : null;
+
+    // Text node properties - capture descriptor to get native getter/setter
+    const _textContentDescriptor = Object.getOwnPropertyDescriptor(Node.prototype, 'textContent');
+    const _textContentGetter = _textContentDescriptor ? _textContentDescriptor.get : null;
+
+    // ClassList methods
+    const _classList_add = DOMTokenList.prototype.add;
+    const _classList_remove = DOMTokenList.prototype.remove;
+    const _classList_contains = DOMTokenList.prototype.contains;
+
+    // RegExp methods
+    const _RegExp_exec = RegExp.prototype.exec;
+
+    // JSON methods
+    const _JSON_stringify = JSON.stringify;
+
+    // Freeze critical prototypes to prevent tampering after our capture
+    Object.freeze(document.createRange);
+    Object.freeze(document.createTreeWalker);
+    Object.freeze(Range.prototype.setStart);
+    Object.freeze(Range.prototype.setEnd);
+    Object.freeze(Range.prototype.extractContents);
+    Object.freeze(Range.prototype.insertNode);
+    Object.freeze(TreeWalker.prototype.nextNode);
+    Object.freeze(Element.prototype.matches);
+    Object.freeze(Element.prototype.getBoundingClientRect);
+    Object.freeze(Element.prototype.appendChild);
+    Object.freeze(Element.prototype.insertBefore);
+    Object.freeze(Element.prototype.removeChild);
+    Object.freeze(Element.prototype.setAttribute);
+    Object.freeze(Element.prototype.getAttribute);
+    Object.freeze(Element.prototype.removeAttribute);
+    Object.freeze(Element.prototype.hasAttribute);
+    Object.freeze(Element.prototype.scrollIntoView);
+    Object.freeze(Node.prototype.removeChild);
+    Object.freeze(Node.prototype.normalize);
+    Object.freeze(DOMTokenList.prototype.add);
+    Object.freeze(DOMTokenList.prototype.remove);
+    Object.freeze(DOMTokenList.prototype.contains);
+    Object.freeze(RegExp.prototype.exec);
+    Object.freeze(JSON.stringify);
+    Object.freeze(window.getComputedStyle);
+
+    // Message handler capture (done early to prevent tampering)
+    const _messageHandler = window.webkit?.messageHandlers?.iTermCustomFind;
+    const _postMessage = _messageHandler?.postMessage?.bind(_messageHandler);
+
+    // ==============================
     //  Block-Based Find Engine
     // ==============================
 
     const TAG = '[iTermCustomFind-BlockBased]';
     const sessionSecret = "{{SECRET}}";
     const DEFAULT_INSTANCE_ID = 'default';
+
+    // Security constants
+    const MAX_SEARCH_TERM_LENGTH = 1000;
+    const MAX_CONTEXT_LENGTH = 500;
+    const MAX_REGEX_COMPLEXITY = 100;
+    const MAX_INSTANCES = 10;
+    const VALID_SEARCH_MODES = ['caseSensitive', 'caseInsensitive', 'caseSensitiveRegex', 'caseInsensitiveRegex'];
+    const VALID_ACTIONS = ['startFind', 'findNext', 'findPrevious', 'clearFind', 'reveal', 'hideResults', 'showResults', 'updatePositions'];
 
     // Global registry of engines on this page
     const INSTANCES = new Map();
@@ -29,8 +127,167 @@
          }
      `;
 
+    // ==============================
+    //  Security Helper Functions
+    // ==============================
+
+    // Simple hash function for integrity verification
+    function simpleHash(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32-bit integer
+        }
+        return hash.toString(36);
+    }
+
+    // Secure message posting with integrity verification
+    function securePostMessage(payload) {
+        if (!_postMessage) {
+            console.warn(TAG, 'Message handler unavailable - postMessage failed');
+            return false;
+        }
+
+        try {
+            // Add integrity hash using sessionSecret
+            payload.integrity = simpleHash(_JSON_stringify(payload.data) + sessionSecret);
+            _postMessage(payload);
+            return true;
+        } catch (e) {
+            console.error(TAG, 'Failed to post message:', e);
+            return false;
+        }
+    }
+
+    function validateSessionSecret(secret) {
+        return secret === sessionSecret;
+    }
+
+    function sanitizeString(str, maxLength = MAX_SEARCH_TERM_LENGTH) {
+        if (typeof str !== 'string') {
+            return '';
+        }
+        // Remove null bytes and control characters
+        str = str.replace(/\0/g, '').replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+        // Limit length
+        return str.slice(0, maxLength);
+    }
+
+    function sanitizeInstanceId(id) {
+        if (typeof id !== 'string') {
+            return DEFAULT_INSTANCE_ID;
+        }
+        // Only allow alphanumeric characters, underscore, and hyphen
+        const cleaned = id.replace(/[^A-Za-z0-9_-]/g, '');
+        // Ensure it's not empty and within length limits
+        const result = cleaned.slice(0, 50);
+        return result.length > 0 ? result : DEFAULT_INSTANCE_ID;
+    }
+
+    function validateNumber(value, min, max, defaultValue) {
+        const num = parseInt(value, 10);
+        if (isNaN(num) || num < min || num > max) {
+            return defaultValue;
+        }
+        return num;
+    }
+
+    function validateSearchMode(mode) {
+        return VALID_SEARCH_MODES.includes(mode) ? mode : 'caseInsensitive';
+    }
+
+    function validateAction(action) {
+        return VALID_ACTIONS.includes(action) ? action : null;
+    }
+
+    function escapeHtml(str) {
+        const div = _createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function validateRegexComplexity(pattern) {
+        // Check for patterns that could cause catastrophic backtracking
+        const dangerousPatterns = [
+            /(\w+\+)+\w/,           // Nested quantifiers
+            /(\w+\*)+\w/,
+            /(\w+\?)+\w/,
+            /(\w+\{[\d,]+\})+\w/,
+            /([\w\s]+)+$/,          // Alternation with overlapping
+            /(\w+\|)+\w/,
+            /\(\?.*\)/              // Advanced regex features
+        ];
+
+        for (const dangerous of dangerousPatterns) {
+            if (dangerous.test(pattern)) {
+                return false;
+            }
+        }
+
+        // Limit pattern length
+        if (pattern.length > MAX_REGEX_COMPLEXITY) {
+            return false;
+        }
+
+        return true;
+    }
+
+    function validateCommand(command) {
+        if (!command || typeof command !== 'object') {
+            return null;
+        }
+
+        // Validate session secret
+        if (!validateSessionSecret(command.sessionSecret)) {
+            console.error(TAG, 'Invalid session secret');
+            return null;
+        }
+
+        // Create sanitized command
+        const sanitized = {
+            action: validateAction(command.action),
+            instanceId: sanitizeInstanceId(command.instanceId),
+            sessionSecret: sessionSecret // Use the valid secret
+        };
+
+        if (!sanitized.action) {
+            console.error(TAG, 'Invalid action:', command.action);
+            return null;
+        }
+
+        // Validate action-specific parameters
+        switch (sanitized.action) {
+            case 'startFind':
+                sanitized.searchTerm = sanitizeString(command.searchTerm);
+                sanitized.searchMode = validateSearchMode(command.searchMode);
+                sanitized.contextLength = validateNumber(command.contextLength, 0, MAX_CONTEXT_LENGTH, 0);
+
+                // Validate regex patterns
+                if (sanitized.searchMode.includes('Regex')) {
+                    if (!validateRegexComplexity(sanitized.searchTerm)) {
+                        console.error(TAG, 'Regex pattern too complex or dangerous');
+                        return null;
+                    }
+                }
+                break;
+
+            case 'reveal':
+                if (command.identifier && typeof command.identifier === 'object') {
+                    sanitized.identifier = {
+                        bufferStart: validateNumber(command.identifier.bufferStart, 0, Number.MAX_SAFE_INTEGER, 0),
+                        bufferEnd: validateNumber(command.identifier.bufferEnd, 0, Number.MAX_SAFE_INTEGER, 0),
+                        text: sanitizeString(command.identifier.text, 100)
+                    };
+                }
+                break;
+        }
+
+        return sanitized;
+    }
+
     function injectStyles() {
-        if (document.getElementById('iterm-find-styles')) {
+        if (_getElementById('iterm-find-styles')) {
             return;
         }
 
@@ -44,10 +301,10 @@
             return;
         }
 
-        const styleElement = document.createElement('style');
+        const styleElement = _createElement('style');
         styleElement.id = 'iterm-find-styles';
         styleElement.textContent = highlightStyles;
-        document.head.appendChild(styleElement);
+        _appendChild.call(document.head, styleElement);
         console.debug(TAG, 'Styles injected');
     }
     injectStyles();
@@ -108,18 +365,18 @@
             this.textNodeMap = new TextNodeMap();
 
             let position = 0;
-            const walker = document.createTreeWalker(
+            const walker = _createTreeWalker(
                 this.element,
-                NodeFilter.SHOW_TEXT,
+                _SHOW_TEXT,
                 {
                     acceptNode: (node) => {
                         const parent = node.parentElement;
-                        if (!parent) return NodeFilter.FILTER_REJECT;
+                        if (!parent) return _FILTER_REJECT;
 
                         // Skip script and style
                         const tag = parent.tagName;
                         if (tag === 'SCRIPT' || tag === 'STYLE') {
-                            return NodeFilter.FILTER_REJECT;
+                            return _FILTER_REJECT;
                         }
 
                         // Check if node is hidden and try to find revealer
@@ -128,7 +385,7 @@
                             if (!rev) {
                                 engine.hiddenSkippedCount++;
                                 engine.log('reject hidden node', node.textContent.slice(0, 40));
-                                return NodeFilter.FILTER_REJECT;
+                                return _FILTER_REJECT;
                             } else {
                                 node._itermReveal = rev;
                                 engine.log('accept hidden via revealer', rev.tagName, node.textContent.slice(0, 40));
@@ -137,23 +394,23 @@
 
                         // Skip completely empty text nodes, but keep whitespace-containing nodes
                         if (!node.textContent || node.textContent.length === 0) {
-                            return NodeFilter.FILTER_REJECT;
+                            return _FILTER_REJECT;
                         }
 
-                        return NodeFilter.FILTER_ACCEPT;
+                        return _FILTER_ACCEPT;
                     }
                 }
             );
 
             let node;
-            while (node = walker.nextNode()) {
+            while (node = _TreeWalker_nextNode.call(walker)) {
                 position = this.textNodeMap.addTextNode(node, position);
                 this.textContent += node.textContent;
             }
         }
 
         updateBounds() {
-            this.bounds = this.element.getBoundingClientRect();
+            this.bounds = _getBoundingClientRect.call(this.element);
         }
 
         containsPoint(x, y) {
@@ -169,7 +426,18 @@
 
     function safeStringify(obj) {
         try {
-            return JSON.stringify(obj);
+            return JSON.stringify(obj, (key, value) => {
+                // Prevent circular references
+                if (typeof value === 'object' && value !== null) {
+                    if (value instanceof Node) {
+                        return '[DOM Node]';
+                    }
+                    if (value instanceof Window) {
+                        return '[Window]';
+                    }
+                }
+                return value;
+            });
         } catch (_) {
             return String(obj);
         }
@@ -255,7 +523,7 @@
             for (let e = el; e; e = e.parentElement) {
                 if (e.hasAttribute('hidden')) { return true; }
                 if (e.getAttribute('aria-hidden') === 'true') { return true; }
-                const cs = getComputedStyle(e);
+                const cs = _getComputedStyle(e);
                 if (cs.display === 'none' || cs.visibility === 'hidden') { return true; }
             }
             return false;
@@ -264,13 +532,13 @@
         firstRevealableAncestor(el) {
             for (let e = el; e; e = e.parentElement) {
                 // Check static selectors first
-                if (SAFE_REVEAL_SELECTORS.some(sel => { try { return e.matches(sel); } catch (_) { return false; } })) {
+                if (SAFE_REVEAL_SELECTORS.some(sel => { try { return _matches.call(e, sel); } catch (_) { return false; } })) {
                     return e;
                 }
 
                 // Check for CSS-hidden elements that can be revealed
                 try {
-                    const cs = getComputedStyle(e);
+                    const cs = _getComputedStyle(e);
                     if (cs.display === 'none' || cs.visibility === 'hidden') {
                         return e;
                     }
@@ -295,17 +563,17 @@
                     return;
                 }
 
-                if (el.hasAttribute('hidden')) {
+                if (_hasAttribute.call(el, 'hidden')) {
                     this.revealRestores.push({ el, type: 'attr', attr: 'hidden', oldValue: '' });
-                    el.removeAttribute('hidden');
+                    _removeAttribute.call(el, 'hidden');
                 }
 
-                if (el.getAttribute('aria-hidden') === 'true') {
+                if (_getAttribute.call(el, 'aria-hidden') === 'true') {
                     this.revealRestores.push({ el, type: 'attr', attr: 'aria-hidden', oldValue: 'true' });
-                    el.setAttribute('aria-hidden', 'false');
+                    _setAttribute.call(el, 'aria-hidden', 'false');
                 }
 
-                const cs = getComputedStyle(el);
+                const cs = _getComputedStyle(el);
                 if (cs.display === 'none') {
                     this.revealRestores.push({ el, type: 'style-display', oldValue: el.style.display });
                     el.style.display = 'block';
@@ -315,19 +583,19 @@
                     el.style.visibility = 'visible';
                 }
 
-                if (el.matches('.mw-collapsible')) {
-                    if (el.classList.contains('collapsed')) {
+                if (_matches.call(el, '.mw-collapsible')) {
+                    if (_classList_contains.call(el.classList, 'collapsed')) {
                         this.revealRestores.push({ el, type: 'class-remove-add', removed: 'collapsed' });
-                        el.classList.remove('collapsed');
+                        _classList_remove.call(el.classList, 'collapsed');
                     }
                 }
-                if (el.matches('[aria-expanded="false"]')) {
-                    this.revealRestores.push({ el, type: 'attr', attr: 'aria-expanded', oldValue: el.getAttribute('aria-expanded') });
-                    el.setAttribute('aria-expanded', 'true');
+                if (_matches.call(el, '[aria-expanded="false"]')) {
+                    this.revealRestores.push({ el, type: 'attr', attr: 'aria-expanded', oldValue: _getAttribute.call(el, 'aria-expanded') });
+                    _setAttribute.call(el, 'aria-expanded', 'true');
                 }
-                if (el.matches('[data-collapsed="true"]')) {
-                    this.revealRestores.push({ el, type: 'attr', attr: 'data-collapsed', oldValue: el.getAttribute('data-collapsed') });
-                    el.setAttribute('data-collapsed', 'false');
+                if (_matches.call(el, '[data-collapsed="true"]')) {
+                    this.revealRestores.push({ el, type: 'attr', attr: 'data-collapsed', oldValue: _getAttribute.call(el, 'data-collapsed') });
+                    _setAttribute.call(el, 'data-collapsed', 'false');
                 }
             } catch (e) {
                 this.log('forceVisible error:', e);
@@ -419,6 +687,10 @@
         getClickLocation(x, y) {
             this.log('getClickLocation: called with coordinates', x, y);
 
+            // Validate coordinates
+            x = validateNumber(x, 0, window.innerWidth, 0);
+            y = validateNumber(y, 0, window.innerHeight, 0);
+
             // Find which block contains the click
             for (let i = 0; i < this.blocks.length; i++) {
                 const block = this.blocks[i];
@@ -426,7 +698,7 @@
                     this.log('getClickLocation: click is in block', i);
 
                     // Get caret position within block
-                    const range = document.caretRangeFromPoint(x, y);
+                    const range = _caretRangeFromPoint ? _caretRangeFromPoint(x, y) : null;
                     if (range && range.startContainer.nodeType === Node.TEXT_NODE) {
                         const textNode = range.startContainer;
                         const offset = range.startOffset;
@@ -437,24 +709,24 @@
 
                         // Use DOM-invariant position finding instead of cached textNodeMap
                         // This walks the current DOM state and works after highlighting
-                        const walker = document.createTreeWalker(
+                        const walker = _createTreeWalker(
                             block.element,
-                            NodeFilter.SHOW_TEXT,
+                            _SHOW_TEXT,
                             {
                                 acceptNode: (node) => {
                                     const parent = node.parentElement;
-                                    if (!parent) return NodeFilter.FILTER_REJECT;
+                                    if (!parent) return _FILTER_REJECT;
 
                                     const tag = parent.tagName;
                                     if (tag === 'SCRIPT' || tag === 'STYLE') {
-                                        return NodeFilter.FILTER_REJECT;
+                                        return _FILTER_REJECT;
                                     }
 
                                     if (!node.textContent || node.textContent.length === 0) {
-                                        return NodeFilter.FILTER_REJECT;
+                                        return _FILTER_REJECT;
                                     }
 
-                                    return NodeFilter.FILTER_ACCEPT;
+                                    return _FILTER_ACCEPT;
                                 }
                             }
                         );
@@ -462,7 +734,7 @@
                         let currentPos = 0;
                         let node;
 
-                        while (node = walker.nextNode()) {
+                        while (node = _TreeWalker_nextNode.call(walker)) {
                             this.log('getClickLocation: walking text node at pos', currentPos, 'content:', node.textContent.substring(0, 20));
                             if (node === textNode) {
                                 // Found our clicked text node
@@ -550,7 +822,7 @@
             regex.lastIndex = 0;
 
             let match;
-            while ((match = regex.exec(block.textContent)) !== null) {
+            while ((match = _RegExp_exec.call(regex, block.textContent)) !== null) {
                 matches.push({
                     blockIndex: blockIndex,
                     blockStart: match.index,
@@ -620,21 +892,21 @@
             }
 
             try {
-                const range = document.createRange();
-                range.setStart(startResult.node, startResult.offset);
-                range.setEnd(endResult.node, endResult.offset + 1); // +1 because we want inclusive end
+                const range = _createRange();
+                _Range_setStart.call(range, startResult.node, startResult.offset);
+                _Range_setEnd.call(range, endResult.node, endResult.offset + 1); // +1 because we want inclusive end
 
                 // Extract the content from the range
-                const contents = range.extractContents();
+                const contents = _Range_extractContents.call(range);
 
                 // Create the highlight span
-                const span = document.createElement('span');
+                const span = _createElement('span');
                 span.className = 'iterm-find-highlight';
-                span.setAttribute('data-iterm-id', this.instanceId);
-                span.appendChild(contents);
+                _setAttribute.call(span, 'data-iterm-id', this.instanceId);
+                _appendChild.call(span, contents);
 
                 // Insert the span at the range position
-                range.insertNode(span);
+                _Range_insertNode.call(range, span);
 
                 elements.push(span);
                 this.highlightedElements.push(span);
@@ -647,17 +919,17 @@
                     const charResult = this.findPositionInBlock(block, pos);
                     if (charResult) {
                         try {
-                            const range = document.createRange();
-                            range.setStart(charResult.node, charResult.offset);
-                            range.setEnd(charResult.node, charResult.offset + 1);
+                            const range = _createRange();
+                            _Range_setStart.call(range, charResult.node, charResult.offset);
+                            _Range_setEnd.call(range, charResult.node, charResult.offset + 1);
 
-                            const span = document.createElement('span');
+                            const span = _createElement('span');
                             span.className = 'iterm-find-highlight';
-                            span.setAttribute('data-iterm-id', this.instanceId);
+                            _setAttribute.call(span, 'data-iterm-id', this.instanceId);
 
-                            const contents = range.extractContents();
-                            span.appendChild(contents);
-                            range.insertNode(span);
+                            const contents = _Range_extractContents.call(range);
+                            _appendChild.call(span, contents);
+                            _Range_insertNode.call(range, span);
 
                             elements.push(span);
                             this.highlightedElements.push(span);
@@ -680,26 +952,26 @@
 
         findPositionInBlock(block, position) {
             // Walk the block's DOM tree and count characters until we reach the position
-            const walker = document.createTreeWalker(
+            const walker = _createTreeWalker(
                 block.element,
-                NodeFilter.SHOW_TEXT,
+                _SHOW_TEXT,
                 {
                     acceptNode: (node) => {
                         const parent = node.parentElement;
-                        if (!parent) return NodeFilter.FILTER_REJECT;
+                        if (!parent) return _FILTER_REJECT;
 
                         // Skip script and style
                         const tag = parent.tagName;
                         if (tag === 'SCRIPT' || tag === 'STYLE') {
-                            return NodeFilter.FILTER_REJECT;
+                            return _FILTER_REJECT;
                         }
 
                         // Skip completely empty text nodes, but keep whitespace-containing nodes
                         if (!node.textContent || node.textContent.length === 0) {
-                            return NodeFilter.FILTER_REJECT;
+                            return _FILTER_REJECT;
                         }
 
-                        return NodeFilter.FILTER_ACCEPT;
+                        return _FILTER_ACCEPT;
                     }
                 }
             );
@@ -707,7 +979,7 @@
             let currentPos = 0;
             let node;
 
-            while (node = walker.nextNode()) {
+            while (node = _TreeWalker_nextNode.call(walker)) {
                 const nodeText = node.textContent || '';
                 const nodeStart = currentPos;
                 const nodeEnd = currentPos + nodeText.length;
@@ -775,7 +1047,7 @@
         clearHighlights() {
             this.log('clearHighlights: starting');
 
-            const spans = document.querySelectorAll(
+            const spans = _querySelectorAll(
                 `.iterm-find-highlight[data-iterm-id="${this.instanceId}"], ` +
                 `.iterm-find-highlight-current[data-iterm-id="${this.instanceId}"]`
             );
@@ -786,14 +1058,14 @@
                 if (!parent) return;
 
                 while (span.firstChild) {
-                    parent.insertBefore(span.firstChild, span);
+                    _insertBefore.call(parent, span.firstChild, span);
                 }
-                parent.removeChild(span);
+                _removeChild.call(parent, span);
                 parents.add(parent);
             });
 
             // Normalize text nodes
-            parents.forEach(p => p.normalize());
+            parents.forEach(p => _normalize.call(p));
 
             // Restore revealed elements
             this.globallyAutoOpenedDetails.forEach(d => {
@@ -810,12 +1082,12 @@
                     el.style.visibility = rec.oldValue;
                 } else if (rec.type === 'attr') {
                     if (rec.oldValue === null || rec.oldValue === '') {
-                        el.removeAttribute(rec.attr);
+                        _removeAttribute.call(el, rec.attr);
                     } else {
-                        el.setAttribute(rec.attr, rec.oldValue);
+                        _setAttribute.call(el, rec.attr, rec.oldValue);
                     }
                 } else if (rec.type === 'class-remove-add') {
-                    if (rec.removed) { el.classList.add(rec.removed); }
+                    if (rec.removed) { _classList_add.call(el.classList, rec.removed); }
                 }
             });
             this.revealRestores = [];
@@ -873,7 +1145,7 @@
             if (this.currentMatchIndex >= 0 && this.currentMatchIndex < this.matches.length) {
                 this.matches[this.currentMatchIndex].els.forEach(e => {
                     e.className = 'iterm-find-highlight';
-                    e.setAttribute('data-iterm-id', this.instanceId);
+                    _setAttribute.call(e, 'data-iterm-id', this.instanceId);
                 });
             }
 
@@ -885,12 +1157,12 @@
 
             current.els.forEach(e => {
                 e.className = 'iterm-find-highlight-current';
-                e.setAttribute('data-iterm-id', this.instanceId);
+                _setAttribute.call(e, 'data-iterm-id', this.instanceId);
             });
 
             // Scroll into view
             if (current.els.length > 0) {
-                current.els[0].scrollIntoView({
+                _scrollIntoView.call(current.els[0], {
                     behavior: '{{SCROLL_BEHAVIOR}}',
                     block: 'center',
                     inline: 'center'
@@ -960,12 +1232,12 @@
 
                 current.els.forEach(e => {
                     e.className = 'iterm-find-highlight-current';
-                    e.setAttribute('data-iterm-id', this.instanceId);
+                    _setAttribute.call(e, 'data-iterm-id', this.instanceId);
                 });
 
                 // Scroll into view
                 if (current.els.length > 0) {
-                    current.els[0].scrollIntoView({
+                    _scrollIntoView.call(current.els[0], {
                         behavior: '{{SCROLL_BEHAVIOR}}',
                         block: 'center',
                         inline: 'center'
@@ -1066,7 +1338,7 @@
 
             // Get bounding boxes for all elements of this match
             const elementBounds = match.els.map(el => {
-                const rect = el.getBoundingClientRect();
+                const rect = _getBoundingClientRect.call(el);
                 // Convert viewport-relative coordinates to document-relative coordinates
                 return {
                     left: rect.left + window.scrollX,
@@ -1110,35 +1382,35 @@
 
         hideResults() {
             this.log('hideResults: hiding all search result highlights');
-            
+
             // Hide both regular and current highlights for this instance
-            const highlights = document.querySelectorAll(
+            const highlights = _querySelectorAll(
                 `.iterm-find-highlight[data-iterm-id="${this.instanceId}"], ` +
                 `.iterm-find-highlight-current[data-iterm-id="${this.instanceId}"]`
             );
-            
+
             highlights.forEach(highlight => {
                 // Add the hidden class to hide the highlight
-                highlight.classList.add('iterm-find-removed');
+                _classList_add.call(highlight.classList, 'iterm-find-removed');
             });
-            
+
             this.log(`hideResults: hid ${highlights.length} highlight elements`);
         }
 
         showResults() {
             this.log('showResults: showing all search result highlights');
-            
+
             // Show both regular and current highlights for this instance
-            const highlights = document.querySelectorAll(
+            const highlights = _querySelectorAll(
                 `.iterm-find-highlight[data-iterm-id="${this.instanceId}"], ` +
                 `.iterm-find-highlight-current[data-iterm-id="${this.instanceId}"]`
             );
-            
+
             highlights.forEach(highlight => {
                 // Remove the hidden class to show the highlight
-                highlight.classList.remove('iterm-find-removed');
+                _classList_remove.call(highlight.classList, 'iterm-find-removed');
             });
-            
+
             this.log(`showResults: showed ${highlights.length} highlight elements`);
         }
 
@@ -1146,7 +1418,7 @@
 
         extractContext(match) {
             this.log('extractContext: called for match at globalStart=' + match.globalStart + ', globalEnd=' + match.globalEnd);
-            
+
             if (!this.contextLen || this.contextLen <= 0) {
                 this.log('extractContext: no context length set, returning empty context');
                 return {
@@ -1267,26 +1539,11 @@
             this.log('reportResults: payload data keys=' + Object.keys(payload.data).join(','));
             this.log('reportResults: sessionSecret=' + sessionSecret);
 
-            try {
-                this.log('reportResults: checking message handler...');
-                if (!window.webkit) {
-                    this.log('reportResults: ERROR - window.webkit not found');
-                    return;
-                }
-                if (!window.webkit.messageHandlers) {
-                    this.log('reportResults: ERROR - window.webkit.messageHandlers not found');
-                    return;
-                }
-                if (!window.webkit.messageHandlers.iTermCustomFind) {
-                    this.log('reportResults: ERROR - window.webkit.messageHandlers.iTermCustomFind not found');
-                    return;
-                }
-
-                this.log('reportResults: posting message to Swift...');
-                window.webkit.messageHandlers.iTermCustomFind.postMessage(payload);
+            this.log('reportResults: posting message to Swift...');
+            if (securePostMessage(payload)) {
                 this.log('reportResults: message posted successfully');
-            } catch (e) {
-                this.log('reportResults: ERROR posting message:', e);
+            } else {
+                this.log('reportResults: ERROR - failed to post message');
             }
         }
 
@@ -1347,6 +1604,11 @@
         const key = id || DEFAULT_INSTANCE_ID;
         let engine = INSTANCES.get(key);
         if (!engine) {
+            // Limit number of instances
+            if (INSTANCES.size >= MAX_INSTANCES) {
+                console.error(TAG, 'Maximum number of instances reached');
+                return null;
+            }
             engine = new FindEngine(key);
             INSTANCES.set(key, engine);
         }
@@ -1354,20 +1616,42 @@
     }
 
     function handleCommand(command) {
-        const id = command.instanceId || DEFAULT_INSTANCE_ID;
-        const engine = getEngine(id);
-        return engine.handleFindCommand(command);
+        const validated = validateCommand(command);
+        if (!validated) {
+            console.error(TAG, 'Invalid command');
+            return;
+        }
+
+        const engine = getEngine(validated.instanceId);
+        if (!engine) {
+            console.error(TAG, 'Could not create engine');
+            return;
+        }
+
+        return engine.handleFindCommand(validated);
     }
 
-    function destroyInstance(id) {
+    function destroyInstance(command) {
+        if (!validateSessionSecret(command?.sessionSecret)) {
+            console.error(TAG, 'Invalid session secret for destroyInstance');
+            return;
+        }
+
+        const id = sanitizeInstanceId(command.instanceId);
         const engine = INSTANCES.get(id);
         if (engine) {
             engine.destroy();
         }
     }
 
-    function getDebugState(id) {
-        const engine = INSTANCES.get(id || DEFAULT_INSTANCE_ID);
+    function getDebugState(command) {
+        if (!validateSessionSecret(command?.sessionSecret)) {
+            console.error(TAG, 'Invalid session secret for getDebugState');
+            return { error: 'Unauthorized' };
+        }
+
+        const id = sanitizeInstanceId(command.instanceId);
+        const engine = INSTANCES.get(id);
         if (!engine) return { error: 'No engine found' };
 
         // Create match identifiers with matched text
@@ -1394,8 +1678,14 @@
         };
     }
 
-    function clearStateWithoutResponse(id) {
-        const engine = INSTANCES.get(id || DEFAULT_INSTANCE_ID);
+    function clearStateWithoutResponse(command) {
+        if (!validateSessionSecret(command?.sessionSecret)) {
+            console.error(TAG, 'Invalid session secret for clearStateWithoutResponse');
+            return { error: 'Unauthorized' };
+        }
+
+        const id = sanitizeInstanceId(command.instanceId);
+        const engine = INSTANCES.get(id);
         if (!engine) return { error: 'No engine found' };
 
         // Clear state without sending response to Swift
@@ -1408,8 +1698,14 @@
         return { cleared: true };
     }
 
-    function refreshBlockBounds(id) {
-        const engine = INSTANCES.get(id || DEFAULT_INSTANCE_ID);
+    function refreshBlockBounds(command) {
+        if (!validateSessionSecret(command?.sessionSecret)) {
+            console.error(TAG, 'Invalid session secret for refreshBlockBounds');
+            return { error: 'Unauthorized' };
+        }
+
+        const id = sanitizeInstanceId(command.instanceId);
+        const engine = INSTANCES.get(id);
         if (!engine) return { error: 'No engine found' };
 
         // Update bounds for all blocks
@@ -1424,8 +1720,14 @@
         return { updated: updatedCount };
     }
 
-    function getBlocks(id) {
-        const engine = INSTANCES.get(id || DEFAULT_INSTANCE_ID);
+    function getBlocks(command) {
+        if (!validateSessionSecret(command?.sessionSecret)) {
+            console.error(TAG, 'Invalid session secret for getBlocks');
+            return { error: 'Unauthorized' };
+        }
+
+        const id = sanitizeInstanceId(command.instanceId);
+        const engine = INSTANCES.get(id);
         if (!engine) return { error: 'No engine found' };
 
         return {
@@ -1438,19 +1740,35 @@
         };
     }
 
-    function getMatchBoundsInEngine(instanceId, identifier) {
-        const id = instanceId || DEFAULT_INSTANCE_ID;
+    function getMatchBoundsInEngine(command) {
+        if (!validateSessionSecret(command?.sessionSecret)) {
+            console.error(TAG, 'Invalid session secret for getMatchBoundsInEngine');
+            return { error: 'Unauthorized' };
+        }
+
+        const id = sanitizeInstanceId(command.instanceId);
         const engine = INSTANCES.get(id);
         if (!engine) {
             return { error: 'No engine found' };
         }
+
+        // Validate identifier
+        let identifier = null;
+        if (command.identifier && typeof command.identifier === 'object') {
+            identifier = {
+                bufferStart: validateNumber(command.identifier.bufferStart, 0, Number.MAX_SAFE_INTEGER, 0),
+                bufferEnd: validateNumber(command.identifier.bufferEnd, 0, Number.MAX_SAFE_INTEGER, 0),
+                text: sanitizeString(command.identifier.text, 100)
+            };
+        }
+
         return engine.getMatchBounds ? engine.getMatchBounds(identifier) : { error: 'Method not implemented' };
     }
 
     {{TEST_IMPLS}}
 
-    // Expose API
-    window.iTermCustomFind = {
+    // Expose API - Make it immutable
+    const api = {
         handleCommand,
         destroyInstance,
         getMatchBoundsInEngine,
@@ -1458,7 +1776,22 @@
         {{TEST_FUNCTIONS}}
     };
 
-    Object.freeze(window.iTermCustomFind);
+    // Freeze the API object and all its methods
+    Object.freeze(api);
+    Object.freeze(api.handleCommand);
+    Object.freeze(api.destroyInstance);
+    Object.freeze(api.getMatchBoundsInEngine);
+    Object.freeze(api.clearStateWithoutResponse);
+    {{TEST_FREEZE}}
+
+    // Use Object.defineProperty to make it non-configurable and non-writable
+    Object.defineProperty(window, 'iTermCustomFind', {
+        value: api,
+        writable: false,
+        configurable: false,
+        enumerable: true
+    });
+
     console.debug(TAG, 'Block-based find engine initialized');
     console.log('Block-based find engine initialized - visible in console');
 })();

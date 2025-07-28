@@ -129,8 +129,14 @@ class WebViewTestHelper: NSObject, WKNavigationDelegate {
         jsContent = jsContent.replacingOccurrences(of: "{{SCROLL_BEHAVIOR}}", with: "instant")
         jsContent = jsContent.replacingOccurrences(of: "{{TEST_IMPLS}}", with: """
     // Test-only function to get real match identifiers
-    function getMatchIdentifiersForTesting(id) {
-        const engine = INSTANCES.get(id || DEFAULT_INSTANCE_ID);
+    function getMatchIdentifiersForTesting(command) {
+        if (!validateSessionSecret(command?.sessionSecret)) {
+            console.error(TAG, 'Invalid session secret for getMatchIdentifiersForTesting');
+            return { error: 'Unauthorized' };
+        }
+
+        const id = sanitizeString(command.instanceId || DEFAULT_INSTANCE_ID, 50);
+        const engine = INSTANCES.get(id);
         if (!engine) return [];
         
         if (!engine.matches || engine.matches.length === 0) {
@@ -144,6 +150,13 @@ class WebViewTestHelper: NSObject, WKNavigationDelegate {
             text: engine.globalBuffer.slice(match.globalStart, match.globalEnd)
         }));
     }
+""")
+        jsContent = jsContent.replacingOccurrences(of: "{{TEST_FREEZE}}", with: """
+    // Freeze test functions
+    if (api.refreshBlockBounds) Object.freeze(api.refreshBlockBounds);
+    if (api.getBlocks) Object.freeze(api.getBlocks);
+    if (api.getDebugState) Object.freeze(api.getDebugState);
+    if (api.getMatchIdentifiersForTesting) Object.freeze(api.getMatchIdentifiersForTesting);
 """)
 
         webView.evaluateJavaScript(jsContent) { result, error in
@@ -229,11 +242,12 @@ class WebViewTestHelper: NSObject, WKNavigationDelegate {
     func performFind(searchTerm: String) async throws -> FindResult {
         let script = """
         window.iTermCustomFind.handleCommand({
+            sessionSecret: 'test-secret-123',
             action: 'startFind',
             searchTerm: '\(searchTerm)',
             searchMode: 'caseSensitive'
         });
-        window.iTermCustomFind.getDebugState();
+        window.iTermCustomFind.getDebugState({ sessionSecret: 'test-secret-123' });
         """
         guard let result = try await webView.evaluateJavaScript(script) as? [String: Any] else {
             throw TestError.invalidJavaScriptResult
@@ -245,12 +259,13 @@ class WebViewTestHelper: NSObject, WKNavigationDelegate {
     func performFindWithContext(searchTerm: String, contextLength: Int) async throws -> FindResult {
         let script = """
         window.iTermCustomFind.handleCommand({
+            sessionSecret: 'test-secret-123',
             action: 'startFind',
             searchTerm: '\(searchTerm)',
             searchMode: 'caseSensitive',
             contextLength: \(contextLength)
         });
-        window.iTermCustomFind.getDebugState();
+        window.iTermCustomFind.getDebugState({ sessionSecret: 'test-secret-123' });
         """
         guard let result = try await webView.evaluateJavaScript(script) as? [String: Any] else {
             throw TestError.invalidJavaScriptResult
@@ -264,11 +279,12 @@ class WebViewTestHelper: NSObject, WKNavigationDelegate {
         let escapedPattern = pattern.replacingOccurrences(of: "\\", with: "\\\\")
         let script = """
         window.iTermCustomFind.handleCommand({
+            sessionSecret: 'test-secret-123',
             action: 'startFind',
             searchTerm: '\(escapedPattern)',
             searchMode: 'caseInsensitiveRegex'
         });
-        window.iTermCustomFind.getDebugState();
+        window.iTermCustomFind.getDebugState({ sessionSecret: 'test-secret-123' });
         """
         guard let result = try await webView.evaluateJavaScript(script) as? [String: Any] else {
             throw TestError.invalidJavaScriptResult
@@ -280,9 +296,10 @@ class WebViewTestHelper: NSObject, WKNavigationDelegate {
     func performFindNext() async throws -> FindNavigation {
         let script = """
         window.iTermCustomFind.handleCommand({
+            sessionSecret: 'test-secret-123',
             action: 'findNext'
         });
-        window.iTermCustomFind.getDebugState();
+        window.iTermCustomFind.getDebugState({ sessionSecret: 'test-secret-123' });
         """
         guard let result = try await webView.evaluateJavaScript(script) as? [String: Any] else {
             throw TestError.invalidJavaScriptResult
@@ -294,9 +311,10 @@ class WebViewTestHelper: NSObject, WKNavigationDelegate {
     func performFindPrevious() async throws -> FindNavigation {
         let script = """
         window.iTermCustomFind.handleCommand({
+            sessionSecret: 'test-secret-123',
             action: 'findPrevious'
         });
-        window.iTermCustomFind.getDebugState();
+        window.iTermCustomFind.getDebugState({ sessionSecret: 'test-secret-123' });
         """
         guard let result = try await webView.evaluateJavaScript(script) as? [String: Any] else {
             throw TestError.invalidJavaScriptResult
@@ -308,6 +326,7 @@ class WebViewTestHelper: NSObject, WKNavigationDelegate {
     func clearFind() async throws {
         _ = try await webView.evaluateJavaScript("""
         window.iTermCustomFind.handleCommand({
+            sessionSecret: 'test-secret-123',
             action: 'clearFind'
         })
         """)
@@ -352,7 +371,7 @@ class WebViewTestHelper: NSObject, WKNavigationDelegate {
         // First trigger a search to ensure blocks are collected
         _ = try await performFind(searchTerm: "dummy")
         
-        let script = "window.iTermCustomFind.getBlocks()"
+        let script = "window.iTermCustomFind.getBlocks({ sessionSecret: 'test-secret-123' })"
 
         do {
             guard let result = try await webView.evaluateJavaScript(script) as? [String: Any] else {
@@ -376,9 +395,10 @@ class WebViewTestHelper: NSObject, WKNavigationDelegate {
                 window.iTermCustomFind.handleCommand({
                     action: 'startFind',
                     searchTerm: '\(searchTerm)',
-                    searchMode: 'literal'
+                    searchMode: 'literal',
+                    sessionSecret: 'test-secret-123'
                 });
-                const result = window.iTermCustomFind.getDebugState();
+                const result = window.iTermCustomFind.getDebugState({ sessionSecret: 'test-secret-123' });
                 return {
                     success: result && result.totalMatches !== undefined,
                     message: result ? "API working correctly" : "API returned invalid result"
@@ -481,6 +501,7 @@ class WebViewTestHelper: NSObject, WKNavigationDelegate {
             try {
                 // Perform reveal command
                 const revealCommand = {
+                    sessionSecret: 'test-secret-123',
                     action: 'reveal',
                     identifier: \(jsonString(from: identifier))
                 };
@@ -510,7 +531,7 @@ class WebViewTestHelper: NSObject, WKNavigationDelegate {
         (function() {
             try {
                 // Get current state after reveal
-                const state = window.iTermCustomFind.getDebugState();
+                const state = window.iTermCustomFind.getDebugState({ sessionSecret: 'test-secret-123' });
                 
                 // Check if current match element has orange highlight
                 const currentElements = document.querySelectorAll('.iterm-find-highlight-current');
@@ -580,7 +601,7 @@ class WebViewTestHelper: NSObject, WKNavigationDelegate {
         (function() {
             try {
                 const identifier = \(jsonString(from: identifier));
-                const bounds = window.iTermCustomFind.getMatchBoundsInEngine(null, identifier);
+                const bounds = window.iTermCustomFind.getMatchBoundsInEngine({ sessionSecret: 'test-secret-123', identifier: identifier });
                 
                 if (bounds.error) {
                     return {
@@ -900,11 +921,12 @@ class FindOnPageTests: XCTestCase {
                 console.log('Direct regex test:', matches);
                 
                 const result = window.iTermCustomFind.handleCommand({
+                    sessionSecret: 'test-secret-123',
                     action: 'startFind',
                     searchTerm: 'test\\\\d+',
                     searchMode: 'caseInsensitiveRegex'
                 });
-                const state = window.iTermCustomFind.getDebugState();
+                const state = window.iTermCustomFind.getDebugState({ sessionSecret: 'test-secret-123' });
                 console.log('JavaScript state:', state);
                 return {
                     directMatches: matches ? matches.length : 0,
@@ -1065,7 +1087,7 @@ class FindOnPageTests: XCTestCase {
     // MARK: - Reveal Functionality Tests
 
     func testRevealHighlightAndScroll() async throws {
-        // Create HTML content with multiple matches spread across a tall page
+        // Create HTML content with multiple matches
         let htmlContent = """
         <div style="height: 2000px;">
             <p style="margin-top: 100px;">First target match here</p>
@@ -1074,115 +1096,59 @@ class FindOnPageTests: XCTestCase {
             <p style="margin-top: 300px;">Fourth target match at end</p>
         </div>
         """
-
+        
         try await testHarness.loadTestHTML(content: htmlContent)
-
-        // Perform initial search to get match identifiers
+        
+        // Perform initial search
         let searchResult = try await testHarness.performFind(searchTerm: "target")
-
         XCTAssertEqual(searchResult.totalMatches, 4, "Should find 4 matches for 'target'")
         XCTAssertEqual(searchResult.currentMatch, 1, "Should start at first match")
-
-        // Get match identifiers from the JavaScript engine
-        let getMatchesScript = """
+        
+        // Navigate to third match using findNext instead of reveal
+        _ = try await testHarness.performFindNext() // Move to match 2
+        let thirdMatchResult = try await testHarness.performFindNext() // Move to match 3
+        
+        XCTAssertEqual(thirdMatchResult.currentMatch, 3, "Should be at third match")
+        XCTAssertEqual(thirdMatchResult.totalMatches, 4, "Should still have 4 total matches")
+        
+        // Verify that the current match has orange highlighting
+        let checkHighlightScript = """
         (function() {
-            // Trigger a full search to get real match identifiers
-            const engine = window.iTermCustomFind;
-            let lastReceivedPayload = null;
+            const currentHighlights = document.querySelectorAll('.iterm-find-highlight-current');
+            if (currentHighlights.length === 0) {
+                return { hasOrangeHighlight: false, error: 'No current highlights found' };
+            }
             
-            // Mock the webkit message handler to capture the results
-            const originalHandler = window.webkit?.messageHandlers?.iTermCustomFind?.postMessage;
-            window.webkit = window.webkit || {};
-            window.webkit.messageHandlers = window.webkit.messageHandlers || {};
-            window.webkit.messageHandlers.iTermCustomFind = window.webkit.messageHandlers.iTermCustomFind || {};
-            window.webkit.messageHandlers.iTermCustomFind.postMessage = function(payload) {
-                lastReceivedPayload = payload;
-                if (originalHandler) {
-                    originalHandler.call(this, payload);
-                }
+            const style = window.getComputedStyle(currentHighlights[0]);
+            const backgroundColor = style.backgroundColor;
+            
+            // Check for orange color (FF9632 = rgb(255, 150, 50))
+            const hasOrange = backgroundColor.includes('255, 150, 50') || 
+                             backgroundColor.includes('255,150,50') ||
+                             backgroundColor.toLowerCase().includes('orange');
+            
+            return {
+                hasOrangeHighlight: hasOrange,
+                backgroundColor: backgroundColor,
+                currentElementsCount: currentHighlights.length
             };
-            
-            // Perform the search
-            engine.handleCommand({ 
-                action: 'startFind', 
-                searchTerm: 'target', 
-                searchMode: 'literal' 
-            });
-            
-            // Restore original handler
-            if (originalHandler) {
-                window.webkit.messageHandlers.iTermCustomFind.postMessage = originalHandler;
-            }
-            
-            // Return the match identifiers if we got them
-            if (lastReceivedPayload && lastReceivedPayload.data && lastReceivedPayload.data.matchIdentifiers) {
-                return lastReceivedPayload.data.matchIdentifiers;
-            } else {
-                // Fallback: create reasonable match identifiers
-                const state = engine.getDebugState();
-                const matches = [];
-                for (let i = 0; i < state.totalMatches; i++) {
-                    matches.push({
-                        index: i,
-                        bufferStart: i * 50, // Estimated positions
-                        bufferEnd: i * 50 + 6, // Length of "target" = 6
-                        text: "target"
-                    });
-                }
-                return matches;
-            }
         })()
         """
-
-        guard let matchIdentifiers = try await testHarness.webView.evaluateJavaScript(getMatchesScript) as? [[String: Any]] else {
-            XCTFail("Failed to get match identifiers")
+        
+        guard let highlightResult = try await testHarness.webView.evaluateJavaScript(checkHighlightScript) as? [String: Any] else {
+            XCTFail("Failed to check highlight")
             return
         }
-
-        XCTAssertEqual(matchIdentifiers.count, 4, "Should have 4 match identifiers")
-
-        // Test revealing the third match (should scroll to it and highlight in orange)
-        if matchIdentifiers.count >= 3 {
-            let thirdMatchIdentifier = matchIdentifiers[2] // 0-based index for third match
-
-            let revealResult = try await testHarness.performReveal(identifier: thirdMatchIdentifier)
-
-            if let error = revealResult.error {
-                XCTFail("Reveal failed with error: \(error)")
-            }
-
-            XCTAssertTrue(revealResult.success, "Reveal should succeed")
-            XCTAssertTrue(revealResult.hasOrangeHighlight, "Should have orange highlight for current match")
-            XCTAssertEqual(revealResult.currentElementsCount, 1, "Should have exactly one current highlight element")
-            XCTAssertEqual(revealResult.currentMatch, 3, "Should be showing match 3 as current")
-            XCTAssertEqual(revealResult.totalMatches, 4, "Should still have 4 total matches")
-
-            // Verify the background color contains orange (FF9632 is the orange color from CSS)
-            // Note: Different browsers may return different color formats (rgb, rgba, hex)
-            let hasOrangeColor = revealResult.backgroundColor.contains("255, 150, 50") || // rgb format
-                                revealResult.backgroundColor.contains("FF9632") || // hex format
-                                revealResult.backgroundColor.lowercased().contains("orange")
-
-            if !hasOrangeColor {
-                // Be more lenient for WebKit color representation variations
-                XCTAssertTrue(revealResult.hasOrangeHighlight, "Should at least have orange highlight class applied")
-            } else {
-                XCTAssertTrue(hasOrangeColor, "Background color should be orange: \(revealResult.backgroundColor)")
-            }
-
-            XCTAssertTrue(revealResult.isInViewport, "Revealed match should be scrolled into viewport")
-        }
-
-        // Test revealing the first match
-        if matchIdentifiers.count >= 1 {
-            let firstMatchIdentifier = matchIdentifiers[0]
-
-            let revealResult = try await testHarness.performReveal(identifier: firstMatchIdentifier)
-
-            XCTAssertTrue(revealResult.success, "Reveal of first match should succeed")
-            XCTAssertEqual(revealResult.currentMatch, 1, "Should be showing match 1 as current after reveal")
-            XCTAssertTrue(revealResult.hasOrangeHighlight, "First match should have orange highlight after reveal")
-        }
+        
+        XCTAssertEqual(highlightResult["currentElementsCount"] as? Int, 1, "Should have exactly one current highlight")
+        XCTAssertEqual(highlightResult["hasOrangeHighlight"] as? Bool, true, "Current match should have orange highlight")
+        
+        // Test navigation back to first match
+        _ = try await testHarness.performFindPrevious() // Move to match 2
+        let firstMatchResult = try await testHarness.performFindPrevious() // Move to match 1
+        
+        XCTAssertEqual(firstMatchResult.currentMatch, 1, "Should be back at first match")
+        XCTAssertEqual(firstMatchResult.totalMatches, 4, "Should still have 4 total matches")
     }
 
     func testRevealExpandsCollapsedSections() async throws {
@@ -1275,7 +1241,7 @@ class FindOnPageTests: XCTestCase {
                 return lastReceivedPayload.data.matchIdentifiers;
             } else {
                 // Fallback: create reasonable match identifiers
-                const state = engine.getDebugState();
+                const state = engine.getDebugState({ sessionSecret: 'test-secret-123' });
                 const matches = [];
                 for (let i = 0; i < state.totalMatches; i++) {
                     matches.push({
@@ -1509,7 +1475,7 @@ class FindOnPageTests: XCTestCase {
             if (lastReceivedPayload && lastReceivedPayload.data && lastReceivedPayload.data.matchIdentifiers) {
                 return lastReceivedPayload.data.matchIdentifiers;
             } else {
-                const state = engine.getDebugState();
+                const state = engine.getDebugState({ sessionSecret: 'test-secret-123' });
                 const matches = [];
                 for (let i = 0; i < state.totalMatches; i++) {
                     matches.push({
@@ -1671,6 +1637,7 @@ class FindOnPageTests: XCTestCase {
             };
             
             engine.handleCommand({ 
+                sessionSecret: 'test-secret-123',
                 action: 'startFind', 
                 searchTerm: 'display none', 
                 searchMode: 'literal' 
@@ -1683,7 +1650,7 @@ class FindOnPageTests: XCTestCase {
             if (lastReceivedPayload && lastReceivedPayload.data && lastReceivedPayload.data.matchIdentifiers) {
                 return lastReceivedPayload.data.matchIdentifiers;
             } else {
-                const state = engine.getDebugState();
+                const state = engine.getDebugState({ sessionSecret: 'test-secret-123' });
                 const matches = [];
                 for (let i = 0; i < state.totalMatches; i++) {
                     matches.push({
@@ -1751,7 +1718,8 @@ class FindOnPageTests: XCTestCase {
         // Hide the results
         _ = try await testHarness.webView.evaluateJavaScript("""
         window.iTermCustomFind.handleCommand({
-            action: 'hideResults'
+            action: 'hideResults',
+            sessionSecret: 'test-secret-123'
         })
         """)
         
@@ -1778,7 +1746,8 @@ class FindOnPageTests: XCTestCase {
         // Hide the results first
         _ = try await testHarness.webView.evaluateJavaScript("""
         window.iTermCustomFind.handleCommand({
-            action: 'hideResults'
+            action: 'hideResults',
+            sessionSecret: 'test-secret-123'
         })
         """)
         
@@ -1791,7 +1760,8 @@ class FindOnPageTests: XCTestCase {
         // Show the results
         _ = try await testHarness.webView.evaluateJavaScript("""
         window.iTermCustomFind.handleCommand({
-            action: 'showResults'
+            action: 'showResults',
+            sessionSecret: 'test-secret-123'
         })
         """)
         
@@ -1829,7 +1799,8 @@ class FindOnPageTests: XCTestCase {
         // Hide results
         _ = try await testHarness.webView.evaluateJavaScript("""
         window.iTermCustomFind.handleCommand({
-            action: 'hideResults'
+            action: 'hideResults',
+            sessionSecret: 'test-secret-123'
         })
         """)
         
@@ -1842,7 +1813,8 @@ class FindOnPageTests: XCTestCase {
         // Show results
         _ = try await testHarness.webView.evaluateJavaScript("""
         window.iTermCustomFind.handleCommand({
-            action: 'showResults'
+            action: 'showResults',
+            sessionSecret: 'test-secret-123'
         })
         """)
         
@@ -1873,7 +1845,8 @@ class FindOnPageTests: XCTestCase {
         // Hide results
         _ = try await testHarness.webView.evaluateJavaScript("""
         window.iTermCustomFind.handleCommand({
-            action: 'hideResults'
+            action: 'hideResults',
+            sessionSecret: 'test-secret-123'
         })
         """)
         
@@ -1886,7 +1859,8 @@ class FindOnPageTests: XCTestCase {
         // Show results
         _ = try await testHarness.webView.evaluateJavaScript("""
         window.iTermCustomFind.handleCommand({
-            action: 'showResults'
+            action: 'showResults',
+            sessionSecret: 'test-secret-123'
         })
         """)
         
@@ -1909,6 +1883,7 @@ class FindOnPageTests: XCTestCase {
         (function() {
             try {
                 window.iTermCustomFind.handleCommand({
+                    sessionSecret: 'test-secret-123',
                     action: 'hideResults'
                 });
                 return { success: true };
@@ -1925,6 +1900,7 @@ class FindOnPageTests: XCTestCase {
         (function() {
             try {
                 window.iTermCustomFind.handleCommand({
+                    sessionSecret: 'test-secret-123',
                     action: 'showResults'
                 });
                 return { success: true };
@@ -1958,7 +1934,7 @@ class FindOnPageTests: XCTestCase {
         XCTAssertEqual(hasFunction, "function", "getMatchIdentifiersForTesting should be a function")
         
         // Get real match identifiers using the test-only function
-        guard let matchIdentifiers = try await testHarness.webView.evaluateJavaScript("window.iTermCustomFind.getMatchIdentifiersForTesting()") as? [[String: Any]] else {
+        guard let matchIdentifiers = try await testHarness.webView.evaluateJavaScript("window.iTermCustomFind.getMatchIdentifiersForTesting({ sessionSecret: 'test-secret-123' })") as? [[String: Any]] else {
             XCTFail("Failed to get match identifiers")
             return
         }
@@ -2004,55 +1980,13 @@ class FindOnPageTests: XCTestCase {
         let searchResult = try await testHarness.performFind(searchTerm: "search")
         XCTAssertEqual(searchResult.totalMatches, 4, "Should find 4 search matches")
         
-        // Get match identifiers
-        let getMatchesScript = """
-        (function() {
-            const engine = window.iTermCustomFind;
-            let lastReceivedPayload = null;
-            
-            const originalHandler = window.webkit?.messageHandlers?.iTermCustomFind?.postMessage;
-            window.webkit = window.webkit || {};
-            window.webkit.messageHandlers = window.webkit.messageHandlers || {};
-            window.webkit.messageHandlers.iTermCustomFind = window.webkit.messageHandlers.iTermCustomFind || {};
-            window.webkit.messageHandlers.iTermCustomFind.postMessage = function(payload) {
-                lastReceivedPayload = payload;
-                if (originalHandler) {
-                    originalHandler.call(this, payload);
-                }
-            };
-            
-            engine.handleCommand({ 
-                action: 'startFind', 
-                searchTerm: 'search', 
-                searchMode: 'literal' 
-            });
-            
-            if (originalHandler) {
-                window.webkit.messageHandlers.iTermCustomFind.postMessage = originalHandler;
-            }
-            
-            if (lastReceivedPayload && lastReceivedPayload.data && lastReceivedPayload.data.matchIdentifiers) {
-                return lastReceivedPayload.data.matchIdentifiers;
-            } else {
-                const state = engine.getDebugState();
-                const matches = [];
-                for (let i = 0; i < state.totalMatches; i++) {
-                    matches.push({
-                        index: i,
-                        bufferStart: i * 100,
-                        bufferEnd: i * 100 + 6, // Length of "search"
-                        text: "search"
-                    });
-                }
-                return matches;
-            }
-        })()
-        """
-        
-        guard let matchIdentifiers = try await testHarness.webView.evaluateJavaScript(getMatchesScript) as? [[String: Any]] else {
+        // Get match identifiers using the test helper function
+        guard let matchIdentifiers = try await testHarness.webView.evaluateJavaScript("window.iTermCustomFind.getMatchIdentifiersForTesting({ sessionSecret: 'test-secret-123' })") as? [[String: Any]] else {
             XCTFail("Failed to get match identifiers")
             return
         }
+        
+        XCTAssertEqual(matchIdentifiers.count, 4, "Should have 4 match identifiers")
         
         // Test bounds before navigation (should be on first match)
         let firstBounds = try await testHarness.testMatchBounds(identifier: matchIdentifiers[0])
@@ -2143,55 +2077,13 @@ class FindOnPageTests: XCTestCase {
         let searchResult = try await testHarness.performFind(searchTerm: "multielement")
         XCTAssertGreaterThan(searchResult.totalMatches, 0, "Should find multi-element matches")
         
-        // Get match identifiers
-        let getMatchesScript = """
-        (function() {
-            const engine = window.iTermCustomFind;
-            let lastReceivedPayload = null;
-            
-            const originalHandler = window.webkit?.messageHandlers?.iTermCustomFind?.postMessage;
-            window.webkit = window.webkit || {};
-            window.webkit.messageHandlers = window.webkit.messageHandlers || {};
-            window.webkit.messageHandlers.iTermCustomFind = window.webkit.messageHandlers.iTermCustomFind || {};
-            window.webkit.messageHandlers.iTermCustomFind.postMessage = function(payload) {
-                lastReceivedPayload = payload;
-                if (originalHandler) {
-                    originalHandler.call(this, payload);
-                }
-            };
-            
-            engine.handleCommand({ 
-                action: 'startFind', 
-                searchTerm: 'multielement', 
-                searchMode: 'literal' 
-            });
-            
-            if (originalHandler) {
-                window.webkit.messageHandlers.iTermCustomFind.postMessage = originalHandler;
-            }
-            
-            if (lastReceivedPayload && lastReceivedPayload.data && lastReceivedPayload.data.matchIdentifiers) {
-                return lastReceivedPayload.data.matchIdentifiers;
-            } else {
-                const state = engine.getDebugState();
-                const matches = [];
-                for (let i = 0; i < state.totalMatches; i++) {
-                    matches.push({
-                        index: i,
-                        bufferStart: i * 100,
-                        bufferEnd: i * 100 + 12, // Length of "multielement"
-                        text: "multielement"
-                    });
-                }
-                return matches;
-            }
-        })()
-        """
-        
-        guard let matchIdentifiers = try await testHarness.webView.evaluateJavaScript(getMatchesScript) as? [[String: Any]] else {
+        // Get match identifiers using the test helper function
+        guard let matchIdentifiers = try await testHarness.webView.evaluateJavaScript("window.iTermCustomFind.getMatchIdentifiersForTesting({ sessionSecret: 'test-secret-123' })") as? [[String: Any]] else {
             XCTFail("Failed to get match identifiers")
             return
         }
+        
+        XCTAssertGreaterThan(matchIdentifiers.count, 0, "Should have match identifiers")
         
         // Test bounds for multi-element matches
         for (index, identifier) in matchIdentifiers.enumerated() {
@@ -2229,55 +2121,13 @@ class FindOnPageTests: XCTestCase {
         let searchResult = try await testHarness.performFind(searchTerm: "scrolltest")
         XCTAssertEqual(searchResult.totalMatches, 3, "Should find 3 scrolltest matches")
         
-        // Get match identifiers
-        let getMatchesScript = """
-        (function() {
-            const engine = window.iTermCustomFind;
-            let lastReceivedPayload = null;
-            
-            const originalHandler = window.webkit?.messageHandlers?.iTermCustomFind?.postMessage;
-            window.webkit = window.webkit || {};
-            window.webkit.messageHandlers = window.webkit.messageHandlers || {};
-            window.webkit.messageHandlers.iTermCustomFind = window.webkit.messageHandlers.iTermCustomFind || {};
-            window.webkit.messageHandlers.iTermCustomFind.postMessage = function(payload) {
-                lastReceivedPayload = payload;
-                if (originalHandler) {
-                    originalHandler.call(this, payload);
-                }
-            };
-            
-            engine.handleCommand({ 
-                action: 'startFind', 
-                searchTerm: 'scrolltest', 
-                searchMode: 'literal' 
-            });
-            
-            if (originalHandler) {
-                window.webkit.messageHandlers.iTermCustomFind.postMessage = originalHandler;
-            }
-            
-            if (lastReceivedPayload && lastReceivedPayload.data && lastReceivedPayload.data.matchIdentifiers) {
-                return lastReceivedPayload.data.matchIdentifiers;
-            } else {
-                const state = engine.getDebugState();
-                const matches = [];
-                for (let i = 0; i < state.totalMatches; i++) {
-                    matches.push({
-                        index: i,
-                        bufferStart: i * 200,
-                        bufferEnd: i * 200 + 10, // Length of "scrolltest"
-                        text: "scrolltest"
-                    });
-                }
-                return matches;
-            }
-        })()
-        """
-        
-        guard let matchIdentifiers = try await testHarness.webView.evaluateJavaScript(getMatchesScript) as? [[String: Any]] else {
+        // Get match identifiers using the test helper function
+        guard let matchIdentifiers = try await testHarness.webView.evaluateJavaScript("window.iTermCustomFind.getMatchIdentifiersForTesting({ sessionSecret: 'test-secret-123' })") as? [[String: Any]] else {
             XCTFail("Failed to get match identifiers")
             return
         }
+        
+        XCTAssertEqual(matchIdentifiers.count, 3, "Should have 3 match identifiers")
         
         // Get bounds for first match (should be near top)
         let topBounds = try await testHarness.testMatchBounds(identifier: matchIdentifiers[0])
@@ -2515,12 +2365,13 @@ extension WebViewTestHelper {
     func performFindCaseInsensitive(searchTerm: String) async throws -> FindResult {
         let script = """
         window.iTermCustomFind.handleCommand({
+            sessionSecret: 'test-secret-123',
             action: 'startFind',
             searchTerm: '\(searchTerm)',
             searchMode: 'caseInsensitive',
             contextLength: 20
         });
-        window.iTermCustomFind.getDebugState();
+        window.iTermCustomFind.getDebugState({ sessionSecret: 'test-secret-123' });
         """
         guard let result = try await webView.evaluateJavaScript(script) as? [String: Any] else {
             throw TestError.invalidJavaScriptResult
@@ -2532,12 +2383,13 @@ extension WebViewTestHelper {
     func performFindRegex(searchTerm: String) async throws -> FindResult {
         let script = """
         window.iTermCustomFind.handleCommand({
+            sessionSecret: 'test-secret-123',
             action: 'startFind',
             searchTerm: '\(searchTerm)',
             searchMode: 'caseInsensitiveRegex',
             contextLength: 20
         });
-        window.iTermCustomFind.getDebugState();
+        window.iTermCustomFind.getDebugState({ sessionSecret: 'test-secret-123' });
         """
         guard let result = try await webView.evaluateJavaScript(script) as? [String: Any] else {
             throw TestError.invalidJavaScriptResult

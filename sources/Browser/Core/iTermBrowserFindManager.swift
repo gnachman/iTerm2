@@ -93,13 +93,14 @@ class iTermBrowserFindManager: NSObject {
                 substitutions: ["SECRET": secret,
                                 "SCROLL_BEHAVIOR": "smooth",
                                 "TEST_FUNCTIONS": "",
-                                "TEST_IMPLS": "" ])
+                                "TEST_IMPLS": "",
+                                "TEST_FREEZE": "" ])
 
             let userScript = WKUserScript(
                 source: script,
                 injectionTime: .atDocumentStart,
-                forMainFrameOnly: false
-            )
+                forMainFrameOnly: false,
+                in: .defaultClient)
 
             webView.configuration.userContentController.addUserScript(userScript)
 
@@ -203,9 +204,9 @@ class iTermBrowserFindManager: NSObject {
             guard let webView = sharedState.webView else {
                 throw NoWebViewError()
             }
-            let script = "window.iTermCustomFind.getMatchBoundsInEngine(" + json(self.instanceID) + ", " + json(identifier) + ")"
+            let script = "window.iTermCustomFind.getMatchBoundsInEngine({sessionSecret: '\(sharedState.secret)', instanceId: " + json(self.instanceID) + ", identifier: " + json(identifier) + "})"
             do {
-                let dict = try await webView.evaluateJavaScript(script) as? [String: CGFloat]
+                let dict = try await webView.evaluateJavaScript(script, contentWorld: .defaultClient) as? [String: CGFloat]
                 guard let dict else {
                     throw InvalidResponseError()
                 }
@@ -233,12 +234,13 @@ class iTermBrowserFindManager: NSObject {
             if let instanceID {
                 temp["instanceId"] = instanceID
             }
+            temp["sessionSecret"] = sharedState.secret
             let jsonData = try JSONSerialization.data(withJSONObject: temp)
             let jsonString = String(data: jsonData, encoding: .utf8) ?? "{}"
             let script = "window.iTermCustomFind && window.iTermCustomFind.handleCommand(\(jsonString))"
 
             do {
-                return try await webView.evaluateJavaScript(script)
+                return try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
             } catch {
                 DLog("\(error) while executing \(script)")
                 throw error
@@ -346,7 +348,7 @@ class iTermBrowserFindManager: NSObject {
             lastSearchWasGlobal = true
             do {
                 // The user script won't be installed until documentStart. If it isn't there now it may never arrive.
-                let myFunction = try await sharedState.webView?.evaluateJavaScript("typeof window.iTermCustomFind")
+                let myFunction = try await sharedState.webView?.evaluateJavaScript("typeof window.iTermCustomFind", contentWorld: .defaultClient)
                 if myFunction as? String == "undefined" {
                     stream.done = true
                     return
@@ -552,7 +554,7 @@ extension WKWebView {
         let maxIterations = 5
         for _ in 0..<maxIterations {
             do {
-                if let isComplete = try await evaluateJavaScript(checkScript) as? Bool,
+                if let isComplete = try await evaluateJavaScript(checkScript, contentWorld: .defaultClient) as? Bool,
                    isComplete {
                     // Scrolling is complete
                     return
