@@ -14,7 +14,7 @@ class iTermBrowserPageSaver {
     private let baseURL: URL
     private var downloadedResources: [String: String] = [:]
     private var resourcesFolder: URL!
-    
+
     init(webView: WKWebView, baseURL: URL) {
         self.webView = webView
         self.baseURL = baseURL
@@ -295,5 +295,62 @@ enum PageSaveError: LocalizedError {
         case .failedToSaveFile:
             return "Failed to save file"
         }
+    }
+}
+
+extension iTermBrowserPageSaver {
+    static func pickDestinationAndSave(webView: WKWebView, parentWindow: NSWindow) {
+        guard let url = webView.url else { return }
+
+        let savePanel = NSSavePanel()
+        savePanel.canCreateDirectories = true
+        savePanel.nameFieldStringValue = sanitizeFilename(url.host ?? "page")
+        savePanel.title = "Save Page As"
+        savePanel.message = "Choose a folder to save the page and its resources"
+
+        savePanel.beginSheetModal(for: parentWindow) { response in
+            guard response == .OK, let folderURL = savePanel.url else { return }
+
+            Task {
+                await self.performPageSave(url: url,
+                                           to: folderURL,
+                                           webView: webView,
+                                           window: parentWindow)
+            }
+        }
+    }
+
+    private static func performPageSave(url: URL,
+                                        to folderURL: URL,
+                                        webView: WKWebView,
+                                        window: NSWindow) async {
+        let pageSaver = iTermBrowserPageSaver(webView: webView, baseURL: url)
+
+        do {
+            try await pageSaver.savePageWithResources(to: folderURL)
+
+            await MainActor.run {
+                let htmlFile = folderURL.appendingPathComponent("index.html")
+                NSWorkspace.shared.selectFile(htmlFile.path, inFileViewerRootedAtPath: folderURL.path)
+            }
+        } catch {
+            DLog("Error saving page: \(error)")
+            await showSaveError(error, window: window)
+        }
+    }
+
+    @MainActor
+    private static func showSaveError(_ error: Error, window: NSWindow) {
+        let alert = NSAlert()
+        alert.messageText = "Save Failed"
+        alert.informativeText = "Could not save the page: \(error.localizedDescription)"
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "OK")
+        alert.beginSheetModal(for: window, completionHandler: nil)
+    }
+
+    private static func sanitizeFilename(_ name: String) -> String {
+        let invalidChars = CharacterSet(charactersIn: "\\/:*?\"<>|")
+        return name.components(separatedBy: invalidChars).joined(separator: "_")
     }
 }

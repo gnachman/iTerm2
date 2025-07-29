@@ -1054,6 +1054,14 @@ extension iTermBrowserViewController {
         return true
     }
 
+    @objc(saveContents:)
+    func saveContents(_ sender: Any) {
+        if let window = view.window {
+            iTermBrowserPageSaver.pickDestinationAndSave(webView: browserManager.webView,
+                                                         parentWindow: window)
+        }
+    }
+
     @objc(pasteOptions:)
     func pasteOptions(_ sender: Any) {
         openAdvancedPaste()
