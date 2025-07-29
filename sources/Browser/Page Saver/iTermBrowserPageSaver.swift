@@ -8,23 +8,51 @@
 import Foundation
 import WebKit
 
+@MainActor
+struct SSHLocation {
+    var description: String {
+        return "\(endpoint.sshIdentity.displayName):\(path)"
+    }
+    var path: String
+    var endpoint: SSHEndpoint
+
+    func appendingPathComponent(_ component: String) -> SSHLocation {
+        return SSHLocation(path: path.appending(pathComponent: component), endpoint: endpoint)
+    }
+}
+
+extension SSHLocation {
+    init?(_ item: iTermSavePanelItem) {
+        path = item.filename
+        if item.host.isLocalhost {
+            self.endpoint = LocalhostEndpoint.instance
+        } else {
+            guard let endpoint = ConductorRegistry.instance[item.host].first else {
+                return nil
+            }
+            self.endpoint = endpoint
+        }
+    }
+}
+
 @available(macOS 11.0, *)
+@MainActor
 class iTermBrowserPageSaver {
     private let webView: WKWebView
     private let baseURL: URL
     private var downloadedResources: [String: String] = [:]
-    private var resourcesFolder: URL!
+    private var resourcesFolder: SSHLocation!
 
     init(webView: WKWebView, baseURL: URL) {
         self.webView = webView
         self.baseURL = baseURL
     }
     
-    func savePageWithResources(to folderURL: URL) async throws {
+    func savePageWithResources(to location: SSHLocation) async throws {
         // Create main folder and resources subfolder
-        try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
-        resourcesFolder = folderURL.appendingPathComponent("resources")
-        try FileManager.default.createDirectory(at: resourcesFolder, withIntermediateDirectories: true)
+        try await location.endpoint.mkdir(location.path)
+        resourcesFolder = location.appendingPathComponent("resources")
+        try await resourcesFolder.endpoint.mkdir(resourcesFolder.path)
 
         // Extract all resource URLs using JavaScript
         let resourceURLs = await extractResourceURLs()
@@ -44,13 +72,12 @@ class iTermBrowserPageSaver {
         }
         
         // Save the main HTML file
-        let htmlFile = folderURL.appendingPathComponent("index.html")
-        try processedHTML.write(to: htmlFile, atomically: true, encoding: .utf8)
-        
-        DLog("Page saved successfully to \(folderURL.path)")
+        let htmlFile = location.appendingPathComponent("index.html")
+        try await htmlFile.endpoint.create(htmlFile.path, content: processedHTML.lossyData)
+
+        DLog("Page saved successfully to \(htmlFile.description)")
     }
     
-    @MainActor
     private func extractResourceURLs() async -> [String] {
         let script = iTermBrowserTemplateLoader.loadTemplate(named: "extract-resources", type: "js")
         
@@ -65,7 +92,6 @@ class iTermBrowserPageSaver {
         }
     }
     
-    @MainActor
     private func addSavedResourceAttributes() async {
         let scriptTemplate = iTermBrowserTemplateLoader.loadTemplate(named: "add-saved-attributes", type: "js")
         
@@ -88,7 +114,6 @@ class iTermBrowserPageSaver {
         }
     }
     
-    @MainActor
     private func getHTMLWithSavedAttributes() async -> String? {
         // Get HTML by cloning the DOM and applying changes to the clone, not the live DOM
         let cloneAndProcessScript = """
@@ -182,12 +207,12 @@ class iTermBrowserPageSaver {
             }
             
             // For other resources, save as files
-            let filename = generateFilename(for: resourceURL, response: response)
+            let filename = await generateFilename(for: resourceURL, response: response)
             let localFile = resourcesFolder.appendingPathComponent(filename)
             
             // Save the file
-            try data.write(to: localFile)
-            
+            try await localFile.endpoint.create(localFile.path, content: data)
+
             // Store the relative path
             let relativePath = "resources/\(filename)"
             downloadedResources[urlString] = relativePath
@@ -201,7 +226,7 @@ class iTermBrowserPageSaver {
         }
     }
     
-    private func generateFilename(for url: URL, response: URLResponse?) -> String {
+    private func generateFilename(for url: URL, response: URLResponse?) async -> String {
         var filename = url.lastPathComponent
         
         // If no filename, generate one based on URL path
@@ -222,7 +247,7 @@ class iTermBrowserPageSaver {
         // Ensure uniqueness
         var counter = 1
         let originalFilename = filename
-        while FileManager.default.fileExists(atPath: resourcesFolder.appendingPathComponent(filename).path) {
+        while await Self.fileExists(resourcesFolder.appendingPathComponent(filename)) {
             let nameWithoutExt = (originalFilename as NSString).deletingPathExtension
             let ext = (originalFilename as NSString).pathExtension
             filename = ext.isEmpty ? "\(nameWithoutExt)_\(counter)" : "\(nameWithoutExt)_\(counter).\(ext)"
@@ -231,7 +256,16 @@ class iTermBrowserPageSaver {
         
         return filename
     }
-    
+
+    private static func fileExists(_ location: SSHLocation) async -> Bool {
+        do {
+            _ = try await location.endpoint.stat(location.path)
+            return true
+        } catch {
+            return false
+        }
+    }
+
     private func extensionForMimeType(_ mimeType: String) -> String {
         return MimeTypeUtilities.extensionForMimeType(mimeType)
     }
@@ -299,43 +333,44 @@ enum PageSaveError: LocalizedError {
 }
 
 extension iTermBrowserPageSaver {
-    static func pickDestinationAndSave(webView: WKWebView, parentWindow: NSWindow) {
+    @MainActor
+    static func pickDestinationAndSave(webView: WKWebView, parentWindow: NSWindow) async {
         guard let url = webView.url else { return }
 
-        let savePanel = NSSavePanel()
-        savePanel.canCreateDirectories = true
-        savePanel.nameFieldStringValue = sanitizeFilename(url.host ?? "page")
-        savePanel.title = "Save Page As"
-        savePanel.message = "Choose a folder to save the page and its resources"
+        let savePanel = iTermModernSavePanel()
+        savePanel.defaultFilename = sanitizeFilename(url.host ?? "page")
 
-        savePanel.beginSheetModal(for: parentWindow) { response in
-            guard response == .OK, let folderURL = savePanel.url else { return }
-
-            Task {
-                await self.performPageSave(url: url,
-                                           to: folderURL,
-                                           webView: webView,
-                                           window: parentWindow)
-            }
+        let response = await savePanel.beginSheetModal(for: parentWindow)
+        guard response == .OK,
+              let item = savePanel.item,
+        let location = SSHLocation(item) else {
+            return
         }
+
+        await self.performPageSave(url: url,
+                                   to: location,
+                                   webView: webView,
+                                   window: parentWindow)
     }
 
     private static func performPageSave(url: URL,
-                                        to folderURL: URL,
+                                        to location: SSHLocation,
                                         webView: WKWebView,
                                         window: NSWindow) async {
         let pageSaver = iTermBrowserPageSaver(webView: webView, baseURL: url)
 
         do {
-            try await pageSaver.savePageWithResources(to: folderURL)
+            try await pageSaver.savePageWithResources(to: location)
 
-            await MainActor.run {
-                let htmlFile = folderURL.appendingPathComponent("index.html")
-                NSWorkspace.shared.selectFile(htmlFile.path, inFileViewerRootedAtPath: folderURL.path)
+            if location.endpoint.sshIdentity.isLocalhost {
+                await MainActor.run {
+                    let htmlFile = location.appendingPathComponent("index.html")
+                    NSWorkspace.shared.selectFile(htmlFile.path, inFileViewerRootedAtPath: location.path)
+                }
             }
         } catch {
             DLog("Error saving page: \(error)")
-            await showSaveError(error, window: window)
+            showSaveError(error, window: window)
         }
     }
 

@@ -1074,8 +1074,8 @@ extension iTermBrowserViewController {
             let response = await savePanel.beginSheetModal(for: window)
             if response == .OK,
                 let item = savePanel.item,
-                let conductor = ConductorRegistry.instance[item.host].first {
-                try? await conductor.create(item.filename, content: string.lossyData)
+                let location = SSHLocation(item) {
+                try? await location.endpoint.create(location.path, content: string.lossyData)
             }
         }
     }
@@ -1083,8 +1083,10 @@ extension iTermBrowserViewController {
     @objc(saveContents:)
     func saveContents(_ sender: Any) {
         if let window = view.window {
-            iTermBrowserPageSaver.pickDestinationAndSave(webView: browserManager.webView,
-                                                         parentWindow: window)
+            Task {
+                await iTermBrowserPageSaver.pickDestinationAndSave(webView: browserManager.webView,
+                                                                   parentWindow: window)
+            }
         }
     }
 

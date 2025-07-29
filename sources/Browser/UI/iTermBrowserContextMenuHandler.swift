@@ -20,8 +20,10 @@ class iTermBrowserContextMenuHandler {
 
     func savePageAs() {
         if let parentWindow {
-            iTermBrowserPageSaver.pickDestinationAndSave(webView: webView,
-                                                         parentWindow: parentWindow)
+            Task {
+                await iTermBrowserPageSaver.pickDestinationAndSave(webView: webView,
+                                                                   parentWindow: parentWindow)
+            }
         }
     }
 }

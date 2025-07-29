@@ -57,6 +57,10 @@ public class SSHIdentity: NSObject, Codable {
     }
     private let state: State
 
+    var isLocalhost: Bool {
+        return host == Self.localhost.host
+    }
+
     @objc public var commandLine: String {
         return state.commandLine
     }
