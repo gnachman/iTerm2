@@ -58,6 +58,7 @@ class SSHFilePanel: NSWindowController {
     private var buttonStackView: NSStackView!
     private var cancelButton: NSButton!
     private var openButton: NSButton!
+    private var newFolderButton: NSButton!
     private var sidebar: SSHFilePanelSidebar!
     private var completionHandler: ((NSApplication.ModalResponse) -> Void)?
     private var navigationHistory: [SSHFileDescriptor] = []
@@ -66,6 +67,13 @@ class SSHFilePanel: NSWindowController {
     private(set) var selectedFiles: [SSHFileDescriptor] = []
     private var lastPath = [SSHIdentity: String]()
     private var initialized = false
+    var isSavePanel = false
+    var defaultFilename: String?
+    private var saveAsTextField: NSTextField!
+    private var saveAsLabel: NSTextField!
+    private var newFolderNameTextField: NSTextField!
+    private var newFolderSheet: NSPanel!
+
     private enum Mode {
         case regular
         case search(Int, Cancellation)
@@ -83,6 +91,7 @@ class SSHFilePanel: NSWindowController {
     private var nextSearchGeneration = 0
     var canChooseDirectories = false
     var canChooseFiles = true
+    var canCreateDirectories = false
     var isSelectable: ((RemoteFile) -> Bool)?
     var includeLocalhost = true
 
@@ -98,7 +107,11 @@ class SSHFilePanel: NSWindowController {
     }
 
     private var currentEndpoint: SSHEndpoint?
-    private var currentPath: SSHFileDescriptor?
+    private var currentPath: SSHFileDescriptor? {
+        didSet {
+            updateSavePanelEnabled()
+        }
+    }
 
     // MARK: - Constants
     private let minimumWindowWidth: CGFloat = 550
@@ -127,7 +140,11 @@ class SSHFilePanel: NSWindowController {
         setupUI()
         setupWindow()
 
-        self.window?.makeFirstResponder(fileList.documentView)
+        if isSavePanel {
+            self.window?.makeFirstResponder(saveAsTextField)
+        } else {
+            self.window?.makeFirstResponder(fileList.documentView)
+        }
 
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(connectedHostsDidChange(_:)),
@@ -299,7 +316,11 @@ class SSHFilePanel: NSWindowController {
         restoreWindowState()
 
         DispatchQueue.main.async { [weak self] in
-            self?.fileList.takeFirstResponder()
+            if self?.isSavePanel == true {
+                self?.window?.makeFirstResponder(self?.saveAsTextField)
+            } else {
+                self?.fileList.takeFirstResponder()
+            }
         }
     }
 
@@ -376,8 +397,21 @@ class SSHFilePanel: NSWindowController {
         let spacer3 = NSView()
         spacer3.translatesAutoresizingMaskIntoConstraints = false
 
+        // Create save panel UI if needed
+        var saveAsContainer: NSView?
+        if isSavePanel {
+            saveAsContainer = setupSaveAsContainer()
+        }
+
         // Create main vertical stack
-        let mainStackView = NSStackView(views: [spacer, toolbarView, separatorLine, fileList, separatorLine2, spacer2, buttonStackView, spacer3])
+        var views = [NSView]()
+        views.append(spacer)
+        if let saveAsContainer = saveAsContainer {
+            views.append(saveAsContainer)
+        }
+        views.append(contentsOf: [toolbarView, separatorLine, fileList, separatorLine2, spacer2, buttonStackView, spacer3])
+        
+        let mainStackView = NSStackView(views: views)
         mainStackView.translatesAutoresizingMaskIntoConstraints = false
         mainStackView.orientation = .vertical
         mainStackView.alignment = .leading
@@ -420,6 +454,58 @@ class SSHFilePanel: NSWindowController {
 
             spacer2.heightAnchor.constraint(equalToConstant: 8),
         ])
+        
+        // Additional constraints for save panel UI
+        if let saveAsContainer = saveAsContainer {
+            NSLayoutConstraint.activate([
+                saveAsContainer.leadingAnchor.constraint(equalTo: mainStackView.leadingAnchor),
+                saveAsContainer.trailingAnchor.constraint(equalTo: mainStackView.trailingAnchor),
+                saveAsContainer.heightAnchor.constraint(equalToConstant: 44)
+            ])
+        }
+    }
+
+    private func setupSaveAsContainer() -> NSView {
+        let container = NSView()
+        container.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Create "Save As:" label
+        saveAsLabel = NSTextField(labelWithString: "Save As:")
+        saveAsLabel.translatesAutoresizingMaskIntoConstraints = false
+        saveAsLabel.alignment = .right
+        saveAsLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        saveAsLabel.textColor = NSColor.secondaryLabelColor
+        
+        // Create editable text field
+        saveAsTextField = NSTextField()
+        saveAsTextField.translatesAutoresizingMaskIntoConstraints = false
+        saveAsTextField.isEditable = true
+        saveAsTextField.isBezeled = true
+        saveAsTextField.bezelStyle = .roundedBezel
+        saveAsTextField.focusRingType = .default
+        saveAsTextField.placeholderString = "Enter filename"
+        saveAsTextField.delegate = self
+
+        // Pre-fill with default filename if provided
+        if let defaultFilename = defaultFilename {
+            saveAsTextField.stringValue = defaultFilename
+        }
+        
+        container.addSubview(saveAsLabel)
+        container.addSubview(saveAsTextField)
+        
+        NSLayoutConstraint.activate([
+            // Center the text field horizontally
+            saveAsTextField.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            saveAsTextField.widthAnchor.constraint(equalToConstant: 233),
+            saveAsTextField.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            
+            // Place label to the left of text field
+            saveAsLabel.trailingAnchor.constraint(equalTo: saveAsTextField.leadingAnchor, constant: -8),
+            saveAsLabel.centerYAnchor.constraint(equalTo: container.centerYAnchor)
+        ])
+        
+        return container
     }
 
     private func setupToolbar() {
@@ -546,12 +632,22 @@ class SSHFilePanel: NSWindowController {
 
         openButton = NSButton()
         openButton.translatesAutoresizingMaskIntoConstraints = false
-        openButton.title = "Open"
+        openButton.title = isSavePanel ? "Save" : "Open"
         openButton.bezelStyle = .rounded
         openButton.keyEquivalent = "\r" // Return
         openButton.isEnabled = false
         openButton.target = self
         openButton.action = #selector(openButtonClicked)
+
+        // Create New Folder button (only if canCreateDirectories is true)
+        if canCreateDirectories {
+            newFolderButton = NSButton()
+            newFolderButton.translatesAutoresizingMaskIntoConstraints = false
+            newFolderButton.title = "New Folder"
+            newFolderButton.bezelStyle = .rounded
+            newFolderButton.target = self
+            newFolderButton.action = #selector(newFolderButtonClicked)
+        }
 
         // Create button stack with right alignment and proper spacing
         let spacerView = NSView()
@@ -560,21 +656,45 @@ class SSHFilePanel: NSWindowController {
         let rightSpacer = NSView()
         rightSpacer.translatesAutoresizingMaskIntoConstraints = false
 
-        buttonStackView = NSStackView(views: [spacerView, cancelButton, openButton, rightSpacer])
+        var buttonViews: [NSView] = []
+        if canCreateDirectories {
+            // Add a left spacer for the New Folder button
+            let leftSpacer = NSView()
+            leftSpacer.translatesAutoresizingMaskIntoConstraints = false
+            buttonViews.append(leftSpacer)
+            buttonViews.append(newFolderButton)
+        }
+        buttonViews.append(contentsOf: [spacerView, cancelButton, openButton, rightSpacer])
+        
+        buttonStackView = NSStackView(views: buttonViews)
         buttonStackView.translatesAutoresizingMaskIntoConstraints = false
         buttonStackView.orientation = .horizontal
         buttonStackView.alignment = .centerY
         buttonStackView.distribution = .fill
         buttonStackView.spacing = 12
 
-        NSLayoutConstraint.activate([
+        var constraints: [NSLayoutConstraint] = [
             cancelButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 80),
             openButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 80),
             rightSpacer.widthAnchor.constraint(equalToConstant: 8)
-        ])
+        ]
+        
+        if canCreateDirectories {
+            constraints.append(contentsOf: [
+                newFolderButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 90),
+                // Set left spacer width to 8 points (20 - 12 spacing = 8) for exact 20pt margin
+                buttonViews[0].widthAnchor.constraint(equalToConstant: 8)
+            ])
+        }
+        
+        NSLayoutConstraint.activate(constraints)
     }
 
     // MARK: - Actions
+
+    @objc private func newFolderButtonClicked(_ sender: NSButton) {
+        showNewFolderSheet()
+    }
 
     @objc private func locationButtonChanged(_ sender: NSPopUpButton) {
         guard let selectedItem = sender.selectedItem,
@@ -1022,6 +1142,148 @@ extension SSHFilePanel {
 
         return expandedPath
     }
+    
+    // MARK: - New Folder Sheet
+    
+    @MainActor
+    private func showNewFolderSheet() {
+        guard let currentPath = currentPath else { return }
+        
+        newFolderSheet = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 400, height: 150),
+                                 styleMask: [.titled, .closable],
+                                 backing: .buffered,
+                                 defer: false)
+        newFolderSheet.title = ""
+        newFolderSheet.isFloatingPanel = false
+        
+        let contentView = NSView()
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+        newFolderSheet.contentView = contentView
+        
+        // Create main title
+        let mainTitle = NSTextField(labelWithString: "New Folder")
+        mainTitle.translatesAutoresizingMaskIntoConstraints = false
+        mainTitle.font = NSFont.boldSystemFont(ofSize: NSFont.systemFontSize)
+        mainTitle.textColor = NSColor.labelColor
+        mainTitle.alignment = .left
+        
+        // Create subtitle
+        let subtitleLabel = NSTextField(labelWithString: "Name of new folder inside “\(currentPath.absolutePath.lastPathComponent)”:")
+        subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        subtitleLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        subtitleLabel.textColor = NSColor.secondaryLabelColor
+        
+        // Create text field
+        newFolderNameTextField = NSTextField()
+        newFolderNameTextField.translatesAutoresizingMaskIntoConstraints = false
+        newFolderNameTextField.stringValue = "untitled folder"
+        newFolderNameTextField.isEditable = true
+        newFolderNameTextField.isBezeled = true
+        newFolderNameTextField.bezelStyle = .roundedBezel
+        newFolderNameTextField.focusRingType = .default
+        
+        // Create buttons
+        let cancelSheetButton = NSButton()
+        cancelSheetButton.translatesAutoresizingMaskIntoConstraints = false
+        cancelSheetButton.title = "Cancel"
+        cancelSheetButton.bezelStyle = .rounded
+        cancelSheetButton.keyEquivalent = "\u{1b}" // Escape
+        
+        let createButton = NSButton()
+        createButton.translatesAutoresizingMaskIntoConstraints = false
+        createButton.title = "Create"
+        createButton.bezelStyle = .rounded
+        createButton.keyEquivalent = "\r" // Return
+        
+        // Button actions
+        cancelSheetButton.target = self
+        cancelSheetButton.action = #selector(cancelNewFolderSheet(_:))
+        
+        createButton.target = self
+        createButton.action = #selector(createNewFolder(_:))
+        
+        // Create button stack
+        let buttonStack = NSStackView(views: [cancelSheetButton, createButton])
+        buttonStack.translatesAutoresizingMaskIntoConstraints = false
+        buttonStack.orientation = .horizontal
+        buttonStack.spacing = 12
+        buttonStack.distribution = .fillEqually
+        
+        // Add views to content view
+        contentView.addSubview(mainTitle)
+        contentView.addSubview(subtitleLabel)
+        contentView.addSubview(newFolderNameTextField)
+        contentView.addSubview(buttonStack)
+        
+        // Set up constraints
+        NSLayoutConstraint.activate([
+            mainTitle.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
+            mainTitle.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            mainTitle.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            
+            subtitleLabel.topAnchor.constraint(equalTo: mainTitle.bottomAnchor, constant: 14),
+            subtitleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            subtitleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            
+            newFolderNameTextField.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 8),
+            newFolderNameTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            newFolderNameTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            
+            buttonStack.topAnchor.constraint(equalTo: newFolderNameTextField.bottomAnchor, constant: 20),
+            buttonStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            buttonStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -17),
+            buttonStack.widthAnchor.constraint(equalToConstant: 180),
+            
+            cancelSheetButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 80),
+            createButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 80)
+        ])
+        
+        // Show sheet
+        window?.beginSheet(newFolderSheet) { _ in }
+        
+        // Make text field first responder and select all text
+        DispatchQueue.main.async {
+            self.newFolderSheet.makeFirstResponder(self.newFolderNameTextField)
+            self.newFolderNameTextField.selectText(nil)
+        }
+    }
+    
+    @objc private func cancelNewFolderSheet(_ sender: NSButton) {
+        if let sheet = sender.window {
+            window?.endSheet(sheet)
+        }
+    }
+    
+    @objc private func createNewFolder(_ sender: NSButton) {
+        guard let sheet = sender.window,
+              let textField = newFolderNameTextField,
+              let currentPath = currentPath,
+              let endpoint = currentEndpoint else {
+            return
+        }
+        
+        let folderName = textField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !folderName.isEmpty else { return }
+        
+        let newFolderPath = (currentPath.absolutePath as NSString).appendingPathComponent(folderName)
+        
+        Task { @MainActor in
+            do {
+                try await endpoint.mkdir(newFolderPath)
+                window?.endSheet(sheet)
+                // Refresh the current directory to show the new folder
+                await navigateToPath(currentPath)
+            } catch {
+                // Show error alert
+                let alert = NSAlert()
+                alert.messageText = "Unable to create folder"
+                alert.informativeText = error.localizedDescription
+                alert.alertStyle = .warning
+                alert.addButton(withTitle: "OK")
+                alert.beginSheetModal(for: sheet) { _ in }
+            }
+        }
+    }
 }
 
 // MARK: - Window Restoration Extension
@@ -1275,6 +1537,16 @@ extension SSHFilePanel {
         }
     }
 
+    var destinationDescriptor: SSHFileDescriptor? {
+        it_assert(isSavePanel, "Not a save panel")
+        guard let currentPath else {
+            return nil
+        }
+        return SSHFileDescriptor(absolutePath: currentPath.absolutePath.appending(pathComponent: saveAsTextField.stringValue),
+                                 isDirectory: false,
+                                 sshIdentity: currentPath.sshIdentity)
+    }
+
     func promiseItems() -> [Item] {
         return selectedFiles.map { file in
             let cancellation = Cancellation()
@@ -1331,14 +1603,27 @@ extension SSHFilePanel: SSHFilePanelFileListDelegate {
         return true
     }
 
+    private func updateSavePanelEnabled() {
+        if isSavePanel {
+            openButton.isEnabled = currentPath != nil && !saveAsTextField.stringValue.isEmpty
+        }
+    }
+
     func sshFilePanelSelectionDidChange() {
-        if fileList.selectedFiles.isEmpty {
-            openButton.isEnabled = false
-        } else if fileList.selectedFiles.count == 1 {
-            openButton.isEnabled = true
+        if isSavePanel {
+            if let selection = fileList.selectedFiles.first, !selection.isDirectory {
+                saveAsTextField.stringValue = selection.file.name
+            }
+            updateSavePanelEnabled()
         } else {
-            openButton.isEnabled = fileList.selectedFiles.allSatisfy { node in
-                !node.isDirectory
+            if fileList.selectedFiles.isEmpty {
+                openButton.isEnabled = false
+            } else if fileList.selectedFiles.count == 1 {
+                openButton.isEnabled = true
+            } else {
+                openButton.isEnabled = fileList.selectedFiles.allSatisfy { node in
+                    !node.isDirectory
+                }
             }
         }
     }
@@ -1459,3 +1744,8 @@ extension SSHFilePanel: SSHFilePanelSidebarDelegate {
     }
 }
 
+extension SSHFilePanel: NSTextFieldDelegate {
+    func controlTextDidChange(_ obj: Notification) {
+        updateSavePanelEnabled()
+    }
+}

@@ -357,6 +357,10 @@ class iTermBrowserWebView: WKWebView {
             setMouseInfo(event: event, sideEffects: sideEffects)
         }
         super.mouseUp(with: event)
+        Task { @MainActor in
+            DLog("fetching selection")
+            currentSelection = try? await evaluateJavaScript("window.getSelection().toString();") as? String
+        }
     }
 
     private func mouseUpImpl(with event: NSEvent) -> iTermClickSideEffects {

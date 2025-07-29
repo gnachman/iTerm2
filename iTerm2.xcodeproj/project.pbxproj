@@ -4419,6 +4419,7 @@
 		A6E304452DFB45830029CAB4 /* DeepSeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E304442DFB45810029CAB4 /* DeepSeek.swift */; };
 		A6E304672E00C6C90029CAB4 /* QuickLookHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E304662E00C6C70029CAB4 /* QuickLookHelper.swift */; };
 		A6E312622E386342008222DE /* NSObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E312612E38633F008222DE /* NSObject.swift */; };
+		A6E312862E388A9B008222DE /* iTermModernSavePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E312852E388A95008222DE /* iTermModernSavePanel.swift */; };
 		A6E34BD02118097A00F147DD /* iTermBackgroundDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E34BCE2118097A00F147DD /* iTermBackgroundDrawingHelper.h */; };
 		A6E34BD12118097A00F147DD /* iTermBackgroundDrawingHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E34BCF2118097A00F147DD /* iTermBackgroundDrawingHelper.m */; };
 		A6E39FAB2CD18B6B00035787 /* BidiDisplayInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E39FAA2CD18B6300035787 /* BidiDisplayInfo.swift */; };
@@ -8469,6 +8470,7 @@
 		A6E304442DFB45810029CAB4 /* DeepSeek.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepSeek.swift; sourceTree = "<group>"; };
 		A6E304662E00C6C70029CAB4 /* QuickLookHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickLookHelper.swift; sourceTree = "<group>"; };
 		A6E312612E38633F008222DE /* NSObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NSObject.swift; sourceTree = "<group>"; };
+		A6E312852E388A95008222DE /* iTermModernSavePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermModernSavePanel.swift; sourceTree = "<group>"; };
 		A6E34BCE2118097A00F147DD /* iTermBackgroundDrawingHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBackgroundDrawingHelper.h; sourceTree = "<group>"; };
 		A6E34BCF2118097A00F147DD /* iTermBackgroundDrawingHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBackgroundDrawingHelper.m; sourceTree = "<group>"; };
 		A6E39FAA2CD18B6300035787 /* BidiDisplayInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BidiDisplayInfo.swift; sourceTree = "<group>"; };
@@ -13658,6 +13660,7 @@
 		A6EC807F2828E9E100493544 /* ssh */ = {
 			isa = PBXGroup;
 			children = (
+				A6E312852E388A95008222DE /* iTermModernSavePanel.swift */,
 				A69FF3DA2E14689900AFF7A8 /* Conductor+FileCheckerDataSource.swift */,
 				A69FF3D82E14688800AFF7A8 /* Conductor+ConductorFileTransferDelegate.swift */,
 				A69FF3D62E14687A00AFF7A8 /* CodableNSDictionary.swift */,
@@ -18217,6 +18220,7 @@
 				A6A4866020B6762E00493302 /* AppearancePreferencesViewController.m in Sources */,
 				A6F718B8226583600053488E /* iTermURLActionFactory.m in Sources */,
 				A630119920E70CDA008114B7 /* iTermStatusBarSetupElement.m in Sources */,
+				A6E312862E388A9B008222DE /* iTermModernSavePanel.swift in Sources */,
 				A6A64E562508A9E10040490B /* iTermSnippetsMenuController.m in Sources */,
 				A630118420E6A613008114B7 /* iTermStatusBarSetupViewController.m in Sources */,
 				A6AF79FA2E07E27D008D77BA /* iTermBrowserLocalPageManager.swift in Sources */,

@@ -1043,15 +1043,41 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
     }
 }
 
-// MARK: - Actions
-
 @available(macOS 11.0, *)
-extension iTermBrowserViewController {
+extension iTermBrowserViewController: NSMenuItemValidation {
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         if menuItem.action == #selector(addNamedMark(_:)) {
             return canAddNamedMark
         }
+        if menuItem.action == #selector(saveDocumentAs(_:)) {
+            return browserManager.webView?.currentSelection?.isEmpty == false
+        }
         return true
+    }
+}
+
+// MARK: - Actions
+
+@available(macOS 11.0, *)
+extension iTermBrowserViewController {
+    @objc(saveDocumentAs:)
+    func saveDocumentAs(_ sender: Any) {
+        let backup = browserManager.webView?.currentSelection
+        Task {
+            guard let window = view.window,
+                    let string = await browserManager.webView.selectedText ?? backup else {
+                return
+            }
+
+            let savePanel = iTermModernSavePanel()
+            savePanel.defaultFilename = browserManager.webView.title ?? "Untitled"
+            let response = await savePanel.beginSheetModal(for: window)
+            if response == .OK,
+                let item = savePanel.item,
+                let conductor = ConductorRegistry.instance[item.host].first {
+                try? await conductor.create(item.filename, content: string.lossyData)
+            }
+        }
     }
 
     @objc(saveContents:)
