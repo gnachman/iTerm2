@@ -590,6 +590,8 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 // Updates the preferences for semantic history.
 - (void)setSemanticHistoryPrefs:(NSDictionary *)prefs;
 
+- (void)configureAsBrowser;
+
 // Various accessors (TODO: convert as many as possible into properties)
 - (void)setFontTable:(iTermFontTable *)fontTable
    horizontalSpacing:(CGFloat)horizontalSpacing

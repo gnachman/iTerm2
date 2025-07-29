@@ -480,7 +480,6 @@ DEFINE_STRING(dynamicProfilesPath, @"", SECTION_GENERAL @"Path to folder with dy
 DEFINE_FLOAT(dynamicProfilesNotificationLatency, 0.1, SECTION_GENERAL @"Delay between detecting a change to dynamic profiles and acting on it.\nIf a lot of changes happen to the DynamicProfiles folder a longer delay will help coalesce filesystem events to reduce CPU usage.");
 DEFINE_STRING(gitSearchPath, @"", SECTION_GENERAL @"$PATH used when running git for the status bar component.\nChange this to use a custom install of git. You must restart iTerm2 for a change here to take effect.");
 DEFINE_FLOAT(gitTimeout, 4, SECTION_GENERAL @"Timeout in seconds when running git for the status bar component.");
-DEFINE_BOOL(workAroundBigSurBug, NO, SECTION_GENERAL @"Work around Big Sur bug where a white line flashes at the top of the screen in full screen mode.");
 DEFINE_STRING(preferredBaseDir, @"", SECTION_GENERAL @"Folder for config files. There must not be a space in the path.\nIf empty, then ~/.config/iterm2 will be the default location.");
 DEFINE_INT(maximumNumberOfTriggerCommands, 16, SECTION_GENERAL @"Maximum number of trigger-launched commands that can run at once.\nIf too many “Run Command…” triggers fire their commands will be queued. You must restart iTerm2 for changes to this setting to take effect.");
 DEFINE_INT(smartSelectionRadius, 2, SECTION_GENERAL @"Maximum number of lines before and after the click location to include in smart selection.");

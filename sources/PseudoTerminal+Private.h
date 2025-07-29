@@ -11,6 +11,38 @@
 @class iTermRootTerminalView;
 @class iTermWindowShortcutLabelTitlebarAccessoryViewController;
 
+// Constants for saved window arrangement key names.
+extern NSString *const TERMINAL_ARRANGEMENT_OLD_X_ORIGIN;
+extern NSString *const TERMINAL_ARRANGEMENT_OLD_Y_ORIGIN;
+extern NSString *const TERMINAL_ARRANGEMENT_OLD_WIDTH;
+extern NSString *const TERMINAL_ARRANGEMENT_OLD_HEIGHT;
+extern NSString *const TERMINAL_ARRANGEMENT_X_ORIGIN;
+extern NSString *const TERMINAL_ARRANGEMENT_Y_ORIGIN;
+extern NSString *const TERMINAL_ARRANGEMENT_WIDTH;
+extern NSString *const TERMINAL_ARRANGEMENT_HEIGHT;
+extern NSString *const TERMINAL_ARRANGEMENT_EDGE_SPANNING_OFF;
+extern NSString *const TERMINAL_ARRANGEMENT_TABS;
+extern NSString *const TERMINAL_ARRANGEMENT_FULLSCREEN;
+extern NSString *const TERMINAL_ARRANGEMENT_LION_FULLSCREEN;
+extern NSString *const TERMINAL_ARRANGEMENT_WINDOW_TYPE;
+extern NSString *const TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE;
+extern NSString *const TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX;
+extern NSString *const TERMINAL_ARRANGEMENT_SCREEN_INDEX;
+extern NSString *const TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING;
+extern NSString *const TERMINAL_ARRANGEMENT_DESIRED_COLUMNS;
+extern NSString *const TERMINAL_ARRANGEMENT_DESIRED_ROWS;
+extern NSString *const TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW;
+extern NSString *const TERMINAL_ARRANGEMENT_INITIAL_PROFILE;
+extern NSString *const TERMINAL_GUID;
+extern NSString *const TERMINAL_ARRANGEMENT_HAS_TOOLBELT;
+extern NSString *const TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW;
+extern NSString *const TERMINAL_ARRANGEMENT_USE_TRANSPARENCY;
+extern NSString *const TERMINAL_ARRANGEMENT_TOOLBELT_PROPORTIONS;
+extern NSString *const TERMINAL_ARRANGEMENT_TITLE_OVERRIDE;
+extern NSString *const TERMINAL_ARRANGEMENT_TOOLBELT;
+extern NSString *const TERMINAL_ARRANGEMENT_SCROLLER_WIDTH;
+extern NSString *const TERMINAL_ARRANGEMENT_MINIATURIZED;
+
 @interface PseudoTerminal() {
     // Is this a full screen window?
     BOOL _fullScreen;
@@ -100,6 +132,7 @@
 - (BOOL)shouldRevealStandardWindowButtons;
 - (void)hideStandardWindowButtonsAndTitlebarAccessories;
 - (NSArray *)screenConfiguration;
+- (void)safelySetSessionSize:(PTYSession*)aSession rows:(int)rows columns:(int)columns;
 
 @end
 

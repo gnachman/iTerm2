@@ -54,12 +54,16 @@ CGFloat iTermMaxBlurRadius(void) {
     IBOutlet NSTextField *_blendAmountLabel;
     IBOutlet NSTextField *_columnsField;
     IBOutlet NSTextField *_rowsField;
+
+    IBOutlet NSTextField *_widthField;
+    IBOutlet NSTextField *_heightField;
+
+    IBOutlet NSTextField *_columnsLabel;
     IBOutlet NSButton *_hideAfterOpening;
     IBOutlet NSPopUpButton *_windowStyle;
     IBOutlet NSPopUpButton *_screen;
     IBOutlet NSTextField *_screenLabel;
     IBOutlet NSPopUpButton *_space;
-    IBOutlet NSTextField *_columnsLabel;
     IBOutlet NSTextField *_rowsLabel;
     IBOutlet NSTextField *_windowStyleLabel;
     IBOutlet NSTextField *_spaceLabel;
@@ -199,6 +203,19 @@ CGFloat iTermMaxBlurRadius(void) {
                    displayName:@"Window height in rows"
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(1, iTermMaxInitialSessionSize);
+
+    info = [self defineControl:_widthField
+                           key:KEY_WIDTH
+                   displayName:@"Window width in pixels"
+                          type:kPreferenceInfoTypeIntegerTextField];
+    info.range = NSMakeRange(1, iTermMaxInitialSessionSize);
+
+    info = [self defineControl:_heightField
+                           key:KEY_HEIGHT
+                   displayName:@"Window height in pixels"
+                          type:kPreferenceInfoTypeIntegerTextField];
+    info.range = NSMakeRange(1, iTermMaxInitialSessionSize);
+
 
     [self defineControl:_hideAfterOpening
                     key:KEY_HIDE_AFTER_OPENING

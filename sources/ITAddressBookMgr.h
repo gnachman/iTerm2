@@ -137,6 +137,10 @@
 // Display
 #define KEY_ROWS                   @"Rows"  // not to exceed iTermMaxInitialSessionSize
 #define KEY_COLUMNS                @"Columns"  // not to exceed iTermMaxInitialSessionSize
+
+// for browser only, at least for now
+#define KEY_WIDTH                  @"Width in Points"  // NSNumber
+#define KEY_HEIGHT                 @"Height in Points"  // NSNumber
 #define KEY_FULLSCREEN             @"Full Screen"  // DEPRECATED
 #define KEY_WINDOW_TYPE            @"Window Type"
 #define KEY_USE_CUSTOM_WINDOW_TITLE           @"Use Custom Window Title"

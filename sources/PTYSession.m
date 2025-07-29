@@ -1797,7 +1797,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // set our preferences
     [aSession setProfile:theBookmark];
 
-    [aSession setScreenSize:[sessionView frame] parent:[delegate realParentWindow]];
+    [aSession setScreenSize:[sessionView frame].size parent:[delegate realParentWindow]];
 
     if ([arrangement[SESSION_ARRANGEMENT_TMUX_FOCUS_REPORTING] boolValue]) {
         // This has to be done after setScreenSize:parent: because it has a side-effect of enabling
@@ -2221,7 +2221,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 // Session specific methods
-- (BOOL)setScreenSize:(NSRect)aRect parent:(id<WindowControllerInterface>)parent {
+- (BOOL)setScreenSize:(NSSize)size parent:(id<WindowControllerInterface>)parent {
     _modeHandler.mode = iTermSessionModeDefault;
     _screen.delegate = self;
     if ([iTermAdvancedSettingsModel showLocationsInScrollbar] && [iTermAdvancedSettingsModel showMarksInScrollbar]) {
@@ -2230,7 +2230,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // Allocate the root per-session view.
     if (!_view) {
-        self.view = [[[SessionView alloc] initWithFrame:NSMakeRect(0, 0, aRect.size.width, aRect.size.height)] autorelease];
+        self.view = [[[SessionView alloc] initWithFrame:NSMakeRect(0, 0, size.width, size.height)] autorelease];
         self.view.driver.dataSource = _metalGlue;
         [self initializeMarksMinimap];
         [_view setFindDriverDelegate:self];
@@ -2252,9 +2252,13 @@ ITERM_WEAKLY_REFERENCEABLE
     _view.searchResultsMinimapViewDelegate = _textview.findOnPageHelper;
     _metalGlue.textView = _textview;
     [_textview setAutoresizingMask: NSViewWidthSizable | NSViewHeightSizable];
-    [_textview setFontTable:[iTermFontTable fontTableForProfile:_profile]
-          horizontalSpacing:[iTermProfilePreferences doubleForKey:KEY_HORIZONTAL_SPACING inProfile:_profile]
-            verticalSpacing:[iTermProfilePreferences doubleForKey:KEY_VERTICAL_SPACING inProfile:_profile]];
+    if (_profile.profileIsBrowser) {
+        [_textview configureAsBrowser];
+    } else {
+        [_textview setFontTable:[iTermFontTable fontTableForProfile:_profile]
+              horizontalSpacing:[iTermProfilePreferences doubleForKey:KEY_HORIZONTAL_SPACING inProfile:_profile]
+                verticalSpacing:[iTermProfilePreferences doubleForKey:KEY_VERTICAL_SPACING inProfile:_profile]];
+    }
     if (@available(macOS 11, *)) {
         _view.browserViewController.zoom = [iTermProfilePreferences doubleForKey:KEY_BROWSER_ZOOM inProfile:_profile];
     }
@@ -6463,9 +6467,13 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         return;
     }
     DLog(@"Line height was %f", [_textview lineHeight]);
-    [_textview setFontTable:newFontTable
-          horizontalSpacing:horizontalSpacing
-            verticalSpacing:verticalSpacing];
+    if (self.isBrowserSession) {
+        [_textview configureAsBrowser];
+    } else {
+        [_textview setFontTable:newFontTable
+              horizontalSpacing:horizontalSpacing
+                verticalSpacing:verticalSpacing];
+    }
     if (@available(macOS 11, *)) {
         _view.browserViewController.zoom = newFontTable.browserZoom;
     }

@@ -498,7 +498,6 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (void)setWarnAboutSecureKeyboardInputWithOpenCommand:(BOOL)value;
 
 + (NSString *)webUserAgent;
-+ (BOOL)workAroundBigSurBug;
 + (BOOL)workAroundMultiDisplayOSBug;
 + (BOOL)workAroundNumericKeypadBug;
 + (int)xtermVersion;

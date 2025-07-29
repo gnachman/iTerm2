@@ -164,8 +164,10 @@ class UserDefaultsUnsavedController: NSTitlebarAccessoryViewController {
 
     private func hideNotification() {
         UserDefaults.standard.setValue(true, forKey: Self.hideKey)
-        if let i = view.window?.titlebarAccessoryViewControllers.firstIndex(of: self) {
-            view.window?.removeTitlebarAccessoryViewController(at: i)
+        if let window = view.window,
+           window.styleMask.contains(.titled),
+           let i = window.titlebarAccessoryViewControllers.firstIndex(of: self) {
+            window.removeTitlebarAccessoryViewController(at: i)
         }
     }
 

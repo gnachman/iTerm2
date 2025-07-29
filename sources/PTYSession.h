@@ -679,7 +679,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)irAdvance:(int)dir;
 
 // Session specific methods
-- (BOOL)setScreenSize:(NSRect)aRect parent:(id<WindowControllerInterface>)parent;
+- (BOOL)setScreenSize:(NSSize)size parent:(id<WindowControllerInterface>)parent;
 
 // triggers
 - (void)setAllTriggersEnabled:(BOOL)enabled;

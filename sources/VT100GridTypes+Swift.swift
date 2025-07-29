@@ -109,3 +109,13 @@ extension VT100GridRect {
         self = VT100GridRectMake(x, y, width, height)
     }
 }
+
+extension Optional where Wrapped == VT100GridSize {
+    var d: String {
+        if let v = self {
+            return VT100GridSizeDescription(v)
+        } else {
+            return "(nil)"
+        }
+    }
+}

@@ -824,11 +824,6 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         _savedWindowType = self.windowType;
         _windowType = WINDOW_TYPE_LION_FULL_SCREEN;
     }
-    if ([iTermAdvancedSettingsModel workAroundBigSurBug]) {
-        while (self.window.it_titlebarAccessoryViewControllers.count > 0) {
-            [self.window removeTitlebarAccessoryViewControllerAtIndex:0];
-        }
-    }
 }
 
 - (void)windowDidEnterFullScreenImpl:(NSNotification *)notification {
@@ -1028,7 +1023,6 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
         case WINDOW_TYPE_NO_TITLE_BAR:
             return (mask |
                     NSWindowStyleMaskFullSizeContentView |
-                    NSWindowStyleMaskTitled |
                     NSWindowStyleMaskClosable |
                     NSWindowStyleMaskMiniaturizable |
                     resizable);
@@ -1039,7 +1033,6 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
         case WINDOW_TYPE_COMPACT:
             return (mask |
                     NSWindowStyleMaskFullSizeContentView |
-                    NSWindowStyleMaskTitled |
                     NSWindowStyleMaskClosable |
                     NSWindowStyleMaskMiniaturizable |
                     resizable);
@@ -1047,7 +1040,6 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
             return (mask |
                     NSWindowStyleMaskFullSizeContentView |
-                    NSWindowStyleMaskTitled |
                     NSWindowStyleMaskClosable |
                     NSWindowStyleMaskMiniaturizable |
                     resizable);

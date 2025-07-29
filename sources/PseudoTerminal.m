@@ -158,43 +158,42 @@ static NSString *const kWindowNameFormat = @"iTerm Window %d";
 #define PtyLog DLog
 
 // Constants for saved window arrangement key names.
-static NSString *const TERMINAL_ARRANGEMENT_OLD_X_ORIGIN = @"Old X Origin";
-static NSString *const TERMINAL_ARRANGEMENT_OLD_Y_ORIGIN = @"Old Y Origin";
-static NSString *const TERMINAL_ARRANGEMENT_OLD_WIDTH = @"Old Width";
-static NSString *const TERMINAL_ARRANGEMENT_OLD_HEIGHT = @"Old Height";
-static NSString *const TERMINAL_ARRANGEMENT_X_ORIGIN = @"X Origin";
-static NSString *const TERMINAL_ARRANGEMENT_Y_ORIGIN = @"Y Origin";
-static NSString *const TERMINAL_ARRANGEMENT_WIDTH = @"Width";
-static NSString *const TERMINAL_ARRANGEMENT_HEIGHT = @"Height";
-static NSString *const TERMINAL_ARRANGEMENT_EDGE_SPANNING_OFF = @"Edge Spanning Off";  // Deprecated. Included in window type now.
-static NSString *const TERMINAL_ARRANGEMENT_TABS = @"Tabs";
-static NSString *const TERMINAL_ARRANGEMENT_FULLSCREEN = @"Fullscreen";
-static NSString *const TERMINAL_ARRANGEMENT_LION_FULLSCREEN = @"LionFullscreen";
-static NSString *const TERMINAL_ARRANGEMENT_WINDOW_TYPE = @"Window Type";
-static NSString *const TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE = @"Saved Window Type";  // Only relevant for fullscreen
-static NSString *const TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX = @"Selected Tab Index";
-static NSString *const TERMINAL_ARRANGEMENT_SCREEN_INDEX = @"Screen";
-static NSString *const TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING = @"Hide After Opening";
-static NSString *const TERMINAL_ARRANGEMENT_DESIRED_COLUMNS = @"Desired Columns";
-static NSString *const TERMINAL_ARRANGEMENT_DESIRED_ROWS = @"Desired Rows";
-static NSString *const TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW = @"Is Hotkey Window";
-static NSString *const TERMINAL_ARRANGEMENT_INITIAL_PROFILE = @"Initial Profile";  // Optional
-
-static NSString *const TERMINAL_GUID = @"TerminalGuid";
-static NSString *const TERMINAL_ARRANGEMENT_HAS_TOOLBELT = @"Has Toolbelt";
-static NSString *const TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"Hiding Toolbelt Should Resize Window";
-static NSString *const TERMINAL_ARRANGEMENT_USE_TRANSPARENCY = @"Use Transparency";
-static NSString *const TERMINAL_ARRANGEMENT_TOOLBELT_PROPORTIONS = @"Toolbelt Proportions";
-static NSString *const TERMINAL_ARRANGEMENT_TITLE_OVERRIDE = @"Title Override";
-static NSString *const TERMINAL_ARRANGEMENT_TOOLBELT = @"Toolbelt";
+NSString *const TERMINAL_ARRANGEMENT_OLD_X_ORIGIN = @"Old X Origin";
+NSString *const TERMINAL_ARRANGEMENT_OLD_Y_ORIGIN = @"Old Y Origin";
+NSString *const TERMINAL_ARRANGEMENT_OLD_WIDTH = @"Old Width";
+NSString *const TERMINAL_ARRANGEMENT_OLD_HEIGHT = @"Old Height";
+NSString *const TERMINAL_ARRANGEMENT_X_ORIGIN = @"X Origin";
+NSString *const TERMINAL_ARRANGEMENT_Y_ORIGIN = @"Y Origin";
+NSString *const TERMINAL_ARRANGEMENT_WIDTH = @"Width";
+NSString *const TERMINAL_ARRANGEMENT_HEIGHT = @"Height";
+NSString *const TERMINAL_ARRANGEMENT_EDGE_SPANNING_OFF = @"Edge Spanning Off";  // Deprecated. Included in window type now.
+NSString *const TERMINAL_ARRANGEMENT_TABS = @"Tabs";
+NSString *const TERMINAL_ARRANGEMENT_FULLSCREEN = @"Fullscreen";
+NSString *const TERMINAL_ARRANGEMENT_LION_FULLSCREEN = @"LionFullscreen";
+NSString *const TERMINAL_ARRANGEMENT_WINDOW_TYPE = @"Window Type";
+NSString *const TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE = @"Saved Window Type";  // Only relevant for fullscreen
+NSString *const TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX = @"Selected Tab Index";
+NSString *const TERMINAL_ARRANGEMENT_SCREEN_INDEX = @"Screen";
+NSString *const TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING = @"Hide After Opening";
+NSString *const TERMINAL_ARRANGEMENT_DESIRED_COLUMNS = @"Desired Columns";
+NSString *const TERMINAL_ARRANGEMENT_DESIRED_ROWS = @"Desired Rows";
+NSString *const TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW = @"Is Hotkey Window";
+NSString *const TERMINAL_ARRANGEMENT_INITIAL_PROFILE = @"Initial Profile";  // Optional
+NSString *const TERMINAL_GUID = @"TerminalGuid";
+NSString *const TERMINAL_ARRANGEMENT_HAS_TOOLBELT = @"Has Toolbelt";
+NSString *const TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"Hiding Toolbelt Should Resize Window";
+NSString *const TERMINAL_ARRANGEMENT_USE_TRANSPARENCY = @"Use Transparency";
+NSString *const TERMINAL_ARRANGEMENT_TOOLBELT_PROPORTIONS = @"Toolbelt Proportions";
+NSString *const TERMINAL_ARRANGEMENT_TITLE_OVERRIDE = @"Title Override";
+NSString *const TERMINAL_ARRANGEMENT_TOOLBELT = @"Toolbelt";
 
 // This is used to adjust the window's size to preserve rows x cols when the scroller style changes.
 // If the window was maximized to the screen's visible frame, it will be unset to disable this behavior.
-static NSString *const TERMINAL_ARRANGEMENT_SCROLLER_WIDTH = @"Scroller Width";
+NSString *const TERMINAL_ARRANGEMENT_SCROLLER_WIDTH = @"Scroller Width";
 
 // Only present in arrangements created by the window restoration system, not (for example) saved arrangements in the UI.
 // Boolean NSNumber.
-static NSString *const TERMINAL_ARRANGEMENT_MINIATURIZED = @"miniaturized";
+NSString *const TERMINAL_ARRANGEMENT_MINIATURIZED = @"miniaturized";
 
 static NSRect iTermRectCenteredHorizontallyWithinRect(NSRect frameToCenter, NSRect container) {
     CGFloat centerOfContainer = NSMidX(container);
@@ -294,11 +293,6 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     DirectoriesPopupWindowController *_directoriesPopupWindowController;
     AutocompleteView* autocompleteView;
 
-    // This is a hack to support old applescript code that set the window size
-    // before adding a session to it, which doesn't really make sense now that
-    // textviews and windows are loosely coupled.
-    int nextSessionRows_;
-    int nextSessionColumns_;
 
     // Indicates if _anchoredScreenNumber is to be used.
     BOOL _isAnchoredToScreen;
@@ -355,11 +349,6 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     // After dealloc starts, the restorable state should not be updated
     // because the window's state is a shambles.
     BOOL doNotSetRestorableState_;
-
-    // For top/left/bottom of screen windows, this is the size it really wants to be.
-    // Initialized to -1 in -init and then set to the size of the first session
-    // forever.
-    int desiredRows_, desiredColumns_;
 
     // If set, then hiding the toolbelt should shrink the window by the toolbelt's width.
     BOOL hidingToolbeltShouldResizeWindow_;
@@ -640,7 +629,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
     NSScreen *screen = [self anchorToScreenNumber:screenNumber];
 
-    desiredRows_ = desiredColumns_ = -1;
+    _windowSizeHelper = [[iTermTerminalWindowSizeHelper alloc] init];
     NSRect initialFrame;
     switch (windowType) {
         case WINDOW_TYPE_TOP:
@@ -1102,6 +1091,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_fullScreenEnteredSeal rejectWithDefaultError];
     [_fullScreenPromise release];
     [_fullScreenEnteredSeal release];
+    [_windowSizeHelper release];
+
     [super dealloc];
 }
 
@@ -3427,12 +3418,7 @@ ITERM_WEAKLY_REFERENCEABLE
                sessions:(NSArray *)sessions
      partialAttachments:(NSDictionary *)partialAttachments {
     PtyLog(@"Restore arrangement: %@", arrangement);
-    if ([arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_ROWS]) {
-        desiredRows_ = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_ROWS] intValue];
-    }
-    if ([arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_COLUMNS]) {
-        desiredColumns_ = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_COLUMNS] intValue];
-    }
+    [_windowSizeHelper willLoadArrangement:arrangement];
     iTermWindowType windowType = iTermThemedWindowType([PseudoTerminal _windowTypeForArrangement:arrangement]);
     NSRect rect;
     rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
@@ -3707,8 +3693,7 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         result[TERMINAL_ARRANGEMENT_SCREEN_INDEX] = @(_screenNumberFromFirstProfile);
     }
-    result[TERMINAL_ARRANGEMENT_DESIRED_ROWS] = @(desiredRows_);
-    result[TERMINAL_ARRANGEMENT_DESIRED_COLUMNS] = @(desiredColumns_);
+    [_windowSizeHelper populateInArrangement:result];
 
     // Save tabs.
     if ([tabs count] == 0) {
@@ -4332,15 +4317,13 @@ ITERM_WEAKLY_REFERENCEABLE
             edgeSpanning = NO;
             // Fall through
         case WINDOW_TYPE_TOP:
-            PtyLog(@"Window type = TOP, desired rows=%d", desiredRows_);
+            PtyLog(@"Window type = TOP. %@", _windowSizeHelper);
             if (!preserveSize) {
                 // If the screen grew and the window was smaller than the desired number of rows, grow it.
-                if (desiredRows_ > 0) {
-                    frame.size.height = MIN(screenVisibleFrame.size.height,
-                                            ceil([[session textview] lineHeight] * desiredRows_) + decorationSize.height + 2 * [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]);
-                } else {
-                    frame.size.height = MIN(screenVisibleFrame.size.height, frame.size.height);
-                }
+                frame.size.height = [_windowSizeHelper heightForScreenVisibleSize:screenVisibleFrame.size
+                                                                       lineHeight:[[session textview] lineHeight]
+                                                                 decorationHeight:decorationSize.height
+                                                                         fallback:frame.size.height];
             }
             if (!edgeSpanning) {
                 if (!preserveSize) {
@@ -4359,15 +4342,13 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_BOTTOM_PARTIAL:
             edgeSpanning = NO;
         case WINDOW_TYPE_BOTTOM:
-            PtyLog(@"Window type = BOTTOM, desired rows=%d", desiredRows_);
+            PtyLog(@"Window type = BOTTOM. %@", _windowSizeHelper);
             if (!preserveSize) {
                 // If the screen grew and the window was smaller than the desired number of rows, grow it.
-                if (desiredRows_ > 0) {
-                    frame.size.height = MIN(screenVisibleFrame.size.height,
-                                            ceil([[session textview] lineHeight] * desiredRows_) + decorationSize.height + 2 * [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]);
-                } else {
-                    frame.size.height = MIN(screenVisibleFrame.size.height, frame.size.height);
-                }
+                frame.size.height = [_windowSizeHelper heightForScreenVisibleSize:screenVisibleFrame.size
+                                                                       lineHeight:[[session textview] lineHeight]
+                                                                 decorationHeight:decorationSize.height
+                                                                         fallback:frame.size.height];
             }
             if (!edgeSpanning) {
                 if (!preserveSize) {
@@ -4389,15 +4370,13 @@ ITERM_WEAKLY_REFERENCEABLE
             edgeSpanning = NO;
             // Fall through
         case WINDOW_TYPE_LEFT:
-            PtyLog(@"Window type = LEFT, desired cols=%d", desiredColumns_);
+            PtyLog(@"Window type = LEFT. %@", _windowSizeHelper);
             if (!preserveSize) {
                 // If the screen grew and the window was smaller than the desired number of columns, grow it.
-                if (desiredColumns_ > 0) {
-                    frame.size.width = MIN(screenVisibleFrame.size.width,
-                                           [[session textview] charWidth] * desiredColumns_ + 2 * [iTermPreferences intForKey:kPreferenceKeySideMargins] + iTermScrollbarWidth());
-                } else {
-                    frame.size.width = MIN(screenVisibleFrame.size.width, frame.size.width);
-                }
+                frame.size.width = [_windowSizeHelper widthForScreenVisibleSize:screenVisibleFrame.size
+                                                                      charWidth:[[session textview] charWidth]
+                                                                decorationWidth:iTermScrollbarWidth()
+                                                                       fallback:frame.size.width];
             }
             if (!edgeSpanning) {
                 if (!preserveSize) {
@@ -4416,15 +4395,13 @@ ITERM_WEAKLY_REFERENCEABLE
             edgeSpanning = NO;
             // Fall through
         case WINDOW_TYPE_RIGHT:
-            PtyLog(@"Window type = RIGHT, desired cols=%d", desiredColumns_);
+            PtyLog(@"Window type = RIGHT. %@", _windowSizeHelper);
             if (!preserveSize) {
                 // If the screen grew and the window was smaller than the desired number of columns, grow it.
-                if (desiredColumns_ > 0) {
-                    frame.size.width = MIN(screenVisibleFrame.size.width,
-                                           [[session textview] charWidth] * desiredColumns_ + 2 * [iTermPreferences intForKey:kPreferenceKeySideMargins] + iTermScrollbarWidth());
-                } else {
-                    frame.size.width = MIN(screenVisibleFrame.size.width, frame.size.width);
-                }
+                frame.size.width = [_windowSizeHelper widthForScreenVisibleSize:screenVisibleFrame.size
+                                                                      charWidth:[[session textview] charWidth]
+                                                                decorationWidth:iTermScrollbarWidth()
+                                                                       fallback:frame.size.width];
             }
             if (!edgeSpanning) {
                 if (!preserveSize) {
@@ -5305,21 +5282,21 @@ ITERM_WEAKLY_REFERENCEABLE
 - (NSSize)preferredWindowFrameToPerfectlyFitCurrentSessionInInitialConfiguration {
     PTYSession *session = [self currentSession];
     PTYTextView *textView = session.textview;
-    NSSize cellSize = NSMakeSize(textView.charWidth, textView.lineHeight);
-    NSSize decorationSize = [self windowDecorationSize];
-    VT100GridSize sessionSize =
-    VT100GridSizeMake(MIN(iTermMaxInitialSessionSize,
-                          [session.profile[KEY_COLUMNS] intValue]),
-                      MIN(iTermMaxInitialSessionSize,
-                          [session.profile[KEY_ROWS] intValue]));
-    return NSMakeSize([iTermPreferences intForKey:kPreferenceKeySideMargins] * 2 + sessionSize.width * cellSize.width + decorationSize.width,
-                      [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2 + sessionSize.height * cellSize.height + decorationSize.height);
+    const NSSize cellSize = NSMakeSize(textView.charWidth, textView.lineHeight);
+    const NSSize decorationSize = [self windowDecorationSize];
+    return [_windowSizeHelper preferredSizeForCellSize:cellSize
+                                        decorationSize:decorationSize
+                                               profile:session.profile];
 }
 
 - (void)addShortcutAccessorViewControllerToTitleBarIfNeeded {
     DLog(@"addShortcutAccessorViewControllerToTitleBarIfNeeded");
     if (!_shortcutAccessoryViewController) {
         DLog(@"Don't already have a shortcut accessory view controller");
+        return;
+    }
+    if ((self.window.styleMask & NSWindowStyleMaskTitled) == 0) {
+        DLog(@"Style mask does not include titled");
         return;
     }
     if (self.shouldHaveShortcutAccessory &&
@@ -5358,7 +5335,7 @@ ITERM_WEAKLY_REFERENCEABLE
             return NO;
             
         case WINDOW_TYPE_LION_FULL_SCREEN:
-            return ![iTermAdvancedSettingsModel workAroundBigSurBug];
+            return YES;
 
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_ACCESSORY:
@@ -5623,7 +5600,7 @@ ITERM_WEAKLY_REFERENCEABLE
             // then its desired size becomes irrelevant; we want it to preserve the size you set
             // and forget about the size in its profile. This way it will go back to the old size
             // when toggling out of fullscreen.
-            desiredRows_ = -1;
+            [_windowSizeHelper didEndLiveResizeVerticallyConstrained:YES];
             break;
 
         case WINDOW_TYPE_BOTTOM:
@@ -5633,7 +5610,7 @@ ITERM_WEAKLY_REFERENCEABLE
             } else {
                 self.windowType = WINDOW_TYPE_BOTTOM;
             }
-            desiredRows_ = -1;
+            [_windowSizeHelper didEndLiveResizeVerticallyConstrained:YES];
             break;
 
         case WINDOW_TYPE_LEFT:
@@ -5643,7 +5620,7 @@ ITERM_WEAKLY_REFERENCEABLE
             } else {
                 self.windowType = WINDOW_TYPE_LEFT;
             }
-            desiredColumns_ = -1;
+            [_windowSizeHelper didEndLiveResizeVerticallyConstrained:NO];
             break;
 
         case WINDOW_TYPE_RIGHT:
@@ -5653,7 +5630,7 @@ ITERM_WEAKLY_REFERENCEABLE
             } else {
                 self.windowType = WINDOW_TYPE_RIGHT;
             }
-            desiredColumns_ = -1;
+            [_windowSizeHelper didEndLiveResizeVerticallyConstrained:NO];
             break;
 
         default:
@@ -5690,10 +5667,6 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)shouldMoveTabBarToTitlebarAccessoryInLionFullScreen {
-    if ([iTermAdvancedSettingsModel workAroundBigSurBug]) {
-        DLog(@"work around big sur bug - return NO");
-        return NO;
-    }
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_LeftTab:
         case PSMTab_BottomTab:
@@ -5835,6 +5808,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)updateTabBarControlIsTitlebarAccessory {
     DLog(@"updateTabBarControlIsTitlebarAccessory %@", self);
+    if ((self.window.styleMask & NSWindowStyleMaskTitled) == 0) {
+        DLog(@"Style mask does not include titled");
+        return;
+    }
     const NSInteger index = [self.window.it_titlebarAccessoryViewControllers indexOfObject:_titleBarAccessoryTabBarViewController];
     if ([self tabBarShouldBeAccessory]) {
         DLog(@"tab bar should be accessory");
@@ -5862,6 +5839,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)returnTabBarToContentView {
     DLog(@"returnTabBarToContentView %@", self);
+    if ((self.window.styleMask & NSWindowStyleMaskTitled) == 0) {
+        DLog(@"Style mask does not include titled");
+        return;
+    }
     const NSInteger index = [self.window.it_titlebarAccessoryViewControllers indexOfObject:_titleBarAccessoryTabBarViewController];
     if (index == NSNotFound) {
         assert(!_contentView.tabBarControlOnLoan);
@@ -5894,6 +5875,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self.window standardWindowButton:NSWindowMiniaturizeButton] setHidden:YES];
     [[self.window standardWindowButton:NSWindowZoomButton] setHidden:YES];
     [self returnTabBarToContentView];
+    if ((self.window.styleMask & NSWindowStyleMaskTitled) == 0) {
+        DLog(@"Style mask does not include titled");
+        return;
+    }
     while (self.window.titlebarAccessoryViewControllers.count) {
         [self.window removeTitlebarAccessoryViewControllerAtIndex:0];
     }
@@ -10241,72 +10226,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 // an open tab, or its bookmark's preference if it's the first session in the window.
 - (void)setupSession:(PTYSession *)aSession
             withSize:(NSSize*)size {
-    NSDictionary *profile;
-    NSParameterAssert(aSession != nil);
-
-    profile = aSession.profile;
-    PtyLog(@"Open session with prefs: %@", profile);
-    int rows = MIN(iTermMaxInitialSessionSize,
-                   [[profile objectForKey:KEY_ROWS] intValue]);
-    int columns = MIN(iTermMaxInitialSessionSize,
-                      [[profile objectForKey:KEY_COLUMNS] intValue]);
-    if (self.tabs.count == 0 && desiredRows_ < 0) {
-        desiredRows_ = rows;
-        desiredColumns_ = columns;
-    }
-    if (nextSessionRows_) {
-        rows = nextSessionRows_;
-        nextSessionRows_ = 0;
-    }
-    if (nextSessionColumns_) {
-        columns = nextSessionColumns_;
-        nextSessionColumns_ = 0;
-    }
-    // rows, columns are set to the bookmark defaults. Make sure they'll fit.
-
-    if (![iTermSessionLauncher profileIsWellFormed:profile]) {
-        @throw [NSException exceptionWithName:@"MissingFonts"
-                                       reason:@"No usable font could be found"
-                                     userInfo:nil];
-    }
-    NSSize charSize = [PTYTextView charSizeForFont:[ITAddressBookMgr fontWithDesc:[profile objectForKey:KEY_NORMAL_FONT]
-                                                                 ligaturesEnabled:[iTermProfilePreferences boolForKey:KEY_ASCII_LIGATURES
-                                                                                                            inProfile:profile]]
-                                 horizontalSpacing:[iTermProfilePreferences doubleForKey:KEY_HORIZONTAL_SPACING inProfile:profile]
-                                   verticalSpacing:[iTermProfilePreferences doubleForKey:KEY_VERTICAL_SPACING inProfile:profile]];
-
-    if (size == nil && [_contentView.tabView numberOfTabViewItems] != 0) {
-        NSSize contentSize = [[[[self currentSession] view] scrollview] documentVisibleRect].size;
-        rows = (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]*2) / charSize.height;
-        columns = (contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins]*2) / charSize.width;
-    }
-    NSRect sessionRect;
-    if (size != nil) {
-        BOOL hasScrollbar = [self scrollbarShouldBeVisible];
-        NSSize contentSize =
-            [PTYScrollView contentSizeForFrameSize:*size
-                           horizontalScrollerClass:nil
-                             verticalScrollerClass:(hasScrollbar ? [PTYScroller class] : nil)
-                                        borderType:NSNoBorder
-                                       controlSize:NSControlSizeRegular
-                                     scrollerStyle:[self scrollerStyle]
-                                        rightExtra:self.currentSession.desiredRightExtra];
-        rows = (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]*2) / charSize.height;
-        columns = (contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins]*2) / charSize.width;
-        sessionRect.origin = NSZeroPoint;
-        sessionRect.size = *size;
-    } else {
-        sessionRect = NSMakeRect(0, 0, columns * charSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2, rows * charSize.height + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2);
-    }
-
-    if ([aSession setScreenSize:sessionRect parent:self]) {
-        PtyLog(@"setupSession - call safelySetSessionSize");
-        [self safelySetSessionSize:aSession rows:rows columns:columns];
-        PtyLog(@"setupSession - call setPreferencesFromAddressBookEntry");
-        [aSession setPreferencesFromAddressBookEntry:profile];
-        [aSession loadInitialColorTableAndResetCursorGuide];
-        [aSession.screen resetTimestamps];
-    }
+    [self setupSessionImpl:aSession withSize:size];
 }
 
 - (IBAction)moveSessionToWindow:(id)sender {

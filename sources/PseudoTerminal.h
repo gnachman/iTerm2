@@ -28,6 +28,7 @@
 @class iTermToolbeltView;
 @protocol iTermWindowScope;
 @class iTermController;
+@class iTermTerminalWindowSizeHelper;
 @class PseudoTerminalState;
 @class TmuxController;
 @class WKWebViewConfiguration;
@@ -107,6 +108,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 @property(nonatomic, strong) iTermPromise *fullScreenPromise;
 @property(nonatomic, strong) id<iTermPromiseSeal> fullScreenEnteredSeal;
 @property(nonatomic) BOOL automaticallySelectNewTabs;
+@property(nonatomic, readonly) iTermTerminalWindowSizeHelper *windowSizeHelper;
 
 // Draws a mock-up of a window arrangement into the current graphics context.
 // |frames| gives an array of NSValue's having NSRect values for each screen,
