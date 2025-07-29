@@ -6826,6 +6826,10 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
 }
 
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues {
+    [self setSessionSpecificProfileValues:newValues reload:YES];
+}
+
+- (void)setSessionSpecificProfileValues:(NSDictionary *)newValues reload:(BOOL)reload {
     DLog(@"%@: setSessionSpecificProfilevalues:%@", self, newValues);
     if (![self profileValuesDifferFromCurrentProfile:newValues]) {
         DLog(@"No changes to be made");
@@ -6882,8 +6886,10 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
     DLog(@"Set bookmark and reload profile");
     [[ProfileModel sessionsInstance] setBookmark:temp withGuid:temp[KEY_GUID]];
 
-    // Update this session's copy of the bookmark
-    [self reloadProfile];
+    if (reload) {
+        // Update this session's copy of the bookmark
+        [self reloadProfile];
+    }
 }
 
 - (void)remarry {

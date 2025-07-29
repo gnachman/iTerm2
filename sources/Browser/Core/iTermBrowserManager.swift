@@ -52,6 +52,7 @@ protocol iTermBrowserManagerDelegate: AnyObject, iTermBrowserFindManagerDelegate
     func browserManager(_ browserManager: iTermBrowserManager, openFile file: String)
     func browserManager(_ browserManager: iTermBrowserManager, performSplitPaneAction action: iTermBrowserSplitPaneAction)
     func browserManagerCurrentTabHasMultipleSessions(_ browserManager: iTermBrowserManager) -> Bool
+    func browserManagerBroadcastWebViews(_ browserManager: iTermBrowserManager) -> [iTermBrowserWebView]
 }
 
 @available(macOS 11.0, *)
@@ -190,10 +191,10 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                                                    substitutions: [:])
 #endif
 
-            var js = iTermBrowserTemplateLoader.loadTemplate(named: "console-log",
+            let js = iTermBrowserTemplateLoader.loadTemplate(named: "console-log",
                                                              type: "js",
                                                              substitutions: ["LOG_ERRORS": logErrors])
-
+            #warning("TODO: I should move most of these from .page to .defaultClient")
             configuration.userContentController.add(handlerProxy, contentWorld: .page, name: "iTerm2ConsoleLog")
             configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: "iTerm2ConsoleLog")
             contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
@@ -676,6 +677,25 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
 @available(macOS 11.0, *)
 @MainActor
 extension iTermBrowserManager: iTermBrowserWebViewDelegate {
+    func webView(_ webView: iTermBrowserWebView,
+                 didReceiveEvent event: iTermBrowserWebView.Event) {
+        for receiver in delegate?.browserManagerBroadcastWebViews(self) ?? [] {
+            if receiver == webView {
+                continue
+            }
+            receiver.receivingBroadcast = true
+            defer {
+                receiver.receivingBroadcast = false
+            }
+            switch event {
+            case .insert(text: let text):
+                receiver.insertText(text)
+            case .doCommandBySelector(let sel):
+                receiver.doCommand(by: sel)
+            }
+        }
+    }
+    
     func webViewSetMouseInfo(_ webView: iTermBrowserWebView,
                              pointInView: NSPoint,
                              button: Int,

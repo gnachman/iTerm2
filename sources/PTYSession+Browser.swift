@@ -13,7 +13,7 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
     func browserFindManager(_ manager: iTermBrowserFindManager, didUpdateResult result: iTermBrowserFindResultBundle) {
         view.findDriver.viewController.countDidChange()
     }
-    
+
     func browserViewController(_ controller: iTermBrowserViewController, didUpdateTitle title: String?) {
         if let title {
             setUntrustedIconName(title)
@@ -30,10 +30,10 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
                                requestNewWindowForURL url: URL,
                                configuration: WKWebViewConfiguration) -> WKWebView? {
         /* If you ever want to open in a window, do:
-            return iTermController.sharedInstance().openSingleUserBrowserWindow(with: url,
-                                                                                configuration: configuration,
-                                                                                options: [],
-                                                                                completion: {})
+         return iTermController.sharedInstance().openSingleUserBrowserWindow(with: url,
+         configuration: configuration,
+         options: [],
+         completion: {})
          */
         let term = (delegate?.realParentWindow() as? PseudoTerminal)
         return term?.openTab(with: url,
@@ -140,7 +140,7 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
                                    actions: SmartSelectionController.actions(inRule: dict) ?? [])
         }
     }
-    
+
     func browserViewController(_ controller: iTermBrowserViewController, didHoverURL url: String?, frame: NSRect) {
         let webView = controller.webView
         let frameInSessionView = view.convert(frame, from: webView)
@@ -163,11 +163,11 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
 
     func browserViewController(_ controller: iTermBrowserViewController, runCommand command: String) {
         guard iTermWarning.show(withTitle: "OK to run:\n\(command)",
-                             actions: ["OK", "Cancel"],
-                             accessory: nil,
-                             identifier: nil,
-                             silenceable: .kiTermWarningTypePersistent,
-                             heading: "Run command?",
+                                actions: ["OK", "Cancel"],
+                                accessory: nil,
+                                identifier: nil,
+                                silenceable: .kiTermWarningTypePersistent,
+                                heading: "Run command?",
                                 window: view.window) == .kiTermWarningSelection0 else {
             return
         }
@@ -191,11 +191,11 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
 
     func browserViewController(_ controller: iTermBrowserViewController, openFile file: String) {
         guard iTermWarning.show(withTitle: "OK to open this file?\n\(file)",
-                             actions: ["OK", "Cancel"],
-                             accessory: nil,
-                             identifier: nil,
-                             silenceable: .kiTermWarningTypePersistent,
-                             heading: "Open file?",
+                                actions: ["OK", "Cancel"],
+                                accessory: nil,
+                                identifier: nil,
+                                silenceable: .kiTermWarningTypePersistent,
+                                heading: "Open file?",
                                 window: view.window) == .kiTermWarningSelection0 else {
             return
         }
@@ -228,21 +228,32 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
     func browserViewControllerCurrentTabHasMultipleSessions(_ controller: iTermBrowserViewController) -> Bool {
         return (delegate?.sessions().count ?? 0) > 1
     }
-    
+
     func browserViewControllerDidStartNavigation(_ controller: iTermBrowserViewController) {
         browserIsLoading = true
         updateDisplayBecause("browser activity")
     }
-    
+
     func browserViewControllerDidFinishNavigation(_ controller: iTermBrowserViewController) {
         browserIsLoading = false
         updateDisplayBecause("browser activity")
     }
-    
+
     func browserViewControllerDidReceiveNamedMarkUpdate(_ controller: iTermBrowserViewController, guid: String, text: String) {
         // The browser manager has already handled the update via the message handler
         // We just need to notify observers that marks have changed
         NamedMarksDidChangeNotification(sessionGuid: nil).post()
+    }
+
+    func browserViewControllerBroadcastWebViews(_ controller: iTermBrowserViewController) -> [iTermBrowserWebView] {
+        let sessions = delegate?.realParentWindow()?.broadcastSessions() ?? []
+        // TODO: Also broadcast to terminals
+        return sessions.compactMap { (session: PTYSession) -> iTermBrowserWebView? in
+            guard session.isBrowserSession(), session !== self else {
+                return nil
+            }
+            return session.view.browserViewController?.webView
+        }
     }
 }
 

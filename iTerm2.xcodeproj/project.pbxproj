@@ -4420,6 +4420,8 @@
 		A6E304672E00C6C90029CAB4 /* QuickLookHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E304662E00C6C70029CAB4 /* QuickLookHelper.swift */; };
 		A6E312622E386342008222DE /* NSObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E312612E38633F008222DE /* NSObject.swift */; };
 		A6E312862E388A9B008222DE /* iTermModernSavePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E312852E388A95008222DE /* iTermModernSavePanel.swift */; };
+		A6E312B22E397DF4008222DE /* iTermBaseWKWebView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E312B12E397DF2008222DE /* iTermBaseWKWebView.h */; };
+		A6E312B42E397EC0008222DE /* iTermBaseWKWebView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E312B32E397EBD008222DE /* iTermBaseWKWebView.m */; };
 		A6E34BD02118097A00F147DD /* iTermBackgroundDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E34BCE2118097A00F147DD /* iTermBackgroundDrawingHelper.h */; };
 		A6E34BD12118097A00F147DD /* iTermBackgroundDrawingHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E34BCF2118097A00F147DD /* iTermBackgroundDrawingHelper.m */; };
 		A6E39FAB2CD18B6B00035787 /* BidiDisplayInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E39FAA2CD18B6300035787 /* BidiDisplayInfo.swift */; };
@@ -8471,6 +8473,8 @@
 		A6E304662E00C6C70029CAB4 /* QuickLookHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickLookHelper.swift; sourceTree = "<group>"; };
 		A6E312612E38633F008222DE /* NSObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NSObject.swift; sourceTree = "<group>"; };
 		A6E312852E388A95008222DE /* iTermModernSavePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermModernSavePanel.swift; sourceTree = "<group>"; };
+		A6E312B12E397DF2008222DE /* iTermBaseWKWebView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBaseWKWebView.h; sourceTree = "<group>"; };
+		A6E312B32E397EBD008222DE /* iTermBaseWKWebView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBaseWKWebView.m; sourceTree = "<group>"; };
 		A6E34BCE2118097A00F147DD /* iTermBackgroundDrawingHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBackgroundDrawingHelper.h; sourceTree = "<group>"; };
 		A6E34BCF2118097A00F147DD /* iTermBackgroundDrawingHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBackgroundDrawingHelper.m; sourceTree = "<group>"; };
 		A6E39FAA2CD18B6300035787 /* BidiDisplayInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BidiDisplayInfo.swift; sourceTree = "<group>"; };
@@ -10370,6 +10374,8 @@
 		1D9DDE31142E73E300275650 /* Categories */ = {
 			isa = PBXGroup;
 			children = (
+				A6E312B32E397EBD008222DE /* iTermBaseWKWebView.m */,
+				A6E312B12E397DF2008222DE /* iTermBaseWKWebView.h */,
 				A6E312612E38633F008222DE /* NSObject.swift */,
 				A6A3EDC92E0CE2A700D711DA /* NSMenu+iTerm.m */,
 				A6A3EDC72E0CE27900D711DA /* NSMenu+iTerm.h */,
@@ -15024,6 +15030,7 @@
 				A630116920E60725008114B7 /* iTermStatusBarLayout.h in Headers */,
 				A69CCB1C211BF4FF008ADA71 /* iTermRecordingCodec.h in Headers */,
 				A66719431DCE36C3000CE608 /* iTermScriptingWindow.h in Headers */,
+				A6E312B22E397DF4008222DE /* iTermBaseWKWebView.h in Headers */,
 				A667C265277A3B29006B4DEF /* PTYTriggerEvaluator.h in Headers */,
 				A66F3CF71FED741E00AA2021 /* iTermTextRendererTransientState.h in Headers */,
 				A6FE8D03209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.h in Headers */,
@@ -18422,6 +18429,7 @@
 				A6A4866A20B6793E00493302 /* iTermKeyMappingViewController.m in Sources */,
 				A6AA2F6B2E28B615002998B3 /* HudsuckerProxy.swift in Sources */,
 				A6F18B762AEA18F5006C08EE /* iTermToolWrapper.m in Sources */,
+				A6E312B42E397EC0008222DE /* iTermBaseWKWebView.m in Sources */,
 				A663196A22FE5D3D00C502BD /* iTermFileDescriptorMultiClient.m in Sources */,
 				A6F7D4C52E037E520065D09C /* iTermBrowserTemplateLoader.swift in Sources */,
 				A643B7F42DA88F1600EF918E /* PathExtractor.swift in Sources */,

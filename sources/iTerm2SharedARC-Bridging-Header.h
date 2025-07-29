@@ -24,6 +24,7 @@
 #import "AtomicHelpers.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermCommandRunnerPool.h"
+#import "iTermBaseWKWebView.h"
 #import "iTermBuriedSessions.h"
 #import "iTermCPUUtilization.h"
 #import "iTermContextMenuUtilities.h"

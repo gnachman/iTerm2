@@ -72,6 +72,7 @@ protocol iTermBrowserViewControllerDelegate: AnyObject, iTermBrowserFindManagerD
     func browserViewControllerDidStartNavigation(_ controller: iTermBrowserViewController)
     func browserViewControllerDidFinishNavigation(_ controller: iTermBrowserViewController)
     func browserViewControllerDidReceiveNamedMarkUpdate(_ controller: iTermBrowserViewController, guid: String, text: String)
+    func browserViewControllerBroadcastWebViews(_ controller: iTermBrowserViewController) -> [iTermBrowserWebView]
 }
 
 @available(macOS 11.0, *)
@@ -221,7 +222,7 @@ extension iTermBrowserViewController {
         return browserManager.favicon
     }
 
-    @objc var webView: WKWebView {
+    @objc var webView: iTermBrowserWebView {
         return browserManager.webView
     }
 
@@ -1041,6 +1042,11 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
     func browserManager(_ manager: iTermBrowserManager, didReceiveNamedMarkUpdate guid: String, text: String) {
         delegate?.browserViewControllerDidReceiveNamedMarkUpdate(self, guid: guid, text: text)
     }
+
+    func browserManagerBroadcastWebViews(_ browserManager: iTermBrowserManager) -> [iTermBrowserWebView] {
+        return delegate?.browserViewControllerBroadcastWebViews(self) ?? []
+    }
+
 }
 
 @available(macOS 11.0, *)

@@ -983,6 +983,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
 // Set a value in the session's dictionary without affecting the backing profile.
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues;
+- (void)setSessionSpecificProfileValues:(NSDictionary *)newValues reload:(BOOL)reload;
 - (NSString *)amendedColorKey:(NSString *)baseKey;
 
 - (void)useTransparencyDidChange;

@@ -1284,7 +1284,10 @@ extension PTYSession {
             KEY_CURSOR_BOOST + COLORS_LIGHT_MODE_SUFFIX: nullValue,
             KEY_CURSOR_BOOST + COLORS_DARK_MODE_SUFFIX: nullValue,
         ]
-        setSessionSpecificProfileValues(terminalOnlyKeys)
+        setSessionSpecificProfileValues(terminalOnlyKeys, reload: false)
+        DispatchQueue.main.async {
+            self.reloadProfile()
+        }
 
         if iTermProfilePreferences.bool(forKey: KEY_BROWSER_DEV_NULL, inProfile: self.profile) {
             setSessionSpecificProfileValues([KEY_UNDO_TIMEOUT: 0])

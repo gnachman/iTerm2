@@ -40,11 +40,18 @@ protocol iTermBrowserWebViewDelegate: AnyObject {
     func webViewOpenFile(_ webView: iTermBrowserWebView, file: String)
     func webViewPerformSplitPaneAction(_ webView: iTermBrowserWebView, action: iTermBrowserSplitPaneAction)
     func webViewCurrentTabHasMultipleSessions(_ webView: iTermBrowserWebView) -> Bool
+    func webView(_ webView: iTermBrowserWebView, didReceiveEvent: iTermBrowserWebView.Event)
+
 }
 
 @available(macOS 11.0, *)
 @MainActor
-class iTermBrowserWebView: WKWebView {
+class iTermBrowserWebView: iTermBaseWKWebView {
+    enum Event {
+        case insert(text: String)
+        case doCommandBySelector(Selector?)
+    }
+
     weak var browserDelegate: iTermBrowserWebViewDelegate?
     var deferrableInteractionState: Any?
     private let pointerController: PointerController
@@ -57,6 +64,7 @@ class iTermBrowserWebView: WKWebView {
     private var trackingArea: NSTrackingArea?
     private let focusFollowsMouse = iTermFocusFollowsMouse()
     private let contextMenuHelper = iTermBrowserContextMenuHelper()
+    var receivingBroadcast = false
 
     var currentSelection: String? {
         didSet {
@@ -889,6 +897,24 @@ extension iTermBrowserWebView {
                 DLog("\(error)")
                 return nil
             }
+        }
+    }
+}
+
+extension iTermBrowserWebView {
+    @objc(insertText:replacementRange:)
+    override func insertText(_ insertString: Any!, replacementRange: NSRange) {
+        super.insertText(insertString, replacementRange: replacementRange)
+        if !receivingBroadcast {
+            browserDelegate?.webView(self, didReceiveEvent: .insert(text: "\(insertString!)"))
+        }
+    }
+
+    @objc(doCommandBySelector:)
+    override func doCommand(by selector: Selector!) {
+        super.doCommand(by: selector)
+        if !receivingBroadcast {
+            browserDelegate?.webView(self, didReceiveEvent: .doCommandBySelector(selector))
         }
     }
 }

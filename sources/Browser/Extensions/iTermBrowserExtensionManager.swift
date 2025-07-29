@@ -46,7 +46,7 @@ class iTermBrowserExtensionManager {
         self.logger = logger
         self.profileObserver = profileObserver
         self.profileMutator = profileMutator
-        let baseDirectoryPath: String? = profileObserver.value(KEY_BROWSER_EXTENSIONS_ROOT)
+
         extensionRegistry = BrowserExtensionRegistry(
             baseDirectory: nil,
             logger: logger)
