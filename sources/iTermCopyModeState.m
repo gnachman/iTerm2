@@ -253,21 +253,6 @@
 
 #pragma mark - Private
 
-- (PTYTextViewSelectionEndpoint)endpointWithDirection:(PTYTextViewSelectionExtensionDirection)direction {
-    switch (VT100GridCoordOrder(_start, _coord)) {
-        case NSOrderedSame:
-            if (direction == kPTYTextViewSelectionExtensionDirectionLeft || direction == kPTYTextViewSelectionExtensionDirectionUp) {
-                return kPTYTextViewSelectionEndpointStart;
-            } else {
-                return kPTYTextViewSelectionEndpointEnd;
-            }
-        case NSOrderedAscending:
-            return kPTYTextViewSelectionEndpointEnd;
-        case NSOrderedDescending:
-            return kPTYTextViewSelectionEndpointStart;
-    }
-}
-
 - (VT100GridWindowedRange)trivialRange {
     return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(_coord.x, _coord.y, 0, 0), 0, 0);
 }

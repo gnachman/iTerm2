@@ -45,5 +45,6 @@ protocol iTermBrowserActionPerforming: AnyObject {
     func actionPerformingInvoke(scriptFunction: String)
     func actionPerformingOpenQuickLook(atPointInWindow point: NSPoint)
     func actionPerformingPasteSpecial(config: String, fromSelection: Bool)
+    func actionPerformingCopyMode(actions: String)
 }
 

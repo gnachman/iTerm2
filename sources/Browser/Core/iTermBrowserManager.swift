@@ -72,6 +72,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private var adblockHandler: iTermBrowserAdblockHandler?
     private var notificationHandler: iTermBrowserNotificationHandler?
     private var hoverLinkHandler: iTermBrowserHoverLinkHandler?
+    private(set) var copyModeHandler: iTermBrowserCopyModeHandler?
     let passwordWriter = iTermBrowserPasswordWriter()
     private let selectionMonitor = iTermBrowserSelectionMonitor()
     private let contextMenuMonitor = iTermBrowserContextMenuMonitor()
@@ -141,6 +142,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         case passwordManager
         case autofillHandler
         case hoverLinkHandler
+        case copyModeHandler
     }
 
     private func setupWebView(configuration preferredConfiguration: WKWebViewConfiguration?,
@@ -279,6 +281,16 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                     identifier: UserScripts.hoverLinkHandler.rawValue))
             }
 
+            copyModeHandler = iTermBrowserCopyModeHandler.create()
+            if let copyModeHandler {
+                contentManager.add(
+                    userScript: .init(code: copyModeHandler.javascript,
+                                      injectionTime: .atDocumentStart,
+                                      forMainFrameOnly: false,
+                                      worlds: [.defaultClient],
+                                      identifier: "CopyMode"))
+            }
+
             configuration.userContentController.add(handlerProxy, name: iTermBrowserSSLBypassHandler.messageHandlerName)
 
             // Setup reader mode
@@ -325,6 +337,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         adblockManager?.updateRulesIfNeeded()
 
         userState.registerWebView(webView, contentManager: contentManager)
+        copyModeHandler?.webView = webView
 
         // Enable back/forward navigation
         webView.allowsBackForwardNavigationGestures = true
@@ -677,6 +690,14 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
 @available(macOS 11.0, *)
 @MainActor
 extension iTermBrowserManager: iTermBrowserWebViewDelegate {
+    func webView(_ webView: iTermBrowserWebView, handleKeyDown event: NSEvent) -> Bool {
+        if copyModeHandler?.enabled != true {
+            return false
+        }
+        copyModeHandler?.handle(event)
+        return true
+    }
+
     func webView(_ webView: iTermBrowserWebView,
                  didReceiveEvent event: iTermBrowserWebView.Event) {
         for receiver in delegate?.browserManagerBroadcastWebViews(self) ?? [] {
@@ -1057,6 +1078,7 @@ extension iTermBrowserManager: WKNavigationDelegate {
         navigationCount += 1
         readerModeManager.resetForNavigation()
         delegate?.browserManager(self, didStartNavigation: navigation)
+        copyModeHandler?.enabled = false
     }
 
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
@@ -1168,6 +1190,7 @@ extension iTermBrowserManager: WKNavigationDelegate {
         }
 
         delegate?.browserManager(self, didFailNavigation: navigation, withError: error)
+        copyModeHandler?.enabled = false
     }
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {

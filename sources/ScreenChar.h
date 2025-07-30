@@ -30,6 +30,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "ITAddressBookMgr.h"
+#import "iTermTriState.h"
 #import "NSStringITerm.h"
 #import "VT100GridTypes.h"
 
@@ -113,12 +114,6 @@ typedef NS_ENUM(NSUInteger, kiTermScreenCharAnsiColor) {
     kiTermScreenCharAnsiColorBrightWhite
 };
 
-typedef NS_ENUM(int, iTermTriState) {
-    iTermTriStateFalse,
-    iTermTriStateTrue,
-    iTermTriStateOther
-};
-iTermTriState iTermTriStateFromBool(BOOL b);
 
 // Max unichars in a glyph.
 static const int kMaxParts = 20;

@@ -30,6 +30,7 @@
 #import "iTermContextMenuUtilities.h"
 #import "iTermController.h"
 #import "iTermCopyModeHandler.h"
+#import "iTermCopyModeState.h"
 #import "iTermCoreTextLineRenderingHelper.h"
 #import "iTermDatabase.h"
 #import "iTermDirectoryEntry.h"

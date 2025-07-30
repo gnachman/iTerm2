@@ -41,6 +41,7 @@ protocol iTermBrowserWebViewDelegate: AnyObject {
     func webViewPerformSplitPaneAction(_ webView: iTermBrowserWebView, action: iTermBrowserSplitPaneAction)
     func webViewCurrentTabHasMultipleSessions(_ webView: iTermBrowserWebView) -> Bool
     func webView(_ webView: iTermBrowserWebView, didReceiveEvent: iTermBrowserWebView.Event)
+    func webView(_ webView: iTermBrowserWebView, handleKeyDown event: NSEvent) -> Bool
 
 }
 
@@ -191,6 +192,13 @@ class iTermBrowserWebView: iTermBaseWKWebView {
     }
 
     // MARK: - NSView
+
+    override func keyDown(with event: NSEvent) {
+        if browserDelegate?.webView(self, handleKeyDown: event) == true {
+            return
+        }
+        super.keyDown(with: event)
+    }
 
     override func touchesBegan(with event: NSEvent) {
         numTouches = event.touches(matching: [.began, .stationary],

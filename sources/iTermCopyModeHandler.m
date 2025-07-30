@@ -277,21 +277,79 @@ iTermCopyModeAction iTermCopyModeActionFromName(NSString *name, BOOL *ok) {
     [self handleEvent:event];
 }
 
-- (BOOL)handleEvent:(NSEvent *)event {
-    [self.delegate copyModeHandler:self redrawLine:_state.coord.y];
+- (void)handleAsyncEvent:(NSEvent *)event completion:(void (^)(BOOL))completion {
     BOOL wasSelecting = _state.selecting;
+
+    BOOL result = NO;
+    const iTermCopyModeAction action = [self willHandleEvent:event result:&result];
+    if (action == iTermCopyModeAction_Count) {
+        completion(result);
+        return;
+    }
+
+    const NSInteger count = MAX(1, _count);
+    _count = 0;
+    __block int i = 0;
+    __weak __typeof(self) weakSelf = self;
+    __block void (^perform)(id);
+    perform = ^(id erasedSelf){
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            completion(NO);
+            return;
+        }
+        i += 1;
+        [strongSelf performAction:action event:event completion:^(BOOL moved) {
+            __strong __typeof(self) strongSelf = weakSelf;
+            if (!strongSelf) {
+                completion(NO);
+                return;
+            }
+            if (moved || (strongSelf->_state.selecting != wasSelecting)) {
+                if (strongSelf.enabled) {
+                    [strongSelf.delegate copyModeHandler:strongSelf revealCurrentLineInState:strongSelf->_state];
+                }
+                [strongSelf.delegate copyModeHandlerRedraw:strongSelf];
+            }
+            if (i < count) {
+                void (^unerasedSelf)(id) = erasedSelf;
+                unerasedSelf(erasedSelf);
+            } else {
+                completion(YES);
+            }
+        }];
+    };
+    perform(perform);
+}
+
+- (iTermCopyModeAction)willHandleEvent:(NSEvent *)event result:(out BOOL *)result {
+    [self.delegate copyModeHandlerRedraw:self];
 
     const iTermCopyModeAction action = [self actionForEvent:event];
     if (![self wouldHandleEvent:event]) {
         _count = 0;
-        return NO;
+        *result = NO;
+        return iTermCopyModeAction_Count;
     }
 
     const int countAccrued = [self countAccruedByAction:action event:event];
     if (countAccrued >= 0) {
         _count *= 10;
         _count += countAccrued;
-        return YES;
+        *result = YES;
+        return iTermCopyModeAction_Count;
+    }
+
+    return action;
+}
+
+- (BOOL)handleEvent:(NSEvent *)event {
+    BOOL wasSelecting = _state.selecting;
+
+    BOOL result = NO;
+    const iTermCopyModeAction action = [self willHandleEvent:event result:&result];
+    if (action == iTermCopyModeAction_Count) {
+        return result;
     }
 
     const NSInteger count = MAX(1, _count);
@@ -301,9 +359,9 @@ iTermCopyModeAction iTermCopyModeActionFromName(NSString *name, BOOL *ok) {
 
         if (moved || (_state.selecting != wasSelecting)) {
             if (self.enabled) {
-                [self.delegate copyModeHandler:self revealLine:_state.coord.y];
+                [self.delegate copyModeHandler:self revealCurrentLineInState:_state];
             }
-            [self.delegate copyModeHandler:self redrawLine:_state.coord.y];
+            [self.delegate copyModeHandlerRedraw:self];
         }
     }
     return YES;
@@ -322,6 +380,13 @@ iTermCopyModeAction iTermCopyModeActionFromName(NSString *name, BOOL *ok) {
         default:
             return -1;
     }
+}
+
+- (void)performAction:(iTermCopyModeAction)action
+                event:(NSEvent *)event
+           completion:(void (^)(BOOL))completion {
+    [_state performAsynchronously:^{ [self performAction:action event:event]; }
+                       completion:completion];
 }
 
 - (BOOL)performAction:(iTermCopyModeAction)action event:(NSEvent *)event {

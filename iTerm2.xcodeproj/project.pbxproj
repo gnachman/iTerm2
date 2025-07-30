@@ -4422,6 +4422,24 @@
 		A6E312862E388A9B008222DE /* iTermModernSavePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E312852E388A95008222DE /* iTermModernSavePanel.swift */; };
 		A6E312B22E397DF4008222DE /* iTermBaseWKWebView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E312B12E397DF2008222DE /* iTermBaseWKWebView.h */; };
 		A6E312B42E397EC0008222DE /* iTermBaseWKWebView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E312B32E397EBD008222DE /* iTermBaseWKWebView.m */; };
+		A6E312B72E399ABB008222DE /* copy-mode.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E312B62E399ABB008222DE /* copy-mode.js */; };
+		A6E312B82E399ABB008222DE /* copy-mode.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E312B62E399ABB008222DE /* copy-mode.js */; };
+		A6E312B92E399ABB008222DE /* copy-mode.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E312B62E399ABB008222DE /* copy-mode.js */; };
+		A6E312BE2E399CAC008222DE /* iTermBrowserCopyModeState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E312BA2E399C64008222DE /* iTermBrowserCopyModeState.swift */; };
+		A6E312C02E3C11BF008222DE /* copy-mode-cursor.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E312BF2E3C11BC008222DE /* copy-mode-cursor.js */; };
+		A6E312C12E3C11BF008222DE /* copy-mode-cursor.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E312BF2E3C11BC008222DE /* copy-mode-cursor.js */; };
+		A6E312C22E3C11BF008222DE /* copy-mode-cursor.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E312BF2E3C11BC008222DE /* copy-mode-cursor.js */; };
+		A6E312C42E3C11F3008222DE /* copy-mode-cursor-movement.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E312C32E3C11E9008222DE /* copy-mode-cursor-movement.js */; };
+		A6E312C52E3C11F3008222DE /* copy-mode-cursor-movement.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E312C32E3C11E9008222DE /* copy-mode-cursor-movement.js */; };
+		A6E312C62E3C11F3008222DE /* copy-mode-cursor-movement.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E312C32E3C11E9008222DE /* copy-mode-cursor-movement.js */; };
+		A6E312C82E3C1219008222DE /* copy-mode-impl.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E312C72E3C1216008222DE /* copy-mode-impl.js */; };
+		A6E312C92E3C1219008222DE /* copy-mode-impl.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E312C72E3C1216008222DE /* copy-mode-impl.js */; };
+		A6E312CA2E3C1219008222DE /* copy-mode-impl.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E312C72E3C1216008222DE /* copy-mode-impl.js */; };
+		A6E312CC2E3C1238008222DE /* copy-mode-util.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E312CB2E3C1235008222DE /* copy-mode-util.js */; };
+		A6E312CD2E3C1238008222DE /* copy-mode-util.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E312CB2E3C1235008222DE /* copy-mode-util.js */; };
+		A6E312CE2E3C1238008222DE /* copy-mode-util.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E312CB2E3C1235008222DE /* copy-mode-util.js */; };
+		A6E312D02E3C1D40008222DE /* iTermTriState.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E312CF2E3C1D3E008222DE /* iTermTriState.h */; };
+		A6E312D52E3C26AF008222DE /* iTermBrowserCopyModeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E312D12E3C2661008222DE /* iTermBrowserCopyModeHandler.swift */; };
 		A6E34BD02118097A00F147DD /* iTermBackgroundDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E34BCE2118097A00F147DD /* iTermBackgroundDrawingHelper.h */; };
 		A6E34BD12118097A00F147DD /* iTermBackgroundDrawingHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E34BCF2118097A00F147DD /* iTermBackgroundDrawingHelper.m */; };
 		A6E39FAB2CD18B6B00035787 /* BidiDisplayInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E39FAA2CD18B6300035787 /* BidiDisplayInfo.swift */; };
@@ -8475,6 +8493,14 @@
 		A6E312852E388A95008222DE /* iTermModernSavePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermModernSavePanel.swift; sourceTree = "<group>"; };
 		A6E312B12E397DF2008222DE /* iTermBaseWKWebView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBaseWKWebView.h; sourceTree = "<group>"; };
 		A6E312B32E397EBD008222DE /* iTermBaseWKWebView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBaseWKWebView.m; sourceTree = "<group>"; };
+		A6E312B62E399ABB008222DE /* copy-mode.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "copy-mode.js"; sourceTree = "<group>"; };
+		A6E312BA2E399C64008222DE /* iTermBrowserCopyModeState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserCopyModeState.swift; sourceTree = "<group>"; };
+		A6E312BF2E3C11BC008222DE /* copy-mode-cursor.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "copy-mode-cursor.js"; sourceTree = "<group>"; };
+		A6E312C32E3C11E9008222DE /* copy-mode-cursor-movement.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "copy-mode-cursor-movement.js"; sourceTree = "<group>"; };
+		A6E312C72E3C1216008222DE /* copy-mode-impl.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "copy-mode-impl.js"; sourceTree = "<group>"; };
+		A6E312CB2E3C1235008222DE /* copy-mode-util.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "copy-mode-util.js"; sourceTree = "<group>"; };
+		A6E312CF2E3C1D3E008222DE /* iTermTriState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTriState.h; sourceTree = "<group>"; };
+		A6E312D12E3C2661008222DE /* iTermBrowserCopyModeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserCopyModeHandler.swift; sourceTree = "<group>"; };
 		A6E34BCE2118097A00F147DD /* iTermBackgroundDrawingHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBackgroundDrawingHelper.h; sourceTree = "<group>"; };
 		A6E34BCF2118097A00F147DD /* iTermBackgroundDrawingHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBackgroundDrawingHelper.m; sourceTree = "<group>"; };
 		A6E39FAA2CD18B6300035787 /* BidiDisplayInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BidiDisplayInfo.swift; sourceTree = "<group>"; };
@@ -11284,6 +11310,7 @@
 		A63F40AC1842988A003A6A6D /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				A6E312CF2E3C1D3E008222DE /* iTermTriState.h */,
 				A605128E2E38525500507125 /* PseudoTerminal.swift */,
 				A6A3CE162E3844C400710B09 /* TerminalWindowSizeHelper.swift */,
 				A6D90D5D2E2F4F7800BA9F4F /* PTYTextView+MouseHandler.h */,
@@ -13604,6 +13631,20 @@
 			name = NSManagedObjects;
 			sourceTree = "<group>";
 		};
+		A6E312B52E3997A6008222DE /* Copy Mode */ = {
+			isa = PBXGroup;
+			children = (
+				A6E312D12E3C2661008222DE /* iTermBrowserCopyModeHandler.swift */,
+				A6E312B62E399ABB008222DE /* copy-mode.js */,
+				A6E312BF2E3C11BC008222DE /* copy-mode-cursor.js */,
+				A6E312C32E3C11E9008222DE /* copy-mode-cursor-movement.js */,
+				A6E312C72E3C1216008222DE /* copy-mode-impl.js */,
+				A6E312CB2E3C1235008222DE /* copy-mode-util.js */,
+				A6E312BA2E399C64008222DE /* iTermBrowserCopyModeState.swift */,
+			);
+			path = "Copy Mode";
+			sourceTree = "<group>";
+		};
 		A6E8EA1D2DD2DDC1001143CF /* unordered_dense */ = {
 			isa = PBXGroup;
 			children = (
@@ -13742,6 +13783,7 @@
 		A6F7D4B32E0340A30065D09C /* Browser */ = {
 			isa = PBXGroup;
 			children = (
+				A6E312B52E3997A6008222DE /* Copy Mode */,
 				A61220F02E1070EF00F48E64 /* Ad Blocking */,
 				A6FE7A912E0E6B7F00BEBCE4 /* Autofill */,
 				A6CBB8132E0A16AA00B2CCCB /* Bookmarks */,
@@ -15109,6 +15151,7 @@
 				A653F66724CD6A8C0062377E /* iTermRestorableStateRestorer.h in Headers */,
 				A61A859424EFA01800B03880 /* iTermBackgroundCommandRunner.h in Headers */,
 				A61A859C24F0F2CC00B03880 /* PseudoTerminal+WindowStyle.h in Headers */,
+				A6E312D02E3C1D40008222DE /* iTermTriState.h in Headers */,
 				530AB8B420B2098000D2AA08 /* iTermVariables.h in Headers */,
 				A621F10B26F650DF001DD3A6 /* ScreenCharArray.h in Headers */,
 				A653F68424CF4EC70062377E /* FMResultSet.h in Headers */,
@@ -15906,6 +15949,7 @@
 				1D8BBA6D1B30F5C30005A852 /* Navigate@2x.png in Resources */,
 				A69C93482121140100531438 /* iTermStatusBarLargeComposerViewController.xib in Resources */,
 				A67F6152214395870093940A /* graphic_less.png in Resources */,
+				A6E312C92E3C1219008222DE /* copy-mode-impl.js in Resources */,
 				A66433512DEA78A60099F722 /* globe@2x.png in Resources */,
 				A66433522DEA78A60099F722 /* globe.png in Resources */,
 				A6F7A74B213CB143004DE961 /* StatusBarIconRAM.png in Resources */,
@@ -15922,6 +15966,7 @@
 				1D6ED99619AEA20D005A7799 /* PrefsAdvanced@2x.png in Resources */,
 				A6F7D5062E05C8650065D09C /* detect-favicon.js in Resources */,
 				A69C933B2121101D00531438 /* iTermsStatusBarComposerViewController.xib in Resources */,
+				A6E312C02E3C11BF008222DE /* copy-mode-cursor.js in Resources */,
 				A6E7AEB1214394F600DE9F3B /* graphic_git@2x.png in Resources */,
 				A629F58123AF2DE600C2F16B /* iterm2_shell_integration.tcsh in Resources */,
 				A697CE242D9769250031583F /* NotesMenuTip@2x.png in Resources */,
@@ -16009,6 +16054,7 @@
 				A67F61A6214395B70093940A /* graphic_python@2x.png in Resources */,
 				A6B3A73D1AC74E02008E8D4E /* FindCursorCell2.png in Resources */,
 				1D6ED9AA19AEA20D005A7799 /* IBarCursor.png in Resources */,
+				A6E312CC2E3C1238008222DE /* copy-mode-util.js in Resources */,
 				1D6ED9AC19AEA20D005A7799 /* NewOutput@2x.png in Resources */,
 				1D6ED9AD19AEA20D005A7799 /* UKCrashReporter Readme.txt in Resources */,
 				A6F7A745213CB143004DE961 /* StatusBarIconPaste.png in Resources */,
@@ -16185,6 +16231,7 @@
 				1D99C8E91BD59C37001EE1FC /* SearchCursor@2x.png in Resources */,
 				A67D0D4F1A2EE12A003A8B35 /* DirectoriesPopup.xib in Resources */,
 				A631FC9D20EF04F500EB824F /* iTermStatusBarSetupConfigureComponentWindowController.xib in Resources */,
+				A6E312C52E3C11F3008222DE /* copy-mode-cursor-movement.js in Resources */,
 				A67F6180214395A70093940A /* graphic_perl.png in Resources */,
 				A67D0D641A2EE12A003A8B35 /* iTermOpenQuicklyWindowController.xib in Resources */,
 				A6F2F21D250757FE00FC227F /* PrefsShortcuts.png in Resources */,
@@ -16307,6 +16354,7 @@
 				A67F61FA2143976F0093940A /* graphic_icons.json in Resources */,
 				A6F7A718213CB143004DE961 /* StatusBarIconRAM@2x.png in Resources */,
 				53FF9822209283BE008688D7 /* template_basic_daemon.py in Resources */,
+				A6E312B92E399ABB008222DE /* copy-mode.js in Resources */,
 				A6F18B372AE2F39C006C08EE /* uniE0C1_flame-thin.pdf in Resources */,
 				A6A30ED62950EA540050F01A /* aiterm.png in Resources */,
 				A6EFF23B1D20F6C000806EEF /* EraseDarkBackground.png in Resources */,
@@ -16397,6 +16445,7 @@
 				A6E7AEB9214394F600DE9F3B /* graphic_ethereum.png in Resources */,
 				A6109B622B969B4100D8E4E9 /* graphic_neovim.png in Resources */,
 				A6E7AE68214394CA00DE9F3B /* graphic_bullhorn@2x.png in Resources */,
+				A6E312B72E399ABB008222DE /* copy-mode.js in Resources */,
 				A6CEDA6019988A7300BB57EC /* LogoFrame.png in Resources */,
 				A6A3CE122E38313C00710B09 /* console-log.js in Resources */,
 				A6A3CE132E38313C00710B09 /* log-errors.js in Resources */,
@@ -16504,6 +16553,7 @@
 				A6B4833729D73DA10055E24A /* square.and.pencil.png in Resources */,
 				A6B577D82C0A970F003FEB4F /* ai-plugin.sb in Resources */,
 				A65E6F562547F1D5008A4866 /* WindowCorner_Square@2x.png in Resources */,
+				A6E312CE2E3C1238008222DE /* copy-mode-util.js in Resources */,
 				A62DBB9D20F47CFA008B63D1 /* GoForward.png in Resources */,
 				A67F61F92143976F0093940A /* graphic_icons.json in Resources */,
 				A697CE3C2D976BB00031583F /* ComposerMenuTip@2x.png in Resources */,
@@ -16569,6 +16619,7 @@
 				A6F31A37295BC41700C1A51E /* uniE0C6_PowerlineExtraSymbols.pdf in Resources */,
 				A6A3EDE82E0DAF0600D711DA /* smartselection-demo.html in Resources */,
 				A67F61CB214395C60093940A /* graphic_shell.png in Resources */,
+				A6E312C62E3C11F3008222DE /* copy-mode-cursor-movement.js in Resources */,
 				A6F7D50F2E05CEDA0065D09C /* history-page.html in Resources */,
 				A67F118118D82B9500B23C7B /* PrefsAdvanced.png in Resources */,
 				A67F61D1214395C60093940A /* graphic_ruby.png in Resources */,
@@ -16683,6 +16734,7 @@
 				A6EC8047281B391900493544 /* TextViewPortholeRenderer-dark.css in Resources */,
 				A6F7A74D213CB143004DE961 /* StatusBarIconComposer@2x.png in Resources */,
 				A65429B320C4931100CE71B1 /* iTermParameterPanelWindowController.xib in Resources */,
+				A6E312CA2E3C1219008222DE /* copy-mode-impl.js in Resources */,
 				A69FF3BD2E139DBA00AFF7A8 /* extract-text-fragment.js in Resources */,
 				A67A50E226CCD3E300281693 /* xterm-new in Resources */,
 				A6E7AEA4214394F600DE9F3B /* graphic_git.png in Resources */,
@@ -16822,6 +16874,7 @@
 				A6A64E652508BE650040490B /* StatusBarIconSnippet@2x.png in Resources */,
 				A63821F0229E50CD005D74BE /* Warning@2x.png in Resources */,
 				537A1FB922168DF800FBEE5A /* MinimalFindView.xib in Resources */,
+				A6E312C22E3C11BF008222DE /* copy-mode-cursor.js in Resources */,
 				A6C978F224A0194500971AA7 /* WindowCornerFull.psd in Resources */,
 				A6E7AE93214394DD00DE9F3B /* graphic_coffee.png in Resources */,
 				1D8BBA7C1B30FD230005A852 /* Later@2x.png in Resources */,
@@ -16947,6 +17000,7 @@
 				A66F52D92106F6F100571168 /* gitup@2x.png in Resources */,
 				A6D90D602E2F5F4900BA9F4F /* ai-prompt-help.md in Resources */,
 				1D5FDD7C1208E91100C46BA3 /* close.png in Resources */,
+				A6E312C42E3C11F3008222DE /* copy-mode-cursor-movement.js in Resources */,
 				A6A64E612508BE650040490B /* StatusBarIconSnippet.png in Resources */,
 				A66351462B659309009B93F7 /* PinnedIndicator@2x.png in Resources */,
 				A6CB24AB2C68149100005824 /* it2cat in Resources */,
@@ -16990,6 +17044,7 @@
 				A6FE7A882E0E252300BEBCE4 /* hover-link-detector.js in Resources */,
 				A6DB14642D6D09C800266394 /* AIStreaming.png in Resources */,
 				A66433532DEA78A60099F722 /* globe@2x.png in Resources */,
+				A6E312C12E3C11BF008222DE /* copy-mode-cursor.js in Resources */,
 				A66433542DEA78A60099F722 /* globe.png in Resources */,
 				1DBBA5DE1B3CB0590026E3B6 /* restore-arrangement.png in Resources */,
 				A67D0D471A2EE12A003A8B35 /* CommandHistoryPopup.xib in Resources */,
@@ -17417,11 +17472,13 @@
 				A697CDDD2D975AE20031583F /* AIWatching@2x.png in Resources */,
 				1D48B286165F362B000046EE /* TabClose_Front@2x.png in Resources */,
 				A697CDE02D975C540031583F /* SnippetsTip.jpg in Resources */,
+				A6E312B82E399ABB008222DE /* copy-mode.js in Resources */,
 				A697CDE12D975C540031583F /* SnippetsTip@2x.jpg in Resources */,
 				1D48B28C165F3669000046EE /* TabClose_Front_Pressed.png in Resources */,
 				A697CE542D9772A00031583F /* AutoComposerMenuTip.jpg in Resources */,
 				A697CE552D9772A00031583F /* AutoComposerMenuTip@2x.jpg in Resources */,
 				A67F619B214395B70093940A /* graphic_php@2x.png in Resources */,
+				A6E312CD2E3C1238008222DE /* copy-mode-util.js in Resources */,
 				A640486E29BFCB6C0063C34A /* SpecialExceptionsWindowController.xib in Resources */,
 				A697CE1C2D9765B70031583F /* CodeciergeMenuTip@2x.png in Resources */,
 				A697CE1D2D9765B70031583F /* CodeciergeMenuTip.png in Resources */,
@@ -17509,6 +17566,7 @@
 				A6F7D50A2E05CEC10065D09C /* history-page.js in Resources */,
 				A66DB8321C8E4C2E00233E88 /* ChangeProfile.png in Resources */,
 				A6057C171883D12E004A60AF /* broken_image.png in Resources */,
+				A6E312C82E3C1219008222DE /* copy-mode-impl.js in Resources */,
 				A67F6170214395990093940A /* graphic_mysql.png in Resources */,
 				A6A30ED12950EA540050F01A /* aiterm@2x.png in Resources */,
 				9DB3D6E1176C8F0B0071CCF8 /* PrefsAppearance@2x.png in Resources */,
@@ -18539,6 +18597,7 @@
 				A667C26227799447006B4DEF /* PTYNoteViewController.m in Sources */,
 				A619DC442CD595FD004B8996 /* iTermBijection.m in Sources */,
 				A63011AA20E7EDFC008114B7 /* iTermStatusBarKnobCheckboxViewController.m in Sources */,
+				A6E312BE2E399CAC008222DE /* iTermBrowserCopyModeState.swift in Sources */,
 				53E9DFE9220D558E0070C9C0 /* iTermSetTitleTrigger.m in Sources */,
 				A6D1A3F12C7E9A6900FECDF2 /* Optional+iTerm.swift in Sources */,
 				A6EEAEDB2836F1180039E850 /* SSHProcessInfoProvider.swift in Sources */,
@@ -19033,6 +19092,7 @@
 				A6A4867720B67C3600493302 /* ProfilesAdvancedPreferencesViewController.m in Sources */,
 				A6FE7AA22E0E738900BEBCE4 /* iTermBrowserAutofillContactSource.swift in Sources */,
 				A6725AD323D639C2001CA48A /* iTermProfilesMenuController.m in Sources */,
+				A6E312D52E3C26AF008222DE /* iTermBrowserCopyModeHandler.swift in Sources */,
 				A6EC937C24E8568D00EEADEF /* iTermBuriedSessions.m in Sources */,
 				A6822748280786A5005DF0B4 /* Porthole.swift in Sources */,
 				A6AFE9392401E88D00D489C7 /* iTermImageView.m in Sources */,

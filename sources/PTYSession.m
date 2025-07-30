@@ -1302,11 +1302,18 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setCopyMode:(BOOL)copyMode {
+    if (self.isBrowserSession) {
+        [self.view.browserViewController setCopyMode:copyMode];
+        return;
+    }
     [_textview removePortholeSelections];
     _modeHandler.mode = copyMode ? iTermSessionModeCopy : iTermSessionModeDefault;
 }
 
 - (BOOL)copyMode {
+    if (self.isBrowserSession) {
+        return [self.view.browserViewController copyMode];
+    }
     return _modeHandler.mode == iTermSessionModeCopy;
 }
 
@@ -12130,7 +12137,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (VT100GridCoord)textViewCopyModeCursorCoord {
-    return _modeHandler.copyModeHandler.state.coord;
+    return [iTermCopyModeState castFrom:_modeHandler.copyModeHandler.state].coord;
 }
 
 - (BOOL)textViewPasswordInput {
@@ -12145,8 +12152,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)textViewDidSelectRangeForFindOnPage:(VT100GridCoordRange)range {
     if (_modeHandler.mode == iTermSessionModeCopy) {
-        _modeHandler.copyModeHandler.state.coord = range.start;
-        _modeHandler.copyModeHandler.state.start = range.end;
+        [iTermCopyModeState castFrom:_modeHandler.copyModeHandler.state].coord = range.start;
+        [iTermCopyModeState castFrom:_modeHandler.copyModeHandler.state].start = range.end;
         [self.textview requestDelegateRedraw];
     }
 }
@@ -19146,7 +19153,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }];
 }
 
-- (iTermCopyModeState *)copyModeHandlerCreateState:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY {
+- (id<iTermCopyModeStateProtocol>)copyModeHandlerCreateState:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY {
     iTermCopyModeState *state = [[[iTermCopyModeState alloc] init] autorelease];
     state.coord = VT100GridCoordMake(_screen.cursorX - 1,
                                      _screen.cursorY - 1 + _screen.numberOfScrollbackLines);
@@ -19168,15 +19175,17 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return state;
 }
 
-- (void)copyModeHandler:(iTermCopyModeHandler *)handler redrawLine:(int)line NOT_COPY_FAMILY {
-    [self.textview setNeedsDisplayOnLine:line];
+- (void)copyModeHandlerRedraw:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY {
+    [self.textview requestDelegateRedraw];
 }
 
 - (void)copyModeHandlerShowFindPanel:(iTermCopyModeHandler *)handler {
     [self showFindPanel];
 }
 
-- (void)copyModeHandler:(iTermCopyModeHandler *)handler revealLine:(int)line NOT_COPY_FAMILY {
+- (void)copyModeHandler:(iTermCopyModeHandler *)handler revealCurrentLineInState:(id<iTermCopyModeStateProtocol>)state NOT_COPY_FAMILY {
+    iTermCopyModeState *s = [iTermCopyModeState castFrom:state];
+    const int line = s.coord.y;
     [_textview scrollLineNumberRangeIntoView:VT100GridRangeMake(line, 1)];
 }
 

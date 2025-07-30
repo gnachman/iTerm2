@@ -13,12 +13,7 @@
 
 @class PTYTextView;
 
-@interface iTermCopyModeState : NSObject
-
-@property (nonatomic) VT100GridCoord coord;
-@property (nonatomic) VT100GridCoord start;
-@property (nonatomic) int numberOfLines;
-@property (nonatomic, strong) PTYTextView *textView;
+@protocol iTermCopyModeStateProtocol<NSObject>
 @property (nonatomic) BOOL selecting;
 @property (nonatomic) iTermSelectionMode mode;
 
@@ -60,5 +55,19 @@
 
 - (BOOL)scrollUp;
 - (BOOL)scrollDown;
+
+@optional
+- (void)performAsynchronously:(void (^)(void))block completion:(void (^)(BOOL))completion;
+
+@end
+
+@interface iTermCopyModeState : NSObject<iTermCopyModeStateProtocol>
+
+@property (nonatomic) VT100GridCoord coord;
+@property (nonatomic) VT100GridCoord start;
+@property (nonatomic) int numberOfLines;
+@property (nonatomic, strong) PTYTextView *textView;
+@property (nonatomic) BOOL selecting;
+@property (nonatomic) iTermSelectionMode mode;
 
 @end

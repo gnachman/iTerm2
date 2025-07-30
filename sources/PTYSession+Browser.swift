@@ -255,6 +255,13 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
             return session.view.browserViewController?.webView
         }
     }
+
+    func browserViewController(_ controller: iTermBrowserViewController,
+                               showError message: String,
+                               suppressionKey: String,
+                               identifier: String) {
+        self.showError(message, suppressionKey: suppressionKey, identifier: identifier)
+    }
 }
 
 // MARK: - Browser Find Support

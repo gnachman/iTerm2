@@ -10,7 +10,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class iTermCopyModeHandler;
-@class iTermCopyModeState;
+@protocol iTermCopyModeStateProtocol;
 @class NSEvent;
 @class PTYTextView;
 
@@ -20,11 +20,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)copyModeHandlerDidChangeEnabledState:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY;
 
-- (void)copyModeHandler:(iTermCopyModeHandler *)handler redrawLine:(int)line NOT_COPY_FAMILY;
+- (void)copyModeHandlerRedraw:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY;
 
-- (iTermCopyModeState *)copyModeHandlerCreateState:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY;
+- (id<iTermCopyModeStateProtocol>)copyModeHandlerCreateState:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY;
 
-- (void)copyModeHandler:(iTermCopyModeHandler *)handler revealLine:(int)line NOT_COPY_FAMILY;
+- (void)copyModeHandler:(iTermCopyModeHandler *)handler
+revealCurrentLineInState:(id<iTermCopyModeStateProtocol>)state NOT_COPY_FAMILY;
 
 - (void)copyModeHandlerShowFindPanel:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY;
 
@@ -35,9 +36,10 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermCopyModeHandler : NSObject
 @property (nonatomic, weak) id<iTermCopyModeHandlerDelegate> delegate;
 @property (nonatomic) BOOL enabled;
-@property (nullable, nonatomic, readonly) iTermCopyModeState *state;
+@property (nullable, nonatomic, readonly) id<iTermCopyModeStateProtocol> state;
 
 - (BOOL)handleEvent:(NSEvent *)event;
+- (void)handleAsyncEvent:(NSEvent *)event completion:(void (^)(BOOL))completion;
 - (void)handleAutoEnteringEvent:(NSEvent *)event;
 - (BOOL)wouldHandleEvent:(NSEvent *)event;
 - (BOOL)shouldAutoEnterWithEvent:(NSEvent *)event;

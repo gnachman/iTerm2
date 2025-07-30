@@ -1040,6 +1040,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (CGFloat)desiredRightExtra;
 + (CGFloat)desiredRightExtraForProfile:(Profile *)profile;
 - (void)refuseFirstResponderAtCurrentMouseLocation;
+- (void)showError:(NSString *)message suppressionKey:(NSString *)key identifier:(NSString *)identifier;
 
 #pragma mark - API
 

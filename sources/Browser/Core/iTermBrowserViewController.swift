@@ -73,19 +73,21 @@ protocol iTermBrowserViewControllerDelegate: AnyObject, iTermBrowserFindManagerD
     func browserViewControllerDidFinishNavigation(_ controller: iTermBrowserViewController)
     func browserViewControllerDidReceiveNamedMarkUpdate(_ controller: iTermBrowserViewController, guid: String, text: String)
     func browserViewControllerBroadcastWebViews(_ controller: iTermBrowserViewController) -> [iTermBrowserWebView]
+    func browserViewController(_ controller: iTermBrowserViewController,
+                               showError: String,
+                               suppressionKey: String,
+                               identifier: String)
 }
 
 @available(macOS 11.0, *)
 @objc(iTermBrowserViewController)
 class iTermBrowserViewController: NSViewController {
-    weak var delegate: iTermBrowserViewControllerDelegate?
     private let browserManager: iTermBrowserManager
     private var toolbar: iTermBrowserToolbar!
     private var backgroundView: NSVisualEffectView!
     private let historyController: iTermBrowserHistoryController
     private let suggestionsController: iTermBrowserSuggestionsController
     private let navigationState = iTermBrowserNavigationState()
-    @objc let sessionGuid: String
     private var bookmarkTagEditor: iTermBookmarkTagEditorWindowController?
     private lazy var contextMenuHandler = iTermBrowserContextMenuHandler(webView: browserManager.webView, parentWindow: view.window)
     private var deferredURL: String?
@@ -98,13 +100,25 @@ class iTermBrowserViewController: NSViewController {
     private let pointerActionPerformer = iTermBrowserPointerActionPerformer()
     private static let didDeinitialize = Notification.Name("iTermBrowserViewControllerDidDeinitialize")
     private let logger = iTermLogger()
+    private let shadeView = ShadeView()
+
+    // API
+    weak var delegate: iTermBrowserViewControllerDelegate?
+    @objc let sessionGuid: String
+    @objc var copyMode: Bool {
+        get {
+            browserManager.copyModeHandler?.enabled ?? false
+        }
+        set {
+            browserManager.copyModeHandler?.enabled = newValue
+        }
+    }
 
     class ShadeView: SolidColorView {
         override func hitTest(_ point: NSPoint) -> NSView? {
             return nil
         }
     }
-    private let shadeView = ShadeView()
 
     @objc var zoom: CGFloat {
         get {
@@ -153,6 +167,7 @@ class iTermBrowserViewController: NSViewController {
 
         pointerController.delegate = pointerActionPerformer
         pointerActionPerformer.delegate = self
+        browserManager.copyModeHandler?.delegate = self
 
         NotificationCenter.default.addObserver(
             self,
@@ -1046,7 +1061,6 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
     func browserManagerBroadcastWebViews(_ browserManager: iTermBrowserManager) -> [iTermBrowserWebView] {
         return delegate?.browserViewControllerBroadcastWebViews(self) ?? []
     }
-
 }
 
 @available(macOS 11.0, *)
@@ -1249,6 +1263,24 @@ extension iTermBrowserViewController: iTermBrowserActionPerforming {
         browserManager.webView.performScroll(movement: movement)
     }
 
+    func actionPerformingCopyMode(actions: String) {
+        Task { @MainActor in
+            let parser = VimKeyParser(actions)
+            let events: [NSEvent]
+            do {
+                events = try parser.events()
+            } catch {
+                delegate?.browserViewController(self,
+                                                showError: error.localizedDescription,
+                                                suppressionKey: "NoSyncSuppressCopyModeErrors",
+                                                identifier: "Copy Mode Error")
+                DLog("\(error.localizedDescription)")
+                return
+            }
+            await browserManager.copyModeHandler?.handle(events)
+        }
+    }
+
     func actionPerformingSend(data: Data, broadcastAllowed: Bool) {
         guard let string = String(data: data, encoding: .utf8) else { return }
 
@@ -1313,5 +1345,11 @@ extension iTermBrowserViewController: iTermBrowserActionPerforming {
 extension iTermBrowserViewController: iTermBrowserFindManagerDelegate {
     func browserFindManager(_ manager: iTermBrowserFindManager, didUpdateResult result: iTermBrowserFindResultBundle) {
         delegate?.browserFindManager(manager, didUpdateResult: result)
+    }
+}
+
+extension iTermBrowserViewController: iTermBrowserCopyModeHandlerDelegate {
+    func copyModeHandlerShowFindPanel(_ sender: iTermBrowserCopyModeHandler) {
+        delegate?.browserViewControllerShowFindPanel(self)
     }
 }

@@ -31,9 +31,13 @@ class iTermBrowserKeyBindingActionPerformer {
                 .ACTION_INVOKE_SCRIPT_FUNCTION, .ACTION_DUPLICATE_TAB, .ACTION_MOVE_TO_SPLIT_PANE,
                 .ACTION_COMPOSE, .ACTION_SEND_TMUX_COMMAND, .ACTION_SEQUENCE,
                 .ACTION_SWAP_WITH_NEXT_PANE, .ACTION_SWAP_WITH_PREVIOUS_PANE,
-                .ACTION_ALERT_ON_NEXT_MARK, .ACTION_COPY_MODE, .ACTION_COPY_INTERPOLATED_STRING:
+                .ACTION_ALERT_ON_NEXT_MARK, .ACTION_COPY_INTERPOLATED_STRING:
             // PTYSession's implementation of these is just fine.
             return false
+
+        case .ACTION_COPY_MODE:
+            delegate?.actionPerformingCopyMode(actions: parameter as String)
+            return true
 
         case .ACTION_SET_PROFILE:
             let profile = ProfileModel.sharedInstance().bookmark(withGuid: action.parameter) as? NSDictionary
