@@ -753,6 +753,7 @@ DEFINE_SETTABLE_STRING(rustAdblockListURL, RustAdblockListURL, @"https://easylis
 DEFINE_SETTABLE_BOOL(browserProxyEnabled, BrowserProxyEnabled, NO, SECTION_WEB_BROWSER @"Enable HTTP proxy for web browser?\nWhen enabled, routes all browser traffic through the configured proxy server.");
 DEFINE_SETTABLE_STRING(browserProxyHost, BrowserProxyHost, @"127.0.0.1", SECTION_WEB_BROWSER @"HTTP proxy hostname or IP address\nThe address of the proxy server to use for browser connections.");
 DEFINE_SETTABLE_INT(browserProxyPort, BrowserProxyPort, 8118, SECTION_WEB_BROWSER @"HTTP proxy port\nThe port number of the proxy server.");
+DEFINE_FLOAT(webInstantReplayFrameRate, 60.0, SECTION_WEB_BROWSER @"Instant replay frame rate for web browser sessions");
 
 #pragma mark - Experimental Features
 

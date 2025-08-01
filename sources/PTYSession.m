@@ -6424,8 +6424,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
 }
 
-- (BOOL)canInstantReplayPrev
-{
+- (BOOL)canInstantReplayPrev {
+    if (self.isBrowserSession) {
+        return self.view.browserViewController.instantReplayAvailable;
+    }
     if (_dvrDecoder) {
         return [_dvrDecoder timestamp] != [_dvr firstTimeStamp];
     } else {

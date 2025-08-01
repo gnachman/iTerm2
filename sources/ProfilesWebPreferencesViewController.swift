@@ -9,6 +9,7 @@
 class ProfilesWebPreferencesViewController: iTermProfilePreferencesBaseViewController {
     @IBOutlet var browserPageZoom: NSSlider!
     @IBOutlet var devNullMode: NSButton!
+    @IBOutlet var enableInstantReplay: NSButton!
 
     override init(nibName nibNameOrNil: NSNib.Name?, bundle nibBundleOrNil: Bundle?) {
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
@@ -30,6 +31,12 @@ class ProfilesWebPreferencesViewController: iTermProfilePreferencesBaseViewContr
                                   key: KEY_BROWSER_DEV_NULL,
                                   relatedView: nil,
                                   type: .checkbox)
+        }
+        do {
+            _ = defineControl(enableInstantReplay,
+                              key: KEY_INSTANT_REPLAY,
+                              relatedView: nil,
+                              type: .checkbox)
         }
     }
 }

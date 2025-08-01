@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
       "WebFetch(domain:github.com)",
@@ -34,7 +35,9 @@
       "Bash(swift run:*)",
       "Bash(timeout:*)",
       "Bash(swift build)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(ffprobe:*)",
+      "Bash(ffmpeg:*)"
     ],
     "deny": []
   }

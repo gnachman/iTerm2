@@ -101,6 +101,9 @@ class iTermBrowserViewController: NSViewController {
     private static let didDeinitialize = Notification.Name("iTermBrowserViewControllerDidDeinitialize")
     private let logger = iTermLogger()
     private let shadeView = ShadeView()
+    private var instantReplayMovieBuilder: InstantReplayMovieBuilder?
+    private var videoWindowController: VideoPlaybackWindowController?
+    private let profileObserver: iTermProfilePreferenceObserver
 
     // API
     weak var delegate: iTermBrowserViewControllerDelegate?
@@ -144,6 +147,7 @@ class iTermBrowserViewController: NSViewController {
          profileObserver: iTermProfilePreferenceObserver,
          profileMutator: iTermProfilePreferenceMutator)  {
         self.sessionGuid = sessionGuid
+        self.profileObserver = profileObserver
         let user: iTermBrowserUser = if profileObserver.value(KEY_BROWSER_DEV_NULL) == true {
             .devNull
         } else {
@@ -168,7 +172,10 @@ class iTermBrowserViewController: NSViewController {
         pointerController.delegate = pointerActionPerformer
         pointerActionPerformer.delegate = self
         browserManager.copyModeHandler?.delegate = self
-
+        updateInstantReplayEnabled()
+        profileObserver.observeBool(key: KEY_INSTANT_REPLAY) { [weak self] _, _ in
+            self?.updateInstantReplayEnabled()
+        }
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(otherBrowserViewControllerDidDeinitialize),
@@ -185,6 +192,34 @@ class iTermBrowserViewController: NSViewController {
 
 @available(macOS 11.0, *)
 extension iTermBrowserViewController {
+    @objc
+    var instantReplayAvailable: Bool {
+        return instantReplayMovieBuilder != nil
+    }
+
+    @objc
+    func startInstantReplay() {
+        Task {
+            if let instantReplayMovieBuilder {
+                videoWindowController = VideoPlaybackWindowController(videoSize: instantReplayMovieBuilder.expectedSize())
+                videoWindowController?.window?.makeKeyAndOrderFront(nil)
+                do {
+                    let (url, _) = try await instantReplayMovieBuilder.save()
+                    videoWindowController?.setVideoURL(url)
+                } catch {
+                    videoWindowController?.close()
+                    videoWindowController = nil
+                    iTermWarning.show(withTitle: "Could not create movie: \(error.localizedDescription)",
+                                      actions: ["OK"],
+                                      accessory: nil,
+                                      identifier: nil,
+                                      silenceable: .kiTermWarningTypePersistent,
+                                      heading: "Problem saving instant replay movie",
+                                      window: view.window)
+                }
+            }
+        }
+    }
     @objc
     var hasSelection: Bool {
         return !(browserManager.webView?.currentSelection?.isEmpty ?? true)
@@ -222,6 +257,19 @@ extension iTermBrowserViewController {
     @objc var restorableState: NSDictionary {
         let state = iTermBrowserRestorableState(interactionState: interactionState as? NSData)
         return state.dictionaryValue as NSDictionary
+    }
+
+    private func updateInstantReplayEnabled() {
+        if profileObserver.value(KEY_INSTANT_REPLAY) == true {
+            instantReplayMovieBuilder = InstantReplayMovieBuilder(
+                view: browserManager.webView,
+                maxMemoryMB: iTermPreferences.integer(forKey: kPreferenceKeyInstantReplayMemoryMegabytes),
+                bitsPerPixel: 0.02,
+                profile: .medium)
+        } else {
+            instantReplayMovieBuilder?.stop()
+            instantReplayMovieBuilder = nil
+        }
     }
 
     private var interactionState: NSObject? {

@@ -1641,6 +1641,7 @@ DQ
                 <outlet property="browserPageZoom" destination="VXt-Ga-Uvg" id="Kjz-s5-nNG"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="KdR-au-w45"/>
                 <outlet property="devNullMode" destination="dRY-Y3-E01" id="zRT-Lu-Rob"/>
+                <outlet property="enableInstantReplay" destination="Mfp-Bd-POU" id="W47-38-Y9m"/>
                 <outlet property="view" destination="AAg-E0-J0n" id="UBv-g2-plh"/>
             </connections>
         </viewController>
@@ -3484,11 +3485,11 @@ DQ
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="HBp-sZ-6Au" customClass="iTermBrowserModeEnclosure">
-                    <rect key="frame" x="20" y="248" width="522" height="64"/>
+                    <rect key="frame" x="20" y="226" width="522" height="86"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EhU-tQ-9dJ">
-                            <rect key="frame" x="-2" y="48" width="106" height="16"/>
+                            <rect key="frame" x="-2" y="70" width="106" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Page Zoom:" id="9ce-ui-ZGz">
                                 <font key="font" metaFont="system"/>
@@ -3497,7 +3498,7 @@ DQ
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jlj-GH-Ow7">
-                            <rect key="frame" x="-1" y="20" width="106" height="16"/>
+                            <rect key="frame" x="-1" y="42" width="106" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Privacy:" id="I7W-YQ-zKh">
                                 <font key="font" metaFont="system"/>
@@ -3506,7 +3507,7 @@ DQ
                             </textFieldCell>
                         </textField>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3Zy-E1-0s7" customClass="iTermSlider">
-                            <rect key="frame" x="111" y="44" width="391" height="20"/>
+                            <rect key="frame" x="111" y="66" width="391" height="20"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <subviews>
                                 <slider toolTip="How much of the background image is visible through the background color." verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VXt-Ga-Uvg">
@@ -3521,7 +3522,7 @@ DQ
                             </subviews>
                         </customView>
                         <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dRY-Y3-E01">
-                            <rect key="frame" x="109" y="19" width="393" height="18"/>
+                            <rect key="frame" x="109" y="41" width="393" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Use /dev/null mode (no history, cookies, or other data saved)" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="lJx-wQ-cSk">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -3531,6 +3532,26 @@ DQ
                                 <action selector="settingChanged:" target="cZm-PZ-opq" id="cDR-nV-C7g"/>
                             </connections>
                         </button>
+                        <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Mfp-Bd-POU">
+                            <rect key="frame" x="109" y="19" width="312" height="18"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="check" title="Enable Instant Replay (costs memory and CPU)" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="MML-g6-oeR">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="settingChanged:" target="cZm-PZ-opq" id="yi0-to-Vtk"/>
+                            </connections>
+                        </button>
+                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0kl-Ai-fRp">
+                            <rect key="frame" x="-1" y="20" width="106" height="16"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Instant Replay:" id="YKe-63-gdc">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
                     </subviews>
                 </customView>
             </subviews>

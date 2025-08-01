@@ -496,7 +496,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 
 + (BOOL)warnAboutSecureKeyboardInputWithOpenCommand;
 + (void)setWarnAboutSecureKeyboardInputWithOpenCommand:(BOOL)value;
-
++ (double)webInstantReplayFrameRate;
 + (NSString *)webUserAgent;
 + (BOOL)workAroundMultiDisplayOSBug;
 + (BOOL)workAroundNumericKeypadBug;

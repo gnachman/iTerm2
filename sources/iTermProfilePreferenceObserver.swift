@@ -64,6 +64,25 @@ class iTermProfilePreferenceObserver: NSObject {
         }
     }
 
+    func observeBool(key: String, closure: @MainActor @escaping (Bool, Bool) -> ()) {
+        lastValue[key] = value(for: key)
+        closures[key] = { oldValue, newValue in
+            let oldTyped: Bool? = if let oldValue {
+                oldValue as? Bool
+            } else {
+                nil
+            }
+            let newTyped: Bool? = if let newValue {
+                newValue as? Bool
+            } else {
+                nil
+            }
+            Task { @MainActor in
+                closure(oldTyped ?? false, newTyped ?? false)
+            }
+        }
+    }
+
     func observeString(key: String, closure: @MainActor @escaping (String?, String?) -> ()) {
         observe(key: key, closure: closure)
     }

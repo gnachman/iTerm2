@@ -8014,8 +8014,11 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return [[self window] screen];
 }
 
-- (IBAction)irPrev:(id)sender
-{
+- (IBAction)irPrev:(id)sender {
+    if (self.currentSession.isBrowserSession) {
+        [self.currentSession.view.browserViewController startInstantReplay];
+        return;
+    }
     [self irAdvance:-1];
     [[self window] makeFirstResponder:[[self currentSession] mainResponder]];
     [_instantReplayWindowController updateInstantReplayView];

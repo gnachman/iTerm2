@@ -4440,6 +4440,10 @@
 		A6E312CE2E3C1238008222DE /* copy-mode-util.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E312CB2E3C1235008222DE /* copy-mode-util.js */; };
 		A6E312D02E3C1D40008222DE /* iTermTriState.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E312CF2E3C1D3E008222DE /* iTermTriState.h */; };
 		A6E312D52E3C26AF008222DE /* iTermBrowserCopyModeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E312D12E3C2661008222DE /* iTermBrowserCopyModeHandler.swift */; };
+		A6E312FD2E3D3D33008222DE /* InMemoryVideoBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E312F92E3D39AC008222DE /* InMemoryVideoBuilder.swift */; };
+		A6E312FF2E3D45FA008222DE /* InstantReplayMovieBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E312FE2E3D45F9008222DE /* InstantReplayMovieBuilder.swift */; };
+		A6E313012E3D461A008222DE /* VideoStitcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E313002E3D4619008222DE /* VideoStitcher.swift */; };
+		A6E313032E3DD2CB008222DE /* VideoPlaybackWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E313022E3DD2CB008222DE /* VideoPlaybackWindowController.swift */; };
 		A6E34BD02118097A00F147DD /* iTermBackgroundDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E34BCE2118097A00F147DD /* iTermBackgroundDrawingHelper.h */; };
 		A6E34BD12118097A00F147DD /* iTermBackgroundDrawingHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E34BCF2118097A00F147DD /* iTermBackgroundDrawingHelper.m */; };
 		A6E39FAB2CD18B6B00035787 /* BidiDisplayInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E39FAA2CD18B6300035787 /* BidiDisplayInfo.swift */; };
@@ -8501,6 +8505,10 @@
 		A6E312CB2E3C1235008222DE /* copy-mode-util.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "copy-mode-util.js"; sourceTree = "<group>"; };
 		A6E312CF2E3C1D3E008222DE /* iTermTriState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTriState.h; sourceTree = "<group>"; };
 		A6E312D12E3C2661008222DE /* iTermBrowserCopyModeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserCopyModeHandler.swift; sourceTree = "<group>"; };
+		A6E312F92E3D39AC008222DE /* InMemoryVideoBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InMemoryVideoBuilder.swift; sourceTree = "<group>"; };
+		A6E312FE2E3D45F9008222DE /* InstantReplayMovieBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstantReplayMovieBuilder.swift; sourceTree = "<group>"; };
+		A6E313002E3D4619008222DE /* VideoStitcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoStitcher.swift; sourceTree = "<group>"; };
+		A6E313022E3DD2CB008222DE /* VideoPlaybackWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlaybackWindowController.swift; sourceTree = "<group>"; };
 		A6E34BCE2118097A00F147DD /* iTermBackgroundDrawingHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBackgroundDrawingHelper.h; sourceTree = "<group>"; };
 		A6E34BCF2118097A00F147DD /* iTermBackgroundDrawingHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBackgroundDrawingHelper.m; sourceTree = "<group>"; };
 		A6E39FAA2CD18B6300035787 /* BidiDisplayInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BidiDisplayInfo.swift; sourceTree = "<group>"; };
@@ -13645,6 +13653,17 @@
 			path = "Copy Mode";
 			sourceTree = "<group>";
 		};
+		A6E312F82E3D399F008222DE /* Instant Replay */ = {
+			isa = PBXGroup;
+			children = (
+				A6E312F92E3D39AC008222DE /* InMemoryVideoBuilder.swift */,
+				A6E312FE2E3D45F9008222DE /* InstantReplayMovieBuilder.swift */,
+				A6E313022E3DD2CB008222DE /* VideoPlaybackWindowController.swift */,
+				A6E313002E3D4619008222DE /* VideoStitcher.swift */,
+			);
+			path = "Instant Replay";
+			sourceTree = "<group>";
+		};
 		A6E8EA1D2DD2DDC1001143CF /* unordered_dense */ = {
 			isa = PBXGroup;
 			children = (
@@ -13783,16 +13802,17 @@
 		A6F7D4B32E0340A30065D09C /* Browser */ = {
 			isa = PBXGroup;
 			children = (
-				A6E312B52E3997A6008222DE /* Copy Mode */,
 				A61220F02E1070EF00F48E64 /* Ad Blocking */,
 				A6FE7A912E0E6B7F00BEBCE4 /* Autofill */,
 				A6CBB8132E0A16AA00B2CCCB /* Bookmarks */,
+				A6E312B52E3997A6008222DE /* Copy Mode */,
 				A6CBB8202E0A1CE000B2CCCB /* Core */,
 				A6CBB8142E0A16CB00B2CCCB /* Database */,
 				A6CBB81E2E0A1CB000B2CCCB /* Demos */,
 				A69F59392E21CB9100B96E1B /* Extensions */,
 				A6CBB81F2E0A1CC200B2CCCB /* Favicon */,
 				A6CBB8172E0A1BBE00B2CCCB /* History */,
+				A6E312F82E3D399F008222DE /* Instant Replay */,
 				A6CBB8162E0A1B7400B2CCCB /* Local Pages */,
 				A6FE7AA32E0F10A900BEBCE4 /* Marks */,
 				A6CBB8352E0A3B1000B2CCCB /* Page Saver */,
@@ -18762,6 +18782,7 @@
 				A6354B962A1B269A002836A3 /* ToolNamedMarks.swift in Sources */,
 				A62EEDA320E012DA00943DE3 /* iTermScriptExporter.m in Sources */,
 				A603831E294BBA9200FE11C2 /* iTermNSKeyBindingEmulator.m in Sources */,
+				A6E312FD2E3D3D33008222DE /* InMemoryVideoBuilder.swift in Sources */,
 				A66719681DCE3772000CE608 /* iTermWebSocketConnection.m in Sources */,
 				A6069F3A2DF7B79300EE6CC7 /* SSHFolderDialogTextField.swift in Sources */,
 				A6E21CF92255CA4A0036C49D /* NSMutableAttributedString+iTerm.m in Sources */,
@@ -18883,6 +18904,7 @@
 				A6EC47CE21ED96F2000E1321 /* iTermLaunchExperienceController.m in Sources */,
 				A6F7F8072763F47B005E433E /* VT100ScreenState.m in Sources */,
 				A6AFD68924496EF1007D0660 /* iTermMultiServerMessageBuilder.m in Sources */,
+				A6E313012E3D461A008222DE /* VideoStitcher.swift in Sources */,
 				A69D559C232A0CF3002E0F99 /* iTermSessionLauncher.m in Sources */,
 				A6E7352C20EC04B40034FCFD /* PTYTab.m in Sources */,
 				A682273E280355A8005DF0B4 /* KeyActionSequenceTableViewController.swift in Sources */,
@@ -18965,6 +18987,7 @@
 				A6A39EBC24B99AC000A64433 /* iTermGraphicsUtilities.m in Sources */,
 				A65B1B5C2D1252E300F5A740 /* iTermShortcutInputView.m in Sources */,
 				A6FE8D04209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m in Sources */,
+				A6E312FF2E3D45FA008222DE /* InstantReplayMovieBuilder.swift in Sources */,
 				A65EC0301F31800300AC0A6B /* iTermUpdateCadenceController.m in Sources */,
 				A6F7D4F52E0537710065D09C /* BrowserVisits.swift in Sources */,
 				A6F7D4F62E0537710065D09C /* BrowserDatabase.swift in Sources */,
@@ -19174,6 +19197,7 @@
 				A6891DCB2818605500751F40 /* JSONPortholeRenderer.swift in Sources */,
 				A630117720E6971D008114B7 /* iTermStatusBarTextComponent.m in Sources */,
 				A6631A342D723C76006C603B /* CompletionsWindow.swift in Sources */,
+				A6E313032E3DD2CB008222DE /* VideoPlaybackWindowController.swift in Sources */,
 				A6B3E85F2DA06F2C0027FC63 /* BounceTrigger.m in Sources */,
 				A6EB643A2D5D800F00481D33 /* NSDictionaryCodableBox.swift in Sources */,
 				A6D1C420286192F600B68526 /* TextClipDrawing.swift in Sources */,

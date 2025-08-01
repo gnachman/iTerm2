@@ -185,6 +185,8 @@
 #define KEY_BROWSER_DEV_NULL       @"Dev Null Mode"
 #define KEY_BROWSER_EXTENSIONS_ROOT @"Browser Extensions Root"
 #define KEY_BROWSER_EXTENSION_ACTIVE_IDS @"Browser Extension Active IDs"
+#define KEY_INSTANT_REPLAY         @"Instant Replay"
+
 // Terminal
 #define KEY_DISABLE_WINDOW_RESIZING           @"Disable Window Resizing"
 #define KEY_PREVENT_TAB                       @"Prevent Opening in a Tab"
