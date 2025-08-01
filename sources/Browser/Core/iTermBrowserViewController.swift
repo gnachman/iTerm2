@@ -186,6 +186,30 @@ class iTermBrowserViewController: NSViewController {
 @available(macOS 11.0, *)
 extension iTermBrowserViewController {
     @objc
+    var hasSelection: Bool {
+        return !(browserManager.webView?.currentSelection?.isEmpty ?? true)
+    }
+
+    @objc
+    func jumpToSelection() {
+        browserManager.webView?.evaluateJavaScript("""
+        (function() {
+          try {
+            const sel = window.getSelection();
+            if (sel.rangeCount === 0) return;
+            const rect = sel.getRangeAt(0).getBoundingClientRect();
+            window.scrollTo({
+              top: window.scrollY + rect.top - window.innerHeight/2,
+              behavior: 'smooth'
+            });
+          } catch (e) {
+            console.error(e);
+          }
+        })();
+        """)
+    }
+
+    @objc
     func loadRestorableState(_ restorableState: NSDictionary?, orURL url: String?) {
         if let restorableState, let dict = restorableState as? [String: Any] {
             let state = iTermBrowserRestorableState.create(from: dict)

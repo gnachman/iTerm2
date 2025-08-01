@@ -4458,6 +4458,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (BOOL)hasSelection {
+    if (self.isBrowserSession) {
+        return self.view.browserViewController.hasSelection;
+    }
     return [_textview.selection hasSelection];
 }
 

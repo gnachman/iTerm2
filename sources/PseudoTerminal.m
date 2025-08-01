@@ -10723,9 +10723,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         return YES;
     } else if ([item action] == @selector(zoomOnSelection:)) {
         return ![self inInstantReplay] && [[self currentSession] hasSelection];
+    } else if ([item action] == @selector(jumpToSelection:)) {
+        return self.currentSession.hasSelection;
     } else if ([item action] == @selector(findPrevious:) ||
                [item action] == @selector(findNext:) ||
-               [item action] == @selector(jumpToSelection:) ||
                [item action] == @selector(findUrls:)) {
         result = ([self currentSession] != nil);
     } else if ([item action] == @selector(openSelection:)) {
@@ -11765,9 +11766,13 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         [[self currentSession] searchNext];
     }
 }
-- (IBAction)jumpToSelection:(id)sender
-{
-    PTYTextView *textView = [[self currentSession] textview];
+- (IBAction)jumpToSelection:(id)sender {
+    PTYSession *session = self.currentSession;
+    if (session.isBrowserSession) {
+        [session.view.browserViewController jumpToSelection];
+        return;
+    }
+    PTYTextView *textView = [session textview];
     if (textView) {
         DLog(@"jump to selection");
         [textView scrollToSelection];
