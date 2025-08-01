@@ -10768,13 +10768,20 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     } else if (item.action == @selector(clearToStartOfSelection:)) {
         return self.currentSession.hasSelection;
     } else if (item.action == @selector(clearInstantReplay:)) {
-        return ![[self currentSession] liveSession] && self.currentSession.screen.dvr.canClear;
+        return (!self.currentSession.isBrowserSession &&
+                ![[self currentSession] liveSession] &&
+                self.currentSession.screen.dvr.canClear);
     } else if (item.action == @selector(compose:)) {
         return self.currentSession != nil && !self.currentSession.shouldShowAutoComposer;
     } else if (item.action == @selector(reset:)) {
         return self.currentSession != nil && !self.currentSession.view.isBrowser;
     } else if (item.action == @selector(addNamedMark:)) {
         return self.currentSession != nil && [self.currentSession canAddNamedMark];
+    } else if (item.action == @selector(clearBuffer:) ||
+               item.action == @selector(clearScrollbackBuffer:) ||
+               item.action == @selector(clearToStartOfSelection:) ||
+               item.action == @selector(clearToLastMark:)) {
+        return !self.currentSession.isBrowserSession;
     }
 
     return result;
