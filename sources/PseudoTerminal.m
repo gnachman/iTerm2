@@ -10646,6 +10646,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         [item setState:[[iTermController sharedInstance] selectionRespectsSoftBoundaries] ? NSControlStateValueOn : NSControlStateValueOff];
         result = YES;
     } else if ([item action] == @selector(toggleAutoCommandHistory:)) {
+        if (self.currentSession.isBrowserSession) {
+            return NO;
+        }
         result = [[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed];
         if (result) {
             if ([item respondsToSelector:@selector(setState:)]) {
@@ -10655,6 +10658,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
             [item setState:NSControlStateValueOff];
         }
     } else if ([item action] == @selector(toggleAutoComposer:)) {
+        if (self.currentSession.isBrowserSession) {
+            return NO;
+        }
         result = [[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed];
         if (result) {
             if ([item respondsToSelector:@selector(setState:)]) {
@@ -10780,7 +10786,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     } else if (item.action == @selector(clearBuffer:) ||
                item.action == @selector(clearScrollbackBuffer:) ||
                item.action == @selector(clearToStartOfSelection:) ||
-               item.action == @selector(clearToLastMark:)) {
+               item.action == @selector(clearToLastMark:) ||
+               item.action == @selector(toggleCursorGuide:) ||
+               item.action == @selector(findCursor:)) {
         return !self.currentSession.isBrowserSession;
     }
 
