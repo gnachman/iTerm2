@@ -82,7 +82,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private let navigationState: iTermBrowserNavigationState
     private var navigationCount = 0
     private let readerModeManager = iTermBrowserReaderModeManager()
-    private let autofillHandler = iTermBrowserAutofillHandler()
+    let autofillHandler = iTermBrowserAutofillHandler()
     let user: iTermBrowserUser
     private var currentMainFrameHTTPMethod: String?
     let userState: iTermBrowserUserState

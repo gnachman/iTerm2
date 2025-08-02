@@ -58,6 +58,8 @@ class iTermBrowserTemplateLoader: NSObject {
                        let includeContent = try? String(contentsOfFile: includePath) {
                         let fullRange = Range(match.range(at: 0), in: result)!
                         result.replaceSubrange(fullRange, with: includeContent)
+                    } else {
+                        it_fatalError("Could not load included file \(name).\(ext)")
                     }
                 }
             }

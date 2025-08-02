@@ -4444,6 +4444,12 @@
 		A6E312FF2E3D45FA008222DE /* InstantReplayMovieBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E312FE2E3D45F9008222DE /* InstantReplayMovieBuilder.swift */; };
 		A6E313012E3D461A008222DE /* VideoStitcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E313002E3D4619008222DE /* VideoStitcher.swift */; };
 		A6E313032E3DD2CB008222DE /* VideoPlaybackWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E313022E3DD2CB008222DE /* VideoPlaybackWindowController.swift */; };
+		A6E3136B2E3E95E4008222DE /* autofill-fill-all.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E3136A2E3E95E4008222DE /* autofill-fill-all.js */; };
+		A6E3136C2E3E95E4008222DE /* autofill-fill-all.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E3136A2E3E95E4008222DE /* autofill-fill-all.js */; };
+		A6E3136D2E3E95E4008222DE /* autofill-fill-all.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E3136A2E3E95E4008222DE /* autofill-fill-all.js */; };
+		A6E3136F2E3E9AE0008222DE /* autofill-core.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E3136E2E3E9AE0008222DE /* autofill-core.js */; };
+		A6E313702E3E9AE0008222DE /* autofill-core.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E3136E2E3E9AE0008222DE /* autofill-core.js */; };
+		A6E313712E3E9AE0008222DE /* autofill-core.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E3136E2E3E9AE0008222DE /* autofill-core.js */; };
 		A6E34BD02118097A00F147DD /* iTermBackgroundDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E34BCE2118097A00F147DD /* iTermBackgroundDrawingHelper.h */; };
 		A6E34BD12118097A00F147DD /* iTermBackgroundDrawingHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E34BCF2118097A00F147DD /* iTermBackgroundDrawingHelper.m */; };
 		A6E39FAB2CD18B6B00035787 /* BidiDisplayInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E39FAA2CD18B6300035787 /* BidiDisplayInfo.swift */; };
@@ -8509,6 +8515,8 @@
 		A6E312FE2E3D45F9008222DE /* InstantReplayMovieBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstantReplayMovieBuilder.swift; sourceTree = "<group>"; };
 		A6E313002E3D4619008222DE /* VideoStitcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoStitcher.swift; sourceTree = "<group>"; };
 		A6E313022E3DD2CB008222DE /* VideoPlaybackWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlaybackWindowController.swift; sourceTree = "<group>"; };
+		A6E3136A2E3E95E4008222DE /* autofill-fill-all.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "autofill-fill-all.js"; sourceTree = "<group>"; };
+		A6E3136E2E3E9AE0008222DE /* autofill-core.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "autofill-core.js"; sourceTree = "<group>"; };
 		A6E34BCE2118097A00F147DD /* iTermBackgroundDrawingHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBackgroundDrawingHelper.h; sourceTree = "<group>"; };
 		A6E34BCF2118097A00F147DD /* iTermBackgroundDrawingHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBackgroundDrawingHelper.m; sourceTree = "<group>"; };
 		A6E39FAA2CD18B6300035787 /* BidiDisplayInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BidiDisplayInfo.swift; sourceTree = "<group>"; };
@@ -13854,7 +13862,9 @@
 		A6FE7A912E0E6B7F00BEBCE4 /* Autofill */ = {
 			isa = PBXGroup;
 			children = (
+				A6E3136E2E3E9AE0008222DE /* autofill-core.js */,
 				A6FE7A8E2E0E6B7F00BEBCE4 /* autofill-detector.js */,
+				A6E3136A2E3E95E4008222DE /* autofill-fill-all.js */,
 				A6FE7A9D2E0E6BA000BEBCE4 /* autofill-write.js */,
 				A6FE7AA12E0E738900BEBCE4 /* iTermBrowserAutofillContactSource.swift */,
 				A6FE7A8F2E0E6B7F00BEBCE4 /* iTermBrowserAutofillHandler.swift */,
@@ -16011,6 +16021,7 @@
 				A6CBB9002E0A754900B2CCCB /* extract-plain-text.js in Resources */,
 				A6F31A40295BC61F00C1A51E /* uniE0D0_PowerlineExtraSymbols.pdf in Resources */,
 				A65429A720BE7ECE00CE71B1 /* ScriptIcon.png in Resources */,
+				A6E313702E3E9AE0008222DE /* autofill-core.js in Resources */,
 				A6EA848827223B02009D14AB /* graphic_emacs@2x.png in Resources */,
 				A659C99B2DAF235C0036BA52 /* Channel@2x.png in Resources */,
 				A6F7D50C2E05CEC10065D09C /* history-page.js in Resources */,
@@ -16414,6 +16425,7 @@
 				A697CDCB2D975AE20031583F /* AIExplainTip.jpg in Resources */,
 				A697CE8A2D97C7D70031583F /* ArrangementsMenuTip.png in Resources */,
 				A697CE8B2D97C7D70031583F /* ArrangementsMenuTip@2x.png in Resources */,
+				A6E3136C2E3E95E4008222DE /* autofill-fill-all.js in Resources */,
 				A697CDCC2D975AE20031583F /* RenderNatively.png in Resources */,
 				A697CDCD2D975AE20031583F /* TmuxDashboard@2x.png in Resources */,
 				A697CDCE2D975AE20031583F /* AIWatching@2x.png in Resources */,
@@ -16770,6 +16782,7 @@
 				A6E7AE56214394CA00DE9F3B /* graphic_bq.png in Resources */,
 				A6E16C7024A8696D00C6DB06 /* WindowCornerFull_BigSur.png in Resources */,
 				A6E7AE99214394DD00DE9F3B /* graphic_code.png in Resources */,
+				A6E313712E3E9AE0008222DE /* autofill-core.js in Resources */,
 				A67D0D631A2EE12A003A8B35 /* iTermOpenQuicklyWindowController.xib in Resources */,
 				A629F58423AF2DED00C2F16B /* iterm2_shell_integration.fish in Resources */,
 				53FF9819209247E2008688D7 /* iTermScriptTemplatePickerWindowController.xib in Resources */,
@@ -16825,6 +16838,7 @@
 				A6F7D4CB2E037EA80065D09C /* settings-page.html in Resources */,
 				53B93E0021F640BB001EC59C /* iTermBadgeConfigurationWindowController.xib in Resources */,
 				A6EC937724E78A5900EEADEF /* iTermEditSnippetWindowController.xib in Resources */,
+				A6E3136B2E3E95E4008222DE /* autofill-fill-all.js in Resources */,
 				A6CBB7BD2E08BDD600B2CCCB /* geolocation-demo.html in Resources */,
 				A67D0D7B1A2EE12A003A8B35 /* PasteView.xib in Resources */,
 				1DBBA5E21B3CB0590026E3B6 /* restore-arrangement@2x.png in Resources */,
@@ -17314,6 +17328,7 @@
 				A6FE7A8C2E0E679800BEBCE4 /* autofill-demo.html in Resources */,
 				A6CB24A52C68149100005824 /* it2copy in Resources */,
 				A697CED12D9B0FB60031583F /* CommandSelectionHelp.md in Resources */,
+				A6E3136D2E3E95E4008222DE /* autofill-fill-all.js in Resources */,
 				A6CB24AD2C68149100005824 /* it2profile in Resources */,
 				A66A882224DFCCC30043728B /* graphic_elixir.png in Resources */,
 				1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */,
@@ -17423,6 +17438,7 @@
 				1D8BBA6B1B30F5C30005A852 /* Navigate@2x.png in Resources */,
 				A67D0D801A2EE12A003A8B35 /* PreferencePanel.xib in Resources */,
 				A635F1E325076201008C3038 /* iTermActionsEditingViewController.xib in Resources */,
+				A6E3136F2E3E9AE0008222DE /* autofill-core.js in Resources */,
 				A67D0D5F1A2EE12A003A8B35 /* iTermKeyMapping.xib in Resources */,
 				A67D0D561A2EE12A003A8B35 /* InstantReplay.xib in Resources */,
 				A65B725A1B1A630100F947A7 /* CheckMark.png in Resources */,

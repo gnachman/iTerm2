@@ -193,6 +193,12 @@ class iTermBrowserViewController: NSViewController {
 @available(macOS 11.0, *)
 extension iTermBrowserViewController {
     @objc
+    func openAutocomplete() {
+        Task {
+            await browserManager.autofillHandler?.fillAll(webView: browserManager.webView)
+        }
+    }
+    @objc
     var instantReplayAvailable: Bool {
         return instantReplayMovieBuilder != nil
     }

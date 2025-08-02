@@ -75,4 +75,31 @@ class iTermBrowserAutofillHandler {
         let writer = iTermBrowserAutofillWriter(webView: webView)
         await writer.fillFields(fields)
     }
+
+    func fillAll(webView: WKWebView) async {
+        DLog("fillAll() method called")
+        
+        // Create JavaScript that rediscovers autofillable fields and fills them all
+        let js = iTermBrowserTemplateLoader.loadTemplate(
+            named: "autofill-fill-all",
+            type: "js", 
+            substitutions: ["SECRET": sessionSecret])
+        
+        DLog("fillAll() loaded JavaScript template, length: \(js.count)")
+        
+        do {
+            let result = try await webView.evaluateJavaScript(js)
+            if let resultDict = result as? [String: Any],
+               let success = resultDict["success"] as? Bool,
+               let fieldsFound = resultDict["fieldsFound"] as? Int {
+                if success {
+                    DLog("fillAll successfully found and triggered autofill for \(fieldsFound) fields")
+                } else {
+                    DLog("fillAll failed - authentication or other error")
+                }
+            }
+        } catch {
+            DLog("fillAll failed: \(error)")
+        }
+    }
 }

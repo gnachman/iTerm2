@@ -168,7 +168,7 @@ class iTermBrowserStaticPageRegistry {
     private func setupDefaultPages() {
         // Register all static pages here
         registerStaticPage(urlPath: "welcome", templateName: "welcome-page", substitutions: [:])
-        #if DEBUG
+        #if ITERM_DEBUG
         let pages = [
             "dev",
             "notifications-demo",

@@ -8298,6 +8298,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (IBAction)openAutocomplete:(id)sender {
+    if (self.currentSession.isBrowserSession) {
+        [self.currentSession.view.browserViewController openAutocomplete];
+        return;
+    }
     if (!autocompleteView) {
         autocompleteView = [[AutocompleteView alloc] init];
     }
