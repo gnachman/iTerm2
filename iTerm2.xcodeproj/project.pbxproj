@@ -955,9 +955,6 @@
 		A6024B7A254C93DA0036D6CF /* NSSet+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6024B78254C93DA0036D6CF /* NSSet+iTerm.m */; };
 		A6024B81254CE2000036D6CF /* iTermAddTriggerViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6024B7E254CE2000036D6CF /* iTermAddTriggerViewController.h */; };
 		A6024B82254CE2000036D6CF /* iTermAddTriggerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6024B7F254CE2000036D6CF /* iTermAddTriggerViewController.m */; };
-		A6024B83254D17BF0036D6CF /* iTermAddTriggerViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6024B80254CE2000036D6CF /* iTermAddTriggerViewController.xib */; };
-		A6024B84254D17C00036D6CF /* iTermAddTriggerViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6024B80254CE2000036D6CF /* iTermAddTriggerViewController.xib */; };
-		A6024B85254D17C00036D6CF /* iTermAddTriggerViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6024B80254CE2000036D6CF /* iTermAddTriggerViewController.xib */; };
 		A6024B88254D367E0036D6CF /* iTermColorSuggester.h in Headers */ = {isa = PBXBuildFile; fileRef = A6024B86254D367E0036D6CF /* iTermColorSuggester.h */; };
 		A6024B89254D367E0036D6CF /* iTermColorSuggester.m in Sources */ = {isa = PBXBuildFile; fileRef = A6024B87254D367E0036D6CF /* iTermColorSuggester.m */; };
 		A6024B8B254DDFEE0036D6CF /* iTermNSColorCategoryTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A6024B8A254DDFEE0036D6CF /* iTermNSColorCategoryTests.m */; };
@@ -6210,7 +6207,6 @@
 		A6024B78254C93DA0036D6CF /* NSSet+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSSet+iTerm.m"; sourceTree = "<group>"; };
 		A6024B7E254CE2000036D6CF /* iTermAddTriggerViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermAddTriggerViewController.h; sourceTree = "<group>"; };
 		A6024B7F254CE2000036D6CF /* iTermAddTriggerViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermAddTriggerViewController.m; sourceTree = "<group>"; };
-		A6024B80254CE2000036D6CF /* iTermAddTriggerViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermAddTriggerViewController.xib; sourceTree = "<group>"; };
 		A6024B86254D367E0036D6CF /* iTermColorSuggester.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermColorSuggester.h; sourceTree = "<group>"; };
 		A6024B87254D367E0036D6CF /* iTermColorSuggester.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermColorSuggester.m; sourceTree = "<group>"; };
 		A6024B8A254DDFEE0036D6CF /* iTermNSColorCategoryTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermNSColorCategoryTests.m; sourceTree = "<group>"; };
@@ -10140,7 +10136,6 @@
 				A635F1E82507621A008C3038 /* iTermSnippetsEditingViewController.xib */,
 				A6024B7E254CE2000036D6CF /* iTermAddTriggerViewController.h */,
 				A6024B7F254CE2000036D6CF /* iTermAddTriggerViewController.m */,
-				A6024B80254CE2000036D6CF /* iTermAddTriggerViewController.xib */,
 				A6A73D6427CCA408002E4CCA /* DonateViewController.swift */,
 				A682273D280355A8005DF0B4 /* KeyActionSequenceTableViewController.swift */,
 				A6EC8088282A28C600493544 /* SSHConfigurationWindow.xib */,
@@ -16312,7 +16307,6 @@
 				1D6ED9D919AEA20D005A7799 /* important@2x.png in Resources */,
 				1D6ED9DA19AEA20D005A7799 /* Alert@2x.png in Resources */,
 				A67D0D3A1A2EE12A003A8B35 /* AdvancedWorkingDirectoryWindow.xib in Resources */,
-				A6024B85254D17C00036D6CF /* iTermAddTriggerViewController.xib in Resources */,
 				1D6ED9DC19AEA20D005A7799 /* PrefsGeneral.png in Resources */,
 				A6E7AE5A214394CA00DE9F3B /* graphic_bq@2x.png in Resources */,
 				A67F61BD214395C60093940A /* graphic_shell@2x.png in Resources */,
@@ -16813,7 +16807,6 @@
 				A65B72561B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
 				A6A3EDDD2E0D0C7E00D711DA /* urls-at-point.js in Resources */,
 				A69C93472121140100531438 /* iTermStatusBarLargeComposerViewController.xib in Resources */,
-				A6024B84254D17C00036D6CF /* iTermAddTriggerViewController.xib in Resources */,
 				A6971F3620D8D3CB0075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib in Resources */,
 				A6E7AE62214394CA00DE9F3B /* graphic_atom@2x.png in Resources */,
 				A697CDE22D975C540031583F /* SnippetsTip.jpg in Resources */,
@@ -17466,7 +17459,6 @@
 				A63011BB20E83081008114B7 /* iTermStatusBarKnobTextViewController.xib in Resources */,
 				A6971F3520D8D3CB0075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib in Resources */,
 				A6F7A73A213CB143004DE961 /* StatusBarIconClock.png in Resources */,
-				A6024B83254D17BF0036D6CF /* iTermAddTriggerViewController.xib in Resources */,
 				A67F6187214395A70093940A /* graphic_perl@2x.png in Resources */,
 				A610941D2A4A213D00AC2268 /* key-light.png in Resources */,
 				A67F615B214395990093940A /* graphic_micro.png in Resources */,

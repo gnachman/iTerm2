@@ -84,11 +84,53 @@
         completion(dict, updateProfile);
     }];
     [panel it_setAssociatedObject:vc forKey:"AddTriggerVC"];
-    [panel setFrame:[NSPanel frameRectForContentRect:vc.view.bounds styleMask:panel.styleMask] display:NO];
+    
+    // Force view loading to establish proper size
+    if (@available(macOS 14.0, *)) {
+        [vc loadViewIfNeeded];
+    } else {
+        // For macOS 12 compatibility
+        [vc view];
+    }
+    
+    // Set an explicit size for the content since we're using programmatic views
+    NSSize contentSize = NSMakeSize(480, 208);
+    NSRect contentRect = NSMakeRect(0, 0, contentSize.width, contentSize.height);
+    
+    [panel setFrame:[NSPanel frameRectForContentRect:contentRect styleMask:panel.styleMask] display:NO];
     [panel.contentView addSubview:vc.view];
-    panel.contentView.autoresizesSubviews = YES;
-    vc.view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-    vc.view.frame = panel.contentView.bounds;
+    
+    // Set up constraints to fill the panel content view
+    vc.view.translatesAutoresizingMaskIntoConstraints = NO;
+    [panel.contentView addConstraint:[NSLayoutConstraint constraintWithItem:vc.view
+                                                                  attribute:NSLayoutAttributeTop
+                                                                  relatedBy:NSLayoutRelationEqual
+                                                                     toItem:panel.contentView
+                                                                  attribute:NSLayoutAttributeTop
+                                                                 multiplier:1.0
+                                                                   constant:0]];
+    [panel.contentView addConstraint:[NSLayoutConstraint constraintWithItem:vc.view
+                                                                  attribute:NSLayoutAttributeLeading
+                                                                  relatedBy:NSLayoutRelationEqual
+                                                                     toItem:panel.contentView
+                                                                  attribute:NSLayoutAttributeLeading
+                                                                 multiplier:1.0
+                                                                   constant:0]];
+    [panel.contentView addConstraint:[NSLayoutConstraint constraintWithItem:vc.view
+                                                                  attribute:NSLayoutAttributeTrailing
+                                                                  relatedBy:NSLayoutRelationEqual
+                                                                     toItem:panel.contentView
+                                                                  attribute:NSLayoutAttributeTrailing
+                                                                 multiplier:1.0
+                                                                   constant:0]];
+    [panel.contentView addConstraint:[NSLayoutConstraint constraintWithItem:vc.view
+                                                                  attribute:NSLayoutAttributeBottom
+                                                                  relatedBy:NSLayoutRelationEqual
+                                                                     toItem:panel.contentView
+                                                                  attribute:NSLayoutAttributeBottom
+                                                                 multiplier:1.0
+                                                                   constant:0]];
+    
     [window beginSheet:panel completionHandler:^(NSModalResponse returnCode) {}];
 }
 
@@ -99,8 +141,7 @@
             defaultTextColor:(NSColor *)defaultTextColor
       defaultBackgroundColor:(NSColor *)defaultBackgroundColor
                   completion:(void (^)(NSDictionary * _Nullable, BOOL))completion {
-    self = [super initWithNibName:NSStringFromClass([self class])
-                           bundle:[NSBundle bundleForClass:[self class]]];
+    self = [super initWithNibName:nil bundle:nil];
     if (self) {
         _regex = [regex copy];
         _interpolatedStrings = interpolatedStrings;
@@ -150,8 +191,571 @@
     _visualizationViewController.regex = _regex ?: @"";
 }
 
+- (void)loadView {
+    [self createViews];
+    [self setupConstraints];
+}
+
+- (void)createViews {
+    // Create main view
+    NSView *mainView = [[NSView alloc] init];
+    self.view = mainView;
+    
+    // Create vertical stack view
+    NSStackView *stackView = [[NSStackView alloc] init];
+    stackView.translatesAutoresizingMaskIntoConstraints = NO;
+    stackView.orientation = NSUserInterfaceLayoutOrientationVertical;
+    stackView.alignment = NSLayoutAttributeLeading;
+    stackView.spacing = 8;
+    [mainView addSubview:stackView];
+    
+    // Regular Expression row
+    NSView *regexRow = [self createRowWithLabelText:@"Regular Expression:" hasVisualizationButton:YES];
+    [stackView addArrangedSubview:regexRow];
+    
+    // Name row
+    NSView *nameRow = [self createRowWithLabelText:@"Name:" hasVisualizationButton:NO];
+    [stackView addArrangedSubview:nameRow];
+    
+    // Buttons row
+    NSView *buttonsRow = [self createButtonsRow];
+    [stackView addArrangedSubview:buttonsRow];
+    
+    // Action row
+    NSView *actionRow = [self createActionRow];
+    [stackView addArrangedSubview:actionRow];
+    
+    // Param container - create a wrapper view for right alignment
+    NSView *paramWrapperView = [[NSView alloc] init];
+    paramWrapperView.translatesAutoresizingMaskIntoConstraints = NO;
+    
+    _paramContainerView = [[NSView alloc] init];
+    _paramContainerView.translatesAutoresizingMaskIntoConstraints = NO;
+    [paramWrapperView addSubview:_paramContainerView];
+    
+    // Right-align the param container and fix its width
+    [paramWrapperView addConstraint:[NSLayoutConstraint constraintWithItem:_paramContainerView
+                                                                 attribute:NSLayoutAttributeTrailing
+                                                                 relatedBy:NSLayoutRelationEqual
+                                                                    toItem:paramWrapperView
+                                                                 attribute:NSLayoutAttributeTrailing
+                                                                multiplier:1.0
+                                                                  constant:0]];
+    [paramWrapperView addConstraint:[NSLayoutConstraint constraintWithItem:_paramContainerView
+                                                                 attribute:NSLayoutAttributeWidth
+                                                                 relatedBy:NSLayoutRelationEqual
+                                                                    toItem:nil
+                                                                 attribute:NSLayoutAttributeNotAnAttribute
+                                                                multiplier:1.0
+                                                                  constant:319]];
+    [paramWrapperView addConstraint:[NSLayoutConstraint constraintWithItem:_paramContainerView
+                                                                 attribute:NSLayoutAttributeTop
+                                                                 relatedBy:NSLayoutRelationEqual
+                                                                    toItem:paramWrapperView
+                                                                 attribute:NSLayoutAttributeTop
+                                                                multiplier:1.0
+                                                                  constant:0]];
+    [paramWrapperView addConstraint:[NSLayoutConstraint constraintWithItem:_paramContainerView
+                                                                 attribute:NSLayoutAttributeBottom
+                                                                 relatedBy:NSLayoutRelationEqual
+                                                                    toItem:paramWrapperView
+                                                                 attribute:NSLayoutAttributeBottom
+                                                                multiplier:1.0
+                                                                  constant:0]];
+    
+    [stackView addArrangedSubview:paramWrapperView];
+    
+    // OK/Cancel buttons row
+    NSView *okCancelRow = [self createOkCancelRow];
+    [stackView addArrangedSubview:okCancelRow];
+    
+    // Store the stack view for constraints
+    [mainView addConstraint:[NSLayoutConstraint constraintWithItem:stackView
+                                                         attribute:NSLayoutAttributeTop
+                                                         relatedBy:NSLayoutRelationEqual
+                                                            toItem:mainView
+                                                         attribute:NSLayoutAttributeTop
+                                                        multiplier:1.0
+                                                          constant:20]];
+    [mainView addConstraint:[NSLayoutConstraint constraintWithItem:stackView
+                                                         attribute:NSLayoutAttributeLeading
+                                                         relatedBy:NSLayoutRelationEqual
+                                                            toItem:mainView
+                                                         attribute:NSLayoutAttributeLeading
+                                                        multiplier:1.0
+                                                          constant:20]];
+    [mainView addConstraint:[NSLayoutConstraint constraintWithItem:stackView
+                                                         attribute:NSLayoutAttributeTrailing
+                                                         relatedBy:NSLayoutRelationEqual
+                                                            toItem:mainView
+                                                         attribute:NSLayoutAttributeTrailing
+                                                        multiplier:1.0
+                                                          constant:-20]];
+    [mainView addConstraint:[NSLayoutConstraint constraintWithItem:stackView
+                                                         attribute:NSLayoutAttributeBottom
+                                                         relatedBy:NSLayoutRelationEqual
+                                                            toItem:mainView
+                                                         attribute:NSLayoutAttributeBottom
+                                                        multiplier:1.0
+                                                          constant:-20]];
+}
+
+- (NSView *)createRowWithLabelText:(NSString *)labelText hasVisualizationButton:(BOOL)hasVisualizationButton {
+    NSView *row = [[NSView alloc] init];
+    row.translatesAutoresizingMaskIntoConstraints = NO;
+    
+    // Create label
+    NSTextField *label = [[NSTextField alloc] init];
+    label.translatesAutoresizingMaskIntoConstraints = NO;
+    label.stringValue = labelText;
+    label.editable = NO;
+    label.bordered = NO;
+    label.backgroundColor = [NSColor clearColor];
+    label.alignment = NSTextAlignmentRight;
+    label.lineBreakMode = NSLineBreakByClipping;
+    label.usesSingleLineMode = YES;
+    [row addSubview:label];
+    
+    // Create text field
+    NSTextField *textField = [[NSTextField alloc] init];
+    textField.translatesAutoresizingMaskIntoConstraints = NO;
+    textField.bordered = YES;
+    textField.editable = YES;
+    textField.delegate = self;
+    [row addSubview:textField];
+    
+    if ([labelText isEqualToString:@"Regular Expression:"]) {
+        _regexTextField = textField;
+    } else if ([labelText isEqualToString:@"Name:"]) {
+        _nameTextField = textField;
+    }
+    
+    // Add visualization button if needed
+    if (hasVisualizationButton) {
+        _toggleVisualizationButton = [[NSButton alloc] init];
+        _toggleVisualizationButton.translatesAutoresizingMaskIntoConstraints = NO;
+        _toggleVisualizationButton.bezelStyle = NSBezelStyleRounded;
+        _toggleVisualizationButton.bordered = YES;
+        _toggleVisualizationButton.image = [NSImage it_imageForSymbolName:@"flowchart"
+                                                  accessibilityDescription:@"Show visualization"
+                                                         fallbackImageName:@"flowchart"
+                                                                  forClass:[self class]];
+        _toggleVisualizationButton.target = self;
+        _toggleVisualizationButton.action = @selector(toggleVisualization:);
+        [row addSubview:_toggleVisualizationButton];
+        
+        // Constraints for row with visualization button
+        [row addConstraint:[NSLayoutConstraint constraintWithItem:label
+                                                       attribute:NSLayoutAttributeLeading
+                                                       relatedBy:NSLayoutRelationEqual
+                                                          toItem:row
+                                                       attribute:NSLayoutAttributeLeading
+                                                      multiplier:1.0
+                                                        constant:0]];
+        [row addConstraint:[NSLayoutConstraint constraintWithItem:label
+                                                       attribute:NSLayoutAttributeWidth
+                                                       relatedBy:NSLayoutRelationEqual
+                                                          toItem:nil
+                                                       attribute:NSLayoutAttributeNotAnAttribute
+                                                      multiplier:1.0
+                                                        constant:120]];
+        [row addConstraint:[NSLayoutConstraint constraintWithItem:label
+                                                       attribute:NSLayoutAttributeCenterY
+                                                       relatedBy:NSLayoutRelationEqual
+                                                          toItem:row
+                                                       attribute:NSLayoutAttributeCenterY
+                                                      multiplier:1.0
+                                                        constant:0]];
+        
+        [row addConstraint:[NSLayoutConstraint constraintWithItem:textField
+                                                       attribute:NSLayoutAttributeLeading
+                                                       relatedBy:NSLayoutRelationEqual
+                                                          toItem:label
+                                                       attribute:NSLayoutAttributeTrailing
+                                                      multiplier:1.0
+                                                        constant:6]];
+        [row addConstraint:[NSLayoutConstraint constraintWithItem:textField
+                                                       attribute:NSLayoutAttributeCenterY
+                                                       relatedBy:NSLayoutRelationEqual
+                                                          toItem:row
+                                                       attribute:NSLayoutAttributeCenterY
+                                                      multiplier:1.0
+                                                        constant:0]];
+        [row addConstraint:[NSLayoutConstraint constraintWithItem:textField
+                                                       attribute:NSLayoutAttributeHeight
+                                                       relatedBy:NSLayoutRelationEqual
+                                                          toItem:nil
+                                                       attribute:NSLayoutAttributeNotAnAttribute
+                                                      multiplier:1.0
+                                                        constant:21]];
+        
+        [row addConstraint:[NSLayoutConstraint constraintWithItem:_toggleVisualizationButton
+                                                       attribute:NSLayoutAttributeLeading
+                                                       relatedBy:NSLayoutRelationEqual
+                                                          toItem:textField
+                                                       attribute:NSLayoutAttributeTrailing
+                                                      multiplier:1.0
+                                                        constant:6]];
+        [row addConstraint:[NSLayoutConstraint constraintWithItem:_toggleVisualizationButton
+                                                       attribute:NSLayoutAttributeTrailing
+                                                       relatedBy:NSLayoutRelationEqual
+                                                          toItem:row
+                                                       attribute:NSLayoutAttributeTrailing
+                                                      multiplier:1.0
+                                                        constant:0]];
+        [row addConstraint:[NSLayoutConstraint constraintWithItem:_toggleVisualizationButton
+                                                       attribute:NSLayoutAttributeCenterY
+                                                       relatedBy:NSLayoutRelationEqual
+                                                          toItem:row
+                                                       attribute:NSLayoutAttributeCenterY
+                                                      multiplier:1.0
+                                                        constant:0]];
+        [row addConstraint:[NSLayoutConstraint constraintWithItem:_toggleVisualizationButton
+                                                       attribute:NSLayoutAttributeWidth
+                                                       relatedBy:NSLayoutRelationEqual
+                                                          toItem:nil
+                                                       attribute:NSLayoutAttributeNotAnAttribute
+                                                      multiplier:1.0
+                                                        constant:28]];
+        [row addConstraint:[NSLayoutConstraint constraintWithItem:_toggleVisualizationButton
+                                                       attribute:NSLayoutAttributeHeight
+                                                       relatedBy:NSLayoutRelationEqual
+                                                          toItem:nil
+                                                       attribute:NSLayoutAttributeNotAnAttribute
+                                                      multiplier:1.0
+                                                        constant:28]];
+        
+        [row addConstraint:[NSLayoutConstraint constraintWithItem:row
+                                                       attribute:NSLayoutAttributeHeight
+                                                       relatedBy:NSLayoutRelationEqual
+                                                          toItem:nil
+                                                       attribute:NSLayoutAttributeNotAnAttribute
+                                                      multiplier:1.0
+                                                        constant:28]];
+    } else {
+        // Constraints for row without visualization button
+        [row addConstraint:[NSLayoutConstraint constraintWithItem:label
+                                                       attribute:NSLayoutAttributeLeading
+                                                       relatedBy:NSLayoutRelationEqual
+                                                          toItem:row
+                                                       attribute:NSLayoutAttributeLeading
+                                                      multiplier:1.0
+                                                        constant:0]];
+        [row addConstraint:[NSLayoutConstraint constraintWithItem:label
+                                                       attribute:NSLayoutAttributeWidth
+                                                       relatedBy:NSLayoutRelationEqual
+                                                          toItem:nil
+                                                       attribute:NSLayoutAttributeNotAnAttribute
+                                                      multiplier:1.0
+                                                        constant:120]];
+        [row addConstraint:[NSLayoutConstraint constraintWithItem:label
+                                                       attribute:NSLayoutAttributeCenterY
+                                                       relatedBy:NSLayoutRelationEqual
+                                                          toItem:row
+                                                       attribute:NSLayoutAttributeCenterY
+                                                      multiplier:1.0
+                                                        constant:0]];
+        
+        [row addConstraint:[NSLayoutConstraint constraintWithItem:textField
+                                                       attribute:NSLayoutAttributeLeading
+                                                       relatedBy:NSLayoutRelationEqual
+                                                          toItem:label
+                                                       attribute:NSLayoutAttributeTrailing
+                                                      multiplier:1.0
+                                                        constant:6]];
+        [row addConstraint:[NSLayoutConstraint constraintWithItem:textField
+                                                       attribute:NSLayoutAttributeTrailing
+                                                       relatedBy:NSLayoutRelationEqual
+                                                          toItem:row
+                                                       attribute:NSLayoutAttributeTrailing
+                                                      multiplier:1.0
+                                                        constant:0]];
+        [row addConstraint:[NSLayoutConstraint constraintWithItem:textField
+                                                       attribute:NSLayoutAttributeCenterY
+                                                       relatedBy:NSLayoutRelationEqual
+                                                          toItem:row
+                                                       attribute:NSLayoutAttributeCenterY
+                                                      multiplier:1.0
+                                                        constant:0]];
+        [row addConstraint:[NSLayoutConstraint constraintWithItem:textField
+                                                       attribute:NSLayoutAttributeHeight
+                                                       relatedBy:NSLayoutRelationEqual
+                                                          toItem:nil
+                                                       attribute:NSLayoutAttributeNotAnAttribute
+                                                      multiplier:1.0
+                                                        constant:21]];
+        
+        [row addConstraint:[NSLayoutConstraint constraintWithItem:row
+                                                       attribute:NSLayoutAttributeHeight
+                                                       relatedBy:NSLayoutRelationEqual
+                                                          toItem:nil
+                                                       attribute:NSLayoutAttributeNotAnAttribute
+                                                      multiplier:1.0
+                                                        constant:21]];
+    }
+    
+    return row;
+}
+
+- (NSView *)createButtonsRow {
+    NSView *row = [[NSView alloc] init];
+    row.translatesAutoresizingMaskIntoConstraints = NO;
+    
+    _instantButton = [[NSButton alloc] init];
+    _instantButton.translatesAutoresizingMaskIntoConstraints = NO;
+    _instantButton.buttonType = NSButtonTypeSwitch;
+    _instantButton.title = @"Instant";
+    _instantButton.target = self;
+    _instantButton.action = @selector(instantDidChange:);
+    [row addSubview:_instantButton];
+    
+    _enabledButton = [[NSButton alloc] init];
+    _enabledButton.translatesAutoresizingMaskIntoConstraints = NO;
+    _enabledButton.buttonType = NSButtonTypeSwitch;
+    _enabledButton.title = @"Enabled";
+    _enabledButton.target = self;
+    _enabledButton.action = @selector(enabledDidChange:);
+    [row addSubview:_enabledButton];
+    
+    _updateProfileButton = [[NSButton alloc] init];
+    _updateProfileButton.translatesAutoresizingMaskIntoConstraints = NO;
+    _updateProfileButton.buttonType = NSButtonTypeSwitch;
+    _updateProfileButton.title = @"Update Profile";
+    [row addSubview:_updateProfileButton];
+    
+    // Add leading spacer to align with text fields
+    NSView *spacer = [[NSView alloc] init];
+    spacer.translatesAutoresizingMaskIntoConstraints = NO;
+    [row addSubview:spacer];
+    
+    // Constraints
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:spacer
+                                                   attribute:NSLayoutAttributeLeading
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:row
+                                                   attribute:NSLayoutAttributeLeading
+                                                  multiplier:1.0
+                                                    constant:0]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:spacer
+                                                   attribute:NSLayoutAttributeWidth
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:nil
+                                                   attribute:NSLayoutAttributeNotAnAttribute
+                                                  multiplier:1.0
+                                                    constant:126]];
+    
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:_instantButton
+                                                   attribute:NSLayoutAttributeLeading
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:spacer
+                                                   attribute:NSLayoutAttributeTrailing
+                                                  multiplier:1.0
+                                                    constant:0]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:_enabledButton
+                                                   attribute:NSLayoutAttributeLeading
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:_instantButton
+                                                   attribute:NSLayoutAttributeTrailing
+                                                  multiplier:1.0
+                                                    constant:6]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:_updateProfileButton
+                                                   attribute:NSLayoutAttributeLeading
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:_enabledButton
+                                                   attribute:NSLayoutAttributeTrailing
+                                                  multiplier:1.0
+                                                    constant:6]];
+    
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:_instantButton
+                                                   attribute:NSLayoutAttributeCenterY
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:row
+                                                   attribute:NSLayoutAttributeCenterY
+                                                  multiplier:1.0
+                                                    constant:0]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:_enabledButton
+                                                   attribute:NSLayoutAttributeCenterY
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:row
+                                                   attribute:NSLayoutAttributeCenterY
+                                                  multiplier:1.0
+                                                    constant:0]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:_updateProfileButton
+                                                   attribute:NSLayoutAttributeCenterY
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:row
+                                                   attribute:NSLayoutAttributeCenterY
+                                                  multiplier:1.0
+                                                    constant:0]];
+    
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:row
+                                                   attribute:NSLayoutAttributeHeight
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:nil
+                                                   attribute:NSLayoutAttributeNotAnAttribute
+                                                  multiplier:1.0
+                                                    constant:18]];
+    
+    return row;
+}
+
+- (NSView *)createActionRow {
+    NSView *row = [[NSView alloc] init];
+    row.translatesAutoresizingMaskIntoConstraints = NO;
+    
+    // Create label
+    NSTextField *label = [[NSTextField alloc] init];
+    label.translatesAutoresizingMaskIntoConstraints = NO;
+    label.stringValue = @"Action:";
+    label.editable = NO;
+    label.bordered = NO;
+    label.backgroundColor = [NSColor clearColor];
+    label.alignment = NSTextAlignmentRight;
+    label.lineBreakMode = NSLineBreakByClipping;
+    label.usesSingleLineMode = YES;
+    [row addSubview:label];
+    
+    // Create popup button
+    _actionButton = [[NSPopUpButton alloc] init];
+    _actionButton.translatesAutoresizingMaskIntoConstraints = NO;
+    _actionButton.target = self;
+    _actionButton.action = @selector(selectionDidChange:);
+    [row addSubview:_actionButton];
+    
+    // Constraints
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:label
+                                                   attribute:NSLayoutAttributeLeading
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:row
+                                                   attribute:NSLayoutAttributeLeading
+                                                  multiplier:1.0
+                                                    constant:0]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:label
+                                                   attribute:NSLayoutAttributeWidth
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:nil
+                                                   attribute:NSLayoutAttributeNotAnAttribute
+                                                  multiplier:1.0
+                                                    constant:120]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:label
+                                                   attribute:NSLayoutAttributeCenterY
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:row
+                                                   attribute:NSLayoutAttributeCenterY
+                                                  multiplier:1.0
+                                                    constant:0]];
+    
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:_actionButton
+                                                   attribute:NSLayoutAttributeLeading
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:label
+                                                   attribute:NSLayoutAttributeTrailing
+                                                  multiplier:1.0
+                                                    constant:6]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:_actionButton
+                                                   attribute:NSLayoutAttributeTrailing
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:row
+                                                   attribute:NSLayoutAttributeTrailing
+                                                  multiplier:1.0
+                                                    constant:0]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:_actionButton
+                                                   attribute:NSLayoutAttributeCenterY
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:row
+                                                   attribute:NSLayoutAttributeCenterY
+                                                  multiplier:1.0
+                                                    constant:0]];
+    
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:row
+                                                   attribute:NSLayoutAttributeHeight
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:nil
+                                                   attribute:NSLayoutAttributeNotAnAttribute
+                                                  multiplier:1.0
+                                                    constant:25]];
+    
+    return row;
+}
+
+- (NSView *)createOkCancelRow {
+    NSView *row = [[NSView alloc] init];
+    row.translatesAutoresizingMaskIntoConstraints = NO;
+    
+    _cancelButton = [[NSButton alloc] init];
+    _cancelButton.translatesAutoresizingMaskIntoConstraints = NO;
+    _cancelButton.bezelStyle = NSBezelStyleRounded;
+    _cancelButton.title = @"Cancel";
+    _cancelButton.target = self;
+    _cancelButton.action = @selector(cancel:);
+    _cancelButton.keyEquivalent = @"\e"; // Escape key
+    [row addSubview:_cancelButton];
+    
+    _okButton = [[NSButton alloc] init];
+    _okButton.translatesAutoresizingMaskIntoConstraints = NO;
+    _okButton.bezelStyle = NSBezelStyleRounded;
+    _okButton.title = @"OK";
+    _okButton.target = self;
+    _okButton.action = @selector(ok:);
+    _okButton.keyEquivalent = @"\r"; // Return key
+    [row addSubview:_okButton];
+    
+    // Constraints - buttons right-aligned
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:_okButton
+                                                   attribute:NSLayoutAttributeTrailing
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:row
+                                                   attribute:NSLayoutAttributeTrailing
+                                                  multiplier:1.0
+                                                    constant:0]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:_cancelButton
+                                                   attribute:NSLayoutAttributeTrailing
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:_okButton
+                                                   attribute:NSLayoutAttributeLeading
+                                                  multiplier:1.0
+                                                    constant:-6]];
+    
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:_cancelButton
+                                                   attribute:NSLayoutAttributeCenterY
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:row
+                                                   attribute:NSLayoutAttributeCenterY
+                                                  multiplier:1.0
+                                                    constant:0]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:_okButton
+                                                   attribute:NSLayoutAttributeCenterY
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:row
+                                                   attribute:NSLayoutAttributeCenterY
+                                                  multiplier:1.0
+                                                    constant:0]];
+    
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:row
+                                                   attribute:NSLayoutAttributeHeight
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:nil
+                                                   attribute:NSLayoutAttributeNotAnAttribute
+                                                  multiplier:1.0
+                                                    constant:32]];
+    
+    return row;
+}
+
+- (void)setupConstraints {
+    // Set up param container view constraints
+    [_paramContainerView addConstraint:[NSLayoutConstraint constraintWithItem:_paramContainerView
+                                                                    attribute:NSLayoutAttributeHeight
+                                                                    relatedBy:NSLayoutRelationGreaterThanOrEqual
+                                                                       toItem:nil
+                                                                    attribute:NSLayoutAttributeNotAnAttribute
+                                                                   multiplier:1.0
+                                                                     constant:21]];
+}
+
 - (void)viewDidLoad {
-    _paramY = NSMinY(_paramContainerView.frame);
+    [super viewDidLoad];
+    
     _regexTextField.stringValue = _regex;
     _nameTextField.stringValue = @"";
     _instantButton.state = [iTermUserDefaults addTriggerInstant] ? NSControlStateValueOn : NSControlStateValueOff;
@@ -261,7 +865,7 @@
 - (void)updateCustomViewForTrigger:(Trigger *)trigger value:(id)value {
     id delegateToSave;
     NSView *view = [TriggerController viewForParameterForTrigger:self.currentTrigger
-                                                            size:NSMakeSize(_paramContainerView.frame.size.width, 21)
+                                                            size:NSMakeSize(320, 21)
                                                            value:value
                                                         receiver:self
                                              interpolatedStrings:_interpolatedStrings
@@ -279,23 +883,65 @@
     _savedDelegate = delegateToSave;
 
     NSPopUpButton *popup = [NSPopUpButton castFrom:view];
-    NSRect frame = _paramContainerView.frame;
-    if (popup) {
-        popup.bordered = YES;
-        popup.frame = _paramContainerView.bounds;
-        frame.size.height = 25;
-    } else {
-        frame.size.height = 21;
+    
+    // Remove existing param view
+    [_paramView removeFromSuperview];
+    
+    // Remove existing height constraint if any
+    for (NSLayoutConstraint *constraint in _paramContainerView.constraints) {
+        if (constraint.firstAttribute == NSLayoutAttributeHeight && constraint.secondItem == nil) {
+            [_paramContainerView removeConstraint:constraint];
+            break;
+        }
     }
-    frame.origin.y = NSMinY(_actionButton.frame) - NSHeight(frame) - 5;
-    _paramContainerView.frame = frame;
+    
+    // Set appropriate height based on view type
+    CGFloat height = popup ? 25 : 21;
+    [_paramContainerView addConstraint:[NSLayoutConstraint constraintWithItem:_paramContainerView
+                                                                    attribute:NSLayoutAttributeHeight
+                                                                    relatedBy:NSLayoutRelationEqual
+                                                                       toItem:nil
+                                                                    attribute:NSLayoutAttributeNotAnAttribute
+                                                                   multiplier:1.0
+                                                                     constant:height]];
+    
     if ([view conformsToProtocol:@protocol(iTermOptionallyBordered)]) {
         [(id<iTermOptionallyBordered>)view setOptionalBorderEnabled:YES];
     }
 
-    [_paramView removeFromSuperview];
     _paramView = view;
+    view.translatesAutoresizingMaskIntoConstraints = NO;
     [_paramContainerView addSubview:view];
+    
+    // Add constraints to fill the container
+    [_paramContainerView addConstraint:[NSLayoutConstraint constraintWithItem:view
+                                                                    attribute:NSLayoutAttributeTop
+                                                                    relatedBy:NSLayoutRelationEqual
+                                                                       toItem:_paramContainerView
+                                                                    attribute:NSLayoutAttributeTop
+                                                                   multiplier:1.0
+                                                                     constant:0]];
+    [_paramContainerView addConstraint:[NSLayoutConstraint constraintWithItem:view
+                                                                    attribute:NSLayoutAttributeLeading
+                                                                    relatedBy:NSLayoutRelationEqual
+                                                                       toItem:_paramContainerView
+                                                                    attribute:NSLayoutAttributeLeading
+                                                                   multiplier:1.0
+                                                                     constant:0]];
+    [_paramContainerView addConstraint:[NSLayoutConstraint constraintWithItem:view
+                                                                    attribute:NSLayoutAttributeTrailing
+                                                                    relatedBy:NSLayoutRelationEqual
+                                                                       toItem:_paramContainerView
+                                                                    attribute:NSLayoutAttributeTrailing
+                                                                   multiplier:1.0
+                                                                     constant:0]];
+    [_paramContainerView addConstraint:[NSLayoutConstraint constraintWithItem:view
+                                                                    attribute:NSLayoutAttributeBottom
+                                                                    relatedBy:NSLayoutRelationEqual
+                                                                       toItem:_paramContainerView
+                                                                    attribute:NSLayoutAttributeBottom
+                                                                   multiplier:1.0
+                                                                     constant:0]];
 }
 
 - (void)colorWellDidChange:(CPKColorWell *)colorWell {

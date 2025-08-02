@@ -4501,7 +4501,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     // Compute the proper imeOffset.
     int dirtStart;
     int dirtEnd;
-    int dirtMax;
+    int dirtMax; 
     _drawingHelper.numberOfIMELines = 0;
     do {
         dirtStart = ([_dataSource cursorY] - 1 - _drawingHelper.numberOfIMELines) * [_dataSource width] + [_dataSource cursorX] - 1;
