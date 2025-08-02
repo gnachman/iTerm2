@@ -8048,8 +8048,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 }
 
-- (IBAction)stopCoprocess:(id)sender
-{
+- (IBAction)stopCoprocess:(id)sender {
     [[self currentSession] stopCoprocess];
 }
 
@@ -10626,6 +10625,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     } else if (item.action == @selector(disableBroadcasting:)) {
         item.state = (_broadcastInputHelper.broadcastMode == BROADCAST_OFF) ? NSControlStateValueOn : NSControlStateValueOff;
     } else if ([item action] == @selector(runCoprocess:)) {
+        if (self.currentSession.isBrowserSession) {
+            return NO;
+        }
         result = ![[self currentSession] hasCoprocess];
     } else if ([item action] == @selector(stopCoprocess:)) {
         result = [[self currentSession] hasCoprocess];

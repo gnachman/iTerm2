@@ -7993,8 +7993,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     [_shell stopCoprocess];
 }
 
-- (BOOL)hasCoprocess
-{
+- (BOOL)hasCoprocess {
+    if (self.isBrowserSession)  {
+        return NO;
+    }
     return [_shell hasCoprocess];
 }
 
