@@ -4091,6 +4091,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (BOOL)isRestartable {
+    if (self.isBrowserSession) {
+        return NO;
+    }
     return _program != nil;
 }
 

@@ -10637,7 +10637,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         result = [[self currentSession] hasCoprocess];
     } else if ([item action] == @selector(startStopLogging:)) {
         PTYSession *session = self.currentSession;
-        if (!session || session.exited) {
+        if (!session || session.exited || session.isBrowserSession) {
             item.state = NSControlStateValueOff;
             return NO;
         }
@@ -10649,6 +10649,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         result = [[self currentSession] canInstantReplayNext];
     } else if ([item action] == @selector(toggleCursorGuide:)) {
         PTYSession *session = [self currentSession];
+        if (session.isBrowserSession) {
+            return NO;
+        }
         [item setState:session.highlightCursorLine ? NSControlStateValueOn : NSControlStateValueOff];
         result = YES;
     } else if ([item action] == @selector(toggleSelectionRespectsSoftBoundaries:)) {
@@ -10757,6 +10760,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         }
         return enabled;
     } else if (item.action == @selector(exportRecording:)) {
+        if (self.currentSession.isBrowserSession) {
+            return NO;
+        }
         return !self.currentSession.screen.dvr.empty;
     } else if (item.action == @selector(toggleSizeChangesAffectProfile:)) {
         item.state = [iTermPreferences boolForKey:kPreferenceKeySizeChangesAffectProfile] ? NSControlStateValueOn : NSControlStateValueOff;

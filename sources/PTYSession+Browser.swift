@@ -262,6 +262,10 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
                                identifier: String) {
         self.showError(message, suppressionKey: suppressionKey, identifier: identifier)
     }
+
+    func browserViewControllerBury(_ controller: iTermBrowserViewController) {
+        bury()
+    }
 }
 
 // MARK: - Browser Find Support

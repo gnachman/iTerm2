@@ -77,6 +77,7 @@ protocol iTermBrowserViewControllerDelegate: AnyObject, iTermBrowserFindManagerD
                                showError: String,
                                suppressionKey: String,
                                identifier: String)
+    func browserViewControllerBury(_ controller: iTermBrowserViewController)
 }
 
 @available(macOS 11.0, *)
@@ -397,6 +398,11 @@ extension iTermBrowserViewController {
 
     func startFind(_ string: String, mode: iTermBrowserFindMode) {
         browserManager.browserFindManager?.startFind(string, mode: mode)
+    }
+
+    @objc(bury:)
+    func bury(_ sender: Any?) {
+        delegate?.browserViewControllerBury(self)
     }
 
     @objc func findNext(_ sender: Any?) {
