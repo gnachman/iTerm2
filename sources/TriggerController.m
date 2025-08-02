@@ -165,7 +165,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     IBOutlet NSButton *_interpolatedStringParameters;
     IBOutlet NSButton *_updateProfileButton;
     IBOutlet NSButton *_shareButton;
-    IBOutlet iTermAddTriggerViewController *_detailViewController;
+    iTermAddTriggerViewController *_detailViewController;
     IBOutlet NSView *_detailViewContainer;
     NSArray *_cached;
 }
@@ -187,6 +187,58 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
                                                    object:nil];
     }
     return self;
+}
+
+- (void)setBrowserMode:(BOOL)browserMode {
+    if (_browserMode == browserMode) {
+        return;
+    }
+    _browserMode = browserMode;
+    
+    // Recreate the detail view controller with the correct browser mode
+    if (_detailViewController) {
+        [_detailViewController.view removeFromSuperview];
+        [self createDetailViewController];
+        
+        // Update the detail view if a trigger is selected
+        [self updateDetailViewController];
+    }
+}
+
+- (void)createDetailViewController {
+    // Remove old view controller if it exists
+    if (_detailViewController) {
+        [_detailViewController.view removeFromSuperview];
+        _detailViewController = nil;
+    }
+    
+    _detailViewController = [[iTermAddTriggerViewController alloc] initWithName:@""
+                                                                          regex:@""
+                                                            interpolatedStrings:[iTermProfilePreferences boolForKey:KEY_TRIGGERS_USE_INTERPOLATED_STRINGS inProfile:[self bookmark]]
+                                                               defaultTextColor:[NSColor colorWithDisplayP3Red:1 green:1 blue:1 alpha:0]
+                                                         defaultBackgroundColor:[NSColor colorWithDisplayP3Red:1 green:0 blue:0 alpha:1]
+                                                                    browserMode:_browserMode
+                                                                     completion:^(NSDictionary *ignore, BOOL ignore2) {}];
+    
+    // Only proceed if we have a container view
+    if (_detailViewContainer) {
+        [_detailViewContainer addSubview:_detailViewController.view];
+        
+        // Use auto layout constraints instead of manual frame setting
+        _detailViewController.view.translatesAutoresizingMaskIntoConstraints = NO;
+        [NSLayoutConstraint activateConstraints:@[
+            [_detailViewController.view.topAnchor constraintEqualToAnchor:_detailViewContainer.topAnchor],
+            [_detailViewController.view.leadingAnchor constraintEqualToAnchor:_detailViewContainer.leadingAnchor],
+            [_detailViewController.view.trailingAnchor constraintEqualToAnchor:_detailViewContainer.trailingAnchor],
+            [_detailViewController.view.bottomAnchor constraintEqualToAnchor:_detailViewContainer.bottomAnchor]
+        ]];
+    }
+    [_detailViewController removeOkCancel];
+    
+    __weak __typeof(self) weakSelf = self;
+    _detailViewController.didChange = ^{
+        [weakSelf detailViewControllerDidChange];
+    };
 }
 
 + (NSArray<Class> *)triggerClasses {
@@ -227,13 +279,6 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     _tableView.doubleAction = @selector(doubleClick:);
     _tableView.target = self;
     _tableView.rowHeight = 21;
-    [_detailViewContainer addSubview:_detailViewController.view];
-    _detailViewController.view.frame = _detailViewContainer.bounds;
-    [_detailViewController removeOkCancel];
-    __weak __typeof(self) weakSelf = self;
-    _detailViewController.didChange = ^{
-        [weakSelf detailViewControllerDidChange];
-    };
     [self updateCopyToProfileButtonVisibility];
     [self updateUseInterpolatedStringParametersState];
     [self updateShareButtonEnabled];
@@ -800,12 +845,19 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 
 - (void)updateDetailViewController {
     if (_tableView.selectedRowIndexes.count != 1) {
-        [_detailViewController willHide];
-        _detailViewController.view.hidden = YES;
+        if (_detailViewController) {
+            [_detailViewController willHide];
+            _detailViewController.view.hidden = YES;
+        }
         return;
-    } else {
-        _detailViewController.view.hidden = NO;
     }
+    
+    // Create detail view controller lazily when we actually need to show it
+    if (!_detailViewController) {
+        [self createDetailViewController];
+    }
+    
+    _detailViewController.view.hidden = NO;
     NSInteger i = _tableView.selectedRow;
     NSDictionary *dict = [self triggerDictionariesForCurrentProfile][i];
     [_detailViewController setTrigger:[Trigger triggerFromDict:dict]];
@@ -1007,6 +1059,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     }
     NSMutableDictionary *triggerDictionary =
         [[self triggerDictionariesForCurrentProfile][row] mutableCopy];
+    triggerDictionary[kTriggerMatchTypeKey] = @(_detailViewController.matchType);
     triggerDictionary[kTriggerRegexKey] = _detailViewController.regex;
     triggerDictionary[kTriggerParameterKey] = _detailViewController.parameter;
     triggerDictionary[kTriggerActionKey] = _detailViewController.action;

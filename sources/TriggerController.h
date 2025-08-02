@@ -38,6 +38,7 @@ extern NSString *const kTwoPraramValueColumnIdentifier;
 @property (nonatomic) BOOL hasSelection;
 @property (nonatomic, weak) IBOutlet id<TriggerDelegate> delegate;
 @property (nonatomic, readonly) NSTableView *tableView;
+@property (nonatomic) BOOL browserMode;
 
 + (NSArray<Class> *)triggerClasses;
 + (NSView *)viewForParameterForTrigger:(Trigger *)trigger

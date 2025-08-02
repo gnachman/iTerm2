@@ -17,6 +17,7 @@
 #import <CommonCrypto/CommonDigest.h>
 #import "iTerm2SharedARC-Swift.h"
 
+NSString * const kTriggerMatchTypeKey = @"matchType";
 NSString * const kTriggerRegexKey = @"regex";
 NSString * const kTriggerActionKey = @"action";
 NSString * const kTriggerParameterKey = @"parameter";
@@ -60,8 +61,7 @@ NSString * const kTriggerNameKey = @"name";
     return [self triggerFromDict:dict];
 }
 
-+ (Trigger *)triggerFromDict:(NSDictionary *)dict
-{
++ (Trigger *)triggerFromDict:(NSDictionary *)dict {
     NSString *className = [dict objectForKey:kTriggerActionKey];
     Class class = NSClassFromString(className);
     Trigger *trigger = [[class alloc] init];
@@ -69,6 +69,7 @@ NSString * const kTriggerNameKey = @"name";
     trigger.param = dict[kTriggerParameterKey];
     trigger.partialLine = [dict[kTriggerPartialLineKey] boolValue];
     trigger.disabled = [dict[kTriggerDisabledKey] boolValue];
+    trigger.matchType = [dict[kTriggerMatchTypeKey] unsignedIntegerValue];
     trigger->_name = [NSString castFrom:dict[kTriggerNameKey]];
     return trigger;
 }
@@ -414,6 +415,7 @@ NSString * const kTriggerNameKey = @"name";
 - (NSDictionary *)dictionaryValue {
     return [@{ kTriggerActionKey: NSStringFromClass(self.class),
                kTriggerRegexKey: self.regex ?: @"",
+               kTriggerMatchTypeKey: @(self.matchType),
                kTriggerParameterKey: self.param ?: @"",
                kTriggerPartialLineKey: @(self.partialLine),
                kTriggerDisabledKey: @(self.disabled),

@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="23504" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="23727" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="23504"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="23727"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="TriggerController">
             <connections>
                 <outlet property="_detailViewContainer" destination="Mk1-Ez-PEA" id="FKi-1h-kje"/>
-                <outlet property="_detailViewController" destination="Dz9-zY-38C" id="anG-0Z-iql"/>
                 <outlet property="_interpolatedStringParameters" destination="rYA-8a-Y7G" id="Xa7-1M-OLB"/>
                 <outlet property="_regexColumn" destination="hKE-xP-l4d" id="XwD-KC-qFc"/>
                 <outlet property="_removeTriggerButton" destination="lql-om-mCN" id="HLz-ZZ-qqO"/>
@@ -182,7 +181,6 @@ DQ
             </connections>
             <point key="canvasLocation" x="207" y="431"/>
         </window>
-        <viewController id="Dz9-zY-38C" customClass="iTermAddTriggerViewController"/>
         <userDefaultsController representsSharedInstance="YES" id="HNI-tG-eUI"/>
     </objects>
     <resources>

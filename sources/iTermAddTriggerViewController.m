@@ -7,6 +7,7 @@
 
 #import "iTermAddTriggerViewController.h"
 
+#import "ITAddressBookMgr.h"
 #import "iTermFocusablePanel.h"
 #import "iTermHighlightLineTrigger.h"
 #import "iTermOptionallyBordered.h"
@@ -22,26 +23,31 @@
 
 #import <ColorPicker/ColorPicker.h>
 
+static const CGFloat kLabelWidth = 124;
+
 @interface iTermAddTriggerViewController()<iTermTriggerParameterController>
 @end
 
 @implementation iTermAddTriggerViewController {
-    IBOutlet NSTextField *_regexTextField;
-    IBOutlet NSTextField *_nameTextField;
-    IBOutlet NSPopUpButton *_actionButton;
-    IBOutlet NSView *_paramContainerView;
-    IBOutlet NSButton *_instantButton;
-    IBOutlet NSButton *_updateProfileButton;
-    IBOutlet NSButton *_okButton;
-    IBOutlet NSButton *_cancelButton;
-    IBOutlet NSButton *_enabledButton;
-    IBOutlet NSButton *_toggleVisualizationButton;
+    NSTextField *_regexTextField;
+    NSTextField *_nameTextField;
+    NSPopUpButton *_actionButton;
+    NSView *_paramContainerView;
+    NSButton *_instantButton;
+    NSButton *_updateProfileButton;
+    NSButton *_okButton;
+    NSButton *_cancelButton;
+    NSButton *_enabledButton;
+    NSButton *_toggleVisualizationButton;
+    NSPopUpButton *_matchTypeButton;
     
     NSArray<Trigger *> *_triggers;
     NSView *_paramView;
     id _savedDelegate;
 
     BOOL _interpolatedStrings;
+    BOOL _browserMode;
+    iTermTriggerMatchType _matchType;
     void (^_completion)(NSDictionary *, BOOL);
     CGFloat _paramY;
     NSColor *_defaultTextColor;
@@ -55,6 +61,22 @@
       interpolatedStrings:(BOOL)interpolatedStrings
          defaultTextColor:(NSColor *)defaultTextColor
    defaultBackgroundColor:(NSColor *)defaultBackgroundColor
+               completion:(void (^)(NSDictionary *, BOOL))completion {
+    [self addTriggerForText:text
+                     window:window
+        interpolatedStrings:interpolatedStrings
+           defaultTextColor:defaultTextColor
+     defaultBackgroundColor:defaultBackgroundColor
+                browserMode:NO
+                 completion:completion];
+}
+
++ (void)addTriggerForText:(NSString *)text
+                   window:(NSWindow *)window
+      interpolatedStrings:(BOOL)interpolatedStrings
+         defaultTextColor:(NSColor *)defaultTextColor
+   defaultBackgroundColor:(NSColor *)defaultBackgroundColor
+              browserMode:(BOOL)browserMode
                completion:(void (^)(NSDictionary *, BOOL))completion {
     NSPanel *panel = [[iTermFocusablePanel alloc] initWithContentRect:NSZeroRect
                                                             styleMask:NSWindowStyleMaskTitled
@@ -78,6 +100,7 @@
                                                                         interpolatedStrings:interpolatedStrings
                                                                            defaultTextColor:defaultTextColor
                                                                      defaultBackgroundColor:defaultBackgroundColor
+                                                                                browserMode:browserMode
                                                                                  completion:
                                          ^(NSDictionary * _Nullable dict, BOOL updateProfile) {
         [window endSheet:panel returnCode:dict ? NSModalResponseOK : NSModalResponseCancel];
@@ -94,7 +117,8 @@
     }
     
     // Set an explicit size for the content since we're using programmatic views
-    NSSize contentSize = NSMakeSize(480, 208);
+    CGFloat height = browserMode ? 241 : 208;  // Extra 33 points for match type row
+    NSSize contentSize = NSMakeSize(480, height);
     NSRect contentRect = NSMakeRect(0, 0, contentSize.width, contentSize.height);
     
     [panel setFrame:[NSPanel frameRectForContentRect:contentRect styleMask:panel.styleMask] display:NO];
@@ -140,6 +164,7 @@
          interpolatedStrings:(BOOL)interpolatedStrings
             defaultTextColor:(NSColor *)defaultTextColor
       defaultBackgroundColor:(NSColor *)defaultBackgroundColor
+                 browserMode:(BOOL)browserMode
                   completion:(void (^)(NSDictionary * _Nullable, BOOL))completion {
     self = [super initWithNibName:nil bundle:nil];
     if (self) {
@@ -148,6 +173,8 @@
         _defaultTextColor = defaultTextColor;
         _defaultBackgroundColor = defaultBackgroundColor;
         _completion = [completion copy];
+        _browserMode = browserMode;
+        _matchType = browserMode ? iTermTriggerMatchTypeURLRegex : iTermTriggerMatchTypeRegex;
     }
     return self;
 }
@@ -160,6 +187,8 @@
         _defaultTextColor = [NSColor colorWithDisplayP3Red:1 green:1 blue:1 alpha:0];
         _defaultBackgroundColor = [NSColor colorWithDisplayP3Red:1 green:0 blue:0 alpha:1];
         _completion = ^(NSDictionary *ignore, BOOL ignore2) {};
+        _browserMode = NO;
+        _matchType = iTermTriggerMatchTypeRegex;
     }
     return self;
 }
@@ -172,6 +201,8 @@
         _defaultTextColor = [NSColor colorWithDisplayP3Red:1 green:1 blue:1 alpha:0];
         _defaultBackgroundColor = [NSColor colorWithDisplayP3Red:1 green:0 blue:0 alpha:1];
         _completion = ^(NSDictionary *ignore, BOOL ignore2) {};
+        _browserMode = NO;
+        _matchType = iTermTriggerMatchTypeRegex;
     }
     return self;
 }
@@ -208,6 +239,12 @@
     stackView.alignment = NSLayoutAttributeLeading;
     stackView.spacing = 8;
     [mainView addSubview:stackView];
+    
+    // Match type selector row (browser mode only)
+    if (_browserMode) {
+        NSView *matchTypeRow = [self createMatchTypeRow];
+        [stackView addArrangedSubview:matchTypeRow];
+    }
     
     // Regular Expression row
     NSView *regexRow = [self createRowWithLabelText:@"Regular Expression:" hasVisualizationButton:YES];
@@ -358,7 +395,7 @@
                                                           toItem:nil
                                                        attribute:NSLayoutAttributeNotAnAttribute
                                                       multiplier:1.0
-                                                        constant:120]];
+                                                        constant:kLabelWidth]];
         [row addConstraint:[NSLayoutConstraint constraintWithItem:label
                                                        attribute:NSLayoutAttributeCenterY
                                                        relatedBy:NSLayoutRelationEqual
@@ -447,7 +484,7 @@
                                                           toItem:nil
                                                        attribute:NSLayoutAttributeNotAnAttribute
                                                       multiplier:1.0
-                                                        constant:120]];
+                                                        constant:kLabelWidth]];
         [row addConstraint:[NSLayoutConstraint constraintWithItem:label
                                                        attribute:NSLayoutAttributeCenterY
                                                        relatedBy:NSLayoutRelationEqual
@@ -497,6 +534,87 @@
     return row;
 }
 
+- (NSView *)createMatchTypeRow {
+    NSView *row = [[NSView alloc] init];
+    row.translatesAutoresizingMaskIntoConstraints = NO;
+    
+    // Create label
+    NSTextField *label = [[NSTextField alloc] init];
+    label.translatesAutoresizingMaskIntoConstraints = NO;
+    label.stringValue = @"Match Against:";
+    label.editable = NO;
+    label.bordered = NO;
+    label.backgroundColor = [NSColor clearColor];
+    label.alignment = NSTextAlignmentRight;
+    label.lineBreakMode = NSLineBreakByClipping;
+    label.usesSingleLineMode = YES;
+    [row addSubview:label];
+    
+    // Create popup button for match type
+    _matchTypeButton = [[NSPopUpButton alloc] init];
+    _matchTypeButton.translatesAutoresizingMaskIntoConstraints = NO;
+    [_matchTypeButton addItemWithTitle:@"URL"];
+    [_matchTypeButton addItemWithTitle:@"Page Content"];
+    _matchTypeButton.target = self;
+    _matchTypeButton.action = @selector(matchTypeDidChange:);
+    [row addSubview:_matchTypeButton];
+    
+    // Constraints
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:label
+                                                   attribute:NSLayoutAttributeLeading
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:row
+                                                   attribute:NSLayoutAttributeLeading
+                                                  multiplier:1.0
+                                                    constant:0]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:label
+                                                   attribute:NSLayoutAttributeWidth
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:nil
+                                                   attribute:NSLayoutAttributeNotAnAttribute
+                                                  multiplier:1.0
+                                                    constant:kLabelWidth]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:label
+                                                   attribute:NSLayoutAttributeCenterY
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:row
+                                                   attribute:NSLayoutAttributeCenterY
+                                                  multiplier:1.0
+                                                    constant:0]];
+    
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:_matchTypeButton
+                                                   attribute:NSLayoutAttributeLeading
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:label
+                                                   attribute:NSLayoutAttributeTrailing
+                                                  multiplier:1.0
+                                                    constant:6]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:_matchTypeButton
+                                                   attribute:NSLayoutAttributeTrailing
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:row
+                                                   attribute:NSLayoutAttributeTrailing
+                                                  multiplier:1.0
+                                                    constant:0]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:_matchTypeButton
+                                                   attribute:NSLayoutAttributeFirstBaseline
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:label
+                                                   attribute:NSLayoutAttributeFirstBaseline
+                                                  multiplier:1.0
+                                                    constant:0]];
+    
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:row
+                                                   attribute:NSLayoutAttributeHeight
+                                                   relatedBy:NSLayoutRelationEqual
+                                                      toItem:nil
+                                                   attribute:NSLayoutAttributeNotAnAttribute
+                                                  multiplier:1.0
+                                                    constant:23]];
+    
+    return row;
+}
+
 - (NSView *)createButtonsRow {
     NSView *row = [[NSView alloc] init];
     row.translatesAutoresizingMaskIntoConstraints = NO;
@@ -542,7 +660,7 @@
                                                       toItem:nil
                                                    attribute:NSLayoutAttributeNotAnAttribute
                                                   multiplier:1.0
-                                                    constant:126]];
+                                                    constant:kLabelWidth + 6]];
     
     [row addConstraint:[NSLayoutConstraint constraintWithItem:_instantButton
                                                    attribute:NSLayoutAttributeLeading
@@ -636,7 +754,7 @@
                                                       toItem:nil
                                                    attribute:NSLayoutAttributeNotAnAttribute
                                                   multiplier:1.0
-                                                    constant:120]];
+                                                    constant:kLabelWidth]];
     [row addConstraint:[NSLayoutConstraint constraintWithItem:label
                                                    attribute:NSLayoutAttributeCenterY
                                                    relatedBy:NSLayoutRelationEqual
@@ -838,16 +956,29 @@
     }
 }
 
+- (IBAction)matchTypeDidChange:(id)sender {
+    _matchType = (iTermTriggerMatchType)_matchTypeButton.indexOfSelectedItem;
+    if (_didChange) {
+        _didChange();
+    }
+}
+
 - (IBAction)ok:(id)sender {
     Trigger *trigger = [self currentTrigger];
     const BOOL instant = _instantButton.state == NSControlStateValueOn;
     const BOOL updateProfile = _updateProfileButton.state == NSControlStateValueOn;
-    NSDictionary *triggerDictionary = [@{ kTriggerActionKey: trigger.action,
-                                          kTriggerRegexKey: _regexTextField.stringValue,
-                                          kTriggerParameterKey: [[self currentTrigger] param] ?: @0,
-                                          kTriggerPartialLineKey: @(instant),
-                                          kTriggerDisabledKey: @NO,
-                                          kTriggerNameKey: _nameTextField.stringValue ?: [NSNull null] } dictionaryByRemovingNullValues];
+    NSMutableDictionary *mutableTriggerDictionary = [@{ kTriggerActionKey: trigger.action,
+                                                        kTriggerRegexKey: _regexTextField.stringValue,
+                                                        kTriggerParameterKey: [[self currentTrigger] param] ?: @0,
+                                                        kTriggerPartialLineKey: @(instant),
+                                                        kTriggerDisabledKey: @NO,
+                                                        kTriggerNameKey: _nameTextField.stringValue ?: [NSNull null] } mutableCopy];
+    
+    if (_browserMode) {
+        mutableTriggerDictionary[kTriggerMatchTypeKey] = @(_matchType);
+    }
+    
+    NSDictionary *triggerDictionary = [mutableTriggerDictionary dictionaryByRemovingNullValues];
     [iTermUserDefaults setAddTriggerInstant:instant];
     [iTermUserDefaults setAddTriggerUpdateProfile:updateProfile];
     _completion(triggerDictionary, updateProfile);
@@ -977,6 +1108,10 @@
 
 - (NSString *)name {
     return _nameTextField.stringValue;
+}
+
+- (iTermTriggerMatchType)matchType {
+    return _matchType;
 }
 
 - (void)willHide {

@@ -7,6 +7,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "ITAddressBookMgr.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 @class Trigger;
@@ -20,8 +22,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSString *action;
 @property (nonatomic, readonly) BOOL enabled;
 @property (nonatomic, readonly) BOOL instant;
+@property (nonatomic, readonly) iTermTriggerMatchType matchType;
 @property (nonatomic, strong) NSColor *defaultTextColor;
 @property (nonatomic, strong) NSColor *defaultBackgroundColor;
+@property (nonatomic) BOOL browserMode;
 
 + (void)addTriggerForText:(NSString *)text
                    window:(NSWindow *)window
@@ -30,11 +34,20 @@ NS_ASSUME_NONNULL_BEGIN
    defaultBackgroundColor:(NSColor *)defaultBackgroundColor
                completion:(void (^)(NSDictionary *, BOOL))completion;
 
++ (void)addTriggerForText:(NSString *)text
+                   window:(NSWindow *)window
+               interpolatedStrings:(BOOL)interpolatedStrings
+         defaultTextColor:(NSColor *)defaultTextColor
+   defaultBackgroundColor:(NSColor *)defaultBackgroundColor
+              browserMode:(BOOL)browserMode
+               completion:(void (^)(NSDictionary *, BOOL))completion;
+
 - (instancetype)initWithName:(NSString *)name
                        regex:(NSString *)regex
          interpolatedStrings:(BOOL)interpolatedStrings
             defaultTextColor:(NSColor *)defaultTextColor
       defaultBackgroundColor:(NSColor *)defaultBackgroundColor
+                 browserMode:(BOOL)browserMode
                   completion:(void (^)(NSDictionary * _Nullable, BOOL))completion NS_DESIGNATED_INITIALIZER;
 
 - (void)setTrigger:(Trigger *)trigger;

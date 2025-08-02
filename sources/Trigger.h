@@ -7,6 +7,7 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "ITAddressBookMgr.h"
 #import "iTermFocusReportingTextField.h"
 #import "iTermObject.h"
 #import "iTermPromise.h"
@@ -27,6 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol PTYAnnotationReading;
 @class Trigger;
 
+extern NSString * const kTriggerMatchTypeKey;
 extern NSString * const kTriggerRegexKey;
 extern NSString * const kTriggerActionKey;
 extern NSString * const kTriggerParameterKey;
@@ -111,6 +113,7 @@ extern NSString * const kTriggerNameKey;
 
 @interface Trigger : NSObject<iTermObject>
 
+@property (nonatomic) iTermTriggerMatchType matchType;
 @property (nonatomic, copy, readonly) NSString *regex;
 @property (nonatomic, copy, readonly) NSString *name;
 @property (nonatomic, copy) NSString *action;

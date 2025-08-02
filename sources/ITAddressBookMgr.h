@@ -515,6 +515,13 @@ static inline iTermLoggingStyle iTermLoggingStyleFromUserDefaultsValue(NSUIntege
     return iTermLoggingStyleRaw;
 }
 
+typedef NS_ENUM(NSInteger, iTermTriggerMatchType) {
+    iTermTriggerMatchTypeRegex = 0,
+    iTermTriggerMatchTypeURLRegex = 1,
+    iTermTriggerMatchTypePageContentRegex = 2
+};
+
+
 NSString *iTermPathToSSH(void);
 
 @interface ITAddressBookMgr : NSObject <NSNetServiceBrowserDelegate, NSNetServiceDelegate>

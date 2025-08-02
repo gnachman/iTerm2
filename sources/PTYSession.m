@@ -12580,6 +12580,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                  interpolatedStrings:[self.profile[KEY_TRIGGERS_USE_INTERPOLATED_STRINGS] boolValue]
                                     defaultTextColor:cs.suggestedTextColor
                               defaultBackgroundColor:cs.suggestedBackgroundColor
+                                         browserMode:self.isBrowserSession
                                           completion:^(NSDictionary * _Nonnull dict, BOOL updateProfile) {
         if (!dict) {
             return;
