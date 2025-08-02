@@ -234,6 +234,13 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
 }
 
 - (NSRect)popupWindowOriginRectInScreenCoords {
+    if (self.isBrowserSession) {
+        const NSRect viewBounds = self.view.bounds;
+        const NSRect cursorRectInViewCoords = NSMakeRect(NSMidX(viewBounds), 0, 1, 1);
+        const NSRect cursorRectInWindowCoords = [self.view convertRect:cursorRectInViewCoords toView:nil];
+        const NSRect cursorRectInScreenCoords = [self.view.window convertRectToScreen:cursorRectInWindowCoords];
+        return cursorRectInScreenCoords;
+    }
     id<iTermPopupWindowHosting> host = [self popupHost];
     if (!host) {
         return [self textViewCursorFrameInScreenCoords];
