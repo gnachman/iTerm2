@@ -35,6 +35,7 @@
 
      // Wrap console.log / console.error
      const _oldLog = console.log;
+     const _oldWarn = console.warn;
      const _oldError = console.error;
 
      console.log = function(...args) {
@@ -44,7 +45,18 @@
              _postMessage(msg);
          }
          catch (e) {
-             _oldError(TAG, 'failed to post log:', e);
+             _oldLog(TAG, 'failed to post log:', e);
+         }
+     };
+
+     console.warn = function(...args) {
+         _oldWarn.apply(console, args);
+         try {
+             const msg = args.map(serializeArg).join(' ');
+             _postMessage(msg);
+         }
+         catch (e) {
+             _oldWarn(TAG, 'failed to post warning:', e);
          }
      };
 

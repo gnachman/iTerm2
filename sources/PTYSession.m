@@ -3809,7 +3809,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (NSArray<iTermTuple<NSString *, NSNumber *> *> *)triggerTuples {
     NSArray<NSDictionary *> *triggers = self.profile[KEY_TRIGGERS];
     return [triggers mapWithBlock:^id(NSDictionary *dict) {
-        return [iTermTuple tupleWithObject:dict[kTriggerRegexKey]
+        return [iTermTuple tupleWithObject:dict[kTriggerNameKey] ?: dict[kTriggerRegexKey]
                                  andObject:@(![dict[kTriggerDisabledKey] boolValue])];
     }];
 }
@@ -12469,7 +12469,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)openTriggersViewController {
     [_triggerWindowController autorelease];
-    _triggerWindowController = [[TriggerController alloc] init];
+    _triggerWindowController = [[TriggerController alloc] initInBrowserMode:self.isBrowserSession];
     _triggerWindowController.guid = self.profile[KEY_GUID];
     _triggerWindowController.delegate = self;
     [_triggerWindowController windowWillOpen];

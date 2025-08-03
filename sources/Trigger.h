@@ -30,6 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 extern NSString * const kTriggerMatchTypeKey;
 extern NSString * const kTriggerRegexKey;
+extern NSString * const kTriggerContentRegexKey;
 extern NSString * const kTriggerActionKey;
 extern NSString * const kTriggerParameterKey;
 extern NSString * const kTriggerPartialLineKey;
@@ -113,8 +114,9 @@ extern NSString * const kTriggerNameKey;
 
 @interface Trigger : NSObject<iTermObject>
 
-@property (nonatomic) iTermTriggerMatchType matchType;
+@property (nonatomic, readonly) iTermTriggerMatchType matchType;
 @property (nonatomic, copy, readonly) NSString *regex;
+@property (nonatomic, copy, readonly) NSString *contentRegex;
 @property (nonatomic, copy, readonly) NSString *name;
 @property (nonatomic, copy) NSString *action;
 @property (nullable, nonatomic, copy) id param;

@@ -20,5 +20,6 @@
 
 // Add snippets.
 - (void)populateWithSnippetsSelectingActionKey:(id)actionKey;
+- (void)it_addItemWithTitle:(NSString *)title tag:(NSUInteger)tag;
 
 @end

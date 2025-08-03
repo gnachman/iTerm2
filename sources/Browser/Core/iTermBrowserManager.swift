@@ -11,7 +11,7 @@ import WebExtensionsFramework
 
 @available(macOS 11.0, *)
 @MainActor
-protocol iTermBrowserManagerDelegate: AnyObject, iTermBrowserFindManagerDelegate {
+protocol iTermBrowserManagerDelegate: AnyObject, iTermBrowserFindManagerDelegate, iTermBrowserTriggerHandlerDelegate {
     func browserManager(_ manager: iTermBrowserManager, didUpdateURL url: String?)
     func browserManager(_ manager: iTermBrowserManager, didUpdateTitle title: String?)
     func browserManager(_ manager: iTermBrowserManager, didUpdateFavicon favicon: NSImage?)
@@ -61,7 +61,11 @@ protocol iTermBrowserManagerDelegate: AnyObject, iTermBrowserFindManagerDelegate
 class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler {
     private static let adblockSettingsDidChange = NSNotification.Name("iTermBrowserManagerAdblockSettingsDidChange")
 
-    weak var delegate: iTermBrowserManagerDelegate?
+    weak var delegate: iTermBrowserManagerDelegate?  {
+        didSet {
+            triggerHandler?.delegate = delegate
+        }
+    }
     private(set) var webView: iTermBrowserWebView!
     private var lastFailedURL: URL?
     private var currentPageURL: URL?
@@ -87,6 +91,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private var currentMainFrameHTTPMethod: String?
     let userState: iTermBrowserUserState
     private let handlerProxy = iTermBrowserWebViewHandlerProxy()
+    private let triggerHandler: iTermBrowserTriggerHandler?
 
     private static var safariVersion = {
         Bundle(path: "/Applications/Safari.app")?.infoDictionary?["CFBundleShortVersionString"] as? String
@@ -112,7 +117,10 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         self.localPageManager = iTermBrowserLocalPageManager(user: user,
                                                              historyController: historyController)
         self.namedMarkManager = iTermBrowserNamedMarkManager(user: user)
+        self.triggerHandler = iTermBrowserTriggerHandler(profileObserver: profileObserver)
+
         super.init()
+
         handlerProxy.delegate = self
         localPageManager.delegate = self
         setupWebView(configuration: configuration,
@@ -291,7 +299,18 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                                       identifier: "CopyMode"))
             }
 
-            configuration.userContentController.add(handlerProxy, name: iTermBrowserSSLBypassHandler.messageHandlerName)
+            if let triggerHandler {
+                configuration.userContentController.add(
+                    handlerProxy,
+                    contentWorld: .defaultClient,
+                    name: iTermBrowserTriggerHandler.messageHandlerName)
+                contentManager.add(
+                    userScript: .init(code: triggerHandler.javascript,
+                                      injectionTime: .atDocumentStart,
+                                      forMainFrameOnly: true,
+                                      worlds: [.defaultClient],
+                                      identifier: "TriggerHandler"))
+            }
 
             // Setup reader mode
             readerModeManager.delegate = self
@@ -338,7 +357,6 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
 
         userState.registerWebView(webView, contentManager: contentManager)
         copyModeHandler?.webView = webView
-
         // Enable back/forward navigation
         webView.allowsBackForwardNavigationGestures = true
         
@@ -448,6 +466,12 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
             return nil
         }
         return .init(title: title, content: content)
+    }
+
+    func enterReaderMode() {
+        Task {
+            await readerModeManager.enterReaderMode(webView: webView)
+        }
     }
 
     func toggleReaderMode() {
@@ -966,6 +990,18 @@ extension iTermBrowserManager {
 
         case iTermBrowserSSLBypassHandler.messageHandlerName:
             iTermBrowserSSLBypassHandler.offerBypass(webView: webView, message: message)
+
+        case iTermBrowserTriggerHandler.messageHandlerName:
+            if let triggerHandler {
+                Task {
+                    for action in await triggerHandler.handleMessage(webView: webView, message: message) {
+                        switch action {
+                        case .stop:
+                            return
+                        }
+                    }
+                }
+            }
 
         default:
             DLog(message.name)

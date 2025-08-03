@@ -1145,6 +1145,14 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
     func browserManagerBroadcastWebViews(_ browserManager: iTermBrowserManager) -> [iTermBrowserWebView] {
         return delegate?.browserViewControllerBroadcastWebViews(self) ?? []
     }
+
+    func browserManager(_ browserManager: iTermBrowserManager,
+                        performTriggerAction action: BrowserTriggerAction) {
+        switch action {
+        case .stop:
+            break
+        }
+    }
 }
 
 @available(macOS 11.0, *)
@@ -1435,5 +1443,20 @@ extension iTermBrowserViewController: iTermBrowserFindManagerDelegate {
 extension iTermBrowserViewController: iTermBrowserCopyModeHandlerDelegate {
     func copyModeHandlerShowFindPanel(_ sender: iTermBrowserCopyModeHandler) {
         delegate?.browserViewControllerShowFindPanel(self)
+    }
+}
+
+@MainActor
+extension iTermBrowserViewController: iTermBrowserTriggerHandlerDelegate {
+    func browserTriggerEnterReaderMode() {
+        browserManager.enterReaderMode()
+    }
+
+    func triggerHandlerScope(_ sender: iTermBrowserTriggerHandler) -> iTermVariableScope? {
+        return delegate?.browserViewControllerScope(self).0
+    }
+
+    func triggerHandlerObject(_ sender: iTermBrowserTriggerHandler) -> iTermObject? {
+        return delegate?.browserViewControllerScope(self).1
     }
 }

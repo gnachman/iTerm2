@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, copy) void (^didChange)(void);
 @property (nonatomic, readonly) NSString *regex;
+@property (nonatomic, readonly, nullable) NSString *contentRegex;
 @property (nonatomic, readonly) NSString *name;
 @property (nonatomic, readonly) id parameter;
 @property (nonatomic, readonly) NSString *action;
@@ -32,18 +33,13 @@ NS_ASSUME_NONNULL_BEGIN
                interpolatedStrings:(BOOL)interpolatedStrings
          defaultTextColor:(NSColor *)defaultTextColor
    defaultBackgroundColor:(NSColor *)defaultBackgroundColor
-               completion:(void (^)(NSDictionary *, BOOL))completion;
-
-+ (void)addTriggerForText:(NSString *)text
-                   window:(NSWindow *)window
-               interpolatedStrings:(BOOL)interpolatedStrings
-         defaultTextColor:(NSColor *)defaultTextColor
-   defaultBackgroundColor:(NSColor *)defaultBackgroundColor
               browserMode:(BOOL)browserMode
                completion:(void (^)(NSDictionary *, BOOL))completion;
 
 - (instancetype)initWithName:(NSString *)name
+                   matchType:(iTermTriggerMatchType)matchType
                        regex:(NSString *)regex
+                contentRegex:(NSString * _Nullable)contentRegex
          interpolatedStrings:(BOOL)interpolatedStrings
             defaultTextColor:(NSColor *)defaultTextColor
       defaultBackgroundColor:(NSColor *)defaultBackgroundColor

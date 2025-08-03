@@ -91,6 +91,13 @@ class iTermProfilePreferenceObserver: NSObject {
         observe(key: key, closure: closure)
     }
 
+    func observeDictionary(key: String, closure: @MainActor @escaping ([AnyHashable: Any]?, [AnyHashable: Any]?) -> ()) {
+        observe(key: key, closure: closure)
+    }
+
+    func value(_ key: String) -> [[AnyHashable: Any]]? {
+        return iTermProfilePreferences.object(forKey: key, inProfile: model.bookmark(withGuid: guid)) as? [[AnyHashable: Any]]
+    }
     func value(_ key: String) -> [String]? {
         return iTermProfilePreferences.object(forKey: key, inProfile: model.bookmark(withGuid: guid)) as? [String]
     }

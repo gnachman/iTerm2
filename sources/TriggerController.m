@@ -171,16 +171,14 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 }
 
 - (instancetype)init {
+    return [self initInBrowserMode:NO];
+}
+
+- (instancetype)initInBrowserMode:(BOOL)browserMode {
     self = [self initWithWindowNibName:@"iTermTriggersPanel"];
     if (self) {
-        NSMutableArray *triggers = [NSMutableArray array];
-        for (Class class in [self.class triggerClasses]) {
-            [triggers addObject:[[class alloc] init]];
-        }
-        for (Trigger *trigger in triggers) {
-            trigger.delegate = self;
-        }
-        _triggers = triggers;
+        _browserMode = browserMode;
+        [self loadTriggers];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(reloadAllProfiles:)
                                                      name:kReloadAllProfiles
@@ -194,7 +192,8 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
         return;
     }
     _browserMode = browserMode;
-    
+    [self loadTriggers];
+
     // Recreate the detail view controller with the correct browser mode
     if (_detailViewController) {
         [_detailViewController.view removeFromSuperview];
@@ -205,6 +204,17 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     }
 }
 
+- (void)loadTriggers {
+    NSMutableArray *triggers = [NSMutableArray array];
+    for (Class class in [self.class triggerClassesForTerminal:!_browserMode]) {
+        [triggers addObject:[[class alloc] init]];
+    }
+    for (Trigger *trigger in triggers) {
+        trigger.delegate = self;
+    }
+    _triggers = triggers;
+}
+
 - (void)createDetailViewController {
     // Remove old view controller if it exists
     if (_detailViewController) {
@@ -213,7 +223,9 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     }
     
     _detailViewController = [[iTermAddTriggerViewController alloc] initWithName:@""
+                                                                      matchType:_browserMode ? iTermTriggerMatchTypeURLRegex : iTermTriggerMatchTypeRegex
                                                                           regex:@""
+                                                                   contentRegex:nil
                                                             interpolatedStrings:[iTermProfilePreferences boolForKey:KEY_TRIGGERS_USE_INTERPOLATED_STRINGS inProfile:[self bookmark]]
                                                                defaultTextColor:[NSColor colorWithDisplayP3Red:1 green:1 blue:1 alpha:0]
                                                          defaultBackgroundColor:[NSColor colorWithDisplayP3Red:1 green:0 blue:0 alpha:1]
@@ -241,34 +253,38 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     };
 }
 
-+ (NSArray<Class> *)triggerClasses {
-    NSArray *allClasses = @[ [AlertTrigger class],
-                             [AnnotateTrigger class],
-                             [BellTrigger class],
-                             [BounceTrigger class],
-                             [iTermRPCTrigger class],
-                             [CaptureTrigger class],
-                             [iTermFoldTrigger class],
-                             [iTermInjectTrigger class],
-                             [iTermHighlightLineTrigger class],
-                             [iTermUserNotificationTrigger class],
-                             [iTermSetUserVariableTrigger class],
-                             [iTermShellPromptTrigger class],
-                             [iTermSetTitleTrigger class],
-                             [iTermSetNamedMarkTrigger class],
-                             [iTermSGRTrigger class],
-                             [SendTextTrigger class],
-                             [ScriptTrigger class],
-                             [CoprocessTrigger class],
-                             [MuteCoprocessTrigger class],
-                             [HighlightTrigger class],
-                             [MarkTrigger class],
-                             [PasswordTrigger class],
-                             [iTermHyperlinkTrigger class],
-                             [SetDirectoryTrigger class],
-                             [SetHostnameTrigger class],
-                             [StopTrigger class] ];
-
++ (NSArray<Class> *)triggerClassesForTerminal:(BOOL)terminal {
+    NSArray *allClasses;
+    if (terminal) {
+        allClasses = @[ [AlertTrigger class],
+                        [AnnotateTrigger class],
+                        [BellTrigger class],
+                        [BounceTrigger class],
+                        [iTermRPCTrigger class],
+                        [CaptureTrigger class],
+                        [iTermFoldTrigger class],
+                        [iTermInjectTrigger class],
+                        [iTermHighlightLineTrigger class],
+                        [iTermUserNotificationTrigger class],
+                        [iTermSetUserVariableTrigger class],
+                        [iTermShellPromptTrigger class],
+                        [iTermSetTitleTrigger class],
+                        [iTermSetNamedMarkTrigger class],
+                        [iTermSGRTrigger class],
+                        [SendTextTrigger class],
+                        [ScriptTrigger class],
+                        [CoprocessTrigger class],
+                        [MuteCoprocessTrigger class],
+                        [HighlightTrigger class],
+                        [MarkTrigger class],
+                        [PasswordTrigger class],
+                        [iTermHyperlinkTrigger class],
+                        [SetDirectoryTrigger class],
+                        [SetHostnameTrigger class],
+                        [StopTrigger class] ];
+    } else {
+        allClasses = @[ [ReaderModeBrowserTrigger class] ];
+    }
     return [allClasses sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
                   return [[obj1 title] compare:[obj2 title]];
               }];
@@ -338,12 +354,12 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 }
 
 - (int)numberOfTriggers {
-    return [[self.class triggerClasses] count];
+    return [[self.class triggerClassesForTerminal:!self.browserMode] count];
 }
 
 - (int)indexOfAction:(NSString *)action {
     int n = [self numberOfTriggers];
-    NSArray *classes = [self.class triggerClasses];
+    NSArray *classes = [self.class triggerClassesForTerminal:!self.browserMode];
     for (int i = 0; i < n; i++) {
         NSString *className = NSStringFromClass(classes[i]);
         if ([className isEqualToString:action]) {
@@ -359,7 +375,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 
 // Index in triggerClasses of an object of class "c"
 - (NSInteger)indexOfTriggerClass:(Class)c {
-    NSArray *classes = [self.class triggerClasses];
+    NSArray *classes = [self.class triggerClassesForTerminal:!self.browserMode];
     for (int i = 0; i < classes.count; i++) {
         if (classes[i] == c) {
             return i;
@@ -446,7 +462,12 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 }
 
 - (NSDictionary *)defaultTriggerDictionary {
-    int index = [self indexOfTriggerClass:[BounceTrigger class]];
+    int index;
+    if (_browserMode) {
+        index = 0;
+    } else {
+        index = [self indexOfTriggerClass:[BounceTrigger class]];
+    }
     Trigger *trigger = _triggers[index];
     return @{ kTriggerRegexKey: @"",
               kTriggerActionKey: [trigger action] };
@@ -1061,6 +1082,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
         [[self triggerDictionariesForCurrentProfile][row] mutableCopy];
     triggerDictionary[kTriggerMatchTypeKey] = @(_detailViewController.matchType);
     triggerDictionary[kTriggerRegexKey] = _detailViewController.regex;
+    triggerDictionary[kTriggerContentRegexKey] = _detailViewController.contentRegex ?: @"";
     triggerDictionary[kTriggerParameterKey] = _detailViewController.parameter;
     triggerDictionary[kTriggerActionKey] = _detailViewController.action;
     triggerDictionary[kTriggerDisabledKey] = @(!_detailViewController.enabled);

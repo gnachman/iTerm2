@@ -40,7 +40,8 @@ extern NSString *const kTwoPraramValueColumnIdentifier;
 @property (nonatomic, readonly) NSTableView *tableView;
 @property (nonatomic) BOOL browserMode;
 
-+ (NSArray<Class> *)triggerClasses;
+- (instancetype)initInBrowserMode:(BOOL)browserMode;
++ (NSArray<Class> *)triggerClassesForTerminal:(BOOL)terminal;
 + (NSView *)viewForParameterForTrigger:(Trigger *)trigger
                                   size:(CGSize)size
                                  value:(id)value

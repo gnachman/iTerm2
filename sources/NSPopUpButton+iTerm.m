@@ -94,4 +94,10 @@
     [self selectItemAtIndex:selectedIndex];
 }
 
+- (void)it_addItemWithTitle:(NSString *)title tag:(NSUInteger)tag {
+    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:title action:nil keyEquivalent:@""];
+    item.tag = tag;
+    [self.menu addItem:item];
+}
+
 @end

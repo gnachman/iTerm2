@@ -77,7 +77,10 @@ class iTermBrowserReaderModeManager: NSObject {
         }
     }
     
-    private func enterReaderMode(webView: WKWebView) async {
+    func enterReaderMode(webView: WKWebView) async {
+        if isReaderModeActive {
+            return
+        }
         guard await ensureScriptsInjected(webView: webView) else { return }
 
         do {

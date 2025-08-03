@@ -19,6 +19,7 @@
 
 NSString * const kTriggerMatchTypeKey = @"matchType";
 NSString * const kTriggerRegexKey = @"regex";
+NSString * const kTriggerContentRegexKey = @"contentregex";
 NSString * const kTriggerActionKey = @"action";
 NSString * const kTriggerParameterKey = @"parameter";
 NSString * const kTriggerPartialLineKey = @"partial";
@@ -33,6 +34,7 @@ NSString * const kTriggerNameKey = @"name";
     // line. -1 means it has not fired on the current line.
     long long _lastLineNumber;
     NSString *regex_;
+    NSString *contentRegex_;
     id param_;
     iTermSwiftyStringWithBackreferencesEvaluator *_evaluator;
     NSRegularExpression *_compiledRegex;
@@ -40,6 +42,7 @@ NSString * const kTriggerNameKey = @"name";
 
 @synthesize regex = regex_;
 @synthesize param = param_;
+@synthesize contentRegex = contentRegex_;
 
 + (NSSet<NSString *> *)synonyms {
     return [NSSet set];
@@ -66,10 +69,11 @@ NSString * const kTriggerNameKey = @"name";
     Class class = NSClassFromString(className);
     Trigger *trigger = [[class alloc] init];
     trigger.regex = dict[kTriggerRegexKey];
+    trigger.contentRegex = dict[kTriggerContentRegexKey];
     trigger.param = dict[kTriggerParameterKey];
     trigger.partialLine = [dict[kTriggerPartialLineKey] boolValue];
     trigger.disabled = [dict[kTriggerDisabledKey] boolValue];
-    trigger.matchType = [dict[kTriggerMatchTypeKey] unsignedIntegerValue];
+    trigger->_matchType = [dict[kTriggerMatchTypeKey] unsignedIntegerValue];
     trigger->_name = [NSString castFrom:dict[kTriggerNameKey]];
     return trigger;
 }
@@ -83,8 +87,8 @@ NSString * const kTriggerNameKey = @"name";
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p name=%@ regex=%@ param=%@>",
-            NSStringFromClass(self.class), self, self.name, self.regex, self.param];
+    return [NSString stringWithFormat:@"<%@: %p name=%@ regex=%@ contentRegex=%@ param=%@>",
+            NSStringFromClass(self.class), self, self.name, self.regex, self.contentRegex, self.param];
 }
 
 - (NSString *)action {
@@ -183,6 +187,10 @@ NSString * const kTriggerNameKey = @"name";
 - (void)setRegex:(NSString *)regex {
     regex_ = [regex copy];
     _compiledRegex = [NSRegularExpression regularExpressionWithPattern:regex_ options:0 error:nil];
+}
+
+- (void)setContentRegex:(NSString * _Nonnull)contentRegex {
+    contentRegex_ = [contentRegex copy];
 }
 
 - (void)enumerateMatchesInString:(NSString *)string
@@ -354,7 +362,11 @@ NSString * const kTriggerNameKey = @"name";
         _evaluator.expression = expression;
     }
     __weak __typeof(self) weakSelf = self;
-    [_evaluator evaluateWithAdditionalContext:@{ @"matches": backreferences, @"line": @(absLine) }
+    NSDictionary *additionalContext = @{ @"matches": backreferences, @"line": @(absLine) };
+    if (absLine < 0) {
+        additionalContext = [additionalContext dictionaryByRemovingObjectForKey:@"line"];
+    }
+    [_evaluator evaluateWithAdditionalContext:additionalContext
                                         scope:scope
                                         owner:owner
                                    completion:^(NSString * _Nullable value, NSError * _Nullable error) {
@@ -415,6 +427,7 @@ NSString * const kTriggerNameKey = @"name";
 - (NSDictionary *)dictionaryValue {
     return [@{ kTriggerActionKey: NSStringFromClass(self.class),
                kTriggerRegexKey: self.regex ?: @"",
+               kTriggerContentRegexKey: self.contentRegex ?: @"",
                kTriggerMatchTypeKey: @(self.matchType),
                kTriggerParameterKey: self.param ?: @"",
                kTriggerPartialLineKey: @(self.partialLine),
