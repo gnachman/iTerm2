@@ -7,7 +7,6 @@
 
 import WebKit
 
-@available(macOS 11, *)
 @MainActor
 class iTermBrowserContextMenuMonitor {
     static let messageHandlerName = "iTermContextMenuMonitor"
@@ -40,9 +39,5 @@ class iTermBrowserContextMenuMonitor {
         let x = xStr.doubleValue
         let y = yStr.doubleValue
         webView.openContextMenu(atJavascriptLocation: NSPoint(x: x, y: y))
-    }
-
-    func reallyOpenContextMenu(atJavascriptLocation location: NSPoint, in webView: iTermBrowserWebView) {
-
     }
 }

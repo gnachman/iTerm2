@@ -8,7 +8,6 @@
 import CoreLocation
 import WebKit
 
-@available(macOS 11.0, *)
 @MainActor
 class iTermBrowserGeolocationHandler: NSObject {
     private static var instances = [iTermBrowserUser: iTermBrowserGeolocationHandler]()
@@ -161,7 +160,6 @@ class iTermBrowserGeolocationHandler: NSObject {
 
 // MARK: - Location Request Handling
 
-@available(macOS 11.0, *)
 @MainActor
 extension iTermBrowserGeolocationHandler {
     private func handleGetCurrentPosition(webView: WKWebView, messageDict: [String: Any]) async {
@@ -269,13 +267,11 @@ extension iTermBrowserGeolocationHandler {
         let jsCode = """
             window.iTermGeolocationHandler.handlePositionSuccess('\(secret)', \(operationId), \(coords), \(timestamp));
         """
-        
-        await MainActor.run {
-            webView.evaluateJavaScript(jsCode) { _, error in
-                if let error = error {
-                    DLog("Error sending position success: \(error)")
-                }
-            }
+
+        do {
+            _ = try await webView.evaluateJavaScript(jsCode, contentWorld: .page)
+        } catch {
+            DLog("Error sending position success: \(error)")
         }
     }
     
@@ -285,12 +281,10 @@ extension iTermBrowserGeolocationHandler {
             window.iTermGeolocationHandler.handlePositionError('\(secret)', \(operationId), \(code), '\(escapedMessage)');
         """
         
-        await MainActor.run {
-            webView.evaluateJavaScript(jsCode) { _, error in
-                if let error = error {
-                    DLog("Error sending position error: \(error)")
-                }
-            }
+        do {
+            _ = try await webView.evaluateJavaScript(jsCode, contentWorld: .page)
+        } catch {
+            DLog("Error sending position error: \(error)")
         }
     }
     
@@ -302,12 +296,10 @@ extension iTermBrowserGeolocationHandler {
             window.iTermGeolocationHandler.handleWatchPositionUpdate('\(secret)', \(watchId), \(coords), \(timestamp));
         """
         
-        await MainActor.run {
-            webView.evaluateJavaScript(jsCode) { _, error in
-                if let error = error {
-                    DLog("Error sending watch position update: \(error)")
-                }
-            }
+        do {
+            _ = try await webView.evaluateJavaScript(jsCode, contentWorld: .page)
+        } catch {
+            DLog("Error sending watch position update: \(error)")
         }
     }
     
@@ -317,12 +309,10 @@ extension iTermBrowserGeolocationHandler {
             window.iTermGeolocationHandler.handleWatchError('\(secret)', \(watchId), \(code), '\(escapedMessage)');
         """
         
-        await MainActor.run {
-            webView.evaluateJavaScript(jsCode) { _, error in
-                if let error = error {
-                    DLog("Error sending watch error: \(error)")
-                }
-            }
+        do {
+            _ = try await webView.evaluateJavaScript(jsCode, contentWorld: .page)
+        } catch {
+            DLog("Error sending watch error: \(error)")
         }
     }
     
@@ -355,17 +345,14 @@ extension iTermBrowserGeolocationHandler {
         let permissionString = decision == .granted ? "granted" : (decision == .denied ? "denied" : "prompt")
         let jsCode = "window.iTermGeolocationHandler.setPermission('\(secret)', '\(permissionString)');"
         
-        await MainActor.run {
-            webView.evaluateJavaScript(jsCode) { _, error in
-                if let error = error {
-                    DLog("Error updating geolocation permission state: \(error)")
-                }
-            }
+        do {
+            _ = try await webView.evaluateJavaScript(jsCode, contentWorld: .page)
+        } catch {
+            DLog("Error updating geolocation permission state: \(error)")
         }
     }
 }
 
-@available(macOS 11.0, *)
 extension iTermBrowserGeolocationHandler: CLLocationManagerDelegate {
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         Task { @MainActor in

@@ -7,7 +7,6 @@
 
 import WebKit
 
-@available(macOS 11, *)
 @MainActor
 class iTermBrowserSelectionMonitor {
     static let messageHandlerName = "iTermSelectionMonitor"

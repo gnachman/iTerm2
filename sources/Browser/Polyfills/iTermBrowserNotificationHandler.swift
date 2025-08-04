@@ -10,7 +10,6 @@ import UserNotifications
 import Security
 import WebKit
 
-@available(macOS 11.0, *)
 @MainActor
 class iTermBrowserNotificationHandler {
     static let messageHandlerName = "iTermNotification"
@@ -92,12 +91,10 @@ class iTermBrowserNotificationHandler {
         // Send response back to JavaScript with session secret
         let jsCode = "window.iTermNotificationHandler.handlePermissionResponse('\(sessionSecret)', \(requestId), '\(permissionString)');"
         
-        await MainActor.run {
-            webView.evaluateJavaScript(jsCode) { _, error in
-                if let error = error {
-                    DLog("Error sending permission response: \(error)")
-                }
-            }
+        do {
+            _ = try await webView.evaluateJavaScript(jsCode, contentWorld: .page)
+        } catch {
+            DLog("Error sending permission response: \(error)")
         }
     }
     
@@ -178,13 +175,11 @@ class iTermBrowserNotificationHandler {
         
         let permissionString = decision == .granted ? "granted" : (decision == .denied ? "denied" : "default")
         let jsCode = "window.iTermNotificationHandler.setPermission('\(permissionString)');"
-        
-        await MainActor.run {
-            webView.evaluateJavaScript(jsCode) { _, error in
-                if let error = error {
-                    DLog("Error updating permission state: \(error)")
-                }
-            }
+
+        do {
+            _ = try await webView.evaluateJavaScript(jsCode, contentWorld: .page)
+        } catch {
+            DLog("Error updating permission state: \(error)")
         }
     }
 }

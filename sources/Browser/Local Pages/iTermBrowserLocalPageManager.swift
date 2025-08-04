@@ -10,16 +10,16 @@ import Foundation
 
 // MARK: - Page Handler Protocol
 
-@available(macOS 11.0, *)
+@MainActor
 protocol iTermBrowserPageHandler {
-    @MainActor func start(urlSchemeTask: WKURLSchemeTask, url: URL)
-    @MainActor func injectJavaScript(into webView: WKWebView)
-    @MainActor func resetState()
+    func start(urlSchemeTask: WKURLSchemeTask, url: URL)
+    func injectJavaScript(into webView: WKWebView)
+    func resetState()
 }
 
 // MARK: - Page Context
 
-@available(macOS 11.0, *)
+
 private struct iTermBrowserPageContext {
     let handler: any iTermBrowserPageHandler
     var messageHandlerRegistered: Bool
@@ -34,7 +34,6 @@ private struct iTermBrowserPageContext {
 
 // MARK: - Local Page Manager Delegate
 
-@available(macOS 11.0, *)
 @MainActor
 protocol iTermBrowserLocalPageManagerDelegate: AnyObject {
     func localPageManagerDidUpdateAdblockSettings(_ manager: iTermBrowserLocalPageManager)
@@ -50,7 +49,6 @@ struct iTermBrowserSchemes {
     static let about = "iterm2-about"
 }
 
-@available(macOS 11.0, *)
 @MainActor
 class iTermBrowserLocalPageManager: NSObject {
     weak var delegate: iTermBrowserLocalPageManagerDelegate?
@@ -207,7 +205,7 @@ class iTermBrowserLocalPageManager: NSObject {
 
 // MARK: - Private Implementation
 
-@available(macOS 11.0, *)
+@MainActor
 private extension iTermBrowserLocalPageManager {
     
     func setupPageContext(for urlString: String) {
@@ -312,7 +310,7 @@ private extension iTermBrowserLocalPageManager {
 
 // MARK: - Handler Delegates
 
-@available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserLocalPageManager: iTermBrowserSettingsHandlerDelegate {
     func settingsHandlerDidUpdateAdblockSettings(_ handler: iTermBrowserSettingsHandler) {
         delegate?.localPageManagerDidUpdateAdblockSettings(self)
@@ -331,21 +329,21 @@ extension iTermBrowserLocalPageManager: iTermBrowserSettingsHandlerDelegate {
     }
 }
 
-@available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserLocalPageManager: iTermBrowserHistoryViewHandlerDelegate {
     func historyViewHandlerDidNavigateToURL(_ handler: iTermBrowserHistoryViewHandler, url: String) {
         delegate?.localPageManagerDidNavigateToURL(self, url: url)
     }
 }
 
-@available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserLocalPageManager: iTermBrowserBookmarkViewHandlerDelegate {
     func bookmarkViewHandlerDidNavigateToURL(_ handler: iTermBrowserBookmarkViewHandler, url: String) {
         delegate?.localPageManagerDidNavigateToURL(self, url: url)
     }
 }
 
-@available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserLocalPageManager: iTermBrowserPermissionsViewHandlerDelegate {
     func permissionsViewHandlerDidRevokeAllPermissions(_ handler: iTermBrowserPermissionsViewHandler, for origin: String) {
         // Notify the browser controller that permissions have been revoked

@@ -9,7 +9,7 @@ import Foundation
 import Security
 import WebKit
 
-@available(macOS 11.0, *)
+@MainActor
 class iTermBrowserPasswordManagerHandler {
     static let instance = iTermBrowserPasswordManagerHandler()
     static let messageHandlerName = "iTermOpenPasswordManager"

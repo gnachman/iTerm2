@@ -1,7 +1,6 @@
 import Foundation
 import WebKit
 
-@available(macOS 11.0, *)
 @MainActor
 protocol iTermBrowserAutofillHandlerDelegate: AnyObject {
     func autoFillHandler(_ handler: iTermBrowserAutofillHandler,
@@ -9,7 +8,6 @@ protocol iTermBrowserAutofillHandlerDelegate: AnyObject {
                          fields: [[String: Any]])
 }
 
-@available(macOS 11.0, *)
 @MainActor
 class iTermBrowserAutofillHandler {
     static let messageHandlerName = "iTermAutofillHandler"
@@ -88,7 +86,7 @@ class iTermBrowserAutofillHandler {
         DLog("fillAll() loaded JavaScript template, length: \(js.count)")
         
         do {
-            let result = try await webView.evaluateJavaScript(js)
+            let result = try await webView.evaluateJavaScript(js, contentWorld: .defaultClient)
             if let resultDict = result as? [String: Any],
                let success = resultDict["success"] as? Bool,
                let fieldsFound = resultDict["fieldsFound"] as? Int {

@@ -8,7 +8,7 @@
 import Foundation
 import WebKit
 
-@available(macOS 11.0, *)
+@MainActor
 class iTermBrowserHoverLinkHandler {
     static let messageHandlerName = "iTermHoverLink"
     private let secret: String
@@ -72,8 +72,10 @@ class iTermBrowserHoverLinkHandler {
     
     func clearHover(in webView: WKWebView) {
         let script = "window.iTermHoverLinkHandler?.clearHover('\(secret)');"
-        webView.evaluateJavaScript(script) { _, error in
-            if let error = error {
+        Task {
+            do {
+                _ = try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
+            } catch {
                 DLog("Failed to clear hover: \(error)")
             }
         }
