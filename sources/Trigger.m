@@ -155,6 +155,10 @@ NSString * const kTriggerNameKey = @"name";
     return nil;
 }
 
+- (NSSet<NSNumber *> *)allowedMatchTypes {
+    return [NSSet setWithArray:@[ @(iTermTriggerMatchTypeRegex) ]];
+}
+
 - (NSArray *)groupedMenuItemsForPopupButton
 {
     NSDictionary *menuItems = [self menuItemsForPoupupButton];
@@ -509,12 +513,26 @@ NSString * const kTriggerNameKey = @"name";
 
 - (NSAttributedString *)regexAttributedString {
     NSMutableParagraphStyle *paragraphStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
-    NSDictionary *attributes = @{
+    NSDictionary *monospacedAttributes = @{
         NSParagraphStyleAttributeName: paragraphStyle,
         NSFontAttributeName: [NSFont monospacedSystemFontOfSize:[NSFont systemFontSize] weight:NSFontWeightRegular]
     };
-    return [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"/%@/", self.regex ?: @""]
-                                           attributes:attributes];
+    NSDictionary *plainAttributes = @{
+        NSParagraphStyleAttributeName: paragraphStyle,
+        NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize] weight:NSFontWeightRegular]
+    };
+    switch (self.matchType) {
+        case iTermTriggerMatchTypeRegex:
+        case iTermTriggerMatchTypeURLRegex:
+            return [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"/%@/", self.regex ?: @""]
+                                                   attributes:monospacedAttributes];
+        case iTermTriggerMatchTypePageContentRegex:
+            return [@[ [[NSAttributedString alloc] initWithString:@"Content: " attributes: plainAttributes],
+                      [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"/%@/", self.contentRegex ?: @""] attributes:monospacedAttributes],
+                      [[NSAttributedString alloc] initWithString:@" URL: " attributes: plainAttributes],
+                      [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"/%@/", self.regex ?: @""] attributes:monospacedAttributes]
+                    ] attributedComponentsJoinedByAttributedString:nil];
+    }
 }
 
 - (NSAttributedString *)functionAttributedString {

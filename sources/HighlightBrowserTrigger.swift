@@ -21,6 +21,12 @@ class HighlightBrowserTrigger: Trigger, iTermColorSettable {
     override func paramIsTwoColorWells() -> Bool {
         true
     }
+    override var allowedMatchTypes: Set<NSNumber> {
+        return Set([ NSNumber(value: iTermTriggerMatchType.pageContentRegex.rawValue )])
+    }
+    override var matchType: iTermTriggerMatchType {
+        .pageContentRegex
+    }
     var colors: (String, String) {
         if let components = (param as? String)?.components(separatedBy: ";"), components.count >= 2 {
             return (components[0], components[1])
@@ -91,9 +97,14 @@ class HighlightBrowserTrigger: Trigger, iTermColorSettable {
 }
 
 extension HighlightBrowserTrigger: BrowserTrigger {
-    func performBrowserAction(urlCaptures: [String],
+    func performBrowserAction(matchID: String?,
+                              urlCaptures: [String],
                               contentCaptures: [String]?,
                               in client: any BrowserTriggerClient) async -> [BrowserTriggerAction] {
+        guard let matchID else {
+            DLog("No match ID")
+            return []
+        }
         let colors = self.colors
         let regex = contentRegex
         let scheduler = client.scopeProvider.triggerCallbackScheduler()
@@ -102,7 +113,7 @@ extension HighlightBrowserTrigger: BrowserTrigger {
                                         scope: client.scopeProvider,
                                         useInterpolation: client.useInterpolation).then { message in
             scheduler.scheduleTriggerCallback {
-                client.triggerDelegate?.browserTriggerHighlightText(regex: regex,
+                client.triggerDelegate?.browserTriggerHighlightText(matchID: matchID,
                                                                     textColor: colors.0.nilIfEmpty,
                                                                     backgroundColor: colors.1.nilIfEmpty)
             }

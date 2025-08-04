@@ -9,6 +9,7 @@
 #import "ProfilesAdvancedPreferencesViewController.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "ITAddressBookMgr.h"
 #import "iTermProfilePreferences.h"
 #import "iTermSemanticHistoryPrefsController.h"
@@ -43,6 +44,8 @@
     IBOutlet NSControl *_removeBoundHost;
     IBOutlet NSControl *_boundHostShellIntegrationWarning;
     IBOutlet NSControl *_boundHostHelp;
+
+    IBOutlet iTermPopoverHelpButton *_triggersHelp;
 
     IBOutlet NSButton *_triggersButton;
     IBOutlet NSButton *_enableTriggersInInteractiveApps;
@@ -144,6 +147,11 @@
     _smartSelectionWindowController.guid = selectedGuid;
     _semanticHistoryPrefController.guid = selectedGuid;
     [_boundHostsTableView reloadData];
+    if (self.profileType == ProfileTypeBrowser) {
+        _triggersHelp.helpText = @"Triggers are actions you configure to run when certain URLs are visited or text on a web page is found.";
+    } else {
+        _triggersHelp.helpText = @"Triggers watch for text matching a regular expression to arrive in a terminal session and then perform an action in response.";
+    }
 }
 
 - (void)viewWillAppear {

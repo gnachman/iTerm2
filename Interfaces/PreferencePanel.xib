@@ -1819,6 +1819,7 @@ DQ
                 <outlet property="_snippetsFilter" destination="b96-Hq-tSl" id="bPQ-O7-yZT"/>
                 <outlet property="_triggerWindowController" destination="5797" id="s19-Zp-Wt4"/>
                 <outlet property="_triggersButton" destination="5914" id="Jbw-55-ffW"/>
+                <outlet property="_triggersHelp" destination="jkG-0o-728" id="jYM-TS-r5m"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="XlF-0B-sbO"/>
                 <outlet property="view" destination="prV-vq-Wo2" id="GbH-gF-fmF"/>
             </connections>
@@ -5983,9 +5984,6 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
-                    <userDefinedRuntimeAttributes>
-                        <userDefinedRuntimeAttribute type="string" keyPath="helpText" value="Triggers watch for text matching a regular expression to arrive in a terminal session and then perform an action in response."/>
-                    </userDefinedRuntimeAttributes>
                 </button>
             </subviews>
             <accessibility identifier="prefsProfilesAdvanced"/>

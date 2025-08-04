@@ -1452,10 +1452,14 @@ extension iTermBrowserViewController: iTermBrowserTriggerHandlerDelegate {
         await browserManager.enterReaderMode()
     }
 
-    func browserTriggerHighlightText(regex: String, textColor: String?, backgroundColor: String?) {
-        browserManager.triggerHandler?.highlightText(regex: regex,
+    func browserTriggerHighlightText(matchID: String, textColor: String?, backgroundColor: String?) {
+        browserManager.triggerHandler?.highlightText(matchID: matchID,
                                                      textColor: textColor,
                                                      backgroundColor: backgroundColor)
+    }
+
+    func browserTriggerMakeHyperlink(matchID: String, url: String) {
+        browserManager.triggerHandler?.makeHyperlink(matchID: matchID, url: url)
     }
 
     func triggerHandlerScope(_ sender: iTermBrowserTriggerHandler) -> iTermVariableScope? {

@@ -92,7 +92,7 @@
     NSMutableAttributedString *result = [[[NSMutableAttributedString alloc] init] autorelease];
     for (NSAttributedString *element in self) {
         [result appendAttributedString:element];
-        if (element != self.lastObject) {
+        if (element != self.lastObject && joiner != nil) {
             [result appendAttributedString:joiner];
         }
     }

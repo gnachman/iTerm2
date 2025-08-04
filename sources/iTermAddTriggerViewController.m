@@ -228,9 +228,10 @@ static const CGFloat kLabelWidth = 124;
     _visualizationViewController.regex = _regex ?: @"";
     _contentRegexVisualizationViewController.regex = _contentRegex ?: @"";
     _matchType = trigger.matchType;
-    if (_browserMode && _matchTypeButton) {
+    if (_browserMode) {
         [_matchTypeButton selectItemWithTag:_matchType];
         [self updateContentRegexVisibility];
+        _matchTypeButton.enabled = (trigger.allowedMatchTypes.count > 1);
     }
 }
 
@@ -253,11 +254,12 @@ static const CGFloat kLabelWidth = 124;
     [mainView addSubview:stackView];
     
     // Match type selector row (browser mode only)
-    if (_browserMode) {
-        NSView *matchTypeRow = [self createMatchTypeRow];
-        [stackView addArrangedSubview:matchTypeRow];
-    }
-    
+    // I'm removing this for now because we don't have a trigger that allows multiple match types.
+    //   if (_browserMode) {
+    //        NSView *matchTypeRow = [self createMatchTypeRow];
+    //        [stackView addArrangedSubview:matchTypeRow];
+    //    }
+
     // Regular Expression row
     NSView *regexRow = [self createRowWithLabelText:@"Regular Expression:" hasVisualizationButton:YES];
     [stackView addArrangedSubview:regexRow];

@@ -18,10 +18,17 @@ class ReaderModeBrowserTrigger: Trigger {
     override func takesParameter() -> Bool {
         false
     }
+    override var allowedMatchTypes: Set<NSNumber> {
+        return Set([ NSNumber(value: iTermTriggerMatchType.urlRegex.rawValue )])
+    }
+    override var matchType: iTermTriggerMatchType {
+        .urlRegex
+    }
 }
 
 extension ReaderModeBrowserTrigger: BrowserTrigger {
-    func performBrowserAction(urlCaptures: [String],
+    func performBrowserAction(matchID: String?,
+                              urlCaptures: [String],
                               contentCaptures: [String]?,
                               in client: any BrowserTriggerClient) async -> [BrowserTriggerAction] {
         let scheduler = client.scopeProvider.triggerCallbackScheduler()

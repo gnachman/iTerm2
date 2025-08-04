@@ -63,6 +63,9 @@ extension iTermBrowserTriggerHandler {
 
             // Unique identifier of the trigger (the key in the dictionary of triggers)
             var identifier: String
+
+            // Unique identifier for this match. Only for content matches.
+            var matchID: String?
         }
         var matches: [Match]
     }
@@ -95,11 +98,12 @@ extension iTermBrowserTriggerHandler {
 
 // Perform actions
 extension iTermBrowserTriggerHandler {
-    func highlightText(regex: String, textColor: String?, backgroundColor: String?) {
+    func highlightText(matchID: String, textColor: String?, backgroundColor: String?) {
         guard let webView else {
             return
         }
         Task {
+            let jsonMatchID = try! JSONEncoder().encode(matchID).lossyString
             let jsonTextColor = if let textColor {
                 (try? JSONEncoder().encode(textColor).lossyString) ?? "null"
             } else {
@@ -110,12 +114,20 @@ extension iTermBrowserTriggerHandler {
             } else {
                 "null"
             }
-            let script = iTermBrowserTemplateLoader.loadTemplate(named: "trigger-highlight-text",
-                                                                 type: "js",
-                                                                 substitutions: ["REGEX": try! JSONEncoder().encode(regex).lossyString,
-                                                                                 "TEXT_COLOR": jsonTextColor,
-                                                                                 "BACKGROUND_COLOR": jsonBackgroundColor ])
-            _ = try? await webView.evaluateJavaScript(script, in: nil, contentWorld: .defaultClient)
+            let script = "window.iTerm2Triggers?.highlightText(\(jsonMatchID), \(jsonTextColor), \(jsonBackgroundColor));"
+            _ = try? await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
+        }
+    }
+
+    func makeHyperlink(matchID: String, url: String) {
+        guard let webView else {
+            return
+        }
+        Task {
+            let jsonMatchID = try! JSONEncoder().encode(matchID).lossyString
+            let jsonURL = try! JSONEncoder().encode(url).lossyString
+            let script = "window.iTerm2Triggers?.makeHyperlink(\(jsonMatchID), \(jsonURL));"
+            _ = try? await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
         }
     }
 }
@@ -141,16 +153,13 @@ private extension iTermBrowserTriggerHandler {
                                                                               substitutions: [:])
         let call = """
         try {
-            console.log('iTerm2Triggers: start setting triggers');
             \(removeHighlightsScript)
             window.iTerm2Triggers.setTriggers(
                 {sessionSecret: '\(sessionSecret)', 
                  triggers: \(json)
                 });
-            console.log('iTerm2Triggers: finished setting triggers');
         } catch(e) {
-            console.log(e.toString());
-            console.log(e);
+            console.error(e.toString());
             throw e;
         }
         """
@@ -209,7 +218,8 @@ private extension iTermBrowserTriggerHandler {
                         url: Bool,
                         client: Client) async -> [BrowserTriggerAction] {
         if url {
-            return await trigger.performBrowserAction(urlCaptures: match.urlCaptures,
+            return await trigger.performBrowserAction(matchID: match.matchID,
+                                                      urlCaptures: match.urlCaptures,
                                                       contentCaptures: match.contentCaptures,
                                                       in: client)
         } else {

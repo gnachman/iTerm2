@@ -10,17 +10,15 @@
     let compiledRegexes = {};
     // Map from trigger identifier to compiled content regex (lazy-loaded)
     let compiledContentRegexes = {};
+    // Map from match ID to match data (for public API)
+    let storedMatches = {};
+    // Counter for generating unique match IDs
+    let matchIdCounter = 0;
 
-    console.log(TAG, 'Initializing...');
-    console.log(TAG, 'window.webkit:', window.webkit);
-    console.log(TAG, 'window.webkit?.messageHandlers:', window.webkit?.messageHandlers);
-    console.log(TAG, 'Available message handlers:', window.webkit?.messageHandlers ? Object.keys(window.webkit.messageHandlers) : 'none');
+    console.debug(TAG, 'Initializing...');
 
     const _messageHandler = window.webkit?.messageHandlers?.iTerm2Trigger;
     const _postMessage = _messageHandler?.postMessage?.bind(_messageHandler);
-
-    console.log(TAG, '_messageHandler:', _messageHandler);
-    console.log(TAG, '_postMessage:', _postMessage);
 
     // Request triggers from the host on startup
     function requestTriggers() {
@@ -29,13 +27,12 @@
             return;
         }
 
-        console.log(TAG, 'Requesting triggers from host');
+        console.debug(TAG, 'Requesting triggers from host');
         try {
             _postMessage({
                 sessionSecret: sessionSecret,
                 requestTriggers: true
             });
-            console.log(TAG, 'Successfully sent trigger request');
         } catch (error) {
             console.error(TAG, 'Failed to request triggers:', error.toString());
         }
@@ -43,31 +40,26 @@
 
     // Eagerly compile URL regexes for both URL triggers (matchType 1) and page content triggers (matchType 2)
     function compileTriggersRegexes(triggerDict) {
-        console.log(TAG, 'Compiling URL regexes:', triggerDict);
+        console.debug(TAG, 'Compiling URL regexes for', Object.keys(triggerDict).length, 'triggers');
         const newCompiledRegexes = {};
 
         for (const [identifier, trigger] of Object.entries(triggerDict)) {
             const matchType = trigger.matchType || 0;
-            console.log(TAG, 'Trigger', identifier, 'matchType:', matchType);
 
             // Eagerly compile URL regex for both URL triggers (matchType 1) and page content triggers (matchType 2)
             if (matchType === 1 || matchType === 2) {
                 const regex = trigger.regex;
                 if (!regex) {
-                    console.log(TAG, 'Trigger', identifier, 'has no regex');
                     continue;
                 }
 
                 try {
                     newCompiledRegexes[identifier] = new RegExp(regex);
-                    console.log(TAG, 'Compiled URL regex for', identifier, ':', regex);
                 } catch (error) {
                     console.error(TAG, 'Invalid URL regex pattern for', identifier, ':', regex, error.toString());
                 }
             }
         }
-
-        console.log(TAG, 'Compiled URL regexes:', Object.keys(newCompiledRegexes));
         return newCompiledRegexes;
     }
 
@@ -79,14 +71,12 @@
 
         const contentRegex = trigger.contentregex;
         if (!contentRegex) {
-            console.log(TAG, 'Trigger', identifier, 'has no content regex');
             return null;
         }
 
         try {
             const compiled = new RegExp(contentRegex);
             compiledContentRegexes[identifier] = compiled;
-            console.log(TAG, 'Lazily compiled content regex for', identifier, ':', contentRegex);
             return compiled;
         } catch (error) {
             console.error(TAG, 'Invalid content regex pattern for', identifier, ':', contentRegex, error.toString());
@@ -98,14 +88,13 @@
 
     function setTriggers(command) {
         try {
-            console.log(TAG, 'setTriggers called with:', command);
+            console.debug(TAG, 'setTriggers called');
             const validated = validateCommand(command);
             if (!validated) {
                 console.error(TAG, 'Invalid command');
                 return;
             }
             triggers = command.triggers;
-            console.log(TAG, 'triggers is now set to:', triggers);
             compiledRegexes = compileTriggersRegexes(triggers);
             // Clear cached content regexes since triggers have changed
             compiledContentRegexes = {};
@@ -136,15 +125,112 @@
         return command
     }
 
-    // Get page text content for content matching
-    function getPageTextContent() {
-        // Get visible text content from the document
-        return document.body ? document.body.innerText || document.body.textContent || '' : '';
+    // Block elements that create line breaks
+    const BLOCK_ELEMENTS = new Set([
+        'P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6',
+        'LI', 'TR', 'BR', 'HR', 'BLOCKQUOTE', 'ADDRESS',
+        'ARTICLE', 'ASIDE', 'FOOTER', 'HEADER', 'MAIN',
+        'NAV', 'SECTION', 'PRE', 'TABLE', 'DD', 'DT'
+    ]);
+
+    // Build searchable text representation while tracking node positions
+    function buildTextWithNodeMap() {
+        let fullText = "";
+        const nodeMap = []; // Maps character positions to nodes
+        
+        function walkNodes(node) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                const startPos = fullText.length;
+                fullText += node.textContent;
+                nodeMap.push({
+                    node: node,
+                    start: startPos,
+                    end: fullText.length
+                });
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                const tagName = node.tagName?.toUpperCase();
+                
+                // Skip invisible elements
+                const style = window.getComputedStyle(node);
+                if (style.display === 'none' || style.visibility === 'hidden') {
+                    return;
+                }
+                
+                // Add newline before block elements (except at the very beginning)
+                if (BLOCK_ELEMENTS.has(tagName) && fullText.length > 0 && !fullText.endsWith('\n')) {
+                    fullText += '\n';
+                }
+                
+                // Process children
+                for (const child of node.childNodes) {
+                    walkNodes(child);
+                }
+                
+                // Add newline after block elements
+                if (BLOCK_ELEMENTS.has(tagName) && !fullText.endsWith('\n')) {
+                    fullText += '\n';
+                }
+            }
+        }
+        
+        if (document.body) {
+            walkNodes(document.body);
+        }
+        
+        return { fullText, nodeMap };
+    }
+
+    // Create a Range object from position in the built text
+    function createRangeFromPosition(startPos, length, nodeMap) {
+        const endPos = startPos + length;
+        let startNode, startOffset, endNode, endOffset;
+        
+        // Find which nodes contain the start and end positions
+        for (const entry of nodeMap) {
+            if (startPos >= entry.start && startPos < entry.end) {
+                startNode = entry.node;
+                startOffset = startPos - entry.start;
+            }
+            if (endPos > entry.start && endPos <= entry.end) {
+                endNode = entry.node;
+                endOffset = endPos - entry.start;
+            }
+        }
+        
+        // If the match spans multiple nodes, we need to handle it differently
+        if (startNode && endNode) {
+            try {
+                const range = document.createRange();
+                range.setStart(startNode, startOffset);
+                range.setEnd(endNode, endOffset);
+                return range;
+            } catch (e) {
+                console.error(TAG, 'Failed to create range:', e);
+                return null;
+            }
+        }
+        
+        return null;
+    }
+
+    // Generate a unique match ID
+    function generateMatchId() {
+        return `match_${++matchIdCounter}`;
+    }
+
+    // Public API: Get match data by ID
+    function getMatchById(matchId) {
+        return storedMatches[matchId] || null;
+    }
+
+    // Store match data for later retrieval
+    function storeMatch(matchId, matchData) {
+        storedMatches[matchId] = matchData;
     }
 
     // Check URL and page content against triggers and post matches
     function checkTriggers() {
-        console.log(TAG, 'checkTriggers called, current URL:', window.location.href);
+        console.debug(TAG, 'checkTriggers called, current URL:', window.location.href);
 
         if (!_postMessage) {
             console.error(TAG, 'Message handler unavailable');
@@ -154,20 +240,15 @@
         const currentURL = window.location.href;
         const matches = [];
 
-        console.log(TAG, 'Checking', Object.keys(compiledRegexes).length, 'compiled regexes');
-
         // Check each compiled regex
         for (const [identifier, regex] of Object.entries(compiledRegexes)) {
             const trigger = triggers[identifier];
             if (!trigger) {
-                console.log(TAG, 'No trigger found for identifier:', identifier);
                 continue;
             }
 
             const matchType = trigger.matchType || 0;
             const urlMatch = currentURL.match(regex);
-            
-            console.log(TAG, 'Testing URL regex for', identifier, ':', regex, 'match:', urlMatch);
 
             if (urlMatch) {
                 if (matchType === 1) {
@@ -181,25 +262,60 @@
                     // Page content trigger - URL matched, now check content
                     const contentRegex = getCompiledContentRegex(identifier, trigger);
                     if (contentRegex) {
-                        const pageText = getPageTextContent();
-                        const contentMatch = pageText.match(contentRegex);
+                        // Build text representation with node mapping
+                        const { fullText, nodeMap } = buildTextWithNodeMap();
                         
-                        console.log(TAG, 'Testing content regex for', identifier, ':', contentRegex, 'content match:', contentMatch);
+                        // Find ALL content matches, not just the first one
+                        const globalContentRegex = new RegExp(contentRegex.source, contentRegex.flags.includes('g') ? contentRegex.flags : contentRegex.flags + 'g');
+                        let contentMatch;
+                        
+                        console.debug(TAG, 'Testing content regex for', identifier, 'in text of length:', fullText.length);
 
-                        if (contentMatch) {
-                            matches.push({
-                                matchType: 'pageContent',
-                                urlCaptures: Array.from(urlMatch),
-                                contentCaptures: Array.from(contentMatch),
-                                identifier: identifier
-                            });
+                        while ((contentMatch = globalContentRegex.exec(fullText)) !== null) {
+                            const matchId = generateMatchId();
+                            const matchText = contentMatch[0];
+                            const matchIndex = contentMatch.index;
+                            
+                            // Create Range for this match
+                            const range = createRangeFromPosition(matchIndex, matchText.length, nodeMap);
+                            
+                            if (range) {
+                                console.debug(TAG, 'Content match found:', matchText, 'at index', matchIndex);
+                                
+                                const matchData = {
+                                    matchType: 'pageContent',
+                                    urlCaptures: Array.from(urlMatch),
+                                    contentCaptures: Array.from(contentMatch),
+                                    identifier: identifier,
+                                    matchText: matchText,
+                                    range: range  // Store the Range object instead of index
+                                };
+                                
+                                // Store the match data for later retrieval
+                                storeMatch(matchId, matchData);
+                                
+                                matches.push({
+                                    matchType: 'pageContent',
+                                    urlCaptures: Array.from(urlMatch),
+                                    contentCaptures: Array.from(contentMatch),
+                                    identifier: identifier,
+                                    matchID: matchId
+                                });
+                            } else {
+                                console.warn(TAG, 'Failed to create range for match at index:', matchIndex);
+                            }
+                            
+                            // Prevent infinite loop for zero-length matches
+                            if (contentMatch.index === globalContentRegex.lastIndex) {
+                                globalContentRegex.lastIndex++;
+                            }
                         }
                     }
                 }
             }
         }
 
-        console.log(TAG, 'Found', matches.length, 'matches');
+        console.debug(TAG, 'Found', matches.length, 'matches');
 
         // If we found matches, post them
         if (matches.length > 0) {
@@ -207,14 +323,11 @@
                 matches: matches
             };
 
-            console.log(TAG, 'Posting match event:', matchEvent);
-
             try {
                 _postMessage({
                     sessionSecret: sessionSecret,
                     matchEvent: JSON.stringify(matchEvent)
                 });
-                console.log(TAG, 'Successfully posted match event');
             } catch (error) {
                 console.error(TAG, 'Failed to post message:', error.toString());
             }
@@ -223,17 +336,15 @@
 
     // Listen for document ready and URL changes
     function setupTriggerListeners() {
-        console.log(TAG, 'Setting up trigger listeners');
+        console.debug(TAG, 'Setting up trigger listeners');
 
         // Check triggers when document loads (for every page load)
         document.addEventListener('DOMContentLoaded', () => {
-            console.log(TAG, 'DOMContentLoaded event fired');
             checkTriggers();
         });
 
         // Listen for popstate events (back/forward navigation)
         window.addEventListener('popstate', () => {
-            console.log(TAG, 'popstate event fired');
             checkTriggers();
         });
 
@@ -243,13 +354,11 @@
 
         history.pushState = function(...args) {
             originalPushState.apply(this, args);
-            console.log(TAG, 'pushState called');
             setTimeout(checkTriggers, 0); // Async to let URL update
         };
 
         history.replaceState = function(...args) {
             originalReplaceState.apply(this, args);
-            console.log(TAG, 'replaceState called');
             setTimeout(checkTriggers, 0); // Async to let URL update
         };
     }
@@ -261,8 +370,15 @@
     requestTriggers();
 
     const api = {
-        setTriggers
+        setTriggers,
+        getMatchById,
+        // Expose the stored matches for debugging
+        _storedMatches: storedMatches
     };
+
+    // Include additional trigger functionality
+    {{INCLUDE:trigger-highlight-text.js}}
+    {{INCLUDE:trigger-make-hyperlink.js}}
 
     Object.freeze(api);
     Object.freeze(api.setTriggers);

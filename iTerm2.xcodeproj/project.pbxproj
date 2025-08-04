@@ -3511,6 +3511,7 @@
 		A6C682292E40367B00B8B021 /* trigger-remove-highlighted-text.js in Resources */ = {isa = PBXBuildFile; fileRef = A6C682282E40367B00B8B021 /* trigger-remove-highlighted-text.js */; };
 		A6C6822A2E40367B00B8B021 /* trigger-remove-highlighted-text.js in Resources */ = {isa = PBXBuildFile; fileRef = A6C682282E40367B00B8B021 /* trigger-remove-highlighted-text.js */; };
 		A6C6822B2E40367B00B8B021 /* trigger-remove-highlighted-text.js in Resources */ = {isa = PBXBuildFile; fileRef = A6C682282E40367B00B8B021 /* trigger-remove-highlighted-text.js */; };
+		A6C6824F2E40440C00B8B021 /* HyperlinkBrowserTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C6824E2E4043F700B8B021 /* HyperlinkBrowserTrigger.swift */; };
 		A6C760431B45C4CF00E3C992 /* NSTableColumn+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA1C1F11A2E49A3007381D3 /* NSTableColumn+iTerm.m */; };
 		A6C760451B45C4CF00E3C992 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DD39AD6180B8118004E56D5 /* Cocoa.framework */; };
 		A6C760471B45C4CF00E3C992 /* SSKeychain.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA7C8F1923E89100DF1410 /* SSKeychain.h */; };
@@ -3972,6 +3973,9 @@
 		A6D5724127BCDAA1002E6E9F /* CharacterAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D5724027BCDAA1002E6E9F /* CharacterAttributes.swift */; };
 		A6D5985121B78B9700B59C94 /* iTermBroadcastInputHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D5984F21B78B9700B59C94 /* iTermBroadcastInputHelper.h */; };
 		A6D5985221B78B9700B59C94 /* iTermBroadcastInputHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D5985021B78B9700B59C94 /* iTermBroadcastInputHelper.m */; };
+		A6D693DE2E405AB8005E9AFE /* trigger-make-hyperlink.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D693DD2E405AB8005E9AFE /* trigger-make-hyperlink.js */; };
+		A6D693DF2E405AB8005E9AFE /* trigger-make-hyperlink.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D693DD2E405AB8005E9AFE /* trigger-make-hyperlink.js */; };
+		A6D693E02E405AB8005E9AFE /* trigger-make-hyperlink.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D693DD2E405AB8005E9AFE /* trigger-make-hyperlink.js */; };
 		A6D7D2222BBE0E7B00D884F5 /* FakeWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D173858126C820A004622DC /* FakeWindow.m */; };
 		A6D7E0712C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D7E0702C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift */; };
 		A6D7E0722C1B6AF5007D0A37 /* iTermProfileSearchToken.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D468BBF1B056CD600226083 /* iTermProfileSearchToken.m */; };
@@ -8185,6 +8189,7 @@
 		A6C537C21939507100A08C18 /* iTermRestorableSession.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRestorableSession.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6C5EDCE2D4D6CF3000D9E85 /* TmuxFormatBuiltInCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TmuxFormatBuiltInCommand.swift; sourceTree = "<group>"; };
 		A6C682282E40367B00B8B021 /* trigger-remove-highlighted-text.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "trigger-remove-highlighted-text.js"; sourceTree = "<group>"; };
+		A6C6824E2E4043F700B8B021 /* HyperlinkBrowserTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HyperlinkBrowserTrigger.swift; sourceTree = "<group>"; };
 		A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libiTerm2Shared.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		A6C7641C1B45CB2800E3C992 /* iTerm2XCTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iTerm2XCTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A6C7641F1B45CB2800E3C992 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -8399,6 +8404,7 @@
 		A6D5724227BCE06C002E6E9F /* iTermTextDataSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTextDataSource.h; sourceTree = "<group>"; };
 		A6D5984F21B78B9700B59C94 /* iTermBroadcastInputHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBroadcastInputHelper.h; sourceTree = "<group>"; };
 		A6D5985021B78B9700B59C94 /* iTermBroadcastInputHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBroadcastInputHelper.m; sourceTree = "<group>"; };
+		A6D693DD2E405AB8005E9AFE /* trigger-make-hyperlink.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "trigger-make-hyperlink.js"; sourceTree = "<group>"; };
 		A6D7E0702C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileStyleSearchEngine.swift; sourceTree = "<group>"; };
 		A6D7E0752C236D54007D0A37 /* LineBlockMetadataArray.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LineBlockMetadataArray.h; sourceTree = "<group>"; };
 		A6D7E0762C236D54007D0A37 /* LineBlockMetadataArray.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LineBlockMetadataArray.m; sourceTree = "<group>"; };
@@ -10337,6 +10343,7 @@
 		1D9DDE2D142E730700275650 /* Triggers */ = {
 			isa = PBXGroup;
 			children = (
+				A6C6824E2E4043F700B8B021 /* HyperlinkBrowserTrigger.swift */,
 				A68CB8622E4006A3002531F5 /* HighlightBrowserTrigger.swift */,
 				A68CB8582E3FC40A002531F5 /* ReaderModeBrowserTrigger.swift */,
 				A600A93D2E3FBFCF00D05EAD /* BrowserTrigger.swift */,
@@ -11656,6 +11663,7 @@
 			isa = PBXGroup;
 			children = (
 				A68CB8642E400A2A002531F5 /* trigger-highlight-text.js */,
+				A6D693DD2E405AB8005E9AFE /* trigger-make-hyperlink.js */,
 				A6C682282E40367B00B8B021 /* trigger-remove-highlighted-text.js */,
 				A600A93C2E3EDEDD00D05EAD /* triggers.js */,
 				A67238B72E3EDC8E003227C3 /* iTermBrowserTriggerHandler.swift */,
@@ -15983,6 +15991,7 @@
 				A63011B520E7EE6B008114B7 /* iTermStatusBarKnobNumericViewController.xib in Resources */,
 				A6A3CE142E38313C00710B09 /* log-errors.js in Resources */,
 				A6A3CE152E38313C00710B09 /* console-log.js in Resources */,
+				A6D693DE2E405AB8005E9AFE /* trigger-make-hyperlink.js in Resources */,
 				A6EC808B282A28CE00493544 /* SSHConfigurationWindow.xib in Resources */,
 				537A1FBE22169B2200FBEE5A /* MinimalPasteView.xib in Resources */,
 				1DA76A261B308AD000CB272A /* iTermTipCardViewController.xib in Resources */,
@@ -16795,6 +16804,7 @@
 				A6FE7A952E0E6B7F00BEBCE4 /* autofill-detector.js in Resources */,
 				A66351472B659309009B93F7 /* PinnedIndicator@2x.png in Resources */,
 				A686C1991ADF62F200906FAE /* Zoomed@2x.png in Resources */,
+				A6D693E02E405AB8005E9AFE /* trigger-make-hyperlink.js in Resources */,
 				A65E6F592547F1D5008A4866 /* WindowCornerFull_Square.png in Resources */,
 				A6F31A28295BC41700C1A51E /* uniE0C9_PowerlineExtraSymbols.pdf in Resources */,
 				A671D6D52E1E372E0087348B /* dev.html in Resources */,
@@ -17211,6 +17221,7 @@
 				A67F6161214395990093940A /* graphic_mysql@2x.png in Resources */,
 				A67D0D741A2EE12A003A8B35 /* NumberOfSpacesAccessoryView.xib in Resources */,
 				A6D4C26921E18CB5009CF11B /* iTermScriptInspector.xib in Resources */,
+				A6D693DF2E405AB8005E9AFE /* trigger-make-hyperlink.js in Resources */,
 				A6F7D5182E05F3A30065D09C /* write-password.js in Resources */,
 				A659C9992DAF235C0036BA52 /* Channel@2x.png in Resources */,
 				A659C99A2DAF235C0036BA52 /* Channel.png in Resources */,
@@ -18338,6 +18349,7 @@
 				A6A723582DB7157C00A8115D /* iTermLegacyStyleString.swift in Sources */,
 				A6A723592DB7157C00A8115D /* DeltaString.swift in Sources */,
 				A6069F082DF25BB800EE6CC7 /* AIConversation.swift in Sources */,
+				A6C6824F2E40440C00B8B021 /* HyperlinkBrowserTrigger.swift in Sources */,
 				A6A7235A2DB7157C00A8115D /* iTermSubString.swift in Sources */,
 				A6069F382DF7B16F00EE6CC7 /* SSHFolderDialog.swift in Sources */,
 				A6566750219EA46E005FE60E /* NSNumber+iTerm.m in Sources */,

@@ -133,6 +133,7 @@ extern NSString * const kTriggerNameKey;
 @property (nonatomic, weak) id<iTermTriggerDelegate> delegate;
 @property (nonatomic, readonly) BOOL detectsPrompt;
 @property (nullable, nonatomic, readonly) NSString *helpText;
+@property (nonatomic, readonly) NSSet<NSNumber *> *allowedMatchTypes;
 
 + (nullable NSSet<NSString *> *)synonyms;
 + (nullable Trigger *)triggerFromDict:(NSDictionary *)dict;

@@ -1,144 +1,121 @@
-;(function() {
-    'use strict';
-
-    const regex = {{REGEX}};
-    const textColor = {{TEXT_COLOR}};
-    const backgroundColor = {{BACKGROUND_COLOR}};
-
-    // Highlight all matching text in textColor/backgroundColor. If either is null, then leave the corresponding color unaffected.
+    // Add highlightText function directly to the api object
     
-    console.debug('iTerm2 Text Highlighter: Starting with regex:', regex, 'textColor:', textColor, 'backgroundColor:', backgroundColor);
-
-    function highlightText() {
-        console.debug('iTerm2 Text Highlighter: highlightText() called');
-
-        if (!regex) {
-            console.debug('iTerm2 Text Highlighter: No regex provided, exiting');
+    api.highlightText = function(matchId, textColor, backgroundColor) {
+        if (!matchId) {
             return;
         }
 
-        // Create a regex object from the template-substituted regex
-        let regexObj;
+        // Get match data from api
+        const matchData = api.getMatchById(matchId);
+        if (!matchData) {
+            console.error('iTerm2 Text Highlighter: No match data found for ID:', matchId);
+            return;
+        }
+
+
+        // Check if we have a Range object
+        if (!matchData.range) {
+            console.error('iTerm2 Text Highlighter: No range found in match data');
+            return;
+        }
+
+        // Validate that it's actually a Range object
+        if (!(matchData.range instanceof Range)) {
+            console.error('iTerm2 Text Highlighter: Stored range is not a Range object:', typeof matchData.range, matchData.range);
+            return;
+        }
+
         try {
-            regexObj = new RegExp(regex, 'g'); // global, case-sensitive
-            console.debug('iTerm2 Text Highlighter: Regex compiled successfully:', regexObj);
-        } catch (error) {
-            console.error('iTerm2 Text Highlighter: Invalid regex pattern:', regex, error);
-            return;
-        }
-
-        // Function to wrap text nodes with highlighting
-        function highlightTextNode(textNode) {
-            const text = textNode.textContent;
-            console.debug('iTerm2 Text Highlighter: Processing text node:', text.substring(0, 100) + (text.length > 100 ? '...' : ''));
+            // Use the Range to wrap the matched text
+            const range = matchData.range;
             
-            const matches = [];
-            let match;
-            
-            // Find all matches
-            regexObj.lastIndex = 0; // Reset regex state
-            while ((match = regexObj.exec(text)) !== null) {
-                console.debug('iTerm2 Text Highlighter: Found match:', match[0], 'at position', match.index);
-                matches.push({
-                    start: match.index,
-                    end: match.index + match[0].length,
-                    text: match[0]
-                });
-                
-                // Prevent infinite loop for zero-length matches
-                if (match.index === regexObj.lastIndex) {
-                    regexObj.lastIndex++;
-                }
-            }
-
-            if (matches.length === 0) {
-                console.debug('iTerm2 Text Highlighter: No matches found in this text node');
+            // Check if the range is still valid
+            if (!range.startContainer || !range.endContainer) {
+                console.error('iTerm2 Text Highlighter: Invalid range - containers are null');
                 return;
             }
-
-            console.debug('iTerm2 Text Highlighter: Found', matches.length, 'matches in text node');
-
-            // Create document fragment with highlighted text
-            const fragment = document.createDocumentFragment();
-            let lastIndex = 0;
-
-            matches.forEach((match, index) => {
-                console.debug('iTerm2 Text Highlighter: Processing match', index + 1, ':', match.text);
-
-                // Add text before the match
-                if (match.start > lastIndex) {
-                    fragment.appendChild(document.createTextNode(text.substring(lastIndex, match.start)));
-                }
-
-                // Create highlighted span
-                const span = document.createElement('span');
-                span.textContent = match.text;
-                
-                // Apply colors if specified
-                if (textColor) {
-                    span.style.color = textColor;
-                    console.debug('iTerm2 Text Highlighter: Applied text color:', textColor);
-                }
-                if (backgroundColor) {
-                    span.style.backgroundColor = backgroundColor;
-                    console.debug('iTerm2 Text Highlighter: Applied background color:', backgroundColor);
-                }
-                
-                // Add marker attribute
-                span.setAttribute('data-iterm2-highlight', 'true');
-
-                fragment.appendChild(span);
-                lastIndex = match.end;
-            });
-
-            // Add remaining text
-            if (lastIndex < text.length) {
-                fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
+            
+            // Create a span element for highlighting
+            const span = document.createElement('span');
+            span.setAttribute('data-iterm2-highlight', 'true');
+            span.setAttribute('data-iterm2-match-id', matchId);
+            
+            // Apply colors if specified
+            if (textColor) {
+                span.style.color = textColor;
             }
-
-            // Replace the original text node
-            console.debug('iTerm2 Text Highlighter: Replacing text node with highlighted version');
-            textNode.parentNode.replaceChild(fragment, textNode);
+            if (backgroundColor) {
+                span.style.backgroundColor = backgroundColor;
+            }
+            
+            // Extract and wrap the contents of the range
+            try {
+                // Clone the range to avoid modifying the stored one
+                const workingRange = range.cloneRange();
+                
+                // Extract the contents and append to span
+                const contents = workingRange.extractContents();
+                span.appendChild(contents);
+                
+                // Insert the span at the range location
+                workingRange.insertNode(span);
+                
+            } catch (e) {
+                console.error('iTerm2 Text Highlighter: Error wrapping range:', e);
+                
+                // Fallback: try to highlight by finding the text
+                highlightFallback(matchData, matchId, textColor, backgroundColor);
+            }
+            
+        } catch (error) {
+            console.error('iTerm2 Text Highlighter: Error during highlighting:', error);
         }
-
-        // Walk through all text nodes in the document
+    };
+    
+    // Fallback function if Range manipulation fails
+    function highlightFallback(matchData, matchId, textColor, backgroundColor) {
+        
+        const matchText = matchData.matchText;
+        if (!matchText) {
+            console.error('iTerm2 Text Highlighter: No match text available for fallback');
+            return;
+        }
+        
+        // Walk through text nodes and find the match
         function walkTextNodes(node) {
             if (node.nodeType === Node.TEXT_NODE) {
-                // Skip if parent already has highlighting to avoid double-highlighting
-                if (!node.parentNode.hasAttribute('data-iterm2-highlight')) {
-                    highlightTextNode(node);
-                } else {
-                    console.debug('iTerm2 Text Highlighter: Skipping already highlighted text node');
+                const text = node.textContent;
+                const index = text.indexOf(matchText);
+                
+                if (index !== -1 && !node.parentNode.hasAttribute('data-iterm2-highlight')) {
+                    // Found the text, create a replacement
+                    const before = text.substring(0, index);
+                    const after = text.substring(index + matchText.length);
+                    
+                    const span = document.createElement('span');
+                    span.textContent = matchText;
+                    span.setAttribute('data-iterm2-highlight', 'true');
+                    span.setAttribute('data-iterm2-match-id', matchId);
+                    
+                    if (textColor) span.style.color = textColor;
+                    if (backgroundColor) span.style.backgroundColor = backgroundColor;
+                    
+                    const fragment = document.createDocumentFragment();
+                    if (before) fragment.appendChild(document.createTextNode(before));
+                    fragment.appendChild(span);
+                    if (after) fragment.appendChild(document.createTextNode(after));
+                    
+                    node.parentNode.replaceChild(fragment, node);
+                    return true;
                 }
-            } else if (node.nodeType === Node.ELEMENT_NODE) {
-                // Skip script and style elements
-                const tagName = node.tagName.toLowerCase();
-                if (tagName !== 'script' && tagName !== 'style') {
-                    // Create a copy of childNodes since we might modify the DOM
-                    const children = Array.from(node.childNodes);
-                    children.forEach(child => walkTextNodes(child));
-                } else {
-                    console.debug('iTerm2 Text Highlighter: Skipping', tagName, 'element');
+            } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName !== 'SCRIPT' && node.tagName !== 'STYLE') {
+                for (const child of [...node.childNodes]) {
+                    if (walkTextNodes(child)) return true;
                 }
             }
+            return false;
         }
-
-        // Start highlighting from document body
-        if (document.body) {
-            console.debug('iTerm2 Text Highlighter: Starting to walk through document body');
-            walkTextNodes(document.body);
-            console.debug('iTerm2 Text Highlighter: Finished processing document');
-        } else {
-            console.debug('iTerm2 Text Highlighter: No document body found');
-        }
+        
+        walkTextNodes(document.body);
     }
-
-    // Run highlighting when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', highlightText);
-    } else {
-        highlightText();
-    }
-
-    true;
-})();
+        

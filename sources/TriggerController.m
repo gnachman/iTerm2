@@ -284,7 +284,8 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
                         [StopTrigger class] ];
     } else {
         allClasses = @[ [ReaderModeBrowserTrigger class],
-                        [HighlightBrowserTrigger class] ];
+                        [HighlightBrowserTrigger class],
+                        [HyperlinkBrowserTrigger class] ];
     }
     return [allClasses sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
                   return [[obj1 title] compare:[obj2 title]];
