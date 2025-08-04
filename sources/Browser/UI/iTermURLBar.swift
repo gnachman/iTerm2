@@ -287,7 +287,7 @@ class iTermURLBarGuts: NSView {
             textFieldWidth = bounds.width - textFieldX - inset
         }
         
-        textFieldBackground.frame = NSRect(x: textFieldX, y: 4,
+        textFieldBackground.frame = NSRect(x: textFieldX, y: 2,
                                           width: textFieldWidth, height: bounds.height - 8)
         
         // Text field fills the background container
