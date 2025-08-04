@@ -7,7 +7,8 @@
 
 @MainActor
 protocol BrowserTriggerDelegate {
-    func browserTriggerEnterReaderMode()
+    func browserTriggerEnterReaderMode() async
+    func browserTriggerHighlightText(regex: String, textColor: String?, backgroundColor: String?)
 }
 
 @MainActor
@@ -29,7 +30,7 @@ protocol BrowserTrigger {
     // NOTE: This should be idempotent. It may be called more than once on the same page.
     // For example, if the user navigates "back".
     func performBrowserAction(urlCaptures: [String],
-                              contentCaptures: [String],
+                              contentCaptures: [String]?,
                               in client: BrowserTriggerClient) async -> [BrowserTriggerAction]
 }
 

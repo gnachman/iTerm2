@@ -44,8 +44,7 @@ extension iTermBrowserTriggerHandler {
     var javascript: String {
         return iTermBrowserTemplateLoader.loadTemplate(named: "triggers",
                                                        type: "js",
-                                                       substitutions: ["SECRET": sessionSecret,
-                                                                       "INITIAL_TRIGGERS": currentTriggersJSON])
+                                                       substitutions: ["SECRET": sessionSecret])
     }
 
     // Message from javascript
@@ -60,7 +59,7 @@ extension iTermBrowserTriggerHandler {
             // The first capture in these is the entire matching range and subsequent values are
             // captured substrings, if any.
             var urlCaptures: [String]
-            var contentCaptures: [String]
+            var contentCaptures: [String]?
 
             // Unique identifier of the trigger (the key in the dictionary of triggers)
             var identifier: String
@@ -71,13 +70,53 @@ extension iTermBrowserTriggerHandler {
     func handleMessage(webView: WKWebView, message: WKScriptMessage) async -> [BrowserTriggerAction] {
         guard let body = message.body as? [String: Any],
               let secret = body["sessionSecret"] as? String,
-              secret == sessionSecret,
-              let string = body["matchEvent"] as? String,
+              secret == sessionSecret else {
+            DLog("Bogus message or invalid session secret \(message)")
+            return []
+        }
+        
+        // Handle request for triggers
+        if body["requestTriggers"] as? Bool == true {
+            DLog("Browser requested triggers")
+            self.webView = webView
+            sendTriggersToWebView()
+            return []
+        }
+        
+        // Handle match event
+        guard let string = body["matchEvent"] as? String,
               let event = try? JSONDecoder().decode(TriggerMatchEvent.self, from: string.lossyData) else {
-            DLog("Bogus message \(message)")
+            DLog("Bogus match event message \(message)")
             return []
         }
         return await handle(matchEvent: event)
+    }
+}
+
+// Perform actions
+extension iTermBrowserTriggerHandler {
+    func highlightText(regex: String, textColor: String?, backgroundColor: String?) {
+        guard let webView else {
+            return
+        }
+        Task {
+            let jsonTextColor = if let textColor {
+                (try? JSONEncoder().encode(textColor).lossyString) ?? "null"
+            } else {
+                "null"
+            }
+            let jsonBackgroundColor = if let backgroundColor {
+                (try? JSONEncoder().encode(backgroundColor).lossyString) ?? "null"
+            } else {
+                "null"
+            }
+            let script = iTermBrowserTemplateLoader.loadTemplate(named: "trigger-highlight-text",
+                                                                 type: "js",
+                                                                 substitutions: ["REGEX": try! JSONEncoder().encode(regex).lossyString,
+                                                                                 "TEXT_COLOR": jsonTextColor,
+                                                                                 "BACKGROUND_COLOR": jsonBackgroundColor ])
+            _ = try? await webView.evaluateJavaScript(script, in: nil, contentWorld: .defaultClient)
+        }
     }
 }
 
@@ -92,16 +131,34 @@ private extension iTermBrowserTriggerHandler {
 
     func triggersDidChange() {
         loadTriggersFromSettings()
-
+        sendTriggersToWebView()
+    }
+    
+    func sendTriggersToWebView() {
         let json = currentTriggersJSON
+        let removeHighlightsScript = iTermBrowserTemplateLoader.loadTemplate(named: "trigger-remove-highlighted-text",
+                                                                              type: "js",
+                                                                              substitutions: [:])
         let call = """
-        window.iTerm2Triggers.setTriggers({sessionSecret: '\(sessionSecret)', triggers: \(json)});
+        try {
+            console.log('iTerm2Triggers: start setting triggers');
+            \(removeHighlightsScript)
+            window.iTerm2Triggers.setTriggers(
+                {sessionSecret: '\(sessionSecret)', 
+                 triggers: \(json)
+                });
+            console.log('iTerm2Triggers: finished setting triggers');
+        } catch(e) {
+            console.log(e.toString());
+            console.log(e);
+            throw e;
+        }
         """
         Task { @MainActor in
             do {
                 _ = try await webView?.evaluateJavaScript(call, contentWorld: .defaultClient)
             } catch {
-                DLog("\(error)")
+                DLog("\(call): \(error)")
             }
         }
     }

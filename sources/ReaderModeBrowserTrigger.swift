@@ -22,15 +22,20 @@ class ReaderModeBrowserTrigger: Trigger {
 
 extension ReaderModeBrowserTrigger: BrowserTrigger {
     func performBrowserAction(urlCaptures: [String],
-                              contentCaptures: [String],
+                              contentCaptures: [String]?,
                               in client: any BrowserTriggerClient) async -> [BrowserTriggerAction] {
         let scheduler = client.scopeProvider.triggerCallbackScheduler()
-        paramWithBackreferencesReplaced(withValues: urlCaptures + contentCaptures,
-                                        absLine: -1,
-                                        scope: client.scopeProvider,
-                                        useInterpolation: client.useInterpolation).then { message in
-            scheduler.scheduleTriggerCallback {
-                client.triggerDelegate?.browserTriggerEnterReaderMode()
+        await withCheckedContinuation { continuation in
+            paramWithBackreferencesReplaced(withValues: urlCaptures + (contentCaptures ?? []),
+                                            absLine: -1,
+                                            scope: client.scopeProvider,
+                                            useInterpolation: client.useInterpolation).then { message in
+                scheduler.scheduleTriggerCallback {
+                    Task {
+                        await client.triggerDelegate?.browserTriggerEnterReaderMode()
+                        continuation.resume()
+                    }
+                }
             }
         }
         return []

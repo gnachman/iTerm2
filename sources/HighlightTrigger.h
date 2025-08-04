@@ -13,8 +13,8 @@ extern NSString * const kHighlightForegroundColor;
 extern NSString * const kHighlightBackgroundColor;
 
 @protocol iTermColorSettable<NSObject>
-- (void)setTextColor:(NSColor *)textColor;
-- (void)setBackgroundColor:(NSColor *)backgroundColor;
+@property (nonatomic, strong, readwrite) NSColor *textColor;
+@property (nonatomic, strong, readwrite) NSColor *backgroundColor;
 @end
 
 @interface HighlightTrigger : Trigger<iTermColorSettable>

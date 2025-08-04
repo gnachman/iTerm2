@@ -1448,8 +1448,14 @@ extension iTermBrowserViewController: iTermBrowserCopyModeHandlerDelegate {
 
 @MainActor
 extension iTermBrowserViewController: iTermBrowserTriggerHandlerDelegate {
-    func browserTriggerEnterReaderMode() {
-        browserManager.enterReaderMode()
+    func browserTriggerEnterReaderMode() async {
+        await browserManager.enterReaderMode()
+    }
+
+    func browserTriggerHighlightText(regex: String, textColor: String?, backgroundColor: String?) {
+        browserManager.triggerHandler?.highlightText(regex: regex,
+                                                     textColor: textColor,
+                                                     backgroundColor: backgroundColor)
     }
 
     func triggerHandlerScope(_ sender: iTermBrowserTriggerHandler) -> iTermVariableScope? {

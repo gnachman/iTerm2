@@ -2758,6 +2758,10 @@
 		A68CB85B2E3FD510002531F5 /* triggers.js in Resources */ = {isa = PBXBuildFile; fileRef = A600A93C2E3EDEDD00D05EAD /* triggers.js */; };
 		A68CB85C2E3FD510002531F5 /* triggers.js in Resources */ = {isa = PBXBuildFile; fileRef = A600A93C2E3EDEDD00D05EAD /* triggers.js */; };
 		A68CB85D2E3FD510002531F5 /* triggers.js in Resources */ = {isa = PBXBuildFile; fileRef = A600A93C2E3EDEDD00D05EAD /* triggers.js */; };
+		A68CB8632E4006A8002531F5 /* HighlightBrowserTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68CB8622E4006A3002531F5 /* HighlightBrowserTrigger.swift */; };
+		A68CB8652E400A2E002531F5 /* trigger-highlight-text.js in Resources */ = {isa = PBXBuildFile; fileRef = A68CB8642E400A2A002531F5 /* trigger-highlight-text.js */; };
+		A68CB8662E400A2E002531F5 /* trigger-highlight-text.js in Resources */ = {isa = PBXBuildFile; fileRef = A68CB8642E400A2A002531F5 /* trigger-highlight-text.js */; };
+		A68CB8672E400A2E002531F5 /* trigger-highlight-text.js in Resources */ = {isa = PBXBuildFile; fileRef = A68CB8642E400A2A002531F5 /* trigger-highlight-text.js */; };
 		A68E332B1DE6AFC6003F1D8E /* iTermTouchBarButton.h in Headers */ = {isa = PBXBuildFile; fileRef = A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */; };
 		A68E33331DE746F5003F1D8E /* Add Mark Touch Bar Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E332D1DE746F5003F1D8E /* Add Mark Touch Bar Icon.png */; };
 		A68E33341DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E332E1DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png */; };
@@ -3504,6 +3508,9 @@
 		A6C537BE1938374600A08C18 /* iTermTabBarControlView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */; };
 		A6C537C31939507100A08C18 /* iTermRestorableSession.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537C11939507100A08C18 /* iTermRestorableSession.h */; };
 		A6C5EDCF2D4D6CFA000D9E85 /* TmuxFormatBuiltInCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C5EDCE2D4D6CF3000D9E85 /* TmuxFormatBuiltInCommand.swift */; };
+		A6C682292E40367B00B8B021 /* trigger-remove-highlighted-text.js in Resources */ = {isa = PBXBuildFile; fileRef = A6C682282E40367B00B8B021 /* trigger-remove-highlighted-text.js */; };
+		A6C6822A2E40367B00B8B021 /* trigger-remove-highlighted-text.js in Resources */ = {isa = PBXBuildFile; fileRef = A6C682282E40367B00B8B021 /* trigger-remove-highlighted-text.js */; };
+		A6C6822B2E40367B00B8B021 /* trigger-remove-highlighted-text.js in Resources */ = {isa = PBXBuildFile; fileRef = A6C682282E40367B00B8B021 /* trigger-remove-highlighted-text.js */; };
 		A6C760431B45C4CF00E3C992 /* NSTableColumn+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA1C1F11A2E49A3007381D3 /* NSTableColumn+iTerm.m */; };
 		A6C760451B45C4CF00E3C992 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DD39AD6180B8118004E56D5 /* Cocoa.framework */; };
 		A6C760471B45C4CF00E3C992 /* SSKeychain.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA7C8F1923E89100DF1410 /* SSKeychain.h */; };
@@ -7669,6 +7676,8 @@
 		A68BE9442DE428D5002DD513 /* flowchart.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flowchart.png; sourceTree = "<group>"; };
 		A68BE9452DE428D5002DD513 /* flowchart@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "flowchart@2x.png"; sourceTree = "<group>"; };
 		A68CB8582E3FC40A002531F5 /* ReaderModeBrowserTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderModeBrowserTrigger.swift; sourceTree = "<group>"; };
+		A68CB8622E4006A3002531F5 /* HighlightBrowserTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HighlightBrowserTrigger.swift; sourceTree = "<group>"; };
+		A68CB8642E400A2A002531F5 /* trigger-highlight-text.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "trigger-highlight-text.js"; sourceTree = "<group>"; };
 		A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTouchBarButton.h; sourceTree = "<group>"; };
 		A68E332A1DE6AFC6003F1D8E /* iTermTouchBarButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTouchBarButton.m; sourceTree = "<group>"; };
 		A68E332D1DE746F5003F1D8E /* Add Mark Touch Bar Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Add Mark Touch Bar Icon.png"; path = "images/Add Mark Touch Bar Icon.png"; sourceTree = "<group>"; };
@@ -8175,6 +8184,7 @@
 		A6C537C11939507100A08C18 /* iTermRestorableSession.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermRestorableSession.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6C537C21939507100A08C18 /* iTermRestorableSession.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRestorableSession.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6C5EDCE2D4D6CF3000D9E85 /* TmuxFormatBuiltInCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TmuxFormatBuiltInCommand.swift; sourceTree = "<group>"; };
+		A6C682282E40367B00B8B021 /* trigger-remove-highlighted-text.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "trigger-remove-highlighted-text.js"; sourceTree = "<group>"; };
 		A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libiTerm2Shared.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		A6C7641C1B45CB2800E3C992 /* iTerm2XCTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iTerm2XCTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A6C7641F1B45CB2800E3C992 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -10327,6 +10337,7 @@
 		1D9DDE2D142E730700275650 /* Triggers */ = {
 			isa = PBXGroup;
 			children = (
+				A68CB8622E4006A3002531F5 /* HighlightBrowserTrigger.swift */,
 				A68CB8582E3FC40A002531F5 /* ReaderModeBrowserTrigger.swift */,
 				A600A93D2E3FBFCF00D05EAD /* BrowserTrigger.swift */,
 				A6854FE92D8B82A30019E96C /* SGRTrigger.swift */,
@@ -11644,6 +11655,8 @@
 		A67238B62E3EDC80003227C3 /* Triggers */ = {
 			isa = PBXGroup;
 			children = (
+				A68CB8642E400A2A002531F5 /* trigger-highlight-text.js */,
+				A6C682282E40367B00B8B021 /* trigger-remove-highlighted-text.js */,
 				A600A93C2E3EDEDD00D05EAD /* triggers.js */,
 				A67238B72E3EDC8E003227C3 /* iTermBrowserTriggerHandler.swift */,
 			);
@@ -16307,6 +16320,7 @@
 				A6CBB7AE2E087DBF00B2CCCB /* notification-bridge.js in Resources */,
 				A6CBB7BE2E08BDD600B2CCCB /* geolocation-demo.html in Resources */,
 				A6109B662B969B4100D8E4E9 /* graphic_neovim@2x.png in Resources */,
+				A6C6822B2E40367B00B8B021 /* trigger-remove-highlighted-text.js in Resources */,
 				A6C838B22CB9ACF90062BE68 /* success-sound.mp3 in Resources */,
 				A6CBB8302E0A284100B2CCCB /* add-saved-attributes.js in Resources */,
 				A6C838B32CB9ACF90062BE68 /* error-sound.mp3 in Resources */,
@@ -16379,6 +16393,7 @@
 				A671D6D62E1E372E0087348B /* dev.html in Resources */,
 				1D6ED9E019AEA20D005A7799 /* PrefsAppearance.png in Resources */,
 				A6A64E6B2508C5B50040490B /* OpenQuicklySnippetIcon.png in Resources */,
+				A68CB8672E400A2E002531F5 /* trigger-highlight-text.js in Resources */,
 				A67F61EC214395D50093940A /* graphic_yarn@2x.png in Resources */,
 				1D8BBA6A1B30F5C30005A852 /* Navigate.png in Resources */,
 				1D6ED9E119AEA20D005A7799 /* broken_image.png in Resources */,
@@ -16696,6 +16711,7 @@
 				A67D0D481A2EE12A003A8B35 /* CommandHistoryPopup.xib in Resources */,
 				A6FEA28C1CF4DD2900376F28 /* iTermHotkeyPreferencesWindowController.xib in Resources */,
 				A65DF4A62849C11D00AA29AB /* bash-si-loader in Resources */,
+				A68CB8652E400A2E002531F5 /* trigger-highlight-text.js in Resources */,
 				A6F7A726213CB143004DE961 /* StatusBarIconHost.png in Resources */,
 				A67F6165214395990093940A /* graphic_monitor.png in Resources */,
 				A6E7AE81214394DD00DE9F3B /* graphic_curl@2x.png in Resources */,
@@ -16885,6 +16901,7 @@
 				A6F7A729213CB143004DE961 /* StatusBarIconComposer.png in Resources */,
 				A697CDF02D975FEB0031583F /* SelectionRespectsSoftBoundariesMenuTip.png in Resources */,
 				A697CDF12D975FEB0031583F /* SelectionRespectsSoftBoundariesMenuTip@2x.png in Resources */,
+				A6C6822A2E40367B00B8B021 /* trigger-remove-highlighted-text.js in Resources */,
 				A65E6F5C2547F1D5008A4866 /* WindowCorner_Square.png in Resources */,
 				A6BEE47826E0A624009C0C2C /* FilterIndicator@2x.png in Resources */,
 				A6EC0B0A2C87DF5E00598D20 /* uniE0D6_Powerline_normal-right-inverse-cutout.pdf in Resources */,
@@ -17105,6 +17122,7 @@
 				A66433532DEA78A60099F722 /* globe@2x.png in Resources */,
 				A6E312C12E3C11BF008222DE /* copy-mode-cursor.js in Resources */,
 				A66433542DEA78A60099F722 /* globe.png in Resources */,
+				A6C682292E40367B00B8B021 /* trigger-remove-highlighted-text.js in Resources */,
 				1DBBA5DE1B3CB0590026E3B6 /* restore-arrangement.png in Resources */,
 				A67D0D471A2EE12A003A8B35 /* CommandHistoryPopup.xib in Resources */,
 				A6F2F218250757FE00FC227F /* PrefsShortcuts@2x.png in Resources */,
@@ -17377,6 +17395,7 @@
 				A67F616D214395990093940A /* graphic_nano@2x.png in Resources */,
 				1D8F396B13EB7A2C0025B80B /* BroadcastInput.png in Resources */,
 				A66A882B24DFCCC30043728B /* graphic_postgres.png in Resources */,
+				A68CB8662E400A2E002531F5 /* trigger-highlight-text.js in Resources */,
 				A6CB24A62C68149100005824 /* it2setcolor in Resources */,
 				A66A882824DFCCC30043728B /* graphic_erlang@2x.png in Resources */,
 				A6F7D5042E05C8650065D09C /* detect-favicon.js in Resources */,
@@ -18854,6 +18873,7 @@
 				A68BE8B22DE1430F002DD513 /* PorterStemmer.m in Sources */,
 				A68BE8B32DE1430F002DD513 /* porter.c in Sources */,
 				A6D1C41E2861430D00B68526 /* FindIndicatorWindow.swift in Sources */,
+				A68CB8632E4006A8002531F5 /* HighlightBrowserTrigger.swift in Sources */,
 				A6BEE47E26E7E4CC009C0C2C /* PTYSessionZoomState.swift in Sources */,
 				532F942C215DFEF600D509E4 /* iTermCacheableImage.m in Sources */,
 				A6614C7D210AE7350001EAA3 /* iTermPasteViewManager.m in Sources */,

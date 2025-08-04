@@ -45,7 +45,8 @@ static const CGFloat kLabelWidth = 124;
     NSButton *_contentRegexVisualizationButton;
     NSPopUpButton *_matchTypeButton;
     
-    NSArray<Trigger *> *_triggers;
+    NSArray<Trigger *> *_prototypes;
+    Trigger *_currentTrigger;
     NSView *_paramView;
     id _savedDelegate;
 
@@ -208,12 +209,12 @@ static const CGFloat kLabelWidth = 124;
 }
 
 - (void)setTrigger:(Trigger *)trigger {
-    _regex = [trigger.regex copy];
+    _regex = [trigger.regex copy] ?: @"";
     _contentRegex = [trigger.contentRegex copy];
     _regexTextField.stringValue = _regex;
     _contentRegexTextField.stringValue = _contentRegex ?: @"";
     _nameTextField.stringValue = trigger.name ?: @"";
-    const NSInteger i = [_triggers indexOfObjectPassingTest:^BOOL(Trigger * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+    const NSInteger i = [_prototypes indexOfObjectPassingTest:^BOOL(Trigger * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         return [obj isKindOfClass:trigger.class];
     }];
     _enabledButton.state = trigger.disabled ? NSControlStateValueOff : NSControlStateValueOn;
@@ -222,7 +223,8 @@ static const CGFloat kLabelWidth = 124;
     if (i != NSNotFound) {
         [_actionButton selectItemAtIndex:i];
     }
-    [self updateCustomViewForTrigger:trigger value:trigger.param];
+    _currentTrigger = [Trigger triggerFromDict:trigger.dictionaryValue];
+    [self updateCustomViewForTrigger:_currentTrigger value:_currentTrigger.param];
     _visualizationViewController.regex = _regex ?: @"";
     _contentRegexVisualizationViewController.regex = _contentRegex ?: @"";
     _matchType = trigger.matchType;
@@ -286,7 +288,14 @@ static const CGFloat kLabelWidth = 124;
     _paramContainerView.translatesAutoresizingMaskIntoConstraints = NO;
     [paramWrapperView addSubview:_paramContainerView];
     
-    // Right-align the param container and fix its width
+    // Left-align the param container to match other controls and stretch to trailing edge
+    [paramWrapperView addConstraint:[NSLayoutConstraint constraintWithItem:_paramContainerView
+                                                                 attribute:NSLayoutAttributeLeading
+                                                                 relatedBy:NSLayoutRelationEqual
+                                                                    toItem:paramWrapperView
+                                                                 attribute:NSLayoutAttributeLeading
+                                                                multiplier:1.0
+                                                                  constant:kLabelWidth + 6]];
     [paramWrapperView addConstraint:[NSLayoutConstraint constraintWithItem:_paramContainerView
                                                                  attribute:NSLayoutAttributeTrailing
                                                                  relatedBy:NSLayoutRelationEqual
@@ -294,13 +303,6 @@ static const CGFloat kLabelWidth = 124;
                                                                  attribute:NSLayoutAttributeTrailing
                                                                 multiplier:1.0
                                                                   constant:0]];
-    [paramWrapperView addConstraint:[NSLayoutConstraint constraintWithItem:_paramContainerView
-                                                                 attribute:NSLayoutAttributeWidth
-                                                                 relatedBy:NSLayoutRelationEqual
-                                                                    toItem:nil
-                                                                 attribute:NSLayoutAttributeNotAnAttribute
-                                                                multiplier:1.0
-                                                                  constant:319]];
     [paramWrapperView addConstraint:[NSLayoutConstraint constraintWithItem:_paramContainerView
                                                                  attribute:NSLayoutAttributeTop
                                                                  relatedBy:NSLayoutRelationEqual
@@ -1027,25 +1029,25 @@ static const CGFloat kLabelWidth = 124;
     _nameTextField.stringValue = @"";
     _instantButton.state = [iTermUserDefaults addTriggerInstant] ? NSControlStateValueOn : NSControlStateValueOff;
     _updateProfileButton.state = [iTermUserDefaults addTriggerUpdateProfile] ? NSControlStateValueOn : NSControlStateValueOff;
-    _triggers = [[TriggerController triggerClassesForTerminal:!_browserMode] mapWithBlock:^id(Class triggerClass) {
+    _prototypes = [[TriggerController triggerClassesForTerminal:!_browserMode] mapWithBlock:^id(Class triggerClass) {
         return [[triggerClass alloc] init];
     }];
-    [_triggers enumerateObjectsUsingBlock:^(Trigger *_Nonnull trigger, NSUInteger idx, BOOL * _Nonnull stop) {
+    [_prototypes enumerateObjectsUsingBlock:^(Trigger *_Nonnull trigger, NSUInteger idx, BOOL * _Nonnull stop) {
         [trigger reloadData];
         [_actionButton addItemWithTitle:[trigger.class title]];
     }];
 
     // Select highlight with colors based on text.
     for (Class theClass in @[ [iTermHighlightLineTrigger class], [HighlightTrigger class] ]) {
-        Trigger<iTermColorSettable> *trigger = [self firstTriggerOfClass:theClass];
+        Trigger<iTermColorSettable> *trigger = [self prototypeOfClass:theClass];
         if (trigger) {
             [trigger setTextColor:_defaultTextColor];
             [trigger setBackgroundColor:_defaultBackgroundColor];
-            [_actionButton selectItemAtIndex:[_triggers indexOfObject:trigger]];
+            [_actionButton selectItemAtIndex:[_prototypes indexOfObject:trigger]];
+            [self setTrigger:trigger];
         } else {
             [_actionButton selectItemAtIndex:0];
         }
-        [self updateCustomViewForTrigger:self.currentTrigger value:nil];
     }
     
     // Set up initial content regex visibility and hide instant button in browser mode
@@ -1061,8 +1063,8 @@ static const CGFloat kLabelWidth = 124;
     _updateProfileButton.hidden = YES;
 }
 
-- (__kindof Trigger *)firstTriggerOfClass:(Class)theClass {
-    return [_triggers objectPassingTest:^BOOL(Trigger *element, NSUInteger index, BOOL *stop) {
+- (__kindof Trigger *)prototypeOfClass:(Class)theClass {
+    return [_prototypes objectPassingTest:^BOOL(Trigger *element, NSUInteger index, BOOL *stop) {
         return [element isKindOfClass:theClass];
     }];
 }
@@ -1105,7 +1107,7 @@ static const CGFloat kLabelWidth = 124;
 }
 
 - (IBAction)selectionDidChange:(id)sender {
-    [self updateCustomViewForTrigger:self.currentTrigger value:nil];
+    [self setTrigger:[self currentPrototype]];
     if (_didChange) {
         _didChange();
     }
@@ -1120,13 +1122,13 @@ static const CGFloat kLabelWidth = 124;
 }
 
 - (IBAction)ok:(id)sender {
-    Trigger *trigger = [self currentTrigger];
+    Trigger *trigger = _currentTrigger;
     const BOOL instant = _instantButton.state == NSControlStateValueOn;
     const BOOL updateProfile = _updateProfileButton.state == NSControlStateValueOn;
     NSMutableDictionary *mutableTriggerDictionary = [@{ kTriggerActionKey: trigger.action,
                                                         kTriggerRegexKey: _regexTextField.stringValue,
                                                         kTriggerContentRegexKey: _contentRegexTextField.stringValue ?: @"",
-                                                        kTriggerParameterKey: [[self currentTrigger] param] ?: @0,
+                                                        kTriggerParameterKey: [trigger param] ?: @0,
                                                         kTriggerPartialLineKey: @(instant),
                                                         kTriggerDisabledKey: @NO,
                                                         kTriggerNameKey: _nameTextField.stringValue ?: [NSNull null] } mutableCopy];
@@ -1145,14 +1147,14 @@ static const CGFloat kLabelWidth = 124;
     _completion(nil, NO);
 }
 
-- (Trigger *)currentTrigger {
+- (Trigger *)currentPrototype {
     const NSInteger index = [_actionButton indexOfSelectedItem];
-    return _triggers[index];
+    return _prototypes[index];
 }
 
 - (void)updateCustomViewForTrigger:(Trigger *)trigger value:(id)value {
     id delegateToSave;
-    NSView *view = [TriggerController viewForParameterForTrigger:self.currentTrigger
+    NSView *view = [TriggerController viewForParameterForTrigger:trigger
                                                             size:NSMakeSize(320, 21)
                                                            value:value
                                                         receiver:self
@@ -1233,7 +1235,7 @@ static const CGFloat kLabelWidth = 124;
 }
 
 - (void)colorWellDidChange:(CPKColorWell *)colorWell {
-    id<iTermColorSettable> trigger = (id)self.currentTrigger;
+    id<iTermColorSettable> trigger = (id)_currentTrigger;
     if (![trigger conformsToProtocol:@protocol(iTermColorSettable)]) {
         return;
     }
@@ -1248,11 +1250,11 @@ static const CGFloat kLabelWidth = 124;
 }
 
 - (id)parameter {
-    return self.currentTrigger.param;
+    return _currentTrigger.param;
 }
 
 - (NSString *)action {
-    return NSStringFromClass([self.currentTrigger class]);
+    return NSStringFromClass([_currentTrigger class]);
 }
 
 - (NSString *)contentRegex {
@@ -1390,7 +1392,8 @@ static const CGFloat kLabelWidth = 124;
 #pragma mark - iTermTriggerParameterController
 
 - (void)parameterPopUpButtonDidChange:(id)sender {
-    [[self currentTrigger] setParam:[[self currentTrigger] objectAtIndex:[sender indexOfSelectedItem]]];
+    const NSUInteger i = [sender indexOfSelectedItem];
+    _currentTrigger.param = _prototypes[i].param;
     if (_didChange) {
         _didChange();
     }
@@ -1398,7 +1401,7 @@ static const CGFloat kLabelWidth = 124;
 
 - (void)controlTextDidChange:(NSNotification *)obj {
     NSTextField *textField = [NSTextField castFrom:obj.object];
-    NSString *param = self.currentTrigger.param;
+    NSString *param = _currentTrigger.param;
 
     if (textField == _regexTextField) {
         _regex = [[textField stringValue] copy];
@@ -1418,7 +1421,7 @@ static const CGFloat kLabelWidth = 124;
         } else {
             param = textField.stringValue ?: @"";
         }
-        [[self currentTrigger] setParam:param];
+        [_currentTrigger setParam:param];
     }
     if (_didChange) {
         _didChange();

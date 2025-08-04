@@ -91,7 +91,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private var currentMainFrameHTTPMethod: String?
     let userState: iTermBrowserUserState
     private let handlerProxy = iTermBrowserWebViewHandlerProxy()
-    private let triggerHandler: iTermBrowserTriggerHandler?
+    let triggerHandler: iTermBrowserTriggerHandler?
 
     private static var safariVersion = {
         Bundle(path: "/Applications/Safari.app")?.infoDictionary?["CFBundleShortVersionString"] as? String
@@ -373,7 +373,9 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         
         // Initialize adblock handler
         adblockHandler = iTermBrowserAdblockHandler(webView: webView)
-        
+
+        triggerHandler?.webView = webView
+
         // Setup settings delegate
         setupSettingsDelegate()
     }
@@ -468,10 +470,8 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         return .init(title: title, content: content)
     }
 
-    func enterReaderMode() {
-        Task {
-            await readerModeManager.enterReaderMode(webView: webView)
-        }
+    func enterReaderMode() async {
+        await readerModeManager.enterReaderMode(webView: webView)
     }
 
     func toggleReaderMode() {
