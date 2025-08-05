@@ -139,6 +139,7 @@ class iTermURLBarGuts: NSView {
     private var textFieldBackground: NSView!
     private var faviconView: NSImageView?
     private var progressIndicator: NSProgressIndicator?
+    private var visualEffectView: NSVisualEffectView!
     
     // Suggestions
     private var completionsWindow: CompletionsWindow?
@@ -209,17 +210,31 @@ class iTermURLBarGuts: NSView {
 
     // MARK: - Setup
     private func setupUI() {
-        // Configure this view's layer for the border
+        // Configure this view
         wantsLayer = true
-        layer?.cornerRadius = Self.cornerRadius
-        layer?.borderWidth = 1
-        layer?.borderColor = NSColor.separatorColor.cgColor
-        layer?.backgroundColor = NSColor.textBackgroundColor.cgColor
+        
+        // Use NSVisualEffectView for proper system appearance integration
+        visualEffectView = NSVisualEffectView()
+        visualEffectView.material = .contentBackground
+        visualEffectView.blendingMode = .behindWindow
+        visualEffectView.state = .active
+        visualEffectView.wantsLayer = true
+        visualEffectView.layer?.cornerRadius = Self.cornerRadius
+        visualEffectView.layer?.masksToBounds = true
+        // Put the border on the visual effect view itself
+        visualEffectView.layer?.borderWidth = 1
+        visualEffectView.layer?.borderColor = NSColor(white: 0.85, alpha: 1.0).cgColor
+        addSubview(visualEffectView)
+        visualEffectView.frame = bounds
+        visualEffectView.autoresizingMask = [.width, .height]
         
         setupTextFieldBackground()
         setupTextField()
         setupIcons()
         setupTextFieldDelegate()
+        
+        // Ensure visual effect view is behind all other content
+        visualEffectView.superview?.addSubview(visualEffectView, positioned: .below, relativeTo: textFieldBackground)
     }
     
     private func setupTextFieldBackground() {
@@ -371,6 +386,9 @@ class iTermURLBarGuts: NSView {
             // View was removed from window, clean up completions
             closeCompletions()
             currentSuggestionsTask?.cancel()
+        } else {
+            // View was added to window, update appearance with correct effective appearance
+            updateAppearance()
         }
     }
     
@@ -378,6 +396,18 @@ class iTermURLBarGuts: NSView {
         closeCompletions()
         currentSuggestionsTask?.cancel()
         super.removeFromSuperview()
+    }
+    
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        updateAppearance()
+    }
+    
+    private func updateAppearance() {
+        let borderColor = effectiveAppearance.name == .darkAqua 
+            ? NSColor(white: 0.25, alpha: 1.0) 
+            : NSColor(white: 0.85, alpha: 1.0)
+        visualEffectView.layer?.borderColor = borderColor.cgColor
     }
     
     // MARK: - Private Methods
