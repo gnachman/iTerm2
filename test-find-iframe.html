@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find on Page - Iframe Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .section {
+            background: #f4f4f4;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        iframe {
+            width: 100%;
+            height: 300px;
+            border: 2px solid #007bff;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        h2 {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test Page for Find on Page with Iframes</h1>
+        
+        <div class="section">
+            <h2>First Section</h2>
+            <p>This is some test content in the main frame. You can search for words like "apple", "banana", or "cherry" to test the find functionality.</p>
+            <p>The quick brown fox jumps over the lazy dog. This pangram contains every letter of the alphabet.</p>
+        </div>
+
+        <iframe srcdoc='
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        padding: 15px;
+                        background: #e9f5ff;
+                    }
+                    h3 { color: #0066cc; }
+                </style>
+            </head>
+            <body>
+                <h3>Iframe Content</h3>
+                <p>This content is inside an iframe. Search for "apple" or "orange" to find matches here.</p>
+                <p>The lazy dog was not impressed by the quick brown fox. Sometimes the dog prefers to eat an apple or an orange.</p>
+                <p>Testing special characters: @#$% and numbers: 12345</p>
+            </body>
+            </html>
+        '></iframe>
+
+        <div class="section">
+            <h2>Second Section</h2>
+            <p>More content in the main frame after the iframe. The word "apple" appears here too, as does "banana" and "cherry".</p>
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. The quick brown fox appears again in this section.</p>
+        </div>
+    </div>
+</body>
+</html>

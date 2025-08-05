@@ -38,7 +38,10 @@ extension NSRect {
         return NSPoint(x: minX, y: minY)
     }
     var minXmaxY: NSPoint {
-        return  NSPoint(x: minX, y: maxY)
+        return NSPoint(x: minX, y: maxY)
+    }
+    var maxXminY: NSPoint {
+        return NSPoint(x: maxX, y: minY)
     }
 }
 

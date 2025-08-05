@@ -332,6 +332,10 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                 handlerProxy,
                 contentWorld: .defaultClient,
                 name: iTermBrowserFindManager.messageHandlerName)
+            configuration.userContentController.add(
+                handlerProxy,
+                contentWorld: .defaultClient,
+                name: iTermBrowserFindManager.graphDiscoveryMessageHandlerName)
         }
         configuration.userContentController.add(readerModeManager,
                                                 contentWorld: .defaultClient,
@@ -990,6 +994,9 @@ extension iTermBrowserManager {
             XLog("Javascript Console: \(string)")
 #endif
 
+        case iTermBrowserFindManager.graphDiscoveryMessageHandlerName:
+            _findManager?.handleMessage(webView: webView, message: message)
+
 
         case iTermBrowserNotificationHandler.messageHandlerName:
             notificationHandler?.handleMessage(webView: webView, message: message)
@@ -1226,7 +1233,7 @@ extension iTermBrowserManager: WKNavigationDelegate {
         injectMessageHandlersIfNeeded()
 
         notifyDelegateOfUpdates()
-        
+
         // Update permission states for geolocation
         if let url = webView.url {
             let originString = iTermBrowserPermissionManager.normalizeOrigin(from: url)
@@ -1242,7 +1249,7 @@ extension iTermBrowserManager: WKNavigationDelegate {
 
         // Update title in browser history if available
         historyController.titleDidChange(for: webView.url, title: webView.title)
-        
+
         // Apply cosmetic filtering using adblock-rust
         adblockHandler?.applyCosmeticFiltering()
 

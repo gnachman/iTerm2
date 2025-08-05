@@ -398,11 +398,9 @@ extension iTermBrowserViewController {
             do {
                 let jsrect = try await findManager.reveal(
                     globalFindResultWithIdentifier: matchIdentifier)
-                let windowOrigin = browserManager.webView.convertFromJavascriptCoordinates(jsrect.origin)
-                let windowMaxima = browserManager.webView.convertFromJavascriptCoordinates(
-                    NSPoint(x: jsrect.maxX, y: jsrect.maxY)
-                )
-                let rect = NSRect(origin: windowOrigin, size: windowMaxima - windowOrigin)
+                let windowOrigin = browserManager.webView.convertFromJavascriptCoordinates(jsrect.minXmaxY)
+                let windowOpposite = browserManager.webView.convertFromJavascriptCoordinates(jsrect.maxXminY)
+                let rect = NSRect(origin: windowOrigin, size: abs(windowOpposite - windowOrigin))
                 if let screenRect = view.window?.convertToScreen(rect) {
                     completion(screenRect)
                 } else {
@@ -416,8 +414,8 @@ extension iTermBrowserViewController {
         }
     }
 
-    func startFind(_ string: String, mode: iTermBrowserFindMode) {
-        browserManager.browserFindManager?.startFind(string, mode: mode)
+    func startFind(_ string: String, mode: iTermBrowserFindMode, force: Bool) {
+        browserManager.browserFindManager?.startFind(string, mode: mode, force: force)
     }
 
     @objc(bury:)
@@ -735,7 +733,9 @@ extension iTermBrowserViewController {
 
         switch NSFindPanelAction(rawValue: UInt(menuItem.tag)) {
         case .showFindPanel:
-            delegate?.browserViewControllerShowFindPanel(self)
+            browserManager.browserFindManager?.withoutForceSearch {
+                delegate?.browserViewControllerShowFindPanel(self)
+            }
         case .setFindString:
             // TODO: Implement setting find string from selection if needed
             break

@@ -66,6 +66,8 @@ class iTermBrowserFindResultBundle {
 @MainActor
 class iTermBrowserFindManager: NSObject {
     static let messageHandlerName = "iTermCustomFind"
+    static let graphDiscoveryMessageHandlerName = "iTermGraphDiscovery"
+    private var ignoreForceSearch = 0
 
     var delegate: iTermBrowserFindManagerDelegate? {
         set {
@@ -119,9 +121,13 @@ class iTermBrowserFindManager: NSObject {
         @MainActor
         func handleResultsUpdate(_ data: [String: Any], findManager: iTermBrowserFindManager) {
             DLog("handleResultsUpdate:\n\(data)")
+            let matchIdentifiers = data["matchIdentifiers"] as? [[String: Any]]
+            guard let matchIdentifiers else {
+                // Ignore partial updates, which do not include match IDs.
+                return
+            }
             let totalMatches = data["totalMatches"] as? Int ?? 0
             let currentMatch = data["currentMatch"] as? Int ?? 0
-            let matchIdentifiers = data["matchIdentifiers"] as? [[String: Any]]
             let contexts = data["contexts"] as? [[String: String]]
 
             // Update internal state
@@ -141,8 +147,8 @@ class iTermBrowserFindManager: NSObject {
                     nil
                 }
             }
-            let results = (0..<(matchIdentifiers?.count ?? 0)).map { i in
-                let matchIdentifier = matchIdentifiers![i]
+            let results = (0..<matchIdentifiers.count).map { i in
+                let matchIdentifier = matchIdentifiers[i]
                 let context = contextTuples?[i]
                 let matchedText = matchIdentifier["text"] as? String
                 return iTermBrowserFindResult(index: i,
@@ -178,10 +184,15 @@ class iTermBrowserFindManager: NSObject {
             guard let webView = sharedState.webView else {
                 throw NoWebViewError()
             }
-            let script = "window.iTermCustomFind.getMatchBoundsInEngine({sessionSecret: '\(sharedState.secret)', instanceId: " + json(self.instanceID) + ", identifier: " + json(identifier) + "})"
+            let script = """
+            return await window.iTermCustomFind.getMatchBoundsInEngine({sessionSecret: '\(sharedState.secret)',
+                                                                        instanceId: \(json(self.instanceID)),
+                                                                        identifier: \(json(identifier) ) }); 
+            """
             do {
-                let dict = try await webView.evaluateJavaScript(script, contentWorld: .defaultClient) as? [String: CGFloat]
-                guard let dict else {
+                let raw = try await webView.callAsyncJavaScript(script, contentWorld: .defaultClient)
+                guard let dict = raw as? [String: Double] else {
+                    DLog("Bad result: \(String(describing: raw)) in \(script)")
                     throw InvalidResponseError()
                 }
                 guard let x = dict["x"],
@@ -211,10 +222,10 @@ class iTermBrowserFindManager: NSObject {
             temp["sessionSecret"] = sharedState.secret
             let jsonData = try JSONSerialization.data(withJSONObject: temp)
             let jsonString = String(data: jsonData, encoding: .utf8) ?? "{}"
-            let script = "window.iTermCustomFind && window.iTermCustomFind.handleCommand(\(jsonString))"
+            let script = "window.iTermCustomFind &&await  window.iTermCustomFind.handleCommand(\(jsonString))"
 
             do {
-                return try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
+                return try await webView.callAsyncJavaScript(script, contentWorld: .defaultClient)
             } catch {
                 DLog("\(error) while executing \(script)")
                 throw error
@@ -327,7 +338,7 @@ class iTermBrowserFindManager: NSObject {
 
     var javascript: String {
         sharedState.isJavaScriptInjected = true
-        return iTermBrowserTemplateLoader.loadTemplate(
+        let script = iTermBrowserTemplateLoader.loadTemplate(
             named: "custom-find",
             type: "js",
             substitutions: ["SECRET": sharedState.secret,
@@ -335,6 +346,7 @@ class iTermBrowserFindManager: NSObject {
                             "TEST_FUNCTIONS": "",
                             "TEST_IMPLS": "",
                             "TEST_FREEZE": "" ])
+        return script
     }
 
     var webView: WKWebView? {
@@ -392,8 +404,20 @@ class iTermBrowserFindManager: NSObject {
         }
     }
 
-    func startFind(_ searchTerm: String, mode: iTermBrowserFindMode) {
+    func withoutForceSearch(_ closure: () -> ()) {
+        ignoreForceSearch += 1
+        defer {
+            ignoreForceSearch -= 1
+        }
+        closure()
+    }
+
+    func startFind(_ searchTerm: String, mode: iTermBrowserFindMode, force: Bool) {
         hideGlobalSearchResultsIfNeeded()
+        if searchTerm == defaultState.currentSearchTerm && !(force && ignoreForceSearch == 0) {
+            DLog("Search query is unchanged and search is not forced. Do nothing.")
+            return
+        }
         defaultState.startFind(searchTerm, mode: mode, contextLength: 0, sharedState: sharedState, findManager: self)
     }
 
@@ -474,6 +498,14 @@ class iTermBrowserFindManager: NSObject {
     }
 
     func handleMessage(webView: WKWebView, message: WKScriptMessage) {
+        if message.name == Self.graphDiscoveryMessageHandlerName {
+            handleGraphDiscoveryMessage(webView: webView, message: message)
+        } else {
+            handleFindMessage(webView: webView, message: message)
+        }
+    }
+
+    private func handleFindMessage(webView: WKWebView, message: WKScriptMessage) {
         guard message.name == "iTermCustomFind",
               let body = message.body as? [String: Any],
               let sessionSecret = body["sessionSecret"] as? String,
@@ -571,5 +603,39 @@ extension WKWebView {
         
         // Timeout after 500ms - assume scrolling is complete
         DLog("Scroll completion check timed out after 500ms")
+    }
+}
+
+// MARK: - Graph discovery
+@MainActor
+extension iTermBrowserFindManager {
+    private func handleGraphDiscoveryMessage(webView: WKWebView, message: WKScriptMessage) {
+        DLog("[IFD] NATIVE - got a message: \(message.body)")
+        if let body = message.body as? [String: Any],
+           let type = body["type"] as? String,
+           type == "DISCOVERY_COMPLETE",
+           let graph = body["graph"] as? [String: Any] {
+
+            DLog("[IFD] NATIVE - iframe graph discovery complete:")
+            processGraphNode(graph, indent: 0)
+        }
+    }
+
+    private func processGraphNode(_ node: [String: Any], indent: Int) {
+        let spacing = String(repeating: "  ", count: indent)
+
+        if let frameId = node["frameId"] as? String {
+            DLog("\(spacing)Frame ID: \(frameId)")
+        }
+
+        if let error = node["error"] as? String {
+            DLog("\(spacing)  Error: \(error)")
+        }
+
+        if let children = node["children"] as? [[String: Any]] {
+            for child in children {
+                processGraphNode(child, indent: indent + 1)
+            }
+        }
     }
 }

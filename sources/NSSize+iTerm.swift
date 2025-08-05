@@ -40,3 +40,7 @@ extension NSSize {
         return width * height
     }
 }
+
+func abs(_ size: NSSize) -> NSSize {
+    return NSSize(width: abs(size.width), height: abs(size.height))
+}

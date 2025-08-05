@@ -323,7 +323,7 @@ extension PTYSession {
         if force || aString != vc.activeSearchTerm {
             // Start new search (force=true or different search string)
             let browserMode: iTermBrowserFindMode = mode.browserFindMode(query: aString)
-            vc.startFind(aString, mode: browserMode)
+            vc.startFind(aString, mode: browserMode, force: force)
         } else {
             // Continue existing search (move to next/previous result)
             if direction {

@@ -978,7 +978,6 @@
 		A6038322294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict in Resources */ = {isa = PBXBuildFile; fileRef = A603831F294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict */; };
 		A6038323294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict in Resources */ = {isa = PBXBuildFile; fileRef = A603831F294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict */; };
 		A603A96829B12CEA000E9E98 /* SearchTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A603A96729B12CEA000E9E98 /* SearchTests.m */; };
-		A603A96A29B12D93000E9E98 /* zalgo_for_unit_test.txt in Resources */ = {isa = PBXBuildFile; fileRef = A603A96929B12D92000E9E98 /* zalgo_for_unit_test.txt */; };
 		A603E9FB283EE53C0028B648 /* SecretServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A603E9FA283EE53C0028B648 /* SecretServer.swift */; };
 		A603E9FE283EE9BD0028B648 /* ObjCExceptions.h in Headers */ = {isa = PBXBuildFile; fileRef = A603E9FC283EE9BD0028B648 /* ObjCExceptions.h */; };
 		A603E9FF283EE9BD0028B648 /* ObjCExceptions.m in Sources */ = {isa = PBXBuildFile; fileRef = A603E9FD283EE9BD0028B648 /* ObjCExceptions.m */; };
@@ -1056,7 +1055,6 @@
 		A608A58027978076003525F7 /* VT100ScreenMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */; };
 		A608A5812797811D003525F7 /* iTermCapturedOutputMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A62C3B3D1BD40DC900B5629D /* iTermCapturedOutputMark.m */; };
 		A608CCF5214DE7C1007A7B87 /* iTermVariablesTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BC9B20214A395A00F50C09 /* iTermVariablesTest.m */; };
-		A608CCF6214DE7C1007A7B87 /* iTermFindOnPageHelperTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A68AC8F51F0823100023A216 /* iTermFindOnPageHelperTest.m */; };
 		A608CCF7214DE7C1007A7B87 /* iTermProcessCollectionTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A60BB3901EB6A56800D76C09 /* iTermProcessCollectionTest.m */; };
 		A608CCF8214DE7C1007A7B87 /* iTermShellHistoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B431BC9D368004084E0 /* iTermShellHistoryTest.m */; };
 		A608CCF9214DE7C1007A7B87 /* iTermEquivalenceClassSetTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB0401B45E8BA00F511E6 /* iTermEquivalenceClassSetTest.m */; };
@@ -3991,6 +3989,53 @@
 		A6D693FE2E41B9AF005E9AFE /* SFSymbolEnum.generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D693FB2E41B9AF005E9AFE /* SFSymbolEnum.generated.swift */; };
 		A6D694012E41C094005E9AFE /* SFSymbolEnum.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D693FF2E41C094005E9AFE /* SFSymbolEnum.h */; };
 		A6D694022E41C094005E9AFE /* SFSymbolEnum.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D694002E41C094005E9AFE /* SFSymbolEnum.m */; };
+		A6D694042E429F42005E9AFE /* graph-discovery.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694032E429F42005E9AFE /* graph-discovery.js */; };
+		A6D694052E429F42005E9AFE /* graph-discovery.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694032E429F42005E9AFE /* graph-discovery.js */; };
+		A6D694062E429F42005E9AFE /* graph-discovery.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694032E429F42005E9AFE /* graph-discovery.js */; };
+		A6D694432E44801C005E9AFE /* find-security.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694422E448015005E9AFE /* find-security.js */; };
+		A6D694442E44801C005E9AFE /* find-security.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694422E448015005E9AFE /* find-security.js */; };
+		A6D694452E44801C005E9AFE /* find-security.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694422E448015005E9AFE /* find-security.js */; };
+		A6D694462E44801C005E9AFE /* find-security.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694422E448015005E9AFE /* find-security.js */; };
+		A6D694482E448038005E9AFE /* find-constants.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694472E448035005E9AFE /* find-constants.js */; };
+		A6D694492E448038005E9AFE /* find-constants.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694472E448035005E9AFE /* find-constants.js */; };
+		A6D6944A2E448038005E9AFE /* find-constants.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694472E448035005E9AFE /* find-constants.js */; };
+		A6D6944B2E448038005E9AFE /* find-constants.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694472E448035005E9AFE /* find-constants.js */; };
+		A6D6944D2E448058005E9AFE /* find-utils.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D6944C2E448056005E9AFE /* find-utils.js */; };
+		A6D6944E2E448058005E9AFE /* find-utils.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D6944C2E448056005E9AFE /* find-utils.js */; };
+		A6D6944F2E448058005E9AFE /* find-utils.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D6944C2E448056005E9AFE /* find-utils.js */; };
+		A6D694502E448058005E9AFE /* find-utils.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D6944C2E448056005E9AFE /* find-utils.js */; };
+		A6D694522E44809B005E9AFE /* find-global-click.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694512E448097005E9AFE /* find-global-click.js */; };
+		A6D694532E44809B005E9AFE /* find-global-click.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694512E448097005E9AFE /* find-global-click.js */; };
+		A6D694542E44809B005E9AFE /* find-global-click.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694512E448097005E9AFE /* find-global-click.js */; };
+		A6D694552E44809B005E9AFE /* find-global-click.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694512E448097005E9AFE /* find-global-click.js */; };
+		A6D694572E4480AF005E9AFE /* find-segment.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694562E4480AD005E9AFE /* find-segment.js */; };
+		A6D694582E4480AF005E9AFE /* find-segment.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694562E4480AD005E9AFE /* find-segment.js */; };
+		A6D694592E4480AF005E9AFE /* find-segment.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694562E4480AD005E9AFE /* find-segment.js */; };
+		A6D6945A2E4480AF005E9AFE /* find-segment.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694562E4480AD005E9AFE /* find-segment.js */; };
+		A6D6945C2E4480BD005E9AFE /* find-text-segment.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D6945B2E4480BA005E9AFE /* find-text-segment.js */; };
+		A6D6945D2E4480BD005E9AFE /* find-text-segment.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D6945B2E4480BA005E9AFE /* find-text-segment.js */; };
+		A6D6945E2E4480BD005E9AFE /* find-text-segment.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D6945B2E4480BA005E9AFE /* find-text-segment.js */; };
+		A6D6945F2E4480BD005E9AFE /* find-text-segment.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D6945B2E4480BA005E9AFE /* find-text-segment.js */; };
+		A6D694612E4480D5005E9AFE /* find-iframe-segment.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694602E4480D1005E9AFE /* find-iframe-segment.js */; };
+		A6D694622E4480D5005E9AFE /* find-iframe-segment.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694602E4480D1005E9AFE /* find-iframe-segment.js */; };
+		A6D694632E4480D5005E9AFE /* find-iframe-segment.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694602E4480D1005E9AFE /* find-iframe-segment.js */; };
+		A6D694642E4480D5005E9AFE /* find-iframe-segment.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694602E4480D1005E9AFE /* find-iframe-segment.js */; };
+		A6D694662E4480E6005E9AFE /* find-match.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694652E4480E3005E9AFE /* find-match.js */; };
+		A6D694672E4480E6005E9AFE /* find-match.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694652E4480E3005E9AFE /* find-match.js */; };
+		A6D694682E4480E6005E9AFE /* find-match.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694652E4480E3005E9AFE /* find-match.js */; };
+		A6D694692E4480E6005E9AFE /* find-match.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694652E4480E3005E9AFE /* find-match.js */; };
+		A6D6946B2E448116005E9AFE /* find-engine.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D6946A2E448113005E9AFE /* find-engine.js */; };
+		A6D6946C2E448116005E9AFE /* find-engine.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D6946A2E448113005E9AFE /* find-engine.js */; };
+		A6D6946D2E448116005E9AFE /* find-engine.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D6946A2E448113005E9AFE /* find-engine.js */; };
+		A6D6946E2E448116005E9AFE /* find-engine.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D6946A2E448113005E9AFE /* find-engine.js */; };
+		A6D694702E44812C005E9AFE /* find-api.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D6946F2E44812A005E9AFE /* find-api.js */; };
+		A6D694712E44812C005E9AFE /* find-api.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D6946F2E44812A005E9AFE /* find-api.js */; };
+		A6D694722E44812C005E9AFE /* find-api.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D6946F2E44812A005E9AFE /* find-api.js */; };
+		A6D694732E44812C005E9AFE /* find-api.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D6946F2E44812A005E9AFE /* find-api.js */; };
+		A6D694B92E450A9E005E9AFE /* find-highlighter.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694B82E450A9A005E9AFE /* find-highlighter.js */; };
+		A6D694BA2E450A9E005E9AFE /* find-highlighter.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694B82E450A9A005E9AFE /* find-highlighter.js */; };
+		A6D694BB2E450A9E005E9AFE /* find-highlighter.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694B82E450A9A005E9AFE /* find-highlighter.js */; };
+		A6D694BC2E450A9E005E9AFE /* find-highlighter.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694B82E450A9A005E9AFE /* find-highlighter.js */; };
 		A6D7D2222BBE0E7B00D884F5 /* FakeWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D173858126C820A004622DC /* FakeWindow.m */; };
 		A6D7E0712C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D7E0702C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift */; };
 		A6D7E0722C1B6AF5007D0A37 /* iTermProfileSearchToken.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D468BBF1B056CD600226083 /* iTermProfileSearchToken.m */; };
@@ -6351,7 +6396,6 @@
 		A60383162943AF1500FE11C2 /* iTerm2SandboxedWorker-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTerm2SandboxedWorker-Bridging-Header.h"; sourceTree = "<group>"; };
 		A603831F294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict */ = {isa = PBXFileReference; lastKnownFileType = text.plist; name = iTermCopyModeKeyBindings.dict; path = OtherResources/iTermCopyModeKeyBindings.dict; sourceTree = SOURCE_ROOT; };
 		A603A96729B12CEA000E9E98 /* SearchTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SearchTests.m; sourceTree = "<group>"; };
-		A603A96929B12D92000E9E98 /* zalgo_for_unit_test.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = zalgo_for_unit_test.txt; sourceTree = "<group>"; };
 		A603E9FA283EE53C0028B648 /* SecretServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecretServer.swift; sourceTree = "<group>"; };
 		A603E9FC283EE9BD0028B648 /* ObjCExceptions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObjCExceptions.h; sourceTree = "<group>"; };
 		A603E9FD283EE9BD0028B648 /* ObjCExceptions.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ObjCExceptions.m; sourceTree = "<group>"; };
@@ -7673,7 +7717,6 @@
 		A68A4C8B2128ED1300424F8A /* statusbar.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = statusbar.py; sourceTree = "<group>"; };
 		A68AC8F11F05C0860023A216 /* NSBundle+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSBundle+iTerm.h"; sourceTree = "<group>"; };
 		A68AC8F21F05C0860023A216 /* NSBundle+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSBundle+iTerm.m"; sourceTree = "<group>"; };
-		A68AC8F51F0823100023A216 /* iTermFindOnPageHelperTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFindOnPageHelperTest.m; sourceTree = "<group>"; };
 		A68ADA0429CCBE420008E092 /* CommandInfoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandInfoViewController.swift; sourceTree = "<group>"; };
 		A68ADA0529CCBE420008E092 /* CommandInfoViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = CommandInfoViewController.xib; sourceTree = "<group>"; };
 		A68ADA0A29D397400008E092 /* Progress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Progress.swift; sourceTree = "<group>"; };
@@ -8430,6 +8473,18 @@
 		A6D693FB2E41B9AF005E9AFE /* SFSymbolEnum.generated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSymbolEnum.generated.swift; sourceTree = "<group>"; };
 		A6D693FF2E41C094005E9AFE /* SFSymbolEnum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SFSymbolEnum.h; sourceTree = "<group>"; };
 		A6D694002E41C094005E9AFE /* SFSymbolEnum.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SFSymbolEnum.m; sourceTree = "<group>"; };
+		A6D694032E429F42005E9AFE /* graph-discovery.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "graph-discovery.js"; sourceTree = "<group>"; };
+		A6D694422E448015005E9AFE /* find-security.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "find-security.js"; sourceTree = "<group>"; };
+		A6D694472E448035005E9AFE /* find-constants.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "find-constants.js"; sourceTree = "<group>"; };
+		A6D6944C2E448056005E9AFE /* find-utils.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "find-utils.js"; sourceTree = "<group>"; };
+		A6D694512E448097005E9AFE /* find-global-click.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "find-global-click.js"; sourceTree = "<group>"; };
+		A6D694562E4480AD005E9AFE /* find-segment.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "find-segment.js"; sourceTree = "<group>"; };
+		A6D6945B2E4480BA005E9AFE /* find-text-segment.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "find-text-segment.js"; sourceTree = "<group>"; };
+		A6D694602E4480D1005E9AFE /* find-iframe-segment.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "find-iframe-segment.js"; sourceTree = "<group>"; };
+		A6D694652E4480E3005E9AFE /* find-match.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "find-match.js"; sourceTree = "<group>"; };
+		A6D6946A2E448113005E9AFE /* find-engine.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "find-engine.js"; sourceTree = "<group>"; };
+		A6D6946F2E44812A005E9AFE /* find-api.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "find-api.js"; sourceTree = "<group>"; };
+		A6D694B82E450A9A005E9AFE /* find-highlighter.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "find-highlighter.js"; sourceTree = "<group>"; };
 		A6D7E0702C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileStyleSearchEngine.swift; sourceTree = "<group>"; };
 		A6D7E0752C236D54007D0A37 /* LineBlockMetadataArray.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LineBlockMetadataArray.h; sourceTree = "<group>"; };
 		A6D7E0762C236D54007D0A37 /* LineBlockMetadataArray.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LineBlockMetadataArray.m; sourceTree = "<group>"; };
@@ -12764,6 +12819,18 @@
 			isa = PBXGroup;
 			children = (
 				A6D90D652E2FF7E100BA9F4F /* custom-find.js */,
+				A6D6946F2E44812A005E9AFE /* find-api.js */,
+				A6D694472E448035005E9AFE /* find-constants.js */,
+				A6D6946A2E448113005E9AFE /* find-engine.js */,
+				A6D694512E448097005E9AFE /* find-global-click.js */,
+				A6D694B82E450A9A005E9AFE /* find-highlighter.js */,
+				A6D694602E4480D1005E9AFE /* find-iframe-segment.js */,
+				A6D694652E4480E3005E9AFE /* find-match.js */,
+				A6D694422E448015005E9AFE /* find-security.js */,
+				A6D694562E4480AD005E9AFE /* find-segment.js */,
+				A6D6945B2E4480BA005E9AFE /* find-text-segment.js */,
+				A6D6944C2E448056005E9AFE /* find-utils.js */,
+				A6D694032E429F42005E9AFE /* graph-discovery.js */,
 				A6F7D4D02E03BE3A0065D09C /* iTermBrowserFindManager.swift */,
 			);
 			path = "Find on Page";
@@ -13255,11 +13322,9 @@
 			isa = PBXGroup;
 			children = (
 				A6BBBFD42CC87713000A697C /* SearchEngineTests.swift */,
-				A603A96929B12D92000E9E98 /* zalgo_for_unit_test.txt */,
 				A6C7641E1B45CB2800E3C992 /* Supporting Files */,
 				C6675EB91C4FE95E0041173B /* Utilities */,
 				A6BC9B20214A395A00F50C09 /* iTermVariablesTest.m */,
-				A68AC8F51F0823100023A216 /* iTermFindOnPageHelperTest.m */,
 				A60BB3901EB6A56800D76C09 /* iTermProcessCollectionTest.m */,
 				A6D22B431BC9D368004084E0 /* iTermShellHistoryTest.m */,
 				A6BDB0401B45E8BA00F511E6 /* iTermEquivalenceClassSetTest.m */,
@@ -15943,6 +16008,7 @@
 			files = (
 				A6F7A70C213CB143004DE961 /* StatusBarIconNetwork.png in Resources */,
 				A67A508C26CCD3E300281693 /* xterm-256color in Resources */,
+				A6D694722E44812C005E9AFE /* find-api.js in Resources */,
 				A6E7AEAE214394F600DE9F3B /* graphic_database.png in Resources */,
 				1D6ED97619AEA20D005A7799 /* close.png in Resources */,
 				A6E7AE63214394CA00DE9F3B /* graphic_atom@2x.png in Resources */,
@@ -15953,6 +16019,7 @@
 				A6A3EDD52E0D050300D711DA /* extract-text-at-point.js in Resources */,
 				A686A11A1C86A6DE0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */,
 				A6F7A724213CB143004DE961 /* StatusBarIconCPU.png in Resources */,
+				A6D6946B2E448116005E9AFE /* find-engine.js in Resources */,
 				A6D90D622E2F5F4900BA9F4F /* ai-prompt-help.md in Resources */,
 				5308BF8F228283CE004BECAC /* StatusBarIconBattery.png in Resources */,
 				A67D0D5E1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib in Resources */,
@@ -16032,6 +16099,7 @@
 				A6A30ED32950EA540050F01A /* aiterm@2x.png in Resources */,
 				A6EC8048281B391900493544 /* TextViewPortholeRenderer-dark.css in Resources */,
 				A68ADA0929CCBE4C0008E092 /* CommandInfoViewController.xib in Resources */,
+				A6D694592E4480AF005E9AFE /* find-segment.js in Resources */,
 				A6F7D51A2E05F3A30065D09C /* write-password.js in Resources */,
 				A6F18B4C2AE2F39C006C08EE /* uniE0B6_left-half-circle-thick.pdf in Resources */,
 				A67D0D461A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib in Resources */,
@@ -16072,6 +16140,7 @@
 				A697CE132D9764E00031583F /* CapturedOutputMenuTip.png in Resources */,
 				A6F18B3D2AE2F39C006C08EE /* uniE0CE_lego_separator.pdf in Resources */,
 				A665C1FC2440461500F623F0 /* WindowCorner@2x.png in Resources */,
+				A6D6944A2E448038005E9AFE /* find-constants.js in Resources */,
 				A6FE7A822E0E188F00BEBCE4 /* dragdrop-demo.html in Resources */,
 				A6F7A721213CB143004DE961 /* StatusBarIconCPU@2x.png in Resources */,
 				A690F7031B424C55009F76D8 /* Media.xcassets in Resources */,
@@ -16263,6 +16332,7 @@
 				A66351482B659309009B93F7 /* PinnedIndicator@2x.png in Resources */,
 				A697CE682D97C2720031583F /* CoprocessMenuTip.png in Resources */,
 				A697CE692D97C2720031583F /* CoprocessMenuTip@2x.png in Resources */,
+				A6D694BA2E450A9E005E9AFE /* find-highlighter.js in Resources */,
 				1D6ED9BD19AEA20D005A7799 /* BroadcastInput.png in Resources */,
 				A67F618C214395A70093940A /* graphic_nginx@2x.png in Resources */,
 				A68615582D77E98D00E9CCC2 /* command.png in Resources */,
@@ -16327,6 +16397,8 @@
 				A629F5BB23B081DD00C2F16B /* MouseReportingCursorOverlay@2x.png in Resources */,
 				A6A3EDE22E0D149D00D711DA /* selection-test.html in Resources */,
 				A6F31A3C295BC58C00C1A51E /* uniE0D2_PowerlineExtraSymbols.pdf in Resources */,
+				A6D694522E44809B005E9AFE /* find-global-click.js in Resources */,
+				A6D694682E4480E6005E9AFE /* find-match.js in Resources */,
 				A65E6F572547F1D5008A4866 /* WindowCorner_Square@2x.png in Resources */,
 				A6CBB8E72E0A6C5000B2CCCB /* enter-reader-mode.js in Resources */,
 				1D8BBA871B31DC160005A852 /* ChevronDown@2x.png in Resources */,
@@ -16425,6 +16497,7 @@
 				A6A1BCC629CB700400646E9F /* square.and.arrow.down.png in Resources */,
 				A6F7A73C213CB143004DE961 /* StatusBarIconClock.png in Resources */,
 				A6E7AE5D214394CA00DE9F3B /* graphic_bullhorn.png in Resources */,
+				A6D694052E429F42005E9AFE /* graph-discovery.js in Resources */,
 				A697CDF42D975FEB0031583F /* SelectionRespectsSoftBoundariesMenuTip.png in Resources */,
 				A697CDF52D975FEB0031583F /* SelectionRespectsSoftBoundariesMenuTip@2x.png in Resources */,
 				A6F7D4D52E03D99F0065D09C /* view-source.html in Resources */,
@@ -16435,6 +16508,7 @@
 				1D6ED9DE19AEA20D005A7799 /* PrefsAdvanced.png in Resources */,
 				A6EC5FB72B98398500F84417 /* Onboarding-OCL.png in Resources */,
 				A6FE7AB72E0F27DD00BEBCE4 /* navigate-to-named-mark.js in Resources */,
+				A6D6945F2E4480BD005E9AFE /* find-text-segment.js in Resources */,
 				A629F58F23AF437400C2F16B /* utilities-manifest.txt in Resources */,
 				1D8BBA751B30F7FB0005A852 /* Dismiss.png in Resources */,
 				1D6ED9DF19AEA20D005A7799 /* PrefsGeneral@2x.png in Resources */,
@@ -16470,6 +16544,7 @@
 				A6F7D50E2E05CEDA0065D09C /* history-page.html in Resources */,
 				A67D0D6A1A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib in Resources */,
 				A6B9662425F95DAF00D45CBD /* iTermTriggersPanel.xib in Resources */,
+				A6D694452E44801C005E9AFE /* find-security.js in Resources */,
 				A68615682D78D3AB00E9CCC2 /* sparkles.png in Resources */,
 				A69FF3C12E13A23600AFF7A8 /* update-mark-positions.js in Resources */,
 				A6A1BCC929CB700400646E9F /* square.and.arrow.up.png in Resources */,
@@ -16484,6 +16559,7 @@
 				1D6ED9E419AEA20D005A7799 /* PrefsProfile.png in Resources */,
 				1D6ED9E519AEA20D005A7799 /* PrefsProfile@2x.png in Resources */,
 				A602AAE52B0BCDB100E6C965 /* whitebox_logo@2x.png in Resources */,
+				A6D6944E2E448058005E9AFE /* find-utils.js in Resources */,
 				A6F2F21A250757FE00FC227F /* PrefsShortcuts@2x.png in Resources */,
 				1D6ED9E619AEA20D005A7799 /* PrefsKeyboard.png in Resources */,
 				A67F61FA2143976F0093940A /* graphic_icons.json in Resources */,
@@ -16502,6 +16578,7 @@
 				A6D16EB72E07ED050099139D /* welcome-page.html in Resources */,
 				A610941F2A4A213D00AC2268 /* key-light.png in Resources */,
 				1D6ED9E819AEA20D005A7799 /* PrefsMouse.png in Resources */,
+				A6D694612E4480D5005E9AFE /* find-iframe-segment.js in Resources */,
 				A61220ED2E106F9800F48E64 /* adblock-css-injection.js in Resources */,
 				A6E7AE8E214394DD00DE9F3B /* graphic_composer@2x.png in Resources */,
 				A60D02432687F86E00E19362 /* iTermStatusBarKnobFontViewController.xib in Resources */,
@@ -16568,6 +16645,7 @@
 				A69FF3C02E13A23600AFF7A8 /* update-mark-positions.js in Resources */,
 				A697CDBB2D975AE20031583F /* RenderNatively@2x.png in Resources */,
 				A697CDBC2D975AE20031583F /* AIExplainTip.jpg in Resources */,
+				A6D6946C2E448116005E9AFE /* find-engine.js in Resources */,
 				A697CDBD2D975AE20031583F /* RenderNatively.png in Resources */,
 				A697CDBE2D975AE20031583F /* TmuxDashboard@2x.png in Resources */,
 				A697CDBF2D975AE20031583F /* AIWatching@2x.png in Resources */,
@@ -16575,6 +16653,7 @@
 				A697101418DFA7F9007E901D /* closebutton@2x.png in Resources */,
 				A6FE7AC02E0F418900BEBCE4 /* get-viewport-center-xpath.js in Resources */,
 				A67F61AE214395B70093940A /* graphic_psql.png in Resources */,
+				A6D694B92E450A9E005E9AFE /* find-highlighter.js in Resources */,
 				A65D97C024B19D2600DF45F9 /* iTermMinimalComposerViewController.xib in Resources */,
 				A6E7AE6B214394CA00DE9F3B /* graphic_bower.png in Resources */,
 				A6F18B572AE2F39C006C08EE /* uniE0B4_right-half-circle-thick.pdf in Resources */,
@@ -16588,6 +16667,7 @@
 				A67F615F214395990093940A /* graphic_monitor@2x.png in Resources */,
 				A697CDEA2D975E680031583F /* ActionsMenuTip.jpg in Resources */,
 				A697CDEB2D975E680031583F /* ActionsMenuTip@2x.jpg in Resources */,
+				A6D694552E44809B005E9AFE /* find-global-click.js in Resources */,
 				A6F7A744213CB143004DE961 /* StatusBarIconPaste.png in Resources */,
 				A6D90D542E2EF19F00BA9F4F /* turndown.browser.umd.js in Resources */,
 				A697CE802D97C5950031583F /* BurySessionMenuTip@2x.png in Resources */,
@@ -16691,6 +16771,7 @@
 				A6B577D82C0A970F003FEB4F /* ai-plugin.sb in Resources */,
 				A65E6F562547F1D5008A4866 /* WindowCorner_Square@2x.png in Resources */,
 				A6E312CE2E3C1238008222DE /* copy-mode-util.js in Resources */,
+				A6D6945A2E4480AF005E9AFE /* find-segment.js in Resources */,
 				A62DBB9D20F47CFA008B63D1 /* GoForward.png in Resources */,
 				A67F61F92143976F0093940A /* graphic_icons.json in Resources */,
 				A697CE3C2D976BB00031583F /* ComposerMenuTip@2x.png in Resources */,
@@ -16760,6 +16841,7 @@
 				A6E312C62E3C11F3008222DE /* copy-mode-cursor-movement.js in Resources */,
 				A6F7D50F2E05CEDA0065D09C /* history-page.html in Resources */,
 				A67F118118D82B9500B23C7B /* PrefsAdvanced.png in Resources */,
+				A6D6944F2E448058005E9AFE /* find-utils.js in Resources */,
 				A67F61D1214395C60093940A /* graphic_ruby.png in Resources */,
 				A62DBB9A20F47CFA008B63D1 /* GoBack.png in Resources */,
 				A65B72B21B33C07D00F947A7 /* NextTip.png in Resources */,
@@ -16804,6 +16886,7 @@
 				A6EC0B072C87DF5E00598D20 /* uniE0D7_Powerline_normal-left-inverse-cutout.pdf in Resources */,
 				A67F61F62143976F0093940A /* graphic_colors.json in Resources */,
 				A67F61AB214395B70093940A /* graphic_rails@2x.png in Resources */,
+				A6D694432E44801C005E9AFE /* find-security.js in Resources */,
 				A67D0D871A2EE12A003A8B35 /* PseudoTerminal.strings in Resources */,
 				A69B457C1967B04300F5444D /* BrokenPipeDivider.png in Resources */,
 				5308BF9622828A28004BECAC /* StatusBarIconCharging.png in Resources */,
@@ -16869,11 +16952,13 @@
 				A6E7AEB3214394F600DE9F3B /* graphic_ethereum@2x.png in Resources */,
 				A67F6182214395A70093940A /* graphic_nginx.png in Resources */,
 				A68615622D78D37500E9CCC2 /* clock.png in Resources */,
+				A6D694702E44812C005E9AFE /* find-api.js in Resources */,
 				A67F618E214395A70093940A /* graphic_nodejs@2x.png in Resources */,
 				A6DB14652D6D09C800266394 /* AIStreaming.png in Resources */,
 				A67F61E2214395D50093940A /* graphic_zip.png in Resources */,
 				A6EC8047281B391900493544 /* TextViewPortholeRenderer-dark.css in Resources */,
 				A6F7A74D213CB143004DE961 /* StatusBarIconComposer@2x.png in Resources */,
+				A6D694692E4480E6005E9AFE /* find-match.js in Resources */,
 				A65429B320C4931100CE71B1 /* iTermParameterPanelWindowController.xib in Resources */,
 				A6E312CA2E3C1219008222DE /* copy-mode-impl.js in Resources */,
 				A69FF3BD2E139DBA00AFF7A8 /* extract-text-fragment.js in Resources */,
@@ -16926,6 +17011,7 @@
 				A6971F3620D8D3CB0075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib in Resources */,
 				A6E7AE62214394CA00DE9F3B /* graphic_atom@2x.png in Resources */,
 				A697CDE22D975C540031583F /* SnippetsTip.jpg in Resources */,
+				A6D6944B2E448038005E9AFE /* find-constants.js in Resources */,
 				A6F7D5052E05C8650065D09C /* detect-favicon.js in Resources */,
 				A697CDE32D975C540031583F /* SnippetsTip@2x.jpg in Resources */,
 				A6F7A747213CB143004DE961 /* StatusBarIconPaste@2x.png in Resources */,
@@ -16959,6 +17045,7 @@
 				A67F6168214395990093940A /* graphic_nano.png in Resources */,
 				536EF5B923F6684D00B81875 /* it2run in Resources */,
 				A6F2F21C250757FE00FC227F /* PrefsShortcuts.png in Resources */,
+				A6D694042E429F42005E9AFE /* graph-discovery.js in Resources */,
 				A6F7D4D72E03D99F0065D09C /* view-source.html in Resources */,
 				A65D7CB221E1EBCB00E3D81C /* StopStatusIcon.png in Resources */,
 				A6B4832B29D73DA10055E24A /* placeholdertext.fill.png in Resources */,
@@ -16994,6 +17081,7 @@
 				A65D7CB321E1EBCB00E3D81C /* StopStatusIcon@2x.png in Resources */,
 				A686C1961ADF62F200906FAE /* Zoomed.png in Resources */,
 				A636C3B922891BD900A83E2F /* StatusBarIconNoBattery@2x.png in Resources */,
+				A6D694632E4480D5005E9AFE /* find-iframe-segment.js in Resources */,
 				A62CD06627E9124F00215E92 /* askpass.sh in Resources */,
 				A6F31A3B295BC58C00C1A51E /* uniE0D2_PowerlineExtraSymbols.pdf in Resources */,
 				A6DB145B2D6CE22400266394 /* CommandIcon.png in Resources */,
@@ -17058,6 +17146,7 @@
 				A697CE7D2D97C3FA0031583F /* TriggersMenuTip@2x.png in Resources */,
 				A697CEB82D987C5A0031583F /* OpenQuicklyNamedMark.png in Resources */,
 				A6D90D682E2FF7E100BA9F4F /* custom-find.js in Resources */,
+				A6D6945E2E4480BD005E9AFE /* find-text-segment.js in Resources */,
 				A697CEB92D987C5A0031583F /* OpenQuicklyNamedMark@2x.png in Resources */,
 				A6F7A732213CB143004DE961 /* StatusBarIconGitBranch.png in Resources */,
 				A67F61C8214395C60093940A /* graphic_search.png in Resources */,
@@ -17194,6 +17283,7 @@
 				1DBBA5DE1B3CB0590026E3B6 /* restore-arrangement.png in Resources */,
 				A67D0D471A2EE12A003A8B35 /* CommandHistoryPopup.xib in Resources */,
 				A6F2F218250757FE00FC227F /* PrefsShortcuts@2x.png in Resources */,
+				A6D694BC2E450A9E005E9AFE /* find-highlighter.js in Resources */,
 				A6EC47C221EC623D000E1321 /* iTermOnboardingWindowController.xib in Resources */,
 				A6E7AE55214394CA00DE9F3B /* graphic_bq.png in Resources */,
 				A629F57923AF2DD900C2F16B /* iterm2_shell_integration.bash in Resources */,
@@ -17224,6 +17314,7 @@
 				A66F52D32106F6F100571168 /* gitdown@2x.png in Resources */,
 				A6FE7AB82E0F27DD00BEBCE4 /* navigate-to-named-mark.js in Resources */,
 				A61BB46421CA2D5A0027F47D /* iTerm2Script.icns in Resources */,
+				A6D694662E4480E6005E9AFE /* find-match.js in Resources */,
 				A6CB24A22C68149100005824 /* it2attention in Resources */,
 				A67D0D8F1A2EE12A003A8B35 /* TmuxDashboard.xib in Resources */,
 				A66DB8331C8E4C2E00233E88 /* ChangeProfile@2x.png in Resources */,
@@ -17290,10 +17381,13 @@
 				A6F370762DAB193900A0A59E /* folder@2x.png in Resources */,
 				A6F18B3E2AE2F39C006C08EE /* uniE0B0_Powerline_normal-left.pdf in Resources */,
 				1D5FDD9B1208E91100C46BA3 /* Warning.png in Resources */,
+				A6D694532E44809B005E9AFE /* find-global-click.js in Resources */,
 				A663010B19CFCE74004AF81C /* SuppressAllOutput@2x.png in Resources */,
 				A67F61F0214395D50093940A /* graphic_zip@2x.png in Resources */,
 				A6E7AE89214394DD00DE9F3B /* graphic_compile.png in Resources */,
 				A6B70FBD19830C37007A4284 /* dead@2x.png in Resources */,
+				A6D694492E448038005E9AFE /* find-constants.js in Resources */,
+				A6D694582E4480AF005E9AFE /* find-segment.js in Resources */,
 				A6FEA28B1CF4DD2900376F28 /* iTermHotkeyPreferencesWindowController.xib in Resources */,
 				1DB40A411B1FDC75005B83C7 /* NoColor@2x.png in Resources */,
 				A67D0D591A2EE12A003A8B35 /* iTerm.strings in Resources */,
@@ -17316,6 +17410,7 @@
 				A6F7A722213CB143004DE961 /* StatusBarIconCPU.png in Resources */,
 				A697CEC12D98C3560031583F /* SparklesSquareFilledOnSquare.png in Resources */,
 				A6EC5FB92B98404300F84417 /* Onboarding-AI.png in Resources */,
+				A6D694462E44801C005E9AFE /* find-security.js in Resources */,
 				A6CBB82E2E0A284100B2CCCB /* add-saved-attributes.js in Resources */,
 				A6F7A72E213CB143004DE961 /* StatusBarIconLoupe.png in Resources */,
 				537A1FB822168DF800FBEE5A /* MinimalFindView.xib in Resources */,
@@ -17423,6 +17518,7 @@
 				A6DB145C2D6CE22400266394 /* CommandIcon.png in Resources */,
 				A68615692D78D3AB00E9CCC2 /* sparkles.png in Resources */,
 				A6153D4F21F30A9C002976FC /* iTermJobTreeViewController.xib in Resources */,
+				A6D694622E4480D5005E9AFE /* find-iframe-segment.js in Resources */,
 				A66E804B27544E61003ABDF9 /* SecureKeyboardEntry@2x.png in Resources */,
 				A68E33371DE746F5003F1D8E /* Previous Mark Touch Bar Icon.png in Resources */,
 				A6D1784821BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.xib in Resources */,
@@ -17514,6 +17610,7 @@
 				A697CEBB2D987C5A0031583F /* OpenQuicklyNamedMark@2x.png in Resources */,
 				A697CDFC2D9760F00031583F /* FilterMenuTip@2x.jpg in Resources */,
 				A697CDFD2D9760F00031583F /* FilterMenuTip.jpg in Resources */,
+				A6D694502E448058005E9AFE /* find-utils.js in Resources */,
 				A6AC04C921F0FDBD00CD2774 /* StatusBarComposerExpand.png in Resources */,
 				A6D90D5A2E2EF2B900BA9F4F /* convert-to-markdown.js in Resources */,
 				A6BEE47726E0A624009C0C2C /* FilterIndicator@2x.png in Resources */,
@@ -17662,6 +17759,7 @@
 				9D737D5F17495B4100B3334D /* PrefsGeneral.png in Resources */,
 				1D99C8E71BD59C37001EE1FC /* SearchCursor@2x.png in Resources */,
 				A60BB3861EB54BD100D76C09 /* CopyMode.png in Resources */,
+				A6D6946D2E448116005E9AFE /* find-engine.js in Resources */,
 				A6B70FC119830F0D007A4284 /* NewOutput.png in Resources */,
 				1DA76A0B1B30892900CB272A /* iTermTipWindowController.xib in Resources */,
 				A67F61A7214395B70093940A /* graphic_rails.png in Resources */,
@@ -17721,6 +17819,7 @@
 				A67F6170214395990093940A /* graphic_mysql.png in Resources */,
 				A6A30ED12950EA540050F01A /* aiterm@2x.png in Resources */,
 				9DB3D6E1176C8F0B0071CCF8 /* PrefsAppearance@2x.png in Resources */,
+				A6D694062E429F42005E9AFE /* graph-discovery.js in Resources */,
 				A6E7AEB8214394F600DE9F3B /* graphic_ethereum.png in Resources */,
 				A6A1BCC729CB700400646E9F /* square.and.arrow.up.png in Resources */,
 				A6F18B382AE2F39C006C08EE /* uniE0B5_right-half-circle-thin.pdf in Resources */,
@@ -17750,6 +17849,7 @@
 				A67F61ED214395D50093940A /* graphic_vim@2x.png in Resources */,
 				1DEF5E6D185F889600300319 /* Alert.png in Resources */,
 				9DB3D6E4176CB4D80071CCF8 /* PrefsProfile.png in Resources */,
+				A6D694732E44812C005E9AFE /* find-api.js in Resources */,
 				9DB3D6E5176CB4D80071CCF8 /* PrefsProfile@2x.png in Resources */,
 				9DB3D6E8176CBC0C0071CCF8 /* PrefsKeyboard.png in Resources */,
 				A6E16C6224A85D5F00C6DB06 /* BigSurAddTab.png in Resources */,
@@ -17775,6 +17875,7 @@
 				A6A64E642508BE650040490B /* StatusBarIconSnippet@2x.png in Resources */,
 				A68615642D78D39100E9CCC2 /* document.png in Resources */,
 				A6CB249E2C68149100005824 /* it2setkeylabel in Resources */,
+				A6D6945C2E4480BD005E9AFE /* find-text-segment.js in Resources */,
 				A69FF3BF2E13A23600AFF7A8 /* update-mark-positions.js in Resources */,
 				A6E7AE67214394CA00DE9F3B /* graphic_bullhorn@2x.png in Resources */,
 				9DB3D6ED176CC47E0071CCF8 /* PrefsMouse@2x.png in Resources */,
@@ -17828,11 +17929,22 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A6D694482E448038005E9AFE /* find-constants.js in Resources */,
+				A6D694BB2E450A9E005E9AFE /* find-highlighter.js in Resources */,
+				A6D694642E4480D5005E9AFE /* find-iframe-segment.js in Resources */,
+				A6D694712E44812C005E9AFE /* find-api.js in Resources */,
+				A6D6944D2E448058005E9AFE /* find-utils.js in Resources */,
 				A6A3CDC92E36F4EC00710B09 /* custom-find.js in Resources */,
+				A6D694572E4480AF005E9AFE /* find-segment.js in Resources */,
+				A6D6945D2E4480BD005E9AFE /* find-text-segment.js in Resources */,
+				A6D694442E44801C005E9AFE /* find-security.js in Resources */,
 				A6A3CDAB2E36F34300710B09 /* load(1).php in Resources */,
+				A6D694542E44809B005E9AFE /* find-global-click.js in Resources */,
 				A6A3CDAC2E36F34300710B09 /* load(2).php in Resources */,
 				A6A3CDBE2E36F34300710B09 /* load.php in Resources */,
+				A6D6946E2E448116005E9AFE /* find-engine.js in Resources */,
 				A6A3CDC52E36F34300710B09 /* secretaryofstate.html in Resources */,
+				A6D694672E4480E6005E9AFE /* find-match.js in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -18084,7 +18196,6 @@
 				A6E15195275DFCB400D0F41C /* PTYTextViewTest-golden-travis-testSurrogatePair.png in Resources */,
 				A6E151DB275DFCB400D0F41C /* PTYTextViewTest-golden-nonretina-testUnderlineCursor.png in Resources */,
 				A6E151BE275DFCB400D0F41C /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultBackgroundOnlyUnderCursor.png in Resources */,
-				A603A96A29B12D93000E9E98 /* zalgo_for_unit_test.txt in Resources */,
 				A6BDB0B31B45FD8300F511E6 /* TestBackground.png in Resources */,
 				A6E15212275DFCB400D0F41C /* PTYTextViewTest-golden-nonretina-testBadge.png in Resources */,
 				A6E15159275DFCB400D0F41C /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allWhite.png in Resources */,
@@ -19819,7 +19930,6 @@
 				A608CCFF214DE7C1007A7B87 /* PTYSessionTest.m in Sources */,
 				A63493FE23F277020047C31B /* iTermPromiseTests.m in Sources */,
 				A608CCFA214DE7C1007A7B87 /* iTermIntervalTreeTest.m in Sources */,
-				A608CCF6214DE7C1007A7B87 /* iTermFindOnPageHelperTest.m in Sources */,
 				C6675EBC1C4FE96B0041173B /* iTermSelectorSwizzler.m in Sources */,
 				A65660DB2372AA5100DC6744 /* iTermDoublyLinkedListTests.m in Sources */,
 				A608CD02214DE7C1007A7B87 /* VT100DCSParserTest.m in Sources */,
