@@ -42,7 +42,7 @@ protocol iTermBrowserWebViewDelegate: AnyObject {
     func webViewCurrentTabHasMultipleSessions(_ webView: iTermBrowserWebView) -> Bool
     func webView(_ webView: iTermBrowserWebView, didReceiveEvent: iTermBrowserWebView.Event)
     func webView(_ webView: iTermBrowserWebView, handleKeyDown event: NSEvent) -> Bool
-
+    func webViewDidChangeEffectiveAppearance(_ webView: iTermBrowserWebView)
 }
 
 @available(macOS 11.0, *)
@@ -192,6 +192,10 @@ class iTermBrowserWebView: iTermBaseWKWebView {
     }
 
     // MARK: - NSView
+
+    override func viewDidChangeEffectiveAppearance() {
+        browserDelegate?.webViewDidChangeEffectiveAppearance(self)
+    }
 
     override func keyDown(with event: NSEvent) {
         if browserDelegate?.webView(self, handleKeyDown: event) == true {

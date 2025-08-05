@@ -775,6 +775,10 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
 @available(macOS 11.0, *)
 @MainActor
 extension iTermBrowserManager: iTermBrowserWebViewDelegate {
+    func webViewDidChangeEffectiveAppearance(_ webView: iTermBrowserWebView) {
+        updateFavicon()
+    }
+
     func webView(_ webView: iTermBrowserWebView, handleKeyDown event: NSEvent) -> Bool {
         if delegate?.browserManager(self, handleKeyDown: event) == true {
             return true
@@ -1232,19 +1236,8 @@ extension iTermBrowserManager: WKNavigationDelegate {
         }
 
         // Try to detect and load favicon
-        Task {
-            do {
-                switch try await detectFavicon(webView: webView) {
-                case .left(let image):
-                    self.favicon = image
-                    notifyDelegateOfFaviconUpdate()
-                case .right(let url):
-                    loadFavicon(from: url)
-                }
-            } catch {
-                DLog("Failed to detect favicon: \(error)")
-            }
-        }
+        updateFavicon()
+
         // Update title in browser history if available
         historyController.titleDidChange(for: webView.url, title: webView.title)
         
@@ -1896,7 +1889,7 @@ extension iTermBrowserManager: iTermBrowserAutofillHandlerDelegate {
                          requestAutofillForHost host: String,
                          fields: [[String: Any]]) {
         NSLog("Autofill requested for host: \(host) with \(fields.count) fields")
-        
+
         Task {
             let contactSource = iTermBrowserAutofillContactSource()
             do {
@@ -1911,8 +1904,8 @@ extension iTermBrowserManager: iTermBrowserAutofillHandlerDelegate {
             }
         }
     }
-    
-    #if DEBUG
+
+#if DEBUG
     func debugAutofillFields() {
         guard let webView = webView else { return }
         let js = "if (window.debugAutofillFields) { window.debugAutofillFields(); }"
@@ -1922,7 +1915,25 @@ extension iTermBrowserManager: iTermBrowserAutofillHandlerDelegate {
             }
         }
     }
-    #endif
+#endif
+
+    private func updateFavicon() {
+        Task {
+            do {
+                switch try await detectFavicon(webView: webView,
+                                               appearance: webView.effectiveAppearance,
+                                               isRetina: (webView.window?.backingScaleFactor ?? 2.0) > 1) {
+                case .left(let image):
+                    self.favicon = image
+                    notifyDelegateOfFaviconUpdate()
+                case .right(let url):
+                    loadFavicon(from: url)
+                }
+            } catch {
+                DLog("Failed to detect favicon: \(error)")
+            }
+        }
+    }
 }
 
 @MainActor
