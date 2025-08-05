@@ -65,6 +65,8 @@ class iTermBrowserFindResultBundle {
 @objc(iTermBrowserFindManager)
 @MainActor
 class iTermBrowserFindManager: NSObject {
+    static let messageHandlerName = "iTermCustomFind"
+
     var delegate: iTermBrowserFindManagerDelegate? {
         set {
             defaultState.delegate = newValue
@@ -77,42 +79,12 @@ class iTermBrowserFindManager: NSObject {
     @MainActor
     fileprivate class Shared: NSObject {
         let secret: String
-        weak var webView: WKWebView?
+        weak var webView: WKWebView!
         var isJavaScriptInjected = false
 
-        init(secret: String,
-             webView: WKWebView,
-             delegate: WKScriptMessageHandler) {
+        init(secret: String) {
             self.secret = secret
-            self.webView = webView
-
-            // Load and inject the custom find JavaScript
-            let script = iTermBrowserTemplateLoader.loadTemplate(
-                named: "custom-find",
-                type: "js",
-                substitutions: ["SECRET": secret,
-                                "SCROLL_BEHAVIOR": "smooth",
-                                "TEST_FUNCTIONS": "",
-                                "TEST_IMPLS": "",
-                                "TEST_FREEZE": "" ])
-
-            let userScript = WKUserScript(
-                source: script,
-                injectionTime: .atDocumentStart,
-                forMainFrameOnly: false,
-                in: .defaultClient)
-
-            webView.configuration.userContentController.addUserScript(userScript)
-
-            // Add message handler
-            webView.configuration.userContentController.add(
-                delegate,
-                contentWorld: .defaultClient,
-                name: "iTermCustomFind")
-
-            isJavaScriptInjected = true
         }
-
     }
 
     @MainActor
@@ -336,17 +308,39 @@ class iTermBrowserFindManager: NSObject {
         }
     }
 
-    fileprivate var defaultState = State(instanceID: nil)
-    fileprivate var globalState = State(instanceID: "global")
+    fileprivate var defaultState = State(instanceID: "main_" + UUID().uuidString)
+    fileprivate var globalState = State(instanceID: "global_" + UUID().uuidString)
     private var sharedState: Shared!
     private var lastSearchWasGlobal = false
 
-    init?(webView: WKWebView) {
+    static func create() -> iTermBrowserFindManager? {
         guard let secret = String.makeSecureHexString() else {
             return nil
         }
+        return iTermBrowserFindManager(secret: secret)
+    }
+
+    private init(secret: String) {
         super.init()
-        sharedState = Shared(secret: secret, webView: webView, delegate: self)
+        self.sharedState = Shared(secret: secret)
+    }
+
+    var javascript: String {
+        sharedState.isJavaScriptInjected = true
+        return iTermBrowserTemplateLoader.loadTemplate(
+            named: "custom-find",
+            type: "js",
+            substitutions: ["SECRET": sharedState.secret,
+                            "SCROLL_BEHAVIOR": "smooth",
+                            "TEST_FUNCTIONS": "",
+                            "TEST_IMPLS": "",
+                            "TEST_FREEZE": "" ])
+    }
+
+    var webView: WKWebView? {
+        didSet {
+            sharedState.webView = webView
+        }
     }
     
     // MARK: - Public Interface
@@ -478,14 +472,8 @@ class iTermBrowserFindManager: NSObject {
     func resetFindCursor() {
         clearFind()
     }
-}
 
-// MARK: - WKScriptMessageHandler
-
-@objc
-extension iTermBrowserFindManager: WKScriptMessageHandler {
-    func userContentController(_ userContentController: WKUserContentController,
-                             didReceive message: WKScriptMessage) {
+    func handleMessage(webView: WKWebView, message: WKScriptMessage) {
         guard message.name == "iTermCustomFind",
               let body = message.body as? [String: Any],
               let sessionSecret = body["sessionSecret"] as? String,

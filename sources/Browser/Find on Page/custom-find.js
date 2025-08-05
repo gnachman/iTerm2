@@ -611,13 +611,14 @@
 
             // Find all block elements
             const blockElements = this.findBlockElements(root);
+            console.log(`Found block elements: ${blockElements}`);
 
             let globalPosition = 0;
 
             for (const element of blockElements) {
                 const block = new BlockSegment(element);
                 block.collectTextNodes(this);
-
+                console.log(`Block for element ${element} has text content ${block.textContent}`);
                 if (block.textContent.length > 0) {
                     // Set global positions - no spaces between blocks to preserve semantic boundaries
                     block.globalStart = globalPosition;
@@ -635,12 +636,18 @@
         findBlockElements(root) {
             const blocks = [];
             const seen = new Set();
+            console.log("findBlockElements: Searching for block elements.");
 
             function traverse(element) {
-                if (seen.has(element)) return;
+                console.log(`findBlockElements.traverse: ${element}`);
+                if (seen.has(element)) {
+                    console.log("findBlockElements.traverse: already saw this one");
+                    return;
+                }
                 seen.add(element);
 
                 if (isBlockElement(element)) {
+                    console.log("findBlockElements.traverse: This is a block element");
                     // Check if this block contains any child blocks
                     let hasChildBlocks = false;
                     for (const child of element.children) {
@@ -652,6 +659,7 @@
 
                     // Only add blocks that don't contain other blocks (leaf blocks)
                     if (!hasChildBlocks) {
+                        console.log(`findBlockElements.traverse: Add ${element}`);
                         blocks.push(element);
                     } else {
                         // This block has child blocks, so traverse children instead
@@ -660,14 +668,20 @@
                         }
                     }
                 } else {
+                    console.log("findBlockElements.traverse: This is not a block element");
                     // Not a block element, traverse children
                     for (const child of element.children) {
                         traverse(child);
                     }
                 }
             }
-
-            traverse(root);
+            try {
+                traverse(root);
+                console.log("findBlockElements: traverse finished");
+            } catch(e) {
+                console.error(e.toString());
+                console.error(e);
+            }
             return blocks;
         }
 
@@ -1203,7 +1217,7 @@
             const regex = this.createSearchRegex(term);
             this.log('startFind: Regex created:', regex);
 
-            this.log('startFind: Collecting blocks from document.body');
+            this.log('startFind: Collecting blocks from document.body', document.body);
             this.collectBlocks(document.body);
 
             this.log('startFind: Finding matches in', this.blocks.length, 'blocks');

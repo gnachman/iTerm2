@@ -84,12 +84,12 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private var currentPageURL: URL?
     private let localPageManager: iTermBrowserLocalPageManager
     private(set) var favicon: NSImage?
-    private var _findManager: Any?
+    private var _findManager = iTermBrowserFindManager.create()
     private var adblockManager: iTermBrowserAdblockManager?
     private var adblockHandler: iTermBrowserAdblockHandler?
     private var notificationHandler: iTermBrowserNotificationHandler?
-    private var hoverLinkHandler: iTermBrowserHoverLinkHandler?
-    private(set) var copyModeHandler: iTermBrowserCopyModeHandler?
+    private var hoverLinkHandler = iTermBrowserHoverLinkHandler()
+    private(set) var copyModeHandler = iTermBrowserCopyModeHandler.create()
     let passwordWriter = iTermBrowserPasswordWriter()
     private let selectionMonitor = iTermBrowserSelectionMonitor()
     private let contextMenuMonitor = iTermBrowserContextMenuMonitor()
@@ -168,26 +168,200 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         case copyModeHandler
     }
 
+    private func configure(_ configuration: WKWebViewConfiguration,
+                           contentManager: BrowserExtensionUserContentManager) {
+        switch user {
+        case .regular(id: let userID):
+            if #available(macOS 14, *) {
+                let profileStore = WKWebsiteDataStore(forIdentifier: userID)
+                configuration.websiteDataStore = profileStore
+            }
+        case .devNull:
+            configuration.websiteDataStore = .nonPersistent()
+        }
+
+        // Configure proxy if enabled
+        applyProxyConfiguration(to: configuration.websiteDataStore)
+
+        var logErrors = ""
+#if DEBUG
+        logErrors = iTermBrowserTemplateLoader(named: "log-errors",
+                                               type: "js",
+                                               substitutions: [:])
+#endif
+        let js = iTermBrowserTemplateLoader.loadTemplate(named: "console-log",
+                                                         type: "js",
+                                                         substitutions: ["LOG_ERRORS": logErrors])
+        configuration.userContentController.add(handlerProxy, contentWorld: .page, name: "iTerm2ConsoleLog")
+        configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: "iTerm2ConsoleLog")
+        configuration.userContentController.add(handlerProxy, contentWorld: .page, name: "iterm2-about:permissions")
+        contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
+            code: "(function() {" + js + "})();",
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: false,
+            worlds: [.page, .defaultClient],
+            identifier: UserScripts.consoleLog.rawValue))
+
+        // TODO: Ensure all of these handlers are stateless because related webviews (e.g., target=_blank) share them.
+        if let notificationHandler {
+            // This is a polyfill so it goes int he page world
+            configuration.userContentController.add(handlerProxy, contentWorld: .page, name: iTermBrowserNotificationHandler.messageHandlerName)
+            contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
+                code: notificationHandler.javascript,
+                injectionTime: .atDocumentStart,
+                forMainFrameOnly: false,
+                worlds: [.page],
+                identifier: UserScripts.notificationHandler.rawValue))
+        }
+
+        if let selectionMonitor {
+            configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: iTermBrowserSelectionMonitor.messageHandlerName)
+            contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
+                code: selectionMonitor.javascript,
+                injectionTime: .atDocumentStart,
+                forMainFrameOnly: false,
+                worlds: [.defaultClient],
+                identifier: UserScripts.selectionMonitor.rawValue))
+        }
+
+        if let contextMenuMonitor {
+            configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: iTermBrowserContextMenuMonitor.messageHandlerName)
+            contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
+                code: contextMenuMonitor.javascript,
+                injectionTime: .atDocumentStart,
+                forMainFrameOnly: false,
+                worlds: [.defaultClient],
+                identifier: UserScripts.contextMenuMonitor.rawValue))
+        }
+
+        let geolocationHandler = iTermBrowserGeolocationHandler.instance(for: user)
+        if let geolocationHandler {
+            // This goes in the page world because it is a polyfill meant to be used by pages.
+            configuration.userContentController.add(handlerProxy, contentWorld: .page, name: iTermBrowserGeolocationHandler.messageHandlerName)
+            contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
+                code: geolocationHandler.javascript,
+                injectionTime: .atDocumentStart,
+                forMainFrameOnly: false,
+                worlds: [.page],
+                identifier: UserScripts.geolocation.rawValue))
+        }
+
+        if let passwordManagerHandler = iTermBrowserPasswordManagerHandler.instance {
+            configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: iTermBrowserPasswordManagerHandler.messageHandlerName)
+            contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
+                code: passwordManagerHandler.javascript,
+                injectionTime: .atDocumentEnd,
+                forMainFrameOnly: false,
+                worlds: [.defaultClient],
+                identifier: UserScripts.passwordManager.rawValue))
+        }
+
+        if let autofillHandler {
+            autofillHandler.delegate = self
+            configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: iTermBrowserAutofillHandler.messageHandlerName)
+            contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
+                code: autofillHandler.javascript,
+                injectionTime: .atDocumentEnd,
+                forMainFrameOnly: true,
+                worlds: [.defaultClient],
+                identifier: UserScripts.autofillHandler.rawValue))
+        }
+
+        if let hoverLinkHandler = hoverLinkHandler {
+            configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: iTermBrowserHoverLinkHandler.messageHandlerName)
+            contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
+                code: hoverLinkHandler.javascript,
+                injectionTime: .atDocumentStart,
+                forMainFrameOnly: true,
+                worlds: [.defaultClient],
+                identifier: UserScripts.hoverLinkHandler.rawValue))
+        }
+
+        if let copyModeHandler {
+            contentManager.add(
+                userScript: .init(code: copyModeHandler.javascript,
+                                  injectionTime: .atDocumentStart,
+                                  forMainFrameOnly: false,
+                                  worlds: [.defaultClient],
+                                  identifier: "CopyMode"))
+        }
+
+        if let triggerHandler {
+            configuration.userContentController.add(
+                handlerProxy,
+                contentWorld: .defaultClient,
+                name: iTermBrowserTriggerHandler.messageHandlerName)
+            contentManager.add(
+                userScript: .init(code: triggerHandler.javascript,
+                                  injectionTime: .atDocumentStart,
+                                  forMainFrameOnly: true,
+                                  worlds: [.defaultClient],
+                                  identifier: "TriggerHandler"))
+        }
+        configuration.userContentController.add(
+            handlerProxy,
+            contentWorld: .defaultClient,
+            name: iTermBrowserAudioHandler.messageHandlerName)
+        configuration.userContentController.add(
+            handlerProxy,
+            contentWorld: .page,
+            name: iTermBrowserAudioHandler.messageHandlerName)
+        if let audioHandler {
+            contentManager.add(
+                userScript: .init(code: audioHandler.javascript(world: .page),
+                                  injectionTime: .atDocumentStart,
+                                  forMainFrameOnly: false,
+                                  worlds: [.page],
+                                  identifier: iTermBrowserAudioHandler.messageHandlerName))
+            contentManager.add(
+                userScript: .init(code: audioHandler.javascript(world: .defaultClient),
+                                  injectionTime: .atDocumentStart,
+                                  forMainFrameOnly: false,
+                                  worlds: [.defaultClient],
+                                  identifier: iTermBrowserAudioHandler.messageHandlerName))
+        }
+
+        if let browserFindManager {
+            contentManager.add(
+                userScript: .init(code: browserFindManager.javascript,
+                                  injectionTime: .atDocumentStart,
+                                  forMainFrameOnly: false,
+                                  worlds: [.defaultClient],
+                                  identifier: iTermBrowserFindManager.messageHandlerName))
+            configuration.userContentController.add(
+                handlerProxy,
+                contentWorld: .defaultClient,
+                name: iTermBrowserFindManager.messageHandlerName)
+        }
+        configuration.userContentController.add(readerModeManager, name: "readerMode")
+
+        // Add message handler for named mark updates
+        if namedMarkManager != nil {
+            configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: iTermBrowserNamedMarkManager.messageHandlerName)
+            configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: iTermBrowserNamedMarkManager.layoutUpdateHandlerName)
+        }
+        // Register custom URL scheme handler for iterm2-about: URLs
+        configuration.setURLSchemeHandler(handlerProxy, forURLScheme: iTermBrowserSchemes.about)
+    }
+
     private func setupWebView(configuration preferredConfiguration: WKWebViewConfiguration?,
                               profileObserver: iTermProfilePreferenceObserver,
                               pointerController: PointerController) {
         // Setup adblocking. This has to be done early because it's needed when applying the proxy configuration.
         setupAdblocking()
-
+        
         let notificationHandler = iTermBrowserNotificationHandler(user: user)
         self.notificationHandler = notificationHandler
-
+        
         let configuration: WKWebViewConfiguration
-        let contentManager: BrowserExtensionUserContentManager
+        let contentManager: BrowserExtensionUserContentManager?
         if let preferredConfiguration {
-            #warning("TODO: Somehow deal with this and content managers and root certs")
+#warning("TODO: Somehow deal with this and content managers and root certs")
             configuration = preferredConfiguration
-            contentManager = BrowserExtensionUserContentManager(
-                userContentController: configuration.userContentController,
-                userScriptFactory: BrowserExtensionUserScriptFactory())
+            contentManager = nil
         } else {
             let prefs = WKPreferences()
-
+            
             // block JS-only popups
             prefs.javaScriptCanOpenWindowsAutomatically = false
             configuration = WKWebViewConfiguration()
@@ -196,173 +370,11 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                 userContentController: configuration.userContentController,
                 userScriptFactory: BrowserExtensionUserScriptFactory())
 
-            switch user {
-            case .regular(id: let userID):
-                if #available(macOS 14, *) {
-                    let profileStore = WKWebsiteDataStore(forIdentifier: userID)
-                    configuration.websiteDataStore = profileStore
-                }
-            case .devNull:
-                configuration.websiteDataStore = .nonPersistent()
-            }
-            
-            // Configure proxy if enabled
-            applyProxyConfiguration(to: configuration.websiteDataStore)
-
-            var logErrors = ""
-#if DEBUG
-            logErrors = iTermBrowserTemplateLoader(named: "log-errors",
-                                                   type: "js",
-                                                   substitutions: [:])
-#endif
-
-            let js = iTermBrowserTemplateLoader.loadTemplate(named: "console-log",
-                                                             type: "js",
-                                                             substitutions: ["LOG_ERRORS": logErrors])
-            configuration.userContentController.add(handlerProxy, contentWorld: .page, name: "iTerm2ConsoleLog")
-            configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: "iTerm2ConsoleLog")
-            configuration.userContentController.add(handlerProxy, contentWorld: .page, name: "iterm2-about:permissions")
-            contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
-                code: "(function() {" + js + "})();",
-                injectionTime: .atDocumentStart,
-                forMainFrameOnly: false,
-                worlds: [.page, .defaultClient],
-                identifier: UserScripts.consoleLog.rawValue))
-
-            // TODO: Ensure all of these handlers are stateless because related webviews (e.g., target=_blank) share them.
-            if let notificationHandler {
-                // This is a polyfill so it goes int he page world
-                configuration.userContentController.add(handlerProxy, contentWorld: .page, name: iTermBrowserNotificationHandler.messageHandlerName)
-                contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
-                    code: notificationHandler.javascript,
-                    injectionTime: .atDocumentStart,
-                    forMainFrameOnly: false,
-                    worlds: [.page],
-                    identifier: UserScripts.notificationHandler.rawValue))
-            }
-
-            if let selectionMonitor {
-                configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: iTermBrowserSelectionMonitor.messageHandlerName)
-                contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
-                    code: selectionMonitor.javascript,
-                    injectionTime: .atDocumentStart,
-                    forMainFrameOnly: false,
-                    worlds: [.defaultClient],
-                    identifier: UserScripts.selectionMonitor.rawValue))
-            }
-
-            if let contextMenuMonitor {
-                configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: iTermBrowserContextMenuMonitor.messageHandlerName)
-                contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
-                    code: contextMenuMonitor.javascript,
-                    injectionTime: .atDocumentStart,
-                    forMainFrameOnly: false,
-                    worlds: [.defaultClient],
-                    identifier: UserScripts.contextMenuMonitor.rawValue))
-            }
-
-            let geolocationHandler = iTermBrowserGeolocationHandler.instance(for: user)
-            if let geolocationHandler {
-                // This goes in the page world because it is a polyfill meant to be used by pages.
-                configuration.userContentController.add(handlerProxy, contentWorld: .page, name: iTermBrowserGeolocationHandler.messageHandlerName)
-                contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
-                    code: geolocationHandler.javascript,
-                    injectionTime: .atDocumentStart,
-                    forMainFrameOnly: false,
-                    worlds: [.page],
-                    identifier: UserScripts.geolocation.rawValue))
-            }
-
-            if let passwordManagerHandler = iTermBrowserPasswordManagerHandler.instance {
-                configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: iTermBrowserPasswordManagerHandler.messageHandlerName)
-                contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
-                    code: passwordManagerHandler.javascript,
-                    injectionTime: .atDocumentEnd,
-                    forMainFrameOnly: false,
-                    worlds: [.defaultClient],
-                    identifier: UserScripts.passwordManager.rawValue))
-            }
-
-            if let autofillHandler {
-                autofillHandler.delegate = self
-                configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: iTermBrowserAutofillHandler.messageHandlerName)
-                contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
-                    code: autofillHandler.javascript,
-                    injectionTime: .atDocumentEnd,
-                    forMainFrameOnly: true,
-                    worlds: [.defaultClient],
-                    identifier: UserScripts.autofillHandler.rawValue))
-            }
-
-            // Set up hover link detection
-            hoverLinkHandler = iTermBrowserHoverLinkHandler()
-            if let hoverLinkHandler = hoverLinkHandler {
-                configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: iTermBrowserHoverLinkHandler.messageHandlerName)
-                contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
-                    code: hoverLinkHandler.javascript,
-                    injectionTime: .atDocumentStart,
-                    forMainFrameOnly: true,
-                    worlds: [.defaultClient],
-                    identifier: UserScripts.hoverLinkHandler.rawValue))
-            }
-
-            copyModeHandler = iTermBrowserCopyModeHandler.create()
-            if let copyModeHandler {
-                contentManager.add(
-                    userScript: .init(code: copyModeHandler.javascript,
-                                      injectionTime: .atDocumentStart,
-                                      forMainFrameOnly: false,
-                                      worlds: [.defaultClient],
-                                      identifier: "CopyMode"))
-            }
-
-            if let triggerHandler {
-                configuration.userContentController.add(
-                    handlerProxy,
-                    contentWorld: .defaultClient,
-                    name: iTermBrowserTriggerHandler.messageHandlerName)
-                contentManager.add(
-                    userScript: .init(code: triggerHandler.javascript,
-                                      injectionTime: .atDocumentStart,
-                                      forMainFrameOnly: true,
-                                      worlds: [.defaultClient],
-                                      identifier: "TriggerHandler"))
-            }
-            if let audioHandler {
-                audioHandler.delegate = self
-                configuration.userContentController.add(
-                    handlerProxy,
-                    contentWorld: .defaultClient,
-                    name: iTermBrowserAudioHandler.messageHandlerName)
-                configuration.userContentController.add(
-                    handlerProxy,
-                    contentWorld: .page,
-                    name: iTermBrowserAudioHandler.messageHandlerName)
-                contentManager.add(
-                    userScript: .init(code: audioHandler.javascript(world: .page),
-                                      injectionTime: .atDocumentStart,
-                                      forMainFrameOnly: false,
-                                      worlds: [.page],
-                                      identifier: iTermBrowserAudioHandler.messageHandlerName))
-                contentManager.add(
-                    userScript: .init(code: audioHandler.javascript(world: .defaultClient),
-                                      injectionTime: .atDocumentStart,
-                                      forMainFrameOnly: false,
-                                      worlds: [.defaultClient],
-                                      identifier: iTermBrowserAudioHandler.messageHandlerName))
-            }
-            // Setup reader mode
-            readerModeManager.delegate = self
-            configuration.userContentController.add(readerModeManager, name: "readerMode")
-
-            // Add message handler for named mark updates
-            if namedMarkManager != nil {
-                configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: iTermBrowserNamedMarkManager.messageHandlerName)
-                configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: iTermBrowserNamedMarkManager.layoutUpdateHandlerName)
-            }
-            // Register custom URL scheme handler for iterm2-about: URLs
-            configuration.setURLSchemeHandler(handlerProxy, forURLScheme: iTermBrowserSchemes.about)
+            configure(configuration, contentManager: contentManager!)
         }
+        audioHandler?.delegate = self
+        // Setup reader mode
+        readerModeManager.delegate = self
 
         webView = iTermBrowserWebView(frame: .zero,
                                       configuration: configuration,
@@ -390,30 +402,28 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
             }
         }
         webView.browserDelegate = self
-
-        // Start updates if needed
-        adblockManager?.updateRulesIfNeeded()
-
-        userState.registerWebView(webView, contentManager: contentManager)
-        copyModeHandler?.webView = webView
         // Enable back/forward navigation
         webView.allowsBackForwardNavigationGestures = true
-        
+
         // Observe title changes
         webView.addObserver(self, forKeyPath: "title", options: [.new], context: nil)
-        
-        // Initialize find manager
-        if let findManager = iTermBrowserFindManager(webView: webView) {
-            _findManager = findManager
-            findManager.delegate = self
-        } else {
-            DLog("Failed to initialize find manager")
+
+        // TODO: This is going to cause problems for extensions. If you open a link with target=_blank then the new webview won't have a content
+        // manager. I don't know what will happen if we do not register a webview with the extension manager.
+        if let contentManager {
+            userState.registerWebView(webView, contentManager: contentManager)
         }
-        
+        copyModeHandler?.webView = webView
+
+        // Initialize find manager
+        _findManager?.webView = webView
+        _findManager?.delegate = self
+        triggerHandler?.webView = webView
+
         // Initialize adblock handler
         adblockHandler = iTermBrowserAdblockHandler(webView: webView)
-
-        triggerHandler?.webView = webView
+        // Start updates if needed
+        adblockManager?.updateRulesIfNeeded()
 
         // Setup settings delegate
         setupSettingsDelegate()
@@ -667,7 +677,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     // MARK: - Find Support
     
     @objc var browserFindManager: iTermBrowserFindManager? {
-        return _findManager as? iTermBrowserFindManager
+        _findManager
     }
     
     @objc var supportsFinding: Bool {
@@ -1058,6 +1068,9 @@ extension iTermBrowserManager {
             }
         case iTermBrowserAudioHandler.messageHandlerName:
             audioHandler?.handleMessage(webView: webView, message: message)
+
+        case iTermBrowserFindManager.messageHandlerName:
+            browserFindManager?.handleMessage(webView: webView, message: message)
 
         default:
             DLog(message.name)
