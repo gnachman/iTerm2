@@ -488,6 +488,7 @@ class iTermBrowserToolbar: NSView {
     }
     
     func setLoading(_ loading: Bool) {
+        updateFavicon(SFSymbol.globe.nsimage)
         reloadButton.isHidden = loading
         stopButton.isHidden = !loading
         urlBar.isLoading = loading

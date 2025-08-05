@@ -17,3 +17,9 @@ extension NSImage {
         return icon
     }
 }
+
+extension SFSymbol {
+    var nsimage: NSImage {
+        NSImage(systemSymbolName: rawValue, accessibilityDescription: rawValue)!
+    }
+}
