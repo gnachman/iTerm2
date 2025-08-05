@@ -332,6 +332,10 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                 handlerProxy,
                 contentWorld: .defaultClient,
                 name: iTermBrowserFindManager.messageHandlerName)
+            configuration.userContentController.add(
+                handlerProxy,
+                contentWorld: .defaultClient,
+                name: iTermBrowserFindManager.graphDiscoveryMessageHandlerName)
         }
         configuration.userContentController.add(readerModeManager,
                                                 contentWorld: .defaultClient,
@@ -990,6 +994,9 @@ extension iTermBrowserManager {
             XLog("Javascript Console: \(string)")
 #endif
 
+        case iTermBrowserFindManager.graphDiscoveryMessageHandlerName:
+            _findManager?.handleMessage(webView: webView, message: message)
+
 
         case iTermBrowserNotificationHandler.messageHandlerName:
             notificationHandler?.handleMessage(webView: webView, message: message)
@@ -1226,7 +1233,7 @@ extension iTermBrowserManager: WKNavigationDelegate {
         injectMessageHandlersIfNeeded()
 
         notifyDelegateOfUpdates()
-        
+
         // Update permission states for geolocation
         if let url = webView.url {
             let originString = iTermBrowserPermissionManager.normalizeOrigin(from: url)
@@ -1242,12 +1249,38 @@ extension iTermBrowserManager: WKNavigationDelegate {
 
         // Update title in browser history if available
         historyController.titleDidChange(for: webView.url, title: webView.title)
-        
+
         // Apply cosmetic filtering using adblock-rust
         adblockHandler?.applyCosmeticFiltering()
 
         delegate?.browserManager(self, didFinishNavigation: navigation)
         navigationState.didCompleteLoading(error: nil)
+
+        Task {
+            do {
+                let script = """
+                  // Discover the iframe graph
+                  console.log("GEORGE: About to test the API");
+                  window.iTermGraphDiscovery.discover((graph) => {
+                      console.log('GEORGE: Graph:', graph);
+                  });
+
+                  // Get titles from all frames
+                  window.iTermGraphDiscovery.evaluateInAll('document.title', (results) => {
+                      console.log('GEORGE: All titles:', results);
+                  });
+
+                  // Evaluate in specific frame with custom timeout
+                  //window.iTermGraphDiscovery.evaluateInFrame('frameId123', 'window.location.href', (result) => {
+                  //    console.log('GEORGE: Frame URL:', result);
+                  //}, 5000); // 5 second timeout
+                """
+                _ = try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
+                print("iframe discovery started successfully")
+            } catch {
+                print("Failed to start iframe discovery: \(error)")
+            }
+        }
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {

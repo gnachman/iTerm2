@@ -3991,6 +3991,9 @@
 		A6D693FE2E41B9AF005E9AFE /* SFSymbolEnum.generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D693FB2E41B9AF005E9AFE /* SFSymbolEnum.generated.swift */; };
 		A6D694012E41C094005E9AFE /* SFSymbolEnum.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D693FF2E41C094005E9AFE /* SFSymbolEnum.h */; };
 		A6D694022E41C094005E9AFE /* SFSymbolEnum.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D694002E41C094005E9AFE /* SFSymbolEnum.m */; };
+		A6D694042E429F42005E9AFE /* graph-discovery.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694032E429F42005E9AFE /* graph-discovery.js */; };
+		A6D694052E429F42005E9AFE /* graph-discovery.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694032E429F42005E9AFE /* graph-discovery.js */; };
+		A6D694062E429F42005E9AFE /* graph-discovery.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D694032E429F42005E9AFE /* graph-discovery.js */; };
 		A6D7D2222BBE0E7B00D884F5 /* FakeWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D173858126C820A004622DC /* FakeWindow.m */; };
 		A6D7E0712C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D7E0702C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift */; };
 		A6D7E0722C1B6AF5007D0A37 /* iTermProfileSearchToken.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D468BBF1B056CD600226083 /* iTermProfileSearchToken.m */; };
@@ -8430,6 +8433,7 @@
 		A6D693FB2E41B9AF005E9AFE /* SFSymbolEnum.generated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSymbolEnum.generated.swift; sourceTree = "<group>"; };
 		A6D693FF2E41C094005E9AFE /* SFSymbolEnum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SFSymbolEnum.h; sourceTree = "<group>"; };
 		A6D694002E41C094005E9AFE /* SFSymbolEnum.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SFSymbolEnum.m; sourceTree = "<group>"; };
+		A6D694032E429F42005E9AFE /* graph-discovery.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "graph-discovery.js"; sourceTree = "<group>"; };
 		A6D7E0702C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileStyleSearchEngine.swift; sourceTree = "<group>"; };
 		A6D7E0752C236D54007D0A37 /* LineBlockMetadataArray.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LineBlockMetadataArray.h; sourceTree = "<group>"; };
 		A6D7E0762C236D54007D0A37 /* LineBlockMetadataArray.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LineBlockMetadataArray.m; sourceTree = "<group>"; };
@@ -12763,6 +12767,7 @@
 		A68CB85A2E3FCC14002531F5 /* Find on Page */ = {
 			isa = PBXGroup;
 			children = (
+				A6D694032E429F42005E9AFE /* graph-discovery.js */,
 				A6D90D652E2FF7E100BA9F4F /* custom-find.js */,
 				A6F7D4D02E03BE3A0065D09C /* iTermBrowserFindManager.swift */,
 			);
@@ -16425,6 +16430,7 @@
 				A6A1BCC629CB700400646E9F /* square.and.arrow.down.png in Resources */,
 				A6F7A73C213CB143004DE961 /* StatusBarIconClock.png in Resources */,
 				A6E7AE5D214394CA00DE9F3B /* graphic_bullhorn.png in Resources */,
+				A6D694052E429F42005E9AFE /* graph-discovery.js in Resources */,
 				A697CDF42D975FEB0031583F /* SelectionRespectsSoftBoundariesMenuTip.png in Resources */,
 				A697CDF52D975FEB0031583F /* SelectionRespectsSoftBoundariesMenuTip@2x.png in Resources */,
 				A6F7D4D52E03D99F0065D09C /* view-source.html in Resources */,
@@ -16959,6 +16965,7 @@
 				A67F6168214395990093940A /* graphic_nano.png in Resources */,
 				536EF5B923F6684D00B81875 /* it2run in Resources */,
 				A6F2F21C250757FE00FC227F /* PrefsShortcuts.png in Resources */,
+				A6D694042E429F42005E9AFE /* graph-discovery.js in Resources */,
 				A6F7D4D72E03D99F0065D09C /* view-source.html in Resources */,
 				A65D7CB221E1EBCB00E3D81C /* StopStatusIcon.png in Resources */,
 				A6B4832B29D73DA10055E24A /* placeholdertext.fill.png in Resources */,
@@ -17721,6 +17728,7 @@
 				A67F6170214395990093940A /* graphic_mysql.png in Resources */,
 				A6A30ED12950EA540050F01A /* aiterm@2x.png in Resources */,
 				9DB3D6E1176C8F0B0071CCF8 /* PrefsAppearance@2x.png in Resources */,
+				A6D694062E429F42005E9AFE /* graph-discovery.js in Resources */,
 				A6E7AEB8214394F600DE9F3B /* graphic_ethereum.png in Resources */,
 				A6A1BCC729CB700400646E9F /* square.and.arrow.up.png in Resources */,
 				A6F18B382AE2F39C006C08EE /* uniE0B5_right-half-circle-thin.pdf in Resources */,

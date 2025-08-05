@@ -108,8 +108,11 @@ extension Array where Element: Collection, Element.Element: Comparable {
         if isEmpty {
             return 0
         }
+        if count == 1 {
+            return self[0].count
+        }
         var i = 0
-        while true {
+        while i < 1024 {
             let trying = i + 1
             let firstCollection = AnyCollection(self.first!)
             guard allSatisfy({ AnyCollection($0).count >= trying }) else {
@@ -121,6 +124,7 @@ extension Array where Element: Collection, Element.Element: Comparable {
             }
             i = trying
         }
+        return 0
     }
 
     var longestCommonPrefix: [Element.Element] {

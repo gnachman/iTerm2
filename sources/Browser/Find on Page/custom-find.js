@@ -1,6 +1,8 @@
 (function() {
     'use strict';
 
+    {{INCLUDE:graph-discovery.js}}
+
     // ==============================
     //  Security: Native API Capture
     // ==============================

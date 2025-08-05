@@ -66,6 +66,7 @@ class iTermBrowserFindResultBundle {
 @MainActor
 class iTermBrowserFindManager: NSObject {
     static let messageHandlerName = "iTermCustomFind"
+    static let graphDiscoveryMessageHandlerName = "iTermGraphDiscovery"
 
     var delegate: iTermBrowserFindManagerDelegate? {
         set {
@@ -474,6 +475,14 @@ class iTermBrowserFindManager: NSObject {
     }
 
     func handleMessage(webView: WKWebView, message: WKScriptMessage) {
+        if message.name == Self.graphDiscoveryMessageHandlerName {
+            handleGraphDiscoveryMessage(webView: webView, message: message)
+        } else {
+            handleFindMessage(webView: webView, message: message)
+        }
+    }
+
+    private func handleFindMessage(webView: WKWebView, message: WKScriptMessage) {
         guard message.name == "iTermCustomFind",
               let body = message.body as? [String: Any],
               let sessionSecret = body["sessionSecret"] as? String,
@@ -571,5 +580,39 @@ extension WKWebView {
         
         // Timeout after 500ms - assume scrolling is complete
         DLog("Scroll completion check timed out after 500ms")
+    }
+}
+
+// MARK: - Graph discovery
+@MainActor
+extension iTermBrowserFindManager {
+    private func handleGraphDiscoveryMessage(webView: WKWebView, message: WKScriptMessage) {
+        print("[IFD] NATIVE - got a message: \(message.body)")
+        if let body = message.body as? [String: Any],
+           let type = body["type"] as? String,
+           type == "DISCOVERY_COMPLETE",
+           let graph = body["graph"] as? [String: Any] {
+
+            print("[IFD] NATIVE - iframe graph discovery complete:")
+            processGraphNode(graph, indent: 0)
+        }
+    }
+
+    private func processGraphNode(_ node: [String: Any], indent: Int) {
+        let spacing = String(repeating: "  ", count: indent)
+
+        if let frameId = node["frameId"] as? String {
+            print("\(spacing)Frame ID: \(frameId)")
+        }
+
+        if let error = node["error"] as? String {
+            print("\(spacing)  Error: \(error)")
+        }
+
+        if let children = node["children"] as? [[String: Any]] {
+            for child in children {
+                processGraphNode(child, indent: indent + 1)
+            }
+        }
     }
 }
