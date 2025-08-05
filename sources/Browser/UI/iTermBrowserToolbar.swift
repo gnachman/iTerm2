@@ -5,7 +5,7 @@
 //  Created by George Nachman on 6/18/25.
 //
 
-@available(macOS 11.0, *)
+@MainActor
 @objc(iTermBrowserHistoryItem)
 class iTermBrowserHistoryItem: NSObject {
     @objc let title: String
@@ -19,7 +19,7 @@ class iTermBrowserHistoryItem: NSObject {
     }
 }
 
-@available(macOS 11.0, *)
+@MainActor
 protocol iTermBrowserToolbarDelegate: AnyObject {
     func browserToolbarDidTapReload()
     func browserToolbarDidTapStop()
@@ -42,12 +42,16 @@ protocol iTermBrowserToolbarDelegate: AnyObject {
     func browserToolbarIsCurrentURLBookmarked() async -> Bool
     func browserToolbarDidTapAskAI()
     func browserToolbarShouldOfferReaderMode() async -> Bool
+    func browserToolbarPermissionsForCurrentSite() async -> ([BrowserPermissionType: BrowserPermissionDecision], String)?
+    func browserToolbarResetPermission(for key: BrowserPermissionType, origin: String) async
+    func browserToolbarUnmute(url: String)
+    func browserToolbarIsCurrentPageMuted() -> Bool
 #if DEBUG
     func browserToolbarDidTapDebugAutofill()
 #endif
 }
 
-@available(macOS 11.0, *)
+@MainActor
 @objc(iTermBrowserToolbar)
 class iTermBrowserToolbar: NSView {
     weak var delegate: iTermBrowserToolbarDelegate?
@@ -125,6 +129,7 @@ class iTermBrowserToolbar: NSView {
         layoutButtons()
     }
 
+    @MainActor
     struct HorizontalLayoutHelper {
         enum Direction {
             case ltr
@@ -173,6 +178,7 @@ class iTermBrowserToolbar: NSView {
         }
     }
 
+    @MainActor
     struct VerticalLayoutHelper {
         var enclosureHeight: CGFloat
 
@@ -257,87 +263,133 @@ class iTermBrowserToolbar: NSView {
         let menu = NSMenu()
         
         // Add/Remove Bookmark menu item
-        Task {
+        Task { @MainActor in
             let currentURL = delegate?.browserToolbarCurrentURL()
             let isBookmarked = await delegate?.browserToolbarIsCurrentURLBookmarked() ?? false
             let readerAvailable = (await delegate?.browserToolbarShouldOfferReaderMode() == true)
-            await MainActor.run {
-                if readerAvailable {
-                    // Reader Mode menu item
-                    let isReaderModeActive = delegate?.browserToolbarIsReaderModeActive() ?? false
-                    let readerModeTitle = isReaderModeActive ? "Exit Reader Mode" : "Reader Mode"
-                    let readerModeIcon = isReaderModeActive ? "doc.text.fill" : "doc.text"
-                    let readerModeItem = NSMenuItem(title: readerModeTitle, action: #selector(readerModeMenuItemSelected), keyEquivalent: "")
-                    readerModeItem.target = self
-                    readerModeItem.image = NSImage(systemSymbolName: readerModeIcon, accessibilityDescription: nil)
-                    readerModeItem.isEnabled = currentURL != nil
-                    menu.addItem(readerModeItem)
+            if readerAvailable {
+                // Reader Mode menu item
+                let isReaderModeActive = delegate?.browserToolbarIsReaderModeActive() ?? false
+                let readerModeTitle = isReaderModeActive ? "Exit Reader Mode" : "Reader Mode"
+                let readerModeIcon = isReaderModeActive ? "doc.text.fill" : "doc.text"
+                let readerModeItem = NSMenuItem(title: readerModeTitle, action: #selector(readerModeMenuItemSelected), keyEquivalent: "")
+                readerModeItem.target = self
+                readerModeItem.image = NSImage(systemSymbolName: readerModeIcon, accessibilityDescription: nil)
+                readerModeItem.isEnabled = currentURL != nil
+                menu.addItem(readerModeItem)
 
-                    // Distraction Removal menu item
-                    let isDistractionRemovalActive = delegate?.browserToolbarIsDistractionRemovalActive() ?? false
-                    let distractionRemovalTitle = isDistractionRemovalActive ? "Exit Distraction Removal" : "Remove Distractions"
-                    let distractionRemovalIcon = isDistractionRemovalActive ? "target.fill" : "target"
-                    let distractionRemovalItem = NSMenuItem(title: distractionRemovalTitle, action: #selector(distractionRemovalMenuItemSelected), keyEquivalent: "")
-                    distractionRemovalItem.target = self
-                    distractionRemovalItem.image = NSImage(systemSymbolName: distractionRemovalIcon, accessibilityDescription: nil)
-                    distractionRemovalItem.isEnabled = currentURL != nil
-                    menu.addItem(distractionRemovalItem)
-
-                    menu.addItem(NSMenuItem.separator())
-
-                    let askAIItem = NSMenuItem(title: "Ask AI…", action: #selector(askAIMenuItemSelected), keyEquivalent: "")
-                    askAIItem.target = self
-                    askAIItem.image = NSImage(systemSymbolName: "sparkles", accessibilityDescription: nil)
-                    menu.addItem(askAIItem)
-
-                }
-
-                if devNullIndicator.isHidden {
-                    let bookmarkTitle = isBookmarked ? "Remove Bookmark" : "Add Bookmark"
-                    let bookmarkIcon = isBookmarked ? "bookmark.fill" : "bookmark"
-                    let bookmarkItem = NSMenuItem(title: bookmarkTitle, action: #selector(bookmarkMenuItemSelected), keyEquivalent: "")
-                    bookmarkItem.target = self
-                    bookmarkItem.image = NSImage(systemSymbolName: bookmarkIcon, accessibilityDescription: nil)
-                    bookmarkItem.isEnabled = currentURL != nil
-                    menu.addItem(bookmarkItem)
-
-                    menu.addItem(NSMenuItem.separator())
-
-                    // Manage Bookmarks menu item
-                    let manageBookmarksItem = NSMenuItem(title: "Manage Bookmarks", action: #selector(manageBookmarksMenuItemSelected), keyEquivalent: "")
-                    manageBookmarksItem.target = self
-                    manageBookmarksItem.image = NSImage(systemSymbolName: "book", accessibilityDescription: nil)
-                    menu.addItem(manageBookmarksItem)
-
-                    // History menu item
-                    let historyItem = NSMenuItem(title: "History", action: #selector(historyMenuItemSelected), keyEquivalent: "")
-                    historyItem.target = self
-                    historyItem.image = NSImage(systemSymbolName: "clock", accessibilityDescription: nil)
-                    menu.addItem(historyItem)
-                }
+                // Distraction Removal menu item
+                let isDistractionRemovalActive = delegate?.browserToolbarIsDistractionRemovalActive() ?? false
+                let distractionRemovalTitle = isDistractionRemovalActive ? "Exit Distraction Removal" : "Remove Distractions"
+                let distractionRemovalIcon = isDistractionRemovalActive ? "target.fill" : "target"
+                let distractionRemovalItem = NSMenuItem(title: distractionRemovalTitle, action: #selector(distractionRemovalMenuItemSelected), keyEquivalent: "")
+                distractionRemovalItem.target = self
+                distractionRemovalItem.image = NSImage(systemSymbolName: distractionRemovalIcon, accessibilityDescription: nil)
+                distractionRemovalItem.isEnabled = currentURL != nil
+                menu.addItem(distractionRemovalItem)
 
                 menu.addItem(NSMenuItem.separator())
 
-                #if DEBUG
-                // Debug Autofill menu item (debug builds only)
-                let debugAutofillItem = NSMenuItem(title: "Debug Autofill Fields", action: #selector(debugAutofillMenuItemSelected), keyEquivalent: "")
-                debugAutofillItem.target = self
-                debugAutofillItem.image = NSImage(systemSymbolName: "magnifyingglass.circle", accessibilityDescription: nil)
-                menu.addItem(debugAutofillItem)
+                let askAIItem = NSMenuItem(title: "Ask AI…", action: #selector(askAIMenuItemSelected), keyEquivalent: "")
+                askAIItem.target = self
+                askAIItem.image = NSImage(systemSymbolName: "sparkles", accessibilityDescription: nil)
+                menu.addItem(askAIItem)
+
+            }
+
+            if devNullIndicator.isHidden {
+                let bookmarkTitle = isBookmarked ? "Remove Bookmark" : "Add Bookmark"
+                let bookmarkIcon = isBookmarked ? "bookmark.fill" : "bookmark"
+                let bookmarkItem = NSMenuItem(title: bookmarkTitle, action: #selector(bookmarkMenuItemSelected), keyEquivalent: "")
+                bookmarkItem.target = self
+                bookmarkItem.image = NSImage(systemSymbolName: bookmarkIcon, accessibilityDescription: nil)
+                bookmarkItem.isEnabled = currentURL != nil
+                menu.addItem(bookmarkItem)
+
                 menu.addItem(NSMenuItem.separator())
-                #endif
 
-                // Settings menu item
-                let settingsItem = NSMenuItem(title: "Settings", action: #selector(settingsMenuItemSelected), keyEquivalent: "")
-                settingsItem.target = self
-                settingsItem.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: nil)
-                menu.addItem(settingsItem)
+                // Manage Bookmarks menu item
+                let manageBookmarksItem = NSMenuItem(title: "Manage Bookmarks", action: #selector(manageBookmarksMenuItemSelected), keyEquivalent: "")
+                manageBookmarksItem.target = self
+                manageBookmarksItem.image = NSImage(systemSymbolName: "book", accessibilityDescription: nil)
+                menu.addItem(manageBookmarksItem)
+
+                // History menu item
+                let historyItem = NSMenuItem(title: "History", action: #selector(historyMenuItemSelected), keyEquivalent: "")
+                historyItem.target = self
+                historyItem.image = NSImage(systemSymbolName: "clock", accessibilityDescription: nil)
+                menu.addItem(historyItem)
+            }
+
+            menu.addItem(NSMenuItem.separator())
+
+#if DEBUG
+            // Debug Autofill menu item (debug builds only)
+            let debugAutofillItem = NSMenuItem(title: "Debug Autofill Fields", action: #selector(debugAutofillMenuItemSelected), keyEquivalent: "")
+            debugAutofillItem.target = self
+            debugAutofillItem.image = NSImage(systemSymbolName: "magnifyingglass.circle", accessibilityDescription: nil)
+            menu.addItem(debugAutofillItem)
+            menu.addItem(NSMenuItem.separator())
+#endif
+
+            // Site permissions
+            let tuple = await delegate?.browserToolbarPermissionsForCurrentSite()
+            if let tuple, !tuple.0.isEmpty {
+                let (permissions, origin) = tuple
+                let sortedPermissionTypes = permissions.keys.sorted { $0.displayName < $1.displayName }
+                for key in sortedPermissionTypes {
+                    let value = permissions[key]!
+                    let item = NSMenuItem(title: "Reset " + key.displayName +  " Permission (" + value.displayName + ")",
+                                          action: #selector(resetPermission(_:)),
+                                          keyEquivalent: "")
+                    item.image = NSImage(systemSymbolName: "hand.raised", accessibilityDescription: nil)
+                    item.representedObject = [key.rawValue, origin]
+                    item.target = self
+                    menu.addItem(item)
+                }
+                menu.addItem(NSMenuItem.separator())
+            }
+
+            if delegate?.browserToolbarIsCurrentPageMuted() == true {
+                let item = NSMenuItem(title: "Unmute Current Page",
+                                      action: #selector(unmute(_:)),
+                                      keyEquivalent: "")
+                item.image = NSImage(systemSymbolName: "speaker.slash", accessibilityDescription: nil)
+                item.representedObject = currentURL
+                item.target = self
+                menu.addItem(item)
+                menu.addItem(NSMenuItem.separator())
+            }
+
+            // Settings menu item
+            let settingsItem = NSMenuItem(title: "Settings", action: #selector(settingsMenuItemSelected), keyEquivalent: "")
+            settingsItem.target = self
+            settingsItem.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: nil)
+            menu.addItem(settingsItem)
 
 
-                // Position menu below the button
-                let buttonFrame = menuButton.frame
-                let menuLocation = NSPoint(x: buttonFrame.minX, y: buttonFrame.minY)
-                menu.popUp(positioning: nil, at: menuLocation, in: self)
+            // Position menu below the button
+            let buttonFrame = menuButton.frame
+            let menuLocation = NSPoint(x: buttonFrame.minX, y: buttonFrame.minY)
+            menu.popUp(positioning: nil, at: menuLocation, in: self)
+        }
+    }
+
+    @objc private func unmute(_ sender: Any?) {
+        if let delegate,
+           let url = (sender as? NSMenuItem)?.representedObject as? String {
+           delegate.browserToolbarUnmute(url: url)
+        }
+    }
+
+    @objc private func resetPermission(_ sender: Any?) {
+        if let delegate,
+           let strings = (sender as? NSMenuItem)?.representedObject as? [String],
+           strings.count == 2,
+           let key = BrowserPermissionType(rawValue: strings[0]) {
+            Task {
+                await delegate.browserToolbarResetPermission(for: key,
+                                                             origin: strings[1])
             }
         }
     }
@@ -466,7 +518,7 @@ class iTermBrowserToolbar: NSView {
 
 // MARK: - iTermURLBarDelegate
 
-@available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserToolbar: iTermURLBarDelegate {
     func urlBarDidSubmitURL(url: String) {
         delegate?.browserToolbarDidSubmitURL(url)

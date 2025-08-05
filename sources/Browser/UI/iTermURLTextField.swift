@@ -7,13 +7,13 @@
 
 import Cocoa
 
-@available(macOS 11.0, *)
+@MainActor
 protocol iTermURLTextFieldDelegate: AnyObject {
     func urlTextFieldDidBecomeFirstResponder(_ textField: iTermURLTextField)
 }
 
 
-@available(macOS 11.0, *)
+@MainActor
 class iTermURLTextField: NSScrollView {
     weak var urlTextFieldDelegate: iTermURLTextFieldDelegate?
     
@@ -193,7 +193,7 @@ class iTermURLTextField: NSScrollView {
 // MARK: - NSTextViewDelegate
 
 
-@available(macOS 11.0, *)
+@MainActor
 extension iTermURLTextField: NSTextViewDelegate {
         func textDidChange(_ notification: Notification) {
         // Prevent line breaks - replace with spaces

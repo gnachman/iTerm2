@@ -13,7 +13,7 @@ struct SmartSelectRule {
     var actions: Array<[String: Any]>
 }
 
-@available(macOS 11.0, *)
+@MainActor
 protocol iTermBrowserViewControllerDelegate: AnyObject, iTermBrowserFindManagerDelegate {
     func browserViewController(_ controller: iTermBrowserViewController,
                                didUpdateTitle title: String?)
@@ -78,9 +78,13 @@ protocol iTermBrowserViewControllerDelegate: AnyObject, iTermBrowserFindManagerD
                                suppressionKey: String,
                                identifier: String)
     func browserViewControllerBury(_ controller: iTermBrowserViewController)
+    func browserViewController<T>(_ controller: iTermBrowserViewController,
+                                  announce: BrowserAnnouncement<T>) async -> T?
+    func browserViewController(_ controller: iTermBrowserViewController,
+                               handleKeyDown event: NSEvent) -> Bool
 }
 
-@available(macOS 11.0, *)
+@MainActor
 @objc(iTermBrowserViewController)
 class iTermBrowserViewController: NSViewController {
     private let browserManager: iTermBrowserManager
@@ -134,7 +138,11 @@ class iTermBrowserViewController: NSViewController {
     }
     
     deinit {
-        toolbar?.cleanup()
+        if let toolbar {
+            DispatchQueue.main.async {
+                toolbar.cleanup()
+            }
+        }
         NotificationCenter.default.removeObserver(self)
     }
     
@@ -191,7 +199,7 @@ class iTermBrowserViewController: NSViewController {
 
 // MARK: -  Public API
 
-@available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserViewController {
     @objc
     func openAutocomplete() {
@@ -459,7 +467,6 @@ extension iTermBrowserViewController {
 
     // MARK: - Password
 
-    @available(macOS 12, *)
     @objc(enterPassword:)
     func enter(password: String) {
         guard let webView = browserManager.webView else {
@@ -472,7 +479,6 @@ extension iTermBrowserViewController {
         }
     }
 
-    @available(macOS 12, *)
     @objc(enterUsername:)
     func enter(username: String) {
         guard let webView = browserManager.webView else {
@@ -683,7 +689,7 @@ public struct BrowserManagerError: Error, LocalizedError {
 
 // MARK: -  Overrides
 
-@available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserViewController {
     override func loadView() {
         view = iTermBrowserView()
@@ -730,7 +736,7 @@ extension iTermBrowserViewController {
 
 // MARK: -  Setup
 
-@available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserViewController {
     private func setupBackgroundView() {
         backgroundView = NSVisualEffectView()
@@ -831,6 +837,7 @@ extension iTermBrowserViewController {
 }
 
 // MARK: - Notification Handlers
+@MainActor
 extension iTermBrowserViewController {
     @objc
     private func otherBrowserViewControllerDidDeinitialize() {
@@ -843,7 +850,7 @@ extension iTermBrowserViewController {
 
 // MARK: - iTermBrowserToolbarDelegate
 
-@available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserViewController: iTermBrowserToolbarDelegate {
     func browserToolbarDidTapReload() {
         browserManager.reload()
@@ -889,18 +896,18 @@ extension iTermBrowserViewController: iTermBrowserToolbarDelegate {
         // When the user presses enter in the URL bar, the URL bar must lose first responder.
         browserManager.webView.window?.makeFirstResponder(browserManager.webView)
     }
-    
+
     func browserToolbarDidTapAddBookmark() async {
         guard let currentURL = browserManager.webView.url?.absoluteString else {
             return
         }
-        
+
         guard let database = await BrowserDatabase.instance(for: browserManager.user) else {
             return
         }
-        
+
         let isBookmarked = await database.isBookmarked(url: currentURL)
-        
+
         if isBookmarked {
             // Remove bookmark
             let success = await database.removeBookmark(url: currentURL)
@@ -918,37 +925,37 @@ extension iTermBrowserViewController: iTermBrowserToolbarDelegate {
             }
         }
     }
-    
+
     func browserToolbarDidTapManageBookmarks() {
         browserManager.loadURL(iTermBrowserBookmarkViewHandler.bookmarksURL.absoluteString)
     }
-    
+
     func browserToolbarDidTapReaderMode() {
         browserManager.toggleReaderMode()
     }
-    
+
     func browserToolbarIsReaderModeActive() -> Bool {
         return browserManager.isReaderModeActive
     }
-    
+
     func browserToolbarDidTapDistractionRemoval() {
         browserManager.toggleDistractionRemoval()
     }
-    
+
     func browserToolbarIsDistractionRemovalActive() -> Bool {
         return browserManager.isDistractionRemovalActive
     }
-    
+
     func browserToolbarCurrentURL() -> String? {
         return browserManager.webView.url?.absoluteString
     }
-    
+
     func browserToolbarIsCurrentURLBookmarked() async -> Bool {
         guard let currentURL = browserManager.webView.url?.absoluteString,
               let database = await BrowserDatabase.instance(for: browserManager.user) else {
             return false
         }
-        
+
         return await database.isBookmarked(url: currentURL)
     }
 
@@ -963,21 +970,52 @@ extension iTermBrowserViewController: iTermBrowserToolbarDelegate {
             }
         }
     }
-    
-    #if DEBUG
+
+#if DEBUG
     func browserToolbarDidTapDebugAutofill() {
         browserManager.debugAutofillFields()
     }
-    #endif
+#endif
 
     func browserToolbarShouldOfferReaderMode() async -> Bool {
         return await (browserManager.pageContent()?.content ?? "").count > 10
+    }
+
+    func browserToolbarPermissionsForCurrentSite() async -> ([BrowserPermissionType: BrowserPermissionDecision], String)? {
+        guard let url = browserManager.webView.url else {
+            return nil
+        }
+        let origin = iTermBrowserPermissionManager.normalizeOrigin(from: url)
+        var result = [BrowserPermissionType: BrowserPermissionDecision]()
+        let manager = iTermBrowserPermissionManager(user: browserManager.user)
+        for permissionType in BrowserPermissionType.allCases {
+            let decision = await manager.getPermissionDecision(for: permissionType,
+                                                               origin: origin)
+            guard let decision else {
+                continue
+            }
+            result[permissionType] = decision
+        }
+        return (result, origin)
+    }
+
+    func browserToolbarResetPermission(for key: BrowserPermissionType, origin: String) async {
+        await iTermBrowserPermissionManager(user: browserManager.user).resetPermission(
+            origin: origin,
+            permissionType: key)
+    }
+
+    func browserToolbarUnmute(url: String) {
+        browserManager.unmuteCurrentPage()
+    }
+    func browserToolbarIsCurrentPageMuted() -> Bool {
+        return browserManager.currentPageIsMuted
     }
 }
 
 // MARK: - iTermBrowserManagerDelegate
 
-@available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserViewController: iTermBrowserManagerDelegate {
     func browserManager(_ manager: iTermBrowserManager, didUpdateURL url: String?) {
         // Close bookmark tag editor when navigating to a different URL
@@ -1060,9 +1098,9 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
             Task { @MainActor in
                 guard let self else { return }
                 try await self.browserManager.namedMarkManager?.add(with: name,
-                                                    webView: self.browserManager.webView,
-                                                    httpMethod: self.browserManager.currentHTTPMethod,
-                                                    clickPoint: point)
+                                                                    webView: self.browserManager.webView,
+                                                                    httpMethod: self.browserManager.currentHTTPMethod,
+                                                                    clickPoint: point)
                 NamedMarksDidChangeNotification(sessionGuid: nil).post()
             }
         }
@@ -1137,7 +1175,7 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
     func browserManagerCurrentTabHasMultipleSessions(_ browserManager: iTermBrowserManager) -> Bool {
         return delegate?.browserViewControllerCurrentTabHasMultipleSessions(self) ?? false
     }
-    
+
     func browserManager(_ manager: iTermBrowserManager, didReceiveNamedMarkUpdate guid: String, text: String) {
         delegate?.browserViewControllerDidReceiveNamedMarkUpdate(self, guid: guid, text: text)
     }
@@ -1153,9 +1191,17 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
             break
         }
     }
+
+    func browserManager<T>(_ browserManager: iTermBrowserManager, announce: BrowserAnnouncement<T>) async -> T? {
+        return await delegate?.browserViewController(self, announce: announce)
+    }
+
+    func browserManager(_ browserManager: iTermBrowserManager, handleKeyDown event: NSEvent) -> Bool {
+        return delegate?.browserViewController(self, handleKeyDown: event) == true
+    }
 }
 
-@available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserViewController: NSMenuItemValidation {
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         if menuItem.action == #selector(addNamedMark(_:)) {
@@ -1170,7 +1216,7 @@ extension iTermBrowserViewController: NSMenuItemValidation {
 
 // MARK: - Actions
 
-@available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserViewController {
     @objc(saveDocumentAs:)
     func saveDocumentAs(_ sender: Any) {
@@ -1257,7 +1303,7 @@ extension iTermBrowserViewController {
 
 // MARK: - Bookmark Management
 
-@available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserViewController: iTermBookmarkTagEditorDelegate {
     private func showBookmarkTagEditor(url: String, title: String?) {
         // Close existing editor if open
@@ -1289,7 +1335,7 @@ extension iTermBrowserViewController: iTermBookmarkTagEditorDelegate {
     }
 }
 
-@available(macOS 11.0, *)
+@MainActor
 @objc(iTermBrowserView)
 class iTermBrowserView: NSView {
     override func resize(withOldSuperviewSize oldSize: NSSize) {
@@ -1301,7 +1347,7 @@ class iTermBrowserView: NSView {
     }
 }
 
-@available(macOS 11.0, *)
+@MainActor
 extension iTermBrowserViewController: iTermBrowserActionPerforming {
     func actionPerformExtendSelection(toPointInWindow point: NSPoint) {
         browserManager.webView.extendSelection(toPointInWindow: point)
@@ -1440,6 +1486,7 @@ extension iTermBrowserViewController: iTermBrowserFindManagerDelegate {
     }
 }
 
+@MainActor
 extension iTermBrowserViewController: iTermBrowserCopyModeHandlerDelegate {
     func copyModeHandlerShowFindPanel(_ sender: iTermBrowserCopyModeHandler) {
         delegate?.browserViewControllerShowFindPanel(self)

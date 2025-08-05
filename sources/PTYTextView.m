@@ -123,6 +123,9 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 
 @end
 
+@interface PTYTextView(PointerDelegate)<PointerControllerDelegate>
+@end
+
 @implementation PTYTextView {
     // -refresh does not want to be reentrant.
     BOOL _inRefresh;
@@ -3882,31 +3885,6 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                                    completion:completion];
 }
 
-#pragma mark PointerControllerDelegate
-
-- (void)pasteFromClipboardWithEvent:(NSEvent *)event {
-    [self paste:nil];
-}
-
-- (void)pasteFromSelectionWithEvent:(NSEvent *)event {
-    [self pasteSelection:nil];
-}
-
-- (void)openTargetWithEvent:(NSEvent *)event {
-    [_urlActionHelper openTargetWithEvent:event inBackground:NO];
-}
-
-- (void)openTargetInBackgroundWithEvent:(NSEvent *)event {
-    [_urlActionHelper openTargetWithEvent:event inBackground:YES];
-}
-
-- (void)smartSelectAndMaybeCopyWithEvent:(NSEvent *)event
-                        ignoringNewlines:(BOOL)ignoringNewlines {
-    [_selection endLiveSelection];
-    [_urlActionHelper smartSelectAndMaybeCopyWithEvent:event
-                                      ignoringNewlines:ignoringNewlines];
-}
-
 - (BOOL)showCommandInfoForEvent:(NSEvent *)event {
     if (event.buttonNumber == 1) {
         iTermOffscreenCommandLine *offscreenCommandLine = [self offscreenCommandLineForClickAt:event.locationInWindow];
@@ -3934,125 +3912,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     return NO;
 }
 
-// Called for a right click that isn't control+click (e.g., two fingers on trackpad).
-- (void)openContextMenuWithEvent:(NSEvent *)event {
-    if ([self showCommandInfoForEvent:event]) {
-        return;
-    }
-
-    NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
-    [_contextMenuHelper openContextMenuAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)
-                                    event:event];
-}
-
-- (void)extendSelectionWithEvent:(NSEvent *)event {
-    if (![_selection hasSelection]) {
-        return;
-    }
-    NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
-    const long long overflow = _dataSource.totalScrollbackOverflow;
-    [_selection beginExtendingSelectionAt:VT100GridAbsCoordMake(clickPoint.x, clickPoint.y + overflow)];
-    [_selection endLiveSelection];
-    if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
-        [self copySelectionAccordingToUserPreferences];
-    }
-}
-
-- (void)quickLookWithEvent:(NSEvent *)event {
-    [self handleQuickLookWithEvent:event];
-}
-
-- (void)nextTabWithEvent:(NSEvent *)event {
-    [_delegate textViewSelectNextTab];
-}
-
-- (void)previousTabWithEvent:(NSEvent *)event {
-    [_delegate textViewSelectPreviousTab];
-}
-
-- (void)nextWindowWithEvent:(NSEvent *)event {
-    [_delegate textViewSelectNextWindow];
-}
-
-- (void)previousWindowWithEvent:(NSEvent *)event {
-    [_delegate textViewSelectPreviousWindow];
-}
-
-- (void)movePaneWithEvent:(NSEvent *)event {
-    [self movePane:nil];
-}
-
-- (void)sendEscapeSequence:(NSString *)text withEvent:(NSEvent *)event {
-    [_delegate sendEscapeSequence:text];
-}
-
-- (void)sendHexCode:(NSString *)codes withEvent:(NSEvent *)event {
-    [_delegate sendHexCode:codes];
-}
-
-- (void)sendText:(NSString *)text withEvent:(NSEvent *)event escaping:(iTermSendTextEscaping)escaping {
-    [_delegate sendText:text escaping:escaping];
-}
-
-- (void)selectPaneLeftWithEvent:(NSEvent *)event {
-    [_delegate selectPaneLeftInCurrentTerminal];
-}
-
-- (void)selectPaneRightWithEvent:(NSEvent *)event {
-    [_delegate selectPaneRightInCurrentTerminal];
-}
-
-- (void)selectPaneAboveWithEvent:(NSEvent *)event {
-    [_delegate selectPaneAboveInCurrentTerminal];
-}
-
-- (void)selectPaneBelowWithEvent:(NSEvent *)event {
-    [_delegate selectPaneBelowInCurrentTerminal];
-}
-
-- (void)newWindowWithProfile:(NSString *)guid withEvent:(NSEvent *)event {
-    [_delegate textViewCreateWindowWithProfileGuid:guid];
-}
-
-- (void)newTabWithProfile:(NSString *)guid withEvent:(NSEvent *)event {
-    [_delegate textViewCreateTabWithProfileGuid:guid];
-}
-
-- (void)newVerticalSplitWithProfile:(NSString *)guid withEvent:(NSEvent *)event {
-    [_delegate textViewSplitVertically:YES withProfileGuid:guid];
-}
-
-- (void)newHorizontalSplitWithProfile:(NSString *)guid withEvent:(NSEvent *)event {
-    [_delegate textViewSplitVertically:NO withProfileGuid:guid];
-}
-
-- (void)selectNextPaneWithEvent:(NSEvent *)event {
-    [_delegate textViewSelectNextPane];
-}
-
-- (void)selectPreviousPaneWithEvent:(NSEvent *)event {
-    [_delegate textViewSelectPreviousPane];
-}
-
-- (void)selectMenuItemWithIdentifier:(NSString *)identifier
-                               title:(NSString *)title
-                               event:(NSEvent *)event {
-    [_delegate textViewSelectMenuItemWithIdentifier:identifier title:title];
-}
-
-- (void)advancedPasteWithConfiguration:(NSString *)configuration
-                             fromSelection:(BOOL)fromSelection
-                             withEvent:(NSEvent *)event {
-    [self.delegate textViewPasteSpecialWithStringConfiguration:configuration
-                                                 fromSelection:fromSelection];
-}
-
 - (NSMenu *)titleBarMenu {
     return [_contextMenuHelper titleBarMenu];
-}
-
-- (void)invokeScriptFunction:(NSString *)function withEvent:(NSEvent *)event {
-    [self.delegate textViewInvokeScriptFunction:function];
 }
 
 #pragma mark - Drag and Drop
@@ -7121,6 +6982,149 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
 
 - (void)focusFollowsMouseDidChangeMouseLocationToRefusFirstResponderAt {
     [self.delegate textViewUpdateTrackingAreas];
+}
+
+@end
+
+@implementation PTYTextView(PointerDelegate)
+- (void)pasteFromClipboardWithEvent:(NSEvent *)event {
+    [self paste:nil];
+}
+
+- (void)pasteFromSelectionWithEvent:(NSEvent *)event {
+    [self pasteSelection:nil];
+}
+
+- (void)openTargetWithEvent:(NSEvent *)event {
+    [_urlActionHelper openTargetWithEvent:event inBackground:NO];
+}
+
+- (void)openTargetInBackgroundWithEvent:(NSEvent *)event {
+    [_urlActionHelper openTargetWithEvent:event inBackground:YES];
+}
+
+- (void)smartSelectAndMaybeCopyWithEvent:(NSEvent *)event
+                        ignoringNewlines:(BOOL)ignoringNewlines {
+    [_selection endLiveSelection];
+    [_urlActionHelper smartSelectAndMaybeCopyWithEvent:event
+                                      ignoringNewlines:ignoringNewlines];
+}
+
+// Called for a right click that isn't control+click (e.g., two fingers on trackpad).
+- (void)openContextMenuWithEvent:(NSEvent *)event {
+    if ([self showCommandInfoForEvent:event]) {
+        return;
+    }
+
+    NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
+    [_contextMenuHelper openContextMenuAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)
+                                    event:event];
+}
+
+- (void)extendSelectionWithEvent:(NSEvent *)event {
+    if (![_selection hasSelection]) {
+        return;
+    }
+    NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
+    const long long overflow = _dataSource.totalScrollbackOverflow;
+    [_selection beginExtendingSelectionAt:VT100GridAbsCoordMake(clickPoint.x, clickPoint.y + overflow)];
+    [_selection endLiveSelection];
+    if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
+        [self copySelectionAccordingToUserPreferences];
+    }
+}
+
+- (void)quickLookWithEvent:(NSEvent *)event {
+    [self handleQuickLookWithEvent:event];
+}
+
+- (void)nextTabWithEvent:(NSEvent *)event {
+    [_delegate textViewSelectNextTab];
+}
+
+- (void)previousTabWithEvent:(NSEvent *)event {
+    [_delegate textViewSelectPreviousTab];
+}
+
+- (void)nextWindowWithEvent:(NSEvent *)event {
+    [_delegate textViewSelectNextWindow];
+}
+
+- (void)previousWindowWithEvent:(NSEvent *)event {
+    [_delegate textViewSelectPreviousWindow];
+}
+
+- (void)movePaneWithEvent:(NSEvent *)event {
+    [self movePane:nil];
+}
+
+- (void)sendEscapeSequence:(NSString *)text withEvent:(NSEvent *)event {
+    [_delegate sendEscapeSequence:text];
+}
+
+- (void)sendHexCode:(NSString *)codes withEvent:(NSEvent *)event {
+    [_delegate sendHexCode:codes];
+}
+
+- (void)sendText:(NSString *)text withEvent:(NSEvent *)event escaping:(iTermSendTextEscaping)escaping {
+    [_delegate sendText:text escaping:escaping];
+}
+
+- (void)selectPaneLeftWithEvent:(NSEvent *)event {
+    [_delegate selectPaneLeftInCurrentTerminal];
+}
+
+- (void)selectPaneRightWithEvent:(NSEvent *)event {
+    [_delegate selectPaneRightInCurrentTerminal];
+}
+
+- (void)selectPaneAboveWithEvent:(NSEvent *)event {
+    [_delegate selectPaneAboveInCurrentTerminal];
+}
+
+- (void)selectPaneBelowWithEvent:(NSEvent *)event {
+    [_delegate selectPaneBelowInCurrentTerminal];
+}
+
+- (void)newWindowWithProfile:(NSString *)guid withEvent:(NSEvent *)event {
+    [_delegate textViewCreateWindowWithProfileGuid:guid];
+}
+
+- (void)newTabWithProfile:(NSString *)guid withEvent:(NSEvent *)event {
+    [_delegate textViewCreateTabWithProfileGuid:guid];
+}
+
+- (void)newVerticalSplitWithProfile:(NSString *)guid withEvent:(NSEvent *)event {
+    [_delegate textViewSplitVertically:YES withProfileGuid:guid];
+}
+
+- (void)newHorizontalSplitWithProfile:(NSString *)guid withEvent:(NSEvent *)event {
+    [_delegate textViewSplitVertically:NO withProfileGuid:guid];
+}
+
+- (void)selectNextPaneWithEvent:(NSEvent *)event {
+    [_delegate textViewSelectNextPane];
+}
+
+- (void)selectPreviousPaneWithEvent:(NSEvent *)event {
+    [_delegate textViewSelectPreviousPane];
+}
+
+- (void)selectMenuItemWithIdentifier:(NSString *)identifier
+                               title:(NSString *)title
+                               event:(NSEvent *)event {
+    [_delegate textViewSelectMenuItemWithIdentifier:identifier title:title];
+}
+
+- (void)advancedPasteWithConfiguration:(NSString *)configuration
+                             fromSelection:(BOOL)fromSelection
+                             withEvent:(NSEvent *)event {
+    [self.delegate textViewPasteSpecialWithStringConfiguration:configuration
+                                                 fromSelection:fromSelection];
+}
+
+- (void)invokeScriptFunction:(NSString *)function withEvent:(NSEvent *)event {
+    [self.delegate textViewInvokeScriptFunction:function];
 }
 
 @end

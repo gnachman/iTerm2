@@ -705,6 +705,14 @@ actor BrowserDatabase {
 
     // MARK: - Permission Management
 
+    func resetPermission(origin: String, permissionType: BrowserPermissionType) async {
+        await withDatabase { db in
+            let permission = BrowserPermissions(origin: origin, permissionType: permissionType, decision: .denied)
+            let (query, args) = permission.removeQuery()
+            _ = self.executeUpdate(db: db, sql: query, withArguments: args)
+        }
+    }
+
     func savePermission(origin: String, permissionType: BrowserPermissionType, decision: BrowserPermissionDecision) async -> Bool {
         return await withDatabase { db in
             var permission = BrowserPermissions(origin: origin, permissionType: permissionType, decision: decision)

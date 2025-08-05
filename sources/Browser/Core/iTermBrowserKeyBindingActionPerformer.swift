@@ -5,7 +5,7 @@
 //  Created by George Nachman on 6/24/25.
 //
 
-@available(macOS 11, *)
+@MainActor
 class iTermBrowserKeyBindingActionPerformer {
     weak var delegate: iTermBrowserActionPerforming?
 

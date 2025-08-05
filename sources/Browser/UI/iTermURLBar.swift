@@ -7,7 +7,7 @@
 
 import Cocoa
 
-@available(macOS 11.0, *)
+@MainActor
 struct URLSuggestion {
     // When accepted, this value goes in the URL bar.
     let url: String
@@ -31,7 +31,7 @@ struct URLSuggestion {
     }
 }
 
-@available(macOS 11.0, *)
+@MainActor
 protocol iTermURLBarDelegate: AnyObject {
     func urlBarDidSubmitURL(url: String)
     func urlBarDidRequestSuggestions(query: String) async -> [URLSuggestion]
@@ -39,7 +39,7 @@ protocol iTermURLBarDelegate: AnyObject {
     func urlBarDidEndEditing()
 }
 
-@available(macOS 11.0, *)
+@MainActor
 @objc(iTermURLBar)
 class iTermURLBar: NSView {
     private let guts = iTermURLBarGuts(frame: .zero)
@@ -125,7 +125,7 @@ class iTermURLBar: NSView {
     }
 }
 
-@available(macOS 11.0, *)
+@MainActor
 @objc(iTermURLBarGuts)
 class iTermURLBarGuts: NSView {
     fileprivate static let cornerRadius = CGFloat(8.0)
@@ -199,7 +199,11 @@ class iTermURLBarGuts: NSView {
     }
     
     deinit {
-        closeCompletions()
+        if let window = completionsWindow {
+            DispatchQueue.main.async {
+                iTermURLBarGuts.closeCompletions(window: window)
+            }
+        }
         currentSuggestionsTask?.cancel()
     }
 
@@ -521,13 +525,17 @@ class iTermURLBarGuts: NSView {
     
     private func closeCompletions() {
         if let window = completionsWindow {
-            window.parent?.removeChildWindow(window)
-            window.orderOut(nil)
+            Self.closeCompletions(window: window)
             completionsWindow = nil
         }
         pendingQuery = nil
     }
-    
+
+    private static func closeCompletions(window: NSWindow) {
+        window.parent?.removeChildWindow(window)
+        window.orderOut(nil)
+    }
+
     private func handleTextChange(_ text: String) {
         // Cancel any existing suggestion task
         currentSuggestionsTask?.cancel()
@@ -575,7 +583,7 @@ class iTermURLBarGuts: NSView {
 
 // MARK: - NSTextFieldDelegate
 
-@available(macOS 11.0, *)
+@MainActor
 extension iTermURLBarGuts: NSTextFieldDelegate {
     func controlTextDidChange(_ obj: Notification) {
         handleTextChange(textField.stringValue)
@@ -597,7 +605,7 @@ extension iTermURLBarGuts: NSTextFieldDelegate {
     }
 }
 
-@available(macOS 11.0, *)
+@MainActor
 extension iTermURLBarGuts: iTermURLTextFieldDelegate {
     func urlTextFieldDidBecomeFirstResponder(_ textField: iTermURLTextField) {
         isTextFieldFocused = true
@@ -611,7 +619,7 @@ extension iTermURLBarGuts: iTermURLTextFieldDelegate {
 
 // MARK: - NSDraggingSource
 
-@available(macOS 11.0, *)
+@MainActor
 extension iTermURLBarGuts: NSDraggingSource {
     func draggingSession(_ session: NSDraggingSession, sourceOperationMaskFor context: NSDraggingContext) -> NSDragOperation {
         switch context {
@@ -638,13 +646,15 @@ extension iTermURLBarGuts: NSDraggingSource {
 
 // MARK: - NSPasteboardItemDataProvider
 
-@available(macOS 11.0, *)
 extension iTermURLBarGuts: NSPasteboardItemDataProvider {
-    func pasteboard(_ pasteboard: NSPasteboard?, item: NSPasteboardItem, provideDataForType type: NSPasteboard.PasteboardType) {
-        guard let url = draggedURL else { return }
-        
-        if type == .URL {
-            pasteboard?.setData(url.dataRepresentation, forType: .URL)
+    nonisolated func pasteboard(_ pasteboard: NSPasteboard?, item: NSPasteboardItem,
+                                provideDataForType type: NSPasteboard.PasteboardType) {
+        MainActor.assumeIsolated {
+            guard let url = draggedURL else { return }
+
+            if type == .URL {
+                pasteboard?.setData(url.dataRepresentation, forType: .URL)
+            }
         }
     }
 }

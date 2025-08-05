@@ -14,6 +14,7 @@ enum ScrollMovement {
     case pageUp
 }
 
+@MainActor
 protocol iTermBrowserActionPerforming: AnyObject {
     func actionPerformingScroll(movement: ScrollMovement)
     func actionPerformingSend(data: Data, broadcastAllowed: Bool)

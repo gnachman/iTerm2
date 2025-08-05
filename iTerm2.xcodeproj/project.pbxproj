@@ -3571,7 +3571,6 @@
 		A6C763211B45C52B00E3C992 /* iTermLaunchServices.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E713B918FCCDD1008D94DD /* iTermLaunchServices.m */; };
 		A6C763231B45C52B00E3C992 /* MovePaneController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D29732614082676004C5DBE /* MovePaneController.m */; };
 		A6C763241B45C52B00E3C992 /* MovingAverage.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9053C517A5CCF100A0B64E /* MovingAverage.m */; };
-		A6C763271B45C52B00E3C992 /* PointerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8255FF146881EC007CAE78 /* PointerController.m */; };
 		A6C7632B1B45C52B00E3C992 /* SmartMatch.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30C5186D0F36007F550F /* SmartMatch.m */; };
 		A6C7632C1B45C52B00E3C992 /* TemporaryNumberAllocator.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A3104186D2973007F550F /* TemporaryNumberAllocator.m */; };
 		A6C7632D1B45C52B00E3C992 /* ThreeFingerTapGestureRecognizer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D6944D6169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m */; };
@@ -3976,6 +3975,18 @@
 		A6D693DE2E405AB8005E9AFE /* trigger-make-hyperlink.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D693DD2E405AB8005E9AFE /* trigger-make-hyperlink.js */; };
 		A6D693DF2E405AB8005E9AFE /* trigger-make-hyperlink.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D693DD2E405AB8005E9AFE /* trigger-make-hyperlink.js */; };
 		A6D693E02E405AB8005E9AFE /* trigger-make-hyperlink.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D693DD2E405AB8005E9AFE /* trigger-make-hyperlink.js */; };
+		A6D693E32E41379E005E9AFE /* iTermBrowserAudioHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D693E22E413798005E9AFE /* iTermBrowserAudioHandler.swift */; };
+		A6D693E42E4137E4005E9AFE /* monitor-audio-context.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D693E12E413703005E9AFE /* monitor-audio-context.js */; };
+		A6D693E52E4137E4005E9AFE /* monitor-audio-context.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D693E12E413703005E9AFE /* monitor-audio-context.js */; };
+		A6D693E62E4137E4005E9AFE /* monitor-audio-context.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D693E12E413703005E9AFE /* monitor-audio-context.js */; };
+		A6D693E82E41446B005E9AFE /* monitor-play.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D693E72E414450005E9AFE /* monitor-play.js */; };
+		A6D693E92E41446B005E9AFE /* monitor-play.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D693E72E414450005E9AFE /* monitor-play.js */; };
+		A6D693EA2E41446B005E9AFE /* monitor-play.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D693E72E414450005E9AFE /* monitor-play.js */; };
+		A6D693EC2E416AC6005E9AFE /* PointerControllerDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D693EB2E416AC2005E9AFE /* PointerControllerDelegate.swift */; };
+		A6D693ED2E416C82005E9AFE /* PointerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8255FF146881EC007CAE78 /* PointerController.m */; };
+		A6D693F52E417306005E9AFE /* mute-audio.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D693F42E417304005E9AFE /* mute-audio.js */; };
+		A6D693F62E417306005E9AFE /* mute-audio.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D693F42E417304005E9AFE /* mute-audio.js */; };
+		A6D693F72E417306005E9AFE /* mute-audio.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D693F42E417304005E9AFE /* mute-audio.js */; };
 		A6D7D2222BBE0E7B00D884F5 /* FakeWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D173858126C820A004622DC /* FakeWindow.m */; };
 		A6D7E0712C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D7E0702C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift */; };
 		A6D7E0722C1B6AF5007D0A37 /* iTermProfileSearchToken.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D468BBF1B056CD600226083 /* iTermProfileSearchToken.m */; };
@@ -8405,6 +8416,11 @@
 		A6D5984F21B78B9700B59C94 /* iTermBroadcastInputHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBroadcastInputHelper.h; sourceTree = "<group>"; };
 		A6D5985021B78B9700B59C94 /* iTermBroadcastInputHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBroadcastInputHelper.m; sourceTree = "<group>"; };
 		A6D693DD2E405AB8005E9AFE /* trigger-make-hyperlink.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "trigger-make-hyperlink.js"; sourceTree = "<group>"; };
+		A6D693E12E413703005E9AFE /* monitor-audio-context.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "monitor-audio-context.js"; sourceTree = "<group>"; };
+		A6D693E22E413798005E9AFE /* iTermBrowserAudioHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserAudioHandler.swift; sourceTree = "<group>"; };
+		A6D693E72E414450005E9AFE /* monitor-play.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "monitor-play.js"; sourceTree = "<group>"; };
+		A6D693EB2E416AC2005E9AFE /* PointerControllerDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointerControllerDelegate.swift; sourceTree = "<group>"; };
+		A6D693F42E417304005E9AFE /* mute-audio.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "mute-audio.js"; sourceTree = "<group>"; };
 		A6D7E0702C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileStyleSearchEngine.swift; sourceTree = "<group>"; };
 		A6D7E0752C236D54007D0A37 /* LineBlockMetadataArray.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LineBlockMetadataArray.h; sourceTree = "<group>"; };
 		A6D7E0762C236D54007D0A37 /* LineBlockMetadataArray.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LineBlockMetadataArray.m; sourceTree = "<group>"; };
@@ -12275,6 +12291,7 @@
 		A68A30C9186D101C007F550F /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				A6D693EB2E416AC2005E9AFE /* PointerControllerDelegate.swift */,
 				A6D90D5B2E2F4D4C00BA9F4F /* iTermFocusFollowsMouseFocusReceiver.swift */,
 				A6AA2F662E28B257002998B3 /* iTermProfilePreferenceMutator.swift */,
 				A6AA2F672E28B257002998B3 /* iTermProfilePreferenceObserver.swift */,
@@ -13691,6 +13708,17 @@
 			name = NSManagedObjects;
 			sourceTree = "<group>";
 		};
+		A6D693EE2E417111005E9AFE /* Audio Muting */ = {
+			isa = PBXGroup;
+			children = (
+				A6D693F42E417304005E9AFE /* mute-audio.js */,
+				A6D693E72E414450005E9AFE /* monitor-play.js */,
+				A6D693E12E413703005E9AFE /* monitor-audio-context.js */,
+				A6D693E22E413798005E9AFE /* iTermBrowserAudioHandler.swift */,
+			);
+			path = "Audio Muting";
+			sourceTree = "<group>";
+		};
 		A6E312B52E3997A6008222DE /* Copy Mode */ = {
 			isa = PBXGroup;
 			children = (
@@ -13854,6 +13882,7 @@
 		A6F7D4B32E0340A30065D09C /* Browser */ = {
 			isa = PBXGroup;
 			children = (
+				A6D693EE2E417111005E9AFE /* Audio Muting */,
 				A61220F02E1070EF00F48E64 /* Ad Blocking */,
 				A6FE7A912E0E6B7F00BEBCE4 /* Autofill */,
 				A6CBB8132E0A16AA00B2CCCB /* Bookmarks */,
@@ -16228,6 +16257,7 @@
 				1DE922E81AC3709200965876 /* BackgroundStripes.png in Resources */,
 				1D6ED9C019AEA20D005A7799 /* IBarCursorXMR.png in Resources */,
 				A6384F2B2BE7B9B4008C6984 /* Onboarding-SelectedCommand.png in Resources */,
+				A6D693F62E417306005E9AFE /* mute-audio.js in Resources */,
 				A6F1B3C42693B82C00546767 /* DebugLogging.png in Resources */,
 				A60C0353208964FE00FE2F1F /* it2_api_wrapper.sh in Resources */,
 				A67F61D2214395C60093940A /* graphic_ruby.png in Resources */,
@@ -16246,6 +16276,7 @@
 				1D6ED9C319AEA20D005A7799 /* Maximized@2x.png in Resources */,
 				A6F18B3A2AE2F39C006C08EE /* uniE0B5_right-half-circle-thin.pdf in Resources */,
 				1D6ED9C419AEA20D005A7799 /* DefaultPointerActions.plist in Resources */,
+				A6D693EA2E41446B005E9AFE /* monitor-play.js in Resources */,
 				A6EFF2331D2049A400806EEF /* Erase.png in Resources */,
 				A697CEB52D9862D70031583F /* VerticalSplit.png in Resources */,
 				53BBA0FA214236AC0074D061 /* iterm2_git_poll.sh in Resources */,
@@ -16290,6 +16321,7 @@
 				A697CE632D9773CE0031583F /* InstantReplayMenuTip@2x.png in Resources */,
 				A66A882424DFCCC30043728B /* graphic_elixir.png in Resources */,
 				A66F52C32106F6F100571168 /* gitdirty@2x.png in Resources */,
+				A6D693E62E4137E4005E9AFE /* monitor-audio-context.js in Resources */,
 				A697CDE42D975C540031583F /* SnippetsTip.jpg in Resources */,
 				A697CDE52D975C540031583F /* SnippetsTip@2x.jpg in Resources */,
 				A697CE5A2D9773360031583F /* OpenQuicklyMenuTip.jpg in Resources */,
@@ -16594,6 +16626,7 @@
 				A6FE8D0E2093893700B5C648 /* iTermOptionalComponentDownloadWindowController.xib in Resources */,
 				A6CBB8FF2E0A754900B2CCCB /* extract-plain-text.js in Resources */,
 				A68BE9482DE428D5002DD513 /* flowchart@2x.png in Resources */,
+				A6D693E92E41446B005E9AFE /* monitor-play.js in Resources */,
 				A61220EB2E106F9800F48E64 /* adblock-css-injection.js in Resources */,
 				A68BE9492DE428D5002DD513 /* flowchart.png in Resources */,
 				A697CE102D9764E00031583F /* CapturedOutputMenuTip@2x.png in Resources */,
@@ -16738,6 +16771,7 @@
 				A67F61BC214395C60093940A /* graphic_shell@2x.png in Resources */,
 				A686A1171C86A6DD0024C2DE /* NewOutputForDarkTheme.png in Resources */,
 				A6DC98A228A82608009D21C0 /* Window@2x.png in Resources */,
+				A6D693E52E4137E4005E9AFE /* monitor-audio-context.js in Resources */,
 				A6F18B5A2AE2F39C006C08EE /* uniE0CF_lego_separator_thin.pdf in Resources */,
 				A67F61A8214395B70093940A /* graphic_rails.png in Resources */,
 				A610941E2A4A213D00AC2268 /* key-light.png in Resources */,
@@ -16846,6 +16880,7 @@
 				A6A30ED22950EA540050F01A /* aiterm@2x.png in Resources */,
 				A6CBB8EB2E0A6C5D00B2CCCB /* exit-reader-mode.js in Resources */,
 				A6CEDA6219988A7300BB57EC /* LogoShadow.png in Resources */,
+				A6D693F72E417306005E9AFE /* mute-audio.js in Resources */,
 				A67D0D781A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */,
 				A65B725E1B1A630100F947A7 /* CheckMark@2x.png in Resources */,
 				1DC2AF5419521CFF005769D5 /* QuestionMarkSign@2x.png in Resources */,
@@ -17484,6 +17519,7 @@
 				A6F7A73D213CB143004DE961 /* StatusBarIconJobs@2x.png in Resources */,
 				A67F6184214395A70093940A /* graphic_npm@2x.png in Resources */,
 				1DC2A1CE1949165D005769D5 /* Maximized@2x.png in Resources */,
+				A6D693E82E41446B005E9AFE /* monitor-play.js in Resources */,
 				A66F52C12106F6F100571168 /* gitdirty@2x.png in Resources */,
 				A6CBB7AF2E087DBF00B2CCCB /* notification-bridge.js in Resources */,
 				A65FF3C320F1854F008BD0AE /* iTermMiniSearchFieldViewController.xib in Resources */,
@@ -17593,6 +17629,7 @@
 				A67F61B0214395B70093940A /* graphic_php.png in Resources */,
 				A697CE322D976AFE0031583F /* AnnotationsMenuTip.png in Resources */,
 				A697CE332D976AFE0031583F /* AnnotationsMenuTip@2x.png in Resources */,
+				A6D693E42E4137E4005E9AFE /* monitor-audio-context.js in Resources */,
 				A6E7AE95214394DD00DE9F3B /* graphic_coffee@2x.png in Resources */,
 				A6E16C6A24A866F300C6DB06 /* WindowCorner_BigSur@2x.png in Resources */,
 				A6F7D5102E05CEDA0065D09C /* history-page.html in Resources */,
@@ -17710,6 +17747,7 @@
 				A6F7A707213CB143004DE961 /* StatusBarIconUser.png in Resources */,
 				A6F7A728213CB143004DE961 /* StatusBarIconComposer.png in Resources */,
 				A68ADA0729CCBE4B0008E092 /* CommandInfoViewController.xib in Resources */,
+				A6D693F52E417306005E9AFE /* mute-audio.js in Resources */,
 				A6C838AD2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist in Resources */,
 				A6A64E642508BE650040490B /* StatusBarIconSnippet@2x.png in Resources */,
 				A68615642D78D39100E9CCC2 /* document.png in Resources */,
@@ -18925,6 +18963,7 @@
 				5376CB0A2205337400FE7476 /* TmuxDashboardController.m in Sources */,
 				A6F718B22263E8A20053488E /* iTermInitialDirectory.m in Sources */,
 				A65AEDED2CC1B625007F4A11 /* SearchEngine.swift in Sources */,
+				A6D693EC2E416AC6005E9AFE /* PointerControllerDelegate.swift in Sources */,
 				A62132D327862A4800B80724 /* TokenExecutor.swift in Sources */,
 				A6AA2F922E2976DC002998B3 /* iTermBrowserSSLBypassHandler.swift in Sources */,
 				A6566754219EA582005FE60E /* NSNull+iTerm.m in Sources */,
@@ -18986,6 +19025,7 @@
 				A6CBB7B22E087F8A00B2CCCB /* iTermBrowserNotificationHandler.swift in Sources */,
 				A6D10E4027F8CD230026DB56 /* iTermWarning.m in Sources */,
 				A6E16C7524A880A100C6DB06 /* AMIndeterminateProgressIndicator.m in Sources */,
+				A6D693ED2E416C82005E9AFE /* PointerController.m in Sources */,
 				A6556EAA1FCB42E0000CC89C /* iTermCharacterSource.m in Sources */,
 				A6EB64322D5D2E5700481D33 /* Message.swift in Sources */,
 				A67094512AD9F26B0044DB50 /* SimpleContextMenu.swift in Sources */,
@@ -19160,6 +19200,7 @@
 				A6BBBFD12CC876D3000A697C /* Range+iTerm.swift in Sources */,
 				A6180D7521A36F730073F219 /* iTermMetalPerFrameStateRow.m in Sources */,
 				A6A9839127E5C427003319D1 /* PasswordManagerDataSourceProvider.swift in Sources */,
+				A6D693E32E41379E005E9AFE /* iTermBrowserAudioHandler.swift in Sources */,
 				A6A7235C2DB7362D00A8115D /* iTermMutableStringProtocol.swift in Sources */,
 				A6EC937024E787BA00EEADEF /* iTermSnippetsModel.m in Sources */,
 				A629F5A223AFF53F00C2F16B /* iTermShellIntegrationFirstPageViewController.m in Sources */,
@@ -19545,7 +19586,6 @@
 				A66E5E591E62691F00E8FE35 /* iTermTouchBarButton.m in Sources */,
 				A6C763881B45C52B00E3C992 /* ProfileListView.m in Sources */,
 				A6CEC10E1DCE8146009F4FD2 /* GPBMessage.m in Sources */,
-				A6C763271B45C52B00E3C992 /* PointerController.m in Sources */,
 				A6C763E21B45C6DD00E3C992 /* PSMTabDragWindow.m in Sources */,
 				A6936B5A1D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.m in Sources */,
 				A6C763DA1B45C6DD00E3C992 /* NSWindow+PSM.m in Sources */,

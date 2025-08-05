@@ -7,12 +7,13 @@
 
 import Foundation
 
-enum BrowserPermissionType: String, CaseIterable {
+enum BrowserPermissionType: String, CaseIterable, Hashable {
     case notification = "notification"
     case camera = "camera"
     case microphone = "microphone"
     case cameraAndMicrophone = "cameraAndMicrophone"
     case geolocation = "geolocation"
+    case audioPlayback = "audioPlayback"
 
     var displayName: String {
         switch self {
@@ -26,6 +27,8 @@ enum BrowserPermissionType: String, CaseIterable {
             return "Camera and Microphone"
         case .geolocation:
             return "Location"
+        case .audioPlayback:
+            return "Audio Playback"
         }
     }
 }

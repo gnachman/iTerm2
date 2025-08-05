@@ -43,6 +43,8 @@ extension iTermBrowserPermissionManager {
             decision = await handleMediaPermissionRequest(camera: false, microphone: true, origin: origin)
         case .cameraAndMicrophone:
             decision = await handleMediaPermissionRequest(camera: true, microphone: true, origin: origin)
+        case .audioPlayback:
+            it_fatalError("Client should handle it themselves")
         }
         
         await savePermissionDecision(origin: origin, permissionType: permissionType, decision: decision)
@@ -109,9 +111,7 @@ extension iTermBrowserPermissionManager {
         return decision == .granted ? .grant : .deny
     }
     
-    // MARK: - Private Helper Methods
-    
-    private func savePermissionDecision(origin: String, permissionType: BrowserPermissionType, decision: BrowserPermissionDecision) async {
+    func savePermissionDecision(origin: String, permissionType: BrowserPermissionType, decision: BrowserPermissionDecision) async {
         guard let database = await BrowserDatabase.instance(for: user) else {
             DLog("Could not save permission: database unavailable")
             return
@@ -125,7 +125,19 @@ extension iTermBrowserPermissionManager {
             DLog("Failed to save permission to database")
         }
     }
-    
+
+    func resetPermission(origin: String, permissionType: BrowserPermissionType) async {
+        guard let database = await BrowserDatabase.instance(for: user) else {
+            DLog("Could not reset permission: database unavailable")
+            return
+        }
+
+        await database.resetPermission(origin: origin, permissionType: permissionType)
+        DLog("Reset \(permissionType) for \(origin)")
+    }
+
+    // MARK: - Private Helper Methods
+
     // MARK: - Geolocation-Specific Implementation
 
     private func handleMediaPermissionRequest(camera: Bool, microphone: Bool, origin: String) async -> BrowserPermissionDecision {

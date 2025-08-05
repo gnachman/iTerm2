@@ -9,6 +9,17 @@
 import Network
 import WebExtensionsFramework
 
+struct BrowserAnnouncement<T> {
+    var message: String
+    var style: iTermAnnouncementViewStyle
+    struct Option {
+        var title: String
+        var identifier: T
+    }
+    var options: [Option]
+    var identifier: String
+}
+
 @available(macOS 11.0, *)
 @MainActor
 protocol iTermBrowserManagerDelegate: AnyObject, iTermBrowserFindManagerDelegate, iTermBrowserTriggerHandlerDelegate {
@@ -53,6 +64,8 @@ protocol iTermBrowserManagerDelegate: AnyObject, iTermBrowserFindManagerDelegate
     func browserManager(_ browserManager: iTermBrowserManager, performSplitPaneAction action: iTermBrowserSplitPaneAction)
     func browserManagerCurrentTabHasMultipleSessions(_ browserManager: iTermBrowserManager) -> Bool
     func browserManagerBroadcastWebViews(_ browserManager: iTermBrowserManager) -> [iTermBrowserWebView]
+    func browserManager<T>(_ browserManager: iTermBrowserManager, announce: BrowserAnnouncement<T>) async -> T?
+    func browserManager(_ browserManager: iTermBrowserManager, handleKeyDown event: NSEvent) -> Bool
 }
 
 @available(macOS 11.0, *)
@@ -92,6 +105,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     let userState: iTermBrowserUserState
     private let handlerProxy = iTermBrowserWebViewHandlerProxy()
     let triggerHandler: iTermBrowserTriggerHandler?
+    private let audioHandler: iTermBrowserAudioHandler?
 
     private static var safariVersion = {
         Bundle(path: "/Applications/Safari.app")?.infoDictionary?["CFBundleShortVersionString"] as? String
@@ -118,6 +132,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                                                              historyController: historyController)
         self.namedMarkManager = iTermBrowserNamedMarkManager(user: user)
         self.triggerHandler = iTermBrowserTriggerHandler(profileObserver: profileObserver)
+        self.audioHandler = iTermBrowserAudioHandler()
 
         super.init()
 
@@ -206,6 +221,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                                                              substitutions: ["LOG_ERRORS": logErrors])
             configuration.userContentController.add(handlerProxy, contentWorld: .page, name: "iTerm2ConsoleLog")
             configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: "iTerm2ConsoleLog")
+            configuration.userContentController.add(handlerProxy, contentWorld: .page, name: "iterm2-about:permissions")
             contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
                 code: "(function() {" + js + "})();",
                 injectionTime: .atDocumentStart,
@@ -312,7 +328,29 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                                       worlds: [.defaultClient],
                                       identifier: "TriggerHandler"))
             }
-
+            if let audioHandler {
+                audioHandler.delegate = self
+                configuration.userContentController.add(
+                    handlerProxy,
+                    contentWorld: .defaultClient,
+                    name: iTermBrowserAudioHandler.messageHandlerName)
+                configuration.userContentController.add(
+                    handlerProxy,
+                    contentWorld: .page,
+                    name: iTermBrowserAudioHandler.messageHandlerName)
+                contentManager.add(
+                    userScript: .init(code: audioHandler.javascript(world: .page),
+                                      injectionTime: .atDocumentStart,
+                                      forMainFrameOnly: false,
+                                      worlds: [.page],
+                                      identifier: iTermBrowserAudioHandler.messageHandlerName))
+                contentManager.add(
+                    userScript: .init(code: audioHandler.javascript(world: .defaultClient),
+                                      injectionTime: .atDocumentStart,
+                                      forMainFrameOnly: false,
+                                      worlds: [.defaultClient],
+                                      identifier: iTermBrowserAudioHandler.messageHandlerName))
+            }
             // Setup reader mode
             readerModeManager.delegate = self
             configuration.userContentController.add(readerModeManager, name: "readerMode")
@@ -452,6 +490,18 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     }
     
     // MARK: - Public Interface
+
+    var currentPageIsMuted: Bool {
+        audioHandler?.mutedFrames.isEmpty == false
+    }
+
+    func unmuteCurrentPage() {
+        Task {
+            for frame in audioHandler?.mutedFrames ?? [] {
+                await audioHandler?.unmute(webView, frame: frame)
+            }
+        }
+    }
 
     struct PageContent {
         var title: String
@@ -716,6 +766,9 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
 @MainActor
 extension iTermBrowserManager: iTermBrowserWebViewDelegate {
     func webView(_ webView: iTermBrowserWebView, handleKeyDown event: NSEvent) -> Bool {
+        if delegate?.browserManager(self, handleKeyDown: event) == true {
+            return true
+        }
         if copyModeHandler?.enabled != true {
             return false
         }
@@ -1003,6 +1056,8 @@ extension iTermBrowserManager {
                     }
                 }
             }
+        case iTermBrowserAudioHandler.messageHandlerName:
+            audioHandler?.handleMessage(webView: webView, message: message)
 
         default:
             DLog(message.name)
@@ -1116,6 +1171,8 @@ extension iTermBrowserManager: WKNavigationDelegate {
         readerModeManager.resetForNavigation()
         delegate?.browserManager(self, didStartNavigation: navigation)
         copyModeHandler?.enabled = false
+        audioHandler?.disabled = false
+        audioHandler?.mutedFrames = []
     }
 
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
@@ -1873,5 +1930,76 @@ extension iTermBrowserUserState.Configuration {
 extension iTermBrowserManager: iTermBrowserFindManagerDelegate {
     func browserFindManager(_ manager: iTermBrowserFindManager, didUpdateResult result: iTermBrowserFindResultBundle) {
         delegate?.browserFindManager(manager, didUpdateResult: result)
+    }
+}
+
+extension iTermBrowserManager: iTermBrowserAudioHandlerDelegate {
+    func browserAudioHandlerDidStartPlaying(_ sender: iTermBrowserAudioHandler, inFrame frame: WKFrameInfo) {
+        guard let url = webView.url else {
+            NSLog("%@", "Audio: no url")
+            return
+        }
+        let origin = iTermBrowserPermissionManager.normalizeOrigin(from: url)
+        Task {
+            guard webView.url == url else {
+                NSLog("%@", "Audio: url changed")
+                return
+            }
+            let decision = await iTermBrowserPermissionManager(user: user).getPermissionDecision(
+                for: .audioPlayback,
+                origin: origin)
+            switch decision {
+            case .denied:
+                NSLog("%@", "Audio denied for \(origin). Muting.")
+                await audioHandler?.mute(webView, frame: frame)
+                return
+            case .granted:
+                NSLog("%@", "Audio granted for \(origin). Doing nothing.")
+                return
+            case .none:
+                await audioHandler?.mute(webView, frame: frame)
+                enum Action {
+                    case allowOnce
+                    case allowAlways
+                    case denyOnce
+                    case denyAlways
+                }
+                let announcement = BrowserAnnouncement(
+                    message: "Audio was muted. Allow playback by \(origin)?",
+                    style: .kiTermAnnouncementViewStyleQuestion,
+                    options: [.init(title: "Allow _Once", identifier: Action.allowOnce),
+                              .init(title: "Allow _Always", identifier: Action.allowAlways),
+                              .init(title: "_Deny Once", identifier: Action.denyOnce),
+                              .init(title: "De_ny Always", identifier: Action.denyAlways) ],
+                    identifier: "NoSyncMuteAudio_\(origin)")
+                switch await delegate?.browserManager(self, announce: announcement) {
+                case .allowOnce:
+                    if webView.url == url {
+                        NSLog("%@", "Audio allowed once \(origin). Disabling audio handler.")
+                        audioHandler?.disabled = true
+                        await audioHandler?.unmute(webView, frame: frame)
+                    }
+                case .allowAlways:
+                    NSLog("%@", "Audio allowed always for \(origin).")
+                    await iTermBrowserPermissionManager(user: user).savePermissionDecision(origin: origin,
+                                                                                           permissionType: .audioPlayback,
+                                                                                           decision: .granted)
+                    await audioHandler?.unmute(webView, frame: frame)
+                case .denyOnce:
+                    NSLog("%@", "Audio denied once for \(origin). Doing nothing.")
+                    audioHandler?.disabled = true
+                    break
+                case .denyAlways:
+                    NSLog("%@", "Audio denied always for \(origin).")
+                    await iTermBrowserPermissionManager(user: user).savePermissionDecision(origin: origin,
+                                                                                           permissionType: .audioPlayback,
+                                                                                           decision: .denied)
+                case .none:
+                    // Was closed without selecting an item
+                    NSLog("%@", "Audio: announcement closed without making a selection")
+                    break
+                }
+            }
+        }
     }
 }

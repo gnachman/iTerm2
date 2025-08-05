@@ -121,7 +121,6 @@ TriggerDelegate> {
 - (void)queueAnnouncement:(iTermAnnouncementViewController *)announcement
                identifier:(NSString *)identifier;
 - (void)removeAnnouncementWithIdentifier:(NSString *)identifier;
-- (void)dismissAnnouncementWithIdentifier:(NSString *)identifier;
 - (BOOL)haveAutoComposer;
 
 @end

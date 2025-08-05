@@ -266,6 +266,42 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
     func browserViewControllerBury(_ controller: iTermBrowserViewController) {
         bury()
     }
+
+    func browserViewController<T>(_ controller: iTermBrowserViewController,
+                                  announce request: BrowserAnnouncement<T>) async -> T? {
+        if hasAnnouncement(withIdentifier: request.identifier) {
+            return nil
+        }
+        var count = 0
+        return await withCheckedContinuation { (continuation: CheckedContinuation<T?, Never>) in
+            dismissAnnouncement(withIdentifier: request.identifier)
+            let announcement = iTermAnnouncementViewController.announcement(withTitle: request.message,
+                                                                            style: request.style,
+                                                                            withActions: request.options.map { $0.title }) { selection in
+                if count > 0 {
+                    // This is always called with -2 eventually.
+                    return
+                }
+                switch selection {
+                case -2, -1:  // Dismissed programatically or closed
+                    count += 1
+                    continuation.resume(returning: nil)
+                default:
+                    count += 1
+                    continuation.resume(returning: request.options[Int(selection)].identifier)
+                }
+            }
+            queueAnnouncement(announcement, identifier: request.identifier)
+        }
+    }
+
+    func browserViewController(_ controller: iTermBrowserViewController,
+                               handleKeyDown event: NSEvent) -> Bool {
+        if view.currentAnnouncement?.handleKeyDown(event) == true {
+            return true
+        }
+        return false
+    }
 }
 
 // MARK: - Browser Find Support

@@ -45,6 +45,7 @@
 @class iTermURLActionHelper;
 @class iTermVariableScope;
 @class MovingAverage;
+@protocol PointerControllerDelegate;
 @protocol PTYAnnotationReading;
 @class PTYScroller;
 @class PTYScrollView;
@@ -348,8 +349,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
   iTermSpecialHandlerForAPIKeyDownNotifications,
   iTermTextDrawingHelperDelegate,
   NSDraggingDestination,
-  NSTextInputClient,
-  PointerControllerDelegate>
+  NSTextInputClient>
 
 // Current selection
 @property(nonatomic, readonly) iTermSelection *selection;

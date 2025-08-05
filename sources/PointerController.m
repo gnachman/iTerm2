@@ -8,6 +8,7 @@
 
 #import "PointerController.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermApplicationDelegate.h"
 #import "NSEvent+iTerm.h"
 #import "PointerPrefsController.h"

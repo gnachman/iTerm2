@@ -166,7 +166,8 @@ function getPermissionIcon(permissionType) {
         'camera': '📷',
         'microphone': '🎤',
         'cameraAndMicrophone': '📹',
-        'geolocation': '📍'
+        'geolocation': '📍',
+        'audioPlayback': '🔊'
     };
     return icons[permissionType] || '🔒';
 }
@@ -177,7 +178,8 @@ function getPermissionDisplayName(permissionType) {
         'camera': 'Camera',
         'microphone': 'Microphone',
         'cameraAndMicrophone': 'Camera and Microphone',
-        'geolocation': 'Location'
+        'geolocation': 'Location',
+        'audioPlayback': 'Audio Playback'
     };
     return names[permissionType] || permissionType;
 }

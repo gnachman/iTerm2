@@ -8,10 +8,12 @@
 
 import Cocoa
 
+@MainActor
 @objc protocol iTermBookmarkTagEditorDelegate: AnyObject {
     func bookmarkTagEditorWillClose(_ controller: iTermBookmarkTagEditorWindowController)
 }
 
+@MainActor
 @objc
 class iTermBookmarkTagEditorWindowController: NSWindowController {
     weak var delegate: iTermBookmarkTagEditorDelegate?
