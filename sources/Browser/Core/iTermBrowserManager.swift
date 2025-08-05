@@ -1294,6 +1294,8 @@ extension iTermBrowserManager: WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        localPageManager.unregisterAllMessageHandlers(webView: webView)
+
         // Track HTTP method for main frame navigations only
         if navigationAction.targetFrame?.isMainFrame == true {
             currentMainFrameHTTPMethod = navigationAction.request.httpMethod
@@ -1340,7 +1342,9 @@ extension iTermBrowserManager: WKNavigationDelegate {
 
             // Pre-register message handler if needed
             if localPageManager.shouldRegisterMessageHandler(for: urlString) {
-                webView.configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: urlString)
+                webView.configuration.userContentController.add(handlerProxy,
+                                                                contentWorld: .page,
+                                                                name: urlString)
                 localPageManager.markMessageHandlerRegistered(for: urlString)
                 DLog("Pre-registered message handler for \(urlString)")
             }
@@ -1486,6 +1490,7 @@ extension iTermBrowserManager: WKUIDelegate {
         guard navigationAction.targetFrame == nil, let url = navigationAction.request.url else {
             return nil
         }
+        localPageManager.unregisterAllMessageHandlers(webView: webView)
         return delegate?.browserManager(self,
                                         requestNewWindowForURL: url,
                                         configuration: configuration)

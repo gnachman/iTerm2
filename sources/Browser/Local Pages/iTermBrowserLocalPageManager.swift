@@ -188,7 +188,16 @@ class iTermBrowserLocalPageManager: NSObject {
         guard let context = activePageContexts[urlString] else { return false }
         return context.requiresMessageHandler && !context.messageHandlerRegistered
     }
-    
+
+    func unregisterAllMessageHandlers(webView: WKWebView) {
+        for url in activePageContexts.keys {
+            if activePageContexts[url]?.messageHandlerRegistered == true {
+                webView.configuration.userContentController.removeScriptMessageHandler(forName: url)
+            }
+        }
+        activePageContexts.removeAll()
+    }
+
     /// Mark message handler as registered for URL
     func markMessageHandlerRegistered(for urlString: String) {
         guard var context = activePageContexts[urlString] else { return }
