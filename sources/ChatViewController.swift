@@ -124,7 +124,7 @@ class ChatViewController: NSViewController {
 
         // Session button
         if #available(macOS 11.0, *),
-           let image = NSImage(systemSymbolName: "info.circle", accessibilityDescription: nil) {
+           let image = NSImage(systemSymbolName: SFSymbol.infoCircle.rawValue, accessibilityDescription: nil) {
             sessionButton = NSButton(image: image, target: nil, action: nil)
             sessionButton.imageScaling = .scaleProportionallyUpOrDown
             sessionButton.controlSize = .large
@@ -144,7 +144,7 @@ class ChatViewController: NSViewController {
         sessionButton.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         if #available(macOS 11.0, *) {
-            let webSearchButton = WebSearchButton(image: NSImage.it_image(forSymbolName: "globe",
+            let webSearchButton = WebSearchButton(image: NSImage.it_image(forSymbolName: SFSymbol.globe.rawValue,
                                                                           accessibilityDescription: "Web search image",
                                                                           fallbackImageName: "globe",
                                                                           for: Self.self),

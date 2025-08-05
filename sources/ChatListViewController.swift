@@ -40,7 +40,7 @@ class ChatListViewController: NSViewController {
     private let newChatButton: NSButton = {
         let button: NSButton
         if #available(macOS 11.0, *),
-           let image = NSImage(systemSymbolName: "plus", accessibilityDescription: nil) {
+           let image = NSImage(systemSymbolName: SFSymbol.plus.rawValue, accessibilityDescription: nil) {
             button = NSButton(image: image, target: nil, action: nil)
             button.imageScaling = .scaleProportionallyUpOrDown
             button.isBordered = false

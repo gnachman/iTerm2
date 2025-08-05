@@ -7,6 +7,7 @@
 
 #import "iTermsStatusBarComposerViewController.h"
 
+#import "SFSymbolEnum/SFSymbolEnum.h"
 #import "iTermStatusBarLargeComposerViewController.h"
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -237,7 +238,7 @@ doCommandBySelector:(SEL)commandSelector {
         static NSImage *darkImage;
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
-            lightImage = [NSImage imageWithSystemSymbolName:@"chevron.down" accessibilityDescription:@"Show History"];
+            lightImage = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolChevronDown) accessibilityDescription:@"Show History"];
             darkImage = [lightImage it_imageWithTintColor:[NSColor whiteColor]];
         });
         NSImage *image = controlView.effectiveAppearance.it_isDark ? darkImage : lightImage;

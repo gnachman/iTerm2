@@ -6,6 +6,7 @@
 //
 
 #import "iTermAddTriggerViewController.h"
+#import "SFSymbolEnum/SFSymbolEnum.h"
 
 #import "ITAddressBookMgr.h"
 #import "iTermFocusablePanel.h"
@@ -394,7 +395,7 @@ static const CGFloat kLabelWidth = 124;
         _toggleVisualizationButton.translatesAutoresizingMaskIntoConstraints = NO;
         _toggleVisualizationButton.bezelStyle = NSBezelStyleRounded;
         _toggleVisualizationButton.bordered = YES;
-        _toggleVisualizationButton.image = [NSImage it_imageForSymbolName:@"flowchart"
+        _toggleVisualizationButton.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolFlowchart)
                                                   accessibilityDescription:@"Show visualization"
                                                          fallbackImageName:@"flowchart"
                                                                   forClass:[self class]];
@@ -665,7 +666,7 @@ static const CGFloat kLabelWidth = 124;
     _contentRegexVisualizationButton.translatesAutoresizingMaskIntoConstraints = NO;
     _contentRegexVisualizationButton.bezelStyle = NSBezelStyleRounded;
     _contentRegexVisualizationButton.bordered = YES;
-    _contentRegexVisualizationButton.image = [NSImage it_imageForSymbolName:@"flowchart"
+    _contentRegexVisualizationButton.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolFlowchart)
                                                     accessibilityDescription:@"Show content regex visualization"
                                                            fallbackImageName:@"flowchart"
                                                                     forClass:[self class]];
@@ -1082,14 +1083,14 @@ static const CGFloat kLabelWidth = 124;
         [popover showRelativeToRect:button.bounds ofView:button preferredEdge:NSRectEdgeMaxX];
         _popover = popover;
 
-        button.image = [NSImage it_imageForSymbolName:@"flowchart.fill"
+        button.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolFlowchartFill)
                              accessibilityDescription:@"Hide visualization"
                                     fallbackImageName:@"flowchart.fill"
                                              forClass:[self class]];
     } else {
         [_popover close];
         _popover = nil;
-        button.image = [NSImage it_imageForSymbolName:@"flowchart"
+        button.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolFlowchart)
               accessibilityDescription:@"Show visualization"
                      fallbackImageName:@"flowchart"
                               forClass:[self class]];
@@ -1283,7 +1284,7 @@ static const CGFloat kLabelWidth = 124;
     [_popover close];
     _popover = nil;
     _visualizationViewController = nil;
-    _toggleVisualizationButton.image = [NSImage it_imageForSymbolName:@"flowchart"
+    _toggleVisualizationButton.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolFlowchart)
                                              accessibilityDescription:@"Show visualization"
                                                     fallbackImageName:@"flowchart"
                                                              forClass:[self class]];
@@ -1292,7 +1293,7 @@ static const CGFloat kLabelWidth = 124;
     _contentRegexPopover = nil;
     _contentRegexVisualizationViewController = nil;
     if (_contentRegexVisualizationButton) {
-        _contentRegexVisualizationButton.image = [NSImage it_imageForSymbolName:@"flowchart"
+        _contentRegexVisualizationButton.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolFlowchart)
                                                          accessibilityDescription:@"Show content regex visualization"
                                                                 fallbackImageName:@"flowchart"
                                                                          forClass:[self class]];
@@ -1328,14 +1329,14 @@ static const CGFloat kLabelWidth = 124;
         [popover showRelativeToRect:button.bounds ofView:button preferredEdge:NSRectEdgeMaxX];
         _contentRegexPopover = popover;
 
-        button.image = [NSImage it_imageForSymbolName:@"flowchart.fill"
+        button.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolFlowchartFill)
                              accessibilityDescription:@"Hide content regex visualization"
                                     fallbackImageName:@"flowchart.fill"
                                              forClass:[self class]];
     } else {
         [_contentRegexPopover close];
         _contentRegexPopover = nil;
-        button.image = [NSImage it_imageForSymbolName:@"flowchart"
+        button.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolFlowchart)
               accessibilityDescription:@"Show content regex visualization"
                      fallbackImageName:@"flowchart"
                               forClass:[self class]];

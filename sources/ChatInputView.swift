@@ -48,7 +48,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         inputTextFieldContainer.textView.delegate = self
 
         if #available(macOS 11.0, *) {
-            if let image = NSImage(systemSymbolName: "paperplane.fill", accessibilityDescription: "Send") {
+            if let image = NSImage(systemSymbolName: SFSymbol.paperplaneFill.rawValue, accessibilityDescription: "Send") {
                 sendButton = SendButton(image: image, target: self, action: #selector(sendButtonClicked))
                 sendButton.imageScaling = .scaleProportionallyUpOrDown
                 sendButton.imagePosition = .imageOnly
@@ -65,7 +65,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         sendButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         sendButton.setContentCompressionResistancePriority(.required, for: .horizontal)
 
-        var addImage = NSImage.it_image(forSymbolName: "plus", accessibilityDescription: "Attach files", fallbackImageName: "plus", for: ChatInputView.self)!
+        var addImage = NSImage.it_image(forSymbolName: SFSymbol.plus.rawValue, accessibilityDescription: "Attach files", fallbackImageName: "plus", for: ChatInputView.self)!
         if #available(macOS 11.0, *) {
             // Create a larger version of the image
             let config = NSImage.SymbolConfiguration(pointSize: 16, weight: .medium) // Adjust size as needed

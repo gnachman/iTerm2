@@ -13,6 +13,7 @@
 #import "iTermTuple.h"
 #import "DebugLogging.h"
 #import "NSImage+iTerm.h"
+#import "SFSymbolEnum/SFSymbolEnum.h"
 
 
 NSString *const kiTermIndicatorBell = @"kiTermIndicatorBell";
@@ -74,38 +75,38 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         // Handle version-specific SF Symbols
-        NSString *maximizedSymbol = @"square.arrowtriangle.4.outward";
-        NSString *debugLoggingSymbol = @"ladybug.circle";
-        
+        NSString *maximizedSymbol;
+        NSString *debugLoggingSymbol;
+
         if (@available(macOS 14, *)) {
             // Use newer symbols on macOS 14+
-            maximizedSymbol = @"square.arrowtriangle.4.outward";
-            debugLoggingSymbol = @"ladybug.circle";
+            maximizedSymbol = SFSymbolGetString(SFSymbolSquareArrowtriangle4Outward);
+            debugLoggingSymbol = SFSymbolGetString(SFSymbolLadybugCircle);
         } else {
             // Use older symbols on macOS < 14
-            maximizedSymbol = @"arrow.down.left.and.arrow.up.right.rectangle";
-            debugLoggingSymbol = @"ant.circle";
+            maximizedSymbol = SFSymbolGetString(SFSymbolArrowUpLeftAndArrowDownRight);
+            debugLoggingSymbol = SFSymbolGetString(SFSymbolAntCircle);
         }
         
         symbolMap = @{
-            kiTermIndicatorBell: @"bell",
-            kiTermIndicatorWrapToTop: @"arrow.counterclockwise",
-            kiTermIndicatorWrapToBottom: @"arrow.clockwise",
-            kItermIndicatorBroadcastInput: @"dot.radiowaves.right",
+            kiTermIndicatorBell: SFSymbolGetString(SFSymbolBell),
+            kiTermIndicatorWrapToTop: SFSymbolGetString(SFSymbolArrowCounterclockwise),
+            kiTermIndicatorWrapToBottom: SFSymbolGetString(SFSymbolArrowClockwise),
+            kItermIndicatorBroadcastInput: SFSymbolGetString(SFSymbolDotRadiowavesRight),
             kiTermIndicatorMaximized: maximizedSymbol,
-            kiTermIndicatorCoprocess: @"rectangle.2.swap",
-            kiTermIndicatorAlert: @"eye",
-            kiTermIndicatorAllOutputSuppressed: @"stop.circle",
-            kiTermIndicatorZoomedIn: @"magnifyingglass.circle",
-            kiTermIndicatorCopyMode: @"doc.on.doc",
+            kiTermIndicatorCoprocess: SFSymbolGetString(SFSymbolRectangle2Swap),
+            kiTermIndicatorAlert: SFSymbolGetString(SFSymbolEye),
+            kiTermIndicatorAllOutputSuppressed: SFSymbolGetString(SFSymbolStopCircle),
+            kiTermIndicatorZoomedIn: SFSymbolGetString(SFSymbolMagnifyingglassCircle),
+            kiTermIndicatorCopyMode: SFSymbolGetString(SFSymbolDocOnDoc),
             kiTermIndicatorDebugLogging: debugLoggingSymbol,
-            kiTermIndicatorFilter: @"line.3.horizontal.decrease.circle",
-            kiTermIndicatorSecureKeyboardEntry_Forced: @"key",
-            kiTermIndicatorSecureKeyboardEntry_User: @"key",
-            kiTermIndicatorPinned: @"pin",
-            kiTermIndicatorAIChatLinked: @"brain",
-            kiTermIndicatorAIChatStreaming: @"dot.radiowaves.right",
-            kiTermIndicatorChannel: @"rectangle.stack"
+            kiTermIndicatorFilter: SFSymbolGetString(SFSymbolLine3HorizontalDecreaseCircle),
+            kiTermIndicatorSecureKeyboardEntry_Forced: SFSymbolGetString(SFSymbolKey),
+            kiTermIndicatorSecureKeyboardEntry_User: SFSymbolGetString(SFSymbolKey),
+            kiTermIndicatorPinned: SFSymbolGetString(SFSymbolPin),
+            kiTermIndicatorAIChatLinked: SFSymbolGetString(SFSymbolBrain),
+            kiTermIndicatorAIChatStreaming: SFSymbolGetString(SFSymbolDotRadiowavesRight),
+            kiTermIndicatorChannel: SFSymbolGetString(SFSymbolRectangleStack)
         };
     });
     return symbolMap;

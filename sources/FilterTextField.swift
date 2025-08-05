@@ -27,7 +27,7 @@ class FilterTextField: NSSearchField {
             return
         }
         cell.setButtonType(.toggle)
-        let filterImage = NSImage(systemSymbolName: "line.horizontal.3.decrease.circle",
+        let filterImage = NSImage(systemSymbolName: SFSymbol.lineHorizontal3DecreaseCircle.rawValue,
                                   accessibilityDescription: "Filter")
         cell.image = filterImage
         cell.alternateImage = filterImage

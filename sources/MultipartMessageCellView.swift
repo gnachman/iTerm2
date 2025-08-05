@@ -325,10 +325,17 @@ class MultipartMessageCellView: MessageCellView {
 
         let copyButton = NSButton()
         copyButton.title = "Copy"
-        copyButton.image = NSImage.it_image(forSymbolName: "document.on.document",
-                                            accessibilityDescription: "Copy",
-                                            fallbackImageName: "document.on.document",
-                                            for: MultipartMessageCellView.self)
+        if #available(macOS 15, *) {
+            copyButton.image = NSImage.it_image(forSymbolName: SFSymbol.documentOnDocument.rawValue,
+                                                accessibilityDescription: "Copy",
+                                                fallbackImageName: "document.on.document",
+                                                for: MultipartMessageCellView.self)
+        } else {
+            copyButton.image = NSImage.it_image(forSymbolName: SFSymbol.docOnDoc.rawValue,
+                                                accessibilityDescription: "Copy",
+                                                fallbackImageName: "document.on.document",
+                                                for: MultipartMessageCellView.self)
+        }
         copyButton.imagePosition = .imageLeading
         copyButton.bezelStyle = .smallSquare
         copyButton.isBordered = false

@@ -7,6 +7,7 @@
 //
 
 #import "ToolCapturedOutputView.h"
+#import "SFSymbolEnum/SFSymbolEnum.h"
 
 #import "iTerm2SharedARC-Swift.h"
 #import "CapturedOutput.h"
@@ -82,7 +83,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
         if (@available(macOS 10.16, *)) {
             _clearButton.bezelStyle = NSBezelStyleRegularSquare;
             _clearButton.bordered = NO;
-            _clearButton.image = [NSImage it_imageForSymbolName:@"trash" accessibilityDescription:@"Clear"];
+            _clearButton.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolTrash) accessibilityDescription:@"Clear"];
             _clearButton.imagePosition = NSImageOnly;
             _clearButton.frame = NSMakeRect(0, 0, 22, 22);
         } else {

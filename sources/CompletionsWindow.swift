@@ -568,42 +568,49 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
     private func icon(for item: Item) -> NSImage {
         switch item.kind {
         case .file:
-            return NSImage.it_image(forSymbolName: "document",
-                                    accessibilityDescription: "File",
-                                    fallbackImageName: "document",
-                                    for: CompletionsWindow.self)
+            if #available(macOS 15, *) {
+                return NSImage.it_image(forSymbolName: SFSymbol.document.rawValue,
+                                        accessibilityDescription: "File",
+                                        fallbackImageName: "document",
+                                        for: CompletionsWindow.self)
+            } else {
+                return NSImage.it_image(forSymbolName: SFSymbol.doc.rawValue,
+                                        accessibilityDescription: "File",
+                                        fallbackImageName: "document",
+                                        for: CompletionsWindow.self)
+            }
         case .aiSuggestion:
-            return NSImage.it_image(forSymbolName: "sparkles",
+            return NSImage.it_image(forSymbolName: SFSymbol.sparkles.rawValue,
                                     accessibilityDescription: "AI",
                                     fallbackImageName: "sparkles",
                                     for: CompletionsWindow.self)
         case .history:
-            return NSImage.it_image(forSymbolName: "clock",
+            return NSImage.it_image(forSymbolName: SFSymbol.clock.rawValue,
                                     accessibilityDescription: "History",
                                     fallbackImageName: "clock",
                                     for: CompletionsWindow.self)
         case .command:
-            return NSImage.it_image(forSymbolName: "command",
+            return NSImage.it_image(forSymbolName: SFSymbol.command.rawValue,
                                     accessibilityDescription: "Command",
                                     fallbackImageName: "command",
                                     for: CompletionsWindow.self)
         case .folder:
-            return NSImage.it_image(forSymbolName: "folder",
+            return NSImage.it_image(forSymbolName: SFSymbol.folder.rawValue,
                                     accessibilityDescription: "Folder",
                                     fallbackImageName: "folder",
                                     for: CompletionsWindow.self)
         case .webSearch:
-            return NSImage.it_image(forSymbolName: "magnifyingglass",
+            return NSImage.it_image(forSymbolName: SFSymbol.magnifyingglass.rawValue,
                                     accessibilityDescription: "Web Search",
                                     fallbackImageName: "magnifyingglass",
                                     for: CompletionsWindow.self)
         case .navigation:
-            return NSImage.it_image(forSymbolName: "safari",
+            return NSImage.it_image(forSymbolName: SFSymbol.safari.rawValue,
                                     accessibilityDescription: "Navigate",
                                     fallbackImageName: "safari",
                                     for: CompletionsWindow.self)
         case .bookmark:
-            return NSImage.it_image(forSymbolName: "bookmark",
+            return NSImage.it_image(forSymbolName: SFSymbol.bookmark.rawValue,
                                     accessibilityDescription: "Bookmark",
                                     fallbackImageName: "bookmark",
                                     for: CompletionsWindow.self)

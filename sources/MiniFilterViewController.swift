@@ -29,7 +29,7 @@ class MiniFilterField: iTermMiniSearchField {
             return
         }
         cell.setButtonType(.toggle)
-        let filterImage = NSImage(systemSymbolName: "line.horizontal.3.decrease.circle",
+        let filterImage = NSImage(systemSymbolName: SFSymbol.lineHorizontal3DecreaseCircle.rawValue,
                                   accessibilityDescription: "Filter")
         let tinted = iconColor.map { filterImage?.it_image(withTintColor: $0) } ?? filterImage
         cell.image = tinted

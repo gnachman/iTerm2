@@ -6,6 +6,7 @@
 //
 
 #import "iTermJobTreeViewController.h"
+#import "SFSymbolEnum/SFSymbolEnum.h"
 
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
@@ -272,7 +273,7 @@ static int gSignalsToList[] = {
 
 - (void)awakeFromNib {
     if (@available(macOS 10.16, *)) {
-        kill_.image = [NSImage it_imageForSymbolName:@"play" accessibilityDescription:@"Clear"];
+        kill_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolPlay) accessibilityDescription:@"Clear"];
         _outlineView.style = NSTableViewStyleInset;
     }
     [self updateKillButtonEnabled];

@@ -311,7 +311,7 @@ extension ChatWindowController: NSToolbarDelegate {
         item.paletteLabel = "Toggle Chat List"
         item.toolTip = "Show or hide the chat list"
         if #available(macOS 11.0, *) {
-            item.image = NSImage(systemSymbolName: "sidebar.left",
+            item.image = NSImage(systemSymbolName: SFSymbol.sidebarLeft.rawValue,
                                  accessibilityDescription: "Toggle Chat List")
         } else {
             item.image = NSImage(named: NSImage.touchBarSidebarTemplateName)

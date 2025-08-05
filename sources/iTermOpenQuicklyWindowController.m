@@ -1,5 +1,6 @@
 #import "iTermOpenQuicklyWindowController.h"
 
+#import "SFSymbolEnum/SFSymbolEnum.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "ITAddressBookMgr.h"
 #import "iTermApplication.h"
@@ -93,7 +94,7 @@
 
     if (@available(macOS 10.16, *)) {
         {
-            NSImage *image = [NSImage imageWithSystemSymbolName:@"magnifyingglass"
+            NSImage *image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolMagnifyingglass)
                                        accessibilityDescription:@"Search icon"];
             NSImageSymbolConfiguration *config =
             [NSImageSymbolConfiguration configurationWithPointSize:21
@@ -104,7 +105,7 @@
             NSImageSymbolConfiguration *config =
             [NSImageSymbolConfiguration configurationWithPointSize:14
                                                             weight:NSFontWeightRegular];
-            NSImage *image = [NSImage imageWithSystemSymbolName:@"xmark.circle.fill"
+            NSImage *image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolXmarkCircleFill)
                                        accessibilityDescription:@"Clear search query"];
             [_xButton setImage:[image imageWithSymbolConfiguration:config]];
             NSRect frame = _xButton.frame;

@@ -27,6 +27,7 @@
 
 #import "iTermApplication.h"
 
+#import "SFSymbolEnum/SFSymbolEnum.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -1015,7 +1016,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         static NSCursor *sparkles;
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
-            NSImage *image = [NSImage imageWithSystemSymbolName:@"sparkles"
+            NSImage *image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolSparkles)
                                        accessibilityDescription:@"Leader pending"];
             NSImage *black = [image it_imageWithTintColor:[NSColor blackColor]];
             NSImage *white = [image it_imageWithTintColor:[NSColor whiteColor]];

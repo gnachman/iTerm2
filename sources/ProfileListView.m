@@ -24,6 +24,7 @@
 
 #import "ProfileListView.h"
 
+#import "SFSymbolEnum/SFSymbolEnum.h"
 #import "DebugLogging.h"
 #import "iTermSplitViewAnimation.h"
 #import "ITAddressBookMgr.h"
@@ -685,7 +686,7 @@ const CGFloat kDefaultTagsWidth = 80;
         NSAttributedString *browserIcon;
         if (@available(macOS 11.0, *)) {
             NSTextAttachment *attachment = [[[NSTextAttachment alloc] init] autorelease];
-            NSString *imageName = isDefault ? @"safari.fill" : @"safari";
+            NSString *imageName = isDefault ? SFSymbolGetString(SFSymbolSafariFill) : SFSymbolGetString(SFSymbolSafari);
             NSImage *image = [NSImage imageWithSystemSymbolName:imageName accessibilityDescription:nil];
             image.size = NSMakeSize(16, 16);
             attachment.image = image;

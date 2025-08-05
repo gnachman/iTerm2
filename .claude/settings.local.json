@@ -37,7 +37,8 @@
       "Bash(swift build)",
       "Bash(pkill:*)",
       "Bash(ffprobe:*)",
-      "Bash(ffmpeg:*)"
+      "Bash(ffmpeg:*)",
+      "Bash(swift:*)"
     ],
     "deny": []
   }

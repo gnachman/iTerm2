@@ -680,14 +680,14 @@ extension SSHFilePanelSidebar: NSOutlineViewDelegate {
                     image?.isTemplate = true
                 } else {
                     image = NSImage.it_image(
-                        forSymbolName: "folder",
+                        forSymbolName: SFSymbol.folder.rawValue,
                         accessibilityDescription: "Folder",
                         fallbackImageName: "folder",
                         for: SSHFilePanelSidebar.self)
                 }
             } else {
                 image = NSImage.it_image(
-                    forSymbolName: "folder",
+                    forSymbolName: SFSymbol.folder.rawValue,
                     accessibilityDescription: "Folder",
                     fallbackImageName: "folder",
                     for: SSHFilePanel.self)
@@ -700,7 +700,7 @@ extension SSHFilePanelSidebar: NSOutlineViewDelegate {
                 image?.isTemplate = true
             } else {
                 image = NSImage.it_image(
-                    forSymbolName: "server.rack",
+                    forSymbolName: SFSymbol.serverRack.rawValue,
                     accessibilityDescription: "Server",
                     fallbackImageName: "rack",
                     for: SSHFilePanel.self

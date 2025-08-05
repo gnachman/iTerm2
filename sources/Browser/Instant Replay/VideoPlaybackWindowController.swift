@@ -106,7 +106,7 @@ class VideoPlaybackWindowController: NSWindowController, NSMenuItemValidation {
         let symbolConfig = NSImage.SymbolConfiguration(pointSize: 18, weight: .medium)
 
         playBackwardButton = NSButton()
-        playBackwardButton.image = NSImage(systemSymbolName: "arrowtriangle.backward.fill", accessibilityDescription: "Play Backward")?.withSymbolConfiguration(symbolConfig)
+        playBackwardButton.image = NSImage(systemSymbolName: SFSymbol.arrowtriangleBackwardFill.rawValue, accessibilityDescription: "Play Backward")?.withSymbolConfiguration(symbolConfig)
         playBackwardButton.bezelStyle = .shadowlessSquare
         playBackwardButton.isBordered = false
         playBackwardButton.target = self
@@ -115,7 +115,7 @@ class VideoPlaybackWindowController: NSWindowController, NSMenuItemValidation {
         controlsContainer.addSubview(playBackwardButton)
         
         playPauseButton = NSButton()
-        playPauseButton.image = NSImage(systemSymbolName: "play.fill", accessibilityDescription: "Play")?.withSymbolConfiguration(symbolConfig)
+        playPauseButton.image = NSImage(systemSymbolName: SFSymbol.playFill.rawValue, accessibilityDescription: "Play")?.withSymbolConfiguration(symbolConfig)
         playPauseButton.bezelStyle = .shadowlessSquare
         playPauseButton.isBordered = false
         playPauseButton.target = self
@@ -142,7 +142,7 @@ class VideoPlaybackWindowController: NSWindowController, NSMenuItemValidation {
         
         revealInFinderButton = NSButton()
         let smallerSymbolConfig = NSImage.SymbolConfiguration(pointSize: 14, weight: .medium)
-        revealInFinderButton.image = NSImage(systemSymbolName: "arrow.up.right.square", accessibilityDescription: "Reveal in Finder")?.withSymbolConfiguration(smallerSymbolConfig)
+        revealInFinderButton.image = NSImage(systemSymbolName: SFSymbol.arrowUpRightSquare.rawValue, accessibilityDescription: "Reveal in Finder")?.withSymbolConfiguration(smallerSymbolConfig)
         revealInFinderButton.bezelStyle = .shadowlessSquare
         revealInFinderButton.isBordered = false
         revealInFinderButton.target = self
@@ -307,11 +307,11 @@ class VideoPlaybackWindowController: NSWindowController, NSMenuItemValidation {
             let symbolConfig = NSImage.SymbolConfiguration(pointSize: 18, weight: .medium)
             
             // Update forward play/pause button
-            let forwardSymbolName = player.rate > 0 ? "pause.fill" : "play.fill"
+            let forwardSymbolName = player.rate > 0 ? SFSymbol.pauseFill.rawValue : SFSymbol.playFill.rawValue
             playPauseButton.image = NSImage(systemSymbolName: forwardSymbolName, accessibilityDescription: player.rate > 0 ? "Pause" : "Play")?.withSymbolConfiguration(symbolConfig)
             
             // Update backward play button
-            let backwardSymbolName = player.rate < 0 ? "pause.fill" : "arrowtriangle.backward.fill"
+            let backwardSymbolName = player.rate < 0 ? SFSymbol.pauseFill.rawValue : SFSymbol.arrowtriangleBackwardFill.rawValue
             playBackwardButton.image = NSImage(systemSymbolName: backwardSymbolName, accessibilityDescription: player.rate < 0 ? "Pause" : "Play Backward")?.withSymbolConfiguration(symbolConfig)
         }
     }

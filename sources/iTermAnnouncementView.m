@@ -7,6 +7,7 @@
 //
 
 #import "iTermAnnouncementView.h"
+#import "SFSymbolEnum/SFSymbolEnum.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "DebugLogging.h"
 #import "NSColor+iTerm.h"
@@ -217,10 +218,10 @@ static const CGFloat kMargin = 8;
         NSImage *image;
         switch (_style) {
             case kiTermAnnouncementViewStyleWarning:
-                image = [NSImage imageWithSystemSymbolName:@"exclamationmark.triangle" accessibilityDescription:@"Warning icon"];
+                image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolExclamationmarkTriangle) accessibilityDescription:@"Warning icon"];
                 break;
             case kiTermAnnouncementViewStyleQuestion:
-                image = [NSImage imageWithSystemSymbolName:@"questionmark.circle" accessibilityDescription:@"Question icon"];
+                image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolQuestionmarkCircle) accessibilityDescription:@"Question icon"];
                 break;
         }
         NSImageSymbolConfiguration *config = [NSImageSymbolConfiguration configurationWithPointSize:22.0 weight:NSFontWeightRegular];

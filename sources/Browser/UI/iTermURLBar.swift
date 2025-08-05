@@ -488,7 +488,7 @@ class iTermURLBarGuts: NSView {
             let draggingItem = NSDraggingItem(pasteboardWriter: pasteboardItem)
             
             // Set the dragging image to the favicon or a default
-            let dragImage = favicon ?? NSImage(systemSymbolName: "globe", accessibilityDescription: nil) ?? NSImage()
+            let dragImage = favicon ?? NSImage(systemSymbolName: SFSymbol.globe.rawValue, accessibilityDescription: nil) ?? NSImage()
             draggingItem.setDraggingFrame(faviconView.frame, contents: dragImage)
             
             // Store the URL for the data provider

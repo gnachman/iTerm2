@@ -103,7 +103,7 @@ class FileBrowserWindowController: NSWindowController {
         let backForward: NSToolbarItem
 
         init() {
-            let ellipsisCircleImage = NSImage(systemSymbolName: "ellipsis.circle",
+            let ellipsisCircleImage = NSImage(systemSymbolName: SFSymbol.ellipsisCircle.rawValue,
                                               accessibilityDescription: "Action")!
             let backForwardView = NSPopUpButton(image: ellipsisCircleImage, target: nil, action: nil)
             backForwardView.pullsDown = true

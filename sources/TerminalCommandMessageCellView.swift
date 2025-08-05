@@ -19,7 +19,7 @@ class TerminalCommandMessageCellView: MessageCellView {
     private let icon: NSImageView = {
         let image = {
             if #available(macOS 11, *) {
-                let image = NSImage.init(systemSymbolName: "desktopcomputer", accessibilityDescription: "Command icon")!
+                let image = NSImage.init(systemSymbolName: SFSymbol.desktopcomputer.rawValue, accessibilityDescription: "Command icon")!
                 if #available(macOS 12, *) {
                     return image.withSymbolConfiguration(.init(paletteColors: [.white, .clear, .black]))!
                 } else {

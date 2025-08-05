@@ -7,6 +7,7 @@
 //
 
 #import "NSAppearance+iTerm.h"
+#import "SFSymbolEnum/SFSymbolEnum.h"
 
 #import "DebugLogging.h"
 #import "NSArray+iTerm.h"
@@ -256,7 +257,7 @@
 
 + (NSImage *)it_hamburgerForClass:(Class)theClass {
     if (@available(macOS 10.16, *)) {
-        return [self it_imageForSymbolName:@"ellipsis.circle" accessibilityDescription:@"Menu"];
+        return [self it_imageForSymbolName:SFSymbolGetString(SFSymbolEllipsisCircle) accessibilityDescription:@"Menu"];
     }
     return [NSImage it_imageNamed:@"Hamburger" forClass:theClass];
 }

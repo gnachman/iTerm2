@@ -56,7 +56,7 @@ class PortholeContainerView: NSView {
 
     static func closeButtonImage(_ color: NSColor) -> NSImage {
         if #available(macOS 11.0, *) {
-            if let image = NSImage(systemSymbolName: "xmark.circle",
+            if let image = NSImage(systemSymbolName: SFSymbol.xmarkCircle.rawValue,
                                    accessibilityDescription: "Close markdown view") {
                 return image.it_image(withTintColor: color)
             }

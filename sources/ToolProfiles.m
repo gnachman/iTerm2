@@ -7,6 +7,7 @@
 //
 
 #import "ToolProfiles.h"
+#import "SFSymbolEnum/SFSymbolEnum.h"
 
 #import "DebugLogging.h"
 #import "iTermController.h"
@@ -53,7 +54,7 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
         if (@available(macOS 10.16, *)) {
             _openButton.bezelStyle = NSBezelStyleRegularSquare;
             _openButton.bordered = NO;
-            _openButton.image = [NSImage it_imageForSymbolName:@"play" accessibilityDescription:@"Open Profile"];
+            _openButton.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolPlay) accessibilityDescription:@"Open Profile"];
             _openButton.imageScaling = NSImageScaleProportionallyUpOrDown;
             _openButton.imagePosition = NSImageOnly;
         } else {

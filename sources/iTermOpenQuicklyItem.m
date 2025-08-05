@@ -1,4 +1,5 @@
 #import "iTermOpenQuicklyItem.h"
+#import "SFSymbolEnum/SFSymbolEnum.h"
 #import "iTermLogoGenerator.h"
 #import "iTermOpenQuicklyTableCellView.h"
 #import "NSImage+iTerm.h"
@@ -110,7 +111,7 @@
 @implementation iTermOpenQuicklyInvocationItem
 
 - (NSImage *)icon {
-    return [NSImage it_imageForSymbolName:@"function" accessibilityDescription:nil];
+    return [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolFunction) accessibilityDescription:nil];
 }
 
 @end
@@ -142,7 +143,7 @@
 - (NSImage *)icon {
     if (@available(macOS 11, *)) {
         NSImageSymbolConfiguration *config = [NSImageSymbolConfiguration configurationWithPointSize:32 weight:NSFontWeightRegular];
-        NSImage *image = [NSImage imageWithSystemSymbolName:@"bookmark" accessibilityDescription:@"globe"];
+        NSImage *image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolBookmark) accessibilityDescription:@"globe"];
         image = [image imageWithSymbolConfiguration:config];
         image.size = NSMakeSize(32, 32);
         return image;
@@ -157,7 +158,7 @@
 - (NSImage *)icon {
     if (@available(macOS 11, *)) {
         NSImageSymbolConfiguration *config = [NSImageSymbolConfiguration configurationWithPointSize:32 weight:NSFontWeightRegular];
-        NSImage *image = [NSImage imageWithSystemSymbolName:@"globe" accessibilityDescription:@"globe"];
+        NSImage *image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolGlobe) accessibilityDescription:@"globe"];
         image = [image imageWithSymbolConfiguration:config];
         image.size = NSMakeSize(32, 32);
         return image;

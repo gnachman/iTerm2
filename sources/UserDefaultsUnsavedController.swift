@@ -42,7 +42,7 @@ fileprivate class UnsavedUserDefaultsViewController: NSViewController {
         button.frame = NSRect(x: 0, y: 0, width: size, height: size)
         self.button = button
 
-        let image = NSImage(systemSymbolName: "exclamationmark.circle.fill", accessibilityDescription: nil)
+        let image = NSImage(systemSymbolName: SFSymbol.exclamationmarkCircleFill.rawValue, accessibilityDescription: nil)
         image?.isTemplate = true
         button.contentTintColor = .red
         button.image = image

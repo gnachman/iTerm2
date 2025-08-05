@@ -67,6 +67,7 @@
  *  additional profile: parameter. The analog of iTermPreferences is iTermProfilePreferences.
  *  */
 #import "PreferencePanel.h"
+#import "SFSymbolEnum/SFSymbolEnum.h"
 
 #import "DebugLogging.h"
 #import "AppearancePreferencesViewController.h"
@@ -525,14 +526,14 @@ static iTermPreferencesSearchEngine *gSearchEngine;
 #ifdef MAC_OS_X_VERSION_10_16
     if (@available(macOS 10.16, *)) {
         self.window.toolbarStyle = NSWindowToolbarStylePreference;
-        _globalToolbarItem.image = [NSImage it_imageForSymbolName:@"gearshape" accessibilityDescription:@"General"];
-        _appearanceToolbarItem.image = [NSImage it_imageForSymbolName:@"eye" accessibilityDescription:@"Appearance"];
-        _keyboardToolbarItem.image = [NSImage it_imageForSymbolName:@"keyboard" accessibilityDescription:@"Keys"];
-        _arrangementsToolbarItem.image = [NSImage it_imageForSymbolName:@"macwindow.on.rectangle" accessibilityDescription:@"Arrangements"];
-        _profilesToolbarItem.image = [NSImage it_imageForSymbolName:@"person" accessibilityDescription:@"Profiles"];
-        _mouseToolbarItem.image = [NSImage it_imageForSymbolName:@"cursorarrow.motionlines" accessibilityDescription:@"Pointer"];
-        _advancedToolbarItem.image = [NSImage it_imageForSymbolName:@"gearshape.2" accessibilityDescription:@"Advanced"];
-        _shortcutsToolbarItem.image = [NSImage it_imageForSymbolName:@"bolt.circle" accessibilityDescription:@"Shortcuts"];
+        _globalToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolGearshape) accessibilityDescription:@"General"];
+        _appearanceToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolEye) accessibilityDescription:@"Appearance"];
+        _keyboardToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolKeyboard) accessibilityDescription:@"Keys"];
+        _arrangementsToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolMacwindowOnRectangle) accessibilityDescription:@"Arrangements"];
+        _profilesToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolPerson) accessibilityDescription:@"Profiles"];
+        _mouseToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolCursorarrowMotionlines) accessibilityDescription:@"Pointer"];
+        _advancedToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolGearshape2) accessibilityDescription:@"Advanced"];
+        _shortcutsToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolBoltCircle) accessibilityDescription:@"Shortcuts"];
     }
 #endif
     _globalTabViewItem.view = _generalPreferencesViewController.view;

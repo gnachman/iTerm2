@@ -131,7 +131,7 @@ class DismissableLinkViewController: NSViewController {
         }
         let imageButton = NSButton()
         close = imageButton
-        imageButton.image = NSImage(systemSymbolName: "xmark.circle",
+        imageButton.image = NSImage(systemSymbolName: SFSymbol.xmarkCircle.rawValue,
                                     accessibilityDescription: "Permanently hide \(text) button")
         imageButton.bezelStyle = .shadowlessSquare
         imageButton.isBordered = false

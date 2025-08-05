@@ -517,7 +517,7 @@ class SSHFilePanel: NSWindowController {
         backButton = NSButton()
         backButton.translatesAutoresizingMaskIntoConstraints = false
         backButton.bezelStyle = .texturedRounded
-        backButton.image = NSImage.it_image(forSymbolName: "chevron.left",
+        backButton.image = NSImage.it_image(forSymbolName: SFSymbol.chevronLeft.rawValue,
                                             accessibilityDescription: "Back",
                                             fallbackImageName: "chevron.left",
                                             for: SSHFilePanel.self)
@@ -528,7 +528,7 @@ class SSHFilePanel: NSWindowController {
         forwardButton = NSButton()
         forwardButton.translatesAutoresizingMaskIntoConstraints = false
         forwardButton.bezelStyle = .texturedRounded
-        forwardButton.image = NSImage.it_image(forSymbolName: "chevron.right",
+        forwardButton.image = NSImage.it_image(forSymbolName: SFSymbol.chevronRight.rawValue,
                                                accessibilityDescription: "Forward",
                                                fallbackImageName: "chevron.right",
                                                for: SSHFilePanel.self)

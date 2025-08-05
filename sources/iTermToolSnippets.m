@@ -7,6 +7,7 @@
 
 #import "iTermToolSnippets.h"
 
+#import "SFSymbolEnum/SFSymbolEnum.h"
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermActionsModel.h"
@@ -126,8 +127,8 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     self = [super initWithFrame:frame];
     if (self) {
         if (@available(macOS 11.0, *)) {
-            _icon = [NSImage imageWithSystemSymbolName:@"text.document.fill" accessibilityDescription:@"Snippet icon"];
-            _folderIcon = [NSImage imageWithSystemSymbolName:@"folder.fill" accessibilityDescription:@"Folder icon"];
+            _icon = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolTextBubbleFill) accessibilityDescription:@"Snippet icon"];
+            _folderIcon = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolFolderFill) accessibilityDescription:@"Folder icon"];
         }
         if (@available(macOS 10.16, *)) {
             _applyButton = iTermToolSnippetsNewButton(@"play", @"Send", self, @selector(apply:), frame);
