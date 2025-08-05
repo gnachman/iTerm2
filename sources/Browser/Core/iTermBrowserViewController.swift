@@ -202,6 +202,11 @@ class iTermBrowserViewController: NSViewController {
 @MainActor
 extension iTermBrowserViewController {
     @objc
+    func findPanelDidHide() {
+        browserManager.browserFindManager?.clearFind()
+    }
+
+    @objc
     func openAutocomplete() {
         Task {
             await browserManager.autofillHandler?.fillAll(webView: browserManager.webView)

@@ -703,6 +703,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 - (void)findViewDidHide {
     self.delegate.sessionViewStatusBarViewController.mustShowSearchComponent = NO;
     self.delegate.sessionViewStatusBarViewController.temporaryLeftComponent = nil;
+    [self.browserViewController findPanelDidHide];
 }
 
 - (BOOL)useMetal {
