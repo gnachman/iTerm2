@@ -295,8 +295,9 @@ class iTermURLBarGuts: NSView {
         progressIndicator?.frame = NSRect(x: progressX, y: iconY,
                                          width: iconSize.width, height: iconSize.height)
         
-        // Text field background - now just a container for positioning
-        let textFieldX: CGFloat = inset + iconSize.width + 4 // After favicon + spacing
+        // Text field background - adjust positioning based on favicon visibility
+        let hasFavicon = favicon != nil
+        let textFieldX: CGFloat = hasFavicon ? (inset + iconSize.width + 4) : inset
         let textFieldWidth: CGFloat
         if _isLoading && !(progressIndicator?.isHidden ?? true) {
             // When progress indicator is visible, shrink text field

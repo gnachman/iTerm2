@@ -214,23 +214,37 @@ class iTermBrowserToolbar: NSView {
         }
         rightHelper.x -= 12.0
         
-        // Calculate available space for indicators
-        let availableSpaceForIndicators = rightHelper.x - leftHelper.x - 250.0 // Reserve 250 for URL bar
+        // Position indicators next to menu button - they can shrink but have a minimum size
+        let totalAvailableSpace = rightHelper.x - leftHelper.x
+        let minUrlBarWidth: CGFloat = 250.0
         let minIndicatorsWidth: CGFloat = 24.0
+        let maxIndicatorsWidth: CGFloat = 120.0
+        let spacing: CGFloat = 12.0
         
-        if availableSpaceForIndicators >= minIndicatorsWidth {
-            // Use all available space for indicators, but leave some padding
-            let indicatorsWidth = availableSpaceForIndicators * 0.3 // Use 30% of remaining space
-            rightHelper.x -= indicatorsWidth
-            let indicatorsFrame = NSRect(x: rightHelper.x, y: 0, width: indicatorsWidth, height: bounds.height)
-            indicatorsView.frame = indicatorsFrame
+        var indicatorsWidth: CGFloat = 0
+        var showIndicators = false
+        
+        // Check if we have space for URL bar + minimum indicators
+        if totalAvailableSpace >= minUrlBarWidth + minIndicatorsWidth + spacing {
+            // Calculate how much space we can give to indicators
+            let spaceForIndicators = totalAvailableSpace - minUrlBarWidth - spacing
+            indicatorsWidth = min(maxIndicatorsWidth, max(minIndicatorsWidth, spaceForIndicators * 0.3))
+            showIndicators = true
+            
+            // Position indicators
+            rightHelper.x -= indicatorsWidth + spacing
+            indicatorsView.frame = NSRect(x: rightHelper.x + spacing, y: 0, width: indicatorsWidth, height: bounds.height)
             indicatorsView.isHidden = false
         } else {
             // Not enough space, hide indicators
             indicatorsView.isHidden = true
         }
-
-        leftHelper.addProportional(urlBar, minX: leftHelper.x, maxX: rightHelper.x, preferredMinWidth: 250.0, fraction: 0.55)
+        
+        // Now center URL bar in remaining space
+        let remainingSpace = rightHelper.x - leftHelper.x
+        let urlBarWidth = max(remainingSpace * 0.6, minUrlBarWidth)
+        let urlBarX = leftHelper.x + (remainingSpace - urlBarWidth) / 2.0
+        urlBar.frame = NSRect(x: urlBarX, y: 0, width: urlBarWidth, height: bounds.height)
 
         let verticalHelper = VerticalLayoutHelper(enclosureHeight: bounds.height)
         verticalHelper.centerInEnclosure(backButton)
