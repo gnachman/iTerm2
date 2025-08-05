@@ -333,7 +333,9 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                 contentWorld: .defaultClient,
                 name: iTermBrowserFindManager.messageHandlerName)
         }
-        configuration.userContentController.add(readerModeManager, name: "readerMode")
+        configuration.userContentController.add(readerModeManager,
+                                                contentWorld: .defaultClient,
+                                                name: "readerMode")
 
         // Add message handler for named mark updates
         if namedMarkManager != nil {
