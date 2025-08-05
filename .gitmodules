@@ -46,3 +46,6 @@
 [submodule "submodules/adblock-rust"]
 	path = submodules/adblock-rust
         url = https://github.com/gnachman/adblock-rust
+[submodule "submodules/SFSymbolEnum"]
+	path = submodules/SFSymbolEnum
+	url = https://github.com/gnachman/SFSymbolEnum

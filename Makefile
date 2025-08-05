@@ -253,7 +253,12 @@ paranoidlibhudsucker: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) libhudsucker
 
 # You probably want make paranoiddeps to avoid depending on Hombrew stuff.
-deps: force fatlibsixel CoreParse NMSSH bindeps libgit2 sparkle librailroad_dsl libadblock libhudsucker
+deps: force fatlibsixel CoreParse NMSSH bindeps libgit2 sparkle librailroad_dsl libadblock libhudsucker sfsymbolenum
+
+sfsymbolenum:
+	cp submodules/SFSymbolEnum/Sources/SFSymbolEnum/* ThirdParty/SFSymbolEnum
+	cd submodules/SFSymbolEnum && swift generateSFSymbolEnum.swift --objc > ../../ThirdParty/SFSymbolEnum/SFSymbolEnum.h
+	cd submodules/SFSymbolEnum && swift generateSFSymbolEnum.swift --objc-impl > ../../ThirdParty/SFSymbolEnum/SFSymbolEnum.m
 
 DepsIfNeeded: force
 	tools/rebuild-deps-if-needed

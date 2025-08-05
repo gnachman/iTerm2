@@ -3988,6 +3988,10 @@
 		A6D693F62E417306005E9AFE /* mute-audio.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D693F42E417304005E9AFE /* mute-audio.js */; };
 		A6D693F72E417306005E9AFE /* mute-audio.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D693F42E417304005E9AFE /* mute-audio.js */; };
 		A6D693F92E419823005E9AFE /* iTermBrowserIndicatorsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D693F82E419823005E9AFE /* iTermBrowserIndicatorsView.swift */; };
+		A6D693FD2E41B9AF005E9AFE /* SFSymbolEnum.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D693FA2E41B9AF005E9AFE /* SFSymbolEnum.swift */; };
+		A6D693FE2E41B9AF005E9AFE /* SFSymbolEnum.generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D693FB2E41B9AF005E9AFE /* SFSymbolEnum.generated.swift */; };
+		A6D694012E41C094005E9AFE /* SFSymbolEnum.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D693FF2E41C094005E9AFE /* SFSymbolEnum.h */; };
+		A6D694022E41C094005E9AFE /* SFSymbolEnum.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D694002E41C094005E9AFE /* SFSymbolEnum.m */; };
 		A6D7D2222BBE0E7B00D884F5 /* FakeWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D173858126C820A004622DC /* FakeWindow.m */; };
 		A6D7E0712C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D7E0702C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift */; };
 		A6D7E0722C1B6AF5007D0A37 /* iTermProfileSearchToken.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D468BBF1B056CD600226083 /* iTermProfileSearchToken.m */; };
@@ -8423,6 +8427,10 @@
 		A6D693EB2E416AC2005E9AFE /* PointerControllerDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointerControllerDelegate.swift; sourceTree = "<group>"; };
 		A6D693F42E417304005E9AFE /* mute-audio.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "mute-audio.js"; sourceTree = "<group>"; };
 		A6D693F82E419823005E9AFE /* iTermBrowserIndicatorsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserIndicatorsView.swift; sourceTree = "<group>"; };
+		A6D693FA2E41B9AF005E9AFE /* SFSymbolEnum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSymbolEnum.swift; sourceTree = "<group>"; };
+		A6D693FB2E41B9AF005E9AFE /* SFSymbolEnum.generated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSymbolEnum.generated.swift; sourceTree = "<group>"; };
+		A6D693FF2E41C094005E9AFE /* SFSymbolEnum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SFSymbolEnum.h; sourceTree = "<group>"; };
+		A6D694002E41C094005E9AFE /* SFSymbolEnum.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SFSymbolEnum.m; sourceTree = "<group>"; };
 		A6D7E0702C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileStyleSearchEngine.swift; sourceTree = "<group>"; };
 		A6D7E0752C236D54007D0A37 /* LineBlockMetadataArray.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LineBlockMetadataArray.h; sourceTree = "<group>"; };
 		A6D7E0762C236D54007D0A37 /* LineBlockMetadataArray.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LineBlockMetadataArray.m; sourceTree = "<group>"; };
@@ -9700,6 +9708,7 @@
 		1D03D42519144B8E0049EB8F /* ThirdParty */ = {
 			isa = PBXGroup;
 			children = (
+				A6D693FC2E41B9AF005E9AFE /* SFSymbolEnum */,
 				A68BE8B12DE1430F002DD513 /* PorterStemmer */,
 				A6E8EA1D2DD2DDC1001143CF /* unordered_dense */,
 				A6F66B6E2C2E2B6200DC3569 /* BTree */,
@@ -13722,6 +13731,17 @@
 			path = "Audio Muting";
 			sourceTree = "<group>";
 		};
+		A6D693FC2E41B9AF005E9AFE /* SFSymbolEnum */ = {
+			isa = PBXGroup;
+			children = (
+				A6D693FF2E41C094005E9AFE /* SFSymbolEnum.h */,
+				A6D694002E41C094005E9AFE /* SFSymbolEnum.m */,
+				A6D693FA2E41B9AF005E9AFE /* SFSymbolEnum.swift */,
+				A6D693FB2E41B9AF005E9AFE /* SFSymbolEnum.generated.swift */,
+			);
+			path = SFSymbolEnum;
+			sourceTree = "<group>";
+		};
 		A6E312B52E3997A6008222DE /* Copy Mode */ = {
 			isa = PBXGroup;
 			children = (
@@ -15276,6 +15296,7 @@
 				A6A4B2AF2426B8D600184EAC /* iTermTouchbarMappings.h in Headers */,
 				A61ED2A520E99DCD0035BECD /* iTermStatusBarClockComponent.h in Headers */,
 				530AB8BC20B3D3D000D2AA08 /* iTermWindowHacks.h in Headers */,
+				A6D694012E41C094005E9AFE /* SFSymbolEnum.h in Headers */,
 				A620041E248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.h in Headers */,
 				A65660D42372A4A600DC6744 /* iTermCache.h in Headers */,
 				5365207121433ED2003C58FD /* iTermGitState.h in Headers */,
@@ -18704,6 +18725,8 @@
 				A6069F1A2DF366E300EE6CC7 /* Pipeline.swift in Sources */,
 				A63F0A5B2BF435200096633F /* iTermSSHHelpers.m in Sources */,
 				A629F59823AFF49E00C2F16B /* iTermShellIntegrationRootView.m in Sources */,
+				A6D693FD2E41B9AF005E9AFE /* SFSymbolEnum.swift in Sources */,
+				A6D693FE2E41B9AF005E9AFE /* SFSymbolEnum.generated.swift in Sources */,
 				A6A4867A20B67DFF00493302 /* ProfilesSessionPreferencesViewController.m in Sources */,
 				A678FE7927F10B1700BEF8FA /* DismissableLinkViewController.swift in Sources */,
 				A6A3EDC22E0CA96000D711DA /* print.swift in Sources */,
@@ -18716,6 +18739,7 @@
 				A6D1A3ED2C7E9A1A00FECDF2 /* ReferenceContainer.swift in Sources */,
 				A66719671DCE3772000CE608 /* iTermWebSocketFrameBuilder.m in Sources */,
 				A667C23E276C7A44006B4DEF /* HighlightTrigger.m in Sources */,
+				A6D694022E41C094005E9AFE /* SFSymbolEnum.m in Sources */,
 				A6A4B2B02426B8D600184EAC /* iTermTouchbarMappings.m in Sources */,
 				A6AFD68524496EC2007D0660 /* iTermMultiServerMessage.m in Sources */,
 				A6ED047627A357BE00E41D13 /* MarkCache.swift in Sources */,
