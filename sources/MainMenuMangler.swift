@@ -212,9 +212,10 @@ class MainMenuMangler: NSObject {
                     conflict.menuItem.keyEquivalent = ""
                     conflict.menuItem.keyEquivalentModifierMask = []
                 }
-                
-                menu.insertItem(web, at: menu.items.count - 2)
-                
+                if let i = menu.items.firstIndex(where: { $0.identifier?.rawValue == "Session" }) {
+                    menu.insertItem(web, at: i + 1)
+                }
+
                 // Restore web menu key equivalents after adding to menu
                 restoreWebKeyEquivalents()
             }

@@ -1029,7 +1029,7 @@ DQ
                         </items>
                     </menu>
                 </menuItem>
-                <menuItem title="Session" id="ZGW-Bo-6S6">
+                <menuItem title="Session" identifier="Session" id="ZGW-Bo-6S6">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <menu key="submenu" title="Session" id="3Ow-tu-l1x">
                         <items>
