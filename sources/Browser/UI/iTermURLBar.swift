@@ -311,7 +311,11 @@ class iTermURLBarGuts: NSView {
                                           width: textFieldWidth, height: bounds.height - 8)
         
         // Text field fills the background container
-        textField.frame = textFieldBackground.bounds
+        var textFieldFrame = textFieldBackground.bounds
+        let leftInset = 22.0
+        textFieldFrame.origin.x += leftInset
+        textFieldFrame.size.width -= leftInset
+        textField.frame = textFieldFrame
     }
 
     private func setupTextFieldDelegate() {
