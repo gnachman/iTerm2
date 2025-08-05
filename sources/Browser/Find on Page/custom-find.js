@@ -646,57 +646,6 @@
             recurse(root);
             return blocks;
         }
-        findBlockElements_deprecated(root) {
-            const blocks = [];
-            const seen = new Set();
-            console.log("findBlockElements: Searching for block elements.");
-
-            function traverse(element) {
-                console.log(`findBlockElements.traverse: ${element}`);
-                if (seen.has(element)) {
-                    console.log("findBlockElements.traverse: already saw this one");
-                    return;
-                }
-                seen.add(element);
-
-                if (isBlockElement(element)) {
-                    console.log("findBlockElements.traverse: This is a block element");
-                    // Check if this block contains any child blocks
-                    let hasChildBlocks = false;
-                    for (const child of element.children) {
-                        if (isBlockElement(child)) {
-                            hasChildBlocks = true;
-                            break;
-                        }
-                    }
-
-                    // Only add blocks that don't contain other blocks (leaf blocks)
-                    if (!hasChildBlocks) {
-                        console.log(`findBlockElements.traverse: Add ${element}`);
-                        blocks.push(element);
-                    } else {
-                        // This block has child blocks, so traverse children instead
-                        for (const child of element.children) {
-                            traverse(child);
-                        }
-                    }
-                } else {
-                    console.log("findBlockElements.traverse: This is not a block element");
-                    // Not a block element, traverse children
-                    for (const child of element.children) {
-                        traverse(child);
-                    }
-                }
-            }
-            try {
-                traverse(root);
-                console.log("findBlockElements: traverse finished");
-            } catch(e) {
-                console.error(e.toString());
-                console.error(e);
-            }
-            return blocks;
-        }
 
         // ---------- Click Detection ----------
 
