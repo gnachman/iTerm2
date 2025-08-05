@@ -461,15 +461,8 @@
         return arr;
     }
 
-    const BLOCK_ELEMENTS = new Set([
-        'ADDRESS', 'ARTICLE', 'ASIDE', 'BLOCKQUOTE', 'BR', 'DD', 'DIV',
-        'DL', 'DT', 'FIELDSET', 'FIGCAPTION', 'FIGURE', 'FOOTER', 'FORM',
-        'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'HEADER', 'HR', 'LI', 'MAIN',
-        'NAV', 'OL', 'P', 'PRE', 'SECTION', 'TABLE', 'TD', 'TH', 'TR', 'UL'
-    ]);
-
-    function isBlockElement(element) {
-        return BLOCK_ELEMENTS.has(element.tagName);
+    function isBlock(el) {
+      return getComputedStyle(el).display === 'block';
     }
 
     // ==============================
@@ -634,6 +627,26 @@
         }
 
         findBlockElements(root) {
+            const blocks = [];
+            function recurse(el) {
+                // if this el is block-level
+                if (isBlock(el)) {
+                    // check for any child that’s also block-level
+                    const hasChildBlock = Array.from(el.children).some(isBlock);
+                    if (!hasChildBlock) {
+                        blocks.push(el);
+                        return;
+                    }
+                }
+                // otherwise keep walking
+                for (const child of el.children) {
+                    recurse(child);
+                }
+            }
+            recurse(root);
+            return blocks;
+        }
+        findBlockElements_deprecated(root) {
             const blocks = [];
             const seen = new Set();
             console.log("findBlockElements: Searching for block elements.");
