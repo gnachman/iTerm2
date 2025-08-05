@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermPreferences.h"
 #import "NSAttributedString+PSM.h"
+#import "NSImage+iTerm.h"
 #import "NSTextField+iTerm.h"
 
 @implementation iTermFakeWindowTitleLabel {
@@ -70,7 +71,7 @@
                                                                                     attributes:attributes];
     NSMutableAttributedString *result;
     if (icon) {
-        NSTextAttachment *textAttachment = [self iconTextAttachmentForWindowTitleLabelWithImage:icon
+        NSTextAttachment *textAttachment = [self iconTextAttachmentForWindowTitleLabelWithImage:[icon it_imageOfSize:NSMakeSize(16, 16)]
                                                                                            font:font];
         result = [[NSAttributedString attributedStringWithAttachment:textAttachment] mutableCopy];
     } else {
