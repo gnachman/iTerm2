@@ -1314,7 +1314,10 @@ extension PTYSession {
             profileObserver: iTermProfilePreferenceObserver(
                 guid: profile[KEY_GUID]! as! String,
                 model: isDivorced ? ProfileModel.sessionsInstance() : ProfileModel.sharedInstance()),
-            profileMutator: iTermProfilePreferenceMutator(model: model, guid: guid))
+            profileMutator: iTermProfilePreferenceMutator(
+                model: model,
+                guid: guid),
+            indicatorsHelper: textview.indicatorsHelper)
         vc.delegate = self
         view.setBrowserViewController(
             vc, initialURL: iTermProfilePreferences.string(forKey: KEY_INITIAL_URL,

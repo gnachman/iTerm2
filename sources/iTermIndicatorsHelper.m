@@ -14,7 +14,6 @@
 #import "DebugLogging.h"
 #import "NSImage+iTerm.h"
 
-static NSDictionary<NSString *, iTermTuple<NSImage *, NSImage *> *> *gIndicatorImagePairs;
 
 NSString *const kiTermIndicatorBell = @"kiTermIndicatorBell";
 NSString *const kiTermIndicatorWrapToTop = @"kiTermIndicatorWrapToTop";
@@ -70,124 +69,140 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     NSRect _lastFrame;
 }
 
-+ (NSDictionary<NSString *, iTermTuple<NSImage *, NSImage *> *> *)indicatorImagePairs {
++ (NSDictionary<NSString *, NSString *> *)indicatorSFSymbolMap {
+    static NSDictionary<NSString *, NSString *> *symbolMap = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        gIndicatorImagePairs = @{
-            kiTermIndicatorBell: [self imagePairWithLegacyName:@"bell"
-                                                 modernOutline:@"bell"
-                                                         large:NO],
-            kiTermIndicatorWrapToTop: [self imagePairWithLegacyName:@"wrap_to_top"
-                                                      modernOutline:@"arrow.counterclockwise"
-                                                              large:YES],
-            kiTermIndicatorWrapToBottom: [self imagePairWithLegacyName:@"wrap_to_bottom"
-                                                         modernOutline:@"arrow.clockwise"
-                                                                 large:YES],
-            kItermIndicatorBroadcastInput: [self imagePairWithLegacyName:@"BroadcastInput"
-                                                           modernOutline:@"dot.radiowaves.right"
-                                                                   large:NO],
-            kiTermIndicatorMaximized: [self imagePairWithLegacyName:@"Maximized"
-                                                      modernOutline:@"square.arrowtriangle.4.outward"
-                                                              large:NO],
-            kiTermIndicatorCoprocess: [self imagePairWithLegacyName:@"Coprocess"
-                                                      modernOutline:@"rectangle.2.swap"
-                                                              large:NO],
-            kiTermIndicatorAlert: [self imagePairWithLegacyName:@"Alert"
-                                                  modernOutline:@"eye"
-                                                          large:NO],
-            kiTermIndicatorAllOutputSuppressed: [self imagePairWithLegacyName:@"SuppressAllOutput"
-                                                                modernOutline:@"stop.circle"
-                                                                        large:NO],
-            kiTermIndicatorZoomedIn: [self imagePairWithLegacyName:@"Zoomed"
-                                                     modernOutline:@"magnifyingglass.circle"
-                                                             large:NO],
-            kiTermIndicatorCopyMode: [self imagePairWithLegacyName:@"CopyMode"
-                                                     modernOutline:@"doc.on.doc"
-                                                             large:NO],
-            kiTermIndicatorDebugLogging: [self imagePairWithLegacyName:@"DebugLogging"
-                                                         modernOutline:@"ladybug.circle"
-                                                                 large:NO],
-            kiTermIndicatorFilter: [self imagePairWithLegacyName:@"FilterIndicator"
-                                                   modernOutline:@"line.3.horizontal.decrease.circle"
-                                                           large:NO],
-            kiTermIndicatorSecureKeyboardEntry_Forced: [self imagePairWithLegacyName:@"SecureKeyboardEntry"
-                                                                       modernOutline:@"key"
-                                                                               large:NO],
-            kiTermIndicatorSecureKeyboardEntry_User: [self imagePairWithLegacyName:@"SecureKeyboardEntry"
-                                                                     modernOutline:@"key"
-                                                                             large:NO],
-            kiTermIndicatorPinned: [self imagePairWithLegacyName:@"PinnedIndicator"
-                                                   modernOutline:@"pin"
-                                                           large:NO],
-            kiTermIndicatorAIChatLinked: [self imagePairWithLegacyName:@"AIWatching"
-                                                       modernOutline:@"brain"
-                                                               large:NO],
-            kiTermIndicatorAIChatStreaming: [self imagePairWithLegacyName:@"AIStreaming"
-                                                            modernOutline:@"dot.radiowaves.right"
-                                                                    large:NO],
-            kiTermIndicatorChannel: [self imagePairWithLegacyName:@"Channel"
-                                                    modernOutline:@"rectangle.stack"
-                                                            large:NO]
+        // Handle version-specific SF Symbols
+        NSString *maximizedSymbol = @"square.arrowtriangle.4.outward";
+        NSString *debugLoggingSymbol = @"ladybug.circle";
+        
+        if (@available(macOS 14, *)) {
+            // Use newer symbols on macOS 14+
+            maximizedSymbol = @"square.arrowtriangle.4.outward";
+            debugLoggingSymbol = @"ladybug.circle";
+        } else {
+            // Use older symbols on macOS < 14
+            maximizedSymbol = @"arrow.down.left.and.arrow.up.right.rectangle";
+            debugLoggingSymbol = @"ant.circle";
+        }
+        
+        symbolMap = @{
+            kiTermIndicatorBell: @"bell",
+            kiTermIndicatorWrapToTop: @"arrow.counterclockwise",
+            kiTermIndicatorWrapToBottom: @"arrow.clockwise",
+            kItermIndicatorBroadcastInput: @"dot.radiowaves.right",
+            kiTermIndicatorMaximized: maximizedSymbol,
+            kiTermIndicatorCoprocess: @"rectangle.2.swap",
+            kiTermIndicatorAlert: @"eye",
+            kiTermIndicatorAllOutputSuppressed: @"stop.circle",
+            kiTermIndicatorZoomedIn: @"magnifyingglass.circle",
+            kiTermIndicatorCopyMode: @"doc.on.doc",
+            kiTermIndicatorDebugLogging: debugLoggingSymbol,
+            kiTermIndicatorFilter: @"line.3.horizontal.decrease.circle",
+            kiTermIndicatorSecureKeyboardEntry_Forced: @"key",
+            kiTermIndicatorSecureKeyboardEntry_User: @"key",
+            kiTermIndicatorPinned: @"pin",
+            kiTermIndicatorAIChatLinked: @"brain",
+            kiTermIndicatorAIChatStreaming: @"dot.radiowaves.right",
+            kiTermIndicatorChannel: @"rectangle.stack"
         };
     });
-
-    return gIndicatorImagePairs;
-}
-
-+ (iTermTuple<NSImage *, NSImage *> *)imagePairWithLegacyName:(NSString *)legacyName
-                                                modernOutline:(NSString *)outline
-                                                        large:(BOOL)large {
-    return [iTermTuple tupleWithObject:[self imageWithLegacyName:legacyName
-                                                   modernOutline:outline
-                                                           large:large
-                                                  darkBackground:YES]
-                             andObject:[self imageWithLegacyName:legacyName
-                                                   modernOutline:outline
-                                                           large:large
-                                                  darkBackground:NO]];
+    return symbolMap;
 }
 
 
-+ (NSImage *)imageWithLegacyName:(NSString *)legacyName
-                   modernOutline:(NSString *)outline
-                           large:(BOOL)large
-                  darkBackground:(BOOL)darkBackground {
-    if (@available(macOS 11, *)) {
-        NSImage *sfSymbol = [NSImage imageWithSystemSymbolName:outline accessibilityDescription:nil];
-        if (sfSymbol) {
-            const NSSize size = large ? NSMakeSize(64, 64) : NSMakeSize(30, 30);
-            const NSSize insetSize = large ? NSMakeSize(64, 64) : NSMakeSize(26, 26);
-            iTermCompositeImageBuilder *builder = [[iTermCompositeImageBuilder alloc] initWithSize:size];
 
-            NSImage *background = [NSImage imageOfSize:size drawBlock:^{
-                const CGFloat radiusFraction = 6;
++ (iTermTuple<NSImage *, NSImage *> *)imagePairWithSFSymbol:(NSString *)sfSymbol
+                                                      large:(BOOL)large
+                                                       size:(CGFloat)size
+                                               backgroundless:(BOOL)backgroundless {
+    return [iTermTuple tupleWithObject:[self imageWithSFSymbol:sfSymbol
+                                                         large:large
+                                                          size:size
+                                                darkBackground:YES
+                                                  backgroundless:backgroundless]
+                             andObject:[self imageWithSFSymbol:sfSymbol
+                                                         large:large
+                                                          size:size
+                                                darkBackground:NO
+                                                  backgroundless:backgroundless]];
+}
 
-                NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:NSMakeRect(0,
-                                                                                        0,
-                                                                                        size.width,
-                                                                                        size.height)
-                                                                     xRadius:size.width / radiusFraction
-                                                                     yRadius:size.height / radiusFraction];
 
-                [darkBackground ? [NSColor blackColor] : [NSColor whiteColor] set];
-                [path fill];
-
-                [darkBackground ? [NSColor lightGrayColor] : [NSColor darkGrayColor] set];
-                [path stroke];
-            }];
-            [builder addImage:background];
-
-            // Add outline
-            iTermTintedImage *tintedImage = [[iTermTintedImage alloc] initWithImage:sfSymbol];
-            [builder addImage:[tintedImage imageTintedWithColor:darkBackground ? [NSColor whiteColor] : [NSColor blackColor]
-                                                           size:[self fillingSizeFor:sfSymbol.size
-                                                                             filling:insetSize]]];
-
-            NSImage *composite = [builder image];
-            return composite;
-        }
++ (NSImage *)imageWithSFSymbol:(NSString *)sfSymbol
+                         large:(BOOL)large
+                          size:(CGFloat)size
+                darkBackground:(BOOL)darkBackground
+                  backgroundless:(BOOL)backgroundless {
+    // Since deployment target is macOS 12+, we always use SF Symbols
+    // Create a symbol configuration for the desired size to avoid upscaling
+    NSImageSymbolConfiguration *config = [NSImageSymbolConfiguration configurationWithPointSize:size weight:NSFontWeightRegular scale:NSImageSymbolScaleMedium];
+    NSImage *sfSymbolImage = [NSImage imageWithSystemSymbolName:sfSymbol accessibilityDescription:nil];
+    if (@available(macOS 12.0, *)) {
+        sfSymbolImage = [sfSymbolImage imageWithSymbolConfiguration:config];
     }
-    return [NSImage it_imageNamed:legacyName forClass:self.class];
+    
+    if (backgroundless) {
+        // For backgroundless mode, return the SF Symbol as a template image
+        // so AppKit can color it appropriately for light/dark mode
+        const NSSize imageSize = large ? NSMakeSize(64, 64) : NSMakeSize(size, size);
+        
+        // Resize the SF Symbol to the appropriate size while maintaining aspect ratio
+        NSImage *resizedImage = [NSImage imageOfSize:imageSize drawBlock:^{
+            NSSize sfSymbolSize = sfSymbolImage.size;
+            
+            // Calculate the scaling to fit the symbol within the imageSize while maintaining aspect ratio
+            CGFloat scaleX = imageSize.width / sfSymbolSize.width;
+            CGFloat scaleY = imageSize.height / sfSymbolSize.height;
+            CGFloat scale = MIN(scaleX, scaleY);
+            
+            NSSize scaledSize = NSMakeSize(sfSymbolSize.width * scale, sfSymbolSize.height * scale);
+            NSRect centeredRect = NSMakeRect((imageSize.width - scaledSize.width) / 2,
+                                           (imageSize.height - scaledSize.height) / 2,
+                                           scaledSize.width,
+                                           scaledSize.height);
+            
+            [sfSymbolImage drawInRect:centeredRect
+                             fromRect:NSZeroRect
+                            operation:NSCompositingOperationSourceOver
+                             fraction:1.0];
+        }];
+        
+        resizedImage.template = YES;
+        return resizedImage;
+    }
+    
+    // For background mode, create composite image with background
+    const NSSize imageSize = large ? NSMakeSize(64, 64) : NSMakeSize(size, size);
+    const NSSize insetSize = large ? NSMakeSize(64, 64) : NSMakeSize(size - 4, size - 4);
+    iTermCompositeImageBuilder *builder = [[iTermCompositeImageBuilder alloc] initWithSize:imageSize];
+
+    NSImage *background = [NSImage imageOfSize:imageSize drawBlock:^{
+        const CGFloat radiusFraction = 6;
+
+        NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:NSInsetRect(NSMakeRect(0,
+                                                                                            0,
+                                                                                            imageSize.width,
+                                                                                            imageSize.height), 0.5, 0.5)
+                                                             xRadius:imageSize.width / radiusFraction
+                                                             yRadius:imageSize.height / radiusFraction];
+
+        [darkBackground ? [NSColor blackColor] : [NSColor whiteColor] set];
+        [path fill];
+
+        [darkBackground ? [NSColor lightGrayColor] : [NSColor darkGrayColor] set];
+        [path stroke];
+    }];
+    [builder addImage:background];
+
+    // Add outline
+    iTermTintedImage *tintedImage = [[iTermTintedImage alloc] initWithImage:sfSymbolImage];
+    [builder addImage:[tintedImage imageTintedWithColor:darkBackground ? [NSColor whiteColor] : [NSColor blackColor]
+                                                   size:[self fillingSizeFor:sfSymbolImage.size
+                                                                     filling:insetSize]]];
+
+    return [builder image];
 }
 
 + (NSSize)fillingSizeFor:(NSSize)innerSize
@@ -210,15 +225,55 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     self = [super init];
     if (self) {
         _visibleIndicators = [[NSMutableDictionary alloc] init];
+        _backgroundlessMode = NO;
+        _indicatorSize = 26.0; // Default size
     }
     return self;
+}
+
+- (void)setBackgroundlessMode:(BOOL)backgroundlessMode {
+    if (_backgroundlessMode != backgroundlessMode) {
+        _backgroundlessMode = backgroundlessMode;
+        // Clear cache to force regeneration with new mode
+        [_visibleIndicators removeAllObjects];
+        [_delegate indicatorNeedsDisplay];
+    }
+}
+
+- (void)setIndicatorSize:(CGFloat)indicatorSize {
+    if (_indicatorSize != indicatorSize) {
+        _indicatorSize = indicatorSize;
+        // Clear cache to force regeneration with new size
+        [_visibleIndicators removeAllObjects];
+        [_delegate indicatorNeedsDisplay];
+    }
 }
 
 - (void)setIndicator:(NSString *)identifier visible:(BOOL)visible darkBackground:(BOOL)darkBackground {
     if (visible && (!_visibleIndicators[identifier] || _visibleIndicators[identifier].dark != darkBackground)) {
         iTermIndicator *indicator = [[iTermIndicator alloc] init];
-        iTermTuple<NSImage *, NSImage *> *tuple = [[self class] indicatorImagePairs][identifier];
-        indicator.image = darkBackground ? tuple.firstObject : tuple.secondObject;
+        
+        // Check if this is a large indicator
+        NSSet *largeIndicators = [NSSet setWithObjects:kiTermIndicatorWrapToTop, kiTermIndicatorWrapToBottom, nil];
+        BOOL isLarge = [largeIndicators containsObject:identifier];
+        
+        if (_backgroundlessMode) {
+            // Create backgroundless image directly with configurable size
+            NSString *sfSymbol = [[[self class] indicatorSFSymbolMap] objectForKey:identifier];
+            iTermTuple<NSImage *, NSImage *> *tuple = [[self class] imagePairWithSFSymbol:sfSymbol
+                                                                                     large:isLarge
+                                                                                      size:_indicatorSize
+                                                                             backgroundless:YES];
+            indicator.image = darkBackground ? tuple.firstObject : tuple.secondObject;
+        } else {
+            // Create images with current size (with background)
+            NSString *sfSymbol = [[[self class] indicatorSFSymbolMap] objectForKey:identifier];
+            iTermTuple<NSImage *, NSImage *> *tuple = [[self class] imagePairWithSFSymbol:sfSymbol
+                                                                                     large:isLarge
+                                                                                      size:_indicatorSize
+                                                                             backgroundless:NO];
+            indicator.image = darkBackground ? tuple.firstObject : tuple.secondObject;
+        }
         assert(indicator.image);
         indicator.dark = darkBackground;
         _visibleIndicators[identifier] = indicator;
@@ -441,4 +496,13 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     [self checkForFlashUpdate];
 }
 
+- (NSString *)modernOutlineForIdentifier:(NSString *)identifier {
+    return [[[self class] indicatorSFSymbolMap] objectForKey:identifier];
+}
+
+- (void)configurationDidComplete {
+    if (self.configurationObserver) {
+        self.configurationObserver();
+    }
+}
 @end

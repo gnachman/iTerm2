@@ -12173,6 +12173,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     NSRect visibleRect = NSIntersectionRect(rect, _textview.enclosingScrollView.documentVisibleRect);
     [_view setMetalViewNeedsDisplayInTextViewRect:visibleRect];
     [self updateWrapperAlphaForMetalEnabled:_view.useMetal];
+    if (self.isBrowserSession) {
+        [_textview configureIndicatorsHelperWithRightMargin:0];
+    }
 }
 
 - (BOOL)textViewShouldDrawRect {
@@ -18030,6 +18033,12 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 - (NSDictionary *)sessionViewStatusBarAdvancedConfigurationDictionary {
     NSDictionary *layout = [iTermProfilePreferences objectForKey:KEY_STATUS_BAR_LAYOUT inProfile:self.profile];
     return layout[iTermStatusBarLayoutKeyAdvancedConfiguration] ?: @{};
+}
+
+- (void)sessionViewWillDraw {
+    if (self.isBrowserSession) {
+        [_textview configureIndicatorsHelperWithRightMargin:0];
+    }
 }
 
 #pragma mark - iTermCoprocessDelegate

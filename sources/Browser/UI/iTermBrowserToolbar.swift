@@ -61,7 +61,10 @@ class iTermBrowserToolbar: NSView {
     private var stopButton: NSButton!
     private var devNullIndicator: NSButton!
     private var urlBar: iTermURLBar!
+    private var indicatorsView: iTermBrowserIndicatorsView!
     private var menuButton: NSButton!
+    var indicatorsHelper: iTermIndicatorsHelper?
+    var sessionGuid: String?
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -111,6 +114,9 @@ class iTermBrowserToolbar: NSView {
         urlBar = iTermURLBar()
         urlBar.delegate = self
         addSubview(urlBar)
+        
+        indicatorsView = iTermBrowserIndicatorsView()
+        addSubview(indicatorsView)
         
         menuButton = HoverButton(symbolName: "line.3.horizontal",
                                  accessibilityDescription: "Menu")
@@ -207,6 +213,22 @@ class iTermBrowserToolbar: NSView {
             rightHelper.add(devNullIndicator)
         }
         rightHelper.x -= 12.0
+        
+        // Calculate available space for indicators
+        let availableSpaceForIndicators = rightHelper.x - leftHelper.x - 250.0 // Reserve 250 for URL bar
+        let minIndicatorsWidth: CGFloat = 24.0
+        
+        if availableSpaceForIndicators >= minIndicatorsWidth {
+            // Use all available space for indicators, but leave some padding
+            let indicatorsWidth = availableSpaceForIndicators * 0.3 // Use 30% of remaining space
+            rightHelper.x -= indicatorsWidth
+            let indicatorsFrame = NSRect(x: rightHelper.x, y: 0, width: indicatorsWidth, height: bounds.height)
+            indicatorsView.frame = indicatorsFrame
+            indicatorsView.isHidden = false
+        } else {
+            // Not enough space, hide indicators
+            indicatorsView.isHidden = true
+        }
 
         leftHelper.addProportional(urlBar, minX: leftHelper.x, maxX: rightHelper.x, preferredMinWidth: 250.0, fraction: 0.55)
 
@@ -217,6 +239,7 @@ class iTermBrowserToolbar: NSView {
         verticalHelper.centerInEnclosure(stopButton)
         verticalHelper.centerInEnclosure(menuButton)
         verticalHelper.centerInEnclosure(devNullIndicator)
+        verticalHelper.centerInEnclosure(indicatorsView)
         verticalHelper.centerInEnclosure(urlBar, fixedHeight: 28.0)
     }
 
@@ -233,6 +256,15 @@ class iTermBrowserToolbar: NSView {
         super.removeFromSuperview()
     }
 
+    func checkIndicatorsForUpdate() {
+        indicatorsView.updateIndicators()
+    }
+    
+    func configureIndicators(indicatorsHelper: iTermIndicatorsHelper, sessionGuid: String) {
+        self.indicatorsHelper = indicatorsHelper
+        self.sessionGuid = sessionGuid
+        indicatorsView.configure(indicatorsHelper: indicatorsHelper, sessionGuid: sessionGuid)
+    }
     @objc func backTapped() {
         delegate?.browserToolbarDidSelectHistoryItem(steps: -1)
     }

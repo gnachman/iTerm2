@@ -156,7 +156,7 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 - (void)sessionViewUpdateComposerFrame;
 - (NSDictionary *)sessionViewStatusBarAdvancedConfigurationDictionary;
 - (CGFloat)desiredRightExtra;
-
+- (void)sessionViewWillDraw;
 @end
 
 typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {

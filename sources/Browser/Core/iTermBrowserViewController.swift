@@ -109,6 +109,7 @@ class iTermBrowserViewController: NSViewController {
     private var instantReplayMovieBuilder: InstantReplayMovieBuilder?
     private var videoWindowController: VideoPlaybackWindowController?
     private let profileObserver: iTermProfilePreferenceObserver
+    private let indicatorsHelper: iTermIndicatorsHelper
 
     // API
     weak var delegate: iTermBrowserViewControllerDelegate?
@@ -154,9 +155,11 @@ class iTermBrowserViewController: NSViewController {
     init(configuration: WKWebViewConfiguration?,
          sessionGuid: String,
          profileObserver: iTermProfilePreferenceObserver,
-         profileMutator: iTermProfilePreferenceMutator)  {
+         profileMutator: iTermProfilePreferenceMutator,
+         indicatorsHelper: iTermIndicatorsHelper)  {
         self.sessionGuid = sessionGuid
         self.profileObserver = profileObserver
+        self.indicatorsHelper = indicatorsHelper
         let user: iTermBrowserUser = if profileObserver.value(KEY_BROWSER_DEV_NULL) == true {
             .devNull
         } else {
@@ -190,6 +193,10 @@ class iTermBrowserViewController: NSViewController {
             selector: #selector(otherBrowserViewControllerDidDeinitialize),
             name: Self.didDeinitialize,
             object: nil)
+
+        indicatorsHelper.configurationObserver = { [weak self] in
+            self?.toolbar.checkIndicatorsForUpdate()
+        }
     }
 
     required init?(coder: NSCoder) {
@@ -756,8 +763,12 @@ extension iTermBrowserViewController {
 
     private func setupToolbar() {
         toolbar = iTermBrowserToolbar()
+        toolbar.indicatorsHelper = indicatorsHelper
         toolbar.delegate = self
         toolbar.setDevNullMode(browserManager.user == .devNull)
+        indicatorsHelper.backgroundlessMode = true
+        indicatorsHelper.indicatorSize = 20.0
+        toolbar.configureIndicators(indicatorsHelper: indicatorsHelper, sessionGuid: sessionGuid)
         view.addSubview(toolbar)
     }
 

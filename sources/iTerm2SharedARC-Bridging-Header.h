@@ -44,6 +44,7 @@
 #import "iTermGlobalSearchResult.h"
 #import "iTermHistogram.h"
 #import "iTermImageInfo.h"
+#import "iTermIndicatorsHelper.h"
 #import "iTermKeyboardNavigatableTableView.h"
 #import "iTermLogoGenerator.h"
 #import "iTermMetalBufferPool.h"

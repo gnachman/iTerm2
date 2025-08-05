@@ -41,9 +41,12 @@ extern CGFloat kiTermIndicatorStandardHeight;
 
 @property(nonatomic, assign) id<iTermIndicatorsHelperDelegate> delegate;
 @property(nonatomic, readonly) NSInteger numberOfVisibleIndicators;
+@property(nonatomic, assign) BOOL backgroundlessMode;
+@property(nonatomic, assign) CGFloat indicatorSize; // Size for non-large indicators (default: 26)
 
 // Alpha value for fullscreen flash.
 @property(nonatomic, readonly) CGFloat fullScreenAlpha;
+@property(nonatomic, copy) void (^configurationObserver)(void);
 
 - (void)setIndicator:(NSString *)identifier visible:(BOOL)visible darkBackground:(BOOL)darkBackground;
 - (void)beginFlashingIndicator:(NSString *)identifier darkBackground:(BOOL)darkBackground;
@@ -59,5 +62,8 @@ extern CGFloat kiTermIndicatorStandardHeight;
 - (void)enumerateCenterIndicatorsInFrame:(NSRect)frame block:(void (^)(NSString *, NSImage *, NSRect, CGFloat, BOOL))block;
 
 - (NSString *)helpTextForIndicatorAt:(NSPoint)point sessionID:(NSString *)sessionID;
+- (NSString *)helpTextForIndicatorWithName:(NSString *)name sessionID:(NSString *)sessionID;
++ (NSArray<NSString *> *)sequentialIndicatorIdentifiers;
+- (void)configurationDidComplete;
 
 @end

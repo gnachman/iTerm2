@@ -1866,7 +1866,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [_indicatorsHelper setIndicator:kiTermIndicatorSecureKeyboardEntry_Forced
                             visible:secure && !secureByUser && allowSecureKeyboardEntryIndicator
                      darkBackground:isDark];
-
+    [_indicatorsHelper configurationDidComplete];
     NSRect rect = self.visibleRect;
     rect.size.width -= rightMargin;
     return rect;

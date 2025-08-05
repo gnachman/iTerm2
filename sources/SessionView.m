@@ -303,6 +303,11 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return self;
 }
 
+- (void)viewWillDraw {
+    [self.delegate sessionViewWillDraw];
+    [super viewWillDraw];
+}
+
 - (void)setBrowserViewController:(iTermBrowserViewController *)browserViewController
                       initialURL:(NSString *)initialURL
                  restorableState:(NSDictionary *)restorableState NS_AVAILABLE_MAC(11_0) {

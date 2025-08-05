@@ -3987,6 +3987,7 @@
 		A6D693F52E417306005E9AFE /* mute-audio.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D693F42E417304005E9AFE /* mute-audio.js */; };
 		A6D693F62E417306005E9AFE /* mute-audio.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D693F42E417304005E9AFE /* mute-audio.js */; };
 		A6D693F72E417306005E9AFE /* mute-audio.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D693F42E417304005E9AFE /* mute-audio.js */; };
+		A6D693F92E419823005E9AFE /* iTermBrowserIndicatorsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D693F82E419823005E9AFE /* iTermBrowserIndicatorsView.swift */; };
 		A6D7D2222BBE0E7B00D884F5 /* FakeWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D173858126C820A004622DC /* FakeWindow.m */; };
 		A6D7E0712C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D7E0702C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift */; };
 		A6D7E0722C1B6AF5007D0A37 /* iTermProfileSearchToken.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D468BBF1B056CD600226083 /* iTermProfileSearchToken.m */; };
@@ -8421,6 +8422,7 @@
 		A6D693E72E414450005E9AFE /* monitor-play.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "monitor-play.js"; sourceTree = "<group>"; };
 		A6D693EB2E416AC2005E9AFE /* PointerControllerDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointerControllerDelegate.swift; sourceTree = "<group>"; };
 		A6D693F42E417304005E9AFE /* mute-audio.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "mute-audio.js"; sourceTree = "<group>"; };
+		A6D693F82E419823005E9AFE /* iTermBrowserIndicatorsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserIndicatorsView.swift; sourceTree = "<group>"; };
 		A6D7E0702C1B5FB1007D0A37 /* ProfileStyleSearchEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileStyleSearchEngine.swift; sourceTree = "<group>"; };
 		A6D7E0752C236D54007D0A37 /* LineBlockMetadataArray.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LineBlockMetadataArray.h; sourceTree = "<group>"; };
 		A6D7E0762C236D54007D0A37 /* LineBlockMetadataArray.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LineBlockMetadataArray.m; sourceTree = "<group>"; };
@@ -13423,12 +13425,13 @@
 			isa = PBXGroup;
 			children = (
 				A69FF3C62E143ABC00AFF7A8 /* HoverButton.swift */,
+				A6CBB82B2E0A22DE00B2CCCB /* iTermBrowserContextMenuHandler.swift */,
+				A6D693F82E419823005E9AFE /* iTermBrowserIndicatorsView.swift */,
 				A6F7D4B62E03424F0065D09C /* iTermBrowserToolbar.swift */,
 				A6F7D4E02E0484790065D09C /* iTermBrowserURLTextView.swift */,
 				A6F7D4DE2E03E06E0065D09C /* iTermURLBar.swift */,
 				A6F7D4FB2E05BF0C0065D09C /* iTermURLHelpers.swift */,
 				A6F7D4DC2E03E03B0065D09C /* iTermURLTextField.swift */,
-				A6CBB82B2E0A22DE00B2CCCB /* iTermBrowserContextMenuHandler.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -18616,6 +18619,7 @@
 				A630117F20E69D43008114B7 /* iTermStatusBarComponentKnob.m in Sources */,
 				5370678321C9D2780088D0F3 /* SIGPolicy.m in Sources */,
 				A6A4866A20B6793E00493302 /* iTermKeyMappingViewController.m in Sources */,
+				A6D693F92E419823005E9AFE /* iTermBrowserIndicatorsView.swift in Sources */,
 				A6AA2F6B2E28B615002998B3 /* HudsuckerProxy.swift in Sources */,
 				A6F18B762AEA18F5006C08EE /* iTermToolWrapper.m in Sources */,
 				A6E312B42E397EC0008222DE /* iTermBaseWKWebView.m in Sources */,

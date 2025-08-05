@@ -785,6 +785,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (void)smearCursorIfNeededWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper;
 - (void)didFoldOrUnfold;
 - (BOOL)updateMarginColor;
+- (NSRect)configureIndicatorsHelperWithRightMargin:(CGFloat)rightMargin;
 
 #pragma mark - Testing only
 
