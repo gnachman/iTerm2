@@ -129,6 +129,8 @@ class iTermBrowserFindManager: NSObject {
         var currentMatchIndex: Int = 0
         var searchProgress: Double = 0.0
         var searchComplete: Bool = false
+        private var generation = 0
+        private var mutex = AsyncMutex()
 
         init(instanceID: String?) {
             self.instanceID = instanceID
@@ -272,14 +274,24 @@ class iTermBrowserFindManager: NSObject {
             currentSearchTerm = searchTerm
             findMode = mode
             resetSearchState()
+            generation = generation + 1
+            let thisGeneration = generation
 
             Task {
-                try await executeJavaScript(command: [
-                    "action": "startFind",
-                    "searchTerm": searchTerm,
-                    "contextLength": contextLength,
-                    "searchMode": mode.rawValue
-                ], sharedState: sharedState)
+                try await mutex.sync {
+                    if generation != thisGeneration {
+                        DLog("Not searching for \(searchTerm) because there is a more recent term")
+                        return
+                    }
+                    DLog("Begin search for \(searchTerm)")
+                    try await executeJavaScript(command: [
+                        "action": "startFind",
+                        "searchTerm": searchTerm,
+                        "contextLength": contextLength,
+                        "searchMode": mode.rawValue
+                    ], sharedState: sharedState)
+                    DLog("Completed search for \(searchTerm)")
+                }
             }
         }
 
