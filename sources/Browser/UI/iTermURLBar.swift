@@ -296,8 +296,7 @@ class iTermURLBarGuts: NSView {
                                          width: iconSize.width, height: iconSize.height)
         
         // Text field background - adjust positioning based on favicon visibility
-        let hasFavicon = favicon != nil
-        let textFieldX: CGFloat = hasFavicon ? (inset + iconSize.width + 4) : inset
+        let textFieldX: CGFloat = (inset + iconSize.width + 4)
         let textFieldWidth: CGFloat
         if _isLoading && !(progressIndicator?.isHidden ?? true) {
             // When progress indicator is visible, shrink text field
@@ -311,11 +310,7 @@ class iTermURLBarGuts: NSView {
                                           width: textFieldWidth, height: bounds.height - 8)
         
         // Text field fills the background container
-        var textFieldFrame = textFieldBackground.bounds
-        let leftInset = 22.0
-        textFieldFrame.origin.x += leftInset
-        textFieldFrame.size.width -= leftInset
-        textField.frame = textFieldFrame
+        textField.frame = textFieldBackground.bounds
     }
 
     private func setupTextFieldDelegate() {
