@@ -1255,32 +1255,6 @@ extension iTermBrowserManager: WKNavigationDelegate {
 
         delegate?.browserManager(self, didFinishNavigation: navigation)
         navigationState.didCompleteLoading(error: nil)
-
-        Task {
-            do {
-                let script = """
-                  // Discover the iframe graph
-                  console.log("GEORGE: About to test the API");
-                  window.iTermGraphDiscovery.discover((graph) => {
-                      console.log('GEORGE: Graph:', graph);
-                  });
-
-                  // Get titles from all frames
-                  window.iTermGraphDiscovery.evaluateInAll('document.title', (results) => {
-                      console.log('GEORGE: All titles:', results);
-                  });
-
-                  // Evaluate in specific frame with custom timeout
-                  //window.iTermGraphDiscovery.evaluateInFrame('frameId123', 'window.location.href', (result) => {
-                  //    console.log('GEORGE: Frame URL:', result);
-                  //}, 5000); // 5 second timeout
-                """
-                _ = try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
-                print("iframe discovery started successfully")
-            } catch {
-                print("Failed to start iframe discovery: \(error)")
-            }
-        }
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {

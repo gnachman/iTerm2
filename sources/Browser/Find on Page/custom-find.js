@@ -19,6 +19,7 @@
     const _Range_setEnd = Range.prototype.setEnd;
     const _Range_extractContents = Range.prototype.extractContents;
     const _Range_insertNode = Range.prototype.insertNode;
+    const _Range_surroundContents = Range.prototype.surroundContents;
 
     // TreeWalker/NodeFilter
     const _TreeWalker_nextNode = TreeWalker.prototype.nextNode;
@@ -352,14 +353,21 @@
         }
     }
 
-    class BlockSegment {
-        constructor(element) {
+    // Represents a segment in the document - either text content or an iframe
+    class Segment {
+        constructor(type, index) {
+            this.type = type;           // 'text' or 'iframe'
+            this.index = index;         // Position in parent's segment array
+        }
+    }
+    
+    class TextSegment extends Segment {
+        constructor(index, element) {
+            super('text', index);
             this.element = element;           // The block DOM element
             this.textContent = '';           // Concatenated text from all text nodes
             this.textNodeMap = new TextNodeMap();
             this.bounds = null;              // DOMRect - will be computed when needed
-            this.globalStart = 0;            // Start position in global buffer
-            this.globalEnd = 0;              // End position in global buffer
         }
 
         collectTextNodes(engine) {
@@ -421,7 +429,59 @@
                    y >= this.bounds.top && y <= this.bounds.bottom;
         }
     }
+    
+    class IframeSegment extends Segment {
+        constructor(index, iframe, frameId) {
+            super('iframe', index);
+            this.iframe = iframe;        // The iframe DOM element
+            this.frameId = frameId;      // ID from graph discovery
+            this.bounds = null;
+        }
+        
+        updateBounds() {
+            this.bounds = _getBoundingClientRect.call(this.iframe);
+        }
+        
+        containsPoint(x, y) {
+            if (!this.bounds) this.updateBounds();
+            return x >= this.bounds.left && x <= this.bounds.right &&
+                   y >= this.bounds.top && y <= this.bounds.bottom;
+        }
+    }
 
+    // Match structure with segment-based coordinates
+    class Match {
+        constructor(coordinates, text) {
+            this.id = Math.random().toString(36).substr(2, 9); // Generate unique ID
+            this.coordinates = coordinates;  // Array representing position [segment1, segment2, ..., localPos]
+            this.text = text;                // The matched text
+            this.type = null;                // 'local' or 'remote'
+            this.highlightElements = [];     // For local matches
+            this.revealers = new Set();      // For local matches
+            
+            // Debug: Log match creation
+            console.log(`[Match] Created match ID: ${this.id} with coordinates: [${coordinates.join(',')}] text: "${text?.substring(0, 20)}..."`);
+            
+            // For remote matches
+            this.frameId = null;
+            this.remoteIndex = null;
+            this.contextBefore = null;
+            this.contextAfter = null;
+        }
+        
+        // Compare two matches for ordering
+        static compare(a, b) {
+            // Lexicographic comparison of coordinate arrays
+            const minLen = Math.min(a.coordinates.length, b.coordinates.length);
+            for (let i = 0; i < minLen; i++) {
+                if (a.coordinates[i] < b.coordinates[i]) return -1;
+                if (a.coordinates[i] > b.coordinates[i]) return 1;
+            }
+            // If all compared elements are equal, shorter array comes first
+            return a.coordinates.length - b.coordinates.length;
+        }
+    }
+    
     // ------------------------------
     // Utility Functions
     // ------------------------------
@@ -481,12 +541,17 @@
             this.searchMode = 'caseSensitive';
             this.contextLen = 0;
 
-            // Block-based storage
-            this.blocks = [];                // Array of BlockSegment instances
-            this.globalBuffer = '';          // Concatenated text from all blocks
-            this.matches = [];               // [{ blockIndex, blockStart, blockEnd, globalStart, globalEnd, els, revealers }]
+            // Segment-based storage
+            this.segments = [];              // Array of segments (text blocks or iframe refs)
+            this.matches = [];               // Sorted array of matches with segment coordinates
             this.highlightedElements = [];
             this.hiddenSkippedCount = 0;
+            
+            // iframe support
+            this.frameGraph = null;          // Cached iframe graph from discovery
+            this.frameMatches = new Map();   // Map<frameId, array of matches in that frame>
+            this.isMainFrame = (window === window.top);
+            this.frameId = null;             // Will be set from graph discovery
 
             // details elements we opened automatically for *any* match, so we can close on clear
             this.globallyAutoOpenedDetails = new Set();
@@ -508,7 +573,9 @@
         }
 
         log(...args) {
-            const message = `${TAG} [${this.instanceId}] ${args.map(a => (typeof a === 'object' ? safeStringify(a) : a)).join(' ')}`;
+            const frameInfo = this.frameId ? `frame:${this.frameId.substring(0, 8)}` : 'frame:unknown';
+            const prefix = `${TAG} [${this.instanceId}|${frameInfo}]`;
+            const message = `${prefix} ${args.map(a => (typeof a === 'object' ? safeStringify(a) : a)).join(' ')}`;
             console.debug(message);
             console.log(message); // Also log to regular console for visibility
         }
@@ -597,64 +664,189 @@
             }
         }
 
-        // ---------- Block Collection ----------
+        // ---------- Segment Collection ----------
 
-        collectBlocks(root) {
-            this.log('collectBlocks: starting block collection');
-            this.blocks = [];
-            this.globalBuffer = '';
-
-            // Find all block elements
-            const blockElements = this.findBlockElements(root);
-            console.log(`Found block elements: ${blockElements}`);
-
-            let globalPosition = 0;
-
-            for (const element of blockElements) {
-                const block = new BlockSegment(element);
-                block.collectTextNodes(this);
-                console.log(`Block for element ${element} has text content ${block.textContent}`);
-                if (block.textContent.length > 0) {
-                    // Set global positions - no spaces between blocks to preserve semantic boundaries
-                    block.globalStart = globalPosition;
-                    block.globalEnd = globalPosition + block.textContent.length;
-
-                    this.blocks.push(block);
-                    this.globalBuffer += block.textContent;
-                    globalPosition += block.textContent.length;
+        async collectSegments(root) {
+            this.log('collectSegments: ENTER - starting segment collection, isMainFrame:', this.isMainFrame);
+            this.segments = [];
+            
+            try {
+                // First, discover iframe graph if we're in main frame
+                if (this.isMainFrame && window.iTermGraphDiscovery) {
+                    this.log('collectSegments: main frame - discovering iframe graph');
+                    await this.discoverFrameGraph();
+                    this.log('collectSegments: iframe discovery complete, frameId now:', this.frameId?.substring(0, 8));
+                } else {
+                    this.log('collectSegments: child frame or no graph discovery available');
                 }
+
+                // Build segments for this frame
+                this.log('collectSegments: building segments for root:', root?.tagName);
+                this.buildSegments(root);
+                
+                const textSegments = this.segments.filter(s => s.type === 'text').length;
+                const iframeSegments = this.segments.filter(s => s.type === 'iframe').length;
+                this.log(`collectSegments: EXIT - found ${this.segments.length} total segments (${textSegments} text, ${iframeSegments} iframe)`);
+            } catch (e) {
+                this.log('collectSegments: ERROR during segment collection:', e);
+                // Continue with empty segments to avoid completely breaking search
+                this.segments = [];
+                throw e;
             }
-
-            this.log(`collectBlocks: found ${this.blocks.length} blocks, buffer length: ${this.globalBuffer.length}`);
         }
-
-        findBlockElements(root) {
-            const blocks = [];
-            function recurse(el) {
-                // if this el is block-level
-                if (isBlock(el)) {
-                    // check for any child that’s also block-level
-                    const hasChildBlock = Array.from(el.children).some(isBlock);
-                    if (!hasChildBlock) {
-                        blocks.push(el);
-                        return;
+        
+        async discoverFrameGraph() {
+            this.log('discoverFrameGraph: ENTER - calling graph discovery');
+            return new Promise((resolve, reject) => {
+                let resolved = false;
+                
+                // Set a timeout to catch hanging promises
+                const timeout = setTimeout(() => {
+                    if (!resolved) {
+                        this.log('discoverFrameGraph: TIMEOUT - discovery callback not called within 3 seconds');
+                        resolved = true;
+                        reject(new Error('Graph discovery timeout'));
+                    }
+                }, 3000);
+                
+                try {
+                    this.log('discoverFrameGraph: about to call window.iTermGraphDiscovery.discover');
+                    window.iTermGraphDiscovery.discover((graph) => {
+                        if (resolved) {
+                            this.log('discoverFrameGraph: WARNING - callback called after timeout');
+                            return;
+                        }
+                        resolved = true;
+                        clearTimeout(timeout);
+                        
+                        this.log('discoverFrameGraph: callback called with graph:', {
+                            frameId: graph?.frameId?.substring(0, 8),
+                            hasChildren: !!(graph?.children),
+                            childCount: graph?.children?.length || 0
+                        });
+                        
+                        this.frameGraph = graph;
+                        this.frameId = graph.frameId;  // Set our frame ID from discovery
+                        const childCount = graph.children ? graph.children.length : 0;
+                        this.log('discoverFrameGraph: EXIT - graph discovered, frameId:', this.frameId?.substring(0, 8), 'children:', childCount);
+                        if (childCount > 0) {
+                            this.log('discoverFrameGraph: child frame IDs:', graph.children.map(c => c.frameId?.substring(0, 8)));
+                        }
+                        resolve();
+                    });
+                    this.log('discoverFrameGraph: window.iTermGraphDiscovery.discover called successfully');
+                } catch (e) {
+                    if (!resolved) {
+                        resolved = true;
+                        clearTimeout(timeout);
+                        this.log('discoverFrameGraph: ERROR calling graph discovery:', e);
+                        reject(e);
                     }
                 }
-                // otherwise keep walking
+            });
+        }
+        
+        buildSegments(root) {
+            this.log('buildSegments: ENTER - analyzing root element:', root?.tagName);
+            let segmentIndex = 0;
+            const blocks = [];
+            const iframePositions = new Map(); // Map iframe element to its position in document flow
+            
+            // First pass: find all blocks and note iframe positions
+            this.log('buildSegments: first pass - finding blocks and iframes');
+            const findBlocksAndIframes = (el, currentBlock) => {
+                if (el.tagName === 'IFRAME') {
+                    // Record iframe position
+                    iframePositions.set(el, { afterBlock: currentBlock, beforeNextBlock: true });
+                    return currentBlock;
+                }
+                
+                if (isBlock(el)) {
+                    // Check for child blocks or iframes
+                    const hasChildBlockOrIframe = Array.from(el.children).some(child => 
+                        isBlock(child) || child.tagName === 'IFRAME'
+                    );
+                    
+                    if (!hasChildBlockOrIframe) {
+                        // This is a leaf block
+                        blocks.push(el);
+                        return el;
+                    }
+                }
+                
+                // Recurse into children
+                let lastBlock = currentBlock;
                 for (const child of el.children) {
-                    recurse(child);
+                    lastBlock = findBlocksAndIframes(child, lastBlock);
+                }
+                return lastBlock;
+            };
+            
+            findBlocksAndIframes(root, null);
+            
+            this.log('buildSegments: first pass complete - found', blocks.length, 'blocks and', iframePositions.size, 'iframes');
+            
+            // Second pass: build segments interleaving text blocks and iframes
+            this.log('buildSegments: second pass - building segments');
+            const processedIframes = new Set();
+            
+            for (let i = 0; i < blocks.length; i++) {
+                const block = blocks[i];
+                
+                // Add any iframes that come before this block
+                for (const [iframe, position] of iframePositions) {
+                    if (!processedIframes.has(iframe) && 
+                        position.afterBlock === (i > 0 ? blocks[i-1] : null)) {
+                        const iframeSegment = new IframeSegment(segmentIndex++, iframe, null);
+                        this.segments.push(iframeSegment);
+                        processedIframes.add(iframe);
+                    }
+                }
+                
+                // Add the text block segment
+                const textSegment = new TextSegment(segmentIndex++, block);
+                textSegment.collectTextNodes(this);
+                if (textSegment.textContent.length > 0) {
+                    this.log('buildSegments: added text segment', textSegment.index, 'with', textSegment.textContent.length, 'chars');
+                    this.segments.push(textSegment);
+                } else {
+                    this.log('buildSegments: skipping empty text segment for block', block.tagName);
                 }
             }
-            recurse(root);
-            return blocks;
+            
+            // Add any remaining iframes at the end
+            for (const [iframe, position] of iframePositions) {
+                if (!processedIframes.has(iframe)) {
+                    const iframeSegment = new IframeSegment(segmentIndex++, iframe, null);
+                    this.segments.push(iframeSegment);
+                    processedIframes.add(iframe);
+                }
+            }
+            
+            // Match iframe segments with frame graph
+            if (this.frameGraph) {
+                this.matchIframesToGraph();
+            }
+        }
+        
+        matchIframesToGraph() {
+            // Match iframe elements to their frameIds from the graph
+            const iframeSegments = this.segments.filter(s => s.type === 'iframe');
+            
+            // The graph.children array should correspond to iframes in document order
+            if (this.frameGraph.children) {
+                for (let i = 0; i < iframeSegments.length && i < this.frameGraph.children.length; i++) {
+                    iframeSegments[i].frameId = this.frameGraph.children[i].frameId;
+                }
+            }
         }
 
         // ---------- Click Detection ----------
 
-        handleClick(event) {
+        async handleClick(event) {
             this.log('handleClick: detected at', event.clientX, event.clientY);
 
-            const clickLocation = this.getClickLocation(event.clientX, event.clientY);
+            const clickLocation = await this.getClickLocation(event.clientX, event.clientY);
             if (clickLocation) {
                 this.lastClickLocation = clickLocation;
                 this.useClickLocationForNext = true;
@@ -662,78 +854,135 @@
             }
         }
 
-        getClickLocation(x, y) {
+        async getClickLocation(x, y) {
             this.log('getClickLocation: called with coordinates', x, y);
 
             // Validate coordinates
             x = validateNumber(x, 0, window.innerWidth, 0);
             y = validateNumber(y, 0, window.innerHeight, 0);
 
-            // Find which block contains the click
-            for (let i = 0; i < this.blocks.length; i++) {
-                const block = this.blocks[i];
-                if (block.containsPoint(x, y)) {
-                    this.log('getClickLocation: click is in block', i);
+            // Find which segment contains the click
+            for (let i = 0; i < this.segments.length; i++) {
+                const segment = this.segments[i];
+                if (segment.containsPoint && segment.containsPoint(x, y)) {
+                    this.log('getClickLocation: click is in segment', i, 'type:', segment.type);
 
-                    // Get caret position within block
-                    const range = _caretRangeFromPoint ? _caretRangeFromPoint(x, y) : null;
-                    if (range && range.startContainer.nodeType === Node.TEXT_NODE) {
-                        const textNode = range.startContainer;
-                        const offset = range.startOffset;
-
-                        this.log('getClickLocation: caret found in text node, offset', offset);
-                        this.log('getClickLocation: text node content:', textNode.textContent);
-                        this.log('getClickLocation: text node parent element:', textNode.parentElement.tagName, textNode.parentElement.className);
-
-                        // Use DOM-invariant position finding instead of cached textNodeMap
-                        // This walks the current DOM state and works after highlighting
-                        const walker = _createTreeWalker(
-                            block.element,
-                            _SHOW_TEXT,
-                            {
-                                acceptNode: (node) => {
-                                    const parent = node.parentElement;
-                                    if (!parent) return _FILTER_REJECT;
-
-                                    const tag = parent.tagName;
-                                    if (tag === 'SCRIPT' || tag === 'STYLE') {
-                                        return _FILTER_REJECT;
-                                    }
-
-                                    if (!node.textContent || node.textContent.length === 0) {
-                                        return _FILTER_REJECT;
-                                    }
-
-                                    return _FILTER_ACCEPT;
-                                }
-                            }
-                        );
-
-                        let currentPos = 0;
-                        let node;
-
-                        while (node = _TreeWalker_nextNode.call(walker)) {
-                            this.log('getClickLocation: walking text node at pos', currentPos, 'content:', node.textContent.substring(0, 20));
-                            if (node === textNode) {
-                                // Found our clicked text node
-                                const finalPosition = currentPos + offset;
-                                this.log('getClickLocation: found clicked text node at block position', finalPosition);
-                                return { blockIndex: i, position: finalPosition };
-                            }
-                            currentPos += node.textContent.length;
-                        }
-
-                        this.log('getClickLocation: ERROR - could not find clicked text node in walker');
-                    } else {
-                        this.log('getClickLocation: no valid caret range found');
+                    if (segment.type === 'iframe') {
+                        return await this.handleIframeClick(segment, x, y);
+                    } else if (segment.type === 'text') {
+                        return this.handleTextSegmentClick(segment, i, x, y);
                     }
-                } else {
-                    this.log('getClickLocation: click not in block', i, 'bounds:', block.bounds);
                 }
             }
 
-            this.log('getClickLocation: click not in any block');
+            this.log('getClickLocation: click not in any segment');
             return null;
+        }
+        
+        async handleIframeClick(iframeSegment, x, y) {
+            this.log('handleIframeClick: starting iframe click handling', {
+                frameId: iframeSegment.frameId,
+                segmentIndex: iframeSegment.index,
+                mainFrameCoords: { x, y }
+            });
+            
+            // Convert main frame coordinates to iframe coordinates
+            const iframeRect = _getBoundingClientRect.call(iframeSegment.iframe);
+            const iframeX = x - iframeRect.left;
+            const iframeY = y - iframeRect.top;
+            
+            this.log('handleIframeClick: converted coordinates to iframe space:', {
+                iframeX,
+                iframeY,
+                iframeRect: { left: iframeRect.left, top: iframeRect.top, width: iframeRect.width, height: iframeRect.height }
+            });
+            
+            // Delegate click handling to the iframe
+            const script = `
+                (function() {
+                    if (window.iTermCustomFind && window.iTermCustomFind.handleClickInFrame) {
+                        return window.iTermCustomFind.handleClickInFrame(${iframeX}, ${iframeY});
+                    }
+                    return null;
+                })()
+            `;
+            
+            this.log('handleIframeClick: evaluating click script in frame:', iframeSegment.frameId);
+            
+            const iframeClickResult = await new Promise((resolve) => {
+                window.iTermGraphDiscovery.evaluateInFrame(iframeSegment.frameId, script, (result) => {
+                    this.log('handleIframeClick: iframe click script completed with result:', result);
+                    resolve(result);
+                });
+            });
+            
+            // If iframe returned a position, prepend our segment index to create full coordinates
+            if (iframeClickResult && iframeClickResult.coordinates) {
+                const fullCoordinates = [iframeSegment.index, ...iframeClickResult.coordinates];
+                this.log('handleIframeClick: returning remote click result with full coordinates:', fullCoordinates);
+                return {
+                    coordinates: fullCoordinates,
+                    type: 'remote'
+                };
+            }
+            
+            // Fallback: position at start of iframe
+            return {
+                coordinates: [iframeSegment.index, 0],
+                type: 'iframe_boundary'
+            };
+        }
+        
+        handleTextSegmentClick(segment, segmentIndex, x, y) {
+            this.log('handleTextSegmentClick: processing click in text segment', segmentIndex);
+
+            // Get caret position within segment
+            const range = _caretRangeFromPoint ? _caretRangeFromPoint(x, y) : null;
+            if (range && range.startContainer.nodeType === Node.TEXT_NODE) {
+                const textNode = range.startContainer;
+                const offset = range.startOffset;
+
+                this.log('handleTextSegmentClick: caret found in text node, offset', offset);
+
+                // Find the position of this text node within the segment
+                const nodeInfo = segment.textNodeMap.nodeToPosition.get(textNode);
+                if (nodeInfo) {
+                    const position = nodeInfo.start + offset;
+                    this.log('handleTextSegmentClick: calculated position', position, 'in segment');
+                    
+                    return {
+                        coordinates: [segmentIndex, position],
+                        type: 'local'
+                    };
+                }
+            }
+
+            // Fallback: return start of segment
+            this.log('handleTextSegmentClick: using fallback position');
+            return {
+                coordinates: [segmentIndex, 0],
+                type: 'local'
+            };
+        }
+        
+        // Internal method for handling clicks that works in both main frame and iframes
+        handleTextSegmentClickInternal(x, y) {
+            this.log('handleTextSegmentClickInternal: processing click at', x, y);
+            
+            // Find which segment contains the click
+            for (let i = 0; i < this.segments.length; i++) {
+                const segment = this.segments[i];
+                if (segment.type === 'text' && segment.containsPoint && segment.containsPoint(x, y)) {
+                    return this.handleTextSegmentClick(segment, i, x, y);
+                }
+            }
+            
+            // Fallback: return position at start of first segment
+            this.log('handleTextSegmentClickInternal: using fallback position');
+            return {
+                coordinates: [0, 0],
+                type: 'local'
+            };
         }
 
         clearClickLocation() {
@@ -744,9 +993,6 @@
         getStartingMatchIndex() {
             this.log('getStartingMatchIndex: called');
             this.log('getStartingMatchIndex: lastClickLocation:', this.lastClickLocation);
-            this.log('getStartingMatchIndex: lastClickLocation type:', typeof this.lastClickLocation);
-            this.log('getStartingMatchIndex: lastClickLocation === null?', this.lastClickLocation === null);
-            this.log('getStartingMatchIndex: !lastClickLocation?', !this.lastClickLocation);
             this.log('getStartingMatchIndex: matches.length:', this.matches.length);
 
             if (!this.lastClickLocation || this.matches.length === 0) {
@@ -754,24 +1000,20 @@
                 return 0;
             }
 
-            const { blockIndex, position } = this.lastClickLocation;
-            this.log('getStartingMatchIndex: click was at block', blockIndex, 'position', position);
+            const clickCoordinates = this.lastClickLocation.coordinates;
+            this.log('getStartingMatchIndex: click was at coordinates', clickCoordinates);
 
-            // Log some matches around the click position for context
-            this.log('getStartingMatchIndex: examining matches:');
-            for (let i = 0; i < Math.min(10, this.matches.length); i++) {
-                const match = this.matches[i];
-                this.log(`  match ${i}: block ${match.blockIndex}, positions ${match.blockStart}-${match.blockEnd} (global ${match.globalStart}-${match.globalEnd})`);
-            }
+            // Create a dummy match object with click coordinates for comparison
+            const clickMatch = new Match(clickCoordinates, '');
 
-            // Find first match after click position
+            // Find first match after click position using lexicographic comparison
             for (let i = 0; i < this.matches.length; i++) {
                 const match = this.matches[i];
-                this.log(`getStartingMatchIndex: checking match ${i}: block ${match.blockIndex} pos ${match.blockStart}-${match.blockEnd}`);
+                this.log(`getStartingMatchIndex: checking match ${i} at coordinates`, match.coordinates);
 
-                if (match.blockIndex > blockIndex ||
-                    (match.blockIndex === blockIndex && match.blockStart >= position)) {
-                    this.log('getStartingMatchIndex: found first match after click at index', i);
+                // Use existing Match.compare method
+                if (Match.compare(match, clickMatch) >= 0) {
+                    this.log('getStartingMatchIndex: found first match at or after click at index', i);
                     return i;
                 }
             }
@@ -793,6 +1035,137 @@
             }
 
             this.log(`findMatches: found ${this.matches.length} total matches`);
+        }
+        
+        async findMatchesWithIframes(regex, searchTerm) {
+            this.log('findMatchesWithIframes: ENTER - searching for:', searchTerm, 'mode:', this.searchMode);
+            this.matches = [];
+            this.frameMatches.clear();
+            
+            if (!this.isMainFrame) {
+                // If we're not the main frame, just do local search
+                this.log('findMatchesWithIframes: child frame - doing local search only');
+                this.matches = this.findLocalMatches(regex);
+                this.log('findMatchesWithIframes: EXIT - child frame found', this.matches.length, 'local matches');
+                return;
+            }
+            
+            // Main frame: coordinate search across all frames using evaluateInAll
+            this.log('findMatchesWithIframes: main frame - coordinating cross-frame search');
+            const searchScript = `
+                (function() {
+                    // Each frame searches its own content
+                    if (window.iTermCustomFind && window.iTermCustomFind.searchInFrame) {
+                        return window.iTermCustomFind.searchInFrame({
+                            searchTerm: ${JSON.stringify(searchTerm)},
+                            searchMode: ${JSON.stringify(this.searchMode)},
+                            contextLength: ${this.contextLen},
+                            instanceId: ${JSON.stringify(this.instanceId)}
+                        });
+                    }
+                    return { matches: [] };
+                })()
+            `;
+            
+            this.log('findMatchesWithIframes: executing search script in all frames');
+            const allFrameResults = await new Promise((resolve) => {
+                window.iTermGraphDiscovery.evaluateInAll(searchScript, (results) => {
+                    resolve(results);
+                });
+            });
+            
+            this.log('findMatchesWithIframes: received results from', Object.keys(allFrameResults).length, 'frames');
+            
+            // Process results from all frames
+            let localMatchCount = 0;
+            let remoteMatchCount = 0;
+            
+            for (const [frameId, result] of Object.entries(allFrameResults)) {
+                const frameIdShort = frameId?.substring(0, 8) || 'unknown';
+                this.log('findMatchesWithIframes: processing frame', frameIdShort, 'with', result?.matches?.length || 0, 'matches');
+                
+                if (!result || !result.matches) {
+                    this.log('findMatchesWithIframes: skipping frame', frameIdShort, '- no results');
+                    continue;
+                }
+                
+                if (frameId === this.frameId) {
+                    // Skip our own frame's matches - we already have them from direct search
+                    this.log('findMatchesWithIframes: skipping main frame results (already have them from direct search)');
+                    continue;
+                } else {
+                    // Remote frame's matches - need to prepend iframe segment index
+                    const iframeSegment = this.segments.find(s => 
+                        s.type === 'iframe' && s.frameId === frameId
+                    );
+                    
+                    if (!iframeSegment) {
+                        this.log('findMatchesWithIframes: WARNING - no iframe segment found for frame', frameIdShort);
+                        continue;
+                    }
+                    
+                    this.log('findMatchesWithIframes: processing remote matches from frame', frameIdShort, 'in segment', iframeSegment.index);
+                    result.matches.forEach((frameMatch, idx) => {
+                        const remoteMatch = new Match(
+                            [iframeSegment.index, ...frameMatch.coordinates],
+                            frameMatch.text
+                        );
+                        
+                        remoteMatch.type = 'remote';
+                        remoteMatch.frameId = frameId;
+                        remoteMatch.remoteIndex = idx;
+                        this.log('findMatchesWithIframes: assigned type "remote" to match ID:', remoteMatch.id, 'frameId:', frameId.substring(0, 8));
+                        remoteMatch.contextBefore = frameMatch.contextBefore;
+                        remoteMatch.contextAfter = frameMatch.contextAfter;
+                        
+                        this.matches.push(remoteMatch);
+                        remoteMatchCount++;
+                        this.log('findMatchesWithIframes: added remote match', idx, 'at coords', remoteMatch.coordinates, 'text:', frameMatch.text.substring(0, 20) + '... (total matches now:', this.matches.length + ')');
+                    });
+                    
+                    this.frameMatches.set(frameId, result.matches.length);
+                }
+            }
+            
+            // Sort all matches by coordinates
+            this.log('findMatchesWithIframes: sorting', this.matches.length, 'matches by coordinates');
+            this.matches.sort(Match.compare);
+            
+            this.log(`findMatchesWithIframes: EXIT - found ${this.matches.length} total matches (${localMatchCount} local, ${remoteMatchCount} remote)`);
+        }
+        
+        findLocalMatches(regex) {
+            const matches = [];
+            
+            for (let segmentIdx = 0; segmentIdx < this.segments.length; segmentIdx++) {
+                const segment = this.segments[segmentIdx];
+                
+                if (segment.type !== 'text') continue;
+                
+                regex.lastIndex = 0;
+                let match;
+                
+                while ((match = _RegExp_exec.call(regex, segment.textContent)) !== null) {
+                    const localMatch = new Match(
+                        [segmentIdx, match.index],  // Coordinates: [segment, position]
+                        match[0]  // Matched text
+                    );
+                    
+                    localMatch.type = 'local';
+                    localMatch.segment = segment;
+                    localMatch.localStart = match.index;
+                    this.log('findLocalMatches: assigned type "local" to match ID:', localMatch.id, 'frame:', this.frameId?.substring(0, 8) || 'unknown');
+                    localMatch.localEnd = match.index + match[0].length;
+                    
+                    matches.push(localMatch);
+                    
+                    if (match[0].length === 0) {
+                        regex.lastIndex++;
+                    }
+                }
+            }
+            
+            return matches;
         }
 
         findMatchesInBlock(regex, block, blockIndex) {
@@ -818,114 +1191,292 @@
 
             return matches;
         }
+        
+        // Find text node and offset by walking the DOM directly using coordinates
+        findTextNodeByCoordinates(segment, targetOffset, matchLength) {
+            let currentOffset = 0;
+            let startNode = null;
+            let startOffset = 0;
+            let endNode = null;
+            let endOffset = 0;
+            
+            const walker = _createTreeWalker(
+                segment.element,
+                _SHOW_TEXT,
+                {
+                    acceptNode: (node) => {
+                        const parent = node.parentElement;
+                        if (!parent) return _FILTER_REJECT;
+                        
+                        // Skip nodes inside elements that would be invisible/irrelevant
+                        if (_matches.call(parent, 'script, style, noscript')) {
+                            return _FILTER_REJECT;
+                        }
+                        
+                        return _FILTER_ACCEPT;
+                    }
+                },
+                false
+            );
+            
+            let node;
+            while (node = _TreeWalker_nextNode.call(walker)) {
+                const textContent = _textContentGetter ? _textContentGetter.call(node) : node.textContent;
+                const nodeLength = textContent.length;
+                
+                if (currentOffset + nodeLength > targetOffset) {
+                    // Start position is in this node
+                    if (startNode === null) {
+                        startNode = node;
+                        startOffset = targetOffset - currentOffset;
+                    }
+                    
+                    // Check if end position is also in this node
+                    const targetEndOffset = targetOffset + matchLength;
+                    if (currentOffset + nodeLength >= targetEndOffset) {
+                        endNode = node;
+                        endOffset = targetEndOffset - currentOffset;
+                        break;
+                    }
+                }
+                
+                currentOffset += nodeLength;
+                
+                // If we found start but not end, and we've moved past the target range
+                if (startNode && currentOffset >= targetOffset + matchLength) {
+                    endNode = node;
+                    endOffset = (targetOffset + matchLength) - (currentOffset - nodeLength);
+                    break;
+                }
+            }
+            
+            if (!startNode || !endNode) {
+                return null;
+            }
+            
+            return {
+                startNode,
+                startOffset,
+                endNode, 
+                endOffset
+            };
+        }
+        
+        async clearHighlightsInAllFrames() {
+            this.log('clearHighlightsInAllFrames: clearing highlights in all frames');
+            
+            const clearScript = `
+                (function() {
+                    if (window.iTermCustomFind && window.iTermCustomFind.clearStateWithoutResponse) {
+                        return window.iTermCustomFind.clearStateWithoutResponse({
+                            sessionSecret: ${JSON.stringify(sessionSecret)},
+                            instanceId: ${JSON.stringify(this.instanceId)}
+                        });
+                    }
+                    return { error: 'API not available' };
+                })()
+            `;
+            
+            await new Promise((resolve) => {
+                window.iTermGraphDiscovery.evaluateInAll(clearScript, (results) => {
+                    const clearedFrames = Object.keys(results).filter(frameId => !results[frameId]?.error);
+                    this.log('clearHighlightsInAllFrames: cleared highlights in', clearedFrames.length, 'frames');
+                    resolve();
+                });
+            });
+        }
 
         // ---------- Highlighting ----------
 
-        highlight() {
+        async highlight() {
             this.log('highlight: starting with', this.matches.length, 'matches');
 
-            let highlightedCount = 0;
+            // Group local matches by segment to optimize TextNodeMap rebuilding
+            const localMatchesBySegment = new Map();
+            const remoteMatches = [];
+            
             for (const match of this.matches) {
+                this.log('highlight: processing match ID:', match.id, 'type:', match.type, 'coordinates:', match.coordinates);
+                if (match.type === 'local') {
+                    const segmentIndex = match.coordinates[0];
+                    if (!localMatchesBySegment.has(segmentIndex)) {
+                        localMatchesBySegment.set(segmentIndex, []);
+                    }
+                    localMatchesBySegment.get(segmentIndex).push(match);
+                    this.log('highlight: added local match ID:', match.id, 'to segment', segmentIndex);
+                } else if (match.type === 'remote') {
+                    remoteMatches.push(match);
+                    this.log('highlight: added remote match ID:', match.id, 'to remote matches');
+                } else {
+                    this.log('highlight: WARNING - match ID:', match.id, 'has unknown type:', match.type);
+                }
+            }
+            
+            // Highlight local matches segment by segment in reverse order
+            let highlightedCount = 0;
+            for (const [segmentIndex, matches] of localMatchesBySegment.entries()) {
+                this.log('highlight: processing segment', segmentIndex, 'with', matches.length, 'matches');
+                
+                // Sort matches within segment in reverse order (end to beginning)
+                matches.sort((a, b) => b.localStart - a.localStart);
+                
+                for (const match of matches) {
+                    try {
+                        this.log('highlight: attempting to highlight local match ID:', match.id, 'in segment', segmentIndex);
+                        this.highlightLocalMatch(match);
+                        highlightedCount++;
+                        this.log('highlight: successfully highlighted match ID:', match.id);
+                    } catch (e) {
+                        this.log('highlight: ERROR highlighting match ID:', match.id, ':', e);
+                    }
+                }
+                
+                // Rebuild TextNodeMap for this segment after all highlighting is done
                 try {
-                    this.highlightMatch(match);
+                    const segment = this.segments[segmentIndex];
+                    if (segment && segment.type === 'text') {
+                        this.log('highlight: rebuilding TextNodeMap for segment', segmentIndex);
+                        // Log highlightElements counts before rebuilding
+                        const segmentMatches = localMatchesBySegment.get(segmentIndex) || [];
+                        segmentMatches.forEach((m, i) => {
+                            this.log('highlight: before rebuild - match ID:', m.id, 'at segment index', i, 'has', m.highlightElements ? m.highlightElements.length : 'null', 'highlightElements');
+                        });
+                        
+                        segment.collectTextNodes(this);
+                        
+                        // Log highlightElements counts after rebuilding  
+                        segmentMatches.forEach((m, i) => {
+                            this.log('highlight: after rebuild - match ID:', m.id, 'at segment index', i, 'has', m.highlightElements ? m.highlightElements.length : 'null', 'highlightElements');
+                        });
+                        this.log('highlight: rebuilt TextNodeMap with', segment.textNodeMap.length, 'total characters');
+                    }
+                } catch (e) {
+                    this.log('highlight: error rebuilding TextNodeMap for segment', segmentIndex, ':', e);
+                }
+            }
+            
+            // Handle remote matches
+            for (const match of remoteMatches) {
+                try {
+                    // Remote matches are highlighted in their own frames
+                    // We just ensure the iframe highlights are updated
+                    await this.ensureRemoteHighlighting(match);
                     highlightedCount++;
                 } catch (e) {
-                    this.log('highlight: error highlighting match', match, ':', e);
+                    this.log('highlight: error highlighting remote match', match, ':', e);
                 }
             }
 
             this.log('highlight: completed,', highlightedCount, 'of', this.matches.length, 'matches highlighted');
         }
+        
+        async ensureRemoteHighlighting(match) {
+            this.log('highlight: request highlight match in frame', match.frameId);
+            // Tell the iframe to highlight its matches
+            const script = `
+                (function() {
+                    if (window.iTermCustomFind && window.iTermCustomFind.highlightMatches) {
+                        window.iTermCustomFind.highlightMatches(${JSON.stringify(this.instanceId)});
+                    }
+                })()
+            `;
+            
+            await new Promise((resolve) => {
+                window.iTermGraphDiscovery.evaluateInFrame(match.frameId, script, resolve);
+            });
+        }
 
-        highlightMatch(match) {
-            const block = this.blocks[match.blockIndex];
-            const elements = [];
-            const revealers = new Set();
-
-            this.log('highlightMatch: attempting to highlight match at block', match.blockIndex, 'positions', match.blockStart, '-', match.blockEnd);
-
-            // Collect revealers for this match range
-            for (let pos = match.blockStart; pos < match.blockEnd; pos++) {
-                const posResult = this.findPositionInBlock(block, pos);
-                if (posResult && posResult.revealer) {
-                    revealers.add(posResult.revealer);
-                }
-            }
-
-            // Use block-invariant approach: find position by walking the tree each time
-            const startResult = this.findPositionInBlock(block, match.blockStart);
-            const endResult = this.findPositionInBlock(block, match.blockEnd - 1); // -1 because end is exclusive
-
-            if (!startResult || !endResult) {
-                this.log('highlightMatch: could not find positions in block');
+        highlightLocalMatch(match) {
+            const segmentIndex = match.coordinates[0];
+            const segmentOffset = match.coordinates[1];
+            
+            const segment = this.segments[segmentIndex];
+            if (!segment || segment.type !== 'text') {
+                this.log('highlightLocalMatch: invalid segment for match');
                 return;
             }
 
-            // Collect revealers from start and end nodes too
-            if (startResult.revealer) {
-                revealers.add(startResult.revealer);
+            const elements = [];
+            const revealers = new Set();
+
+            this.log('highlightLocalMatch: attempting to highlight match at coordinates', match.coordinates, 'text:', match.text.substring(0, 10) + '...');
+
+            // Use coordinates to find text nodes directly, bypassing potentially stale TextNodeMap
+            const result = this.findTextNodeByCoordinates(segment, segmentOffset, match.text.length);
+            
+            if (!result) {
+                this.log('highlightLocalMatch: could not locate text nodes using coordinates');
+                return;
             }
-            if (endResult.revealer) {
-                revealers.add(endResult.revealer);
+            
+            const { startNode, startOffset, endNode, endOffset } = result;
+            
+            // Validate the DOM nodes
+            if (!startNode || !endNode) {
+                this.log('highlightLocalMatch: invalid DOM nodes from coordinate lookup');
+                return;
+            }
+
+            // Check if nodes are still connected to the document  
+            if (!startNode.isConnected || !endNode.isConnected) {
+                this.log('highlightLocalMatch: DOM nodes disconnected - startConnected:', startNode.isConnected, 'endConnected:', endNode.isConnected);
+                return;
             }
 
             try {
+                this.log('highlightLocalMatch: creating range for coordinates', match.coordinates, 'startNode:', startNode.nodeName, 'startOffset:', startOffset, 'endNode:', endNode.nodeName, 'endOffset:', endOffset);
                 const range = _createRange();
-                _Range_setStart.call(range, startResult.node, startResult.offset);
-                _Range_setEnd.call(range, endResult.node, endResult.offset + 1); // +1 because we want inclusive end
-
-                // Extract the content from the range
-                const contents = _Range_extractContents.call(range);
+                
+                _Range_setStart.call(range, startNode, startOffset);
+                _Range_setEnd.call(range, endNode, endOffset);
 
                 // Create the highlight span
                 const span = _createElement('span');
                 span.className = 'iterm-find-highlight';
                 _setAttribute.call(span, 'data-iterm-id', this.instanceId);
-                _appendChild.call(span, contents);
 
-                // Insert the span at the range position
-                _Range_insertNode.call(range, span);
+                this.log('highlightLocalMatch: surrounding range contents with highlight span');
+                _Range_surroundContents.call(range, span);
 
                 elements.push(span);
                 this.highlightedElements.push(span);
 
-                this.log('highlightMatch: successfully highlighted match');
+                this.log('highlightLocalMatch: successfully highlighted match');
             } catch (e) {
-                this.log('highlightMatch: error highlighting match:', e);
-                // Fallback: try highlighting each character individually
-                for (let pos = match.blockStart; pos < match.blockEnd; pos++) {
-                    const charResult = this.findPositionInBlock(block, pos);
+                this.log('highlightLocalMatch: error highlighting match:', e.message);
+                // Fallback: try character-by-character highlighting
+                this.log('highlightLocalMatch: attempting fallback character-by-character highlighting');
+                
+                for (let i = 0; i < match.text.length; i++) {
+                    const charResult = this.findTextNodeByCoordinates(segment, segmentOffset + i, 1);
                     if (charResult) {
                         try {
                             const range = _createRange();
-                            _Range_setStart.call(range, charResult.node, charResult.offset);
-                            _Range_setEnd.call(range, charResult.node, charResult.offset + 1);
+                            _Range_setStart.call(range, charResult.startNode, charResult.startOffset);
+                            _Range_setEnd.call(range, charResult.endNode, charResult.endOffset);
 
                             const span = _createElement('span');
                             span.className = 'iterm-find-highlight';
                             _setAttribute.call(span, 'data-iterm-id', this.instanceId);
 
-                            const contents = _Range_extractContents.call(range);
-                            _appendChild.call(span, contents);
-                            _Range_insertNode.call(range, span);
-
+                            _Range_surroundContents.call(range, span);
                             elements.push(span);
                             this.highlightedElements.push(span);
-
-                            // Collect revealer from individual char if present
-                            if (charResult.revealer) {
-                                revealers.add(charResult.revealer);
-                            }
                         } catch (e2) {
-                            // Skip this character if it fails
+                            this.log('highlightLocalMatch: fallback failed for character', i, ':', e2.message);
                             continue;
                         }
                     }
                 }
             }
 
-            match.els = elements;
+            // Store elements in the match
+            match.highlightElements = elements;
             match.revealers = revealers;
+            
+            this.log('highlightLocalMatch: created match with', elements.length, 'highlightElements for match', match.id, 'at array index', this.matches.indexOf(match));
+
+            // TODO: Collect revealers if needed for reveal functionality
         }
 
         findPositionInBlock(block, position) {
@@ -1113,50 +1664,170 @@
 
         // ---------- Navigation ----------
 
-        setCurrent(idx) {
+        async setCurrent(idx, _triedMatches = new Set()) {
+            this.log('setCurrent: ENTER - setting current to index', idx, 'total matches:', this.matches.length, 'tried:', _triedMatches.size);
+            
             if (this.matches.length === 0) {
-                this.log('setCurrent: no matches');
+                this.log('setCurrent: EXIT - no matches available');
                 return;
+            }
+
+            // Normalize index
+            const normalizedIdx = ((idx % this.matches.length) + this.matches.length) % this.matches.length;
+            
+            // Check if we've tried all matches without success
+            if (_triedMatches.has(normalizedIdx)) {
+                this.log('setCurrent: ERROR - already tried match at index', normalizedIdx, '- all matches may be broken');
+                if (_triedMatches.size >= this.matches.length) {
+                    this.log('setCurrent: ERROR - tried all matches without success, giving up');
+                    return;
+                }
             }
 
             // Clear previous current highlight
             if (this.currentMatchIndex >= 0 && this.currentMatchIndex < this.matches.length) {
-                this.matches[this.currentMatchIndex].els.forEach(e => {
-                    e.className = 'iterm-find-highlight';
-                    _setAttribute.call(e, 'data-iterm-id', this.instanceId);
-                });
+                const prevMatch = this.matches[this.currentMatchIndex];
+                this.log('setCurrent: clearing previous highlight for match', this.currentMatchIndex, 'type:', prevMatch.type);
+                
+                if (prevMatch.type === 'local') {
+                    prevMatch.highlightElements?.forEach(e => {
+                        e.className = 'iterm-find-highlight';
+                        _setAttribute.call(e, 'data-iterm-id', this.instanceId);
+                    });
+                } else if (prevMatch.type === 'remote') {
+                    // Clear highlight in remote frame
+                    await this.clearCurrentInFrame(prevMatch.frameId);
+                }
             }
 
             // Set new current
-            this.currentMatchIndex = ((idx % this.matches.length) + this.matches.length) % this.matches.length;
+            this.currentMatchIndex = normalizedIdx;
             const current = this.matches[this.currentMatchIndex];
+            this.log('setCurrent: setting new current to index', this.currentMatchIndex, 'ID:', current.id, 'type:', current.type, 'coords:', current.coordinates);
 
-            this.ensureVisibleForMatch(current);
+            // Track that we're trying this match
+            const newTriedMatches = new Set(_triedMatches);
+            newTriedMatches.add(normalizedIdx);
 
-            current.els.forEach(e => {
-                e.className = 'iterm-find-highlight-current';
-                _setAttribute.call(e, 'data-iterm-id', this.instanceId);
-            });
+            let highlightingSucceeded = false;
 
-            // Scroll into view
-            if (current.els.length > 0) {
-                _scrollIntoView.call(current.els[0], {
-                    behavior: '{{SCROLL_BEHAVIOR}}',
-                    block: 'center',
-                    inline: 'center'
-                });
+            if (current.type === 'local') {
+                this.log('setCurrent: handling local match - ensuring visibility and highlighting');
+                this.ensureVisibleForMatch(current);
+                
+                // Check if this match has highlight elements (was successfully highlighted)
+                if (current.highlightElements && current.highlightElements.length > 0) {
+                    current.highlightElements.forEach(e => {
+                        e.className = 'iterm-find-highlight-current';
+                        _setAttribute.call(e, 'data-iterm-id', this.instanceId);
+                    });
+
+                    // Scroll into view
+                    this.log('setCurrent: scrolling local match into view');
+                    _scrollIntoView.call(current.highlightElements[0], {
+                        behavior: '{{SCROLL_BEHAVIOR}}',
+                        block: 'center',
+                        inline: 'center'
+                    });
+                    
+                    highlightingSucceeded = true;
+                } else {
+                    this.log('setCurrent: WARNING - local match has no highlight elements, may have failed during initial highlighting');
+                }
+            } else if (current.type === 'remote') {
+                // Navigate to remote match
+                this.log('setCurrent: handling remote match - delegating to iframe');
+                try {
+                    await this.navigateToRemoteMatch(current);
+                    highlightingSucceeded = true; // Assume success unless an error is thrown
+                } catch (e) {
+                    this.log('setCurrent: ERROR - remote match navigation failed:', e.message);
+                    highlightingSucceeded = false;
+                }
             }
 
+            // If highlighting failed, try the next match
+            if (!highlightingSucceeded) {
+                this.log('setCurrent: highlighting failed for match', this.currentMatchIndex, 'ID:', current.id, '- trying next match');
+                const nextIdx = normalizedIdx + 1;
+                return await this.setCurrent(nextIdx, newTriedMatches);
+            }
+
+            this.log('setCurrent: EXIT - highlighting succeeded, reporting results');
             this.reportResults(false);
+        }
+        
+        async navigateToRemoteMatch(match) {
+            this.log('navigateToRemoteMatch: starting navigation to remote match', {
+                frameId: match.frameId,
+                remoteIndex: match.remoteIndex,
+                coordinates: match.coordinates
+            });
+            
+            // First, scroll the iframe into view
+            const iframeSegment = this.segments.find(s => 
+                s.type === 'iframe' && s.frameId === match.frameId
+            );
+            
+            if (iframeSegment && iframeSegment.iframe) {
+                this.log('navigateToRemoteMatch: scrolling iframe into view, segment index:', iframeSegment.index);
+                _scrollIntoView.call(iframeSegment.iframe, { behavior: 'smooth', block: 'center' });
+            } else {
+                this.log('navigateToRemoteMatch: WARNING - iframe segment not found for frameId:', match.frameId);
+            }
+            
+            // Then highlight the match within the iframe
+            const script = `
+                (function() {
+                    if (window.iTermCustomFind && window.iTermCustomFind.highlightRemoteMatch) {
+                        return window.iTermCustomFind.highlightRemoteMatch(${match.remoteIndex}, ${JSON.stringify(this.instanceId)});
+                    }
+                })()
+            `;
+            
+            this.log('navigateToRemoteMatch: evaluating highlight script in frame:', match.frameId);
+            
+            await new Promise((resolve) => {
+                window.iTermGraphDiscovery.evaluateInFrame(match.frameId, script, (result) => {
+                    this.log('navigateToRemoteMatch: highlight script completed with result:', result);
+                    resolve(result);
+                });
+            });
+            
+            this.log('navigateToRemoteMatch: completed navigation to remote match');
+        }
+        
+        async clearCurrentInFrame(frameId) {
+            this.log('clearCurrentInFrame: clearing current highlight in frame:', frameId);
+            
+            const script = `
+                (function() {
+                    if (window.iTermCustomFind && window.iTermCustomFind.clearCurrentHighlight) {
+                        window.iTermCustomFind.clearCurrentHighlight(${JSON.stringify(this.instanceId)});
+                    }
+                })()
+            `;
+            
+            await new Promise((resolve) => {
+                window.iTermGraphDiscovery.evaluateInFrame(frameId, script, (result) => {
+                    this.log('clearCurrentInFrame: clear script completed for frame:', frameId, 'result:', result);
+                    resolve(result);
+                });
+            });
         }
 
         // ---------- Commands ----------
 
-        startFind(term, mode, contextLen) {
+        async startFind(term, mode, contextLen) {
             this.log('=== START FIND ===');
-            this.log('startFind: term=' + term + ', mode=' + mode + ', contextLen=' + contextLen);
+            this.log('startFind: term=' + term + ', mode=' + mode + ', contextLen=' + contextLen + ', frame=' + (this.frameId?.substring(0, 8) || 'unknown'));
 
-            this.clearHighlights();
+            // Clear highlights in all frames (main + iframes) before starting new search
+            if (this.isMainFrame) {
+                await this.clearHighlightsInAllFrames();
+            } else {
+                this.clearHighlights();
+            }
             this.clearClickLocation(); // Force clear any persisting click location
             this.useClickLocationForNext = false;
             this.currentSearchTerm = term;
@@ -1181,16 +1852,16 @@
             const regex = this.createSearchRegex(term);
             this.log('startFind: Regex created:', regex);
 
-            this.log('startFind: Collecting blocks from document.body', document.body);
-            this.collectBlocks(document.body);
+            this.log('startFind: Collecting segments from document.body', document.body);
+            await this.collectSegments(document.body);
 
-            this.log('startFind: Finding matches in', this.blocks.length, 'blocks');
-            this.findMatches(regex);
+            this.log('startFind: Finding matches in', this.segments.length, 'segments');
+            await this.findMatchesWithIframes(regex, term);
 
             this.log('startFind: Found', this.matches.length, 'total matches');
 
             try {
-                this.highlight();
+                await this.highlight();
                 this.log('startFind: Highlighting completed');
             } catch (e) {
                 this.log('startFind: ERROR in highlighting, but continuing:', e);
@@ -1202,8 +1873,7 @@
                 this.log('startFind: Setting current match to index', startIndex);
 
                 // Set current match and ensure it's visible
-                this.currentMatchIndex = ((startIndex % this.matches.length) + this.matches.length) % this.matches.length;
-                const current = this.matches[this.currentMatchIndex];
+                await this.setCurrent(startIndex);
 
                 // Ensure the match is visible (auto-reveal)
                 this.ensureVisibleForMatch(current);
@@ -1233,7 +1903,7 @@
             this.log('=== START FIND COMPLETE ===');
         }
 
-        findNext() {
+        async findNext() {
             this.log('findNext: called');
             this.log('findNext: matches.length:', this.matches.length);
             this.log('findNext: currentMatchIndex:', this.currentMatchIndex);
@@ -1250,37 +1920,36 @@
                 this.log('findNext: getStartingMatchIndex returned:', startIndex);
                 this.useClickLocationForNext = false;
                 this.log('findNext: setting current to:', startIndex);
-                this.setCurrent(startIndex);
+                await this.setCurrent(startIndex);
             } else {
                 this.log('findNext: normal next, going to:', this.currentMatchIndex + 1);
-                this.setCurrent(this.currentMatchIndex + 1);
+                await this.setCurrent(this.currentMatchIndex + 1);
             }
         }
 
-        findPrevious() {
+        async findPrevious() {
             if (this.matches.length === 0) return;
 
             if (this.useClickLocationForNext) {
                 const startIndex = this.getStartingMatchIndex();
                 this.useClickLocationForNext = false;
-                this.setCurrent(startIndex - 1);
+                await this.setCurrent(startIndex - 1);
             } else {
-                this.setCurrent(this.currentMatchIndex - 1);
+                await this.setCurrent(this.currentMatchIndex - 1);
             }
         }
 
         // Reveal a specific match by its identifier
-        reveal(identifier) {
+        async reveal(identifier) {
             if (!identifier) {
                 this.log('reveal: no identifier provided');
                 return;
             }
 
-            // Find the match by comparing buffer positions and text
+            // Find the match by comparing identifier data
             const matchIndex = this.matches.findIndex(m =>
-                m.globalStart === identifier.bufferStart &&
-                m.globalEnd === identifier.bufferEnd &&
-                this.globalBuffer.slice(m.globalStart, m.globalEnd) === identifier.text
+                m.text === identifier.text &&
+                JSON.stringify(m.coordinates) === JSON.stringify(identifier.coordinates)
             );
 
             if (matchIndex === -1) {
@@ -1292,30 +1961,40 @@
 
             // Make this the current match and scroll to it
             // setCurrent will handle scrolling and send currentChanged message
-            this.setCurrent(matchIndex);
+            await this.setCurrent(matchIndex);
         }
 
         // Get current bounding box for a match using its stable identifier
-        getMatchBounds(identifier) {
+        async getMatchBounds(identifier) {
             if (!identifier) {
                 this.log('getMatchBounds: no identifier provided');
                 return {};
             }
 
-            // Find the match by comparing buffer positions and text
+            // Find the match by comparing identifier data
             const match = this.matches.find(m =>
-                m.globalStart === identifier.bufferStart &&
-                m.globalEnd === identifier.bufferEnd &&
-                this.globalBuffer.slice(m.globalStart, m.globalEnd) === identifier.text
+                m.text === identifier.text &&
+                JSON.stringify(m.coordinates) === JSON.stringify(identifier.coordinates)
             );
 
             if (!match) {
                 this.log('getMatchBounds: match not found for identifier', identifier);
                 return {};
             }
-
+            
+            // Handle based on match type
+            if (match.type === 'local') {
+                return this.getLocalMatchBounds(match);
+            } else if (match.type === 'remote') {
+                return await this.getRemoteMatchBounds(match);
+            }
+            
+            return {};
+        }
+        
+        getLocalMatchBounds(match) {
             // Get bounding boxes for all elements of this match
-            const elementBounds = match.els.map(el => {
+            const elementBounds = match.highlightElements?.map(el => {
                 const rect = _getBoundingClientRect.call(el);
                 // Convert viewport-relative coordinates to document-relative coordinates
                 return {
@@ -1324,10 +2003,10 @@
                     right: rect.right + window.scrollX,
                     bottom: rect.bottom + window.scrollY
                 };
-            });
+            }) || [];
 
             if (elementBounds.length === 0) {
-                this.log('getMatchBounds: match has no elements');
+                this.log('getLocalMatchBounds: match has no elements');
                 return {};
             }
 
@@ -1352,7 +2031,72 @@
                 height: bottom - top
             };
 
-            this.log('getMatchBounds: returning bounds', result);
+            this.log('getLocalMatchBounds: returning bounds', result);
+            return result;
+        }
+        
+        async getRemoteMatchBounds(match) {
+            this.log('getRemoteMatchBounds: starting bounds retrieval for remote match', {
+                frameId: match.frameId,
+                remoteIndex: match.remoteIndex,
+                coordinates: match.coordinates
+            });
+            
+            // Get bounds from the iframe and transform to main frame coordinates
+            const script = `
+                (function() {
+                    if (window.iTermCustomFind && window.iTermCustomFind.getRemoteMatchBounds) {
+                        return window.iTermCustomFind.getRemoteMatchBounds(${match.remoteIndex});
+                    }
+                    return null;
+                })()
+            `;
+            
+            this.log('getRemoteMatchBounds: evaluating bounds script in frame:', match.frameId);
+            
+            const remoteBounds = await new Promise((resolve) => {
+                window.iTermGraphDiscovery.evaluateInFrame(match.frameId, script, (result) => {
+                    this.log('getRemoteMatchBounds: bounds script completed with result:', result);
+                    resolve(result);
+                });
+            });
+            
+            if (!remoteBounds || typeof remoteBounds !== 'object') {
+                this.log('getRemoteMatchBounds: WARNING - failed to get bounds from iframe, result:', remoteBounds);
+                return {};
+            }
+            
+            // Transform coordinates from iframe to main frame
+            const iframeSegment = this.segments.find(s => 
+                s.type === 'iframe' && s.frameId === match.frameId
+            );
+            
+            if (!iframeSegment) {
+                this.log('getRemoteMatchBounds: ERROR - iframe segment not found for frameId:', match.frameId);
+                return {};
+            }
+            
+            // Get iframe bounds in main frame
+            const iframeRect = _getBoundingClientRect.call(iframeSegment.iframe);
+            
+            this.log('getRemoteMatchBounds: iframe bounds in main frame:', {
+                left: iframeRect.left,
+                top: iframeRect.top,
+                width: iframeRect.width,
+                height: iframeRect.height
+            });
+            
+            this.log('getRemoteMatchBounds: remote bounds from iframe:', remoteBounds);
+            
+            // Transform iframe-relative coordinates to main frame coordinates
+            const result = {
+                x: remoteBounds.x + iframeRect.left + window.scrollX,
+                y: remoteBounds.y + iframeRect.top + window.scrollY,
+                width: remoteBounds.width,
+                height: remoteBounds.height
+            };
+            
+            this.log('getRemoteMatchBounds: returning transformed bounds to main frame coordinates', result);
             return result;
         }
 
@@ -1394,6 +2138,58 @@
 
         // ---------- Context Extraction ----------
 
+        extractContextBefore(match, contextLen) {
+            if (!contextLen || match.type !== 'local') {
+                return '';
+            }
+            
+            const segment = match.segment || this.segments[match.coordinates[0]];
+            if (!segment || segment.type !== 'text') {
+                return '';
+            }
+            
+            const startPos = Math.max(0, match.localStart - contextLen);
+            const endPos = match.localStart;
+            
+            return segment.textContent.substring(startPos, endPos).replace(/^\s+/, '');
+        }
+        
+        extractContextAfter(match, contextLen) {
+            if (!contextLen || match.type !== 'local') {
+                return '';
+            }
+            
+            const segment = match.segment || this.segments[match.coordinates[0]];
+            if (!segment || segment.type !== 'text') {
+                return '';
+            }
+            
+            const startPos = match.localEnd;
+            const endPos = Math.min(segment.textContent.length, match.localEnd + contextLen);
+            
+            return segment.textContent.substring(startPos, endPos).replace(/\s+$/, '');
+        }
+        
+        extractMatchContext(match) {
+            if (match.type === 'local') {
+                return {
+                    contextBefore: this.extractContextBefore(match, this.contextLen),
+                    contextAfter: this.extractContextAfter(match, this.contextLen)
+                };
+            } else if (match.type === 'remote') {
+                // Remote matches already have context from iframe search
+                return {
+                    contextBefore: match.contextBefore || '',
+                    contextAfter: match.contextAfter || ''
+                };
+            }
+            
+            return {
+                contextBefore: '',
+                contextAfter: ''
+            };
+        }
+        
         extractContext(match) {
             this.log('extractContext: called for match at globalStart=' + match.globalStart + ', globalEnd=' + match.globalEnd);
 
@@ -1480,9 +2276,8 @@
 
             const matchIdentifiers = this.matches.map((m, index) => ({
                 index: index,
-                bufferStart: m.globalStart,
-                bufferEnd: m.globalEnd,
-                text: this.globalBuffer.slice(m.globalStart, m.globalEnd)
+                coordinates: m.coordinates,
+                text: m.text
             }));
 
             this.log('reportResults: created', matchIdentifiers.length, 'match identifiers');
@@ -1491,7 +2286,7 @@
             let contexts = undefined;
             if (fullUpdate) {
                 contexts = this.matches.map((match, index) => {
-                    const context = this.extractContext(match);
+                    const context = this.extractMatchContext(match);
                     this.log('reportResults: extracted context for match', index, ':', context);
                     return context;
                 });
@@ -1525,18 +2320,18 @@
             }
         }
 
-        handleFindCommand(command) {
+        async handleFindCommand(command) {
             this.log('handleFindCommand:', command);
 
             switch (command.action) {
                 case 'startFind':
-                    this.startFind(command.searchTerm, command.searchMode, command.contextLength);
+                    await this.startFind(command.searchTerm, command.searchMode, command.contextLength);
                     break;
                 case 'findNext':
-                    this.findNext();
+                    await this.findNext();
                     break;
                 case 'findPrevious':
-                    this.findPrevious();
+                    await this.findPrevious();
                     break;
                 case 'clearFind':
                     this.clearHighlights();
@@ -1544,7 +2339,7 @@
                     this.reportResults(true);
                     break;
                 case 'reveal':
-                    this.reveal(command.identifier);
+                    await this.reveal(command.identifier);
                     break;
                 case 'hideResults':
                     this.hideResults();
@@ -1642,7 +2437,7 @@
 
         // Extract contexts for each match
         const contexts = engine.matches.map((match) => {
-            return engine.extractContext(match);
+            return engine.extractMatchContext(match);
         });
 
         return {
@@ -1745,12 +2540,254 @@
 
     {{TEST_IMPLS}}
 
+    // Helper functions for iframe highlighting and navigation
+    function highlightMatches(instanceId) {
+        console.log('[iTermCustomFind-BlockBased] highlightMatches called with instanceId:', instanceId);
+        const engine = getEngine(instanceId);
+        if (!engine) {
+            console.log('[iTermCustomFind-BlockBased] highlightMatches: no engine found for instanceId:', instanceId);
+            return;
+        }
+        if (!engine.matches) {
+            console.log('[iTermCustomFind-BlockBased] highlightMatches: engine has no matches');
+            return;
+        }
+        console.log('[iTermCustomFind-BlockBased] highlightMatches: found', engine.matches.length, 'matches in engine');
+        for (const match of engine.matches) {
+            console.log('[iTermCustomFind-BlockBased] highlightMatches: processing match type:', match.type);
+            if (match.type === 'local') {
+                engine.highlightLocalMatch(match);
+            }
+        }
+    }
+    
+    function highlightRemoteMatch(index, instanceId) {
+        const engine = getEngine(instanceId);
+        if (!engine) {
+            console.log('[iTermCustomFind-BlockBased] highlightRemoteMatch: no engine available for index', index);
+            return;
+        }
+        
+        engine.log('highlightRemoteMatch: highlighting match in iframe', {
+            index: index,
+            totalMatches: engine.matches ? engine.matches.length : 0
+        });
+        
+        if (engine && engine.matches && engine.matches[index]) {
+            const match = engine.matches[index];
+            engine.log('highlightRemoteMatch: found match to highlight - ID:', match.id, 'at index', index, {
+                matchType: match.type,
+                coordinates: match.coordinates,
+                text: match.text ? match.text.substring(0, 30) + '...' : 'null',
+                hasHighlightElements: !!match.highlightElements,
+                highlightElementsLength: match.highlightElements ? match.highlightElements.length : 'N/A'
+            });
+            
+            if (match.type === 'local') {
+                // Clear all current highlights first
+                clearCurrentHighlight(instanceId);
+                
+                // Set this as current
+                if (match.highlightElements && match.highlightElements.length > 0) {
+                    engine.log('highlightRemoteMatch: updating', match.highlightElements.length, 'elements to current');
+                    match.highlightElements.forEach(e => {
+                        e.className = 'iterm-find-highlight-current';
+                    });
+                    
+                    // Scroll into view
+                    engine.log('highlightRemoteMatch: scrolling first highlight element into view');
+                    _scrollIntoView.call(match.highlightElements[0], {
+                        behavior: 'smooth',
+                        block: 'center',
+                        inline: 'center'
+                    });
+                } else {
+                    engine.log('highlightRemoteMatch: WARNING - no highlight elements to update for match ID:', match.id, 'at index', index, {
+                        highlightElementsUndefined: match.highlightElements === undefined,
+                        highlightElementsNull: match.highlightElements === null,
+                        highlightElementsLength: match.highlightElements ? match.highlightElements.length : 'N/A',
+                        highlightElementsType: typeof match.highlightElements
+                    });
+                }
+            } else {
+                engine.log('highlightRemoteMatch: WARNING - match is not local type:', match.type);
+            }
+        } else {
+            engine.log('highlightRemoteMatch: WARNING - match not found at index', index, 'total matches:', engine.matches ? engine.matches.length : 0);
+        }
+    }
+    
+    function clearCurrentHighlight(instanceId) {
+        const engine = getEngine(instanceId);
+        if (!engine) {
+            console.log('[iTermCustomFind-BlockBased] clearCurrentHighlight: no engine available');
+            return;
+        }
+        
+        engine.log('clearCurrentHighlight: clearing current highlights in iframe');
+        
+        if (engine.matches) {
+            let clearedCount = 0;
+            for (const match of engine.matches) {
+                if (match.type === 'local' && match.highlightElements) {
+                    match.highlightElements.forEach(e => {
+                        if (e.className === 'iterm-find-highlight-current') {
+                            e.className = 'iterm-find-highlight';
+                            clearedCount++;
+                        }
+                    });
+                }
+            }
+            engine.log('clearCurrentHighlight: cleared', clearedCount, 'highlight elements in iframe');
+        } else {
+            engine.log('clearCurrentHighlight: no matches to clear');
+        }
+    }
+    
+    function getRemoteMatchBounds(index, instanceId) {
+        const engine = getEngine(instanceId);
+        if (!engine) {
+            console.log('[iTermCustomFind-BlockBased] getRemoteMatchBounds: no engine available for index', index);
+            return null;
+        }
+        
+        engine.log('getRemoteMatchBounds: getting bounds for match in iframe', {
+            index: index,
+            totalMatches: engine.matches ? engine.matches.length : 0
+        });
+        
+        if (engine.matches && engine.matches[index]) {
+            const match = engine.matches[index];
+            engine.log('getRemoteMatchBounds: found match', {
+                matchType: match.type,
+                coordinates: match.coordinates,
+                hasHighlightElements: !!match.highlightElements
+            });
+            
+            if (match.type === 'local') {
+                const bounds = engine.getLocalMatchBounds(match);
+                engine.log('getRemoteMatchBounds: returning bounds from iframe', bounds);
+                return bounds;
+            } else {
+                engine.log('getRemoteMatchBounds: WARNING - match is not local type:', match.type);
+            }
+        } else {
+            engine.log('getRemoteMatchBounds: WARNING - match not found at index', index);
+        }
+        return null;
+    }
+    
+    function handleClickInFrame(x, y, instanceId) {
+        const engine = getEngine(instanceId);
+        if (!engine) {
+            console.log('[iTermCustomFind-BlockBased] handleClickInFrame: no engine available for coordinates', { x, y });
+            return null;
+        }
+        
+        engine.log('handleClickInFrame: handling click in iframe', {
+            x: x,
+            y: y,
+            hasSegments: !!(engine.segments && engine.segments.length > 0)
+        });
+        
+        // Ensure we have segments collected
+        if (!engine.segments || engine.segments.length === 0) {
+            engine.log('handleClickInFrame: no segments found, building segments synchronously');
+            engine.buildSegments(document.body);
+            engine.log('handleClickInFrame: built', engine.segments.length, 'segments');
+        }
+        
+        // Use the same click handling logic as main frame
+        const result = engine.handleTextSegmentClickInternal(x, y);
+        engine.log('handleClickInFrame: click handling completed with result:', result);
+        return result;
+    }
+    
+    // Helper function for frames to search their own content when called by evaluateInAll
+    function searchInFrame(params) {
+        const { searchTerm, searchMode, contextLength, instanceId } = params;
+        
+        // Use the passed instance ID to get the correct engine
+        const engine = getEngine(instanceId);
+        if (!engine) {
+            console.log('[iTermCustomFind-BlockBased] searchInFrame: no engine available, returning empty results');
+            return { matches: [] };
+        }
+        
+        // Ensure iframe engine has its frame ID from graph discovery
+        if (!engine.frameId) {
+            // For iframe contexts, get frame ID from graph discovery system
+            const discoverySymbol = Symbol.for('iTermGraphDiscovery');
+            if (window[discoverySymbol] && window[discoverySymbol].frameId) {
+                engine.frameId = window[discoverySymbol].frameId;
+            }
+        }
+        
+        engine.log('searchInFrame: starting search in iframe', {
+            searchTerm: searchTerm,
+            searchMode: searchMode,
+            contextLength: contextLength
+        });
+        
+        // Set search parameters
+        engine.searchMode = searchMode || 'caseInsensitive';
+        engine.contextLen = contextLength || 0;
+        
+        // Ensure we have segments collected
+        if (!engine.segments || engine.segments.length === 0) {
+            engine.log('searchInFrame: no segments found, building segments synchronously');
+            // Synchronously collect segments if not already done
+            // For iframes, we can't use async in this context
+            engine.buildSegments(document.body);
+            engine.log('searchInFrame: built', engine.segments.length, 'segments');
+        } else {
+            engine.log('searchInFrame: using existing', engine.segments.length, 'segments');
+        }
+        
+        // Create regex and find matches
+        const regex = engine.createSearchRegex(searchTerm);
+        const matches = engine.findLocalMatches(regex);
+        
+        // Store matches in the engine so they can be highlighted later
+        engine.matches = matches;
+        
+        engine.log('searchInFrame: found', matches.length, 'local matches in iframe');
+        
+        // Return matches with their coordinates, positions, and context
+        const result = {
+            matches: matches.map(match => ({
+                coordinates: match.coordinates,
+                text: match.text,
+                localStart: match.localStart,
+                localEnd: match.localEnd,
+                contextBefore: contextLength > 0 ? engine.extractContextBefore(match, contextLength) : '',
+                contextAfter: contextLength > 0 ? engine.extractContextAfter(match, contextLength) : ''
+            }))
+        };
+        
+        engine.log('searchInFrame: returning search results for iframe', {
+            matchCount: result.matches.length,
+            sampleMatch: result.matches[0] ? {
+                coordinates: result.matches[0].coordinates,
+                text: result.matches[0].text.substring(0, 20) + '...'
+            } : null
+        });
+        
+        return result;
+    }
+    
     // Expose API - Make it immutable
     const api = {
         handleCommand,
         destroyInstance,
         getMatchBoundsInEngine,
-        clearStateWithoutResponse
+        clearStateWithoutResponse,
+        searchInFrame,
+        highlightMatches,
+        highlightRemoteMatch,
+        clearCurrentHighlight,
+        getRemoteMatchBounds,
+        handleClickInFrame
         {{TEST_FUNCTIONS}}
     };
 
@@ -1760,6 +2797,12 @@
     Object.freeze(api.destroyInstance);
     Object.freeze(api.getMatchBoundsInEngine);
     Object.freeze(api.clearStateWithoutResponse);
+    Object.freeze(api.searchInFrame);
+    Object.freeze(api.highlightMatches);
+    Object.freeze(api.highlightRemoteMatch);
+    Object.freeze(api.clearCurrentHighlight);
+    Object.freeze(api.getRemoteMatchBounds);
+    Object.freeze(api.handleClickInFrame);
     {{TEST_FREEZE}}
 
     // Use Object.defineProperty to make it non-configurable and non-writable

@@ -355,7 +355,21 @@
         }
 
         discoverChildren(callback) {
-            this.discoveryCallback = callback;
+            if (callback !== undefined) {
+                // Callback provided - handle API discovery logic
+                if (this.discoveryInProgress) {
+                    this.log('API: Discovery in progress, queueing callback');
+                    this.discoveryQueue.push(callback);
+                    return;
+                }
+                
+                // Start new discovery
+                this.log('API: Starting new graph discovery');
+                this.discoveryInProgress = true;
+                this.discoveryCallback = callback;
+            }
+            // If no callback, this is called from startDiscovery() - preserve existing state
+            
             this.currentRequestId = this.generateFrameId();
             const iframes = document.querySelectorAll('iframe');
             
@@ -458,11 +472,14 @@
             }
 
             // If we have a callback (from parent request), call it
+            this.log('checkDiscoveryComplete: checking for discovery callback, callback exists:', !!this.discoveryCallback);
             if (this.discoveryCallback) {
                 this.log('Invoking discovery callback');
                 this.discoveryCallback(subtree);
                 this.discoveryCallback = null;
                 this.currentRequestId = null;
+            } else {
+                this.log('No discovery callback to invoke');
             }
 
             // If we're the main frame, send to native and process queue
@@ -527,8 +544,8 @@
         }
 
         executeJavaScript(javascript, requestId, responseTarget) {
-            this.log(`Executing JavaScript: ${javascript.substring(0, 50)}...`);
-            
+            this.log(`Executing JavaScript: ${javascript}`);
+
             let result;
             let error = null;
             
@@ -668,37 +685,20 @@
                     }
                     
                     self.log('API: Graph discovery requested');
+                    self.log('API: Debug state - currentGraph:', !!self.currentGraph, 'discoveryInProgress:', self.discoveryInProgress);
                     
                     // If we already have a cached graph, return it immediately
                     if (self.currentGraph) {
                         self.log('API: Returning cached graph');
-                        setTimeout(() => callback(self.currentGraph), 0);
+                        setTimeout(() => {
+                            self.log('API: Calling cached graph callback');
+                            callback(self.currentGraph);
+                        }, 0);
                         return;
                     }
                     
-                    // If discovery is already in progress, queue this callback
-                    if (self.discoveryInProgress) {
-                        self.log('API: Discovery in progress, queueing callback');
-                        self.discoveryQueue.push(callback);
-                        return;
-                    }
-                    
-                    // Start new discovery
-                    self.log('API: Starting new graph discovery');
-                    self.discoveryInProgress = true;
-                    
-                    // Store the API callback
-                    const originalCallback = self.discoveryCallback;
-                    self.discoveryCallback = (graph) => {
-                        // Call original callback if it exists
-                        if (originalCallback) {
-                            originalCallback(graph);
-                        }
-                        // Call API callback
-                        callback(graph);
-                    };
-                    
-                    self.startDiscovery();
+                    // Let discoverChildren handle the queue management and discovery
+                    self.discoverChildren(callback);
                 },
                 
                 // Evaluate JavaScript in all frames
@@ -710,7 +710,7 @@
                         throw new Error('evaluateInAll() requires a callback function');
                     }
                     
-                    self.log(`API: Evaluating in all frames: ${javascript.substring(0, 30)}...`);
+                    self.log(`API: Evaluating in all frames: ${javascript}`);
                     self.log(`API: Current graph cached: ${!!self.currentGraph}`);
                     
                     if (!self.currentGraph) {
@@ -738,7 +738,7 @@
                         throw new Error('evaluateInFrame() requires a callback function');
                     }
                     
-                    self.log(`API: Evaluating in frame ${frameId}: ${javascript.substring(0, 30)}...`);
+                    self.log(`API: Evaluating in frame ${frameId}: ${javascript}`);
                     self._evaluateInFrame(frameId, javascript, callback, timeout);
                 }
             };
