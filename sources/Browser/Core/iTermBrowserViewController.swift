@@ -438,10 +438,6 @@ extension iTermBrowserViewController {
         browserManager.browserFindManager?.findPrevious()
     }
 
-    @objc func clearFindString(_ sender: Any?) {
-        browserManager.browserFindManager?.clearFind()
-    }
-    
     // Additional find methods for integration with iTerm2's find system
     
     var activeSearchTerm: String? {
@@ -758,6 +754,8 @@ extension iTermBrowserViewController {
             iTermFindPasteboard.sharedInstance().setStringValueUnconditionally(selectedText)
             iTermFindPasteboard.sharedInstance().updateObservers(delegate,
                                                                  internallyGenerated: true)
+        case .selectAll:
+            break
         default:
             // Other actions are handled by the dedicated methods below
             break
@@ -1247,6 +1245,9 @@ extension iTermBrowserViewController: NSMenuItemValidation {
         }
         if menuItem.action == #selector(revealContentNavigationShortcuts(_:)) {
             return browserManager.browserFindManager?.hasActiveSearch ?? false
+        }
+        if menuItem.action == #selector(performFindPanelAction(_:)) {
+            return menuItem.tag != NSFindPanelAction.selectAll.rawValue
         }
         return true
     }
