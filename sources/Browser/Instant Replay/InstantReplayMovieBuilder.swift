@@ -143,6 +143,19 @@ extension InstantReplayMovieBuilder {
                                      scaleFactor: scaleFactor)
         return try await stitcher.stitch()
     }
+
+    func clear() {
+        if stream != nil {
+            stop()
+            recorders = []
+            if canStartCapture() {
+                addRecorder()
+                Task {
+                    await setupScreenCapture()
+                }
+            }
+        }
+    }
 }
 
 private extension InstantReplayMovieBuilder {

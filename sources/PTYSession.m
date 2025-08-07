@@ -1223,6 +1223,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)clearInstantReplay {
+    if (self.isBrowserSession) {
+        [_view.browserViewController clearInstantReplay];
+        return;
+    }
     if (_dvrDecoder) {
         [_dvr releaseDecoder:_dvrDecoder];
         _dvrDecoder = nil;

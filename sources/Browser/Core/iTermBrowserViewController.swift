@@ -230,6 +230,10 @@ extension iTermBrowserViewController {
     var instantReplayAvailable: Bool {
         return instantReplayMovieBuilder != nil
     }
+    @objc
+    func clearInstantReplay() {
+        instantReplayMovieBuilder?.clear()
+    }
 
     @objc
     func startInstantReplay() {

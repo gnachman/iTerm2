@@ -2146,8 +2146,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 // Save the current scroll position
-- (IBAction)saveScrollPosition:(id)sender
-{
+- (IBAction)saveScrollPosition:(id)sender {
     [[self currentSession] screenSaveScrollPosition];
 }
 
@@ -2167,8 +2166,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 // Jump to the saved scroll position
-- (IBAction)jumpToSavedScrollPosition:(id)sender
-{
+- (IBAction)jumpToSavedScrollPosition:(id)sender {
     [[self currentSession] jumpToSavedScrollPosition];
 }
 
@@ -3191,7 +3189,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [findDriver closeViewAndDoTemporarySearchForString:regex
                                                   mode:iTermFindModeCaseSensitiveRegex
                                               progress:^(NSRange linesSearched) {
-        if (session.isBrowserSession) {
+        if (browser) {
             if (linesSearched.location == linesSearched.length) {
                 [session convertVisibleSearchResultsToContentNavigationShortcutsWithAction:iTermContentNavigationActionOpen
                                                                                          clearOnEnd:YES];
@@ -10694,11 +10692,17 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         }
     } else if ([item action] == @selector(toggleAlertOnNextMark:)) {
         PTYSession *currentSession = [self currentSession];
+        if (currentSession.isBrowserSession) {
+            return NO;
+        }
         if ([item respondsToSelector:@selector(setState:)]) {
             [item setState:currentSession.alertOnNextMark ? NSControlStateValueOn : NSControlStateValueOff];
         }
         result = (currentSession != nil);
     } else if (item.action == @selector(nextMark:) || item.action == @selector(previousMark:)) {
+        if (self.currentSession.isBrowserSession) {
+            return NO;
+        }
         NSResponder *firstResponder = self.window.firstResponder;
         const BOOL isTextView = [firstResponder isKindOfClass:[NSTextView class]];
         result = !isTextView;
@@ -10800,8 +10804,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     } else if (item.action == @selector(clearToStartOfSelection:)) {
         return self.currentSession.hasSelection;
     } else if (item.action == @selector(clearInstantReplay:)) {
-        return (!self.currentSession.isBrowserSession &&
-                ![[self currentSession] liveSession] &&
+        if (self.currentSession.isBrowserSession) {
+            return self.currentSession.view.browserViewController.instantReplayAvailable;
+        }
+        return (![[self currentSession] liveSession] &&
                 self.currentSession.screen.dvr.canClear);
     } else if (item.action == @selector(compose:)) {
         return self.currentSession != nil && !self.currentSession.shouldShowAutoComposer;
@@ -10815,7 +10821,13 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                item.action == @selector(clearToLastMark:) ||
                item.action == @selector(toggleCursorGuide:) ||
                item.action == @selector(findCursor:) ||
-               item.action == @selector(filter:)) {
+               item.action == @selector(filter:) ||
+               item.action == @selector(saveScrollPosition:) ||
+               item.action == @selector(jumpToSavedScrollPosition:) ||
+               item.action == @selector(addNoteAtCursor:) ||
+               item.action == @selector(nextAnnotation:) ||
+               item.action == @selector(previousAnnotation:) ||
+               item.action == @selector(clearBuffer:)) {
         return !self.currentSession.isBrowserSession;
     }
 
