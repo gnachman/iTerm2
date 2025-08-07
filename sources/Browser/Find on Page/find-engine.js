@@ -40,7 +40,7 @@ class FindEngine {
             this.log("Clear click location because of navigation");
             this.clearClickLocation();
         };
-        this.highlighter = new FindHighlighter(this.log.bind(this), self.instanceId, null);
+        this.highlighter = new FindHighlighter(this.log.bind(this), this.instanceId, null);
 
         document.addEventListener('click', this.boundHandleClick, true);
         window.addEventListener('beforeunload', this.boundHandleNavigation);
@@ -216,6 +216,21 @@ class FindEngine {
                     // This is a leaf block
                     blocks.push(el);
                     return el;
+                } else {
+                    // This is a non-leaf block - check if it has direct text node children
+                    let hasDirectTextContent = false;
+                    for (const child of el.childNodes) {
+                        if (child.nodeType === Node.TEXT_NODE && child.textContent.trim().length > 0) {
+                            hasDirectTextContent = true;
+                            break;
+                        }
+                    }
+                    
+                    if (hasDirectTextContent) {
+                        // Add this non-leaf block as it contains direct text content
+                        blocks.push(el);
+                        this.log('buildSegments: added non-leaf block with direct text content:', el.tagName);
+                    }
                 }
             }
 
@@ -885,14 +900,20 @@ class FindEngine {
         const matches = [];
 
         for (let segmentIdx = 0; segmentIdx < this.segments.length; segmentIdx++) {
+            this.log("Searching segment", segmentIdx,"for",regex);
             const segment = this.segments[segmentIdx];
 
-            if (segment.type !== 'text') continue;
+            if (segment.type !== 'text') {
+                this.log("Skip segment of type",segment.type)
+                continue;
+            }
 
             regex.lastIndex = 0;
             let match;
 
+            this.log("text is", segment.textContent);
             while ((match = _RegExp_exec.call(regex, segment.textContent)) !== null) {
+                this.log("found a match");
                 const localMatch = new Match(
                     [segmentIdx, match.index],  // Coordinates: [segment, position]
                     match[0]  // Matched text

@@ -66,32 +66,6 @@ function escapeHtml(str) {
     return div.innerHTML;
 }
 
-function validateRegexComplexity(pattern) {
-    // Check for patterns that could cause catastrophic backtracking
-    const dangerousPatterns = [
-        /(\w+\+)+\w/,           // Nested quantifiers
-        /(\w+\*)+\w/,
-        /(\w+\?)+\w/,
-        /(\w+\{[\d,]+\})+\w/,
-        /([\w\s]+)+$/,          // Alternation with overlapping
-        /(\w+\|)+\w/,
-        /\(\?.*\)/              // Advanced regex features
-    ];
-
-    for (const dangerous of dangerousPatterns) {
-        if (dangerous.test(pattern)) {
-            return false;
-        }
-    }
-
-    // Limit pattern length
-    if (pattern.length > MAX_REGEX_COMPLEXITY) {
-        return false;
-    }
-
-    return true;
-}
-
 function validateCommand(command) {
     if (!command || typeof command !== 'object') {
         return null;
@@ -121,14 +95,6 @@ function validateCommand(command) {
             sanitized.searchTerm = sanitizeString(command.searchTerm);
             sanitized.searchMode = validateSearchMode(command.searchMode);
             sanitized.contextLength = validateNumber(command.contextLength, 0, MAX_CONTEXT_LENGTH, 0);
-
-            // Validate regex patterns
-            if (sanitized.searchMode.includes('Regex')) {
-                if (!validateRegexComplexity(sanitized.searchTerm)) {
-                    console.error(TAG, 'Regex pattern too complex or dangerous');
-                    return null;
-                }
-            }
             break;
 
         case 'reveal':
@@ -239,11 +205,15 @@ function firstRevealableAncestor(el) {
 
 // Find text node and offset by walking the DOM directly using coordinates
 function findTextNodeByCoordinates(segment, targetOffset, matchLength) {
+    console.debug('findTextNodeByCoordinates: ENTER - targetOffset:', targetOffset, 'matchLength:', matchLength, 'segment.element:', segment.element.tagName, 'segment.textContent.length:', segment.textContent.length);
+    console.debug('findTextNodeByCoordinates: segment.textContent preview:', JSON.stringify(segment.textContent.substring(0, 100) + '...'));
+    
     let currentOffset = 0;
     let startNode = null;
     let startOffset = 0;
     let endNode = null;
     let endOffset = 0;
+    let nodeCount = 0;
 
     const walker = _createTreeWalker(
         segment.element,
@@ -268,12 +238,16 @@ function findTextNodeByCoordinates(segment, targetOffset, matchLength) {
     while (node = _TreeWalker_nextNode.call(walker)) {
         const textContent = _textContentGetter ? _textContentGetter.call(node) : node.textContent;
         const nodeLength = textContent.length;
+        nodeCount++;
+        
+        console.debug('findTextNodeByCoordinates: node', nodeCount, 'textContent:', JSON.stringify(textContent), 'length:', nodeLength, 'currentOffset:', currentOffset, 'parent:', node.parentElement?.tagName);
 
         if (currentOffset + nodeLength > targetOffset) {
             // Start position is in this node
             if (startNode === null) {
                 startNode = node;
                 startOffset = targetOffset - currentOffset;
+                console.debug('findTextNodeByCoordinates: found START node at offset', startOffset, 'in text:', JSON.stringify(textContent));
             }
 
             // Check if end position is also in this node
@@ -281,6 +255,7 @@ function findTextNodeByCoordinates(segment, targetOffset, matchLength) {
             if (currentOffset + nodeLength >= targetEndOffset) {
                 endNode = node;
                 endOffset = targetEndOffset - currentOffset;
+                console.debug('findTextNodeByCoordinates: found END node at offset', endOffset, 'in text:', JSON.stringify(textContent));
                 break;
             }
         }
@@ -291,14 +266,27 @@ function findTextNodeByCoordinates(segment, targetOffset, matchLength) {
         if (startNode && currentOffset >= targetOffset + matchLength) {
             endNode = node;
             endOffset = (targetOffset + matchLength) - (currentOffset - nodeLength);
+            console.debug('findTextNodeByCoordinates: found END node (past target) at offset', endOffset, 'in text:', JSON.stringify(textContent));
             break;
         }
     }
 
+    console.debug('findTextNodeByCoordinates: traversal complete - nodeCount:', nodeCount, 'totalOffset:', currentOffset);
+    console.debug('findTextNodeByCoordinates: result - startNode:', !!startNode, 'endNode:', !!endNode);
+    
+    if (startNode) {
+        console.debug('findTextNodeByCoordinates: startNode content:', JSON.stringify(startNode.textContent), 'startOffset:', startOffset);
+    }
+    if (endNode) {
+        console.debug('findTextNodeByCoordinates: endNode content:', JSON.stringify(endNode.textContent), 'endOffset:', endOffset);
+    }
+
     if (!startNode || !endNode) {
+        console.debug('findTextNodeByCoordinates: FAILED - returning null because startNode:', !!startNode, 'endNode:', !!endNode);
         return null;
     }
 
+    console.debug('findTextNodeByCoordinates: SUCCESS - returning node range');
     return {
         startNode,
         startOffset,

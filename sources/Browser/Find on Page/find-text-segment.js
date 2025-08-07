@@ -7,8 +7,9 @@ class TextSegment extends Segment {
     }
 
     collectTextNodes(engine) {
+        console.debug('TextSegment.collectTextNodes: ENTER - element:', this.element.tagName, 'id:', this.element.id, 'className:', this.element.className);
         this.textContent = '';
-        
+        let nodeCount = 0;
 
         const walker = _createTreeWalker(
             this.element,
@@ -59,9 +60,17 @@ class TextSegment extends Segment {
         );
 
         let node;
+        let currentOffset = 0;
         while (node = _TreeWalker_nextNode.call(walker)) {
-            this.textContent += node.textContent;
+            nodeCount++;
+            const nodeText = node.textContent;
+            console.debug('TextSegment.collectTextNodes: node', nodeCount, 'offset:', currentOffset, 'length:', nodeText.length, 'content:', JSON.stringify(nodeText), 'parent:', node.parentElement?.tagName);
+            this.textContent += nodeText;
+            currentOffset += nodeText.length;
         }
+
+        console.debug('TextSegment.collectTextNodes: COMPLETE - collected', nodeCount, 'nodes, total length:', this.textContent.length);
+        console.debug('TextSegment.collectTextNodes: final textContent:', JSON.stringify(this.textContent.substring(0, 100) + (this.textContent.length > 100 ? '...' : '')));
     }
 
     updateBounds() {
