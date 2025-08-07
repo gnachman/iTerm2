@@ -34,9 +34,21 @@
      }
 
      // Wrap console.log / console.error
+     const _oldDebug = console.debug;
      const _oldLog = console.log;
      const _oldWarn = console.warn;
      const _oldError = console.error;
+
+     console.debug = function(...args) {
+         _oldDebug.apply(console, args);
+         try {
+             const msg = args.map(serializeArg).join(' ');
+             _postMessage(msg);
+         }
+         catch (e) {
+             _oldDebug(TAG, 'failed to post log:', e);
+         }
+     };
 
      console.log = function(...args) {
          _oldLog.apply(console, args);
