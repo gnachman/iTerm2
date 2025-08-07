@@ -72,6 +72,7 @@ class iTermBrowserNamedMark: NSObject, iTermGenericNamedMarkReading {
 @available(macOS 11, *)
 class iTermBrowserNamedMarkManager {
     static let messageHandlerName = "iTerm2NamedMarkUpdate"
+    #warning("TODO: This is never used but it is referenced in javascript. That's gotta be a bug. Are we not dealing with layout updates corrrectly?")
     static let layoutUpdateHandlerName = "iTerm2MarkLayoutUpdate"
     private var pendingNavigationMark: iTermBrowserNamedMark?
     private let secret: String
@@ -371,7 +372,7 @@ extension iTermBrowserNamedMarkManager {
                                 scrollY: currentScrollY
                             });
                         } catch (error) {
-                            console.log('Error sending layout update:', error);
+                            console.log('Error sending layout update:', error.toString(), error);
                         }
                         
                         lastViewportWidth = currentWidth;

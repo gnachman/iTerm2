@@ -2255,7 +2255,11 @@ ITERM_WEAKLY_REFERENCEABLE
                                                               aSize.height)];
     _textview.colorMap = _screen.colorMap;
     _textview.keyboardHandler.keyMapper = _keyMapper;
-    _view.mainResponder = _textview;
+    if (self.isBrowserSession && _view.browserViewController != nil) {
+        _view.mainResponder = _view.browserViewController;
+    } else if (!self.isBrowserSession) {
+        _view.mainResponder = _textview;
+    }
     _view.searchResultsMinimapViewDelegate = _textview.findOnPageHelper;
     _metalGlue.textView = _textview;
     [_textview setAutoresizingMask: NSViewWidthSizable | NSViewHeightSizable];
@@ -7103,6 +7107,15 @@ DLog(args); \
     return [_composerManager dismiss];
 }
 
+- (void)convertVisibleSearchResultsToContentNavigationShortcutsWithAction:(iTermContentNavigationAction)action
+                                                               clearOnEnd:(BOOL)clearOnEnd {
+    if (self.isBrowserSession) {
+        [self.view.browserViewController convertVisibleSearchResultsToContentNavigationShortcutsWithAction:action
+                                                                                                clearOnEnd:clearOnEnd];
+        return;
+    }
+    [self.textview convertVisibleSearchResultsToContentNavigationShortcutsWithAction:action clearOnEnd:clearOnEnd];
+}
 // Note that the caller is responsible for respecting swapFindNextPrevious
 - (void)searchNext {
     [_view createFindDriverIfNeeded];

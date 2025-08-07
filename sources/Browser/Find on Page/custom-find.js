@@ -13,6 +13,7 @@
     {{INCLUDE:find-engine.js}}
     {{INCLUDE:find-api.js}}
     {{INCLUDE:find-highlighter.js}}
+    {{INCLUDE:find-nav.js}}
 
     injectStyles();
 

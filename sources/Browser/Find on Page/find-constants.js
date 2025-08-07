@@ -13,7 +13,7 @@ const MAX_CONTEXT_LENGTH = 500;
 const MAX_REGEX_COMPLEXITY = 100;
 const MAX_INSTANCES = 10;
 const VALID_SEARCH_MODES = ['caseSensitive', 'caseInsensitive', 'caseSensitiveRegex', 'caseInsensitiveRegex'];
-const VALID_ACTIONS = ['startFind', 'findNext', 'findPrevious', 'clearFind', 'reveal', 'hideResults', 'showResults'];
+const VALID_ACTIONS = ['startFind', 'findNext', 'findPrevious', 'clearFind', 'reveal', 'hideResults', 'showResults', 'startNavigationShortcuts', 'clearNavigationShortcuts'];
 
 // Inject styles once
 const highlightStyles = `

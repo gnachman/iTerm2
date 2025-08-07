@@ -3187,9 +3187,20 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"findDriver=%@ regex=%@", findDriver, regex);
     __weak PTYSession *session = self.currentSession;
     __block BOOL done = NO;
+    const BOOL browser = session.isBrowserSession;
     [findDriver closeViewAndDoTemporarySearchForString:regex
                                                   mode:iTermFindModeCaseSensitiveRegex
                                               progress:^(NSRange linesSearched) {
+        if (session.isBrowserSession) {
+            if (linesSearched.location == linesSearched.length) {
+                [session convertVisibleSearchResultsToContentNavigationShortcutsWithAction:iTermContentNavigationActionOpen
+                                                                                         clearOnEnd:YES];
+                done = YES;
+            }
+            return;
+        }
+
+        // Terminal codepath
         if (!session.textview || done) {
             return;
         }
@@ -3197,7 +3208,7 @@ ITERM_WEAKLY_REFERENCEABLE
         const NSRange visibleAbsLines = NSMakeRange(visibleLines.location + session.screen.totalScrollbackOverflow,
                                                     visibleLines.length);
         if (NSLocationInRange(visibleAbsLines.location, linesSearched)) {
-            [session.textview convertVisibleSearchResultsToContentNavigationShortcutsWithAction:iTermContentNavigationActionOpen
+            [session convertVisibleSearchResultsToContentNavigationShortcutsWithAction:iTermContentNavigationActionOpen
                                                                                      clearOnEnd:YES];
             done = YES;
             return;

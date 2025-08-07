@@ -3834,6 +3834,9 @@
 		A6CBB9F12E0B6EA200B2CCCB /* has-selection.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CBB9DB2E0B6E9300B2CCCB /* has-selection.js */; };
 		A6CC16541CF012E300E8C148 /* iTermCarbonHotKeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */; };
 		A6CC16551CF012E300E8C148 /* iTermCarbonHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */; };
+		A6CC2C7B2E4541A400F8D620 /* find-nav.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CC2C7A2E4541A400F8D620 /* find-nav.js */; };
+		A6CC2C7C2E4541A400F8D620 /* find-nav.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CC2C7A2E4541A400F8D620 /* find-nav.js */; };
+		A6CC2C7D2E4541A400F8D620 /* find-nav.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CC2C7A2E4541A400F8D620 /* find-nav.js */; };
 		A6CC49882C06E173003484B2 /* iTermPermissionsHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */; };
 		A6CC498A2C06EB4E003484B2 /* SettingsSecureTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC49892C06EB4E003484B2 /* SettingsSecureTextField.swift */; };
 		A6CC498C2C08E03A003484B2 /* AttributedStringSaver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC498B2C08E03A003484B2 /* AttributedStringSaver.swift */; };
@@ -8333,6 +8336,7 @@
 		A6CBB9DD2E0B6E9300B2CCCB /* iTermBrowserWebView+Actions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "iTermBrowserWebView+Actions.swift"; sourceTree = "<group>"; };
 		A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCarbonHotKeyController.h; sourceTree = "<group>"; };
 		A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCarbonHotKeyController.m; sourceTree = "<group>"; };
+		A6CC2C7A2E4541A400F8D620 /* find-nav.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "find-nav.js"; sourceTree = "<group>"; };
 		A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermPermissionsHelper.swift; sourceTree = "<group>"; };
 		A6CC49892C06EB4E003484B2 /* SettingsSecureTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSecureTextField.swift; sourceTree = "<group>"; };
 		A6CC498B2C08E03A003484B2 /* AttributedStringSaver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributedStringSaver.swift; sourceTree = "<group>"; };
@@ -12826,6 +12830,7 @@
 				A6D694B82E450A9A005E9AFE /* find-highlighter.js */,
 				A6D694602E4480D1005E9AFE /* find-iframe-segment.js */,
 				A6D694652E4480E3005E9AFE /* find-match.js */,
+				A6CC2C7A2E4541A400F8D620 /* find-nav.js */,
 				A6D694422E448015005E9AFE /* find-security.js */,
 				A6D694562E4480AD005E9AFE /* find-segment.js */,
 				A6D6945B2E4480BA005E9AFE /* find-text-segment.js */,
@@ -16362,6 +16367,7 @@
 				A697CE182D9765B70031583F /* CodeciergeMenuTip@2x.png in Resources */,
 				A697CE192D9765B70031583F /* CodeciergeMenuTip.png in Resources */,
 				1D99C8E61BD59C37001EE1FC /* SearchCursor.png in Resources */,
+				A6CC2C7C2E4541A400F8D620 /* find-nav.js in Resources */,
 				A6C978F624A0194500971AA7 /* WindowCornerFull@2x.png in Resources */,
 				A67D0D7F1A2EE12A003A8B35 /* PreferencePanel.strings in Resources */,
 				A665C1FF2440461500F623F0 /* WindowCorner.png in Resources */,
@@ -16684,6 +16690,7 @@
 				A6CBB8C22E0A696C00B2CCCB /* Readability.js in Resources */,
 				A6E7AE5F214394CA00DE9F3B /* graphic_clojure.png in Resources */,
 				A6F7D5162E05F39D0065D09C /* probe-password.js in Resources */,
+				A6CC2C7B2E4541A400F8D620 /* find-nav.js in Resources */,
 				A66433552DEA78A60099F722 /* globe@2x.png in Resources */,
 				A66433562DEA78A60099F722 /* globe.png in Resources */,
 				A6E7AE8D214394DD00DE9F3B /* graphic_composer@2x.png in Resources */,
@@ -17698,6 +17705,7 @@
 				A67F61CD214395C60093940A /* graphic_read@2x.png in Resources */,
 				1D48B285165F362B000046EE /* TabClose_Front_Pressed@2x.png in Resources */,
 				A629F5B923B081DD00C2F16B /* MouseReportingCursorOverlay@2x.png in Resources */,
+				A6CC2C7D2E4541A400F8D620 /* find-nav.js in Resources */,
 				A66351492B659309009B93F7 /* PinnedIndicator.png in Resources */,
 				A697CDCF2D975AE20031583F /* Toolbelt-Screenshot@2x.png in Resources */,
 				A697CDD02D975AE20031583F /* VerticalSplit@2x.png in Resources */,

@@ -68,6 +68,7 @@ class iTermBrowserFindManager: NSObject {
     static let messageHandlerName = "iTermCustomFind"
     static let graphDiscoveryMessageHandlerName = "iTermGraphDiscovery"
     private var ignoreForceSearch = 0
+    private(set) var findInProgress = false
 
     var delegate: iTermBrowserFindManagerDelegate? {
         set {
@@ -94,6 +95,7 @@ class iTermBrowserFindManager: NSObject {
         var instanceID: String?
         weak var delegate: iTermBrowserFindManagerDelegate?
         var currentSearchTerm: String?
+        // Are searching for or showing search results?
         var isSearchActive = false
         var findMode: iTermBrowserFindMode = .caseSensitive
         var stream: iTermBrowserGlobalSearchResultStream?
@@ -102,6 +104,7 @@ class iTermBrowserFindManager: NSObject {
         var totalMatches: Int = 0
         var currentMatchIndex: Int = 0
         var searchProgress: Double = 0.0
+        // Did the last performed search finish?
         var searchComplete: Bool = false
         private var generation = 0
         private var mutex = AsyncMutex()
@@ -346,6 +349,7 @@ class iTermBrowserFindManager: NSObject {
                             "TEST_FUNCTIONS": "",
                             "TEST_IMPLS": "",
                             "TEST_FREEZE": "" ])
+        print(script)
         return script
     }
 
@@ -356,6 +360,43 @@ class iTermBrowserFindManager: NSObject {
     }
     
     // MARK: - Public Interface
+
+    func convertVisibleSearchResultsToContentNavigationShortcuts(action: iTermContentNavigationAction,
+                                                                 clearOnEnd: Bool) {
+        hideGlobalSearchResultsIfNeeded()
+        Task {
+            do {
+                let state = defaultState
+                let selectionAction = switch action {
+                case .open:
+                    "open"
+                case .copy:
+                    "copy"
+                @unknown default:
+                    it_fatalError()
+                }
+                try await state.executeJavaScript(command: ["action": "startNavigationShortcuts",
+                                                            "selectionAction": selectionAction],
+                                                  sharedState: sharedState)
+                DLog("Started navigation shortcuts")
+            } catch {
+                DLog("Failed to start navigation shortcuts: \(error)")
+            }
+        }
+    }
+
+    func clearNavigationShortcuts() {
+        Task {
+            do {
+                let state = defaultState
+                try await state.executeJavaScript(command: ["action": "clearNavigationShortcuts"], 
+                                                  sharedState: sharedState)
+                DLog("Cleared navigation shortcuts")
+            } catch {
+                DLog("Failed to clear navigation shortcuts: \(error)")
+            }
+        }
+    }
 
     func executeGlobalSearch(query: String, mode: iTermBrowserFindMode) -> iTermBrowserGlobalSearchResultStream {
         let stream = iTermBrowserGlobalSearchResultStream()
@@ -418,6 +459,7 @@ class iTermBrowserFindManager: NSObject {
             DLog("Search query is unchanged and search is not forced. Do nothing.")
             return
         }
+        findInProgress = true
         defaultState.startFind(searchTerm, mode: mode, contextLength: 0, sharedState: sharedState, findManager: self)
     }
 
@@ -459,15 +501,13 @@ class iTermBrowserFindManager: NSObject {
         return defaultState.currentMatchIndex
     }
     
-    var findInProgress: Bool {
-        return defaultState.isSearchActive && !defaultState.searchComplete
-    }
-    
+
     func continueFind(progress: UnsafeMutablePointer<Double>, range: NSRangePointer) -> Bool {
         hideGlobalSearchResultsIfNeeded()
         guard defaultState.isSearchActive else {
             progress.pointee = 1.0
             range.pointee = NSRange(location: 100, length: 100)
+            findInProgress = false
             return false
         }
         
@@ -483,14 +523,11 @@ class iTermBrowserFindManager: NSObject {
         if defaultState.searchComplete {
             progress.pointee = 1.0
             range.pointee = NSRange(location: 100, length: 100)
+            findInProgress = false
             return false
         }
-        
-        // For now, browser search completes immediately
-        // In the future, this could be enhanced for incremental search
-        defaultState.searchComplete = true
-        defaultState.searchProgress = 1.0
-        return false
+
+        return true
     }
     
     func resetFindCursor() {

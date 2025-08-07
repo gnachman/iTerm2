@@ -332,7 +332,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [_browserViewController loadRestorableState:restorableState orURL:initialURL];
 
     NSResponder *prev = self.nextResponder;
-    [self setNextResponder:_browserViewController];
+    [self setMainResponder:_browserViewController];
     _browserViewController.nextResponder = prev;
     [self.window makeFirstResponder:_browserViewController];
 }

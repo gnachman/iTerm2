@@ -208,6 +208,13 @@ class iTermBrowserViewController: NSViewController {
 
 @MainActor
 extension iTermBrowserViewController {
+    @objc(convertVisibleSearchResultsToContentNavigationShortcutsWithAction:clearOnEnd:)
+    func convertVisibleSearchResultsToContentNavigationShortcuts(action: iTermContentNavigationAction,
+                                                                 clearOnEnd: Bool) {
+        browserManager.browserFindManager?.convertVisibleSearchResultsToContentNavigationShortcuts(action: action,
+                                                                                                   clearOnEnd: clearOnEnd)
+    }
+
     @objc
     func findPanelDidHide() {
         browserManager.browserFindManager?.clearFind()
@@ -1226,6 +1233,9 @@ extension iTermBrowserViewController: NSMenuItemValidation {
         if menuItem.action == #selector(saveDocumentAs(_:)) {
             return browserManager.webView?.currentSelection?.isEmpty == false
         }
+        if menuItem.action == #selector(revealContentNavigationShortcuts(_:)) {
+            return browserManager.browserFindManager?.hasActiveSearch ?? false
+        }
         return true
     }
 }
@@ -1315,6 +1325,13 @@ extension iTermBrowserViewController {
         }
     }
 
+    @objc(revealContentNavigationShortcuts:)
+    func revealContentNavigationShortcuts(_ sender: Any?) {
+        convertVisibleSearchResultsToContentNavigationShortcuts(action: .open, clearOnEnd: false)
+        if let webView = browserManager.webView {
+            webView.window?.makeFirstResponder(webView)
+        }
+    }
 }
 
 // MARK: - Bookmark Management

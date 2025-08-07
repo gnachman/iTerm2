@@ -194,99 +194,179 @@ class FindEngine {
     buildSegments(root) {
         this.log('buildSegments: ENTER - analyzing root element:', root?.tagName);
         let segmentIndex = 0;
-        const blocks = [];
-        const iframePositions = new Map(); // Map iframe element to its position in document flow
 
-        // First pass: find all blocks and note iframe positions
-        this.log('buildSegments: first pass - finding blocks and iframes');
-        const findBlocksAndIframes = (el, currentBlock) => {
-            if (el.tagName === 'IFRAME') {
-                // Record iframe position
-                iframePositions.set(el, { afterBlock: currentBlock, beforeNextBlock: true });
-                return currentBlock;
-            }
+        // Collect items (text ranges and iframes) in document order
+        const items = this.collectItems(root);
+        this.log('buildSegments: collected', items.length, 'items');
 
-            if (isBlock(el)) {
-                // Check for child blocks or iframes
-                const hasChildBlockOrIframe = Array.from(el.children).some(child =>
-                    isBlock(child) || child.tagName === 'IFRAME'
-                );
+        // Build segments from items
+        let currentTextNodes = [];
+        let currentContainerElement = null;
 
-                if (!hasChildBlockOrIframe) {
-                    // This is a leaf block
-                    blocks.push(el);
-                    return el;
-                } else {
-                    // This is a non-leaf block - check if it has direct text node children
-                    let hasDirectTextContent = false;
-                    for (const child of el.childNodes) {
-                        if (child.nodeType === Node.TEXT_NODE && child.textContent.trim().length > 0) {
-                            hasDirectTextContent = true;
-                            break;
-                        }
-                    }
-                    
-                    if (hasDirectTextContent) {
-                        // Add this non-leaf block as it contains direct text content
-                        blocks.push(el);
-                        this.log('buildSegments: added non-leaf block with direct text content:', el.tagName);
-                    }
+        for (const item of items) {
+            if (item.type === 'iframe') {
+                // Finish current text segment if we have text nodes
+                if (currentTextNodes.length > 0) {
+                    const textSegment = new TextSegment(segmentIndex++, currentContainerElement);
+                    textSegment.setTextNodes(currentTextNodes);
+                    this.segments.push(textSegment);
+                    this.log('buildSegments: added text segment', textSegment.index, 'with', textSegment.textContent.length, 'chars');
+                    currentTextNodes = [];
+                    currentContainerElement = null;
                 }
-            }
 
-            // Recurse into children
-            let lastBlock = currentBlock;
-            for (const child of el.children) {
-                lastBlock = findBlocksAndIframes(child, lastBlock);
-            }
-            return lastBlock;
-        };
-
-        findBlocksAndIframes(root, null);
-
-        this.log('buildSegments: first pass complete - found', blocks.length, 'blocks and', iframePositions.size, 'iframes');
-
-        // Second pass: build segments interleaving text blocks and iframes
-        this.log('buildSegments: second pass - building segments');
-        const processedIframes = new Set();
-
-        for (let i = 0; i < blocks.length; i++) {
-            const block = blocks[i];
-
-            // Add any iframes that come before this block
-            for (const [iframe, position] of iframePositions) {
-                if (!processedIframes.has(iframe) &&
-                    position.afterBlock === (i > 0 ? blocks[i-1] : null)) {
-                    const iframeSegment = new IframeSegment(segmentIndex++, iframe, null);
-                    this.segments.push(iframeSegment);
-                    processedIframes.add(iframe);
+                // Add iframe segment
+                const iframeSegment = new IframeSegment(segmentIndex++, item.element, null);
+                this.segments.push(iframeSegment);
+                this.log('buildSegments: added iframe segment', iframeSegment.index);
+            } else if (item.type === 'textRange') {
+                // Add text nodes to current segment
+                currentTextNodes.push(...item.textNodes);
+                if (!currentContainerElement) {
+                    currentContainerElement = item.containerElement;
                 }
-            }
-
-            // Add the text block segment
-            const textSegment = new TextSegment(segmentIndex++, block);
-            textSegment.collectTextNodes(this);
-            if (textSegment.textContent.length > 0) {
-                this.log('buildSegments: added text segment', textSegment.index, 'with', textSegment.textContent.length, 'chars');
-                this.segments.push(textSegment);
-            } else {
-                this.log('buildSegments: skipping empty text segment for block', block.tagName);
             }
         }
 
-        // Add any remaining iframes at the end
-        for (const [iframe, position] of iframePositions) {
-            if (!processedIframes.has(iframe)) {
-                const iframeSegment = new IframeSegment(segmentIndex++, iframe, null);
-                this.segments.push(iframeSegment);
-                processedIframes.add(iframe);
-            }
+        // Finish final text segment if we have remaining text nodes
+        if (currentTextNodes.length > 0) {
+            const textSegment = new TextSegment(segmentIndex++, currentContainerElement);
+            textSegment.setTextNodes(currentTextNodes);
+            this.segments.push(textSegment);
+            this.log('buildSegments: added final text segment', textSegment.index, 'with', textSegment.textContent.length, 'chars');
         }
 
         // Match iframe segments with frame graph
         if (this.frameGraph) {
             this.matchIframesToGraph();
         }
+    }
+
+    // Collect items (text ranges and iframes) in document order
+    collectItems(root) {
+        const items = [];
+        
+        // Walk the DOM tree in document order, collecting text ranges and iframe boundaries
+        const walkNode = (node) => {
+            if (node.nodeType === Node.TEXT_NODE) {
+                // Skip empty text nodes and scripts/styles
+                const parent = node.parentElement;
+                if (!parent || node.textContent.trim().length === 0) {
+                    return;
+                }
+                if (_matches.call(parent, 'script, style, noscript')) {
+                    return;
+                }
+                
+                // Add this text node to the current text range
+                // We'll group adjacent text nodes later
+                items.push({
+                    type: 'text',
+                    node: node,
+                    containerElement: parent
+                });
+                return;
+            }
+            
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                if (node.tagName === 'IFRAME') {
+                    // Iframe creates a segment boundary
+                    items.push({ type: 'iframe', element: node });
+                    return; // Don't recurse into iframe content
+                }
+                
+                // For all other elements, recurse into children in document order
+                for (const child of node.childNodes) {
+                    walkNode(child);
+                }
+            }
+        };
+
+        walkNode(root);
+        
+        // Group adjacent text nodes into text ranges, with iframes creating boundaries
+        return this.groupIntoRanges(items);
+    }
+    
+    // Group adjacent text items into ranges, with iframes as boundaries
+    groupIntoRanges(items) {
+        const ranges = [];
+        let currentTextNodes = [];
+        
+        for (const item of items) {
+            if (item.type === 'iframe') {
+                // Finish current text range if we have text nodes
+                if (currentTextNodes.length > 0) {
+                    ranges.push({
+                        type: 'textRange',
+                        textNodes: currentTextNodes,
+                        containerElement: this.findCommonAncestor(currentTextNodes)
+                    });
+                    currentTextNodes = [];
+                }
+                
+                // Add iframe as boundary
+                ranges.push({ type: 'iframe', element: item.element });
+            } else if (item.type === 'text') {
+                // Add text node to current range
+                currentTextNodes.push(item.node);
+            }
+        }
+        
+        // Finish final text range if we have remaining text nodes
+        if (currentTextNodes.length > 0) {
+            ranges.push({
+                type: 'textRange',
+                textNodes: currentTextNodes,
+                containerElement: this.findCommonAncestor(currentTextNodes)
+            });
+        }
+        
+        return ranges;
+    }
+    
+    // Find the lowest common ancestor of all text nodes
+    findCommonAncestor(textNodes) {
+        if (textNodes.length === 0) return null;
+        if (textNodes.length === 1) return textNodes[0].parentElement;
+        
+        // Start with the first node's ancestors
+        let commonAncestor = textNodes[0].parentElement;
+        
+        // Check each subsequent text node
+        for (let i = 1; i < textNodes.length; i++) {
+            commonAncestor = this.findLowestCommonAncestor(commonAncestor, textNodes[i].parentElement);
+            if (!commonAncestor) {
+                // Fallback to document.body if no common ancestor found
+                return document.body;
+            }
+        }
+        
+        return commonAncestor;
+    }
+    
+    // Find the lowest common ancestor of two elements
+    findLowestCommonAncestor(element1, element2) {
+        if (!element1 || !element2) return null;
+        
+        // Get all ancestors of element1
+        const ancestors1 = [];
+        let current = element1;
+        while (current) {
+            ancestors1.push(current);
+            current = current.parentElement;
+        }
+        
+        // Walk up from element2 until we find a common ancestor
+        current = element2;
+        while (current) {
+            if (ancestors1.includes(current)) {
+                return current;
+            }
+            current = current.parentElement;
+        }
+        
+        return null; // Should never happen in a well-formed DOM
     }
 
     matchIframesToGraph() {
@@ -893,7 +973,10 @@ class FindEngine {
         this.log('findMatchesWithIframes: sorting', this.matches.length, 'matches by coordinates');
         this.matches.sort(Match.compare);
 
-        this.log(`findMatchesWithIframes: EXIT - found ${this.matches.length} total matches (${localMatchCount} local, ${remoteMatchCount} remote)`);
+        // Count actual local vs remote matches for reporting
+        const actualLocalCount = this.matches.filter(m => m.type === 'local').length;
+        const actualRemoteCount = this.matches.filter(m => m.type === 'remote').length;
+        this.log(`findMatchesWithIframes: EXIT - found ${this.matches.length} total matches (${actualLocalCount} local, ${actualRemoteCount} remote)`);
     }
 
     findLocalMatches(regex) {
@@ -922,7 +1005,7 @@ class FindEngine {
                 localMatch.type = 'local';
                 localMatch.segment = segment;
                 localMatch.localStart = match.index;
-                this.log('findLocalMatches: assigned type "local" to match ID:', localMatch.id, 'frame:', this.frameId?.substring(0, 8) || 'unknown');
+                this.log('findLocalMatches: assigned type "local" to match ID:', localMatch.id, 'frame:', (this.frameId?.substring(0, 8) || 'unknown'), 'coord:', localMatch.coordinates, 'in segment with text:', segment.textContent);
                 localMatch.localEnd = match.index + match[0].length;
 
                 matches.push(localMatch);
@@ -1745,12 +1828,145 @@ class FindEngine {
             case 'showResults':
                 await this.highlighter.highlight(this.matches, this.currentSearchTerm, this.segments);
                 break;
+            case 'startNavigationShortcuts':
+                await this.startNavigationShortcuts(command.selectionAction);
+                break;
+            case 'clearNavigationShortcuts':
+                this.clearNavigationShortcuts();
+                break;
+
             default:
                 this.log('Unknown action:', command.action);
         }
         this.log('handleFindCommand returning');
         return true;
     }
+
+    // Navigation shortcuts functions
+    async startNavigationShortcuts(selectionAction = 'open') {
+        if (!this.matches || this.matches.length === 0) {
+            return { error: 'No matches to navigate' };
+        }
+
+        // Ensure find-nav.js is available
+        if (typeof window.findNav === 'undefined') {
+            this.log('find-nav.js not loaded');
+            return { error: 'Navigation not available' };
+        }
+
+        // Start navigation with callback, passing instanceId for bounds calculation
+        await window.findNav.startNavigation(this.segments, this.matches, this.instanceId, (text) => {
+            // Callback function when shortcut is selected
+            this.log('Navigation shortcut selected:', text, 'action:', selectionAction);
+            
+            if (selectionAction === 'open') {
+                // Try to open the text as a URL
+                this.openUrl(text);
+            } else if (selectionAction === 'copy') {
+                // Copy text to clipboard and show toast
+                this.copyToClipboard(text);
+            }
+        });
+        return true;
+    }
+
+    openUrl(text) {
+        // Check if text looks like a URL
+        let url = text.trim();
+        
+        // Add protocol if missing
+        if (!/^https?:\/\//i.test(url)) {
+            // Check if it looks like a domain
+            if (/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(url)) {
+                url = 'https://' + url;
+            } else {
+                this.log('openUrl: text does not appear to be a URL:', text);
+                this.showToast('Not a valid URL: ' + text);
+                return;
+            }
+        }
+        
+        try {
+            this.log('openUrl: opening URL:', url);
+            window.open(url, '_blank', 'noopener,noreferrer');
+        } catch (e) {
+            this.log('openUrl: error opening URL:', e);
+            this.showToast('Failed to open URL: ' + url);
+        }
+    }
+
+    async copyToClipboard(text) {
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                // Use modern clipboard API
+                await navigator.clipboard.writeText(text);
+                this.log('copyToClipboard: copied using navigator.clipboard:', text);
+            } else {
+                // Fallback for older browsers or non-secure contexts
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.opacity = '0';
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                this.log('copyToClipboard: copied using fallback method:', text);
+            }
+            this.showToast('Copied');
+        } catch (e) {
+            this.log('copyToClipboard: error copying to clipboard:', e);
+            this.showToast('Failed to copy');
+        }
+    }
+
+    showToast(message) {
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.textContent = message;
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 14px;
+            z-index: 10001;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        `;
+        
+        document.body.appendChild(toast);
+        
+        // Animate in
+        requestAnimationFrame(() => {
+            toast.style.opacity = '1';
+        });
+        
+        // Remove after 2 seconds
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }, 2000);
+        
+        this.log('showToast: displayed toast:', message);
+    }
+
+    clearNavigationShortcuts() {
+        if (typeof window.findNav !== 'undefined') {
+            window.findNav.clearNavigation();
+        }
+        return true;
+    }
+
 
     destroy() {
         this.clearHighlights();
@@ -1773,6 +1989,7 @@ function getEngine(id) {
         }
         engine = new FindEngine(key);
         INSTANCES.set(key, engine);
+        console.log("Created engine with instance id", key);
     }
     return engine;
 }

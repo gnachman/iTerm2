@@ -215,59 +215,102 @@ function findTextNodeByCoordinates(segment, targetOffset, matchLength) {
     let endOffset = 0;
     let nodeCount = 0;
 
-    const walker = _createTreeWalker(
-        segment.element,
-        _SHOW_TEXT,
-        {
-            acceptNode: (node) => {
-                const parent = node.parentElement;
-                if (!parent) return _FILTER_REJECT;
+    // Use stored text nodes if available (from setTextNodes), otherwise use TreeWalker
+    if (segment.textNodes && segment.textNodes.length > 0) {
+        console.debug('findTextNodeByCoordinates: using stored textNodes array with', segment.textNodes.length, 'nodes');
+        
+        for (const node of segment.textNodes) {
+            const textContent = _textContentGetter ? _textContentGetter.call(node) : node.textContent;
+            const nodeLength = textContent.length;
+            nodeCount++;
+            
+            console.debug('findTextNodeByCoordinates: node', nodeCount, 'textContent:', JSON.stringify(textContent), 'length:', nodeLength, 'currentOffset:', currentOffset, 'parent:', node.parentElement?.tagName);
 
-                // Skip nodes inside elements that would be invisible/irrelevant
-                if (_matches.call(parent, 'script, style, noscript')) {
-                    return _FILTER_REJECT;
+            if (currentOffset + nodeLength > targetOffset) {
+                // Start position is in this node
+                if (startNode === null) {
+                    startNode = node;
+                    startOffset = targetOffset - currentOffset;
+                    console.debug('findTextNodeByCoordinates: found START node at offset', startOffset, 'in text:', JSON.stringify(textContent));
                 }
 
-                return _FILTER_ACCEPT;
-            }
-        },
-        false
-    );
-
-    let node;
-    while (node = _TreeWalker_nextNode.call(walker)) {
-        const textContent = _textContentGetter ? _textContentGetter.call(node) : node.textContent;
-        const nodeLength = textContent.length;
-        nodeCount++;
-        
-        console.debug('findTextNodeByCoordinates: node', nodeCount, 'textContent:', JSON.stringify(textContent), 'length:', nodeLength, 'currentOffset:', currentOffset, 'parent:', node.parentElement?.tagName);
-
-        if (currentOffset + nodeLength > targetOffset) {
-            // Start position is in this node
-            if (startNode === null) {
-                startNode = node;
-                startOffset = targetOffset - currentOffset;
-                console.debug('findTextNodeByCoordinates: found START node at offset', startOffset, 'in text:', JSON.stringify(textContent));
+                // Check if end position is also in this node
+                const targetEndOffset = targetOffset + matchLength;
+                if (currentOffset + nodeLength >= targetEndOffset) {
+                    endNode = node;
+                    endOffset = targetEndOffset - currentOffset;
+                    console.debug('findTextNodeByCoordinates: found END node at offset', endOffset, 'in text:', JSON.stringify(textContent));
+                    break;
+                }
             }
 
-            // Check if end position is also in this node
-            const targetEndOffset = targetOffset + matchLength;
-            if (currentOffset + nodeLength >= targetEndOffset) {
+            currentOffset += nodeLength;
+
+            // If we found start but not end, and we've moved past the target range
+            if (startNode && currentOffset >= targetOffset + matchLength) {
                 endNode = node;
-                endOffset = targetEndOffset - currentOffset;
-                console.debug('findTextNodeByCoordinates: found END node at offset', endOffset, 'in text:', JSON.stringify(textContent));
+                endOffset = (targetOffset + matchLength) - (currentOffset - nodeLength);
+                console.debug('findTextNodeByCoordinates: found END node (past target) at offset', endOffset, 'in text:', JSON.stringify(textContent));
                 break;
             }
         }
+    } else {
+        console.debug('findTextNodeByCoordinates: using TreeWalker traversal');
+        
+        const walker = _createTreeWalker(
+            segment.element,
+            _SHOW_TEXT,
+            {
+                acceptNode: (node) => {
+                    const parent = node.parentElement;
+                    if (!parent) return _FILTER_REJECT;
 
-        currentOffset += nodeLength;
+                    // Skip nodes inside elements that would be invisible/irrelevant
+                    if (_matches.call(parent, 'script, style, noscript')) {
+                        return _FILTER_REJECT;
+                    }
 
-        // If we found start but not end, and we've moved past the target range
-        if (startNode && currentOffset >= targetOffset + matchLength) {
-            endNode = node;
-            endOffset = (targetOffset + matchLength) - (currentOffset - nodeLength);
-            console.debug('findTextNodeByCoordinates: found END node (past target) at offset', endOffset, 'in text:', JSON.stringify(textContent));
-            break;
+                    return _FILTER_ACCEPT;
+                }
+            },
+            false
+        );
+
+        let node;
+        while (node = _TreeWalker_nextNode.call(walker)) {
+            const textContent = _textContentGetter ? _textContentGetter.call(node) : node.textContent;
+            const nodeLength = textContent.length;
+            nodeCount++;
+            
+            console.debug('findTextNodeByCoordinates: node', nodeCount, 'textContent:', JSON.stringify(textContent), 'length:', nodeLength, 'currentOffset:', currentOffset, 'parent:', node.parentElement?.tagName);
+
+            if (currentOffset + nodeLength > targetOffset) {
+                // Start position is in this node
+                if (startNode === null) {
+                    startNode = node;
+                    startOffset = targetOffset - currentOffset;
+                    console.debug('findTextNodeByCoordinates: found START node at offset', startOffset, 'in text:', JSON.stringify(textContent));
+                }
+
+                // Check if end position is also in this node
+                const targetEndOffset = targetOffset + matchLength;
+                if (currentOffset + nodeLength >= targetEndOffset) {
+                    endNode = node;
+                    endOffset = targetEndOffset - currentOffset;
+                    console.debug('findTextNodeByCoordinates: found END node at offset', endOffset, 'in text:', JSON.stringify(textContent));
+                    break;
+                }
+            }
+
+            currentOffset += nodeLength;
+
+            // If we found start but not end, and we've moved past the target range
+            if (startNode && currentOffset >= targetOffset + matchLength) {
+                endNode = node;
+                endOffset = (targetOffset + matchLength) - (currentOffset - nodeLength);
+                console.debug('findTextNodeByCoordinates: found END node (past target) at offset', endOffset, 'in text:', JSON.stringify(textContent));
+                break;
+            }
         }
     }
 

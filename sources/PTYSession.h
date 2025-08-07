@@ -17,6 +17,7 @@
 #import "LineBuffer.h"
 #import "PTYTask.h"
 #import "PTYTextView.h"
+#import "PTYTextView+ARC.h"
 #import "ProfileModel.h"
 #import "TextViewWrapper.h"
 #import "TmuxController.h"
@@ -873,6 +874,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // Find next/previous occurrence of find string.
 - (void)searchNext;
 - (void)searchPrevious;
+- (void)convertVisibleSearchResultsToContentNavigationShortcutsWithAction:(iTermContentNavigationAction)action
+                                                               clearOnEnd:(BOOL)clearOnEnd;
 
 - (void)setPasteboard:(NSString *)pbName;
 - (void)stopCoprocess;

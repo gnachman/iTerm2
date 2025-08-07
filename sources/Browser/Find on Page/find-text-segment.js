@@ -4,6 +4,25 @@ class TextSegment extends Segment {
         this.element = element;           // The block DOM element
         this.textContent = '';           // Concatenated text from all text nodes
         this.bounds = null;              // DOMRect - will be computed when needed
+        this.textNodes = null;           // Array of text nodes in order (when using setTextNodes)
+    }
+
+    // New method to set text nodes directly
+    setTextNodes(textNodes) {
+        console.debug('TextSegment.setTextNodes: ENTER - setting', textNodes.length, 'text nodes');
+        this.textContent = '';
+        this.textNodes = textNodes.slice(); // Store a copy of the text nodes array
+        let nodeCount = 0;
+
+        for (const node of textNodes) {
+            nodeCount++;
+            const nodeText = node.textContent;
+            console.debug('TextSegment.setTextNodes: node', nodeCount, 'length:', nodeText.length, 'content:', JSON.stringify(nodeText), 'parent:', node.parentElement?.tagName);
+            this.textContent += nodeText;
+        }
+
+        console.debug('TextSegment.setTextNodes: COMPLETE - processed', nodeCount, 'nodes, total length:', this.textContent.length);
+        console.debug('TextSegment.setTextNodes: final textContent:', JSON.stringify(this.textContent.substring(0, 100) + (this.textContent.length > 100 ? '...' : '')));
     }
 
     collectTextNodes(engine) {
