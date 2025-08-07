@@ -6,44 +6,76 @@
     let activeField = null;
     let activeType  = null; // 'password' or 'username'
 
-    // create the floating button once
-    const btn = document.createElement('button');
-    btn.type            = 'button';
-    btn.tabIndex        = -1;
-    btn.setAttribute('aria-label', 'Open Password Manager');
-    Object.assign(btn.style, {
-        position:    'absolute',
-        display:     'none',
-        boxSizing:   'border-box',
-        zIndex:      '2147483647',
-        borderRadius:'4px',
-        border:      '1px solid rgba(0,0,0,0.2)',
-        background:  '#fff',
-        cursor:      'pointer',
-        fontSize:    '1em',
-        lineHeight:  '1',
-        display:     'flex',
-        alignItems:  'center',
-        justifyContent:'center',
-        padding:     '0'
-    });
-    btn.addEventListener('mousedown', e => e.preventDefault());
-    document.body.appendChild(btn);
+    // button will be created only when needed
+    let btn = null;
+
+    function createButton() {
+        if (btn) return; // Already created
+        
+        btn = document.createElement('button');
+        btn.type            = 'button';
+        btn.tabIndex        = -1;
+        btn.setAttribute('aria-label', 'Open Password Manager');
+        Object.assign(btn.style, {
+            position:    'absolute',
+            display:     'none',
+            boxSizing:   'border-box',
+            zIndex:      '2147483647',
+            borderRadius:'4px',
+            border:      '1px solid rgba(0,0,0,0.2)',
+            background:  '#fff',
+            cursor:      'pointer',
+            fontSize:    '1em',
+            lineHeight:  '1',
+            alignItems:  'center',
+            justifyContent:'center',
+            padding:     '0'
+        });
+        btn.addEventListener('mousedown', e => e.preventDefault());
+        
+        // on click, notify native
+        btn.addEventListener('click', e => {
+            e.preventDefault();
+            if (!activeField) return;
+            const msgType = activeType === 'username' ? 'openUser' : 'openPassword';
+
+            let nextPasswordFieldId = null;
+            if (activeType === 'username') {
+                const nextField = findNextPasswordField();
+                nextPasswordFieldId = nextField
+                    ? nextField.id
+                    : null;
+            }
+
+            window.webkit.messageHandlers[handlerName].postMessage({
+                type:          msgType,
+                sessionSecret,
+                fieldName:     activeField.name || null,
+                nextPasswordFieldId: nextPasswordFieldId
+            });
+        });
+        
+        document.body.appendChild(btn);
+        updateBtnTheme();
+        
+        // Listen for theme changes
+        window.matchMedia('(prefers-color-scheme: dark)')
+              .addEventListener('change', updateBtnTheme);
+    }
 
     function updateBtnTheme() {
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        btn.style.backgroundColor = '#2c2c2e';
-        btn.style.border          = '1px solid rgba(255,255,255,0.3)';
-        btn.style.color           = '#fff';
-      } else {
-        btn.style.backgroundColor = '#fff';
-        btn.style.border          = '1px solid rgba(0,0,0,0.2)';
-        btn.style.color           = '#000';
-      }
+        if (!btn) return;
+        
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            btn.style.backgroundColor = '#2c2c2e';
+            btn.style.border          = '1px solid rgba(255,255,255,0.3)';
+            btn.style.color           = '#fff';
+        } else {
+            btn.style.backgroundColor = '#fff';
+            btn.style.border          = '1px solid rgba(0,0,0,0.2)';
+            btn.style.color           = '#000';
+        }
     }
-    updateBtnTheme();
-    window.matchMedia('(prefers-color-scheme: dark)')
-          .addEventListener('change', updateBtnTheme);
 
     const findNextPasswordField = function() {
         const current = document.activeElement;
@@ -75,33 +107,17 @@
         return closest;
     }
 
-    // on click, notify native
-    btn.addEventListener('click', e => {
-        e.preventDefault();
-        if (!activeField) return;
-        const msgType = activeType === 'username' ? 'openUser' : 'openPassword';
-
-        let nextPasswordFieldId = null;
-        if (activeType === 'username') {
-            const nextField = findNextPasswordField();
-            nextPasswordFieldId = nextField
-                ? nextField.id
-                : null;
-        }
-
-        window.webkit.messageHandlers[handlerName].postMessage({
-            type:          msgType,
-            sessionSecret,
-            fieldName:     activeField.name || null,
-            nextPasswordFieldId: nextPasswordFieldId
-        });
-    });
 
     function updateButton() {
         if (!activeField) {
-            btn.style.display = 'none';
+            if (btn) {
+                btn.style.display = 'none';
+            }
             return;
         }
+        
+        // Create button if it doesn't exist
+        createButton();
 
         const r         = activeField.getBoundingClientRect();
         const baseLeft  = window.scrollX + r.right - r.height;
@@ -191,7 +207,9 @@
         } else {
             // if focus moved anywhere else *except* our button, hide
             activeField = null;
-            btn.style.display = 'none';
+            if (btn) {
+                btn.style.display = 'none';
+            }
         }
     });
 
