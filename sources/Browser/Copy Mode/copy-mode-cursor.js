@@ -14,15 +14,23 @@ class Cursor {
         this.characterOffset = 0;
         this.visible = false;
         this.selecting = false;
-        this.createElement();
+        // Don't create element in constructor - wait until first use
     }
 
     setSelecting(selecting) {
         this.selecting = selecting;
+        this.ensureElementExists();
         if (this.svgPath) {
             // Update cursor appearance when selecting state changes
             this.updateDisplay();
         }
+    }
+
+    ensureElementExists() {
+        if (this.element) {
+            return; // Already created
+        }
+        this.createElement();
     }
 
     createElement() {
@@ -77,6 +85,7 @@ class Cursor {
 
         this.textNode = textNode;
         this.characterOffset = characterOffset;
+        this.ensureElementExists();
         this.updateDisplay();
     }
 
@@ -166,6 +175,7 @@ class Cursor {
 
     show() {
         this.visible = true;
+        this.ensureElementExists();
         if (this.element) {
             this.element.style.display = 'block';
             this.updateDisplay(); // Make sure position is set when showing
@@ -180,6 +190,9 @@ class Cursor {
     }
 
     getBoundingRect() {
-        return this.element ? this.element.getBoundingClientRect() : null;
+        if (!this.element) {
+            return null;
+        }
+        return this.element.getBoundingClientRect();
     }
 }

@@ -21,8 +21,7 @@ class CopyMode {
         console.log("[copymode] init() called");
         console.log("[copymode] Creating Cursor instance");
         this.cursor = new Cursor();
-        // Set initial position to first text node
-        this.initializeCursorPosition();
+        // Don't initialize cursor position until copy mode is enabled
     }
 
     initializeCursorPosition() {
@@ -66,8 +65,10 @@ class CopyMode {
     enable() {
         console.log("[copymode] Enable called");
         this.enabled = true;
+        // Initialize cursor position on first enable
+        this.initializeCursorPosition();
         this.cursor.show();
-        console.log(`[copymode] Cursor enabled at page position (${this.cursor.x}, ${this.cursor.y})`);
+        console.log(`[copymode] Cursor enabled`);
         return true;
     }
 
