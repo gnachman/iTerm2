@@ -13949,6 +13949,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         if ([self isBrowserSession]) {
             [_view.browserViewController addNamedMark:name];
         }
+        return;
     }
     DLog(@"saveScrollPositionWithName:%@", name);
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {

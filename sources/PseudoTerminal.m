@@ -10814,7 +10814,8 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                item.action == @selector(clearToStartOfSelection:) ||
                item.action == @selector(clearToLastMark:) ||
                item.action == @selector(toggleCursorGuide:) ||
-               item.action == @selector(findCursor:)) {
+               item.action == @selector(findCursor:) ||
+               item.action == @selector(filter:)) {
         return !self.currentSession.isBrowserSession;
     }
 
