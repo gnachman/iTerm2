@@ -744,8 +744,20 @@ extension iTermBrowserViewController {
                 delegate?.browserViewControllerShowFindPanel(self)
             }
         case .setFindString:
-            // TODO: Implement setting find string from selection if needed
-            break
+            guard let raw = browserManager.webView?.currentSelection else {
+                return
+            }
+            let selectedText = switch iTermFindDriver.mode() {
+            case .smartCaseSensitivity, .caseSensitiveSubstring, .caseInsensitiveSubstring:
+                raw
+            case .caseSensitiveRegex, .caseInsensitiveRegex:
+                (raw as NSString).escapingForRegex() as String
+            @unknown default:
+                it_fatalError()
+            }
+            iTermFindPasteboard.sharedInstance().setStringValueUnconditionally(selectedText)
+            iTermFindPasteboard.sharedInstance().updateObservers(delegate,
+                                                                 internallyGenerated: true)
         default:
             // Other actions are handled by the dedicated methods below
             break
