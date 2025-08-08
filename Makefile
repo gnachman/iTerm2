@@ -183,6 +183,9 @@ sparkle: force
 	cd submodules/Sparkle && xcodebuild -scheme Sparkle -configuration Release
 	mv submodules/Sparkle/Build/Release/Sparkle.framework ThirdParty/Sparkle.framework
 
+paranoidbindeps: force
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) bindeps
+
 paranoiddeps: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) deps
 

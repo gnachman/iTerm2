@@ -13578,7 +13578,6 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = A66719571DCE36C3000CE608 /* Build configuration list for PBXNativeTarget "iTerm2SharedARC" */;
 			buildPhases = (
-				A6B78B812A099498007D6D85 /* Build binary dependencies if xcode version changed */,
 				A66717861DCE36C3000CE608 /* Sources */,
 				A66719031DCE36C3000CE608 /* Frameworks */,
 				A66719091DCE36C3000CE608 /* Headers */,
@@ -15506,25 +15505,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "#!/bin/bash\nset -x\ntest -d \"${PROJECT_DERIVED_FILE_DIR}\" || mkdir \"${PROJECT_DERIVED_FILE_DIR}\"\ncp \"${DERIVED_SOURCES_DIR}\"/*-Swift.h \"${PROJECT_DERIVED_FILE_DIR}\"\n";
-		};
-		A6B78B812A099498007D6D85 /* Build binary dependencies if xcode version changed */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Build binary dependencies if xcode version changed";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "make DepsIfNeeded\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
