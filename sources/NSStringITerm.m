@@ -186,6 +186,82 @@
     return [NSString stringWithString:aMutableString];
 }
 
+- (NSString *)quotedStringForPaste {
+    const NSUInteger length = self.length;
+    NSMutableString *result = [NSMutableString stringWithCapacity:length + 2];
+    [result appendString:@"\""];
+
+    for (NSUInteger i = 0; i < length; i++) {
+        uint32_t cp = [self characterAtIndex:i];
+
+        if (CFStringIsSurrogateHighCharacter(cp)) {
+            if (i + 1 < length) {
+                uint16_t lo = [self characterAtIndex:i + 1];
+                if (CFStringIsSurrogateLowCharacter(lo)) {
+                    cp = CFStringGetLongCharacterForSurrogatePair((UniChar)cp, lo);
+                    i += 1;
+                }
+            }
+        }
+
+        switch (cp) {
+            case '\"': {
+                [result appendString:@"\\\""];
+                break;
+            }
+            case '\\': {
+                [result appendString:@"\\\\"];
+                break;
+            }
+            case '\n': {
+                [result appendString:@"\\n"];
+                break;
+            }
+            case '\r': {
+                [result appendString:@"\\r"];
+                break;
+            }
+            case '\t': {
+                [result appendString:@"\\t"];
+                break;
+            }
+            case '\b': {
+                [result appendString:@"\\b"];
+                break;
+            }
+            case '\f': {
+                [result appendString:@"\\f"];
+                break;
+            }
+            case '\a': {
+                [result appendString:@"\\a"];
+                break;
+            }
+            case '\v': {
+                [result appendString:@"\\v"];
+                break;
+            }
+            default: {
+                if (cp < 0x20 || cp == 0x7F) {
+                    [result appendFormat:@"\\x%02x", (unsigned int)cp];
+                } else if (cp >= 0x80 && cp <= 0x9F) {
+                    [result appendFormat:@"\\x%02x", (unsigned int)cp];
+                } else if (cp >= 0xA0 && cp <= 0xFFFF) {
+                    [result appendFormat:@"\\u%04x", (unsigned int)cp];
+                } else if (cp > 0xFFFF) {
+                    [result appendFormat:@"\\U%08x", (unsigned int)cp];
+                } else {
+                    [result appendFormat:@"%C", (unichar)cp];
+                }
+                break;
+            }
+        }
+    }
+
+    [result appendString:@"\""];
+    return result;
+}
+
 - (NSString *)stringWithEscapedShellCharactersIncludingNewlines:(BOOL)includingNewlines {
     NSMutableString *aMutableString = [[NSMutableString alloc] initWithString:self];
     [aMutableString escapeShellCharactersIncludingNewlines:includingNewlines];

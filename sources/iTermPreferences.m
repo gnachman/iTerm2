@@ -166,6 +166,7 @@ NSString *const kPreferenceKeyDoubleClickPerformsSmartSelection = @"DoubleClickP
 NSString *const kPreferenceKeyEnterCopyModeAutomatically = @"EnterCopyModeAutomatically";
 NSString *const kPreferenceKeyFocusOnRightOrMiddleClick = @"FocusOnRightOrMiddleClick";
 NSString *const kPreferenceKeyClickToSelectCommand = @"ClickToSelectCommand";
+NSString *const kPreferenceKeyWrapDroppedFilenamesInQuotesWhenPasting = @"WrapDroppedFilenamesInQuotesWhenPasting";
 NSString *const kPreferenceKeyReportHorizontalScrollEvents = @"ReportHorizontalScrollEvents";
 NSString *const kPreferenceKeyAppVersion = @"iTerm Version";  // Excluded from syncing
 NSString *const kPreferenceKeyAllAppVersions = @"NoSyncAllAppVersions";  // Array of known iTerm2 versions this user has used on this machine.
@@ -610,6 +611,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyDoubleClickPerformsSmartSelection: @NO,
                   kPreferenceKeyEnterCopyModeAutomatically: @YES,
                   kPreferenceKeyClickToSelectCommand: @YES,
+                  kPreferenceKeyWrapDroppedFilenamesInQuotesWhenPasting: @NO,
 
                   kPreferenceAutoCommandHistory: @NO,
                   kPreferenceAutoComposer: @NO,

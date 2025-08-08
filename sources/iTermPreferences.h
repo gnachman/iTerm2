@@ -275,6 +275,7 @@ extern NSString *const kPreferenceKeyTripleClickSelectsFullWrappedLines;
 extern NSString *const kPreferenceKeyDoubleClickPerformsSmartSelection;
 extern NSString *const kPreferenceKeyEnterCopyModeAutomatically;
 extern NSString *const kPreferenceKeyClickToSelectCommand;
+extern NSString *const kPreferenceKeyWrapDroppedFilenamesInQuotesWhenPasting;
 extern NSString *const kPreferenceKeyFocusOnRightOrMiddleClick;
 extern NSString *const kPreferenceKeyReportHorizontalScrollEvents;
 

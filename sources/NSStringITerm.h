@@ -87,6 +87,11 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Suitable for use as bash -c 'escaped string'
 - (NSString *)stringEscapedForBash;
 
+// foo -> "foo"
+// foo"bar -> "foo\"bar"
+// foo\nbar -> "foo\\nbar"
+- (NSString *)quotedStringForPaste;
+
 // Always uses backslash.
 - (NSString *)stringWithBackslashEscapedShellCharactersIncludingNewlines:(BOOL)includingNewlines;
 - (NSString *)stringWithEscapedShellCharactersExceptTabAndNewline;

@@ -159,6 +159,7 @@ enum {
     iTermUserDefaultsObserver *_observer;
 
     IBOutlet NSButton *_clickToSelectCommand;
+    IBOutlet NSButton *_wrapDroppedFilenamesInQuotesWhenPasting;
 
     IBOutlet NSPopUpButton *_allowsSendingClipboardContents;
     IBOutlet NSTextField *_allowsSendingClipboardContentsLabel;
@@ -618,7 +619,10 @@ enum {
                     key:kPreferenceKeyClickToSelectCommand
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
-
+    [self defineControl:_wrapDroppedFilenamesInQuotesWhenPasting
+                    key:kPreferenceKeyWrapDroppedFilenamesInQuotesWhenPasting
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
     [self defineControl:_smartPlacement
                     key:kPreferenceKeySmartWindowPlacement
             relatedView:nil

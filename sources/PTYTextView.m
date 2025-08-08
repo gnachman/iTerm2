@@ -3423,7 +3423,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
     if ([types containsObject:NSPasteboardTypeFileURL]) {
         // Filenames were dragged.
-        NSArray *filenames = [pasteboard filenamesOnPasteboardWithShellEscaping:YES];
+        NSArray *filenames = [pasteboard filenamesOnPasteboardWithShellEscaping:YES forPaste:YES];
         if (filenames.count) {
             BOOL pasteNewline = NO;
 
@@ -3997,7 +3997,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     if (!optionPressed && pasteOK && (sourceMask & (NSDragOperationGeneric | NSDragOperationCopy | NSDragOperationLink)) != 0) {
         DLog(@"Allowing a filename drag");
         // No modifier key was pressed and pasting is OK, so select the paste operation.
-        NSArray *filenames = [pb filenamesOnPasteboardWithShellEscaping:YES];
+        NSArray *filenames = [pb filenamesOnPasteboardWithShellEscaping:YES forPaste:YES];
         DLog(@"filenames=%@", filenames);
         if (numberOfValidItemsPtr) {
             if (filenames.count) {
@@ -4023,7 +4023,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         // Either Option was pressed or the sender allows Copy but not Generic,
         // and it's ok to upload, so select the upload operation.
         if (numberOfValidItemsPtr) {
-            *numberOfValidItemsPtr = [[pb filenamesOnPasteboardWithShellEscaping:NO] count];
+            *numberOfValidItemsPtr = [[pb filenamesOnPasteboardWithShellEscaping:NO forPaste:YES] count];
         }
         // You have to press option to get here so Copy is the only possibility.
         return NSDragOperationCopy;
@@ -4194,7 +4194,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
     int dropLine = dropPoint.y / _lineHeight;
     SCPPath *dropScpPath = [_dataSource scpPathForFile:@"" onLine:dropLine];
-    NSArray *filenames = [pasteboard filenamesOnPasteboardWithShellEscaping:NO];
+    NSArray *filenames = [pasteboard filenamesOnPasteboardWithShellEscaping:NO forPaste:NO];
     if ([types containsObject:NSPasteboardTypeFileURL] && filenames.count && dropScpPath) {
         // This is all so the mouse cursor will change to a plain arrow instead of the
         // drop target cursor.

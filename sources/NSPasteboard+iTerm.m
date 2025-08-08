@@ -8,10 +8,11 @@
 
 #import "NSPasteboard+iTerm.h"
 #import "NSStringITerm.h"
+#import "iTermPreferences.h"
 
 @implementation NSPasteboard (iTerm)
 
-- (NSArray *)filenamesOnPasteboardWithShellEscaping:(BOOL)escape {
+- (NSArray *)filenamesOnPasteboardWithShellEscaping:(BOOL)escape forPaste:(BOOL)forPaste {
     NSMutableArray *results = [NSMutableArray array];
     NSArray<NSURL *> *urls = [self readObjectsForClasses:@[ [NSURL class] ] options:0];
     for (NSURL *url in urls) {
@@ -26,7 +27,11 @@
         }
 
         if (escape) {
-            filename = [filename stringWithEscapedShellCharactersIncludingNewlines:YES];
+            if (forPaste && [iTermPreferences boolForKey:kPreferenceKeyWrapDroppedFilenamesInQuotesWhenPasting]) {
+                filename = [filename quotedStringForPaste];
+            } else {
+                filename = [filename stringWithEscapedShellCharactersIncludingNewlines:YES];
+            }
         }
         if (filename) {
             [results addObject:filename];
