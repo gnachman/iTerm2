@@ -222,14 +222,12 @@ class iTermBrowserToolbar: NSView {
         let spacing: CGFloat = 12.0
         
         var indicatorsWidth: CGFloat = 0
-        var showIndicators = false
-        
+
         // Check if we have space for URL bar + minimum indicators
         if totalAvailableSpace >= minUrlBarWidth + minIndicatorsWidth + spacing {
             // Calculate how much space we can give to indicators
             let spaceForIndicators = totalAvailableSpace - minUrlBarWidth - spacing
             indicatorsWidth = min(maxIndicatorsWidth, max(minIndicatorsWidth, spaceForIndicators * 0.3))
-            showIndicators = true
             
             // Position indicators
             rightHelper.x -= indicatorsWidth + spacing

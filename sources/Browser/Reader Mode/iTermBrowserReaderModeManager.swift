@@ -101,7 +101,7 @@ class iTermBrowserReaderModeManager: NSObject {
             let script = iTermBrowserTemplateLoader.loadTemplate(named: "exit-reader-mode",
                                                                type: "js",
                                                                substitutions: [:])
-            try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
+            _ = try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
             updateReaderModeState(false)
         } catch {
             DLog("Error exiting reader mode: \(error)")
@@ -117,7 +117,7 @@ class iTermBrowserReaderModeManager: NSObject {
                                                                         "POINT_X": "\(point.x)",
                                                                         "POINT_Y": "\(point.y)"
                                                                      ])
-                try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
+                _ = try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
             } catch {
                 DLog("Error in removeElement: \(error)")
             }
@@ -140,7 +140,7 @@ class iTermBrowserReaderModeManager: NSObject {
             let distractionRemovalJS = iTermBrowserTemplateLoader.loadTemplate(named: "distraction-removal",
                                                                              type: "js",
                                                                              substitutions: [:])
-            try await webView.evaluateJavaScript(distractionRemovalJS, contentWorld: .defaultClient)
+            _ = try await webView.evaluateJavaScript(distractionRemovalJS, contentWorld: .defaultClient)
 
             // Then enter distraction removal mode
             let script = iTermBrowserTemplateLoader.loadTemplate(named: "enter-distraction-removal",
@@ -160,7 +160,7 @@ class iTermBrowserReaderModeManager: NSObject {
             let script = iTermBrowserTemplateLoader.loadTemplate(named: "exit-distraction-removal",
                                                                type: "js",
                                                                substitutions: [:])
-            try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
+            _ = try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
             updateDistractionRemovalState(false)
         } catch {
             DLog("Error exiting distraction removal mode: \(error)")
@@ -191,10 +191,10 @@ class iTermBrowserReaderModeManager: NSObject {
         
         do {
             // Inject Readability.js first
-            try await webView.evaluateJavaScript(loadReadabilityScript, contentWorld: .defaultClient)
+            _ = try await webView.evaluateJavaScript(loadReadabilityScript, contentWorld: .defaultClient)
 
             // Then inject reader mode script
-            try await webView.evaluateJavaScript(loadReaderModeScript, contentWorld: .defaultClient)
+            _ = try await webView.evaluateJavaScript(loadReaderModeScript, contentWorld: .defaultClient)
 
             scriptsInjected = true
             return true

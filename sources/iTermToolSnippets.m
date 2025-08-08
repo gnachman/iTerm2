@@ -198,6 +198,10 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     return self;
 }
 
++ (ProfileType)supportedProfileTypes {
+    return ProfileTypeBrowser | ProfileTypeTerminal;
+}
+
 - (void)buildTree {
     _tree = [self makeTree];
 }
@@ -852,7 +856,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 
 - (id<NSPasteboardWriting>)outlineView:(NSOutlineView *)outlineView pasteboardWriterForItem:(id)item {
     if ([item isKindOfClass:[iTermSnippetItem class]]) {
-        iTermSnippet *snippet = [item snippet];
+        iTermSnippet *snippet = [(iTermSnippetItem *)item snippet];
         NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
         [pbItem setPropertyList:snippet.guid forType:iTermToolSnippetsPasteboardType];
         [pbItem setString:snippet.value forType:NSPasteboardTypeString];

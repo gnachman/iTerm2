@@ -95,6 +95,10 @@ class ToolNamedMarks: NSView, ToolbeltTool, NSTableViewDelegate, NSTableViewData
         it_fatalError("init(coder:) has not been implemented")
     }
 
+    static var supportedProfileTypes: ProfileType {
+        ProfileType(rawValue: ProfileType.terminal.rawValue | ProfileType.browser.rawValue)
+    }
+
     @objc func shutdown() {
     }
 
@@ -137,7 +141,8 @@ class ToolNamedMarks: NSView, ToolbeltTool, NSTableViewDelegate, NSTableViewData
 
     @objc override var isFlipped: Bool { true }
 
-    @objc(setNamedMarks:) func set(marks: [iTermGenericNamedMarkReading]) {
+    @objc(setNamedMarks:)
+    func set(marks: [iTermGenericNamedMarkReading]) {
         // For browser sessions, preserve the database ordering which already sorts current page marks first
         // For terminal sessions, sort by namedMarkSort
         if toolWrapper()?.delegate?.delegate?.toolbeltCurrentSessionIsBrowser() == true {

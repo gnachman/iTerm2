@@ -127,6 +127,10 @@ static const CGFloat kHelpMargin = 5;
     return self;
 }
 
++ (ProfileType)supportedProfileTypes {
+    return ProfileTypeTerminal;
+}
+
 - (void)shutdown {
     shutdown_ = YES;
     [[NSNotificationCenter defaultCenter] removeObserver:self];

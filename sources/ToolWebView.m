@@ -118,6 +118,10 @@ static NSString *const iTermToolWebViewLogger = @"logger";
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
++ (ProfileType)supportedProfileTypes {
+    return ProfileTypeBrowser | ProfileTypeTerminal;
+}
+
 - (void)loadURL {
     NSURLRequest *request = [[NSURLRequest alloc] initWithURL:_url];
     DLog(@"%@: load %@", self, _url);

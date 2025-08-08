@@ -123,6 +123,10 @@ static const CGFloat kMargin = 4;
     [minuteRefreshTimer_ invalidate];
 }
 
++ (ProfileType)supportedProfileTypes {
+    return ProfileTypeBrowser | ProfileTypeTerminal;
+}
+
 - (BOOL)validateMenuItem:(NSMenuItem *)item {
     return [self respondsToSelector:[item action]] && [_tableView clickedRow] >= 0;
 }

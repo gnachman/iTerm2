@@ -49,6 +49,10 @@ static const CGFloat kMargin = 0;
     return self;
 }
 
++ (ProfileType)supportedProfileTypes {
+    return ProfileTypeTerminal;
+}
+
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
     [super resizeSubviewsWithOldSize:oldSize];
     [self relayout];

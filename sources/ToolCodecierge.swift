@@ -55,6 +55,8 @@ class ToolCodecierge: NSView, ToolbeltTool {
         }
     }
 
+    static var supportedProfileTypes: ProfileType { .terminal }
+
     fileprivate enum State {
         case uninitialized
         case onboarding

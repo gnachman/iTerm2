@@ -40,13 +40,17 @@ extern NSString *const kToolbeltShouldHide;
 // Returns an array of tool keys.
 + (NSArray *)allTools;
 
-// Returns an array of tool keys for tools to show.
+// Returns an array of tool keys for tools to show ignoring profile type.
 + (NSArray *)configuredTools;
+
+// An array of tool keys that we can actually use.
++ (NSArray<NSString *> *)availableConfiguredToolsForProfileType:(ProfileType)profileType;
 
 + (void)populateMenu:(NSMenu *)menu;
 + (void)toggleShouldShowTool:(NSString *)theName;
-+ (int)numberOfVisibleTools;
-+ (BOOL)shouldShowTool:(NSString *)name;
++ (int)numberOfVisibleToolsForProfileType:(ProfileType)profileType;
++ (BOOL)shouldShowTool:(NSString *)name
+           profileType:(ProfileType)profileType;
 + (NSArray<NSString *> *)builtInToolNames;
 + (void)registerDynamicToolWithIdentifier:(NSString *)identifier name:(NSString *)name URL:(NSString *)url revealIfAlreadyRegistered:(BOOL)revealIfAlreadyRegistered;
 
@@ -63,6 +67,7 @@ extern NSString *const kToolbeltShouldHide;
 - (void)relayoutAllTools;
 - (void)restoreFromState:(NSDictionary *)state;
 - (NSDictionary *)restorableState;
+- (void)refreshTools;
 
 #pragma mark - Testing
 

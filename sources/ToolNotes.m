@@ -116,12 +116,15 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
     return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [textView_ writeRTFDToFile:[self filename] atomically:NO];
     [filemanager_ release];
     [super dealloc];
+}
+
++ (ProfileType)supportedProfileTypes {
+    return ProfileTypeBrowser | ProfileTypeTerminal;
 }
 
 - (NSString *)filename {

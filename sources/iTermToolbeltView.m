@@ -66,6 +66,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     iTermToolbeltVibrantVisualEffectView *_vev NS_AVAILABLE_MAC(10_14);
     iTermHamburgerButton *_menuButton;
     BOOL _inSplitViewDidResizeSubviews;
+    NSTextField *_noToolsMessage;
 }
 
 static NSMutableDictionary<NSString *, Class> *gRegisteredTools;
@@ -116,7 +117,7 @@ static NSString *const kDynamicToolURL = @"URL";
         return;
     }
     NSDictionary *registry = [[NSUserDefaults standardUserDefaults] objectForKey:kDynamicToolsKey];
-    NSString *oldName = [[registry[identifier][kDynamicToolName] retain] autorelease];
+    NSString *oldName = registry[identifier][kDynamicToolName];
     if ([registry[identifier][kDynamicToolURL] isEqualToString:url] &&
         [registry[identifier][kDynamicToolName] isEqualToString:name]) {
         if (revealIfAlreadyRegistered) {
@@ -127,7 +128,7 @@ static NSString *const kDynamicToolURL = @"URL";
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermToolbeltDidRegisterDynamicToolNotification object:identifier];
         return;
     }
-    NSMutableDictionary *mutableRegistry = [[registry mutableCopy] autorelease] ?: [NSMutableDictionary dictionary];
+    NSMutableDictionary *mutableRegistry = [registry mutableCopy] ?: [NSMutableDictionary dictionary];
     mutableRegistry[identifier] = @{ kDynamicToolName: name,
                                      kDynamicToolURL: url };
     [[NSUserDefaults standardUserDefaults] setObject:mutableRegistry forKey:kDynamicToolsKey];
@@ -163,6 +164,13 @@ static NSString *const kDynamicToolURL = @"URL";
     return vettedTools;
 }
 
++ (NSArray<NSString *> *)availableConfiguredToolsForProfileType:(ProfileType)profileType {
+    return [[self configuredTools] filteredArrayUsingBlock:^BOOL(NSString *name) {
+        Class<ToolbeltTool> c = gRegisteredTools[name];
+        return ([c supportedProfileTypes] & profileType) != 0;
+    }];
+}
+
 + (void)populateMenu:(NSMenu *)menu {
     if (menu.itemArray.count > 0) {
         for (NSInteger i = menu.itemArray.count - 1; i >= 0; i--) {
@@ -180,19 +188,20 @@ static NSString *const kDynamicToolURL = @"URL";
 + (void)addToolsToMenu:(NSMenu *)menu {
     NSArray *names = [[iTermToolbeltView allTools] sortedArrayUsingSelector:@selector(compare:)];
     for (NSString *theName in names) {
-        NSMenuItem *i = [[[NSMenuItem alloc] initWithTitle:theName
-                                                    action:@selector(toggleToolbeltTool:)
-                                             keyEquivalent:@""] autorelease];
-        [i setState:[iTermToolbeltView shouldShowTool:theName] ? NSControlStateValueOn : NSControlStateValueOff];
+        NSMenuItem *i = [[NSMenuItem alloc] initWithTitle:theName
+                                                   action:@selector(toggleToolbeltTool:)
+                                            keyEquivalent:@""];
+        i.tag = (ProfileType)[gRegisteredTools[theName] supportedProfileTypes];
+        [i setState:[[iTermToolbeltView configuredTools] containsObject:theName] ? NSControlStateValueOn : NSControlStateValueOff];
         i.identifier = [@"Toolbelt." stringByAppendingString:theName];
         [menu addItem:i];
     }
 }
 
 + (void)toggleShouldShowTool:(NSString *)theName {
-    NSMutableArray *tools = [[[iTermToolbeltView configuredTools] mutableCopy] autorelease];
+    NSMutableArray *tools = [[iTermToolbeltView configuredTools] mutableCopy];
     if (!tools) {
-        tools = [[[iTermToolbeltView defaultTools] mutableCopy] autorelease];
+        tools = [[iTermToolbeltView defaultTools] mutableCopy];
     }
     if ([tools indexOfObject:theName] == NSNotFound) {
         [tools addObject:theName];
@@ -206,16 +215,16 @@ static NSString *const kDynamicToolURL = @"URL";
                                                       userInfo:nil];
 }
 
-+ (int)numberOfVisibleTools {
-    NSArray *tools = [iTermToolbeltView configuredTools];
++ (int)numberOfVisibleToolsForProfileType:(ProfileType)profileType {
+    NSArray *tools = [iTermToolbeltView availableConfiguredToolsForProfileType:profileType];
     if (!tools) {
         tools = [iTermToolbeltView defaultTools];
     }
     return [tools count];
 }
 
-+ (BOOL)shouldShowTool:(NSString *)name {
-    return [[iTermToolbeltView configuredTools] indexOfObject:name] != NSNotFound;
++ (BOOL)shouldShowTool:(NSString *)name profileType:(ProfileType)profileType {
+    return [[iTermToolbeltView availableConfiguredToolsForProfileType:profileType] indexOfObject:name] != NSNotFound;
 }
 
 #pragma mark - Private class methods
@@ -231,7 +240,7 @@ static NSString *const kDynamicToolURL = @"URL";
 + (NSDictionary *)toolsDictionary {
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     for (NSString *toolName in gRegisteredTools) {
-        [dict setObject:[[[[gRegisteredTools objectForKey:toolName] alloc] init] autorelease]
+        [dict setObject:[[[gRegisteredTools objectForKey:toolName] alloc] init]
                  forKey:toolName];
     }
     return dict;
@@ -243,7 +252,7 @@ static NSString *const kDynamicToolURL = @"URL";
     self = [super initWithFrame:frame];
     if (self) {
         _delegate = delegate;
-        _vev = [[[iTermToolbeltVibrantVisualEffectView alloc] init] autorelease];
+        _vev = [[iTermToolbeltVibrantVisualEffectView alloc] init];
         _vev.blendingMode = NSVisualEffectBlendingModeBehindWindow;
         _vev.material = NSVisualEffectMaterialSidebar;
         _vev.state = NSVisualEffectStateActive;
@@ -252,11 +261,11 @@ static NSString *const kDynamicToolURL = @"URL";
         [self addSubview:_vev];
 
         self.wantsLayer = YES;
-        self.layer = [[[CALayer alloc] init] autorelease];
+        self.layer = [[CALayer alloc] init];
         self.layer.delegate = self;
         self.layer.backgroundColor = [[self backgroundColor] CGColor];
-        
-        NSArray *items = [iTermToolbeltView configuredTools];
+        const ProfileType profileType = [delegate toolbeltProfileType];
+        NSArray *items = [iTermToolbeltView availableConfiguredToolsForProfileType:profileType];
         if (!items) {
             items = [iTermToolbeltView defaultTools];
             [[NSUserDefaults standardUserDefaults] setObject:items forKey:kToolbeltPrefKey];
@@ -273,24 +282,30 @@ static NSString *const kDynamicToolURL = @"URL";
         [_splitter setDividerColor:[NSColor colorWithCalibratedWhite:122/255.0 alpha:0.25]];
         [self addSubview:_splitter];
 
+        _noToolsMessage = [NSTextField newLabelStyledTextField];
+        _noToolsMessage.alignment = NSTextAlignmentCenter;
+        _noToolsMessage.stringValue = @"No Tools enabled. Select them from the menu above.";
+        _noToolsMessage.frame = self.bounds;
+        [self addSubview:_noToolsMessage];
+        [self layoutNoToolsMessage];
+
         _tools = [[NSMutableDictionary alloc] init];
 
         for (NSString *theName in items) {
-            if ([iTermToolbeltView shouldShowTool:theName]) {
+            if ([iTermToolbeltView shouldShowTool:theName profileType:profileType]) {
                 [self addToolWithName:theName];
             }
         }
-        _dragHandle = [[[iTermDragHandleView alloc] initWithFrame:NSMakeRect(0, 0, 3, frame.size.height)]
-                       autorelease];
+        _dragHandle = [[iTermDragHandleView alloc] initWithFrame:NSMakeRect(0, 0, 3, frame.size.height)];
         _dragHandle.delegate = self;
         _dragHandle.autoresizingMask = (NSViewHeightSizable | NSViewMaxXMargin);
         [self addSubview:_dragHandle];
 
-        _menuButton = [[[iTermHamburgerButton alloc] initWithMenuProvider:^NSMenu * _Nonnull {
-            NSMenu *menu = [[[NSMenu alloc] initWithTitle:@"Contextual Menu"] autorelease];
+        _menuButton = [[iTermHamburgerButton alloc] initWithMenuProvider:^NSMenu * _Nonnull {
+            NSMenu *menu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
             [iTermToolbeltView addToolsToMenu:menu];
             return menu;
-        }] autorelease];
+        }];
         [_menuButton setButtonType:NSButtonTypeMomentaryPushIn];
 
         _menuButton.frame = self.menuButtonFrame;
@@ -299,18 +314,30 @@ static NSString *const kDynamicToolURL = @"URL";
     return self;
 }
 
-- (void)dealloc {
-    [_splitter release];
-    [_tools release];
-    [_proportions release];
-    [super dealloc];
-}
-
 #pragma mark - NSView
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
     [super resizeSubviewsWithOldSize:oldSize];
     _menuButton.frame = self.menuButtonFrame;
+    [self layoutNoToolsMessage];
+}
+
+- (void)layoutNoToolsMessage {
+    const NSRect bounds = self.bounds;
+    NSRect rect = bounds;
+    rect.size.width -= 8;
+    rect.origin.x = 4;
+    if (rect.size.width < 16) {
+        _noToolsMessage.frame = NSZeroRect;
+        return;
+    }
+    rect.size.height = [_noToolsMessage it_heightForWidth:rect.size.width];
+    rect.origin.y = 22 + (NSHeight(bounds) - NSHeight(rect) - 22) / 2;
+    if (rect.origin.y < 22 || NSMaxY(rect) > NSMaxY(bounds)) {
+        _noToolsMessage.frame = NSZeroRect;
+        return;
+    }
+    _noToolsMessage.frame = rect;
 }
 
 - (NSRect)menuButtonFrame {
@@ -377,7 +404,6 @@ static NSString *const kDynamicToolURL = @"URL";
         }
         [wrapper setDelegate:nil];
         [_tools removeObjectForKey:theName];
-        [[wrapper retain] autorelease];
         [wrapper removeToolSubviews];
         [wrapper removeFromSuperview];
     }
@@ -386,16 +412,24 @@ static NSString *const kDynamicToolURL = @"URL";
 - (void)toggleToolWithName:(NSString *)theName {
     iTermToolWrapper *wrapper = [_tools objectForKey:theName];
     if (wrapper) {
+        [self removeToolWithName:theName];
+    } else {
+        [self addToolWithName:theName];
+    }
+    [self forceSplitterSubviewsToRespectSizeConstraints];
+}
+
+- (void)removeToolWithName:(NSString *)theName {
+    iTermToolWrapper *wrapper = [_tools objectForKey:theName];
+    if (wrapper) {
         if ([wrapper.tool respondsToSelector:@selector(shutdown)]) {
             [[wrapper tool] shutdown];
         }
         [_tools removeObjectForKey:theName];
         [wrapper removeFromSuperview];
         [wrapper setDelegate:nil];
-    } else {
-        [self addToolWithName:theName];
+        _noToolsMessage.hidden = _splitter.subviews.count > 0;
     }
-    [self forceSplitterSubviewsToRespectSizeConstraints];
 }
 
 - (BOOL)showingToolWithName:(NSString *)theName {
@@ -473,25 +507,34 @@ static NSString *const kDynamicToolURL = @"URL";
     }
 }
 
-- (void)addTool:(NSView<ToolbeltTool> *)theTool toWrapper:(iTermToolWrapper *)wrapper {
-    [_splitter addSubview:wrapper];
+- (void)addTool:(NSView<ToolbeltTool> *)theTool toWrapper:(iTermToolWrapper *)wrapper index:(NSInteger)index {
+    if (index < 0 || index > _splitter.subviews.count) {
+        [_splitter addSubview:wrapper];
+    } else {
+        [_splitter insertSubview:wrapper atIndex:index];
+    }
     [wrapper.container addSubview:theTool];
 
     [wrapper setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
     [theTool setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
     [self adjustSubviews];
-    [_tools setObject:wrapper forKey:[[wrapper.name copy] autorelease]];
+    [_tools setObject:wrapper forKey:[wrapper.name copy]];
+    _noToolsMessage.hidden = _splitter.subviews.count > 0;
 }
 
 - (void)addToolWithName:(NSString *)toolName {
+    [self addToolWithName:toolName index:-1];
+}
+
+- (void)addToolWithName:(NSString *)toolName index:(NSInteger)index {
     if (![gRegisteredTools objectForKey:toolName]) {
         // User could have a plist from a future version with a tool that doesn't exist here.
         return;
     }
-    iTermToolWrapper *wrapper = [[[iTermToolWrapper alloc] initWithFrame:NSMakeRect(0,
+    iTermToolWrapper *wrapper = [[iTermToolWrapper alloc] initWithFrame:NSMakeRect(0,
                                                                           0,
                                                                           self.frame.size.width,
-                                                                          self.frame.size.height / MAX(1, [iTermToolbeltView numberOfVisibleTools ] - 1))] autorelease];
+                                                                          self.frame.size.height / MAX(1, [iTermToolbeltView numberOfVisibleToolsForProfileType:self.profileType] - 1))];
     wrapper.name = toolName;
     wrapper.delegate = self;
     Class c = [gRegisteredTools objectForKey:toolName];
@@ -511,13 +554,13 @@ static NSString *const kDynamicToolURL = @"URL";
             NSDictionary *attrs = registry[identifier];
             NSURL *url = [NSURL URLWithString:(attrs[kDynamicToolURL] ?: @"")];
             if (url && identifier) {
-                theTool = [[[c alloc] initWithFrame:frame URL:url identifier:identifier] autorelease];
+                theTool = [[c alloc] initWithFrame:frame URL:url identifier:identifier];
             }
         } else {
-            theTool = [[[c alloc] initWithFrame:frame] autorelease];
+            theTool = [[c alloc] initWithFrame:frame];
         }
         if (theTool) {
-            [self addTool:theTool toWrapper:wrapper];
+            [self addTool:theTool toWrapper:wrapper index:index];
         }
     }
 }
@@ -530,6 +573,34 @@ static NSString *const kDynamicToolURL = @"URL";
         return [c isDynamic];
     }
     return YES;
+}
+
+- (void)refreshTools {
+    [[self commandHistoryView] updateCommands];
+    [[self capturedOutputView] updateCapturedOutput];
+    [[self directoriesView] updateDirectories];
+    [[self jobsView] updateJobs];
+    [[self snippetsView] currentSessionDidChange];
+    [[self codeciergeView] currentSessionDidChange];
+    [[self namedMarksView] setNamedMarks:[self.delegate toolbeltNamedMarks]];
+    [self updateForProfileType];
+}
+
+- (void)updateForProfileType {
+    const ProfileType profileType = self.profileType;
+
+    NSArray<NSString *> *keysToRemove = [_tools.allKeys filteredArrayUsingBlock:^BOOL(NSString *key) {
+        iTermToolWrapper *wrapper = _tools[key];
+        return (([[wrapper.tool class] supportedProfileTypes] & profileType) == 0);
+    }];
+    for (NSString *key in keysToRemove) {
+        [self removeToolWithName:key];
+    }
+    [[iTermToolbeltView availableConfiguredToolsForProfileType:profileType] enumerateObjectsUsingBlock:^(NSString *key, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (_tools[key] == nil) {
+            [self addToolWithName:key index:idx];
+        }
+    }];
 }
 
 - (void)relayoutAllTools {
@@ -715,8 +786,15 @@ static NSString *const kDynamicToolURL = @"URL";
 }
 #pragma mark - PTYSplitViewDelegate
 
+- (ProfileType)profileType {
+    if (!self.delegate) {
+        return ProfileTypeTerminal;
+    }
+    return [self.delegate toolbeltProfileType];
+}
+
 - (NSDictionary *)proportions {
-    NSArray<NSString *> *names = [iTermToolbeltView configuredTools];
+    NSArray<NSString *> *names = [iTermToolbeltView availableConfiguredToolsForProfileType:self.profileType];
     NSArray<NSNumber *> *heights = [names mapWithBlock:^id(NSString *name) {
         return @(_tools[name].frame.size.height);
     }];
@@ -735,7 +813,6 @@ static NSString *const kDynamicToolURL = @"URL";
 }
 
 - (void)setProportions:(NSDictionary *)dict {
-    [_proportions release];
     _proportions = nil;
     if (!dict) {
         return;
@@ -745,7 +822,7 @@ static NSString *const kDynamicToolURL = @"URL";
         return;
     }
 
-    NSArray<NSString *> *names = [iTermToolbeltView configuredTools];
+    NSArray<NSString *> *names = [iTermToolbeltView availableConfiguredToolsForProfileType:self.profileType];
     NSArray<NSNumber *> *currentHeights = [names mapWithBlock:^id(NSString *name) {
         return @(_tools[name].frame.size.height);
     }];
@@ -818,14 +895,13 @@ static NSString *const kDynamicToolURL = @"URL";
         y += _splitter.dividerThickness;
     }
     [self adjustSubviews];
-    _proportions = [[self proportions] retain];
+    _proportions = [self proportions];
 }
 
 - (void)splitView:(PTYSplitView *)splitView
 draggingDidEndOfSplit:(int)clickedOnSplitterIndex
            pixels:(NSSize)changePx {
-    [_proportions release];
-    _proportions = [[self proportions] retain];
+    _proportions = [self proportions];
     [[NSUserDefaults standardUserDefaults] setObject:_proportions
                                               forKey:iTermToolbeltProportionsUserDefaultsKey];
 }

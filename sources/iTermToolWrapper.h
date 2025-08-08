@@ -9,6 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 #import "iTermKeyBindingAction.h"
+#import "ProfileModel.h"
 
 @class CapturedOutput;
 @class iTermAction;
@@ -50,6 +51,8 @@
 - (NSArray<NSString *> *)toolbeltSnippetTags;
 - (void)toolbeltMakeCurrentSessionFirstResponder;
 - (BOOL)toolbeltCurrentSessionIsBrowser;
+- (NSArray<id<iTermGenericNamedMarkReading>> *)toolbeltNamedMarks;
+- (ProfileType)toolbeltProfileType;
 
 @end
 
@@ -68,6 +71,7 @@
 @end
 
 @protocol ToolbeltTool <NSObject>
+@property(class, nonatomic, readonly) ProfileType supportedProfileTypes;
 - (CGFloat)minimumHeight;
 
 @optional

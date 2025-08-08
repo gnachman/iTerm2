@@ -3787,14 +3787,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)refreshTools {
-    [[_contentView.toolbelt commandHistoryView] updateCommands];
-    [[_contentView.toolbelt capturedOutputView] updateCapturedOutput];
-    [[_contentView.toolbelt directoriesView] updateDirectories];
-    [[_contentView.toolbelt jobsView] updateJobs];
-    [[_contentView.toolbelt snippetsView] currentSessionDidChange];
-    [[_contentView.toolbelt codeciergeView] currentSessionDidChange];
+    [_contentView.toolbelt refreshTools];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSnippetsTagsDidChange object:nil];
-    [self refreshNamedMarks];
 }
 
 - (void)refreshNamedMarks {
@@ -8793,10 +8787,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (self.autoCommandHistorySessionGuid) {
         [self hideAutoCommandHistory];
     }
-    [[_contentView.toolbelt commandHistoryView] updateCommands];
-    [[_contentView.toolbelt snippetsView] currentSessionDidChange];
+    [_contentView.toolbelt refreshTools];
+
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSnippetsTagsDidChange object:nil];
-    [[_contentView.toolbelt jobsView] updateJobs];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     if ([[PreferencePanel sessionsInstance] isWindowLoaded] && ![iTermAdvancedSettingsModel pinEditSession]) {
         [self editSession:self.currentSession makeKey:NO];
@@ -10613,7 +10606,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         return _contentView.shouldShowToolbelt;
     } else if ([item action] == @selector(toggleToolbeltVisibility:)) {
         [item setState:_contentView.shouldShowToolbelt ? NSControlStateValueOn : NSControlStateValueOff];
-        return [[iTermToolbeltView configuredTools] count] > 0;
+        return [[iTermToolbeltView availableConfiguredToolsForProfileType:self.currentSession.profile.profileType] count] > 0;
     } else if ([item action] == @selector(moveSessionToWindow:)) {
         result = ([[self allSessions] count] > 1);
     } else if ([item action] == @selector(moveSessionToTab:)) {
@@ -12136,6 +12129,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     return self.currentSession.isBrowserSession;
 }
 
+- (NSArray<id<iTermGenericNamedMarkReading>> *)toolbeltNamedMarks {
+    return self.currentSession.namedMarks;
+}
+
 - (pid_t)toolbeltCurrentShellProcessId {
     return self.currentSession.variablesScope.effectiveRootPid.intValue;
 }
@@ -12214,6 +12211,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 - (void)toolbeltMakeCurrentSessionFirstResponder {
     [[self window] makeFirstResponder:[[self currentSession] mainResponder]];
     [[self currentTab] recheckBlur];
+}
+
+- (ProfileType)toolbeltProfileType {
+    return self.currentSession.profile.profileType;
 }
 
 #pragma mark - Quick Look panel support

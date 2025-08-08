@@ -146,4 +146,11 @@
 - (void)popupWindowHostSetPreview:(NSString *)string {
 }
 
+- (CGFloat)it_heightForWidth:(CGFloat)width {
+    NSCell *cell = self.cell;
+    const NSRect bounds = NSMakeRect(0, 0, width, CGFLOAT_MAX);
+    const NSSize size = [cell cellSizeForBounds:bounds];
+    return ceil(size.height);
+}
+
 @end

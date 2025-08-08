@@ -485,6 +485,12 @@ static BOOL hasBecomeActive = NO;
     } else if (menuItem.action == @selector(replayRecordedKeys:)) {
         return iTermController.sharedInstance.currentTerminal != nil && [self pidForReplay] != 0;
 #endif
+    } else if (menuItem.action == @selector(toggleToolbeltTool:)) {
+        ProfileType profileType = [[[[[iTermController sharedInstance] currentTerminal] currentSession] profile] profileType];
+        if (profileType == 0) {
+            return NO;
+        }
+        return !!(menuItem.tag & profileType);
     } else {
         return YES;
     }
@@ -2346,9 +2352,6 @@ static iTermKeyEventReplayer *gReplayer;
 }
 
 - (IBAction)toggleToolbeltTool:(NSMenuItem *)menuItem {
-    if ([iTermToolbeltView numberOfVisibleTools] == 1 && [menuItem state] == NSControlStateValueOn) {
-        return;
-    }
     [iTermToolbeltView toggleShouldShowTool:[menuItem title]];
 }
 

@@ -36,6 +36,7 @@ NS_ASSUME_NONNULL_BEGIN
 // check).
 - (NSTextField *)replaceWithHyperlinkTo:(NSURL *)url;
 
+- (CGFloat)it_heightForWidth:(CGFloat)width;
 @end
 
 NS_ASSUME_NONNULL_END

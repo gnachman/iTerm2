@@ -13949,10 +13949,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)saveScrollPositionWithName:(NSString *)name {
-    if (@available(macOS 11, *)) {
-        if ([self isBrowserSession]) {
-            [_view.browserViewController addNamedMark:name];
-        }
+    if ([self isBrowserSession]) {
+        [_view.browserViewController addNamedMark:name];
         return;
     }
     DLog(@"saveScrollPositionWithName:%@", name);
@@ -20589,14 +20587,14 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     if (!self.delegate.realParentWindow.shouldShowToolbelt) {
         return NO;
     }
-    return [iTermToolbeltView shouldShowTool:kCapturedOutputToolName];
+    return [iTermToolbeltView shouldShowTool:kCapturedOutputToolName profileType:self.profile.profileType];
 }
 
 - (void)showCapturedOutputTool {
     if (!self.delegate.realParentWindow.shouldShowToolbelt) {
         [self.delegate.realParentWindow toggleToolbeltVisibility:nil];
     }
-    if (![iTermToolbeltView shouldShowTool:kCapturedOutputToolName]) {
+    if (![iTermToolbeltView shouldShowTool:kCapturedOutputToolName profileType:self.profile.profileType]) {
         [iTermToolbeltView toggleShouldShowTool:kCapturedOutputToolName];
     }
 }

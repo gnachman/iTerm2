@@ -138,6 +138,10 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
     return self;
 }
 
++ (ProfileType)supportedProfileTypes {
+    return ProfileTypeTerminal;
+}
+
 - (void)removeSelection {
     mark_ = nil;
     [tableView_ selectRowIndexes:[NSIndexSet indexSet] byExtendingSelection:NO];

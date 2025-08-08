@@ -40,7 +40,7 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
 
 @property(nonatomic, strong) NSString *key;
 @property(nonatomic) PreferenceInfoType type;
-@property(nonatomic, strong) NSControl *control;
+@property(nonatomic, strong) NSView *control;
 @property(nonatomic) NSRange range;  // For integer fields, the range of legal values.
 @property(nonatomic, readonly) NSArray<NSString *> *searchKeywords;
 @property(nonatomic, strong) NSStepper *associatedStepper;
@@ -101,7 +101,7 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
 
 + (instancetype)infoForPreferenceWithKey:(NSString *)key
                                     type:(PreferenceInfoType)type
-                                 control:(NSControl *)control;
+                                 control:(NSView *)control;
 
 - (void)addShouldBeEnabledDependencyOnUserDefault:(NSString *)key
                                        controller:(id<PreferenceController>)controller;

@@ -106,7 +106,6 @@ extension HighlightBrowserTrigger: BrowserTrigger {
             return []
         }
         let colors = self.colors
-        let regex = contentRegex
         let scheduler = client.scopeProvider.triggerCallbackScheduler()
         paramWithBackreferencesReplaced(withValues: urlCaptures + (contentCaptures ?? []),
                                         absLine: -1,

@@ -16,7 +16,7 @@
 
 + (instancetype)infoForPreferenceWithKey:(NSString *)key
                                     type:(PreferenceInfoType)type
-                                 control:(NSControl *)control {
+                                 control:(NSView *)control {
     PreferenceInfo *info = [[self alloc] init];
     info.key = key;
     info.type = type;

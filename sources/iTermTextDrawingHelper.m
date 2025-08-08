@@ -1072,7 +1072,6 @@ const CGFloat commandRegionOutlineThickness = 2.0;
 }
 
 - (void)drawAccessoriesInRect:(NSRect)bgRect virtualOffset:(CGFloat)virtualOffset {
-    const VT100GridCoordRange coordRange = [self safeCoordRange:[self coordRangeForRect:bgRect]];
     [self drawBadgeInRect:bgRect
                   margins:self.badgeMargins
             virtualOffset:virtualOffset];

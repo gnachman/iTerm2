@@ -836,7 +836,9 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
 
 - (void)updateEnabledStateForInfo:(PreferenceInfo *)info {
     if (info.shouldBeEnabled) {
-        [info.control setEnabled:info.shouldBeEnabled()];
+        if ([info.control respondsToSelector:@selector(setEnabled:)]) {
+            [(id)info.control setEnabled:info.shouldBeEnabled()];
+        }
     }
 }
 
