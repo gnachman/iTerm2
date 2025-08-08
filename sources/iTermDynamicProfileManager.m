@@ -456,6 +456,9 @@
     }
 
     for (Profile *profile in allProfiles) {
+        if (![iTermAdvancedSettingsModel browserProfiles] && [profile profileType] == ProfileTypeBrowser) {
+            continue;
+        }
         if ([guids containsObject:profile[KEY_GUID]]) {
             [self reportError:[NSString stringWithFormat:@"Two dynamic profiles have the same Guid: %@", profile[KEY_GUID]]
                          file:filename];

@@ -26,6 +26,7 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermProfileModelJournal.h"
 #import "iTermProfileSearchToken.h"
 #import "NSArray+iTerm.h"
@@ -700,6 +701,9 @@ static NSMutableArray<NSString *> *_combinedLog;
 - (void)load:(NSArray *)prefs {
     [bookmarks_ removeAllObjects];
     for (Profile *profile in prefs) {
+        if (![iTermAdvancedSettingsModel browserProfiles] && [profile profileType] == ProfileTypeBrowser) {
+            continue;
+        }
         NSArray *tags = profile[KEY_TAGS];
         if (![tags containsObject:@"bonjour"]) {
             [self addBookmark:profile];

@@ -3020,6 +3020,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     _sshState = ssh ? iTermSSHStateProfile : iTermSSHStateNone;
     if (@available(macOS 11, *)) {
         if (browser) {
+            if (![iTermAdvancedSettingsModel browserProfiles]) {
+                DLog(@"Declining to enter browser mode because advanced setting is off");
+                completion(NO);
+                return;
+            }
             [self becomeBrowserWithConfiguration:webViewConfiguration
                                  restorableState:_savedBrowserState];
             [_savedBrowserState release];
