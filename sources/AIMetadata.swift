@@ -112,6 +112,7 @@ class AIMetadata: NSObject {
     }
 
     static var recommendedOpenAIModel: Model {
+        // TOOD: When gpt-5 doesn't require identification for streaming switch this over
         return AIMetadata.gpt4_1
     }
 
@@ -131,6 +132,33 @@ class AIMetadata: NSObject {
         return AIMetadata.claude_4_sonnet
     }
 
+    private static let gpt5 = Model(
+        name: "gpt-5",
+        contextWindowTokens: 400_000,
+        maxResponseTokens: 128_000,
+        url: "https://api.openai.com/v1/responses",
+        api: .responses,
+        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
+        vectorStoreConfig: .openAI
+    )
+    private static let gpt5_mini = Model(
+        name: "gpt-5-mini",
+        contextWindowTokens: 400_000,
+        maxResponseTokens: 128_000,
+        url: "https://api.openai.com/v1/responses",
+        api: .responses,
+        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
+        vectorStoreConfig: .openAI
+    )
+    private static let gpt5_nano = Model(
+        name: "gpt-5-nano",
+        contextWindowTokens: 400_000,
+        maxResponseTokens: 128_000,
+        url: "https://api.openai.com/v1/responses",
+        api: .responses,
+        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
+        vectorStoreConfig: .openAI
+    )
     private static let gpt4_1 = Model(
         name: "gpt-4.1",
         contextWindowTokens: 1_000_000,
@@ -185,6 +213,9 @@ class AIMetadata: NSObject {
     )
     private let models: [Model] = [
         // The first model will be the default.
+        AIMetadata.gpt5,
+        AIMetadata.gpt5_mini,
+        AIMetadata.gpt5_nano,
         AIMetadata.gpt4_1,
         Model(
             name: "gpt-4o",
