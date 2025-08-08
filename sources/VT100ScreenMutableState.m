@@ -2729,11 +2729,18 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     self.shouldExpectPromptMarks = YES;
 }
 
+// If a new mark was created, return it. If a screen mark already exists at that line return nil.
 - (VT100ScreenMark *)setPromptStartLine:(int)line detectedByTrigger:(BOOL)detectedByTrigger {
     DLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine.", line);
+    const long long lastPromptLine = (long long)line + self.cumulativeScrollbackOverflow;
+    // There might already be a prompt-start mark here if the shell sends both an OSC 7 URL and final term control sequences.
+    VT100ScreenMark *existing = [VT100ScreenMark castFrom:self.markCache[lastPromptLine]];
+    if (existing != nil && existing.isPrompt) {
+        DLog(@"There is already a mark at line %lld: %@", lastPromptLine, existing);
+        return nil;
+    }
     // Reset this in case it's taking the "real" shell integration path.
     self.fakePromptDetectedAbsLine = -1;
-    const long long lastPromptLine = (long long)line + self.cumulativeScrollbackOverflow;
     self.lastPromptLine = lastPromptLine;
     [self assignCurrentCommandEndDate];
     VT100ScreenMark *mark = (VT100ScreenMark *)[self addMarkOnLine:line ofClass:[VT100ScreenMark class]];
