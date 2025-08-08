@@ -3,6 +3,15 @@ import AVFoundation
 import Carbon
 import Cocoa
 
+class WindowClosingAVPlayerView: AVPlayerView {
+    override func keyDown(with event: NSEvent) {
+        if event.keyCode == kVK_Escape {
+            self.window?.orderOut(nil)
+        } else {
+            super.keyDown(with: event)
+        }
+    }
+}
 
 class VideoPlaybackWindowController: NSWindowController, NSMenuItemValidation {
     private var player: AVPlayer?
@@ -71,7 +80,7 @@ class VideoPlaybackWindowController: NSWindowController, NSMenuItemValidation {
         let contentView = NSView()
         window.contentView = contentView
         
-        playerView = AVPlayerView()
+        playerView = WindowClosingAVPlayerView()
         playerView.translatesAutoresizingMaskIntoConstraints = false
         playerView.controlsStyle = .none
         playerView.isHidden = true
@@ -254,19 +263,10 @@ class VideoPlaybackWindowController: NSWindowController, NSMenuItemValidation {
             self?.updateUI(currentTime: time)
         }
     }
-    
+
+
     private func setupKeyHandling() {
         window?.acceptsMouseMovedEvents = true
-        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event -> NSEvent? in
-            if event.keyCode == kVK_Escape {
-                self?.window?.orderOut(nil)
-                return nil
-            } else if event.keyCode == kVK_Space {
-                self?.handleSpacebarPress()
-                return nil
-            }
-            return event
-        }
     }
     
     private func getVideoDuration() -> Double? {
@@ -389,30 +389,6 @@ class VideoPlaybackWindowController: NSWindowController, NSMenuItemValidation {
             }
         }
     }
-    
-    private func handleSpacebarPress() {
-        guard let player = player,
-              let duration = getVideoDuration() else { return }
-        
-        // If currently playing (forward or backward), pause
-        if player.rate != 0 {
-            player.pause()
-            return
-        }
-        
-        // If paused, determine direction based on position
-        let currentTime = CMTimeGetSeconds(player.currentTime())
-        let isAtEnd = abs(currentTime - duration) < 0.01
-        
-        if isAtEnd {
-            // At the end, play backward
-            player.rate = -1.0
-        } else {
-            // Not at end, play forward
-            player.play()
-        }
-    }
-    
     
     private func updateDurationDisplay() {
         guard let playerItem = player?.currentItem else { return }
