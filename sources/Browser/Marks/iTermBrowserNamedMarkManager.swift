@@ -363,7 +363,7 @@ extension iTermBrowserNamedMarkManager {
                     var significantScroll = Math.abs(currentScrollY - lastScrollY) > 100;
                     
                     if (widthChanged || heightChanged || significantScroll) {
-                        console.log('Layout change detected, updating marks');
+                        console.debug('Layout change detected, updating marks');
                         try {
                             window.webkit.messageHandlers.iTerm2MarkLayoutUpdate.postMessage({
                                 type: 'layoutChange',
@@ -372,7 +372,7 @@ extension iTermBrowserNamedMarkManager {
                                 scrollY: currentScrollY
                             });
                         } catch (error) {
-                            console.log('Error sending layout update:', error.toString(), error);
+                            console.debug('Error sending layout update:', error.toString(), error);
                         }
                         
                         lastViewportWidth = currentWidth;
@@ -412,7 +412,7 @@ extension iTermBrowserNamedMarkManager {
                     }
                     
                     if (significantChange) {
-                        console.log('Significant DOM change detected');
+                        console.debug('Significant DOM change detected');
                         scheduleMarkUpdate();
                     }
                 });
@@ -423,7 +423,7 @@ extension iTermBrowserNamedMarkManager {
                 });
             }
             
-            console.log('Mark layout monitoring initialized');
+            console.debug('Mark layout monitoring initialized');
         })();
         """
         
