@@ -50,6 +50,7 @@ typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
     NSControlTextEditingDelegate,
     NSWindowDelegate,
     NSMenuItemValidation>
+@property (nonatomic, class, strong) NSArray<NSString *> *cachedCombinedAccountNames;
 @end
 
 @implementation iTermPasswordManagerWindowController {
@@ -88,35 +89,43 @@ typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
     NSInteger _cancelCount;
     BOOL _awakeFromNibAvailabilityCheckFailed;
     iTermPasswordManagerReload _reloadPolicy;
+
+    @protected
+    IBOutlet NSMenu *_searchFieldMenu;
+    IBOutlet NSMenuItem *_probeMenuItem;
+    IBOutlet NSMenuItem *_sendReturnMenuItem;
+    IBOutlet NSMenuItem *_separatorMenuItem;
 }
 
-static NSArray<NSString *> *gCachedCombinedAccountNames;
-
+static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 + (NSArray<NSString *> *)cachedCombinedAccountNames {
-    return gCachedCombinedAccountNames;
-}
-
-+ (void)updateCombinedAccountNamesCache {
-    const BOOL wait = (gCachedCombinedAccountNames == nil);
-    dispatch_group_t group = dispatch_group_create();
-    dispatch_group_enter(group);
-    [self fetchAccountsWithCompletion:^(NSArray<NSString *> *names) {}];
-    if (wait) {
-        dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)));
-    }
+    return gTerminalCachedCombinedAccountNames;
 }
 
 + (void)setCachedCombinedAccountNames:(NSArray<NSString *> *)names {
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        gCachedCombinedAccountNames = @[];
-    });
-    gCachedCombinedAccountNames = names;
+    gTerminalCachedCombinedAccountNames = names;
+    // Note the browser subclass does not post this because we don't need it yet.
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermPasswordManagerDidLoadAccounts object:nil];
 }
 
++ (iTermPasswordManagerDataSourceProvider *)dataSourceProvider {
+    return [iTermPasswordManagerDataSourceProvider forTerminal];
+}
+
+- (iTermPasswordManagerDataSourceProvider *)dataSourceProvider {
+    return [iTermPasswordManagerDataSourceProvider forTerminal];
+}
+
++ (id<PasswordManagerDataSource>)dataSource {
+    return [self.dataSourceProvider dataSource];
+}
+
+- (id<PasswordManagerDataSource>)dataSource {
+    return [self.dataSourceProvider dataSource];
+}
+
 + (void)fetchAccountsWithCompletion:(void (^)(NSArray<id<PasswordManagerAccount>> *))completion {
-    [[iTermPasswordManagerDataSourceProvider dataSource] fetchAccounts:^(NSArray<id<PasswordManagerAccount>> * _Nonnull accounts) {
+    [[self dataSource] fetchAccounts:^(NSArray<id<PasswordManagerAccount>> * _Nonnull accounts) {
         // Sort accounts
         NSArray<id<PasswordManagerAccount>> *result =
         [accounts sortedArrayUsingComparator:^NSComparisonResult(id<PasswordManagerAccount> _Nonnull obj1,
@@ -143,7 +152,7 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
     self = [self initWithWindowNibName:@"iTermPasswordManager"];
     if (self) {
         [self authenticate];
-        [[iTermPasswordManagerDataSourceProvider dataSource] resetErrors];
+        [[[self class] dataSource] resetErrors];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(reloadAccountsNotification:)
                                                      name:kPasswordManagersShouldReloadData
@@ -169,7 +178,7 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 
     _broadcastButton.state = NSControlStateValueOff;
     [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
-    if (iTermPasswordManagerDataSourceProvider.authenticated &&
+    if ([[self.class dataSourceProvider] authenticated] &&
         ![self.currentDataSource checkAvailability]) {
         _awakeFromNibAvailabilityCheckFailed = YES;
         [self dataSourceDidBecomeUnavailable];
@@ -292,7 +301,7 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)notification {
-    if (iTermPasswordManagerDataSourceProvider.authenticated) {
+    if (self.dataSourceProvider.authenticated) {
         [[self window] makeFirstResponder:_searchField];
     }
 }
@@ -363,7 +372,7 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
         [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index]
                 byExtendingSelection:NO];
         [_tableView scrollRowToVisible:index];
-    } else if (!iTermPasswordManagerDataSourceProvider.authenticated) {
+    } else if (!self.dataSourceProvider.authenticated) {
         DLog(@"set _accountNameToSelectAfterAuthentication to %@", name);
         _accountNameToSelectAfterAuthentication = [name copy];
     } else {
@@ -376,7 +385,7 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 #pragma mark - Keychain
 
 - (void)updateConfiguration {
-    if (iTermPasswordManagerDataSourceProvider.authenticated) {
+    if (self.dataSourceProvider.authenticated) {
         [self reloadAccounts:^{}];
     }
 }
@@ -417,7 +426,7 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 }
 
 - (IBAction)reloadItems:(id)sender {
-    if (!iTermPasswordManagerDataSourceProvider.authenticated) {
+    if (!self.dataSourceProvider.authenticated) {
         return;
     }
     __weak __typeof(self) weakSelf = self;
@@ -431,7 +440,7 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 }
 
 - (IBAction)reloadItemsWithCompletion:(void (^)(void))completion {
-    if (!iTermPasswordManagerDataSourceProvider.authenticated) {
+    if (!self.dataSourceProvider.authenticated) {
         completion();
         return;
     }
@@ -446,13 +455,13 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 }
 
 - (IBAction)useKeychain:(id)sender {
-    [iTermPasswordManagerDataSourceProvider enableKeychain];
+    [self.dataSourceProvider enableKeychain];
     [self update];
     [self updateConfiguration];
 }
 
 - (IBAction)use1Password:(id)sender {
-    [iTermPasswordManagerDataSourceProvider enable1Password];
+    [self.dataSourceProvider enable1Password];
     [self.currentDataSource resetErrors];
     if (![self.currentDataSource checkAvailability]) {
         [self useKeychain:nil];
@@ -462,7 +471,7 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 }
 
 - (IBAction)useLastPass:(id)sender {
-    [iTermPasswordManagerDataSourceProvider enableLastPass];
+    [self.dataSourceProvider enableLastPass];
     [self.currentDataSource resetErrors];
     if (![self.currentDataSource checkAvailability]) {
         [self useKeychain:nil];
@@ -496,7 +505,7 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 }
 
 - (IBAction)add:(id)sender {
-    if (!iTermPasswordManagerDataSourceProvider.authenticated) {
+    if (!self.dataSourceProvider.authenticated) {
         return;
     }
     _newAccountOkButton.enabled = NO;
@@ -568,7 +577,7 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 }
 
 - (IBAction)remove:(id)sender {
-    if (iTermPasswordManagerDataSourceProvider.authenticated) {
+    if (self.dataSourceProvider.authenticated) {
         NSInteger selectedRow = [_tableView selectedRow];
         if (selectedRow < 0 || selectedRow >= _entries.count) {
             return;
@@ -755,7 +764,7 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 
 
 - (IBAction)appendOTP:(id)sender {
-    if (!iTermPasswordManagerDataSourceProvider.authenticated) {
+    if (!self.dataSourceProvider.authenticated) {
         return;
     }
     id<PasswordManagerAccount> account = [self clickedAccount];
@@ -851,7 +860,7 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
-    if (!iTermPasswordManagerDataSourceProvider.authenticated) {
+    if (!self.dataSourceProvider.authenticated) {
         return NO;
     }
     if (menuItem.action == @selector(toggleRequireAuthenticationAfterScreenLocks:)) {
@@ -866,11 +875,11 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
     } else if (menuItem.action == @selector(toggleProbe:)) {
         menuItem.state = self.shouldProbe ? NSControlStateValueOn : NSControlStateValueOff;
     } else if (menuItem.action == @selector(useKeychain:)) {
-        menuItem.state = iTermPasswordManagerDataSourceProvider.keychainEnabled ? NSControlStateValueOn : NSControlStateValueOff;
+        menuItem.state = self.dataSourceProvider.keychainEnabled ? NSControlStateValueOn : NSControlStateValueOff;
     } else if (menuItem.action == @selector(use1Password:)) {
-        menuItem.state = iTermPasswordManagerDataSourceProvider.onePasswordEnabled ? NSControlStateValueOn : NSControlStateValueOff;
+        menuItem.state = self.dataSourceProvider.onePasswordEnabled ? NSControlStateValueOn : NSControlStateValueOff;
     } else if (menuItem.action == @selector(useLastPass:)) {
-        menuItem.state = iTermPasswordManagerDataSourceProvider.lastPassEnabled ? NSControlStateValueOn : NSControlStateValueOff;
+        menuItem.state = self.dataSourceProvider.lastPassEnabled ? NSControlStateValueOn : NSControlStateValueOff;
     } else if (menuItem.action == @selector(editAccountName:) ||
                menuItem.action == @selector(editUserName:) ||
                menuItem.action == @selector(copyPassword:) ||
@@ -914,7 +923,7 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 
 + (void)staticScreenDidLock:(NSNotification *)notification {
     if ([iTermUserDefaults requireAuthenticationAfterScreenLocks]) {
-        [iTermPasswordManagerDataSourceProvider revokeAuthentication];
+        [self.dataSourceProvider revokeAuthentication];
     }
 }
 
@@ -931,18 +940,18 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 #pragma mark - Private
 
 - (id<PasswordManagerDataSource>)currentDataSource {
-    return iTermPasswordManagerDataSourceProvider.dataSource;
+    return self.class.dataSource;
 }
 
 - (void)authenticate {
     DLog(@"Request auth if possible");
-    if (iTermPasswordManagerDataSourceProvider.authenticated) {
+    if (self.dataSourceProvider.authenticated) {
         DLog(@"Already authenticated");
         return;
     }
 
     __weak __typeof(self) weakSelf = self;
-    [iTermPasswordManagerDataSourceProvider requestAuthenticationIfNeeded:^(BOOL authenticated) {
+    [self.dataSourceProvider requestAuthenticationIfNeeded:^(BOOL authenticated) {
         [weakSelf authenticationDidComplete:authenticated];
     }];
 }
@@ -997,7 +1006,7 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 
 - (void)fetchPasswordForRow:(NSInteger)index completion:(void (^)(NSString *password, NSString *otp))completion {
     DLog(@"row=%@", @(index));
-    if (!iTermPasswordManagerDataSourceProvider.authenticated) {
+    if (!self.dataSourceProvider.authenticated) {
         DLog(@"passwordForRow: return nil, not authenticated");
         completion(nil, nil);
         return;
@@ -1046,7 +1055,7 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 
 - (NSString *)selectedUserName {
     DLog(@"selectedUserName");
-    if (!iTermPasswordManagerDataSourceProvider.authenticated) {
+    if (!self.dataSourceProvider.authenticated) {
         DLog(@"selectedUserName: return nil, not authenticated");
         return nil;
     }
@@ -1130,7 +1139,7 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
     }
 
     NSString *filter = [_searchField stringValue];
-    if (iTermPasswordManagerDataSourceProvider.authenticated) {
+    if (self.dataSourceProvider.authenticated) {
         __weak __typeof(self) weakSelf = self;
         const NSInteger cancelCount = [self incrBusy];
         [self.class fetchAccountsWithCompletion:^(NSArray<id<PasswordManagerAccount>> *accounts) {
@@ -1149,7 +1158,7 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 - (void)consolidateReloads:(void (^ NS_NOESCAPE)(void))block {
     const iTermPasswordManagerReload saved = _reloadPolicy;
     _reloadPolicy = iTermPasswordManagerReloadOnce;
-    [iTermPasswordManagerDataSourceProvider consolidateAvailabilityChecks:^{
+    [self.dataSourceProvider consolidateAvailabilityChecks:^{
         block();
     }];
     _reloadPolicy = saved;
@@ -1219,7 +1228,7 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
    setObjectValue:(id)anObject
    forTableColumn:(NSTableColumn *)aTableColumn
               row:(NSInteger)rowIndex {
-    if (!iTermPasswordManagerDataSourceProvider.authenticated) {
+    if (!self.dataSourceProvider.authenticated) {
         return;
     }
     if (rowIndex < 0 || rowIndex >= _entries.count) {
@@ -1372,3 +1381,36 @@ dataCellForTableColumn:(NSTableColumn *)tableColumn
 }
 
 @end
+
+@implementation iTermBrowserPasswordManagerWindowController
+static NSArray<NSString *> *gBrowserCachedCombinedAccountNames;
++ (NSArray<NSString *> *)cachedCombinedAccountNames {
+    return gBrowserCachedCombinedAccountNames;
+}
+
++ (void)setCachedCombinedAccountNames:(NSArray<NSString *> *)names {
+    gBrowserCachedCombinedAccountNames = names;
+}
+
++ (id<PasswordManagerDataSource>)dataSource {
+    return [self.dataSourceProvider dataSource];
+}
++ (iTermPasswordManagerDataSourceProvider *)dataSourceProvider {
+    return [iTermPasswordManagerDataSourceProvider forBrowser];
+}
+- (id<PasswordManagerDataSource>)dataSource {
+    return [self.dataSourceProvider dataSource];
+}
+- (iTermPasswordManagerDataSourceProvider *)dataSourceProvider {
+    return [iTermPasswordManagerDataSourceProvider forBrowser];
+}
+
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    [_searchFieldMenu removeItem:_probeMenuItem];
+    [_searchFieldMenu removeItem:_sendReturnMenuItem];
+    [_searchFieldMenu removeItem:_separatorMenuItem];
+}
+
+@end
+

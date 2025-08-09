@@ -7612,12 +7612,17 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return;
     }
     // It would be a shame to send a focus report to a password prompt.
-    [(session ?: self.currentSession) performBlockWithoutFocusReporting:^{
+    PTYSession *effectiveSession = session ?: self.currentSession;
+    [effectiveSession performBlockWithoutFocusReporting:^{
         [session reveal];
         DLog(@"Show the password manager as a sheet");
         _passwordManagerWindowController.delegate = nil;
         [_passwordManagerWindowController autorelease];
-        _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];
+        if (effectiveSession.isBrowserSession) {
+            _passwordManagerWindowController = [[iTermBrowserPasswordManagerWindowController alloc] init];
+        } else {
+            _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];
+        }
         _passwordManagerWindowController.sendUserByDefault = forUser;
         _passwordManagerWindowController.didSendUserName = didSendUserName;
         _passwordManagerWindowController.delegate = self;

@@ -7,8 +7,6 @@
 
 import AppKit
 
-fileprivate let serviceName = "iTerm2"
-
 // Used to store account name in label and username in account. That was a mistake.
 // Now it stores username and account name in accountName and account name in label (just for looks in keychain access)
 fileprivate class ModernKeychainAccount: NSObject, PasswordManagerAccount {
@@ -19,15 +17,18 @@ fileprivate class ModernKeychainAccount: NSObject, PasswordManagerAccount {
     let userName: String
     private var keychainAccountName: String
     private var defective: Bool
+    private let serviceName: String
 
-    fileprivate init(accountName: String, userName: String) {
+    fileprivate init(serviceName: String, accountName: String, userName: String) {
+        self.serviceName = serviceName
         self.accountName = accountName
         self.userName = userName
         defective = false
         keychainAccountName = accountName + accountNameUserNameSeparator + userName
     }
 
-    fileprivate init?(_ dict: NSDictionary) {
+    fileprivate init?(serviceName: String, _ dict: NSDictionary) {
+        self.serviceName = serviceName
         if let combinedAccountName = dict[kSecAttrAccount] as? String {
             if let range = combinedAccountName.range(of: accountNameUserNameSeparator) {
                 accountName = String(combinedAccountName[..<range.lowerBound])
@@ -133,8 +134,9 @@ fileprivate class LegacyKeychainAccount: NSObject, PasswordManagerAccount {
     let accountName: String
     let userName: String
     private let keychainAccountName: String
-
-    fileprivate init?(_ dict: NSDictionary) {
+    private let serviceName: String
+    fileprivate init?(serviceName: String, _ dict: NSDictionary) {
+        self.serviceName = serviceName
         if let combinedAccountName = dict[kSecAttrAccount] as? String,
             dict[kSecAttrLabel] as? String == "iTerm2" {
             if let range = combinedAccountName.range(of: accountNameUserNameSeparator) {
@@ -211,7 +213,17 @@ fileprivate class LegacyKeychainAccount: NSObject, PasswordManagerAccount {
 
 class KeychainPasswordDataSource: NSObject, PasswordManagerDataSource {
     private var openPanel: NSOpenPanel?
-    private static let keychain = KeychainPasswordDataSource()
+    private let browser: Bool
+    private var serviceName: String {
+        if browser {
+            "iTerm2-Browser"
+        } else {
+            "iTerm2"
+        }
+    }
+    init(browser: Bool) {
+        self.browser = browser
+    }
 
     func fetchAccounts(_ completion: @escaping ([PasswordManagerAccount]) -> ()) {
         completion(self.accounts)
@@ -222,7 +234,9 @@ class KeychainPasswordDataSource: NSObject, PasswordManagerDataSource {
     }
 
     func add(userName: String, accountName: String, password: String, completion: (PasswordManagerAccount?, Error?) -> ()) {
-        let account = ModernKeychainAccount(accountName: accountName, userName: userName)
+        let account = ModernKeychainAccount(serviceName: serviceName,
+                                            accountName: accountName,
+                                            userName: userName)
         account.set(password: password) { error in
             if let error = error {
                 completion(nil, error)
@@ -241,7 +255,7 @@ class KeychainPasswordDataSource: NSObject, PasswordManagerDataSource {
             return []
         }
         return dicts.compactMap {
-            LegacyKeychainAccount($0) ?? ModernKeychainAccount($0)
+            LegacyKeychainAccount(serviceName: serviceName, $0) ?? ModernKeychainAccount(serviceName: serviceName, $0)
         }
     }
 

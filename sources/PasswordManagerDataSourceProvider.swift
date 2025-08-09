@@ -10,13 +10,18 @@ import LocalAuthentication
 
 @objc(iTermPasswordManagerDataSourceProvider)
 class PasswordManagerDataSourceProvider: NSObject {
-    @objc private(set) static var authenticated = false
-    private static var _dataSource: PasswordManagerDataSource? = nil
-    private static var dataSourceType: DataSource = preferredDataSource
-    private static let _keychain = KeychainPasswordDataSource()
-    private static var _onePassword = OnePasswordDataSource()
-    private static var _lastPass = LastPassDataSource()
-    private static let dataSourceNameUserDefaultsKey = "NoSyncPasswordManagerDataSourceName"
+    @objc static let forTerminal = PasswordManagerDataSourceProvider(browser: false)
+    @objc static let forBrowser = PasswordManagerDataSourceProvider(browser: true)
+    @objc private(set) var authenticated = false
+    private var _dataSource: PasswordManagerDataSource? = nil
+    private var dataSourceType: DataSource!
+    private let _keychain: KeychainPasswordDataSource
+    private var _onePassword: OnePasswordDataSource
+    private var _lastPass: LastPassDataSource
+    private let browser: Bool
+    private var dataSourceNameUserDefaultsKey: String {
+        "NoSyncPasswordManagerDataSourceName" + (browser ? "Browser" : "")
+    }
 
     enum DataSource: String {
         case keychain = "Keychain"
@@ -26,7 +31,18 @@ class PasswordManagerDataSourceProvider: NSObject {
         static let defaultValue = DataSource.keychain
     }
 
-    static var preferredDataSource: DataSource {
+    init(browser: Bool) {
+        _keychain = KeychainPasswordDataSource(browser: browser)
+        _onePassword = OnePasswordDataSource(browser: browser)
+        _lastPass = LastPassDataSource(browser: browser)
+        self.browser = browser
+
+        super.init()
+
+        dataSourceType = preferredDataSource
+    }
+
+    var preferredDataSource: DataSource {
         get {
             let rawValue = UserDefaults.standard.string(forKey: dataSourceNameUserDefaultsKey) ?? ""
             return DataSource(rawValue: rawValue) ?? DataSource.defaultValue
@@ -37,7 +53,7 @@ class PasswordManagerDataSourceProvider: NSObject {
         }
     }
 
-    @objc static var dataSource: PasswordManagerDataSource? {
+    @objc var dataSource: PasswordManagerDataSource? {
         guard authenticated else {
             return nil
         }
@@ -58,56 +74,56 @@ class PasswordManagerDataSourceProvider: NSObject {
         return existing
     }
 
-    @objc static func enableKeychain() {
+    @objc func enableKeychain() {
         preferredDataSource = .keychain
     }
 
-    @objc static var keychainEnabled: Bool {
+    @objc var keychainEnabled: Bool {
         return preferredDataSource == .keychain
     }
 
-    @objc static func enable1Password() {
+    @objc func enable1Password() {
         preferredDataSource = .onePassword
     }
 
-    @objc static var onePasswordEnabled: Bool {
+    @objc var onePasswordEnabled: Bool {
         return preferredDataSource == .onePassword
     }
 
-    @objc static func enableLastPass() {
+    @objc func enableLastPass() {
         preferredDataSource = .lastPass
     }
 
-    @objc static var lastPassEnabled: Bool {
+    @objc var lastPassEnabled: Bool {
         return preferredDataSource == .lastPass
     }
 
-    @objc static var keychain: PasswordManagerDataSource? {
+    @objc var keychain: PasswordManagerDataSource? {
         if !authenticated {
             return nil
         }
         return _keychain
     }
 
-    private static var onePassword: OnePasswordDataSource? {
+    private var onePassword: OnePasswordDataSource? {
         if !authenticated {
             return nil
         }
         return _onePassword
     }
 
-    private static var lastPass: LastPassDataSource? {
+    private var lastPass: LastPassDataSource? {
         if !authenticated {
             return nil
         }
         return _lastPass
     }
 
-    @objc static func revokeAuthentication() {
+    @objc func revokeAuthentication() {
         authenticated = false
     }
 
-    @objc static func requestAuthenticationIfNeeded(_ completion: @escaping (Bool) -> ()) {
+    @objc func requestAuthenticationIfNeeded(_ completion: @escaping (Bool) -> ()) {
         if authenticated {
             completion(true)
             return
@@ -131,13 +147,13 @@ class PasswordManagerDataSourceProvider: NSObject {
             DispatchQueue.main.async {
                 iTermApplication.shared().localAuthenticationDialogOpen = false
                 if success {
-                    Self.authenticated = true
+                    self.authenticated = true
                     completion(true)
                 } else {
-                    Self.authenticated = false
+                    self.authenticated = false
                     if let error = error as NSError?, (error.code != LAError.systemCancel.rawValue &&
                                                        error.code != LAError.appCancel.rawValue) {
-                        showError(error)
+                        self.showError(error)
                     }
                     completion(false)
                 }
@@ -145,7 +161,7 @@ class PasswordManagerDataSourceProvider: NSObject {
         }
     }
 
-    @objc static func consolidateAvailabilityChecks(_ block: () -> ()) {
+    @objc func consolidateAvailabilityChecks(_ block: () -> ()) {
         if let dataSource = dataSource {
             dataSource.consolidateAvailabilityChecks(block)
             return
@@ -153,7 +169,7 @@ class PasswordManagerDataSourceProvider: NSObject {
         block()
     }
 
-    private static func showError(_ error: NSError) {
+    private func showError(_ error: NSError) {
         let alert = NSAlert()
         let reason: String
         switch LAError.Code(rawValue: error.code) {
