@@ -510,6 +510,10 @@
           description="Index of tab in parent tab view control">
         <cocoa key="indexOfTab" />
       </property>
+
+      <property name="title" code="titl" type="text">
+        <cocoa key="title" />
+      </property>
     </class>
 
     <class name="session" code="Trms" description="A terminal session">

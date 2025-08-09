@@ -40,6 +40,8 @@
     return [self sessions];
   } else if ([key isEqualToString:@"indexOfTab"]) {
     return [self indexOfTab];
+  } else if ([key isEqualToString:@"title"]) {
+    return [self title];
   } else {
     return nil;
   }

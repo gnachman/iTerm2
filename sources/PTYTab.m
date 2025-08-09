@@ -5516,6 +5516,10 @@ typedef struct {
     return _tabTitleOverrideSwiftyString.swiftyString;
 }
 
+- (NSString *)title {
+    return self.variablesScope.title;
+}
+
 #pragma mark NSSplitView delegate methods
 
 - (void)splitViewDidChangeSubviews:(PTYSplitView *)splitView {
