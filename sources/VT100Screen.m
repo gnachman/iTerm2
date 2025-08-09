@@ -626,6 +626,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (SCPPath *)scpPathForFile:(NSString *)filename onLine:(int)line {
     DLog(@"Figuring out path for %@ on line %d", filename, line);
     id<VT100RemoteHostReading> remoteHost = [self remoteHostOnLine:line];
+    DLog(@"Remote host is %@", remoteHost);
     if (!remoteHost.username || !remoteHost.hostname) {
         DLog(@"nil username or hostname; return nil");
         return nil;
@@ -647,6 +648,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         DLog(@"Use working directory of %@", workingDirectory);
         path = [workingDirectory stringByAppendingPathComponent:filename];
     }
+    DLog(@"path=%@", path);
     SCPPath *scpPath = [[[SCPPath alloc] init] autorelease];
     scpPath.path = path;
     scpPath.hostname = remoteHost.hostname;

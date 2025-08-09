@@ -164,6 +164,8 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)doubleReportScrollWheel;
 + (NSString *)downloadsDirectory;
 + (double)noSyncDownloadPrefsTimeout;
++ (BOOL)noSyncOpenLinksInApp;
++ (void)setNoSyncOpenLinksInApp:(BOOL)value;
 + (BOOL)drawBottomLineForHorizontalTabBar;
 + (BOOL)drawOutlineAroundCursor;
 + (BOOL)dwcLineCache;
