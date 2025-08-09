@@ -8916,14 +8916,23 @@ typedef NS_ENUM(NSUInteger, PseudoTerminalTabSizeExclusion) {
     return [self fitWindowToTabSize:tabSize preferredHeight:nil];
 }
 
-// NOTE: The preferred height is respected only if it would be larger than the height the window would
-// otherwise be set to and is less than the max height (self.maxFrame.size.height).
-- (BOOL)fitWindowToTabSize:(NSSize)tabSize preferredHeight:(NSNumber *)preferredHeight {
+typedef struct {
+    BOOL ok;
+    NSRect frame;
+    BOOL mustResizeTabs;
+} PseudoTerminalWindowFrameInfo;
+
+- (PseudoTerminalWindowFrameInfo)windowFrameForTabSize:(NSSize)tabSize
+                                       preferredHeight:(NSNumber *)preferredHeight {
     DLog(@"fitWindowToTabSize:%@ preferredHeight:%@", NSStringFromSize(tabSize), preferredHeight);
+    PseudoTerminalWindowFrameInfo result = {
+        .ok = NO,
+        .mustResizeTabs = NO,
+    };
     if ([self anyFullScreen]) {
         DLog(@"Full screen - fit tabs to window instead.");
         [self fitTabsToWindow];
-        return NO;
+        return result;
     }
     // Set the window size to be large enough to encompass that tab plus its decorations.
     NSSize decorationSize = [self windowDecorationSize];
@@ -8939,14 +8948,13 @@ typedef NS_ENUM(NSUInteger, PseudoTerminalTabSizeExclusion) {
         DLog(@"Ignoring preferred height %@ with winSize.height %@", preferredHeight, @(winSize.height));
     }
 
-    NSRect frame = [[self window] frame];
-    DLog(@"Original frame: %@ maxy=%@", NSStringFromRect(frame), @(NSMaxY(frame)));
+    result.frame = [[self window] frame];
+    DLog(@"Original frame: %@ maxy=%@", NSStringFromRect(result.frame), @(NSMaxY(result.frame)));
 
     if (_contentView.shouldShowToolbelt) {
         winSize.width += floor(_contentView.toolbeltWidth);
     }
 
-    BOOL mustResizeTabs = NO;
     NSSize maxFrameSize = [self maxFrame].size;
     PtyLog(@"maxFrameSize=%@, screens=%@", [NSValue valueWithSize:maxFrameSize], [NSScreen screens]);
     if (maxFrameSize.width <= 0 || maxFrameSize.height <= 0) {
@@ -8954,22 +8962,34 @@ typedef NS_ENUM(NSUInteger, PseudoTerminalTabSizeExclusion) {
         // attached (e.g., plug in mouse+keyboard and external display into
         // clamshell simultaneously)
         XLog(@"* max frame size was not positive; aborting fitWindowToTabSize");
-        return NO;
+        return result;
     }
     if (winSize.width > maxFrameSize.width ||
         winSize.height > maxFrameSize.height) {
-        mustResizeTabs = YES;
+        result.mustResizeTabs = YES;
     }
     winSize.width = MIN(winSize.width, maxFrameSize.width);
     winSize.height = MIN(winSize.height, maxFrameSize.height);
 
     CGFloat heightChange = winSize.height - [[self window] frame].size.height;
     DLog(@"Existing height is %@. heightChange is %@", @([[self window] frame].size.height), @(heightChange));
-    frame.size = winSize;
-    frame.origin.y -= heightChange;
+    result.frame.size = winSize;
+    result.frame.origin.y -= heightChange;
 
+    // Set the frame for X-of-screen windows. The size doesn't change
+    // for _PARTIAL window types.
+    DLog(@"fitWindowToTabSize using screen number %@ with frame %@", @([[NSScreen screens] indexOfObject:self.screen]),
+         NSStringFromRect(self.screen.frame));
+
+    // Update the frame for the window style, but don't mess with the size we've computed except
+    // as needed (e.g., for edge-spanning x-of-screen windows).
+    result.frame = [self canonicalFrameForScreen:self.screen windowFrame:result.frame preserveSize:YES];
+    result.ok = YES;
+    return result;
+}
+
+- (NSView *)addBugfixView:(NSUInteger *)savedMaskPtr {
     NSView *bugFixView = nil;
-    NSUInteger savedMask = 0;
     // The following code doesn't play nicely with the constraints that are
     // unfortunately added by the system in 10.10 when using title bar
     // accessories. The addition of title bar accessories forces a bunch of
@@ -9000,19 +9020,23 @@ typedef NS_ENUM(NSUInteger, PseudoTerminalTabSizeExclusion) {
         bugFixView = [[[NSView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1)] autorelease];
         bugFixView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
         [[[self window] contentView] addSubview:bugFixView];
-        savedMask = _contentView.tabView.autoresizingMask;
+        *savedMaskPtr = _contentView.tabView.autoresizingMask;
         _contentView.tabView.autoresizingMask = 0;
     }
 
-    // Set the frame for X-of-screen windows. The size doesn't change
-    // for _PARTIAL window types.
-    DLog(@"fitWindowToTabSize using screen number %@ with frame %@", @([[NSScreen screens] indexOfObject:self.screen]),
-         NSStringFromRect(self.screen.frame));
-
-    // Update the frame for the window style, but don't mess with the size we've computed except
-    // as needed (e.g., for edge-spanning x-of-screen windows).
-    frame = [self canonicalFrameForScreen:self.screen windowFrame:frame preserveSize:YES];
-
+    return bugFixView;
+}
+// NOTE: The preferred height is respected only if it would be larger than the height the window would
+// otherwise be set to and is less than the max height (self.maxFrame.size.height).
+- (BOOL)fitWindowToTabSize:(NSSize)tabSize preferredHeight:(NSNumber *)preferredHeight {
+    PseudoTerminalWindowFrameInfo frameInfo = [self windowFrameForTabSize:tabSize
+                                                          preferredHeight:preferredHeight];
+    if (!frameInfo.ok) {
+        return NO;
+    }
+    const NSRect frame = frameInfo.frame;
+    NSUInteger savedMask = 0;
+    NSView *bugFixView = [self addBugfixView:&savedMask];
     const BOOL didResize = !NSEqualRects([[self window] frame], frame);
     DLog(@"Set window frame to %@", NSStringFromRect(frame));
 
@@ -9051,7 +9075,7 @@ typedef NS_ENUM(NSUInteger, PseudoTerminalTabSizeExclusion) {
     [_contentView.tabBarControl updateFlashing];
     PtyLog(@"fitWindowToTabs - return.");
 
-    if (mustResizeTabs) {
+    if (frameInfo.mustResizeTabs) {
         [self fitTabsToWindow];
     }
 
