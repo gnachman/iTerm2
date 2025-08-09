@@ -121,7 +121,7 @@ withApplicationAtURL:appURL
 }
 
 - (BOOL)it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:(NSURL *)url configuration:(NSWorkspaceOpenConfiguration *)configuration {
-    if ([iTermWarning showWarningWithTitle:@"iTerm2 can display web pages! Would you like to open this link in iTem2?"
+    if ([iTermWarning showWarningWithTitle:@"iTerm2 can display web pages! Would you like to open this link in iTerm2?"
                                    actions:@[ @"Use Default Browser", @"Open in iTerm2"]
                                  accessory:nil
                                 identifier:@"NoSyncOpenLinksInApp"
