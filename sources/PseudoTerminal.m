@@ -9026,6 +9026,30 @@ typedef struct {
 
     return bugFixView;
 }
+
+// This is like fitWindowToTabSize but it avoids shrinking the window by less than one cell.
+- (void)lazyFitWindowToTabSize:(NSSize)tabSize cellSize:(NSSize)cellSize {
+    PseudoTerminalWindowFrameInfo frameInfo = [self windowFrameForTabSize:tabSize
+                                                          preferredHeight:nil];
+    if (!frameInfo.ok) {
+        return;
+    }
+    const NSSize currentSize = self.window.frame.size;
+    const NSSize delta = NSMakeSize(frameInfo.frame.size.width - currentSize.width,
+                                    frameInfo.frame.size.height - currentSize.height);
+    BOOL shouldResize = NO;
+    if (delta.width > 0 || delta.height > 0) {
+        // Growing is always allowed
+        shouldResize = YES;
+        // Shrinking by more than once cell is always allowed
+    } else if (-delta.width > cellSize.width || -delta.height > cellSize.height) {
+        shouldResize = YES;
+    }
+    if (shouldResize) {
+        [self fitWindowToTabSize:tabSize preferredHeight:nil];
+    }
+}
+
 // NOTE: The preferred height is respected only if it would be larger than the height the window would
 // otherwise be set to and is less than the max height (self.maxFrame.size.height).
 - (BOOL)fitWindowToTabSize:(NSSize)tabSize preferredHeight:(NSNumber *)preferredHeight {

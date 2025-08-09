@@ -90,6 +90,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)autoLogFormat;  // Use the per-profile setting instead. This is only around for migrating the default.
 #endif
 + (BOOL)autologAppends;
++ (BOOL)avoidShrinkingTmuxWindows;
 + (NSString *)badgeFont;
 + (BOOL)badgeFontIsBold;
 + (double)badgeMaxHeightFraction;

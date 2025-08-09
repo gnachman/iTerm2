@@ -230,6 +230,7 @@
 // Fit the window to exactly fit a tab of the given size. Returns true if the
 // window was resized.
 - (BOOL)fitWindowToTabSize:(NSSize)tabSize;
+- (void)lazyFitWindowToTabSize:(NSSize)tabSize cellSize:(NSSize)cellSize;
 
 // Return the index of a tab or NSNotFound.
 - (NSInteger)indexOfTab:(PTYTab*)aTab;
