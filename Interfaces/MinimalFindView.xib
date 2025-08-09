@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="18122" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="23727" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="18122"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="23727"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -89,6 +89,7 @@ Gw
                             </searchFieldCell>
                             <connections>
                                 <outlet property="delegate" destination="Fot-sg-fSk" id="XcJ-vJ-GQL"/>
+                                <outlet property="searchMenuTemplate" destination="enE-Ym-YM3" id="uoR-4M-kji"/>
                             </connections>
                         </searchField>
                     </subviews>
@@ -155,10 +156,47 @@ Gw
             </items>
             <point key="canvasLocation" x="765" y="144"/>
         </menu>
+        <menu id="enE-Ym-YM3">
+            <items>
+                <menuItem title="Smart Case Substring" state="on" id="SN7-Sj-4U1">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="changeFilterMode:" target="-2" id="bbV-2W-uT4"/>
+                    </connections>
+                </menuItem>
+                <menuItem isSeparatorItem="YES" id="lcL-LF-OXn"/>
+                <menuItem title="Case-Insensitive Substring" state="on" tag="2" id="Vbn-Kf-BFO">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="changeFilterMode:" target="-2" id="bc5-hl-axp"/>
+                    </connections>
+                </menuItem>
+                <menuItem title="Case-Sensitive Substring" state="on" tag="1" id="bNJ-IZ-LLw">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="changeFilterMode:" target="-2" id="MZv-wE-rTC"/>
+                    </connections>
+                </menuItem>
+                <menuItem isSeparatorItem="YES" id="qSB-hJ-fnu"/>
+                <menuItem title="Case-Sensitive Regex" state="on" tag="3" id="Z0l-BY-eOm">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="changeFilterMode:" target="-2" id="H4S-ew-uBu"/>
+                    </connections>
+                </menuItem>
+                <menuItem title="Case-Insensitive Regex" state="on" tag="4" id="G2m-Ta-5TL">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="changeFilterMode:" target="-2" id="v35-OE-OS4"/>
+                    </connections>
+                </menuItem>
+            </items>
+            <point key="canvasLocation" x="546" y="-80"/>
+        </menu>
     </objects>
     <resources>
-        <image name="NSGoLeftTemplate" width="10" height="14"/>
-        <image name="NSGoRightTemplate" width="10" height="14"/>
+        <image name="NSGoLeftTemplate" width="12" height="17"/>
+        <image name="NSGoRightTemplate" width="12" height="17"/>
         <image name="TabClose_Front" width="16" height="16"/>
         <image name="TabClose_Front_Pressed" width="16" height="16"/>
     </resources>

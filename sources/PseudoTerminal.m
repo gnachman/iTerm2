@@ -7841,7 +7841,16 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     PTYSession *newSession;
 
     // Initialize a new session
-    Profile *profile = [self profileForNewSessionPreferringProfile:oldSession.profile];
+    Profile *preferred = oldSession.profile;
+    if (oldSession.isDivorced && preferred != nil) {
+        // When creating a synthetic session from a divorced profile we do not want to have two
+        // sessions with the same profile GUID (that is not allowed in sessionsInstance).
+        // Assign it a new GUID and add it.
+        NSString *newGuid = [[NSUUID UUID] UUIDString];
+        preferred = [preferred dictionaryBySettingObject:newGuid forKey:KEY_GUID];
+        [[ProfileModel sessionsInstance] addBookmark:preferred];
+    }
+    Profile *profile = [self profileForNewSessionPreferringProfile:preferred];
     if (![iTermSessionLauncher profileIsWellFormed:profile]) {
         return nil;
     }

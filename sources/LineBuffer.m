@@ -1765,8 +1765,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     return (int)absPosition;
 }
 
-- (long long)absPositionForPosition:(int)pos
-{
+- (long long)absPositionForPosition:(int)pos {
     long long absPos = pos;
     return absPos + droppedChars;
 }
@@ -2053,6 +2052,10 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 - (void)setPartial:(BOOL)partial {
     self.dirty = YES;
     [_lineBlocks.lastBlock setPartial:partial];
+}
+
+- (BOOL)isPartial {
+    return _lineBlocks.lastBlock.hasPartial;
 }
 
 - (LineBlock *)testOnlyBlockAtIndex:(int)i {

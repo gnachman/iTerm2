@@ -6968,6 +6968,7 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
 #define DIVORCE_LOG(args...) do { \
 DLog(args); \
 [logs addObject:[NSString stringWithFormat:args]]; \
+[ProfileModel log:[NSString stringWithFormat:args]]; \
 } while (0)
 
 - (NSString *)divorceAddressBookEntryFromPreferences {
@@ -6981,8 +6982,9 @@ DLog(args); \
                             [[[[ProfileModel sessionsInstance] debugHistoryForGuid:guid] componentsJoinedByString:@"\n"] it_compressedString]);
         return guid;
     }
-    [self setIsDivorced:YES withDecree:@"PLACEHOLDER DECREE"];
     NSMutableArray<NSString *> *logs = [NSMutableArray array];
+    DIVORCE_LOG(@"Session %@ will divorce", self);
+    [self setIsDivorced:YES withDecree:@"PLACEHOLDER DECREE"];
     DIVORCE_LOG(@"Remove profile with guid %@ from sessions instance", guid);
     [[ProfileModel sessionsInstance] removeProfileWithGuid:guid];
     DIVORCE_LOG(@"Set profile %@ divorced, add to sessions instance", bookmark[KEY_GUID]);
@@ -7244,7 +7246,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (void)setFilter:(NSString *)filter {
     _modeHandler.mode = iTermSessionModeDefault;
     DLog(@"setFilter:%@", filter);
-    if ([filter isEqualToString:_filter]) {
+    if ([filter isEqualToString:_filter] && _asyncFilter.mode == _view.findDriver.filterMode) {
         return;
     }
     if (!filter) {
@@ -7273,11 +7275,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     iTermAsyncFilter *refining = [[_asyncFilter retain] autorelease];
     [_asyncFilter release];
 
+    if (_asyncFilter.mode != _view.findDriver.filterMode ||
+        iTermFilterModeIsRegularExpression(_view.findDriver.filterMode)) {
+        refining = nil;
+    }
+
     DLog(@"Append lines from %@", self.liveSession);
     __weak __typeof(self) weakSelf = self;
     DLog(@"Will create new async filter for query %@ refining %@", filter, refining.it_addressString);
     _asyncFilter = [source newAsyncFilterWithDestination:self
                                                    query:filter
+                                                    mode:_view.findDriver.filterMode
                                                 refining:refining
                                             absLineRange:sourceSession.textview.findOnPageHelper.absLineRange
                                                 progress:^(double progress) {

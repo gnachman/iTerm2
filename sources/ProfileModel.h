@@ -143,6 +143,8 @@ extern NSString *const iTermProfileDidChange;
 - (void)recordSortOrder;
 - (void)moveProfileWithGuidIfNeededToRespectSortOrder:(NSString *)guid;
 
++ (void)log:(NSString *)message;
+
 @end
 
 @interface NSDictionary(ProfileModel)

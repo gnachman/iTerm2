@@ -902,7 +902,7 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
 - (int)offsetOfStartOfLineIncludingOffset:(int)offset {
     int i = [self _findEntryBeforeOffset:offset];
     if (i < 0) {
-        i = cll_entries - 2;
+        i = cll_entries - 1;
     }
     if (i < 1) {
         return 0;

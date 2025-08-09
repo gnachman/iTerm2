@@ -134,6 +134,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 - (iTermAsyncFilter *)newAsyncFilterWithDestination:(id<iTermFilterDestination>)destination
                                               query:(NSString *)query
+                                               mode:(iTermFindMode)mode
                                            refining:(iTermAsyncFilter *)refining
                                        absLineRange:(NSRange)absLineRange
                                            progress:(void (^)(double))progress;

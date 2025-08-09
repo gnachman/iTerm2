@@ -89,6 +89,9 @@ static NSMutableArray<NSString *> *_combinedLog;
                                               forKey:@"New Bookmarks"];
 }
 
++ (void)log:(NSString *)message {
+    [_combinedLog addObject:message];
+}
 - (NSMutableArray<NSString *> *)debugHistoryForGuid:(NSString *)guid {
     return _combinedLog;
 //    if ([_debugGuids containsObject:guid]) {
@@ -646,11 +649,12 @@ static NSMutableArray<NSString *> *_combinedLog;
     if (needJournal) {
         [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE bookmark:[bookmarks_ objectAtIndex:i] model:self identifier:nil]];
     }
-    [[self debugHistoryForGuid:bookmark[KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Replace bookmark at index %@ (%@) with %@",
+    [[self debugHistoryForGuid:bookmark[KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Replace bookmark at index %@ (%@) with %@\n%@",
                                                               self,
                                                               @(i),
                                                               bookmarks_[i][KEY_GUID],
-                                                              bookmark[KEY_GUID]]];
+                                                              bookmark[KEY_GUID],
+                                                              [NSThread callStackSymbols]]];
     [bookmarks_ replaceObjectAtIndex:i withObject:bookmark];
     if (needJournal) {
         BookmarkJournalEntry* e = [BookmarkJournalEntry journalWithAction:JOURNAL_ADD

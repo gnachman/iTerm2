@@ -186,6 +186,52 @@ class FilteringUpdater: HexAddressFormatting {
         return context.status == .Matched
     }
 
+    // Used to determine if we need to back up to the start of the last line after doing a search.
+    private struct BackupInfo {
+        var lastLineStartCoord: VT100GridCoord
+        private let lineBuffer: LineBuffer
+        private let context: FindContext
+        private let width: Int32
+
+        init?(lineBuffer: LineBuffer,
+              context: FindContext,
+              width: Int32,
+              computedStopAt: LineBufferPosition) {
+            if !lineBuffer.isPartial() {
+                return nil
+            }
+            self.lineBuffer = lineBuffer
+            self.width = width
+            self.context = context
+
+            let startPosition = lineBuffer.position(of: context, width: width)
+            let lastLineStartPosition = lineBuffer.positionForStartOfLastLine(before: computedStopAt)
+            let lastLineStartCoord = lineBuffer.coordinate(for: lastLineStartPosition,
+                                                           width: width,
+                                                           extendsRight: false,
+                                                           ok: nil)
+            let startingCoord = lineBuffer.coordinate(for: startPosition,
+                                                      width: width,
+                                                      extendsRight: false,
+                                                      ok: nil)
+            let startedBeforeStartOfLastLine = startingCoord <= lastLineStartCoord
+            if !startedBeforeStartOfLastLine {
+                return nil
+            }
+            self.lastLineStartCoord = lastLineStartCoord
+        }
+
+        var shouldBackUp: Bool {
+            let endingPosition = lineBuffer.position(of: context, width: width)
+            let endingCoord = lineBuffer.coordinate(for: endingPosition,
+                                                    width: width,
+                                                    extendsRight: false,
+                                                    ok: nil)
+            let endedAfterStartOfLastLine = endingCoord > lastLineStartCoord
+            return endedAfterStartOfLastLine
+        }
+    }
+
     func update() -> Bool {
         DLog("\(hexAddress): FilteringUpdater: update")
         if let lastPosition {
@@ -199,7 +245,11 @@ class FilteringUpdater: HexAddressFormatting {
             return false
         }
         DLog("\(hexAddress): FilteringUpdater: update: perform search starting at \(lineBuffer.position(of: context, width: width).description), stopping at \(stopAt.description))")
-        var needsToBackUp = false
+
+        let backupInfo = BackupInfo(lineBuffer: lineBuffer,
+                                    context: context,
+                                    width: width,
+                                    computedStopAt: computedStopAt)
         lineBuffer.findSubstring(context, stopAt: stopAt)
         switch context.status {
         case .Matched:
@@ -218,10 +268,6 @@ class FilteringUpdater: HexAddressFormatting {
                     acceptedLines.append(AbsResultRange(expandedResultRanges[i] as! ResultRange,
                                                         offset: numberOfDroppedChars))
                 }
-                if temporary && !needsToBackUp {
-                    DLog("\(hexAddress): FilteringUpdater: update: Set needsToBackUp to true")
-                    needsToBackUp = true
-                }
                 lastY = range.yEnd
             }
             context.results?.removeAllObjects()
@@ -231,7 +277,7 @@ class FilteringUpdater: HexAddressFormatting {
         @unknown default:
             it_fatalError()
         }
-        if needsToBackUp {
+        if backupInfo?.shouldBackUp == true {
             // We know we searched the last line so prepare to search again from the beginning
             // of the last line next time.
             lastPosition = lineBuffer.positionForStartOfLastLine(before: computedStopAt)
@@ -269,6 +315,7 @@ class AsyncFilter: NSObject {
     private let progress: ((Double) -> (Void))?
     private let cadence: TimeInterval
     private let query: String
+    @objc let mode: iTermFindMode
     private var updater: FilteringUpdater
     private var started = false
     private let lineBufferCopy: LineBuffer
@@ -307,6 +354,7 @@ class AsyncFilter: NSObject {
         self.cadence = cadence
         self.progress = progress
         self.query = query
+        self.mode = mode
         self.destination = destination
         updater = FilteringUpdater(query: query,
                                    lineBuffer: lineBufferCopy,
@@ -381,7 +429,7 @@ class AsyncFilter: NSObject {
         DLog("AsyncFilter\(self): Timer fired")
         let needsUpdate = loopForDuration(0.01) {
             DLog("AsyncFilter: Update")
-            return updater.update()
+            return callUpdater()
         }
         if !needsUpdate {
             progress?(1)
@@ -409,7 +457,16 @@ extension AsyncFilter: ContentSubscriber {
         if timer != nil {
             return
         }
-        while updater.update() { }
+        while callUpdater() { }
+    }
+
+    private func callUpdater() -> Bool {
+        if lastLineIsTemporary {
+            DLog("\(it_addressString): AsyncFilter: update: Removing previous line before updating")
+            destination.removeLastLine()
+            lastLineIsTemporary = false
+        }
+        return updater.update()
     }
 
     func updateMetadata(selectedCommandRange: NSRange, cumulativeOverflow: Int64) {

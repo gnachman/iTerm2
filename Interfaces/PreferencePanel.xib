@@ -6702,7 +6702,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <clipView key="contentView" drawsBackground="NO" id="6XT-bG-foe">
                                                                                 <rect key="frame" x="0.0" y="0.0" width="577" height="269"/>
-                                                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                                                <autoresizingMask key="autoresizingMask"/>
                                                                                 <subviews>
                                                                                     <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" allowsUndo="YES" spellingCorrection="YES" smartInsertDelete="YES" id="pSg-z3-7LN">
                                                                                         <rect key="frame" x="0.0" y="0.0" width="577" height="269"/>
@@ -7747,11 +7747,11 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                         </tabViewItem>
                         <tabViewItem label="Experimental" identifier="" id="XCA-9w-Cev">
                             <view key="view" id="2tm-sf-nvY">
-                                <rect key="frame" x="10" y="33" width="755" height="693"/>
+                                <rect key="frame" x="10" y="33" width="755" height="513"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vjG-YS-4xs" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="80" y="605" width="592" height="95"/>
+                                        <rect key="frame" x="80" y="425" width="592" height="95"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Dt4-v9-hNo">

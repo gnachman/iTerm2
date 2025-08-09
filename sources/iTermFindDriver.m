@@ -19,6 +19,7 @@
 #import "NSObject+iTerm.h"
 
 static iTermFindMode gFindMode;
+static iTermFindMode gFilterMode;
 static NSString *gSearchString;
 
 @interface FindState : NSObject
@@ -54,32 +55,48 @@ static NSString *gSearchString;
         kFindViewDelayStateActiveMedium,
         kFindViewDelayStateActiveLong,
     } _delayState;
+
+    iTermFindMode _filterMode;
 }
 
 + (iTermFindMode)mode {
     return gFindMode;
 }
 
++ (iTermFindMode)filterMode {
+    return gFilterMode;
+}
+
 + (void)loadUserDefaults {
-    NSNumber *mode = [[NSUserDefaults standardUserDefaults] objectForKey:@"findMode_iTerm"];
-    if (!mode) {
-        // Migrate legacy value.
-        NSNumber *ignoreCase = [[NSUserDefaults standardUserDefaults] objectForKey:@"findIgnoreCase_iTerm"];
-        BOOL caseSensitive = ignoreCase ? ![ignoreCase boolValue] : NO;
-        BOOL isRegex = [[NSUserDefaults standardUserDefaults] boolForKey:@"findRegex_iTerm"];
-        
-        if (caseSensitive && isRegex) {
-            gFindMode = iTermFindModeCaseSensitiveRegex;
-        } else if (!caseSensitive && isRegex) {
-            gFindMode = iTermFindModeCaseInsensitiveRegex;
-        } else if (caseSensitive && !isRegex) {
-            gFindMode = iTermFindModeCaseSensitiveSubstring;
-        } else if (!caseSensitive && !isRegex) {
-            gFindMode = iTermFindModeSmartCaseSensitivity;  // Upgrade case-insensitive substring to smart case sensitivity.
+    {
+        NSNumber *mode = [[NSUserDefaults standardUserDefaults] objectForKey:@"findMode_iTerm"];
+        if (!mode) {
+            // Migrate legacy value.
+            NSNumber *ignoreCase = [[NSUserDefaults standardUserDefaults] objectForKey:@"findIgnoreCase_iTerm"];
+            BOOL caseSensitive = ignoreCase ? ![ignoreCase boolValue] : NO;
+            BOOL isRegex = [[NSUserDefaults standardUserDefaults] boolForKey:@"findRegex_iTerm"];
+
+            if (caseSensitive && isRegex) {
+                gFindMode = iTermFindModeCaseSensitiveRegex;
+            } else if (!caseSensitive && isRegex) {
+                gFindMode = iTermFindModeCaseInsensitiveRegex;
+            } else if (caseSensitive && !isRegex) {
+                gFindMode = iTermFindModeCaseSensitiveSubstring;
+            } else if (!caseSensitive && !isRegex) {
+                gFindMode = iTermFindModeSmartCaseSensitivity;  // Upgrade case-insensitive substring to smart case sensitivity.
+            }
+        } else {
+            // Modern value
+            gFindMode = [mode unsignedIntegerValue];
         }
-    } else {
-        // Modern value
-        gFindMode = [mode unsignedIntegerValue];
+    }
+    {
+        NSNumber *mode = [[NSUserDefaults standardUserDefaults] objectForKey:@"NoSyncFilterMode"];
+        if (!mode) {
+            gFilterMode = iTermFindModeSmartCaseSensitivity;
+        } else {
+            gFilterMode = [mode unsignedIntegerValue];
+        }
     }
 }
 
@@ -96,6 +113,7 @@ static NSString *gSearchString;
         });
         _state = [[FindState alloc] init];
         _state.mode = gFindMode;
+        _filterMode = gFilterMode;
         __weak __typeof(self) weakSelf = self;
         [[iTermFindPasteboard sharedInstance] addObserver:self block:^(id sender, NSString *newValue, BOOL internallyGenerated) {
             [weakSelf loadFindStringFromSharedPasteboard:newValue];
@@ -119,6 +137,15 @@ static NSString *gSearchString;
 - (void)setMode:(iTermFindMode)mode {
     _state.mode = mode;
     [self setGlobalMode:mode];
+}
+
+- (iTermFindMode)filterMode {
+    return _filterMode;
+}
+
+- (void)setFilterMode:(iTermFindMode)mode {
+    _filterMode = mode;
+    [self setGlobalFilterMode:mode];
 }
 
 - (void)setFindString:(NSString *)setFindString {
@@ -205,8 +232,7 @@ static NSString *gSearchString;
     [self doSearch];
 }
 
-- (void)userDidEditFilter:(NSString *)updatedFilter
-              fieldEditor:(NSTextView *)fieldEditor {
+- (void)userDidEditFilter:(NSString *)updatedFilter {
     [_delegate findDriverSetFilter:updatedFilter withSideEffects:YES];
 }
 
@@ -520,6 +546,15 @@ static NSString *gSearchString;
         // The user defaults key got recycled to make it clear whether the legacy (number) or modern value (dict) is
         // in use, but the key doesn't reflect its true meaning any more.
         [[NSUserDefaults standardUserDefaults] setObject:@(set) forKey:@"findMode_iTerm"];
+    }
+}
+
+- (void)setGlobalFilterMode:(iTermFindMode)set {
+    if (!_savedState) {
+        gFilterMode = set;
+        // The user defaults key got recycled to make it clear whether the legacy (number) or modern value (dict) is
+        // in use, but the key doesn't reflect its true meaning any more.
+        [[NSUserDefaults standardUserDefaults] setObject:@(set) forKey:@"NoSyncFilterMode"];
     }
 }
 

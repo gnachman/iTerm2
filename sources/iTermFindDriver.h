@@ -78,11 +78,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 @interface iTermFindDriver : NSObject
 
 + (iTermFindMode)mode;
++ (iTermFindMode)filterMode;
 
 @property (nonatomic, weak) id<iTermFindDriverDelegate> delegate;
 @property (nonatomic, readonly) NSViewController<iTermFindViewController> *viewController;
 @property (nonatomic, readonly) NSViewController<iTermFilterViewController> *filterViewController;
 @property (nonatomic) iTermFindMode mode;
+@property (nonatomic) iTermFindMode filterMode;
 @property (nonatomic, readonly) BOOL shouldSearchAutomatically;
 
 // NOTE: Permanently visible find views (those added to status bars via configuration) never

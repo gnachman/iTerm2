@@ -258,6 +258,11 @@ static const CGFloat kFilterHeight = 30;
     self.driver.mode = (iTermFindMode)[sender tag];
 }
 
+- (IBAction)changeFilterMode:(id)sender {
+    self.driver.filterMode = (iTermFindMode)([sender tag]);
+    [self.driver userDidEditFilter:_filterField.stringValue];
+}
+
 - (IBAction)eraseSearchHistory:(id)sender {
     [self.driver eraseSearchHistory];
 }
@@ -276,8 +281,10 @@ static const CGFloat kFilterHeight = 30;
 - (BOOL)validateUserInterfaceItem:(NSMenuItem *)item {
     if (item.action == @selector(toggleFilter:)) {
         item.state = self.filterIsVisible ? NSControlStateValueOn : NSControlStateValueOff;
-    } else {
+    } else if (item.action == @selector(changeMode:)) {
         item.state = (item.tag == self.driver.mode) ? NSControlStateValueOn : NSControlStateValueOff;
+    } else if (item.action == @selector(changeFilterMode:)) {
+        item.state = (item.tag == self.driver.filterMode) ? NSControlStateValueOn : NSControlStateValueOff;
     }
     return YES;
 }
@@ -293,8 +300,7 @@ static const CGFloat kFilterHeight = 30;
         return;
     }
     if (field == _filterField) {
-        [self.driver userDidEditFilter:_filterField.stringValue
-                           fieldEditor:fieldEditor];
+        [self.driver userDidEditFilter:_filterField.stringValue];
         return;
     }
 }

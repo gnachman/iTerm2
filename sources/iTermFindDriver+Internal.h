@@ -16,8 +16,7 @@
                             userOriginated:(BOOL)userOriginated;
 - (void)userDidEditSearchQuery:(NSString *)updatedQuery
                    fieldEditor:(NSTextView *)fieldEditor;
-- (void)userDidEditFilter:(NSString *)updatedFilter
-              fieldEditor:(NSTextView *)fieldEditor;
+- (void)userDidEditFilter:(NSString *)updatedFilter;
 - (void)backTab;
 - (void)forwardTab;
 - (void)copyPasteSelection;

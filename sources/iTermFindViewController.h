@@ -16,6 +16,19 @@ typedef NS_ENUM(NSUInteger, iTermFindMode) {
     iTermFindModeCaseInsensitiveRegex = 4,
 };
 
+NS_INLINE BOOL iTermFilterModeIsRegularExpression(iTermFindMode mode) {
+    switch (mode) {
+        case iTermFindModeSmartCaseSensitivity:
+        case iTermFindModeCaseSensitiveSubstring:
+        case iTermFindModeCaseInsensitiveSubstring:
+            return NO;
+        case iTermFindModeCaseSensitiveRegex:
+        case iTermFindModeCaseInsensitiveRegex:
+            return YES;
+    }
+    return NO;
+}
+
 @protocol iTermFindViewController<NSObject>
 
 @property (nonatomic, readonly) BOOL searchBarIsFirstResponder;

@@ -299,6 +299,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)endResizing;
 
 - (void)setPartial:(BOOL)partial;
+- (BOOL)isPartial;
 
 // If the last block is non-empty, make a new block to avoid having to copy it on write.
 - (void)seal;
