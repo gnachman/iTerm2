@@ -38,6 +38,7 @@ NSString *const kPreferenceKeyConfirmClosingMultipleTabs = @"OnlyWhenMoreTabs"; 
 NSString *const kPreferenceKeyPromptOnQuit = @"PromptOnQuit";
 NSString *const kPreferenceKeyPromptOnQuitEvenIfThereAreNoWindows = @"PromptOnQuitEvenIfThereAreNoWindows";
 NSString *const kPreferenceKeyInstantReplayMemoryMegabytes = @"IRMemory";
+NSString *const kPreferenceKeyAITimeout = @"AI Timeout";
 NSString *const kPreferenceKeySavePasteAndCommandHistory = @"SavePasteHistory";  // The key predates command history
 NSString *const kPreferenceKeyAddBonjourHostsToProfiles = @"EnableRendezvous";  // The key predates the name Bonjour
 NSString *const kPreferenceKeyNotifyOnlyForCriticalShellIntegrationUpdates = @"NotifyOnlyForCriticalShellIntegrationUpdates";  // BOOL
@@ -459,6 +460,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyPromptOnQuit: @YES,
                   kPreferenceKeyPromptOnQuitEvenIfThereAreNoWindows: @NO,
                   kPreferenceKeyInstantReplayMemoryMegabytes: @4,
+                  kPreferenceKeyAITimeout: @30,
                   kPreferenceKeySavePasteAndCommandHistory: @NO,
                   kPreferenceKeyAddBonjourHostsToProfiles: @NO,
                   kPreferenceKeyNotifyOnlyForCriticalShellIntegrationUpdates: @YES,

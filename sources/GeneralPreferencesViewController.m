@@ -181,6 +181,7 @@ enum {
     IBOutlet NSTextField *_aiModelLabel;
     IBOutlet NSTextField *_aiTokenLimitLabel;
     IBOutlet NSButton *_resetAIPrompt;
+    IBOutlet NSTextField *_aiTimeout;
 
     IBOutlet NSTextField *_aiPluginLabel;
     IBOutlet NSButton *_enableAI;
@@ -902,6 +903,10 @@ enum {
             iTermSecureUserDefaults.instance.aiCompletionsEnabled = [newValue boolValue];
         }
     };
+    [self defineControl:_aiTimeout
+                    key:kPreferenceKeyAITimeout
+            relatedView:nil
+                   type:kPreferenceInfoTypeIntegerTextField];
 
     // ---------------------------------------------------------------------------------------------
     [self defineControl:_enableRTL

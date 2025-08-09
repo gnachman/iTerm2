@@ -116,6 +116,7 @@ extern NSString *const kPreferenceKeyConfirmClosingMultipleTabs;
 extern NSString *const kPreferenceKeyPromptOnQuit;
 extern NSString *const kPreferenceKeyPromptOnQuitEvenIfThereAreNoWindows;
 extern NSString *const kPreferenceKeyInstantReplayMemoryMegabytes;
+extern NSString *const kPreferenceKeyAITimeout;
 extern NSString *const kPreferenceKeySavePasteAndCommandHistory;
 extern NSString *const kPreferenceKeyAddBonjourHostsToProfiles;
 extern NSString *const kPreferenceKeyNotifyOnlyForCriticalShellIntegrationUpdates;

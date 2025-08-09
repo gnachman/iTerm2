@@ -117,8 +117,8 @@ class PluginClient {
         }
 
         let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 30
-        config.timeoutIntervalForResource = 60 * 5
+        config.timeoutIntervalForRequest = iTermPreferences.double(forKey: kPreferenceKeyAITimeout)
+        config.timeoutIntervalForResource =  iTermPreferences.double(forKey: kPreferenceKeyAITimeout)
         let delegate = HTTPStreamDelegate(callback: callback)
         delegate.streaming = streaming
         DLog("Request with delegate \(delegate.it_addressString):\n\(body)")
