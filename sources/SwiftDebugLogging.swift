@@ -47,7 +47,7 @@ class iTermLogger {
             }
         }
     }
-    var verbosityLevel = Level.debug
+    var verbosityLevel = Level.error
     var nslog = true
     var oslog = false
 
