@@ -114,7 +114,6 @@ static iTermController *gSharedInstance;
 + (void)releaseSharedInstance {
     DLog(@"releaseSharedInstance");
     [gSharedInstance cleanUpIfNeeded];
-    [gSharedInstance release];
     gSharedInstance = nil;
 }
 
@@ -186,13 +185,6 @@ static iTermController *gSharedInstance;
 - (void)dealloc {
     DLog(@"dealloc");
     [self cleanUpIfNeeded];
-
-    [_restorableSessions release];
-    [_currentRestorableSessionsStack release];
-    [_fullScreenWindowManager release];
-    [_lastSelectionPromise release];
-    [_setCurrentTerminalHelper release];
-    [super dealloc];
 }
 
 - (void)cleanUpIfNeeded {
@@ -221,7 +213,6 @@ static iTermController *gSharedInstance;
         // In either case, we only get here if we're pretty sure everything will get restored
         // nicely.
         DLog(@"Intentionally leaving sessions running on quit");
-        [_terminalWindows autorelease];
     } else {
         DLog(@"Will close all terminal windows to kill jobs: %@", _terminalWindows);
         // Terminate buried sessions
@@ -231,7 +222,6 @@ static iTermController *gSharedInstance;
             [[_terminalWindows objectAtIndex:0] close];
         }
         ITAssertWithMessage([_terminalWindows count] == 0, @"Expected terminals to be gone");
-        [_terminalWindows release];
     }
     _terminalWindows = nil;
 }
@@ -709,7 +699,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
             x = frame.origin.x;
             yOffset -= maxHeight;
         }
-        NSViewAnimation *theAnim = [[[NSViewAnimation alloc] initWithViewAnimations:@[ dict ]] autorelease];
+        NSViewAnimation *theAnim = [[NSViewAnimation alloc] initWithViewAnimations:@[ dict ]];
 
         // Set some additional attributes for the animation.
         [theAnim setDuration:0.75];
@@ -804,7 +794,6 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     [aMenuItem setRepresentedObject:[bookmark objectForKey:KEY_GUID]];
     [aMenuItem setTarget:aTarget];
     [aMenu addItem:aMenuItem];
-    [aMenuItem release];
 
     if (alternateSelector) {
         aMenuItem = [[NSMenuItem alloc] initWithTitle:[bookmark objectForKey:KEY_NAME]
@@ -825,7 +814,6 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         [aMenuItem setKeyEquivalentModifierMask:modifierMask | NSEventModifierFlagOption];
         [aMenuItem setAlternate:YES];
         [aMenu addItem:aMenuItem];
-        [aMenuItem release];
     }
 }
 
@@ -837,7 +825,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
           alternateSelector:(SEL)alternateSelector
             openAllSelector:(SEL)openAllSelector {
     NSMenuItem *aMenuItem = [[NSMenuItem alloc] initWithTitle:tag action:@selector(noAction:) keyEquivalent:@""];
-    NSMenu *subMenu = [[[NSMenu alloc] init] autorelease];
+    NSMenu *subMenu = [[NSMenu alloc] init];
     int count = 0;
     int MAX_MENU_ITEMS = 100;
     if ([tag isEqualToString:@"bonjour"]) {
@@ -867,12 +855,10 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                                                            action:nil
                                                     keyEquivalent:@""];
         [subMenu addItem:overflowItem];
-        [overflowItem release];
     }
     [aMenuItem setSubmenu:subMenu];
     [aMenuItem setTarget:self];
     [aMenu addItem:aMenuItem];
-    [aMenuItem release];
 
     if (openAllSelector && count > 1) {
         [subMenu addItem:[NSMenuItem separatorItem]];
@@ -889,7 +875,6 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
             [aMenuItem setTarget:aTarget];
         }
         [subMenu addItem:aMenuItem];
-        [aMenuItem release];
 
         // Add alternate -------------------------------------------------------
         aMenuItem = [[NSMenuItem alloc] initWithTitle:@"Open All in New Window"
@@ -906,7 +891,6 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
             [aMenuItem setTarget:aTarget];
         }
         [subMenu addItem:aMenuItem];
-        [aMenuItem release];
     }
 }
 
@@ -1027,7 +1011,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
               withSelector:(SEL)selector
            openAllSelector:(SEL)openAllSelector
                 startingAt:(int)startingAt {
-    iTermProfileModelJournalParams *params = [[[iTermProfileModelJournalParams alloc] init] autorelease];
+    iTermProfileModelJournalParams *params = [[iTermProfileModelJournalParams alloc] init];
     params.selector = selector;
     params.openAllSelector = openAllSelector;
     params.alternateSelector = @selector(newSessionInWindowAtIndex:);
@@ -1089,7 +1073,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 - (Profile *)defaultBookmark {
     Profile *aDict = [[ProfileModel sharedInstance] defaultBookmark];
     if (!aDict) {
-        NSMutableDictionary *temp = [[[NSMutableDictionary alloc] init] autorelease];
+        NSMutableDictionary *temp = [[NSMutableDictionary alloc] init];
         [ITAddressBookMgr setDefaultsInBookmark:temp];
         [temp setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
         aDict = temp;
@@ -1108,12 +1092,12 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         windowType = iTermThemedWindowType([iTermProfilePreferences intForKey:KEY_WINDOW_TYPE inProfile:profile]);
     }
     PseudoTerminal *term =
-        [[[PseudoTerminal alloc] initWithSmartLayout:YES
-                                          windowType:windowType
-                                     savedWindowType:windowType
-                                              screen:[iTermProfilePreferences intForKey:KEY_SCREEN inProfile:profile]
-                                    hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                             profile:profile] autorelease];
+        [[PseudoTerminal alloc] initWithSmartLayout:YES
+                                         windowType:windowType
+                                    savedWindowType:windowType
+                                             screen:[iTermProfilePreferences intForKey:KEY_SCREEN inProfile:profile]
+                                   hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                            profile:profile];
     if ([iTermProfilePreferences boolForKey:KEY_HIDE_AFTER_OPENING inProfile:profile]) {
         [term hideAfterOpening];
     }
@@ -1393,7 +1377,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     if (!_restorableSessions.count) {
         return nil;
     }
-    iTermRestorableSession *restorableSession = [[[_restorableSessions lastObject] retain] autorelease];
+    iTermRestorableSession *restorableSession = [_restorableSessions lastObject];
     [_restorableSessions removeLastObject];
     return restorableSession;
 }
@@ -1523,7 +1507,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                directory:(NSString *)directory
                 hostname:(NSString *)hostname
                 username:(NSString *)username {
-    MutableProfile *profile = [[[[ProfileModel sharedInstance] defaultProfile] mutableCopy] autorelease];
+    MutableProfile *profile = [[[ProfileModel sharedInstance] defaultProfile] mutableCopy];
     if (directory) {
         profile[KEY_CUSTOM_DIRECTORY] = kProfilePreferenceInitialDirectoryCustomValue;
         profile[KEY_WORKING_DIRECTORY] = directory;
@@ -1532,7 +1516,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     }
     if (hostname) {
         profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeSSHValue;
-        iTermSSHConfiguration *sshConfig = [[[iTermSSHConfiguration alloc] init] autorelease];
+        iTermSSHConfiguration *sshConfig = [[iTermSSHConfiguration alloc] init];
         profile[KEY_SSH_CONFIG] = sshConfig.dictionaryValue;
         if (username) {
             profile[KEY_COMMAND_LINE] = [NSString stringWithFormat:@"%@@%@", username, hostname];
@@ -1547,12 +1531,12 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     profile[KEY_INITIAL_TEXT] = initialText;
     PseudoTerminal *term = [self currentTerminal];
     if (makeWindow || !term) {
-        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
+        term = [[PseudoTerminal alloc] initWithSmartLayout:YES
                                                  windowType:WINDOW_TYPE_NORMAL
                                             savedWindowType:WINDOW_TYPE_NORMAL
                                                      screen:-1
                                            hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                                    profile:profile] autorelease];
+                                                    profile:profile];
         [self addTerminalWindow:term];
     }
 
@@ -1588,7 +1572,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 }
 
 - (NSWindow *)openSingleUseLoginWindowAndWrite:(NSData *)data completion:(void (^)(PTYSession *session))completion {
-    MutableProfile *profile = [[[[ProfileModel sharedInstance] defaultProfile] mutableCopy] autorelease];
+    MutableProfile *profile = [[[ProfileModel sharedInstance] defaultProfile] mutableCopy];
     profile[KEY_CUSTOM_DIRECTORY] = kProfilePreferenceInitialDirectoryHomeValue;
     profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeCustomShellValue;
     if ([profile[KEY_WINDOW_TYPE] integerValue] == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
@@ -1597,12 +1581,12 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     }
 
     PseudoTerminal *term = nil;
-    term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
-                                             windowType:WINDOW_TYPE_ACCESSORY
-                                        savedWindowType:WINDOW_TYPE_ACCESSORY
-                                                 screen:-1
-                                       hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                                profile:profile] autorelease];
+    term = [[PseudoTerminal alloc] initWithSmartLayout:YES
+                                            windowType:WINDOW_TYPE_ACCESSORY
+                                       savedWindowType:WINDOW_TYPE_ACCESSORY
+                                                screen:-1
+                                      hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                               profile:profile];
     [self addTerminalWindow:term];
 
     DLog(@"Open login window");
@@ -1656,7 +1640,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                                options:(iTermSingleUseWindowOptions)options
                         didMakeSession:(void (^)(PTYSession *session))didMakeSession
                             completion:(void (^)(void))completion {
-    NSMutableString *temp = [[rawCommand mutableCopy] autorelease];
+    NSMutableString *temp = [rawCommand mutableCopy];
     [temp escapeCharacters:@"\\\""];
 
     [self openSingleUseWindowWithCommand:temp
@@ -1677,12 +1661,12 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 
     PseudoTerminal *term = [self currentTerminal];
     if (!term) {
-        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
-                                                 windowType:WINDOW_TYPE_ACCESSORY
-                                            savedWindowType:WINDOW_TYPE_ACCESSORY
-                                                     screen:-1
-                                           hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                                    profile:profile] autorelease];
+        term = [[PseudoTerminal alloc] initWithSmartLayout:YES
+                                                windowType:WINDOW_TYPE_ACCESSORY
+                                           savedWindowType:WINDOW_TYPE_ACCESSORY
+                                                    screen:-1
+                                          hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                                   profile:profile];
         [self addTerminalWindow:term];
     }
 
@@ -1704,7 +1688,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     if (![iTermAdvancedSettingsModel browserProfiles]) {
         return nil;
     }
-    MutableProfile *windowProfile = [[[[ProfileModel sharedInstance] defaultBrowserProfileCreatingIfNeeded] mutableCopy] autorelease];
+    MutableProfile *windowProfile = [[[ProfileModel sharedInstance] defaultBrowserProfileCreatingIfNeeded] mutableCopy];
     if ([windowProfile[KEY_WINDOW_TYPE] integerValue] == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
         [windowProfile[KEY_WINDOW_TYPE] integerValue] == WINDOW_TYPE_LION_FULL_SCREEN) {
         windowProfile[KEY_WINDOW_TYPE] = @(iTermWindowDefaultType());
@@ -1713,12 +1697,12 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     const BOOL shortLived = !!(options & iTermSingleUseWindowOptionsShortLived);
 
     PseudoTerminal *term = nil;
-    term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
-                                             windowType:WINDOW_TYPE_ACCESSORY
-                                        savedWindowType:WINDOW_TYPE_ACCESSORY
-                                                 screen:-1
-                                       hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                                profile:windowProfile] autorelease];
+    term = [[PseudoTerminal alloc] initWithSmartLayout:YES
+                                            windowType:WINDOW_TYPE_ACCESSORY
+                                       savedWindowType:WINDOW_TYPE_ACCESSORY
+                                                screen:-1
+                                      hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                               profile:windowProfile];
     [self addTerminalWindow:term];
 
     DLog(@"Open single-use browser window with url: %@", url);
@@ -1814,7 +1798,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         return;
     }
 
-    MutableProfile *windowProfile = [[[self defaultBookmark] mutableCopy] autorelease];
+    MutableProfile *windowProfile = [[self defaultBookmark] mutableCopy];
     if ([windowProfile[KEY_WINDOW_TYPE] integerValue] == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
         [windowProfile[KEY_WINDOW_TYPE] integerValue] == WINDOW_TYPE_LION_FULL_SCREEN) {
         windowProfile[KEY_WINDOW_TYPE] = @(iTermWindowDefaultType());
@@ -1827,12 +1811,12 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     const BOOL shortLived = !!(options & iTermSingleUseWindowOptionsShortLived);
 
     PseudoTerminal *term = nil;
-    term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
-                                             windowType:WINDOW_TYPE_ACCESSORY
-                                        savedWindowType:WINDOW_TYPE_ACCESSORY
-                                                 screen:-1
-                                       hotkeyWindowType:iTermHotkeyWindowTypeNone
-                                                profile:windowProfile] autorelease];
+    term = [[PseudoTerminal alloc] initWithSmartLayout:YES
+                                            windowType:WINDOW_TYPE_ACCESSORY
+                                       savedWindowType:WINDOW_TYPE_ACCESSORY
+                                                screen:-1
+                                      hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                               profile:windowProfile];
     [self addTerminalWindow:term];
 
     NSString *command = [self shCommandLineWithCommand:rawCommand
