@@ -1325,3 +1325,13 @@ extension PTYSession {
             restorableState: restorableState as? [AnyHashable: Any])
     }
 }
+
+@objc
+extension PTYSession {
+    var defaultAccountNameForPasswordManager: String? {
+        if isBrowserSession() {
+            return view.browserViewController.currentURL?.host
+        }
+        return nil
+    }
+}

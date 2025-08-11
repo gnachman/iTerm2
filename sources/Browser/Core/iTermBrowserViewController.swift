@@ -208,6 +208,9 @@ class iTermBrowserViewController: NSViewController {
 
 @MainActor
 extension iTermBrowserViewController {
+    @objc
+    var currentURL: URL? { browserManager.webView.url }
+
     @objc(convertVisibleSearchResultsToContentNavigationShortcutsWithAction:clearOnEnd:)
     func convertVisibleSearchResultsToContentNavigationShortcuts(action: iTermContentNavigationAction,
                                                                  clearOnEnd: Bool) {
