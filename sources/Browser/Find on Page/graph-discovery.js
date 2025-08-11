@@ -77,7 +77,7 @@
         }
 
         log(message) {
-            console.debug(`[IFD:${this.frameId.substring(0, 8)}] ${message}`);
+            console.log(`[IFD:${this.frameId.substring(0, 8)}] ${message}`);
         }
 
         generateFrameId() {
@@ -622,7 +622,7 @@
                 this.log(`Sending message: type=${type}, requestId=${requestId}`);
                 target.postMessage(message, '*');
             } catch (e) {
-                this.log(`Failed to send message: ${e.message}`);
+                this.log(`Failed to send message: ${e.message}. The message was ${message}`);
             }
         }
 
@@ -811,22 +811,27 @@
             
             // Execute
             if (frameId === this.frameId) {
+                this.log(`Will call executeJavaScript. frameId=${frameId}, this.frameId=${this.frameId}`);
                 this.executeJavaScript(javascript, requestId, window);
             } else {
+                this.log(`Will call _sendEvaluationToFrame. frameId=${frameId}, this.frameId=${this.frameId}`);
                 this._sendEvaluationToFrame(frameId, javascript, requestId);
             }
         }
 
         // Send evaluation request to a specific frame
         _sendEvaluationToFrame(frameId, javascript, requestId) {
+            this.log(`_sendEvaluationToFrame ${frameId}`);
             // Broadcast to all child iframes - they'll filter by frameId
             const iframes = document.querySelectorAll('iframe');
             for (const iframe of iframes) {
+                this.log(`_sendEvaluationToFrame: send to iframe`);
                 this.sendMessage(iframe.contentWindow, MessageType.EVAL_REQUEST, {
                     javascript: javascript,
                     targetFrameId: frameId
                 }, requestId);
             }
+            this.log(`_sendEvaluationToFrame: returning.`);
         }
 
         startDiscovery() {

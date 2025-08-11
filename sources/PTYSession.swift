@@ -254,6 +254,55 @@ extension PTYSession {
         case .readWebPage(let args):
             try ensureIsBrowser()
             try readWebPage(args: args, completion: completion)
+
+        case .discoverForms(let args):
+            try ensureIsBrowser()
+            try discoverFormsInBrowser(args, completion: completion)
+        case .describeForm(let args):
+            try ensureIsBrowser()
+            try describeFormInBrowser(args, completion: completion)
+        case .getFormState(let args):
+            try ensureIsBrowser()
+            try getFormStateInBrowser(args, completion: completion)
+        case .setFieldValue(let args):
+            try ensureIsBrowser()
+            try setFieldValueInBrowser(args, completion: completion)
+        case .chooseOption(let args):
+            try ensureIsBrowser()
+            try chooseOptionInBrowser(args, completion: completion)
+        case .toggleCheckbox(let args):
+            try ensureIsBrowser()
+            try toggleCheckboxInBrowser(args, completion: completion)
+        case .uploadFile(let args):
+            try ensureIsBrowser()
+            try uploadFileInBrowser(args, completion: completion)
+        case .clickNode(let args):
+            try ensureIsBrowser()
+            try clickNodeInBrowser(args, completion: completion)
+        case .submitForm(let args):
+            try ensureIsBrowser()
+            try submitFormInBrowser(args, completion: completion)
+        case .validateForm(let args):
+            try ensureIsBrowser()
+            try validateFormInBrowser(args, completion: completion)
+        case .inferSemantics(let args):
+            try ensureIsBrowser()
+            try inferSemanticsInBrowser(args, completion: completion)
+        case .focusField(let args):
+            try ensureIsBrowser()
+            try focusFieldInBrowser(args, completion: completion)
+        case .blurField(let args):
+            try ensureIsBrowser()
+            try blurFieldInBrowser(args, completion: completion)
+        case .scrollIntoView(let args):
+            try ensureIsBrowser()
+            try scrollIntoViewInBrowser(args, completion: completion)
+        case .detectChallenge(let args):
+            try ensureIsBrowser()
+            try detectChallengeInBrowser(args, completion: completion)
+        case .mapNodesForActions(let args):
+            try ensureIsBrowser()
+            try mapNodesForActionsInBrowser(args, completion: completion)
         }
     }
 }
@@ -749,6 +798,150 @@ extension PTYSession {
             }
         }
     }
+    private func discoverFormsInBrowser(_ args: RemoteCommand.DiscoverForms,
+                                        completion: @escaping (String, String) throws -> ()) rethrows {
+        if let interface = view.browserViewController.agentInterface {
+            try interface.discoverFormsInBrowser(args, completion: completion)
+        } else {
+            try? completion("", "Functions for browser interaction are not currently available")
+        }
+    }
+
+    private func describeFormInBrowser(_ args: RemoteCommand.DescribeForm,
+                                       completion: @escaping (String, String) throws -> ()) rethrows {
+        if let interface = view.browserViewController.agentInterface {
+            try interface.describeFormInBrowser(args, completion: completion)
+        } else {
+            try? completion("", "Functions for browser interaction are not currently available")
+        }
+    }
+
+    private func getFormStateInBrowser(_ args: RemoteCommand.GetFormState,
+                                       completion: @escaping (String, String) throws -> ()) rethrows {
+        if let interface = view.browserViewController.agentInterface {
+            try interface.getFormStateInBrowser(args, completion: completion)
+        } else {
+            try? completion("", "Functions for browser interaction are not currently available")
+        }
+    }
+
+    private func setFieldValueInBrowser(_ args: RemoteCommand.SetFieldValue,
+                                        completion: @escaping (String, String) throws -> ()) rethrows {
+        if let interface = view.browserViewController.agentInterface {
+            try interface.setFieldValueInBrowser(args, completion: completion)
+        } else {
+            try? completion("", "Functions for browser interaction are not currently available")
+        }
+    }
+
+    private func chooseOptionInBrowser(_ args: RemoteCommand.ChooseOption,
+                                       completion: @escaping (String, String) throws -> ()) rethrows {
+        if let interface = view.browserViewController.agentInterface {
+            try interface.chooseOptionInBrowser(args, completion: completion)
+        } else {
+            try? completion("", "Functions for browser interaction are not currently available")
+        }
+    }
+
+    private func toggleCheckboxInBrowser(_ args: RemoteCommand.ToggleCheckbox,
+                                         completion: @escaping (String, String) throws -> ()) rethrows {
+        if let interface = view.browserViewController.agentInterface {
+            try interface.toggleCheckboxInBrowser(args, completion: completion)
+        } else {
+            try? completion("", "Functions for browser interaction are not currently available")
+        }
+    }
+
+    private func uploadFileInBrowser(_ args: RemoteCommand.UploadFile,
+                                     completion: @escaping (String, String) throws -> ()) rethrows {
+        if let interface = view.browserViewController.agentInterface {
+            try interface.uploadFileInBrowser(args, completion: completion)
+        } else {
+            try? completion("", "Functions for browser interaction are not currently available")
+        }
+    }
+
+    private func clickNodeInBrowser(_ args: RemoteCommand.ClickNode,
+                                    completion: @escaping (String, String) throws -> ()) rethrows {
+        if let interface = view.browserViewController.agentInterface {
+            try interface.clickNodeInBrowser(args, completion: completion)
+        } else {
+            try? completion("", "Functions for browser interaction are not currently available")
+        }
+    }
+
+    private func submitFormInBrowser(_ args: RemoteCommand.SubmitForm,
+                                     completion: @escaping (String, String) throws -> ()) rethrows {
+        if let interface = view.browserViewController.agentInterface {
+            try interface.submitFormInBrowser(args, completion: completion)
+        } else {
+            try? completion("", "Functions for browser interaction are not currently available")
+        }
+    }
+
+    private func validateFormInBrowser(_ args: RemoteCommand.ValidateForm,
+                                       completion: @escaping (String, String) throws -> ()) rethrows {
+        if let interface = view.browserViewController.agentInterface {
+            try interface.validateFormInBrowser(args, completion: completion)
+        } else {
+            try? completion("", "Functions for browser interaction are not currently available")
+        }
+    }
+
+    private func inferSemanticsInBrowser(_ args: RemoteCommand.InferSemantics,
+                                         completion: @escaping (String, String) throws -> ()) rethrows {
+        if let interface = view.browserViewController.agentInterface {
+            try interface.inferSemanticsInBrowser(args, completion: completion)
+        } else {
+            try? completion("", "Functions for browser interaction are not currently available")
+        }
+    }
+
+    private func focusFieldInBrowser(_ args: RemoteCommand.FocusField,
+                                     completion: @escaping (String, String) throws -> ()) rethrows {
+        if let interface = view.browserViewController.agentInterface {
+            try interface.focusFieldInBrowser(args, completion: completion)
+        } else {
+            try? completion("", "Functions for browser interaction are not currently available")
+        }
+    }
+
+    private func blurFieldInBrowser(_ args: RemoteCommand.BlurField,
+                                    completion: @escaping (String, String) throws -> ()) rethrows {
+        if let interface = view.browserViewController.agentInterface {
+            try interface.blurFieldInBrowser(args, completion: completion)
+        } else {
+            try? completion("", "Functions for browser interaction are not currently available")
+        }
+    }
+
+    private func scrollIntoViewInBrowser(_ args: RemoteCommand.ScrollIntoView,
+                                         completion: @escaping (String, String) throws -> ()) rethrows {
+        if let interface = view.browserViewController.agentInterface {
+            try interface.scrollIntoViewInBrowser(args, completion: completion)
+        } else {
+            try? completion("", "Functions for browser interaction are not currently available")
+        }
+    }
+
+    private func detectChallengeInBrowser(_ args: RemoteCommand.DetectChallenge,
+                                          completion: @escaping (String, String) throws -> ()) rethrows {
+        if let interface = view.browserViewController.agentInterface {
+            try interface.detectChallengeInBrowser(args, completion: completion)
+        } else {
+            try? completion("", "Functions for browser interaction are not currently available")
+        }
+    }
+
+    private func mapNodesForActionsInBrowser(_ args: RemoteCommand.MapNodesForActions,
+                                             completion: @escaping (String, String) throws -> ()) rethrows {
+        if let interface = view.browserViewController.agentInterface {
+            try interface.mapNodesForActionsInBrowser(args, completion: completion)
+        } else {
+            try? completion("", "Functions for browser interaction are not currently available")
+        }
+    }
+
 }
 
 struct SubSelectionSerializationInfo {
@@ -1323,5 +1516,15 @@ extension PTYSession {
             vc, initialURL: iTermProfilePreferences.string(forKey: KEY_INITIAL_URL,
                                                            inProfile: profile),
             restorableState: restorableState as? [AnyHashable: Any])
+    }
+}
+
+@objc
+extension PTYSession {
+    var defaultAccountNameForPasswordManager: String? {
+        if isBrowserSession() {
+            return view.browserViewController.currentURL?.host
+        }
+        return nil
     }
 }

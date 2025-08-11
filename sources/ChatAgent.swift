@@ -947,162 +947,234 @@ extension Message {
 extension RemoteCommand.Content {
     var functionName: String {
         switch self {
-        case .isAtPrompt:
-            "is_at_prompt"
-        case .executeCommand:
-            "execute_command"
-        case .getLastExitStatus:
-            "get_last_exit_status"
-        case .getCommandHistory:
-            "get_command_history"
-        case .getLastCommand:
-            "get_last_command"
-        case .getCommandBeforeCursor:
-            "get_command_before_cursor"
-        case .searchCommandHistory:
-            "search_command_history"
-        case .getCommandOutput:
-            "get_command_output"
-        case .getTerminalSize:
-            "get_terminal_size"
-        case .getShellType:
-            "get_shell_type"
-        case .detectSSHSession:
-            "detect_ssh_session"
-        case .getRemoteHostname:
-            "get_remote_hostname"
-        case .getUserIdentity:
-            "get_user_identity"
-        case .getCurrentDirectory:
-            "get_current_directory"
-        case .setClipboard:
-            "set_clipboard"
-        case .insertTextAtCursor:
-            "insert_text_at_cursor"
-        case .deleteCurrentLine:
-            "delete_current_line"
-        case .getManPage:
-            "get_man_page"
-        case .createFile:
-            "create_file"
-        case .searchBrowser:
-            "find_on_page"
-        case .loadURL:
-            "load_url"
-        case .webSearch:
-            "web_search_in_browser"
-        case .getURL:
-            "get_current_url"
-        case .readWebPage:
-            "read_web_page_section"
+        case .isAtPrompt: "is_at_prompt"
+        case .executeCommand: "execute_command"
+        case .getLastExitStatus: "get_last_exit_status"
+        case .getCommandHistory: "get_command_history"
+        case .getLastCommand: "get_last_command"
+        case .getCommandBeforeCursor: "get_command_before_cursor"
+        case .searchCommandHistory: "search_command_history"
+        case .getCommandOutput: "get_command_output"
+        case .getTerminalSize: "get_terminal_size"
+        case .getShellType: "get_shell_type"
+        case .detectSSHSession: "detect_ssh_session"
+        case .getRemoteHostname: "get_remote_hostname"
+        case .getUserIdentity: "get_user_identity"
+        case .getCurrentDirectory: "get_current_directory"
+        case .setClipboard: "set_clipboard"
+        case .insertTextAtCursor: "insert_text_at_cursor"
+        case .deleteCurrentLine: "delete_current_line"
+        case .getManPage: "get_man_page"
+        case .createFile: "create_file"
+        case .searchBrowser: "find_on_page"
+        case .loadURL: "load_url"
+        case .webSearch: "web_search_in_browser"
+        case .getURL: "get_current_url"
+        case .readWebPage: "read_web_page_section"
+
+        case .discoverForms: "discover_forms"
+        case .describeForm: "describe_form"
+        case .getFormState: "get_form_state"
+        case .setFieldValue: "set_field_value"
+        case .chooseOption: "choose_option"
+        case .toggleCheckbox: "toggle_checkbox"
+        case .uploadFile: "upload_file"
+        case .clickNode: "click_node"
+        case .submitForm: "submit_form"
+        case .validateForm: "validate_form"
+        case .inferSemantics: "infer_semantics"
+        case .focusField: "focus_field"
+        case .blurField: "blur_field"
+        case .scrollIntoView: "scroll_into_view"
+        case .detectChallenge: "detect_challenge"
+        case .mapNodesForActions: "map_nodes_for_actions"
         }
     }
 
     var argDescriptions: [String: String] {
-        return switch self {
-        case .isAtPrompt(_):
-            [:]
-        case .executeCommand(_):
-            ["command": "The command to run"]
-        case .getLastExitStatus(_):
-            [:]
-        case .getCommandHistory(_):
-            ["limit": "Maximum number of history items to return."]
-        case .getLastCommand(_):
-            [:]
-        case .getCommandBeforeCursor(_):
-            [:]
-        case .searchCommandHistory(_):
-            ["query": "Search query for filtering command history."]
-        case .getCommandOutput(_):
-            ["id": "Unique identifier of the command whose output is requested."]
-        case .getTerminalSize(_):
-            [:]
-        case .getShellType(_):
-            [:]
-        case .detectSSHSession(_):
-            [:]
-        case .getRemoteHostname(_):
-            [:]
-        case .getUserIdentity(_):
-            [:]
-        case .getCurrentDirectory(_):
-            [:]
-        case .setClipboard(_):
-            ["text": "The text to copy to the clipboard."]
-        case .insertTextAtCursor(_):
+        switch self {
+        case .isAtPrompt: [:]
+        case .executeCommand: ["command": "The command to run"]
+        case .getLastExitStatus: [:]
+        case .getCommandHistory: ["limit": "Maximum number of history items to return."]
+        case .getLastCommand: [:]
+        case .getCommandBeforeCursor: [:]
+        case .searchCommandHistory: ["query": "Search query for filtering command history."]
+        case .getCommandOutput: ["id": "Unique identifier of the command whose output is requested."]
+        case .getTerminalSize: [:]
+        case .getShellType: [:]
+        case .detectSSHSession: [:]
+        case .getRemoteHostname: [:]
+        case .getUserIdentity: [:]
+        case .getCurrentDirectory: [:]
+        case .setClipboard: ["text": "The text to copy to the clipboard."]
+        case .insertTextAtCursor:
             ["text": "The text to insert at the cursor position. Consider whether execute_command would be a better choice, especially when running a command at the shell prompt since insert_text_at_cursor does not return the output to you."]
-        case .deleteCurrentLine(_):
-            [:]
-        case .getManPage(_):
-            ["cmd": "The command whose man page content is requested."]
+        case .deleteCurrentLine: [:]
+        case .getManPage: ["cmd": "The command whose man page content is requested."]
         case .createFile:
             ["filename": "The name of the file you wish to create. It will be replaced if it already exists.",
              "content": "The content that will be written to the file."]
-        case .searchBrowser(_):
-            ["query": "The text to search for on the current page."]
-        case .loadURL(_):
-            ["url": "The URL to load. Must use https scheme."]
-        case .webSearch(_):
-            ["query": "The web search query"]
-        case .getURL(_):
-            [:]
-        case .readWebPage(_):
+        case .searchBrowser: ["query": "The text to search for on the current page."]
+        case .loadURL: ["url": "The URL to load. Must use https scheme."]
+        case .webSearch: ["query": "The web search query"]
+        case .getURL: [:]
+        case .readWebPage:
             ["startingLineNumber": "The line number to start reading at.",
              "numberOfLines": "The number of lines to return."]
+
+        case .discoverForms:
+            ["frameId": "Opaque frame identifier",
+             "visibility": "Filter forms by visibility. Legal values are 'visible' and 'any'.",
+             "maxForms": "Maximum number of forms to return"]
+        case .describeForm:
+            ["frameId": "Frame containing the form",
+             "formId": "Opaque form identifier",
+             "includeOptions": "Include select options in metadata",
+             "includeAria": "Include ARIA attributes",
+             "includeCss": "Include CSS information"]
+        case .getFormState:
+            ["formId": "Opaque form identifier",
+             "maskSecrets": "Whether to mask sensitive fields"]
+        case .setFieldValue:
+            ["frameId": "Frame containing the form",
+             "fieldId": "Opaque field identifier",
+             "value": "The value to set (string, boolean, array, or null)",
+             "mode": "How to set the value. Legal values: 'type', 'set', 'paste'",
+             "clearFirst": "Clear field before setting value",
+             "delayMsPerChar": "Delay between keystrokes when typing",
+             "ensureVisible": "Scroll into view before interaction",
+             "selectAfter": "Select field content after setting"]
+        case .chooseOption:
+            ["fieldId": "Opaque field identifier",
+             "by": "Selection method. Legal values: 'value', 'label', 'index'",
+             "choice": "Option(s) to select. Can be string, number, or string array",
+             "deselectOthers": "Whether to deselect other options"]
+        case .toggleCheckbox:
+            ["fieldId": "Opaque field identifier",
+             "checked": "Desired checkbox state"]
+        case .uploadFile:
+            ["fieldId": "Opaque field identifier",
+             "files": "List of files to upload",
+             "replace": "Replace existing files or append",
+             "files.fileHandle": "Unique identifier for this file",
+             "files.name": "File name"]
+        case .clickNode:
+            ["frameId": "Opaque frame identifier",
+             "nodeId": "Opaque node identifier",
+             "ensureVisible": "Scroll into view before clicking",
+             "button": "Mouse button to use. Legal values: 'left', 'middle', 'right'",
+             "clickCount": "Number of clicks"]
+        case .submitForm:
+            ["frameId": "Frame containing the form",
+             "formId": "Opaque form identifier",
+             "submitterNodeId": "Specific submitter button ID. Leave empty if unknown.",
+             "wait": "Should the function block until the form submission completes?",
+             "timeoutMs": "Timeout in milliseconds"]
+        case .validateForm:
+            ["formId": "Opaque form identifier"]
+        case .inferSemantics:
+            ["formId": "Opaque form identifier",
+             "locale": "Locale for semantic mapping"]
+        case .focusField:
+            ["fieldId": "Opaque field identifier"]
+        case .blurField:
+            ["fieldId": "Opaque field identifier"]
+        case .scrollIntoView:
+            ["nodeId": "Opaque node identifier",
+             "align": "Alignment strategy for scrolling. Legal values: 'nearest', 'center', 'start', 'end'"]
+        case .detectChallenge:
+            ["frameId": "Opaque frame identifier",
+             "formId": "Form identifier. Leave empty if unknown."]
+        case .mapNodesForActions:
+            ["frameId": "Opaque frame identifier",
+             "formId": "Form identifier. Leave empty if unknown."]
         }
     }
 
     var functionDescription: String {
         switch self {
-        case .isAtPrompt(_):
+        case .isAtPrompt:
             "Returns true if the terminal is at the command prompt, allowing safe command injection."
-        case .executeCommand(_):
+        case .executeCommand:
             "Runs a shell command and returns its output."
-        case .getLastExitStatus(_):
+        case .getLastExitStatus:
             "Retrieves the exit status of the last executed command."
-        case .getCommandHistory(_):
+        case .getCommandHistory:
             "Returns the recent command history."
-        case .getLastCommand(_):
+        case .getLastCommand:
             "Retrieves the most recent command."
-        case .getCommandBeforeCursor(_):
+        case .getCommandBeforeCursor:
             "Returns the current partially typed command before the cursor."
-        case .searchCommandHistory(_):
+        case .searchCommandHistory:
             "Searches history for commands matching a query."
-        case .getCommandOutput(_):
+        case .getCommandOutput:
             "Returns the output of a previous command by its unique identifier."
-        case .getTerminalSize(_):
+        case .getTerminalSize:
             "Returns (columns, rows) of the terminal window."
-        case .getShellType(_):
+        case .getShellType:
             "Detects the shell in use (e.g., bash, zsh, fish)."
-        case .detectSSHSession(_):
+        case .detectSSHSession:
             "Returns true if the user is SSH’ed into a remote host."
-        case .getRemoteHostname(_):
+        case .getRemoteHostname:
             "Returns the remote hostname if in an SSH session."
-        case .getUserIdentity(_):
+        case .getUserIdentity:
             "Returns the logged-in user’s username."
-        case .getCurrentDirectory(_):
+        case .getCurrentDirectory:
             "Returns the current directory."
-        case .setClipboard(_):
+        case .setClipboard:
             "Copies text to the clipboard."
-        case .insertTextAtCursor(_):
+        case .insertTextAtCursor:
             "Inserts text into the terminal input at the cursor position."
-        case .deleteCurrentLine(_):
+        case .deleteCurrentLine:
             "Clears the current command line input (only at the prompt)."
-        case .getManPage(_):
+        case .getManPage:
             "Returns the content of a command's man page."
         case .createFile:
             "Creates a file containing a specified string on the user's computer and then reveals it in Finder."
+        case .searchBrowser:
+            "Searches the current web page in the associated web browser (after converting to markdown format) for a substring."
         case .loadURL:
-            "Loads the specified URL in the associated web browser"
+            "Loads the specified URL in the associated web browser."
         case .webSearch:
-            "Performs a web search using the currently configured search engine in the associated web browser"
+            "Performs a web search using the currently configured search engine in the associated web browser."
         case .getURL:
-            "Returns the current URL of the associated web browser"
+            "Returns the current URL of the associated web browser."
         case .readWebPage:
             "Returns some of the content (in markdown format) of the page visible in the associated web browser."
-        case .searchBrowser(_):
-            "Searches the current web page in the associated web browser (after converting to markdown format) for a substring."
+
+        case .discoverForms:
+            "Enumerates all forms in the current frame and returns their metadata."
+        case .describeForm:
+            "Returns detailed information about a specific form."
+        case .getFormState:
+            "Returns current values for all fields in a form."
+        case .setFieldValue:
+            "Sets a value in a specific form field."
+        case .chooseOption:
+            "Selects option(s) in a select or radio group."
+        case .toggleCheckbox:
+            "Sets a checkbox to checked or unchecked."
+        case .uploadFile:
+            "Uploads one or more files to a file input field."
+        case .clickNode:
+            "Clicks a given clickable element."
+        case .submitForm:
+            "Submits a form and optionally waits for navigation."
+        case .validateForm:
+            "Validates a form according to HTML5 constraints."
+        case .inferSemantics:
+            "Infers semantic roles for fields in a form."
+        case .focusField:
+            "Focuses a specific form field."
+        case .blurField:
+            "Removes focus from a form field."
+        case .scrollIntoView:
+            "Scrolls an element into view."
+        case .detectChallenge:
+            "Detects CAPTCHA, OTP, or similar web challenges."
+        case .mapNodesForActions:
+            "Identifies likely Next, Submit, or Continue buttons."
         }
     }
 }
@@ -1426,6 +1498,214 @@ extension ChatAgent {
                     implementation: { [weak self] llmMessage, command, completion in
                         let remoteCommand = RemoteCommand(llmMessage: llmMessage,
                                                           content: .readWebPage(command))
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                    })
+            case .discoverForms(let args):
+                conversation.define(
+                    function: ChatGPTFunctionDeclaration(
+                        name: content.functionName,
+                        description: content.functionDescription,
+                        parameters: JSONSchema(for: args,
+                                               descriptions: content.argDescriptions)),
+                    arguments: type(of: args),
+                    implementation: { [weak self] llmMessage, command, completion in
+                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
+                                                          content: .discoverForms(command))
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                    })
+            case .describeForm(let args):
+                conversation.define(
+                    function: ChatGPTFunctionDeclaration(
+                        name: content.functionName,
+                        description: content.functionDescription,
+                        parameters: JSONSchema(for: args,
+                                               descriptions: content.argDescriptions)),
+                    arguments: type(of: args),
+                    implementation: { [weak self] llmMessage, command, completion in
+                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
+                                                          content: .describeForm(command))
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                    })
+            case .getFormState(let args):
+                conversation.define(
+                    function: ChatGPTFunctionDeclaration(
+                        name: content.functionName,
+                        description: content.functionDescription,
+                        parameters: JSONSchema(for: args,
+                                               descriptions: content.argDescriptions)),
+                    arguments: type(of: args),
+                    implementation: { [weak self] llmMessage, command, completion in
+                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
+                                                          content: .getFormState(command))
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                    })
+            case .setFieldValue(let args):
+                conversation.define(
+                    function: ChatGPTFunctionDeclaration(
+                        name: content.functionName,
+                        description: content.functionDescription,
+                        parameters: JSONSchema(for: args,
+                                               descriptions: content.argDescriptions)),
+                    arguments: type(of: args),
+                    implementation: { [weak self] llmMessage, command, completion in
+                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
+                                                          content: .setFieldValue(command))
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                    })
+            case .chooseOption(let args):
+                conversation.define(
+                    function: ChatGPTFunctionDeclaration(
+                        name: content.functionName,
+                        description: content.functionDescription,
+                        parameters: JSONSchema(for: args,
+                                               descriptions: content.argDescriptions)),
+                    arguments: type(of: args),
+                    implementation: { [weak self] llmMessage, command, completion in
+                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
+                                                          content: .chooseOption(command))
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                    })
+            case .toggleCheckbox(let args):
+                conversation.define(
+                    function: ChatGPTFunctionDeclaration(
+                        name: content.functionName,
+                        description: content.functionDescription,
+                        parameters: JSONSchema(for: args,
+                                               descriptions: content.argDescriptions)),
+                    arguments: type(of: args),
+                    implementation: { [weak self] llmMessage, command, completion in
+                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
+                                                          content: .toggleCheckbox(command))
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                    })
+            case .uploadFile(let args):
+                conversation.define(
+                    function: ChatGPTFunctionDeclaration(
+                        name: content.functionName,
+                        description: content.functionDescription,
+                        parameters: JSONSchema(for: args,
+                                               descriptions: content.argDescriptions)),
+                    arguments: type(of: args),
+                    implementation: { [weak self] llmMessage, command, completion in
+                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
+                                                          content: .uploadFile(command))
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                    })
+            case .clickNode(let args):
+                conversation.define(
+                    function: ChatGPTFunctionDeclaration(
+                        name: content.functionName,
+                        description: content.functionDescription,
+                        parameters: JSONSchema(for: args,
+                                               descriptions: content.argDescriptions)),
+                    arguments: type(of: args),
+                    implementation: { [weak self] llmMessage, command, completion in
+                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
+                                                          content: .clickNode(command))
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                    })
+            case .submitForm(let args):
+                conversation.define(
+                    function: ChatGPTFunctionDeclaration(
+                        name: content.functionName,
+                        description: content.functionDescription,
+                        parameters: JSONSchema(for: args,
+                                               descriptions: content.argDescriptions)),
+                    arguments: type(of: args),
+                    implementation: { [weak self] llmMessage, command, completion in
+                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
+                                                          content: .submitForm(command))
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                    })
+            case .validateForm(let args):
+                conversation.define(
+                    function: ChatGPTFunctionDeclaration(
+                        name: content.functionName,
+                        description: content.functionDescription,
+                        parameters: JSONSchema(for: args,
+                                               descriptions: content.argDescriptions)),
+                    arguments: type(of: args),
+                    implementation: { [weak self] llmMessage, command, completion in
+                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
+                                                          content: .validateForm(command))
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                    })
+            case .inferSemantics(let args):
+                conversation.define(
+                    function: ChatGPTFunctionDeclaration(
+                        name: content.functionName,
+                        description: content.functionDescription,
+                        parameters: JSONSchema(for: args,
+                                               descriptions: content.argDescriptions)),
+                    arguments: type(of: args),
+                    implementation: { [weak self] llmMessage, command, completion in
+                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
+                                                          content: .inferSemantics(command))
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                    })
+            case .focusField(let args):
+                conversation.define(
+                    function: ChatGPTFunctionDeclaration(
+                        name: content.functionName,
+                        description: content.functionDescription,
+                        parameters: JSONSchema(for: args,
+                                               descriptions: content.argDescriptions)),
+                    arguments: type(of: args),
+                    implementation: { [weak self] llmMessage, command, completion in
+                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
+                                                          content: .focusField(command))
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                    })
+            case .blurField(let args):
+                conversation.define(
+                    function: ChatGPTFunctionDeclaration(
+                        name: content.functionName,
+                        description: content.functionDescription,
+                        parameters: JSONSchema(for: args,
+                                               descriptions: content.argDescriptions)),
+                    arguments: type(of: args),
+                    implementation: { [weak self] llmMessage, command, completion in
+                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
+                                                          content: .blurField(command))
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                    })
+            case .scrollIntoView(let args):
+                conversation.define(
+                    function: ChatGPTFunctionDeclaration(
+                        name: content.functionName,
+                        description: content.functionDescription,
+                        parameters: JSONSchema(for: args,
+                                               descriptions: content.argDescriptions)),
+                    arguments: type(of: args),
+                    implementation: { [weak self] llmMessage, command, completion in
+                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
+                                                          content: .scrollIntoView(command))
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                    })
+            case .detectChallenge(let args):
+                conversation.define(
+                    function: ChatGPTFunctionDeclaration(
+                        name: content.functionName,
+                        description: content.functionDescription,
+                        parameters: JSONSchema(for: args,
+                                               descriptions: content.argDescriptions)),
+                    arguments: type(of: args),
+                    implementation: { [weak self] llmMessage, command, completion in
+                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
+                                                          content: .detectChallenge(command))
+                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+                    })
+            case .mapNodesForActions(let args):
+                conversation.define(
+                    function: ChatGPTFunctionDeclaration(
+                        name: content.functionName,
+                        description: content.functionDescription,
+                        parameters: JSONSchema(for: args,
+                                               descriptions: content.argDescriptions)),
+                    arguments: type(of: args),
+                    implementation: { [weak self] llmMessage, command, completion in
+                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
+                                                          content: .mapNodesForActions(command))
                         try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
                     })
             }

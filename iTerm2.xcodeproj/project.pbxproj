@@ -3837,6 +3837,16 @@
 		A6CC2C7C2E4541A400F8D620 /* find-nav.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CC2C7A2E4541A400F8D620 /* find-nav.js */; };
 		A6CC2C7D2E4541A400F8D620 /* find-nav.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CC2C7A2E4541A400F8D620 /* find-nav.js */; };
 		A6CC2C7E2E45BE9900F8D620 /* iTermToolbeltView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DC881415513A00F83147 /* iTermToolbeltView.m */; };
+		A6CC2CA02E48077B00F8D620 /* iTermBrowserAgentInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC2C9F2E48077300F8D620 /* iTermBrowserAgentInterface.swift */; };
+		A6CC2CA32E480AE200F8D620 /* agent-interface.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CC2CA22E480AE100F8D620 /* agent-interface.js */; };
+		A6CC2CA42E480AE200F8D620 /* agent-interface.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CC2CA22E480AE100F8D620 /* agent-interface.js */; };
+		A6CC2CA52E480AE200F8D620 /* agent-interface.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CC2CA22E480AE100F8D620 /* agent-interface.js */; };
+		A6CC2CA72E480BD300F8D620 /* agent-impl.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CC2CA62E480BD000F8D620 /* agent-impl.js */; };
+		A6CC2CA82E480BD300F8D620 /* agent-impl.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CC2CA62E480BD000F8D620 /* agent-impl.js */; };
+		A6CC2CA92E480BD300F8D620 /* agent-impl.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CC2CA62E480BD000F8D620 /* agent-impl.js */; };
+		A6CC2CAB2E48108D00F8D620 /* agent-utils.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CC2CAA2E48108C00F8D620 /* agent-utils.js */; };
+		A6CC2CAC2E48108D00F8D620 /* agent-utils.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CC2CAA2E48108C00F8D620 /* agent-utils.js */; };
+		A6CC2CAD2E48108D00F8D620 /* agent-utils.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CC2CAA2E48108C00F8D620 /* agent-utils.js */; };
 		A6CC49882C06E173003484B2 /* iTermPermissionsHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */; };
 		A6CC498A2C06EB4E003484B2 /* SettingsSecureTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC49892C06EB4E003484B2 /* SettingsSecureTextField.swift */; };
 		A6CC498C2C08E03A003484B2 /* AttributedStringSaver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC498B2C08E03A003484B2 /* AttributedStringSaver.swift */; };
@@ -8337,6 +8347,10 @@
 		A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCarbonHotKeyController.h; sourceTree = "<group>"; };
 		A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCarbonHotKeyController.m; sourceTree = "<group>"; };
 		A6CC2C7A2E4541A400F8D620 /* find-nav.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "find-nav.js"; sourceTree = "<group>"; };
+		A6CC2C9F2E48077300F8D620 /* iTermBrowserAgentInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserAgentInterface.swift; sourceTree = "<group>"; };
+		A6CC2CA22E480AE100F8D620 /* agent-interface.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "agent-interface.js"; sourceTree = "<group>"; };
+		A6CC2CA62E480BD000F8D620 /* agent-impl.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "agent-impl.js"; sourceTree = "<group>"; };
+		A6CC2CAA2E48108C00F8D620 /* agent-utils.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "agent-utils.js"; sourceTree = "<group>"; };
 		A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermPermissionsHelper.swift; sourceTree = "<group>"; };
 		A6CC49892C06EB4E003484B2 /* SettingsSecureTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSecureTextField.swift; sourceTree = "<group>"; };
 		A6CC498B2C08E03A003484B2 /* AttributedStringSaver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributedStringSaver.swift; sourceTree = "<group>"; };
@@ -13553,13 +13567,9 @@
 		A6CBB8202E0A1CE000B2CCCB /* Core */ = {
 			isa = PBXGroup;
 			children = (
-				A6A3CE0F2E3830D300710B09 /* log-errors.js */,
-				A6A3CE0E2E38307900710B09 /* console-log.js */,
 				A6CBB7FD2E09163A00B2CCCB /* check-iframe-origins.js */,
+				A6A3CE0E2E38307900710B09 /* console-log.js */,
 				A6FE7A862E0E252300BEBCE4 /* hover-link-detector.js */,
-				A69FF3B62E1316CD00AFF7A8 /* monitor-context-menu.js */,
-				A69FF3B02E13120F00AFF7A8 /* monitor-selection.js */,
-				A6CBB8222E0A21F800B2CCCB /* rewrite-resources.js */,
 				A6A3EDC52E0CDA9500D711DA /* iTermBrowserActionPerforming.swift */,
 				A69FF3882E12FC3500AFF7A8 /* iTermBrowserContextMenuHelper.swift */,
 				A69FF3B42E1316C800AFF7A8 /* iTermBrowserContextMenuMonitor.swift */,
@@ -13577,6 +13587,10 @@
 				A6F7D4B42E0340A80065D09C /* iTermBrowserViewController.swift */,
 				A6F7D4D82E03DB420065D09C /* iTermBrowserWebView.swift */,
 				A6C7C9702E18F26E00AA7668 /* iTermBrowserWebViewHandlerProxy.swift */,
+				A6A3CE0F2E3830D300710B09 /* log-errors.js */,
+				A69FF3B62E1316CD00AFF7A8 /* monitor-context-menu.js */,
+				A69FF3B02E13120F00AFF7A8 /* monitor-selection.js */,
+				A6CBB8222E0A21F800B2CCCB /* rewrite-resources.js */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -13642,6 +13656,17 @@
 				A6CBB9DD2E0B6E9300B2CCCB /* iTermBrowserWebView+Actions.swift */,
 			);
 			path = "WebView Additions";
+			sourceTree = "<group>";
+		};
+		A6CC2CA12E480AD900F8D620 /* Agent Interface */ = {
+			isa = PBXGroup;
+			children = (
+				A6CC2CAA2E48108C00F8D620 /* agent-utils.js */,
+				A6CC2CA62E480BD000F8D620 /* agent-impl.js */,
+				A6CC2CA22E480AE100F8D620 /* agent-interface.js */,
+				A6CC2C9F2E48077300F8D620 /* iTermBrowserAgentInterface.swift */,
+			);
+			path = "Agent Interface";
 			sourceTree = "<group>";
 		};
 		A6CEBF5F1DCE7DF3009F4FD2 /* Proto */ = {
@@ -13974,6 +13999,7 @@
 		A6F7D4B32E0340A30065D09C /* Browser */ = {
 			isa = PBXGroup;
 			children = (
+				A6CC2CA12E480AD900F8D620 /* Agent Interface */,
 				A6D693EE2E417111005E9AFE /* Audio Muting */,
 				A61220F02E1070EF00F48E64 /* Ad Blocking */,
 				A6FE7A912E0E6B7F00BEBCE4 /* Autofill */,
@@ -16043,6 +16069,7 @@
 				A67D0D731A2EE12A003A8B35 /* MainMenu.xib in Resources */,
 				A6B4833229D73DA10055E24A /* text.redaction.png in Resources */,
 				A636C3BA22891BD900A83E2F /* StatusBarIconNoBattery@2x.png in Resources */,
+				A6CC2CAD2E48108D00F8D620 /* agent-utils.js in Resources */,
 				A67F6136214395570093940A /* graphic_gulp.png in Resources */,
 				A61220762E0FA74700F48E64 /* distraction-removal-helpers.js in Resources */,
 				A61220772E0FA74700F48E64 /* remove-element-at-point.js in Resources */,
@@ -16280,6 +16307,7 @@
 				A6E16C7424A8696D00C6DB06 /* WindowCorner_BigSur.png in Resources */,
 				1D6ED9B519AEA20D005A7799 /* bell.png in Resources */,
 				A6E7AE9A214394DD00DE9F3B /* graphic_code.png in Resources */,
+				A6CC2CA72E480BD300F8D620 /* agent-impl.js in Resources */,
 				A618FFCF224602F800B8FD88 /* StatusBarIconAction@2x.png in Resources */,
 				A65B72AB1B3285A300F947A7 /* DisableTips.png in Resources */,
 				A6F7A72D213CB143004DE961 /* StatusBarIconNetwork@2x.png in Resources */,
@@ -16338,6 +16366,7 @@
 				A697CE692D97C2720031583F /* CoprocessMenuTip@2x.png in Resources */,
 				A6D694BA2E450A9E005E9AFE /* find-highlighter.js in Resources */,
 				1D6ED9BD19AEA20D005A7799 /* BroadcastInput.png in Resources */,
+				A6CC2CA52E480AE200F8D620 /* agent-interface.js in Resources */,
 				A67F618C214395A70093940A /* graphic_nginx@2x.png in Resources */,
 				A68615582D77E98D00E9CCC2 /* command.png in Resources */,
 				A6E7AEB4214394F600DE9F3B /* graphic_ethereum@2x.png in Resources */,
@@ -17051,6 +17080,7 @@
 				A67F6168214395990093940A /* graphic_nano.png in Resources */,
 				536EF5B923F6684D00B81875 /* it2run in Resources */,
 				A6F2F21C250757FE00FC227F /* PrefsShortcuts.png in Resources */,
+				A6CC2CA92E480BD300F8D620 /* agent-impl.js in Resources */,
 				A6D694042E429F42005E9AFE /* graph-discovery.js in Resources */,
 				A6F7D4D72E03D99F0065D09C /* view-source.html in Resources */,
 				A65D7CB221E1EBCB00E3D81C /* StopStatusIcon.png in Resources */,
@@ -17084,6 +17114,7 @@
 				A6F7A73B213CB143004DE961 /* StatusBarIconClock.png in Resources */,
 				A67F616E214395990093940A /* graphic_nano@2x.png in Resources */,
 				A6F18B3C2AE2F39C006C08EE /* uniE0CE_lego_separator.pdf in Resources */,
+				A6CC2CAC2E48108D00F8D620 /* agent-utils.js in Resources */,
 				A65D7CB321E1EBCB00E3D81C /* StopStatusIcon@2x.png in Resources */,
 				A686C1961ADF62F200906FAE /* Zoomed.png in Resources */,
 				A636C3B922891BD900A83E2F /* StatusBarIconNoBattery@2x.png in Resources */,
@@ -17123,6 +17154,7 @@
 				A663010919CFCE74004AF81C /* SuppressAllOutput.png in Resources */,
 				1DB8FBD119468A40006BAF5C /* TabClose_Front_Rollover.png in Resources */,
 				A697101518DFA7FC007E901D /* closebutton.png in Resources */,
+				A6CC2CA32E480AE200F8D620 /* agent-interface.js in Resources */,
 				A67D0D8A1A2EE12A003A8B35 /* PseudoTerminal.xib in Resources */,
 				A6CBB7F12E090ED400B2CCCB /* media-demo.html in Resources */,
 				A6EC808A282A28CE00493544 /* SSHConfigurationWindow.xib in Resources */,
@@ -17290,6 +17322,7 @@
 				A67D0D471A2EE12A003A8B35 /* CommandHistoryPopup.xib in Resources */,
 				A6F2F218250757FE00FC227F /* PrefsShortcuts@2x.png in Resources */,
 				A6D694BC2E450A9E005E9AFE /* find-highlighter.js in Resources */,
+				A6CC2CAB2E48108D00F8D620 /* agent-utils.js in Resources */,
 				A6EC47C221EC623D000E1321 /* iTermOnboardingWindowController.xib in Resources */,
 				A6E7AE55214394CA00DE9F3B /* graphic_bq.png in Resources */,
 				A629F57923AF2DD900C2F16B /* iterm2_shell_integration.bash in Resources */,
@@ -17392,6 +17425,7 @@
 				A67F61F0214395D50093940A /* graphic_zip@2x.png in Resources */,
 				A6E7AE89214394DD00DE9F3B /* graphic_compile.png in Resources */,
 				A6B70FBD19830C37007A4284 /* dead@2x.png in Resources */,
+				A6CC2CA82E480BD300F8D620 /* agent-impl.js in Resources */,
 				A6D694492E448038005E9AFE /* find-constants.js in Resources */,
 				A6D694582E4480AF005E9AFE /* find-segment.js in Resources */,
 				A6FEA28B1CF4DD2900376F28 /* iTermHotkeyPreferencesWindowController.xib in Resources */,
@@ -17693,6 +17727,7 @@
 				A6E7AEAF214394F600DE9F3B /* graphic_git@2x.png in Resources */,
 				A6CB24A42C68149100005824 /* it2git in Resources */,
 				A67F61A4214395B70093940A /* graphic_python@2x.png in Resources */,
+				A6CC2CA42E480AE200F8D620 /* agent-interface.js in Resources */,
 				A629F57D23AF2DD900C2F16B /* utilities.tgz in Resources */,
 				A6339DD71D232CEE000BAD78 /* StatusItem.png in Resources */,
 				A6FE7AC22E0F418900BEBCE4 /* get-viewport-center-xpath.js in Resources */,
@@ -18863,6 +18898,7 @@
 				A655E6962066C78700DC21B9 /* iTermScrollAccumulator.m in Sources */,
 				A640487529C147A10063C34A /* CRUD.swift in Sources */,
 				A648DAC72427E8E900C2FF02 /* iTermSearchQueryDidChangeNotification.m in Sources */,
+				A6CC2CA02E48077B00F8D620 /* iTermBrowserAgentInterface.swift in Sources */,
 				A667C23B276BD931006B4DEF /* VT100StateTransition.m in Sources */,
 				A61A85AA24F23C9B00B03880 /* iTermGlobalSearchOutlineView.m in Sources */,
 				A6CBB7B62E0899A600B2CCCB /* iTermBrowserGeolocationHandler.swift in Sources */,

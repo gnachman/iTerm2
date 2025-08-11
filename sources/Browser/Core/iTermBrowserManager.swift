@@ -106,6 +106,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private let handlerProxy = iTermBrowserWebViewHandlerProxy()
     let triggerHandler: iTermBrowserTriggerHandler?
     private let audioHandler: iTermBrowserAudioHandler?
+    let agentInterface = iTermBrowserAgentInterface()
 
     private static var safariVersion = {
         Bundle(path: "/Applications/Safari.app")?.infoDictionary?["CFBundleShortVersionString"] as? String
@@ -340,6 +341,18 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         configuration.userContentController.add(readerModeManager,
                                                 contentWorld: .defaultClient,
                                                 name: "readerMode")
+        if let agentInterface {
+            contentManager.add(
+                userScript: .init(code: agentInterface.javascript,
+                                  injectionTime: .atDocumentStart,
+                                  forMainFrameOnly: false,
+                                  worlds: [agentInterface.contentWorld],
+                                  identifier: agentInterface.messageHandlerName))
+            configuration.userContentController.add(
+                handlerProxy,
+                contentWorld: agentInterface.contentWorld,
+                name: agentInterface.messageHandlerName)
+        }
 
         // Add message handler for named mark updates
         if namedMarkManager != nil {
@@ -425,6 +438,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         _findManager?.webView = webView
         _findManager?.delegate = self
         triggerHandler?.webView = webView
+        agentInterface?.webView = webView
 
         // Initialize adblock handler
         adblockHandler = iTermBrowserAdblockHandler(webView: webView)
@@ -1199,6 +1213,7 @@ extension iTermBrowserManager: WKNavigationDelegate {
         copyModeHandler?.enabled = false
         audioHandler?.disabled = false
         audioHandler?.mutedFrames = []
+        agentInterface?.willNavigate()
     }
 
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {

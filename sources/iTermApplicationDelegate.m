@@ -2343,7 +2343,8 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (IBAction)openPasswordManager:(id)sender {
     DLog(@"Menu item selected");
-    [self openPasswordManagerToAccountName:nil inSession:nil];
+    NSString *name = [[[[iTermController sharedInstance] currentTerminal] currentSession] defaultAccountNameForPasswordManager];
+    [self openPasswordManagerToAccountName:name inSession:nil];
 }
 
 - (IBAction)openAIChats:(id)sender {

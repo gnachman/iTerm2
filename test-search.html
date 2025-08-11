@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet Accessories Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .search-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .search-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        #searchInput {
+            flex: 1;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            outline: none;
+        }
+        #searchInput:focus {
+            border-color: #3498db;
+        }
+        #submitBtn {
+            padding: 12px 24px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #submitBtn:hover {
+            background-color: #2980b9;
+        }
+        .suggestions {
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="search-container">
+        <h1>🐕 Pet Accessories Store</h1>
+        <form class="search-form" method="GET" action="test-results.html">
+            <input 
+                type="text" 
+                id="searchInput" 
+                name="q" 
+                placeholder="Search for dog accessories..."
+                autocomplete="off"
+                required
+            >
+            <button type="submit" id="submitBtn">Search</button>
+        </form>
+        <div class="suggestions">
+            Try searching for: collars, leashes, toys, beds, treats, or bowls
+        </div>
+    </div>
+
+    <script>
+        // Add some interactive behavior for testing
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const value = e.target.value.toLowerCase();
+            const submitBtn = document.getElementById('submitBtn');
+            
+            if (value.includes('dog') || value.includes('puppy')) {
+                submitBtn.style.backgroundColor = '#27ae60';
+                submitBtn.textContent = 'Find Dog Stuff!';
+            } else {
+                submitBtn.style.backgroundColor = '#3498db';
+                submitBtn.textContent = 'Search';
+            }
+        });
+
+        // Log form submission for testing
+        document.querySelector('.search-form').addEventListener('submit', function(e) {
+            console.log('Form submitted with query:', document.getElementById('searchInput').value);
+        });
+    </script>
+</body>
+</html>

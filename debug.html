@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet Accessories Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .search-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .search-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        #searchInput {
+            flex: 1;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            outline: none;
+        }
+        #searchInput:focus {
+            border-color: #3498db;
+        }
+        #submitBtn {
+            padding: 12px 24px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #submitBtn:hover {
+            background-color: #2980b9;
+        }
+        .suggestions {
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="search-container">
+        <h1>JavaScript Debug Console</h1>
+        <div style="margin-bottom: 20px;">
+            <textarea 
+                id="jsExpression" 
+                placeholder="Enter JavaScript expression..."
+                style="width: 100%; height: 100px; padding: 12px; font-family: monospace; font-size: 14px; border: 2px solid #ddd; border-radius: 6px; resize: vertical;"
+            ></textarea>
+        </div>
+        <button 
+            id="evalBtn" 
+            onclick="evaluateExpression()"
+            style="padding: 12px 24px; background-color: #27ae60; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; margin-bottom: 20px;"
+        >
+            Evaluate
+        </button>
+        <div id="output" style="background: #f8f9fa; padding: 15px; border-radius: 6px; font-family: monospace; white-space: pre-wrap; min-height: 50px; border: 1px solid #dee2e6;"></div>
+    </div>
+
+    <script>
+        function evaluateExpression() {
+            const expression = document.getElementById('jsExpression').value;
+            const output = document.getElementById('output');
+            
+            if (!expression.trim()) {
+                output.textContent = 'Please enter a JavaScript expression';
+                output.style.color = '#666';
+                return;
+            }
+            
+            try {
+                const result = eval(expression);
+                output.style.color = '#28a745';
+                output.textContent = 'Result: ' + JSON.stringify(result, null, 2);
+            } catch (error) {
+                output.style.color = '#dc3545';
+                output.textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        // Allow Ctrl+Enter or Cmd+Enter to evaluate
+        document.getElementById('jsExpression').addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                evaluateExpression();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -29,6 +29,7 @@ extern NSString *const iTermPasswordManagerDidLoadAccounts;
 @property(nonatomic, assign) id<iTermPasswordManagerDelegate> delegate;
 
 @property(nonatomic) BOOL sendUserByDefault;
+@property(nonatomic, copy) NSString *defaultAccountName;
 
 // If set, the didSendUserName block is called after sending the username when
 // the user chooses to send both username and password. You can use it to focus

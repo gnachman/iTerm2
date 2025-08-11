@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results - Pet Accessories</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .search-again {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .search-again input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+        .search-again button {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .product-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+        .product-card:hover {
+            transform: translateY(-2px);
+        }
+        .product-image {
+            height: 200px;
+            background: linear-gradient(45deg, #e3f2fd, #bbdefb);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+        .product-info {
+            padding: 15px;
+        }
+        .product-name {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        .product-description {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .product-price {
+            color: #27ae60;
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .add-to-cart {
+            width: 100%;
+            padding: 10px;
+            background-color: #f39c12;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .add-to-cart:hover {
+            background-color: #e67e22;
+        }
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .filter-section {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .filter-group label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .filter-group select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🐕 Search Results</h1>
+        <p id="query-display">Showing results for your search</p>
+        <form class="search-again" method="GET" action="test-results.html">
+            <input type="text" name="q" placeholder="Search again..." id="newSearch">
+            <button type="submit">Search</button>
+        </form>
+    </div>
+
+    <div class="filters">
+        <h3>Filter Results</h3>
+        <div class="filter-section">
+            <div class="filter-group">
+                <label for="categoryFilter">Category</label>
+                <select id="categoryFilter">
+                    <option value="">All Categories</option>
+                    <option value="collars">Collars & Leashes</option>
+                    <option value="toys">Toys</option>
+                    <option value="beds">Beds & Comfort</option>
+                    <option value="food">Food & Treats</option>
+                    <option value="grooming">Grooming</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="priceFilter">Price Range</label>
+                <select id="priceFilter">
+                    <option value="">Any Price</option>
+                    <option value="low">Under $20</option>
+                    <option value="mid">$20 - $50</option>
+                    <option value="high">Over $50</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="sizeFilter">Size</label>
+                <select id="sizeFilter">
+                    <option value="">Any Size</option>
+                    <option value="small">Small Dogs</option>
+                    <option value="medium">Medium Dogs</option>
+                    <option value="large">Large Dogs</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="results-grid" id="resultsGrid">
+        <!-- Products will be populated by JavaScript -->
+    </div>
+
+    <script>
+        // Sample products data
+        const products = [
+            { id: 1, name: "Premium Leather Collar", description: "Handcrafted leather collar with brass buckles", price: "$24.99", emoji: "🦴", category: "collars" },
+            { id: 2, name: "Rope Toy Bundle", description: "Set of 3 colorful rope toys for active play", price: "$15.99", emoji: "🧸", category: "toys" },
+            { id: 3, name: "Memory Foam Dog Bed", description: "Orthopedic support bed with removable cover", price: "$49.99", emoji: "🛏️", category: "beds" },
+            { id: 4, name: "Retractable Leash", description: "16ft retractable leash with comfortable grip", price: "$19.99", emoji: "🦮", category: "collars" },
+            { id: 5, name: "Puzzle Treat Dispenser", description: "Interactive toy that dispenses treats as reward", price: "$22.99", emoji: "🧩", category: "toys" },
+            { id: 6, name: "Grain-Free Training Treats", description: "High-protein, bite-sized training rewards", price: "$12.99", emoji: "🦴", category: "food" },
+            { id: 7, name: "Waterproof Dog Jacket", description: "Weather-resistant jacket with reflective strips", price: "$32.99", emoji: "🧥", category: "clothing" },
+            { id: 8, name: "Stainless Steel Bowl Set", description: "Non-slip bowls for food and water", price: "$18.99", emoji: "🥣", category: "food" },
+            { id: 9, name: "Professional Grooming Kit", description: "Complete set with brushes, nail clippers, and shampoo", price: "$39.99", emoji: "✂️", category: "grooming" },
+            { id: 10, name: "Squeaky Tennis Balls", description: "Pack of 6 tennis balls with squeakers", price: "$9.99", emoji: "🎾", category: "toys" },
+            { id: 11, name: "Adjustable Harness", description: "No-pull harness with padded chest plate", price: "$26.99", emoji: "🦺", category: "collars" },
+            { id: 12, name: "Heated Pet Blanket", description: "Self-warming blanket for extra comfort", price: "$34.99", emoji: "🔥", category: "beds" }
+        ];
+
+        // Get search query from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const query = urlParams.get('q') || '';
+        
+        // Update query display
+        if (query) {
+            document.getElementById('query-display').textContent = `Showing results for "${query}"`;
+            document.getElementById('newSearch').value = query;
+        }
+
+        // Render products
+        function renderProducts(productsToShow = products) {
+            const grid = document.getElementById('resultsGrid');
+            grid.innerHTML = '';
+            
+            productsToShow.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div class="product-image">${product.emoji}</div>
+                    <div class="product-info">
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-description">${product.description}</div>
+                        <div class="product-price">${product.price}</div>
+                        <button class="add-to-cart" onclick="addToCart(${product.id})">Add to Cart</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Filter functionality
+        function applyFilters() {
+            const category = document.getElementById('categoryFilter').value;
+            const price = document.getElementById('priceFilter').value;
+            const size = document.getElementById('sizeFilter').value;
+            
+            let filtered = products.filter(product => {
+                if (category && product.category !== category) return false;
+                
+                if (price) {
+                    const productPrice = parseFloat(product.price.replace('$', ''));
+                    if (price === 'low' && productPrice >= 20) return false;
+                    if (price === 'mid' && (productPrice < 20 || productPrice > 50)) return false;
+                    if (price === 'high' && productPrice <= 50) return false;
+                }
+                
+                return true;
+            });
+            
+            renderProducts(filtered);
+        }
+
+        // Add event listeners
+        document.getElementById('categoryFilter').addEventListener('change', applyFilters);
+        document.getElementById('priceFilter').addEventListener('change', applyFilters);
+        document.getElementById('sizeFilter').addEventListener('change', applyFilters);
+
+        // Mock add to cart function
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            alert(`Added "${product.name}" to cart! 🛒`);
+        }
+
+        // Initial render
+        renderProducts();
+
+        // Log page load for testing
+        console.log('Results page loaded with query:', query);
+    </script>
+</body>
+</html>

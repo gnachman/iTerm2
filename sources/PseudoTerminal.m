@@ -7634,6 +7634,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         }];
 
         [_passwordManagerWindowController selectAccountName:name];
+        _passwordManagerWindowController.defaultAccountName = name;
     }];
 }
 

@@ -223,6 +223,107 @@ struct RemoteCommand: Codable {
         var startingLineNumber: Int = 0
         var numberOfLines: Int = 0
     }
+
+    struct DiscoverForms: Codable {
+        var frameId: String = ""
+        var visibility: String = "visible" // "visible" or "any"
+        var maxForms: Int = 50
+    }
+
+    struct DescribeForm: Codable {
+        var frameId: String = ""
+        var formId: String = ""
+        var includeOptions: Bool = true
+        var includeAria: Bool = true
+        var includeCss: Bool = false
+    }
+
+    struct GetFormState: Codable {
+        var formId: String = ""
+        var maskSecrets: Bool = true
+    }
+
+    struct SetFieldValue: Codable {
+        var frameId: String = ""
+        var fieldId: String = ""
+        var value = JSONSchemaAnyCodable.placeholder // Any JSON value: string, boolean, array, or null
+        var mode: String = "type" // "type", "set", or "paste"
+        var clearFirst: Bool = true
+        var delayMsPerChar: Int = 0
+        var ensureVisible: Bool = true
+        var selectAfter: Bool = false
+    }
+
+    struct ChooseOption: Codable {
+        var fieldId: String = ""
+        var by: String = "value" // "value", "label", or "index"
+        var choice = JSONSchemaStringNumberOrStringArray.placeholder // String, number, or string array
+        var deselectOthers: Bool = true
+    }
+
+    struct ToggleCheckbox: Codable {
+        var fieldId: String = ""
+        var checked: Bool = true
+    }
+
+    struct UploadFile: Codable {
+        struct FileRef: Codable {
+            var fileHandle: String = ""
+            var name: String = ""
+        }
+
+        var fieldId: String = ""
+        var files: [FileRef] = [.init()]
+        var replace: Bool = true
+    }
+
+    struct ClickNode: Codable {
+        var frameId: String = ""
+        var nodeId: String = ""
+        var ensureVisible: Bool = true
+        var button: String = "left" // "left", "middle", or "right"
+        var clickCount: Int = 1
+    }
+
+    struct SubmitForm: Codable {
+        var frameId: String = ""
+        var formId: String = ""
+        var submitterNodeId: String = ""
+        var wait: Bool = false
+        var timeoutMs: Int = 10_000
+    }
+
+    struct ValidateForm: Codable {
+        var formId: String = ""
+    }
+
+    struct InferSemantics: Codable {
+        var formId: String = ""
+        var locale: String = "en-US"
+    }
+
+    struct FocusField: Codable {
+        var fieldId: String = ""
+    }
+
+    struct BlurField: Codable {
+        var fieldId: String = ""
+    }
+
+    struct ScrollIntoView: Codable {
+        var nodeId: String = ""
+        var align: String = "nearest" // "nearest", "center", "start", or "end"
+    }
+
+    struct DetectChallenge: Codable {
+        var frameId: String = ""
+        var formId: String = ""
+    }
+
+    struct MapNodesForActions: Codable {
+        var frameId: String = ""
+        var formId: String = ""
+    }
     enum Content: Codable, CaseIterable {
         static var allCases: [RemoteCommand.Content] {
             return [.isAtPrompt(IsAtPrompt()),
@@ -248,7 +349,25 @@ struct RemoteCommand: Codable {
                     .loadURL(LoadURL()),
                     .webSearch(WebSearch()),
                     .getURL(GetURL()),
-                    .readWebPage(ReadWebPage())
+                    .readWebPage(ReadWebPage()),
+
+                .discoverForms(DiscoverForms()),
+                .describeForm(DescribeForm()),
+                .getFormState(GetFormState()),
+                .setFieldValue(SetFieldValue()),
+                .chooseOption(ChooseOption()),
+                .toggleCheckbox(ToggleCheckbox()),
+                .uploadFile(UploadFile()),
+                .clickNode(ClickNode()),
+                .submitForm(SubmitForm()),
+                .validateForm(ValidateForm()),
+                .inferSemantics(InferSemantics()),
+                .focusField(FocusField()),
+                .blurField(BlurField()),
+                .scrollIntoView(ScrollIntoView()),
+                .detectChallenge(DetectChallenge()),
+                .mapNodesForActions(MapNodesForActions())
+
             ]
         }
 
@@ -276,6 +395,24 @@ struct RemoteCommand: Codable {
         case webSearch(WebSearch)
         case getURL(GetURL)
         case readWebPage(ReadWebPage)
+
+        case discoverForms(DiscoverForms)
+        case describeForm(DescribeForm)
+        case getFormState(GetFormState)
+        case setFieldValue(SetFieldValue)
+        case chooseOption(ChooseOption)
+        case toggleCheckbox(ToggleCheckbox)
+        case uploadFile(UploadFile)
+        case clickNode(ClickNode)
+        case submitForm(SubmitForm)
+        case validateForm(ValidateForm)
+        case inferSemantics(InferSemantics)
+        case focusField(FocusField)
+        case blurField(BlurField)
+        case scrollIntoView(ScrollIntoView)
+        case detectChallenge(DetectChallenge)
+        case mapNodesForActions(MapNodesForActions)
+
         // When adding a new command be sure to update allCases.
 
         enum PermissionCategory: String, Codable, CaseIterable {
@@ -317,7 +454,12 @@ struct RemoteCommand: Codable {
                     .viewManpages
             case .createFile:
                     .writeToFilesystem
-            case .searchBrowser, .loadURL, .webSearch, .getURL, .readWebPage:
+            case .searchBrowser, .loadURL, .webSearch, .getURL, .readWebPage,
+                    .discoverForms, .describeForm, .getFormState, .setFieldValue,
+                    .chooseOption, .toggleCheckbox, .uploadFile, .clickNode,
+                    .submitForm, .validateForm, .inferSemantics, .focusField,
+                    .blurField, .scrollIntoView, .detectChallenge,
+                    .mapNodesForActions:
                     .actInWebBrowser
             }
         }
@@ -348,6 +490,23 @@ struct RemoteCommand: Codable {
             case .webSearch(let args): args
             case .getURL(let args): args
             case .readWebPage(let args): args
+
+            case .discoverForms(let args): args
+            case .describeForm(let args): args
+            case .getFormState(let args): args
+            case .setFieldValue(let args): args
+            case .chooseOption(let args): args
+            case .toggleCheckbox(let args): args
+            case .uploadFile(let args): args
+            case .clickNode(let args): args
+            case .submitForm(let args): args
+            case .validateForm(let args): args
+            case .inferSemantics(let args): args
+            case .focusField(let args): args
+            case .blurField(let args): args
+            case .scrollIntoView(let args): args
+            case .detectChallenge(let args): args
+            case .mapNodesForActions(let args): args
             }
         }
     }
@@ -406,6 +565,43 @@ struct RemoteCommand: Codable {
             "Get the current URL"
         case .readWebPage:
             "View the current web page"
+
+        case .discoverForms:
+            "Enumerate forms and controls on the page"
+        case .describeForm:
+            "Get detailed metadata for a form"
+        case .getFormState:
+            "Read current values for all fields in a form"
+        case let .setFieldValue(args):
+            "Set value for field \(args.fieldId)"
+        case let .chooseOption(args):
+            "Choose option in \(args.fieldId) by \(args.by)"
+        case let .toggleCheckbox(args):
+            "Set checkbox \(args.fieldId) to \(args.checked ? "checked" : "unchecked")"
+        case let .uploadFile(args):
+            "Attach \(args.files.count) file(s) to \(args.fieldId)"
+        case let .clickNode(args):
+            "Click a button"
+        case let .submitForm(args):
+            if args.wait {
+                "Submit form and wait"
+            } else {
+                "Submit form"
+            }
+        case .validateForm:
+            "Validate form and list field errors"
+        case .inferSemantics:
+            "Infer semantic roles for fields"
+        case let .focusField(args):
+            "Focus field \(args.fieldId)"
+        case let .blurField(args):
+            "Blur field \(args.fieldId)"
+        case .scrollIntoView:
+            "Scroll element into view"
+        case .detectChallenge:
+            "Detect CAPTCHA/OTP or related challenges"
+        case .mapNodesForActions:
+            "Find likely Next/Submit/Continue buttons"
         }
     }
 
@@ -458,7 +654,41 @@ struct RemoteCommand: Codable {
         case .getURL:
             "The AI agent would like to write to get the current URL"
         case .readWebPage:
-            "The AI agent would like to write to view the current web page"
+            "The AI agent would like to read the current web page"
+
+        case .discoverForms:
+            "The AI Agent would like to enumerate forms and controls on the current web page"
+        case .describeForm:
+            "The AI Agent would like to get detailed metadata for a form"
+        case .getFormState:
+            "The AI Agent would like to read the current values for all fields in a form"
+        case let .setFieldValue(args):
+            "The AI Agent would like to set the value of the field `\(args.fieldId)`"
+        case let .chooseOption(args):
+            "The AI Agent would like to choose an option in the field `\(args.fieldId)` by \(args.by)"
+        case let .toggleCheckbox(args):
+            "The AI Agent would like to set the checkbox `\(args.fieldId)` to \(args.checked ? "checked" : "unchecked")"
+        case let .uploadFile(args):
+            "The AI Agent would like to attach \(args.files.count) file(s) to the field `\(args.fieldId)`"
+        case let .clickNode(args):
+            "The AI Agent would like to click the node `\(args.nodeId)`"
+        case let .submitForm(args):
+            "The AI Agent would like to submit the form `\(args.formId)`"
+        case .validateForm:
+            "The AI Agent would like to validate a form and list any field errors"
+        case .inferSemantics:
+            "The AI Agent would like to infer semantic roles for fields in a form"
+        case let .focusField(args):
+            "The AI Agent would like to focus the field `\(args.fieldId)`"
+        case let .blurField(args):
+            "The AI Agent would like to blur the field `\(args.fieldId)`"
+        case .scrollIntoView:
+            "The AI Agent would like to scroll an element into view"
+        case .detectChallenge:
+            "The AI Agent would like to detect CAPTCHA, OTP, or similar challenges on the page"
+        case .mapNodesForActions:
+            "The AI Agent would like to identify likely Next, Submit, or Continue buttons on the page"
+
         }
     }
 
@@ -471,7 +701,11 @@ struct RemoteCommand: Codable {
                 .getShellType, .detectSSHSession, .getRemoteHostname, .getUserIdentity,
                 .getCurrentDirectory, .setClipboard, .insertTextAtCursor, .deleteCurrentLine,
                 .getManPage, .createFile, .searchBrowser, .loadURL,
-                .webSearch, .getURL, .readWebPage:
+                .webSearch, .getURL, .readWebPage, .discoverForms, .describeForm, .getFormState,
+                .setFieldValue, .chooseOption, .toggleCheckbox, .uploadFile, .clickNode,
+                .submitForm, .validateForm, .inferSemantics, .focusField,
+                .blurField, .scrollIntoView, .detectChallenge,
+                .mapNodesForActions:
             true
         }
     }
