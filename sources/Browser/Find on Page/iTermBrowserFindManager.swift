@@ -349,7 +349,6 @@ class iTermBrowserFindManager: NSObject {
                             "TEST_FUNCTIONS": "",
                             "TEST_IMPLS": "",
                             "TEST_FREEZE": "" ])
-        print(script)
         return script
     }
 
