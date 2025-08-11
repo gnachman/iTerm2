@@ -202,10 +202,15 @@ actor BrowserDatabase {
             listColumns(resultSet: executeQuery(db: db,
                                                 sql: BrowserHistory.tableInfoQuery(),
                                                 withArguments: [])))
-        for migration in historyMigrations {
-            if !executeUpdate(db: db, sql: migration.query, withArguments: migration.args) {
-                return false
+        if !db.transaction({
+            for migration in historyMigrations {
+                if !executeUpdate(db: db, sql: migration.query, withArguments: migration.args) {
+                    return false
+                }
             }
+            return true
+        }) {
+            return false
         }
 
         // Create BrowserVisits table
@@ -217,12 +222,16 @@ actor BrowserDatabase {
             db: db,
             sql: BrowserVisits.tableInfoQuery(),
             withArguments: [])))
-        for migration in visitsMigrations {
-            if !executeUpdate(db: db, sql: migration.query, withArguments: migration.args) {
-                return false
+        if !db.transaction({
+            for migration in visitsMigrations {
+                if !executeUpdate(db: db, sql: migration.query, withArguments: migration.args) {
+                    return false
+                }
             }
+            return true
+        }) {
+            return false
         }
-
         // Create BrowserBookmarks table
         if !executeUpdate(db: db, sql: BrowserBookmarks.schema(), withArguments: []) {
             return false
@@ -232,10 +241,15 @@ actor BrowserDatabase {
             resultSet: executeQuery(db: db,
                                     sql: BrowserBookmarks.tableInfoQuery(),
                                     withArguments: [])))
-        for migration in bookmarksMigrations {
-            if !executeUpdate(db: db, sql: migration.query, withArguments: migration.args) {
-                return false
+        if !db.transaction({
+            for migration in bookmarksMigrations {
+                if !executeUpdate(db: db, sql: migration.query, withArguments: migration.args) {
+                    return false
+                }
             }
+            return true
+        }) {
+            return false
         }
 
         // Create BrowserBookmarkTags table
@@ -247,10 +261,15 @@ actor BrowserDatabase {
             resultSet: executeQuery(db: db,
                                     sql: BrowserBookmarkTags.tableInfoQuery(),
                                     withArguments: [])))
-        for migration in tagsMigrations {
-            if !executeUpdate(db: db, sql: migration.query, withArguments: migration.args) {
-                return false
+        if !db.transaction({
+            for migration in tagsMigrations {
+                if !executeUpdate(db: db, sql: migration.query, withArguments: migration.args) {
+                    return false
+                }
             }
+            return true
+        }) {
+            return false
         }
 
         // Create BrowserPermissions table
@@ -262,10 +281,15 @@ actor BrowserDatabase {
             resultSet: executeQuery(db: db,
                                     sql: BrowserPermissions.tableInfoQuery(),
                                     withArguments: [])))
-        for migration in permissionsMigrations {
-            if !executeUpdate(db: db, sql: migration.query, withArguments: migration.args) {
-                return false
+        if !db.transaction({
+            for migration in permissionsMigrations {
+                if !executeUpdate(db: db, sql: migration.query, withArguments: migration.args) {
+                    return false
+                }
             }
+            return true
+        }) {
+            return false
         }
 
         // Create BrowserNamedMarks table
@@ -277,10 +301,15 @@ actor BrowserDatabase {
             resultSet: executeQuery(db: db,
                                     sql: BrowserNamedMarks.tableInfoQuery(),
                                     withArguments: [])))
-        for migration in namedMarksMigrations {
-            if !executeUpdate(db: db, sql: migration.query, withArguments: migration.args) {
-                return false
+        if !db.transaction({
+            for migration in namedMarksMigrations {
+                if !executeUpdate(db: db, sql: migration.query, withArguments: migration.args) {
+                    return false
+                }
             }
+            return true
+        }) {
+            return false
         }
 
         // Create BrowserKeyValueStore table
@@ -291,11 +320,17 @@ actor BrowserDatabase {
             resultSet: executeQuery(db: db,
                                     sql: BrowserKeyValueStoreEntry.tableInfoQuery(),
                                     withArguments: [])))
-        for migration in keyValueStoreMigrations {
-            if !executeUpdate(db: db, sql: migration.query, withArguments: migration.args) {
-                return false
+        if !db.transaction({
+            for migration in keyValueStoreMigrations {
+                if !executeUpdate(db: db, sql: migration.query, withArguments: migration.args) {
+                    return false
+                }
             }
+            return true
+        }) {
+            return false
         }
+
         return true
     }
 
@@ -349,7 +384,7 @@ actor BrowserDatabase {
             }
         } else {
             // Create new record
-            let newVisit = BrowserVisits(hostname: hostname, path: path, title: title == "" ? nil : title)
+            let newVisit = BrowserVisits(hostname: hostname, path: path, title: title == "" ? nil : title, url: url)
             let (insertQuery, insertArgs) = newVisit.appendQuery()
             _ = executeUpdate(db: db, sql: insertQuery, withArguments: insertArgs)
         }
@@ -490,6 +525,18 @@ actor BrowserDatabase {
         }
     }
 
+    func searchVisits(terms: String, maxAge: Int, minCount: Int, offset: Int = 0, limit: Int = 50) async -> [BrowserVisits] {
+        return await withDatabase { db in
+            let (query, args) = BrowserVisits.searchQuery(terms: terms,
+                                                          maxAge: maxAge,
+                                                          minCount: minCount,
+                                                          offset: offset,
+                                                          limit: limit)
+            return self.executeVisitsQuery(db: db, query: query, args: args)
+        }
+    }
+
+
     // MARK: - Helper Methods
 
     private func executeHistoryQuery(db: iTermDatabase, query: String, args: [Any?]) -> [BrowserHistory] {
@@ -501,6 +548,21 @@ actor BrowserDatabase {
         while resultSet.next() {
             if let history = BrowserHistory(dbResultSet: resultSet) {
                 results.append(history)
+            }
+        }
+        resultSet.close()
+        return results
+    }
+
+    private func executeVisitsQuery(db: iTermDatabase, query: String, args: [Any?]) -> [BrowserVisits] {
+        guard let resultSet = executeQuery(db: db, sql: query, withArguments: args) else {
+            return []
+        }
+
+        var results: [BrowserVisits] = []
+        while resultSet.next() {
+            if let visits = BrowserVisits(dbResultSet: resultSet) {
+                results.append(visits)
             }
         }
         resultSet.close()

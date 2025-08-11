@@ -1115,10 +1115,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
             const CGFloat leftArea = leftIntersection.size.width * leftIntersection.size.height;
             const CGFloat rightArea = rightIntersection.size.width * rightIntersection.size.height;
-            NSLog(@"SessionView: while searching for best frame, comparing %@ (area=%@) to %@ (area=%@)", NSStringFromRect(lhs), @(leftArea), NSStringFromRect(rhs), @(rightArea));
+            DLog(@"SessionView: while searching for best frame, comparing %@ (area=%@) to %@ (area=%@)", NSStringFromRect(lhs), @(leftArea), NSStringFromRect(rhs), @(rightArea));
             return [@(rightArea) compare: @(leftArea)];
         }];
-        NSLog(@"SessionView: Selected %@", NSStringFromRect(bestFrameValue.rectValue));
+        DLog(@"SessionView: Selected %@", NSStringFromRect(bestFrameValue.rectValue));
         _hoverURLView.frame = bestFrameValue.rectValue;
 
         NSRect frame = _hoverURLTextField.frame;
@@ -1143,7 +1143,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     const CGFloat minY = 4;
     const CGFloat maxX = NSWidth(self.bounds) - NSWidth(frame) - 4;
     const CGFloat maxY = NSHeight(self.bounds) - NSHeight(frame) - 4;
-    NSLog(@"SessionView: Proposing frames with minX=%@, minY=%@, maxX=%@, maxY=%@, width=%@, height=%@",
+    DLog(@"SessionView: Proposing frames with minX=%@, minY=%@, maxX=%@, maxY=%@, width=%@, height=%@",
           @(minX), @(minY), @(maxX), @(maxY), @(frame.size.width), @(frame.size.height));
     return @[
         [NSValue valueWithRect:NSMakeRect(minX, minY, frame.size.width, frame.size.height)],

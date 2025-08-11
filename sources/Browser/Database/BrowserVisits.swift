@@ -14,22 +14,25 @@ struct BrowserVisits {
     var lastVisitDate = Date()
     var firstVisitDate = Date()
     var title: String?
+    var url: String
 
-    init(hostname: String, path: String, title: String?) {
+    init(hostname: String, path: String, title: String?, url: String) {
         self.hostname = hostname
         self.path = path
         self.title = title
         self.firstVisitDate = Date()
         self.lastVisitDate = firstVisitDate
+        self.url = url
     }
     
-    init(hostname: String, path: String, visitCount: Int, lastVisitDate: Date, firstVisitDate: Date, title: String?) {
+    init(hostname: String, path: String, visitCount: Int, lastVisitDate: Date, firstVisitDate: Date, title: String?, url: String) {
         self.hostname = hostname
         self.path = path
         self.visitCount = visitCount
         self.lastVisitDate = lastVisitDate
         self.firstVisitDate = firstVisitDate
         self.title = title
+        self.url = url
     }
     
     var fullUrl: String {
@@ -46,6 +49,7 @@ extension BrowserVisits: iTermDatabaseElement {
         case lastVisitDate
         case firstVisitDate
         case title
+        case url
     }
     
     static func schema() -> String {
@@ -57,17 +61,30 @@ extension BrowserVisits: iTermDatabaseElement {
              \(Columns.lastVisitDate.rawValue) integer not null,
              \(Columns.firstVisitDate.rawValue) integer not null,
              \(Columns.title.rawValue) text,
+             \(Columns.url.rawValue) text,
              PRIMARY KEY (\(Columns.hostname.rawValue), \(Columns.path.rawValue)));
         
         CREATE INDEX IF NOT EXISTS idx_browser_visits_hostname ON BrowserVisits(\(Columns.hostname.rawValue));
         CREATE INDEX IF NOT EXISTS idx_browser_visits_path ON BrowserVisits(\(Columns.path.rawValue));
         CREATE INDEX IF NOT EXISTS idx_browser_visits_count ON BrowserVisits(\(Columns.visitCount.rawValue) DESC);
+        CREATE INDEX IF NOT EXISTS idx_browser_visits_url ON BrowserVisits(\(Columns.url.rawValue));
         """
     }
     
     static func migrations(existingColumns: [String]) -> [Migration] {
-        // Future migrations can be added here
-        return []
+        var result = [Migration]()
+        if !existingColumns.contains(Columns.url.rawValue) {
+            result.append(.init(query: "ALTER TABLE BrowserVisits ADD COLUMN \(Columns.url.rawValue) text", args: []))
+            result.append(.init(query: "CREATE INDEX IF NOT EXISTS idx_browser_visits_url ON BrowserVisits(\(Columns.url.rawValue))", args: []))
+            result.append(.init(
+                query:
+                """
+                UPDATE BrowserVisits SET \(Columns.url.rawValue) = 'https://' || (
+                    CASE WHEN substr(\(Columns.hostname.rawValue),1,1)='.' THEN substr(\(Columns.hostname.rawValue),2) ELSE \(Columns.hostname.rawValue) END) ||
+                    CASE WHEN \(Columns.path.rawValue)='' THEN '' ELSE \(Columns.path.rawValue) END;
+                """, args: []))
+        }
+        return result
     }
 
     static func tableInfoQuery() -> String {
@@ -86,8 +103,9 @@ extension BrowserVisits: iTermDatabaseElement {
              \(Columns.visitCount.rawValue), 
              \(Columns.lastVisitDate.rawValue), 
              \(Columns.firstVisitDate.rawValue),
-             \(Columns.title.rawValue))
-        values (?, ?, ?, ?, ?, ?)
+             \(Columns.title.rawValue),
+             \(Columns.url.rawValue)
+        values (?, ?, ?, ?, ?, ?, ?)
         """,
          [
             hostname,
@@ -95,7 +113,8 @@ extension BrowserVisits: iTermDatabaseElement {
             visitCount,
             lastVisitDate.timeIntervalSince1970,
             firstVisitDate.timeIntervalSince1970,
-            title
+            title,
+            url
          ])
     }
 
@@ -104,7 +123,8 @@ extension BrowserVisits: iTermDatabaseElement {
         update BrowserVisits set \(Columns.visitCount.rawValue) = ?,
                                  \(Columns.lastVisitDate.rawValue) = ?,
                                  \(Columns.firstVisitDate.rawValue) = ?,
-                                 \(Columns.title.rawValue) = ?
+                                 \(Columns.title.rawValue) = ?,
+                                 \(Columns.url.rawValue) = ?
         where \(Columns.hostname.rawValue) = ? AND \(Columns.path.rawValue) = ?
         """,
         [
@@ -112,6 +132,7 @@ extension BrowserVisits: iTermDatabaseElement {
             lastVisitDate.timeIntervalSince1970,
             firstVisitDate.timeIntervalSince1970,
             title,
+            url,
 
             // where clause
             hostname,
@@ -123,7 +144,8 @@ extension BrowserVisits: iTermDatabaseElement {
         guard let hostname = result.string(forColumn: Columns.hostname.rawValue),
               let path = result.string(forColumn: Columns.path.rawValue),
               let lastVisitDate = result.date(forColumn: Columns.lastVisitDate.rawValue),
-              let firstVisitDate = result.date(forColumn: Columns.firstVisitDate.rawValue)
+              let firstVisitDate = result.date(forColumn: Columns.firstVisitDate.rawValue),
+              let url = result.string(forColumn: Columns.url.rawValue)
         else {
             return nil
         }
@@ -134,6 +156,7 @@ extension BrowserVisits: iTermDatabaseElement {
         self.lastVisitDate = lastVisitDate
         self.firstVisitDate = firstVisitDate
         self.title = result.string(forColumn: Columns.title.rawValue)
+        self.url = url
     }
 }
 
@@ -214,5 +237,31 @@ extension BrowserVisits {
         WHERE hostname = ? AND path = ?
         """
         return (updateQuery, [title, hostname, path])
+    }
+
+    static func searchQuery(terms: String, maxAge: Int, minCount: Int, offset: Int = 0, limit: Int = 50) -> (String, [Any?]) {
+        let tokens = terms
+            .components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+
+        let urlConditions = tokens.map { _ in "url LIKE ?" }
+        let titleConditions = tokens.map { _ in "\(Columns.title.rawValue) LIKE ?" }
+        let maxAgeCondition = "\(Columns.lastVisitDate.rawValue) > ?"
+        let minCountCondition = "\(Columns.visitCount.rawValue) >= ?"
+        let whereExpression = ["((" + urlConditions.joined(separator: " AND ") + ") OR (" + titleConditions.joined(separator: " AND ") + "))",
+                               maxAgeCondition,
+                               minCountCondition].joined(separator: " AND ")
+
+        let whereClause = "WHERE " + whereExpression
+        let orderBy = "ORDER BY \(Columns.lastVisitDate.rawValue) DESC"
+        let limitClause = "LIMIT ? OFFSET ?"
+
+        let urlArgs = tokens.map { "%\($0)%" }
+        let titleArgs = tokens.map { "%\($0)%" }
+        let maxAgeArg = "\(Int(Date().timeIntervalSince1970) - maxAge)"
+        let minCountArg = "\(minCount)"
+        let allArgs = urlArgs + titleArgs + [maxAgeArg, minCountArg, limit, offset]
+
+        return ("SELECT * FROM BrowserVisits \(whereClause) \(orderBy) \(limitClause)", allArgs)
     }
 }

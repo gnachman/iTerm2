@@ -503,6 +503,23 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
             [items addObject:item];
         }
     }
+    // Add matching recent visits items
+    for (iTermTriple<NSString *, NSURL *, NSString *> *triple in [iTermBrowserVisitsFinder historyMatchingSubstring:matcher.query]) {
+        iTermOpenQuicklyBookmarkItem *item = [[iTermOpenQuicklyBookmarkItem alloc] init];
+        NSMutableAttributedString *attributedName = [[NSMutableAttributedString alloc] init];
+        item.score = [self scoreForBookmarkTitle:triple.firstObject url:triple.secondObject matcher:matcher attributedName:attributedName];
+        if (item.score > 0) {
+            item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
+                                                                            value:@"Open Visited Site in Browser"
+                                                               highlightedIndexes:nil];
+            item.title = attributedName;
+            item.identifier = [triple.secondObject absoluteString];
+            item.url = triple.secondObject;
+            item.bookmarkName = triple.firstObject;
+            item.userID = triple.thirdObject;
+            [items addObject:item];
+        }
+    }
 }
 
 - (void)addURLToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items

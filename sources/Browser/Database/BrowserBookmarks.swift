@@ -106,12 +106,16 @@ extension BrowserBookmarks {
         let tokens = terms
             .components(separatedBy: .whitespacesAndNewlines)
             .filter { !$0.isEmpty }
-        
+
         let urlConditions = tokens.map { _ in "\(Columns.url.rawValue) LIKE ?" }
         let titleConditions = tokens.map { _ in "\(Columns.title.rawValue) LIKE ?" }
         let allConditions = urlConditions + titleConditions
-        
-        let whereClause = "WHERE " + allConditions.joined(separator: " OR ")
+
+        let whereClause = if allConditions.isEmpty {
+            ""
+        } else {
+            "WHERE " + allConditions.joined(separator: " OR ")
+        }
         let orderBy = "ORDER BY \(Columns.dateAdded.rawValue) DESC"
         let limitClause = "LIMIT ? OFFSET ?"
         

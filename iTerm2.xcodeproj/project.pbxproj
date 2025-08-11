@@ -3841,6 +3841,7 @@
 		A6CC2D0B2E4A7FA600F8D620 /* ssh-page-no-conductor.html in Resources */ = {isa = PBXBuildFile; fileRef = A6CC2D092E4A7F3900F8D620 /* ssh-page-no-conductor.html */; };
 		A6CC2D0C2E4A7FA600F8D620 /* ssh-page-no-conductor.html in Resources */ = {isa = PBXBuildFile; fileRef = A6CC2D092E4A7F3900F8D620 /* ssh-page-no-conductor.html */; };
 		A6CC2D0D2E4A9FDA00F8D620 /* iTermController.m in Sources */ = {isa = PBXBuildFile; fileRef = E8A66F030272453F03A80106 /* iTermController.m */; };
+		A6CC2D0F2E4AB38F00F8D620 /* iTermBrowserVisitsFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC2D0E2E4AB38E00F8D620 /* iTermBrowserVisitsFinder.swift */; };
 		A6CC49882C06E173003484B2 /* iTermPermissionsHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */; };
 		A6CC498A2C06EB4E003484B2 /* SettingsSecureTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC49892C06EB4E003484B2 /* SettingsSecureTextField.swift */; };
 		A6CC498C2C08E03A003484B2 /* AttributedStringSaver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC498B2C08E03A003484B2 /* AttributedStringSaver.swift */; };
@@ -8343,6 +8344,7 @@
 		A6CC2C7A2E4541A400F8D620 /* find-nav.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "find-nav.js"; sourceTree = "<group>"; };
 		A6CC2D042E4A73DC00F8D620 /* iTermBrowserSSHPageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserSSHPageManager.swift; sourceTree = "<group>"; };
 		A6CC2D092E4A7F3900F8D620 /* ssh-page-no-conductor.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "ssh-page-no-conductor.html"; sourceTree = "<group>"; };
+		A6CC2D0E2E4AB38E00F8D620 /* iTermBrowserVisitsFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserVisitsFinder.swift; sourceTree = "<group>"; };
 		A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermPermissionsHelper.swift; sourceTree = "<group>"; };
 		A6CC49892C06EB4E003484B2 /* SettingsSecureTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSecureTextField.swift; sourceTree = "<group>"; };
 		A6CC498B2C08E03A003484B2 /* AttributedStringSaver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributedStringSaver.swift; sourceTree = "<group>"; };
@@ -13435,6 +13437,7 @@
 		A6CBB8142E0A16CB00B2CCCB /* Database */ = {
 			isa = PBXGroup;
 			children = (
+				A6CC2D0E2E4AB38E00F8D620 /* iTermBrowserVisitsFinder.swift */,
 				A6AF79C52E06586A008D77BA /* BrowserBookmarks.swift */,
 				A6AF79C92E06593C008D77BA /* BrowserBookmarkTags.swift */,
 				A6F7D4F32E0537710065D09C /* BrowserDatabase.swift */,
@@ -18771,6 +18774,7 @@
 				A635F1EF2507621A008C3038 /* iTermSnippetsEditingViewController.m in Sources */,
 				A6F66BA02C2E2BBB00DC3569 /* iTermMutableOrderedSet.swift in Sources */,
 				A63011BA20E83000008114B7 /* iTermStatusBarKnobTextViewController.m in Sources */,
+				A6CC2D0F2E4AB38F00F8D620 /* iTermBrowserVisitsFinder.swift in Sources */,
 				534B6C6723DC139C0031FED2 /* PTYSession+Scripting.m in Sources */,
 				A690555D241E09EC0020EA6A /* iTermResult.m in Sources */,
 				A630117F20E69D43008114B7 /* iTermStatusBarComponentKnob.m in Sources */,
