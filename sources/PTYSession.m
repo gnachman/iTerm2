@@ -12912,7 +12912,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 {
     if (@available(macOS 11, *)) {
         if ([_conductor canTransferFilesTo:path]) {
-            [_conductor download:path];
+            [_conductor downloadOrView:path window:self.view.window];
             return;
         }
     }

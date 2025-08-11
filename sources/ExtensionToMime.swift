@@ -1025,3 +1025,7 @@ let extensionToMime: [String: String] = [
     "zirz": "application/vnd.zul",
     "zmm": "application/vnd.handheld-entertainment+xml"
 ]
+
+func mimeType(for fileExtension: String) -> String? {
+    return extensionToMime[fileExtension.lowercased()] ?? openAIExtensionToMime[fileExtension.lowercased()]
+}

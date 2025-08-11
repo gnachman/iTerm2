@@ -1306,6 +1306,48 @@ extension Conductor {
         return sshIdentity.matches(host: path.hostname, user: path.username)
     }
 
+    @objc(downloadOrView:window:)
+    func downloadOrView(path: SCPPath, window: NSWindow?) {
+        let ext = path.path.pathExtension.lowercased()
+        let mimeType = mimeType(for: ext)
+        let unsupportedMimeTypes = [
+            "application/zip",
+            "application/x-gtar",
+            "application/x-tar",
+        ]
+        guard iTermAdvancedSettingsModel.browserProfiles(),
+              let mimeType,
+              let url = path.viewInBrowserURL,
+              !unsupportedMimeTypes.contains(mimeType) else {
+            download(path: path)
+            return
+        }
+        Task { @MainActor in
+            guard let sb = try? await stat(path.path) else {
+                return
+            }
+            if sb.kind.isFolder {
+                download(path: path)
+                return
+            }
+            switch iTermWarning.show(
+                withTitle: "Download \(path.path.lastPathComponent) or view in browser?",
+                actions: ["Download", "View", "Cancel"],
+                accessory: nil,
+                identifier: "DownloadOrViewInBrowser_" + mimeType + " " + path.usernameHostnameString,
+                silenceable: .kiTermWarningTypePermanentlySilenceable,
+                heading: "Download or View File?",
+                window: window) {
+            case .kiTermWarningSelection0:  // Download
+                download(path: path)
+            case .kiTermWarningSelection1:  // View
+                iTermController.sharedInstance().openURL(inNewBrowserTab: url, selectTab: true)
+            default:
+                break
+            }
+        }
+    }
+
     @available(macOS 11, *)
     @objc(download:)
     func download(path: SCPPath) {
@@ -1313,6 +1355,10 @@ extension Conductor {
                                          localPath: nil,
                                          delegate: self)
         file.download()
+    }
+
+    func streamDownload(path: SCPPath) -> AsyncThrowingStream<Data, Error> {
+        return stream(remotePath: path.path)
     }
 
     @available(macOS 11, *)
@@ -2385,4 +2431,12 @@ extension Array where Element == Conductor.Nesting {
     }
 }
 
-
+extension SCPPath {
+    var viewInBrowserURL: URL? {
+        var components = URLComponents()
+        components.scheme = iTermBrowserSchemes.ssh
+        components.host = hostname
+        components.path = path
+        return components.url
+    }
+}

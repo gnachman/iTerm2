@@ -83,6 +83,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private var lastFailedURL: URL?
     private var currentPageURL: URL?
     private let localPageManager: iTermBrowserLocalPageManager
+    private let sshPageManager: iTermBrowserSSHPageManager
     private(set) var favicon: NSImage?
     private var _findManager = iTermBrowserFindManager.create()
     private var adblockManager: iTermBrowserAdblockManager?
@@ -130,6 +131,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         self.navigationState = navigationState
         self.localPageManager = iTermBrowserLocalPageManager(user: user,
                                                              historyController: historyController)
+        self.sshPageManager = iTermBrowserSSHPageManager()
         self.namedMarkManager = iTermBrowserNamedMarkManager(user: user)
         self.triggerHandler = iTermBrowserTriggerHandler(profileObserver: profileObserver)
         self.audioHandler = iTermBrowserAudioHandler()
@@ -348,6 +350,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         }
         // Register custom URL scheme handler for iterm2-about: URLs
         configuration.setURLSchemeHandler(handlerProxy, forURLScheme: iTermBrowserSchemes.about)
+        configuration.setURLSchemeHandler(handlerProxy, forURLScheme: iTermBrowserSchemes.ssh)
     }
 
     private func setupWebView(configuration preferredConfiguration: WKWebViewConfiguration?,
@@ -1108,14 +1111,30 @@ extension iTermBrowserManager {
             urlSchemeTask.didFailWithError(NSError(domain: "iTermBrowserManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"]))
             return
         }
-        
-        if !localPageManager.handleURLSchemeTask(urlSchemeTask, url: url) {
+
+        switch url.scheme {
+        case iTermBrowserSchemes.about:
+            if !localPageManager.handleURLSchemeTask(urlSchemeTask, url: url) {
+                urlSchemeTask.didFailWithError(NSError(domain: "iTermBrowserManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unknown URL scheme"]))
+            }
+        case iTermBrowserSchemes.ssh:
+            if !sshPageManager.handleURLSchemeTask(urlSchemeTask, url: url) {
+                urlSchemeTask.didFailWithError(NSError(domain: "iTermBrowserManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unknown URL scheme"]))
+            }
+        default:
             urlSchemeTask.didFailWithError(NSError(domain: "iTermBrowserManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unknown URL scheme"]))
         }
     }
     
     func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {
-        // Cancel any ongoing work if needed
+        switch urlSchemeTask.request.url?.scheme {
+        case iTermBrowserSchemes.about:
+            break
+        case iTermBrowserSchemes.ssh:
+            sshPageManager.stop(urlSchemeTask: urlSchemeTask)
+        default:
+            break
+        }
     }
 }
 

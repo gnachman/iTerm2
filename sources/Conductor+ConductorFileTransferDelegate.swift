@@ -30,6 +30,49 @@ extension Conductor: ConductorFileTransferDelegate {
     }
 
     @MainActor
+    func stream(remotePath: String) -> AsyncThrowingStream<Data, Error> {
+        return AsyncThrowingStream { continuation in
+            let producer = Task {
+                do {
+                    try await yieldChunks(remotePath: remotePath,
+                                          continuation: continuation)
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+            continuation.onTermination = { _ in
+                producer.cancel()
+            }
+        }
+    }
+
+    private func yieldChunks(remotePath: String,
+                             continuation: AsyncThrowingStream<Data, any Error>.Continuation) async throws {
+        let info = try await stat(remotePath)
+        if info.kind == .folder {
+            continuation.finish(
+                throwing: ConductorFileTransfer.ConductorFileTransferError(
+                    "Streaming downloads do not support folders"))
+            return
+        }
+        var done = false
+        var offset = 0
+
+        let chunkSize = 1024
+        while !done {
+            let chunk = DownloadChunk(offset: offset, size: chunkSize)
+            let data = try await download(remotePath, chunk: chunk, uniqueID: nil)
+            if data.isEmpty {
+                done = true
+            } else {
+                continuation.yield(data)
+                offset += data.count
+            }
+        }
+        continuation.finish()
+    }
+
+    @MainActor
     private func reallyBeginDownload(fileTransfer: ConductorFileTransfer,
                                      remotePath: String,
                                      fileHandle: FileHandle,

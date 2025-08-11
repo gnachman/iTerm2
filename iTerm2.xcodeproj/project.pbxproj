@@ -3837,6 +3837,10 @@
 		A6CC2C7C2E4541A400F8D620 /* find-nav.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CC2C7A2E4541A400F8D620 /* find-nav.js */; };
 		A6CC2C7D2E4541A400F8D620 /* find-nav.js in Resources */ = {isa = PBXBuildFile; fileRef = A6CC2C7A2E4541A400F8D620 /* find-nav.js */; };
 		A6CC2C7E2E45BE9900F8D620 /* iTermToolbeltView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DC881415513A00F83147 /* iTermToolbeltView.m */; };
+		A6CC2D082E4A741900F8D620 /* iTermBrowserSSHPageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC2D042E4A73DC00F8D620 /* iTermBrowserSSHPageManager.swift */; };
+		A6CC2D0A2E4A7FA600F8D620 /* ssh-page-no-conductor.html in Resources */ = {isa = PBXBuildFile; fileRef = A6CC2D092E4A7F3900F8D620 /* ssh-page-no-conductor.html */; };
+		A6CC2D0B2E4A7FA600F8D620 /* ssh-page-no-conductor.html in Resources */ = {isa = PBXBuildFile; fileRef = A6CC2D092E4A7F3900F8D620 /* ssh-page-no-conductor.html */; };
+		A6CC2D0C2E4A7FA600F8D620 /* ssh-page-no-conductor.html in Resources */ = {isa = PBXBuildFile; fileRef = A6CC2D092E4A7F3900F8D620 /* ssh-page-no-conductor.html */; };
 		A6CC49882C06E173003484B2 /* iTermPermissionsHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */; };
 		A6CC498A2C06EB4E003484B2 /* SettingsSecureTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC49892C06EB4E003484B2 /* SettingsSecureTextField.swift */; };
 		A6CC498C2C08E03A003484B2 /* AttributedStringSaver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC498B2C08E03A003484B2 /* AttributedStringSaver.swift */; };
@@ -8337,6 +8341,8 @@
 		A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCarbonHotKeyController.h; sourceTree = "<group>"; };
 		A6CC16531CF012E300E8C148 /* iTermCarbonHotKeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCarbonHotKeyController.m; sourceTree = "<group>"; };
 		A6CC2C7A2E4541A400F8D620 /* find-nav.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "find-nav.js"; sourceTree = "<group>"; };
+		A6CC2D042E4A73DC00F8D620 /* iTermBrowserSSHPageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserSSHPageManager.swift; sourceTree = "<group>"; };
+		A6CC2D092E4A7F3900F8D620 /* ssh-page-no-conductor.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "ssh-page-no-conductor.html"; sourceTree = "<group>"; };
 		A6CC49872C06E173003484B2 /* iTermPermissionsHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermPermissionsHelper.swift; sourceTree = "<group>"; };
 		A6CC49892C06EB4E003484B2 /* SettingsSecureTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSecureTextField.swift; sourceTree = "<group>"; };
 		A6CC498B2C08E03A003484B2 /* AttributedStringSaver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributedStringSaver.swift; sourceTree = "<group>"; };
@@ -13644,6 +13650,15 @@
 			path = "WebView Additions";
 			sourceTree = "<group>";
 		};
+		A6CC2D032E4A73D100F8D620 /* ssh Page Manager */ = {
+			isa = PBXGroup;
+			children = (
+				A6CC2D092E4A7F3900F8D620 /* ssh-page-no-conductor.html */,
+				A6CC2D042E4A73DC00F8D620 /* iTermBrowserSSHPageManager.swift */,
+			);
+			path = "ssh Page Manager";
+			sourceTree = "<group>";
+		};
 		A6CEBF5F1DCE7DF3009F4FD2 /* Proto */ = {
 			isa = PBXGroup;
 			children = (
@@ -13974,8 +13989,8 @@
 		A6F7D4B32E0340A30065D09C /* Browser */ = {
 			isa = PBXGroup;
 			children = (
-				A6D693EE2E417111005E9AFE /* Audio Muting */,
 				A61220F02E1070EF00F48E64 /* Ad Blocking */,
+				A6D693EE2E417111005E9AFE /* Audio Muting */,
 				A6FE7A912E0E6B7F00BEBCE4 /* Autofill */,
 				A6CBB8132E0A16AA00B2CCCB /* Bookmarks */,
 				A6E312B52E3997A6008222DE /* Copy Mode */,
@@ -13996,6 +14011,7 @@
 				A6AA2F5D2E28B1AE002998B3 /* Proxy */,
 				A6CBB8BE2E0A695D00B2CCCB /* Reader Mode */,
 				A6CBB81A2E0A1C1700B2CCCB /* Settings */,
+				A6CC2D032E4A73D100F8D620 /* ssh Page Manager */,
 				A6CBB9732E0B18D400B2CCCB /* Suggestions */,
 				A67238B62E3EDC80003227C3 /* Triggers */,
 				A6CBB81C2E0A1C5500B2CCCB /* UI */,
@@ -15907,7 +15923,6 @@
 						ProvisioningStyle = Automatic;
 					};
 					1DD39AD3180B8117004E56D5 = {
-						DevelopmentTeam = H7V7XYVQ7D;
 						ProvisioningStyle = Automatic;
 					};
 					1DFA7C661923E83500DF1410 = {
@@ -16202,6 +16217,7 @@
 				A61220702E0F4C2400F48E64 /* xpath-utils.js in Resources */,
 				A61220712E0F4C2400F48E64 /* get-xpath-at-point.js in Resources */,
 				A6B3A73A1AC74E02008E8D4E /* FindCursorCell3.png in Resources */,
+				A6CC2D0C2E4A7FA600F8D620 /* ssh-page-no-conductor.html in Resources */,
 				537A1FBA22168DF800FBEE5A /* MinimalFindView.xib in Resources */,
 				A6EFF2341D2049A400806EEF /* Erase@2x.png in Resources */,
 				A6CBB8F92E0A6FC800B2CCCB /* reader-mode.css in Resources */,
@@ -17110,6 +17126,7 @@
 				A6109B652B969B4100D8E4E9 /* graphic_neovim@2x.png in Resources */,
 				A6A64E6D2508C5B50040490B /* OpenQuicklySnippetIcon@2x.png in Resources */,
 				A6A64E652508BE650040490B /* StatusBarIconSnippet@2x.png in Resources */,
+				A6CC2D0B2E4A7FA600F8D620 /* ssh-page-no-conductor.html in Resources */,
 				A63821F0229E50CD005D74BE /* Warning@2x.png in Resources */,
 				537A1FB922168DF800FBEE5A /* MinimalFindView.xib in Resources */,
 				A6E312C22E3C11BF008222DE /* copy-mode-cursor.js in Resources */,
@@ -17222,6 +17239,7 @@
 			files = (
 				A6109B612B969B4100D8E4E9 /* graphic_neovim.png in Resources */,
 				A65DF4A12849601A00AA29AB /* .zshenv in Resources */,
+				A6CC2D0A2E4A7FA600F8D620 /* ssh-page-no-conductor.html in Resources */,
 				A6FE7A7F2E0E12DE00BEBCE4 /* clipboard-demo.html in Resources */,
 				A6F18B3B2AE2F39C006C08EE /* uniE0CE_lego_separator.pdf in Resources */,
 				A6CB24A92C68149100005824 /* imgcat in Resources */,
@@ -19600,6 +19618,7 @@
 				A67BCFE8270E702C00636983 /* VT100SavedColors.swift in Sources */,
 				A6D7D2222BBE0E7B00D884F5 /* FakeWindow.m in Sources */,
 				A6A3D18D2815EF6F00C0C9E0 /* TextViewPortholeRenderer.swift in Sources */,
+				A6CC2D082E4A741900F8D620 /* iTermBrowserSSHPageManager.swift in Sources */,
 				A62B36572D24C1A900FDF15E /* SetNamedMarkTrigger.swift in Sources */,
 				A608F22120F07658008E8009 /* iTermImageMark.m in Sources */,
 				A605128F2E38525800507125 /* PseudoTerminal.swift in Sources */,
@@ -20497,7 +20516,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -20585,7 +20604,7 @@
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -20666,7 +20685,7 @@
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -21553,7 +21572,7 @@
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				FRAMEWORK_SEARCH_PATHS = (

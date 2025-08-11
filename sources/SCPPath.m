@@ -30,4 +30,11 @@
     return [NSURL URLWithString:self.stringValue];
 }
 
+- (NSString *)usernameHostnameString {
+    if (!self.username) {
+        return self.hostname;
+    }
+    return [NSString stringWithFormat:@"%@@%@",self.username, self.hostname];
+}
+
 @end

@@ -23,6 +23,7 @@ func normalizeURL(_ urlString: String) -> URL? {
 private func stringHasValidScheme(_ urlString: String) -> Bool {
     return urlString.hasPrefix("http://") ||
     urlString.hasPrefix("https://") ||
+    iTermBrowserSchemes.allSchemes.anySatisfies({urlString.hasPrefix($0 + ":")}) ||
     urlString.hasPrefix(iTermBrowserSchemes.about + ":") ||
     urlString.hasPrefix("about:") ||
     urlString.hasPrefix("file://")

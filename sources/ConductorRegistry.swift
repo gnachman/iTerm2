@@ -51,6 +51,24 @@ class ConductorRegistry {
             return conductors[identity]?.compactMap(\.value) ?? []
         }
     }
+
+    func conductors(for url: URL) -> [Conductor] {
+        return conductors.flatMap { (entry) -> [Conductor] in
+            let key = entry.key
+            if key.hostname != url.host && key.host != url.host {
+                return []
+            }
+            if let user = url.user, let sshUser = key.username, user != sshUser {
+                return []
+            }
+            if let port = url.port,
+                port != 0,
+               (key.port != Int(port) || key.port == 0 && port == 22) {
+                return []
+            }
+            return entry.value.compactMap { $0.value }
+        }
+    }
 }
 
 @available(macOS 11, *)
