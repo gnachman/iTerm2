@@ -113,7 +113,7 @@ class FindEngine {
 
         try {
             // First, discover iframe graph if we're in main frame
-            if (this.isMainFrame && window.iTermGraphDiscovery) {
+            if (this.isMainFrame) {
                 this.log('collectSegments: main frame - discovering iframe graph');
                 await this.discoverFrameGraph();
                 this.log('collectSegments: iframe discovery complete, frameId now:', this.frameId?.substring(0, 8));
@@ -151,8 +151,8 @@ class FindEngine {
             }, 3000);
 
             try {
-                this.log('discoverFrameGraph: about to call window.iTermGraphDiscovery.discover');
-                window.iTermGraphDiscovery.discover(async (graph) => {
+                this.log('discoverFrameGraph: about to call graphDiscoveryDiscover');
+                graphDiscoveryDiscover(async (graph) => {
                     if (resolved) {
                         this.log('discoverFrameGraph: WARNING - callback called after timeout');
                         return;
@@ -179,7 +179,7 @@ class FindEngine {
                     await this.importGlobalClickLocation();
                     resolve();
                 });
-                this.log('discoverFrameGraph: window.iTermGraphDiscovery.discover called successfully');
+                this.log('discoverFrameGraph: graphDiscoveryDiscover called successfully');
             } catch (e) {
                 if (!resolved) {
                     resolved = true;
@@ -208,7 +208,7 @@ class FindEngine {
                 // Finish current text segment if we have text nodes
                 if (currentTextNodes.length > 0) {
                     const textSegment = new TextSegment(segmentIndex++, currentContainerElement);
-                    textSegment.setTextNodes(currentTextNodes);
+                    textSegment.setTextNodes(currentTextNodes, this);
                     this.segments.push(textSegment);
                     this.log('buildSegments: added text segment', textSegment.index, 'with', textSegment.textContent.length, 'chars');
                     currentTextNodes = [];
@@ -231,7 +231,7 @@ class FindEngine {
         // Finish final text segment if we have remaining text nodes
         if (currentTextNodes.length > 0) {
             const textSegment = new TextSegment(segmentIndex++, currentContainerElement);
-            textSegment.setTextNodes(currentTextNodes);
+            textSegment.setTextNodes(currentTextNodes, this);
             this.segments.push(textSegment);
             this.log('buildSegments: added final text segment', textSegment.index, 'with', textSegment.textContent.length, 'chars');
         }
@@ -455,7 +455,7 @@ class FindEngine {
         this.log('handleIframeClick: evaluating click script in frame:', iframeSegment.frameId);
 
         const iframeClickResult = await new Promise((resolve) => {
-            window.iTermGraphDiscovery.evaluateInFrame(iframeSegment.frameId, script, (result) => {
+            graphDiscoveryEvaluateInFrame(iframeSegment.frameId, script, (result) => {
                 this.log('handleIframeClick: iframe click script completed with result:', result);
                 resolve(result);
             });
@@ -668,7 +668,7 @@ class FindEngine {
 
         try {
             const iframeResult = await new Promise((resolve) => {
-                window.iTermGraphDiscovery.evaluateInFrame(clickedFrameId, conversionScript, (result) => {
+                graphDiscoveryEvaluateInFrame(clickedFrameId, conversionScript, (result) => {
                     resolve(result);
                 });
             });
@@ -875,6 +875,13 @@ class FindEngine {
         this.matches = [];
         this.frameMatches.clear();
         this.log('findMatchesWithIframes: cleared - matches.length:', this.matches.length);
+        
+        // Refresh frame graph to catch any dynamically added iframes
+        if (this.isMainFrame) {
+            this.log('findMatchesWithIframes: refreshing frame graph to catch new iframes');
+            await this.discoverFrameGraph();
+            this.log('findMatchesWithIframes: frame graph refreshed, frameId:', this.frameId?.substring(0, 8), 'children:', this.frameGraph?.children?.length || 0);
+        }
 
         if (!this.isMainFrame) {
             // If we're not the main frame, just do local search
@@ -910,7 +917,7 @@ class FindEngine {
 
         this.log('findMatchesWithIframes: executing search script in all frames');
         const allFrameResults = await new Promise((resolve) => {
-            window.iTermGraphDiscovery.evaluateInAll(searchScript, (results) => {
+            graphDiscoveryEvaluateInAll(searchScript, (results) => {
                 resolve(results);
             });
         });
@@ -936,20 +943,23 @@ class FindEngine {
                 this.log('findMatchesWithIframes: SKIPPING', result.matches.length, 'main frame matches - current total matches:', this.matches.length);
                 continue;
             } else {
-                // Remote frame's matches - need to prepend iframe segment index
-                const iframeSegment = this.segments.find(s =>
-                    s.type === 'iframe' && s.frameId === frameId
-                );
-
-                if (!iframeSegment) {
-                    this.log('findMatchesWithIframes: WARNING - no iframe segment found for frame', frameIdShort);
+                // Remote frame's matches - need to find path through frame graph tree
+                this.log('findMatchesWithIframes: looking for path to frame', frameIdShort, 'in frame graph with root:', this.frameGraph?.frameId?.substring(0, 8));
+                const framePath = this.findPathToFrame(this.frameGraph, frameId);
+                if (!framePath) {
+                    this.log('findMatchesWithIframes: WARNING - no path found to frame', frameIdShort, 'in frame graph');
+                    this.log('findMatchesWithIframes: DEBUG - frame graph structure:', JSON.stringify(this.frameGraph, null, 2));
                     continue;
                 }
 
-                this.log('findMatchesWithIframes: processing remote matches from frame', frameIdShort, 'in segment', iframeSegment.index);
+                this.log('findMatchesWithIframes: processing remote matches from frame', frameIdShort, 'via path:', framePath);
                 result.matches.forEach((frameMatch, idx) => {
+                    const originalCoords = frameMatch.coordinates;
+                    const newCoords = [...framePath, ...frameMatch.coordinates];
+                    this.log('findMatchesWithIframes: transforming coordinates for match', idx, 'from', originalCoords, 'to', newCoords, 'via path', framePath);
+                    
                     const remoteMatch = new Match(
-                        [iframeSegment.index, ...frameMatch.coordinates],
+                        newCoords,
                         frameMatch.text
                     );
 
@@ -995,6 +1005,9 @@ class FindEngine {
             let match;
 
             this.log("text is", segment.textContent);
+            for (const node of segment.textNodes) {
+                console.debug('findLocalMatches: node', node, 'has textContent:', node.textContent);
+            }
             while ((match = _RegExp_exec.call(regex, segment.textContent)) !== null) {
                 this.log("found a match");
                 const localMatch = new Match(
@@ -1036,7 +1049,7 @@ class FindEngine {
         `;
 
         await new Promise((resolve) => {
-            window.iTermGraphDiscovery.evaluateInAll(clearScript, (results) => {
+            graphDiscoveryEvaluateInAll(clearScript, (results) => {
                 const clearedFrames = Object.keys(results).filter(frameId => !results[frameId]?.error);
                 this.log('clearHighlightsInAllFrames: cleared highlights in', clearedFrames.length, 'frames - timestamp:', Date.now());
                 resolve();
@@ -1349,7 +1362,7 @@ class FindEngine {
         this.log('navigateToRemoteMatch: evaluating highlight script in frame:', match.frameId);
 
         await new Promise((resolve) => {
-            window.iTermGraphDiscovery.evaluateInFrame(match.frameId, script, (result) => {
+            graphDiscoveryEvaluateInFrame(match.frameId, script, (result) => {
                 this.log('navigateToRemoteMatch: highlight script completed with result:', result);
                 resolve(result);
             });
@@ -1370,7 +1383,7 @@ class FindEngine {
         `;
 
         await new Promise((resolve) => {
-            window.iTermGraphDiscovery.evaluateInFrame(frameId, script, (result) => {
+            graphDiscoveryEvaluateInFrame(frameId, script, (result) => {
                 this.log('clearCurrentInFrame: clear script completed for frame:', frameId, 'result:', result);
                 resolve(result);
             });
@@ -1423,7 +1436,7 @@ class FindEngine {
 
         try {
             this.log('startFind: About to call highlight() - timestamp:', Date.now());
-            await this.highlighter.highlight(this.matches, this.currentSearchTerm, this.segments);
+            await this.highlighter.highlight(this.matches, this.currentSearchTerm, this.segments, this);
             this.log('startFind: Highlighting completed - timestamp:', Date.now());
         } catch (e) {
             this.log('startFind: ERROR in highlighting, but continuing:', e.toString(), e);
@@ -1611,7 +1624,7 @@ class FindEngine {
         this.log('getRemoteMatchBounds: evaluating bounds script in frame:', match.frameId);
 
         const remoteBounds = await new Promise((resolve) => {
-            window.iTermGraphDiscovery.evaluateInFrame(match.frameId, script, (result) => {
+            graphDiscoveryEvaluateInFrame(match.frameId, script, (result) => {
                 this.log('getRemoteMatchBounds: bounds script completed with result:', result);
                 resolve(result);
             });
@@ -1826,7 +1839,7 @@ class FindEngine {
                 this.clearHighlightsInAllFrames();
                 break;
             case 'showResults':
-                await this.highlighter.highlight(this.matches, this.currentSearchTerm, this.segments);
+                await this.highlighter.highlight(this.matches, this.currentSearchTerm, this.segments, this);
                 break;
             case 'startNavigationShortcuts':
                 await this.startNavigationShortcuts(command.selectionAction);

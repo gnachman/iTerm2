@@ -250,9 +250,7 @@
             })();
         `;
         
-        if (window.iTermGraphDiscovery) {
-            window.iTermGraphDiscovery.evaluateInAll(script, () => {});
-        }
+        graphDiscoveryEvaluateInAll(script, () => {});
     }
 
     // Check if characters are a prefix of any shortcut
@@ -287,9 +285,7 @@
             })();
         `;
         
-        if (window.iTermGraphDiscovery) {
-            window.iTermGraphDiscovery.evaluateInAll(script, () => {});
-        }
+        graphDiscoveryEvaluateInAll(script, () => {});
     }
 
     // Handle keyboard input - mirroring iTermShortcutNavigationModeHandler exactly
@@ -574,7 +570,7 @@
         console.log('find-nav: Using evaluateInAll to create bubbles in all frames');
         
         await new Promise((resolve) => {
-            window.iTermGraphDiscovery.evaluateInAll(script, (results) => {
+            graphDiscoveryEvaluateInAll(script, (results) => {
                 console.log('find-nav: evaluateInAll completed, results from', Object.keys(results).length, 'frames');
                 resolve();
             });
@@ -602,29 +598,24 @@
         }
         
         // Clear bubbles in all frames using evaluateInAll
-        if (window.iTermGraphDiscovery) {
-            const script = `
-                (function() {
-                    // Remove all navigation bubbles in this frame
-                    const bubbles = document.querySelectorAll('[data-find-nav-bubble="true"]');
-                    bubbles.forEach(bubble => {
-                        bubble.classList.add('dissolve');
-                        setTimeout(() => {
-                            if (bubble.parentNode) {
-                                bubble.parentNode.removeChild(bubble);
-                            }
-                        }, 300);
-                    });
-                    console.log('find-nav: Cleared', bubbles.length, 'bubbles from frame');
-                })();
-            `;
-            
-            // Use evaluateInAll to clear bubbles in all frames
-            window.iTermGraphDiscovery.evaluateInAll(script, () => {});
-        } else {
-            // Fallback for main frame only
-            removeBubbles();
-        }
+        const script = `
+            (function() {
+                // Remove all navigation bubbles in this frame
+                const bubbles = document.querySelectorAll('[data-find-nav-bubble="true"]');
+                bubbles.forEach(bubble => {
+                    bubble.classList.add('dissolve');
+                    setTimeout(() => {
+                        if (bubble.parentNode) {
+                            bubble.parentNode.removeChild(bubble);
+                        }
+                    }, 300);
+                });
+                console.log('find-nav: Cleared', bubbles.length, 'bubbles from frame');
+            })();
+        `;
+        
+        // Use evaluateInAll to clear bubbles in all frames
+        graphDiscoveryEvaluateInAll(script, () => {});
         
         currentPrefix = '';
         currentCallback = null;

@@ -38,7 +38,8 @@
       "Bash(pkill:*)",
       "Bash(ffprobe:*)",
       "Bash(ffmpeg:*)",
-      "Bash(swift:*)"
+      "Bash(swift:*)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }

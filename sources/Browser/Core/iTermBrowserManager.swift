@@ -107,6 +107,8 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private let handlerProxy = iTermBrowserWebViewHandlerProxy()
     let triggerHandler: iTermBrowserTriggerHandler?
     private let audioHandler: iTermBrowserAudioHandler?
+    private let editingDetector: iTermBrowserEditingDetectorHandler?
+    private let graphDiscovery = iTermBrowserGraphDiscoveryHandler()
 
     private static var safariVersion = {
         Bundle(path: "/Applications/Safari.app")?.infoDictionary?["CFBundleShortVersionString"] as? String
@@ -135,6 +137,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         self.namedMarkManager = iTermBrowserNamedMarkManager(user: user)
         self.triggerHandler = iTermBrowserTriggerHandler(profileObserver: profileObserver)
         self.audioHandler = iTermBrowserAudioHandler()
+        self.editingDetector = iTermBrowserEditingDetectorHandler()
 
         super.init()
 
@@ -203,7 +206,20 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
             forMainFrameOnly: false,
             worlds: [.page, .defaultClient],
             identifier: UserScripts.consoleLog.rawValue))
-
+        contentManager.add(userScript: .init(
+            code: iTermBrowserTemplateLoader.load(template: "graph-discovery.js", substitutions: [:]),
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: false,
+            worlds: [graphDiscovery.world],
+            identifier: "GraphDiscovery"))
+        configuration.userContentController.add(handlerProxy,
+                                                contentWorld: graphDiscovery.world,
+                                                name: iTermBrowserGraphDiscoveryHandler.messageHandlerName)
+        contentManager.add(userScript: .init(code: graphDiscovery.javascript,
+                                             injectionTime: .atDocumentStart,
+                                             forMainFrameOnly: false,
+                                             worlds: [graphDiscovery.world],
+                                             identifier: "GraphDiscovery"))
         // TODO: Ensure all of these handlers are stateless because related webviews (e.g., target=_blank) share them.
         if let notificationHandler {
             // This is a polyfill so it goes int he page world
@@ -300,6 +316,18 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                                   worlds: [.defaultClient],
                                   identifier: "TriggerHandler"))
         }
+        if let editingDetector {
+            configuration.userContentController.add(
+                handlerProxy,
+                contentWorld: .defaultClient,
+                name: iTermBrowserEditingDetectorHandler.messageHandlerName)
+            contentManager.add(
+                userScript: .init(code: editingDetector.javascript,
+                                  injectionTime: .atDocumentStart,
+                                  forMainFrameOnly: false,
+                                  worlds: [.defaultClient],
+                                  identifier: "EditingDetector"))
+        }
         configuration.userContentController.add(
             handlerProxy,
             contentWorld: .defaultClient,
@@ -328,16 +356,12 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                 userScript: .init(code: browserFindManager.javascript,
                                   injectionTime: .atDocumentStart,
                                   forMainFrameOnly: false,
-                                  worlds: [.defaultClient],
+                                  worlds: [browserFindManager.world],
                                   identifier: iTermBrowserFindManager.messageHandlerName))
             configuration.userContentController.add(
                 handlerProxy,
-                contentWorld: .defaultClient,
+                contentWorld: browserFindManager.world,
                 name: iTermBrowserFindManager.messageHandlerName)
-            configuration.userContentController.add(
-                handlerProxy,
-                contentWorld: .defaultClient,
-                name: iTermBrowserFindManager.graphDiscoveryMessageHandlerName)
         }
         configuration.userContentController.add(readerModeManager,
                                                 contentWorld: .defaultClient,
@@ -997,9 +1021,11 @@ extension iTermBrowserManager {
             XLog("Javascript Console: \(string)")
 #endif
 
-        case iTermBrowserFindManager.graphDiscoveryMessageHandlerName:
+        case iTermBrowserFindManager.messageHandlerName:
             _findManager?.handleMessage(webView: webView, message: message)
 
+        case iTermBrowserGraphDiscoveryHandler.messageHandlerName:
+            graphDiscovery.handleMessage(webView: webView, message: message)
 
         case iTermBrowserNotificationHandler.messageHandlerName:
             notificationHandler?.handleMessage(webView: webView, message: message)
@@ -1087,6 +1113,9 @@ extension iTermBrowserManager {
 
         case iTermBrowserFindManager.messageHandlerName:
             browserFindManager?.handleMessage(webView: webView, message: message)
+
+        case iTermBrowserEditingDetectorHandler.messageHandlerName:
+            editingDetector?.handleMessage(webView: webView, message: message)
 
         default:
             DLog(message.name)
@@ -1218,6 +1247,8 @@ extension iTermBrowserManager: WKNavigationDelegate {
         copyModeHandler?.enabled = false
         audioHandler?.disabled = false
         audioHandler?.mutedFrames = []
+        graphDiscovery.willNavigate()
+        self.webView.isEditingText = false
     }
 
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {

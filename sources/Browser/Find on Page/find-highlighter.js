@@ -5,7 +5,7 @@ class FindHighlighter {
         this.frameId = frameId
     }
 
-    async highlight(matches, currentSearchTerm, segments) {
+    async highlight(matches, currentSearchTerm, segments, engine) {
         this.log('highlight: ENTER - starting with', matches.length, 'matches');
         this.log('highlight: frame:', this.frameId?.substring(0, 8) || 'unknown', 'term:', currentSearchTerm, 'timestamp:', Date.now());
 
@@ -45,7 +45,7 @@ class FindHighlighter {
             for (const match of matches) {
                 try {
                     this.log('highlight: attempting to highlight local match ID:', match.id, 'in segment', segmentIndex);
-                    this.highlightLocalMatch(match, segments);
+                    this.highlightLocalMatch(match, segments, engine);
                     highlightedCount++;
                     this.log('highlight: successfully highlighted match ID:', match.id);
                 } catch (e) {
@@ -104,11 +104,11 @@ class FindHighlighter {
         `;
 
         await new Promise((resolve) => {
-            window.iTermGraphDiscovery.evaluateInFrame(match.frameId, script, resolve);
+            graphDiscoveryEvaluateInFrame(match.frameId, script, resolve);
         });
     }
 
-    highlightLocalMatch(match, segments) {
+    highlightLocalMatch(match, segments, engine) {
         this.log('highlightLocalMatch: ENTER - match ID:', match.id, 'timestamp:', Date.now());
         this.log('highlightLocalMatch: frame:', this.frameId?.substring(0, 8) || 'unknown');
 
@@ -126,8 +126,8 @@ class FindHighlighter {
 
         this.log('highlightLocalMatch: attempting to highlight match at coordinates', match.coordinates, 'text:', match.text.substring(0, 10) + '...');
 
-        // Use coordinates to find text nodes directly
-        const result = findTextNodeByCoordinates(segment, segmentOffset, match.text.length);
+        // Use coordinates to find text nodes directly - pass engine for consistent text node collection
+        const result = findTextNodeByCoordinates(segment, segmentOffset, match.text.length, engine);
 
         if (!result) {
             this.log('highlightLocalMatch: could not locate text nodes using coordinates');
@@ -178,7 +178,7 @@ class FindHighlighter {
             this.log('highlightLocalMatch: attempting fallback character-by-character highlighting');
 
             for (let i = 0; i < match.text.length; i++) {
-                const charResult = findTextNodeByCoordinates(segment, segmentOffset + i, 1);
+                const charResult = findTextNodeByCoordinates(segment, segmentOffset + i, 1, engine);
                 if (charResult) {
                     try {
                         const range = _createRange();

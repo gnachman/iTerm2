@@ -1,7 +1,7 @@
 (function() {
     'use strict';
 
-    {{INCLUDE:graph-discovery.js}}
+    {{INCLUDE:graph-discovery-api.js}}
     {{INCLUDE:find-security.js}}
     {{INCLUDE:find-constants.js}}
     {{INCLUDE:find-utils.js}}

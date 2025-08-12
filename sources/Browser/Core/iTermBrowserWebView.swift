@@ -45,9 +45,15 @@ protocol iTermBrowserWebViewDelegate: AnyObject {
     func webViewDidChangeEffectiveAppearance(_ webView: iTermBrowserWebView)
 }
 
+@MainActor
+@objc
+protocol iTermEditableTextDetecting {
+    var isEditingText: Bool { get }
+}
+
 @available(macOS 11.0, *)
 @MainActor
-class iTermBrowserWebView: iTermBaseWKWebView {
+class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
     enum Event {
         case insert(text: String)
         case doCommandBySelector(Selector?)
@@ -66,6 +72,7 @@ class iTermBrowserWebView: iTermBaseWKWebView {
     private let focusFollowsMouse = iTermFocusFollowsMouse()
     private let contextMenuHelper = iTermBrowserContextMenuHelper()
     var receivingBroadcast = false
+    @objc var isEditingText = false
 
     var currentSelection: String? {
         didSet {

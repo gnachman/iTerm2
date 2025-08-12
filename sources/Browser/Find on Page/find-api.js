@@ -68,16 +68,29 @@ async function getMatchBoundsInEngine(command) {
 
 // Helper functions for iframe highlighting and navigation
 function highlightMatches(instanceId) {
+    console.log('highlightMatches: called with instanceId:', instanceId);
     const engine = getEngine(instanceId);
     if (!engine) {
+        console.log('highlightMatches: no engine found for instanceId:', instanceId);
         return;
     }
     if (!engine.matches) {
+        console.log('highlightMatches: engine has no matches');
         return;
     }
+    
+    console.log('highlightMatches: engine has', engine.matches.length, 'matches and', engine.segments.length, 'segments');
+    for (let i = 0; i < engine.segments.length; i++) {
+        const segment = engine.segments[i];
+        if (segment.type === 'text') {
+            console.log('highlightMatches: segment', i, 'has', segment.textContent.length, 'chars:', segment.textContent.substring(0, 50) + '...');
+        }
+    }
+    
     for (const match of engine.matches) {
         if (match.type === 'local') {
-            engine.highlighter.highlightLocalMatch(match, engine.segments);
+            console.log('highlightMatches: highlighting match at coordinates', match.coordinates, 'text:', match.text.substring(0, 20));
+            engine.highlighter.highlightLocalMatch(match, engine.segments, engine);
         }
     }
 }
@@ -274,7 +287,9 @@ const api = {
     highlightRemoteMatch,
     clearCurrentHighlight,
     getRemoteMatchBounds,
-    handleClickInFrame
+    handleClickInFrame,
+
+    getEngine
 };
 
 // Freeze the API object and all its methods

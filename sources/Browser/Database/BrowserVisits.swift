@@ -104,7 +104,7 @@ extension BrowserVisits: iTermDatabaseElement {
              \(Columns.lastVisitDate.rawValue), 
              \(Columns.firstVisitDate.rawValue),
              \(Columns.title.rawValue),
-             \(Columns.url.rawValue)
+             \(Columns.url.rawValue))
         values (?, ?, ?, ?, ?, ?, ?)
         """,
          [

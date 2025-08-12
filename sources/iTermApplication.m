@@ -402,9 +402,20 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     return NO;
 }
 
+- (BOOL)responderIsEditingText:(NSResponder *)responder {
+    if ([responder isKindOfClass:[NSTextView class]]) {
+        return YES;
+    }
+    if ([responder conformsToProtocol:@protocol(iTermEditableTextDetecting)]) {
+        id<iTermEditableTextDetecting> detector = (id<iTermEditableTextDetecting>)responder;
+        return detector.isEditingText;
+    }
+    return NO;
+}
+
 - (BOOL)remapEvent:(NSEvent *)event inResponder:(NSResponder *)responder currentSession:(PTYSession *)currentSession {
     BOOL okToRemap = YES;
-    if ([responder isKindOfClass:[NSTextView class]]) {
+    if ([self responderIsEditingText:responder]) {
         // Disable keymaps that send text
         if ([currentSession hasTextSendingKeyMappingForEvent:event]) {
             okToRemap = NO;
