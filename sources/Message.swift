@@ -166,6 +166,8 @@ struct Message: Codable {
     var content: Content
     let sentDate: Date
     var uniqueID: UUID
+    var inResponseTo: String?  // This is a responseID, not a uniqueID. Not all AI providers support response IDs.
+    var responseID: String?
 
     // This is only present in user-sent messages.
     struct Configuration: Codable {
@@ -277,6 +279,7 @@ extension Message: iTermDatabaseElement {
         case sentDate
         case uniqueID
         case chatID
+        case responseID
     }
 
     static func schema() -> String {
@@ -286,9 +289,19 @@ extension Message: iTermDatabaseElement {
              \(Columns.author.rawValue) text not null,
              \(Columns.chatID.rawValue) text not null,
              \(Columns.content.rawValue) text not null,
-             \(Columns.sentDate.rawValue) integer not null)
+             \(Columns.sentDate.rawValue) integer not null,
+             \(Columns.responseID.rawValue) text)
         """
     }
+
+    static func migrations(existingColumns: [String]) -> [Migration] {
+        var result = [Migration]()
+        if !existingColumns.contains(Columns.responseID.rawValue) {
+            result.append(.init(query: "ALTER TABLE Message ADD COLUMN \(Columns.responseID.rawValue) text", args: []))
+        }
+        return result
+    }
+
 
     static func fetchAllQuery() -> String {
         "select * from Message"
@@ -312,15 +325,17 @@ extension Message: iTermDatabaseElement {
                 \(Columns.author.rawValue), 
                 \(Columns.chatID.rawValue),
                 \(Columns.content.rawValue), 
-                \(Columns.sentDate.rawValue))
-            values (?, ?, ?, ?, ?)
+                \(Columns.sentDate.rawValue),
+                \(Columns.responseID.rawValue))
+            values (?, ?, ?, ?, ?, ?)
             """,
             [
                 uniqueID.uuidString,
                 author.rawValue,
                 chatID,
                 jsonString,
-                sentDate.timeIntervalSince1970
+                sentDate.timeIntervalSince1970,
+                responseID
             ]
         )
     }
@@ -338,7 +353,8 @@ extension Message: iTermDatabaseElement {
             update Message set \(Columns.author.rawValue) = ?,
                                 \(Columns.chatID.rawValue) = ?,
                                 \(Columns.content.rawValue) = ?,
-                                \(Columns.sentDate.rawValue) = ?
+                                \(Columns.sentDate.rawValue) = ?,
+                                \(Columns.responseID.rawValue) = ?
             where \(Columns.uniqueID.rawValue) = ?
             """,
             [
@@ -346,7 +362,8 @@ extension Message: iTermDatabaseElement {
                 chatID,
                 jsonString,
                 sentDate.timeIntervalSince1970,
-                uniqueID.uuidString
+                uniqueID.uuidString,
+                responseID
             ]
         )
     }
@@ -369,5 +386,6 @@ extension Message: iTermDatabaseElement {
         self.chatID = chatID
         self.content = content
         self.sentDate = sentDate
+        self.responseID = result.string(forColumn: Columns.responseID.rawValue)
     }
 }

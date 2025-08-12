@@ -92,6 +92,9 @@ struct AIConversation {
             streaming?(.willInvoke(function))
         }
     }
+    var responseID: String? {
+        controller.previousResponseID
+    }
 
     var messages: [AITermController.Message]
     private(set) var controller: AITermController
@@ -161,6 +164,21 @@ struct AIConversation {
             }
         }
     }
+
+    // Deletes from the first user message on after the given response ID. Used when editing
+    // a conversation. The next completion will therefore be in response to this message.
+    mutating func deleteMessages(after responseID: String) {
+        if var i = messages.firstIndex(where: { $0.responseID == responseID}) {
+            while i < messages.count && messages[i].role != .user {
+                i += 1
+            }
+            if i < messages.count {
+                messages.removeSubrange(i...)
+            }
+            controller.previousResponseID = responseID
+        }
+    }
+
     mutating func add(_ aiMessage: AITermController.Message) {
         while messages.last?.role == aiMessage.role {
             messages.removeLast()
@@ -268,7 +286,7 @@ struct AIConversation {
         complete(streaming: nil, completion: completion)
     }
 
-    mutating func complete(streaming: ((LLM.StreamingUpdate) -> ())?,
+    mutating func complete(streaming: ((LLM.StreamingUpdate, String?) -> ())?,
                            completion: @escaping (Result<AIConversation, Error>) -> ()) {
         precondition(!messages.isEmpty)
 
@@ -299,7 +317,7 @@ struct AIConversation {
                 case .willInvoke:
                     break
                 }
-                streaming(update)
+                streaming(update, controller?.previousResponseID)
             }
         }
 
@@ -324,6 +342,8 @@ struct AIConversation {
             break
             }
         }
+        let lastAssistantMessage = self.messages.last { $0.role == .assistant }
+        controller.previousResponseID = lastAssistantMessage?.responseID
         controller.request(messages: truncatedMessages, stream: streaming != nil)
     }
 

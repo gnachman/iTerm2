@@ -33,6 +33,10 @@ class NotifyingArray<Element> {
         return storage.firstIndex(where: test)
     }
 
+    func last(where closure: (Element) throws -> Bool) rethrows -> Element? {
+        return try storage.last(where: closure)
+    }
+
     subscript(_ index: Int) -> Element {
         get {
             storage[index]

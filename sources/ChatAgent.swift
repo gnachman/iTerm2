@@ -272,7 +272,7 @@ class ChatAgent {
     private func aiMessage(from message: Message) -> AITermController.Message {
         let body = messageToPrompt.body(message: message)
         return AITermController.Message(
-            responseID: nil,
+            responseID: message.responseID,
             role: AITermController.Message.role(from: message),
             body: body)
     }
@@ -743,11 +743,14 @@ class ChatAgent {
             conversation.hostedTools.fileSearch = nil
         }
 
+        if let responseID = userMessage.inResponseTo {
+            conversation.deleteMessages(after: responseID)
+        }
         conversation.add(aiMessage(from: userMessage))
         var uuid: UUID?
-        let streamingCallback: ((LLM.StreamingUpdate) -> ())?
+        let streamingCallback: ((LLM.StreamingUpdate, String?) -> ())?
         if let streaming {
-            streamingCallback = { streamingUpdate in
+            streamingCallback = { streamingUpdate, responseID in
                 switch streamingUpdate {
                 case .appendAttachment(let chunk):
                     if uuid == nil,
@@ -762,7 +765,8 @@ class ChatAgent {
                     if uuid == nil,
                        let initialMessage = Self.message(completionText: chunk,
                                                          userMessage: userMessage,
-                                                         streaming: true) {
+                                                         streaming: true,
+                                                         responseID: responseID) {
                         streaming(.begin(initialMessage))
                         uuid = initialMessage.uniqueID
                     } else if let uuid {
@@ -823,7 +827,10 @@ class ChatAgent {
         guard let text = conversation.messages.last?.body.content else {
             return nil
         }
-        return self.message(completionText: text, userMessage: userMessage, streaming: false)
+        return self.message(completionText: text,
+                            userMessage: userMessage,
+                            streaming: false,
+                            responseID: conversation.messages.last?.responseID)
     }
 
     // Return a new message from the agent containing the content of the last message in result.
@@ -863,14 +870,16 @@ class ChatAgent {
     // This is for a committed message or an initial message in a stream.
     private static func message(completionText text: String,
                                 userMessage: Message,
-                                streaming: Bool) -> Message? {
+                                streaming: Bool,
+                                responseID: String?) -> Message? {
         switch userMessage.content {
         case .plainText, .markdown, .explanationResponse, .terminalCommand, .remoteCommandResponse, .multipart:
             return Message(chatID: userMessage.chatID,
                            author: .agent,
                            content: .markdown(text),
                            sentDate: Date(),
-                           uniqueID: UUID())
+                           uniqueID: UUID(),
+                           responseID: responseID)
         case .explanationRequest(let explanationRequest):
             let messageID = UUID()
             return Message(
@@ -883,7 +892,8 @@ class ChatAgent {
                     streaming ? ExplanationResponse.Update(final: false, messageID: messageID) : nil,
                     markdown: ""),  // markdown is added by the client.
                 sentDate: Date(),
-                uniqueID: messageID)
+                uniqueID: messageID,
+                responseID: responseID)
         case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat, .append,
                 .commit, .setPermissions, .appendAttachment, .vectorStoreCreated:
             it_fatalError()

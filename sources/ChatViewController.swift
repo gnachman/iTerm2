@@ -1302,7 +1302,7 @@ extension ChatViewController: ChatInputViewDelegate {
         let vectorStoreIDs = [listModel.chat(id: chatID)?.vectorStore].compactMap { $0 }
         let configuration = Message.Configuration(hostedWebSearchEnabled: webSearchEnabled,
                                                   vectorStoreIDs: vectorStoreIDs)
-        let message = if attachments.isEmpty {
+        var message = if attachments.isEmpty {
             Message(chatID: chatID,
                     author: .user,
                     content: .plainText(text),
@@ -1318,7 +1318,11 @@ extension ChatViewController: ChatInputViewDelegate {
                     uniqueID: UUID(),
                     configuration: configuration)
         }
-
+        if let lastAgentMessage = model?.items.last(where: { item in
+            item.existingMessage?.message.author == .agent
+        }) {
+            message.inResponseTo = lastAgentMessage.existingMessage?.message.responseID
+        }
         do {
             try ChatClient.instance?.publish(
                 message: message,
