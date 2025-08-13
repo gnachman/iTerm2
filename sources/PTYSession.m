@@ -14544,6 +14544,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)injectData:(NSData *)data {
+    if (self.isBrowserSession) {
+        return;
+    }
     [self.screen injectData:data];
 }
 
@@ -18420,7 +18423,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     ITMGetBufferResponse *response = [[[ITMGetBufferResponse alloc] init] autorelease];
 
     const VT100GridAbsWindowedRange windowedRange = [self absoluteWindowedCoordRangeFromLineRange:request.lineRange];
-    if (windowedRange.coordRange.start.x < 0) {
+    if (windowedRange.coordRange.start.x < 0 || self.isBrowserSession) {
         response.status = ITMGetBufferResponse_Status_InvalidLineRange;
         return nil;
     }
@@ -19405,6 +19408,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 - (void)runCoprocessWithCompletion:(void (^)(id, NSError *))completion
                        commandLine:(NSString *)command
                             mute:(NSNumber *)muteNumber {
+    if (self.isBrowserSession) {
+        NSError *error = [NSError errorWithDomain:@"com.iterm2.run-coprocess-command"
+                                             code:0
+                                         userInfo:@{ NSLocalizedDescriptionKey: @"Not supported in browser sessions" }];
+        completion(nil, error);
+        return;
+    }
     const BOOL mute = muteNumber ? muteNumber.boolValue : NO;
     if (self.hasCoprocess) {
         completion(@NO, nil);
@@ -19420,6 +19430,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                endX:(NSNumber *)endXNumber
                                endY:(NSNumber *)endYNumber
                                text:(NSString *)text {
+    if (self.isBrowserSession) {
+        NSError *error = [NSError errorWithDomain:@"com.iterm2.add-annotation-command"
+                                             code:0
+                                         userInfo:@{ NSLocalizedDescriptionKey: @"Not supported for browser sessions" }];
+        completion(nil, error);
+        return;
+    }
     const VT100GridAbsCoordRange range = VT100GridAbsCoordRangeMake(startXNumber.intValue,
                                                                     startYNumber.longLongValue,
                                                                     endXNumber.intValue,
