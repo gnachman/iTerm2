@@ -3221,6 +3221,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (self.isSingleUseSession) {
         return;
     }
+    if (self.isBrowserSession) {
+        return;
+    }
     if (_tmuxMode == TMUX_CLIENT && (_tmuxController.detached || _tmuxController.detaching)) {
         return;
     }
