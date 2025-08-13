@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="32700.99.1234" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="23727" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22689"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="23727"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -33,7 +33,7 @@
             <windowCollectionBehavior key="collectionBehavior" fullScreenNone="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="196" y="240" width="665" height="402"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1728" height="1079"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1667"/>
             <value key="minSize" type="size" width="665" height="402"/>
             <value key="maxSize" type="size" width="665" height="437"/>
             <view key="contentView" wantsLayer="YES" id="se5-gp-TjO" customClass="iTermOnboardingView">
@@ -110,10 +110,10 @@
                             <action selector="pageIndicator:" target="-2" id="wIO-Xd-Fz7"/>
                         </connections>
                     </button>
-                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="57P-Xf-65n">
+                    <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="57P-Xf-65n">
                         <rect key="frame" x="18" y="369" width="629" height="23"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="What’s New in Version 3.5" id="Dih-Go-912">
+                        <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="What’s New in Version 3.6" id="Dih-Go-912">
                             <font key="font" metaFont="systemLight" size="16"/>
                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -132,24 +132,25 @@
                 <outlet property="view" destination="fTJ-RA-Rgc" id="sJ3-30-6Ba"/>
             </connections>
         </pagecontroller>
-        <customView id="uKS-OK-cAN" userLabel="Filtering" customClass="iTermOnboardingView">
+        <customView id="uKS-OK-cAN" userLabel="Web" customClass="iTermOnboardingView">
             <rect key="frame" x="0.0" y="0.0" width="625" height="343"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4gk-fe-vQq">
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4gk-fe-vQq" userLabel="Web">
                     <rect key="frame" x="18" y="289" width="589" height="34"/>
                     <autoresizingMask key="autoresizingMask"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Filtering" id="LXN-RX-ZgC">
+                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Web Browsing" id="LXN-RX-ZgC">
                         <font key="font" metaFont="systemUltraLight" size="28"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bGK-Us-rSz" customClass="iTermOnboardingTextField">
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bGK-Us-rSz" customClass="iTermOnboardingTextField">
                     <rect key="frame" x="18" y="20" width="589" height="41"/>
                     <autoresizingMask key="autoresizingMask"/>
-                    <textFieldCell key="cell" alignment="center" title="The new Filtering feature makes it easy to find what you’re looking for." id="0Bk-78-p2L">
+                    <textFieldCell key="cell" alignment="center" id="0Bk-78-p2L">
                         <font key="font" metaFont="system"/>
+                        <string key="title">Set a profile’s type to Browser and you can enjoy almost all the features of iTerm2—regex search, instant replay, split panes, hotkey windows, and more—to view web pages.</string>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -158,37 +159,36 @@
                     </connections>
                 </textField>
                 <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jRF-f4-nke">
-                    <rect key="frame" x="-39" y="35" width="695" height="270"/>
+                    <rect key="frame" x="20" y="59" width="585" height="235"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-Filtering" id="Q5w-FO-7Jc"/>
+                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-Web" id="Q5w-FO-7Jc"/>
                 </imageView>
             </subviews>
             <point key="canvasLocation" x="-175.5" y="-384.5"/>
         </customView>
-        <customView id="Cc0-Vj-shB" userLabel="Offscreen command line" customClass="iTermOnboardingView">
+        <customView id="Cc0-Vj-shB" userLabel="AI Chat" customClass="iTermOnboardingView">
             <rect key="frame" x="0.0" y="0.0" width="625" height="343"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UXE-KQ-MEi">
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UXE-KQ-MEi">
                     <rect key="frame" x="18" y="289" width="589" height="34"/>
                     <autoresizingMask key="autoresizingMask"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Offscreen Command Line" id="hKz-h7-CcP">
+                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="AI Chat" id="hKz-h7-CcP">
                         <font key="font" metaFont="systemUltraLight" size="28"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
                 <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="yrA-gS-7pH">
-                    <rect key="frame" x="20" y="25" width="577" height="275"/>
+                    <rect key="frame" x="20" y="43" width="577" height="257"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-OCL" id="Igz-7Y-Uwf"/>
+                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-Chat" id="Igz-7Y-Uwf"/>
                 </imageView>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jYX-nH-O5u" customClass="iTermOnboardingTextField">
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jYX-nH-O5u" customClass="iTermOnboardingTextField">
                     <rect key="frame" x="49" y="20" width="558" height="41"/>
                     <autoresizingMask key="autoresizingMask"/>
-                    <textFieldCell key="cell" id="Lvg-vI-G64">
+                    <textFieldCell key="cell" alignment="center" title="AI Chat lets an LLM view and drive your terminal. Fine-grained permissions settings keep you safe." id="Lvg-vI-G64">
                         <font key="font" metaFont="system"/>
-                        <string key="title">When you’re viewing scrollback history of a previously run command, the command line is shown at the top of the screen. Click to jump to the start or right click for more options.</string>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -199,23 +199,23 @@
             </subviews>
             <point key="canvasLocation" x="494.5" y="-385.5"/>
         </customView>
-        <customView id="U46-lc-cJw" userLabel="AI" customClass="iTermOnboardingView">
+        <customView id="U46-lc-cJw" userLabel="RTL" customClass="iTermOnboardingView">
             <rect key="frame" x="0.0" y="0.0" width="625" height="344"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7Lc-G4-yGt">
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7Lc-G4-yGt">
                     <rect key="frame" x="18" y="290" width="589" height="34"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="AITerm" id="VcV-iJ-Nlq">
+                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Right-to-Left Text Support" id="VcV-iJ-Nlq">
                         <font key="font" metaFont="systemUltraLight" size="28"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="S6M-1Y-bvP" customClass="iTermOnboardingTextField">
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="S6M-1Y-bvP" customClass="iTermOnboardingTextField">
                     <rect key="frame" x="30" y="20" width="577" height="41"/>
                     <autoresizingMask key="autoresizingMask"/>
-                    <textFieldCell key="cell" alignment="center" title="Use AI to write commands for you or even guide you step-by-step through complex workflows." id="d4H-cG-h3K">
+                    <textFieldCell key="cell" alignment="center" title="Right-to-Left text is now rendered properly." id="d4H-cG-h3K">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -225,18 +225,18 @@
                     </connections>
                 </textField>
                 <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="GpA-wZ-e6o">
-                    <rect key="frame" x="30" y="37" width="577" height="251"/>
+                    <rect key="frame" x="30" y="50" width="577" height="238"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-AI" id="UR7-vx-L4E"/>
+                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-RTL" id="UR7-vx-L4E"/>
                 </imageView>
             </subviews>
             <point key="canvasLocation" x="1166.5" y="-386"/>
         </customView>
-        <customView id="olY-Zn-0Bl" userLabel="Command Selection" customClass="iTermOnboardingView">
+        <customView id="olY-Zn-0Bl" userLabel="Command Palette" customClass="iTermOnboardingView">
             <rect key="frame" x="0.0" y="0.0" width="625" height="343"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dAJ-jg-bJ2">
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dAJ-jg-bJ2" userLabel="Command Palette">
                     <rect key="frame" x="18" y="289" width="589" height="34"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Command Selection" id="OAI-gn-AQ7" userLabel="tmux Flow Control">
@@ -245,10 +245,10 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Gmu-pM-bKu" customClass="iTermOnboardingTextField">
-                    <rect key="frame" x="30" y="28" width="577" height="20"/>
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Gmu-pM-bKu" customClass="iTermOnboardingTextField">
+                    <rect key="frame" x="30" y="28" width="577" height="32"/>
                     <autoresizingMask key="autoresizingMask"/>
-                    <textFieldCell key="cell" alignment="center" title="Select a command by clicking on it to restrict Find, Filter, and Select All to its output." id="a2B-NS-5LJ">
+                    <textFieldCell key="cell" alignment="center" title="The Open Quickly UI is now a command palette. Open with ⇧⌘O and type part of the name of a menu item." id="a2B-NS-5LJ">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -258,18 +258,18 @@
                     </connections>
                 </textField>
                 <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vtE-pO-lEk">
-                    <rect key="frame" x="53" y="8" width="530" height="310"/>
+                    <rect key="frame" x="53" y="68" width="530" height="220"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-SelectedCommand" id="5d4-4e-NgE"/>
+                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-OpenQuickly" id="5d4-4e-NgE"/>
                 </imageView>
             </subviews>
             <point key="canvasLocation" x="1866.5" y="-385.5"/>
         </customView>
     </objects>
     <resources>
-        <image name="Onboarding-AI" width="668" height="284"/>
-        <image name="Onboarding-Filtering" width="598" height="323"/>
-        <image name="Onboarding-OCL" width="598" height="323"/>
-        <image name="Onboarding-SelectedCommand" width="697" height="366"/>
+        <image name="Onboarding-Chat" width="801" height="422"/>
+        <image name="Onboarding-OpenQuickly" width="534" height="421"/>
+        <image name="Onboarding-RTL" width="581" height="292"/>
+        <image name="Onboarding-Web" width="590" height="371"/>
     </resources>
 </document>
