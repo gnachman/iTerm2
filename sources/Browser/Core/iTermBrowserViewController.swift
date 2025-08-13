@@ -712,7 +712,9 @@ public struct BrowserManagerError: Error, LocalizedError {
 @MainActor
 extension iTermBrowserViewController {
     override func loadView() {
-        view = iTermBrowserView()
+        let view = iTermBrowserView()
+        view.viewController = self
+        self.view = view
     }
 
     override func viewDidLoad() {
@@ -1385,18 +1387,6 @@ extension iTermBrowserViewController: iTermBookmarkTagEditorDelegate {
     
     func bookmarkTagEditorWillClose(_ controller: iTermBookmarkTagEditorWindowController) {
         bookmarkTagEditor = nil
-    }
-}
-
-@MainActor
-@objc(iTermBrowserView)
-class iTermBrowserView: NSView {
-    override func resize(withOldSuperviewSize oldSize: NSSize) {
-        super.resize(withOldSuperviewSize: oldSize)
-        // Notify the view controller to relayout subviews
-        if let viewController = self.nextResponder as? iTermBrowserViewController {
-            viewController.viewDidLayout()
-        }
     }
 }
 
