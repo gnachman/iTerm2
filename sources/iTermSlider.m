@@ -189,6 +189,10 @@ static char iTermSliderEnabledKVOKey;
         return;
     }
     const double value = [self textFieldValue];
+    if (value < _slider.minValue || value >= _slider.maxValue) {
+        // Ignore illegal values as they can exist during editing
+        return;
+    }
     _slider.doubleValue = value;
     _stepper.doubleValue = value;
     [self performAction];
