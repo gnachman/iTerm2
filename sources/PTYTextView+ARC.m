@@ -1799,7 +1799,7 @@ copyRangeAccordingToUserPreferences:(VT100GridWindowedRange)range {
     __block BOOL ok = NO;
     [self withRelativeCoordRange:absRange block:^(VT100GridCoordRange range) {
         ScreenCharArray *sca = [self.dataSource screenCharArrayForLine:range.end.y];
-        ok = range.end.x >= sca.length - [sca numberOfTrailingEmptyCellsWhereSpaceIsEmpty:YES];
+        ok = range.end.x == 0 || range.end.x >= sca.length - [sca numberOfTrailingEmptyCellsWhereSpaceIsEmpty:YES];
     }];
     return ok;
 }
