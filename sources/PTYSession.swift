@@ -1121,6 +1121,7 @@ extension PTYSession {
             KEY_ANTI_ALIASING: nullValue,
             KEY_ASCII_ANTI_ALIASED: nullValue,
             KEY_DISABLE_WINDOW_RESIZING: nullValue,
+            KEY_DISABLE_UNFOCUSED_WINDOW_RESIZING: nullValue,
             KEY_TREAT_NON_ASCII_AS_DOUBLE_WIDTH: nullValue,
             KEY_AMBIGUOUS_DOUBLE_WIDTH: nullValue,
             KEY_USE_HFS_PLUS_MAPPING: nullValue,

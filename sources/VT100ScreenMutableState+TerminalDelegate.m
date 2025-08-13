@@ -691,7 +691,7 @@ typedef struct {
     [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
                                          iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         DLog(@"side effect starts");
-        const BOOL shouldResize = ([delegate screenShouldInitiateWindowResize] &&
+        const BOOL shouldResize = ([delegate screenShouldInitiateWindowResize] == PTYSessionResizePermissionAllowed &&
                                    ![delegate screenWindowIsFullscreen]);
         if (shouldResize) {
             DLog(@"shouldResize is true");
@@ -1090,7 +1090,7 @@ typedef struct {
     DLog(@"begin %@", NSStringFromPoint(point));
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         DLog(@"begin side-effect");
-        if ([delegate screenShouldInitiateWindowResize] &&
+        if ([delegate screenShouldInitiateWindowResize] == PTYSessionResizePermissionAllowed &&
             ![delegate screenWindowIsFullscreen]) {
             // TODO: Only allow this if there is a single session in the tab.
             DLog(@"doing it");
@@ -1104,7 +1104,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         DLog(@"begin side-effect");
         // TODO: Only allow this if there is a single session in the tab.
-        if ([delegate screenShouldInitiateWindowResize] &&
+        if ([delegate screenShouldInitiateWindowResize] == PTYSessionResizePermissionAllowed &&
             ![delegate screenWindowIsFullscreen]) {
             [delegate screenMiniaturizeWindow:mini];
         }
@@ -1115,7 +1115,7 @@ typedef struct {
     DLog(@"begin %@", @(raise));
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         DLog(@"begin side-effect");
-        if ([delegate screenShouldInitiateWindowResize]) {
+        if ([delegate screenShouldInitiateWindowResize] == PTYSessionResizePermissionAllowed) {
             [delegate screenRaise:raise];
         }
     }];

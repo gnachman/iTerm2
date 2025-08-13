@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermProfilePreferences.h"
 #import "NSObject+iTerm.h"
 
@@ -324,6 +325,22 @@
         [viewToScroll scrollRectToVisible:viewToScroll.bounds];
     });
 
+}
+
+- (ProfileModel *)profileModel {
+    return [_delegate profilePreferencesCurrentModel];
+}
+
+- (iTermProfilePreferenceObserver *)profileObserver {
+    ProfileModel *model = [_delegate profilePreferencesCurrentModel];
+    if (!model) {
+        return nil;
+    }
+    NSString *guid = [self stringForKey:KEY_GUID];
+    if (!guid) {
+        return nil;
+    }
+    return [[iTermProfilePreferenceObserver alloc] initWithGUID:guid model:model];
 }
 
 @end

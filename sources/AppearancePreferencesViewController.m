@@ -357,7 +357,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     info.shouldBeEnabled = ^BOOL{
         return ![iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscreen];
     };
-    [info addShouldBeEnabledDependencyOnUserDefault:kPreferenceKeyLionStyleFullscreen controller:self];
+    [info addShouldBeEnabledDependencyOnSetting:kPreferenceKeyLionStyleFullscreen controller:self];
 
     info = [self defineControl:_enableDivisionView
                            key:kPreferenceKeyEnableDivisionView

@@ -120,9 +120,14 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 
 - (void)screenResetCursorTypeAndBlink;
 
+typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
+    PTYSessionResizePermissionAllowed,
+    PTYSessionResizePermissionDenied,
+    PTYSessionResizePermissionDeniedInactive,
+};
 
 // Returns if the screen is permitted to resize the window.
-- (BOOL)screenShouldInitiateWindowResize;
+- (PTYSessionResizePermission)screenShouldInitiateWindowResize;
 
 // The delegate should resize the screen to the given size.
 - (void)screenResizeToWidth:(int)width height:(int)height;

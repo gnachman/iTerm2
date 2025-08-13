@@ -8,10 +8,13 @@
 
 #import "PreferenceInfo.h"
 #import "PreferencePanel.h"
+
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermUserDefaultsObserver.h"
 
 @implementation PreferenceInfo {
     iTermUserDefaultsObserver *_userDefaultsObserver;
+    iTermProfilePreferenceObserver *_profileObserver;
 }
 
 + (instancetype)infoForPreferenceWithKey:(NSString *)key
@@ -47,12 +50,25 @@
     _observer = [observer copy];
 }
 
-- (void)addShouldBeEnabledDependencyOnUserDefault:(NSString *)key controller:(id<PreferenceController>)controller {
+- (void)addShouldBeEnabledDependencyOnSetting:(NSString *)key controller:(id<PreferenceController>)controller {
+    __weak __typeof(controller) weakController = controller;
+    __weak __typeof(self) weakSelf = self;
+    if ([controller profileModel]) {
+        if (!_profileObserver) {
+            _profileObserver = [controller profileObserver];
+        }
+        [_profileObserver observeKey:key block:^(id before, id after) {
+            __strong __typeof(self) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return;
+            }
+            [weakController updateEnabledStateForInfo:strongSelf];
+        }];
+        return;
+    }
     if (!_userDefaultsObserver) {
         _userDefaultsObserver = [[iTermUserDefaultsObserver alloc] init];
     }
-    __weak __typeof(controller) weakController = controller;
-    __weak __typeof(self) weakSelf = self;
     [_userDefaultsObserver observeKey:key block:^{
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf) {

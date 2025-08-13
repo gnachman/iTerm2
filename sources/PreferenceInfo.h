@@ -29,11 +29,15 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
     kPreferenceInfoTypeStringTextView
 };
 
+@class iTermProfilePreferenceObserver;
 @class iTermPreferencesSearchDocument;
 @class PreferenceInfo;
+@class ProfileModel;
 
 @protocol PreferenceController<NSObject>
 - (void)updateEnabledStateForInfo:(PreferenceInfo *)info;
+- (ProfileModel *)profileModel;  // nil if not a profile prefs controller
+- (iTermProfilePreferenceObserver *)profileObserver;  // nil if not a profile prefs controller
 @end
 
 @interface PreferenceInfo : NSObject
@@ -103,7 +107,7 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
                                     type:(PreferenceInfoType)type
                                  control:(NSView *)control;
 
-- (void)addShouldBeEnabledDependencyOnUserDefault:(NSString *)key
+- (void)addShouldBeEnabledDependencyOnSetting:(NSString *)key
                                        controller:(id<PreferenceController>)controller;
 
 @end

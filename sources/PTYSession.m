@@ -13274,8 +13274,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     *blinking = self.textview.blinkingCursor;
 }
 
-- (BOOL)screenShouldInitiateWindowResize {
-    return ![[[self profile] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue];
+- (PTYSessionResizePermission)screenShouldInitiateWindowResize {
+    if ([[[self profile] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue]) {
+        return PTYSessionResizePermissionDenied;
+    }
+    if (!_focused &&
+        [iTermProfilePreferences boolForKey:KEY_DISABLE_UNFOCUSED_WINDOW_RESIZING inProfile:self.profile]) {
+        return PTYSessionResizePermissionDeniedInactive;
+    }
+    return PTYSessionResizePermissionAllowed;
 }
 
 - (void)screenResizeToWidth:(int)width height:(int)height {
@@ -13291,14 +13298,26 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         DLog(@"Width locked");
         return;
     }
-    if (![self screenShouldInitiateWindowResize]) {
-        __weak __typeof(self) weakSelf = self;
-        [self askToEnableTerminalInitiatedResizing:^{
-            [weakSelf reallySetCellSize:proposedSize];
-        }];
-        return;
+    __weak __typeof(self) weakSelf = self;
+    switch (self.screenShouldInitiateWindowResize) {
+        case PTYSessionResizePermissionAllowed:
+            [self reallySetCellSize:proposedSize];
+            return;
+
+        case PTYSessionResizePermissionDenied: {
+            [self askToEnableTerminalInitiatedResizing:^{
+                [weakSelf reallySetCellSize:proposedSize];
+            }];
+            break;
+        }
+
+        case PTYSessionResizePermissionDeniedInactive: {
+            [self askToEnableTerminalInitiatedResizingWhenUnfocused:^{
+                [weakSelf reallySetCellSize:proposedSize];
+            }];
+            break;
+        }
     }
-    [self reallySetCellSize:proposedSize];
 }
 
 - (void)reallySetCellSize:(VT100GridSize)proposedSize {
@@ -13389,19 +13408,69 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 }
 
+- (void)askToEnableTerminalInitiatedResizingWhenUnfocused:(void (^)(void))allowOnce {
+    NSString *key = @"NoSyncSuppressPromptToEnableUnfocusedResizing";
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:key]) {
+        return;
+    }
+    NSString *identifier = @"Resize Unfocused Window Announcement";
+    void (^completion)(int) = ^(int selection) {
+        switch (selection) {
+            case 0:
+                allowOnce();
+                break;
+
+            case 1:
+                [self revealProfileSettingWithKey:KEY_DISABLE_UNFOCUSED_WINDOW_RESIZING];
+                break;
+
+            case 2:
+                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:key];
+                break;
+
+            default:
+                // Cancel
+                break;
+        }
+    };
+    iTermAnnouncementViewController *announcement =
+    [iTermAnnouncementViewController announcementWithTitle:@"A program has tried to resize the window while this session was not active. Allow it?"
+                                                     style:kiTermAnnouncementViewStyleWarning
+                                               withActions:@[ @"_Allow Once", @"_Open Settings", @"Don’t Show This Again" ]
+                                                completion:completion];
+    iTermAnnouncementViewController *existing = _announcements[identifier];
+    if (existing) {
+        [self setCompletion:completion inAnnouncement:existing identifier:identifier];
+    } else {
+        [self queueAnnouncement:announcement identifier:identifier];
+    }
+}
+
 // TODO: Only allow this if there is a single session in the tab.
 - (void)screenSetPointSize:(NSSize)proposedSize {
     if ([self screenWindowIsFullscreen]) {
         return;
     }
-    if (![self screenShouldInitiateWindowResize]) {
-        __weak __typeof(self) weakSelf = self;
-        [self askToEnableTerminalInitiatedResizing:^{
-            [weakSelf reallySetPointSize:proposedSize];
-        }];
-        return;
+    __weak __typeof(self) weakSelf = self;
+    switch (self.screenShouldInitiateWindowResize) {
+        case PTYSessionResizePermissionAllowed:
+            [self reallySetPointSize:proposedSize];
+            return;
+
+        case PTYSessionResizePermissionDenied: {
+            [self askToEnableTerminalInitiatedResizing:^{
+                [weakSelf reallySetPointSize:proposedSize];
+            }];
+            return;
+        }
+
+        case PTYSessionResizePermissionDeniedInactive: {
+            [self askToEnableTerminalInitiatedResizingWhenUnfocused:^{
+                [weakSelf reallySetPointSize:proposedSize];
+            }];
+            return;
+        }
     }
-    [self reallySetPointSize:proposedSize];
 }
 
 - (void)reallySetPointSize:(NSSize)proposedSize {

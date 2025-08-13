@@ -35,6 +35,7 @@
     IBOutlet NSButton *_disablePrinting;
     IBOutlet NSButton *_disableAltScreen;
     IBOutlet NSButton *_disableWindowResizing;
+    IBOutlet NSButton *_disableUnfocusedWindowResizing;
     IBOutlet NSButton *_silenceBell;
     IBOutlet NSButton *_postNotifications;
     IBOutlet NSButton *_filterAlertsButton;
@@ -202,7 +203,17 @@
     [self defineControl:_disableWindowResizing
                     key:KEY_DISABLE_WINDOW_RESIZING
             relatedView:nil
-                   type:kPreferenceInfoTypeCheckbox];
+                   type:kPreferenceInfoTypeInvertedCheckbox];
+
+    info = [self defineControl:_disableUnfocusedWindowResizing
+                           key:KEY_DISABLE_UNFOCUSED_WINDOW_RESIZING
+                   relatedView:nil
+                          type:kPreferenceInfoTypeInvertedCheckbox];
+    [info setShouldBeEnabled:^BOOL{
+        return ![weakSelf boolForKey:KEY_DISABLE_WINDOW_RESIZING];
+    }];
+    [info addShouldBeEnabledDependencyOnSetting:KEY_DISABLE_WINDOW_RESIZING
+                                         controller:self];
 
     [self defineControl:_allowCursorBlinkControlSequence
                     key:KEY_ALLOW_CHANGE_CURSOR_BLINK
@@ -296,6 +307,7 @@
                    displayName:@"Filter alerts"
                        phrases:@[ @"bell", @"idle", @"session ended", @"new output"]
                            key:nil];
+    [self updateEnabledState];
 }
 
 - (void)layoutSubviewsForEditCurrentSessionMode {

@@ -816,6 +816,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
         info.observer();
     }
     [self updateNonDefaultIndicatorVisibleForInfo:info];
+    [self updateEnabledStateForInfo:info];
 }
 
 - (void)updateNonDefaultIndicatorVisibleForInfo:(PreferenceInfo *)info {
@@ -840,6 +841,14 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
             [(id)info.control setEnabled:info.shouldBeEnabled()];
         }
     }
+}
+
+- (iTermProfilePreferenceObserver *)profileObserver {
+    return nil;
+}
+
+- (ProfileModel *)profileModel {
+    return nil;
 }
 
 - (PreferenceInfo *)infoForControl:(NSView *)control {

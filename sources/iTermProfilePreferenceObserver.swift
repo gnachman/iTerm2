@@ -26,6 +26,14 @@ class iTermProfilePreferenceObserver: NSObject {
                                                object: nil)
     }
 
+    @objc(observeKey:block:)
+    func objcObserve(key: String, closure: @escaping (AnyObject?, AnyObject?) -> ()) {
+        lastValue[key] = value(for: key)
+        closures[key] = { oldValue, newValue in
+            closure(oldValue, newValue)
+        }
+    }
+
     func observe<T>(key: String, closure: @MainActor @escaping (T?, T?) -> ()) {
         lastValue[key] = value(for: key)
         closures[key] = { oldValue, newValue in
