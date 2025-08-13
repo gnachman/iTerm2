@@ -362,8 +362,8 @@ extension Message: iTermDatabaseElement {
                 chatID,
                 jsonString,
                 sentDate.timeIntervalSince1970,
+                responseID,
                 uniqueID.uuidString,
-                responseID
             ]
         )
     }
