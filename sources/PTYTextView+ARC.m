@@ -799,12 +799,8 @@ iTermCommandInfoViewControllerDelegate>
 - (BOOL)showWebkitPopoverAtPoint:(NSPoint)pointInWindow url:(NSURL *)url {
     WKWebView *webView = [[iTermWebViewFactory sharedInstance] webViewWithDelegate:nil];
     if (webView) {
-        if ([[url.scheme lowercaseString] isEqualToString:@"http"]) {
-            [webView loadHTMLString:@"This site cannot be displayed in QuickLook because of Application Transport Security. Only HTTPS URLs can be previewed." baseURL:nil];
-        } else {
-            NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url];
-            [webView loadRequest:request];
-        }
+        NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url];
+        [webView loadRequest:request];
         NSPopover *popover = [[NSPopover alloc] init];
         NSViewController *viewController = [[iTermWebViewWrapperViewController alloc] initWithWebView:webView
                                                                                             backupURL:url];
