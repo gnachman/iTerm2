@@ -297,12 +297,12 @@ struct LLMProvider {
         if hostIsGoogle(url: completionsURL) {
             return .gemini
         }
+        if model.hasPrefix("gpt-5") {
+            return .gpt5
+        }
         if hostIsOpenAIAPI(url: completionsURL) {
             if model.hasPrefix("o1") {
                 return .o1
-            }
-            if model.hasPrefix("gpt-5") {
-                return .gpt5
             }
             return openAIModelIsLegacy(model: model) ? .legacy : .completions
         }
