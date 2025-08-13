@@ -199,7 +199,10 @@ static char iTermSliderEnabledKVOKey;
 }
 
 - (void)controlTextDidEndEditing:(NSNotification *)obj {
-    if (!_textField.stringValue.isNonnegativeFractionalNumber) {
+    const double value = [self textFieldValue];
+    if (value < _slider.minValue ||
+        value >= _slider.maxValue ||
+        !_textField.stringValue.isNonnegativeFractionalNumber) {
         [self loadFromSlider];
     }
 }
