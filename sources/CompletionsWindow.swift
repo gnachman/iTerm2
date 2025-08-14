@@ -222,7 +222,7 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
         adjustedLocation.x -= 24
         adjustedLocation.y += 2
         let bottomLeft = adjustedLocation
-        NSLog("Bottom left point is \(bottomLeft)")
+        DLog("Bottom left point is \(bottomLeft)")
         return (topLeft, bottomLeft)
     }
 
