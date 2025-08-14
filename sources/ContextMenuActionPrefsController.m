@@ -7,6 +7,7 @@
 //
 
 #import "ContextMenuActionPrefsController.h"
+#import "DebugLogging.h"
 #import "FutureMethods.h"
 #import "NSArray+iTerm.h"
 #import "NSStringITerm.h"
@@ -25,14 +26,50 @@ NSString *iTermSmartSelectionActionContextKeyComponents = @"components";
 NSString *iTermSmartSelectionActionContextKeyWorkingDirectory = @"workingDirectory";
 NSString *iTermSmartSelectionActionContextKeyRemoteHost = @"remoteHost";
 
+typedef struct {
+    NSString *title;
+    NSString *placeholder;
+    NSString *parameterLabel;
+    ContextMenuActions tag;
+    BOOL browser;  // Can browser profiles use it?
+} ContextMenuActionDeclaration;
+
+static ContextMenuActionDeclaration gContextMenuActionDeclarations[] = {
+    { @"Open File…",               @"Enter file name",          @"File:",      kOpenFileContextMenuAction,             YES },
+    { @"Open URL…",                @"Enter URL",                @"URL:",       kOpenUrlContextMenuAction,              YES },
+    { @"Run Command…",             @"Enter command",            @"Command:",   kRunCommandContextMenuAction,           NO  },
+    { @"Run Coprocess…",           @"Enter coprocess command",  @"Coprocess:", kRunCoprocessContextMenuAction,         NO  },
+    { @"Send text…",               @"Enter text",               @"Text:",      kSendTextContextMenuAction,             NO  },
+    { @"Run Command in Window…",   @"Enter command",            @"Command:",   kRunCommandInWindowContextMenuAction,   YES },
+    { @"Copy",                     @"",                         @"",           kCopyContextMenuAction,                 YES },
+};
+
+static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMenuActions tag) {
+    const NSUInteger actionsCount = sizeof(gContextMenuActionDeclarations) / sizeof(gContextMenuActionDeclarations[0]);
+    for (NSUInteger i = 0; i < actionsCount; i++) {
+        if (gContextMenuActionDeclarations[i].tag == tag) {
+            return gContextMenuActionDeclarations[i];
+        }
+    }
+    ITAssertWithMessage(NO, @"Invalid tag %@", @(tag));
+}
+
+@interface ContextMenuActionPrefsController()<NSTextFieldDelegate>
+@end
+
 @implementation ContextMenuActionPrefsController {
     IBOutlet NSTableView *_tableView;
-    IBOutlet NSTableColumn *_titleColumn;
-    IBOutlet NSTableColumn *_actionColumn;
-    IBOutlet NSTableColumn *_parameterColumn;
     IBOutlet NSButton *_useInterpolatedStringsButton;
     IBOutlet NSTextField *_parameterInfoTextField;
+
+    IBOutlet NSTextField *_title;
+    IBOutlet NSPopUpButton *_action;
+    IBOutlet NSTextField *_parameter;
+    IBOutlet NSTextField *_parameterLabel;
+    IBOutlet NSView *_detailContainer;
+
     NSMutableArray *_model;
+    BOOL _browser;
 }
 
 - (instancetype)initWithWindow:(NSWindow *)window {
@@ -43,8 +80,7 @@ NSString *iTermSmartSelectionActionContextKeyRemoteHost = @"remoteHost";
     return self;
 }
 
-+ (ContextMenuActions)actionForActionDict:(NSDictionary *)dict
-{
++ (ContextMenuActions)actionForActionDict:(NSDictionary *)dict {
     return (ContextMenuActions) [[dict objectForKey:kActionKey] intValue];
 }
 
@@ -150,9 +186,16 @@ NSString *iTermSmartSelectionActionContextKeyRemoteHost = @"remoteHost";
 
 - (void)updateHelpText {
     if (_useInterpolatedStringsButton.state == NSControlStateValueOn) {
-        _parameterInfoTextField.stringValue = @"In “parameter,” use \\(matches[i]) where i=0 for the entire match and i>0 for capture groups.";
+        NSString *html = @"You can use captured strings from the Smart Selection's regular expression in the parameter. Use \\(matches[i]) where i=0 for the entire match and i>0 for capture groups. For other values, see <a href=\"https://iterm2.com/documentation-scripting-fundamentals.html\">Scripting Fundamentals</a> and <a href=\"https://iterm2.com/documentation-variables.html#session-context\">Variables Reference (Session Context)</a>.";
+        NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+        paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
+        _parameterInfoTextField.attributedStringValue = [NSAttributedString attributedStringWithHTML:html
+                                                                                                font:_parameterInfoTextField.font
+                                                                                      paragraphStyle:paragraphStyle];
+        _parameterInfoTextField.selectable = YES;
+        _parameterInfoTextField.allowsEditingTextAttributes = YES;
     } else {
-        _parameterInfoTextField.stringValue = @"In “parameter,” use \\0 for match, \\1…\\9 for match groups, \\d for directory, \\u for user, \\h for host.";
+        _parameterInfoTextField.stringValue = @"You can use captured strings from the Smart Selection's regular expression in the parameter. Use \\0 for match, \\1…\\9 for match groups, \\d for directory, \\u for user, \\h for host.";
     }
 }
 
@@ -160,36 +203,48 @@ NSString *iTermSmartSelectionActionContextKeyRemoteHost = @"remoteHost";
     return _useInterpolatedStringsButton.state == NSControlStateValueOn;
 }
 
-- (IBAction)ok:(id)sender
-{
+- (IBAction)ok:(id)sender {
     [_delegate contextMenuActionsChanged:_model
                   useInterpolatedStrings:self.useInterpolatedStrings];
 }
 
-- (IBAction)add:(id)sender
-{
+- (IBAction)add:(id)sender {
     NSDictionary *defaultAction = [NSDictionary dictionaryWithObjectsAndKeys:
                                    @"", kTitleKey,
                                    [NSNumber numberWithInt:kOpenFileContextMenuAction], kActionKey,
                                    nil];
     [_model addObject:defaultAction];
     [_tableView reloadData];
+    [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:_model.count - 1]
+            byExtendingSelection:NO];
+    [_title.window makeFirstResponder:_title];
 }
 
-- (IBAction)remove:(id)sender
-{
-    [_tableView reloadData];
+- (IBAction)remove:(id)sender {
     [_model removeObjectAtIndex:[_tableView selectedRow]];
     [_tableView reloadData];
+    [self updateDetailView];
 }
 
-- (void)setActions:(NSArray *)newActions
-{
+- (void)setActions:(NSArray *)newActions browser:(BOOL)browser {
     if (!newActions) {
         newActions = [NSMutableArray array];
     }
+    _browser = browser;
     _model = [newActions mutableCopy];
     [_tableView reloadData];
+    [_action.menu removeAllItems];
+    for (NSInteger i = 0; i < sizeof(gContextMenuActionDeclarations) / sizeof(*gContextMenuActionDeclarations); i++) {
+        if (_browser && !gContextMenuActionDeclarations[i].browser) {
+            continue;
+        }
+        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:gContextMenuActionDeclarations[i].title
+                                                      action:nil
+                                               keyEquivalent:@""];
+        item.tag = gContextMenuActionDeclarations[i].tag;
+        [_action.menu addItem:item];
+    }
+    [self updateDetailView];
 }
 
 #pragma mark NSTableViewDataSource
@@ -199,115 +254,124 @@ NSString *iTermSmartSelectionActionContextKeyRemoteHost = @"remoteHost";
     return [_model count];
 }
 
-- (NSString *)keyForColumn:(NSTableColumn *)aTableColumn
-{
-    if (aTableColumn == _titleColumn) {
-        return kTitleKey;
-    } else if (aTableColumn == _actionColumn) {
-        return kActionKey;
-    } else if (aTableColumn == _parameterColumn) {
-        return kParameterKey;
-    } else {
+- (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex {
+    iTermTableCellViewWithTextField *view = [tableView newTableCellViewWithTextFieldUsingIdentifier:@"Smart Selection Action Tableview Entry"
+                                                                                   attributedString:[self attributedStringForAction:_model[rowIndex]]];
+    return view;
+}
+
+- (NSAttributedString *)attributedStringForAction:(NSDictionary *)action {
+    const ContextMenuActions actionTag = [action[kActionKey] integerValue];
+    if (actionTag < 0 || actionTag >= sizeof(gContextMenuActionDeclarations) / sizeof(*gContextMenuActionDeclarations)) {
         return nil;
     }
-}
+    ContextMenuActionDeclaration decl = ContextMenuActionDeclarationForTag(actionTag);
 
-- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
-{
-    NSString *key = [self keyForColumn:aTableColumn];
-    NSDictionary *row = [_model objectAtIndex:rowIndex];
-    return key ? [row objectForKey:key] : nil;
-}
-
-- (void)tableView:(NSTableView *)aTableView setObjectValue:(id)anObject forTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
-{
-    NSString *key = [self keyForColumn:aTableColumn];
-    if (key) {
-        NSMutableDictionary *temp = [[_model objectAtIndex:rowIndex] mutableCopy];
-        [temp setObject:anObject forKey:key];
-        [_model replaceObjectAtIndex:rowIndex withObject:temp];
-        [aTableView reloadData];
+    NSString *title = action[kTitleKey];
+    if (title.length == 0) {
+        title = @"Untitled Action";
     }
+    NSAttributedString *nameAttributedString = [[NSAttributedString alloc] initWithString:title
+                                                                               attributes:self.nameAttributes];
+    NSAttributedString *actionAttributedString = [[NSAttributedString alloc] initWithString:decl.title
+                                                                                 attributes:self.regularAttributes];
+    id parameterAttributedString = nil;
+    NSString *parameter = action[kParameterKey];
+    if ([NSString castFrom:parameter].length) {
+        parameterAttributedString = [[NSAttributedString alloc] initWithString:parameter
+                                                                    attributes:self.regularAttributes];
+    } else {
+        parameterAttributedString = [NSNull null];
+    }
+    NSAttributedString *newline = [[NSAttributedString alloc] initWithString:@"\n" attributes:self.regularAttributes];
+    return [[@[nameAttributedString,
+               actionAttributedString,
+               parameterAttributedString] arrayByRemovingNulls] it_componentsJoinedBySeparator:newline];
 }
 
-- (NSCell *)tableView:(NSTableView *)tableView
-    dataCellForTableColumn:(NSTableColumn *)tableColumn
-    row:(NSInteger)row
-{
-    // These two arrays and the enum in the header file must be parallel
-    NSArray *actionNames = @[ @"Open File…",
-                              @"Open URL…",
-                              @"Run Command…",
-                              @"Run Coprocess…",
-                              @"Send text…",
-                              @"Run Command in Window…",
-                              @"Copy"];
-    NSArray *paramPlaceholders = @[ @"Enter file name",
-                                    @"Enter URL",
-                                    @"Enter command",
-                                    @"Enter coprocess command",
-                                    @"Enter text",
-                                    @"Enter command",
-                                    @""];
+- (NSDictionary *)nameAttributes {
+    NSMutableParagraphStyle *paragraphStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
+    paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
+    NSDictionary *attributes = @{
+        NSParagraphStyleAttributeName: paragraphStyle,
+        NSFontAttributeName: [NSFont boldSystemFontOfSize:[NSFont systemFontSize] + 2]
+    };
+    return attributes;
+}
 
+- (NSDictionary *)regularAttributes {
+    NSMutableParagraphStyle *paragraphStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
+    paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
+    NSDictionary *attributes = @{
+        NSParagraphStyleAttributeName: paragraphStyle,
+        NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize]]
+    };
+    return attributes;
+}
 
-    if (tableColumn == _titleColumn) {
-        NSTextFieldCell *cell = [[NSTextFieldCell alloc] initTextCell:@""];
-        [cell setPlaceholderString:@"Enter Title"];
-        [cell setEditable:YES];
-        [cell setTruncatesLastVisibleLine:YES];
-        [cell setLineBreakMode:NSLineBreakByTruncatingTail];
-
-        return cell;
-    } else if (tableColumn == _actionColumn) {
-        NSPopUpButtonCell *cell =
-        [[NSPopUpButtonCell alloc] initTextCell:[actionNames objectAtIndex:0] pullsDown:NO];
-        for (int i = 0; i < actionNames.count; i++) {
-            [cell addItemWithTitle:[actionNames objectAtIndex:i]];
-            NSMenuItem *lastItem = [[[cell menu] itemArray] lastObject];
-            [lastItem setTag:i];
-        }
-
-        [cell setBordered:NO];
-
-        return cell;
-    } else if (tableColumn == _parameterColumn) {
-        NSDictionary *actionDict = [_model objectAtIndex:row];
-        int actionNum = [[actionDict objectForKey:kActionKey] intValue];
-        NSString *placeholder = [paramPlaceholders objectAtIndex:actionNum];
-        if (placeholder.length) {
-            NSTextFieldCell *cell = [[NSTextFieldCell alloc] initTextCell:@""];
-            [cell setPlaceholderString:placeholder];
-            [cell setEditable:YES];
-            [cell setTruncatesLastVisibleLine:YES];
-            [cell setLineBreakMode:NSLineBreakByTruncatingTail];
-            return cell;
-        } else {
-            NSTextFieldCell *cell = [[NSTextFieldCell alloc] initTextCell:@""];
-            [cell setEditable:NO];
-            return cell;
-        }
+- (void)controlTextDidChange:(NSNotification *)obj {
+    NSInteger i = _tableView.selectedRow;
+    if (i < 0 || i >= _model.count) {
+        DLog(@"Bogus selected row %@", @(i));
+        return;
     }
-    return nil;
+    NSTextField *textField = [NSTextField castFrom:obj.object];
+
+    NSMutableDictionary *temp = [[_model objectAtIndex:i] mutableCopy];
+    if (textField == _title) {
+        temp[kTitleKey] = textField.stringValue;
+    } else if (textField == _parameter) {
+        temp[kParameterKey] = textField.stringValue;
+    }
+    _model[i] = temp;
+    [_tableView reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:i]
+                          columnIndexes:[NSIndexSet indexSetWithIndex:0]];
+    [_tableView noteHeightOfRowsWithIndexesChanged:[NSIndexSet indexSetWithIndex:i]];
+}
+
+- (IBAction)actionDidChange:(id)sender {
+    NSInteger i = _tableView.selectedRow;
+    if (i < 0 || i >= _model.count) {
+        DLog(@"Bogus selected row %@", @(i));
+        return;
+    }
+    NSMutableDictionary *temp = [[_model objectAtIndex:i] mutableCopy];
+    temp[kActionKey] = @(_action.selectedTag);
+    _model[i] = temp;
+    [_tableView reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:i]
+                          columnIndexes:[NSIndexSet indexSetWithIndex:0]];
+    [self updateDetailView];
 }
 
 #pragma mark NSTableViewDelegate
 
-- (BOOL)tableView:(NSTableView *)aTableView shouldEditTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
-{
-    return YES;
+- (void)tableViewSelectionDidChange:(NSNotification *)aNotification {
+    [self updateDetailView];
 }
 
-- (void)tableViewSelectionDidChange:(NSNotification *)aNotification
-{
+- (void)updateDetailView {
     self.hasSelection = [_tableView numberOfSelectedRows] > 0;
+    _detailContainer.hidden = !self.hasSelection;
+    if (!self.hasSelection) {
+        return;
+    }
+
+    NSDictionary *item = _model[_tableView.selectedRow];
+    _title.stringValue = item[kTitleKey] ?: @"";
+    _parameter.stringValue = item[kParameterKey] ?: @"";
+    NSNumber *action = [NSNumber castFrom:item[kActionKey]] ?: @0;
+    [_action selectItemWithTag:action.integerValue];
+    _parameterLabel.stringValue = ContextMenuActionDeclarationForTag(action.integerValue).parameterLabel;
+
+    const BOOL noParameter = (action.integerValue == kCopyContextMenuAction);
+    _parameterLabel.hidden = noParameter;
+    _parameter.hidden = noParameter;
+    _parameterInfoTextField.hidden = noParameter;
 }
 
-#pragma mark NSWindowDelegate
-
-- (void)windowWillClose:(NSNotification *)notification
-{
-    [_tableView reloadData];
+- (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)row {
+    NSAttributedString *attributedString = [self attributedStringForAction:_model[row]];
+    return [attributedString heightForWidth:tableView.tableColumns[0].width] + 8;
 }
 
 @end

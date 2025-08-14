@@ -464,7 +464,7 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
     }
     [self pushUndo];
     NSArray *actions = [SmartSelectionController actionsInRule:rule];
-    [contextMenuPrefsController_ setActions:actions];
+    [contextMenuPrefsController_ setActions:actions browser:[[self bookmark] profileIsBrowser]];
     contextMenuPrefsController_.useInterpolatedStrings = [self useInterpolatedStrings];
     [contextMenuPrefsController_ window];
     [contextMenuPrefsController_ setDelegate:self];

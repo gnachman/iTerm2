@@ -60,7 +60,7 @@ extern NSString *iTermSmartSelectionActionContextKeyRemoteHost;
                            completion:(void (^)(NSString *parameter))completion;
 
 - (IBAction)ok:(id)sender;
-- (void)setActions:(NSArray *)newActions;
+- (void)setActions:(NSArray *)newActions browser:(BOOL)browser;
 - (IBAction)add:(id)sender;
 - (IBAction)remove:(id)sender;
 
