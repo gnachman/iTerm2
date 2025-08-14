@@ -10,7 +10,7 @@ import WebKit
 import XCTest
 @testable import iTerm2SharedARC
 
-@available(macOS 11.0, *)
+@MainActor
 class iTermBrowserPageSaverTestHelper {
     private let tempDirectory: URL
     private let serverPort: Int
@@ -204,10 +204,11 @@ class iTermBrowserPageSaverTestHelper {
         let saveFolder = tempDirectory.appendingPathComponent("saved-page-\(UUID().uuidString)")
         
         // Save the page
-        let baseURL = await webView.url!
+        let baseURL = webView.url!
         let pageSaver = iTermBrowserPageSaver(webView: webView, baseURL: baseURL)
-        try await pageSaver.savePageWithResources(to: saveFolder)
-        
+        try await pageSaver.savePageWithResources(to: SSHLocation(path: saveFolder.path,
+                                                                  endpoint: LocalhostEndpoint.instance))
+
         // Read saved HTML
         let savedHTMLFile = saveFolder.appendingPathComponent("index.html")
         let savedHTML = try String(contentsOf: savedHTMLFile, encoding: .utf8)
