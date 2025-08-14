@@ -51,14 +51,6 @@ class iTermBrowserAdblockManager: NSObject {
     
     // MARK: - Public Interface
 
-    func internalProxyDidStart() {
-        iTermBrowserAdblockRustManager.shared.updateInternalProxyInstalled(desired: true)
-    }
-
-    func internalProxyDidStop() {
-        iTermBrowserAdblockRustManager.shared.updateInternalProxyInstalled(desired: false)
-    }
-
     @objc func updateRulesIfNeeded() {
         guard iTermAdvancedSettingsModel.webKitAdblockEnabled() else {
             clearRules()

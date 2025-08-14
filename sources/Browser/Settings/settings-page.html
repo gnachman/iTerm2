@@ -625,47 +625,6 @@
             </div>
         </div>
         
-        <div class="adblock-section">
-            <div class="section">
-                <h2>Advanced Ad Blocking</h2>
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <h3>Enable Rust Ad Blocking Engine</h3>
-                        <p>Enhanced ad blocking with cosmetic filtering and advanced rules (requires restart)<br>
-                        <small>This feature uses <a href="https://github.com/brave/adblock-rust?tab=readme-ov-file" target="_blank">Brave's Rust-based adblock engine</a></small></p>
-                    </div>
-                    <label class="toggle">
-                        <input type="checkbox" id="rustAdblockEnabled" {{RUST_ADBLOCK_ENABLED}} onchange="toggleRustAdblock(this.checked)">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <h3>Filter List URLs</h3>
-                        <p>URLs for downloading Rust ad blocking rules (EasyList format). Lists are loaded in order.</p>
-                        <div class="url-settings">
-                            <div id="rustAdblockURLContainer">
-                                <!-- URL list will be populated by JavaScript -->
-                            </div>
-                            <div class="button-group">
-                                <button class="button small" onclick="addRustAdblockURL()">+ Add URL</button>
-                                <button class="button small" onclick="forceRustAdblockUpdate()">Update Now</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="setting-item" id="rustAdblockStats">
-                    <div class="setting-info">
-                        <h3>Status</h3>
-                        <p id="rustAdblockStatsText">Loading Rust engine statistics…</p>
-                    </div>
-                </div>
-                <div class="setting-note">
-                    <p><strong>Note:</strong> Advanced Ad Blocking works by running a local proxy server. It cannot be used simultaneously with the HTTP Proxy feature below.</p>
-                </div>
-            </div>
-        </div>
-        
         <div class="proxy-section">
             <div class="section">
                 <h2>Proxy Settings</h2>
@@ -689,9 +648,6 @@
                         <span>:</span>
                         <input type="number" id="proxyPort" value="8118" placeholder="8118" min="1" max="65535" onchange="updateProxyPort(this.value)" style="width: 80px;">
                     </div>
-                </div>
-                <div class="setting-note">
-                    <p><strong>Note:</strong> HTTP Proxy cannot be used simultaneously with Advanced Ad Blocking, which runs its own local proxy server.</p>
                 </div>
             </div>
         </div>

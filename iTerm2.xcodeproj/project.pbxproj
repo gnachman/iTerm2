@@ -1185,13 +1185,10 @@
 		A61220782E0FA74700F48E64 /* distraction-removal-helpers.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220722E0FA74700F48E64 /* distraction-removal-helpers.js */; };
 		A61220792E0FA74700F48E64 /* remove-element-at-point.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220732E0FA74700F48E64 /* remove-element-at-point.js */; };
 		A61220E32E10489600F48E64 /* iTermFocusFollowsMouse.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61220E22E10489000F48E64 /* iTermFocusFollowsMouse.swift */; };
-		A61220E62E10528800F48E64 /* iTermBrowserAdblockRustManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61220E42E10528800F48E64 /* iTermBrowserAdblockRustManager.swift */; };
-		A61220E72E10528800F48E64 /* iTermBrowserAdblockRustWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61220E52E10528800F48E64 /* iTermBrowserAdblockRustWrapper.swift */; };
 		A61220E92E10542400F48E64 /* libadblock.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A61220E82E10542400F48E64 /* libadblock.a */; };
 		A61220EB2E106F9800F48E64 /* adblock-css-injection.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220EA2E106F9800F48E64 /* adblock-css-injection.js */; };
 		A61220EC2E106F9800F48E64 /* adblock-css-injection.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220EA2E106F9800F48E64 /* adblock-css-injection.js */; };
 		A61220ED2E106F9800F48E64 /* adblock-css-injection.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220EA2E106F9800F48E64 /* adblock-css-injection.js */; };
-		A61220EF2E106F9E00F48E64 /* iTermBrowserAdblockHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61220EE2E106F9E00F48E64 /* iTermBrowserAdblockHandler.swift */; };
 		A612E5C92DACB2920014F159 /* FileDescriptorMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A612E5C82DACB2890014F159 /* FileDescriptorMonitor.swift */; };
 		A612E5CB2DACB5E80014F159 /* IOBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A612E5CA2DACB5E50014F159 /* IOBuffer.swift */; };
 		A612E5CE2DAD968F0014F159 /* ChannelJobManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A612E5CD2DAD96870014F159 /* ChannelJobManager.swift */; };
@@ -3122,7 +3119,6 @@
 		A6A39EBC24B99AC000A64433 /* iTermGraphicsUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A39EBA24B99AC000A64433 /* iTermGraphicsUtilities.m */; };
 		A6A39EBF24B9A96B00A64433 /* iTermUnobtrusiveMessage.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A39EBD24B9A96B00A64433 /* iTermUnobtrusiveMessage.h */; };
 		A6A39EC024B9A96B00A64433 /* iTermUnobtrusiveMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A39EBE24B9A96B00A64433 /* iTermUnobtrusiveMessage.m */; };
-		A6A3CD072E35527A00710B09 /* libhudsucker_ffi.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6D90DB02E3309B300BA9F4F /* libhudsucker_ffi.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A6A3CDAB2E36F34300710B09 /* load(1).php in Resources */ = {isa = PBXBuildFile; fileRef = A6A3CD972E36F34300710B09 /* load(1).php */; };
 		A6A3CDAC2E36F34300710B09 /* load(2).php in Resources */ = {isa = PBXBuildFile; fileRef = A6A3CD982E36F34300710B09 /* load(2).php */; };
 		A6A3CDBE2E36F34300710B09 /* load.php in Resources */ = {isa = PBXBuildFile; fileRef = A6A3CD962E36F34300710B09 /* load.php */; };
@@ -3311,11 +3307,9 @@
 		A6A983BB27E7F79E003319D1 /* LastPassDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A983BA27E7F79E003319D1 /* LastPassDataSource.swift */; };
 		A6AA2F682E28B257002998B3 /* iTermProfilePreferenceMutator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AA2F662E28B257002998B3 /* iTermProfilePreferenceMutator.swift */; };
 		A6AA2F692E28B257002998B3 /* iTermProfilePreferenceObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AA2F672E28B257002998B3 /* iTermProfilePreferenceObserver.swift */; };
-		A6AA2F6B2E28B615002998B3 /* HudsuckerProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AA2F602E28B1E1002998B3 /* HudsuckerProxy.swift */; };
 		A6AA2F8E2E296849002998B3 /* cert-error.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AA2F8D2E296849002998B3 /* cert-error.html */; };
 		A6AA2F8F2E296849002998B3 /* cert-error.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AA2F8D2E296849002998B3 /* cert-error.html */; };
 		A6AA2F902E296849002998B3 /* cert-error.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AA2F8D2E296849002998B3 /* cert-error.html */; };
-		A6AA2F922E2976DC002998B3 /* iTermBrowserSSLBypassHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AA2F912E2976D2002998B3 /* iTermBrowserSSLBypassHandler.swift */; };
 		A6AAD5EE22F4A1DD002DD12C /* iTermCommandRunnerPool.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AAD5EC22F4A1DD002DD12C /* iTermCommandRunnerPool.h */; };
 		A6AAD5EF22F4A1DD002DD12C /* iTermCommandRunnerPool.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AAD5ED22F4A1DD002DD12C /* iTermCommandRunnerPool.m */; };
 		A6AAD5F322F7EB61002DD12C /* iTermWindowSizeView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AAD5F122F7EB61002DD12C /* iTermWindowSizeView.h */; };
@@ -3956,7 +3950,6 @@
 		A6D3205729C492410088BBE1 /* nerd.itse in Resources */ = {isa = PBXBuildFile; fileRef = A6D3205629C492410088BBE1 /* nerd.itse */; };
 		A6D3205829C492410088BBE1 /* nerd.itse in Resources */ = {isa = PBXBuildFile; fileRef = A6D3205629C492410088BBE1 /* nerd.itse */; };
 		A6D3205929C492410088BBE1 /* nerd.itse in Resources */ = {isa = PBXBuildFile; fileRef = A6D3205629C492410088BBE1 /* nerd.itse */; };
-		A6D38AC92E2C014E00EEE5CA /* iTermBrowserProxyCertificateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D38AC82E2C014500EEE5CA /* iTermBrowserProxyCertificateManager.swift */; };
 		A6D3985E2BDACC1300C4C1AD /* SFSymbolsHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D3985D2BDACC1300C4C1AD /* SFSymbolsHelpers.swift */; };
 		A6D420092E4D39DF00E8D3EF /* Onboarding-Chat.png in Resources */ = {isa = PBXBuildFile; fileRef = A6D420052E4D39DF00E8D3EF /* Onboarding-Chat.png */; };
 		A6D4200A2E4D39DF00E8D3EF /* Onboarding-Web.png in Resources */ = {isa = PBXBuildFile; fileRef = A6D420082E4D39DF00E8D3EF /* Onboarding-Web.png */; };
@@ -5402,7 +5395,6 @@
 				A69FEECE2E123B8700AFF7A8 /* iTermSwiftPackages.framework in CopyFiles */,
 				A6FB633423DE802900026D52 /* SearchableComboListView.framework in CopyFiles */,
 				A68BE9512DE51591002DD513 /* librailroad_dsl.dylib in CopyFiles */,
-				A6A3CD072E35527A00710B09 /* libhudsucker_ffi.dylib in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -6539,11 +6531,8 @@
 		A61220722E0FA74700F48E64 /* distraction-removal-helpers.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "distraction-removal-helpers.js"; sourceTree = "<group>"; };
 		A61220732E0FA74700F48E64 /* remove-element-at-point.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "remove-element-at-point.js"; sourceTree = "<group>"; };
 		A61220E22E10489000F48E64 /* iTermFocusFollowsMouse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermFocusFollowsMouse.swift; sourceTree = "<group>"; };
-		A61220E42E10528800F48E64 /* iTermBrowserAdblockRustManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserAdblockRustManager.swift; sourceTree = "<group>"; };
-		A61220E52E10528800F48E64 /* iTermBrowserAdblockRustWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserAdblockRustWrapper.swift; sourceTree = "<group>"; };
 		A61220E82E10542400F48E64 /* libadblock.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libadblock.a; path = "ThirdParty/adblock-rust/lib/libadblock.a"; sourceTree = "<group>"; };
 		A61220EA2E106F9800F48E64 /* adblock-css-injection.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "adblock-css-injection.js"; sourceTree = "<group>"; };
-		A61220EE2E106F9E00F48E64 /* iTermBrowserAdblockHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserAdblockHandler.swift; sourceTree = "<group>"; };
 		A612E5C82DACB2890014F159 /* FileDescriptorMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileDescriptorMonitor.swift; sourceTree = "<group>"; };
 		A612E5CA2DACB5E50014F159 /* IOBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOBuffer.swift; sourceTree = "<group>"; };
 		A612E5CD2DAD96870014F159 /* ChannelJobManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelJobManager.swift; sourceTree = "<group>"; };
@@ -8095,12 +8084,9 @@
 		A6A9839A27E6BDE1003319D1 /* ModalPasswordAlert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModalPasswordAlert.swift; sourceTree = "<group>"; };
 		A6A9839C27E7BD7C003319D1 /* OnePasswordTokenRequester.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnePasswordTokenRequester.swift; sourceTree = "<group>"; };
 		A6A983BA27E7F79E003319D1 /* LastPassDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LastPassDataSource.swift; sourceTree = "<group>"; };
-		A6AA2F582E28B185002998B3 /* libhudsucker_ffi.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libhudsucker_ffi.a; path = "ThirdParty/hudsucker-ffi/lib/libhudsucker_ffi.a"; sourceTree = "<group>"; };
-		A6AA2F602E28B1E1002998B3 /* HudsuckerProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HudsuckerProxy.swift; sourceTree = "<group>"; };
 		A6AA2F662E28B257002998B3 /* iTermProfilePreferenceMutator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermProfilePreferenceMutator.swift; sourceTree = "<group>"; };
 		A6AA2F672E28B257002998B3 /* iTermProfilePreferenceObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermProfilePreferenceObserver.swift; sourceTree = "<group>"; };
 		A6AA2F8D2E296849002998B3 /* cert-error.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "cert-error.html"; sourceTree = "<group>"; };
-		A6AA2F912E2976D2002998B3 /* iTermBrowserSSLBypassHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserSSLBypassHandler.swift; sourceTree = "<group>"; };
 		A6AAD5EC22F4A1DD002DD12C /* iTermCommandRunnerPool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCommandRunnerPool.h; sourceTree = "<group>"; };
 		A6AAD5ED22F4A1DD002DD12C /* iTermCommandRunnerPool.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCommandRunnerPool.m; sourceTree = "<group>"; };
 		A6AAD5F122F7EB61002DD12C /* iTermWindowSizeView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermWindowSizeView.h; sourceTree = "<group>"; };
@@ -8457,7 +8443,6 @@
 		A6D24D3C26BC5FA600CCE211 /* SwiftDebugLogging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDebugLogging.swift; sourceTree = "<group>"; };
 		A6D3205429C29EE30088BBE1 /* NerdFontInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NerdFontInstaller.swift; sourceTree = "<group>"; };
 		A6D3205629C492410088BBE1 /* nerd.itse */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = nerd.itse; path = OtherResources/nerd.itse; sourceTree = "<group>"; };
-		A6D38AC82E2C014500EEE5CA /* iTermBrowserProxyCertificateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserProxyCertificateManager.swift; sourceTree = "<group>"; };
 		A6D3985D2BDACC1300C4C1AD /* SFSymbolsHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSymbolsHelpers.swift; sourceTree = "<group>"; };
 		A6D420052E4D39DF00E8D3EF /* Onboarding-Chat.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Onboarding-Chat.png"; path = "images/Onboarding/Onboarding-Chat.png"; sourceTree = "<group>"; };
 		A6D420062E4D39DF00E8D3EF /* Onboarding-OpenQuickly.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Onboarding-OpenQuickly.png"; path = "images/Onboarding/Onboarding-OpenQuickly.png"; sourceTree = "<group>"; };
@@ -8516,7 +8501,6 @@
 		A6D90D5F2E2F5F3B00BA9F4F /* ai-prompt-help.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "ai-prompt-help.md"; sourceTree = "<group>"; };
 		A6D90D632E2F626700BA9F4F /* ImageViewWithPopoverMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewWithPopoverMessage.swift; sourceTree = "<group>"; };
 		A6D90D652E2FF7E100BA9F4F /* custom-find.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "custom-find.js"; sourceTree = "<group>"; };
-		A6D90DB02E3309B300BA9F4F /* libhudsucker_ffi.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libhudsucker_ffi.dylib; path = "ThirdParty/hudsucker-ffi/lib/libhudsucker_ffi.dylib"; sourceTree = "<group>"; };
 		A6DB14592D6CE22400266394 /* CommandIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = CommandIcon.png; sourceTree = "<group>"; };
 		A6DB145D2D6CEDEE00266394 /* SystemMessageCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemMessageCellView.swift; sourceTree = "<group>"; };
 		A6DB14632D6D09C800266394 /* AIStreaming.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AIStreaming.png; sourceTree = "<group>"; };
@@ -9298,7 +9282,6 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
-				A6D90DB02E3309B300BA9F4F /* libhudsucker_ffi.dylib */,
 				A6B1C69D2DC15898008AD3CA /* ModernTests.xctestplan */,
 				A63F2A3A23FA5951008DDEA4 /* it2run */,
 				5370676121C9D2390088D0F3 /* SignedArchive */,
@@ -10674,7 +10657,6 @@
 		1DD39AD5180B8118004E56D5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				A6AA2F582E28B185002998B3 /* libhudsucker_ffi.a */,
 				A61220E82E10542400F48E64 /* libadblock.a */,
 				A68BE93E2DE3BA3D002DD513 /* librailroad_dsl.dylib */,
 				1D94EAC712D641D3008225A9 /* AddressBook.framework */,
@@ -11127,10 +11109,7 @@
 			isa = PBXGroup;
 			children = (
 				A61220EA2E106F9800F48E64 /* adblock-css-injection.js */,
-				A61220EE2E106F9E00F48E64 /* iTermBrowserAdblockHandler.swift */,
 				A6F7D4E42E04AE7D0065D09C /* iTermBrowserAdblockManager.swift */,
-				A61220E42E10528800F48E64 /* iTermBrowserAdblockRustManager.swift */,
-				A61220E52E10528800F48E64 /* iTermBrowserAdblockRustWrapper.swift */,
 			);
 			path = "Ad Blocking";
 			sourceTree = "<group>";
@@ -13210,16 +13189,6 @@
 			name = "Password Manager";
 			sourceTree = "<group>";
 		};
-		A6AA2F5D2E28B1AE002998B3 /* Proxy */ = {
-			isa = PBXGroup;
-			children = (
-				A6D38AC82E2C014500EEE5CA /* iTermBrowserProxyCertificateManager.swift */,
-				A6AA2F912E2976D2002998B3 /* iTermBrowserSSLBypassHandler.swift */,
-				A6AA2F602E28B1E1002998B3 /* HudsuckerProxy.swift */,
-			);
-			path = Proxy;
-			sourceTree = "<group>";
-		};
 		A6AFE92923FCFF5C00D489C7 /* StateRestoration */ = {
 			isa = PBXGroup;
 			children = (
@@ -14034,7 +14003,6 @@
 				A6CBB80C2E09E4A700B2CCCB /* Password Manager */,
 				A6CBB8182E0A1BE800B2CCCB /* Permissions */,
 				A6CBB81D2E0A1C7200B2CCCB /* Polyfills */,
-				A6AA2F5D2E28B1AE002998B3 /* Proxy */,
 				A6CBB8BE2E0A695D00B2CCCB /* Reader Mode */,
 				A6CBB81A2E0A1C1700B2CCCB /* Settings */,
 				A6CC2D032E4A73D100F8D620 /* ssh Page Manager */,
@@ -18805,7 +18773,6 @@
 				5370678321C9D2780088D0F3 /* SIGPolicy.m in Sources */,
 				A6A4866A20B6793E00493302 /* iTermKeyMappingViewController.m in Sources */,
 				A6D693F92E419823005E9AFE /* iTermBrowserIndicatorsView.swift in Sources */,
-				A6AA2F6B2E28B615002998B3 /* HudsuckerProxy.swift in Sources */,
 				A6F18B762AEA18F5006C08EE /* iTermToolWrapper.m in Sources */,
 				A6E312B42E397EC0008222DE /* iTermBaseWKWebView.m in Sources */,
 				A663196A22FE5D3D00C502BD /* iTermFileDescriptorMultiClient.m in Sources */,
@@ -19123,8 +19090,6 @@
 				A6D90D5C2E2F4D4E00BA9F4F /* iTermFocusFollowsMouseFocusReceiver.swift in Sources */,
 				A66F52B62105AC5B00571168 /* iTermStatusBarGitComponent.m in Sources */,
 				A66F3CF81FED741E00AA2021 /* iTermTextRendererTransientState.mm in Sources */,
-				A61220E62E10528800F48E64 /* iTermBrowserAdblockRustManager.swift in Sources */,
-				A61220E72E10528800F48E64 /* iTermBrowserAdblockRustWrapper.swift in Sources */,
 				A69C9333212108BC00531438 /* iTermStatusBarComposerComponent.m in Sources */,
 				A67960E41F8201A1008A42BC /* iTermMetalDriver.m in Sources */,
 				A608A58027978076003525F7 /* VT100ScreenMark.m in Sources */,
@@ -19157,7 +19122,6 @@
 				A65AEDED2CC1B625007F4A11 /* SearchEngine.swift in Sources */,
 				A6D693EC2E416AC6005E9AFE /* PointerControllerDelegate.swift in Sources */,
 				A62132D327862A4800B80724 /* TokenExecutor.swift in Sources */,
-				A6AA2F922E2976DC002998B3 /* iTermBrowserSSLBypassHandler.swift in Sources */,
 				A6566754219EA582005FE60E /* NSNull+iTerm.m in Sources */,
 				A6F66BA42C2E2C0700DC3569 /* iTermMutableOrderedSet.m in Sources */,
 				A629C706221016AA00E7D4AE /* iTermMoveTabToWindowBuiltInFunction.m in Sources */,
@@ -19183,7 +19147,6 @@
 				A68BE8A52DE10FC0002DD513 /* iTermIntegerNumberFormatter.m in Sources */,
 				A63011CD20E851E0008114B7 /* iTermStatusBarSpringComponent.m in Sources */,
 				A6E1881D2A535EBB00416B1A /* ToastWindowController.m in Sources */,
-				A61220EF2E106F9E00F48E64 /* iTermBrowserAdblockHandler.swift in Sources */,
 				539E4ECE22E172360084FE9A /* iTermAutomaticProfileSwitcher.m in Sources */,
 				A6EB64272D5BC1AA00481D33 /* ChatListDataSource.swift in Sources */,
 				A6E304672E00C6C90029CAB4 /* QuickLookHelper.swift in Sources */,
@@ -19598,7 +19561,6 @@
 				A66F52AA210458CA00571168 /* iTermNetworkUtilization.m in Sources */,
 				A63011CE20E85B16008114B7 /* SessionTitleView.m in Sources */,
 				53E9DFE8220D53980070C9C0 /* iTermHyperlinkTrigger.m in Sources */,
-				A6D38AC92E2C014E00EEE5CA /* iTermBrowserProxyCertificateManager.swift in Sources */,
 				53FF982B2093C823008688D7 /* iTermSignatureVerifier.m in Sources */,
 				535EA4FD20D0EBD300FC81E0 /* iTermSwiftyStringRecognizer.m in Sources */,
 				534B6C6823DC165D0031FED2 /* PasteContext.m in Sources */,
@@ -20268,8 +20230,6 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
-					"$(PROJECT_DIR)/ThirdParty/adblock-rust/lib",
-					"$(PROJECT_DIR)/ThirdParty/hudsucker-ffi/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MARKETING_VERSION = 1.0;
@@ -21543,8 +21503,6 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
-					"$(PROJECT_DIR)/ThirdParty/adblock-rust/lib",
-					"$(PROJECT_DIR)/ThirdParty/hudsucker-ffi/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MARKETING_VERSION = 1.0;
@@ -24178,8 +24136,6 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
-					"$(PROJECT_DIR)/ThirdParty/adblock-rust/lib",
-					"$(PROJECT_DIR)/ThirdParty/hudsucker-ffi/lib",
 				);
 				LINK_WITH_STANDARD_LIBRARIES = YES;
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
@@ -24273,8 +24229,6 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
-					"$(PROJECT_DIR)/ThirdParty/adblock-rust/lib",
-					"$(PROJECT_DIR)/ThirdParty/hudsucker-ffi/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MARKETING_VERSION = 1.0;

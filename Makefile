@@ -191,21 +191,6 @@ libadblock: force
 	cp submodules/adblock-rust/include/* ThirdParty/adblock-rust/include
 	cp submodules/adblock-rust/lib/* ThirdParty/adblock-rust/lib
 
-libhudsucker: force
-	/opt/homebrew/bin/rustup target add x86_64-apple-darwin
-	/opt/homebrew/bin/rustup target add aarch64-apple-darwin
-	mkdir -p hudsucker-ffi/lib
-	mkdir -p hudsucker-ffi/include
-	mkdir -p ThirdParty/hudsucker-ffi/include
-	mkdir -p ThirdParty/hudsucker-ffi/lib
-	cd hudsucker-ffi && PATH=$(PATH):$(HOME)/.cargo/bin $(HOME)/.cargo/bin/cargo build --release --target aarch64-apple-darwin
-	cd hudsucker-ffi && PATH=$(PATH):$(HOME)/.cargo/bin $(HOME)/.cargo/bin/cargo build --release --target x86_64-apple-darwin
-	cd hudsucker-ffi && lipo -create target/aarch64-apple-darwin/release/libhudsucker_ffi.a target/x86_64-apple-darwin/release/libhudsucker_ffi.a -output lib/libhudsucker_ffi.a
-	cd hudsucker-ffi && lipo -create target/aarch64-apple-darwin/release/libhudsucker_ffi.dylib target/x86_64-apple-darwin/release/libhudsucker_ffi.dylib -output lib/libhudsucker_ffi.dylib
-	cd hudsucker-ffi && install_name_tool -id @rpath/libhudsucker_ffi.dylib lib/libhudsucker_ffi.dylib
-	cp hudsucker-ffi/hudsucker_ffi.h ThirdParty/hudsucker-ffi/include/
-	cp hudsucker-ffi/lib/* ThirdParty/hudsucker-ffi/lib/
-
 paranoidrailroad: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) librailroad_dsl
 
@@ -249,11 +234,8 @@ paranoidlibadblock: force
 paranoidlibrailroad: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) librailroad_dsl
 
-paranoidlibhudsucker: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) libhudsucker
-
 # You probably want make paranoiddeps to avoid depending on Hombrew stuff.
-deps: force fatlibsixel CoreParse NMSSH bindeps libgit2 sparkle librailroad_dsl libadblock libhudsucker sfsymbolenum
+deps: force fatlibsixel CoreParse NMSSH bindeps libgit2 sparkle librailroad_dsl libadblock sfsymbolenum
 
 sfsymbolenum:
 	cp submodules/SFSymbolEnum/Sources/SFSymbolEnum/* ThirdParty/SFSymbolEnum

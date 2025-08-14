@@ -34,21 +34,10 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         }
         self.secret = secret
         super.init()
-        
-        // Observe Rust adblock stats changes
-        NotificationCenter.default.addObserver(self, 
-                                               selector: #selector(rustAdblockStatsChanged), 
-                                               name: .rustAdblockStatsChanged, 
-                                               object: nil)
     }
     
     deinit {
         NotificationCenter.default.removeObserver(self)
-    }
-    
-    @objc private func rustAdblockStatsChanged() {
-        guard let webView = delegate?.settingsHandlerWebView(self) else { return }
-        sendRustAdblockStats(to: webView)
     }
     
     // MARK: - Public Interface
@@ -66,7 +55,6 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         
         let substitutions = ["ADBLOCK_ENABLED": iTermAdvancedSettingsModel.webKitAdblockEnabled() ? "checked" : "",
                              "ADBLOCK_URL": iTermAdvancedSettingsModel.adblockListURL().replacingOccurrences(of: "&", with: "&amp;").replacingOccurrences(of: "\"", with: "&quot;"),
-                             "RUST_ADBLOCK_ENABLED": iTermAdvancedSettingsModel.rustAdblockEnabled() ? "checked" : "",
                              "SECRET": secret,
                              "DEV_NULL_NOTE": isDevNull ? "" : "display: none;",
                              "SHOW_EXTENSIONS": showExtensions ? "" : "display: none;"]
@@ -161,20 +149,6 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             }
         case "getProxySettings":
             sendProxySettings(to: webView)
-        case "setRustAdblockEnabled":
-            if let enabled = message["value"] as? Bool {
-                setRustAdblockEnabled(enabled, webView: webView)
-            }
-        case "forceRustAdblockUpdate":
-            forceRustAdblockUpdate(webView: webView)
-        case "getRustAdblockSettings":
-            sendRustAdblockSettings(to: webView)
-        case "getRustAdblockStats":
-            sendRustAdblockStats(to: webView)
-        case "setRustAdblockURL":
-            if let url = message["value"] as? String {
-                setRustAdblockURL(url, webView: webView)
-            }
         case "getExtensions":
 #if ITERM_DEBUG
             if #available(macOS 14, *) {
@@ -238,7 +212,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     
     // MARK: - Adblock Settings
 
-    // This is for webkit adblocking, not rust
+    // This is for webkit adblocking
     private func setAdblockEnabled(_ enabled: Bool, webView: WKWebView) {
         iTermAdvancedSettingsModel.setWebKitAdblockEnabled(enabled)
         delegate?.settingsHandlerDidUpdateAdblockSettings(self)
@@ -316,90 +290,6 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     
     @objc func showAdblockUpdateError(_ error: String, in webView: WKWebView) {
         showStatusMessage("Failed to update ad block rules: \(error)", type: "error", in: webView)
-    }
-    
-    // MARK: - Rust Adblock Settings
-    
-    private func setRustAdblockEnabled(_ enabled: Bool, webView: WKWebView) {
-        iTermAdvancedSettingsModel.setRustAdblockEnabled(enabled)
-
-        DLog("Rust ad blocking \(enabled ? "enabled" : "disabled")")
-        
-        let message = enabled ? "Rust ad blocking enabled" : "Rust ad blocking disabled"
-        showStatusMessage(message, type: "success", in: webView)
-        
-        // Reload the manager if enabled
-        if enabled {
-            Task {
-                await iTermBrowserAdblockRustManager.shared.reload()
-            }
-        }
-
-        delegate?.settingsHandlerDidUpdateAdblockSettings(self)
-    }
-    
-    private func forceRustAdblockUpdate(webView: WKWebView) {
-        Task {
-            await iTermBrowserAdblockRustManager.shared.reload()
-            await MainActor.run {
-                showStatusMessage("Rust ad blocking filter lists reloaded", type: "success", in: webView)
-                // Update stats after reload
-                sendRustAdblockStats(to: webView)
-            }
-        }
-    }
-    
-    private func setRustAdblockURL(_ url: String, webView: WKWebView) {
-        guard !url.isEmpty else { return }
-        
-        iTermAdvancedSettingsModel.setRustAdblockListURL(url)
-        
-        DLog("Rust adblock URL updated to: \(url)")
-        showStatusMessage("Filter list URL updated", type: "success", in: webView)
-    }
-    
-    private func sendRustAdblockSettings(to webView: WKWebView) {
-        let enabled = iTermAdvancedSettingsModel.rustAdblockEnabled()
-        let url = iTermAdvancedSettingsModel.rustAdblockListURL() ?? "https://easylist.to/easylist/easylist.txt"
-        
-        let settings = [
-            "enabled": enabled,
-            "url": url
-        ] as [String: Any]
-        
-        do {
-            let jsonData = try JSONSerialization.data(withJSONObject: settings)
-            let jsonString = String(data: jsonData, encoding: .utf8)!
-            
-            let script = "updateRustAdblockUI(\(jsonString));"
-            webView.evaluateJavaScript(script, completionHandler: nil)
-        } catch {
-            DLog("Failed to encode Rust adblock settings: \(error)")
-        }
-    }
-    
-    private func sendRustAdblockStats(to webView: WKWebView) {
-        let enabled = iTermAdvancedSettingsModel.rustAdblockEnabled()
-        let manager = iTermBrowserAdblockRustManager.shared
-        
-        let stats = [
-            "enabled": enabled,
-            "engineLoaded": manager.engine != nil,
-            "isDownloading": manager.isDownloading,
-            "ruleCount": manager.ruleCount,
-            "hiddenElementsCount": 0, // Could be enhanced with actual tracking
-            "blockedRequestsCount": 0  // Could be enhanced with actual tracking
-        ] as [String: Any]
-        
-        do {
-            let jsonData = try JSONSerialization.data(withJSONObject: stats)
-            let jsonString = String(data: jsonData, encoding: .utf8)!
-            
-            let script = "updateRustAdblockStats(\(jsonString));"
-            webView.evaluateJavaScript(script, completionHandler: nil)
-        } catch {
-            DLog("Failed to encode Rust adblock stats: \(error)")
-        }
     }
     
     // MARK: - Search Settings

@@ -87,7 +87,6 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private(set) var favicon: NSImage?
     private var _findManager = iTermBrowserFindManager.create()
     private var adblockManager: iTermBrowserAdblockManager?
-    private var adblockHandler: iTermBrowserAdblockHandler?
     private var notificationHandler: iTermBrowserNotificationHandler?
     private var hoverLinkHandler = iTermBrowserHoverLinkHandler()
     private(set) var copyModeHandler = iTermBrowserCopyModeHandler.create()
@@ -395,7 +394,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         let configuration: WKWebViewConfiguration
         let contentManager: BrowserExtensionUserContentManager?
         if let preferredConfiguration {
-#warning("TODO: Somehow deal with this and content managers and root certs")
+
             configuration = preferredConfiguration
             contentManager = nil
         } else {
@@ -459,8 +458,6 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         _findManager?.delegate = self
         triggerHandler?.webView = webView
 
-        // Initialize adblock handler
-        adblockHandler = iTermBrowserAdblockHandler(webView: webView)
         // Start updates if needed
         adblockManager?.updateRulesIfNeeded()
 
@@ -1105,9 +1102,6 @@ extension iTermBrowserManager {
         case iTermBrowserNamedMarkManager.layoutUpdateHandlerName:
             namedMarkManager?.handleLayoutUpdateMessage(webView: webView, message: message)
 
-        case iTermBrowserSSLBypassHandler.messageHandlerName:
-            iTermBrowserSSLBypassHandler.offerBypass(webView: webView, message: message)
-
         case iTermBrowserTriggerHandler.messageHandlerName:
             if let triggerHandler {
                 Task {
@@ -1200,54 +1194,6 @@ extension iTermBrowserManager: WKNavigationDelegate {
     func webView(_ webView: WKWebView,
                  didReceive challenge: URLAuthenticationChallenge,
                  completionHandler: @escaping @MainActor (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-        guard #available(macOS 14, *) else {
-            DLog("No proxy because not macos 14")
-            completionHandler(.performDefaultHandling, nil)
-            return
-        }
-
-        guard let serverTrust = challenge.protectionSpace.serverTrust else {
-            DLog("No proxy because no server trust")
-            completionHandler(.performDefaultHandling, nil)
-            return
-        }
-        guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust else {
-            DLog("No proxy because auth is not server trust")
-            completionHandler(.performDefaultHandling, nil)
-            return
-        }
-        guard !webView.configuration.websiteDataStore.proxyConfigurations.isEmpty else {
-            DLog("No proxy because no proxy config")
-            completionHandler(.performDefaultHandling, nil)
-            return
-        }
-        guard shouldUseBuiltInAdblockingProxy else {
-            DLog("No proxy because adblocking proxy disabled in settings")
-            completionHandler(.performDefaultHandling, nil)
-            return
-        }
-        guard let proxy = HudsuckerProxy.standard else {
-            DLog("No proxy because standard proxy is unset")
-            completionHandler(.performDefaultHandling, nil)
-            return
-        }
-        guard proxy.isRunning else {
-            DLog("No proxy because not running")
-            completionHandler(.performDefaultHandling, nil)
-            return
-        }
-        guard let proxyRoot = proxy.caCert else {
-            DLog("No proxy because no ca cert")
-            completionHandler(.performDefaultHandling, nil)
-            return
-        }
-
-        if trustUsesProxyCA(serverTrust, proxyRoot: proxyRoot) {
-            let credential = URLCredential(trust: serverTrust)
-            completionHandler(.useCredential, credential)
-            return
-        }
-
         completionHandler(.performDefaultHandling, nil)
     }
 
@@ -1310,9 +1256,6 @@ extension iTermBrowserManager: WKNavigationDelegate {
 
         // Update title in browser history if available
         historyController.titleDidChange(for: webView.url, title: webView.title)
-
-        // Apply cosmetic filtering using adblock-rust
-        adblockHandler?.applyCosmeticFiltering()
 
         delegate?.browserManager(self, didFinishNavigation: navigation)
         navigationState.didCompleteLoading(error: nil)
@@ -1777,10 +1720,6 @@ extension iTermBrowserManager {
         applyProxyConfiguration(to: webView.configuration.websiteDataStore)
     }
 
-    private var shouldUseBuiltInAdblockingProxy: Bool {
-        return !iTermAdvancedSettingsModel.browserProxyEnabled() && iTermAdvancedSettingsModel.rustAdblockEnabled()
-    }
-
     private func applyProxyConfiguration(to dataStore: WKWebsiteDataStore) {
         guard #available(macOS 14.0, *) else { return }
 
@@ -1791,58 +1730,9 @@ extension iTermBrowserManager {
             let endpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(proxyHost), port: NWEndpoint.Port(integerLiteral: UInt16(proxyPort)))
             let proxyConfig = ProxyConfiguration(httpCONNECTProxy: endpoint)
             dataStore.proxyConfigurations = [proxyConfig]
-            adblockManager?.internalProxyDidStop()
             DLog("Configured browser proxy: \(proxyHost):\(proxyPort)")
             return
         }
-        if shouldUseBuiltInAdblockingProxy {
-            // Use the built-in adblocking proxy
-            dataStore.proxyConfigurations = []
-            do {
-                if let proxy = try Self.makeProxy() {
-                    let proxyPort = proxy.port!
-                    startUsingInternalProxy(onPort: proxyPort, dataStore: dataStore)
-                }
-            } catch {
-                iTermAdvancedSettingsModel.setRustAdblockEnabled(false)
-                // TODO: Update any open settings pages
-            }
-        }
-    }
-
-    private static func makeProxy() throws -> HudsuckerProxy? {
-        if let existing = HudsuckerProxy.standard {
-            return existing
-        }
-        let certErrorTemplate = iTermBrowserTemplateLoader.loadTemplate(
-            named: "cert-error",
-            type: "html",
-            substitutions: [:])
-        let bundleID = "com.googlecode.iterm2.iTerm2-Web-Proxy"
-        guard let bundleURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
-            DLog("Could not find \(bundleID)")
-            return nil
-        }
-        let libraryPath = bundleURL.appendingPathComponent("Contents/Resources/libhudsucker_ffi.dylib")
-        try HudsuckerProxy.loadLibrary(from: libraryPath.path)
-        let proxy = try? HudsuckerProxy.createAddingCertIfNeeded(
-            address: "127.0.0.1",
-            ports: Array(1912..<2012),
-            requestFilter: HudsuckerProxy.filterRequest(url:method:),
-            certificateErrorHTMLTemplate: certErrorTemplate)
-        HudsuckerProxy.standard = proxy
-        return proxy
-    }
-
-    @available(macOS 14, *)
-    @MainActor
-    private func startUsingInternalProxy(onPort proxyPort: Int, dataStore: WKWebsiteDataStore) {
-        DLog("begin")
-        let proxyHost = "127.0.0.1"
-        let endpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(proxyHost), port: NWEndpoint.Port(integerLiteral: UInt16(proxyPort)))
-        let proxyConfig = ProxyConfiguration(httpCONNECTProxy: endpoint)
-        dataStore.proxyConfigurations = [proxyConfig]
-        adblockManager?.internalProxyDidStart()
     }
 }
 
@@ -1905,12 +1795,6 @@ extension iTermBrowserManager {
         updateAdblockSettings()
         // Also update proxy configuration since the delegate is shared
         updateProxyConfiguration()
-
-        if !shouldUseBuiltInAdblockingProxy,
-            let existing = HudsuckerProxy.standard {
-            existing.stop()
-            HudsuckerProxy.standard = nil
-        }
     }
 
     @objc private func adblockRulesDidUpdate() {
