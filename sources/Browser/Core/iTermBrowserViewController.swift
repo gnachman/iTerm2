@@ -514,7 +514,8 @@ extension iTermBrowserViewController {
 
     /// Returns whether we handled it.
     @objc(performKeyBindingAction:event:)
-    func perform(keyBindingAction action: iTermKeyBindingAction, event: NSEvent) -> Bool {
+    @discardableResult
+    func perform(keyBindingAction action: iTermKeyBindingAction, event: NSEvent?) -> Bool {
         keyBindingActionPerformer.perform(keyBindingAction: action, event: event)
     }
 

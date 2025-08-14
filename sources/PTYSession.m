@@ -9790,11 +9790,18 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)applyAction:(iTermAction *)action {
+    iTermKeyBindingAction *keyBindingAction = [iTermKeyBindingAction withAction:action.action
+                                                                      parameter:action.parameter
+                                                                       escaping:action.escaping
+                                                                      applyMode:action.applyMode];
+    if (self.isBrowserSession) {
+        [self.view.browserViewController.view.window makeFirstResponder:self.view.browserViewController.view];
+        [self.view.browserViewController performKeyBindingAction:keyBindingAction
+                                                           event:nil];
+        return;
+    }
     [self.textview.window makeFirstResponder:self.mainResponder];
-    [self performKeyBindingAction:[iTermKeyBindingAction withAction:action.action
-                                                          parameter:action.parameter
-                                                           escaping:action.escaping
-                                                          applyMode:action.applyMode]
+    [self performKeyBindingAction:keyBindingAction
                             event:nil];
 }
 

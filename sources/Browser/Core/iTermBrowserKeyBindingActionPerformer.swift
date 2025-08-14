@@ -9,7 +9,7 @@
 class iTermBrowserKeyBindingActionPerformer {
     weak var delegate: iTermBrowserActionPerforming?
 
-    func perform(keyBindingAction action: iTermKeyBindingAction, event: NSEvent) -> Bool {
+    func perform(keyBindingAction action: iTermKeyBindingAction, event: NSEvent?) -> Bool {
         let parameter = action.parameter as NSString
 
         switch action.keyAction {
@@ -133,20 +133,24 @@ class iTermBrowserKeyBindingActionPerformer {
             }
 
         case .ACTION_COPY_OR_SEND:
-            if let data = data(for: event) {
-                Task {
-                    if await delegate?.actionPerformingHasSelection() == true {
-                        delegate?.actionPerformingCopyToClipboard()
-                    } else {
-                        delegate?.actionPerformingSend(data: data, broadcastAllowed: true)
+            if let event {
+                if let data = data(for: event) {
+                    Task {
+                        if await delegate?.actionPerformingHasSelection() == true {
+                            delegate?.actionPerformingCopyToClipboard()
+                        } else {
+                            delegate?.actionPerformingSend(data: data, broadcastAllowed: true)
+                        }
                     }
                 }
+            } else {
+                _ = NSApp.mainMenu?.performActionForItemWithSelector(NSSelectorFromString("copy:"))
             }
 
         case .ACTION_PASTE_OR_SEND:
             if !NSString.fromPasteboard().isEmpty {
                 delegate?.actionPerformingPasteFromClipboard()
-            } else if let data = data(for: event) {
+            } else if let event, let data = data(for: event) {
                 delegate?.actionPerformingSend(data: data,
                                                   broadcastAllowed: true)
             }
