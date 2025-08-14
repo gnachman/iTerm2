@@ -54,7 +54,7 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
     ITAssertWithMessage(NO, @"Invalid tag %@", @(tag));
 }
 
-@interface ContextMenuActionPrefsController()<NSTextFieldDelegate>
+@interface ContextMenuActionPrefsController()<NSTextFieldDelegate, NSMenuItemValidation>
 @end
 
 @implementation ContextMenuActionPrefsController {
@@ -70,6 +70,8 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
 
     NSMutableArray *_model;
     BOOL _browser;
+
+    NSUndoManager *_undoManager;
 }
 
 - (instancetype)initWithWindow:(NSWindow *)window {
@@ -171,6 +173,67 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
     completion(parameter);
 }
 
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    DLog(@"%@", menuItem);
+    if (menuItem.action == @selector(undo:)) {
+        return [_undoManager canUndo];
+    }
+    if (menuItem.action == @selector(redo:)) {
+        return [_undoManager canRedo];
+    }
+    return YES;
+}
+
+- (void)awakeFromNib {
+    _undoManager = [[NSUndoManager alloc] init];
+    [super awakeFromNib];
+}
+
+- (IBAction)undo:(id)sender {
+    [_undoManager undo];
+}
+
+- (IBAction)redo:(id)sender {
+    [_undoManager redo];
+}
+
+- (void)pushUndo {
+    [_undoManager registerUndoWithTarget:self
+                                selector:@selector(setState:)
+                                  object:@{ @"selectedIndexes": [_tableView selectedRowIndexes],
+                                            @"model": _model.mutableCopy,
+                                            @"firstResponderIdentifier": self.firstResponderID }];
+}
+
+- (NSString *)firstResponderID {
+    if (_title.textFieldIsFirstResponder) {
+        return _title.identifier;
+    }
+    if (_parameter.textFieldIsFirstResponder) {
+        return _parameter.identifier;
+    }
+    if (_action.window.firstResponder == _action) {
+        return _action.identifier;
+    }
+    return @"";
+}
+
+- (void)setState:(NSDictionary *)state {
+    _model = [state[@"model"] mutableCopy];
+    NSIndexSet *indexes = state[@"selectedIndexes"];
+    [_tableView reloadData];
+    [_tableView selectRowIndexes:indexes byExtendingSelection:NO];
+    [self updateDetailView];
+    NSString *firstResponderID = state[@"firstResponderIdentifier"];
+    if ([firstResponderID isEqualToString:_title.identifier]) {
+        [_title.window makeFirstResponder:_title];
+    } else if ([firstResponderID isEqualToString:_action.identifier]) {
+        [_action.window makeFirstResponder:_action];
+    } else if ([firstResponderID isEqualToString:_parameter.identifier]) {
+        [_parameter.window makeFirstResponder:_parameter];
+    }
+}
+
 - (IBAction)help:(id)sender {
     [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/documentation-smart-selection.html"]];
 }
@@ -209,6 +272,7 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
 }
 
 - (IBAction)add:(id)sender {
+    [self pushUndo];
     NSDictionary *defaultAction = [NSDictionary dictionaryWithObjectsAndKeys:
                                    @"", kTitleKey,
                                    [NSNumber numberWithInt:kOpenFileContextMenuAction], kActionKey,
@@ -221,7 +285,8 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
 }
 
 - (IBAction)remove:(id)sender {
-    [_model removeObjectAtIndex:[_tableView selectedRow]];
+    [self pushUndo];
+    [_model removeObjectsAtIndexes:[_tableView selectedRowIndexes]];
     [_tableView reloadData];
     [self updateDetailView];
 }
@@ -315,6 +380,7 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
         DLog(@"Bogus selected row %@", @(i));
         return;
     }
+    [self pushUndo];
     NSTextField *textField = [NSTextField castFrom:obj.object];
 
     NSMutableDictionary *temp = [[_model objectAtIndex:i] mutableCopy];
@@ -335,6 +401,7 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
         DLog(@"Bogus selected row %@", @(i));
         return;
     }
+    [self pushUndo];
     NSMutableDictionary *temp = [[_model objectAtIndex:i] mutableCopy];
     temp[kActionKey] = @(_action.selectedTag);
     _model[i] = temp;
@@ -350,8 +417,9 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
 }
 
 - (void)updateDetailView {
+    // The remove button is bound to this
     self.hasSelection = [_tableView numberOfSelectedRows] > 0;
-    _detailContainer.hidden = !self.hasSelection;
+    _detailContainer.hidden = ([_tableView numberOfSelectedRows] != 1);
     if (!self.hasSelection) {
         return;
     }

@@ -62,6 +62,7 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
     IBOutlet NSButton *_removeButton;
     IBOutlet NSButton *_syntaxHelpButton;
     IBOutlet NSButton *_visualizationButton;
+    IBOutlet NSButton *_actionsButton;
     NSUndoManager *_undoManager;
     iTermRegexVisualizationViewController *_visualizationViewController;
     NSPopover *_popover;
@@ -427,6 +428,12 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
         [_regexTextView setString:rule[kRegexKey] ?: @""];
         [_precisionButton selectItemAtIndex:[self indexForPrecision:rule[kPrecisionKey]]];
         [self updateVisualization];
+        const NSInteger actionCount = [[NSArray castFrom:rule[kActionsKey]] count];
+        if (actionCount == 0) {
+            _actionsButton.title = [NSString stringWithFormat:@"Actions…"];
+        } else {
+            _actionsButton.title = [NSString stringWithFormat:@"Actions (%@)…", @(actionCount)];
+        }
     } else {
         _nameTextField.stringValue = @"";
         [_regexTextView setString:@""];
@@ -473,6 +480,7 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
         __strong __typeof(weakSelf) strongSelf = weakSelf;
         if (strongSelf) {
             [strongSelf->contextMenuPrefsController_.window close];
+            [strongSelf updateDetailView];
         }
     }];
 }
