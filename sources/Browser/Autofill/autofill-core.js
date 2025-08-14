@@ -112,12 +112,25 @@ function getFieldLabels(field) {
     return labels;
 }
 
+// Check if a text string indicates a login/username field
+function isLoginRelatedText(text) {
+    const lowerText = text.toLowerCase();
+    return lowerText.includes('username') || 
+           lowerText.includes('user_name') || 
+           lowerText.includes('user-name') || 
+           lowerText.includes('login') || 
+           lowerText.includes('signin') || 
+           lowerText.includes('sign in') || 
+           lowerText.includes('email address');
+}
+
 // Detect field type
 function detectFieldType(field) {
     if (!field || field.type === 'hidden' || field.type === 'submit' || field.type === 'button' || 
         field.type === 'checkbox' || field.type === 'radio' || field.type === 'password') {
         return null;
     }
+    
     
     // Check autocomplete attribute first (most reliable)
     const autocomplete = field.getAttribute('autocomplete')?.toLowerCase();
@@ -140,6 +153,11 @@ function detectFieldType(field) {
     // Check name attribute
     const name = field.name?.toLowerCase() || '';
     for (const [type, pattern] of Object.entries(fieldPatterns)) {
+        // Skip fullName detection if this looks like a login field
+        if (type === 'fullName' && isLoginRelatedText(name)) {
+            continue;
+        }
+        
         if (pattern.names?.some(n => name.includes(n))) {
             return type;
         }
@@ -148,6 +166,11 @@ function detectFieldType(field) {
     // Check id attribute
     const id = field.id?.toLowerCase() || '';
     for (const [type, pattern] of Object.entries(fieldPatterns)) {
+        // Skip fullName detection if this looks like a login field
+        if (type === 'fullName' && isLoginRelatedText(id)) {
+            continue;
+        }
+        
         if (pattern.ids?.some(i => id.includes(i))) {
             return type;
         }
@@ -156,6 +179,11 @@ function detectFieldType(field) {
     // Check placeholder
     const placeholder = field.placeholder?.toLowerCase() || '';
     for (const [type, pattern] of Object.entries(fieldPatterns)) {
+        // Skip fullName detection if this looks like a login field
+        if (type === 'fullName' && isLoginRelatedText(placeholder)) {
+            continue;
+        }
+        
         if (pattern.placeholders?.some(p => placeholder.includes(p))) {
             return type;
         }
@@ -166,6 +194,11 @@ function detectFieldType(field) {
     for (const label of labels) {
         const labelText = label.textContent?.toLowerCase() || '';
         for (const [type, pattern] of Object.entries(fieldPatterns)) {
+            // Skip fullName detection if this looks like a login field
+            if (type === 'fullName' && isLoginRelatedText(labelText)) {
+                continue;
+            }
+            
             if (pattern.labels?.some(l => labelText.includes(l))) {
                 return type;
             }

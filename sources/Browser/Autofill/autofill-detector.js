@@ -163,6 +163,8 @@
         observer.observe(field, { attributes: true, attributeFilter: ['style', 'class'] });
         
         document.body.appendChild(btn);
+        
+        
         return btn;
     }
     
@@ -186,6 +188,8 @@
         let side = Math.min(r.height * 0.8, keyDim * 1.5);  // 80% of field height max
         
         // Position button inside the right edge of the field
+        // Note: We always use a consistent position. If there are other password manager buttons,
+        // they should handle the adjustment since they run after us.
         const padding = 5;
         const topPosition = r.top + (r.height - side) / 2;
         const leftPosition = r.right - side - padding;
@@ -197,6 +201,21 @@
         btn.style.left = `${window.scrollX + leftPosition}px`;
         btn.style.display = 'flex';
         
+        // Check for overlapping buttons at this position
+        const allButtons = document.querySelectorAll('[data-iterm-autofill]');
+        let overlappingCount = 0;
+        allButtons.forEach(otherBtn => {
+            if (otherBtn !== btn && otherBtn.style.display !== 'none') {
+                const otherLeft = parseFloat(otherBtn.style.left);
+                const otherTop = parseFloat(otherBtn.style.top);
+                if (Math.abs(otherLeft - (window.scrollX + leftPosition)) < 5 && 
+                    Math.abs(otherTop - (window.scrollY + topPosition)) < 5) {
+                    overlappingCount++;
+                }
+            }
+        });
+        
+        
     }
     
     
@@ -207,6 +226,7 @@
     function updateFieldButton(field) {
         const fieldType = detectFieldType(field);
         const isInteractable = isFieldInteractable(field);
+        
         
         if (fieldType && isInteractable) {
             let btn = fieldButtons.get(field);
@@ -233,13 +253,25 @@
     // Show buttons on all autofillable fields
     function showAllButtons() {
         const inputs = document.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]), select');
+        
 
+        // Track which fields we've already processed in this call
+        const processedFields = new Set();
+        
         inputs.forEach(input => {
+            const fieldKey = `${input.id || 'no-id'}_${input.name || 'no-name'}_${input.tagName}`;
+            
+            if (processedFields.has(fieldKey)) {
+                return; // Skip duplicate
+            }
+            processedFields.add(fieldKey);
+            
             const fieldType = detectFieldType(input);
             if (fieldType && isFieldInteractable(input)) {
                 updateFieldButton(input);
             }
         });
+        
     }
     
     // Event listeners
@@ -247,6 +279,7 @@
     
     document.addEventListener('focusin', e => {
         const field = e.target;
+        
         
         // Ignore focus on our buttons
         if (field.getAttribute('data-iterm-autofill')) {
@@ -292,7 +325,11 @@
         const inputs = document.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]), select');
         const autofillableFields = [];
         
+        // Check for duplicate elements in the query result
+        const uniqueInputs = new Set();
         inputs.forEach(input => {
+            uniqueInputs.add(input);
+            
             const fieldType = detectFieldType(input);
             if (fieldType) {
                 autofillableFields.push({
@@ -301,6 +338,7 @@
                 });
             }
         });
+        
         
         // Show buttons on all autofillable fields
         showAllButtons();
@@ -347,6 +385,7 @@
             }
             fieldButtons.delete(field);
         });
+        
         
     }
     
@@ -427,7 +466,7 @@
             try {
                 showAllButtons();
             } catch (error) {
-                // Silently handle rescan errors
+                console.error('[iTerm Autofill] Error in delayed rescan:', error);
             }
         }, 2000);
     }

@@ -1260,6 +1260,7 @@ class FindEngine {
                 prevMatch.highlightElements?.forEach(e => {
                     e.className = 'iterm-find-highlight';
                     _setAttribute.call(e, 'data-iterm-id', this.instanceId);
+                    this.highlighter.applyRegularHighlightStyles(e);
                 });
             } else if (prevMatch.type === 'remote') {
                 // Clear highlight in remote frame
@@ -1291,6 +1292,7 @@ class FindEngine {
                     this.log('setCurrent: element', index, 'BEFORE - tagName:', e.tagName, 'className:', e.className, 'isConnected:', e.isConnected);
                     e.className = 'iterm-find-highlight-current';
                     _setAttribute.call(e, 'data-iterm-id', this.instanceId);
+                    this.highlighter.applyCurrentHighlightStyles(e);
                     this.log('setCurrent: element', index, 'AFTER - className:', e.className, 'data-iterm-id:', e.getAttribute('data-iterm-id'));
                 });
 

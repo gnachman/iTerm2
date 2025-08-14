@@ -5,6 +5,20 @@ class FindHighlighter {
         this.frameId = frameId
     }
 
+    // Apply inline styles for regular highlights (yellow)
+    applyRegularHighlightStyles(element) {
+        element.style.setProperty('background-color', '#FFFF00', 'important');
+        element.style.setProperty('color', '#000000', 'important');
+        element.style.setProperty('border-radius', '2px', 'important');
+    }
+
+    // Apply inline styles for current highlight (orange)
+    applyCurrentHighlightStyles(element) {
+        element.style.setProperty('background-color', '#FF9632', 'important');
+        element.style.setProperty('color', '#000000', 'important');
+        element.style.setProperty('border-radius', '2px', 'important');
+    }
+
     async highlight(matches, currentSearchTerm, segments, engine) {
         this.log('highlight: ENTER - starting with', matches.length, 'matches');
         this.log('highlight: frame:', this.frameId?.substring(0, 8) || 'unknown', 'term:', currentSearchTerm, 'timestamp:', Date.now());
@@ -161,10 +175,11 @@ class FindHighlighter {
             const rangeContents = range.toString();
             this.log('highlightLocalMatch: range contents before surroundContents:', JSON.stringify(rangeContents), 'length:', rangeContents.length);
 
-            // Create the highlight span
+            // Create the highlight span with both class and inline styles
             const span = _createElement('span');
             span.className = 'iterm-find-highlight';
             _setAttribute.call(span, 'data-iterm-id', this.instanceId);
+            this.applyRegularHighlightStyles(span);
 
             this.log('highlightLocalMatch: surrounding range contents with highlight span');
             _Range_surroundContents.call(range, span);
@@ -188,6 +203,7 @@ class FindHighlighter {
                         const span = _createElement('span');
                         span.className = 'iterm-find-highlight';
                         _setAttribute.call(span, 'data-iterm-id', this.instanceId);
+                        this.applyRegularHighlightStyles(span);
 
                         _Range_surroundContents.call(range, span);
                         elements.push(span);
@@ -213,6 +229,7 @@ class FindHighlighter {
             this.log('highlightCurrentMatch: updating', match.highlightElements.length, 'elements to current');
             match.highlightElements.forEach(e => {
                 e.className = 'iterm-find-highlight-current';
+                this.applyCurrentHighlightStyles(e);
             });
 
             // Scroll into view
@@ -239,6 +256,7 @@ class FindHighlighter {
                 match.highlightElements.forEach(e => {
                     if (e.className === 'iterm-find-highlight-current') {
                         e.className = 'iterm-find-highlight';
+                        this.applyRegularHighlightStyles(e);
                         clearedCount++;
                     }
                 });

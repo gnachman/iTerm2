@@ -2,7 +2,6 @@
     'use strict';
     const handlerName   = 'iTermOpenPasswordManager';
     const sessionSecret = "{{SECRET}}";
-    console.debug("password button running");
     let activeField = null;
     let activeType  = null; // 'password' or 'username'
 
@@ -120,11 +119,10 @@
         createButton();
 
         const r         = activeField.getBoundingClientRect();
-        const baseLeft  = window.scrollX + r.right - r.height;
         const minLeft   = window.scrollX + r.left;
 
         // choose emoji based on field type
-        const emoji     = activeType === 'username' ? '👤' : '🔑';
+        const emoji     = activeType === 'username' ? '🎫' : '🔑';
         btn.textContent = emoji;
         btn.title       = 'Open Password Manager';
 
@@ -143,6 +141,10 @@
         document.body.removeChild(meas);
         const keyDim = Math.max(dim.width, dim.height);
         let side     = Math.min(r.height, keyDim * 1.5);
+        
+        // Position button at the right edge with standard padding, not respecting field's internal padding
+        const standardPadding = 5;
+        const baseLeft  = window.scrollX + r.right - side - standardPadding;
 
         // position and size
         btn.style.width   = `${side}px`;
@@ -162,10 +164,19 @@
         ];
         const iz     = parseInt(getComputedStyle(activeField).zIndex) || 0;
         let overlapElRect = null;
+        let overlapElement = null;
 
         for (const {x,y} of samples) {
-            for (const el of document.elementsFromPoint(x,y)) {
+            const elements = document.elementsFromPoint(x,y);
+            
+            for (const el of elements) {
                 if (el === btn || el === activeField) continue;
+                
+                // Skip field containers and only consider actual buttons for overlap
+                if (el.tagName !== 'BUTTON') {
+                    continue;
+                }
+                
                 const er = el.getBoundingClientRect();
                 if (er.left   < r.left   ||
                     er.right  > r.right  ||
@@ -174,17 +185,35 @@
                     continue;
                 }
                 overlapElRect = er;
+                overlapElement = el;
+                console.debug('Password manager: Found button overlap:', {
+                    element: el,
+                    isAutofill: el.getAttribute('data-iterm-autofill'),
+                    rect: er
+                });
                 break;
             }
             if (overlapElRect) break;
         }
 
         let newLeft = baseLeft;
-        if (overlapElRect) {
-            const overlap = btnRect.right - overlapElRect.left + 2;
-            const maxShift= Math.min(32, baseLeft - minLeft);
-            const shift   = Math.min(overlap, maxShift);
-            newLeft        = baseLeft - shift;
+        if (overlapElRect && overlapElement) {
+            // Check if this is an autofill button (has specific data attribute)
+            const isAutofillButton = overlapElement.getAttribute('data-iterm-autofill') === 'true';
+            
+            if (isAutofillButton) {
+                // For autofill buttons, position to the left with spacing
+                const spacing = 5;
+                newLeft = overlapElRect.left - side - spacing;
+                console.debug('Password manager: Avoiding autofill button, new position:', newLeft);
+            } else {
+                // Original overlap handling for other elements
+                const overlap = btnRect.right - overlapElRect.left + 2;
+                const maxShift= Math.min(32, baseLeft - minLeft);
+                const shift   = Math.min(overlap, maxShift);
+                newLeft        = baseLeft - shift;
+                console.debug('Password manager: Avoiding other element, shift:', shift);
+            }
         }
         newLeft = Math.max(newLeft, window.scrollX);
         btn.style.left = `${newLeft}px`;
