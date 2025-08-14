@@ -9,6 +9,7 @@
 
     // Build wrappers that still call the real constructors
     function WrappedAC(...args) {
+        console.debug('[iTerm2 Audio] AudioContext created on', window.location.href);
         window.webkit.messageHandlers.audioHandler.postMessage({
             event: 'audioContextCreated', sessionSecret: secret
         });
@@ -17,6 +18,7 @@
     WrappedAC.prototype = RealAC.prototype;
 
     function WrappedOAC(...args) {
+        console.debug('[iTerm2 Audio] OfflineAudioContext created on', window.location.href);
         window.webkit.messageHandlers.audioHandler.postMessage({
             event: 'offlineAudioContextCreated', sessionSecret: secret
         });

@@ -64,12 +64,17 @@ class iTermBrowserAudioHandler {
         }
 
         switch Event(rawValue: event) {
-        case .pause: return
+        case .pause: 
+            DLog("[Audio Detection] Pause event - ignoring")
+            return
         case .play, .audioContextCreated:
+            DLog("[Audio Detection] Triggering audio handler for event: \(event)")
             if !disabled {
                 delegate?.browserAudioHandlerDidStartPlaying(self, inFrame: message.frameInfo)
             }
-        case .none: return
+        case .none: 
+            DLog("[Audio Detection] Unknown event: \(event)")
+            return
         }
     }
 
