@@ -1818,6 +1818,13 @@ extension iTermBrowserManager {
             named: "cert-error",
             type: "html",
             substitutions: [:])
+        let bundleID = "com.googlecode.iterm2.iTerm2-Web-Proxy"
+        guard let bundleURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
+            DLog("Could not find \(bundleID)")
+            return nil
+        }
+        let libraryPath = bundleURL.appendingPathComponent("Contents/Resources/libhudsucker_ffi.dylib")
+        try HudsuckerProxy.loadLibrary(from: libraryPath.path)
         let proxy = try? HudsuckerProxy.createAddingCertIfNeeded(
             address: "127.0.0.1",
             ports: Array(1912..<2012),

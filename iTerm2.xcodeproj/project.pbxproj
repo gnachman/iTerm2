@@ -3312,7 +3312,6 @@
 		A6AA2F682E28B257002998B3 /* iTermProfilePreferenceMutator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AA2F662E28B257002998B3 /* iTermProfilePreferenceMutator.swift */; };
 		A6AA2F692E28B257002998B3 /* iTermProfilePreferenceObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AA2F672E28B257002998B3 /* iTermProfilePreferenceObserver.swift */; };
 		A6AA2F6B2E28B615002998B3 /* HudsuckerProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AA2F602E28B1E1002998B3 /* HudsuckerProxy.swift */; };
-		A6AA2F8C2E28BC84002998B3 /* libhudsucker_ffi.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6AA2F582E28B185002998B3 /* libhudsucker_ffi.a */; };
 		A6AA2F8E2E296849002998B3 /* cert-error.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AA2F8D2E296849002998B3 /* cert-error.html */; };
 		A6AA2F8F2E296849002998B3 /* cert-error.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AA2F8D2E296849002998B3 /* cert-error.html */; };
 		A6AA2F902E296849002998B3 /* cert-error.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AA2F8D2E296849002998B3 /* cert-error.html */; };
@@ -9197,7 +9196,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A6AA2F8C2E28BC84002998B3 /* libhudsucker_ffi.a in Frameworks */,
 				A69FEECD2E123B8700AFF7A8 /* iTermSwiftPackages.framework in Frameworks */,
 				A6A3D18B2815EF4D00C0C9E0 /* Highlightr.framework in Frameworks */,
 				A6EC8050281BC67900493544 /* SwiftyMarkdown.framework in Frameworks */,

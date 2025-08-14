@@ -1,11 +1,99 @@
 import Foundation
 import Security
+import Darwin
+
+/// Dynamic library loader for Hudsucker
+private class HudsuckerLibrary {
+    private let handle: UnsafeMutableRawPointer
+    
+    // Function pointers
+    let createProxy: @convention(c) (
+        UnsafePointer<CChar>,
+        UnsafePointer<CChar>,
+        UnsafePointer<CChar>,
+        @convention(c) (UnsafePointer<CChar>?, UnsafePointer<CChar>?, UnsafeMutableRawPointer?) -> Bool,
+        UnsafeMutableRawPointer?,
+        UnsafeMutablePointer<OpaquePointer?>
+    ) -> Int32
+    
+    let createProxyWithCertErrors: @convention(c) (
+        UnsafePointer<CChar>,
+        UnsafePointer<CChar>,
+        UnsafePointer<CChar>,
+        @convention(c) (UnsafePointer<CChar>?, UnsafePointer<CChar>?, UnsafeMutableRawPointer?) -> Bool,
+        UnsafeMutableRawPointer?,
+        UnsafePointer<CChar>?,
+        UnsafeMutablePointer<OpaquePointer?>
+    ) -> Int32
+    
+    let destroyProxy: @convention(c) (OpaquePointer?) -> Int32
+    
+    let generateCACert: @convention(c) (
+        UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>,
+        UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>
+    ) -> Int32
+    
+    let freeString: @convention(c) (UnsafeMutablePointer<CChar>?) -> Void
+    
+    let addBypassedDomain: @convention(c) (OpaquePointer?, UnsafePointer<CChar>, UnsafePointer<CChar>) -> Int32
+    
+    init(libraryPath: String) throws {
+        // Open the dynamic library
+        guard let handle = dlopen(libraryPath, RTLD_NOW | RTLD_LOCAL) else {
+            let error = String(cString: dlerror())
+            throw NSError(domain: "HudsuckerProxy", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to load library: \(error)"])
+        }
+        self.handle = handle
+        
+        // Load function pointers
+        guard let createProxyPtr = dlsym(handle, "hudsucker_create_proxy") else {
+            dlclose(handle)
+            throw NSError(domain: "HudsuckerProxy", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to find hudsucker_create_proxy"])
+        }
+        self.createProxy = unsafeBitCast(createProxyPtr, to: type(of: createProxy))
+        
+        guard let createProxyWithCertErrorsPtr = dlsym(handle, "hudsucker_create_proxy_with_cert_errors") else {
+            dlclose(handle)
+            throw NSError(domain: "HudsuckerProxy", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to find hudsucker_create_proxy_with_cert_errors"])
+        }
+        self.createProxyWithCertErrors = unsafeBitCast(createProxyWithCertErrorsPtr, to: type(of: createProxyWithCertErrors))
+        
+        guard let destroyProxyPtr = dlsym(handle, "hudsucker_destroy_proxy") else {
+            dlclose(handle)
+            throw NSError(domain: "HudsuckerProxy", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to find hudsucker_destroy_proxy"])
+        }
+        self.destroyProxy = unsafeBitCast(destroyProxyPtr, to: type(of: destroyProxy))
+        
+        guard let generateCACertPtr = dlsym(handle, "hudsucker_generate_ca_cert") else {
+            dlclose(handle)
+            throw NSError(domain: "HudsuckerProxy", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to find hudsucker_generate_ca_cert"])
+        }
+        self.generateCACert = unsafeBitCast(generateCACertPtr, to: type(of: generateCACert))
+        
+        guard let freeStringPtr = dlsym(handle, "hudsucker_free_string") else {
+            dlclose(handle)
+            throw NSError(domain: "HudsuckerProxy", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to find hudsucker_free_string"])
+        }
+        self.freeString = unsafeBitCast(freeStringPtr, to: type(of: freeString))
+        
+        guard let addBypassedDomainPtr = dlsym(handle, "hudsucker_add_bypassed_domain") else {
+            dlclose(handle)
+            throw NSError(domain: "HudsuckerProxy", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to find hudsucker_add_bypassed_domain"])
+        }
+        self.addBypassedDomain = unsafeBitCast(addBypassedDomainPtr, to: type(of: addBypassedDomain))
+    }
+    
+    deinit {
+        dlclose(handle)
+    }
+}
 
 /// Swift wrapper for the Hudsucker MITM proxy C FFI
 public class HudsuckerProxy {
     private static let caKeyLabel = "iTerm2 Proxy CA Key"
     static var standard: HudsuckerProxy?
     static var filterCallback: ((String, String) -> Bool)?
+    private static var sharedLibrary: HudsuckerLibrary?
     private(set) var port: Int!
 
     static func filterRequest(url: String, method: String) -> Bool {
@@ -66,6 +154,12 @@ public class HudsuckerProxy {
     
     // MARK: - Initialization
     
+    /// Initialize the Hudsucker library from a dynamic library path
+    /// - Parameter libraryPath: Path to the libhudsucker.dylib file
+    public static func loadLibrary(from libraryPath: String) throws {
+        sharedLibrary = try HudsuckerLibrary(libraryPath: libraryPath)
+    }
+    
     /// Initialize a new HudsuckerProxy instance
     /// - Parameters:
     ///   - address: The address to bind to (e.g., "127.0.0.1:8080")
@@ -80,6 +174,9 @@ public class HudsuckerProxy {
                 caKeyPEM: String, 
                 requestFilter: @escaping RequestFilterCallback,
                 certificateErrorHTMLTemplate: String?) throws {
+        guard HudsuckerProxy.sharedLibrary != nil else {
+            throw NSError(domain: "HudsuckerProxy", code: -1, userInfo: [NSLocalizedDescriptionKey: "Library not loaded. Call HudsuckerProxy.loadLibrary(from:) first."])
+        }
         self.address = address
         self.caCertPEM = caCertPEM
         self.caKeyPEM = caKeyPEM
@@ -170,7 +267,12 @@ public class HudsuckerProxy {
     public static func createAddingCertIfNeeded(address: String,
                                                 ports: [Int],
                                                 requestFilter: @escaping RequestFilterCallback,
-                                                certificateErrorHTMLTemplate: String?) throws -> HudsuckerProxy {
+                                                certificateErrorHTMLTemplate: String?,
+                                                libraryPath: String? = nil) throws -> HudsuckerProxy {
+        // Load library if path provided and not already loaded
+        if let path = libraryPath, sharedLibrary == nil {
+            try loadLibrary(from: path)
+        }
         let certAndKey = try loadOrAddCertAndKey()
         return try HudsuckerProxy(address: address,
                                   ports: ports,
@@ -225,9 +327,13 @@ public class HudsuckerProxy {
         var handle: OpaquePointer?
         let result: Int32
         
+        guard let library = HudsuckerProxy.sharedLibrary else {
+            throw NSError(domain: "HudsuckerProxy", code: -1, userInfo: [NSLocalizedDescriptionKey: "Library not loaded"])
+        }
+        
         // Use certificate error handling if template is provided
         if let htmlTemplate = certificateErrorHTMLTemplate {
-            result = hudsucker_create_proxy_with_cert_errors(
+            result = library.createProxyWithCertErrors(
                 "\(address):\(port)",
                 caCertPEM,
                 caKeyPEM,
@@ -237,7 +343,7 @@ public class HudsuckerProxy {
                 &handle
             )
         } else {
-            result = hudsucker_create_proxy(
+            result = library.createProxy(
                 "\(address):\(port)",
                 caCertPEM,
                 caKeyPEM,
@@ -256,8 +362,8 @@ public class HudsuckerProxy {
     
     /// Stop the proxy server
     public func stop() {
-        if let handle = proxyHandle {
-            _ = hudsucker_destroy_proxy(handle)
+        if let handle = proxyHandle, let library = HudsuckerProxy.sharedLibrary {
+            _ = library.destroyProxy(handle)
             proxyHandle = nil
         }
     }
@@ -282,7 +388,11 @@ public class HudsuckerProxy {
             throw ProxyError.runtimeError
         }
         
-        let result = hudsucker_add_bypassed_domain(handle, domain, token)
+        guard let library = HudsuckerProxy.sharedLibrary else {
+            throw ProxyError.runtimeError
+        }
+        
+        let result = library.addBypassedDomain(handle, domain, token)
         
         guard let error = ProxyError(rawValue: result), error == .success else {
             throw ProxyError(rawValue: result) ?? .runtimeError
@@ -294,10 +404,14 @@ public class HudsuckerProxy {
     /// Generate a new CA certificate and private key pair
     /// - Returns: A tuple containing (certificate PEM, private key PEM)
     private static func generateCACertificate() throws -> iTermBrowserProxyCertificateManager.PEMCertAndKey {
+        guard let library = sharedLibrary else {
+            throw NSError(domain: "HudsuckerProxy", code: -1, userInfo: [NSLocalizedDescriptionKey: "Library not loaded"])
+        }
+        
         var certPtr: UnsafeMutablePointer<CChar>?
         var keyPtr: UnsafeMutablePointer<CChar>?
         
-        let result = hudsucker_generate_ca_cert(&certPtr, &keyPtr)
+        let result = library.generateCACert(&certPtr, &keyPtr)
         
         guard let error = ProxyError(rawValue: result), error == .success else {
             throw ProxyError(rawValue: result) ?? .runtimeError
@@ -311,52 +425,9 @@ public class HudsuckerProxy {
         let key = String(cString: keyCStr)
         
         // Free the C strings
-        hudsucker_free_string(certPtr)
-        hudsucker_free_string(keyPtr)
+        library.freeString(certPtr)
+        library.freeString(keyPtr)
         
         return iTermBrowserProxyCertificateManager.PEMCertAndKey(cert: cert, key: key)
     }
 }
-
-// MARK: - C FFI Bridge
-
-// Import the C functions from the hudsucker FFI
-@_silgen_name("hudsucker_create_proxy")
-private func hudsucker_create_proxy(
-    _ addr: UnsafePointer<CChar>,
-    _ caCertPem: UnsafePointer<CChar>,
-    _ caKeyPem: UnsafePointer<CChar>,
-    _ callback: @convention(c) (UnsafePointer<CChar>?, UnsafePointer<CChar>?, UnsafeMutableRawPointer?) -> Bool,
-    _ userData: UnsafeMutableRawPointer?,
-    _ proxyOut: UnsafeMutablePointer<OpaquePointer?>
-) -> Int32
-
-/// Create a new proxy instance with certificate error handling
-@_silgen_name("hudsucker_create_proxy_with_cert_errors")
-private func hudsucker_create_proxy_with_cert_errors(
-    _ addr: UnsafePointer<CChar>,
-    _ caCertPem: UnsafePointer<CChar>,
-    _ caKeyPem: UnsafePointer<CChar>,
-    _ callback: @convention(c) (UnsafePointer<CChar>?, UnsafePointer<CChar>?, UnsafeMutableRawPointer?) -> Bool,
-    _ userData: UnsafeMutableRawPointer?,
-    _ htmlTemplate: UnsafePointer<CChar>?,
-    _ proxyOut: UnsafeMutablePointer<OpaquePointer?>
-) -> Int32
-
-@_silgen_name("hudsucker_start_proxy")
-private func hudsucker_start_proxy(_ proxy: OpaquePointer?) -> Int32
-
-@_silgen_name("hudsucker_destroy_proxy")
-private func hudsucker_destroy_proxy(_ proxy: OpaquePointer?) -> Int32
-
-@_silgen_name("hudsucker_generate_ca_cert")
-private func hudsucker_generate_ca_cert(
-    _ certOut: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>,
-    _ keyOut: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>
-) -> Int32
-
-@_silgen_name("hudsucker_free_string")
-private func hudsucker_free_string(_ ptr: UnsafeMutablePointer<CChar>?)
-
-@_silgen_name("hudsucker_add_bypassed_domain")
-private func hudsucker_add_bypassed_domain(_ proxy: OpaquePointer?, _ domain: UnsafePointer<CChar>, _ token: UnsafePointer<CChar>) -> Int32
