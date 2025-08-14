@@ -2,14 +2,14 @@
     'use strict';
     try {
         document.addEventListener("contextmenu", function(e) {
-            console.log("contextmenu detected");
+            console.debug("contextmenu detected");
             if (!e.isTrusted) {
-                console.log("Non-trusted context menu. Ignore.");
+                console.debug("Non-trusted context menu. Ignore.");
                 return;
             }
             if (e.altKey) {
                 // We originated this event so allow it to go through. Unfortuantely the more obscure modifiers aren't passed through.
-                console.log("Seems to be originated by us.");
+                console.debug("Seems to be originated by us.");
                 return;
             }
             e.preventDefault();

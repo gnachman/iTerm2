@@ -163,14 +163,14 @@
         // Custom geolocation implementation
         const iTermGeolocation = {
             getCurrentPosition: function(successCallback, errorCallback, options) {
-                console.log("getCurrentPosition called")
+                console.debug("getCurrentPosition called")
                 // Validate callbacks
                 if (typeof successCallback !== 'function') {
-                    console.log("getCurrentPosition: successCallback not a function")
+                    console.debug("getCurrentPosition: successCallback not a function")
                     throw new TypeError('successCallback must be a function');
                 }
                 if (errorCallback !== undefined && typeof errorCallback !== 'function') {
-                    console.log("getCurrentPosition: errorCallback not a function")
+                    console.debug("getCurrentPosition: errorCallback not a function")
                     throw new TypeError('errorCallback must be a function or undefined');
                 }
 
@@ -179,7 +179,7 @@
 
                 // Check permission first
                 if (permissionState === 'denied') {
-                    console.log("getCurrentPosition: permission denied")
+                    console.debug("getCurrentPosition: permission denied")
                     if (errorCallback) {
                         setTimeout(() => {
                             errorCallback(createPositionError(1, 'User denied the request for Geolocation.'));
@@ -190,7 +190,7 @@
 
                 // Check cache if maximumAge allows it
                 if (validatedOptions.maximumAge && isCachedPositionValid(validatedOptions.maximumAge)) {
-                    console.log("getCurrentPosition: sending cached value")
+                    console.debug("getCurrentPosition: sending cached value")
                     setTimeout(() => {
                         successCallback(cachedPosition);
                     }, 0);
@@ -207,9 +207,9 @@
 
                 // Set timeout if specified
                 if (validatedOptions.timeout) {
-                    console.log("getCurrentPosition: start timer")
+                    console.debug("getCurrentPosition: start timer")
                     setTimeout(() => {
-                        console.log("getCurrentPosition: timer fired")
+                        console.debug("getCurrentPosition: timer fired")
                         const operation = pendingOperations.get(operationId);
                         if (operation && operation.errorCallback) {
                             pendingOperations.delete(operationId);
@@ -231,7 +231,7 @@
 
                 // Send request to native code
                 try {
-                    console.log("getCurrentPosition: send getCurrentPosition message")
+                    console.debug("getCurrentPosition: send getCurrentPosition message")
                     sendMessage({
                         type: 'getCurrentPosition',
                         operationId: operationId,
@@ -495,7 +495,7 @@
 
             // Handle successful position response
             handlePositionSuccess: createSecureHandler('handlePositionSuccess', function(operationId, coords, timestamp) {
-                console.log("handlePositionSuccess called", coords);
+                console.debug("handlePositionSuccess called", coords);
                 try {
                     const position = createPosition(coords, timestamp);
                     

@@ -134,11 +134,8 @@ class iTermBrowserGraphDiscoveryHandler {
             let wrapped = """
             (() => { 
                 try { 
-                    console.log(`[eval] About to execute the code`);
                     const raw = \(code);
-                    console.log(`[eval] Code returned ${raw}`);
                     const value = JSON.stringify(raw); 
-                    console.log(`[eval] Stringified value is ${value}`);
                     return value;
                 } catch (e) { 
                     console.error("[eval] Eval failed", e.toString(), e);

@@ -9,7 +9,7 @@ let activeTags = [];
 let previousActiveTags = [];
 let allTags = [];
 
-console.log("Bookmarks page loading");
+console.debug("Bookmarks page loading");
 
 // Initialize bookmarks page
 window.loadBookmarks = function(offset = 0, limit = 50, searchQuery = '', sortBy = 'dateAdded', tags = [], retryCount = 0) {
@@ -32,13 +32,13 @@ window.loadBookmarks = function(offset = 0, limit = 50, searchQuery = '', sortBy
         // Set a timeout to retry if no response after 2 seconds
         setTimeout(() => {
             if (isLoading && retryCount < 3) {
-                console.log(`Bookmarks request timed out, retrying (attempt ${retryCount + 1}/3)...`);
+                console.debug(`Bookmarks request timed out, retrying (attempt ${retryCount + 1}/3)...`);
                 isLoading = false;
                 loadBookmarks(offset, limit, searchQuery, sortBy, tags, retryCount + 1);
             }
         }, 2000);
     } else {
-        console.log('Message handler not ready, retrying in 50ms...');
+        console.debug('Message handler not ready, retrying in 50ms...');
         setTimeout(() => {
             isLoading = false;
             loadBookmarks(offset, limit, searchQuery, sortBy, tags, retryCount);
@@ -80,12 +80,12 @@ window.loadTags = function(retryCount = 0) {
         // Set a timeout to retry if no response after 1 second
         setTimeout(() => {
             if (allTags.length === 0 && retryCount < 5) {
-                console.log(`Tags not loaded after 1s, retrying (attempt ${retryCount + 1}/5)...`);
+                console.debug(`Tags not loaded after 1s, retrying (attempt ${retryCount + 1}/5)...`);
                 loadTags(retryCount + 1);
             }
         }, 1000);
     } else {
-        console.log('Message handler not ready for tags, retrying in 50ms...');
+        console.debug('Message handler not ready for tags, retrying in 50ms...');
         setTimeout(() => {
             loadTags(retryCount);
         }, 50);

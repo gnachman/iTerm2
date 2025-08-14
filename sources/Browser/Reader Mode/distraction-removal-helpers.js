@@ -120,7 +120,7 @@ function injectDistractionRemovalStyles() {
 }
 
 function removeElementAtPoint(clientX, clientY, mainContainer, removed, skipBackdrops = false) {
-    console.log('[DR] remove element at', clientX, clientY);
+    console.debug('[DR] remove element at', clientX, clientY);
     const pts = document.elementsFromPoint(clientX, clientY)
         .filter(x => x !== document.documentElement && x !== document.body);
 
@@ -131,13 +131,13 @@ function removeElementAtPoint(clientX, clientY, mainContainer, removed, skipBack
         
         // Check if already removed
         if (root.classList.contains('dr-removed')) {
-            console.log('[DR] element already removed:', root);
+            console.debug('[DR] element already removed:', root);
             break;
         }
         
         const rect = root.getBoundingClientRect();
-        console.log('[DR] hiding root overlay:', root);
-        console.log('[DR] root overlay bounds:', `x=${rect.x}, y=${rect.y}, width=${rect.width}, height=${rect.height}`);
+        console.debug('[DR] hiding root overlay:', root);
+        console.debug('[DR] root overlay bounds:', `x=${rect.x}, y=${rect.y}, width=${rect.width}, height=${rect.height}`);
         
         // More aggressive removal for stubborn ads
         root.classList.add('dr-removed');
@@ -157,12 +157,12 @@ function removeElementAtPoint(clientX, clientY, mainContainer, removed, skipBack
         // Hide any backdrops that cover the viewport (only in full distraction removal mode)
         const bps = findBackdropElements(mainContainer, removed);
         bps.forEach(bp => {
-            console.log('[DR] hiding backdrop via geometry:', bp);
+            console.debug('[DR] hiding backdrop via geometry:', bp);
             removed.push(bp);
             bp.classList.add('dr-removed');
         });
     } else if (!didHide) {
-        console.log('[DR] nothing to hide');
+        console.debug('[DR] nothing to hide');
     }
     
     return didHide;

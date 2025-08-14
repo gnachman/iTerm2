@@ -345,7 +345,10 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 
 - (void)scrollLogsToBottomIfNeeded {
     if (_scrollToBottomOnUpdate.state == NSControlStateValueOn && _tabView.selectedTabViewItem.view == _logsView.enclosingScrollView) {
-        [_logsView scrollRangeToVisible: NSMakeRange(_logsView.string.length, 0)];
+        // This is slow. Avoid doing it if the window isn't visible.
+        if ([[_logsView  window] isVisible]) {
+            [_logsView scrollRangeToVisible: NSMakeRange(_logsView.string.length, 0)];
+        }
     }
 }
 

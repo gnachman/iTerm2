@@ -67,6 +67,24 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
     return instance;
 }
 
++ (instancetype)browserEntry:(NSString *)identifier {
+    static NSMutableDictionary<NSString *, iTermScriptHistoryEntry *> *browserEntries;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        browserEntries = [NSMutableDictionary dictionary];
+    });
+    iTermScriptHistoryEntry *entry = browserEntries[identifier];
+    if (entry) {
+        return entry;
+    }
+    entry = [[self alloc] initWithName:[NSString stringWithFormat:@"Web Browser %@", identifier]
+                              fullPath:nil
+                            identifier:[@"__WB_" stringByAppendingString:identifier]
+                              relaunch:nil];
+    browserEntries[identifier] = entry;
+    return entry;
+}
+
 + (instancetype)smartSelectionAnctionsEntry {
     static id instance;
     static dispatch_once_t onceToken;
@@ -308,6 +326,7 @@ NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification = @"iTerm
     NSMutableSet<NSNumber *> *_replPIDs;
     BOOL _haveAddedAPSLoggingEntry;
     BOOL _haveAddedDynamicProfilesLoggingEntry;
+    NSMutableSet<NSString *> *_browserIDs;
 }
 
 + (instancetype)sharedInstance {
@@ -326,6 +345,7 @@ NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification = @"iTerm
         [self addAPSLoggingEntryIfNeeded];
         [_entries addObject:[iTermScriptHistoryEntry globalEntry]];
         _replPIDs = [NSMutableSet set];
+        _browserIDs = [NSMutableSet set];
     }
     return self;
 }
@@ -350,6 +370,19 @@ NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification = @"iTerm
     }
     _haveAddedDynamicProfilesLoggingEntry = YES;
     [_entries addObject:[iTermScriptHistoryEntry dynamicProfilesEntry]];
+    if (_entries.count != 1) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryNumberOfEntriesDidChangeNotification
+                                                            object:self];
+    }
+}
+
+- (void)addBrowserLoggingEntryIfNeeded:(NSString *)identifier {
+    if ([_browserIDs containsObject:identifier]) {
+        return;
+    }
+    [_browserIDs addObject:identifier];
+
+    [_entries addObject:[iTermScriptHistoryEntry browserEntry:identifier]];
     if (_entries.count != 1) {
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryNumberOfEntriesDidChangeNotification
                                                             object:self];

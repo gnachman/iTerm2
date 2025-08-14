@@ -9,21 +9,21 @@
     var clickX = parseInt("{{CLICK_X}}") || 0;
     var clickY = parseInt("{{CLICK_Y}}") || 0;
     
-    console.log('get-xpath-at-point.js: Getting XPath at point:', clickX, clickY);
+    console.debug('get-xpath-at-point.js: Getting XPath at point:', clickX, clickY);
     
     // Find the best element by scanning horizontally around the click point
     var bestElement = findBestElementHorizontally(clickX, clickY);
     if (!bestElement) {
-        console.log('get-xpath-at-point.js: No suitable element found with scanning, falling back to direct element');
+        console.debug('get-xpath-at-point.js: No suitable element found with scanning, falling back to direct element');
         // Fallback to element directly at click point
         bestElement = document.elementFromPoint(clickX, clickY);
         if (!bestElement) {
-            console.log('get-xpath-at-point.js: No element found at all');
+            console.debug('get-xpath-at-point.js: No element found at all');
             return null;
         }
     }
     
-    console.log('get-xpath-at-point.js: Found best element:', bestElement);
+    console.debug('get-xpath-at-point.js: Found best element:', bestElement);
     
     // Calculate vertical offset from the top of the element to the click point
     var rect = bestElement.getBoundingClientRect();
@@ -32,7 +32,7 @@
     // Highlight the captured element briefly to show what was saved
     highlightElement(bestElement);
     
-    console.log('get-xpath-at-point.js: Generated XPath for element');
+    console.debug('get-xpath-at-point.js: Generated XPath for element');
     
     // Return element data with text fragment using enhanced utility
     return getTextFragmentData(bestElement, offsetY);
@@ -42,29 +42,29 @@
         var candidates = [];
         var stepSize = 30; // Pixel steps for scanning
         
-        console.log('get-xpath-at-point.js: Starting horizontal scan across full page width from 0 to', window.innerWidth);
+        console.debug('get-xpath-at-point.js: Starting horizontal scan across full page width from 0 to', window.innerWidth);
         
         // Scan horizontally across the entire page width
         for (var x = 0; x < window.innerWidth; x += stepSize) {
             var element = document.elementFromPoint(x, centerY);
             if (element) {
-                console.log('get-xpath-at-point.js: Found element at x=' + x + ':', element.tagName);
+                console.debug('get-xpath-at-point.js: Found element at x=' + x + ':', element.tagName);
                 if (!isElementInCandidates(element, candidates)) {
                     var score = scoreElement(element, centerX, centerY);
-                    console.log('get-xpath-at-point.js: Element score:', score);
+                    console.debug('get-xpath-at-point.js: Element score:', score);
                     if (score > 0) {
                         candidates.push({
                             element: element,
                             score: score,
                             distance: Math.abs(x - centerX)
                         });
-                        console.log('get-xpath-at-point.js: Added candidate with score', score);
+                        console.debug('get-xpath-at-point.js: Added candidate with score', score);
                     }
                 } else {
-                    console.log('get-xpath-at-point.js: Element already in candidates');
+                    console.debug('get-xpath-at-point.js: Element already in candidates');
                 }
             } else {
-                console.log('get-xpath-at-point.js: No element found at x=' + x);
+                console.debug('get-xpath-at-point.js: No element found at x=' + x);
             }
         }
         
@@ -76,9 +76,9 @@
             return a.distance - b.distance; // Closer distance first if scores are equal
         });
         
-        console.log('get-xpath-at-point.js: Found', candidates.length, 'candidates');
+        console.debug('get-xpath-at-point.js: Found', candidates.length, 'candidates');
         candidates.forEach(function(candidate, index) {
-            console.log('  Candidate', index + 1, ':', candidate.element.tagName, 'score:', candidate.score, 'distance:', candidate.distance);
+            console.debug('  Candidate', index + 1, ':', candidate.element.tagName, 'score:', candidate.score, 'distance:', candidate.distance);
         });
         
         return candidates.length > 0 ? candidates[0].element : null;
@@ -96,11 +96,11 @@
         var score = 1; // Start with base score so all elements have some value
         var rect = element.getBoundingClientRect();
         
-        console.log('get-xpath-at-point.js: Scoring element:', element.tagName, 'rect:', rect.width + 'x' + rect.height);
+        console.debug('get-xpath-at-point.js: Scoring element:', element.tagName, 'rect:', rect.width + 'x' + rect.height);
         
         // Skip elements that don't contain the click point vertically (but be more lenient)
         if (centerY < rect.top - 5 || centerY > rect.bottom + 5) {
-            console.log('get-xpath-at-point.js: Element does not contain click point vertically');
+            console.debug('get-xpath-at-point.js: Element does not contain click point vertically');
             return 0;
         }
         
@@ -192,7 +192,7 @@
         var isInMargin = rect.left < 200 || rect.right > window.innerWidth - 200;
         if (isInMargin) {
             score -= 20;
-            console.log('get-xpath-at-point.js: Penalizing margin element');
+            console.debug('get-xpath-at-point.js: Penalizing margin element');
         }
         
         // Boost for elements in main content area (center of page)
@@ -209,7 +209,7 @@
                 className.includes('article') || className.includes('post') ||
                 className.includes('entry') || className.includes('body')) {
                 score += 25;
-                console.log('get-xpath-at-point.js: Boosting main content element');
+                console.debug('get-xpath-at-point.js: Boosting main content element');
             }
         }
         
@@ -221,7 +221,7 @@
                 id === 'mw-content-text' || // Wikipedia main content
                 id.includes('bodyContent')) {
                 score += 30;
-                console.log('get-xpath-at-point.js: Boosting main content ID element');
+                console.debug('get-xpath-at-point.js: Boosting main content ID element');
             }
         }
         
@@ -231,7 +231,7 @@
         }
         
         var finalScore = Math.max(1, score); // Ensure minimum score of 1
-        console.log('get-xpath-at-point.js: Element score:', finalScore);
+        console.debug('get-xpath-at-point.js: Element score:', finalScore);
         return finalScore;
     }
     

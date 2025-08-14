@@ -220,7 +220,7 @@
 
         log(message) {
             try {
-                console.log(`[IFD:${this.frameId.slice(0, 8)}] ${message}`);
+                console.debug(`[IFD:${this.frameId.slice(0, 8)}] ${message}`);
             } catch (_) {}
         }
 
@@ -451,7 +451,7 @@
         }
     }
 
-    console.log('[IFD:init] Creating FrameDiscovery instance');
+    console.debug('[IFD:init] Creating FrameDiscovery instance');
     window[DISCOVERY_SYMBOL] = new FrameDiscovery();
-    console.log('[IFD:init] FrameDiscovery initialized');
+    console.debug('[IFD:init] FrameDiscovery initialized');
 })();

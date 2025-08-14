@@ -7,7 +7,7 @@ let currentSearchQuery = '';
 let currentPermissionTypeFilter = '';
 let currentStatusFilter = '';
 
-console.log("Permissions page loading");
+console.debug("Permissions page loading");
 
 // Initialize permissions page
 window.loadPermissions = function(offset = 0, limit = 50, searchQuery = '', permissionTypeFilter = '', statusFilter = '') {
@@ -27,7 +27,7 @@ window.loadPermissions = function(offset = 0, limit = 50, searchQuery = '', perm
             statusFilter: statusFilter
         });
     } else {
-        console.log('Message handler not ready, retrying in 50ms...');
+        console.debug('Message handler not ready, retrying in 50ms...');
         setTimeout(() => {
             isLoading = false;
             loadPermissions(offset, limit, searchQuery, permissionTypeFilter, statusFilter);

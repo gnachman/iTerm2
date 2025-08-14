@@ -43,7 +43,7 @@
          _oldDebug.apply(console, args);
          try {
              const msg = args.map(serializeArg).join(' ');
-             _postMessage(msg);
+             _postMessage({ msg: msg, level: "debug" });
          }
          catch (e) {
              _oldDebug(TAG, 'failed to post log:', e);
@@ -54,7 +54,7 @@
          _oldLog.apply(console, args);
          try {
              const msg = args.map(serializeArg).join(' ');
-             _postMessage(msg);
+             _postMessage({ msg: msg, level: "log" });
          }
          catch (e) {
              _oldLog(TAG, 'failed to post log:', e);
@@ -65,7 +65,7 @@
          _oldWarn.apply(console, args);
          try {
              const msg = args.map(serializeArg).join(' ');
-             _postMessage(msg);
+             _postMessage({ msg: msg, level: "warn" });
          }
          catch (e) {
              _oldWarn(TAG, 'failed to post warning:', e);
@@ -76,7 +76,7 @@
          _oldError.apply(console, args);
          try {
              const msg = args.map(serializeArg).join(' ');
-             _postMessage(msg);
+             _postMessage({ msg: msg, level: "error" });
          }
          catch (e) {
              _oldError(TAG, 'failed to post error:', e);

@@ -1,12 +1,12 @@
 class CopyMode {
     constructor() {
-        console.log("[copymode] CopyMode constructor called");
+        console.debug("[copymode] CopyMode constructor called");
         this.enabled = false;
         this.selecting = false;
         this.mode = SelectionMode.CHARACTER;
         this.selectionStart = null;  // DOM position when selection started
         this.cursor = null;
-        console.log("[copymode] Creating CursorMovement instance");
+        console.debug("[copymode] Creating CursorMovement instance");
         this.movement = new CursorMovement();
 
         // Wait for DOM to be ready
@@ -18,8 +18,8 @@ class CopyMode {
     }
 
     init() {
-        console.log("[copymode] init() called");
-        console.log("[copymode] Creating Cursor instance");
+        console.debug("[copymode] init() called");
+        console.debug("[copymode] Creating Cursor instance");
         this.cursor = new Cursor();
         // Don't initialize cursor position until copy mode is enabled
     }
@@ -47,34 +47,34 @@ class CopyMode {
                 const rect = range.getBoundingClientRect();
 
                 if (rect.width > 0 && rect.height > 0) {
-                    console.log(`[copymode] Found visible text node: "${node.textContent.substring(0, 30)}..." with rect ${rect.width}x${rect.height}`);
+                    console.debug(`[copymode] Found visible text node: "${node.textContent.substring(0, 30)}..." with rect ${rect.width}x${rect.height}`);
                     this.cursor.setPosition(node, 0);
                     return;
                 } else {
-                    console.log(`[copymode] Skipping text node with zero dimensions: "${node.textContent.substring(0, 20)}..."`);
+                    console.debug(`[copymode] Skipping text node with zero dimensions: "${node.textContent.substring(0, 20)}..."`);
                 }
             } catch (e) {
-                console.log(`[copymode] Error testing text node: "${node.textContent.substring(0, 20)}..."`, e);
+                console.debug(`[copymode] Error testing text node: "${node.textContent.substring(0, 20)}..."`, e);
             }
         }
 
-        console.log(`[copymode] No visible text nodes found, cursor not positioned`);
+        console.debug(`[copymode] No visible text nodes found, cursor not positioned`);
     }
 
 
     enable() {
-        console.log("[copymode] Enable called");
+        console.debug("[copymode] Enable called");
         this.enabled = true;
         // Initialize cursor position on first enable
         this.initializeCursorPosition();
         this.cursor.show();
-        console.log(`[copymode] Cursor enabled`);
+        console.debug(`[copymode] Cursor enabled`);
         return true;
     }
 
     disable() {
         try {
-            console.log("[copymode] Disable called");
+            console.debug("[copymode] Disable called");
             this.enabled = false;
             this.setSelecting(false);
             this.selectionStart = null;
@@ -88,10 +88,10 @@ class CopyMode {
     }
 
     moveBackwardWord() {
-        console.log(`[copymode] moveBackwardWord() called`);
+        console.debug(`[copymode] moveBackwardWord() called`);
         const newPosition = this.movement.moveBackwardWord(this.cursor.textNode, this.cursor.characterOffset);
         if (newPosition) {
-            console.log(`[copymode] moveBackwardWord successful`);
+            console.debug(`[copymode] moveBackwardWord successful`);
             this.cursor.setPosition(newPosition.textNode, newPosition.characterOffset);
             this.scrollCursorIntoView();
             this.updateSelection();
@@ -101,10 +101,10 @@ class CopyMode {
     }
 
     moveForwardWord() {
-        console.log(`[copymode] moveForwardWord() called`);
+        console.debug(`[copymode] moveForwardWord() called`);
         const newPosition = this.movement.moveForwardWord(this.cursor.textNode, this.cursor.characterOffset);
         if (newPosition) {
-            console.log(`[copymode] moveForwardWord successful`);
+            console.debug(`[copymode] moveForwardWord successful`);
             this.cursor.setPosition(newPosition.textNode, newPosition.characterOffset);
             this.scrollCursorIntoView();
             this.updateSelection();
@@ -113,10 +113,10 @@ class CopyMode {
         return false;
     }
     moveBackwardBigWord() {
-        console.log(`[copymode] moveBackwardBigWord() called`);
+        console.debug(`[copymode] moveBackwardBigWord() called`);
         const newPosition = this.movement.moveBackwardBigWord(this.cursor.textNode, this.cursor.characterOffset);
         if (newPosition) {
-            console.log(`[copymode] moveBackwardBigWord successful`);
+            console.debug(`[copymode] moveBackwardBigWord successful`);
             this.cursor.setPosition(newPosition.textNode, newPosition.characterOffset);
             this.scrollCursorIntoView();
             this.updateSelection();
@@ -126,10 +126,10 @@ class CopyMode {
     }
 
     moveForwardBigWord() {
-        console.log(`[copymode] moveForwardBigWord() called`);
+        console.debug(`[copymode] moveForwardBigWord() called`);
         const newPosition = this.movement.moveForwardBigWord(this.cursor.textNode, this.cursor.characterOffset);
         if (newPosition) {
-            console.log(`[copymode] moveForwardBigWord successful`);
+            console.debug(`[copymode] moveForwardBigWord successful`);
             this.cursor.setPosition(newPosition.textNode, newPosition.characterOffset);
             this.scrollCursorIntoView();
             this.updateSelection();
@@ -138,45 +138,45 @@ class CopyMode {
         return false;
     }
     moveLeft() {
-        console.log(`[copymode] moveLeft() called`);
-        console.log(`[copymode] Current cursor DOM position: textNode="${this.cursor.textNode?.textContent?.substring(0, 20)}...", offset=${this.cursor.characterOffset}`);
+        console.debug(`[copymode] moveLeft() called`);
+        console.debug(`[copymode] Current cursor DOM position: textNode="${this.cursor.textNode?.textContent?.substring(0, 20)}...", offset=${this.cursor.characterOffset}`);
 
         const newPosition = this.movement.moveLeft(this.cursor.textNode, this.cursor.characterOffset);
         if (newPosition) {
-            console.log(`[copymode] moveLeft successful, updating cursor position`);
+            console.debug(`[copymode] moveLeft successful, updating cursor position`);
             this.cursor.setPosition(newPosition.textNode, newPosition.characterOffset);
             this.scrollCursorIntoView();
             this.updateSelection();
             return true;
         } else {
-            console.log(`[copymode] moveLeft failed, no valid position found`);
+            console.debug(`[copymode] moveLeft failed, no valid position found`);
             return false;
         }
     }
 
     moveRight() {
-        console.log(`[copymode] moveRight() called`);
-        console.log(`[copymode] Current cursor DOM position: textNode="${this.cursor.textNode?.textContent?.substring(0, 20)}...", offset=${this.cursor.characterOffset}`);
+        console.debug(`[copymode] moveRight() called`);
+        console.debug(`[copymode] Current cursor DOM position: textNode="${this.cursor.textNode?.textContent?.substring(0, 20)}...", offset=${this.cursor.characterOffset}`);
 
         const newPosition = this.movement.moveRight(this.cursor.textNode, this.cursor.characterOffset);
         if (newPosition) {
-            console.log(`[copymode] moveRight successful, updating cursor position`);
+            console.debug(`[copymode] moveRight successful, updating cursor position`);
             this.cursor.setPosition(newPosition.textNode, newPosition.characterOffset);
             this.scrollCursorIntoView();
             this.updateSelection();
             return true;
         } else {
-            console.log(`[copymode] moveRight failed, no valid position found`);
+            console.debug(`[copymode] moveRight failed, no valid position found`);
             return false;
         }
     }
     moveUp(skipScrollIntoView = false) {
-        console.log(`[copymode] moveUp() called`);
-        console.log(`[copymode] Current cursor DOM position: textNode="${this.cursor.textNode?.textContent?.substring(0, 20)}...", offset=${this.cursor.characterOffset}`);
+        console.debug(`[copymode] moveUp() called`);
+        console.debug(`[copymode] Current cursor DOM position: textNode="${this.cursor.textNode?.textContent?.substring(0, 20)}...", offset=${this.cursor.characterOffset}`);
 
         const newPosition = this.movement.moveUp(this.cursor.textNode, this.cursor.characterOffset);
         if (newPosition) {
-            console.log(`[copymode] moveUp successful, updating cursor position`);
+            console.debug(`[copymode] moveUp successful, updating cursor position`);
             this.cursor.setPosition(newPosition.textNode, newPosition.characterOffset);
             if (!skipScrollIntoView) {
                 this.scrollCursorIntoView();
@@ -184,18 +184,18 @@ class CopyMode {
             this.updateSelection();
             return true;
         } else {
-            console.log(`[copymode] moveUp failed, no valid position found`);
+            console.debug(`[copymode] moveUp failed, no valid position found`);
             return false;
         }
     }
     moveDown(skipScrollIntoView = false) {
         try {
-            console.log(`[copymode] moveDown() called`);
-            console.log(`[copymode] Current cursor DOM position: textNode="${this.cursor.textNode?.textContent?.substring(0, 20)}...", offset=${this.cursor.characterOffset}`);
+            console.debug(`[copymode] moveDown() called`);
+            console.debug(`[copymode] Current cursor DOM position: textNode="${this.cursor.textNode?.textContent?.substring(0, 20)}...", offset=${this.cursor.characterOffset}`);
 
             const newPosition = this.movement.moveDown(this.cursor.textNode, this.cursor.characterOffset);
             if (newPosition) {
-                console.log(`[copymode] moveDown successful, updating cursor position`);
+                console.debug(`[copymode] moveDown successful, updating cursor position`);
                 this.cursor.setPosition(newPosition.textNode, newPosition.characterOffset);
                 if (!skipScrollIntoView) {
                     this.scrollCursorIntoView();
@@ -203,9 +203,9 @@ class CopyMode {
                 this.updateSelection();
                 return true;
             } else {
-                console.log(`[copymode] moveDown failed, no valid position found`);
+                console.debug(`[copymode] moveDown failed, no valid position found`);
                 // Log current cursor state for debugging
-                console.log(`[copymode] Cursor remains at: textNode="${this.cursor.textNode?.textContent?.substring(0, 20)}...", offset=${this.cursor.characterOffset}`);
+                console.debug(`[copymode] Cursor remains at: textNode="${this.cursor.textNode?.textContent?.substring(0, 20)}...", offset=${this.cursor.characterOffset}`);
                 return false;
             }
         } catch(e) {
@@ -217,15 +217,15 @@ class CopyMode {
 
     // Helper method for page movement
     moveByDistance(direction, targetDistance) {
-        console.log(`[copymode] moveByDistance ${direction} for ${targetDistance}px`);
+        console.debug(`[copymode] moveByDistance ${direction} for ${targetDistance}px`);
         if (!this.cursor || !this.cursor.textNode) {
-            console.log(`[copymode] moveByDistance: no cursor or text node`);
+            console.debug(`[copymode] moveByDistance: no cursor or text node`);
             return false;
         }
 
         const startCoords = this.cursor.getPageCoordinates();
         if (!startCoords) {
-            console.log(`[copymode] moveByDistance: could not get starting coordinates`);
+            console.debug(`[copymode] moveByDistance: could not get starting coordinates`);
             return false;
         }
 
@@ -237,7 +237,7 @@ class CopyMode {
             // Skip scroll-into-view during bulk movement to prevent auto-scrolling that negates the movement
             const moveSuccess = direction === 'up' ? this.moveUp(true) : this.moveDown(true);
             if (!moveSuccess) {
-                console.log(`[copymode] moveByDistance: move${direction} failed, stopping at attempt ${attempts}`);
+                console.debug(`[copymode] moveByDistance: move${direction} failed, stopping at attempt ${attempts}`);
                 break;
             }
 
@@ -252,7 +252,7 @@ class CopyMode {
                 : currentCoords.pageY - startCoords.pageY;
 
             if (distanceMoved >= targetDistance) {
-                console.log(`[copymode] moveByDistance: reached target distance ${distanceMoved}px, stopping`);
+                console.debug(`[copymode] moveByDistance: reached target distance ${distanceMoved}px, stopping`);
                 break;
             }
         }
@@ -262,7 +262,7 @@ class CopyMode {
             this.scrollCursorIntoView();
         }
 
-        console.log(`[copymode] moveByDistance completed: moved=${moved}, attempts=${attempts}`);
+        console.debug(`[copymode] moveByDistance completed: moved=${moved}, attempts=${attempts}`);
         return moved;
     }
 
@@ -310,7 +310,7 @@ class CopyMode {
         }
 
         if (!targetNode) {
-            console.log(`[copymode] findDocumentBoundary: no visible text nodes found`);
+            console.debug(`[copymode] findDocumentBoundary: no visible text nodes found`);
             return null;
         }
 
@@ -321,17 +321,17 @@ class CopyMode {
 
         for (let i = range[0]; i !== range[1]; i += step) {
             if (this.movement.isPositionVisible(targetNode, i)) {
-                console.log(`[copymode] findDocumentBoundary: found ${isStart ? 'first' : 'last'} visible position at offset ${i}`);
+                console.debug(`[copymode] findDocumentBoundary: found ${isStart ? 'first' : 'last'} visible position at offset ${i}`);
                 return { textNode: targetNode, characterOffset: i };
             }
         }
 
-        console.log(`[copymode] findDocumentBoundary: target text node has no visible positions`);
+        console.debug(`[copymode] findDocumentBoundary: target text node has no visible positions`);
         return null;
     }
 
     moveToStart() {
-        console.log(`[copymode] moveToStart() called`);
+        console.debug(`[copymode] moveToStart() called`);
         const position = this.findDocumentBoundary(true);
         if (position) {
             this.cursor.setPosition(position.textNode, position.characterOffset);
@@ -343,7 +343,7 @@ class CopyMode {
     }
 
     moveToEnd() {
-        console.log(`[copymode] moveToEnd() called`);
+        console.debug(`[copymode] moveToEnd() called`);
         const position = this.findDocumentBoundary(false);
         if (position) {
             this.cursor.setPosition(position.textNode, position.characterOffset);
@@ -359,13 +359,13 @@ class CopyMode {
 
     // Helper method to move cursor to a target Y position in the viewport
     moveToViewportPosition(targetY) {
-        console.log(`[copymode] moveToViewportPosition: target=${targetY}`);
+        console.debug(`[copymode] moveToViewportPosition: target=${targetY}`);
 
         // Convert viewport Y to page coordinates
         const scrollY = window.pageYOffset || document.documentElement.scrollTop;
         const targetPageY = targetY + scrollY;
 
-        console.log(`[copymode] moveToViewportPosition: targetPageY=${targetPageY}, scrollY=${scrollY}`);
+        console.debug(`[copymode] moveToViewportPosition: targetPageY=${targetPageY}, scrollY=${scrollY}`);
 
         // Find the best text position near this Y coordinate
         const walker = document.createTreeWalker(
@@ -411,17 +411,17 @@ class CopyMode {
             }
         }
 
-        console.log(`[copymode] moveToViewportPosition: checked ${candidateCount} candidates, best distance: ${bestDistance}`);
+        console.debug(`[copymode] moveToViewportPosition: checked ${candidateCount} candidates, best distance: ${bestDistance}`);
 
         if (bestPosition) {
-            console.log(`[copymode] moveToViewportPosition: moving to offset ${bestPosition.characterOffset}`);
+            console.debug(`[copymode] moveToViewportPosition: moving to offset ${bestPosition.characterOffset}`);
             this.cursor.setPosition(bestPosition.textNode, bestPosition.characterOffset);
             this.scrollCursorIntoView();
             this.updateSelection();
             return true;
         }
 
-        console.log(`[copymode] moveToViewportPosition: no suitable position found`);
+        console.debug(`[copymode] moveToViewportPosition: no suitable position found`);
         return false;
     }
 
@@ -443,15 +443,15 @@ class CopyMode {
     }
     // Helper method to move to start or end of line within the same block
     moveToLineEdge(isStart) {
-        console.log(`[copymode] moveToLineEdge: ${isStart ? 'start' : 'end'}`);
+        console.debug(`[copymode] moveToLineEdge: ${isStart ? 'start' : 'end'}`);
         if (!this.cursor || !this.cursor.textNode) {
-            console.log(`[copymode] moveToLineEdge: no cursor or text node`);
+            console.debug(`[copymode] moveToLineEdge: no cursor or text node`);
             return false;
         }
 
         const currentCoords = this.cursor.getPageCoordinates();
         if (!currentCoords) {
-            console.log(`[copymode] moveToLineEdge: could not get current coordinates`);
+            console.debug(`[copymode] moveToLineEdge: could not get current coordinates`);
             return false;
         }
 
@@ -465,7 +465,7 @@ class CopyMode {
             currentBlock = this.cursor.textNode.parentElement; // Fallback
         }
 
-        console.log(`[copymode] moveToLineEdge: current block is ${currentBlock.tagName}`);
+        console.debug(`[copymode] moveToLineEdge: current block is ${currentBlock.tagName}`);
 
         // Find all text positions within this block on approximately the same line
         const targetY = currentCoords.pageY;
@@ -510,17 +510,17 @@ class CopyMode {
             }
         }
 
-        console.log(`[copymode] moveToLineEdge: checked ${candidateCount} candidates on same line`);
+        console.debug(`[copymode] moveToLineEdge: checked ${candidateCount} candidates on same line`);
 
         if (bestPosition && bestPosition.textNode !== this.cursor.textNode || bestPosition.characterOffset !== this.cursor.characterOffset) {
-            console.log(`[copymode] moveToLineEdge: moving to ${isStart ? 'leftmost' : 'rightmost'} position at X=${bestX}`);
+            console.debug(`[copymode] moveToLineEdge: moving to ${isStart ? 'leftmost' : 'rightmost'} position at X=${bestX}`);
             this.cursor.setPosition(bestPosition.textNode, bestPosition.characterOffset);
             this.scrollCursorIntoView();
             this.updateSelection();
             return true;
         }
 
-        console.log(`[copymode] moveToLineEdge: already at ${isStart ? 'start' : 'end'} of line`);
+        console.debug(`[copymode] moveToLineEdge: already at ${isStart ? 'start' : 'end'} of line`);
         return false;
     }
 
@@ -578,11 +578,11 @@ class CopyMode {
 
 
     swap() {
-        console.log(`[copymode] swap() called`);
+        console.debug(`[copymode] swap() called`);
 
         // Only swap if we're currently selecting and have a selection start point
         if (!this.selecting || !this.selectionStart) {
-            console.log(`[copymode] swap: not selecting or no selection start point, doing nothing`);
+            console.debug(`[copymode] swap: not selecting or no selection start point, doing nothing`);
             return false;
         }
 
@@ -592,8 +592,8 @@ class CopyMode {
             characterOffset: this.cursor.characterOffset
         };
 
-        console.log(`[copymode] swap: moving cursor from "${currentCursorPos.textNode?.textContent?.substring(0, 20)}...", offset ${currentCursorPos.characterOffset}`);
-        console.log(`[copymode] swap: moving cursor to "${this.selectionStart.textNode?.textContent?.substring(0, 20)}...", offset ${this.selectionStart.characterOffset}`);
+        console.debug(`[copymode] swap: moving cursor from "${currentCursorPos.textNode?.textContent?.substring(0, 20)}...", offset ${currentCursorPos.characterOffset}`);
+        console.debug(`[copymode] swap: moving cursor to "${this.selectionStart.textNode?.textContent?.substring(0, 20)}...", offset ${this.selectionStart.characterOffset}`);
 
         // Move cursor to where selection started
         this.cursor.setPosition(this.selectionStart.textNode, this.selectionStart.characterOffset);
@@ -608,7 +608,7 @@ class CopyMode {
         this.scrollCursorIntoView();
         this.updateSelection();
 
-        console.log(`[copymode] swap: selection start now at "${this.selectionStart.textNode?.textContent?.substring(0, 20)}...", offset ${this.selectionStart.characterOffset}`);
+        console.debug(`[copymode] swap: selection start now at "${this.selectionStart.textNode?.textContent?.substring(0, 20)}...", offset ${this.selectionStart.characterOffset}`);
 
         return true;
     }
@@ -628,7 +628,7 @@ class CopyMode {
 
         const cursorRect = this.cursor.getBoundingRect();
         if (!cursorRect) {
-            console.log(`[copymode] scrollCursorIntoView: no cursor rect available`);
+            console.debug(`[copymode] scrollCursorIntoView: no cursor rect available`);
             return;
         }
 
@@ -636,47 +636,47 @@ class CopyMode {
         const viewportWidth = window.innerWidth;
         const scrollPadding = 50;
 
-        console.log(`[copymode] scrollCursorIntoView: cursor at viewport (${cursorRect.left}, ${cursorRect.top}), viewport size ${viewportWidth}x${viewportHeight}`);
+        console.debug(`[copymode] scrollCursorIntoView: cursor at viewport (${cursorRect.left}, ${cursorRect.top}), viewport size ${viewportWidth}x${viewportHeight}`);
 
         let scrolled = false;
 
         if (cursorRect.top < scrollPadding) {
-            console.log(`[copymode] Scrolling up: cursor.top ${cursorRect.top} < padding ${scrollPadding}`);
+            console.debug(`[copymode] Scrolling up: cursor.top ${cursorRect.top} < padding ${scrollPadding}`);
             window.scrollBy(0, cursorRect.top - scrollPadding);
             scrolled = true;
         } else if (cursorRect.bottom > viewportHeight - scrollPadding) {
-            console.log(`[copymode] Scrolling down: cursor.bottom ${cursorRect.bottom} > viewport ${viewportHeight - scrollPadding}`);
+            console.debug(`[copymode] Scrolling down: cursor.bottom ${cursorRect.bottom} > viewport ${viewportHeight - scrollPadding}`);
             window.scrollBy(0, cursorRect.bottom - viewportHeight + scrollPadding);
             scrolled = true;
         }
 
         if (cursorRect.left < scrollPadding) {
-            console.log(`[copymode] Scrolling left: cursor.left ${cursorRect.left} < padding ${scrollPadding}`);
+            console.debug(`[copymode] Scrolling left: cursor.left ${cursorRect.left} < padding ${scrollPadding}`);
             window.scrollBy(cursorRect.left - scrollPadding, 0);
             scrolled = true;
         } else if (cursorRect.right > viewportWidth - scrollPadding) {
-            console.log(`[copymode] Scrolling right: cursor.right ${cursorRect.right} > viewport ${viewportWidth - scrollPadding}`);
+            console.debug(`[copymode] Scrolling right: cursor.right ${cursorRect.right} > viewport ${viewportWidth - scrollPadding}`);
             window.scrollBy(cursorRect.right - viewportWidth + scrollPadding, 0);
             scrolled = true;
         }
 
         if (scrolled) {
-            console.log(`[copymode] Page scrolled, updating cursor display`);
+            console.debug(`[copymode] Page scrolled, updating cursor display`);
             // Since we're using page coordinates for CSS positioning,
             // no need to update display - cursor should stay in correct position
         } else {
-            console.log(`[copymode] Cursor already visible, no scroll needed`);
+            console.debug(`[copymode] Cursor already visible, no scroll needed`);
         }
     }
 
     async copySelection() {
-        console.log("[copymode] copyselection");
+        console.debug("[copymode] copyselection");
         const selection = window.getSelection();
         const selectedText = selection.toString();
 
         if (selectedText) {
             try {
-                console.log(`[copymode] copy ${selectedText}`);
+                console.debug(`[copymode] copy ${selectedText}`);
                 await navigator.clipboard.writeText(selectedText);
                 return true;
             } catch (err) {
@@ -695,7 +695,7 @@ class CopyMode {
         if (selecting === this.selecting) {
             return;
         }
-        console.log(`[copymode] set selecting to ${selecting}`);
+        console.debug(`[copymode] set selecting to ${selecting}`);
 
         this.selecting = selecting;
 
@@ -706,7 +706,7 @@ class CopyMode {
                     textNode: this.cursor.textNode,
                     characterOffset: this.cursor.characterOffset
                 };
-                console.log(`[copymode] Selection started at: "${this.selectionStart.textNode.textContent.substring(0, 20)}...", offset ${this.selectionStart.characterOffset}`);
+                console.debug(`[copymode] Selection started at: "${this.selectionStart.textNode.textContent.substring(0, 20)}...", offset ${this.selectionStart.characterOffset}`);
             }
         }
         // When selecting is turned off, keep the selection visible
@@ -747,9 +747,9 @@ class CopyMode {
             selection.removeAllRanges();
             selection.addRange(range);
 
-            console.log(`[copymode] Selection updated from start to cursor`);
+            console.debug(`[copymode] Selection updated from start to cursor`);
         } catch (e) {
-            console.log(`[copymode] Error updating selection:`, e);
+            console.debug(`[copymode] Error updating selection:`, e);
         }
     }
 

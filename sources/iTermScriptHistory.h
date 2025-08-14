@@ -37,6 +37,7 @@ extern NSString *const iTermScriptHistoryEntryFieldRPCValue;  // RPC changed
 + (instancetype)globalEntry;
 + (instancetype)apsEntry;
 + (instancetype)dynamicProfilesEntry;
++ (instancetype)browserEntry:(NSString *)identifier;
 + (instancetype)smartSelectionAnctionsEntry;
 - (instancetype)initWithName:(NSString *)name
                     fullPath:(nullable NSString *)fullPath
@@ -66,6 +67,7 @@ extern NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification;
 - (iTermScriptHistoryEntry *)runningEntryWithFullPath:(NSString *)fullPath;
 - (void)addAPSLoggingEntryIfNeeded;
 - (void)addDynamicProfilesLoggingEntryIfNeeded;
+- (void)addBrowserLoggingEntryIfNeeded:(NSString *)identifier;
 @end
 
 NS_ASSUME_NONNULL_END

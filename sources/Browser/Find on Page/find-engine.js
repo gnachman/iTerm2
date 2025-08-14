@@ -2002,7 +2002,7 @@ function getEngine(id) {
         }
         engine = new FindEngine(key);
         INSTANCES.set(key, engine);
-        console.log("Created engine with instance id", key);
+        console.debug("Created engine with instance id", key);
     }
     return engine;
 }

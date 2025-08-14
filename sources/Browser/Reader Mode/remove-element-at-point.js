@@ -8,7 +8,7 @@
     
     // Get the main container
     const mainContainer = detectMainContainer() || document.body;
-    console.log('[REMOVE] Main container:', 
+    console.debug('[REMOVE] Main container:', 
         `${mainContainer.tagName}${mainContainer.id ? '#' + mainContainer.id : ''}${mainContainer.className ? '.' + mainContainer.className.split(' ').join('.') : ''}`);
     
     // Get elements at the point
@@ -17,7 +17,7 @@
     
     if (elements.length > 0) {
         const root = findRootOverlay(elements[0], mainContainer);
-        console.log('[REMOVE] Would remove:', 
+        console.debug('[REMOVE] Would remove:', 
             `${root.tagName}${root.id ? '#' + root.id : ''}${root.className ? '.' + root.className.split(' ').join('.') : ''}`);
     }
     

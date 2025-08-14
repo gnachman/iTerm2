@@ -1184,12 +1184,6 @@
 		A61220772E0FA74700F48E64 /* remove-element-at-point.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220732E0FA74700F48E64 /* remove-element-at-point.js */; };
 		A61220782E0FA74700F48E64 /* distraction-removal-helpers.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220722E0FA74700F48E64 /* distraction-removal-helpers.js */; };
 		A61220792E0FA74700F48E64 /* remove-element-at-point.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220732E0FA74700F48E64 /* remove-element-at-point.js */; };
-		A61220BB2E0FAAB300F48E64 /* debug-remove-element-at-point.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220BA2E0FAAB300F48E64 /* debug-remove-element-at-point.js */; };
-		A61220BC2E0FAAB300F48E64 /* debug-remove-element-at-point.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220BA2E0FAAB300F48E64 /* debug-remove-element-at-point.js */; };
-		A61220BD2E0FAAB300F48E64 /* debug-remove-element-at-point.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220BA2E0FAAB300F48E64 /* debug-remove-element-at-point.js */; };
-		A61220BF2E0FAC9200F48E64 /* visual-debug-remove-element.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220BE2E0FAC9200F48E64 /* visual-debug-remove-element.js */; };
-		A61220C02E0FAC9200F48E64 /* visual-debug-remove-element.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220BE2E0FAC9200F48E64 /* visual-debug-remove-element.js */; };
-		A61220C12E0FAC9200F48E64 /* visual-debug-remove-element.js in Resources */ = {isa = PBXBuildFile; fileRef = A61220BE2E0FAC9200F48E64 /* visual-debug-remove-element.js */; };
 		A61220E32E10489600F48E64 /* iTermFocusFollowsMouse.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61220E22E10489000F48E64 /* iTermFocusFollowsMouse.swift */; };
 		A61220E62E10528800F48E64 /* iTermBrowserAdblockRustManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61220E42E10528800F48E64 /* iTermBrowserAdblockRustManager.swift */; };
 		A61220E72E10528800F48E64 /* iTermBrowserAdblockRustWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61220E52E10528800F48E64 /* iTermBrowserAdblockRustWrapper.swift */; };
@@ -6545,8 +6539,6 @@
 		A612206B2E0F4C2400F48E64 /* xpath-utils.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "xpath-utils.js"; sourceTree = "<group>"; };
 		A61220722E0FA74700F48E64 /* distraction-removal-helpers.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "distraction-removal-helpers.js"; sourceTree = "<group>"; };
 		A61220732E0FA74700F48E64 /* remove-element-at-point.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "remove-element-at-point.js"; sourceTree = "<group>"; };
-		A61220BA2E0FAAB300F48E64 /* debug-remove-element-at-point.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "debug-remove-element-at-point.js"; sourceTree = "<group>"; };
-		A61220BE2E0FAC9200F48E64 /* visual-debug-remove-element.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "visual-debug-remove-element.js"; sourceTree = "<group>"; };
 		A61220E22E10489000F48E64 /* iTermFocusFollowsMouse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermFocusFollowsMouse.swift; sourceTree = "<group>"; };
 		A61220E42E10528800F48E64 /* iTermBrowserAdblockRustManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserAdblockRustManager.swift; sourceTree = "<group>"; };
 		A61220E52E10528800F48E64 /* iTermBrowserAdblockRustWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserAdblockRustWrapper.swift; sourceTree = "<group>"; };
@@ -13619,8 +13611,6 @@
 			children = (
 				A6D90D572E2EF2B500BA9F4F /* convert-to-markdown.js */,
 				A6D90D532E2EF19E00BA9F4F /* turndown.browser.umd.js */,
-				A61220BE2E0FAC9200F48E64 /* visual-debug-remove-element.js */,
-				A61220BA2E0FAAB300F48E64 /* debug-remove-element-at-point.js */,
 				A61220722E0FA74700F48E64 /* distraction-removal-helpers.js */,
 				A61220732E0FA74700F48E64 /* remove-element-at-point.js */,
 				A6CBB90A2E0A832B00B2CCCB /* distraction-removal.js */,
@@ -14025,7 +14015,6 @@
 		A6F7D4B32E0340A30065D09C /* Browser */ = {
 			isa = PBXGroup;
 			children = (
-				A6CC2D1B2E4BA11F00F8D620 /* Graph Discovery */,
 				A61220F02E1070EF00F48E64 /* Ad Blocking */,
 				A6D693EE2E417111005E9AFE /* Audio Muting */,
 				A6FE7A912E0E6B7F00BEBCE4 /* Autofill */,
@@ -14038,6 +14027,7 @@
 				A69F59392E21CB9100B96E1B /* Extensions */,
 				A6CBB81F2E0A1CC200B2CCCB /* Favicon */,
 				A68CB85A2E3FCC14002531F5 /* Find on Page */,
+				A6CC2D1B2E4BA11F00F8D620 /* Graph Discovery */,
 				A6CBB8172E0A1BBE00B2CCCB /* History */,
 				A6E312F82E3D399F008222DE /* Instant Replay */,
 				A6CBB8162E0A1B7400B2CCCB /* Local Pages */,
@@ -16317,7 +16307,6 @@
 				1D6ED9AC19AEA20D005A7799 /* NewOutput@2x.png in Resources */,
 				1D6ED9AD19AEA20D005A7799 /* UKCrashReporter Readme.txt in Resources */,
 				A6F7A745213CB143004DE961 /* StatusBarIconPaste.png in Resources */,
-				A61220BB2E0FAAB300F48E64 /* debug-remove-element-at-point.js in Resources */,
 				A6F7A712213CB143004DE961 /* StatusBarIconFolder@2x.png in Resources */,
 				53AA7648237E35A50094D75A /* OpenQuicklyActionIcon@2x.png in Resources */,
 				A623D9501F8984710011F8C3 /* key@2x.png in Resources */,
@@ -16367,7 +16356,6 @@
 				A6F31A2C295BC41700C1A51E /* uniE0CC_PowerlineExtraSymbols.pdf in Resources */,
 				A6F7A70F213CB143004DE961 /* StatusBarIconJobs.png in Resources */,
 				A67D0D791A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */,
-				A61220C02E0FAC9200F48E64 /* visual-debug-remove-element.js in Resources */,
 				A629F58523AF2DEE00C2F16B /* iterm2_shell_integration.fish in Resources */,
 				53FF981A209247E2008688D7 /* iTermScriptTemplatePickerWindowController.xib in Resources */,
 				A60BB38B1EB54BD900D76C09 /* CopyMode@2x.png in Resources */,
@@ -16795,7 +16783,6 @@
 				A68BE9492DE428D5002DD513 /* flowchart.png in Resources */,
 				A697CE102D9764E00031583F /* CapturedOutputMenuTip@2x.png in Resources */,
 				A697CE112D9764E00031583F /* CapturedOutputMenuTip.png in Resources */,
-				A61220C12E0FAC9200F48E64 /* visual-debug-remove-element.js in Resources */,
 				A6CBB9062E0A823D00B2CCCB /* enter-distraction-removal.js in Resources */,
 				A6A3EDD12E0D04A400D711DA /* open-link-at-point.js in Resources */,
 				A6CBB9072E0A823D00B2CCCB /* exit-distraction-removal.js in Resources */,
@@ -17084,7 +17071,6 @@
 				53FF981D20927F1E008688D7 /* template_pyenv_simple.py in Resources */,
 				A60C036A2089897400FE2F1F /* iTermScriptConsole.xib in Resources */,
 				A67D0D391A2EE12A003A8B35 /* AdvancedWorkingDirectoryWindow.xib in Resources */,
-				A61220BC2E0FAAB300F48E64 /* debug-remove-element-at-point.js in Resources */,
 				A67D0D721A2EE12A003A8B35 /* MainMenu.xib in Resources */,
 				A67F6151214395870093940A /* graphic_less.png in Resources */,
 				A697CECF2D9B0FB60031583F /* CommandSelectionHelp.md in Resources */,
@@ -17679,7 +17665,6 @@
 				A6BEE47726E0A624009C0C2C /* FilterIndicator@2x.png in Resources */,
 				A67D0D7D1A2EE12A003A8B35 /* PreferencePanel.strings in Resources */,
 				A6BF8D1A21EB188E003CF805 /* iTermDependencyEditorWindowController.xib in Resources */,
-				A61220BF2E0FAC9200F48E64 /* visual-debug-remove-element.js in Resources */,
 				A68E333C1DE78D08003F1D8E /* Man Page Touch Bar Icon@2x.png in Resources */,
 				A6FE7A9F2E0E6BA000BEBCE4 /* autofill-write.js in Resources */,
 				A6F1B3C22693B82C00546767 /* DebugLogging.png in Resources */,
@@ -17767,7 +17752,6 @@
 				A66351492B659309009B93F7 /* PinnedIndicator.png in Resources */,
 				A697CDCF2D975AE20031583F /* Toolbelt-Screenshot@2x.png in Resources */,
 				A697CDD02D975AE20031583F /* VerticalSplit@2x.png in Resources */,
-				A61220BD2E0FAAB300F48E64 /* debug-remove-element-at-point.js in Resources */,
 				A697CDD12D975AE20031583F /* AdvancedPaste@2x.png in Resources */,
 				A697CDD22D975AE20031583F /* TmuxDashboard.png in Resources */,
 				A697CDD32D975AE20031583F /* HorizontalSplit@2x.png in Resources */,

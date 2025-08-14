@@ -109,7 +109,13 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private let audioHandler: iTermBrowserAudioHandler?
     private let editingDetector: iTermBrowserEditingDetectorHandler?
     private let graphDiscovery = iTermBrowserGraphDiscoveryHandler()
-
+    private static var nextIdentifier = 1
+    private lazy var identifier: Int = {
+        defer {
+            Self.nextIdentifier += 1
+        }
+        return Self.nextIdentifier
+    }()
     private static var safariVersion = {
         Bundle(path: "/Applications/Safari.app")?.infoDictionary?["CFBundleShortVersionString"] as? String
     }()
@@ -189,10 +195,10 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         applyProxyConfiguration(to: configuration.websiteDataStore)
 
         var logErrors = ""
-#if DEBUG
-        logErrors = iTermBrowserTemplateLoader(named: "log-errors",
-                                               type: "js",
-                                               substitutions: [:])
+#if ITERM_DEBUG
+        logErrors = iTermBrowserTemplateLoader.loadTemplate(named: "log-errors",
+                                                            type: "js",
+                                                            substitutions: [:])
 #endif
         let js = iTermBrowserTemplateLoader.loadTemplate(named: "console-log",
                                                          type: "js",
@@ -1007,19 +1013,24 @@ extension iTermBrowserManager: iTermBrowserWebViewDelegate {
 @available(macOS 11.0, *)
 extension iTermBrowserManager {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        // Handle console.log messages separately since they come as String
+        // Handle console.{log,debug,error} messages separately since they come as String
         switch message.name {
         case "iTerm2ConsoleLog":
-            let string = if let logMessage = message.body as? String {
-                logMessage
-            } else {
-                message.body
-            }
+            if let obj = message.body as? [String: String], let logMessage = obj["msg"], let level = obj["level"] {
+                switch level {
+                case "debug":
+                    DLog("Javascript Console: " + logMessage)
+                default:
 #if ITERM_DEBUG
-            NSLog("%@", "Javascript Console: \(string)")
+                    NSLog("%@", "Javascript Console: \(logMessage)")
 #else
-            XLog("Javascript Console: \(string)")
+                    XLog("Javascript Console: \(logMessage)")
 #endif
+                    let id = "#\(identifier)"
+                    iTermScriptHistory.sharedInstance().addBrowserLoggingEntryIfNeeded(id)
+                    iTermScriptHistoryEntry.browserEntry(id).addOutput(logMessage + "\n") {}
+                }
+            }
 
         case iTermBrowserFindManager.messageHandlerName:
             _findManager?.handleMessage(webView: webView, message: message)

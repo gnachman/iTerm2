@@ -1,5 +1,5 @@
 (function() {
-    console.log('navigate-to-named-mark.js: Starting navigation');
+    console.debug('navigate-to-named-mark.js: Starting navigation');
     
     // Parameters passed via template substitution
     var xpath = "{{XPATH}}";
@@ -7,12 +7,12 @@
     var scrollY = parseInt("{{SCROLL_Y}}") || 0;
     var textFragment = "{{TEXT_FRAGMENT}}";
     
-    console.log('navigate-to-named-mark.js: Parameters - xpath:', xpath, 'offsetY:', offsetY, 'scrollY:', scrollY, 'textFragment:', textFragment);
+    console.debug('navigate-to-named-mark.js: Parameters - xpath:', xpath, 'offsetY:', offsetY, 'scrollY:', scrollY, 'textFragment:', textFragment);
     
     var targetElement = null;
     
     try {
-        console.log('navigate-to-named-mark.js: Evaluating XPath:', xpath);
+        console.debug('navigate-to-named-mark.js: Evaluating XPath:', xpath);
         // Try XPath first
         var result = document.evaluate(
             xpath,
@@ -25,22 +25,22 @@
         targetElement = result.singleNodeValue;
         
         if (!targetElement && textFragment) {
-            console.log('navigate-to-named-mark.js: XPath failed, trying text fragment fallback');
+            console.debug('navigate-to-named-mark.js: XPath failed, trying text fragment fallback');
             targetElement = findElementByTextFragment(textFragment);
         }
         
         if (!targetElement) {
-            console.log('navigate-to-named-mark.js: Element not found with XPath or text fragment');
+            console.debug('navigate-to-named-mark.js: Element not found with XPath or text fragment');
             return false; // Element not found
         }
         
-        console.log('navigate-to-named-mark.js: Found target element:', targetElement);
+        console.debug('navigate-to-named-mark.js: Found target element:', targetElement);
         
         // Get element position
         var rect = targetElement.getBoundingClientRect();
         var elementTop = rect.top + window.pageYOffset;
         
-        console.log('navigate-to-named-mark.js: Element rect:', rect, 'elementTop:', elementTop);
+        console.debug('navigate-to-named-mark.js: Element rect:', rect, 'elementTop:', elementTop);
         
         // Calculate scroll position to center the element in the viewport
         var viewportCenter = window.innerHeight / 2;
@@ -49,7 +49,7 @@
         // Ensure we don't scroll past document bounds
         targetScrollY = Math.max(0, Math.min(targetScrollY, document.body.scrollHeight - window.innerHeight));
         
-        console.log('navigate-to-named-mark.js: Scrolling to:', targetScrollY);
+        console.debug('navigate-to-named-mark.js: Scrolling to:', targetScrollY);
         
         // Smooth scroll to position
         window.scrollTo({
@@ -70,12 +70,12 @@
             targetElement.style.outlineOffset = originalOutlineOffset;
         }, 2000);
         
-        console.log('navigate-to-named-mark.js: Navigation successful');
+        console.debug('navigate-to-named-mark.js: Navigation successful');
         return true; // Successfully navigated
         
     } catch (error) {
-        console.log('navigate-to-named-mark.js: Error navigating to mark:', error);
-        console.log('navigate-to-named-mark.js: Error stack:', error.stack);
+        console.debug('navigate-to-named-mark.js: Error navigating to mark:', error);
+        console.debug('navigate-to-named-mark.js: Error stack:', error.stack);
         return false;
     }
     
@@ -83,7 +83,7 @@
     function findElementByTextFragment(fragment) {
         if (!fragment) return null;
         
-        console.log('navigate-to-named-mark.js: Searching for text fragment:', fragment);
+        console.debug('navigate-to-named-mark.js: Searching for text fragment:', fragment);
         
         // Handle contextual fragments (prefix-,text,-suffix or text,end)
         var searchText = fragment;
@@ -120,7 +120,7 @@
             }
         }
         
-        console.log('navigate-to-named-mark.js: Parsed fragment - searchText:', searchText, 'isRange:', isRange, 'prefix:', prefix, 'suffix:', suffix);
+        console.debug('navigate-to-named-mark.js: Parsed fragment - searchText:', searchText, 'isRange:', isRange, 'prefix:', prefix, 'suffix:', suffix);
         
         // Create a tree walker to traverse all text nodes
         var walker = document.createTreeWalker(
@@ -171,13 +171,13 @@
                 }
                 
                 if (contextMatch) {
-                    console.log('navigate-to-named-mark.js: Found text fragment match in element:', textNode.parentNode);
+                    console.debug('navigate-to-named-mark.js: Found text fragment match in element:', textNode.parentNode);
                     return textNode.parentNode;
                 }
             }
         }
         
-        console.log('navigate-to-named-mark.js: Text fragment not found');
+        console.debug('navigate-to-named-mark.js: Text fragment not found');
         return null;
     }
 })();

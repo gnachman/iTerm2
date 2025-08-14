@@ -114,7 +114,7 @@
             return null;
         }
 
-        console.log(`find-nav: Getting position for match ${index}:`, {
+        console.debug(`find-nav: Getting position for match ${index}:`, {
             matchId: match.id,
             type: match.type,
             text: match.text.substring(0, 30) + '...',
@@ -131,7 +131,7 @@
                 // Try to find the match by its ID in the engine's matches array
                 const engineMatch = engine.matches.find(m => m.id === match.id);
                 if (engineMatch && engineMatch.highlightElements) {
-                    console.log(`find-nav: Found match in engine with ${engineMatch.highlightElements.length} highlight elements`);
+                    console.debug(`find-nav: Found match in engine with ${engineMatch.highlightElements.length} highlight elements`);
                     match = engineMatch;
                 } else {
                     console.error(`find-nav: Could not find match ${match.id} in engine matches`);
@@ -143,7 +143,7 @@
             if (match.highlightElements && match.highlightElements.length > 0) {
                 const firstElement = match.highlightElements[0];
                 const rect = firstElement.getBoundingClientRect();
-                console.log(`find-nav: Match ${index} first highlight element:`, {
+                console.debug(`find-nav: Match ${index} first highlight element:`, {
                     tagName: firstElement.tagName,
                     className: firstElement.className,
                     textContent: firstElement.textContent?.substring(0, 30),
@@ -152,7 +152,7 @@
             }
             
             const bounds = engine.getLocalMatchBounds(match);
-            console.log(`find-nav: Local match ${index} bounds:`, bounds, 'from', match.highlightElements?.length, 'elements');
+            console.debug(`find-nav: Local match ${index} bounds:`, bounds, 'from', match.highlightElements?.length, 'elements');
             
             if (!bounds || bounds.x === undefined) {
                 console.error(`find-nav: No bounds for local match ${index}`);
@@ -163,14 +163,14 @@
                 x: bounds.x + bounds.width / 2 - 12,
                 y: bounds.y - 30
             };
-            console.log(`find-nav: Bubble ${index} position:`, position);
+            console.debug(`find-nav: Bubble ${index} position:`, position);
             return position;
         } 
         // For remote matches (iframes), use the engine's getRemoteMatchBounds
         else if (match.type === 'remote') {
-            console.log(`find-nav: Getting remote bounds for match ${index}`);
+            console.debug(`find-nav: Getting remote bounds for match ${index}`);
             const bounds = await engine.getRemoteMatchBounds(match);
-            console.log(`find-nav: Remote match ${index} bounds:`, bounds);
+            console.debug(`find-nav: Remote match ${index} bounds:`, bounds);
             
             if (!bounds || !bounds.x) {
                 console.error(`find-nav: No bounds for remote match ${index}`);
@@ -181,7 +181,7 @@
                 x: bounds.x + bounds.width / 2 - 12,
                 y: bounds.y - 30
             };
-            console.log(`find-nav: Bubble ${index} position:`, position);
+            console.debug(`find-nav: Bubble ${index} position:`, position);
             return position;
         }
 
@@ -246,7 +246,7 @@
                         }, 300);
                     }
                 });
-                console.log('find-nav: Removed bubble with label "' + label + '"');
+                console.debug('find-nav: Removed bubble with label "' + label + '"');
             })();
         `;
         
@@ -281,7 +281,7 @@
                     const matches = label.toLowerCase().startsWith(prefix.toLowerCase());
                     bubble.classList.toggle('highlighted', matches && prefix.length > 0);
                 });
-                console.log('find-nav: Updated highlighting for prefix "' + prefix + '" on', bubbles.length, 'bubbles');
+                console.debug('find-nav: Updated highlighting for prefix "' + prefix + '" on', bubbles.length, 'bubbles');
             })();
         `;
         
@@ -306,7 +306,7 @@
             return true;
         }
 
-        console.log('find-nav: Key pressed:', event.key);
+        console.debug('find-nav: Key pressed:', event.key);
 
         const character = event.key.toUpperCase();
         let candidate = currentPrefix ? currentPrefix + character : character;
@@ -314,7 +314,7 @@
         // Check for exact match with current prefix + character
         const exactMatch = findMatchForKeyEquivalent(candidate);
         if (exactMatch) {
-            console.log('find-nav: Found exact match for', candidate, 'with text:', exactMatch.text);
+            console.debug('find-nav: Found exact match for', candidate, 'with text:', exactMatch.text);
             
             if (currentCallback && exactMatch.text) {
                 currentCallback(exactMatch.text);
@@ -329,7 +329,7 @@
         // Check for single character exact match (without prefix)
         const singleMatch = findMatchForKeyEquivalent(character);
         if (singleMatch) {
-            console.log('find-nav: Found single match for', character, 'with text:', singleMatch.text);
+            console.debug('find-nav: Found single match for', character, 'with text:', singleMatch.text);
             
             if (currentCallback && singleMatch.text) {
                 currentCallback(singleMatch.text);
@@ -355,7 +355,7 @@
 
     // Public API function: Start navigation mode
     async function startNavigation(segmentsParam, matchesParam, instanceId, callback) {
-        console.log('find-nav: Starting navigation with', matchesParam?.length, 'matches');
+        console.debug('find-nav: Starting navigation with', matchesParam?.length, 'matches');
         
         // Clear any existing navigation
         clearNavigation();
@@ -367,7 +367,7 @@
         globalBubbleRegistry = [];
 
         if (!matches || matches.length === 0) {
-            console.log('find-nav: No matches to navigate');
+            console.debug('find-nav: No matches to navigate');
             return;
         }
 
@@ -376,7 +376,7 @@
 
         // Generate shortcut labels with fixed digit count
         const labels = generateShortcutLabels(matches.length);
-        console.log('find-nav: Generated labels:', labels);
+        console.debug('find-nav: Generated labels:', labels);
         
         // Populate global registry for keyboard handling
         for (let index = 0; index < matches.length; index++) {
@@ -387,7 +387,7 @@
                 match: match
             });
         }
-        console.log('find-nav: Populated global registry with', globalBubbleRegistry.length, 'entries');
+        console.debug('find-nav: Populated global registry with', globalBubbleRegistry.length, 'entries');
         
         // Create a match mapping based on coordinates and text that works across frames
         const matchLabels = [];
@@ -414,7 +414,7 @@
             }
         }
         
-        console.log('find-nav: Created match labels for', matchLabels.length, 'matches');
+        console.debug('find-nav: Created match labels for', matchLabels.length, 'matches');
         
         // Use evaluateInAll to let each frame create its own bubbles
         const script = `
@@ -423,10 +423,10 @@
                 const instanceId = ${JSON.stringify(instanceId)};
                 
                 // The getEngine function is inside the IIFE, but we can access it via a hack
-                console.log('find-nav: Checking for iTermCustomFind:', typeof window.iTermCustomFind);
+                console.debug('find-nav: Checking for iTermCustomFind:', typeof window.iTermCustomFind);
                 
                 if (!window.iTermCustomFind) {
-                    console.log('find-nav: Frame does not have iTermCustomFind loaded, skipping');
+                    console.debug('find-nav: Frame does not have iTermCustomFind loaded, skipping');
                     return;
                 }
                 
@@ -437,20 +437,20 @@
                     // Try to access the engine through eval since we're in the same IIFE context
                     engine = eval('getEngine')(instanceId);
                 } catch (e) {
-                    console.log('find-nav: Could not access getEngine:', e.message);
+                    console.debug('find-nav: Could not access getEngine:', e.message);
                     return;
                 }
                 
-                console.log('find-nav: Engine found:', !!engine);
-                console.log('find-nav: Engine has matches:', engine ? !!engine.matches : false);
-                console.log('find-nav: Match count:', engine ? (engine.matches ? engine.matches.length : 0) : 0);
+                console.debug('find-nav: Engine found:', !!engine);
+                console.debug('find-nav: Engine has matches:', engine ? !!engine.matches : false);
+                console.debug('find-nav: Match count:', engine ? (engine.matches ? engine.matches.length : 0) : 0);
                 
                 if (!engine || !engine.matches || engine.matches.length === 0) {
-                    console.log('find-nav: No engine or matches in frame, skipping');
+                    console.debug('find-nav: No engine or matches in frame, skipping');
                     return;
                 }
                 
-                console.log('find-nav: Frame processing', engine.matches.length, 'matches');
+                console.debug('find-nav: Frame processing', engine.matches.length, 'matches');
                 
                 // Create styles if needed
                 if (!document.getElementById('find-nav-styles')) {
@@ -529,7 +529,7 @@
                         return; // No label for this match
                     }
                     
-                    console.log('find-nav: Creating bubble for match', match.id, 'with label', matchLabel, 'coords', match.coordinates);
+                    console.debug('find-nav: Creating bubble for match', match.id, 'with label', matchLabel, 'coords', match.coordinates);
                     
                     const bounds = engine.getLocalMatchBounds(match);
                     if (!bounds || bounds.x === undefined) {
@@ -563,15 +563,15 @@
                     bubblesCreated++;
                 });
                 
-                console.log('find-nav: Frame created', bubblesCreated, 'bubbles');
+                console.debug('find-nav: Frame created', bubblesCreated, 'bubbles');
             })();
         `;
         
-        console.log('find-nav: Using evaluateInAll to create bubbles in all frames');
+        console.debug('find-nav: Using evaluateInAll to create bubbles in all frames');
         
         await new Promise((resolve) => {
             graphDiscoveryEvaluateInAll(script, (results) => {
-                console.log('find-nav: evaluateInAll completed, results from', Object.keys(results).length, 'frames');
+                console.debug('find-nav: evaluateInAll completed, results from', Object.keys(results).length, 'frames');
                 resolve();
             });
         });
@@ -587,7 +587,7 @@
             document.addEventListener('keydown', keyListener, true);
         }
         
-        console.log('find-nav: Keyboard listener added to main frame');
+        console.debug('find-nav: Keyboard listener added to main frame');
     }
 
     // Public API function: Clear navigation mode
@@ -610,7 +610,7 @@
                         }
                     }, 300);
                 });
-                console.log('find-nav: Cleared', bubbles.length, 'bubbles from frame');
+                console.debug('find-nav: Cleared', bubbles.length, 'bubbles from frame');
             })();
         `;
         

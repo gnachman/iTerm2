@@ -85,6 +85,7 @@
 #import "SIGIdentity.h"
 #import "iTermSSHHelpers.h"
 #import "iTermScriptExporter.h"
+#import "iTermScriptHistory.h"
 #import "iTermScriptImporter.h"
 #import "iTermSecureKeyboardEntryController.h"
 #import "iTermSelection.h"

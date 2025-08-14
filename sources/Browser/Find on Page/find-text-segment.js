@@ -10,7 +10,7 @@ class TextSegment extends Segment {
     // Method to set text nodes - now uses shared collection logic for consistency
     setTextNodes(textNodes, engine) {
         const prefix = '[TEXT_COLLECTION:search-via-setTextNodes]';
-        console.log(prefix, 'ENTER - discarding provided', textNodes.length, 'text nodes, using shared collection instead');
+        console.debug(prefix, 'ENTER - discarding provided', textNodes.length, 'text nodes, using shared collection instead');
         this.textContent = '';
 
         // Instead of using the provided textNodes, use shared collection for consistency
@@ -22,18 +22,18 @@ class TextSegment extends Segment {
         for (let i = 0; i < freshTextNodes.length; i++) {
             const node = freshTextNodes[i];
             const nodeText = node.textContent;
-            console.log(prefix, 'processing node', i + 1, 'offset:', currentOffset, 'length:', nodeText.length, 'content:', JSON.stringify(nodeText), 'parent:', node.parentElement?.tagName);
+            console.debug(prefix, 'processing node', i + 1, 'offset:', currentOffset, 'length:', nodeText.length, 'content:', JSON.stringify(nodeText), 'parent:', node.parentElement?.tagName);
             this.textContent += nodeText;
             currentOffset += nodeText.length;
         }
 
-        console.log(prefix, 'COMPLETE - collected', freshTextNodes.length, 'nodes, total length:', this.textContent.length);
-        console.log(prefix, 'final textContent:', JSON.stringify(this.textContent.substring(0, 100) + (this.textContent.length > 100 ? '...' : '')));
+        console.debug(prefix, 'COMPLETE - collected', freshTextNodes.length, 'nodes, total length:', this.textContent.length);
+        console.debug(prefix, 'final textContent:', JSON.stringify(this.textContent.substring(0, 100) + (this.textContent.length > 100 ? '...' : '')));
     }
 
     collectTextNodes(engine) {
         const prefix = '[TEXT_COLLECTION:search]';
-        console.log(prefix, 'ENTER - element:', this.element.tagName, 'id:', this.element.id, 'className:', this.element.className);
+        console.debug(prefix, 'ENTER - element:', this.element.tagName, 'id:', this.element.id, 'className:', this.element.className);
         this.textContent = '';
 
         // Use the shared text node collection function for consistency
@@ -43,13 +43,13 @@ class TextSegment extends Segment {
         for (let i = 0; i < textNodes.length; i++) {
             const node = textNodes[i];
             const nodeText = node.textContent;
-            console.log(prefix, 'processing node', i + 1, 'offset:', currentOffset, 'length:', nodeText.length, 'content:', JSON.stringify(nodeText), 'parent:', node.parentElement?.tagName);
+            console.debug(prefix, 'processing node', i + 1, 'offset:', currentOffset, 'length:', nodeText.length, 'content:', JSON.stringify(nodeText), 'parent:', node.parentElement?.tagName);
             this.textContent += nodeText;
             currentOffset += nodeText.length;
         }
 
-        console.log(prefix, 'COMPLETE - collected', textNodes.length, 'nodes, total length:', this.textContent.length);
-        console.log(prefix, 'final textContent:', JSON.stringify(this.textContent.substring(0, 100) + (this.textContent.length > 100 ? '...' : '')));
+        console.debug(prefix, 'COMPLETE - collected', textNodes.length, 'nodes, total length:', this.textContent.length);
+        console.debug(prefix, 'final textContent:', JSON.stringify(this.textContent.substring(0, 100) + (this.textContent.length > 100 ? '...' : '')));
     }
 
     updateBounds() {

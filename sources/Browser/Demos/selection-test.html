@@ -186,39 +186,39 @@
         
         // Log detailed information on mouse down
         document.addEventListener('mousedown', function(e) {
-            console.log('=== MOUSE DOWN EVENT ===');
-            console.log('Client coordinates (viewport):', e.clientX, e.clientY);
-            console.log('Page coordinates (document):', e.pageX, e.pageY);
-            console.log('Screen coordinates:', e.screenX, e.screenY);
-            console.log('Offset coordinates:', e.offsetX, e.offsetY);
-            console.log('Target element:', e.target.tagName, e.target.className);
-            console.log('Window size:', window.innerWidth, 'x', window.innerHeight);
-            console.log('Document size:', document.documentElement.scrollWidth, 'x', document.documentElement.scrollHeight);
-            console.log('Page zoom / device pixel ratio:', window.devicePixelRatio);
-            console.log('Scroll position:', window.scrollX, window.scrollY);
+            console.debug('=== MOUSE DOWN EVENT ===');
+            console.debug('Client coordinates (viewport):', e.clientX, e.clientY);
+            console.debug('Page coordinates (document):', e.pageX, e.pageY);
+            console.debug('Screen coordinates:', e.screenX, e.screenY);
+            console.debug('Offset coordinates:', e.offsetX, e.offsetY);
+            console.debug('Target element:', e.target.tagName, e.target.className);
+            console.debug('Window size:', window.innerWidth, 'x', window.innerHeight);
+            console.debug('Document size:', document.documentElement.scrollWidth, 'x', document.documentElement.scrollHeight);
+            console.debug('Page zoom / device pixel ratio:', window.devicePixelRatio);
+            console.debug('Scroll position:', window.scrollX, window.scrollY);
             
             // Add a visual marker at click position
             addClickMarker(e.clientX, e.clientY);
             
             // Element from point test
             let elementAtPoint = document.elementFromPoint(e.clientX, e.clientY);
-            console.log('Element from point:', elementAtPoint?.tagName, elementAtPoint?.textContent?.substring(0, 30));
+            console.debug('Element from point:', elementAtPoint?.tagName, elementAtPoint?.textContent?.substring(0, 30));
             
             // Caret range test
             let caretRange = document.caretRangeFromPoint(e.clientX, e.clientY);
             if (caretRange) {
-                console.log('Caret range created successfully at:', caretRange.startOffset);
-                console.log('Caret container type:', caretRange.startContainer.nodeType === Node.TEXT_NODE ? 'TEXT_NODE' : caretRange.startContainer.tagName);
+                console.debug('Caret range created successfully at:', caretRange.startOffset);
+                console.debug('Caret container type:', caretRange.startContainer.nodeType === Node.TEXT_NODE ? 'TEXT_NODE' : caretRange.startContainer.tagName);
             } else {
-                console.log('Caret range failed at coordinates:', e.clientX, e.clientY);
+                console.debug('Caret range failed at coordinates:', e.clientX, e.clientY);
             }
             
-            console.log('========================');
+            console.debug('========================');
         });
         
         // Add visual click marker
         function addClickMarker(x, y) {
-            console.log('*** RED DOT PLACED AT:', 'x=' + x, 'y=' + y, '***');
+            console.debug('*** RED DOT PLACED AT:', 'x=' + x, 'y=' + y, '***');
             
             // Remove old markers if we have too many
             if (clickMarkers.length > 5) {
@@ -278,7 +278,7 @@
         document.addEventListener('selectionchange', function() {
             let selection = window.getSelection();
             if (selection.rangeCount > 0) {
-                console.log('Selection changed:', selection.toString().substring(0, 50));
+                console.debug('Selection changed:', selection.toString().substring(0, 50));
             }
         });
         
@@ -291,13 +291,13 @@
             const currentScale = visualViewport ? visualViewport.scale : 1;
             const currentDimensions = { width: window.innerWidth, height: window.innerHeight };
             
-            console.log(`[Magnification ${context}]`);
-            console.log('  Visual viewport scale:', currentScale);
-            console.log('  Window dimensions:', currentDimensions.width, 'x', currentDimensions.height);
-            console.log('  Visual viewport offset:', visualViewport ? `(${visualViewport.offsetLeft}, ${visualViewport.offsetTop})` : 'N/A');
-            console.log('  Visual viewport size:', visualViewport ? `${visualViewport.width}x${visualViewport.height}` : 'N/A');
-            console.log('  Device pixel ratio:', window.devicePixelRatio);
-            console.log('  Document zoom level:', document.documentElement.style.zoom || 'none');
+            console.debug(`[Magnification ${context}]`);
+            console.debug('  Visual viewport scale:', currentScale);
+            console.debug('  Window dimensions:', currentDimensions.width, 'x', currentDimensions.height);
+            console.debug('  Visual viewport offset:', visualViewport ? `(${visualViewport.offsetLeft}, ${visualViewport.offsetTop})` : 'N/A');
+            console.debug('  Visual viewport size:', visualViewport ? `${visualViewport.width}x${visualViewport.height}` : 'N/A');
+            console.debug('  Device pixel ratio:', window.devicePixelRatio);
+            console.debug('  Document zoom level:', document.documentElement.style.zoom || 'none');
             
             return { scale: currentScale, dimensions: currentDimensions };
         }
@@ -311,8 +311,8 @@
             });
             
             window.visualViewport.addEventListener('scroll', function() {
-                console.log('[Magnification Visual Viewport Scroll]');
-                console.log('  Visual viewport offset:', window.visualViewport.offsetLeft, window.visualViewport.offsetTop);
+                console.debug('[Magnification Visual Viewport Scroll]');
+                console.debug('  Visual viewport offset:', window.visualViewport.offsetLeft, window.visualViewport.offsetTop);
             });
         }
         
@@ -322,16 +322,16 @@
             if (state.scale !== lastVisualViewportScale || 
                 state.dimensions.width !== lastWindowDimensions.width ||
                 state.dimensions.height !== lastWindowDimensions.height) {
-                console.log('  ** MAGNIFICATION CHANGE DETECTED **');
+                console.debug('  ** MAGNIFICATION CHANGE DETECTED **');
                 lastVisualViewportScale = state.scale;
                 lastWindowDimensions = state.dimensions;
             }
         });
         
         // Additional debug info
-        console.log('Test page loaded');
+        console.debug('Test page loaded');
         logMagnificationState('Initial Load');
-        console.log('Visual viewport support:', !!window.visualViewport);
+        console.debug('Visual viewport support:', !!window.visualViewport);
     </script>
 </body>
 </html>

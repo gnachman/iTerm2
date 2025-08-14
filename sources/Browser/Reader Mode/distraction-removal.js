@@ -8,7 +8,7 @@
   let captureLayer = null;
 
   function enter() {
-    console.log('[DR] enter()');
+    console.debug('[DR] enter()');
     if (typeof Readability === 'undefined') {
       console.error('[DR] Readability.js missing');
       return false;
@@ -17,10 +17,10 @@
     const docClone = document.cloneNode(true);
     const reader   = new Readability(docClone);
     const article  = reader.parse();
-    console.log('[DR] Readability.parse →', article);
+    console.debug('[DR] Readability.parse →', article);
 
     mainContainer = detectMainContainer(article);
-    console.log('[DR] mainContainer →', mainContainer);
+    console.debug('[DR] mainContainer →', mainContainer);
 
     // capture layer above all content
     captureLayer = document.createElement('div');
@@ -46,7 +46,7 @@
   }
 
   function exit() {
-    console.log('[DR] exit()');
+    console.debug('[DR] exit()');
     if (!isActive) return false;
 
     captureLayer.removeEventListener('mousemove', onMove);
@@ -73,7 +73,7 @@
   function detectMainContainer(article) {
     if (article?.textContent) {
       const words = article.textContent.split(/\s+/).filter(Boolean);
-        console.log(`Text contetn of article has length ${words.length}: ${article.textContent}`);
+        console.debug(`Text contetn of article has length ${words.length}: ${article.textContent}`);
       if (words.length >= 20) {
         const sample = words.slice(0, 20).join(' ');
         const candidates = Array.from(
@@ -88,9 +88,9 @@
         }
       }
     } else {
-        console.log("No article or no text content");
+        console.debug("No article or no text content");
     }
-    console.log('[DR] fallback scoring detection');
+    console.debug('[DR] fallback scoring detection');
     const cand = Array.from(
       document.querySelectorAll('article, main, div, section, [role=main]')
     ).filter(el => {
@@ -110,7 +110,7 @@
     }
     const scored = cand.map(el=>({el,s:score(el)}))
                       .sort((a,b)=>b.s-a.s);
-    console.log('[DR] scored top:', scored[0]);
+    console.debug('[DR] scored top:', scored[0]);
     return scored[0]?.s>0? scored[0].el : document.body;
   }
 
@@ -154,7 +154,7 @@
   }
 
   function onClick(e) {
-    console.log('[DR] click at', e.clientX, e.clientY);
+    console.debug('[DR] click at', e.clientX, e.clientY);
     const pts = document.elementsFromPoint(e.clientX,e.clientY)
       .filter(x=>x!==captureLayer && x!==document.documentElement && x!==document.body);
 
@@ -162,7 +162,7 @@
     for (const el of pts) {
       if (el===mainContainer) break;
       const root = findRootOverlay(el);
-      console.log('[DR] hiding root overlay:', root);
+      console.debug('[DR] hiding root overlay:', root);
       removed.push(root);
       root.classList.add('dr-removed');
       didHide = true;
@@ -172,7 +172,7 @@
       // hide any backdrops that cover the viewport
       const bps = findBackdropElements();
       bps.forEach(bp => {
-        console.log('[DR] hiding backdrop via geometry:', bp);
+        console.debug('[DR] hiding backdrop via geometry:', bp);
         removed.push(bp);
         bp.classList.add('dr-removed');
       });
@@ -180,7 +180,7 @@
     if (didHide) {
       e.preventDefault(); e.stopPropagation();
     } else {
-      console.log('[DR] nothing to hide');
+      console.debug('[DR] nothing to hide');
     }
   }
 

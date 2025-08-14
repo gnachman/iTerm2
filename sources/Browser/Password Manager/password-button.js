@@ -2,7 +2,7 @@
     'use strict';
     const handlerName   = 'iTermOpenPasswordManager';
     const sessionSecret = "{{SECRET}}";
-    console.log("password button running");
+    console.debug("password button running");
     let activeField = null;
     let activeType  = null; // 'password' or 'username'
 

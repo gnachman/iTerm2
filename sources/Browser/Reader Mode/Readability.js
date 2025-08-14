@@ -81,7 +81,7 @@ function Readability(doc, options) {
           return arg;
         });
         args.unshift("Reader: (Readability)");
-        console.log.apply(console, args);
+        console.debug.apply(console, args);
       } else if (typeof dump !== "undefined") {
         /* global dump */
         var msg = Array.prototype.map.call(arguments, function(x) {

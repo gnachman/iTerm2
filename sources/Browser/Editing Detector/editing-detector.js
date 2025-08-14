@@ -1,6 +1,6 @@
 (() => {
     try {
-        console.log("[editing-detector] starting");
+        console.debug("[editing-detector] starting");
 
         const mh = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.iTerm2EditingDetector;
         const isMainFrame = window === window.top;
@@ -54,7 +54,7 @@
         }
 
         function isTextLikeEditor(el) {
-            console.log("[editing-detector] isTextLikeEditor:", el && el.tagName);
+            console.debug("[editing-detector] isTextLikeEditor:", el && el.tagName);
             if (!el) { return false; }
             
             // Iframe elements themselves are not editable, focus is delegated to their contents
@@ -96,7 +96,7 @@
                     depth: frameDepth(),
                     editable: editable
                 });
-                console.log("[editing-detector] sent editable <-", editable, "depth:", frameDepth());
+                console.debug("[editing-detector] sent editable <-", editable, "depth:", frameDepth());
             } catch (e) {
                 console.error(e.toString(), e);
             }
@@ -110,7 +110,7 @@
                     editable: editable,
                     sessionSecret: sessionSecret
                 }, '*');
-                console.log("[editing-detector] sent to parent editable <-", editable, "frameId:", frameId);
+                console.debug("[editing-detector] sent to parent editable <-", editable, "frameId:", frameId);
             } catch (e) {
                 console.error("[editing-detector] Failed to post to parent:", e);
             }
@@ -170,7 +170,7 @@
                     event.data.sessionSecret === sessionSecret) {
                     frameStates.set(event.data.frameId, event.data.editable);
                     updateAggregatedState();
-                    console.log("[editing-detector] received from child frameId:", event.data.frameId, "editable:", event.data.editable);
+                    console.debug("[editing-detector] received from child frameId:", event.data.frameId, "editable:", event.data.editable);
                     
                     // If child reports true, set up a watchdog to detect if it doesn't report false
                     if (event.data.editable) {

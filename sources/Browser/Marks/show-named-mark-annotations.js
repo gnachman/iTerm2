@@ -39,7 +39,7 @@
             
             var element = result.singleNodeValue;
             if (!element) {
-                console.log('Named mark element not found:', mark.name);
+                console.debug('Named mark element not found:', mark.name);
                 return false;
             }
             
@@ -191,7 +191,7 @@
                         sessionSecret: sessionSecret
                     });
                 } catch (error) {
-                    console.log('Error saving mark text:', error);
+                    console.debug('Error saving mark text:', error);
                 }
                 
                 // Update the mark data
@@ -205,7 +205,7 @@
             container.appendChild(annotation);
             
         } catch (error) {
-            console.log('Error creating annotation for mark:', mark.name, error);
+            console.debug('Error creating annotation for mark:', mark.name, error);
         }
     });
     

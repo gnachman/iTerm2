@@ -148,7 +148,7 @@
                             } catch (e) {
                                 // Cross-origin iframe, can't access content
                                 // This is expected and normal for many iframes
-                                console.log('Cannot access iframe content (cross-origin):', iframe.src);
+                                console.debug('Cannot access iframe content (cross-origin):', iframe.src);
                             }
                         }
                     }

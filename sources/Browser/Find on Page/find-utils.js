@@ -259,7 +259,7 @@ function createTextNodeFilter(engine) {
 // Collect text nodes using the same logic as search phase
 function collectCurrentTextNodes(segment, engine, phase = 'highlight') {
     const prefix = `[TEXT_COLLECTION:${phase}]`;
-    console.log(prefix, 'ENTER - collecting text nodes for segment with element:', segment.element.tagName);
+    console.debug(prefix, 'ENTER - collecting text nodes for segment with element:', segment.element.tagName);
     
     const textNodes = [];
     const walker = _createTreeWalker(
@@ -274,19 +274,19 @@ function collectCurrentTextNodes(segment, engine, phase = 'highlight') {
     while (node = _TreeWalker_nextNode.call(walker)) {
         nodeCount++;
         const nodeText = node.textContent;
-        console.log(prefix, 'node', nodeCount, 'length:', nodeText.length, 'content:', JSON.stringify(nodeText), 'parent:', node.parentElement?.tagName);
+        console.debug(prefix, 'node', nodeCount, 'length:', nodeText.length, 'content:', JSON.stringify(nodeText), 'parent:', node.parentElement?.tagName);
         textNodes.push(node);
     }
     
-    console.log(prefix, 'EXIT - collected', textNodes.length, 'text nodes');
+    console.debug(prefix, 'EXIT - collected', textNodes.length, 'text nodes');
     return textNodes;
 }
 
 // Find text node and offset by walking the DOM directly using coordinates
 function findTextNodeByCoordinates(segment, targetOffset, matchLength, engine) {
     const prefix = '[COORD_MAPPING]';
-    console.log(prefix, 'ENTER - targetOffset:', targetOffset, 'matchLength:', matchLength, 'segment.element:', segment.element.tagName, 'segment.textContent.length:', segment.textContent.length);
-    console.log(prefix, 'segment.textContent preview:', JSON.stringify(segment.textContent.substring(0, 100) + '...'));
+    console.debug(prefix, 'ENTER - targetOffset:', targetOffset, 'matchLength:', matchLength, 'segment.element:', segment.element.tagName, 'segment.textContent.length:', segment.textContent.length);
+    console.debug(prefix, 'segment.textContent preview:', JSON.stringify(segment.textContent.substring(0, 100) + '...'));
     
     let currentOffset = 0;
     let startNode = null;
@@ -296,24 +296,24 @@ function findTextNodeByCoordinates(segment, targetOffset, matchLength, engine) {
     let nodeCount = 0;
 
     // Always use fresh text node collection to ensure consistency with search phase
-    console.log(prefix, 'collecting fresh text nodes using shared filter logic');
+    console.debug(prefix, 'collecting fresh text nodes using shared filter logic');
     const textNodes = collectCurrentTextNodes(segment, engine, 'highlight');
     
-    console.log(prefix, 'using fresh textNodes array with', textNodes.length, 'nodes for coordinate mapping');
+    console.debug(prefix, 'using fresh textNodes array with', textNodes.length, 'nodes for coordinate mapping');
     
     for (const node of textNodes) {
         const textContent = _textContentGetter ? _textContentGetter.call(node) : node.textContent;
         const nodeLength = textContent.length;
         nodeCount++;
         
-        console.log(prefix, 'node', nodeCount, 'textContent:', JSON.stringify(textContent), 'length:', nodeLength, 'currentOffset:', currentOffset, 'parent:', node.parentElement?.tagName);
+        console.debug(prefix, 'node', nodeCount, 'textContent:', JSON.stringify(textContent), 'length:', nodeLength, 'currentOffset:', currentOffset, 'parent:', node.parentElement?.tagName);
 
         if (currentOffset + nodeLength > targetOffset) {
             // Start position is in this node
             if (startNode === null) {
                 startNode = node;
                 startOffset = targetOffset - currentOffset;
-                console.log(prefix, 'found START node at offset', startOffset, 'in text:', JSON.stringify(textContent));
+                console.debug(prefix, 'found START node at offset', startOffset, 'in text:', JSON.stringify(textContent));
             }
 
             // Check if end position is also in this node
@@ -321,7 +321,7 @@ function findTextNodeByCoordinates(segment, targetOffset, matchLength, engine) {
             if (currentOffset + nodeLength >= targetEndOffset) {
                 endNode = node;
                 endOffset = targetEndOffset - currentOffset;
-                console.log(prefix, 'found END node at offset', endOffset, 'in text:', JSON.stringify(textContent));
+                console.debug(prefix, 'found END node at offset', endOffset, 'in text:', JSON.stringify(textContent));
                 break;
             }
         }
@@ -332,27 +332,27 @@ function findTextNodeByCoordinates(segment, targetOffset, matchLength, engine) {
         if (startNode && currentOffset >= targetOffset + matchLength) {
             endNode = node;
             endOffset = (targetOffset + matchLength) - (currentOffset - nodeLength);
-            console.log(prefix, 'found END node (past target) at offset', endOffset, 'in text:', JSON.stringify(textContent));
+            console.debug(prefix, 'found END node (past target) at offset', endOffset, 'in text:', JSON.stringify(textContent));
             break;
         }
     }
 
-    console.log(prefix, 'traversal complete - nodeCount:', nodeCount, 'totalOffset:', currentOffset);
-    console.log(prefix, 'result - startNode:', !!startNode, 'endNode:', !!endNode);
+    console.debug(prefix, 'traversal complete - nodeCount:', nodeCount, 'totalOffset:', currentOffset);
+    console.debug(prefix, 'result - startNode:', !!startNode, 'endNode:', !!endNode);
     
     if (startNode) {
-        console.log(prefix, 'startNode content:', JSON.stringify(startNode.textContent), 'startOffset:', startOffset);
+        console.debug(prefix, 'startNode content:', JSON.stringify(startNode.textContent), 'startOffset:', startOffset);
     }
     if (endNode) {
-        console.log(prefix, 'endNode content:', JSON.stringify(endNode.textContent), 'endOffset:', endOffset);
+        console.debug(prefix, 'endNode content:', JSON.stringify(endNode.textContent), 'endOffset:', endOffset);
     }
 
     if (!startNode || !endNode) {
-        console.log(prefix, 'FAILED - returning null because startNode:', !!startNode, 'endNode:', !!endNode);
+        console.debug(prefix, 'FAILED - returning null because startNode:', !!startNode, 'endNode:', !!endNode);
         return null;
     }
 
-    console.log(prefix, 'SUCCESS - returning node range');
+    console.debug(prefix, 'SUCCESS - returning node range');
     return {
         startNode,
         startOffset,
