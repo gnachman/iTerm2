@@ -191,3 +191,10 @@ extension Array {
     }
 }
 
+extension RangeReplaceableCollection where Iterator.Element: Equatable {
+    mutating func removeFirst(where predicate: (Self.Element) throws -> Bool) rethrows {
+        if let i = try firstIndex(where: predicate) {
+            remove(at: i)
+        }
+    }
+}

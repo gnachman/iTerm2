@@ -12,7 +12,7 @@ struct BrowserNamedMarks {
     var url: String
     var name: String
     var sort: Int64?  // Will be auto-assigned by SQLite
-    var text: String
+    var _text: String  // deprecated
     var dateAdded = Date()
     
     init(guid: String, url: String, name: String, text: String = "") {
@@ -20,7 +20,7 @@ struct BrowserNamedMarks {
         self.url = url
         self.name = name
         self.sort = nil  // Let SQLite auto-assign
-        self.text = text
+        self._text = text
     }
     
     init(guid: String, url: String, name: String, sort: Int64, text: String, dateAdded: Date) {
@@ -28,7 +28,7 @@ struct BrowserNamedMarks {
         self.url = url
         self.name = name
         self.sort = sort
-        self.text = text
+        self._text = text
         self.dateAdded = dateAdded
     }
 }
@@ -86,7 +86,7 @@ extension BrowserNamedMarks: iTermDatabaseElement {
             guid,
             url,
             name,
-            text,
+            _text,
             dateAdded.timeIntervalSince1970
          ])
     }
@@ -101,8 +101,8 @@ extension BrowserNamedMarks: iTermDatabaseElement {
         [
             url,
             name,
-            text,
-            
+            _text,
+
             // where clause
             guid
         ])
@@ -121,14 +121,15 @@ extension BrowserNamedMarks: iTermDatabaseElement {
         self.url = url
         self.name = name
         self.sort = result.longLongInt(forColumn: Columns.sort.rawValue)
-        self.text = result.string(forColumn: Columns.text.rawValue) ?? ""
+        self._text = result.string(forColumn: Columns.text.rawValue) ?? ""
         self.dateAdded = dateAdded
     }
 }
 
 // MARK: - Query helpers
 extension BrowserNamedMarks {
-    static func getAllNamedMarksQuery(sortBy currentPageUrl: String? = nil, offset: Int = 0, limit: Int = 100) -> (String, [Any?]) {
+    // Return all named marks paginated sorting those for `url` first.
+    static func getPaginatedNamedMarksQuery(urlToSortFirst currentPageUrl: String?, offset: Int, limit: Int) -> (String, [Any?]) {
         let baseQuery = """
         SELECT * FROM BrowserNamedMarks
         ORDER BY 
@@ -152,7 +153,8 @@ extension BrowserNamedMarks {
             return ("\(baseQuery) \(orderBy) LIMIT ? OFFSET ?", [limit, offset])
         }
     }
-    
+
+    // Return all named marks with `url` as a prefix.
     static func getNamedMarksForUrlQuery(url: String) -> (String, [Any?]) {
         // Get marks for the exact URL or URL without fragment
         let urlWithoutFragment = URL(string: url)?.withoutFragment?.absoluteString ?? url
@@ -188,15 +190,6 @@ extension BrowserNamedMarks {
         WHERE \(Columns.guid.rawValue) = ?
         """, [name, guid])
     }
-    
-    static func updateNamedMarkTextQuery(guid: String, text: String) -> (String, [Any?]) {
-        ("""
-        UPDATE BrowserNamedMarks 
-        SET \(Columns.text.rawValue) = ? 
-        WHERE \(Columns.guid.rawValue) = ?
-        """, [text, guid])
-    }
-    
 }
 
 // URL extension to get URL without fragment

@@ -71,7 +71,7 @@ protocol iTermBrowserViewControllerDelegate: AnyObject, iTermBrowserFindManagerD
     func browserViewControllerCurrentTabHasMultipleSessions(_ controller: iTermBrowserViewController) -> Bool
     func browserViewControllerDidStartNavigation(_ controller: iTermBrowserViewController)
     func browserViewControllerDidFinishNavigation(_ controller: iTermBrowserViewController)
-    func browserViewControllerDidReceiveNamedMarkUpdate(_ controller: iTermBrowserViewController, guid: String, text: String)
+    func browserViewControllerDidReceiveNamedMarkUpdate(_ controller: iTermBrowserViewController)
     func browserViewControllerBroadcastWebViews(_ controller: iTermBrowserViewController) -> [iTermBrowserWebView]
     func browserViewController(_ controller: iTermBrowserViewController,
                                showError: String,
@@ -1219,8 +1219,8 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
         return delegate?.browserViewControllerCurrentTabHasMultipleSessions(self) ?? false
     }
 
-    func browserManager(_ manager: iTermBrowserManager, didReceiveNamedMarkUpdate guid: String, text: String) {
-        delegate?.browserViewControllerDidReceiveNamedMarkUpdate(self, guid: guid, text: text)
+    func browserManagerDidReceiveNamedMarkUpdate(_ manager: iTermBrowserManager) {
+        delegate?.browserViewControllerDidReceiveNamedMarkUpdate(self)
     }
 
     func browserManagerBroadcastWebViews(_ browserManager: iTermBrowserManager) -> [iTermBrowserWebView] {
@@ -1339,10 +1339,18 @@ extension iTermBrowserViewController {
         }
         BookmarkDialogViewController.show(window: window) { [weak self] name in
             Task { @MainActor in
-                guard let self else { return }
-                try await self.browserManager.namedMarkManager?.add(with: name,
-                                                    webView: self.browserManager.webView,
-                                                    httpMethod: self.browserManager.currentHTTPMethod)
+                guard let self else {
+                    return
+                }
+                let bounds = self.browserManager.webView.bounds
+                let viewPoint = NSPoint(x: bounds.midX, y: bounds.midY)
+                let windowPoint = self.browserManager.webView.convert(viewPoint, to: nil)
+                let jsPoint = self.browserManager.webView.convertToJavaScriptCoordinates(windowPoint)
+                try await self.browserManager.namedMarkManager?.add(
+                    with: name,
+                    webView: self.browserManager.webView,
+                    httpMethod: self.browserManager.currentHTTPMethod,
+                    clickPoint: jsPoint)
                 NamedMarksDidChangeNotification(sessionGuid: nil).post()
             }
         }

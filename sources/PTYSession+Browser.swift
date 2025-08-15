@@ -239,7 +239,7 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
         updateDisplayBecause("browser activity")
     }
 
-    func browserViewControllerDidReceiveNamedMarkUpdate(_ controller: iTermBrowserViewController, guid: String, text: String) {
+    func browserViewControllerDidReceiveNamedMarkUpdate(_ controller: iTermBrowserViewController) {
         // The browser manager has already handled the update via the message handler
         // We just need to notify observers that marks have changed
         NamedMarksDidChangeNotification(sessionGuid: nil).post()

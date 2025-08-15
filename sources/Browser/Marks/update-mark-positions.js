@@ -1,120 +1,76 @@
 (function() {
-    // Include shared XPath utilities
-    {{INCLUDE:xpath-utils.js}}
-    
-    var secret = "{{SECRET}}";
-    var updates = [];
-    
-    console.debug('update-mark-positions.js: Starting mark position update');
-    
-    // Get all current mark annotations to find their GUIDs and XPaths
-    var annotations = document.querySelectorAll('.iterm-mark-annotation[data-mark-guid]');
-    
-    console.debug('update-mark-positions.js: Found', annotations.length, 'mark annotations');
-    
-    for (var i = 0; i < annotations.length; i++) {
-        var annotation = annotations[i];
-        var guid = annotation.getAttribute('data-mark-guid');
-        
-        if (!guid) continue;
-        
-        // Get mark data from the annotation's data attributes
-        var xpath = annotation.dataset.markXpath;
-        var offsetY = parseInt(annotation.dataset.markOffsetY) || 0;
-        var textFragment = annotation.dataset.markTextFragment;
-        
-        if (!xpath) {
-            console.debug('update-mark-positions.js: No XPath data found for GUID:', guid);
-            continue;
-        }
-        
-        console.debug('update-mark-positions.js: Updating position for mark:', guid);
-        
-        try {
-            // Try to find the element using XPath
-            var result = document.evaluate(
-                xpath,
-                document,
-                null,
-                XPathResult.FIRST_ORDERED_NODE_TYPE,
-                null
-            );
-            
-            var element = result.singleNodeValue;
-            if (element) {
-                // Calculate new position
-                var rect = element.getBoundingClientRect();
-                var newScrollY = window.pageYOffset || document.documentElement.scrollTop;
-                var newOffsetY = offsetY; // Keep original offset within element
-                
-                console.debug('update-mark-positions.js: Element found, new scrollY:', newScrollY);
-                
-                updates.push({
-                    guid: guid,
-                    scrollY: Math.round(newScrollY),
-                    offsetY: Math.round(newOffsetY),
-                    elementTop: Math.round(rect.top + newScrollY)
-                });
-            } else {
-                console.debug('update-mark-positions.js: Element not found for XPath:', xpath);
-                
-                // Try to find element using text fragment as fallback
-                if (textFragment) {
-                    var foundElement = findElementByTextFragment(textFragment);
-                    if (foundElement) {
-                        var rect = foundElement.getBoundingClientRect();
-                        var newScrollY = window.pageYOffset || document.documentElement.scrollTop;
-                        var newOffsetY = 0; // Reset offset since we found a different element
-                        
-                        console.debug('update-mark-positions.js: Found element via text fragment, new scrollY:', newScrollY);
-                        
-                        updates.push({
-                            guid: guid,
-                            scrollY: Math.round(newScrollY),
-                            offsetY: Math.round(newOffsetY),
-                            elementTop: Math.round(rect.top + newScrollY)
-                        });
-                    }
+    try {
+        console.log("update-mark-positions.js starting");
+
+        // Include mark location utilities
+        {{INCLUDE:mark-locator.js}}
+
+        var secret = "{{SECRET}}";
+        var updates = [];
+
+        console.log('update-mark-positions.js: Starting mark position update');
+
+        // Get all current mark annotations to find their GUIDs and XPaths
+        var annotations = document.querySelectorAll('.iterm-mark-annotation[data-mark-guid]');
+
+        console.log('update-mark-positions.js: Found', annotations.length, 'mark annotations');
+
+        for (var i = 0; i < annotations.length; i++) {
+            var annotation = annotations[i];
+            var guid = annotation.getAttribute('data-mark-guid');
+
+            if (!guid) continue;
+
+            // Get mark data from the annotation's data attributes
+            var xpath = annotation.dataset.markXpath;
+            var offsetY = parseInt(annotation.dataset.markOffsetY) || 0;
+            var textFragment = annotation.dataset.markTextFragment;
+            var y = annotation.dataset.y ? parseInt(annotation.dataset.y) : undefined;
+
+            console.log('update-mark-positions.js: Updating position for mark:', guid);
+
+            try {
+                // Create mark object for locator
+                var mark = {
+                    xpath: xpath,
+                    offsetY: offsetY,
+                    textFragment: textFragment,
+                    y: y
+                };
+                console.log(`update-mark-postions.js: Locate mark with xpath ${xpath}, textFragment ${textFragment}, y ${y}`);
+                // Use common mark locator
+                var locationInfo = locateMark(mark);
+
+                if (locationInfo.element || locationInfo.strategy === 'absolute') {
+                    var newScrollY = window.pageYOffset || document.documentElement.scrollTop;
+                    var newOffsetY = (locationInfo.strategy === 'xpath') ? offsetY : 0;
+
+                    console.log('update-mark-positions.js: Found position using strategy:', locationInfo.strategy);
+
+                    updates.push({
+                        guid: guid,
+                        scrollY: Math.round(newScrollY),
+                        offsetY: Math.round(newOffsetY),
+                        elementTop: Math.round(locationInfo.documentPosition),
+                        y: y
+                    });
+                } else {
+                    console.log('update-mark-positions.js: No valid position found for mark:', guid);
                 }
-            }
-        } catch (error) {
-            console.debug('update-mark-positions.js: Error updating mark position:', error);
-        }
-    }
-    
-    console.debug('update-mark-positions.js: Prepared', updates.length, 'position updates');
-    return updates;
-    
-    // Helper function to find element by text fragment (simplified version)
-    function findElementByTextFragment(textFragment) {
-        if (!textFragment) return null;
-        
-        console.debug('update-mark-positions.js: Searching for text fragment:', textFragment);
-        
-        // Simple text search - this could be enhanced with the full text fragment parsing
-        var walker = document.createTreeWalker(
-            document.body,
-            NodeFilter.SHOW_TEXT,
-            function(node) {
-                var parentTag = node.parentNode.tagName.toLowerCase();
-                if (parentTag === 'script' || parentTag === 'style' || parentTag === 'noscript') {
-                    return NodeFilter.FILTER_REJECT;
-                }
-                return NodeFilter.FILTER_ACCEPT;
-            }
-        );
-        
-        var node;
-        while (node = walker.nextNode()) {
-            var text = node.textContent;
-            var normalizedText = text.replace(/\\s+/g, ' ').trim();
-            
-            if (normalizedText.toLowerCase().includes(textFragment.toLowerCase())) {
-                console.debug('update-mark-positions.js: Found text fragment match');
-                return node.parentNode;
+            } catch (error) {
+                console.log('update-mark-positions.js: Error updating mark position:', error);
             }
         }
-        
-        return null;
+
+        console.log('update-mark-positions.js: Prepared', updates.length, 'position updates');
+
+        // Re-enable layout change monitoring after processing the update
+        console.log("Updating mark positions is finished");
+        window.iTermLayoutChangeMonitor.reenableLayoutChangeMonitoring();
+
+        return updates;
+    } catch (e) {
+        console.error(e.toString(), e);
+        throw e;
     }
 })();

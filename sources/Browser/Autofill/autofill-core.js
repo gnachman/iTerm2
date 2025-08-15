@@ -130,8 +130,12 @@ function detectFieldType(field) {
         field.type === 'checkbox' || field.type === 'radio' || field.type === 'password') {
         return null;
     }
-    
-    
+
+    // Exclude iTerm mark annotation input fields
+    if (field.closest('.iterm-mark-annotation') || field.closest('#iterm-mark-annotations')) {
+        return null;
+    }
+
     // Check autocomplete attribute first (most reliable)
     const autocomplete = field.getAttribute('autocomplete')?.toLowerCase();
     if (autocomplete && autocomplete !== 'off') {

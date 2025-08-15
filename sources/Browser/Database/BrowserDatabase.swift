@@ -901,9 +901,9 @@ actor BrowserDatabase {
         }
     }
 
-    func getAllNamedMarks(sortBy currentPageUrl: String? = nil, offset: Int = 0, limit: Int = 100) async -> [BrowserNamedMarks] {
+    func getPaginatedNamedMarksQuery(urlToSortFirst currentPageUrl: String?, offset: Int, limit: Int) async -> [BrowserNamedMarks] {
         return await withDatabase { db in
-            let (query, args) = BrowserNamedMarks.getAllNamedMarksQuery(sortBy: currentPageUrl, offset: offset, limit: limit)
+            let (query, args) = BrowserNamedMarks.getPaginatedNamedMarksQuery(urlToSortFirst: currentPageUrl, offset: offset, limit: limit)
             return self.executeNamedMarksQuery(db: db, query: query, args: args)
         }
     }
@@ -928,14 +928,6 @@ actor BrowserDatabase {
             return self.executeUpdate(db: db, sql: query, withArguments: args)
         }
     }
-
-    func updateNamedMarkText(guid: String, text: String) async -> Bool {
-        return await withDatabase { db in
-            let (query, args) = BrowserNamedMarks.updateNamedMarkTextQuery(guid: guid, text: text)
-            return self.executeUpdate(db: db, sql: query, withArguments: args)
-        }
-    }
-
 
     func deleteAllNamedMarks() async {
         await withDatabase { db in

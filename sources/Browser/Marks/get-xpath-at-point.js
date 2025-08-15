@@ -1,7 +1,4 @@
 (function() {
-    // Include shared XPath utilities
-    {{INCLUDE:xpath-utils.js}}
-    
     // Include text fragment extraction utilities
     {{INCLUDE:extract-text-fragment.js}}
     
@@ -35,8 +32,8 @@
     console.debug('get-xpath-at-point.js: Generated XPath for element');
     
     // Return element data with text fragment using enhanced utility
-    return getTextFragmentData(bestElement, offsetY);
-    
+    return getTextFragmentData(bestElement, offsetY, clickY);
+
     // Function to find the best element by scanning horizontally
     function findBestElementHorizontally(centerX, centerY) {
         var candidates = [];
@@ -253,5 +250,19 @@
         }
         
         return occurrences === 1;
+    }
+
+    // Function to highlight an element briefly
+    function highlightElement(element) {
+        var originalOutline = element.style.outline;
+        var originalOutlineOffset = element.style.outlineOffset;
+
+        element.style.outline = '2px solid #007AFF';
+        element.style.outlineOffset = '2px';
+
+        setTimeout(function() {
+            element.style.outline = originalOutline;
+            element.style.outlineOffset = originalOutlineOffset;
+        }, 2000);
     }
 })();

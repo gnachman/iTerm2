@@ -39,7 +39,7 @@ protocol iTermBrowserManagerDelegate: AnyObject, iTermBrowserFindManagerDelegate
     func browserManagerDidRequestAddNamedMark(_ manager: iTermBrowserManager, atPoint point: NSPoint)
     func browserManager(_ manager: iTermBrowserManager, didChangeReaderModeState isActive: Bool)
     func browserManager(_ manager: iTermBrowserManager, didChangeDistractionRemovalState isActive: Bool)
-    func browserManager(_ manager: iTermBrowserManager, didReceiveNamedMarkUpdate guid: String, text: String)
+    func browserManagerDidReceiveNamedMarkUpdate(_ manager: iTermBrowserManager)
     func browserManagerSetMouseInfo(
         _ browserManager: iTermBrowserManager,
         pointInView: NSPoint,
@@ -374,8 +374,12 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
 
         // Add message handler for named mark updates
         if namedMarkManager != nil {
-            configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: iTermBrowserNamedMarkManager.messageHandlerName)
-            configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: iTermBrowserNamedMarkManager.layoutUpdateHandlerName)
+            configuration.userContentController.add(handlerProxy,
+                                                    contentWorld: .defaultClient,
+                                                    name: iTermBrowserNamedMarkManager.messageHandlerName)
+            configuration.userContentController.add(handlerProxy,
+                                                    contentWorld: .defaultClient,
+                                                    name: iTermBrowserNamedMarkManager.layoutUpdateHandlerName)
         }
         // Register custom URL scheme handler for iterm2-about: URLs
         configuration.setURLSchemeHandler(handlerProxy, forURLScheme: iTermBrowserSchemes.about)
@@ -1017,6 +1021,11 @@ extension iTermBrowserManager {
                 switch level {
                 case "debug":
                     DLog("Javascript Console: " + logMessage)
+#if ITERM_DEBUG
+                    let id = "#\(identifier)"
+                    iTermScriptHistory.sharedInstance().addBrowserLoggingEntryIfNeeded(id)
+                    iTermScriptHistoryEntry.browserEntry(id).addOutput(logMessage + "\n") {}
+#endif
                 default:
 #if ITERM_DEBUG
                     NSLog("%@", "Javascript Console: \(logMessage)")
@@ -1095,8 +1104,8 @@ extension iTermBrowserManager {
             contextMenuMonitor?.handleMessage(message, webView: webView)
             
         case iTermBrowserNamedMarkManager.messageHandlerName:
-            if let result = namedMarkManager?.handleMessage(webView: webView, message: message) {
-                delegate?.browserManager(self, didReceiveNamedMarkUpdate: result.guid, text: result.text)
+            if namedMarkManager?.handleMessage(webView: webView, message: message) == true {
+                delegate?.browserManagerDidReceiveNamedMarkUpdate(self)
             }
             
         case iTermBrowserNamedMarkManager.layoutUpdateHandlerName:

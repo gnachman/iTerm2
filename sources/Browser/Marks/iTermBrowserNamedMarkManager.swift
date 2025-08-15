@@ -7,239 +7,154 @@
 
 import WebKit
 
-@available(macOS 11, *)
-class iTermBrowserNamedMark: NSObject, iTermGenericNamedMarkReading {
-    let url: URL
-    let name: String?
-    let namedMarkSort: Int
-    var guid: String
-    var text: String
-
-    init(url: URL, name: String, sort: Int, guid: String, text: String = "") {
-        self.url = url
-        self.name = name
-        self.namedMarkSort = sort
-        self.guid = guid
-        self.text = text
-
-        super.init()
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case url
-        case name
-        case sort
-        case guid
-        case text
-    }
-    var dictionaryValue: [String: Any] {
-        return [CodingKeys.url.rawValue: url.absoluteString,
-                CodingKeys.name.rawValue: name!,
-                CodingKeys.sort.rawValue: namedMarkSort,
-                CodingKeys.guid.rawValue: guid,
-                CodingKeys.text.rawValue: text]
-    }
-
-    init?(dictionaryValue: [String: Any]) {
-        guard let urlString = dictionaryValue[CodingKeys.url.rawValue] as? String,
-              let url = URL(string: urlString) else {
-            return nil
-        }
-        self.url = url
-
-        guard let name = dictionaryValue[CodingKeys.name.rawValue] as? String else {
-            return nil
-        }
-        self.name = name
-
-        guard let sort = dictionaryValue[CodingKeys.sort.rawValue] as? Int else {
-            return nil
-        }
-        self.namedMarkSort = sort
-
-        guard let guid = dictionaryValue[CodingKeys.guid.rawValue] as? String else {
-            return nil
-        }
-        self.guid = guid
-
-        // Text field is optional for backward compatibility
-        self.text = dictionaryValue[CodingKeys.text.rawValue] as? String ?? ""
-
-        super.init()
-    }
-}
-
-@available(macOS 11, *)
+@MainActor
 class iTermBrowserNamedMarkManager {
     static let messageHandlerName = "iTerm2NamedMarkUpdate"
-    #warning("TODO: This is never used but it is referenced in javascript. That's gotta be a bug. Are we not dealing with layout updates corrrectly?")
     static let layoutUpdateHandlerName = "iTerm2MarkLayoutUpdate"
     private var pendingNavigationMark: iTermBrowserNamedMark?
     private let secret: String
     private let user: iTermBrowserUser
     private var _cachedNamedMarks: [iTermBrowserNamedMark] = []
-    
+
     init?(user: iTermBrowserUser) {
         guard let secret = String.makeSecureHexString() else {
             return nil
         }
         self.secret = secret
         self.user = user
-        
+
         // Load marks from database in background
-        loadMarksFromDatabase()
-    }
-    
-    private func loadMarksFromDatabase() {
         Task {
-            guard let db = await BrowserDatabase.instance(for: user) else { return }
-            let dbMarks = await db.getAllNamedMarks()
-            
-            let marks = dbMarks.compactMap { dbMark -> iTermBrowserNamedMark? in
-                guard let url = URL(string: dbMark.url) else { return nil }
-                return iTermBrowserNamedMark(
-                    url: url,
-                    name: dbMark.name,
-                    sort: Int(dbMark.sort ?? 0),
-                    guid: dbMark.guid,
-                    text: dbMark.text
-                )
-            }
-            
-            await MainActor.run {
-                self._cachedNamedMarks = marks
-                self.postNamedMarksDidChangeNotification()
-            }
-        }
-    }
-    
-    private func postNamedMarksDidChangeNotification() {
-        NamedMarksDidChangeNotification(sessionGuid: nil).post()
-    }
-    
-    private func refreshCacheAndNotify(currentPageUrl: String? = nil) async {
-        guard let db = await BrowserDatabase.instance(for: user) else { 
-            DLog("Failed to get database instance in refreshCacheAndNotify")
-            return 
-        }
-        let dbMarks = await db.getAllNamedMarks(sortBy: currentPageUrl)
-        DLog("Retrieved \(dbMarks.count) marks from database")
-        
-        let marks = dbMarks.compactMap { dbMark -> iTermBrowserNamedMark? in
-            guard let url = URL(string: dbMark.url) else { return nil }
-            return iTermBrowserNamedMark(
-                url: url,
-                name: dbMark.name,
-                sort: Int(dbMark.sort ?? 0),
-                guid: dbMark.guid,
-                text: dbMark.text
-            )
-        }
-        
-        await MainActor.run {
-            self._cachedNamedMarks = marks
-            DLog("Updated cache with \(marks.count) marks, posting notification")
-            self.postNamedMarksDidChangeNotification()
-        }
-    }
-    
-    func getNamedMarksSortedByCurrentPage(currentPageUrl: String) async -> [iTermBrowserNamedMark] {
-        guard let db = await BrowserDatabase.instance(for: user) else { return [] }
-        let dbMarks = await db.getAllNamedMarks(sortBy: currentPageUrl)
-        
-        return dbMarks.compactMap { dbMark -> iTermBrowserNamedMark? in
-            guard let url = URL(string: dbMark.url) else { return nil }
-            return iTermBrowserNamedMark(
-                url: url,
-                name: dbMark.name,
-                sort: Int(dbMark.sort ?? 0),
-                guid: dbMark.guid,
-                text: dbMark.text
-            )
+            await loadMarksFromDatabase()
         }
     }
 }
 
-@available(macOS 11, *)
+// MARK: - Location
 extension iTermBrowserNamedMarkManager {
-    var namedMarks: [iTermBrowserNamedMark] {
-        return _cachedNamedMarks
-    }
-
-    func add(with name: String, webView: WKWebView, httpMethod: String?, clickPoint: NSPoint? = nil) async throws {
-        // Check if the current page was loaded with GET
-        guard httpMethod == "GET" || httpMethod == nil else {
-            DLog("Cannot create named mark: page was loaded with \(httpMethod ?? "unknown") method, not GET")
-            throw iTermError("Invalid HTTP method \(httpMethod.d)")
+    struct Location: CustomDebugStringConvertible {
+        var debugDescription: String {
+            "<Location xpath=\(xpath) offsetY=\(offsetY) scrollY=\(scrollY) textFragment=\(textFragment.d) y=\(y)>"
         }
-        
-        let script: String
-        if let clickPoint = clickPoint {
-            // Use click point to get XPath
-            script = iTermBrowserTemplateLoader.loadTemplate(
-                named: "get-xpath-at-point",
-                type: "js",
-                substitutions: [
-                    "CLICK_X": String(Int(clickPoint.x)),
-                    "CLICK_Y": String(Int(clickPoint.y))
-                ]
-            )
-        } else {
-            // Use viewport center to get XPath
-            script = iTermBrowserTemplateLoader.loadTemplate(
-                named: "get-viewport-center-xpath",
-                type: "js"
-            )
-        }
+        var xpath: String
+        var offsetY: Int
+        var scrollY: Int
+        var textFragment: String?
+        var y: Int
 
-        do {
-            let result = try await webView.evaluateJavaScript(script)
-            guard let data = result as? [String: Any],
-                  let xpath = data["xpath"] as? String,
+        init?(_ data: [String: Any]) {
+            guard let xpath = data["xpath"] as? String,
                   let offsetY = data["offsetY"] as? Int,
-                  let scrollY = data["scrollY"] as? Int else {
-                throw iTermError("Bad result from js")
+                  let scrollY = data["scrollY"] as? Int,
+                  let y = data["y"] as? Int else {
+                return nil
             }
-            
-            // Get current URL without fragment
-            guard let currentURL = await webView.url else { return }
-            var components = URLComponents(url: currentURL, resolvingAgainstBaseURL: false)
-            
+            self.xpath = xpath
+            self.offsetY = offsetY
+            self.scrollY = scrollY
+            self.textFragment = data["textFragment"] as? String
+            self.y = y
+        }
+
+        init?(_ url: URL) {
+            guard let fragment = url.fragment,
+                  fragment.hasPrefix("iterm-mark:") else {
+                DLog("Invalid mark fragment: \(url.fragment ?? "nil")")
+                return nil
+            }
+
+            // Parse parameters from fragment
+            // Note: fragment is already percent-decoded by URL, but the individual parameter values may still be encoded
+            let paramString = String(fragment.dropFirst("iterm-mark:".count))
+            DLog("Raw fragment parameters: \(paramString)")
+            var params: [String: String] = [:]
+            for pair in paramString.split(separator: "&") {
+                let components = pair.split(separator: "=", maxSplits: 1)
+                if components.count == 2 {
+                    let key = String(components[0])
+                    let value = String(components[1])
+                    // Decode the value - this is important for XPath which contains special characters
+                    params[key] = value.removingPercentEncoding ?? value
+                }
+            }
+
+            guard let xpath = params["xpath"],
+                  let offsetYStr = params["offsetY"],
+                  let offsetY = Int(offsetYStr),
+                  let scrollYStr = params["scrollY"],
+                  let scrollY = Int(scrollYStr),
+                  let yStr = params["y"],
+                  let y = Int(yStr) else {
+                DLog("Missing required parameters in mark fragment")
+                return nil
+            }
+
+            self.textFragment = params["textFragment"]?.removingPercentEncoding
+            self.xpath = xpath
+            self.offsetY = offsetY
+            self.scrollY = scrollY
+            self.y = y
+        }
+
+        var fragment: String {
             // Create custom fragment with XPath and offset
             // Note: Don't URL-encode here - URLComponents will handle encoding when setting the fragment
-            var fragment = "iterm-mark:xpath=\(xpath)&offsetY=\(offsetY)&scrollY=\(scrollY)"
-            
+            var fragment = "iterm-mark:xpath=\(xpath)&offsetY=\(offsetY)&scrollY=\(scrollY)&y=\(y)"
+
             // Add text fragment if available for improved reliability
-            if let textFragment = data["textFragment"] as? String, !textFragment.isEmpty {
+            if let textFragment, !textFragment.isEmpty {
                 // URL encode the text fragment value since it contains special characters
                 if let encodedTextFragment = textFragment.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
                     fragment += "&textFragment=\(encodedTextFragment)"
                 }
             }
-            
-            components?.fragment = fragment
-            
-            guard let markURL = components?.url else { return }
-            
-            // Create and store the named mark in database
-            let guid = UUID().uuidString
-            
-            // Add to database
-            guard let db = await BrowserDatabase.instance(for: user) else {
-                throw iTermError("Failed to get database instance")
+            return fragment
+        }
+
+        func jsDict(name: String?, guid: String) -> [String: Any] {
+            [
+                "name": name ?? "Unnamed",
+                "xpath": xpath,
+                "offsetY": offsetY,
+                "textFragment": textFragment ?? "",
+                "guid": guid,
+                "y": y
+            ]
+        }
+    }
+}
+
+// MARK: - Public API
+
+@MainActor
+extension iTermBrowserNamedMarkManager {
+    var namedMarks: [iTermBrowserNamedMark] {
+        return _cachedNamedMarks
+    }
+
+    func add(with name: String,
+             webView: WKWebView,
+             httpMethod: String?,
+             clickPoint: NSPoint) async throws {
+        // Check if the current page was loaded with GET
+        guard httpMethod == "GET" || httpMethod == nil else {
+            DLog("Cannot create named mark: page was loaded with \(httpMethod ?? "unknown") method, not GET")
+            throw iTermError("Invalid HTTP method \(httpMethod.d)")
+        }
+
+        do {
+            let location = try await jsLocation(clickPoint: clickPoint, inWebView: webView)
+
+            guard let markURL = webView.url?.namedMark(location: location) else {
+                return
             }
-            
-            let success = await db.addNamedMark(guid: guid, url: markURL.absoluteString, name: name, text: "")
-            DLog("Database add result: \(success) for mark '\(name)' with URL: \(markURL.absoluteString)")
-            
-            if !success {
-                throw iTermError("Failed to save named mark to database")
-            }
-            
+
+            try await dbAdd(name: name, markURL: markURL)
+
             // Refresh cache and notify clients
             DLog("Refreshing cache and notifying clients after adding mark")
-            await refreshCacheAndNotify()
-            
+            await loadMarksFromDatabase()
+
             // Refresh annotations to show the new mark
             reloadAnnotations(webView: webView)
         } catch {
@@ -247,65 +162,25 @@ extension iTermBrowserNamedMarkManager {
             throw error
         }
     }
-    
-    func rename(_ mark: iTermBrowserNamedMark, to newName: String, webView: WKWebView) {
-        Task {
-            guard let db = await BrowserDatabase.instance(for: user) else { return }
-            
-            let success = await db.updateNamedMarkName(guid: mark.guid, name: newName)
-            if success {
-                // Refresh cache and notify clients
-                await refreshCacheAndNotify()
-                
-                // Refresh annotations to show the updated name
-                reloadAnnotations(webView: webView)
-            }
-        }
-    }
-    
-    func updateText(_ mark: iTermBrowserNamedMark, text: String, webView: WKWebView) {
-        Task {
-            guard let db = await BrowserDatabase.instance(for: user) else { return }
-            
-            let success = await db.updateNamedMarkText(guid: mark.guid, text: text)
-            if success {
-                // Refresh cache and notify clients
-                await refreshCacheAndNotify()
-                
-                // Refresh annotations to show the updated mark
-                reloadAnnotations(webView: webView)
-            }
-        }
-    }
 
-    func remove(_ mark: iTermBrowserNamedMark) {
-        Task {
-            guard let db = await BrowserDatabase.instance(for: user) else { return }
-            let success = await db.removeNamedMark(guid: mark.guid)
-            if success {
-                // Refresh cache and notify clients
-                await refreshCacheAndNotify()
-            }
-        }
-    }
-    
     func remove(_ mark: iTermBrowserNamedMark, webView: WKWebView) {
         Task {
-            guard let db = await BrowserDatabase.instance(for: user) else { return }
-            let success = await db.removeNamedMark(guid: mark.guid)
-            if success {
-                // Refresh cache and notify clients
-                await refreshCacheAndNotify()
-                
+            do {
+                try await dbRemove(guid: mark.guid)
+                _cachedNamedMarks.removeFirst { $0.guid == mark.guid }
+                self.postNamedMarksDidChangeNotification()
+
                 // Refresh annotations after removing the mark
                 reloadAnnotations(webView: webView)
+            } catch {
+                DLog("\(error)")
             }
         }
     }
 
     func reveal(_ namedMark: iTermBrowserNamedMark, webView: WKWebView) {
         pendingNavigationMark = namedMark
-        
+
         // Check if we're already at the correct URL (ignoring fragment)
         if namedMark.url.withoutFragment == webView.url?.withoutFragment {
             // Same page, just navigate to the fragment
@@ -316,127 +191,126 @@ extension iTermBrowserNamedMarkManager {
             webView.load(request)
         }
     }
-    
+
+    func rename(_ mark: iTermBrowserNamedMark, to newName: String, webView: WKWebView) {
+        Task {
+            do {
+                try await dbRename(guid: mark.guid, newName: newName)
+                mutate(guid: mark.guid) {
+                    $0.name = newName
+                }
+
+                // Refresh annotations to show the updated name
+                reloadAnnotations(webView: webView)
+            } catch {
+                DLog("\(error)")
+            }
+        }
+    }
+
     func didFinishNavigation(webView: WKWebView, success: Bool) {
         if success {
             if pendingNavigationMark != nil {
                 navigateToMark(webView: webView)
             }
-            
-            // Refresh cache with current page URL for sorting
-            if let currentURL = webView.url {
-                Task {
-                    await refreshCacheAndNotify(currentPageUrl: currentURL.absoluteString)
-                }
-            }
-            
+
             // Show annotations for any marks on this page
             reloadAnnotations(webView: webView)
             // Set up layout change monitoring
-            setupLayoutChangeMonitoring(webView: webView)
+            jsSetupLayoutChangeMonitoring(webView: webView)
         } else {
             DLog("Navigation failed for \(webView.url.d) with pending mark \((pendingNavigationMark?.guid).d)")
         }
     }
-    
-    private func setupLayoutChangeMonitoring(webView: WKWebView) {
-        let script = """
-        (function() {
-            var lastViewportWidth = window.innerWidth;
-            var lastViewportHeight = window.innerHeight;
-            var lastScrollY = window.pageYOffset;
-            var updatePending = false;
-            
-            function scheduleMarkUpdate() {
-                if (updatePending) return;
-                updatePending = true;
-                
-                setTimeout(function() {
-                    updatePending = false;
-                    var currentWidth = window.innerWidth;
-                    var currentHeight = window.innerHeight;
-                    var currentScrollY = window.pageYOffset;
-                    
-                    // Check if significant layout changes occurred
-                    var widthChanged = Math.abs(currentWidth - lastViewportWidth) > 50;
-                    var heightChanged = Math.abs(currentHeight - lastViewportHeight) > 50;
-                    var significantScroll = Math.abs(currentScrollY - lastScrollY) > 100;
-                    
-                    if (widthChanged || heightChanged || significantScroll) {
-                        console.debug('Layout change detected, updating marks');
-                        try {
-                            window.webkit.messageHandlers.iTerm2MarkLayoutUpdate.postMessage({
-                                type: 'layoutChange',
-                                width: currentWidth,
-                                height: currentHeight,
-                                scrollY: currentScrollY
-                            });
-                        } catch (error) {
-                            console.debug('Error sending layout update:', error.toString(), error);
-                        }
-                        
-                        lastViewportWidth = currentWidth;
-                        lastViewportHeight = currentHeight;
-                        lastScrollY = currentScrollY;
-                    }
-                }, 500); // Debounce updates
+
+    func handleMessage(webView: WKWebView, message: WKScriptMessage) -> Bool {
+        guard let messageData = message.body as? [String: Any],
+              let guid = messageData["guid"] as? String,
+              let sessionSecret = messageData["sessionSecret"] as? String,
+              sessionSecret == secret else {
+            return false
+        }
+
+        // Check if this is a delete operation
+        if let shouldDelete = messageData["delete"] as? Bool, shouldDelete {
+            // Find the mark and delete it
+            if let mark = namedMarks.first(where: { $0.guid == guid }) {
+                self.remove(mark, webView: webView)
+                return true
             }
-            
-            // Monitor resize events
-            window.addEventListener('resize', scheduleMarkUpdate);
-            
-            // Monitor scroll events (for significant scrolling that might indicate content changes)
-            window.addEventListener('scroll', scheduleMarkUpdate);
-            
-            // Monitor DOM mutations that might affect layout
-            if (window.MutationObserver) {
-                var observer = new MutationObserver(function(mutations) {
-                    var significantChange = false;
-                    for (var i = 0; i < mutations.length; i++) {
-                        var mutation = mutations[i];
-                        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-                            // Check if added nodes are significant (not just text or small elements)
-                            for (var j = 0; j < mutation.addedNodes.length; j++) {
-                                var node = mutation.addedNodes[j];
-                                if (node.nodeType === Node.ELEMENT_NODE) {
-                                    var element = node;
-                                    var rect = element.getBoundingClientRect();
-                                    if (rect.height > 50 || rect.width > 200) {
-                                        significantChange = true;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        if (significantChange) break;
-                    }
-                    
-                    if (significantChange) {
-                        console.debug('Significant DOM change detected');
-                        scheduleMarkUpdate();
-                    }
-                });
-                
-                observer.observe(document.body, {
-                    childList: true,
-                    subtree: true
-                });
-            }
-            
-            console.debug('Mark layout monitoring initialized');
-        })();
-        """
-        
-        Task {
-            do {
-                try await webView.evaluateJavaScript(script)
-            } catch {
-                DLog("Error setting up layout change monitoring: \(error)")
+        } else if let name = messageData["name"] as? String {
+            // Find the mark and update its name
+            if let mark = namedMarks.first(where: { $0.guid == guid }) {
+                rename(mark, to: name, webView: webView)
+                return true
             }
         }
+
+        return false
+    }
+
+    func handleLayoutUpdateMessage(webView: WKWebView, message: WKScriptMessage) {
+        NSLog("Handle layout update")
+        guard let messageData = message.body as? [String: Any],
+              let type = messageData["type"] as? String,
+              type == "layoutChange" else {
+            return
+        }
+
+        DLog("Handling layout change, updating mark positions")
+        updateMarkPositions(webView: webView)
+    }
+}
+
+// MARK: - Private Implementation
+
+@MainActor
+private extension iTermBrowserNamedMarkManager {
+    func setLocationChangeMonitoringEnabled(in webView: WKWebView, _ value: Bool) async {
+        if value {
+            _ = try? await webView.callAsyncJavaScript(
+                "console.log('Swift enabling monitor.'); window.iTermLayoutChangeMonitor.reenableLayoutChangeMonitoring()",
+                contentWorld: .defaultClient)
+        } else {
+            _ = try? await webView.callAsyncJavaScript(
+                "console.log('Swift disabling monitor.'); window.iTermLayoutChangeMonitor.disableLayoutChangeMonitoring()",
+                contentWorld: .defaultClient)
+        }
+    }
+
+    func safelyModifyDOM(in webView: WKWebView, _ closure: () async throws -> ()) async rethrows {
+        await setLocationChangeMonitoringEnabled(in: webView, false)
+        do {
+            try await closure()
+            await setLocationChangeMonitoringEnabled(in: webView, true)
+        } catch {
+            await setLocationChangeMonitoringEnabled(in: webView, true)
+            throw error
+        }
+    }
+
+    func mutate(guid: String, closure: (iTermBrowserNamedMark) -> ()) {
+        if let i = _cachedNamedMarks.firstIndex(where: { $0.guid == guid}) {
+            closure(_cachedNamedMarks[i])
+            self.postNamedMarksDidChangeNotification()
+        }
+    }
+
+    // Populate cache. Called once during initialization.
+    func loadMarksFromDatabase() async {
+        guard let marks = await dbLoad() else {
+            return
+        }
+        self._cachedNamedMarks = marks
+        self.postNamedMarksDidChangeNotification()
+    }
+
+    // Notify client of state change.
+    func postNamedMarksDidChangeNotification() {
+        NamedMarksDidChangeNotification(sessionGuid: nil).post()
     }
     
-    private func navigateToMark(webView: WKWebView) {
+    func navigateToMark(webView: WKWebView) {
         guard let mark = pendingNavigationMark else {
             DLog("No pending navigation mark")
             return
@@ -445,227 +319,66 @@ extension iTermBrowserNamedMarkManager {
             pendingNavigationMark = nil
         }
 
-        // Parse the fragment to extract parameters
-        guard let fragment = mark.url.fragment,
-              fragment.hasPrefix("iterm-mark:") else {
-            DLog("Invalid mark fragment: \(mark.url.fragment ?? "nil")")
+        guard let location = Location(mark.url) else {
+            DLog("Invalid URL: \(mark.url)")
             return
         }
-        
-        // Parse parameters from fragment
-        // Note: fragment is already percent-decoded by URL, but the individual parameter values may still be encoded
-        let paramString = String(fragment.dropFirst("iterm-mark:".count))
-        DLog("Raw fragment parameters: \(paramString)")
-        var params: [String: String] = [:]
-        for pair in paramString.split(separator: "&") {
-            let components = pair.split(separator: "=", maxSplits: 1)
-            if components.count == 2 {
-                let key = String(components[0])
-                let value = String(components[1])
-                // Decode the value - this is important for XPath which contains special characters
-                params[key] = value.removingPercentEncoding ?? value
-            }
-        }
-        
-        guard let xpath = params["xpath"],
-              let offsetY = params["offsetY"],
-              let scrollY = params["scrollY"] else {
-            DLog("Missing required parameters in mark fragment")
+
+        DLog("Parsed location: \(location)")
+        jsNavigate(location, webView: webView)
+    }
+
+    func reloadAnnotations(webView: WKWebView) {
+        guard let currentURL = webView.url else {
             return
         }
-        
-        // Extract text fragment if available
-        let textFragment = params["textFragment"]?.removingPercentEncoding
-        
-        DLog("Parsed parameters - xpath: \(xpath), offsetY: \(offsetY), scrollY: \(scrollY), textFragment: \(textFragment ?? "none")")
-        
-        var substitutions: [String: String] = [
-            "XPATH": xpath,
-            "OFFSET_Y": offsetY,
-            "SCROLL_Y": scrollY
-        ]
-        
-        // Add text fragment if available
-        if let textFragment = textFragment {
-            substitutions["TEXT_FRAGMENT"] = textFragment
-        } else {
-            substitutions["TEXT_FRAGMENT"] = ""
-        }
-        
-        let script = iTermBrowserTemplateLoader.loadTemplate(
-            named: "navigate-to-named-mark",
-            type: "js",
-            substitutions: substitutions
-        )
-        
+
         Task {
             do {
-                let result = try await webView.evaluateJavaScript(script)
-                if let success = result as? Bool, !success {
-                    DLog("Failed to navigate to mark - element not found")
+                let dbMarks = try await dbFetch(forURL: currentURL)
+                let marksForPage = dbMarks.compactMap {
+                    iTermBrowserNamedMark(row: $0)
                 }
+
+                guard !marksForPage.isEmpty else {
+                    return
+                }
+
+                await showAnnotations(marksForPage: marksForPage, webView: webView)
             } catch {
-                DLog("Error navigating to mark: \(error)")
+                DLog("\(error)")
             }
         }
     }
 
-    private func reloadAnnotations(webView: WKWebView) {
-        guard let currentURL = webView.url else { return }
-        
-        Task {
-            guard let db = await BrowserDatabase.instance(for: user) else { return }
-            
-            // Get marks for this URL from database
-            let dbMarks = await db.getNamedMarksForUrl(currentURL.absoluteString)
-            
-            // Convert to iTermBrowserNamedMark objects
-            let marksForPage = dbMarks.compactMap { dbMark -> iTermBrowserNamedMark? in
-                guard let url = URL(string: dbMark.url) else { return nil }
-                return iTermBrowserNamedMark(
-                    url: url,
-                    name: dbMark.name,
-                    sort: Int(dbMark.sort ?? 0),
-                    guid: dbMark.guid,
-                    text: dbMark.text
-                )
-            }
-            
-            guard !marksForPage.isEmpty else { return }
-            
-            await showAnnotations(marksForPage: marksForPage, webView: webView)
-        }
-    }
-    
-    private func showAnnotations(marksForPage: [iTermBrowserNamedMark], webView: WKWebView) async {
-        
-        // Convert marks to JavaScript format
-        var markData: [[String: Any]] = []
-        for mark in marksForPage {
-            guard let fragment = mark.url.fragment,
-                  fragment.hasPrefix("iterm-mark:") else {
-                continue
-            }
-            
-            // Parse the fragment to extract XPath and offset
-            let paramString = String(fragment.dropFirst("iterm-mark:".count))
-            var params: [String: String] = [:]
-            for pair in paramString.split(separator: "&") {
-                let components = pair.split(separator: "=", maxSplits: 1)
-                if components.count == 2 {
-                    let key = String(components[0])
-                    let value = String(components[1])
-                    params[key] = value.removingPercentEncoding ?? value
-                }
-            }
-            
-            guard let xpath = params["xpath"],
-                  let offsetYString = params["offsetY"],
-                  let offsetY = Int(offsetYString) else {
-                continue
-            }
-            
-            markData.append([
-                "name": mark.name ?? "Unnamed",
-                "xpath": xpath,
-                "offsetY": offsetY,
-                "text": mark.text,
-                "guid": mark.guid
-            ])
-        }
-        
-        guard !markData.isEmpty else { return }
-        
-        // Convert to JSON
-        do {
-            let jsonData = try JSONSerialization.data(withJSONObject: markData, options: [])
-            let jsonString = String(data: jsonData, encoding: .utf8) ?? "[]"
-            
-            let script = iTermBrowserTemplateLoader.loadTemplate(
-                named: "show-named-mark-annotations",
-                type: "js",
-                substitutions: [
-                    "MARKS_JSON": jsonString,
-                    "SECRET": secret
-                ]
-            )
-            
-            Task {
-                do {
-                    try await webView.evaluateJavaScript(script)
-                } catch {
-                    DLog("Error showing mark annotations: \(error)")
-                }
-            }
-        } catch {
-            DLog("Error serializing mark data: \(error)")
+    func showAnnotations(marksForPage: [iTermBrowserNamedMark], webView: WKWebView) async {
+        await safelyModifyDOM(in: webView) {
+            let markData = marksForPage.compactMap { $0.jsDict }
+            await jsShow(markData: markData, webView: webView)
         }
     }
 
-    private func urlEncode(_ string: String) -> String {
+    func urlEncode(_ string: String) -> String {
         return string.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? string
     }
-    
-    func handleMessage(webView: WKWebView, message: WKScriptMessage) -> (guid: String, text: String)? {
-        guard let messageData = message.body as? [String: Any],
-              let guid = messageData["guid"] as? String,
-              let text = messageData["text"] as? String,
-              let sessionSecret = messageData["sessionSecret"] as? String,
-              sessionSecret == secret else {
-            return nil
-        }
-        
-        // Find the mark and update its text
-        if let mark = namedMarks.first(where: { $0.guid == guid }) {
-            updateText(mark, text: text, webView: webView)
-            return (guid: guid, text: text)
-        }
-        
-        return nil
-    }
-    
-    func handleLayoutUpdateMessage(webView: WKWebView, message: WKScriptMessage) {
-        guard let messageData = message.body as? [String: Any],
-              let type = messageData["type"] as? String,
-              type == "layoutChange" else {
+
+    func updateMarkPositions(webView: WKWebView) {
+        guard let currentURL = webView.url else {
             return
         }
-        
-        DLog("Handling layout change, updating mark positions")
-        updateMarkPositions(webView: webView)
-    }
-    
-    private func updateMarkPositions(webView: WKWebView) {
-        guard let currentURL = webView.url else { return }
-        
+
         // Find marks for this page
         let marksForPage = namedMarks.filter { mark in
             mark.url.withoutFragment == currentURL.withoutFragment
         }
         
-        guard !marksForPage.isEmpty else { return }
-        
-        let script = iTermBrowserTemplateLoader.loadTemplate(
-            named: "update-mark-positions",
-            type: "js",
-            substitutions: [
-                "SECRET": secret
-            ]
-        )
-        
-        Task {
-            do {
-                let result = try await webView.evaluateJavaScript(script)
-                if let updates = result as? [[String: Any]] {
-                    await processMarkPositionUpdates(updates: updates, webView: webView)
-                }
-            } catch {
-                DLog("Error updating mark positions: \(error)")
-            }
+        guard !marksForPage.isEmpty else {
+            return
         }
+        jsUpdatePositions(webView: webView)
     }
     
-    private func processMarkPositionUpdates(updates: [[String: Any]], webView: WKWebView) async {
+    func processMarkPositionUpdates(updates: [[String: Any]], webView: WKWebView) async {
         // Position updates from layout changes should not modify the stored URL
         // The URL contains XPath and text fragment which are stable identifiers
         // We just update the annotations to reflect new positions visually
@@ -673,6 +386,7 @@ extension iTermBrowserNamedMarkManager {
             guard let guid = update["guid"] as? String,
                   update["scrollY"] is Int,
                   update["offsetY"] is Int,
+                  update["y"] is Int,
                   namedMarks.first(where: { $0.guid == guid }) != nil else {
                 return false
             }
@@ -686,35 +400,210 @@ extension iTermBrowserNamedMarkManager {
     }
 }
 
-@objc(iTermError) public class iTermErrorObjC: NSObject {
-    @objc static let domain = "com.iterm2.generic"
-    @objc(iTermErrorType) public enum ErrorType: Int, Codable {
-        case generic = 0
-        case requestTooLarge = 1
+// MARK: - Calls to JS
+
+private extension iTermBrowserNamedMarkManager {
+    private func jsLocation(clickPoint: NSPoint, inWebView webView: WKWebView) async throws -> Location {
+        let script: String
+        // Use click point to get XPath
+        script = iTermBrowserTemplateLoader.loadTemplate(
+            named: "get-xpath-at-point",
+            type: "js",
+            substitutions: [
+                "CLICK_X": String(Int(clickPoint.x)),
+                "CLICK_Y": String(Int(clickPoint.y))
+            ]
+        )
+
+        let result = try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
+
+        guard let data = result as? [String: Any] else {
+            throw iTermError("Bad result from js")
+        }
+        guard let location = Location(data) else {
+            throw iTermError("Bad result from js")
+        }
+        return location
+    }
+
+    func jsSetupLayoutChangeMonitoring(webView: WKWebView) {
+        let script = iTermBrowserTemplateLoader.load(template: "layout-change-monitor.js",
+                                                     substitutions: [:])
+
+        Task {
+            do {
+                _ = try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
+            } catch {
+                DLog("Error setting up layout change monitoring: \(error)")
+            }
+        }
+    }
+
+    func jsNavigate(_ location: Location, webView: WKWebView) {
+        var substitutions: [String: String] = [
+            "XPATH": location.xpath,
+            "OFFSET_Y": String(location.offsetY),
+            "SCROLL_Y": String(location.scrollY),
+            "Y": String(location.y)
+        ]
+
+        // Add text fragment if available
+        if let textFragment = location.textFragment {
+            substitutions["TEXT_FRAGMENT"] = textFragment
+        } else {
+            substitutions["TEXT_FRAGMENT"] = ""
+        }
+
+        let script = iTermBrowserTemplateLoader.loadTemplate(
+            named: "navigate-to-named-mark",
+            type: "js",
+            substitutions: substitutions)
+
+        Task {
+            do {
+                try await safelyModifyDOM(in: webView) {
+                    let result = try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
+                    if let success = result as? Bool, !success {
+                        DLog("Failed to navigate to mark - element not found")
+                    }
+                }
+            } catch {
+                DLog("Error navigating to mark: \(error)")
+            }
+        }
+    }
+
+    func jsShow(markData: [[String: Any]], webView: WKWebView) async {
+        NSLog("%@", "jsShow \(markData)")
+        if markData.isEmpty {
+            // This would be a no-op
+            return
+        }
+        // Convert to JSON
+        let jsonString: String
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: markData, options: [])
+            jsonString = String(data: jsonData, encoding: .utf8) ?? "[]"
+        } catch {
+            DLog("Error serializing mark data: \(error)")
+            return
+        }
+
+        let script = iTermBrowserTemplateLoader.loadTemplate(
+            named: "show-named-mark-annotations",
+            type: "js",
+            substitutions: [
+                "MARKS_JSON": jsonString,
+                "SECRET": secret
+            ])
+
+        do {
+            _ = try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
+        } catch {
+            DLog("Error showing mark annotations: \(error)")
+        }
+    }
+
+    func jsUpdatePositions(webView: WKWebView) {
+        let script = iTermBrowserTemplateLoader.loadTemplate(
+            named: "update-mark-positions",
+            type: "js",
+            substitutions: [
+                "SECRET": secret
+            ])
+
+        Task {
+            do {
+                try await safelyModifyDOM(in: webView) {
+                    let result = try await webView.evaluateJavaScript(script,
+                                                                      contentWorld: .defaultClient)
+                    if let updates = result as? [[String: Any]] {
+                        await processMarkPositionUpdates(updates: updates, webView: webView)
+                    }
+                }
+            } catch {
+                DLog("Error updating mark positions: \(error)")
+            }
+        }
     }
 }
 
-struct iTermError: LocalizedError, CustomStringConvertible, CustomNSError, Codable {
-    public internal(set) var message: String
-    public internal(set) var type = iTermErrorObjC.ErrorType.generic
+// MARK: - DB
 
-    public init(_ message: String) {
-        self.message = message
+@MainActor
+private extension iTermBrowserNamedMarkManager {
+    func dbAdd(name: String, markURL: URL) async throws {
+        // Add to database
+        guard let db = await BrowserDatabase.instance(for: user) else {
+            throw iTermError("Failed to get database instance")
+        }
+
+        let guid = UUID().uuidString
+        let success = await db.addNamedMark(guid: guid, url: markURL.absoluteString, name: name, text: "")
+        DLog("Database add result: \(success) for mark '\(name)' with URL: \(markURL.absoluteString)")
+
+        if !success {
+            throw iTermError("Failed to save named mark to database")
+        }
     }
 
-    public var errorDescription: String? {
-        message
+    func dbLoad() async -> [iTermBrowserNamedMark]? {
+        guard let db = await BrowserDatabase.instance(for: user) else {
+            return nil
+        }
+        let dbMarks = await db.getPaginatedNamedMarksQuery(urlToSortFirst: nil,
+                                                           offset: 0,
+                                                           limit: 1_000_000)
+
+        let marks = dbMarks.compactMap { dbMark -> iTermBrowserNamedMark? in
+            guard let url = URL(string: dbMark.url) else {
+                return nil
+            }
+            return iTermBrowserNamedMark(
+                url: url,
+                name: dbMark.name,
+                sort: Int(dbMark.sort ?? 0),
+                guid: dbMark.guid
+            )
+        }
+        return marks
     }
 
-    public var description: String {
-        message
+    func dbRename(guid: String, newName: String) async throws {
+        guard let db = await BrowserDatabase.instance(for: user) else {
+            throw iTermError("No database")
+        }
+
+        let success = await db.updateNamedMarkName(guid: guid,
+                                                   name: newName)
+        if !success {
+            throw iTermError("updateNamedMarkName failed")
+        }
     }
 
-    var localizedDescription: String {
-        message
+    func dbRemove(guid: String) async throws {
+        guard let db = await BrowserDatabase.instance(for: user) else {
+            throw iTermError("No database")
+        }
+        let success = await db.removeNamedMark(guid: guid)
+        if !success {
+            throw iTermError("removeNamedMark failed")
+        }
     }
 
-    public static var errorDomain: String { iTermErrorObjC.domain }
-    public var errorCode: Int { type.rawValue }
+    func dbFetch(forURL currentURL: URL) async throws -> [BrowserNamedMarks] {
+        guard let db = await BrowserDatabase.instance(for: user) else {
+            throw iTermError("No database")
+        }
+
+        return await db.getNamedMarksForUrl(currentURL.absoluteString)
+    }
 }
 
+extension URL {
+    func namedMark(location: iTermBrowserNamedMarkManager.Location) -> URL? {
+        var components = URLComponents(url: self, resolvingAgainstBaseURL: false)
+        components?.fragment = location.fragment
+        return components?.url
+    }
+}
