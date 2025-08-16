@@ -175,14 +175,24 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
 
 
     private var mostRecentChatIsEmpty: Bool {
-        guard let chatID = chatListViewController.selectedChatID else {
+        guard let chatID = chatListViewController.selectedChatID ?? chatListViewController.mostRecentChat?.id else {
             return false
         }
         guard let messages = model.messages(forChat: chatID, createIfNeeded: false) else {
             return false
         }
-
-        return messages.isEmpty
+        let hasNontrivialMessage = messages.contains { message in
+            switch message.content {
+            case .plainText, .markdown, .explanationRequest, .explanationResponse,
+                    .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest,
+                    .clientLocal, .renameChat, .append, .appendAttachment, .commit,
+                    .vectorStoreCreated, .terminalCommand, .multipart:
+                true
+            case .userCommand, .setPermissions:
+                false
+            }
+        }
+        return !hasNontrivialMessage
     }
 
     @objc
