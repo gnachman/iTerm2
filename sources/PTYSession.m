@@ -7233,6 +7233,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
 - (void)findViewControllerClearSearch {
     DLog(@"begin");
+    if (self.isBrowserSession) {
+        [self.view.browserViewController findPanelDidHide];
+        return;
+    }
     [_textview clearHighlights:YES];
 }
 
