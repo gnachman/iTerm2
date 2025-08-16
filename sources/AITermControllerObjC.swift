@@ -183,6 +183,9 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
     }
 
     func aitermControllerDidFailToAddFilesToVectorStore(_ sender: AITermController, error: any Error) {
+        if error as? PluginError == PluginError.cancelled {
+            return
+        }
         it_fatalError()
     }
 

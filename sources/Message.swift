@@ -26,6 +26,10 @@ struct ClientLocal: Codable {
     var action: Action
 }
 
+enum UserCommand: Codable {
+    case stop
+}
+
 struct Message: Codable {
     let chatID: String
     let author: Participant
@@ -55,6 +59,7 @@ struct Message: Codable {
         case append(string: String, uuid: UUID)  // for streaming responses
         case appendAttachment(attachment: LLM.Message.Attachment, uuid: UUID)  // for streaming responses
         case commit(UUID)  // end of streaming response
+        case userCommand(UserCommand)
         case setPermissions(Set<RemoteCommand.Content.PermissionCategory>)
         case vectorStoreCreated(id: String)
         case terminalCommand(TerminalCommand)
@@ -110,6 +115,8 @@ struct Message: Codable {
                 return "Terminal command \(command.command)"
             case .multipart:
                 return "Multipart message"
+            case .userCommand(let command):
+                return "User command \(command)"
             }
         }
 
@@ -136,7 +143,9 @@ struct Message: Codable {
                         "Sending commands to AI automatically"
                     }
                 }
-            case .renameChat, .append, .appendAttachment, .commit, .setPermissions, .vectorStoreCreated: return nil
+            case .renameChat, .append, .appendAttachment, .commit, .setPermissions,
+                    .vectorStoreCreated, .userCommand:
+                return nil
             case .remoteCommandResponse:
                 return "Finished executing command"
             case .terminalCommand(let cmd):
@@ -184,8 +193,12 @@ struct Message: Codable {
     // Not shown as separate messages in chat
     var hiddenFromClient: Bool {
         switch content {
-        case .remoteCommandResponse, .renameChat, .commit, .setPermissions, .vectorStoreCreated: true
-        case .selectSessionRequest, .remoteCommandRequest, .plainText, .markdown, .explanationResponse, .explanationRequest, .clientLocal, .append, .terminalCommand, .appendAttachment, .multipart: false
+        case .remoteCommandResponse, .renameChat, .commit, .setPermissions, .vectorStoreCreated, .userCommand:
+            true
+        case .selectSessionRequest, .remoteCommandRequest, .plainText, .markdown,
+                .explanationResponse, .explanationRequest, .clientLocal, .append, .terminalCommand,
+                .appendAttachment, .multipart:
+            false
         }
     }
 
@@ -197,7 +210,7 @@ struct Message: Codable {
         case .remoteCommandResponse, .selectSessionRequest, .remoteCommandRequest, .plainText,
                 .markdown, .explanationResponse, .explanationRequest, .renameChat, .append,
                 .commit, .setPermissions, .terminalCommand, .appendAttachment, .multipart,
-                .vectorStoreCreated:
+                .vectorStoreCreated, .userCommand:
             false
         }
     }
@@ -230,7 +243,7 @@ struct Message: Codable {
         case .explanationRequest, .explanationResponse, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat,
                 .append, .appendAttachment, .commit, .setPermissions, .terminalCommand,
-                .vectorStoreCreated:
+                .vectorStoreCreated, .userCommand:
             it_fatalError()
         }
     }
@@ -266,7 +279,8 @@ struct Message: Codable {
             }
         case .explanationRequest, .explanationResponse, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .commit, .setPermissions, .terminalCommand, .appendAttachment, .vectorStoreCreated:
+                .commit, .setPermissions, .terminalCommand, .appendAttachment, .vectorStoreCreated,
+                .userCommand:
             it_fatalError()
         }
     }
@@ -341,7 +355,7 @@ extension Message: iTermDatabaseElement {
     }
 
     func removeQuery() -> (String, [Any?]) {
-        ("remove from Message where \(Columns.uniqueID.rawValue) = ?",
+        ("DELETE from Message where \(Columns.uniqueID.rawValue) = ?",
          [uniqueID.uuidString])
     }
 

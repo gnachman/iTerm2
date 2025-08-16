@@ -119,6 +119,8 @@ class ChatViewControllerModel {
             break
         case .some(let justMessage):
             switch justMessage.content {
+            case .userCommand:
+                it_fatalError("user command not allowed in model")
             case .append, .appendAttachment:
                 it_fatalError("Append type messages not allowed in model")
             case .plainText, .markdown, .explanationRequest, .explanationResponse,
@@ -216,7 +218,8 @@ class ChatViewControllerModel {
             }
         case .plainText, .markdown, .explanationRequest, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .commit,
-                .setPermissions, .terminalCommand, .multipart, .vectorStoreCreated:
+                .setPermissions, .terminalCommand, .multipart, .vectorStoreCreated,
+                .userCommand:
             break
         }
         let saved = showTypingIndicator
@@ -273,7 +276,16 @@ class ChatViewControllerModel {
     }
 
     func deleteFrom(index i: Int) {
-        items.removeLast(items.count - i)
+        let removed = items.removeLast(items.count - i)
+        let messageIDs = removed.compactMap {
+            switch $0 {
+            case .message(let message):
+                message.message.uniqueID
+            case .date, .agentTyping:
+                nil
+            }
+        }
+        listModel.delete(chatID: chatID, messageIDs: messageIDs)
     }
 }
 

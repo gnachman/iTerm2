@@ -286,6 +286,10 @@ struct AIConversation {
         complete(streaming: nil, completion: completion)
     }
 
+    mutating func stop() {
+        controller.cancel()
+    }
+
     mutating func complete(streaming: ((LLM.StreamingUpdate, String?) -> ())?,
                            completion: @escaping (Result<AIConversation, Error>) -> ()) {
         precondition(!messages.isEmpty)

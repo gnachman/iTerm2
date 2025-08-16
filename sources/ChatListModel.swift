@@ -44,6 +44,11 @@ class ChatListModel: ChatListDataSource {
         return index(of: chatID)
     }
 
+    func delete(chatID: String, messageIDs: [UUID]) {
+        let messages = messages(forChat: chatID, createIfNeeded: false)
+        messages?.removeAll(where: { messageIDs.contains($0.uniqueID) })
+    }
+
     func delete(chatID: String) throws {
         let i = chatStorage.firstIndex(where: {
             $0.id == chatID
@@ -222,7 +227,8 @@ class ChatListModel: ChatListDataSource {
             return
         case .plainText, .markdown, .explanationRequest, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat,
-                .setPermissions, .terminalCommand, .multipart, .vectorStoreCreated:
+                .setPermissions, .terminalCommand, .multipart, .vectorStoreCreated,
+                .userCommand:
             break
         }
         try messages(forChat: chatID, createIfNeeded: true)?.append(message)
@@ -230,7 +236,7 @@ class ChatListModel: ChatListDataSource {
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
                 .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest, .clientLocal,
                 .append, .commit, .setPermissions, .terminalCommand, .appendAttachment,
-                .multipart:
+                .multipart, .userCommand:
             try bump(chatID: chatID)
         case .renameChat(let string):
             try rename(chatID: chatID, newName: string)

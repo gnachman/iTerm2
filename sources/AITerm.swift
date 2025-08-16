@@ -378,8 +378,8 @@ class AITermController {
 
     private func requestCompletion(query: String, registration: Registration, stream: ((String) -> ())?) {
         requestCompletion(messages: [Message(role: .user, content: query)],
-                    registration: registration,
-                    stream: stream)
+                          registration: registration,
+                          stream: stream)
     }
 
     private let client = iTermAIClient()
@@ -449,7 +449,7 @@ class AITermController {
             return
         }
         state = .creatingVectorStore
-        _ = client.request(webRequest: request, stream: nil, completion: { [weak self] result in
+        cancellation = client.request(webRequest: request, stream: nil, completion: { [weak self] result in
             guard let self else { return }
             do {
                 switch result {
@@ -500,7 +500,7 @@ class AITermController {
             return
         }
         state = .addingFileToVectorStore
-        _ = client.request(webRequest: request, stream: nil, completion: { [weak self] result in
+        cancellation = client.request(webRequest: request, stream: nil, completion: { [weak self] result in
             guard let self else { return }
             do {
                 switch result {
@@ -628,7 +628,7 @@ class AITermController {
             return
         }
         state = .uploadingFile
-        _ = client.request(webRequest: request, stream: nil, completion: { [weak self] result in
+        cancellation = client.request(webRequest: request, stream: nil, completion: { [weak self] result in
             guard let self else { return }
             do {
                 switch result {

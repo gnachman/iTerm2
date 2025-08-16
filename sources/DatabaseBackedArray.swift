@@ -74,6 +74,23 @@ class DatabaseBackedArray<Element> where Element: iTermDatabaseElement {
         delegate?.databaseBackedArray(didRemoveElement: element)
     }
 
+    @discardableResult
+    func removeAll(where closure: (Element) throws -> Bool) rethrows -> IndexSet {
+        var i = 0
+        var j = 0
+        var indexes = IndexSet()
+        while i < elements.count {
+            if try closure(elements[i]) {
+                try? self.remove(at: i)
+                indexes.insert(j)
+            } else {
+                i += 1
+            }
+            j += 1
+        }
+        return indexes
+    }
+
     func insert(_ element: Element, atIndex i: Int) throws {
         let (query, args) = element.appendQuery()
         try db.executeUpdate(query, withArguments: args)

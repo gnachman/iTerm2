@@ -38,6 +38,7 @@ class ChatViewController: NSViewController {
             if showTypingIndicator {
                 scrollToBottom(animated: true)
             }
+            inputView.stoppable = showTypingIndicator
         }
     }
     private var eligibleForAutoPaste = true
@@ -803,6 +804,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 configure(cell: cell, for: message.message, isLast: isLastMessage)
                 return cell
 
+            case .userCommand:
+                it_fatalError("User messages should not be in model")
             case .append, .appendAttachment:
                 it_fatalError("Append-type messages should not be in model")
 
@@ -900,7 +903,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                     }
                 }
             }
-        case .vectorStoreCreated:
+        case .vectorStoreCreated, .userCommand:
             it_fatalError()
         case .selectSessionRequest(let originalMessage, let terminal):
             cell.buttonClicked = { [weak self] identifier, messageID in
@@ -1244,6 +1247,23 @@ extension ChatViewController: ChatInputViewDelegate {
         }
     }
 
+    func stopButtonClicked() {
+        guard let chatID else {
+            return
+        }
+
+        let message = Message(chatID: chatID,
+                              author: .user,
+                              content: .userCommand(.stop),
+                              sentDate: Date(),
+                              uniqueID: UUID())
+        try? ChatClient.instance?.publish(
+            message: message,
+            toChatID: chatID,
+            partial: false)
+        showTypingIndicator = false
+    }
+
     func sendButtonClicked(text: String) {
         guard !text.isEmpty, let chatID else {
             return
@@ -1458,7 +1478,7 @@ extension Message.Content {
         case .multipart:
             it_fatalError()  // TODO: This will be hit. We need a different cell type for multipart messages.
         case .renameChat, .append, .commit, .setPermissions, .terminalCommand, .appendAttachment,
-                .vectorStoreCreated:
+                .vectorStoreCreated, .userCommand:
             it_fatalError()
         case .plainText(let string):
             let paragraphStyle = NSMutableParagraphStyle()
@@ -1548,7 +1568,7 @@ extension Message {
         switch content {
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
                 .remoteCommandResponse, .renameChat, .append, .commit, .setPermissions,
-                .terminalCommand, .appendAttachment, .multipart, .vectorStoreCreated:
+                .terminalCommand, .appendAttachment, .multipart, .vectorStoreCreated, .userCommand:
             []
         case .clientLocal(let clientLocal):
             switch clientLocal.action {

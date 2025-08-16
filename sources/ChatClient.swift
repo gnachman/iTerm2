@@ -42,6 +42,8 @@ class ChatClient {
             return message
         }
         switch message.content {
+        case .userCommand:
+            it_fatalError("Agent should not send userCommand")
         case .remoteCommandRequest(let request):
             it_assert(!partial)
             return processRemoteCommandRequest(chatID: chatID, message: message, request: request)
@@ -282,7 +284,8 @@ class ChatClient {
                     case .explanationRequest, .explanationResponse, .remoteCommandRequest,
                             .remoteCommandResponse, .selectSessionRequest, .clientLocal,
                             .renameChat, .append, .appendAttachment, .commit, .setPermissions,
-                            .vectorStoreCreated, .terminalCommand, .multipart:
+                            .vectorStoreCreated, .terminalCommand, .multipart,
+                            .userCommand:
                         it_fatalError("You can't append \(stringOrAttachment)")
                     }
                 case .attachment:
@@ -306,7 +309,7 @@ class ChatClient {
         case .explanationRequest, .remoteCommandResponse, .clientLocal,
                 .renameChat, .append, .commit, .remoteCommandRequest, .selectSessionRequest,
                 .setPermissions, .terminalCommand, .appendAttachment, .multipart,
-                .vectorStoreCreated:
+                .vectorStoreCreated, .userCommand:
             // These are impossible or just normal streaming messages.
             return appendMessage
 
@@ -361,7 +364,8 @@ class ChatClient {
         switch original.content {
         case .plainText, .markdown, .explanationRequest, .remoteCommandResponse, .clientLocal,
                 .renameChat, .append, .commit, .remoteCommandRequest, .selectSessionRequest,
-                .setPermissions, .terminalCommand, .appendAttachment, .multipart, .vectorStoreCreated:
+                .setPermissions, .terminalCommand, .appendAttachment, .multipart,
+                .vectorStoreCreated, .userCommand:
             // These are impossible or just normal streaming messages.
             return finalMessage
 

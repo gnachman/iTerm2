@@ -77,7 +77,7 @@ fileprivate struct MessageToPromptStateMachine {
             }
         case .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .append,
                 .commit, .setPermissions, .vectorStoreCreated, .terminalCommand, .appendAttachment,
-                .explanationRequest:
+                .explanationRequest, .userCommand:
             it_fatalError()
         case .multipart(let subparts, _):
             return .multipart(subparts.compactMap { subpart -> LLM.Message.Body? in
@@ -164,7 +164,7 @@ fileprivate struct MessageToPromptStateMachine {
             return .text(prompt(terminalCommand: cmd))
         case .explanationResponse, .append, .appendAttachment, .remoteCommandRequest,
                 .selectSessionRequest, .clientLocal, .renameChat, .commit, .setPermissions,
-                .vectorStoreCreated:
+                .vectorStoreCreated, .userCommand:
             it_fatalError()
         }
     }
@@ -225,7 +225,7 @@ class ChatAgent {
                 return aiMessage(from: message)
                 
             case .selectSessionRequest, .clientLocal, .renameChat, .append, .appendAttachment,
-                    .commit, .vectorStoreCreated:
+                    .commit, .vectorStoreCreated, .userCommand:
                 return nil
                 
             case .setPermissions(let updated):
@@ -459,6 +459,10 @@ class ChatAgent {
         conversation.addFilesToVectorStore(fileIDs: fileIDs,
                                            vectorStoreID: justVectorStoreID,
                                            completion: { [weak self, chatID] error in
+            if let error, error as? PluginError == .cancelled {
+                try? completion(.failure(error))
+                return
+            }
             if let error {
                 try? self?.publishNotice(
                     chatID: chatID,
@@ -671,6 +675,11 @@ class ChatAgent {
         }
     }
 
+    func stop() {
+        cancelPendingCommands()
+        conversation.stop()
+    }
+
     func fetchCompletion(userMessage: Message,
                          history: [Message],
                          cancelPendingUploads: Bool,
@@ -717,6 +726,8 @@ class ChatAgent {
             updateSystemMessage(allowedCategories)
             completion(nil)
             return
+        case .userCommand:
+            it_fatalError("User commands should not reach fetchCompletion")
         case .vectorStoreCreated:
             it_fatalError("User should not create vector store")
         case .appendAttachment:
@@ -895,7 +906,7 @@ class ChatAgent {
                 uniqueID: messageID,
                 responseID: responseID)
         case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .commit, .setPermissions, .appendAttachment, .vectorStoreCreated:
+                .commit, .setPermissions, .appendAttachment, .vectorStoreCreated, .userCommand:
             it_fatalError()
         }
     }
@@ -927,7 +938,7 @@ class ChatAgent {
                 sentDate: Date(),
                 uniqueID: messageID)
         case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .commit, .setPermissions, .appendAttachment, .vectorStoreCreated:
+                .commit, .setPermissions, .appendAttachment, .vectorStoreCreated, .userCommand:
             it_fatalError()
         }
     }

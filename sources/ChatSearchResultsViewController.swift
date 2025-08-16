@@ -230,7 +230,7 @@ extension Message.Content {
         case let .terminalCommand(cmd):
             return cmd.command
         case  .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat,
-                .commit, .setPermissions, .vectorStoreCreated:
+                .commit, .setPermissions, .vectorStoreCreated, .userCommand:
             return nil
         }
     }

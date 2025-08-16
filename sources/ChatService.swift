@@ -46,9 +46,25 @@ class ChatService {
     }
 
     private func handleUserMessage(_ message: Message, inChat chatID: String) {
-        if message.isClientLocal {
+        switch message.content {
+        case .clientLocal:
             return
+        case .userCommand(let command):
+            switch command {
+            case .stop:
+                if let existing = agents[chatID] {
+                    existing.stop()
+                }
+                return
+            }
+
+        case .plainText, .markdown, .explanationRequest, .explanationResponse,
+                .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest, .renameChat,
+                .append, .appendAttachment, .commit, .setPermissions, .vectorStoreCreated,
+                .terminalCommand, .multipart:
+            break
         }
+
         agentWorking(chatID: chatID) { stopTyping in
             let agent = if let existing = agents[chatID] {
                 existing

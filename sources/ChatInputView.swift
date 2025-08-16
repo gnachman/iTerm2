@@ -7,6 +7,7 @@
 
 protocol ChatInputViewDelegate: AnyObject {
     func sendButtonClicked(text: String)
+    func stopButtonClicked()
     func textDidChange()
 }
 
@@ -29,14 +30,24 @@ class ChatInputView: NSView, NSTextFieldDelegate {
     private var addAttachmentButton: AddAttachmentButton!
     private let attachmentsView = HorizontalFileListView()
     private var verticalStack: ChatInputVerticalStackView!
+    private let sendImage: NSImage
+    private let stopImage: NSImage
 
     weak var delegate: ChatInputViewDelegate?
+    var stoppable = false {
+        didSet {
+            updateSendButtonEnabled()
+        }
+    }
 
     var attachedFiles: [HorizontalFileListView.File] {
         attachmentsView.files
     }
 
     init() {
+        sendImage = NSImage(systemSymbolName: SFSymbol.paperplaneFill.rawValue, accessibilityDescription: "Send")!
+        stopImage = NSImage(systemSymbolName: SFSymbol.stopCircleFill.rawValue, accessibilityDescription: "Stop")!
+
         super.init(frame: .zero)
 
         // Input Components
@@ -47,20 +58,14 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         inputTextFieldContainer.setContentHuggingPriority(.defaultLow, for: .horizontal)
         inputTextFieldContainer.textView.delegate = self
 
-        if #available(macOS 11.0, *) {
-            if let image = NSImage(systemSymbolName: SFSymbol.paperplaneFill.rawValue, accessibilityDescription: "Send") {
-                sendButton = SendButton(image: image, target: self, action: #selector(sendButtonClicked))
-                sendButton.imageScaling = .scaleProportionallyUpOrDown
-                sendButton.imagePosition = .imageOnly
-                sendButton.bezelStyle = .regularSquare
-                sendButton.isBordered = false
-                sendButton.setButtonType(.momentaryPushIn)
-            } else {
-                sendButton = SendButton(title: "Send", target: self, action: #selector(sendButtonClicked))
-            }
-        } else {
-            sendButton = SendButton(title: "Send", target: self, action: #selector(sendButtonClicked))
-        }
+
+        sendButton = SendButton(image: sendImage, target: self, action: #selector(sendButtonClicked))
+        sendButton.imageScaling = .scaleProportionallyUpOrDown
+        sendButton.imagePosition = .imageOnly
+        sendButton.bezelStyle = .regularSquare
+        sendButton.isBordered = false
+        sendButton.setButtonType(.momentaryPushIn)
+
         sendButton.translatesAutoresizingMaskIntoConstraints = false
         sendButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         sendButton.setContentCompressionResistancePriority(.required, for: .horizontal)
@@ -155,7 +160,11 @@ class ChatInputView: NSView, NSTextFieldDelegate {
 
     @objc
     func sendButtonClicked(_ sender: Any) {
-        delegate?.sendButtonClicked(text: inputTextFieldContainer.stringValue)
+        if stoppable {
+            delegate?.stopButtonClicked()
+        } else {
+            delegate?.sendButtonClicked(text: inputTextFieldContainer.stringValue)
+        }
     }
 
     @objc private func attachmentButtonClicked() {
@@ -211,7 +220,12 @@ class ChatInputView: NSView, NSTextFieldDelegate {
 
     private func updateSendButtonEnabled() {
         let hasPlaceholder = attachmentsView.files.anySatisfies { $0.isPlaceholder }
-        sendButton.isEnabled = !inputTextFieldContainer.stringValue.isEmpty && !hasPlaceholder
+        sendButton.isEnabled = stoppable || (!inputTextFieldContainer.stringValue.isEmpty && !hasPlaceholder)
+        if stoppable {
+            sendButton.image = stopImage
+        } else {
+            sendButton.image = sendImage
+        }
     }
     
     private func updateAttachmentsView() {
@@ -247,6 +261,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         }
         set {
             inputTextFieldContainer.stringValue = newValue
+            updateSendButtonEnabled()
         }
     }
 
@@ -307,7 +322,11 @@ extension ChatInputView {
 extension ChatInputView: NSTextViewDelegate {
     func textView(_ textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
         if commandSelector == #selector(NSResponder.insertNewline(_:)) && sendButton.isEnabled {
+            let wasStoppable = stoppable
             sendButtonClicked(self)
+            if wasStoppable && !stoppable {
+                sendButtonClicked(self)
+            }
             return true
         }
         return false

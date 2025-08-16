@@ -71,7 +71,9 @@ struct WebResponse: Codable {
     var error: String?
 }
 
-struct PluginError: Error, CustomDebugStringConvertible {
+struct PluginError: Error, Equatable, CustomDebugStringConvertible {
+    static let cancelled = PluginError(reason: "cancelled")
+
     var debugDescription: String {
         return "<PluginError \(reason)>"
     }
@@ -171,6 +173,10 @@ struct Plugin {
                                               async: true,
                                               stream: stream)
     }
+
+    func cancel() {
+        PluginClient.instance.cancel()
+    }
 }
 
 class iTermAIClient {
@@ -254,30 +260,28 @@ class iTermAIClient {
             switch Plugin.instance() {
             case .success(let plugin):
                 do {
+                    if cancellation.canceled {
+                        throw PluginError.cancelled
+                    }
+                    cancellation.impl = {
+                        plugin.cancel()
+                    }
                     let response = try plugin.load(webRequest: webRequest, stream: stream)
                     DispatchQueue.main.async {
-                        if !cancellation.canceled {
-                            completion(.success(response))
-                        }
+                        completion(.success(response))
                     }
                 } catch let error as PluginError {
                     DispatchQueue.main.async {
-                        if !cancellation.canceled {
-                            completion(.failure(error))
-                        }
+                        completion(.failure(error))
                     }
                 } catch {
                     DispatchQueue.main.async {
-                        if !cancellation.canceled {
-                            completion(.failure(PluginError(reason: "Unexpected exception: \(error.localizedDescription)")))
-                        }
+                        completion(.failure(PluginError(reason: "Unexpected exception: \(error.localizedDescription)")))
                     }
                 }
             case .failure(let error):
                 DispatchQueue.main.async {
-                    if !cancellation.canceled {
-                        completion(.failure(error))
-                    }
+                    completion(.failure(error))
                 }
             }
         }

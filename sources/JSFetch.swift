@@ -11,9 +11,12 @@ import JavaScriptCore
 class PluginClient {
     static let instance = PluginClient()
     private var session: URLSession?
+    private var task: URLSessionDataTask?
 
     private class HTTPStreamDelegate: NSObject, URLSessionDataDelegate {
         var receivedData = Data()
+        // First argument is content (streaming update or document body)
+        // Second argument is nil for streaming updates. Otherwise, it will be an empty string on success or an error message otherwise.
         let callback: (String, String?) -> Void
         var streaming = false
 
@@ -57,6 +60,11 @@ class PluginClient {
                 callback(receivedData.lossyString, "")
             }
         }
+    }
+
+    func cancel() {
+        task?.cancel()
+        task = nil
     }
 
     func call<RequestType: Codable & CustomDebugStringConvertible,
@@ -119,15 +127,21 @@ class PluginClient {
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = iTermPreferences.double(forKey: kPreferenceKeyAITimeout)
         config.timeoutIntervalForResource =  iTermPreferences.double(forKey: kPreferenceKeyAITimeout)
-        let delegate = HTTPStreamDelegate(callback: callback)
+        let delegate = HTTPStreamDelegate { [weak self] first, second in
+            if second != nil {
+                self?.task = nil
+            }
+            callback(first, second)
+        }
+
         delegate.streaming = streaming
         DLog("Request with delegate \(delegate.it_addressString):\n\(body)")
         session = URLSession(configuration: config,
                              delegate: delegate,
                              delegateQueue: nil)
-        let task = session?.dataTask(with: request)
+        self.task = session?.dataTask(with: request)
         DLog("resume session")
-        task?.resume()
+        self.task?.resume()
     }
 
     private func registerFunctions(context: JSContext, stream: ((String) -> ())?) {

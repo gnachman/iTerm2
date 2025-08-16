@@ -18,11 +18,14 @@ class NotifyingArray<Element> {
         didInsert?(storage.count - 1)
     }
 
-    func removeLast(_ n: Int = 1) {
+    @discardableResult
+    func removeLast(_ n: Int = 1) -> [Element] {
         DLog("Remove \(String(describing: storage.last))")
         let count = storage.count
+        let removed = Array(storage[(storage.count - n)...])
         storage.removeLast(n)
         didRemove?((count - n)..<count)
+        return removed
     }
 
     var last: Element? {
