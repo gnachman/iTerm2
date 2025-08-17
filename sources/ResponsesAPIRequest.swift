@@ -1019,6 +1019,7 @@ public struct ResponsesRequestBody: Codable {
     /// Controls reasoning summaries or encrypted reasoning content.
     public struct ReasoningOptions: Codable {
         enum Effort: String, Codable {
+            case minimal
             case low
             case medium
             case high
@@ -1641,6 +1642,7 @@ struct ResponsesBodyRequestBuilder {
     var stream: Bool
     var hostedTools: HostedTools
     var previousResponseID: String?
+    var shouldThink: Bool?
 
     private func transform(message: LLM.Message) -> ResponsesRequestBody.Input.ItemListEntry? {
         switch message.role {
@@ -1773,6 +1775,7 @@ struct ResponsesBodyRequestBuilder {
                                strict: true,
                                description: function.decl.description))
     }
+
     func body() throws -> Data {
         // Tokens are about 4 letters each. Allow enough tokens to include both the query and an
         // answer the same length as the query.
@@ -1781,7 +1784,7 @@ struct ResponsesBodyRequestBuilder {
             itemList.removeFirst(itemList.count - 1)
         }
         let tools = functions.map { transform(function: $0) } + transformedHostedTools
-        let body = ResponsesRequestBody(
+        var body = ResponsesRequestBody(
             input: .itemList(itemList),
             model: provider.model.name,
             maxOutputTokens: provider.maxTokens(functions: functions, messages: messages),
@@ -1789,6 +1792,13 @@ struct ResponsesBodyRequestBuilder {
             stream: stream,
             toolChoice: tools.isEmpty ? ResponsesRequestBody.ToolChoice.none : .auto,
             tools: tools)
+        if let shouldThink {
+            if shouldThink {
+                body.reasoning = .init(effort: .medium, summary: .auto)
+            } else {
+                body.reasoning = .init(effort: .low)
+            }
+        }
         let bodyEncoder = JSONEncoder()
         let bodyData = try! bodyEncoder.encode(body)
         DLog("REQUEST:\n\(bodyData.lossyString)")

@@ -183,6 +183,8 @@ struct Message: Codable {
         var hostedWebSearchEnabled = false
         // Vector stores to search.
         var vectorStoreIDs: [String]
+        var model: String?
+        var shouldThink: Bool
     }
     var configuration: Configuration?
 
@@ -218,6 +220,23 @@ struct Message: Codable {
     // This is the snippet shown in the chat list.
     var snippetText: String? {
         return content.snippetText
+    }
+
+    mutating func removeStatusUpdates() {
+        if case .multipart(var subparts, let vectorStoreID) = content {
+            subparts.removeAll { subpart in
+                switch subpart {
+                case .attachment(let attachment):
+                    if case .statusUpdate = attachment.type {
+                        return true
+                    }
+                    return false
+                case .plainText, .markdown:
+                    return false
+                }
+            }
+            content = .multipart(subparts, vectorStoreID: vectorStoreID)
+        }
     }
 
     mutating func append(_ attachment: LLM.Message.Attachment, vectorStoreID: String?) {

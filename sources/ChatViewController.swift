@@ -16,6 +16,11 @@ protocol ChatViewControllerDelegate: AnyObject {
 }
 
 @objc class WebSearchButton: NSButton { }
+@objc class ThinkingButton: NSButton { }
+class ChatViewControllerMainStackView: NSStackView {}
+class ChatViewControllerHeaderStackView: NSStackView {}
+class ChatViewControllerSpacerView: NSView {}
+class ChatViewControllerHeaderSpacerView: NSView {}
 
 @objc
 class ChatViewController: NSViewController {
@@ -26,8 +31,10 @@ class ChatViewController: NSViewController {
     private var scrollView: NSScrollView!
     private var tableView: NSTableView!
     private var titleLabel = NSTextField()
+    private var modelSelectorButton: NSPopUpButton?
     private var sessionButton: NSButton!
     private var webSearchButton: WebSearchButton?
+    private var thinkingButton: ThinkingButton?
     private var sendButton: NSButton!
     private var showTypingIndicator: Bool {
         get {
@@ -81,7 +88,13 @@ class ChatViewController: NSViewController {
         super.init(nibName: nil, bundle: nil)
 
         userDefaultsObserver.observeKey(kPreferenceKeyAIFeatureHostedWebSearch) { [weak self] in
-            self?.webSearchButton?.isEnabled = (AITermController.provider?.supportsHostedWebSearch == true)
+            self?.webSearchButton?.isEnabled = (self?.provider?.supportsHostedWebSearch == true)
+        }
+        userDefaultsObserver.observeKey(kPreferenceKeyUseRecommendedAIModel) { [weak self] in
+            self?.updateToolbar()
+        }
+        userDefaultsObserver.observeKey(kPreferenceKeyAIVendor) { [weak self] in
+            self?.updateToolbar()
         }
     }
     
@@ -124,14 +137,12 @@ class ChatViewController: NSViewController {
         titleLabel.lineBreakMode = .byTruncatingTail
 
         // Session button
-        if #available(macOS 11.0, *),
-           let image = NSImage(systemSymbolName: SFSymbol.infoCircle.rawValue, accessibilityDescription: nil) {
+        do {
+            let image = NSImage(systemSymbolName: SFSymbol.infoCircle.rawValue, accessibilityDescription: nil)!
             sessionButton = NSButton(image: image, target: nil, action: nil)
             sessionButton.imageScaling = .scaleProportionallyUpOrDown
             sessionButton.controlSize = .large
             sessionButton.isBordered = false
-        } else {
-            sessionButton = NSButton(title: "Chat Info", target: nil, action: nil)
         }
 
         sessionButton.bezelStyle = .badge
@@ -144,7 +155,7 @@ class ChatViewController: NSViewController {
         sessionButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         sessionButton.setContentCompressionResistancePriority(.required, for: .horizontal)
 
-        if #available(macOS 11.0, *) {
+        do {
             let webSearchButton = WebSearchButton(image: NSImage.it_image(forSymbolName: SFSymbol.globe.rawValue,
                                                                           accessibilityDescription: "Web search image",
                                                                           fallbackImageName: "globe",
@@ -166,8 +177,35 @@ class ChatViewController: NSViewController {
             webSearchButton.setContentCompressionResistancePriority(.required, for: .horizontal)
             webSearchButton.toolTip = "Allow AI to perform web search?"
             self.webSearchButton = webSearchButton
+            webSearchButton.isEnabled = (provider?.supportsHostedWebSearch == true)
         }
-        webSearchButton?.isEnabled = (AITermController.provider?.supportsHostedWebSearch == true)
+
+        do {
+            let smallerConfig = NSImage.SymbolConfiguration(pointSize: 14, weight: .regular)
+
+            let image = NSImage(
+                systemSymbolName: SFSymbol.lightbulb.rawValue,
+                accessibilityDescription: "Enable high-effort reasoning?")?.withSymbolConfiguration(smallerConfig)
+            let thinkingButton = ThinkingButton(image: image!,
+                                                  target: nil,
+                                                action: nil)
+            thinkingButton.imageScaling = .scaleNone
+            thinkingButton.controlSize = .large
+            thinkingButton.contentTintColor = webSearchEnabled ? .controlAccentColor : nil
+            thinkingButton.isBordered = false
+            thinkingButton.bezelStyle = .badge
+            thinkingButton.isBordered = false
+            thinkingButton.target = self
+            thinkingButton.action = #selector(toggleThinking(_:))
+            thinkingButton.sizeToFit()
+            thinkingButton.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
+            thinkingButton.translatesAutoresizingMaskIntoConstraints = false
+            thinkingButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+            thinkingButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+            thinkingButton.toolTip = "Enable high-effort reasoning? Slower but may produce better results."
+            self.thinkingButton = thinkingButton
+            thinkingButton.isEnabled = (provider?.model.features.contains(.configurableThinking) == true)
+        }
 
         // Configure Table View
         tableView = NSTableView()
@@ -194,7 +232,6 @@ class ChatViewController: NSViewController {
         documentView.translatesAutoresizingMaskIntoConstraints = false
         documentView.addSubview(tableView)
 
-        class ChatViewControllerSpacerView: NSView {}
         let spacer = ChatViewControllerSpacerView()
         spacer.translatesAutoresizingMaskIntoConstraints = false
         documentView.addSubview(spacer)
@@ -209,13 +246,12 @@ class ChatViewController: NSViewController {
         inputView.delegate = self
         inputView.translatesAutoresizingMaskIntoConstraints = false
 
-        let headerSpacer = NSView()
+        let headerSpacer = ChatViewControllerHeaderSpacerView()
         headerSpacer.setContentHuggingPriority(.init(1), for: .horizontal)
         headerSpacer.setContentCompressionResistancePriority(.init(1), for: .horizontal)
 
         // Header stack
-        class ChatViewControllerHeaderStackView: NSStackView {}
-        let headerStack = ChatViewControllerHeaderStackView(views: [titleLabel, headerSpacer, webSearchButton, sessionButton].compactMap { $0 })
+        let headerStack = ChatViewControllerHeaderStackView(views: [titleLabel, headerSpacer, thinkingButton, webSearchButton, sessionButton].compactMap { $0 })
         headerStack.orientation = .horizontal
         headerStack.spacing = 8
         headerStack.translatesAutoresizingMaskIntoConstraints = false
@@ -229,7 +265,6 @@ class ChatViewController: NSViewController {
         innerContainer.translatesAutoresizingMaskIntoConstraints = false
 
         // Main Layout including Title
-        class ChatViewControllerMainStackView: NSStackView {}
         let mainStack = ChatViewControllerMainStackView(views: [headerStack, innerContainer])
         mainStack.orientation = .vertical
         mainStack.spacing = 8
@@ -297,6 +332,13 @@ class ChatViewController: NSViewController {
             inputView.bottomAnchor.constraint(equalTo: innerContainer.bottomAnchor),
             inputView.heightAnchor.constraint(equalTo: spacer.heightAnchor),
         ])
+        if let thinkingButton {
+            NSLayoutConstraint.activate([
+                thinkingButton.widthAnchor.constraint(equalToConstant: 18),
+                thinkingButton.topAnchor.constraint(equalTo: titleLabel.topAnchor),
+                thinkingButton.bottomAnchor.constraint(equalTo: titleLabel.bottomAnchor),
+            ])
+        }
         if let webSearchButton {
             NSLayoutConstraint.activate([
                 webSearchButton.widthAnchor.constraint(equalToConstant: 18),
@@ -306,6 +348,9 @@ class ChatViewController: NSViewController {
         }
         view.alphaValue = 0
         self.view = view
+        
+        // Initialize toolbar with model selector if needed
+        updateToolbar()
     }
 }
 
@@ -323,6 +368,98 @@ extension Message {
 }
 
 extension ChatViewController {
+    private func modelIsValid(_ name: String) -> Bool {
+        return AITermController.allProvidersForCurrentVendor.map({ $0.model }).contains { $0.name == name }
+    }
+    private var effectiveModel: String? {
+        return provider?.model.name
+    }
+
+    func updateToolbar() {
+        // Find the header stack
+        guard let mainStack = view.subviews.first(where: { $0 is ChatViewControllerMainStackView }) as? NSStackView,
+              let headerStack = mainStack.arrangedSubviews.first(where: { $0 is ChatViewControllerHeaderStackView }) as? NSStackView else {
+            return
+        }
+        
+        // Remove existing model selector if present
+        if let modelSelectorButton = self.modelSelectorButton {
+            headerStack.removeArrangedSubview(modelSelectorButton)
+            modelSelectorButton.removeFromSuperview()
+            self.modelSelectorButton = nil
+        }
+        
+        // Create new model selector if multiple models are available
+        let availableModels = AITermController.allProvidersForCurrentVendor.map({ $0.model })
+        if availableModels.count > 1 {
+            let modelSelector = NSPopUpButton()
+            modelSelector.translatesAutoresizingMaskIntoConstraints = false
+            modelSelector.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+            modelSelector.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
+            modelSelector.target = self
+            modelSelector.action = #selector(selectModel(_:))
+
+            // Use a minimal, borderless style
+            modelSelector.isBordered = false
+            modelSelector.bezelStyle = .inline
+            modelSelector.font = NSFont.systemFont(ofSize: 20)
+
+            for model in availableModels {
+                modelSelector.addItem(withTitle: model.name)
+                modelSelector.lastItem?.representedObject = model.name
+            }
+
+            self.modelSelectorButton = modelSelector
+            if let selectedModel = effectiveModel {
+                modelSelector.selectItem(withTitle: selectedModel)
+            }
+        }
+        // Find the header spacer (it's the view that's not a button or text field)
+        let headerSpacer = headerStack.arrangedSubviews.first(where: {
+            $0 is ChatViewControllerHeaderSpacerView
+        })
+        
+        // Rebuild the header stack in the correct order
+        for view in headerStack.arrangedSubviews {
+            headerStack.removeArrangedSubview(view)
+        }
+        
+        headerStack.addArrangedSubview(titleLabel)
+        if let headerSpacer = headerSpacer {
+            headerStack.addArrangedSubview(headerSpacer)
+        }
+        if let modelSelector = modelSelectorButton {
+            headerStack.addArrangedSubview(modelSelector)
+            
+            // Apply constraints for the model selector
+            NSLayoutConstraint.activate([
+                modelSelector.firstBaselineAnchor.constraint(equalTo: titleLabel.firstBaselineAnchor),
+            ])
+        }
+        if let thinkingButton, provider?.model.features.contains(.configurableThinking) == true {
+            headerStack.addArrangedSubview(thinkingButton)
+        } else {
+            thinkingButton?.removeFromSuperview()
+        }
+        if let webSearchButton = webSearchButton {
+            headerStack.addArrangedSubview(webSearchButton)
+        }
+        headerStack.addArrangedSubview(sessionButton)
+        
+        // Update web search button state
+        webSearchButton?.isEnabled = (provider?.supportsHostedWebSearch == true)
+        thinkingButton?.isEnabled = (provider?.model.features.contains(.configurableThinking) == true)
+    }
+
+    var provider: LLMProvider? {
+        if let effectiveModelName = preferredModel,
+           modelIsValid(effectiveModelName),
+           let model = AIMetadata.instance.models.first(where: { $0.name == effectiveModelName }) {
+            return LLMProvider(model: model)
+        }
+        return AITermController.provider
+    }
+
     func load(chatID: String?) {
         if streaming {
             stopStreaming()
@@ -405,6 +542,10 @@ extension ChatViewController {
         inputView.makeTextViewFirstResponder()
     }
 
+    func makeMessageInputFieldFirstResponder() {
+        inputView.makeTextViewFirstResponder()
+    }
+
     func offerSelectedText(_ text: String) {
         if eligibleForAutoPaste {
             inputView.stringValue = text
@@ -441,6 +582,11 @@ extension ChatViewController {
             context.duration = 0.25
             clipView.animator().setBoundsOrigin(NSPoint(x: 0, y: constrainedY))
         })
+    }
+
+    @objc private func selectModel(_ sender: Any?)  {
+        preferredModel = modelSelectorButton?.selectedItem?.title
+        updateToolbar()
     }
 
     @objc private func showSessionButtonMenu(_ sender: NSButton) {
@@ -525,9 +671,12 @@ extension ChatViewController {
     }
 
     private static let webSearchUserDefaultsKey = "AI Web Search Enabled"
+    private static let thinkUserDefaultsKey = "AI High Effort Enabled"
+    private static let preferredModelDefaultsKey = "NoSync AI Preferred Model"
+
     private var webSearchEnabled: Bool {
         get {
-            guard let model = LLMMetadata.model() else {
+            guard let model = provider?.model else {
                 return false
             }
             if !model.features.contains(.hostedWebSearch) {
@@ -542,10 +691,38 @@ extension ChatViewController {
             return UserDefaults.standard.set(newValue, forKey: Self.webSearchUserDefaultsKey)
         }
     }
+    private var thinkingEnabled: Bool {
+        get {
+            guard let model = provider?.model else {
+                return false
+            }
+            if !model.features.contains(.configurableThinking) {
+                return false
+            }
+            return UserDefaults.standard.bool(forKey: Self.thinkUserDefaultsKey)
+        }
+        set {
+            return UserDefaults.standard.set(newValue, forKey: Self.thinkUserDefaultsKey)
+        }
+    }
+    // The last value selected in the model picker, but it might be invalid so check it with modelIsValid before use.
+    private var preferredModel: String? {
+        get {
+            UserDefaults.standard.string(forKey: Self.preferredModelDefaultsKey)
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: Self.preferredModelDefaultsKey)
+        }
+    }
 
     @objc private func toggleWebSearch(_ sender: Any) {
         webSearchEnabled = !webSearchEnabled
         webSearchButton?.contentTintColor = webSearchEnabled ? .controlAccentColor : nil
+    }
+
+    @objc private func toggleThinking(_ sender: Any) {
+        thinkingEnabled = !thinkingEnabled
+        thinkingButton?.contentTintColor = thinkingEnabled ? .controlAccentColor : nil
     }
 
     @objc private func toggleAlwaysAllow(_ sender: Any) {
@@ -1320,8 +1497,16 @@ extension ChatViewController: ChatInputViewDelegate {
             }
         }
         let vectorStoreIDs = [listModel.chat(id: chatID)?.vectorStore].compactMap { $0 }
-        let configuration = Message.Configuration(hostedWebSearchEnabled: webSearchEnabled,
-                                                  vectorStoreIDs: vectorStoreIDs)
+        var configuration = Message.Configuration(hostedWebSearchEnabled: webSearchEnabled,
+                                                  vectorStoreIDs: vectorStoreIDs,
+                                                  shouldThink: thinkingEnabled)
+
+        // Set the model if one is selected
+        if let modelSelectorButton,
+           let selectedItem = modelSelectorButton.selectedItem,
+           let modelIdentifier = selectedItem.representedObject as? String {
+            configuration.model = modelIdentifier
+        }
         var message = if attachments.isEmpty {
             Message(chatID: chatID,
                     author: .user,

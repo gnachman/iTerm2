@@ -189,6 +189,7 @@ class ChatListModel: ChatListDataSource {
             if let i = index(ofMessageID: uuid, inChat: chatID),
                let messages =  messages(forChat: chatID, createIfNeeded: false) {
                 var existing = messages[i]
+                existing.removeStatusUpdates()
                 existing.append(chunk, useMarkdownIfAmbiguous: true)
                 try messages.set(at: i, existing)
                 return

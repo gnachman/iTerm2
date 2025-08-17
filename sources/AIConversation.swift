@@ -97,6 +97,12 @@ struct AIConversation {
     }
 
     var messages: [AITermController.Message]
+    var model: String?
+    var shouldThink: Bool? = nil {
+        didSet {
+            controller.shouldThink = shouldThink
+        }
+    }
     private(set) var controller: AITermController
     private var delegate = Delegate()
     private(set) weak var registrationProvider: AIRegistrationProvider?
@@ -300,6 +306,7 @@ struct AIConversation {
             if let error {
                 completion(.failure(error))
             } else {
+                // Called after registration completes.
                 controller.request(
                     messages: messages,
                     stream: streaming != nil && controller.supportsStreaming)
@@ -347,7 +354,14 @@ struct AIConversation {
             }
         }
         let lastAssistantMessage = self.messages.last { $0.role == .assistant }
+        if let modelName = model, let model = AIMetadata.instance.models.first(where: { $0.name == modelName }) {
+            controller.providerOverride = LLMProvider(model: model)
+        } else {
+            controller.providerOverride = nil
+        }
         controller.previousResponseID = lastAssistantMessage?.responseID
+        // This won't do anything if registration is needed. See the completion callback to
+        // prepare() above for that case.
         controller.request(messages: truncatedMessages, stream: streaming != nil)
     }
 

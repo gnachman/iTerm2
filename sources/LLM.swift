@@ -45,9 +45,31 @@ enum LLM {
 
         enum StatusUpdate: Codable, Equatable {
             case webSearchStarted
-            case webSearchFinished
+            case webSearchFinished(String?)
             case codeInterpreterStarted
             case codeInterpreterFinished
+            case reasoningSummaryUpdate(String)
+            case multipart([StatusUpdate])
+
+            var exploded: [LLM.Message.StatusUpdate] {
+                switch self {
+                case .multipart(let parts): parts.flatMap { $0.exploded }
+                default: [self]
+                }
+            }
+
+            var isReasoningSummaryUpdate: Bool {
+                if case .reasoningSummaryUpdate(_) = self {
+                    return true
+                }
+                return false
+            }
+            var isWebSearchFinished: Bool {
+                if case .webSearchFinished(_) = self {
+                    return true
+                }
+                return false
+            }
         }
 
         struct FunctionCallID: Codable, Equatable {
@@ -74,6 +96,12 @@ enum LLM {
             var type: AttachmentType
 
             func appending(_ other: Attachment) -> Attachment? {
+                // Status updates can always merge. This keep it from spamming the window with a bunch of status updates.
+                if case .statusUpdate(let lhs) = type, case .statusUpdate(let rhs) = other.type {
+                    var result = self
+                    result.type = .statusUpdate(.multipart(lhs.exploded + rhs.exploded))
+                    return result
+                }
                 if other.id != id {
                     return nil
                 }

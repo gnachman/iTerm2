@@ -181,6 +181,34 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
         }
     }
 
+    // This is incomplete. I've only implemented what I actually need.
+    struct ResponseOutputItemDoneEvent: ResponseEvent {
+        var type = "response.output_item.done"
+        var sequenceNumber: Int
+        let output_index: Int
+        let item: OutputItem
+
+        enum CodingKeys: String, CodingKey {
+            case type, output_index, item
+            case sequenceNumber = "sequence_number"
+        }
+
+        struct OutputItem: Codable {
+            let id: String  // e.g., fc_xxx. Use this when responding.
+            enum OutputItemType: String, Codable {
+                case webSearchCall = "web_search_call"
+            }
+
+            let type: OutputItemType
+            let status: String  // "completed"
+            let action: Action?
+
+            struct Action: Codable {
+                var type: String?
+                var query: String?
+            }
+        }
+    }
     struct ResponseOutputItemAddedEvent: ResponseEvent {
         let type: String = "response.output_item.added"
         var sequenceNumber: Int
@@ -274,6 +302,24 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
         }
     }
 
+    struct ResponseReasoningSummaryTextDoneEvent: ResponseEvent {
+        let type: String = "response.reasoning_summary_text.done"
+        let sequenceNumber: Int
+        let itemID: String
+        let outputIndex: Int
+        let summaryIndex: Int
+        let text: String
+
+        enum CodingKeys: String, CodingKey {
+            case type
+            case sequenceNumber = "sequence_number"
+            case itemID = "item_id"
+            case outputIndex = "output_index"
+            case summaryIndex = "summary_index"
+            case text
+        }
+    }
+
     // MARK: - Event Wrapper for Parsing
 
     enum ResponseEventType: String, CaseIterable {
@@ -283,6 +329,7 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
         case functionCallArgumentsDelta = "response.function_call_arguments.delta"
         case functionCallArgumentsDone = "response.function_call_arguments.done"
         case outputItemAdded = "response.output_item.added"
+        case outputItemDone = "response.output_item.done"
         case responseDone = "response.done"
         case webSearchCallInProgress = "response.web_search_call.in_progress"
         case webSearchCallCompletedEvent = "response.web_search_call.completed"
@@ -290,6 +337,7 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
         case codeInterpreterCallCompleted = "response.code_interpreter_call.completed"
         case codeInterpreterCallInterpreting = "response.code_interpreter_call.interpreting"
         case codeInterpreterDelta = "response.code_interpreter_call_code.delta"
+        case reasoningSummaryTextDone = "response.reasoning_summary_text.done"
     }
 
     // MARK: - Universal Event Parser
@@ -318,6 +366,8 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
                 return try JSONDecoder().decode(ResponseDoneEvent.self, from: data)
             case .outputItemAdded:
                 return try JSONDecoder().decode(ResponseOutputItemAddedEvent.self, from: data)
+            case .outputItemDone:
+                return try JSONDecoder().decode(ResponseOutputItemDoneEvent.self, from: data)
             case .webSearchCallInProgress:
                 return try JSONDecoder().decode(ResponseWebSearchCallInProgressEvent.self, from: data)
             case .webSearchCallCompletedEvent:
@@ -330,6 +380,8 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
                 return try JSONDecoder().decode(ResponseCodeInterpeterCallCompletedEvent.self, from: data)
             case .codeInterpreterDelta:
                 return try JSONDecoder().decode(ResponseCodeInterpreterDeltaEvent.self, from: data)
+            case .reasoningSummaryTextDone:
+                return try JSONDecoder().decode(ResponseReasoningSummaryTextDoneEvent.self, from: data)
             case .none:
                 DLog("Unrecognized event \(jsonString)")
                 throw ResponseEventError.unknownEventType(typeContainer.type)
@@ -427,7 +479,6 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
         parsedResponse = Response()
         do {
             DLog("RESPONSE:\n\(data.lossyString)")
-
             let jsonString = data.lossyString
             let event = try ResponseEventParser.parseEvent(from: jsonString)
             var choiceMessages = [LLM.Message]()
@@ -466,6 +517,20 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
                     break
                 }
 
+            case let callEvent as ResponseOutputItemDoneEvent:
+                switch callEvent.item.type {
+                case .webSearchCall:
+                    if let query = callEvent.item.action?.query {
+                        choiceMessages.append(
+                            LLM.Message(responseID: nil,
+                                        role: .assistant,
+                                        body: .attachment(.init(
+                                            inline: true,
+                                            id: UUID().uuidString,
+                                            type: .statusUpdate(.webSearchFinished(query))))))
+                    }
+                    parsedResponse?.ignore = false
+                }
             case let argumentsDeltaEvent as ResponseFunctionCallArgumentsDeltaEvent:
                 choiceMessages.append(LLM.Message(
                     responseID: nil,
@@ -499,7 +564,18 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
                                 body: .attachment(.init(
                                     inline: true,
                                     id: UUID().uuidString,
-                                    type: .statusUpdate(.webSearchFinished)))))
+                                    type: .statusUpdate(.webSearchFinished(nil))))))
+                parsedResponse?.ignore = false
+
+            case let reasoningSummary as ResponseReasoningSummaryTextDoneEvent:
+                DLog("\(reasoningSummary)")
+                choiceMessages.append(
+                    LLM.Message(responseID: nil,
+                                role: .assistant,
+                                body: .attachment(.init(
+                                    inline: true,
+                                    id: UUID().uuidString,
+                                type: .statusUpdate(.reasoningSummaryUpdate(reasoningSummary.text))))))
                 parsedResponse?.ignore = false
 
             case let codeInterpreter as ResponseCodeInterpreterInProgressEvent:

@@ -38,6 +38,7 @@ class AITermController {
     typealias Message = LLM.Message
     var representedObject: String?
     private(set) var functions = [LLM.AnyFunction]()
+    var shouldThink: Bool?
     var truncate: (([Message]) -> ([Message]))?
 
     struct Registration {
@@ -392,9 +393,15 @@ class AITermController {
         return nil
     }
 
-    private var llmProvider: LLMProvider? {
-        Self.provider
+    static var allProvidersForCurrentVendor: [LLMProvider] {
+        return LLMMetadata.alternateModels.map { LLMProvider(model: $0) }
     }
+
+    private var llmProvider: LLMProvider? {
+        providerOverride ?? Self.provider
+    }
+
+    var providerOverride: LLMProvider?
 
     private func requestCompletion(messages: [Message], registration: Registration, stream: ((String) -> ())?) {
         guard let llmProvider else {
@@ -406,7 +413,8 @@ class AITermController {
                                         messages: messages,
                                         functions: functions,
                                         hostedTools: hostedTools,
-                                        previousResponseID: previousResponseID)
+                                        previousResponseID: previousResponseID,
+                                        shouldThink: llmProvider.model.features.contains(.configurableThinking) ? shouldThink : nil)
         builder.stream = stream != nil
         guard llmProvider.urlIsValid else {
             handle(event: .error(AIError("Invalid URL for AI provider of \(iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? "(nil)")")))

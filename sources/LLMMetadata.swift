@@ -42,6 +42,32 @@ class LLMMetadata: NSObject {
         return (url?.host ?? "").hasSuffix(".anthropic.com")
     }
 
+    static var currentVendor: iTermAIVendor? {
+        iTermAIVendor(rawValue: iTermPreferences.unsignedInteger(forKey: kPreferenceKeyAIVendor))
+    }
+
+    static var alternateModels: [AIMetadata.Model] {
+        guard iTermPreferences.bool(forKey: kPreferenceKeyUseRecommendedAIModel) else {
+            return []
+        }
+        switch currentVendor {
+        case .openAI:
+            return AIMetadata.alternateOpenAIModels
+        case .deepSeek:
+            return AIMetadata.alternateDeepSeekModels
+        case .gemini:
+            return AIMetadata.alternateGeminiModels
+        case .llama:
+            return AIMetadata.alternateLlamaModels
+        case .anthropic:
+            return AIMetadata.alternateAnthropicModels
+        case .none:
+            return []
+        @unknown default:
+            return []
+        }
+    }
+
     static func model() -> AIMetadata.Model? {
         if iTermPreferences.bool(forKey: kPreferenceKeyUseRecommendedAIModel),
            let vendor = iTermAIVendor(rawValue: iTermPreferences.unsignedInteger(forKey: kPreferenceKeyAIVendor)) {

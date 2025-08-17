@@ -14,22 +14,27 @@ class AIModel: NSObject {
         let urlGuess: String
         let apiGuess: iTermAIAPI
         let featuresGuess: Set<AIMetadata.Model.Feature>
+        let vendorGuess: iTermAIVendor?
         if modelName.contains("gemini") {
             urlGuess = "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}"
             apiGuess = .gemini
             featuresGuess = [.functionCalling, .streaming]
+            vendorGuess = .gemini
         } else if modelName.contains("deepseek") {
             urlGuess = "https://api.deepseek.com/v1/chat/completions"
             apiGuess = .deepSeek
             featuresGuess = [.functionCalling, .streaming]
+            vendorGuess = .deepSeek
         } else if modelName.contains("llama") {
             urlGuess = "http://localhost:11434/api/chat"
             apiGuess = .llama
             featuresGuess = [.streaming, .functionCalling]
+            vendorGuess = .llama
         } else if modelName.contains("claude") {
             urlGuess = "https://api.anthropic.com/v1/messages"
             apiGuess = .anthropic
             featuresGuess = [.streaming, .functionCalling]
+            vendorGuess = .anthropic
         } else if modelName.contains("gpt") || modelName.hasPrefix("o") {
             if legacy {
                 urlGuess = "https://api.openai.com/v1/completions"
@@ -40,10 +45,12 @@ class AIModel: NSObject {
                 apiGuess = .chatCompletions
                 featuresGuess = [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter]
             }
+            vendorGuess = .openAI
         } else {
             apiGuess = .chatCompletions
             urlGuess = "about:empty"
             featuresGuess = []
+            vendorGuess = nil
         }
         let justURL = if let url, !url.isEmpty {
             url
@@ -55,7 +62,8 @@ class AIModel: NSObject {
                                    maxResponseTokens: 8_192,
                                    url: justURL,
                                    api: apiGuess,
-                                   features: featuresGuess))
+                                   features: featuresGuess,
+                                   vendor: vendorGuess))
     }
 
     init(_ model: AIMetadata.Model) {
@@ -89,7 +97,7 @@ class AIMetadata: NSObject {
     @objc static let instance = AIMetadata()
     @objc static var defaultModel: AIModel { AIModel(instance.models[0]) }
 
-    struct Model {
+    struct Model: Equatable {
         var name: String
         var contextWindowTokens: Int
         var maxResponseTokens: Int
@@ -101,6 +109,7 @@ class AIMetadata: NSObject {
             case hostedFileSearch // Can search over files provided to the API (e.g., OpenAI Assistants).
             case hostedWebSearch // Can perform web searches (e.g., via a built-in tool).
             case hostedCodeInterpreter
+            case configurableThinking
         }
         var features: Set<Feature>
 
@@ -109,6 +118,7 @@ class AIMetadata: NSObject {
             case openAI = 1
         }
         var vectorStoreConfig: VectorStoreConfig = .disabled
+        var vendor: iTermAIVendor?
     }
 
     static var recommendedOpenAIModel: Model {
@@ -132,14 +142,45 @@ class AIMetadata: NSObject {
         return AIMetadata.claude_4_sonnet
     }
 
+    static var alternateOpenAIModels: [Model] {
+        return AIMetadata.instance.models.filter { candidate in
+            candidate.vendor == .openAI
+        }
+    }
+
+    static var alternateDeepSeekModels: [Model] {
+        return AIMetadata.instance.models.filter { candidate in
+            candidate.vendor == .deepSeek
+        }
+    }
+
+    static var alternateGeminiModels: [Model] {
+        return AIMetadata.instance.models.filter { candidate in
+            candidate.vendor == .gemini
+        }
+    }
+
+    static var alternateLlamaModels: [Model] {
+        return AIMetadata.instance.models.filter { candidate in
+            candidate.vendor == .llama
+        }
+    }
+
+    static var alternateAnthropicModels: [Model] {
+        return AIMetadata.instance.models.filter { candidate in
+            candidate.vendor == .anthropic
+        }
+    }
+
     private static let gpt5 = Model(
         name: "gpt-5",
         contextWindowTokens: 400_000,
         maxResponseTokens: 128_000,
         url: "https://api.openai.com/v1/responses",
         api: .responses,
-        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
-        vectorStoreConfig: .openAI
+        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
+        vectorStoreConfig: .openAI,
+        vendor: .openAI
     )
     private static let gpt5_mini = Model(
         name: "gpt-5-mini",
@@ -147,8 +188,9 @@ class AIMetadata: NSObject {
         maxResponseTokens: 128_000,
         url: "https://api.openai.com/v1/responses",
         api: .responses,
-        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
-        vectorStoreConfig: .openAI
+        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
+        vectorStoreConfig: .openAI,
+        vendor: .openAI
     )
     private static let gpt5_nano = Model(
         name: "gpt-5-nano",
@@ -156,8 +198,9 @@ class AIMetadata: NSObject {
         maxResponseTokens: 128_000,
         url: "https://api.openai.com/v1/responses",
         api: .responses,
-        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
-        vectorStoreConfig: .openAI
+        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
+        vectorStoreConfig: .openAI,
+        vendor: .openAI
     )
     private static let gpt4_1 = Model(
         name: "gpt-4.1",
@@ -166,7 +209,8 @@ class AIMetadata: NSObject {
         url: "https://api.openai.com/v1/responses",
         api: .responses,
         features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
-        vectorStoreConfig: .openAI
+        vectorStoreConfig: .openAI,
+        vendor: .openAI
     )
     private static let deepseek_chat = Model(
         name: "deepseek-chat",
@@ -174,7 +218,8 @@ class AIMetadata: NSObject {
         maxResponseTokens: 8_000,
         url: "https://api.deepseek.com/v1/chat/completions",
         api: .deepSeek,
-        features: [.functionCalling, .streaming]
+        features: [.functionCalling, .streaming],
+        vendor: .deepSeek
     )
     private static let gemini_2_0_flash = Model(
         name: "gemini-2.0-flash",
@@ -182,7 +227,8 @@ class AIMetadata: NSObject {
         maxResponseTokens: 8_192,
         url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
         api: .gemini,
-        features: [.functionCalling, .streaming]
+        features: [.functionCalling, .streaming],
+        vendor: .gemini
     )
     static private let llama_3_3_latest = Model(
         name: "llama3.3:latest",
@@ -190,7 +236,8 @@ class AIMetadata: NSObject {
         maxResponseTokens: 131_072,
         url: "http://localhost:11434/api/chat",
         api: .llama,
-        features: [.streaming, .functionCalling]
+        features: [.streaming, .functionCalling],
+        vendor: .llama
     )
 
     // Latest Claude 4 models with official aliases
@@ -200,18 +247,29 @@ class AIMetadata: NSObject {
         maxResponseTokens: 64_000,
         url: "https://api.anthropic.com/v1/messages",
         api: .anthropic,
-        features: [.functionCalling, .streaming]
+        features: [.functionCalling, .streaming],
+        vendor: .anthropic
     )
 
+    private static let claude_4_1_opus = Model(
+        name: "claude-opus-4-1",
+        contextWindowTokens: 200_000,
+        maxResponseTokens: 32_000,
+        url: "https://api.anthropic.com/v1/messages",
+        api: .anthropic,
+        features: [.functionCalling, .streaming],
+        vendor: .anthropic
+    )
     private static let claude_4_opus = Model(
         name: "claude-opus-4-0",
         contextWindowTokens: 200_000,
         maxResponseTokens: 32_000,
         url: "https://api.anthropic.com/v1/messages",
         api: .anthropic,
-        features: [.functionCalling, .streaming]
+        features: [.functionCalling, .streaming],
+        vendor: .anthropic
     )
-    private let models: [Model] = [
+    let models: [Model] = [
         // The first model will be the default.
         AIMetadata.gpt5,
         AIMetadata.gpt5_mini,
@@ -224,7 +282,8 @@ class AIMetadata: NSObject {
             url: "https://api.openai.com/v1/responses",
             api: .responses,
             features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
-            vectorStoreConfig: .openAI
+            vectorStoreConfig: .openAI,
+            vendor: .openAI
         ),
         Model(
             name: "gpt-4o-mini",
@@ -233,7 +292,8 @@ class AIMetadata: NSObject {
             url: "https://api.openai.com/v1/responses",
             api: .responses,
             features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
-            vectorStoreConfig: .openAI
+            vectorStoreConfig: .openAI,
+            vendor: .openAI
         ),
         Model(
             name: "gpt-4.1-mini",
@@ -242,7 +302,8 @@ class AIMetadata: NSObject {
             url: "https://api.openai.com/v1/responses",
             api: .responses,
             features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
-            vectorStoreConfig: .openAI
+            vectorStoreConfig: .openAI,
+            vendor: .openAI
         ),
 
         // O-series reasoning models
@@ -252,8 +313,9 @@ class AIMetadata: NSObject {
             maxResponseTokens: 100_000,
             url: "https://api.openai.com/v1/responses",
             api: .responses,
-            features: [.hostedFileSearch, .hostedCodeInterpreter],
-            vectorStoreConfig: .openAI
+            features: [.hostedFileSearch, .hostedCodeInterpreter, .configurableThinking],
+            vectorStoreConfig: .openAI,
+            vendor: .openAI
         ),
         Model(
             name: "o3-pro",
@@ -261,8 +323,9 @@ class AIMetadata: NSObject {
             maxResponseTokens: 100_000,
             url: "https://api.openai.com/v1/responses",
             api: .responses,
-            features: [.functionCalling, .hostedCodeInterpreter],
-            vectorStoreConfig: .openAI
+            features: [.functionCalling, .hostedCodeInterpreter, .configurableThinking],
+            vectorStoreConfig: .openAI,
+            vendor: .openAI
         ),
         Model(
             name: "o4-mini",
@@ -270,8 +333,9 @@ class AIMetadata: NSObject {
             maxResponseTokens: 100_000,
             url: "https://api.openai.com/v1/responses",
             api: .responses,
-            features: [.hostedFileSearch, .streaming, .functionCalling, .hostedCodeInterpreter],
-            vectorStoreConfig: .openAI
+            features: [.hostedFileSearch, .streaming, .functionCalling, .hostedCodeInterpreter, .configurableThinking],
+            vectorStoreConfig: .openAI,
+            vendor: .openAI
         ),
 
         // MARK: - Google Models
@@ -282,7 +346,8 @@ class AIMetadata: NSObject {
             maxResponseTokens: 8_192,
             url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
             api: .gemini,
-            features: [.functionCalling, .streaming]
+            features: [.functionCalling, .streaming],
+            vendor: .gemini
         ),
         AIMetadata.gemini_2_0_flash,
         Model(
@@ -291,7 +356,8 @@ class AIMetadata: NSObject {
             maxResponseTokens: 8_192,
             url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
             api: .gemini,
-            features: [.functionCalling, .streaming]
+            features: [.functionCalling, .streaming],
+            vendor: .gemini
         ),
 
         // MARK: - DeepSeek Models
@@ -303,7 +369,8 @@ class AIMetadata: NSObject {
             maxResponseTokens: 8_000,
             url: "https://api.deepseek.com/v1/chat/completions",
             api: .deepSeek,
-            features: [.functionCalling, .streaming]
+            features: [.functionCalling, .streaming],
+            vendor: .deepSeek
         ),
         Model(
             name: "deepseek-reasoner",
@@ -311,12 +378,14 @@ class AIMetadata: NSObject {
             maxResponseTokens: 8_000,
             url: "https://api.deepseek.com/v1/chat/completions",
             api: .deepSeek,
-            features: [.functionCalling, .streaming]
+            features: [.functionCalling, .streaming],
+            vendor: .deepSeek
         ),
 
         // MARK: - Anthropic Models
 
         AIMetadata.claude_4_sonnet,
+        AIMetadata.claude_4_1_opus,
         AIMetadata.claude_4_opus,
 
         // MARK: - Local Models (via Ollama)

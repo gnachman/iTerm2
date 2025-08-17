@@ -13,6 +13,7 @@ struct LLMRequestBuilder {
     var stream = false
     var hostedTools: HostedTools
     var previousResponseID: String?
+    var shouldThink: Bool?
 
     var headers: [String: String] {
         var result = LLMAuthorizationProvider(provider: provider, apiKey: apiKey).headers
@@ -43,7 +44,8 @@ struct LLMRequestBuilder {
                                             functions: functions,
                                             stream: stream,
                                             hostedTools: hostedTools,
-                                            previousResponseID: previousResponseID).body()
+                                            previousResponseID: previousResponseID,
+                                            shouldThink: shouldThink).body()
         case .earlyO1:
             try O1BodyRequestBuilder(messages: messages,
                                      provider: provider).body()

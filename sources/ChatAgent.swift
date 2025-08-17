@@ -758,6 +758,9 @@ class ChatAgent {
             conversation.deleteMessages(after: responseID)
         }
         conversation.add(aiMessage(from: userMessage))
+        conversation.model = userMessage.configuration?.model
+        conversation.shouldThink = userMessage.configuration?.shouldThink
+
         var uuid: UUID?
         let streamingCallback: ((LLM.StreamingUpdate, String?) -> ())?
         if let streaming {
@@ -819,6 +822,7 @@ class ChatAgent {
         renameConversation = AIConversation(
             registrationProvider: nil,
             messages: conversation.messages + [AITermController.Message(role: .user, content: prompt)])
+        renameConversation?.shouldThink = false
         var failed = false
         renameConversation?.complete { [weak self] (result: Result<AIConversation, Error>) in
             if let newName = result.successValue?.messages.last?.body.content {
@@ -1061,7 +1065,7 @@ extension RemoteCommand.Content {
             ["filename": "The name of the file you wish to create. It will be replaced if it already exists.",
              "content": "The content that will be written to the file."]
         case .searchBrowser(_):
-            ["query": "The text to search for on the current page."]
+            ["query": "The text to search for on the current page. Ensure you know which web page is currently loaded before using this."]
         case .loadURL(_):
             ["url": "The URL to load. Must use https scheme."]
         case .webSearch(_):

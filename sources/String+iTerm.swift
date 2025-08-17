@@ -464,3 +464,19 @@ extension String {
         return result
     }
 }
+
+extension String {
+    /// Escapes ASCII punctuation so SwiftyMarkdown/CommonMark will render the text literally.
+    var escapedForMarkdown: String {
+         let escapables: Set<Character> = Set("*[_")
+        var out = String()
+        out.reserveCapacity(self.count * 2)
+        for ch in self {
+            if escapables.contains(ch) {
+                out.append("\\")
+            }
+            out.append(ch)
+        }
+        return out
+    }
+}

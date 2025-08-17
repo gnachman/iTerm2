@@ -152,6 +152,7 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
         let window = self.window ?? initialize()
         showWindow(nil)
         window.makeKeyAndOrderFront(nil)
+        chatViewController.makeMessageInputFieldFirstResponder()
     }
 
     @objc(isStreamingToGuid:)
