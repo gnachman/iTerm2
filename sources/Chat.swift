@@ -45,6 +45,9 @@ extension Chat: iTermDatabaseElement {
         if !existingColumns.contains(Columns.vectorStore.rawValue) {
             result.append(.init(query: "ALTER TABLE Chat ADD COLUMN \(Columns.vectorStore.rawValue) text", args: []))
         }
+        if !existingColumns.contains(Columns.terminalSessionGuid.rawValue) {
+            result.append(.init(query: "ALTER TABLE Chat ADD COLUMN \(Columns.terminalSessionGuid.rawValue) text", args: []))
+        }
         if !existingColumns.contains(Columns.browserSessionGuid.rawValue) {
             result.append(.init(query: "ALTER TABLE Chat ADD COLUMN \(Columns.browserSessionGuid.rawValue) text", args: []))
         }

@@ -21,4 +21,3 @@ protocol iTermDatabaseElement: iTermDatabaseInitializable {
     func updateQuery() -> (String, [Any?])
     func removeQuery() -> (String, [Any?])
 }
-

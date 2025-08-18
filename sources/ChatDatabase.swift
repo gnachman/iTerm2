@@ -135,8 +135,8 @@ class ChatDatabase {
         let sql =
         """
         SELECT
-            \(Chat.Columns.terminalSessionGuid),
-            \(Chat.Columns.browserSessionGuid),
+            \(Chat.Columns.terminalSessionGuid.rawValue),
+            \(Chat.Columns.browserSessionGuid.rawValue),
             \(Chat.Columns.uuid.rawValue)
         FROM Chat
         WHERE
