@@ -154,13 +154,18 @@ class SSHFilePanelFileList: NSScrollView {
     weak var delegate: SSHFilePanelFileListDelegate?
     var canChooseDirectories = false
     var canChooseFiles = false
+    var allowsMultipleSelection = true {
+        didSet {
+            fileOutlineView.allowsMultipleSelection = allowsMultipleSelection
+        }
+    }
     private var pendingQuickViewPromises = [iTermRenegablePromise<NSURL>]()
 
     init() {
         fileOutlineView = SSHFilePanelFileListOutlineView()
         fileOutlineView.style = .fullWidth
         fileOutlineView.selectionHighlightStyle = .regular
-        fileOutlineView.allowsMultipleSelection = true
+        fileOutlineView.allowsMultipleSelection = allowsMultipleSelection
         fileOutlineView.allowsEmptySelection = true
         fileOutlineView.usesAlternatingRowBackgroundColors = true
         fileOutlineView.gridStyleMask = [.solidHorizontalGridLineMask]

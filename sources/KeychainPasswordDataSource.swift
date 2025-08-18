@@ -212,7 +212,6 @@ fileprivate class LegacyKeychainAccount: NSObject, PasswordManagerAccount {
 }
 
 class KeychainPasswordDataSource: NSObject, PasswordManagerDataSource {
-    private var openPanel: NSOpenPanel?
     private let browser: Bool
     private var serviceName: String {
         if browser {

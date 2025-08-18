@@ -442,17 +442,19 @@ NS_ASSUME_NONNULL_BEGIN
         return;
     }
     DLog(@"begin");
-    NSOpenPanel *panel = [[NSOpenPanel alloc] init];
+    iTermOpenPanel *panel = [[iTermOpenPanel alloc] init];
     panel.allowedContentTypes = @[ UTTypeZIP, [UTType typeWithFilenameExtension:@"its"], UTTypePythonScript ];
     panel.allowsMultipleSelection = YES;
-    if ([panel runModal] == NSModalResponseOK) {
-        NSArray<NSURL *> *urls = [panel.URLs copy];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            for (NSURL *url in urls) {
-                [self importFromURL:url];
-            }
-        });
-    }
+    panel.defaultToLocalhost = YES;
+    [panel beginWithFallback:^(NSModalResponse response, NSArray<NSURL *> *urls) {
+        if (response == NSModalResponseOK) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                for (NSURL *url in urls) {
+                    [self importFromURL:url];
+                }
+            });
+        }
+    }];
 }
 
 - (void)importFromURL:(NSURL *)url {

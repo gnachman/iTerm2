@@ -80,7 +80,6 @@ typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
     NSArray<id<PasswordManagerAccount>> *_entries;
     NSArray<id<PasswordManagerAccount>> *_unfilteredEntries;
     id _eventMonitor;
-    NSOpenPanel *_panel;
     id<PasswordManagerDataSource> _dataSource;
     NSInteger _busyCount;
     NSInteger _cancelCount;

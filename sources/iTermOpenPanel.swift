@@ -5,6 +5,8 @@
 //  Created by George Nachman on 6/8/25.
 //
 
+import UniformTypeIdentifiers
+
 @objc
 class iTermOpenPanelItem: NSObject {
     @objc var urlPromise: iTermRenegablePromise<NSURL>
@@ -35,129 +37,122 @@ class iTermOpenPanel: NSObject {
     @objc var canChooseDirectories = true
     @objc var canChooseFiles = true
     @objc var includeLocalhost = true
-    @objc let allowsMultipleSelection = true  // TODO
+    @objc var allowsMultipleSelection = true
+    @objc var allowedContentTypes = [UTType]()
+    @objc var defaultToLocalhost = false
     @objc private(set) var items: [iTermOpenPanelItem] = []
     static var panels = [iTermOpenPanel]()
     var isSelectable: ((RemoteFile) -> Bool)?
 
-    // Show the panel non-modally with a completion handler
-    func begin(_ handler: @escaping (NSApplication.ModalResponse) -> Void) {
-        Self.panels.append(self)
-
-        if #available(macOS 11, *) {
-            let sshFilePanel = SSHFilePanel()
-            sshFilePanel.canChooseDirectories = canChooseDirectories
-            sshFilePanel.canChooseFiles = canChooseFiles
-            sshFilePanel.isSelectable = isSelectable
-            sshFilePanel.includeLocalhost = includeLocalhost
-            sshFilePanel.dataSource = ConductorRegistry.instance
-
-            // Present non-modally
-            sshFilePanel.begin { [weak self] response in
-                guard let self else { return }
-                if response == .OK {
-                    items = sshFilePanel.promiseItems().map { item in
-                        iTermOpenPanelItem(urlPromise: item.promise,
-                                           filename: item.filename,
-                                           isDirectory: item.isDirectory,
-                                           host: item.host,
-                                           progress: item.progress,
-                                           cancellation: item.cancellation)
-                    }
-                } else {
-                    items = []
-                }
-                handler(response)
-                Self.panels.remove(object: self)
+    private func loadURLs(_ closure: @escaping ([URL]) -> ()) {
+        let group = DispatchGroup()
+        var urls = [URL]()
+        for item in items {
+            group.enter()
+            item.urlPromise.then { url in
+                urls.append(url as URL)
+                group.leave()
             }
-        } else {
-            let openPanel = NSOpenPanel()
-            openPanel.allowsMultipleSelection = allowsMultipleSelection
-            openPanel.canChooseDirectories = canChooseDirectories
-            openPanel.canChooseFiles = canChooseFiles
+        }
+        group.notify(queue: .main) {
+            closure(urls)
+        }
+    }
 
-            // Present non-modally
-            openPanel.begin { [weak self] response in
-                guard let self else { return }
+    // Fall back to system picker if there are no ssh integration sessions active
+    @objc
+    func beginWithFallback(_ handler: @escaping (NSApplication.ModalResponse, [URL]?) -> Void) {
+        if ConductorRegistry.instance.isEmpty {
+            let panel = NSOpenPanel()
+            panel.allowedContentTypes = allowedContentTypes
+            panel.begin { [weak panel] response in
                 if response == .OK {
-                    items = openPanel.urls.map { url in
-                        let promise = iTermRenegablePromise<NSURL> { seal in
-                            seal.fulfill(url as NSURL)
-                        }
-                        var isDirectory = ObjCBool(false)
-                        _ = FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
-                        return iTermOpenPanelItem(urlPromise: promise,
-                                                  filename: url.path,
-                                                  isDirectory: isDirectory.boolValue,
-                                                  host: SSHIdentity.localhost,
-                                                  progress: Progress(),
-                                                  cancellation: Cancellation())
-                    }
+                    handler(.OK, panel?.urls ?? [])
                 } else {
-                    items = []
+                    handler(response, nil)
                 }
-                handler(response)
-                Self.panels.remove(object: self)
+            }
+            return
+        }
+        begin { [weak self] response in
+            if response == .OK {
+                self?.loadURLs { urls in
+                    handler(.OK, urls)
+                }
+            } else {
+                handler(response, nil)
             }
         }
     }
 
+    // Show the panel non-modally with a completion handler
+    @objc
+    func begin(_ handler: @escaping (NSApplication.ModalResponse) -> Void) {
+        Self.panels.append(self)
+
+        let sshFilePanel = SSHFilePanel()
+        sshFilePanel.canChooseDirectories = canChooseDirectories
+        sshFilePanel.canChooseFiles = canChooseFiles
+        sshFilePanel.isSelectable = isSelectable
+        sshFilePanel.includeLocalhost = includeLocalhost
+        sshFilePanel.allowedContentTypes = allowedContentTypes
+        sshFilePanel.allowsMultipleSelection = allowsMultipleSelection
+        sshFilePanel.defaultToLocalhost = defaultToLocalhost
+        
+        sshFilePanel.dataSource = ConductorRegistry.instance
+
+        // Present non-modally
+        sshFilePanel.begin { [weak self] response in
+            guard let self else { return }
+            if response == .OK {
+                items = sshFilePanel.promiseItems().map { item in
+                    iTermOpenPanelItem(urlPromise: item.promise,
+                                       filename: item.filename,
+                                       isDirectory: item.isDirectory,
+                                       host: item.host,
+                                       progress: item.progress,
+                                       cancellation: item.cancellation)
+                }
+            } else {
+                items = []
+            }
+            handler(response)
+            Self.panels.remove(object: self)
+        }
+    }
+
+    @objc
     func beginSheetModal(for window: NSWindow,
                          completionHandler handler: @escaping (NSApplication.ModalResponse) -> Void) {
         Self.panels.append(self)
 
-        if #available(macOS 11, *) {
-            let sshFilePanel = SSHFilePanel()
-            sshFilePanel.canChooseDirectories = canChooseDirectories
-            sshFilePanel.canChooseFiles = canChooseFiles
-            sshFilePanel.isSelectable = isSelectable
-            sshFilePanel.includeLocalhost = includeLocalhost
-            sshFilePanel.dataSource = ConductorRegistry.instance
-            sshFilePanel.beginSheetModal(for: window) { [weak self] response in
-                guard let self else { return }
-                if response == .OK {
-                    items = sshFilePanel.promiseItems().map { item in
-                        iTermOpenPanelItem(urlPromise: item.promise,
-                                           filename: item.filename,
-                                           isDirectory: item.isDirectory,
-                                           host: item.host,
-                                           progress: item.progress,
-                                           cancellation: item.cancellation)
-                    }
-                } else {
-                    items = []
-                }
-                handler(response)
-                Self.panels.remove(object: self)
-            }
-        } else {
-            let openPanel = NSOpenPanel()
-            openPanel.allowsMultipleSelection = allowsMultipleSelection
-            openPanel.canChooseDirectories = canChooseDirectories
-            openPanel.canChooseFiles = canChooseFiles
+        let sshFilePanel = SSHFilePanel()
+        sshFilePanel.canChooseDirectories = canChooseDirectories
+        sshFilePanel.canChooseFiles = canChooseFiles
+        sshFilePanel.isSelectable = isSelectable
+        sshFilePanel.includeLocalhost = includeLocalhost
+        sshFilePanel.allowedContentTypes = allowedContentTypes
+        sshFilePanel.allowsMultipleSelection = allowsMultipleSelection
+        sshFilePanel.defaultToLocalhost = defaultToLocalhost
 
-            openPanel.beginSheetModal(for: window) { [weak self] response in
-                guard let self else { return }
-                if response == .OK {
-                    items = openPanel.urls.map { url in
-                        let promise = iTermRenegablePromise<NSURL> { seal in
-                            seal.fulfill(url as NSURL)
-                        }
-                        var isDirectory = ObjCBool(false)
-                        _ = FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
-                        return iTermOpenPanelItem(urlPromise: promise,
-                                                  filename: url.path,
-                                                  isDirectory: isDirectory.boolValue,
-                                                  host: SSHIdentity.localhost,
-                                                  progress: Progress(),
-                                                  cancellation: Cancellation())
-                    }
-                } else {
-                    items = []
+        sshFilePanel.dataSource = ConductorRegistry.instance
+
+        sshFilePanel.beginSheetModal(for: window) { [weak self] response in
+            guard let self else { return }
+            if response == .OK {
+                items = sshFilePanel.promiseItems().map { item in
+                    iTermOpenPanelItem(urlPromise: item.promise,
+                                       filename: item.filename,
+                                       isDirectory: item.isDirectory,
+                                       host: item.host,
+                                       progress: item.progress,
+                                       cancellation: item.cancellation)
                 }
-                handler(response)
-                Self.panels.remove(object: self)
+            } else {
+                items = []
             }
+            handler(response)
+            Self.panels.remove(object: self)
         }
     }
 }

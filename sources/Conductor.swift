@@ -1415,6 +1415,7 @@ extension Conductor {
         DLog("Recovery finished")
         switch state {
         case .recovered:
+            exfiltrateUsefulFramerInfo()
             delegate?.conductorStateDidChange()
             state = .ground
         default:
@@ -1514,13 +1515,7 @@ extension Conductor {
                 self?.delegate?.conductorStateDidChange()
             }
         }
-        runRemoteCommand("echo $HOME") { [weak self] data, status in
-            if status == 0 {
-                self?.homeDirectory = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
-                self?.delegate?.conductorStateDidChange()
-            }
-        }
-        framerGetenv("PATH")
+        exfiltrateUsefulFramerInfo()
         if myJump != nil {
             framerJump()
         } else {
@@ -1531,6 +1526,16 @@ extension Conductor {
             send(.framerAutopoll, .fireAndForget)
         }
         delegate?.conductorStateDidChange()
+    }
+
+    private func exfiltrateUsefulFramerInfo() {
+        runRemoteCommand("echo $HOME") { [weak self] data, status in
+            if status == 0 {
+                self?.homeDirectory = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+                self?.delegate?.conductorStateDidChange()
+            }
+        }
+        framerGetenv("PATH")
     }
 
     private func uploadPayloads() {

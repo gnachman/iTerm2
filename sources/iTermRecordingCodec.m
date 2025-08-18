@@ -6,6 +6,8 @@
 //
 
 #import "iTermRecordingCodec.h"
+
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermController.h"
 #import "iTermSavePanel.h"
 #import "iTermSessionLauncher.h"
@@ -19,11 +21,14 @@
 @implementation iTermRecordingCodec
 
 + (void)loadRecording {
-    NSOpenPanel *panel = [[NSOpenPanel alloc] init];
+    iTermOpenPanel *panel = [[iTermOpenPanel alloc] init];
     panel.allowedContentTypes = @[ [UTType typeWithFilenameExtension:@"itr"] ];
-    if ([panel runModal] == NSModalResponseOK) {
-        [self loadRecording:panel.URL];
-    }
+    panel.defaultToLocalhost = YES;
+    [panel beginWithFallback:^(NSModalResponse response, NSArray<NSURL *> *urls) {
+        if (response == NSModalResponseOK) {
+            [self loadRecording:urls.firstObject];
+        }
+    }];
 }
 
 + (void)loadRecording:(NSURL *)url {

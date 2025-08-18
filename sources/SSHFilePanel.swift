@@ -7,6 +7,7 @@
 
 import Foundation
 import Cocoa
+import UniformTypeIdentifiers
 
 // MARK: - Data Source Protocol
 
@@ -73,6 +74,7 @@ class SSHFilePanel: NSWindowController {
     private var saveAsLabel: NSTextField!
     private var newFolderNameTextField: NSTextField!
     private var newFolderSheet: NSPanel!
+    private var uiInitialized = false
 
     private enum Mode {
         case regular
@@ -94,6 +96,16 @@ class SSHFilePanel: NSWindowController {
     var canCreateDirectories = false
     var isSelectable: ((RemoteFile) -> Bool)?
     var includeLocalhost = true
+    var allowedContentTypes = [UTType]()
+    var defaultToLocalhost = false
+
+    var allowsMultipleSelection = true {
+        didSet {
+            if uiInitialized {
+                fileList.allowsMultipleSelection = allowsMultipleSelection
+            }
+        }
+    }
 
     // MARK: - Data Properties
 
@@ -150,6 +162,7 @@ class SSHFilePanel: NSWindowController {
                                                selector: #selector(connectedHostsDidChange(_:)),
                                                name: SSHFilePanel.connectedHostsDidChangeNotification,
                                                object: nil)
+        uiInitialized = true
     }
 
     required init?(coder: NSCoder) {
@@ -182,6 +195,7 @@ class SSHFilePanel: NSWindowController {
     }
 
     // MARK: - Data Source Updates
+
     @MainActor
     private func dataSourceDidChange() {
         if !prepared {
@@ -189,10 +203,16 @@ class SSHFilePanel: NSWindowController {
             prepareToShow()
         }
         let connectedHosts = connectedHostsIncludingLocalhost()
-
-        if let firstHost = connectedHosts.first {
+        let defaultHost = if defaultToLocalhost {
+            connectedHosts.first(where: { identity in
+                identity.isLocalhost
+            }) ?? connectedHosts.first
+        } else {
+            connectedHosts.first
+        }
+        if let defaultHost {
             Task { @MainActor in
-                await selectEndpoint(forIdentity: firstHost, initialPath: nil, withHistory: true)
+                await selectEndpoint(forIdentity: defaultHost, initialPath: nil, withHistory: true)
             }
         } else {
             currentEndpoint = nil
@@ -616,6 +636,7 @@ class SSHFilePanel: NSWindowController {
         fileList.translatesAutoresizingMaskIntoConstraints = false
         fileList.canChooseDirectories = canChooseDirectories
         fileList.canChooseFiles = canChooseFiles
+        fileList.allowsMultipleSelection = allowsMultipleSelection
 
         fileList.delegate = self
     }
@@ -1582,6 +1603,19 @@ extension SSHFilePanel {
         }
     }
 }
+extension SSHFilePanelFileList.FileNode {
+    var uttype: UTType? {
+        if sshIdentity.isLocalhost {
+            let url = URL(fileURLWithPath: file.absolutePath)
+            return try? url.resourceValues(forKeys: [.contentTypeKey]).contentType
+        }
+        let ext = file.absolutePath.lastPathComponent.pathExtension
+        if ext.isEmpty {
+            return nil
+        }
+        return UTType(filenameExtension: ext)
+    }
+}
 
 @available(macOS 11, *)
 extension SSHFilePanel: SSHFilePanelFileListDelegate {
@@ -1599,6 +1633,17 @@ extension SSHFilePanel: SSHFilePanelFileListDelegate {
     func sshFilePanelItemIsSelectable(file: SSHFilePanelFileList.FileNode) -> Bool {
         if let isSelectable {
             return isSelectable(file.file)
+        }
+        if !allowedContentTypes.isEmpty {
+            if file.isDirectory {
+                return true
+            }
+            guard let type = file.uttype else {
+                return false
+            }
+            return allowedContentTypes.anySatisfies { allowedType in
+                return type.conforms(to: allowedType)
+            }
         }
         return true
     }
