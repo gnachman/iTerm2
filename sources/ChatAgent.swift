@@ -969,170 +969,20 @@ extension Message {
     }
 }
 
-extension RemoteCommand.Content {
-    var functionName: String {
-        switch self {
-        case .isAtPrompt:
-            "is_at_prompt"
-        case .executeCommand:
-            "execute_command"
-        case .getLastExitStatus:
-            "get_last_exit_status"
-        case .getCommandHistory:
-            "get_command_history"
-        case .getLastCommand:
-            "get_last_command"
-        case .getCommandBeforeCursor:
-            "get_command_before_cursor"
-        case .searchCommandHistory:
-            "search_command_history"
-        case .getCommandOutput:
-            "get_command_output"
-        case .getTerminalSize:
-            "get_terminal_size"
-        case .getShellType:
-            "get_shell_type"
-        case .detectSSHSession:
-            "detect_ssh_session"
-        case .getRemoteHostname:
-            "get_remote_hostname"
-        case .getUserIdentity:
-            "get_user_identity"
-        case .getCurrentDirectory:
-            "get_current_directory"
-        case .setClipboard:
-            "set_clipboard"
-        case .insertTextAtCursor:
-            "insert_text_at_cursor"
-        case .deleteCurrentLine:
-            "delete_current_line"
-        case .getManPage:
-            "get_man_page"
-        case .createFile:
-            "create_file"
-        case .searchBrowser:
-            "find_on_page"
-        case .loadURL:
-            "load_url"
-        case .webSearch:
-            "web_search_in_browser"
-        case .getURL:
-            "get_current_url"
-        case .readWebPage:
-            "read_web_page_section"
-        }
-    }
-
-    var argDescriptions: [String: String] {
-        return switch self {
-        case .isAtPrompt(_):
-            [:]
-        case .executeCommand(_):
-            ["command": "The command to run"]
-        case .getLastExitStatus(_):
-            [:]
-        case .getCommandHistory(_):
-            ["limit": "Maximum number of history items to return."]
-        case .getLastCommand(_):
-            [:]
-        case .getCommandBeforeCursor(_):
-            [:]
-        case .searchCommandHistory(_):
-            ["query": "Search query for filtering command history."]
-        case .getCommandOutput(_):
-            ["id": "Unique identifier of the command whose output is requested."]
-        case .getTerminalSize(_):
-            [:]
-        case .getShellType(_):
-            [:]
-        case .detectSSHSession(_):
-            [:]
-        case .getRemoteHostname(_):
-            [:]
-        case .getUserIdentity(_):
-            [:]
-        case .getCurrentDirectory(_):
-            [:]
-        case .setClipboard(_):
-            ["text": "The text to copy to the clipboard."]
-        case .insertTextAtCursor(_):
-            ["text": "The text to insert at the cursor position. Consider whether execute_command would be a better choice, especially when running a command at the shell prompt since insert_text_at_cursor does not return the output to you."]
-        case .deleteCurrentLine(_):
-            [:]
-        case .getManPage(_):
-            ["cmd": "The command whose man page content is requested."]
-        case .createFile:
-            ["filename": "The name of the file you wish to create. It will be replaced if it already exists.",
-             "content": "The content that will be written to the file."]
-        case .searchBrowser(_):
-            ["query": "The text to search for on the current page. Ensure you know which web page is currently loaded before using this."]
-        case .loadURL(_):
-            ["url": "The URL to load. Must use https scheme."]
-        case .webSearch(_):
-            ["query": "The web search query"]
-        case .getURL(_):
-            [:]
-        case .readWebPage(_):
-            ["startingLineNumber": "The line number to start reading at.",
-             "numberOfLines": "The number of lines to return."]
-        }
-    }
-
-    var functionDescription: String {
-        switch self {
-        case .isAtPrompt(_):
-            "Returns true if the terminal is at the command prompt, allowing safe command injection."
-        case .executeCommand(_):
-            "Runs a shell command and returns its output."
-        case .getLastExitStatus(_):
-            "Retrieves the exit status of the last executed command."
-        case .getCommandHistory(_):
-            "Returns the recent command history."
-        case .getLastCommand(_):
-            "Retrieves the most recent command."
-        case .getCommandBeforeCursor(_):
-            "Returns the current partially typed command before the cursor."
-        case .searchCommandHistory(_):
-            "Searches history for commands matching a query."
-        case .getCommandOutput(_):
-            "Returns the output of a previous command by its unique identifier."
-        case .getTerminalSize(_):
-            "Returns (columns, rows) of the terminal window."
-        case .getShellType(_):
-            "Detects the shell in use (e.g., bash, zsh, fish)."
-        case .detectSSHSession(_):
-            "Returns true if the user is SSH’ed into a remote host."
-        case .getRemoteHostname(_):
-            "Returns the remote hostname if in an SSH session."
-        case .getUserIdentity(_):
-            "Returns the logged-in user’s username."
-        case .getCurrentDirectory(_):
-            "Returns the current directory."
-        case .setClipboard(_):
-            "Copies text to the clipboard."
-        case .insertTextAtCursor(_):
-            "Inserts text into the terminal input at the cursor position."
-        case .deleteCurrentLine(_):
-            "Clears the current command line input (only at the prompt)."
-        case .getManPage(_):
-            "Returns the content of a command's man page."
-        case .createFile:
-            "Creates a file containing a specified string on the user's computer and then reveals it in Finder."
-        case .loadURL:
-            "Loads the specified URL in the associated web browser"
-        case .webSearch:
-            "Performs a web search using the currently configured search engine in the associated web browser"
-        case .getURL:
-            "Returns the current URL of the associated web browser"
-        case .readWebPage:
-            "Returns some of the content (in markdown format) of the page visible in the associated web browser."
-        case .searchBrowser(_):
-            "Searches the current web page in the associated web browser (after converting to markdown format) for a substring."
-        }
-    }
-}
-
 extension ChatAgent {
+    private func define<T: Codable>(in conversation: inout AIConversation, content: RemoteCommand.Content, prototype: T) {
+        let f = ChatGPTFunctionDeclaration(name: content.functionName,
+                                           description: content.functionDescription,
+                                           parameters: JSONSchema(for: prototype, descriptions: content.argDescriptions))
+        let argsType = type(of: prototype)
+        conversation.define(
+            function: f,
+            arguments: argsType) { [weak self] llmMessage, command, completion in
+                let remoteCommand = RemoteCommand(llmMessage: llmMessage,
+                                                  content: content.withValue(command))
+                try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
+            }
+    }
     func defineFunctions(in conversation: inout AIConversation,
                          allowedCategories: Set<RemoteCommand.Content.PermissionCategory>) {
         conversation.removeAllFunctions()
@@ -1141,318 +991,54 @@ extension ChatAgent {
                 continue
             }
             switch content {
-            case .isAtPrompt(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .isAtPrompt(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
-            case .executeCommand(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .executeCommand(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
-            case .getLastExitStatus(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .getLastExitStatus(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
-            case .getCommandHistory(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .getCommandHistory(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
-            case .getLastCommand(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .getLastCommand(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
-            case .getCommandBeforeCursor(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .getCommandBeforeCursor(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
-            case .searchCommandHistory(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .searchCommandHistory(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
-            case .getCommandOutput(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .getCommandOutput(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
-            case .getTerminalSize(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .getTerminalSize(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
-            case .getShellType(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .getShellType(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
-            case .detectSSHSession(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .detectSSHSession(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
-            case .getRemoteHostname(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .getRemoteHostname(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
-            case .getUserIdentity(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .getUserIdentity(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
-            case .getCurrentDirectory(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .getCurrentDirectory(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
-            case .setClipboard(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .setClipboard(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
-            case .insertTextAtCursor(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .insertTextAtCursor(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
-            case .deleteCurrentLine(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .deleteCurrentLine(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
-            case .getManPage(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .getManPage(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
-            case .createFile(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .createFile(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
-            case .searchBrowser(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .searchBrowser(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
-            case .loadURL(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .loadURL(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
-            case .webSearch(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .webSearch(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
-            case .getURL(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .getURL(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
-            case .readWebPage(let args):
-                conversation.define(
-                    function: ChatGPTFunctionDeclaration(
-                        name: content.functionName,
-                        description: content.functionDescription,
-                        parameters: JSONSchema(for: args,
-                                               descriptions: content.argDescriptions)),
-                    arguments: type(of: args),
-                    implementation: { [weak self] llmMessage, command, completion in
-                        let remoteCommand = RemoteCommand(llmMessage: llmMessage,
-                                                          content: .readWebPage(command))
-                        try self?.runRemoteCommand(remoteCommand, llmMessage.responseID, completion: completion)
-                    })
+            case .isAtPrompt(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .executeCommand(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .getLastExitStatus(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .getCommandHistory(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .getLastCommand(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .getCommandBeforeCursor(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .searchCommandHistory(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .getCommandOutput(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .getTerminalSize(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .getShellType(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .detectSSHSession(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .getRemoteHostname(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .getUserIdentity(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .getCurrentDirectory(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .setClipboard(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .insertTextAtCursor(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .deleteCurrentLine(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .getManPage(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .createFile(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .searchBrowser(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .loadURL(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .webSearch(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .getURL(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .readWebPage(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
             }
         }
     }

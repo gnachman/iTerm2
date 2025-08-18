@@ -3968,6 +3968,7 @@
 		A6D4207B2E4FDC9000E8D3EF /* mark-locator.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D4207A2E4FDC9000E8D3EF /* mark-locator.js */; };
 		A6D4207C2E4FDC9000E8D3EF /* mark-locator.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D4207A2E4FDC9000E8D3EF /* mark-locator.js */; };
 		A6D4207D2E4FDC9000E8D3EF /* mark-locator.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D4207A2E4FDC9000E8D3EF /* mark-locator.js */; };
+		A6D4209F2E538A7600E8D3EF /* RemoteCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D4209E2E538A7400E8D3EF /* RemoteCommand.swift */; };
 		A6D441C72A91306400CA76E9 /* ProfileDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D441C62A91306400CA76E9 /* ProfileDocument.swift */; };
 		A6D463E6240447AF005D073D /* iTermBackgroundColorView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D463E4240447AF005D073D /* iTermBackgroundColorView.h */; };
 		A6D463E7240447AF005D073D /* iTermBackgroundColorView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D463E5240447AF005D073D /* iTermBackgroundColorView.m */; };
@@ -8452,6 +8453,7 @@
 		A6D420732E4FB51C00E8D3EF /* iTermBrowserNamedMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserNamedMark.swift; sourceTree = "<group>"; };
 		A6D420782E4FB55900E8D3EF /* iTermError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermError.swift; sourceTree = "<group>"; };
 		A6D4207A2E4FDC9000E8D3EF /* mark-locator.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "mark-locator.js"; sourceTree = "<group>"; };
+		A6D4209E2E538A7400E8D3EF /* RemoteCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteCommand.swift; sourceTree = "<group>"; };
 		A6D441C62A91306400CA76E9 /* ProfileDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileDocument.swift; sourceTree = "<group>"; };
 		A6D463E4240447AF005D073D /* iTermBackgroundColorView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBackgroundColorView.h; sourceTree = "<group>"; };
 		A6D463E5240447AF005D073D /* iTermBackgroundColorView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBackgroundColorView.m; sourceTree = "<group>"; };
@@ -11022,6 +11024,7 @@
 		A6038324294E626400FE11C2 /* AITerm */ = {
 			isa = PBXGroup;
 			children = (
+				A6D4209E2E538A7400E8D3EF /* RemoteCommand.swift */,
 				A6F7D4B12E01C2630065D09C /* CompletionsAnthropic.swift */,
 				A6E304442DFB45810029CAB4 /* DeepSeek.swift */,
 				A6E304402DFA55AA0029CAB4 /* Llama.swift */,
@@ -18636,6 +18639,7 @@
 				A620F2082AC64E93002C60FC /* ButtonMark.swift in Sources */,
 				A621F10326F2B0FE001DD3A6 /* VT100LineInfo.m in Sources */,
 				A6EC80812828E9F600493544 /* Conductor.swift in Sources */,
+				A6D4209F2E538A7600E8D3EF /* RemoteCommand.swift in Sources */,
 				A6CC7F5C274B6C570060C3C2 /* ToolJobs.m in Sources */,
 				A6C811F92DD1A7870088E628 /* TwoTierTokenQueue.swift in Sources */,
 				A63F0A5D2BF436850096633F /* iTermHostnameFinder.swift in Sources */,
