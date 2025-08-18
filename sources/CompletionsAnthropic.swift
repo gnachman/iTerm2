@@ -618,7 +618,7 @@ struct AnthropicStreamingResponseParser: LLMStreamingResponseParser {
     mutating func parse(data: Data) throws -> LLM.AnyStreamingResponse? {
         let decoder = JSONDecoder()
         let response = try decoder.decode(AnthropicStreamingResponse.self, from: data)
-        print("RESPONSE:\n\(data.lossyString)")
+        DLog("RESPONSE:\n\(data.lossyString)")
         parsedResponse = response
         return response
     }

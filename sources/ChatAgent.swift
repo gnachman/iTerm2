@@ -46,129 +46,6 @@ extension Message {
         }
     }
 }
-fileprivate struct MessageToPromptStateMachine {
-    private enum Mode {
-        case regular
-        case initialExplanation
-    }
-    private var mode = Mode.regular
-
-    mutating func body(message: Message) -> LLM.Message.Body {
-        switch message.author {
-        case .agent:
-            body(agentMessage: message)
-        case .user:
-            body(userMessage: message)
-        }
-    }
-
-    private mutating func body(agentMessage: Message) -> LLM.Message.Body {
-        switch agentMessage.content {
-        case .plainText(let value), .markdown(let value):
-            return .text(value)
-        case .explanationResponse(let annotations, _, _):
-            return .text(annotations.rawResponse)
-        case .remoteCommandRequest(let request):
-            if let call = request.llmMessage.function_call {
-                return .functionCall(call,
-                                     id: request.llmMessage.functionCallID)
-            } else {
-                return .uninitialized
-            }
-        case .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .commit, .setPermissions, .vectorStoreCreated, .terminalCommand, .appendAttachment,
-                .explanationRequest, .userCommand:
-            it_fatalError()
-        case .multipart(let subparts, _):
-            return .multipart(subparts.compactMap { subpart -> LLM.Message.Body? in
-                switch subpart {
-                case .attachment(let attachment):
-                    switch attachment.type {
-                    case .code(let code):
-                        return .text(code)
-                    case .statusUpdate:
-                        return nil
-                    case .file, .fileID:
-                        return .attachment(attachment)
-                    }
-                case .markdown(let string), .plainText(let string):
-                    return .text(string)
-                }
-            })
-        }
-    }
-
-    private func prompt(terminalCommand: TerminalCommand) -> String {
-        var lines = [String]()
-        lines.append("iTerm2 is sending you this message automatically because the user enabled sending terminal commands to AI for assistance. If you can provide useful non-obvious insights, respond with those. Do not restate information that is obvious from the output. If there is nothing important to say, just respond with \"Got it.\"")
-        lines.append("I executed the following command line:")
-        lines.append(terminalCommand.command)
-        if let directory = terminalCommand.directory {
-            lines.append("My current directory was:")
-            lines.append(directory)
-        }
-        if let hostname = terminalCommand.hostname {
-            if let username = terminalCommand.username {
-                lines.append("I am logged in as \(username)@\(hostname)")
-            } else {
-                lines.append("The current hostname is \(hostname)")
-            }
-        }
-        lines.append("The exit status of the command was \(terminalCommand.exitCode)")
-        lines.append("It produced this output:")
-        lines.append(terminalCommand.output)
-        return lines.joined(separator: "\n")
-    }
-
-    private mutating func body(userMessage: Message) -> LLM.Message.Body {
-        switch userMessage.content {
-        case .plainText(let value), .markdown(let value):
-            defer {
-                mode = .regular
-            }
-            switch mode {
-            case .regular:
-                return .text(value)
-            case .initialExplanation:
-                return .text(AIExplanationRequest.conversationalPrompt(userPrompt: value))
-            }
-        case .explanationRequest(let request):
-            mode = .initialExplanation
-            return .text(request.prompt())
-        case .multipart(let subparts, _):
-            return .multipart(subparts.compactMap { subpart -> LLM.Message.Body? in
-                switch subpart {
-                case .attachment(let attachment):
-                    switch attachment.type {
-                    case .code(let code):
-                        return .text(code)
-                    case .statusUpdate:
-                        return nil
-                    case .file, .fileID:
-                        return .attachment(attachment)
-                    }
-                case .markdown(let string), .plainText(let string):
-                    return .text(string)
-                }
-            })
-        case .remoteCommandResponse(let result, _, let functionName, let functionCallID):
-            let output = result.map { value in
-                value
-            } failure: { error in
-                "I was unable to complete the function call: " + error.localizedDescription
-            }
-            return .functionOutput(name: functionName,
-                                   output: output,
-                                   id: functionCallID)
-        case .terminalCommand(let cmd):
-            return .text(prompt(terminalCommand: cmd))
-        case .explanationResponse, .append, .appendAttachment, .remoteCommandRequest,
-                .selectSessionRequest, .clientLocal, .renameChat, .commit, .setPermissions,
-                .vectorStoreCreated, .userCommand:
-            it_fatalError()
-        }
-    }
-}
 
 class ChatAgent {
     private var conversation: AIConversation!
@@ -178,28 +55,13 @@ class ChatAgent {
     private var pendingRemoteCommands = [UUID: PendingRemoteCommand]()
     private let broker: ChatBroker
     private var renameConversation: AIConversation?
+    private let prepPipeline: MessagePrepPipeline
 
     struct PendingRemoteCommand {
         var completion: (Result<String, Error>) throws -> ()
         var responseID: String?
     }
 
-    private enum PipelineResult {
-        case fileUploaded(id: String, name: String)
-        case zipCreated(URL, Data)
-        case vectorStoreCreated(id: String)
-        case filesAddedToVectorStore
-        case completed
-
-        var vectorStoreID: String? {
-            if case let .vectorStoreCreated(id) = self {
-                id
-            } else {
-                nil
-            }
-        }
-    }
-    private var pipelineQueue = PipelineQueue<PipelineResult>()
     private var permissions: Set<RemoteCommand.Content.PermissionCategory>!
     private let registrationProvider: AIRegistrationProvider
 
@@ -210,9 +72,11 @@ class ChatAgent {
         self.chatID = chatID
         self.broker = broker
         self.registrationProvider = registrationProvider
+        self.prepPipeline = MessagePrepPipeline(chatID: chatID)
         permissions = Set<RemoteCommand.Content.PermissionCategory>()
         conversation = AIConversation(registrationProvider: registrationProvider)
         conversation.hostedTools.codeInterpreter = true
+        prepPipeline.delegate = self
         load(messages: messages)
     }
 
@@ -277,387 +141,22 @@ class ChatAgent {
             body: body)
     }
 
-    enum StreamingUpdate {
-        case begin(Message)
-        case append(String, UUID)
-        case appendAttachment(LLM.Message.Attachment, UUID)
-    }
 
     var supportsStreaming: Bool {
         return conversation.supportsStreaming
     }
 
-    private func publishNotice(chatID: String, message: String) throws {
-        try broker.publishMessageFromAgent(
-            chatID: chatID,
-            content: .clientLocal(.init(action: .notice(message))))
-    }
 
-    private func uploadableFilesFromSubparts(_ parts: [Message.Subpart]) -> [LLM.Message.Attachment.AttachmentType.File] {
-        guard let provider = AITermController.provider else {
-            return []
-        }
-        if provider.model.vectorStoreConfig == .disabled {
-            return []
-        }
-        return parts.compactMap { subpart -> LLM.Message.Attachment.AttachmentType.File? in
-            switch subpart {
-            case .attachment(let attachment):
-                switch attachment.type {
-                case .code, .statusUpdate:
-                    it_fatalError("Unsupported user-sent attachment type")
-                case .file(let file):
-                    if provider.shouldInlineBase64EncodedFile(mimeType: file.mimeType) == true {
-                        return nil
-                    }
-                    if MIMETypeIsTextual(file.mimeType) {
-                        return nil
-                    }
-                    return file
-                case .fileID:
-                    // No need for ingestion
-                    return nil
-                }
-            case .markdown, .plainText:
-                return nil
-            }
-        }
-    }
-
-    private func textFromSubparts(_ parts: [Message.Subpart]) -> String {
-        return parts.compactMap { part -> String? in
-            switch part {
-            case .attachment(let attachment):
-                switch attachment.type {
-                case .code(let text):
-                    return text
-                case .statusUpdate:
-                    return nil
-                case .file(let file):
-                    if !MIMETypeIsTextual(file.mimeType) {
-                        return nil
-                    }
-                    return file.content.lossyString
-                case .fileID: return nil
-                }
-            case .plainText(let text), .markdown(let text):
-                return text
-            }
-        }.joined(separator: "\n")
-    }
-
-    private func inlineFilesFromSubparts(_ parts: [Message.Subpart]) -> [LLM.Message.Attachment.AttachmentType.File] {
-        return parts.compactMap { part -> LLM.Message.Attachment.AttachmentType.File? in
-            switch part {
-            case .attachment(let attachment):
-                switch attachment.type {
-                case .code, .statusUpdate, .fileID:
-                    return nil
-                case .file(let file):
-                    if let provider = AITermController.provider,
-                       provider.shouldInlineBase64EncodedFile(mimeType: file.mimeType) == true {
-                        return file
-                    }
-                    return nil
-                }
-            case .plainText, .markdown:
-                return nil
-            }
-        }
-    }
-
-    private func uploadAction(chatID: String,
-                              fileName: String,
-                              fileContent: Data) -> Pipeline<PipelineResult>.Action.Closure {
-        return { [weak self] priorValues, completion in
-            self?.conversation.uploadFile(
-                name: fileName,
-                content: fileContent) { result in
-                    try? self?.uploadFinished(chatID: chatID,
-                                              fileName: fileName,
-                                              description: fileName.lastPathComponent,
-                                              result: result,
-                                              completion: completion)
-                }
-        }
-    }
-
-    // Result here is the result of the upload, while the completion block
-    // is for the pipeline action.
-    private func uploadFinished(chatID: String,
-                                fileName: String,
-                                description: String,
-                                result: Result<String, Error>,
-                                completion: @escaping (Result<PipelineResult, Error>) throws -> Void) throws {
-        switch result {
-        case .success(let id):
-            try publishNotice(
-                chatID: chatID,
-                message: "Upload of \(description) finished.")
-            try completion(.success(.fileUploaded(id: id, name: fileName)))
-        case .failure(let error):
-            try publishNotice(
-                chatID: chatID,
-                message: "Failed to upload \(fileName): \(error.localizedDescription)")
-            try completion(.failure(error))
-        }
-    }
-
-    private func createVectorStoreAction(chatID: String) throws -> Pipeline<PipelineResult>.Action.Closure {
-        return { [weak self] _, completion in
-            guard let self else {
-                try completion(.failure(AIError("Chat agent no longer exists")))
-                return
-            }
-            conversation.createVectorStore(
-                name: "iTerm2.\(chatID)") { [weak self, broker] result in
-                    try? result.handle { id in
-                        try broker.publish(message: .init(
-                            chatID: chatID,
-                            author: .agent,
-                            content: .vectorStoreCreated(id: id),
-                            sentDate: Date(),
-                            uniqueID: UUID()),
-                                       toChatID: chatID,
-                                       partial: false)
-                        try? completion(.success(.vectorStoreCreated(id: id)))
-                    } failure: { error in
-                        try self?.publishNotice(
-                            chatID: chatID,
-                            message: "There was a problem creating a vector store database: \(error.localizedDescription)")
-                        try? completion(.failure(error))
-                    }
-                }
-        }
-    }
-
-    private func addFilesToVectorStoreAction(previousResults: [UUID: PipelineResult],
-                                             vectorStoreID: String?,
-                                             completion: @escaping (Result<PipelineResult, Error>) throws -> ()) {
-        let fileIDs = previousResults.values.compactMap { value -> String? in
-            switch value {
-            case let .fileUploaded(id: fileID, name: _): return fileID
-            default:
-                return nil
-            }
-        }
-        let newVectorStoreID = previousResults.values.compactMap { value -> String? in
-            switch value {
-            case .vectorStoreCreated(id: let id): id
-            default: nil
-            }
-        }.first
-        let justVectorStoreID: String
-        if let vectorStoreID {
-            justVectorStoreID = vectorStoreID
-        } else if let newVectorStoreID {
-            justVectorStoreID = newVectorStoreID
-        } else {
-            try? completion(.failure(AIError("Missing vector store ID")))
-            return
-        }
-        conversation.addFilesToVectorStore(fileIDs: fileIDs,
-                                           vectorStoreID: justVectorStoreID,
-                                           completion: { [weak self, chatID] error in
-            if let error, error as? PluginError == .cancelled {
-                try? completion(.failure(error))
-                return
-            }
-            if let error {
-                try? self?.publishNotice(
-                    chatID: chatID,
-                    message: "There was a problem adding files to the vector store: \(error.localizedDescription)")
-                try? completion(.failure(error))
-            } else {
-                try? completion(.success(.filesAddedToVectorStore))
-            }
-        })
-    }
-
-    private func makeZipAction(files: [LLM.Message.Attachment.AttachmentType.File]) -> Pipeline<PipelineResult>.Action.Closure {
-        return { _, completion in
-            let stagingDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-            try? FileManager.default.createDirectory(at: stagingDir,
-                                                     withIntermediateDirectories: true, attributes: nil)
-            var usedNames = Set<String>()
-            var sourceURLs = [URL]()
-            for file in files {
-                var name = file.name
-                var i = 1
-                while usedNames.contains(name) {
-                    name = name.deletingPathExtension + " (\(i))" + name.pathExtension
-                    i += 1
-                }
-                usedNames.insert(name)
-                let dest = stagingDir.appendingPathComponent(name)
-                do {
-                    try file.content.write(to: dest)
-                    sourceURLs.append(URL(fileURLWithPath: name,
-                                          relativeTo: stagingDir))
-                } catch {
-                    DLog("\(error)")
-                }
-            }
-            let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-            try? FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true, attributes: nil)
-            let zipURL = tempDir.appendingPathComponent(Self.zipName)
-            iTermCommandRunner.zip(sourceURLs,
-                                   arguments: [],
-                                   toZip: zipURL,
-                                   relativeTo: stagingDir,
-                                   callbackQueue: .main) { ok in
-                if !ok {
-                    try? completion(.failure(AIError("Failed to zip attached files")))
-                    return
-                }
-                do {
-                    let data = try Data(contentsOf: zipURL)
-                    try? completion(.success(.zipCreated(zipURL, data)))
-                } catch {
-                    try? completion(.failure(error))
-                }
-            }
-        }
-    }
-
-    private static let zipName = "files.zip"
-
-    private func uploadZipAction(zipID: UUID, chatID: String) -> Pipeline<PipelineResult>.Action.Closure {
-        return { [weak self] priorValues, completion in
-            guard case let .zipCreated(url, data) = priorValues[zipID]! else {
-                it_fatalError()
-            }
-            self?.conversation.uploadFile(
-                name: Self.zipName,
-                content: data) { result in
-                    try? self?.uploadFinished(chatID: chatID,
-                                              fileName: url.path,
-                                              description: "attachments",
-                                              result: result,
-                                              completion: completion)
-                }
-        }
-    }
-
-    // Upload and maybe add to vector store.
-    private func ingestFiles(files: [LLM.Message.Attachment.AttachmentType.File],
-                             chatID: String,
-                             addToVectorStore: Bool,
-                             vectorStoreID: String?,
-                             builder: PipelineBuilder<PipelineResult>) throws -> PipelineBuilder<PipelineResult> {
-        var currentBuilder = builder
-        if addToVectorStore {
-            if vectorStoreID == nil {
-                DLog("Need to create a vector store")
-                try currentBuilder.add(description: "Create vector store",
-                                       actionClosure: createVectorStoreAction(chatID: chatID))
-                currentBuilder = currentBuilder.makeChild()
-            }
-            for file in files {
-                DLog("Add upload action for \(file.name)")
-                _ = try currentBuilder.add(description: "Upload \(file.name)",
-                                           actionClosure: uploadAction(
-                                            chatID: chatID,
-                                            fileName: file.name,
-                                            fileContent: file.content))
-            }
-            currentBuilder = currentBuilder.makeChild()
-            try currentBuilder.add(description: "Add files to vector store") { [weak self] previousResults, completion in
-                self?.addFilesToVectorStoreAction(previousResults: previousResults,
-                                                  vectorStoreID: vectorStoreID,
-                                                  completion: completion)
-            }
-        } else {
-            // Uploading for code interpreter. First zip the files, then upload them.
-            let zipID = try currentBuilder.add(description: "Zip files",
-                                               actionClosure: makeZipAction(files: files))
-            currentBuilder = currentBuilder.makeChild()
-            DLog("Add upload action for zip file")
-            try currentBuilder.add(description: "Upload zip file",
-                                   actionClosure: uploadZipAction(zipID: zipID,
-                                                                  chatID: chatID))
-        }
-
-        return currentBuilder.makeChild()
-    }
-
-    private func scheduleMultipartFetch(uploadFiles files: [LLM.Message.Attachment.AttachmentType.File],
-                                        text: String,
-                                        inlineFiles: [LLM.Message.Attachment.AttachmentType.File],
-                                        userMessage: Message,
-                                        history: [Message],
-                                        parts: [Message.Subpart],
-                                        vectorStoreID: String?,
-                                        streaming: ((StreamingUpdate) -> ())?,
-                                        completion: @escaping (Message?) -> ()) throws {
-        DLog("scheduling multipart fetch")
-        let rootBuilder = PipelineBuilder<PipelineResult>()
-        var currentBuilder = rootBuilder
-
-        DLog("files=\(files.map(\.name).joined(separator: ", "))")
-        DLog("text=\(text)")
-        if !files.isEmpty {
-            try publishNotice(chatID: chatID, message: "Uploading…")
-            currentBuilder = try ingestFiles(files: files,
-                                             chatID: userMessage.chatID,
-                                             addToVectorStore: false,
-                                             vectorStoreID: vectorStoreID,
-                                             builder: currentBuilder)
-        }
-        try currentBuilder.add(description: "Send message") { [weak self] values, actionCompletion in
-            DLog("Ready to send the message now that all files are uploaded")
-            let fileIDs = values.values.compactMap {
-                switch $0 {
-                case .fileUploaded(id: let fileID, name: let name): (fileID, name)
-                default: nil
-                }
-            }
-            let attachments = fileIDs.map {
-                Message.Subpart.attachment(LLM.Message.Attachment(inline: false,
-                                                                  id: $0.0,
-                                                                  type: .fileID(id: $0.0, name: $0.1)))
-            } + inlineFiles.map {
-                Message.Subpart.attachment(LLM.Message.Attachment(inline: true,
-                                                                  id: UUID().uuidString,
-                                                                  type: .file($0)))
-            }
-            try self?.fetchCompletion(
-                userMessage: Message(chatID: userMessage.chatID,
-                                     author: userMessage.author,
-                                     content: .multipart([.plainText(text)] + attachments,
-                                                         vectorStoreID: nil),
-                                     sentDate: userMessage.sentDate,
-                                     uniqueID: userMessage.uniqueID),
-                history: history,
-                cancelPendingUploads: false,
-                streaming: streaming,
-                completion: completion)
-        }
-        DLog("Add to pipeline queue")
-        pipelineQueue.append(rootBuilder.build(maxConcurrentActions: 2) { [chatID] disposition in
-            switch disposition {
-            case .success:
-                break
-            default:
-                completion(nil)
-            }
-            DLog("disposition for \(chatID) is \(disposition)")
-        })
-    }
 
     func fetchCompletion(userMessage: Message,
                          history: [Message],
                          streaming: ((StreamingUpdate) -> ())?,
                          completion: @escaping (Message?) -> ()) throws {
         try fetchCompletion(userMessage: userMessage,
-                        history: history,
-                        cancelPendingUploads: true,
-                        streaming: streaming,
-                        completion: completion)
-    }
-
-    private func shouldUploadAnyParts(parts: [Message.Subpart]) -> Bool {
-        return !uploadableFilesFromSubparts(parts).isEmpty
+                            history: history,
+                            cancelPendingUploads: true,
+                            streaming: streaming,
+                            completion: completion)
     }
 
     private func cancelPendingCommands() {
@@ -686,25 +185,28 @@ class ChatAgent {
                          streaming: ((StreamingUpdate) -> ())?,
                          completion: @escaping (Message?) -> ()) throws {
         load(messages: history)
+
+        // Remove items that won't have a previous response ID.
+        let filteredHistory = history.filter { message in
+            switch message.content {
+            case .setPermissions, .renameChat, .selectSessionRequest, .clientLocal,
+                    .append, .appendAttachment, .commit, .vectorStoreCreated, .userCommand:
+                false
+
+            case .plainText, .markdown, .explanationRequest, .explanationResponse,
+                    .remoteCommandRequest, .remoteCommandResponse, .terminalCommand, .multipart:
+                true
+            }
+        }
         if cancelPendingUploads {
-            pipelineQueue.cancelAll()
+            prepPipeline.cancelAll()
         }
         switch userMessage.content {
-        case .multipart(let parts, let maybeVectorStoreID):
-            let uploads = uploadableFilesFromSubparts(parts)
-
-            if !uploads.isEmpty {
-                let text = textFromSubparts(parts)
-                let inlineFiles = inlineFilesFromSubparts(parts)
-                try scheduleMultipartFetch(uploadFiles: uploads,
-                                           text: text,
-                                           inlineFiles: inlineFiles,
-                                           userMessage: userMessage,
-                                           history: history,
-                                           parts: parts,
-                                           vectorStoreID: maybeVectorStoreID,
-                                           streaming: streaming,
-                                           completion: completion)
+        case .multipart:
+            if try prepPipeline.handleMultipartUserMessage(userMessage: userMessage,
+                                                           history: filteredHistory,
+                                                           streaming: streaming,
+                                                           completion: completion) {
                 return
             }
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
@@ -714,17 +216,13 @@ class ChatAgent {
         case .renameChat, .append:
             return
         case .remoteCommandResponse(let result, let messageID, _, _):
-            if let pending = pendingRemoteCommands[messageID] {
-                NSLog("Agent handling remote command response to message \(messageID)")
-                pendingRemoteCommands.removeValue(forKey: messageID)
-                try? pending.completion(Result(result))
+            if handleRemoteCommandResponse(messageID: messageID,
+                                           result: result) {
                 return
             }
         case .setPermissions(let allowedCategories):
-            defineFunctions(in: &conversation,
-                            allowedCategories: allowedCategories)
-            updateSystemMessage(allowedCategories)
-            completion(nil)
+            handleSetPermission(allowedCategories: allowedCategories,
+                                completion: completion)
             return
         case .userCommand:
             it_fatalError("User commands should not reach fetchCompletion")
@@ -733,7 +231,35 @@ class ChatAgent {
         case .appendAttachment:
             it_fatalError("User-sent attachments not supported")
         }
+        fetchCompletionForRegularMessage(userMessage: userMessage,
+                                         history: filteredHistory,
+                                         streaming: streaming,
+                                         completion: completion)
+    }
 
+    private func handleRemoteCommandResponse(messageID: UUID,
+                                             result: Result<String, AIError>) -> Bool {
+        if let pending = pendingRemoteCommands[messageID] {
+            NSLog("Agent handling remote command response to message \(messageID)")
+            pendingRemoteCommands.removeValue(forKey: messageID)
+            try? pending.completion(Result(result))
+            return true
+        }
+        return false
+    }
+
+    private func handleSetPermission(allowedCategories: Set<RemoteCommand.Content.PermissionCategory>,
+                                     completion: @escaping (Message?) -> ()) {
+        defineFunctions(in: &conversation,
+                        allowedCategories: allowedCategories)
+        updateSystemMessage(allowedCategories)
+        completion(nil)
+    }
+
+    private func fetchCompletionForRegularMessage(userMessage: Message,
+                                                  history: [Message],
+                                                  streaming: ((StreamingUpdate) -> ())?,
+                                                  completion: @escaping (Message?) -> ()) {
         cancelPendingCommands()
 
         let needsRenaming = !conversation.messages.anySatisfies({ $0.role == .user})
@@ -769,7 +295,8 @@ class ChatAgent {
                 case .appendAttachment(let chunk):
                     if uuid == nil,
                        let initialMessage = Self.message(attachment: chunk,
-                                                         userMessage: userMessage) {
+                                                         userMessage: userMessage,
+                                                         responseID: responseID) {
                         streaming(.begin(initialMessage))
                         uuid = initialMessage.uniqueID
                     } else if let uuid {
@@ -819,9 +346,16 @@ class ChatAgent {
 
     private func requestRenaming() {
         let prompt = "Please assign a short, specific name to this chat, less than 30 characters in length, but descriptive. It will be shown in a chat list UI. Respond with only the name of the chat."
+        var history = conversation.messages + [AITermController.Message(role: .user, content: prompt)]
+        // Remove response IDs so we don't pollute the conversation's history
+        history = history.map { value in
+            var temp = value
+            temp.responseID = nil
+            return temp
+        }
         renameConversation = AIConversation(
             registrationProvider: nil,
-            messages: conversation.messages + [AITermController.Message(role: .user, content: prompt)])
+            messages: history)
         renameConversation?.shouldThink = false
         var failed = false
         renameConversation?.complete { [weak self] (result: Result<AIConversation, Error>) in
@@ -917,7 +451,8 @@ class ChatAgent {
 
     // Streaming only
     private static func message(attachment: LLM.Message.Attachment,
-                                userMessage: Message) -> Message? {
+                                userMessage: Message,
+                                responseID: String?) -> Message? {
         switch userMessage.content {
         case .plainText, .markdown, .explanationResponse, .terminalCommand, .remoteCommandResponse, .multipart:
             return Message(chatID: userMessage.chatID,
@@ -926,7 +461,8 @@ class ChatAgent {
                             [.attachment(attachment)],
                             vectorStoreID: nil),
                            sentDate: Date(),
-                           uniqueID: UUID())
+                           uniqueID: UUID(),
+                           responseID: responseID)
         case .explanationRequest(let explanationRequest):
             let messageID = UUID()
             return Message(
@@ -940,7 +476,8 @@ class ChatAgent {
                     ExplanationResponse.Update(final: false, messageID: messageID),
                     markdown: ""),  // markdown is added by the client.
                 sentDate: Date(),
-                uniqueID: messageID)
+                uniqueID: messageID,
+                responseID: responseID)
         case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat, .append,
                 .commit, .setPermissions, .appendAttachment, .vectorStoreCreated, .userCommand:
             it_fatalError()
@@ -1075,5 +612,38 @@ extension Result where Failure == Error {
     // Upcast Result<Success,SpecificFailure> to Result<Success,Error>.
     init<SpecificFailure: Error>(_ result: Result<Success, SpecificFailure>) {
         self = result.mapError { $0 }
+    }
+}
+
+extension ChatAgent: MessagePrepPipelineDelegate {
+    func uploadFile(name: String,
+                    content: Data,
+                    completion: @escaping (Result<String, any Error>) -> ()) {
+        conversation.uploadFile(name: name,
+                                content: content,
+                                completion: completion)
+    }
+    
+    func publish(message: Message, toChatID chatID: String, partial: Bool) throws {
+        try broker.publish(message: message, toChatID: chatID, partial: partial)
+    }
+    
+    func createVectorStore(name: String, completion: @escaping (Result<String, any Error>) -> ()) {
+        conversation.createVectorStore(name: name,
+                                       completion: completion)
+    }
+    
+    func addFilesToVectorStore(fileIDs: [String],
+                               vectorStoreID: String,
+                               completion: @escaping ((any Error)?) -> ()) {
+        conversation.addFilesToVectorStore(fileIDs: fileIDs,
+                                           vectorStoreID: vectorStoreID,
+                                           completion: completion)
+    }
+    
+    func publishNotice(chatID: String, message: String) throws {
+        try broker.publishMessageFromAgent(
+            chatID: chatID,
+            content: .clientLocal(.init(action: .notice(message))))
     }
 }

@@ -1709,8 +1709,16 @@ struct ResponsesBodyRequestBuilder {
                                                     filename: file.name))
                         case .fileID(let fileID, _):
                             if hostedTools.codeInterpreter {
+                                // For code interpreter file IDs are shared through
+                                // tools: {
+                                //   type="code_interpreter",
+                                //   container: {
+                                //     file_ids: [ "file id", … ]
+                                //   }
+                                // }
                                 return nil
                             } else {
+                                // This is only valid for PDFs currently.
                                 return .inputFile(.init(fileID: fileID))
                             }
                         }
@@ -1802,6 +1810,7 @@ struct ResponsesBodyRequestBuilder {
         let bodyEncoder = JSONEncoder()
         let bodyData = try! bodyEncoder.encode(body)
         DLog("REQUEST:\n\(bodyData.lossyString)")
+//        print(bodyData.lossyString)
         return bodyData
 
     }

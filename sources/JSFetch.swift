@@ -52,7 +52,7 @@ class PluginClient {
                 DLog("URLSession error: \(error)")
                 callback(receivedData.lossyString, "HTTP request failed with \(error.localizedDescription)")
             } else if let httpResponse = task.response as? HTTPURLResponse, httpResponse.statusCode != 200 {
-                DLog("HTTP status \(httpResponse.statusCode)")
+                DLog("Got response\n\(httpResponse.statusCode)\n\(httpResponse.allHeaderFields)\n\n\(receivedData.lossyString)\n\n")
                 callback(receivedData.lossyString,
                          "HTTP request failed with status \(httpResponse.statusCode).")
             } else {
