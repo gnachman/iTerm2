@@ -2922,6 +2922,7 @@ typedef struct {
                                        pid:(int32_t)pid
                                    channel:(uint8_t)channel
                                      depth:(int)depth {
+    DLog(@"terminalHandleSSHSideChannelOutput:%@ pid:%@ channel:%@ depth:%@", string, @(pid), @(channel), @(depth));
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenHandleSSHSideChannelOutput:string pid:pid channel:channel depth:depth];
     }];

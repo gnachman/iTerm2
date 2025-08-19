@@ -25,7 +25,15 @@ extension Conductor: SSHCommandRunning {
 
     @objc
     func reset() {
-        send(.framerReset, .fireAndForget)
+        log("reset")
+        let code = UUID().uuidString
+        forceReturnToGroundState()
+        switch framerVersion {
+        case .v1, .none:
+            send(.framerReset1, .fireAndForget)
+        default:
+            send(.framerReset2(code), .handleReset(expected: code, lines: StringArray()))
+        }
         if autopollEnabled {
             send(.framerAutopoll, .fireAndForget)
             if let framedPID = framedPID {
@@ -40,17 +48,10 @@ extension Conductor: SSHCommandRunning {
         reset()
     }
 
-    @objc
-    func didResynchronize() {
-        DLog("didResynchronize")
-        forceReturnToGroundState()
-        resetTransitively()
-        DLog(self.debugDescription)
-    }
-
     func addBackgroundJob(_ pid: Int32, command: Command, completion: @escaping (Data, Int32) -> ()) {
         let context = ExecutionContext(command: command, handler: .handleBackgroundJob(StringArray(), completion))
         backgroundJobs[pid] = .executingPipeline(context, [])
+        log("Added background job for pid \(pid), context \(context)")
     }
 
     @objc

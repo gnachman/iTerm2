@@ -2627,7 +2627,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                     [_delegate terminalHandleFramerRecoveryString:token.string];
                     break;
                 case VT100TerminalFramerRecoveryModeSyncing:
-                    DLog(@"Drop token suring framer recovery syncing %@", token);
+                    DLog(@"Drop token during framer recovery syncing %@", token);
                     break;
             }
             break;

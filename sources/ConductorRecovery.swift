@@ -16,6 +16,7 @@ class ConductorRecovery: NSObject {
     @objc let boolArgs: String
     @objc let clientUniqueID: String
     @objc let parent: Conductor?
+    @objc let version: Int
 
     @objc init(pid: pid_t,
                dcsID: String,
@@ -23,6 +24,7 @@ class ConductorRecovery: NSObject {
                sshargs: String,
                boolArgs: String,
                clientUniqueID: String,
+               version: Int,
                parent: Conductor?) {
         self.pid = pid
         self.dcsID = dcsID
@@ -30,6 +32,7 @@ class ConductorRecovery: NSObject {
         self.sshargs = sshargs
         self.boolArgs = boolArgs
         self.clientUniqueID = clientUniqueID
+        self.version = version
         self.parent = parent
     }
 }

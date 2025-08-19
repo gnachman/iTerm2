@@ -651,9 +651,15 @@ def reset():
     LASTPS = {}
     AUTOPOLL = 0
 
-async def handle_reset(identifier, args):
+async def handle_reset1(identifier, args):
     reset()
     q = begin(identifier)
+    end(q, identifier, 0)
+
+async def handle_reset2(identifier, args):
+    reset()
+    q = begin(identifier)
+    send_esc(q, args[0])
     end(q, identifier, 0)
 
 async def handle_save(identifier, args):
@@ -1211,6 +1217,7 @@ async def handle_recover(identifier, args):
     q = lock()
     reset()
     send_esc(q, f'begin-recovery')
+    send_esc(q, f'recovery: version 2')
     for pid in PROCESSES:
         proc = PROCESSES[pid]
         if proc.login:
@@ -1468,6 +1475,7 @@ async def mainloop():
             READSTATE = 1
             line = await asyncio.get_event_loop().run_in_executor(None, read_line)
         except:
+            log("Exception while reading: " + traceback.format_exc())
             fail("none", "exception during read_line")
             return 0
         READSDTATE = 0
@@ -1532,7 +1540,8 @@ HANDLERS = {
     "register": handle_register,
     "deregister": handle_deregister,
     "poll": handle_poll,
-    "reset": handle_reset,
+    "reset": handle_reset1,
+    "reset2": handle_reset2,
     "autopoll": handle_autopoll,
     "recover": handle_recover,
     "save": handle_save,

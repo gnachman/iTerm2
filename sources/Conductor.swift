@@ -174,6 +174,14 @@ class Conductor: NSObject {
     let guid = UUID().uuidString
     private var restorableState: RestorableState
     private var restored = false
+    enum FramerVersion: Int {
+        case v1 = 1
+
+        // v2 changes reset to reset2, taking an argument so we can ignore output before it when resynchronizing.
+        // Keep this in sync with the version reported by the recovery code in framer.py
+        case v2 = 2
+    }
+    private(set) var framerVersion: FramerVersion?
     @objc var sshargs: String {
         restorableState.sshargs
     }
@@ -233,7 +241,7 @@ class Conductor: NSObject {
             restorableState.state
         }
         set {
-            DLog("[\(framedPID.map { String($0) } ?? "unframed")] state \(state) -> \(newValue)")
+            log("[\(framedPID.map { String($0) } ?? "unframed")] state \(state) -> \(newValue)")
             restorableState.state = newValue
         }
     }
@@ -330,7 +338,9 @@ class Conductor: NSObject {
         return checker
     }()
     var ttyState = TTYState()
+    private var waitingToResynchronize = false
     lazy var _processInfoProvider: SSHProcessInfoProvider = {
+        log("Lazily creating process info provider")
         let provider = SSHProcessInfoProvider(rootPID: framedPID!, runner: self)
         provider.register(trackedPID: framedPID!)
         if let sessionID = delegate?.guid {
@@ -449,6 +459,8 @@ class Conductor: NSObject {
                                                    _terminalConfiguration: nil),
                   restored: false)
         _parent = recovery.parent
+        framerVersion = .init(rawValue: recovery.version)
+        waitingToResynchronize = true
     }
 
     deinit {
@@ -497,7 +509,7 @@ extension Conductor {
         guard let pid = framedPID else {
             return []
         }
-        let mine = processInfoProvider.processInfo(for: pid)?.descendants(skipping: 0) ?? []
+        let mine = processInfoProvider?.processInfo(for: pid)?.descendants(skipping: 0) ?? []
         let parents = parent?.transitiveProcesses ?? []
         var result = mine
         result.append(contentsOf: parents)
@@ -529,7 +541,10 @@ extension Conductor {
         }
         return _processInfoProvider
     }
-    @objc var processInfoProvider: ProcessInfoProvider & SessionProcessInfoProvider {
+    @objc var processInfoProvider: (ProcessInfoProvider & SessionProcessInfoProvider)? {
+        if waitingToResynchronize {
+            return nil
+        }
         if framedPID == nil {
             return NullProcessInfoProvider()
         }
@@ -748,7 +763,8 @@ extension Conductor {
         case framerRegister(pid: pid_t)
         case framerDeregister(pid: pid_t)
         case framerPoll
-        case framerReset
+        case framerReset1
+        case framerReset2(String)
         case framerAutopoll
         case framerSave([String:String])
         case framerFile(FileSubcommand)
@@ -761,7 +777,7 @@ extension Conductor {
                 return false
 
             case .framerRun, .framerLogin, .framerSend, .framerKill, .framerQuit, .framerRegister(_),
-                    .framerDeregister(_), .framerPoll, .framerReset, .framerAutopoll, .framerSave(_),
+                    .framerDeregister(_), .framerPoll, .framerReset1, .framerReset2, .framerAutopoll, .framerSave(_),
                     .framerFile(_), .framerEval, .framerGetenv:
                 return true
             }
@@ -812,8 +828,10 @@ extension Conductor {
                 return ["dereigster", String(pid)].joined(separator: "\n")
             case .framerPoll:
                 return "poll"
-            case .framerReset:
+            case .framerReset1:
                 return "reset"
+            case .framerReset2(let code):
+                return ["reset2", code].joined(separator: "\n")
             case .framerAutopoll:
                 return "autopoll"
             case .framerSave(let dict):
@@ -870,8 +888,10 @@ extension Conductor {
                 return ["dereigster", String(pid)].joined(separator: " ")
             case .framerPoll:
                 return "poll"
-            case .framerReset:
+            case .framerReset1:
                 return "reset"
+            case .framerReset2(let code):
+                return ["reset2", code].joined(separator: " ")
             case .framerAutopoll:
                 return "autopoll"
             case .framerFile(let subcommand):
@@ -922,6 +942,8 @@ extension Conductor {
                     return "handleNonFramerLogin"
                 case .handleGetenv:
                     return "handleGetenv"
+                case .handleReset(let expected, let actual):
+                    return "handleReset(\(expected), \(actual.string))"
                 }
             }
 
@@ -938,6 +960,8 @@ extension Conductor {
             case handleFile(StringArray, (String, Int32) -> ())
             case handleNonFramerLogin
             case handleGetenv(String, StringArray)
+            case handleReset(expected: String, lines: StringArray)
+
             private enum Key: CodingKey {
                 case rawValue
                 case stringArray
@@ -958,6 +982,7 @@ extension Conductor {
                 case handleFile
                 case handleNonFramerLogin
                 case handleGetenv
+                case handleReset
             }
 
             private var rawValue: Int {
@@ -988,6 +1013,8 @@ extension Conductor {
                     return RawValues.handleFile.rawValue
                 case .handleNonFramerLogin:
                     return RawValues.handleNonFramerLogin.rawValue
+                case .handleReset:
+                    return RawValues.handleReset.rawValue
                 }
             }
 
@@ -996,7 +1023,7 @@ extension Conductor {
                 try container.encode(rawValue, forKey: .rawValue)
                 switch self {
                 case .failIfNonzeroStatus, .fireAndForget, .handleFramerLogin(_), .handlePoll(_, _),
-                        .handleJump, .handleNonFramerLogin, .handleGetenv:
+                        .handleJump, .handleNonFramerLogin, .handleGetenv, .handleReset:
                     break
                 case .handleCheckForPython(let value):
                     try container.encode(value, forKey: .stringArray)
@@ -1047,6 +1074,9 @@ extension Conductor {
                 case .handleGetenv:
                     self = .handleGetenv(try container.decode(String.self, forKey: .string),
                                          try container.decode(StringArray.self, forKey: .stringArray))
+                case .handleReset:
+                    self = .handleReset(expected: try container.decode(String.self, forKey: .string),
+                                        lines: try container.decode(StringArray.self, forKey: .stringArray))
                 }
             }
         }
@@ -1115,6 +1145,7 @@ extension Conductor {
         var sshargs: String
         var boolArgs: String
         var clientUniqueID: String
+        var version: Int
 
         var tree: NSDictionary {
             return (parentage + [Nesting(pid: login, dcsID: dcsID)]).tree
@@ -1132,6 +1163,7 @@ extension Conductor {
         var sshargs: String?
         var boolArgs: String?
         var clientUniqueID: String?
+        var version: Int?
 
         var finished: FinishedRecoveryInfo? {
             guard let login = login,
@@ -1147,7 +1179,8 @@ extension Conductor {
                 parentage: parentage,
                 sshargs: sshargs,
                 boolArgs: boolArgs,
-                clientUniqueID: clientUniqueID)
+                clientUniqueID: clientUniqueID,
+                version: version ?? 1)
         }
     }
 
@@ -1407,20 +1440,31 @@ extension Conductor {
 
     @objc func startRecovery() {
         write("\n\("recover".base64Encoded)\n\n")
+        waitingToResynchronize = true
         state = .recovery(.ground)
         delegate?.conductorStateDidChange()
     }
 
+    // Don't try to do anything from here until resynchronization is complete.
     @objc func recoveryDidFinish() {
         DLog("Recovery finished")
         switch state {
         case .recovered:
-            exfiltrateUsefulFramerInfo()
             delegate?.conductorStateDidChange()
             state = .ground
         default:
             break
         }
+    }
+
+    @objc
+    func didResynchronize() {
+        DLog("didResynchronize")
+        waitingToResynchronize = false
+        forceReturnToGroundState()
+        resetTransitively()
+        exfiltrateUsefulFramerInfo()
+        DLog(self.debugDescription)
     }
 
     @objc func quit() {
@@ -1635,6 +1679,7 @@ extension Conductor {
         let pythonCode = try! String(contentsOf: path).replacingOccurrences(of: "#{SUB}",
                                                                             with: customCode)
         runPython(pythonCode)
+        framerVersion = .v2
     }
 
     private func runPython(_ code: String) {
@@ -1676,7 +1721,9 @@ extension Conductor {
         delegate?.conductorSendInitialText()
     }
 
-    private func update(executionContext: ExecutionContext, result: PartialResult) -> () {
+    struct IgnoreCommandError: Error { }
+
+    private func update(executionContext: ExecutionContext, result: PartialResult) throws {
         log("update \(executionContext) result=\(result)")
         switch executionContext.handler {
         case .handleNonFramerLogin:
@@ -1736,6 +1783,20 @@ extension Conductor {
             }
         case .fireAndForget:
             return
+        case .handleReset(let code, let lines):
+            switch result {
+            case .line(let message):
+                lines.strings.append(message)
+            case .end:
+                if lines.strings.contains(code) {
+                    log("Have received the reset code \(code)")
+                } else {
+                    log("Throwing because twe have not received the reset code")
+                    throw IgnoreCommandError()
+                }
+            case .abort, .sideChannelLine, .canceled:
+                break
+            }
         case .handleFramerLogin(let lines):
             switch result {
             case .line(let message):
@@ -1905,9 +1966,9 @@ extension Conductor {
     }
 
     @objc(handleLine:depth:) func handle(line: String, depth: Int32) {
-        DLog("[\(framedPID.map { String($0) } ?? "unframed")] handle input: \(line)")
+        log("[\(framedPID.map { String($0) } ?? "unframed")] handle input: \(line) depth=\(depth)")
         if depth != self.depth && framing {
-            DLog("Pass line with depth \(depth) to parent \(String(describing: parent)) because my depth is \(self.depth)")
+            log("Pass line with depth \(depth) to parent \(String(describing: parent)) because my depth is \(self.depth)")
             parent?.handle(line: line, depth: depth)
             return
         }
@@ -1916,30 +1977,30 @@ extension Conductor {
         case .ground, .unhooked, .recovery(_), .recovered:
             // Tolerate unexpected inputs - this is essential for getting back on your feet when
             // restoring.
-            DLog("Unexpected input: \(line)")
+            log("Unexpected input: \(line)")
         case .willExecutePipeline(let contexts):
             let pending = Array(contexts.dropFirst())
             state = .executingPipeline(contexts.first!, pending)
-            update(executionContext: contexts.first!, result: .line(line))
+            try? update(executionContext: contexts.first!, result: .line(line))
         case let .executingPipeline(context, _):
-            update(executionContext: context, result: .line(line))
+            try? update(executionContext: context, result: .line(line))
         }
     }
 
     @objc func handleUnhook() {
-        DLog("< unhook")
+        log("unhook")
         switch state {
         case .executingPipeline(let context, _):
-            update(executionContext: context, result: .abort)
+            try? update(executionContext: context, result: .abort)
         case .willExecutePipeline(let contexts):
-            update(executionContext: contexts.first!, result: .abort)
+            try? update(executionContext: contexts.first!, result: .abort)
         case .ground, .recovered, .unhooked, .recovery:
             break
         }
-        DLog("Abort pending commands")
+        log("Abort pending commands")
         while let pending = queue.first {
             queue.removeFirst()
-            update(executionContext: pending, result: .abort)
+            try? update(executionContext: pending, result: .abort)
         }
         state = .unhooked
         ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
@@ -1948,12 +2009,12 @@ extension Conductor {
     @objc func handleCommandBegin(identifier: String, depth: Int32) {
         // NOTE: no attempt is made to ensure this is meant for me; could be for my parent but it
         // only logs so who cares.
-        DLog("[\(framedPID.map { String($0) } ?? "unframed")] begin \(identifier) depth=\(depth)")
+        log("[\(framedPID.map { String($0) } ?? "unframed")] begin \(identifier) depth=\(depth)")
     }
 
     // type can be "f" for framer or "r" for regular (non-framer)
     @objc func handleCommandEnd(identifier: String, type: String, status: UInt8, depth: Int32) {
-        DLog("[\(framedPID.map { String($0) } ?? "unframed")] end \(identifier) depth=\(depth) state=\(state)")
+        log("[\(framedPID.map { String($0) } ?? "unframed")] end \(identifier) depth=\(depth) state=\(state)")
         let expectFraming: Bool
         if framing {
             expectFraming = true
@@ -1981,30 +2042,38 @@ extension Conductor {
             // restoring.
             DLog("Unexpected command end in \(state)")
         case let .willExecutePipeline(contexts):
-            update(executionContext: contexts.first!, result: .end(status))
-            if contexts.count == 1 {
-                DLog("Command ended. Return to ground state.")
-                state = .ground
-                dequeue()
-            } else {
-                DLog("Command ended. Remain in willExecute with remaining commands.")
-                let pending = Array(contexts.dropFirst())
-                it_assert(!pending.isEmpty)
-                state = .willExecutePipeline(pending)
-                amendPipeline(pending)
+            do {
+                try update(executionContext: contexts.first!, result: .end(status))
+                if contexts.count == 1 {
+                    DLog("Command ended. Return to ground state.")
+                    state = .ground
+                    dequeue()
+                } else {
+                    DLog("Command ended. Remain in willExecute with remaining commands.")
+                    let pending = Array(contexts.dropFirst())
+                    it_assert(!pending.isEmpty)
+                    state = .willExecutePipeline(pending)
+                    amendPipeline(pending)
+                }
+            } catch {
+                log("Got \(error) so not updating state")
             }
         case let .executingPipeline(context, pending):
-            update(executionContext: context, result: .end(status))
-            DLog("Command ended. Return to ground state.")
-            if pending.isEmpty {
+            do {
+                try update(executionContext: context, result: .end(status))
                 DLog("Command ended. Return to ground state.")
-                state = .ground
-                dequeue()
-            } else {
-                it_assert(!pending.isEmpty)
-                DLog("Command ended. Return to willExecute with remaining commands.")
-                state = .willExecutePipeline(Array(pending))
-                amendPipeline(pending)
+                if pending.isEmpty {
+                    DLog("Command ended. Return to ground state.")
+                    state = .ground
+                    dequeue()
+                } else {
+                    it_assert(!pending.isEmpty)
+                    DLog("Command ended. Return to willExecute with remaining commands.")
+                    state = .willExecutePipeline(Array(pending))
+                    amendPipeline(pending)
+                }
+            } catch {
+                log("Got \(error) so not updating state")
             }
         }
     }
@@ -2016,7 +2085,7 @@ extension Conductor {
             parent?.handleTerminate(pid, code: code, depth: depth)
             return
         }
-        DLog("Process \(pid) terminated")
+        log("Process \(pid) terminated")
         if pid == framedPID {
             send(.quit, .fireAndForget)
         } else if let jobState = backgroundJobs[pid] {
@@ -2026,17 +2095,24 @@ extension Conductor {
                 // restoring.
                 DLog("Unexpected termination of \(pid)")
             case let .willExecutePipeline(contexts):
-                update(executionContext: contexts.first!, result: .end(UInt8(code)))
+                try? update(executionContext: contexts.first!, result: .end(UInt8(code)))
+                log("Remove background job \(pid) after handling termination while in willExecutePipeline job state")
                 backgroundJobs.removeValue(forKey: pid)
             case let .executingPipeline(context, _):
-                update(executionContext: context, result: .end(UInt8(code)))
-                backgroundJobs.removeValue(forKey: pid)
+                do {
+                    try update(executionContext: context, result: .end(UInt8(code)))
+                    backgroundJobs.removeValue(forKey: pid)
+                    log("Remove background job \(pid) after handling termination while in executingPipeline job state")
+                } catch {
+                    log("Got \(error) so not updating state")
+                }
             }
         }
     }
 
     @objc(handleSideChannelOutput:pid:channel:depth:)
     func handleSideChannelOutput(_ string: String, pid: Int32, channel: UInt8, depth: Int32) {
+        log("handleSideChannelOutput string=\(string) pid=\(pid) channel=\(channel) depth=\(depth)")
         if depth != self.depth {
             DLog("Pass side-channel output with depth \(depth) to parent \(String(describing: parent)) because my depth is \(self.depth)")
             parent?.handleSideChannelOutput(string, pid: pid, channel: channel, depth: depth)
@@ -2058,6 +2134,7 @@ extension Conductor {
             handleNotif(string)
         }
         guard let jobState = backgroundJobs[pid] else {
+            log("No background job with pid \(pid)")
             return
         }
 //        DLog("pid \(pid) channel \(channel) produced: \(string)")
@@ -2065,12 +2142,12 @@ extension Conductor {
         case .ground, .unhooked, .recovery, .recovered:
             // Tolerate unexpected inputs - this is essential for getting back on your feet when
             // restoring.
-            DLog("Unexpected input: \(string)")
+            log("Unexpected input: \(string)")
         case let .willExecutePipeline(contexts):
             state = .executingPipeline(contexts.first!, Array(contexts.dropFirst()))
         case let .executingPipeline(context, _):
-            update(executionContext: context,
-                   result: .sideChannelLine(line: string, channel: channel, pid: pid))
+            try? update(executionContext: context,
+                        result: .sideChannelLine(line: string, channel: channel, pid: pid))
         }
     }
 
@@ -2152,6 +2229,7 @@ extension Conductor {
 
     @objc(handleRecoveryLine:)
     func handleRecovery(line rawline: String) -> ConductorRecovery? {
+        log("handleRecovery: \(rawline)")
         let line = rawline.trimmingTrailingNewline
         if !line.hasPrefix(":") {
             return nil
@@ -2192,6 +2270,7 @@ extension Conductor {
                                                  sshargs: finished.sshargs,
                                                  boolArgs: finished.boolArgs,
                                                  clientUniqueID: finished.clientUniqueID,
+                                                 version: finished.version,
                                                  parent: parent)
                     }
                     return nil
@@ -2208,6 +2287,11 @@ extension Conductor {
                 var temp = info
                 // See corresponding call to save() that stores these values before starting a login shell.
                 switch command {
+                case "version":
+                    guard let version = Int(value) else {
+                        return nil
+                    }
+                    temp.version = version
                 case "login":
                     guard let pid = pid_t(value) else {
                         return nil
@@ -2276,6 +2360,14 @@ extension Conductor {
         amendPipeline([])
     }
 
+    private func encode(_ pending: Conductor.ExecutionContext) -> String {
+        return pending.command.stringValue.components(separatedBy: "\n")
+            .map(\.base64Encoded)
+            .joined(separator: "\n")
+            .chunk(128, continuation: pending.command.isFramer ? "\\" : "")
+            .joined(separator: "\n") + "\n"
+    }
+
     private func amendPipeline(_ existing: [ExecutionContext]) {
         log("amendPipeline")
         if let last = existing.last, !last.supportsPipelining {
@@ -2290,7 +2382,7 @@ extension Conductor {
         state = .willExecutePipeline(contexts)
         for pending in contexts[existing.count...] {
             willSend(pending)
-            let chunked = pending.command.stringValue.components(separatedBy: "\n").map(\.base64Encoded).joined(separator: "\n").chunk(128, continuation: pending.command.isFramer ? "\\" : "").joined(separator: "\n") + "\n"
+            let chunked = encode(pending)
             write(chunked)
         }
     }
@@ -2337,7 +2429,7 @@ extension Conductor {
             log("delegate is nil. clear queue and reset state.")
             while let pending = queue.first {
                 queue.removeFirst()
-                update(executionContext: pending, result: .abort)
+                try? update(executionContext: pending, result: .abort)
             }
             state = .ground
             return nil
@@ -2345,7 +2437,7 @@ extension Conductor {
         while let pending = queue.first, pending.canceled {
             log("cancel \(pending)")
             queue.removeFirst()
-            update(executionContext: pending, result: .canceled)
+            try? update(executionContext: pending, result: .canceled)
         }
         guard let pending = queue.first else {
             log("queue is empty")
@@ -2405,10 +2497,10 @@ extension Conductor {
     }
 
     func forceReturnToGroundState() {
-        DLog("forceReturnToGroundState")
+        log("forceReturnToGroundState")
         state = .ground
         for context in queue {
-            update(executionContext: context, result: .abort)
+            try? update(executionContext: context, result: .abort)
         }
         queue = []
         parent?.forceReturnToGroundState()

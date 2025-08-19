@@ -14334,19 +14334,20 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         }
         return;
     }
-    NSOpenPanel *panel = [NSOpenPanel openPanel];
+
+    iTermOpenPanel *panel = [[[iTermOpenPanel alloc] init] autorelease];
     panel.canChooseDirectories = YES;
     panel.canChooseFiles = YES;
     panel.allowsMultipleSelection = YES;
 
     [NSApp activateIgnoringOtherApps:YES];
-    [panel beginSheetModalForWindow:_textview.window completionHandler:^(NSInteger result) {
+    [panel beginWithFallbackWindow:_textview.window handler:^(NSModalResponse result, NSArray<NSURL *> *panelURLs) {
         if (result == NSModalResponseOK) {
             [self writeTaskNoBroadcast:@"ok\n" encoding:NSISOLatin1StringEncoding forceEncoding:YES reporting:NO];
             NSFileManager *fileManager = [NSFileManager defaultManager];
             // Get the directories for all the URLs. If a URL was a file, convert it to the containing directory, otherwise leave it alone.
             __block BOOL anyFiles = NO;
-            NSArray<NSURL *> *directories = [panel.URLs mapWithBlock:^id(NSURL *anObject) {
+            NSArray<NSURL *> *directories = [panelURLs mapWithBlock:^id(NSURL *anObject) {
                 BOOL isDirectory = NO;
                 if ([fileManager fileExistsAtPath:anObject.path isDirectory:&isDirectory]) {
                     if (isDirectory) {
@@ -14365,7 +14366,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                 base = [base stringByDeletingLastPathComponent];
             }
             NSArray *baseComponents = [base pathComponents];
-            NSArray<NSString *> *relativePaths = [panel.URLs mapWithBlock:^id(NSURL *anObject) {
+            NSArray<NSString *> *relativePaths = [panelURLs mapWithBlock:^id(NSURL *anObject) {
                 NSString *path = anObject.path;
                 NSArray<NSString *> *pathComponents = [path pathComponents];
                 NSArray<NSString *> *relativePathComponents = [pathComponents subarrayWithRange:NSMakeRange(baseComponents.count, pathComponents.count - baseComponents.count)];
