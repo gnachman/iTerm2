@@ -190,9 +190,17 @@ class Process:
     async def cleanup(self):
         log(f'cleanup {self.__descr}: cleanup process {self.pid}')
         if self.__return_code is None:
+            self.__return_code = self.__process.returncode
+            log(f'nonblocking return code is {self.__return_code}')
+        if self.__return_code is None:
             log(f'kill {self.__descr}')
             try:
-                await self.kill(signal.SIGKILL)
+                # Use os.kill directly to avoid asyncio bug with send_signal on dead processes
+                # https://github.com/python/cpython/issues/87744
+                # https://bugs.python.org/issue38630
+                os.kill(self.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                log(f'cleanup {self.__descr}: process already dead')
             except Exception as e:
                 log(f'cleanup {self.__descr}: exception {e} during kill')
             log(f'cleanup {self.__descr}: wait')
