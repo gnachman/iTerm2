@@ -8,6 +8,7 @@
 
 #import "iTermKeyMappingViewController.h"
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermKeyMappings.h"
 #import "iTermKeystroke.h"
 #import "iTermKeystrokeFormatter.h"
@@ -39,7 +40,6 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
     iTermEditKeyActionWindowController *_editActionWindowController;
     IBOutlet NSButton *_touchBarMitigationsButton;
     IBOutlet NSPanel *_touchBarMitigationsPanel;
-    NSOpenPanel *_openPanel;
     NSSavePanel *_savePanel;
     // Index of row being edited. Valid after presenting the edit key mapping sheet.
     NSInteger _rowIndex;
@@ -436,21 +436,22 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
 #pragma mark - Import/Export
 
 - (void)importMenuItem:(id)sender {
-    _openPanel = [[NSOpenPanel alloc] init];
-    _openPanel.canChooseFiles = YES;
-    _openPanel.canChooseDirectories = NO;
-    _openPanel.allowsMultipleSelection = NO;
+    iTermOpenPanel *panel = [[iTermOpenPanel alloc] init];
+    panel.canChooseFiles = YES;
+    panel.canChooseDirectories = NO;
+    panel.allowsMultipleSelection = NO;
     __weak __typeof(self) weakSelf = self;
-    [_openPanel beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse result) {
+    [panel beginWithFallbackWindow:self.view.window handler:^(NSModalResponse result, NSArray<NSURL *> *urls) {
         if (result == NSModalResponseOK) {
-            [weakSelf importFromOpenPanel];
+            [weakSelf importFromOpenPanel:urls.firstObject];
         }
     }];
 }
 
-- (void)importFromOpenPanel {
-    NSURL *url = _openPanel.URL;
-    _openPanel = nil;
+- (void)importFromOpenPanel:(NSURL *)url {
+    if (!url) {
+        return;
+    }
     NSError *error = nil;
     NSString *const content = [NSString stringWithContentsOfURL:url
                                                        encoding:NSUTF8StringEncoding
