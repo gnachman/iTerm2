@@ -14339,6 +14339,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     panel.canChooseDirectories = YES;
     panel.canChooseFiles = YES;
     panel.allowsMultipleSelection = YES;
+    panel.preferredSSHIdentity = _conductor.sshIdentity ?: [SSHIdentity localhost];
 
     [NSApp activateIgnoringOtherApps:YES];
     [panel beginWithFallbackWindow:_textview.window handler:^(NSModalResponse result, NSArray<NSURL *> *panelURLs) {

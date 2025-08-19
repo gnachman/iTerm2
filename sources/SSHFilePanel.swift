@@ -97,7 +97,7 @@ class SSHFilePanel: NSWindowController {
     var isSelectable: ((RemoteFile) -> Bool)?
     var includeLocalhost = true
     var allowedContentTypes = [UTType]()
-    var defaultToLocalhost = false
+    var preferredSSHIdentity: SSHIdentity?
 
     var allowsMultipleSelection = true {
         didSet {
@@ -203,13 +203,7 @@ class SSHFilePanel: NSWindowController {
             prepareToShow()
         }
         let connectedHosts = connectedHostsIncludingLocalhost()
-        let defaultHost = if defaultToLocalhost {
-            connectedHosts.first(where: { identity in
-                identity.isLocalhost
-            }) ?? connectedHosts.first
-        } else {
-            connectedHosts.first
-        }
+        let defaultHost = preferredSSHIdentity ?? connectedHosts.first
         if let defaultHost {
             Task { @MainActor in
                 await selectEndpoint(forIdentity: defaultHost, initialPath: nil, withHistory: true)

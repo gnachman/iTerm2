@@ -39,7 +39,7 @@ class iTermOpenPanel: NSObject {
     @objc var includeLocalhost = true
     @objc var allowsMultipleSelection = true
     @objc var allowedContentTypes = [UTType]()
-    @objc var defaultToLocalhost = false
+    @objc var preferredSSHIdentity: SSHIdentity?
     @objc private(set) var items: [iTermOpenPanelItem] = []
     static var panels = [iTermOpenPanel]()
     var isSelectable: ((RemoteFile) -> Bool)?
@@ -103,7 +103,7 @@ class iTermOpenPanel: NSObject {
         sshFilePanel.includeLocalhost = includeLocalhost
         sshFilePanel.allowedContentTypes = allowedContentTypes
         sshFilePanel.allowsMultipleSelection = allowsMultipleSelection
-        sshFilePanel.defaultToLocalhost = defaultToLocalhost
+        sshFilePanel.preferredSSHIdentity = preferredSSHIdentity
 
         sshFilePanel.dataSource = ConductorRegistry.instance
         return sshFilePanel

@@ -23,7 +23,7 @@
 + (void)loadRecording {
     iTermOpenPanel *panel = [[iTermOpenPanel alloc] init];
     panel.allowedContentTypes = @[ [UTType typeWithFilenameExtension:@"itr"] ];
-    panel.defaultToLocalhost = YES;
+    panel.preferredSSHIdentity = [SSHIdentity localhost];
     [panel beginWithFallback:^(NSModalResponse response, NSArray<NSURL *> *urls) {
         if (response == NSModalResponseOK) {
             [self loadRecording:urls.firstObject];

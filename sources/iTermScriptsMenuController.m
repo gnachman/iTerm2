@@ -445,7 +445,7 @@ NS_ASSUME_NONNULL_BEGIN
     iTermOpenPanel *panel = [[iTermOpenPanel alloc] init];
     panel.allowedContentTypes = @[ UTTypeZIP, [UTType typeWithFilenameExtension:@"its"], UTTypePythonScript ];
     panel.allowsMultipleSelection = YES;
-    panel.defaultToLocalhost = YES;
+    panel.preferredSSHIdentity = [SSHIdentity localhost];
     [panel beginWithFallback:^(NSModalResponse response, NSArray<NSURL *> *urls) {
         if (response == NSModalResponseOK) {
             dispatch_async(dispatch_get_main_queue(), ^{

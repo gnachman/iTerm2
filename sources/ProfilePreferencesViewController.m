@@ -856,23 +856,25 @@ andEditComponentWithIdentifier:(NSString *)identifier
 }
 
 - (IBAction)importJSONProfiles:(id)sender {
-    NSOpenPanel *openPanel = [NSOpenPanel openPanel];
+    iTermOpenPanel *openPanel = [[iTermOpenPanel alloc] init];
 
     // Set options.
     openPanel.canChooseFiles = YES;
     openPanel.canChooseDirectories = NO;
     openPanel.allowsMultipleSelection = YES;
     openPanel.allowedContentTypes = @[ UTTypeJSON ];
+    openPanel.preferredSSHIdentity = [SSHIdentity localhost];
 
-    if ([openPanel runModal] == NSModalResponseOK) {
-        for (NSURL *url in openPanel.URLs) {
-            NSError *error = nil;
-            if (![self tryToImportJSONProfileFromURL:url error:&error]) {
-                NSArray<NSString *> *actions = @[ @"OK" ];
-                if (![url isEqual:openPanel.URLs.lastObject]) {
-                    actions = [actions arrayByAddingObject:@"Abort"];
-                }
-                iTermWarningSelection selection =
+    [openPanel beginWithFallbackWindow:self.view.window handler:^(NSModalResponse response, NSArray<NSURL *> *urls) {
+        if (response == NSModalResponseOK) {
+            for (NSURL *url in urls) {
+                NSError *error = nil;
+                if (![self tryToImportJSONProfileFromURL:url error:&error]) {
+                    NSArray<NSString *> *actions = @[ @"OK" ];
+                    if (![url isEqual:urls.lastObject]) {
+                        actions = [actions arrayByAddingObject:@"Abort"];
+                    }
+                    iTermWarningSelection selection =
                     [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Import from %@ failed: %@", url.path, error.localizedDescription]
                                                actions:actions
                                              accessory:nil
@@ -880,12 +882,13 @@ andEditComponentWithIdentifier:(NSString *)identifier
                                            silenceable:kiTermWarningTypeTemporarilySilenceable
                                                heading:@"Could not Import Profile"
                                                 window:self.view.window];
-                if (selection == kiTermWarningSelection1) {
-                    return;
+                    if (selection == kiTermWarningSelection1) {
+                        return;
+                    }
                 }
             }
         }
-    }
+    }];
 }
 
 - (BOOL)tryToImportJSONProfileFromURL:(NSURL *)url error:(out NSError **)error {
