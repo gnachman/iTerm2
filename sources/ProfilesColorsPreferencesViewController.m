@@ -574,23 +574,26 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
 - (void)importColorPreset:(id)sender {
     // Create the File Open Dialog class.
-    NSOpenPanel *openPanel = [NSOpenPanel openPanel];
+    iTermOpenPanel *openPanel = [[iTermOpenPanel alloc] init];
 
     // Set options.
     [openPanel setCanChooseFiles:YES];
     [openPanel setCanChooseDirectories:NO];
     [openPanel setAllowsMultipleSelection:YES];
     [openPanel setAllowedContentTypes:@[ [UTType typeWithFilenameExtension:@"itermcolors"] ]];
+    openPanel.preferredSSHIdentity = [SSHIdentity localhost];
 
     // Display the dialog.  If the OK button was pressed,
     // process the files.
-    if ([openPanel runModal] == NSModalResponseOK) {
-        // Get an array containing the full filenames of all
-        // files and directories selected.
-        for (NSURL *url in openPanel.URLs) {
-            [iTermColorPresets importColorPresetFromFile:url.path];
+    [openPanel beginWithFallbackWindow:self.view.window handler:^(NSModalResponse response, NSArray<NSURL *> *urls) {
+        if (response == NSModalResponseOK) {
+            // Get an array containing the full filenames of all
+            // files and directories selected.
+            for (NSURL *url in urls) {
+                [iTermColorPresets importColorPresetFromFile:url.path];
+            }
         }
-    }
+    }];
 }
 
 - (void)saveColorPreset:(id)sender {
