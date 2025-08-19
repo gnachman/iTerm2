@@ -400,18 +400,20 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
 }
 
 - (IBAction)import:(id)sender {
-    NSOpenPanel *panel = [[NSOpenPanel alloc] init];
+    iTermOpenPanel *panel = [[iTermOpenPanel alloc] init];
     panel.allowedContentTypes = @[ [UTType typeWithFilenameExtension:@"it2snippets"] ];
     panel.canChooseFiles = YES;
     panel.canChooseDirectories = NO;
     panel.allowsMultipleSelection = YES;
-    const NSModalResponse response = [panel runModal];
-    if (response != NSModalResponseOK) {
-        return;
-    }
-    for (NSURL *url in panel.URLs) {
-        [self importURL:url];
-    }
+    panel.preferredSSHIdentity = [SSHIdentity localhost];
+    [panel beginWithFallbackWindow:self.view.window handler:^(NSModalResponse response, NSArray<NSURL *> *urls) {
+        if (response != NSModalResponseOK) {
+            return;
+        }
+        for (NSURL *url in urls) {
+            [self importURL:url];
+        }
+    }];
 }
 
 - (IBAction)export:(id)sender {

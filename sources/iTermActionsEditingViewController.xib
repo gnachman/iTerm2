@@ -160,7 +160,7 @@ CA
                     </connections>
                 </button>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="e3W-VS-F5T">
-                    <rect key="frame" x="796" y="17" width="18.5" height="28"/>
+                    <rect key="frame" x="796" y="17" width="19.5" height="28"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                     <buttonCell key="cell" type="smallSquare" bezelStyle="smallSquare" image="square.and.arrow.down" catalog="system" imagePosition="overlaps" alignment="center" state="on" imageScaling="proportionallyDown" inset="2" id="CAQ-Dq-N3k">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
