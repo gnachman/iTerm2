@@ -15,7 +15,9 @@ typedef NS_OPTIONS(NSInteger, iTermSavePanelOptions) {
     kSavePanelOptionAppendOrReplace = (1 << 0),
     kSavePanelOptionFileFormatAccessory = (1 << 1),
     kSavePanelOptionLogPlainTextAccessory = (1 << 2),
-    kSavePanelOptionIncludeTimestampsAccessory= (1 << 3)
+    kSavePanelOptionIncludeTimestampsAccessory = (1 << 3),
+    kSavePanelOptionLocalhostOnly = (1 << 4),
+    kSavePanelOptionDefaultToLocalhost = (1 << 5),
 };
 
 typedef NS_ENUM(NSInteger, iTermSavePanelReplaceOrAppend) {
@@ -24,29 +26,25 @@ typedef NS_ENUM(NSInteger, iTermSavePanelReplaceOrAppend) {
     kSavePanelReplaceOrAppendSelectionAppend,
 };
 
+@class iTermModernSavePanel;
+@class iTermSavePanelItem;
+
 @interface iTermSavePanel : NSObject
 
 // valid only if options includes kSavePanelOptionAppendOrReplace
 @property(nonatomic, readonly) iTermSavePanelReplaceOrAppend replaceOrAppend;
 
 // Path the user selected.
-@property(nonatomic, readonly) NSString *path;
+@property(nonatomic, strong, readonly) iTermSavePanelItem *item;
 @property (nonatomic, readonly) iTermLoggingStyle loggingStyle;
 @property(nonatomic, readonly) BOOL timestamps;
 
-+ (void)asyncShowWithOptions:(NSInteger)options
++ (void)asyncShowWithOptions:(iTermSavePanelOptions)options
                   identifier:(NSString *)identifier
             initialDirectory:(NSString *)initialDirectory
              defaultFilename:(NSString *)defaultFilename
             allowedFileTypes:(NSArray<NSString *> *)allowedFileTypes
                       window:(NSWindow *)window
-                  completion:(void (^)(iTermSavePanel *panel))completion;
-
-+ (NSSavePanel *)showWithOptions:(NSInteger)options
-                      identifier:(NSString *)identifier
-                initialDirectory:(NSString *)initialDirectory
-                 defaultFilename:(NSString *)defaultFilename
-                allowedFileTypes:(NSArray<NSString *> *)allowedFileTypes
-                          window:(NSWindow *)window;
+                  completion:(void (^)(iTermModernSavePanel *panel, iTermSavePanel *savePanel))completion;
 
 @end

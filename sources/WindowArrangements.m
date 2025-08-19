@@ -7,6 +7,8 @@
 //
 
 #import "WindowArrangements.h"
+
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermApplicationDelegate.h"
 #import "NSAlert+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -178,11 +180,14 @@ static NSInteger sWindowArrangementGeneration;
     }
 }
 
-+ (NSString *)showAlertWithText:(NSString *)prompt defaultInput:(NSString *)defaultValue export:(out BOOL *)export {
++ (void)showAlertWithText:(NSString *)prompt
+             defaultInput:(NSString *)defaultValue
+              offerExport:(BOOL)offerExport
+               completion:(void (^)(NSString *name, iTermSavePanelItem *saveItem))completion {
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = prompt;
     [alert addButtonWithTitle:@"OK"];
-    if (export) {
+    if (offerExport) {
         [alert addButtonWithTitle:@"Save to File with Contents…"];
     }
     [alert addButtonWithTitle:@"Cancel"];
@@ -195,58 +200,57 @@ static NSInteger sWindowArrangementGeneration;
     NSInteger button = [alert runModal];
 
     const NSInteger okButton = NSAlertFirstButtonReturn;
-    const NSInteger exportButton = export ? NSAlertSecondButtonReturn : -1;
+    const NSInteger exportButton = offerExport ? NSAlertSecondButtonReturn : -1;
     if (button == okButton) {
         [input validateEditing];
-        return [[input stringValue] stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
+        completion([[input stringValue] stringByReplacingOccurrencesOfString:@"\n" withString:@" "],
+                   nil);
     } else if (button == exportButton) {
-        NSSavePanel *panel = [iTermSavePanel showWithOptions:0
-                                                  identifier:@"NoSyncExportWindowArrangements"
-                                            initialDirectory:NSHomeDirectory()
-                                             defaultFilename:[[input stringValue] stringByAppendingPathExtension:@"iterm2arrangement"]
-                                            allowedFileTypes:@[ @"iterm2arrangement" ]
-                                                      window:nil];
-        if (panel) {
-            NSString *path = panel.URL.path;
-            if (path) {
-                if (export) {
-                    *export = YES;
-                }
-                return path;
+        [iTermSavePanel asyncShowWithOptions:kSavePanelOptionDefaultToLocalhost
+                                  identifier:@"NoSyncExportWindowArrangements"
+                            initialDirectory:NSHomeDirectory()
+                             defaultFilename:[[input stringValue] stringByAppendingPathExtension:@"iterm2arrangement"]
+                            allowedFileTypes:@[ @"iterm2arrangement" ]
+                                      window:nil
+                                  completion:^(iTermModernSavePanel *panel, iTermSavePanel *savePanel) {
+            if (panel.item) {
+                completion(nil, panel.item);
+            } else {
+                completion(nil, nil);
             }
-            return nil;
-        }
+        }];
     }
-    return nil;
 }
 
-+ (NSString *)nameForNewArrangement {
-    NSString *name = [self showAlertWithText:@"Name for saved window arrangement:"
-                                defaultInput:[NSString stringWithFormat:@"Arrangement %d", 1 + [WindowArrangements count]]
-                                      export:nil];
-    if (!name) {
-        return nil;
-    }
-    if ([WindowArrangements hasWindowArrangement:name]) {
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Replace Existing Saved Window Arrangement?";
-        alert.informativeText = @"There is an existing saved window arrangement with this name. Would you like to replace it with the current arrangement?";
-        [alert addButtonWithTitle:@"Yes"];
-        [alert addButtonWithTitle:@"No"];
-        if ([alert runModal] == NSAlertSecondButtonReturn) {
-            return nil;
++ (void)nameForNewArrangement:(void (^)(NSString *))completion {
+    [WindowArrangements showAlertWithText:@"Name for saved window arrangement:"
+                             defaultInput:[NSString stringWithFormat:@"Arrangement %d", 1 + [WindowArrangements count]]
+                              offerExport:NO
+                               completion:^(NSString *name, iTermSavePanelItem *saveItem) {
+        if (!name) {
+            completion(nil);
+            return;
         }
-    }
-    return name;
+        if ([WindowArrangements hasWindowArrangement:name]) {
+            NSAlert *alert = [[NSAlert alloc] init];
+            alert.messageText = @"Replace Existing Saved Window Arrangement?";
+            alert.informativeText = @"There is an existing saved window arrangement with this name. Would you like to replace it with the current arrangement?";
+            [alert addButtonWithTitle:@"Yes"];
+            [alert addButtonWithTitle:@"No"];
+            if ([alert runModal] == NSAlertSecondButtonReturn) {
+                completion(nil);
+                return;
+            }
+        }
+        completion(name);
+    }];
 }
 
-+ (NSString *)selectNameAndWhetherToIncludeContents:(out BOOL *)includeContentsPtr {
-    BOOL export = NO;
-    NSString *name = [self showAlertWithText:@"Name for saved window arrangement:"
-                                defaultInput:[NSString stringWithFormat:@"Arrangement %d", 1 + [WindowArrangements count]]
-                                      export:&export];
-    *includeContentsPtr = export;
-    return name;
++ (void)selectNameAndWhetherToIncludeContentsWithCompletion:(void (^)(NSString *name, iTermSavePanelItem *saveItem))completion {
+    [self showAlertWithText:@"Name for saved window arrangement:"
+               defaultInput:[NSString stringWithFormat:@"Arrangement %d", 1 + [WindowArrangements count]]
+                offerExport:YES
+                 completion:completion];
 }
 
 - (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {

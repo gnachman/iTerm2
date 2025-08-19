@@ -482,15 +482,21 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 }
 
 - (void)saveWindowArrangement:(BOOL)allWindows {
-    BOOL includeContents = NO;
-    NSString *name = [WindowArrangements selectNameAndWhetherToIncludeContents:&includeContents];
-    if (!name) {
-        return;
-    }
-    [self saveWindowArrangementForAllWindows:allWindows name:name includeContents:includeContents];
+    [WindowArrangements selectNameAndWhetherToIncludeContentsWithCompletion:^(NSString *name, iTermSavePanelItem *saveItem) {
+        if (!name) {
+            return;
+        }
+        if (name) {
+            if (saveItem) {
+                [self saveWindowArrangementForAllWindows:allWindows name:name saveItem:saveItem];
+            } else {
+                [self saveWindowArrangementForAllWindows:allWindows name:name saveItem:saveItem];
+            }
+        }
+    }];
 }
 
-- (void)saveWindowArrangementForAllWindows:(BOOL)allWindows name:(NSString *)name includeContents:(BOOL)includeContents {
+- (void)saveWindowArrangementForAllWindows:(BOOL)allWindows name:(NSString *)name saveItem:(iTermSavePanelItem *)saveItem {
     if (allWindows) {
         NSArray<PseudoTerminal *> *sortedTerminalWindows = [_terminalWindows sortedArrayUsingComparator:^NSComparisonResult(PseudoTerminal *lhs, PseudoTerminal *rhs) {
             if (lhs.number == rhs.number) {
@@ -501,13 +507,14 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         }];
         NSMutableArray *terminalArrangements = [NSMutableArray arrayWithCapacity:[sortedTerminalWindows count]];
         for (PseudoTerminal *terminal in sortedTerminalWindows) {
-            NSDictionary *arrangement = [terminal arrangementExcludingTmuxTabs:YES includingContents:includeContents];
+            NSDictionary *arrangement = [terminal arrangementExcludingTmuxTabs:YES
+                                                             includingContents:saveItem != nil];
             if (arrangement) {
                 [terminalArrangements addObject:arrangement];
             }
         }
-        if (includeContents) {
-            [terminalArrangements writeToFile:name atomically:NO];
+        if (saveItem) {
+            [terminalArrangements writeToSaveItem:saveItem completionHandler:^(NSError *error){ }];
         } else {
             [WindowArrangements setArrangement:terminalArrangements withName:name];
         }
@@ -516,19 +523,19 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         if (!currentTerminal) {
             return;
         }
-        [self saveWindowArrangementForWindow:currentTerminal name:name includeContents:includeContents];
+        [self saveWindowArrangementForWindow:currentTerminal name:name saveItem:saveItem];
     }
 }
 
-- (void)saveWindowArrangementForWindow:(PseudoTerminal *)currentTerminal name:(NSString *)name includeContents:(BOOL)includeContents {
+- (void)saveWindowArrangementForWindow:(PseudoTerminal *)currentTerminal name:(NSString *)name saveItem:(iTermSavePanelItem *)saveItem {
     NSMutableArray *terminalArrangements = [NSMutableArray arrayWithCapacity:[_terminalWindows count]];
     NSDictionary *arrangement = [currentTerminal arrangement];
     if (arrangement) {
         [terminalArrangements addObject:arrangement];
     }
     if (terminalArrangements.count) {
-        if (includeContents) {
-            [terminalArrangements writeToFile:name atomically:NO];
+        if (saveItem) {
+            [terminalArrangements writeToSaveItem:saveItem completionHandler:^(NSError *error){ }];
         } else {
             [WindowArrangements setArrangement:terminalArrangements withName:name];
         }

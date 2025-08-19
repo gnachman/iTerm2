@@ -57,6 +57,7 @@ public class SSHIdentity: NSObject, Codable {
     }
     private let state: State
 
+    @objc
     var isLocalhost: Bool {
         return host == Self.localhost.host
     }
@@ -179,6 +180,7 @@ public class SSHIdentity: NSObject, Codable {
 }
 
 extension SSHIdentity {
+    @objc
     var displayName: String {
         let hostport: String
         if state.port == 22 || state.port == 0 {
@@ -222,5 +224,20 @@ extension SSHIdentity {
         let username = dict["username"] as? String
 
         self.init(host: host, hostname: hostname, username: username, port: port)
+    }
+}
+
+@MainActor
+extension SSHIdentity {
+    var endpoint: SSHEndpoint? {
+        if isLocalhost {
+            return LocalhostEndpoint.instance
+        }
+        return ConductorRegistry.instance[self].first
+    }
+
+    @objc
+    var homeDirectory: String? {
+        return endpoint?.homeDirectory
     }
 }

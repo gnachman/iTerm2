@@ -228,7 +228,7 @@
                 [lines addObject:data];
                 offset += lineLength;
 
-                [metadata addObject:iTermMetadataArrayFromData([decoder metadataForLine:i])];
+                [metadata addObject:iTermMetadataArrayFromData([decoder metadataForLine:i]) ?: @[]];
             }
             [theCopy appendFrame:lines
                           length:[decoder screenCharArrayLength]
@@ -246,3 +246,16 @@
 
 @end
 
+@interface NSArray(DVREncodable)<DVREncodable>
+@end
+
+@implementation NSArray(DVREncodable)
+
+- (NSData *)dvrEncodableData {
+    iTermMetadata temp = { 0 };
+    iTermMetadataInitFromArray(&temp, self);
+    iTermMetadataAutorelease(temp);
+    return iTermMetadataEncodeToData(temp);
+}
+
+@end

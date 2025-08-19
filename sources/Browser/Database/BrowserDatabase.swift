@@ -526,12 +526,18 @@ actor BrowserDatabase {
     }
 
     func searchVisits(terms: String, maxAge: Int, minCount: Int, offset: Int = 0, limit: Int = 50) async -> [BrowserVisits] {
+        if terms.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return []
+        }
         return await withDatabase { db in
-            let (query, args) = BrowserVisits.searchQuery(terms: terms,
+            let tuple = BrowserVisits.searchQuery(terms: terms,
                                                           maxAge: maxAge,
                                                           minCount: minCount,
                                                           offset: offset,
                                                           limit: limit)
+            guard let (query, args) = tuple else {
+                return []
+            }
             return self.executeVisitsQuery(db: db, query: query, args: args)
         }
     }

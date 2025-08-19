@@ -975,18 +975,21 @@ andEditComponentWithIdentifier:(NSString *)identifier
     return YES;
 }
 
-- (BOOL)saveString:(NSString *)string toPath:(NSString *)path {
-    NSError *error = nil;
-    [string writeToFile:path atomically:NO encoding:NSUTF8StringEncoding error:&error];
-    if (error) {
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Error";
-        alert.informativeText = [NSString stringWithFormat:@"Couldn't save to %@: %@", path,
-                                 [error localizedDescription]];
-        [alert runModal];
-        return NO;
-    }
-    return YES;
+- (void)saveString:(NSString *)string toItem:(iTermSavePanelItem *)item completion:(void (^)(BOOL))completion {
+    [string writeToSaveItem:item completionHandler:^(NSError *error) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (error) {
+                NSAlert *alert = [[NSAlert alloc] init];
+                alert.messageText = @"Error";
+                alert.informativeText = [NSString stringWithFormat:@"Couldn't save to “%@” on %@: %@",
+                                         item.filename,
+                                         item.host.displayName,
+                                         [error localizedDescription]];
+                [alert runModal];
+            }
+            completion(error == nil);
+        });
+    }];
 }
 
 - (IBAction)saveProfileAsJSON:(id)sender {
@@ -998,19 +1001,19 @@ andEditComponentWithIdentifier:(NSString *)identifier
     }
 
     __weak __typeof(self) weakSelf = self;
-    [iTermSavePanel asyncShowWithOptions:0
+    [iTermSavePanel asyncShowWithOptions:kSavePanelOptionDefaultToLocalhost
                               identifier:@"SaveProfile"
                         initialDirectory:NSHomeDirectory()
                          defaultFilename:[self.selectedProfile[KEY_NAME] stringByAppendingPathExtension:@"json"] ?: @"UnknownProfile.json"
                         allowedFileTypes:@[ @"json" ]
                                   window:self.view.window
-                              completion:^(iTermSavePanel *savePanel) {
-        [weakSelf reallySaveProfile:profile asJSON:savePanel];
+                              completion:^(iTermModernSavePanel *panel, iTermSavePanel *savePanel) {
+        [weakSelf reallySaveProfile:profile asJSON:panel];
     }];
 }
 
-- (void)reallySaveProfile:(Profile *)profile asJSON:(iTermSavePanel *)savePanel {
-    if (!savePanel.path) {
+- (void)reallySaveProfile:(Profile *)profile asJSON:(iTermModernSavePanel *)savePanel {
+    if (!savePanel.item) {
         return;
     }
     NSError *error = nil;
@@ -1024,26 +1027,28 @@ andEditComponentWithIdentifier:(NSString *)identifier
         return;
     }
 
-    if ([self saveString:string toPath:savePanel.path]) {
-        [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:savePanel.path] ]];
-    }
+    [self saveString:string toItem:savePanel.item completion:^(BOOL ok) {
+        if (ok && savePanel.item.host.isLocalhost) {
+            [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:savePanel.item.filename] ]];
+        }
+    }];
 }
 
 - (IBAction)saveAllProfilesAsJSON:(id)sender {
     __weak __typeof(self) weakSelf = self;
-    [iTermSavePanel asyncShowWithOptions:0
+    [iTermSavePanel asyncShowWithOptions:kSavePanelOptionDefaultToLocalhost
                               identifier:@"SaveProfile"
                         initialDirectory:NSHomeDirectory()
                          defaultFilename:@"Profiles.json"
                         allowedFileTypes:@[ @"json" ]
                                   window:self.view.window
-                              completion:^(iTermSavePanel *savePanel) {
-        [weakSelf reallySaveAllProfilesAsJSON:savePanel];
+                              completion:^(iTermModernSavePanel *panel, iTermSavePanel *savePanel) {
+        [weakSelf reallySaveAllProfilesAsJSON:panel];
     }];
 }
 
-- (void)reallySaveAllProfilesAsJSON:(iTermSavePanel *)savePanel {
-    if (!savePanel.path) {
+- (void)reallySaveAllProfilesAsJSON:(iTermModernSavePanel *)savePanel {
+    if (!savePanel.item) {
         return;
     }
     int errors = 0;
@@ -1056,9 +1061,11 @@ andEditComponentWithIdentifier:(NSString *)identifier
         return;
     }
 
-    if ([self saveString:string toPath:savePanel.path]) {
-        [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:savePanel.path] ]];
-    }
+    [self saveString:string toItem:savePanel.item completion:^(BOOL ok) {
+        if (ok && savePanel.item.host.isLocalhost) {
+            [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:savePanel.item.filename] ]];
+        }
+    }];
 }
 
 #pragma mark - Notifications

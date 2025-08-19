@@ -42,6 +42,7 @@ extern NSString *const iTermSnippetsTagsDidChange;
 @protocol iTermWindowController;
 @class iTermRenegablePromise<T>;
 @class iTermRestorableSession;
+@class iTermSavePanelItem;
 @class PasteboardHistory;
 @class PseudoTerminal;
 @class PTYSession;
@@ -100,8 +101,8 @@ extern NSString *const iTermSnippetsTagsDidChange;
 - (int)allocateWindowNumber;
 
 - (void)saveWindowArrangement:(BOOL)allWindows;
-- (void)saveWindowArrangementForAllWindows:(BOOL)allWindows name:(NSString *)name includeContents:(BOOL)includeContents;
-- (void)saveWindowArrangementForWindow:(PseudoTerminal *)currentTerminal name:(NSString *)name includeContents:(BOOL)includeContents;
+- (void)saveWindowArrangementForAllWindows:(BOOL)allWindows name:(NSString *)name saveItem:(iTermSavePanelItem *)saveItem;
+- (void)saveWindowArrangementForWindow:(PseudoTerminal *)currentTerminal name:(NSString *)name saveItem:(iTermSavePanelItem *)saveItem;
 
 - (void)loadWindowArrangementWithName:(NSString *)theName;
 - (BOOL)loadWindowArrangementWithName:(NSString *)theName asTabsInTerminal:(PseudoTerminal *)term;

@@ -42,6 +42,32 @@ struct SSHFileDescriptor {
     let sshIdentity: SSHIdentity
 }
 
+@MainActor
+protocol SSHFilePanelDelegate: AnyObject {
+    // For save panels: This method is not sent. All urls are always disabled.
+    // For open panels: Return `YES` to allow the `item` to be enabled in the panel.
+    //   Delegate implementations should be fast to avoid stalling the UI.
+    func panel(_ sender: SSHFilePanel, shouldEnable item: SSHFileDescriptor) -> Bool
+
+    func panel(_ sender: SSHFilePanel, didChangeToDirectory: SSHFileDescriptor?)
+    func panel(_ sender: SSHFilePanel, userEnteredFilename: String, confirmed: Bool) -> String?
+
+    // Save panel: Sent once by the save panel when the user clicks the Save button. The user is
+    // intending to save a file at `item`. Return `YES` if the `url` is a valid location to save to.
+    // Throw an error if the item is not valid. It can include recovery options. If a recovery
+    // option is selected by the user,  the panel will attempt to close again.
+    //  Note: An item at `item` may not physically exist yet, unless the user decided to overwrite
+    // an existing item.
+    // Open panel: Sent once for each selected item when the user chooses the Open button. Return
+    // Throw an error with a user-displayable message for why the `url` is not valid for opening.
+    // If a recovery option is provided by the error, and recovery succeeded, the panel will attempt
+    // to close again.
+    // Note: Implement this delegate method instead of  `panel:shouldEnableURL:` if the processing
+    // of the selected item takes a long time.
+    func panel(_ sender: SSHFilePanel, validate item: SSHFileDescriptor) throws
+
+}
+
 class SSHMainContentView: iTermLayerBackedSolidColorView { }
 
 @available(macOS 11, *)
@@ -98,6 +124,9 @@ class SSHFilePanel: NSWindowController {
     var includeLocalhost = true
     var allowedContentTypes = [UTType]()
     var preferredSSHIdentity: SSHIdentity?
+    var initialDirectory: URL?  // Only used if preferredSSHIdentity is nonnil and is available
+    var accessoryView: NSView?
+    weak var delegate: SSHFilePanelDelegate?
 
     var allowsMultipleSelection = true {
         didSet {
@@ -148,6 +177,12 @@ class SSHFilePanel: NSWindowController {
         window.delegate = self
     }
 
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+    }
+}
+
+extension SSHFilePanel {
     private func prepareToShow() {
         setupUI()
         setupWindow()
@@ -163,10 +198,6 @@ class SSHFilePanel: NSWindowController {
                                                name: SSHFilePanel.connectedHostsDidChangeNotification,
                                                object: nil)
         uiInitialized = true
-    }
-
-    required init?(coder: NSCoder) {
-        super.init(coder: coder)
     }
 
     override func windowDidLoad() {
@@ -206,7 +237,9 @@ class SSHFilePanel: NSWindowController {
         let defaultHost = preferredSSHIdentity ?? connectedHosts.first
         if let defaultHost {
             Task { @MainActor in
-                await selectEndpoint(forIdentity: defaultHost, initialPath: nil, withHistory: true)
+                await selectEndpoint(forIdentity: defaultHost,
+                                     initialPath: initialDirectory?.path,
+                                     withHistory: true)
             }
         } else {
             currentEndpoint = nil
@@ -234,6 +267,9 @@ class SSHFilePanel: NSWindowController {
                                 initialPath: String?,
                                 withHistory: Bool) async -> Bool {
         currentEndpoint = endpoint(for: sshIdentity)
+        defer {
+            delegate?.panel(self, didChangeToDirectory: currentPath)
+        }
         if currentEndpoint != nil {
             sidebar.selectedIdentity = sshIdentity
             currentPath = SSHFileDescriptor(absolutePath: defaultPath(for: sshIdentity),
@@ -398,7 +434,7 @@ class SSHFilePanel: NSWindowController {
 
         // Setup file table
         setupFileTable()
-        
+
         // Setup buttons
         setupButtons()
 
@@ -423,8 +459,8 @@ class SSHFilePanel: NSWindowController {
         if let saveAsContainer = saveAsContainer {
             views.append(saveAsContainer)
         }
-        views.append(contentsOf: [toolbarView, separatorLine, fileList, separatorLine2, spacer2, buttonStackView, spacer3])
-        
+        views.append(contentsOf: [toolbarView, separatorLine, fileList, separatorLine2] + makeAccessoryViews() + [spacer2, buttonStackView, spacer3])
+
         let mainStackView = NSStackView(views: views)
         mainStackView.translatesAutoresizingMaskIntoConstraints = false
         mainStackView.orientation = .vertical
@@ -635,6 +671,19 @@ class SSHFilePanel: NSWindowController {
         fileList.delegate = self
     }
 
+    private func makeAccessoryViews() -> [NSView] {
+        guard let accessoryView else {
+            return []
+        }
+
+        let separatorLine = iTermLayerBackedSolidColorView()
+        separatorLine.translatesAutoresizingMaskIntoConstraints = false
+        separatorLine.wantsLayer = true
+        separatorLine.color = NSColor.separatorColor
+
+        return [accessoryView, separatorLine]
+    }
+
     private func setupButtons() {
         cancelButton = NSButton()
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
@@ -790,7 +839,7 @@ class SSHFilePanel: NSWindowController {
         cancelCurrentSearch()
     }
 
-    @objc private func cancelButtonClicked(_ sender: Any) {
+    @objc private func cancelButtonClicked(_ sender: Any?) {
         willClose()
         if let sheetParent = window?.sheetParent {
             // Sheet presentation
@@ -804,7 +853,7 @@ class SSHFilePanel: NSWindowController {
         }
     }
 
-    @objc private func openButtonClicked(_ sender: NSButton) {
+    @objc private func openButtonClicked(_ sender: NSButton?) {
         guard let currentIdentity = currentEndpoint?.sshIdentity else {
             cancelButtonClicked(self)
             return
@@ -830,17 +879,116 @@ class SSHFilePanel: NSWindowController {
                               isDirectory: $0.isDirectory,
                               sshIdentity: endpoint.sshIdentity)
         }
+        if isSavePanel {
+            if let delegate {
+                let replacement = delegate.panel(self,
+                                                 userEnteredFilename: saveAsTextField.stringValue,
+                                                 confirmed: true)
+                guard let replacement else {
+                    cancelButtonClicked(nil)
+                    return
+                }
+                saveAsTextField.stringValue = replacement
+            }
+            if allowedContentTypes.count == 1 {
+                let ext = saveAsTextField.stringValue.pathExtension
+                let fileType = UTType(filenameExtension: ext)
+                let requiredType = allowedContentTypes[0]
+                if !(fileType?.conforms(to: requiredType) ?? false) {
+                    saveAsTextField.stringValue = saveAsTextField.stringValue.appendingPathExtension(for: requiredType)
+                }
+            }
+            if let destinationDescriptor, let delegate {
+                do {
+                    try delegate.panel(self, validate: destinationDescriptor)
+                } catch {
+                    validationFailed(error as NSError)
+                }
+            }
+            if let currentEndpoint, let destinationDescriptor {
+                Task {
+                    do {
+                        _ = try await currentEndpoint.stat(destinationDescriptor.absolutePath)
+                        end(returnCode: await presentFileExistsAlert(for: destinationDescriptor))
+                    } catch {
+                        end(returnCode: .OK)
+                    }
+                }
+                return
+            }
+        }
+        end(returnCode: .OK)
+    }
+
+    private func validationFailed(_ e: NSError) {
+        if let description = e.userInfo[NSLocalizedDescriptionKey] as? String,
+           let recoverySuggestion = e.userInfo[NSLocalizedRecoverySuggestionErrorKey] as? String,
+           let recoveryOptions = e.userInfo[NSLocalizedRecoveryOptionsErrorKey] as? [String],
+           let attempter = e.userInfo[NSRecoveryAttempterErrorKey] as? NSObject {
+
+            let option = iTermWarning.show(withTitle: recoverySuggestion,
+                                           actions: recoveryOptions,
+                                           accessory: nil,
+                                           identifier: nil,
+                                           silenceable: .kiTermWarningTypePersistent,
+                                           heading: description,
+                                           window: window)
+            let i = option.rawValue
+            attempter.attemptRecovery(fromError: e,
+                                      optionIndex: i,
+                                      delegate: self,
+                                      didRecoverSelector: #selector(SSHFilePanel.didRecover(recovered:context:)),
+                                      contextInfo: nil)
+            return
+        }
+        _ = iTermWarning.show(withTitle: e.localizedDescription,
+                              actions: [ "OK" ],
+                              accessory: nil,
+                              identifier: nil,
+                              silenceable: .kiTermWarningTypePersistent,
+                              heading: "Could not save file",
+                              window: window)
+        cancelButtonClicked(nil)
+    }
+
+    @objc private func didRecover(recovered: Bool, context: UnsafeMutableRawPointer?) {
+        if recovered {
+            openButtonClicked(openButton)
+        } else {
+            cancelButtonClicked(cancelButton)
+        }
+    }
+
+    private func presentFileExistsAlert(for descriptor: SSHFileDescriptor) async -> NSApplication.ModalResponse {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "A file with the name “\(descriptor.absolutePath.lastPathComponent)” on \(descriptor.sshIdentity.displayName) already exists in this location. Do you want to replace it?"
+        alert.informativeText = "Replacing it will overwrite its current contents."
+
+        let replaceButton = alert.addButton(withTitle: "Replace")
+        replaceButton.hasDestructiveAction = true
+
+        alert.addButton(withTitle: "Cancel")
+
+        if let window {
+            return await alert.beginSheetModal(for: window)
+        } else {
+            return alert.runModal()
+        }
+    }
+
+    private func end(returnCode: NSApplication.ModalResponse) {
         // Sheet presentation
         if let sheetParent = window?.sheetParent {
-            sheetParent.endSheet(window!, returnCode: .OK)
+            sheetParent.endSheet(window!, returnCode: returnCode)
         }
         // Modal presentation
         else if NSApp.modalWindow == window {
-            NSApp.stopModal(withCode: .OK)
+            NSApp.stopModal(withCode: returnCode)
         }
         // Non-modal presentation
         else {
-            completionHandler?(.OK)
+            completionHandler?(returnCode)
             completionHandler = nil
             window?.close()
         }
@@ -1627,6 +1775,12 @@ extension SSHFilePanel: SSHFilePanelFileListDelegate {
     func sshFilePanelItemIsSelectable(file: SSHFilePanelFileList.FileNode) -> Bool {
         if let isSelectable {
             return isSelectable(file.file)
+        }
+        if !isSavePanel, let delegate {
+            let descriptor = SSHFileDescriptor(absolutePath: file.file.absolutePath,
+                                               isDirectory: file.isDirectory,
+                                               sshIdentity: file.sshIdentity)
+            return delegate.panel(self, shouldEnable: descriptor)
         }
         if !allowedContentTypes.isEmpty {
             if file.isDirectory {

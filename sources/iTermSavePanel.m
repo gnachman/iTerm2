@@ -8,6 +8,7 @@
 
 #import "iTermSavePanel.h"
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermSavePanelFileFormatAccessory.h"
 #import "iTermWarning.h"
 #import "NSStringITerm.h"
@@ -19,15 +20,15 @@
 static NSString *const kInitialDirectoryKey = @"Initial Directory";
 static NSString *const iTermSavePanelLoggingStyleUserDefaultsKey = @"NoSyncLoggingStyle";
 
-@interface iTermSavePanel () <NSOpenSavePanelDelegate>
+@interface iTermSavePanel () <iTermModernSavePanelDelegate>
 @property(nonatomic, copy) NSString *filename;  // Just the filename.
-@property(nonatomic, copy) NSString *path;  // Full path.
+@property(nonatomic, strong, readwrite) iTermSavePanelItem *item;
 @property(nonatomic, assign) iTermSavePanelReplaceOrAppend replaceOrAppend;
 @property(nonatomic, copy) NSString *requiredExtension;
 @property(nonatomic, copy) NSString *forcedExtension;
 @property(nonatomic, strong) NSPopUpButton *accessoryButton;
 @property(nonatomic, copy) NSString *identifier;
-@property(nonatomic, strong) NSSavePanel *savePanel;
+@property(nonatomic, strong) iTermModernSavePanel *savePanel;
 @property(nonatomic, strong) NSViewController *accessoryViewController;
 @end
 
@@ -69,19 +70,19 @@ static NSString *const iTermSavePanelLoggingStyleUserDefaultsKey = @"NoSyncLoggi
     return accessory;
 }
 
-+ (NSSavePanel *)newSavePanelWithOptions:(NSInteger)options
-                              identifier:(NSString *)identifier
-                        initialDirectory:(NSString *)initialDirectory
-                         defaultFilename:(NSString *)defaultFilename
-                        allowedFileTypes:(NSArray<NSString *> *)allowedFileTypes
-                                delegate:(iTermSavePanel *)delegate {
++ (iTermModernSavePanel *)newSavePanelWithOptions:(iTermSavePanelOptions)options
+                                       identifier:(NSString *)identifier
+                                 initialDirectory:(NSString *)initialDirectory
+                                  defaultFilename:(NSString *)defaultFilename
+                                 allowedFileTypes:(NSArray<NSString *> *)allowedFileTypes
+                                         delegate:(iTermSavePanel *)delegate {
     NSString *key = [self keyForIdentifier:identifier];
     NSDictionary *savedSettings = [[NSUserDefaults standardUserDefaults] objectForKey:key];
     if (savedSettings) {
         initialDirectory = savedSettings[kInitialDirectoryKey] ?: initialDirectory;
     }
 
-    NSSavePanel *savePanel = [NSSavePanel savePanel];
+    iTermModernSavePanel *savePanel = [[iTermModernSavePanel alloc] init];
     if (initialDirectory) {
         savePanel.directoryURL = [NSURL fileURLWithPath:initialDirectory];
     }
@@ -91,6 +92,9 @@ static NSString *const iTermSavePanelLoggingStyleUserDefaultsKey = @"NoSyncLoggi
         savePanel.allowedContentTypes = [allowedFileTypes mapWithBlock:^id _Nullable(NSString *ext) {
             return [UTType typeWithFilenameExtension:ext];
         }];
+    }
+    if (options & kSavePanelOptionDefaultToLocalhost) {
+        savePanel.preferredSSHIdentity = [SSHIdentity localhost];
     }
     iTermSavePanelFileFormatAccessory *accessoryViewController = nil;
     NSPopUpButton *button = nil;
@@ -144,104 +148,88 @@ static NSString *const iTermSavePanelLoggingStyleUserDefaultsKey = @"NoSyncLoggi
     if (options & kSavePanelOptionFileFormatAccessory) {
         delegate.requiredExtension = allowedFileTypes[0];
     }
+    if (options & kSavePanelOptionLocalhostOnly) {
+        savePanel.requireLocalhost = YES;
+    }
     savePanel.delegate = delegate;
     delegate.savePanel = savePanel;
     return savePanel;
 }
 
-+ (NSSavePanel *)showWithOptions:(NSInteger)options
-                      identifier:(NSString *)identifier
-                initialDirectory:(NSString *)initialDirectory
-                 defaultFilename:(NSString *)defaultFilename
-                allowedFileTypes:(NSArray<NSString *> *)allowedFileTypes
-                          window:(NSWindow *)window {
-    iTermSavePanel *delegate = [[iTermSavePanel alloc] initWithOptions:options];
-    delegate.identifier = identifier;
-    NSSavePanel *savePanel = [self newSavePanelWithOptions:options
-                                                identifier:identifier
-                                            initialDirectory:initialDirectory
-                                             defaultFilename:defaultFilename
-                                            allowedFileTypes:allowedFileTypes
-                                                  delegate:delegate];
-    const NSModalResponse response = [savePanel runModal];
-    switch (response) {
-        case NSModalResponseOK:
-            return savePanel;
-        default:
-            return nil;
-    }
-}
-
-+ (void)asyncShowWithOptions:(NSInteger)options
++ (void)asyncShowWithOptions:(iTermSavePanelOptions)options
                   identifier:(NSString *)identifier
             initialDirectory:(NSString *)initialDirectory
              defaultFilename:(NSString *)defaultFilename
             allowedFileTypes:(NSArray<NSString *> *)allowedFileTypes
                       window:(NSWindow *)window
-                  completion:(void (^)(iTermSavePanel *))completion {
+                  completion:(void (^)(iTermModernSavePanel *panel, iTermSavePanel *savePanel))completion {
     iTermSavePanel *delegate = [[iTermSavePanel alloc] initWithOptions:options];
     delegate.identifier = identifier;
-    NSSavePanel *savePanel = [self newSavePanelWithOptions:options
-                                                identifier:identifier
-                                            initialDirectory:initialDirectory
-                                             defaultFilename:defaultFilename
-                                            allowedFileTypes:allowedFileTypes
-                                                  delegate:delegate];
+    iTermModernSavePanel *savePanel = [self newSavePanelWithOptions:options
+                                                         identifier:identifier
+                                                   initialDirectory:initialDirectory
+                                                    defaultFilename:defaultFilename
+                                                   allowedFileTypes:allowedFileTypes
+                                                           delegate:delegate];
     [delegate presentSavePanel:savePanel options:options window:window completion:completion];
 }
 
-- (void)presentSavePanel:(NSSavePanel *)savePanel
+- (void)presentSavePanel:(iTermModernSavePanel *)savePanel
                  options:(NSInteger)options
                   window:(NSWindow *)window
-              completion:(void (^)(iTermSavePanel *))completion {
-    [savePanel beginSheetModalForWindow:window completionHandler:^(NSModalResponse response) {
-        const BOOL retry =
-            [self savePanelDidCompleteWithResponse:response
-                                           options:options
-                                         savePanel:savePanel
-                                        completion:completion];
-        if (retry) {
-            [self presentSavePanel:savePanel options:options window:window completion:completion];
+              completion:(void (^)(iTermModernSavePanel *panel, iTermSavePanel *savePanel))completion {
+    [savePanel beginWithFallbackWindow:window handler:^(NSModalResponse response, iTermSavePanelItem *item) {
+        [self savePanelDidCompleteWithResponse:response
+                                       options:options
+                                     savePanel:savePanel
+                                    completion:^(iTermModernSavePanel *panel, iTermSavePanel *savePanel, BOOL retry) {
+            if (retry) {
+                [self presentSavePanel:panel options:options window:window completion:completion];
+            } else {
+                completion(panel, savePanel);
+            }
+        }];
+    }];
+}
+
+- (void)savePanelDidCompleteWithResponse:(NSModalResponse)response
+                                 options:(NSInteger)options
+                               savePanel:(iTermModernSavePanel *)savePanel
+                              completion:(void (^)(iTermModernSavePanel *panel, iTermSavePanel *savePanel, BOOL))completion {
+    if (response != NSModalResponseOK) {
+        completion(nil, self, NO);
+    }
+    [iTermSavePanel handleResponseFromSavePanel:savePanel
+                                       delegate:self
+                                        options:options
+                                     completion:^(iTermSavePanelAction action) {
+        switch (action) {
+            case iTermSavePanelActionAbort:
+                completion(nil, self, NO);
+            case iTermSavePanelActionRetry:
+                completion(nil, nil, YES);
+            case iTermSavePanelActionAccept:
+                completion([self accept:savePanel], self, NO);
         }
     }];
 }
 
-- (BOOL)savePanelDidCompleteWithResponse:(NSModalResponse)response
-                                 options:(NSInteger)options
-                               savePanel:(NSSavePanel *)savePanel
-                              completion:(void (^)(iTermSavePanel *))completion {
-    if (response != NSModalResponseOK) {
-        completion(nil);
-        return NO;
-    }
-    switch ([iTermSavePanel handleResponseFromSavePanel:savePanel delegate:self options:options]) {
-        case iTermSavePanelActionAbort:
-            completion(nil);
-            return NO;
-        case iTermSavePanelActionRetry:
-            return YES;
-        case iTermSavePanelActionAccept:
-            completion([self accept]);
-            return NO;
-    }
-}
-
-- (iTermSavePanel *)accept {
-    if (self.path) {
+- (iTermModernSavePanel *)accept:(iTermModernSavePanel *)savePanel {
+    if (savePanel.item) {
         NSString *key = [iTermSavePanel keyForIdentifier:self.identifier];
         NSDictionary *settings =
-            @{ kInitialDirectoryKey: [self.path stringByDeletingLastPathComponent] };
+            @{ kInitialDirectoryKey: [savePanel.item.filename stringByDeletingLastPathComponent] };
         [[NSUserDefaults standardUserDefaults] setObject:settings forKey:key];
     }
     if (self) {
         self->_loggingStyle = (iTermLoggingStyle)self.accessoryButton.selectedTag;
     }
-    if (self.path) {
+    if (self.item) {
         [[NSUserDefaults standardUserDefaults] setInteger:self.accessoryButton.selectedTag
                                                    forKey:iTermSavePanelLoggingStyleUserDefaultsKey];
     }
 
-    return self.path ? self : nil;
+    return savePanel.item ? savePanel : nil;
 }
 
 typedef NS_ENUM(NSUInteger, iTermSavePanelAction) {
@@ -250,12 +238,13 @@ typedef NS_ENUM(NSUInteger, iTermSavePanelAction) {
     iTermSavePanelActionAbort
 };
 
-+ (iTermSavePanelAction)handleResponseFromSavePanel:(NSSavePanel *)savePanel
-                                           delegate:(iTermSavePanel *)delegate
-                                            options:(NSInteger)options {
-    NSURL *URL = savePanel.URL;
++ (void)handleResponseFromSavePanel:(iTermModernSavePanel *)savePanel
+                           delegate:(iTermSavePanel *)delegate
+                            options:(NSInteger)options
+                         completion:(void (^)(iTermSavePanelAction action))completion {
+    iTermSavePanelItem *item = savePanel.item;
     if (delegate.forcedExtension) {
-        URL = [[URL URLByDeletingPathExtension] URLByAppendingPathExtension:delegate.forcedExtension];
+        [item setPathExtension:delegate.forcedExtension];
     }
     NSArray<NSString *> *allowedFileTypes = [savePanel.allowedContentTypes mapWithBlock:^id _Nullable(UTType *uttype) {
         return uttype.preferredFilenameExtension;
@@ -264,27 +253,28 @@ typedef NS_ENUM(NSUInteger, iTermSavePanelAction) {
         if (!delegate.filename) {
             // Something went wrong.
             DLog(@"Save panel's delegate has no filename!");
-            return iTermSavePanelActionAbort;
+            completion(iTermSavePanelActionAbort);
+            return;
         }
 
         // The path contains random crap in the last path component. Use what we saved instead.
-        NSString *directory = [URL.path stringByDeletingLastPathComponent];
-        delegate.path = [directory stringByAppendingPathComponent:delegate.filename];
-        if (allowedFileTypes.count && ![allowedFileTypes containsObject:delegate.path.pathExtension]) {
-            delegate.path = [delegate.path stringByAppendingPathExtension:allowedFileTypes.firstObject];
+        [item setLastPathComponent:delegate.filename];
+        if (allowedFileTypes.count && ![allowedFileTypes containsObject:delegate.item.pathExtension]) {
+            [item setPathExtension:allowedFileTypes.firstObject];
         }
 
         // Show the replace/append/cancel panel.
-        if ([delegate checkForExistingFile]) {
-            return iTermSavePanelActionRetry;
-        }
-        return iTermSavePanelActionAccept;
+        [delegate setItem:savePanel.item];
+        [delegate checkForExistingFile:^(BOOL retry) {
+            completion(retry ? iTermSavePanelActionRetry : iTermSavePanelActionAccept);
+        }];
+        return;
     }
-    delegate.path = URL.path;
-    if (allowedFileTypes.count && ![allowedFileTypes containsObject:delegate.path.pathExtension]) {
-        delegate.path = [delegate.path stringByAppendingPathExtension:allowedFileTypes.firstObject];
+    if (allowedFileTypes.count && ![allowedFileTypes containsObject:delegate.item.pathExtension]) {
+        [item setPathExtension:allowedFileTypes.firstObject];
     }
-    return iTermSavePanelActionAccept;
+    delegate.item = item;
+    completion(iTermSavePanelActionAccept);
 }
 
 + (NSInteger)runModal:(NSSavePanel *)savePanel inWindow:(NSWindow *)window {
@@ -315,53 +305,62 @@ typedef NS_ENUM(NSUInteger, iTermSavePanelAction) {
 #pragma mark - Private
 
 // Returns YES if the save panel should be shown again because the user canceled.
-- (BOOL)checkForExistingFile {
-    BOOL retry = NO;
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    if ([fileManager fileExistsAtPath:self.path]) {
-        NSString *location = @"";
-        NSString *directory = [self.path stringByDeletingLastPathComponent];
-        if ([directory isEqualToString:NSHomeDirectory()]) {
-            location = @" in your home directory";
-        } else if ([directory isEqualToString:[fileManager desktopDirectory]]) {
-            location = @" on the Desktop";
-        }
-
-        NSString *heading =
-            [NSString stringWithFormat:@"“%@” already exists. Do you want to replace it or append to it?",
-         [self.path lastPathComponent]];
-        NSString *body = [NSString stringWithFormat:@"A file or folder with the same name already exists%@. "
-                                                    @"Replacing it will overwrite its current contents.",
-                          location];
-        iTermWarningSelection selection = [iTermWarning showWarningWithTitle:body
-                                                                     actions:@[ @"Cancel", @"Replace", @"Append" ]
-                                                                   accessory:nil
-                                                                  identifier:nil
-                                                                 silenceable:kiTermWarningTypePersistent
-                                                                     heading:heading
-                                                                      window:nil];
-        switch (selection) {
-            case kiTermWarningSelection0:
-                self.replaceOrAppend = kSavePanelReplaceOrAppendSelectionNotApplicable;
-                retry = YES;
-                break;
-
-            case kiTermWarningSelection1:
-                self.replaceOrAppend = kSavePanelReplaceOrAppendSelectionReplace;
-                break;
-
-            case kiTermWarningSelection2:
-                self.replaceOrAppend = kSavePanelReplaceOrAppendSelectionAppend;
-                break;
-
-            default:
-                assert(false);
-        }
-    }
-    return retry;
+- (void)checkForExistingFile:(void (^)(BOOL retry))completion {
+    __weak __typeof(self) weakSelf = self;
+    [self.item exists:^(BOOL exists) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (!exists) {
+                completion(NO);
+                return;
+            }
+            [weakSelf didCheckForExistingFile:exists withCompletion:completion];
+        });
+    }];
 }
 
-#pragma mark - NSOpenSavePanelDelegate
+- (void)didCheckForExistingFile:(BOOL)exists withCompletion:(void (^)(BOOL retry))completion {
+    NSString *location = @"";
+    NSString *directory = [self.item.filename stringByDeletingLastPathComponent];
+    if ([directory isEqualToString:self.item.host.homeDirectory]) {
+        location = @" in your home directory";
+    } else if (self.item.host.isLocalhost && [directory isEqualToString:[[NSFileManager defaultManager] desktopDirectory]]) {
+        location = @" on the Desktop";
+    }
+
+    NSString *heading =
+    [NSString stringWithFormat:@"“%@” already exists. Do you want to replace it or append to it?",
+     [self.item.filename lastPathComponent]];
+    NSString *body = [NSString stringWithFormat:@"A file or folder with the same name already exists%@. "
+                      @"Replacing it will overwrite its current contents.",
+                      location];
+    iTermWarningSelection selection = [iTermWarning showWarningWithTitle:body
+                                                                 actions:@[ @"Cancel", @"Replace", @"Append" ]
+                                                               accessory:nil
+                                                              identifier:nil
+                                                             silenceable:kiTermWarningTypePersistent
+                                                                 heading:heading
+                                                                  window:nil];
+    switch (selection) {
+        case kiTermWarningSelection0:
+            self.replaceOrAppend = kSavePanelReplaceOrAppendSelectionNotApplicable;
+            completion(YES);
+            return;
+
+        case kiTermWarningSelection1:
+            self.replaceOrAppend = kSavePanelReplaceOrAppendSelectionReplace;
+            break;
+
+        case kiTermWarningSelection2:
+            self.replaceOrAppend = kSavePanelReplaceOrAppendSelectionAppend;
+            break;
+
+        default:
+            assert(false);
+    }
+    completion(NO);
+}
+
+#pragma mark - iTermModernSavePanelDelegate
 
 - (NSString *)panel:(id)sender userEnteredFilename:(NSString*)filename confirmed:(BOOL)okFlag {
     if (_options & kSavePanelOptionAppendOrReplace) {
@@ -383,8 +382,17 @@ typedef NS_ENUM(NSUInteger, iTermSavePanelAction) {
     }
 }
 
-- (BOOL)panel:(id)sender validateURL:(NSURL *)url error:(NSError **)outError {
-    NSString *proposedExtension = url.pathExtension;
+- (void)panel:(iTermModernSavePanel * _Nonnull)sender didChangeToDirectory:(iTermSavePanelItem * _Nullable)didChangeToDirectory { 
+}
+
+- (BOOL)panel:(iTermModernSavePanel * _Nonnull)sender shouldEnable:(iTermSavePanelItem * _Nonnull)item { 
+    return YES;
+}
+
+- (BOOL)panel:(iTermModernSavePanel *)sender
+     validate:(iTermSavePanelItem *)item
+        error:(NSError **)error {
+    NSString *proposedExtension = item.filename.pathExtension;
     self.forcedExtension = nil;
     if (!proposedExtension.length) {
         return YES;

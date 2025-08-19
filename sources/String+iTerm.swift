@@ -7,6 +7,7 @@
 
 import Foundation
 import Security
+import UniformTypeIdentifiers
 
 extension String {
     func containsCaseInsensitive(_ substring: String) -> Bool {
@@ -86,6 +87,10 @@ extension String {
         // FREAKING CHECKS IF THE FILE EXISTS and is SO SLOW. I wonder if anyone at Apple has ever
         // used a computer before sometimes.
         return (self as NSString).appendingPathComponent(pathComponent)
+    }
+
+    func appendingPathExtension(for uttype: UTType) -> String {
+        return (self as NSString).appendingPathExtension(for: uttype)
     }
 
     var deletingLastPathComponent: String {

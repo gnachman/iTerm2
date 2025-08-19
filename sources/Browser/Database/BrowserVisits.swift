@@ -239,10 +239,13 @@ extension BrowserVisits {
         return (updateQuery, [title, hostname, path])
     }
 
-    static func searchQuery(terms: String, maxAge: Int, minCount: Int, offset: Int = 0, limit: Int = 50) -> (String, [Any?]) {
+    static func searchQuery(terms: String, maxAge: Int, minCount: Int, offset: Int = 0, limit: Int = 50) -> (String, [Any?])? {
         let tokens = terms
             .components(separatedBy: .whitespacesAndNewlines)
             .filter { !$0.isEmpty }
+        if tokens.isEmpty {
+            return nil
+        }
 
         let urlConditions = tokens.map { _ in "url LIKE ?" }
         let titleConditions = tokens.map { _ in "\(Columns.title.rawValue) LIKE ?" }

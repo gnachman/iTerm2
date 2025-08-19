@@ -10595,35 +10595,37 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                                    [timeFormatter stringFromDate:now]];
 
     __weak __typeof(self) weakSelf = self;
-    [iTermSavePanel asyncShowWithOptions:kSavePanelOptionFileFormatAccessory | kSavePanelOptionIncludeTimestampsAccessory
+    [iTermSavePanel asyncShowWithOptions:kSavePanelOptionFileFormatAccessory | kSavePanelOptionIncludeTimestampsAccessory | kSavePanelOptionDefaultToLocalhost
                               identifier:@"SaveContents"
                         initialDirectory:NSHomeDirectory()
                          defaultFilename:suggestedFilename
                         allowedFileTypes:@[ @"txt", @"rtf" ]
-                                  window:self.window completion:^(iTermSavePanel *savePanel) {
-        [weakSelf reallySaveContents:savePanel];
+                                  window:self.window
+                              completion:^(iTermModernSavePanel *pane, iTermSavePanel *savePanel) {
+        [weakSelf reallySaveContents:savePanel item:pane.item];
     }];
 }
 
-- (void)reallySaveContents:(iTermSavePanel *)savePanel {
-    if (savePanel.path) {
-        NSURL *url = [NSURL fileURLWithPath:savePanel.path];
-        if (url) {
-            if ([[url pathExtension] isEqualToString:@"rtf"]) {
-                NSAttributedString *attributedString = [self.currentSession.textview contentWithAttributes:YES
-                                                                                                timestamps:savePanel.timestamps];
-                NSData *data = [attributedString dataFromRange:NSMakeRange(0, attributedString.length)
-                                            documentAttributes:@{NSDocumentTypeDocumentAttribute: NSRTFTextDocumentType}
-                                                         error:NULL];
-                [data writeToFile:url.path atomically:YES];
-            } else {
-                id content = [self.currentSession.textview contentWithAttributes:NO timestamps:savePanel.timestamps];
-                [content writeToFile:url.path
-                          atomically:NO
-                            encoding:NSUTF8StringEncoding
-                               error:nil];
+- (void)reallySaveContents:(iTermSavePanel *)savePanel item:(iTermSavePanelItem *)item {
+    if (!item) {
+        return;
+    }
+    if ([item.pathExtension isEqualToString:@"rtf"]) {
+        NSAttributedString *attributedString = [self.currentSession.textview contentWithAttributes:YES
+                                                                                        timestamps:savePanel.timestamps];
+        NSData *data = [attributedString dataFromRange:NSMakeRange(0, attributedString.length)
+                                    documentAttributes:@{NSDocumentTypeDocumentAttribute: NSRTFTextDocumentType}
+                                                 error:NULL];
+        [data writeToSaveItem:item completionHandler:^(NSError *error) { }];
+    } else {
+        id content = [self.currentSession.textview contentWithAttributes:NO timestamps:savePanel.timestamps];
+        [content writeToSaveItem:item completionHandler:^(NSError *error) {
+            if (!error) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [item revealInFinderIfLocal];
+                });
             }
-        }
+        }];
     }
 }
 
@@ -11114,10 +11116,11 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         theTab = [self currentTab];
     }
     NSDictionary *arrangement = [self arrangementWithTabs:@[ theTab ] includingContents:NO];
-    NSString *name = [WindowArrangements nameForNewArrangement];
-    if (name) {
-        [WindowArrangements setArrangement:@[ arrangement ] withName:name];
-    }
+    [WindowArrangements nameForNewArrangement:^(NSString *name) {
+        if (name) {
+            [WindowArrangements setArrangement:@[ arrangement ] withName:name];
+        }
+    }];
 }
 
 // These two methods are delicate because -closeTab: won't remove the tab from

@@ -5826,17 +5826,17 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
 - (void)logStart {
     __weak __typeof(self) weakSelf = self;
-    [iTermSavePanel asyncShowWithOptions:kSavePanelOptionAppendOrReplace | kSavePanelOptionLogPlainTextAccessory
+    [iTermSavePanel asyncShowWithOptions:kSavePanelOptionAppendOrReplace | kSavePanelOptionLogPlainTextAccessory | kSavePanelOptionLocalhostOnly
                               identifier:@"StartSessionLog"
                         initialDirectory:NSHomeDirectory()
                          defaultFilename:@""
                         allowedFileTypes:nil
                                   window:self.delegate.realParentWindow.window
-                              completion:^(iTermSavePanel *panel) {
-        NSString *path = panel.path;
-        if (path) {
-            BOOL shouldAppend = (panel.replaceOrAppend == kSavePanelReplaceOrAppendSelectionAppend);
-            [weakSelf startLoggingAt:path append:shouldAppend style:panel.loggingStyle];
+                              completion:^(iTermModernSavePanel *panel, iTermSavePanel *savePanel) {
+        iTermSavePanelItem *item = panel.item;
+        if (item) {
+            BOOL shouldAppend = (savePanel.replaceOrAppend == kSavePanelReplaceOrAppendSelectionAppend);
+            [weakSelf startLoggingAt:item.filename append:shouldAppend style:savePanel.loggingStyle];
         }
     }];
 }

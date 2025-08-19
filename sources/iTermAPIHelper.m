@@ -3095,10 +3095,9 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
             handler(response);
             return;
         }
-
-        [[iTermController sharedInstance] saveWindowArrangementForWindow:term name:name includeContents:NO];
+        [[iTermController sharedInstance] saveWindowArrangementForWindow:term name:name saveItem:nil];
     } else {
-        [[iTermController sharedInstance] saveWindowArrangementForAllWindows:YES name:name includeContents:NO];
+        [[iTermController sharedInstance] saveWindowArrangementForAllWindows:YES name:name saveItem:nil];
     }
     response.status = ITMSavedArrangementResponse_Status_Ok;
     handler(response);
