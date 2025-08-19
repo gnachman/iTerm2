@@ -7,6 +7,7 @@
 
 #import "iTermActionsEditingViewController.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermActionsModel.h"
 #import "iTermCompetentTableRowView.h"
 #import "iTermEditKeyActionWindowController.h"
@@ -214,18 +215,19 @@ static NSString *const iTermActionsEditingPasteboardType = @"com.googlecode.iter
 }
 
 - (IBAction)import:(id)sender {
-    NSOpenPanel *panel = [[NSOpenPanel alloc] init];
+    iTermOpenPanel *panel = [[iTermOpenPanel alloc] init];
     panel.allowedContentTypes = @[ [UTType typeWithFilenameExtension:@"it2actions"] ];
     panel.canChooseFiles = YES;
     panel.canChooseDirectories = NO;
     panel.allowsMultipleSelection = YES;
-    const NSModalResponse response = [panel runModal];
-    if (response != NSModalResponseOK) {
-        return;
-    }
-    for (NSURL *url in panel.URLs) {
-        [self importURL:url];
-    }
+    [panel beginWithFallbackWindow:self.view.window handler:^(NSModalResponse response, NSArray<NSURL *> *urls) {
+        if (response != NSModalResponseOK) {
+            return;
+        }
+        for (NSURL *url in urls) {
+            [self importURL:url];
+        }
+    }];
 }
 
 - (IBAction)export:(id)sender {
