@@ -258,7 +258,7 @@ class ConductorFileTransfer: TransferrableFile {
     }
 
     override func localPath() -> String! {
-        if let data {
+        if data != nil {
             return "(In memory)"
         }
         return _localPath

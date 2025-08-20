@@ -97,6 +97,7 @@ class SSHFilePanel: NSWindowController {
     var isSavePanel = false
     var defaultFilename: String?
     var allowsOtherFileTypes = false
+    var showsHiddenFiles = false
     private var saveAsTextField: NSTextField!
     private var saveAsLabel: NSTextField!
     private var newFolderNameTextField: NSTextField!
@@ -1134,6 +1135,13 @@ extension SSHFilePanel {
         refreshItem.keyEquivalentModifierMask = [.command]
         menu.addItem(refreshItem)
 
+        // Toggle show hidden (Cmd+Shift+.)
+        let toggleShowHiddenFilesItem = NSMenuItem(title: "Show Hidden Files",
+                                    action: #selector(toggleShowHidenFiles),
+                                    keyEquivalent: ".")
+        toggleShowHiddenFilesItem.keyEquivalentModifierMask = [.command, .shift]
+        menu.addItem(toggleShowHiddenFilesItem)
+
         window?.menu = menu
     }
 
@@ -1621,6 +1629,11 @@ extension SSHFilePanel {
             updateNavigationButtons()
         }
     }
+
+    @objc private func toggleShowHidenFiles(_ sender: Any?) {
+        showsHiddenFiles = !showsHiddenFiles
+        updateViewsForCurrentPath()
+    }
 }
 
 @available(macOS 11, *)
@@ -1762,6 +1775,10 @@ extension SSHFilePanelFileList.FileNode {
 
 @available(macOS 11, *)
 extension SSHFilePanel: SSHFilePanelFileListDelegate {
+    func sshFilePanelListShouldShowHiddenFiles() -> Bool {
+        return showsHiddenFiles
+    }
+
     func sshFilePanelListURLPromise(for remoteFile: RemoteFile) -> iTermRenegablePromise<NSURL>? {
         guard let currentEndpoint else {
             return nil

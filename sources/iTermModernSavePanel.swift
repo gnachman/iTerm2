@@ -8,6 +8,7 @@
 import UniformTypeIdentifiers
 
 @objc
+@MainActor
 class iTermSavePanelItem: NSObject {
     @objc var filename: String
     @objc var host: SSHIdentity
@@ -36,7 +37,7 @@ class iTermSavePanelItem: NSObject {
 
     @objc func exists(_ completion: @escaping (Bool) -> ()) {
         Task {
-            guard let endpoint = await host.endpoint else {
+            guard let endpoint = host.endpoint else {
                 completion(false)
                 return
             }
@@ -57,6 +58,10 @@ class iTermSavePanelItem: NSObject {
 
     @MainActor
     @objc func upload(data: Data) async throws {
+        if host.isLocalhost {
+            try data.write(to: URL(fileURLWithPath: filename))
+            return
+        }
         if let delegate = host.endpoint as? ConductorFileTransferDelegate {
             let transfer = ConductorFileTransfer(path: host.scpPath(filename: filename),
                                                  localPath: nil,
@@ -110,6 +115,8 @@ class iTermModernSavePanel: NSObject {
     @objc weak var delegate: iTermModernSavePanelDelegate?
     @objc var requireLocalhost = false
     @objc var allowsOtherFileTypes = false
+    @objc var showsHiddenFiles = false
+    @objc var canSelectHiddenExtension = true
 }
 
 @objc
@@ -202,6 +209,9 @@ private extension iTermModernSavePanel {
         savePanel.nameFieldStringValue = nameFieldStringValue
         savePanel.accessoryView = accessoryView
         savePanel.allowsOtherFileTypes = allowsOtherFileTypes
+        savePanel.showsHiddenFiles = showsHiddenFiles
+        savePanel.canSelectHiddenExtension = canSelectHiddenExtension
+
         if delegate != nil {
             savePanel.delegate = self
         }
@@ -242,6 +252,7 @@ private extension iTermModernSavePanel {
         sshFilePanel.allowedContentTypes = allowedContentTypes
         sshFilePanel.defaultFilename = nameFieldStringValue
         sshFilePanel.allowsOtherFileTypes = allowsOtherFileTypes
+        sshFilePanel.showsHiddenFiles = showsHiddenFiles
         
         if delegate != nil {
             sshFilePanel.delegate = self
@@ -267,12 +278,10 @@ private extension iTermModernSavePanel {
 }
 
 @objc
+@MainActor
 extension NSArray {
     @objc
     func writeTo(saveItem: iTermSavePanelItem) async throws {
-        guard let endpoint = await ConductorRegistry.instance[saveItem.host].first else {
-            throw ConductorFileTransfer.ConductorFileTransferError("No SSH connection to \(saveItem.host.displayName) is open")
-        }
         let data = try PropertyListSerialization.data(fromPropertyList: self as NSArray,
                                                         format: .binary,
                                                         options: 0)
@@ -281,12 +290,10 @@ extension NSArray {
 }
 
 @objc
+@MainActor
 extension NSDictionary {
     @objc
     func writeTo(saveItem: iTermSavePanelItem) async throws {
-        guard let endpoint = await saveItem.host.endpoint else {
-            throw ConductorFileTransfer.ConductorFileTransferError("No SSH connection to \(saveItem.host.displayName) is open")
-        }
         let data = try PropertyListSerialization.data(fromPropertyList: self as NSDictionary,
                                                         format: .binary,
                                                         options: 0)
@@ -294,24 +301,27 @@ extension NSDictionary {
     }
 }
 
+@MainActor
+extension Data {
+    func writeTo(saveItem: iTermSavePanelItem) async throws {
+        try await (self as NSData).writeTo(saveItem: saveItem)
+    }
+}
+
 @objc
+@MainActor
 extension NSData {
     @objc
     func writeTo(saveItem: iTermSavePanelItem) async throws {
-        guard let endpoint = await saveItem.host.endpoint else {
-            throw ConductorFileTransfer.ConductorFileTransferError("No SSH connection to \(saveItem.host.displayName) is open")
-        }
         try await saveItem.upload(data: self as Data)
     }
 }
 
 @objc
+@MainActor
 extension NSString {
     @objc
     func writeTo(saveItem: iTermSavePanelItem) async throws {
-        guard let endpoint = await saveItem.host.endpoint else {
-            throw ConductorFileTransfer.ConductorFileTransferError("No SSH connection to \(saveItem.host.displayName) is open")
-        }
         let data = (self as String).lossyData
         try await saveItem.upload(data: data)
     }

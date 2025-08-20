@@ -8,6 +8,7 @@
 import Foundation
 
 @objc(iTermCommandShareMenuProvider)
+@MainActor
 class CommandShareMenuProvider: NSObject {
     private let mark: VT100ScreenMarkReading
     private let promisedContent: iTermRenegablePromise<NSAttributedString>

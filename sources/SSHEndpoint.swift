@@ -230,6 +230,12 @@ extension RemoteFile {
     }
 }
 
+extension RemoteFile {
+    var isHidden: Bool {
+        return name.hasPrefix(".")
+    }
+}
+
 public enum FileSorting: Codable {
     case byDate
     case byName

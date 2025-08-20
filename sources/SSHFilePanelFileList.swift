@@ -16,6 +16,7 @@ protocol SSHFilePanelFileListDelegate: AnyObject {
     func sshFilePanelSelectionDidChange()
     func sshFilePanelItemIsSelectable(file: SSHFilePanelFileList.FileNode) -> Bool
     func sshFilePanelListURLPromise(for remoteFile: RemoteFile) -> iTermRenegablePromise<NSURL>?
+    func sshFilePanelListShouldShowHiddenFiles() -> Bool
 }
 
 @available(macOS 11, *)
@@ -368,14 +369,18 @@ class SSHFilePanelFileList: NSScrollView {
         guard let path = rootPath, let endpoint = endpoint, !isLoading else { return }
 
         isLoading = true
+        let showHidden = delegate?.sshFilePanelListShouldShowHiddenFiles() ?? false
 
         Task { @MainActor in
             do {
                 let remoteFiles = try await endpoint.listFiles(path, sort: .byName)
-                self.rootNodes = remoteFiles.map {
-                    FileNode(sshIdentity: endpoint.sshIdentity,
-                             file: $0,
-                             path: path)
+                self.rootNodes = remoteFiles.compactMap { file in
+                    if !showHidden && file.isHidden {
+                        return nil
+                    }
+                    return FileNode(sshIdentity: endpoint.sshIdentity,
+                                    file: file,
+                                    path: path)
                 }
                 self.applySortToAllNodes()
                 self.fileOutlineView.reloadData()
