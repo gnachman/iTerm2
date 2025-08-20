@@ -367,25 +367,28 @@ final class SpecialExceptionsWindowController: NSWindowController {
     private let ext = "itse"
 
     @IBAction func share(_ sender: AnyObject) {
-        let panel = NSSavePanel()
+        let panel = iTermModernSavePanel()
 
-        if #available(macOS 11, *) {
-            if let uttype = UTType.init(filenameExtension: ext) {
-                panel.allowedContentTypes = [uttype]
-            }
-        } else {
-            panel.allowedFileTypes = [ext]
+        if let uttype = UTType.init(filenameExtension: ext) {
+            panel.allowedContentTypes = [uttype]
         }
-        panel.title = "Export Special Exceptions"
+
         panel.canCreateDirectories = true
-        panel.treatsFilePackagesAsDirectories = false
         panel.showsHiddenFiles = true
         panel.allowsOtherFileTypes = false
-
-        if panel.runModal() == .OK, let url = panel.url {
-            let encoder = JSONEncoder()
-            if let data = try? encoder.encode(config) {
-                try? data.write(to: url)
+        panel.preferredSSHIdentity = .localhost
+        panel.beginWithFallback { [weak self] response, item in
+            guard let self else {
+                return
+            }
+            if response == .OK, let item {
+                let encoder = JSONEncoder()
+                if let data = try? encoder.encode(config) {
+                    Task {
+                        try await data.writeTo(saveItem: item)
+                        item.revealInFinderIfLocal()
+                    }
+                }
             }
         }
     }
