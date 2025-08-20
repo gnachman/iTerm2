@@ -1386,6 +1386,7 @@ extension Conductor {
     func download(path: SCPPath) {
         let file = ConductorFileTransfer(path: path,
                                          localPath: nil,
+                                         data: nil,
                                          delegate: self)
         file.download()
     }
@@ -1399,6 +1400,7 @@ extension Conductor {
     func upload(file: String, to destinationPath: SCPPath) {
         let file = ConductorFileTransfer(path: destinationPath,
                                          localPath: file,
+                                         data: nil,
                                          delegate: self)
         file.upload()
     }

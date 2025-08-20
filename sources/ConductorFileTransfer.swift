@@ -22,6 +22,7 @@ class ConductorFileTransfer: TransferrableFile {
     weak var delegate: ConductorFileTransferDelegate?
     private var _error = ""
     private var _localPath: String?
+    let data: Data?
 
     private enum State {
         case idle
@@ -35,8 +36,10 @@ class ConductorFileTransfer: TransferrableFile {
 
     init(path: SCPPath,
          localPath: String?,
+         data: Data?,
          delegate: ConductorFileTransferDelegate) {
         self.path = path
+        self.data = data
         self._localPath = localPath
         self.delegate = delegate
     }
@@ -196,9 +199,10 @@ class ConductorFileTransfer: TransferrableFile {
         }
     }
 
-    override func upload() {
-        state = .uploading
-        status = .starting
+    private func sizeToUpload() -> Int? {
+        if let data {
+            return data.count
+        }
         let path = localPath()!
         do {
             let attrs = try FileManager.default.attributesOfItem(atPath: path)
@@ -206,13 +210,23 @@ class ConductorFileTransfer: TransferrableFile {
                 _error = "Could not get size of file: \(path)"
                 state = .failed
                 FileTransferManager.sharedInstance().transferrableFile(self, didFinishTransmissionWithError: ConductorFileTransferError(_error))
-                return
+                return nil
             }
-            fileSize = size
+            return size
         } catch {
             _error = "No such file: \(path)"
             FileTransferManager.sharedInstance().transferrableFile(self, didFinishTransmissionWithError: error)
             state = .failed
+            return nil
+        }
+    }
+
+    override func upload() {
+        state = .uploading
+        status = .starting
+        if let size = sizeToUpload() {
+            fileSize = size
+        } else {
             return
         }
         FileTransferManager.sharedInstance().files.add(self)
@@ -244,6 +258,9 @@ class ConductorFileTransfer: TransferrableFile {
     }
 
     override func localPath() -> String! {
+        if let data {
+            return "(In memory)"
+        }
         return _localPath
     }
 }

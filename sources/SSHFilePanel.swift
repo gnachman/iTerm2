@@ -96,6 +96,7 @@ class SSHFilePanel: NSWindowController {
     private var initialized = false
     var isSavePanel = false
     var defaultFilename: String?
+    var allowsOtherFileTypes = false
     private var saveAsTextField: NSTextField!
     private var saveAsLabel: NSTextField!
     private var newFolderNameTextField: NSTextField!

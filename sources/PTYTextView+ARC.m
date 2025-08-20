@@ -1882,7 +1882,7 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
 
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
           saveImage:(id<iTermImageInfoReading>)imageInfo {
-    NSSavePanel* panel = [NSSavePanel savePanel];
+    iTermModernSavePanel* panel = [[iTermModernSavePanel alloc] init];
 
     NSString *directory = [[NSFileManager defaultManager] downloadsDirectory] ?: NSHomeDirectory();
     [NSSavePanel setDirectoryURL:[NSURL fileURLWithPath:directory] onceForID:@"saveImageAs" savePanel:panel];
@@ -1892,12 +1892,14 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
     }];
     panel.allowsOtherFileTypes = NO;
     panel.canCreateDirectories = YES;
+    panel.preferredSSHIdentity = SSHIdentity.localhost;
     [panel setExtensionHidden:NO];
 
-    if ([panel runModal] == NSModalResponseOK) {
-        NSString *filename = [[panel URL] path];
-        [imageInfo saveToFile:filename];
-    }
+    [panel beginWithFallbackWindow:self.window handler:^(NSModalResponse response, iTermSavePanelItem *item) {
+        if (response == NSModalResponseOK) {
+            [imageInfo saveToItem:item];
+        }
+    }];
 }
 
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu copyImage:(

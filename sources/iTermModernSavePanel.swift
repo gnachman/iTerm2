@@ -54,6 +54,27 @@ class iTermSavePanelItem: NSObject {
             NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: filename)])
         }
     }
+
+    @MainActor
+    @objc func upload(data: Data) async throws {
+        if let delegate = host.endpoint as? ConductorFileTransferDelegate {
+            let transfer = ConductorFileTransfer(path: host.scpPath(filename: filename),
+                                                 localPath: nil,
+                                                 data: data,
+                                                 delegate: delegate)
+            transfer.upload()
+        } else if let endpoint = host.endpoint {
+            _ = try await endpoint.replace(filename, content: data)
+        } else {
+            iTermWarning.show(withTitle: "No ssh connection to \(host.displayName) is available to upload \(filename.lastPathComponent)",
+                              actions: ["OK"],
+                              accessory: nil,
+                              identifier: nil,
+                              silenceable: .kiTermWarningTypePersistent,
+                              heading: "Upload Failed",
+                              window: nil)
+        }
+    }
 }
 
 @objc
@@ -88,6 +109,7 @@ class iTermModernSavePanel: NSObject {
     @objc var nameFieldStringValue = ""
     @objc weak var delegate: iTermModernSavePanelDelegate?
     @objc var requireLocalhost = false
+    @objc var allowsOtherFileTypes = false
 }
 
 @objc
@@ -179,6 +201,7 @@ private extension iTermModernSavePanel {
         savePanel.allowedContentTypes = allowedContentTypes
         savePanel.nameFieldStringValue = nameFieldStringValue
         savePanel.accessoryView = accessoryView
+        savePanel.allowsOtherFileTypes = allowsOtherFileTypes
         if delegate != nil {
             savePanel.delegate = self
         }
@@ -218,6 +241,8 @@ private extension iTermModernSavePanel {
         sshFilePanel.initialDirectory = directoryURL
         sshFilePanel.allowedContentTypes = allowedContentTypes
         sshFilePanel.defaultFilename = nameFieldStringValue
+        sshFilePanel.allowsOtherFileTypes = allowsOtherFileTypes
+        
         if delegate != nil {
             sshFilePanel.delegate = self
         }
@@ -251,7 +276,7 @@ extension NSArray {
         let data = try PropertyListSerialization.data(fromPropertyList: self as NSArray,
                                                         format: .binary,
                                                         options: 0)
-        _ = try await endpoint.replace(saveItem.filename, content: data)
+        try await saveItem.upload(data: data)
     }
 }
 
@@ -265,7 +290,7 @@ extension NSDictionary {
         let data = try PropertyListSerialization.data(fromPropertyList: self as NSDictionary,
                                                         format: .binary,
                                                         options: 0)
-        _ = try await endpoint.replace(saveItem.filename, content: data)
+        try await saveItem.upload(data: data)
     }
 }
 
@@ -276,7 +301,7 @@ extension NSData {
         guard let endpoint = await saveItem.host.endpoint else {
             throw ConductorFileTransfer.ConductorFileTransferError("No SSH connection to \(saveItem.host.displayName) is open")
         }
-        _ = try await endpoint.replace(saveItem.filename, content: self as Data)
+        try await saveItem.upload(data: self as Data)
     }
 }
 
@@ -288,7 +313,7 @@ extension NSString {
             throw ConductorFileTransfer.ConductorFileTransferError("No SSH connection to \(saveItem.host.displayName) is open")
         }
         let data = (self as String).lossyData
-        _ = try await endpoint.replace(saveItem.filename, content: data)
+        try await saveItem.upload(data: data)
     }
 }
 

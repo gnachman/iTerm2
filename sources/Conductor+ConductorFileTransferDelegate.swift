@@ -318,23 +318,33 @@ extension Conductor: ConductorFileTransferDelegate {
     }
 
     func beginUpload(fileTransfer: ConductorFileTransfer) {
+        if let data = fileTransfer.data {
+            Task {
+                await reallyBeginUpload(fileTransfer: fileTransfer, of: .right(data))
+            }
+            return
+        }
         guard let path = fileTransfer.localPath() else {
             fileTransfer.fail(reason: "No local filename specified")
             return
         }
         Task {
             await reallyBeginUpload(fileTransfer: fileTransfer,
-                                    from: path)
+                                    of: .left(path))
         }
     }
 
     @MainActor
     private func reallyBeginUpload(fileTransfer: ConductorFileTransfer,
-                                   from path: String) async {
+                                   of choice: Either<String, Data>) async {
         let tempfile = fileTransfer.path.path + ".uploading-\(UUID().uuidString)"
         do {
-            let fileURL = URL(fileURLWithPath: path)
-            let data = try Data(contentsOf: fileURL)
+            let data = try choice.handle { path in
+                let fileURL = URL(fileURLWithPath: path)
+                return try Data(contentsOf: fileURL)
+            } right: { data in
+                data
+            }
             // Make an empty file and then upload chunks so we don't monopolize the connection.
             try await create(tempfile,
                              content: Data())

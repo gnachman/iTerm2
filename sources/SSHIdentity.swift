@@ -241,3 +241,13 @@ extension SSHIdentity {
         return endpoint?.homeDirectory
     }
 }
+
+extension SSHIdentity {
+    func scpPath(filename: String) -> SCPPath {
+        let scppath = SCPPath()
+        scppath.path = filename
+        scppath.hostname = host
+        scppath.username = username
+        return scppath
+    }
+}

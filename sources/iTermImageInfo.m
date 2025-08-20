@@ -9,6 +9,7 @@
 #import "iTermImageInfo.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAnimatedImageInfo.h"
 #import "iTermImage.h"
 #import "iTermTuple.h"
@@ -149,6 +150,11 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
 }
 
 - (void)saveToFile:(NSString *)filename {
+    NSData *data = [self dataForSavingFilename:filename];
+    [data writeToFile:filename atomically:NO];
+}
+
+- (NSData *)dataForSavingFilename:(NSString *)filename {
     @synchronized(self) {
         NSBitmapImageFileType fileType = NSBitmapImageFileTypePNG;
         if ([filename hasSuffix:@".bmp"]) {
@@ -184,8 +190,17 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
             NSBitmapImageRep *rep = [self.image.images.firstObject bitmapImageRep];
             data = [rep representationUsingType:fileType properties:@{}];
         }
-        [data writeToFile:filename atomically:NO];
+        return data;
     }
+}
+
+- (void)saveToItem:(iTermSavePanelItem *)item {
+    NSData *data = [self dataForSavingFilename:item.filename];
+    [data writeToSaveItem:item completionHandler:^(NSError *error) {
+        if (!error) {
+            [item revealInFinderIfLocal];
+        }
+    }];
 }
 
 - (void)setImageFromImage:(iTermImage *)image data:(NSData *)data {

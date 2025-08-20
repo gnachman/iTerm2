@@ -9,6 +9,8 @@
 #import <Cocoa/Cocoa.h>
 #import "iTermImage.h"
 
+@class iTermSavePanelItem;
+
 // Posted when a lazily loaded image is loaded.
 extern NSString *const iTermImageDidLoad;
 
@@ -55,6 +57,7 @@ extern NSString *const iTermImageDidLoad;
 
 // Format inferred from extension
 - (void)saveToFile:(NSString *)filename;
+- (void)saveToItem:(iTermSavePanelItem *)item;
 
 // Always returns 0 for non-animated images.
 - (int)frameForTimestamp:(NSTimeInterval)timestamp;
