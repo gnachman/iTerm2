@@ -74,7 +74,6 @@ protocol iTermModernSavePanelDelegate: AnyObject {
 }
 
 @objc
-@MainActor
 class iTermModernSavePanel: NSObject {
     @objc var includeLocalhost = true
     @objc private(set) var item: iTermSavePanelItem?
@@ -82,13 +81,20 @@ class iTermModernSavePanel: NSObject {
     @objc var defaultFilename: String?
     @objc var canCreateDirectories = true
     @objc var accessoryView: NSView?
-    @objc var directoryURL: URL?
+    private var _directoryURL: URL?
     @objc var preferredSSHIdentity: SSHIdentity?
     @objc(extensionHidden) var isExtensionHidden = false
     @objc var allowedContentTypes = [UTType]()
     @objc var nameFieldStringValue = ""
     @objc weak var delegate: iTermModernSavePanelDelegate?
     @objc var requireLocalhost = false
+}
+
+@objc
+extension iTermModernSavePanel {
+    var directoryURL: URL? {
+        return _directoryURL
+    }
 }
 
 @objc
@@ -342,5 +348,12 @@ extension iTermModernSavePanel: NSOpenSavePanelDelegate {
         try delegate?.panel(self,
                             validate: iTermSavePanelItem(filename: url.path,
                                                          host: .localhost))
+    }
+}
+
+@objc
+extension iTermModernSavePanel: iTermDirectoryURLSetting {
+    func setDirectoryURL(_ url: URL!) {
+        _directoryURL = directoryURL
     }
 }

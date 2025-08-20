@@ -7,6 +7,13 @@
 
 #import <Cocoa/Cocoa.h>
 
+@protocol iTermDirectoryURLSetting
+- (void)setDirectoryURL:(NSURL *)url;
+@end
+
+@interface NSSavePanel(DirectoryURLSetting)<iTermDirectoryURLSetting>
+@end
+
 @interface NSSavePanel (iTerm)
 
 // Uses URL as the suggested directory (sets it on the first call for any
@@ -17,6 +24,6 @@
 // crashes because of this folly.
 + (void)setDirectoryURL:(NSURL *)url
               onceForID:(NSString *)identifier
-              savePanel:(NSSavePanel *)savePanel;
+              savePanel:(id<iTermDirectoryURLSetting>)savePanel;
 
 @end

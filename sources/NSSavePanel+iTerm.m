@@ -13,11 +13,11 @@ static NSString *const iTermSaveDocumentAsDefaultPathSetPrefix = @"NoSyncSaveDoc
 
 + (void)setDirectoryURL:(NSURL *)url
               onceForID:(NSString *)identifier
-              savePanel:(NSSavePanel *)savePanel {
+              savePanel:(id<iTermDirectoryURLSetting>)savePanel {
     NSString *key = [iTermSaveDocumentAsDefaultPathSetPrefix stringByAppendingString:identifier];
     if (![[NSUserDefaults standardUserDefaults] boolForKey:key]) {
         [[NSUserDefaults standardUserDefaults] setBool:YES forKey:key];
-        savePanel.directoryURL = url;
+        [savePanel setDirectoryURL:url];
     }
 }
 

@@ -3516,7 +3516,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
 // Save method
 - (void)saveDocumentAs:(id)sender {
-    NSSavePanel *aSavePanel = [NSSavePanel savePanel];
+    iTermModernSavePanel *aSavePanel = [[[iTermModernSavePanel alloc] init] autorelease];
+    aSavePanel.preferredSSHIdentity = SSHIdentity.localhost;
+
     NSButton *timestampsButton = [[[NSButton alloc] init] autorelease];
     [timestampsButton setButtonType:NSButtonTypeSwitch];
     timestampsButton.title = @"Include timestamps";
@@ -3544,16 +3546,23 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     // will remember the last path you used.tmp
     [NSSavePanel setDirectoryURL:[NSURL fileURLWithPath:path] onceForID:@"saveDocumentAs:" savePanel:aSavePanel];
     aSavePanel.nameFieldStringValue = nowStr;
-    [aSavePanel beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse result) {
+    __weak __typeof(aSavePanel) weakSavePanel = aSavePanel;
+    [aSavePanel beginSheetModalFor:self.window completionHandler:^(NSModalResponse result) {
+        __strong __typeof(weakSavePanel) savePanel = weakSavePanel;
+        if (!savePanel) {
+            return;
+        }
         if (result != NSModalResponseOK) {
             return;
         }
         const BOOL wantTimestamps = timestampsButton.state == NSControlStateValueOn;
         [[NSUserDefaults standardUserDefaults] setBool:wantTimestamps forKey:userDefaultsKey];
-        if (![[self dataToSaveWithTimestamps:wantTimestamps] writeToFile:aSavePanel.URL.path atomically:YES]) {
-            DLog(@"Beep: can't write to %@", aSavePanel.URL);
-            NSBeep();
-        }
+        [[self dataToSaveWithTimestamps:wantTimestamps] writeToSaveItem:savePanel.item completionHandler:^(NSError *error) {
+            if (error) {
+                DLog(@"Beep: can't write to %@", savePanel.item);
+                NSBeep();
+            }
+        }];
     }];
 }
 
