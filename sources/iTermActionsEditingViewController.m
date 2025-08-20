@@ -231,14 +231,15 @@ static NSString *const iTermActionsEditingPasteboardType = @"com.googlecode.iter
 }
 
 - (IBAction)export:(id)sender {
-    NSSavePanel *panel = [NSSavePanel savePanel];
+    iTermModernSavePanel *panel = [[iTermModernSavePanel alloc] init];
     panel.allowedContentTypes = @[ [UTType typeWithFilenameExtension:@"it2actions"] ];
-
-    const NSModalResponse response = [panel runModal];
-    if (response != NSModalResponseOK) {
-        return;
-    }
-    [self exportToURL:panel.URL];
+    panel.preferredSSHIdentity = SSHIdentity.localhost;
+    [panel beginWithFallback:^(NSModalResponse response, iTermSavePanelItem *item) {
+        if (response != NSModalResponseOK) {
+            return;
+        }
+        [self exportToItem:item];
+    }];
 }
 
 #pragma mark - Import
@@ -305,7 +306,7 @@ static NSString *const iTermActionsEditingPasteboardType = @"com.googlecode.iter
 
 #pragma mark - Export
 
-- (void)exportToURL:(NSURL *)url {
+- (void)exportToItem:(iTermSavePanelItem *)item {
     NSIndexSet *indexes = [_tableView selectedRowIndexes];
     NSMutableArray<NSDictionary *> *array = [NSMutableArray array];
     [indexes enumerateIndexesUsingBlock:^(NSUInteger i, BOOL * _Nonnull stop) {
@@ -313,17 +314,20 @@ static NSString *const iTermActionsEditingPasteboardType = @"com.googlecode.iter
         [array addObject:action.dictionaryValue];
     }];
     NSString *json = [NSJSONSerialization it_jsonStringForObject:array];
-    NSError *error = nil;
-    [json writeToURL:url atomically:NO encoding:NSUTF8StringEncoding error:&error];
-    if (error) {
-        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Error saving to %@: %@", url.path, error.localizedDescription]
-                                   actions:@[ @"OK" ]
-                                 accessory:nil
-                                identifier:@"NoSyncActionWritingError"
-                               silenceable:kiTermWarningTypePersistent
-                                   heading:[NSString stringWithFormat:@"Export Failed"]
-                                    window:self.view.window];
-    }
+    [json writeToSaveItem:item completionHandler:^(NSError *error) {
+        if (error) {
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Error saving to %@: %@",
+                                                item.displayName, error.localizedDescription]
+                                       actions:@[ @"OK" ]
+                                     accessory:nil
+                                    identifier:@"NoSyncActionWritingError"
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:[NSString stringWithFormat:@"Export Failed"]
+                                        window:self.view.window];
+        } else {
+            [item revealInFinderIfLocal];
+        }
+    }];
 }
 
 #pragma mark - NSTableViewDelegate
