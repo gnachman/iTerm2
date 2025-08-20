@@ -19,6 +19,9 @@ class iTermSavePanelItem: NSObject {
         self.host = host
     }
 
+    @objc var displayName: String {
+        "“\(filename.lastPathComponent)” on \(host.displayName)"
+    }
     @objc var pathExtension: String {
         return filename.pathExtension
     }

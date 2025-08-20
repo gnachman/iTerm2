@@ -654,14 +654,17 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
 - (void)exportColorPreset:(id)sender {
     // Create the File Open Dialog class.
-    NSSavePanel *savePanel = [NSSavePanel savePanel];
+    iTermModernSavePanel *savePanel = [[iTermModernSavePanel alloc] init];
+    savePanel.preferredSSHIdentity = SSHIdentity.localhost;
 
     // Set options.
     [savePanel setAllowedContentTypes:@[ [UTType typeWithFilenameExtension:@"itermcolors"] ]];
 
-    if ([savePanel runModal] == NSModalResponseOK) {
-        [self exportColorPresetToFile:savePanel.URL.path];
-    }
+    [savePanel beginWithFallback:^(NSModalResponse response, iTermSavePanelItem *item) {
+        if (response == NSModalResponseOK) {
+            [self exportColorPresetToItem:item];
+        }
+    }];
 }
 
 - (void)deleteColorPreset:(id)sender {
@@ -716,15 +719,19 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     return theDict;
 }
 
-- (void)exportColorPresetToFile:(NSString *)filename {
+- (void)exportColorPresetToItem:(iTermSavePanelItem *)item {
     NSDictionary *theDict = [self presetDictionaryForCurrentColors];
-    if (![theDict iterm_writePresetToFileWithName:filename]) {
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Save Failed.";
-        alert.informativeText = [NSString stringWithFormat:@"Could not save to %@", filename];
-        [alert addButtonWithTitle:@"OK"];
-        [alert runModal];
-    }
+    [theDict writeToSaveItem:item completionHandler:^(NSError *error) {
+        if (error) {
+            NSAlert *alert = [[NSAlert alloc] init];
+            alert.messageText = @"Save Failed.";
+            alert.informativeText = [NSString stringWithFormat:@"Could not save to %@", item.displayName];
+            [alert addButtonWithTitle:@"OK"];
+            [alert runModal];
+        } else {
+            [item revealInFinderIfLocal];
+        }
+    }];
 }
 
 - (BOOL)shouldUpdateBothModesWhenLoadingPreset:(NSString *)presetName {
