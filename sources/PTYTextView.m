@@ -3547,7 +3547,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [NSSavePanel setDirectoryURL:[NSURL fileURLWithPath:path] onceForID:@"saveDocumentAs:" savePanel:aSavePanel];
     aSavePanel.nameFieldStringValue = nowStr;
     __weak __typeof(aSavePanel) weakSavePanel = aSavePanel;
-    [aSavePanel beginSheetModalFor:self.window completionHandler:^(NSModalResponse result) {
+    [aSavePanel beginWithFallbackWindow:self.window completionHandler:^(NSModalResponse result) {
         __strong __typeof(weakSavePanel) savePanel = weakSavePanel;
         if (!savePanel) {
             return;

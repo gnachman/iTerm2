@@ -40,7 +40,7 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
     iTermEditKeyActionWindowController *_editActionWindowController;
     IBOutlet NSButton *_touchBarMitigationsButton;
     IBOutlet NSPanel *_touchBarMitigationsPanel;
-    NSSavePanel *_savePanel;
+    iTermModernSavePanel *_savePanel;
     // Index of row being edited. Valid after presenting the edit key mapping sheet.
     NSInteger _rowIndex;
 }
@@ -550,18 +550,18 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
 }
 
 - (void)exportMenuItem:(id)sender {
-    _savePanel = [NSSavePanel savePanel];
+    _savePanel = [[iTermModernSavePanel alloc] init];
+    _savePanel.preferredSSHIdentity = SSHIdentity.localhost;
     [_savePanel setAllowedContentTypes:@[ [UTType typeWithFilenameExtension:@"itermkeymap"] ]];
     __weak __typeof(self) weakSelf = self;
-    [_savePanel beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse result) {
-        if (result == NSModalResponseOK) {
-            [weakSelf exportFromSavePanel];
+    [_savePanel beginWithFallbackWindow:self.view.window handler:^(NSModalResponse response, iTermSavePanelItem *item) {
+        if (response == NSModalResponseOK) {
+            [weakSelf exportFromSavePanel:item];
         }
     }];
 }
 
-- (void)exportFromSavePanel {
-    NSURL *url = _savePanel.URL;
+- (void)exportFromSavePanel:(iTermSavePanelItem *)item {
     _savePanel = nil;
 
     NSDictionary *const keymappings = [self.delegate keyMappingDictionary:self];
@@ -569,13 +569,13 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
     NSDictionary *const dict = @{ INTERCHANGE_KEY_MAPPING_DICT: keymappings ?: @{},
                                   INTERCHANGE_TOUCH_BAR_ITEMS: touchbarItems ?: @[] };
     NSString *json = [NSJSONSerialization it_jsonStringForObject:dict];
-    NSError *error;
-    [json writeToURL:url atomically:NO encoding:NSUTF8StringEncoding error:&error];
-    if (error) {
-        XLog(@"Beep: %@", error);
-        NSBeep();
-        return;
-    }
+    [json writeToSaveItem:item completionHandler:^(NSError *error) {
+        if (error) {
+            XLog(@"Beep: %@", error);
+            NSBeep();
+            return;
+        }
+    }];
 }
 
 @end
