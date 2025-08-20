@@ -154,7 +154,8 @@ extension iTermBrowserDownload: WKDownloadDelegate {
         
         // Generate final destination path
         let finalDestination = self.finalDestination(forPath: suggestedFilename, 
-                                                     destinationDirectory: downloadsDir)!
+                                                     destinationDirectory: downloadsDir,
+                                                     prompt: false)!
         destinationURL = URL(fileURLWithPath: finalDestination)
         
         completionHandler(destinationURL)

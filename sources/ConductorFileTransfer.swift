@@ -158,7 +158,8 @@ class ConductorFileTransfer: TransferrableFile {
 
             let finalDestination = self.finalDestination(
                 forPath: path.path.lastPathComponent,
-                destinationDirectory: _localPath!.deletingLastPathComponent)!
+                destinationDirectory: _localPath!.deletingLastPathComponent,
+                prompt: true)!
             do {
                 if FileManager.default.fileExists(atPath: finalDestination) {
                     try FileManager.default.replaceItem(at: URL(fileURLWithPath: finalDestination),

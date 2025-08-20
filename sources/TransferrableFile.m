@@ -105,7 +105,8 @@ static NSMutableSet<NSString *> *iTermTransferrableFileLockedFileNames(void) {
 }
 
 - (NSString *)finalDestinationForPath:(NSString *)originalBaseName
-                 destinationDirectory:(NSString *)destinationDirectory {
+                 destinationDirectory:(NSString *)destinationDirectory
+                               prompt:(BOOL)prompt {
     NSString *baseName = originalBaseName;
     if (self.isZipOfFolder) {
         baseName = [baseName stringByAppendingString:@".zip"];
@@ -126,7 +127,7 @@ static NSMutableSet<NSString *> *iTermTransferrableFileLockedFileNames(void) {
         name = [NSString stringWithFormat:@"%@ (%d)%@", prefix, retries, suffix];
     } while ([[NSFileManager defaultManager] fileExistsAtPath:finalDestination] ||
              [TransferrableFile fileNameIsLocked:finalDestination]);
-    if (retries == 1) {
+    if (retries == 1 || !prompt) {
         return finalDestination;
     }
     NSString *message = [NSString stringWithFormat:@"A file named %@ already exists. Keep both files or replace the existing file?", baseName];

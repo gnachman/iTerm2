@@ -60,7 +60,8 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
         } else {
             _filename = [[name lastPathComponent] copy];
             _localPath = [[self finalDestinationForPath:_filename
-                                   destinationDirectory:[self downloadsDirectory]] copy];
+                                   destinationDirectory:[self downloadsDirectory]
+                                                 prompt:YES] copy];
         }
         self.fileSize = size;
     }

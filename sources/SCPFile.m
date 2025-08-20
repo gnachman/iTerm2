@@ -569,7 +569,8 @@ static NSError *SCPFileError(NSString *description) {
             // threads trying to determine the final destination at the same time.
             [self performOnMainThread:^{
                 finalDestination = [self finalDestinationForPath:baseName
-                                            destinationDirectory:downloadDirectory];
+                                            destinationDirectory:downloadDirectory
+                                                          prompt:YES];
                 if ([[NSFileManager defaultManager] fileExistsAtPath:finalDestination]) {
                     [[NSFileManager defaultManager] replaceItemAtURL:[NSURL fileURLWithPath:finalDestination]
                                                        withItemAtURL:[NSURL fileURLWithPath:tempfile]
