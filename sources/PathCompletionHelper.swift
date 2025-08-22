@@ -48,7 +48,9 @@ class PathCompletionHelper: NSObject {
         if pathMark.isLocalhost {
             openWindowAsIndicator()
             iTermSlowOperationGateway.sharedInstance().fetchDirectoryListing(ofPath: pathMark.path) { [weak self] entries in
-                self?.handle(entries)
+                DispatchQueue.main.async {
+                    self?.handle(entries)
+                }
             }
         } else if let conductor, conductor.framing, conductor.sshIdentity.matches(host: hostname, user: username) {
             openWindowAsIndicator()

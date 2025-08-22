@@ -5266,7 +5266,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
     VT100SavedCursor savedCursor;
     savedCursor.position = [dict[kSavedCursorPositionKey] gridCoord];
     savedCursor.charset = [dict[kSavedCursorCharsetKey] intValue];
-    for (int i = 0; i < NUM_CHARSETS && i < [dict[kSavedCursorLineDrawingArrayKey] count]; i++) {
+    for (int i = 0; i < NUM_CHARSETS && i < [(NSArray *)dict[kSavedCursorLineDrawingArrayKey] count]; i++) {
         NSNumber *n = [dict[kSavedCursorLineDrawingArrayKey] objectAtIndex:i];
         savedCursor.lineDrawing[i] = [n boolValue];
     }

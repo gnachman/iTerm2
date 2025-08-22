@@ -163,11 +163,11 @@ enum {
     PSMTab_PositionSingleMask = 1 << 7
 };
 
-typedef enum {
+typedef NS_ENUM(int, PSMTabPosition) {
     PSMTab_TopTab = 0,
     PSMTab_BottomTab = 1,
     PSMTab_LeftTab = 2,
-} PSMTabPosition;
+};
 
 // This view provides a control interface to manage a regular NSTabView.  It looks and works like
 // the tabbed browsing interface of many popular browsers.

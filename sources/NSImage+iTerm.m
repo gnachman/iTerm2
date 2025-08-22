@@ -745,7 +745,7 @@ static NSBitmapImageRep * iTermCreateBitmapRep(NSSize size,
                                                  8,
                                                  0,
                                                  colorSpace,
-                                                 kCGImageAlphaNone);
+                                                 0);
     const CGRect rect = CGRectMake(0,
                                    0,
                                    size.width,

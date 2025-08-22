@@ -4098,6 +4098,7 @@
 		A6D90D662E2FF7E100BA9F4F /* custom-find.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D90D652E2FF7E100BA9F4F /* custom-find.js */; };
 		A6D90D672E2FF7E100BA9F4F /* custom-find.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D90D652E2FF7E100BA9F4F /* custom-find.js */; };
 		A6D90D682E2FF7E100BA9F4F /* custom-find.js in Resources */ = {isa = PBXBuildFile; fileRef = A6D90D652E2FF7E100BA9F4F /* custom-find.js */; };
+		A6DADEA92E57F5A20068DA14 /* PSMTahoeTabStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DADEA72E57F58C0068DA14 /* PSMTahoeTabStyle.swift */; };
 		A6DB145A2D6CE22400266394 /* CommandIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DB14592D6CE22400266394 /* CommandIcon.png */; };
 		A6DB145B2D6CE22400266394 /* CommandIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DB14592D6CE22400266394 /* CommandIcon.png */; };
 		A6DB145C2D6CE22400266394 /* CommandIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DB14592D6CE22400266394 /* CommandIcon.png */; };
@@ -8546,6 +8547,7 @@
 		A6D90D5F2E2F5F3B00BA9F4F /* ai-prompt-help.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "ai-prompt-help.md"; sourceTree = "<group>"; };
 		A6D90D632E2F626700BA9F4F /* ImageViewWithPopoverMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewWithPopoverMessage.swift; sourceTree = "<group>"; };
 		A6D90D652E2FF7E100BA9F4F /* custom-find.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "custom-find.js"; sourceTree = "<group>"; };
+		A6DADEA72E57F58C0068DA14 /* PSMTahoeTabStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PSMTahoeTabStyle.swift; sourceTree = "<group>"; };
 		A6DB14592D6CE22400266394 /* CommandIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = CommandIcon.png; sourceTree = "<group>"; };
 		A6DB145D2D6CEDEE00266394 /* SystemMessageCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemMessageCellView.swift; sourceTree = "<group>"; };
 		A6DB14632D6D09C800266394 /* AIStreaming.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AIStreaming.png; sourceTree = "<group>"; };
@@ -14183,6 +14185,7 @@
 		DD02571E09CB9398008F320C /* source */ = {
 			isa = PBXGroup;
 			children = (
+				A6DADEA72E57F58C0068DA14 /* PSMTahoeTabStyle.swift */,
 				A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */,
 				A6E9ACC91A19956D008B0B6F /* NSWindow+PSM.m */,
 				D3CE2D4C1A00936F0098ED99 /* PSMDarkTabStyle.h */,
@@ -16028,7 +16031,7 @@
 					};
 					A6C7603F1B45C4CF00E3C992 = {
 						DevelopmentTeam = H7V7XYVQ7D;
-						LastSwiftMigration = 1640;
+						LastSwiftMigration = 2600;
 					};
 					A6C7641B1B45CB2800E3C992 = {
 						CreatedOnToolsVersion = 6.3;
@@ -19723,6 +19726,7 @@
 				A65003EB29FDE4410028BC9E /* PasteBuiltInFunction.swift in Sources */,
 				53D68F812283EE7C0018710D /* iTermTmuxLayoutBuilder.m in Sources */,
 				A6FCAF66250D4D6500B89EB0 /* iTermModifyOtherKeysMapper.m in Sources */,
+				A6DADEA92E57F5A20068DA14 /* PSMTahoeTabStyle.swift in Sources */,
 				A63011A520E7ECC2008114B7 /* iTermStatusBarSetupKnobsViewController.m in Sources */,
 				A6CBB9742E0B18D400B2CCCB /* iTermBrowserOpenSearchSuggestions.swift in Sources */,
 				A6A9839527E5C45E003319D1 /* String+iTerm.swift in Sources */,
@@ -22022,6 +22026,7 @@
 				WARNING_CFLAGS = (
 					"-Wall",
 					"-Wno-nullability-completeness",
+					"-Wno-gnu-folding-constant",
 				);
 			};
 			name = Beta;
@@ -22089,6 +22094,10 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wno-gnu-folding-constant",
+				);
 			};
 			name = Development;
 		};
@@ -22147,6 +22156,10 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wno-gnu-folding-constant",
+				);
 			};
 			name = Deployment;
 		};
@@ -22205,6 +22218,10 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wno-gnu-folding-constant",
+				);
 			};
 			name = Beta;
 		};
@@ -22263,6 +22280,10 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wno-gnu-folding-constant",
+				);
 			};
 			name = Nightly;
 		};
@@ -22350,6 +22371,7 @@
 				WARNING_CFLAGS = (
 					"-Wall",
 					"-Wno-nullability-completeness",
+					"-Wno-gnu-folding-constant",
 				);
 			};
 			name = Development;
@@ -22426,6 +22448,7 @@
 				WARNING_CFLAGS = (
 					"-Wall",
 					"-Wno-nullability-completeness",
+					"-Wno-gnu-folding-constant",
 				);
 			};
 			name = Deployment;
@@ -22504,6 +22527,7 @@
 				WARNING_CFLAGS = (
 					"-Wall",
 					"-Wno-nullability-completeness",
+					"-Wno-gnu-folding-constant",
 				);
 			};
 			name = Nightly;

@@ -45,6 +45,8 @@
       "Bash(git log:*)"
       "WebSearch"
       "Bash(~/.cargo/bin/cargo tree)"
+      "Bash(sed:*)",
+      "WebSearch"
     ],
     "deny": []
   }
