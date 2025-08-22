@@ -11,7 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface NSColor (PSM)
 
-- (NSColor *)it_srgbForColorInWindow:(NSWindow *)window;
+- (NSColor *)it_srgbForColorInWindow:(NSWindow * _Nullable)window;
 - (CGFloat)it_hspBrightness;
 
 @end

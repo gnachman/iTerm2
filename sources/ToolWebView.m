@@ -54,7 +54,6 @@ static NSString *const iTermToolWebViewLogger = @"logger";
             WKPreferences *prefs = [[WKPreferences alloc] init];
             prefs.javaScriptCanOpenWindowsAutomatically = NO;
             configuration.preferences = prefs;
-            configuration.processPool = [[WKProcessPool alloc] init];
             WKUserContentController *userContentController =
                 [[WKUserContentController alloc] init];
             configuration.userContentController = userContentController;

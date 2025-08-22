@@ -5114,7 +5114,8 @@ lengthExcludingInBandSignaling:data.length
         // This is to prevent a crash if the dictionary is bad (i.e., non-backward compatible change in a future version).
         self.primaryGrid = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(2, 2) delegate:self];
     }
-    if ([dictionary[@"AltGrid"] count]) {
+    NSDictionary *altGrid = dictionary[@"AltGrid"];
+    if ([altGrid count]) {
         self.altGrid = [[VT100Grid alloc] initWithDictionary:dictionary[@"AltGrid"]
                                                     delegate:self];
     }
