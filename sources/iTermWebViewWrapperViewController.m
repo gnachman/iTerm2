@@ -138,7 +138,6 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
     }
 
     configuration.preferences = prefs;
-    configuration.processPool = [[NSClassFromString(@"WKProcessPool") alloc] init];
 
     [self registerUserScriptInConfiguration:configuration delegate:delegate];
     configuration.websiteDataStore = [NSClassFromString(@"WKWebsiteDataStore") defaultDataStore];

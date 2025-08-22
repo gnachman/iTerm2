@@ -5,7 +5,7 @@
 //  Created by George Nachman on 2/25/25.
 //
 
-extension Result: Codable where Success: Codable, Failure: Codable {
+extension Result: @retroactive Codable where Success: Codable, Failure: Codable {
     enum CodingKeys: String, CodingKey {
         case success, failure
     }

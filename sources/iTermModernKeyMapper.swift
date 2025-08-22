@@ -78,7 +78,7 @@ extension VT100TerminalKeyReportingFlags: Codable {
     }
 }
 
-extension NSEvent.EventType: Codable {
+extension NSEvent.EventType: @retroactive Codable {
     enum CodingKeys: String, CodingKey {
         case rawValue
     }
@@ -98,7 +98,7 @@ extension NSEvent.EventType: Codable {
     }
 }
 
-extension NSEvent.ModifierFlags: Codable {
+extension NSEvent.ModifierFlags: @retroactive Codable {
     enum CodingKeys: String, CodingKey {
         case rawValue
     }

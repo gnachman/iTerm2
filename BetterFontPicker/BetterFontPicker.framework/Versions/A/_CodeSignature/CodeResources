@@ -18,11 +18,11 @@
 		</data>
 		<key>Resources/Info.plist</key>
 		<data>
-		zgU8tpplojcxisd6tfq+sJLLHdQ=
+		xm2WDVtm8HWwJGU4DGvm66bdrFM=
 		</data>
 		<key>Resources/MainViewController.nib</key>
 		<data>
-		shFjWsr+YUOCQQIDMUjTJcuSQGg=
+		DfzyuyV3R+8m+VaSeDDhg/n4w4s=
 		</data>
 		<key>Resources/VerticalSpacingIcon.tiff</key>
 		<data>
@@ -35,7 +35,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			thUgC2NQwy8/vu3YPOExnol8ZFghBlcPTRPsI4F+600=
+			sbI+VbBN3Nc96nvfZ+ytQS3QzCder5BcgfRFYKltN70=
 			</data>
 		</dict>
 		<key>Headers/BetterFontPicker.h</key>
@@ -49,14 +49,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			CpFbbGK0rYfibtI85Uy/cpc6srFMGreQ7lJKHLiahiU=
+			XhXNJFSgJqDUM+uwTbivjG28ySf9vH5QQguRpIkGcwk=
 			</data>
 		</dict>
 		<key>Modules/BetterFontPicker.swiftmodule/Project/x86_64-apple-macos.swiftsourceinfo</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			k4xWyMZHaI6pQZHS6MnykkkeU7p7SfV9dc/OIzNVxOU=
+			g3YvUuIXlXtVWZX3IrG6wZNvwu4D1M5tCd3tSMMdItU=
 			</data>
 		</dict>
 		<key>Modules/BetterFontPicker.swiftmodule/arm64-apple-macos.abi.json</key>
@@ -70,28 +70,28 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			WaPMneViv3Ocwe4zGOmYb4RaluQEW5gyLj6EZ6zyM6o=
+			CtYbSzL7HJRIc49dfV3YUfOwYjXusnUS71DH73L/3Hw=
 			</data>
 		</dict>
 		<key>Modules/BetterFontPicker.swiftmodule/arm64-apple-macos.swiftdoc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			L77xRKUssI+YJ6RNcTRh/eVS0eGUL1va7Z3PIQbDazI=
+			4icApHvuXJwXZnGL50W5FMO5BOOmqD6gyPEJO4lDLAA=
 			</data>
 		</dict>
 		<key>Modules/BetterFontPicker.swiftmodule/arm64-apple-macos.swiftinterface</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			WaPMneViv3Ocwe4zGOmYb4RaluQEW5gyLj6EZ6zyM6o=
+			CtYbSzL7HJRIc49dfV3YUfOwYjXusnUS71DH73L/3Hw=
 			</data>
 		</dict>
 		<key>Modules/BetterFontPicker.swiftmodule/arm64-apple-macos.swiftmodule</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			wiF5xT9tLZaIrx4OP1v5inmmEMvwUiN7zVX6+ZEgecc=
+			1txCYO7JoC0hOSwbLXN+xF0jFHEkxFoJSRPsY8Fw/aU=
 			</data>
 		</dict>
 		<key>Modules/BetterFontPicker.swiftmodule/x86_64-apple-macos.abi.json</key>
@@ -105,28 +105,28 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			zuqs98Gv0tdJV0dQ0wXVSrj/VJLJMqHukstFfuehNSk=
+			oFIw+Z5hnWKBIQ6PC7RwZZT4AEXHKqMufTwyQuj7Id8=
 			</data>
 		</dict>
 		<key>Modules/BetterFontPicker.swiftmodule/x86_64-apple-macos.swiftdoc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			fmEDZCzL9Y6WGUzupIV05i4n0UW8W5ImMvDDn02rWdI=
+			72n7DaqElbhY817N84/1Cfrt6StRsVL3r0bvSb4ZzqA=
 			</data>
 		</dict>
 		<key>Modules/BetterFontPicker.swiftmodule/x86_64-apple-macos.swiftinterface</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			zuqs98Gv0tdJV0dQ0wXVSrj/VJLJMqHukstFfuehNSk=
+			oFIw+Z5hnWKBIQ6PC7RwZZT4AEXHKqMufTwyQuj7Id8=
 			</data>
 		</dict>
 		<key>Modules/BetterFontPicker.swiftmodule/x86_64-apple-macos.swiftmodule</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			SWvic68iIWhlER4z8dv/0PjYoeirukUP6mgE+FSfRHI=
+			7PJOUA9UUZNJOt+3rOHJeVisvU4TpkwTpvclh19Mq30=
 			</data>
 		</dict>
 		<key>Modules/module.modulemap</key>
@@ -161,14 +161,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			kBwofhm3kG0X5gsj6DwcDyQLkUn4zoHt3K4VDZWUmFk=
+			LE5EzEECnJQh6vIA5XVZUD9yxPfwzoLOyGGrq/CSjE0=
 			</data>
 		</dict>
 		<key>Resources/MainViewController.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			3keKL2tBt4xZG0CJCUvmQNbQXSrIrCMjXOwReGQFb0Q=
+			LMpnGUOg5cfIHFqmOj0/bj9K5uxO8CTytRN+GWHuuxA=
 			</data>
 		</dict>
 		<key>Resources/VerticalSpacingIcon.tiff</key>

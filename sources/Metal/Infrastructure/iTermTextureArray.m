@@ -360,6 +360,7 @@ static NSUInteger iTermTextureBytesPerSampleForMetalPixelFormat(MTLPixelFormat p
         case MTLPixelFormatX32_Stencil8:
         case MTLPixelFormatX24_Stencil8:
         case MTLPixelFormatInvalid:
+        case MTLPixelFormatUnspecialized:
             break;
     }
     ITAssertWithMessage(NO, @"Bad pixel format %@", @(pixelFormat));

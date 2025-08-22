@@ -41,6 +41,8 @@
       "Bash(swift:*)",
       "Bash(sed:*)"
       "Bash(~/.cargo/bin/cargo tree)"
+      "Bash(sed:*)",
+      "WebSearch"
     ],
     "deny": []
   }

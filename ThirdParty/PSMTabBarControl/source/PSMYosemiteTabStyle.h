@@ -10,6 +10,9 @@
 #import "PSMTabStyle.h"
 #import "PSMTabBarControl.h"
 
+extern const void *PSMTabStyleLightColorKey;
+extern const void *PSMTabStyleDarkColorKey;
+
 extern BOOL gDebugLogging;
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
 #define DLog(args...) \
@@ -73,6 +76,13 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 
 - (BOOL)shouldDrawTopLineSelected:(BOOL)selected
                          attached:(BOOL)attached
-                         position:(PSMTabPosition)position NS_AVAILABLE_MAC(10_16);
+                         position:(PSMTabPosition)position;
+
+@end
+
+@interface PSMTabBarCell(PSMYosemiteTabStyle)
+
+@property(nonatomic) NSAttributedString *previousAttributedString;
+@property(nonatomic) CGFloat previousWidthOfAttributedString;
 
 @end

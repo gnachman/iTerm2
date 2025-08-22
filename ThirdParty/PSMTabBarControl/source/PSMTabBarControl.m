@@ -9,6 +9,7 @@
 #import "PSMTabBarControl.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "PSMTabBarCell.h"
 #import "PSMOverflowPopUpButton.h"
 #import "PSMRolloverButton.h"
@@ -130,7 +131,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
 
 @implementation PSMTabBarControl {
     // control basics
-    NSMutableArray *_cells; // the cells that draw the tabs
+    NSMutableArray<PSMTabBarCell *> *_cells; // the cells that draw the tabs
     PSMOverflowPopUpButton *_overflowPopUpButton; // for too many tabs
     PSMRolloverButton *_addTabButton;
 
@@ -146,7 +147,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
     int _currentStep;
     BOOL _isHidden;
     BOOL _hideIndicators;
-    IBOutlet id partnerView; // gets resized when hide/show
+    NSView *partnerView; // gets resized when hide/show
     BOOL _awakenedFromNib;
     int _tabBarWidth;
 
@@ -221,7 +222,11 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
         _minimumTabDragDistance = 10;
         _hasCloseButton = YES;
         _tabLocation = PSMTab_TopTab;
-        _style = [[PSMYosemiteTabStyle alloc] init];
+        if (@available(macOS 26, *)) {
+            _style = [[PSMTahoeTabStyle alloc] init];
+        } else {
+            _style = [[PSMYosemiteTabStyle alloc] init];
+        }
         _preDragSelectedTabIndex = NSNotFound;
 
         // the overflow button/menu

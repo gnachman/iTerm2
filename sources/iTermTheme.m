@@ -8,6 +8,7 @@
 #import "iTermTheme.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermColorMap.h"
 #import "iTermPreferences.h"
 #import "NSAppearance+iTerm.h"
@@ -64,7 +65,11 @@
         case TAB_STYLE_MINIMAL:
             assert(NO);
         case TAB_STYLE_LIGHT:
-            return [[PSMYosemiteTabStyle alloc] init];
+            if (@available(macOS 26, *)) {
+                return [[PSMTahoeTabStyle alloc] init];
+            } else {
+                return [[PSMYosemiteTabStyle alloc] init];
+            }
         case TAB_STYLE_DARK:
             return [[PSMDarkTabStyle alloc] init];
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:

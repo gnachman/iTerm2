@@ -179,18 +179,6 @@ librailroad_dsl: force
 	/opt/homebrew/bin/rustup target add aarch64-apple-darwin
 	cd submodules/railroad_dsl && /opt/homebrew/bin/rustup run stable cargo build --release --target aarch64-apple-darwin && /opt/homebrew/bin/rustup run stable cargo build --release --target x86_64-apple-darwin && lipo -create target/aarch64-apple-darwin/release/librailroad_dsl.dylib target/x86_64-apple-darwin/release/librailroad_dsl.dylib -output ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include && install_name_tool -id @rpath/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib
 
-libadblock: force
-	/opt/homebrew/bin/rustup target add x86_64-apple-darwin
-	/opt/homebrew/bin/rustup target add aarch64-apple-darwin
-	mkdir -p submodules/adblock-rust/lib
-	mkdir -p submodules/adblock-rust/include
-	cd submodules/adblock-rust && /opt/homebrew/bin/rustup run stable cbindgen --config cbindgen.toml --crate adblock --output include/adblock.h
-	cd submodules/adblock-rust && /opt/homebrew/bin/rustup run stable cargo build --release --target aarch64-apple-darwin --features ffi
-	cd submodules/adblock-rust && /opt/homebrew/bin/rustup run stable cargo build --release --target x86_64-apple-darwin --features ffi
-	cd submodules/adblock-rust && lipo -create target/aarch64-apple-darwin/release/libadblock.a target/x86_64-apple-darwin/release/libadblock.a -output lib/libadblock.a
-	cp submodules/adblock-rust/include/* ThirdParty/adblock-rust/include
-	cp submodules/adblock-rust/lib/* ThirdParty/adblock-rust/lib
-
 paranoidrailroad: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) librailroad_dsl
 
@@ -228,14 +216,11 @@ paranoidsparkle: force
 paranoidlibsixel: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) fatlibsixel
 
-paranoidlibadblock: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) libadblock
-
 paranoidlibrailroad: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) librailroad_dsl
 
 # You probably want make paranoiddeps to avoid depending on Hombrew stuff.
-deps: force fatlibsixel CoreParse NMSSH bindeps libgit2 sparkle librailroad_dsl libadblock sfsymbolenum
+deps: force fatlibsixel CoreParse NMSSH bindeps libgit2 sparkle librailroad_dsl sfsymbolenum
 
 sfsymbolenum:
 	cp submodules/SFSymbolEnum/Sources/SFSymbolEnum/* ThirdParty/SFSymbolEnum

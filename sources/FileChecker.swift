@@ -196,10 +196,12 @@ class LocalFileChecker: FileChecker, FileCheckerDataSource {
             knownCommands[command] = .pending(1, NSDate.it_timeSinceBoot())
             let candidate = command
             iTermSlowOperationGateway.sharedInstance().statFile(candidate) { [weak self] sb, error in
-                self?.handleStatResult(command: command,
-                                       path: candidate,
-                                       stat: sb,
-                                       error: error)
+                DispatchQueue.main.async {
+                    self?.handleStatResult(command: command,
+                                           path: candidate,
+                                           stat: sb,
+                                           error: error)
+                }
             }
             return nil
         }
@@ -213,10 +215,12 @@ class LocalFileChecker: FileChecker, FileCheckerDataSource {
                 for path in paths {
                     let candidate = path.appending(pathComponent: command)
                     iTermSlowOperationGateway.sharedInstance().statFile(candidate) { [weak self] sb, error in
-                        self?.handleStatResult(command: command,
-                                               path: candidate,
-                                               stat: sb,
-                                               error: error)
+                        DispatchQueue.main.async {
+                            self?.handleStatResult(command: command,
+                                                   path: candidate,
+                                                   stat: sb,
+                                                   error: error)
+                        }
                     }
                 }
             }  // else still waiting on promise
