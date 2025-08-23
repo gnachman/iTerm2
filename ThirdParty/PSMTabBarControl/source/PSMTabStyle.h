@@ -19,6 +19,7 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 @property(nonatomic, readonly) NSAppearance *accessoryAppearance NS_AVAILABLE_MAC(10_14);
 @property(nonatomic, readonly) CGFloat edgeDragHeight;
 @property(nonatomic, readonly) BOOL supportsMultiLineLabels;
+@property(nonatomic, readonly) CGFloat intercellSpacing;
 
 // identity
 - (NSString *)name;
@@ -73,7 +74,7 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 - (void)drawPostHocDecorationsOnSelectedCell:(PSMTabBarCell *)cell
                                tabBarControl:(PSMTabBarControl *)bar;
 - (NSColor *)textColorForCell:(PSMTabBarCell *)cell;
-
+- (NSRect)adjustedCellRect:(NSRect)rect generic:(NSRect)generic;
 @end
 
 @interface PSMTabBarControl (StyleAccessors)

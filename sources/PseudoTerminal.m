@@ -4662,6 +4662,23 @@ ITERM_WEAKLY_REFERENCEABLE
         effectiveWindowType = self.savedWindowType;
     }
     if (!iTermWindowTypeIsCompact(effectiveWindowType)) {
+        if (@available(macOS 26, *)) {
+            switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+                case TAB_STYLE_MINIMAL:
+                case TAB_STYLE_COMPACT:
+                    return NSEdgeInsetsZero;
+                    
+                case TAB_STYLE_AUTOMATIC:
+                case TAB_STYLE_LIGHT:
+                case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                case TAB_STYLE_DARK:
+                case TAB_STYLE_DARK_HIGH_CONTRAST:
+                    return NSEdgeInsetsMake(0,
+                                            8,
+                                            8,
+                                            8);
+            }
+        }
         return NSEdgeInsetsZero;
     }
     if (!exitingLionFullscreen_) {
@@ -5794,13 +5811,15 @@ ITERM_WEAKLY_REFERENCEABLE
             return !exitingLionFullscreen_;
 
         case WINDOW_TYPE_NORMAL:
+            if (@available(macOS 26, *)) {
+                DLog(@"YES - macOS 26 with window type %@", @(self.windowType));
+                return YES;
+            }
+            // FALL THROUGH
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_MAXIMIZED:
             if (![iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur]) {
-                if (@available(macOS 10.16, *)) {
-                    DLog(@"NO - big sur");
-                    return NO;
-                }
+                return NO;
             }
             DLog(@"YES - normal, accessory, or maximized");
             return YES;
@@ -9713,6 +9732,12 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     if ([self shouldHaveTallTabBar]) {
         return [iTermAdvancedSettingsModel compactMinimalTabBarHeight];
     } else {
+        if (iTermWindowTypeIsCompact(self.windowType)) {
+            return [iTermAdvancedSettingsModel defaultTabBarHeight];
+        }
+        if (@available(macOS 26, *)) {
+            return PSMTahoeTabStyle.tabBarHeight;
+        }
         return [iTermAdvancedSettingsModel defaultTabBarHeight];
     }
 }
