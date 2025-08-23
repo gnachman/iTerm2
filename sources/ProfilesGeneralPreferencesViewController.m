@@ -472,7 +472,13 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 }
 
 - (void)updateSubtitlesAllowed {
-    const BOOL subtitlesAllowed = ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL || [iTermAdvancedSettingsModel defaultTabBarHeight] >= 28);
+    BOOL subtitlesAllowed;
+    if (@available(macOS 26, *)) {
+#warning TODO: What about compact windows?
+        subtitlesAllowed = YES;
+    } else {
+        subtitlesAllowed = ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL || [iTermAdvancedSettingsModel defaultTabBarHeight] >= 28);
+    }
     _subtitleText.hidden = !subtitlesAllowed;
     [_subtitleLabel setLabelEnabled:subtitlesAllowed];
     _tallTabBarRequestView.hidden = subtitlesAllowed;

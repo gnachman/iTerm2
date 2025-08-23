@@ -20,6 +20,7 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
     private var _addTabButtonPressedImage: NSImage?
     private var _addTabButtonRolloverImage: NSImage?
     private var _orientation: PSMTabBarOrientation = .horizontalOrientation
+    @objc static let tabBarHeight = 36.0
     
     // MARK: - PSMTabStyle Properties
     @objc weak var tabBar: PSMTabBarControl?
@@ -50,6 +51,10 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
             return 0
         }
         return CGFloat(size.doubleValue)
+    }
+    
+    @objc var intercellSpacing: CGFloat {
+        2.0
     }
     
     @objc var supportsMultiLineLabels: Bool {
@@ -125,6 +130,9 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
     
     @objc func rightMarginForTabBarControl(withOverflow: Bool, addTabButton: Bool) -> Float {
         if withOverflow || addTabButton {
+            if #available(macOS 26, *) {
+                return 32.0 + Float(tabBar?.insets.right ?? 0)
+            }
             return 24.0
         }
         return 0
@@ -328,7 +336,14 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
             parseHTML: parseHTML.boolValue
         )
     }
-    
+
+    func adjustedCellRect(_ rect: NSRect, generic: NSRect) -> NSRect {
+        var frame = rect
+        frame.origin.y = 0.5
+        frame.size.height = generic.height - 1
+        return frame
+    }
+
     // MARK: - Drawing
     
     @objc func drawTabCell(_ cell: PSMTabBarCell, highlightAmount: CGFloat) {
@@ -336,6 +351,14 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
         let isFirst = (cell == tabBar?.cells()?.first as? PSMTabBarCell)
         let isLast = (cell == tabBar?.cells()?.lastObject as? PSMTabBarCell)
         
+        if cell.state == .on {
+            let shadow = NSShadow()
+            shadow.shadowOffset = NSSize.zero
+            shadow.shadowColor = NSColor.black
+            shadow.shadowBlurRadius = 10.0
+            shadow.set()
+            cell.frame.fill()
+        }
         drawCellBackgroundAndFrameHorizontallyOriented(
             horizontal,
             inRect: cell.frame,
@@ -349,42 +372,30 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
         drawInterior(with: cell, inView: cell.controlView, highlightAmount: highlightAmount)
     }
     
+    private let barHeight = 28.0
+    private var barRadius: CGFloat { barHeight / 2.0 }
+    let containerSideInset = CGFloat(8)
+    let containerTopInset = CGFloat(0)
+    let containerBottomInset = CGFloat(0)
+
     @objc func drawBackground(in rect: NSRect, color: NSColor?, horizontal: Bool) {
         if _orientation == .verticalOrientation && (tabBar?.frame.size.width ?? 0) < 2 {
             return
         }
         
         NSGraphicsContext.saveGraphicsState()
-        NSGraphicsContext.current?.shouldAntialias = false
         
-        color?.set()
+        NSColor.windowBackgroundColor.set()
         rect.fill(using: .sourceOver)
+
+        color?.set()
         
-        bottomLineColorSelected(false).set()
-        if _orientation == .horizontalOrientation {
-            NSBezierPath.strokeLine(
-                from: NSPoint(x: rect.origin.x, y: rect.origin.y + rect.size.height - 0.5),
-                to: NSPoint(x: rect.origin.x + rect.size.width, y: rect.origin.y + rect.size.height - 0.5)
-            )
-            
-            topLineColorSelected(false).set()
-            NSBezierPath.strokeLine(
-                from: NSPoint(x: rect.origin.x, y: rect.origin.y - 0.5),
-                to: NSPoint(x: rect.origin.x + rect.size.width, y: rect.origin.y - 0.5)
-            )
-        } else {
-            // Draw a divider between the tabbar and the content
-            NSBezierPath.strokeLine(
-                from: NSPoint(x: rect.origin.x, y: rect.origin.y + 0.5),
-                to: NSPoint(x: rect.origin.x, y: rect.origin.y + rect.size.height + 0.5)
-            )
-            
-            NSBezierPath.strokeLine(
-                from: NSPoint(x: rect.origin.x + rect.size.width, y: rect.origin.y + 0.5),
-                to: NSPoint(x: rect.origin.x + rect.size.width, y: rect.origin.y + rect.size.height + 0.5)
-            )
-        }
-        
+        NSBezierPath(roundedRect: NSRect(x: containerSideInset - 0.5,
+                                         y: containerTopInset,
+                                         width: rect.width - containerSideInset * 2 + 1,
+                                         height: barHeight),
+                     xRadius: barRadius,
+                     yRadius: barRadius).fill()
         NSGraphicsContext.restoreGraphicsState()
     }
     
@@ -397,17 +408,14 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
             tabBar = bar
         }
         
-        // Background to the right of the rightmost tab and left of the leftmost tab
-        let marginColor = backgroundColorSelected(false, highlightAmount: 0)
-        drawBackground(in: clipRect, color: marginColor, horizontal: horizontal)
-        
-        // Draw line above tab bar
-        let topLineColor = topLineColorSelected(false)
-        topLineColor.set()
-        
-        let insetRect: NSRect
-        insetRect = clipRect
-        
+
+        let backgroundColor = NSColor(white: 0.9, alpha: 1.0)
+        var backgroundRect = rect
+        if bar.showAddTabButton {
+            backgroundRect.size.width -= 32.0
+        }
+        drawBackground(in: backgroundRect, color: backgroundColor, horizontal: horizontal)
+
         // no tab view == not connected
         guard let _ = bar.tabView else {
             var labelRect = rect
@@ -426,50 +434,20 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
             attrStr.draw(in: labelRect)
             return
         }
-        
-        let attachedToTitleBar = bar.delegate?.tabView?(bar, valueOfOption: PSMTabBarControlOptionKey.attachedToTitleBar) as? NSNumber ?? NSNumber(value: false)
-        
         // draw cells
-        for i in 0..<2 {
-            let stateToDraw: NSControl.StateValue = (i == 0 ? .on : .off)
-            if let cells = bar.cells() as? [PSMTabBarCell] {
-                for cell in cells {
-                    if !cell.isInOverflowMenu && NSIntersectsRect(cell.frame.insetBy(dx: -1, dy: -1), clipRect) {
-                        if cell.state == stateToDraw {
-                            cell.draw(withFrame: cell.frame, in: bar)
-                            
-                            if shouldDrawTopLineSelected(stateToDraw == .on, attached: attachedToTitleBar.boolValue, position: PSMTabPosition(rawValue: Int32(bar.tabLocation))!) {
-                                topLineColor.set()
-                                NSRect(x: cell.frame.minX, y: 0, width: cell.frame.width, height: 1).fill()
-                            }
-                            
-                            if stateToDraw == .on {
-                                // Can quit early since only one can be selected
-                                break
-                            }
-                        }
-                    }
-                }
-            }
+        var drawableCells = ((bar.cells() as? [PSMTabBarCell]) ?? []).filter { cell in
+            return !cell.isInOverflowMenu && NSIntersectsRect(cell.frame.insetBy(dx: -1, dy: -1), clipRect)
         }
-        
-        if bar.showAddTabButton && attachedToTitleBar.boolValue {
-            var frame = bar.addTabButton()?.frame ?? NSZeroRect
-            frame.size.width = bar.bounds.width - frame.minX
-            topLineColor.set()
-            frame.size.width = CGFloat.greatestFiniteMagnitude
-            frame = frame.intersection(clipRect.intersection(insetRect))
-            NSRect(x: frame.minX, y: 0, width: frame.width, height: 1).fill()
+        if let i = drawableCells.firstIndex(where: { $0.state == .on }) {
+            let cell = drawableCells.remove(at: i)
+            drawableCells.append(cell)
         }
-        
-        drawDividerBetweenTabBarAndContent(rect, bar: bar)
-        
-        if let cells = bar.cells() as? [PSMTabBarCell] {
-            for cell in cells {
-                if !cell.isInOverflowMenu && NSIntersectsRect(cell.frame, clipRect) && cell.state == .on {
-                    cell.drawPostHocDecorations(onSelectedCell: cell, tabBarControl: bar)
-                }
-            }
+        for cell in drawableCells {
+            cell.draw(withFrame: cell.frame, in: bar)
+        }
+
+        if let selectedCell = drawableCells.first, selectedCell.state == .on {
+            selectedCell.drawPostHocDecorations(onSelectedCell: selectedCell, tabBarControl: bar)
         }
     }
     
@@ -581,45 +559,25 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
                                         withTabColor tabColor: NSColor?,
                                         highlightAmount: CGFloat,
                                         horizontal: Bool) {
-        backgroundColorSelected(selected, highlightAmount: highlightAmount).set()
-        var backgroundRect = cellFrame
-        let backgroundInsets = backgroundInsetsWithHorizontalOrientation(horizontal)
-        backgroundRect.origin.x += backgroundInsets.left
-        backgroundRect.origin.y += backgroundInsets.top
-        backgroundRect.size.width -= backgroundInsets.left + backgroundInsets.right
-        backgroundRect.size.height -= backgroundInsets.top + backgroundInsets.bottom
-        
-        if !horizontal {
-            // The bar background color is extended by a half point to get a two-tone effect with the
-            // right-side line but here we want to remove it completely.
-            backgroundRect.size.width += 0.5
-        }
-        backgroundRect.fill()
-        
         if let tabColor = tabColor {
             let color = cellBackgroundColor(forTabColor: tabColor, selected: selected)
             // Alpha the inactive tab's colors a bit to make it clear which tab is active.
             color.set()
-            cellFrame.fill(using: .sourceOver)
+        } else {
+            backgroundColorSelected(selected, highlightAmount: highlightAmount).set()
+        }
+
+        let radius = barRadius - 2.5
+        if selected || tabColor != nil {
+            NSBezierPath(roundedRect: cellFrame.insetBy(dx: 2.0, dy: 2.0), xRadius: radius, yRadius: radius).fill()
+        }
+        if selected {
+            NSColor.white.set()
+            NSBezierPath(roundedRect: cellFrame.insetBy(dx: 2.0, dy: 2.0), xRadius: radius, yRadius: radius).stroke()
         }
         
-        if !selected && _orientation == .horizontalOrientation {
-            drawShadowForUnselectedTab(inRect: backgroundRect)
-        }
     }
 
-    static var unselectedTabShadow: NSImage? = {
-        Bundle(for: PSMTahoeTabStyle.self).image(forResource: "UnselectedTabShadow")
-    }()
-
-    @objc func drawShadowForUnselectedTab(inRect backgroundRect: NSRect) {
-        let shadowHeight: CGFloat = 4
-        var shadowRect = backgroundRect
-        shadowRect.size.height = shadowHeight
-        
-        Self.unselectedTabShadow?.draw(in: shadowRect)
-    }
-    
     @objc func drawSubtitle(_ cachedSubtitle: PSMCachedTitle?,
                           x labelPosition: CGFloat,
                           cell: PSMTabBarCell,
@@ -734,12 +692,12 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
     @objc func textColorDefaultSelected(_ selected: Bool, backgroundColor: NSColor?, windowIsMainAndAppIsActive mainAndActive: Bool) -> NSColor {
         let value: CGFloat
         if mainAndActive {
-            value = 0
+            value = 70
         } else {
             if selected {
-                value = 189
+                value = 177
             } else {
-                value = 164
+                value = 161
             }
         }
         return NSColor(srgbRed: value/255.0, green: value/255.0, blue: value/255.0, alpha: 1)
@@ -793,7 +751,11 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
     }
     
     @objc func backgroundColorSelected(_ selected: Bool, highlightAmount: CGFloat) -> NSColor {
-        return bigSurBackgroundColorSelected(selected, highlightAmount: highlightAmount)
+        if selected {
+            return NSColor(white: 0.97, alpha: 1.0)
+        } else {
+            return NSColor(white: 0, alpha: highlightAmount * 0.2)
+        }
     }
     
     @objc func drawPostHocDecorations(onSelectedCell cell: PSMTabBarCell, tabBarControl bar: PSMTabBarControl) {
@@ -1006,36 +968,12 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
                                                                isLast: Bool?,
                                                                highlightAmount: CGFloat) {
         drawCellBackgroundSelected(selected,
-                                 inRect: cellFrame,
-                                 withTabColor: tabColor,
-                                 highlightAmount: highlightAmount,
-                                 horizontal: horizontal)
+                                   inRect: cellFrame,
+                                   withTabColor: tabColor,
+                                   highlightAmount: highlightAmount,
+                                   horizontal: horizontal)
         
         if horizontal {
-            var shouldDrawLeftLine = false
-            if let isFirst = isFirst, isFirst && cellFrame.minX > 1 {
-                shouldDrawLeftLine = true
-            } else {
-                // Because alpha is less than 1, we don't want to double-draw
-                shouldDrawLeftLine = false
-            }
-            
-            if shouldDrawLeftLine {
-                // Left line
-                verticalLineColorSelected(selected).set()
-                drawVerticalLine(inFrame: cellFrame, x: cellFrame.minX)
-            }
-            
-            // Right line
-            verticalLineColorSelected(selected).set()
-            var rightAdjustment: CGFloat = 0
-            rightAdjustment = (isLast ?? false) ? 0 : 1
-            drawVerticalLine(inFrame: cellFrame, x: cellFrame.maxX - rightAdjustment)
-            
-            // Top line
-            topLineColorSelected(selected).set()
-            
-            // Don't draw bottom line on Big Sur+
         } else {
             // Bottom line
             verticalLineColorSelected(selected).set()
@@ -1044,30 +982,6 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
             modifiedFrame.origin.x += insets.left
             modifiedFrame.size.width -= (insets.left + insets.right)
             drawHorizontalLine(inFrame: modifiedFrame, y: modifiedFrame.maxY - 1)
-        }
-    }
-    
-    private func drawDividerBetweenTabBarAndContent(_ rect: NSRect, bar: PSMTabBarControl) {
-        if _orientation != .horizontalOrientation {
-            bottomLineColorSelected(false).set()
-            var rightLineRect = rect
-            rightLineRect.origin.y -= 1
-            drawVerticalLine(inFrame: rightLineRect, x: rect.maxX - 1)
-        } else {
-            switch PSMTabPosition(rawValue: Int32(bar.tabLocation)) {
-            case .leftTab:
-                break
-            case .topTab:
-                // Bottom line
-                bottomLineColorSelected(true).set()
-                NSRect(x: 0, y: rect.maxY - 1, width: rect.width, height: 1).fill()
-            case .bottomTab:
-                // Top line
-                bottomLineColorSelected(true).set()
-                NSRect(x: 0, y: rect.minY, width: rect.width, height: 1).fill()
-            default:
-                break
-            }
         }
     }
     
