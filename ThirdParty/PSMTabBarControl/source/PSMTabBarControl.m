@@ -184,17 +184,19 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
 
 - (float)availableCellWidthWithOverflow:(BOOL)withOverflow {
     float width = [self frame].size.width;
-    width = width - [_style leftMarginForTabBarControl] - [_style rightMarginForTabBarControlWithOverflow:withOverflow
-                                                                                             addTabButton:self.showAddTabButton] - _resizeAreaCompensation;
+    const CGFloat rightMargin = [_style rightMarginForTabBarControlWithOverflow:withOverflow
+                                                                   addTabButton:self.showAddTabButton];
+    const CGFloat leftMargin = [_style leftMarginForTabBarControl];
+    width = width - leftMargin - rightMargin - _resizeAreaCompensation;
     return width;
 }
 
 - (NSRect)genericCellRectWithOverflow:(BOOL)withOverflow {
     NSRect aRect = [self frame];
     aRect.origin.x = [_style leftMarginForTabBarControl];
-    aRect.origin.y = 0.0;
+    aRect.origin.y = self.insets.top;
     aRect.size.width = [self availableCellWidthWithOverflow:withOverflow];
-    aRect.size.height = self.height;
+    aRect.size.height = self.height - self.insets.top - self.insets.bottom;
     return aRect;
 }
 
@@ -323,6 +325,10 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
     [self unregisterDraggedTypes];
 
     [super dealloc];
+}
+
+- (void)setHeight:(CGFloat)height {
+    _height = height;
 }
 
 - (void)awakeFromNib
@@ -1143,17 +1149,54 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
     } else {
         // Divide up the space evenly, but don't allow cells to be smaller than the minimum
         // width.
-        CGFloat widthRemaining = availableWidth;
         // If all cells are the smallest allowed size, do they fit?
-        const BOOL canFitAllCellsMinimally = (self.cellMinWidth * cellCount <= availableWidth);
-        NSInteger numberOfVisibleCells = canFitAllCellsMinimally ? cellCount : (availableWidth / _cellMinWidth);
-        for (int i = 0; i < numberOfVisibleCells; i++) {
-            CGFloat width = floor(widthRemaining / (numberOfVisibleCells - i));
-            [newWidths addObject:@(width)];
-            widthRemaining -= width;
+        const CGFloat intercellSpacing = _style.intercellSpacing;
+        const BOOL canFitAllCellsMinimally = (self.cellMinWidth * cellCount + intercellSpacing * MAX(0, (cellCount - 1)) <= availableWidth);
+        NSInteger numberOfVisibleCells;
+        if (canFitAllCellsMinimally) {
+            numberOfVisibleCells = cellCount;
+        } else {
+            numberOfVisibleCells = availableWidth / _cellMinWidth;
+            while (numberOfVisibleCells >= 0 && numberOfVisibleCells * _cellMinWidth + intercellSpacing > availableWidth) {
+                numberOfVisibleCells -= 1;
+            }
         }
+        [self computeCellFramesInContainerOfWidth:availableWidth
+                             numberOfVisibleCells:numberOfVisibleCells
+                                 intercellSpacing:intercellSpacing
+                                            scale:2.0
+                                           frames:newWidths];
     }
     return newWidths;
+}
+
+- (void)computeCellFramesInContainerOfWidth:(CGFloat)containerWidth
+                       numberOfVisibleCells:(NSInteger)n
+                           intercellSpacing:(CGFloat)intercellSpacing
+                                      scale:(CGFloat)scale
+                                     frames:(NSMutableArray<NSNumber *> *)outWidths {
+    if (n <= 0) {
+        return;
+    }
+
+    // Work in whole device pixels.
+    const NSInteger totalPx = llround(containerWidth * scale);
+    const NSInteger gapPx = llround(intercellSpacing * scale);
+
+    const NSInteger totalGapsPx = (n - 1) * gapPx;
+    const NSInteger contentPx = MAX(0, totalPx - totalGapsPx);
+
+    // Base width for each button and leftover pixels to distribute.
+    NSInteger basePx = contentPx / n;
+    NSInteger remPx = contentPx % n;
+
+    for (NSInteger i = 0; i < n; i++) {
+        NSInteger wPx = basePx + (i < remPx ? 1 : 0);
+
+        CGFloat w = ((CGFloat)wPx) / scale;
+
+        [outWidths addObject:@(w)];
+    }
 }
 
 - (void)removeCell:(PSMTabBarCell *)cell {
@@ -1269,7 +1312,9 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
     const int cellCount = [_cells count];
     const int numberOfVisibleCells = [newValues count];
     NSRect cellRect = [self genericCellRectWithOverflow:(_showAddTabButton || cellCount > numberOfVisibleCells)];
+    const NSRect generic = cellRect;
     NSMenu *overflowMenu = nil;
+    const CGFloat intercellSpacing = _style.intercellSpacing;
 
     // Set up cells with frames and rects
     for (int i = 0; i < cellCount; i++) {
@@ -1284,6 +1329,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
                 cellRect.origin.y = [[newValues objectAtIndex:i] floatValue];
                 cellRect.origin.x = 0;
             }
+            cellRect = [_style adjustedCellRect:cellRect generic:generic];
             [cell setFrame:cellRect];
 
             // close button tracking rect
@@ -1358,7 +1404,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
             }
 
             // next...
-            cellRect.origin.x += [[newValues objectAtIndex:i] floatValue];
+            cellRect.origin.x += [[newValues objectAtIndex:i] floatValue] + intercellSpacing;
 
         } else {
             // set up menu items

@@ -48,6 +48,10 @@
     return @"Minimal";
 }
 
+- (NSRect)adjustedCellRect:(NSRect)rect generic:(NSRect)generic {
+    return rect;
+}
+
 - (NSAppearance *)accessoryAppearance NS_AVAILABLE_MAC(10_14) {
     if (self.backgroundIsDark) {
         return [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];

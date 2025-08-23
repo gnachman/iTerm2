@@ -7,6 +7,8 @@
 //
 
 #import "iTermTabBarControlView.h"
+
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermPreferences.h"
 #import "DebugLogging.h"
@@ -41,7 +43,11 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
         // This used to depend on job but it's too difficult to do now that different sessions might
         // have different title formats.
         self.ignoreTrailingParentheticalsForSmartTruncation = YES;
-        self.height = [iTermAdvancedSettingsModel defaultTabBarHeight];
+        if (@available(macOS 26, *)) {
+            self.height =  PSMTahoeTabStyle.tabBarHeight;
+        } else {
+            self.height =  [iTermAdvancedSettingsModel defaultTabBarHeight];
+        }
         self.showAddTabButton = ![iTermAdvancedSettingsModel removeAddTabButton];
         self.selectsTabsOnMouseDown = [iTermAdvancedSettingsModel selectsTabsOnMouseDown];
     }

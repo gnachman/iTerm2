@@ -139,6 +139,10 @@
     return size.doubleValue;
 }
 
+- (CGFloat)intercellSpacing {
+    return 0.0;
+}
+
 #pragma mark - Add Tab Button
 
 - (NSImage *)addTabButtonImage {
@@ -249,6 +253,10 @@
     result.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0);
 
     return result;
+}
+
+- (NSRect)adjustedCellRect:(NSRect)rect generic:(NSRect)generic {
+    return rect;
 }
 
 - (NSRect)objectCounterRectForTabCell:(PSMTabBarCell *)cell {
