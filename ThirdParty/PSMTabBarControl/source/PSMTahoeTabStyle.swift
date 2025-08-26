@@ -20,7 +20,6 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     private var _closeButtonDown: NSImage?
     private var _closeButtonOver: NSImage?
     private var _orientation: PSMTabBarOrientation = .horizontalOrientation
-    @objc static let tabBarHeight = 36.0
     
     // MARK: - PSMTabStyle Properties
     @objc weak var tabBar: PSMTabBarControl?
@@ -33,7 +32,12 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     }
     
     @objc var orientation: PSMTabBarOrientation {
-        return _orientation
+        set {
+            _orientation = newValue
+        }
+        get {
+            return _orientation
+        }
     }
     
     @objc var windowIsMainAndAppIsActive: Bool {
@@ -118,6 +122,16 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
 
     // MARK: - PSMTabStyle Protocol
     
+    @objc static var horizontalTabBarHeight = 36.0
+    
+    var tabBarHeight: CGFloat {
+        if orientation == .horizontalOrientation {
+            return Self.horizontalTabBarHeight
+        } else {
+            return 26.0
+        }
+    }
+
     func frameForOverflowButton(withAddTabButton showAddTabButton: Bool, enclosureSize: NSSize, standardHeight: CGFloat) -> NSRect {
         if orientation == .horizontalOrientation {
             return NSRect(x: enclosureSize.width - 36,
@@ -573,18 +587,27 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             return !cell.isInOverflowMenu && NSIntersectsRect(cell.frame.insetBy(dx: -1, dy: -1), clipRect)
         }
 
-        if let i = drawableCells.firstIndex(where: { $0.state == .on }) {
-            let cell = drawableCells.remove(at: i)
-            drawableCells.append(cell)
-        }
-        for cell in drawableCells {
-            cell.draw(withFrame: cell.frame, in: bar)
-        }
-        for i in 0..<(drawableCells.count - 1) {
-            drawDivider(betweenCell: drawableCells[i], andCell: drawableCells[i + 1])
-        }
-        if let selectedCell = drawableCells.first, selectedCell.state == .on {
-            selectedCell.drawPostHocDecorations(onSelectedCell: selectedCell, tabBarControl: bar)
+        if drawableCells.count > 0 {
+            if let i = drawableCells.firstIndex(where: { $0.state == .on }) {
+                let cell = drawableCells.remove(at: i)
+                drawableCells.append(cell)
+            }
+            for cell in drawableCells {
+                cell.draw(withFrame: cell.frame, in: bar)
+            }
+            let sorted = drawableCells.sorted { lhs, rhs in
+                if orientation == .horizontalOrientation {
+                    lhs.frame.minX < rhs.frame.minX
+                } else {
+                    lhs.frame.minY < rhs.frame.minY
+                }
+            }
+            for i in 0..<(drawableCells.count - 1) {
+                drawDivider(betweenCell: sorted[i], andCell: sorted[i + 1])
+            }
+            if let selectedCell = drawableCells.first, selectedCell.state == .on {
+                selectedCell.drawPostHocDecorations(onSelectedCell: selectedCell, tabBarControl: bar)
+            }
         }
     }
 
@@ -749,13 +772,14 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             return
         }
         
-        let attributedString = cachedSubtitle.attributedStringForcingLeftAlignment(orientation == .horizontalOrientation,
+        let attributedString = cachedSubtitle.attributedStringForcingLeftAlignment(orientation == .verticalOrientation,
                                                                                    truncatedForWidth: maxWidth)
         let boundingSize = cachedSubtitle.boundingRect(with: NSSize(width: maxWidth, height: cell.frame.height)).size
         var labelRect = NSRect()
         labelRect.origin.x = xOrigin
         labelRect.origin.y = cell.frame.origin.y + floor((cell.frame.size.height - boundingSize.height) / 2.0) + labelOffset + mainLabelHeight + verticalOffsetForSubtitle()
         labelRect.size.height = boundingSize.height
+        labelRect.size.width = maxWidth
         
         attributedString.draw(in: labelRect)
     }
@@ -1006,7 +1030,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         }
     }
     
-    private var fontSize: CGFloat {
+    var fontSize: CGFloat {
         if let override = tabBar?.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.fontSizeOverride) as? NSNumber {
             return CGFloat(override.doubleValue)
         }
@@ -1342,6 +1366,12 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         let orientation = self.orientation
         let edgePadding = 6.0
         
+        let orientationShift = if orientation == .verticalOrientation {
+            1.0
+        } else {
+            0.0
+        }
+
         // Close button
         if cell.hasCloseButton, let image = _closeButton {
             objects.append(FixedSpacerLO(name: "Leading Spacer", width: edgePadding, priority: Priority.required.rawValue, gravity: .left))
@@ -1353,6 +1383,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                     if cell.closeButtonVisible {
                         var closeButtonRect = cell.closeButtonRect(forFrame: cell.frame)
                         closeButtonRect.origin.x = resolved.frame.minX
+                        closeButtonRect.origin.y += orientationShift
                         closeButton?.draw(at: closeButtonRect.origin,
                                           from: NSZeroRect,
                                           operation: .sourceOver,
@@ -1368,7 +1399,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         if let image = cell.cachedTitle?.inputs.graphic {
             let drawGraphic: (ResolvedLayout) -> () = { resolved in
                 var rect = resolved.frame
-                rect.origin.y = cell.frame.minY + (cell.frame.height - kPSMTabBarIconWidth) / 2.0
+                rect.origin.y = cell.frame.minY + (cell.frame.height - kPSMTabBarIconWidth) / 2.0 + orientationShift
                 rect.size.height = kPSMTabBarIconWidth
                 image.draw(in: rect,
                              from: .zero,
@@ -1390,7 +1421,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         let labelWidth = max(widthOfAttributedStringInCell(cell), subtitleWidth)
         let supportsMultiLineLabels = self.supportsMultiLineLabels
         // Amount to shift text down from vertically centered so that it matches the OS's rendering
-        let textShift = 1.0
+        let textShift = 1.0 + orientationShift
         objects.append(TextLO(name: Name.label.rawValue,
                               priority: Priority.required.rawValue,
                               minWidth: 8,
@@ -1433,7 +1464,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                 ImageLO(name: "Icon", image: icon, priority: Priority.required.rawValue, gravity: .left) { resolved in
                     var rect = resolved.frame
                     rect.size.height = kPSMTabBarIconWidth
-                    rect.origin.y = Self.centeredMinY(cell: cell, height: kPSMTabBarIconWidth)
+                    rect.origin.y = Self.centeredMinY(cell: cell, height: kPSMTabBarIconWidth) + orientationShift
                     icon.draw(in: rect,
                               from: NSZeroRect,
                               operation: .sourceOver,
@@ -1529,9 +1560,9 @@ class PSMTahoeDarkTabStyle: PSMTahoeTabStyle {
     @objc
     override var tabBarColor: NSColor {
         return NSColor(srgbRed: 45.0 / 255.0,
-                       green: 48.0 / 255.0,
-                       blue: 50.0 / 255.0,
-                       alpha: 1)
+                       green:   48.0 / 255.0,
+                       blue:    50.0 / 255.0,
+                       alpha:    1)
     }
     
     override class var xmarkSymbolConfiguration: NSImage.SymbolConfiguration {
@@ -1633,7 +1664,7 @@ class PSMTahoeDarkTabStyle: PSMTahoeTabStyle {
         if orientation != .horizontalOrientation {
             return
         }
-        if leftCell.isHighlighted || rightCell.isHighlighted {
+        if leftCell.isHighlighted || rightCell.isHighlighted || leftCell.state == .on || rightCell.state == .on {
             return
         }
         NSColor.clear.set()
@@ -1682,3 +1713,138 @@ class PSMTahoeOverflowButton: NSButton {
         highlight(false)
     }
 }
+
+@available(macOS 26, *)
+class PSMTahoeDarkHighContrastTabStyle: PSMTahoeDarkTabStyle {
+    @objc
+    override var tabBarColor: NSColor {
+        return NSColor(srgbRed: 15.0 / 255.0,
+                       green:   18.0 / 255.0,
+                       blue:    20.0 / 255.0,
+                       alpha:    1.0)
+    }
+    
+    override class var xmarkSymbolConfiguration: NSImage.SymbolConfiguration {
+        return super.xmarkSymbolConfiguration.applying(.init(paletteColors: [.white]))
+    }
+    
+    override class var backgroundColor: NSColor {
+        return NSColor(displayP3Red: 13.0 / 255.0,
+                       green:        16.0 / 255.0,
+                       blue:         18.0 / 255.0,
+                       alpha:         1.0)
+    }
+    
+    override func accessoryStrokeColor() -> NSColor {
+        return NSColor.darkGray
+    }
+    
+    override func backgroundColorSelected(_ selected: Bool, highlightAmount: CGFloat) -> NSColor {
+        if selected {
+            if tabBar?.window?.isMainWindow == true && NSApp.isActive {
+                return NSColor(displayP3Red: 198.0 / 255.0,
+                               green:        200.0 / 255.0,
+                               blue:         202.0 / 255.0,
+                               alpha:          1.0)
+            }
+            return NSColor(displayP3Red: 53.0 / 255.0,
+                           green:        55.0 / 255.0,
+                           blue:         57.0 / 255.0,
+                           alpha:        1.0)
+        } else {
+            if highlightAmount > 0 {
+                return NSColor(displayP3Red: 24.0 / 255.0,
+                               green:        26.0 / 255.0,
+                               blue:         28.0 / 255.0,
+                               alpha:        1.0)
+            } else {
+                return Self.backgroundColor
+            }
+        }
+    }
+    
+    override class func textColorDefaultSelected(_ selected: Bool,
+                                                 backgroundColor: NSColor?,
+                                                 windowIsMainAndAppIsActive mainAndActive: Bool) -> NSColor {
+        if mainAndActive {
+            if selected {
+                return NSColor(displayP3Red: 255.0 / 255.0,
+                               green:        255.0 / 255.0,
+                               blue:         255.0 / 255.0,
+                               alpha:          1.0)
+            } else {
+                return NSColor(displayP3Red: 66.0 / 255.0,
+                               green:        68.0 / 255.0,
+                               blue:         69.0 / 255.0,
+                               alpha:         1.0)
+            }
+        } else {
+            if selected {
+                return NSColor(displayP3Red: 200.0 / 255.0,
+                               green:        200.0 / 255.0,
+                               blue:         200.0 / 255.0,
+                               alpha:          1.0)
+            } else {
+                return NSColor(displayP3Red: 180.0 / 255.0,
+                               green:        180.0 / 255.0,
+                               blue:         180.0 / 255.0,
+                               alpha:          1.0)
+            }
+        }
+    }
+    
+    override func useLightControls() -> Bool {
+        return true
+    }
+    
+    override func textColor(for cell: PSMTabBarCell) -> NSColor {
+        if anyTabHasColor() {
+            return super.textColor(for: cell)
+        } else {
+            return NSColor.white
+        }
+    }
+    override var fontSize: CGFloat {
+        if let override = tabBar?.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.fontSizeOverride) as? NSNumber {
+            return CGFloat(override.doubleValue)
+        }
+        return 13.0
+    }
+
+}
+
+
+@available(macOS 26, *)
+class PSMTahoeLightHighContrastTabStyle: PSMTahoeTabStyle {
+    override class var xmarkSymbolConfiguration: NSImage.SymbolConfiguration {
+        return super.xmarkSymbolConfiguration.applying(.init(paletteColors: [.black]))
+    }
+    
+    override func accessoryStrokeColor() -> NSColor {
+        return NSColor.black
+    }
+    
+    override class func textColorDefaultSelected(_ selected: Bool,
+                                                 backgroundColor: NSColor?,
+                                                 windowIsMainAndAppIsActive mainAndActive: Bool) -> NSColor {
+        let value: CGFloat
+        if mainAndActive {
+            value = 0
+        } else {
+            if selected {
+                value = 255
+            } else {
+                value = 255
+            }
+        }
+        return NSColor(srgbRed: value/255.0, green: value/255.0, blue: value/255.0, alpha: 1)
+    }
+    
+    override var fontSize: CGFloat {
+        if let override = tabBar?.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.fontSizeOverride) as? NSNumber {
+            return CGFloat(override.doubleValue)
+        }
+        return 13.0
+    }
+}
+
