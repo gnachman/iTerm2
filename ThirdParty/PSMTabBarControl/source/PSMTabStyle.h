@@ -83,6 +83,9 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 - (NSButton *)makeOverflowButtonWithFrame:(NSRect)frame;
 
 @property (nonatomic, readonly) NSSize addTabButtonSize;
+@property (nonatomic, readonly) CGFloat tabBarHeight;
+@property (nonatomic) PSMTabBarOrientation orientation;
+
 @end
 
 @interface PSMTabBarControl (StyleAccessors)

@@ -83,9 +83,17 @@
                 return [[PSMDarkTabStyle alloc] init];
             }
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-            return [[PSMLightHighContrastTabStyle alloc] init];
+            if (@available(macOS 26, *)) {
+                return [[PSMTahoeLightHighContrastTabStyle alloc] init];
+            } else {
+                return [[PSMLightHighContrastTabStyle alloc] init];
+            }
         case TAB_STYLE_DARK_HIGH_CONTRAST:
-            return [[PSMDarkHighContrastTabStyle alloc] init];
+            if (@available(macOS 26, *)) {
+                return [[PSMTahoeDarkHighContrastTabStyle alloc] init];
+            } else {
+                return [[PSMDarkHighContrastTabStyle alloc] init];
+            }
     }
     assert(NO);
     return nil;

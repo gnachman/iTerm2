@@ -8,6 +8,7 @@
 
 #import "PSMYosemiteTabStyle.h"
 
+#import "iTermAdvancedSettingsModel.h"
 #import "NSColor+PSM.h"
 #import "PSMOverflowPopUpButton.h"
 #import "PSMRolloverButton.h"
@@ -317,6 +318,10 @@
 
 - (NSSize)addTabButtonSize {
     return NSMakeSize(24, 24);
+}
+
+- (CGFloat)tabBarHeight {
+    return [iTermAdvancedSettingsModel defaultTabBarHeight];
 }
 
 - (NSRect)objectCounterRectForTabCell:(PSMTabBarCell *)cell {
