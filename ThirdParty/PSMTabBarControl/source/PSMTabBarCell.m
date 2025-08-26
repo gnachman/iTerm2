@@ -489,8 +489,9 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
         [[self psmTabControlView] setNeedsDisplay:NO];
     }
 
-    //tell the control we only need to redraw the affected tab
-    [[self psmTabControlView] setNeedsDisplayInRect:NSInsetRect([self frame], -2, -2)];
+    // Tell the control we only need to redraw the affected tab.
+    id<PSMTabStyle> style = [[self psmTabControlView] style];
+    [[self psmTabControlView] setNeedsDisplayInRect:[style dirtyFrameForCell:self]];
 }
 
 - (void)mouseExited:(NSEvent *)theEvent {
@@ -504,8 +505,9 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
         [[self psmTabControlView] setNeedsDisplay:NO];
     }
 
-    //tell the control we only need to redraw the affected tab
-    [[self psmTabControlView] setNeedsDisplayInRect:NSInsetRect([self frame], -2, -2)];
+    // Tell the control we only need to redraw the affected tab.
+    id<PSMTabStyle> style = [[self psmTabControlView] style];
+    [[self psmTabControlView] setNeedsDisplayInRect:[style dirtyFrameForCell:self]];
 }
 
 - (void)removeCloseButtonTrackingRectFrom:(NSView *)view {

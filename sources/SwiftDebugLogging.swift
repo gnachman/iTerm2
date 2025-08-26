@@ -15,7 +15,7 @@ func DLog(_ messageBlock: @autoclosure () -> String, file: String = #file, line:
     }
     let message = messageBlock()
     // print("\(file):\(line) \(function): \(message)")
-    DebugLogImpl(file.cString(using: .utf8), Int32(line), function.cString(using: .utf8), message)
+    DebugLogImpl(file.cString(using: .utf8)!, Int32(line), function.cString(using: .utf8)!, message)
 }
 
 func XLog(_ messageBlock: @autoclosure () -> String, file: String = #file, line: Int = #line, function: String = #function) {
@@ -24,7 +24,7 @@ func XLog(_ messageBlock: @autoclosure () -> String, file: String = #file, line:
     }
     let message = messageBlock()
     NSLog("\(file):\(line) \(function): \(message)")
-    DebugLogImpl(file.cString(using: .utf8), Int32(line), function.cString(using: .utf8), message)
+    DebugLogImpl(file.cString(using: .utf8)!, Int32(line), function.cString(using: .utf8)!, message)
 }
 
 class iTermLogger {

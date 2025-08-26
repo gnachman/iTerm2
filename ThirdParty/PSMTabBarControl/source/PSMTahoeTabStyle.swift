@@ -7,18 +7,18 @@
 
 import Cocoa
 
-let kPSMMetalObjectCounterRadius: CGFloat = 7.0
-let kPSMMetalCounterMinWidth: CGFloat = 20
+fileprivate let kPSMMetalObjectCounterRadius: CGFloat = 7.0
+fileprivate let kPSMMetalCounterMinWidth: CGFloat = 20
+fileprivate let PSMTahoeTabStyleDebuggingEnabled: Bool = false
 
 @objc
-class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
+@available(macOS 26, *)
+class PSMTahoeTabStyle: NSObject, PSMTabStyle {
+   
     // MARK: - Private Properties
     private var _closeButton: NSImage?
     private var _closeButtonDown: NSImage?
     private var _closeButtonOver: NSImage?
-    private var _addTabButtonImage: NSImage?
-    private var _addTabButtonPressedImage: NSImage?
-    private var _addTabButtonRolloverImage: NSImage?
     private var _orientation: PSMTabBarOrientation = .horizontalOrientation
     @objc static let tabBarHeight = 36.0
     
@@ -54,88 +54,113 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
     }
     
     @objc var intercellSpacing: CGFloat {
-        2.0
+        1.0
     }
     
     @objc var supportsMultiLineLabels: Bool {
-        guard let tabBar = tabBar else { return false }
-        return tabBar.bounds.height >= 28
+        true
     }
     
     // MARK: - Initialization
+    
+    class var closeButtonDownColor: NSColor {
+        NSColor(white: 0, alpha: 0.27)
+    }
+    
+    class var closeButtonOverColor: NSColor {
+        NSColor(white: 0, alpha: 0.10)
+    }
+    
+    class var xmarkSymbolConfiguration: NSImage.SymbolConfiguration {
+        NSImage.SymbolConfiguration(pointSize: 20, weight: .medium)
+    }
     
     override init() {
         super.init()
         
         // Load close buttons
-        let bundle = Bundle(for: type(of: self))
-        _closeButton = bundle.image(forResource: "TabClose_Front")
+        let xmark = NSImage(systemSymbolName: "xmark", accessibilityDescription: "Close")!.withSymbolConfiguration(Self.xmarkSymbolConfiguration)
+        let buttonSize = 15.0
+        let xSize = 8.0
+        _closeButton = NSImage(size: NSSize(width: buttonSize, height: buttonSize), flipped: false, drawingHandler: { rect in
+            NSColor.clear.set()
+            rect.fill(using: .sourceOver)
+
+            xmark?.draw(in: rect.insetBy(dx: (rect.width - xSize) / 2.0, dy: (rect.height - xSize) / 2.0))
+            return true
+        })
         _closeButton?.isTemplate = true
-        _closeButtonDown = bundle.image(forResource: "TabClose_Front_Pressed")
-        _closeButtonDown?.isTemplate = true
-        _closeButtonOver = bundle.image(forResource: "TabClose_Front_Rollover")
-        _closeButtonOver?.isTemplate = true
-        
-        // Load "new tab" buttons
-        var addTabImageName = "YosemiteAddTab"
-        addTabImageName = "BigSurAddTab"
-        
-        if let bundle = PSMTabBarControl.bundle() {
-            _addTabButtonImage = NSImage(byReferencingFile: bundle.pathForImageResource(addTabImageName) ?? "")
-            _addTabButtonPressedImage = NSImage(byReferencingFile: bundle.pathForImageResource(addTabImageName) ?? "")
-            _addTabButtonRolloverImage = NSImage(byReferencingFile: bundle.pathForImageResource(addTabImageName) ?? "")
+
+        _closeButtonDown = NSImage(size: NSSize(width: buttonSize, height: buttonSize), flipped: false, drawingHandler: { rect in
+            NSColor.clear.set()
+            rect.fill(using: .sourceOver)
+
+            Self.closeButtonDownColor.set()
+            NSBezierPath(ovalIn: rect.insetBy(dx: (rect.width - buttonSize) / 2.0, dy: (rect.height - buttonSize) / 2.0)).fill()
             
-            _addTabButtonImage?.isTemplate = true
-            _addTabButtonPressedImage?.isTemplate = true
-            _addTabButtonRolloverImage?.isTemplate = true
-        }
+            xmark?.draw(in: rect.insetBy(dx: (rect.width - xSize) / 2.0, dy: (rect.height - xSize) / 2.0))
+            return true
+        })
+        _closeButtonDown?.isTemplate = true
+
+        _closeButtonOver = NSImage(size: NSSize(width: buttonSize, height: buttonSize), flipped: false, drawingHandler: { rect in
+            NSColor.clear.set()
+            rect.fill(using: .sourceOver)
+
+            Self.closeButtonOverColor.set()
+            NSBezierPath(ovalIn: rect.insetBy(dx: (rect.width - buttonSize) / 2.0, dy: (rect.height - buttonSize) / 2.0)).fill()
+            
+            xmark?.draw(in: rect.insetBy(dx: (rect.width - xSize) / 2.0, dy: (rect.height - xSize) / 2.0))
+            return true
+        })
+        _closeButtonOver?.isTemplate = true
     }
-    
-    // MARK: - NSCoding
-    
-    func encode(with coder: NSCoder) {
-        if coder.allowsKeyedCoding {
-            coder.encode(_closeButton, forKey: "metalCloseButton")
-            coder.encode(_closeButtonDown, forKey: "metalCloseButtonDown")
-            coder.encode(_closeButtonOver, forKey: "metalCloseButtonOver")
-            coder.encode(_addTabButtonImage, forKey: "addTabButtonImage")
-            coder.encode(_addTabButtonPressedImage, forKey: "addTabButtonPressedImage")
-            coder.encode(_addTabButtonRolloverImage, forKey: "addTabButtonRolloverImage")
-        }
-    }
-    
-    required init?(coder: NSCoder) {
-        super.init()
-        if coder.allowsKeyedCoding {
-            _closeButton = coder.decodeObject(forKey: "metalCloseButton") as? NSImage
-            _closeButtonDown = coder.decodeObject(forKey: "metalCloseButtonDown") as? NSImage
-            _closeButtonOver = coder.decodeObject(forKey: "metalCloseButtonOver") as? NSImage
-            _addTabButtonImage = coder.decodeObject(forKey: "addTabButtonImage") as? NSImage
-            _addTabButtonPressedImage = coder.decodeObject(forKey: "addTabButtonPressedImage") as? NSImage
-            _addTabButtonRolloverImage = coder.decodeObject(forKey: "addTabButtonRolloverImage") as? NSImage
-        }
-    }
-    
+
     // MARK: - PSMTabStyle Protocol
     
-    @objc func name() -> String {
-        return "Yosemite"
+    func frameForOverflowButton(withAddTabButton showAddTabButton: Bool, enclosureSize: NSSize, standardHeight: CGFloat) -> NSRect {
+        if orientation == .horizontalOrientation {
+            return NSRect(x: enclosureSize.width - 36,
+                          y: 0,
+                          width: 28,
+                          height: 28)
+        }
+        return NSRect(x: enclosureSize.width - 30, y: enclosureSize.height - 30, width: 24, height: 24)
+    }
+
+    @objc func makeAddTabButton(withFrame frame: NSRect) -> PSMRolloverButton {
+        return PSMTahoeRolloverButton(symbolName: "plus")
     }
     
+    func makeOverflowButton(withFrame frame: NSRect) -> NSButton! {
+        return PSMTahoeOverflowButton()
+    }
+
+    @objc func name() -> String {
+        return "Tahoe"
+    }
+    
+    func frameForAddTabButton(withCellWidths widths: [NSNumber]!, height: CGFloat) -> NSRect {
+        guard let tabBar else {
+            return .zero
+        }
+        return NSRect(x: tabBar.bounds.width - 36,
+                      y: 0,
+                      width: 28,
+                      height: 28)
+    }
+
     // MARK: - Control Specific
     
     @objc func leftMarginForTabBarControl() -> Float {
-        return Float(tabBar?.insets.left ?? 0)
+        return Float(tabBar?.insets.left ?? 0) + 2.0
     }
     
     @objc func rightMarginForTabBarControl(withOverflow: Bool, addTabButton: Bool) -> Float {
         if withOverflow || addTabButton {
-            if #available(macOS 26, *) {
-                return 32.0 + Float(tabBar?.insets.right ?? 0)
-            }
-            return 24.0
+            return 32.0 + Float(tabBar?.insets.right ?? 0) + 2.0
         }
-        return 0
+        return 2.0
     }
     
     @objc func topMarginForTabBarControl() -> Float {
@@ -144,16 +169,20 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
     
     // MARK: - Add Tab Button
     
+    @objc var addTabButtonSize: NSSize {
+        return NSSize(width: 28, height: 28)
+    }
+
     @objc func addTabButtonImage() -> NSImage? {
-        return _addTabButtonImage
+        return nil
     }
     
     @objc func addTabButtonPressedImage() -> NSImage? {
-        return _addTabButtonPressedImage
+        return nil
     }
     
     @objc func addTabButtonRolloverImage() -> NSImage? {
-        return _addTabButtonRolloverImage
+        return nil
     }
     
     // MARK: - Cell Specific
@@ -191,47 +220,22 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
         return result
     }
     
-    @objc func iconRect(forTabCell cell: PSMTabBarCell) -> NSRect {
-        let cellFrame = cell.frame
-        
-        if !cell.hasIcon {
-            return NSZeroRect
-        }
-        
-        let minX: CGFloat
-        if cell.count > 0 {
-            let objectCounterRect = self.objectCounterRect(forTabCell: cell)
-            minX = objectCounterRect.minX
-        } else if !cell.indicator.isHidden {
-            minX = indicatorRect(forTabCell: cell).minX - kSPMTabBarCellInternalXMargin
-        } else {
-            minX = cellFrame.maxX - kSPMTabBarCellInternalXMargin
-        }
-        
-        var result = NSRect()
-        result.size = NSSize(width: kPSMTabBarIconWidth, height: kPSMTabBarIconWidth)
-        result.origin.x = minX - kPSMTabBarCellIconPadding - kPSMTabBarIconWidth
-        result.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0) - 1
-        
-        if let window = cell.controlView?.window, window.backingScaleFactor > 1 {
-            result.origin.y += 0.5
-        }
-        
-        return result
+    private static func centeredMinY(cell: PSMTabBarCell, height: CGFloat) -> CGFloat {
+        cell.frame.origin.y + floor((cell.frame.size.height - height) / 2.0) - 1
     }
     
     @objc func indicatorRect(forTabCell cell: PSMTabBarCell) -> NSRect {
+        return Self.indicatorRect(forTabCell: cell,
+                                  fontSize: fontSize)
+    }
+    
+    private static func indicatorRect(forTabCell cell: PSMTabBarCell,
+                                      fontSize: CGFloat) -> NSRect {
         let cellFrame = cell.frame
         
         let minX: CGFloat
-        if cell.count > 0 {
-            // Indicator to the left of the tab number
-            let objectCounterRect = self.objectCounterRect(forTabCell: cell)
-            minX = objectCounterRect.minX
-        } else {
-            // Indicator on the right edge of the tab
-            minX = cellFrame.maxX - kSPMTabBarCellInternalXMargin
-        }
+        // Indicator on the right edge of the tab
+        minX = cellFrame.maxX - kSPMTabBarCellInternalXMargin
         
         var result = NSRect()
         result.size = NSSize(width: kPSMTabBarIndicatorWidth, height: kPSMTabBarIndicatorWidth)
@@ -241,14 +245,23 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
         return result
     }
     
-    @objc func objectCounterRect(forTabCell cell: PSMTabBarCell) -> NSRect {
+    @objc
+    func objectCounterRect(forTabCell cell: PSMTabBarCell) -> NSRect {
+        return Self.objectCounterRect(forTabCell: cell,
+                                      fontSize: fontSize)
+    }
+    
+    private static func objectCounterRect(forTabCell cell: PSMTabBarCell,
+                                          fontSize: CGFloat) -> NSRect {
         let cellFrame = cell.frame
         
         if cell.count == 0 {
             return NSZeroRect
         }
         
-        var countWidth = retinaRoundUpCell(cell, value: attributedObjectCountValue(forTabCell: cell).size().width)
+        var countWidth = retinaRoundUpCell(cell, value: attributedObjectCountValue(forTabCell: cell,
+                                                                                   fontSize: fontSize,
+                                                                                   textColor: .black).size().width)
         countWidth += (2 * kPSMMetalObjectCounterRadius - 6.0)
         if countWidth < kPSMMetalCounterMinWidth {
             countWidth = kPSMMetalCounterMinWidth
@@ -261,25 +274,34 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
         
         return result
     }
-
+    
     
     @objc
     func minimumWidth(ofTabCell cell: PSMTabBarCell!) -> Float {
         return Float(ceil(widthOfLeftMatterInCell(cell) +
-                         kPSMMinimumTitleWidth +
-                         widthOfRightMatterInCell(cell)))
+                          kPSMMinimumTitleWidth +
+                          widthOfRightMatterInCell(cell)))
     }
     
     @objc
     func desiredWidth(ofTabCell cell: PSMTabBarCell!) -> Float {
         return Float(ceil(widthOfLeftMatterInCell(cell) +
-                         widthOfAttributedStringInCell(cell) +
-                         widthOfRightMatterInCell(cell)))
+                          widthOfAttributedStringInCell(cell) +
+                          widthOfRightMatterInCell(cell)))
     }
     
     // MARK: - Cell Values
     
-    @objc func attributedObjectCountValue(forTabCell cell: PSMTabBarCell) -> NSAttributedString {
+    @objc
+    func attributedObjectCountValue(forTabCell cell: PSMTabBarCell) -> NSAttributedString {
+        return Self.attributedObjectCountValue(forTabCell: cell,
+                                               fontSize: fontSize,
+                                               textColor: textColor(for: cell))
+    }
+    
+    private static func attributedObjectCountValue(forTabCell cell: PSMTabBarCell,
+                                                   fontSize: CGFloat,
+                                                   textColor: NSColor) -> NSAttributedString {
         let count = cell.count
         var contents = String(count)
         let modifierString = cell.modifierString ?? ""
@@ -293,8 +315,8 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
         }
         
         let attributes: [NSAttributedString.Key: Any] = [
-            .font: NSFont.systemFont(ofSize: fontSize),
-            .foregroundColor: textColor(for: cell)
+            .font: NSFont.systemFont(ofSize: fontSize, weight: .light),
+            .foregroundColor: textColor
         ]
         
         return NSAttributedString(string: contents, attributes: attributes)
@@ -336,28 +358,60 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
             parseHTML: parseHTML.boolValue
         )
     }
-
+    
     func adjustedCellRect(_ rect: NSRect, generic: NSRect) -> NSRect {
         var frame = rect
-        frame.origin.y = 0.5
+        if _orientation == .horizontalOrientation {
+            frame.origin.y = 0.0
+        } else {
+            frame = frame.insetBy(dx: 4, dy: 0)
+        }
         frame.size.height = generic.height - 1
         return frame
     }
-
+    
     // MARK: - Drawing
+    
+    private static let rightDropShadow: NSImage = {
+        Bundle(for: PSMTahoeTabStyle.self).image(forResource: "TahoeTabBarShadow")!
+    }()
+    
+    private static let leftDropShadow: NSImage = {
+        rightDropShadow.it_horizontallyFlipped()
+    }()
+    
+    private static let maxAlphaForVerticalDropShadows = 0.07
+    private static let topDropShadow: NSImage = {
+        return NSImage(size: NSSize(width: 16, height: 56), flipped: false) { rect in
+            let gradient = NSGradient(starting: .init(white: 0, alpha: 0),
+                                      ending: .init(white: 0, alpha: maxAlphaForVerticalDropShadows))!
+            gradient.draw(in: rect, angle: 270)
+            return true
+        }
+    }()
+
+    private static let bottomDropShadow: NSImage = {
+        return NSImage(size: NSSize(width: 16, height: 56), flipped: false) { rect in
+            let gradient = NSGradient(starting: .init(white: 0, alpha: 0),
+                                      ending: .init(white: 0, alpha: maxAlphaForVerticalDropShadows))!
+            gradient.draw(in: rect, angle: 90)
+            return true
+        }
+    }()
+
+    @objc func dirtyFrame(for cell: PSMTabBarCell!) -> NSRect {
+        return cell.frame.insetBy(dx: -Self.leftDropShadow.size.width, dy: -Self.topDropShadow.size.height)
+    }
     
     @objc func drawTabCell(_ cell: PSMTabBarCell, highlightAmount: CGFloat) {
         let horizontal = (_orientation == .horizontalOrientation)
         let isFirst = (cell == tabBar?.cells()?.first as? PSMTabBarCell)
         let isLast = (cell == tabBar?.cells()?.lastObject as? PSMTabBarCell)
         
-        if cell.state == .on {
-            let shadow = NSShadow()
-            shadow.shadowOffset = NSSize.zero
-            shadow.shadowColor = NSColor.black
-            shadow.shadowBlurRadius = 10.0
-            shadow.set()
-            cell.frame.fill()
+        if tabBar?.window?.isKeyWindow == true {
+            if cell.state == .on {
+                drawDropShadow(cell: cell)
+            }
         }
         drawCellBackgroundAndFrameHorizontallyOriented(
             horizontal,
@@ -366,18 +420,93 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
             withTabColor: cell.tabColor,
             isFirst: isFirst,
             isLast: isLast,
-            highlightAmount: highlightAmount
-        )
-        
+            highlightAmount: highlightAmount,
+            isHighlighted: cell.isHighlighted)
         drawInterior(with: cell, inView: cell.controlView, highlightAmount: highlightAmount)
+        
+        if PSMTahoeTabStyleDebuggingEnabled {
+            NSColor.red.set()
+            cell.frame.frame(withWidth: 0.5)
+        }
     }
     
+    private func drawDropShadow(cell: PSMTabBarCell) {
+        let scale = cell.controlView?.window?.backingScaleFactor ?? 2.0
+        
+        switch orientation {
+        case .horizontalOrientation:
+            let leftShadow = Self.rightDropShadow
+            let shadowSize = leftShadow.size
+            // The drop shadow image is the left side of the shadow.
+            // The rightmost 30 pixels include the left portion of a tab.
+            let offset = CGFloat(30 / scale)
+            let leftDestinationRect = NSRect(x: cell.frame.minX - shadowSize.width + offset,
+                                             y: cell.frame.minY - 0.5,
+                                             width: shadowSize.width,
+                                             height: shadowSize.height)
+            leftShadow.draw(in: leftDestinationRect)
+            
+            let rightShadow = Self.leftDropShadow
+            let rightDestinationRect = NSRect(x: cell.frame.maxX - offset,
+                                              y: cell.frame.minY - 0.5,
+                                              width: shadowSize.width,
+                                              height: shadowSize.height)
+            rightShadow.draw(in: rightDestinationRect)
+            
+            NSColor(displayP3Red: 0, green: 0, blue: 0, alpha: 0.027).set()
+            // If the drop shadow image changes you can get the new RGBA values by uncommenting these print statements:
+            // print(rightShadow.color(at: CGPoint(x: 0, y: 0))!.usingColorSpace(NSColorSpace.displayP3)!)
+            // print(rightShadow.color(at: CGPoint(x: 0, y: shadowSize.height - 1))!.usingColorSpace(NSColorSpace.displayP3)!)
+            NSRect(x: cell.frame.minX + offset, y: cell.frame.minY - 0.5, width: cell.frame.width - offset * 2, height: 2).fill()
+            
+            NSColor(displayP3Red: 0, green: 0, blue: 0, alpha: 0.035).set()
+            NSRect(x: cell.frame.minX + offset, y: cell.frame.maxY - 1.5, width: cell.frame.width - offset * 2, height: 2).fill()
+        case .verticalOrientation:
+            let offset = CGFloat(10 / scale)
+            let shadowSize = Self.topDropShadow.size
+            let topDestinationRect = NSRect(x: cell.frame.minX,
+                                            y: cell.frame.minY - shadowSize.height + offset,
+                                            width: cell.frame.width,
+                                            height: shadowSize.height)
+            Self.topDropShadow.draw(in: topDestinationRect)
+            
+            let bottomDestinationRect = NSRect(x: cell.frame.minX,
+                                               y: cell.frame.maxY - offset,
+                                               width: cell.frame.width,
+                                               height: shadowSize.height)
+            Self.bottomDropShadow.draw(in: bottomDestinationRect)
+            
+            NSColor(white: 0, alpha: Self.maxAlphaForVerticalDropShadows).set()
+            let midRect = NSRect(x: cell.frame.minX,
+                                 y: cell.frame.minY + offset,
+                                 width: cell.frame.width,
+                                 height: cell.frame.height - offset * 2)
+            midRect.fill()
+            break
+        @unknown default:
+            it_fatalError()
+        }
+    }
+
     private let barHeight = 28.0
     private var barRadius: CGFloat { barHeight / 2.0 }
     let containerSideInset = CGFloat(8)
     let containerTopInset = CGFloat(0)
     let containerBottomInset = CGFloat(0)
-
+    
+    private func clippingPath(rect: NSRect) -> NSBezierPath {
+        if orientation == .horizontalOrientation {
+            return NSBezierPath(roundedRect: NSRect(x: containerSideInset - 0.5,
+                                                    y: containerTopInset,
+                                                    width: rect.width - containerSideInset * 2 + 1,
+                                                    height: barHeight),
+                                xRadius: barRadius,
+                                yRadius: barRadius)
+        } else {
+            return NSBezierPath(rect: rect)
+        }
+    }
+    
     @objc func drawBackground(in rect: NSRect, color: NSColor?, horizontal: Bool) {
         if _orientation == .verticalOrientation && (tabBar?.frame.size.width ?? 0) < 2 {
             return
@@ -385,18 +514,17 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
         
         NSGraphicsContext.saveGraphicsState()
         
-        NSColor.windowBackgroundColor.set()
+        NSColor.clear.set()
         rect.fill(using: .sourceOver)
-
-        color?.set()
         
-        NSBezierPath(roundedRect: NSRect(x: containerSideInset - 0.5,
-                                         y: containerTopInset,
-                                         width: rect.width - containerSideInset * 2 + 1,
-                                         height: barHeight),
-                     xRadius: barRadius,
-                     yRadius: barRadius).fill()
+        color?.set()
+
+        clippingPath(rect: rect).fill()
         NSGraphicsContext.restoreGraphicsState()
+    }
+    
+    class var backgroundColor: NSColor {
+        NSColor(white: 0.9, alpha: 1.0)
     }
     
     @objc func drawTabBar(_ bar: PSMTabBarControl, in rect: NSRect, clipRect: NSRect, horizontal: Bool, withOverflow: Bool) {
@@ -408,14 +536,20 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
             tabBar = bar
         }
         
-
-        let backgroundColor = NSColor(white: 0.9, alpha: 1.0)
+        
+        let backgroundColor = Self.backgroundColor
         var backgroundRect = rect
         if bar.showAddTabButton {
             backgroundRect.size.width -= 32.0
         }
-        drawBackground(in: backgroundRect, color: backgroundColor, horizontal: horizontal)
 
+        drawBackground(in: backgroundRect, color: backgroundColor, horizontal: horizontal)
+        NSGraphicsContext.current?.saveGraphicsState()
+        defer {
+            NSGraphicsContext.current?.restoreGraphicsState()
+        }
+        clippingPath(rect: backgroundRect).addClip()
+        
         // no tab view == not connected
         guard let _ = bar.tabView else {
             var labelRect = rect
@@ -438,6 +572,7 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
         var drawableCells = ((bar.cells() as? [PSMTabBarCell]) ?? []).filter { cell in
             return !cell.isInOverflowMenu && NSIntersectsRect(cell.frame.insetBy(dx: -1, dy: -1), clipRect)
         }
+
         if let i = drawableCells.firstIndex(where: { $0.state == .on }) {
             let cell = drawableCells.remove(at: i)
             drawableCells.append(cell)
@@ -445,10 +580,15 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
         for cell in drawableCells {
             cell.draw(withFrame: cell.frame, in: bar)
         }
-
+        for i in 0..<(drawableCells.count - 1) {
+            drawDivider(betweenCell: drawableCells[i], andCell: drawableCells[i + 1])
+        }
         if let selectedCell = drawableCells.first, selectedCell.state == .on {
             selectedCell.drawPostHocDecorations(onSelectedCell: selectedCell, tabBarControl: bar)
         }
+    }
+
+    func drawDivider(betweenCell leftCell: PSMTabBarCell, andCell rightCell: PSMTabBarCell) {
     }
     
     @objc func accessoryFillColor() -> NSColor {
@@ -482,10 +622,6 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
         return NSColor.clear
     }
     
-    @objc func verticalLineColorSelected(_ selected: Bool) -> NSColor {
-        return NSColor(white: 0, alpha: 0.07)
-    }
-    
     @objc func anyTabHasColor() -> Bool {
         guard let cells = tabBar?.cells() as? [PSMTabBarCell] else { return false }
         return cells.contains { $0.tabColor != nil }
@@ -493,16 +629,16 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
     
     @objc func tabColorBrightness(_ cell: PSMTabBarCell) -> CGFloat {
         let color = effectiveBackgroundColor(forTabWithTabColor: cell.tabColor,
-                                            selected: cell.state == .on,
-                                            highlightAmount: 0,
-                                            window: cell.controlView?.window)
+                                             selected: cell.state == .on,
+                                             highlightAmount: 0,
+                                             window: cell.controlView?.window)
         
         // This gets blended over a NSVisualEffectView, whose color is a mystery. Assume it's
         // related to light/dark mode.
         let names = [NSAppearance.Name.darkAqua,
-                    NSAppearance.Name.vibrantDark,
-                    NSAppearance.Name.aqua,
-                    NSAppearance.Name.vibrantLight]
+                     NSAppearance.Name.vibrantDark,
+                     NSAppearance.Name.aqua,
+                     NSAppearance.Name.vibrantLight]
         let bestMatch = tabBar?.effectiveAppearance.bestMatch(from: names)
         let frontAlpha = color.alphaComponent
         let frontBrightness = color.it_hspBrightness()
@@ -525,9 +661,9 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
     }
     
     @objc func effectiveBackgroundColor(forTabWithTabColor tabColor: NSColor?,
-                                       selected: Bool,
-                                       highlightAmount: CGFloat,
-                                       window: NSWindow?) -> NSColor {
+                                        selected: Bool,
+                                        highlightAmount: CGFloat,
+                                        window: NSWindow?) -> NSColor {
         DLog("Computing effective background color for tab with color \(String(describing: tabColor)) selected=\(selected) highlight=\(highlightAmount)")
         let base = backgroundColorSelected(selected, highlightAmount: highlightAmount).it_srgbForColor(in: window)
         DLog("base=\(base)")
@@ -554,76 +690,113 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
         }
     }
     
+    class var outlineColor: NSColor {
+        NSColor.white
+    }
+    
     @objc func drawCellBackgroundSelected(_ selected: Bool,
-                                        inRect cellFrame: NSRect,
-                                        withTabColor tabColor: NSColor?,
-                                        highlightAmount: CGFloat,
-                                        horizontal: Bool) {
-        if let tabColor = tabColor {
-            let color = cellBackgroundColor(forTabColor: tabColor, selected: selected)
-            // Alpha the inactive tab's colors a bit to make it clear which tab is active.
-            color.set()
-        } else {
-            backgroundColorSelected(selected, highlightAmount: highlightAmount).set()
-        }
-
+                                          inRect cellFrame: NSRect,
+                                          withTabColor tabColor: NSColor?,
+                                          highlightAmount: CGFloat,
+                                          horizontal: Bool,
+                                          isHighlighted: Bool) {
+        backgroundColorSelected(selected, highlightAmount: isHighlighted ? 1.0 : 0.0).set()
+        
         let radius = barRadius - 2.5
-        if selected || tabColor != nil {
-            NSBezierPath(roundedRect: cellFrame.insetBy(dx: 2.0, dy: 2.0), xRadius: radius, yRadius: radius).fill()
-        }
+        var rect = cellFrame
+        rect.origin.y += 2
+        rect.size.height -= 3
+        let path = NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
+        path.fill()
         if selected {
-            NSColor.white.set()
-            NSBezierPath(roundedRect: cellFrame.insetBy(dx: 2.0, dy: 2.0), xRadius: radius, yRadius: radius).stroke()
+            drawCellOutline(path: path, rect: rect, radius: radius)
         }
         
+        if let tabColor {
+            let color = cellBackgroundColor(forTabColor: tabColor, selected: selected)
+            color.set()
+            if selected {
+                // Tint the outline if this cell is selected.
+                NSGraphicsContext.current?.saveGraphicsState()
+                path.addClip()
+                rect.fill(using: .color)
+                
+                NSColor(white: 1.0, alpha: tabColor.perceivedBrightness).set()
+                rect.fill(using: .plusLighter)
+                NSGraphicsContext.current?.restoreGraphicsState()
+            }
+            
+            // Tint the inside.
+            let path2 = NSBezierPath(roundedRect: rect.insetBy(dx: 1.0, dy: 1.0),
+                                     xRadius: radius - 1.0,
+                                     yRadius: radius - 1.0)
+            path2.fill()
+        }
     }
-
-    @objc func drawSubtitle(_ cachedSubtitle: PSMCachedTitle?,
-                          x labelPosition: CGFloat,
-                          cell: PSMTabBarCell,
-                          hasIcon drewIcon: Bool,
-                          iconRect: NSRect,
-                          reservedSpace: CGFloat,
-                          cellFrame: NSRect,
-                          labelOffset: CGFloat,
-                          mainLabelHeight: CGFloat) {
-        guard let cachedSubtitle = cachedSubtitle, !cachedSubtitle.isEmpty else {
+    
+    func drawCellOutline(path: NSBezierPath, rect: NSRect, radius: CGFloat) {
+        Self.outlineColor.set()
+        path.stroke()
+    }
+    
+    func drawSubtitle(cell: PSMTabBarCell,
+                      orientation: PSMTabBarOrientation,
+                      xOrigin: CGFloat,
+                      maxWidth: CGFloat,
+                      labelOffset: CGFloat,
+                      mainLabelHeight: CGFloat) {
+        guard let cachedSubtitle = cell.cachedSubtitle, !cachedSubtitle.isEmpty else {
             return
         }
         
+        let attributedString = cachedSubtitle.attributedStringForcingLeftAlignment(orientation == .horizontalOrientation,
+                                                                                   truncatedForWidth: maxWidth)
+        let boundingSize = cachedSubtitle.boundingRect(with: NSSize(width: maxWidth, height: cell.frame.height)).size
         var labelRect = NSRect()
-        labelRect.origin.x = labelPosition
-        var boundingSize = NSSize()
-        var truncate = false
-        
-        labelRect.size.width = widthForLabel(inCell: cell,
-                                            labelPosition: labelPosition,
-                                            hasIcon: drewIcon,
-                                            iconRect: iconRect,
-                                            cachedTitle: cachedSubtitle,
-                                            reservedSpace: reservedSpace,
-                                            boundingSize: &boundingSize,
-                                            truncate: &truncate)
-        
-        labelRect.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - boundingSize.height) / 2.0) + labelOffset + mainLabelHeight + verticalOffsetForSubtitle()
+        labelRect.origin.x = xOrigin
+        labelRect.origin.y = cell.frame.origin.y + floor((cell.frame.size.height - boundingSize.height) / 2.0) + labelOffset + mainLabelHeight + verticalOffsetForSubtitle()
         labelRect.size.height = boundingSize.height
-        
-        let attributedString = cachedSubtitle.attributedStringForcingLeftAlignment(truncate, truncatedForWidth: labelRect.size.width)
-        if truncate {
-            labelRect.origin.x += reservedSpace
-        }
         
         attributedString.draw(in: labelRect)
     }
     
-    @objc func widthForLabel(inCell cell: PSMTabBarCell,
-                             labelPosition: CGFloat,
-                             hasIcon drewIcon: Bool,
-                             iconRect: NSRect,
-                             cachedTitle: PSMCachedTitle,
-                             reservedSpace: CGFloat,
-                             boundingSize boundingSizePtr: UnsafeMutablePointer<NSSize>,
-                             truncate truncatePtr: UnsafeMutablePointer<Bool>) -> CGFloat {
+    private func subtitleWidth(cell: PSMTabBarCell, orientation: PSMTabBarOrientation) -> CGFloat {
+        guard let cachedSubtitle = cell.cachedSubtitle else {
+            return 0
+        }
+        let attributedString = cachedSubtitle.attributedStringForcingLeftAlignment(orientation == .horizontalOrientation,
+                                                                                   truncatedForWidth: cell.frame.width)
+        return attributedString.size().width
+    }
+    
+    @objc
+    func widthForLabel(inCell cell: PSMTabBarCell,
+                       labelPosition: CGFloat,
+                       hasIcon drewIcon: Bool,
+                       iconRect: NSRect,
+                       cachedTitle: PSMCachedTitle,
+                       reservedSpace: CGFloat,
+                       boundingSize boundingSizePtr: UnsafeMutablePointer<NSSize>) -> CGFloat {
+        return Self.widthForLabel(inCell: cell,
+                                  labelPosition: labelPosition,
+                                  hasIcon: drewIcon,
+                                  iconRect: iconRect,
+                                  cachedTitle: cachedTitle,
+                                  reservedSpace: reservedSpace,
+                                  fontSize: fontSize,
+                                  orientation: _orientation,
+                                  boundingSize: boundingSizePtr)
+    }
+    
+    static func widthForLabel(inCell cell: PSMTabBarCell,
+                              labelPosition: CGFloat,
+                              hasIcon drewIcon: Bool,
+                              iconRect: NSRect,
+                              cachedTitle: PSMCachedTitle,
+                              reservedSpace: CGFloat,
+                              fontSize: CGFloat,
+                              orientation: PSMTabBarOrientation,
+                              boundingSize boundingSizePtr: UnsafeMutablePointer<NSSize>) -> CGFloat {
         let cellFrame = cell.frame
         var labelRect = NSRect(x: labelPosition,
                                y: 0,
@@ -638,31 +811,36 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
         }
         
         if cell.count > 0 {
-            labelRect.size.width -= (objectCounterRect(forTabCell: cell).size.width + kPSMTabBarCellPadding)
+            labelRect.size.width -= (objectCounterRect(forTabCell: cell, fontSize: fontSize).size.width + kPSMTabBarCellPadding)
         }
         
         let boundingSize = cachedTitle.boundingRect(with: labelRect.size).size
         
-        var truncate = false
-        if _orientation == .horizontalOrientation {
+        if orientation == .horizontalOrientation {
             let effectiveLeftMargin = (labelRect.size.width - boundingSize.width) / 2
             if effectiveLeftMargin < reservedSpace {
                 labelRect.size.width -= reservedSpace
-                truncate = true
             }
         }
         
-        truncatePtr.pointee = truncate
         boundingSizePtr.pointee = boundingSize
         
         return labelRect.size.width
     }
     
     @objc func willDrawSubtitle(_ subtitle: PSMCachedTitle?) -> Bool {
-        return supportsMultiLineLabels && subtitle != nil && !subtitle!.isEmpty
+        return Self.willDrawSubtitle(subtitle)
+    }
+    
+    private static func willDrawSubtitle(_ subtitle: PSMCachedTitle?) -> Bool {
+        return subtitle?.isEmpty == false
     }
     
     @objc func verticalOffsetForTitleWhenSubtitlePresent() -> CGFloat {
+        return Self.verticalOffsetForTitleWhenSubtitlePresent
+    }
+    
+    private static var verticalOffsetForTitleWhenSubtitlePresent: CGFloat {
         return -5
     }
     
@@ -671,25 +849,19 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
     }
     
     @objc func shouldDrawTopLineSelected(_ selected: Bool, attached: Bool, position: PSMTabPosition) -> Bool {
-        switch position {
-        case .bottomTab, .leftTab:
-            return true
-        case .topTab:
-            if !attached {
-                return false
-            }
-            if !selected {
-                return true
-            }
-            // Leave out the line on the selected tab when it's attached to the tabbar so it looks like
-            // it's the same surface.
-            return false
-        @unknown default:
-            it_fatalError()
-        }
+        return false
     }
     
-    @objc func textColorDefaultSelected(_ selected: Bool, backgroundColor: NSColor?, windowIsMainAndAppIsActive mainAndActive: Bool) -> NSColor {
+    @objc
+    func textColorDefaultSelected(_ selected: Bool,
+                                  backgroundColor: NSColor?,
+                                  windowIsMainAndAppIsActive mainAndActive: Bool) -> NSColor {
+        return Self.textColorDefaultSelected(selected, backgroundColor: backgroundColor, windowIsMainAndAppIsActive: mainAndActive)
+    }
+    
+    class func textColorDefaultSelected(_ selected: Bool,
+                                        backgroundColor: NSColor?,
+                                        windowIsMainAndAppIsActive mainAndActive: Bool) -> NSColor {
         let value: CGFloat
         if mainAndActive {
             value = 70
@@ -758,44 +930,17 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
         }
     }
     
-    @objc func drawPostHocDecorations(onSelectedCell cell: PSMTabBarCell, tabBarControl bar: PSMTabBarControl) {
-        if anyTabHasColor() {
-            let brightness = tabColorBrightness(cell)
-            var rect = cell.frame.insetBy(dx: -0.5, dy: 0.5)
-            
-            let strengthNumber = bar.delegate?.tabView?(bar, valueOfOption: PSMTabBarControlOptionKey.coloredSelectedTabOutlineStrength) as? NSNumber ?? NSNumber(value: 0.5)
-            let strength = strengthNumber.doubleValue
-            let keyMainAndActive = windowIsMainAndAppIsActive
-            let alpha = min(max(strength, 0), 1) * (keyMainAndActive ? 1 : 0.6)
-            
-            let outerColor: NSColor
-            let innerColor: NSColor
-            if brightness > 0.5 {
-                outerColor = NSColor(white: 1, alpha: alpha)
-                innerColor = NSColor(white: 0, alpha: alpha)
-            } else {
-                outerColor = NSColor(white: 0, alpha: alpha)
-                innerColor = NSColor(white: 1, alpha: alpha)
-            }
-            
-            outerColor.set()
-            let width = min(max(strength, 1), 3)
-            rect = rect.insetBy(dx: width - 1, dy: width - 1)
-            var path = NSBezierPath(rect: rect)
-            path.lineWidth = width
-            path.stroke()
-            
-            innerColor.set()
-            rect = rect.insetBy(dx: width, dy: width)
-            path = NSBezierPath(rect: rect)
-            path.lineWidth = width
-            path.stroke()
-        }
+    @objc func drawPostHocDecorations(onSelectedCell cell: PSMTabBarCell,
+                                      tabBarControl bar: PSMTabBarControl) {
     }
     
     // MARK: - Private Helper Methods
     
     private func retinaRoundUpCell(_ cell: PSMTabBarCell, value: CGFloat) -> CGFloat {
+        return Self.retinaRoundUpCell(cell, value: value)
+    }
+    
+    private static func retinaRoundUpCell(_ cell: PSMTabBarCell, value: CGFloat) -> CGFloat {
         guard let window = cell.controlView?.window else {
             return ceil(value)
         }
@@ -851,7 +996,7 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
     
     private func widthOfAttributedStringInCell(_ cell: PSMTabBarCell) -> CGFloat {
         let attributedString = cell.attributedStringValue
-        if !cell.previousAttributedString.isEqual(to: attributedString) {
+        if cell.previousAttributedString?.isEqual(to: attributedString) != true {
             cell.previousAttributedString = attributedString
             let width = attributedString.size().width
             cell.previousWidthOfAttributedString = width
@@ -870,63 +1015,6 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
     
     private var subtitleFontSize: CGFloat {
         return round(fontSize * 0.8)
-    }
-    
-    private func bottomLineColorSelected(_ selected: Bool) -> NSColor {
-        return NSColor(srgbRed: 230.0/255.0, green: 230.0/255.0, blue: 230.0/255.0, alpha: 1)
-    }
-    
-    @available(macOS 10.16, *)
-    private func bigSurBackgroundColorSelected(_ selected: Bool, highlightAmount: CGFloat) -> NSColor {
-        if selected {
-            // Reveal the visual effect view with material NSVisualEffectMaterialTitlebar beneath the tab bar.
-            return NSColor.clear
-        }
-        // `base` gives how much darker the unselected tab is as an alpha value.
-        let base = (tabBar?.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.lightModeInactiveTabDarkness) as? NSNumber)?.doubleValue ?? 0.1
-        return NSColor(white: 0, alpha: base + (1 - base) * (highlightAmount * 0.05))
-    }
-    
-    @available(macOS 10.14, *)
-    private func mojaveBackgroundColorSelected(_ selected: Bool, highlightAmount: CGFloat) -> NSColor {
-        var colors: [CGFloat] = [0, 0, 0]
-        let keyMainAndActive = windowIsMainAndAppIsActive
-        
-        if keyMainAndActive {
-            if selected {
-                colors[0] = 210.0 / 255.0
-                colors[1] = 210.0 / 255.0
-                colors[2] = 210.0 / 255.0
-            } else {
-                let color = tabBarColor
-                colors[0] = color.redComponent
-                colors[1] = color.greenComponent
-                colors[2] = color.blueComponent
-            }
-        } else {
-            if selected {
-                colors[0] = 246.0 / 255.0
-                colors[1] = 246.0 / 255.0
-                colors[2] = 246.0 / 255.0
-            } else {
-                let color = tabBarColor
-                colors[0] = color.redComponent
-                colors[1] = color.greenComponent
-                colors[2] = color.blueComponent
-            }
-        }
-        
-        let highlightedColors: [CGFloat] = [0, 0, 0]
-        var a: CGFloat = 0
-        if !selected {
-            a = highlightAmount * 0.05
-        }
-        
-        for i in 0..<3 {
-            colors[i] = colors[i] * (1.0 - a) + highlightedColors[i] * a
-        }
-        
-        return NSColor(srgbRed: colors[0], green: colors[1], blue: colors[2], alpha: 1)
     }
     
     private func cellBackgroundColor(forTabColor tabColor: NSColor, selected: Bool) -> NSColor {
@@ -949,56 +1037,29 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
         return NSColor(colorSpace: tabColor.colorSpace, components: &components, count: 4)
     }
     
-    private func drawHorizontalLine(inFrame rect: NSRect, y: CGFloat) {
-        NSRect(x: rect.minX, y: y, width: rect.size.width + 1, height: 1).fill(using: .sourceOver)
-    }
-    
-    private func drawVerticalLine(inFrame rect: NSRect, x: CGFloat) {
-        let topInset: CGFloat = 1
-        let bottomInset: CGFloat = 0
-        let modifiedRect = NSRect(x: x, y: rect.minY + topInset, width: 1, height: rect.size.height - topInset - bottomInset)
-        modifiedRect.fill(using: .sourceOver)
-    }
-    
     private func drawCellBackgroundAndFrameHorizontallyOriented(_ horizontal: Bool,
-                                                               inRect cellFrame: NSRect,
-                                                               selected: Bool,
-                                                               withTabColor tabColor: NSColor?,
-                                                               isFirst: Bool?,
-                                                               isLast: Bool?,
-                                                               highlightAmount: CGFloat) {
+                                                                inRect cellFrame: NSRect,
+                                                                selected: Bool,
+                                                                withTabColor tabColor: NSColor?,
+                                                                isFirst: Bool?,
+                                                                isLast: Bool?,
+                                                                highlightAmount: CGFloat,
+                                                                isHighlighted: Bool) {
         drawCellBackgroundSelected(selected,
                                    inRect: cellFrame,
                                    withTabColor: tabColor,
                                    highlightAmount: highlightAmount,
-                                   horizontal: horizontal)
-        
-        if horizontal {
-        } else {
-            // Bottom line
-            verticalLineColorSelected(selected).set()
-            let insets = insetsForTabBarDividers()
-            var modifiedFrame = cellFrame
-            modifiedFrame.origin.x += insets.left
-            modifiedFrame.size.width -= (insets.left + insets.right)
-            drawHorizontalLine(inFrame: modifiedFrame, y: modifiedFrame.maxY - 1)
-        }
+                                   horizontal: horizontal,
+                                   isHighlighted: isHighlighted)
     }
     
-    private func drawInterior(with cell: PSMTabBarCell, inView controlView: NSView?, highlightAmount: CGFloat) {
-        let cellFrame = cell.frame
-        var labelPosition = cellFrame.origin.x + kSPMTabBarCellInternalXMargin
-        
-        // close button
-        var closeButtonSize = NSZeroSize
-        let closeButtonRect = cell.closeButtonRect(forFrame: cellFrame)
-        var closeButton = _closeButton
-        
-        if cell.closeButtonOver {
-            closeButton = _closeButtonOver
-        }
-        if cell.closeButtonPressed {
-            closeButton = _closeButtonDown
+    private func tintedCloseButtonImage(cell: PSMTabBarCell) -> NSImage? {
+        let untintedCloseButton = if cell.closeButtonOver {
+            _closeButtonOver
+        } else if cell.closeButtonPressed {
+            _closeButtonDown
+        } else {
+            _closeButton
         }
         
         let closeButtonTintColor: NSColor
@@ -1011,23 +1072,10 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
             closeButtonTintColor = NSColor.black
         }
         
-        closeButton = closeButton?.it_cachingImage(withTintColor: closeButtonTintColor, key: colorKey)
-        
-        var reservedSpace: CGFloat = 0
-        closeButtonSize = closeButton?.size ?? NSZeroSize
-        let cachedTitle = cell.cachedTitle
-        
-        if cell.hasCloseButton {
-            if cell.isCloseButtonSuppressed && _orientation == .horizontalOrientation {
-                // Do not use this much space on the left for the label, but the label is centered as
-                // though it is not reserved if it's not too long.
-                reservedSpace = closeButtonSize.width + kPSMTabBarCellPadding
-            } else {
-                labelPosition += closeButtonSize.width + kPSMTabBarCellPadding
-            }
-        }
-        
-        // Draw close button
+        return untintedCloseButton?.it_cachingImage(withTintColor: closeButtonTintColor, key: colorKey)
+    }
+    
+    private func closeButtonAlpha(cell: PSMTabBarCell, highlightAmount: CGFloat) -> CGFloat {
         var closeButtonAlpha: CGFloat = 0
         if cell.hasCloseButton && cell.closeButtonVisible {
             if cell.isCloseButtonSuppressed {
@@ -1040,137 +1088,408 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
             if !keyMainAndActive {
                 closeButtonAlpha /= 2
             }
-            
-            closeButton?.draw(at: closeButtonRect.origin,
-                             from: NSZeroRect,
-                             operation: .sourceOver,
-                             fraction: closeButtonAlpha)
         }
+        return closeButtonAlpha
+    }
+    
+    enum SizingMode: CustomDebugStringConvertible {
+        case fixed(CGFloat)
+        case expanding(minWidth: CGFloat, maxWidth: CGFloat)
         
-        // Draw graphic icon (i.e., the app icon, not new-output indicator icon) over close button.
-        if let graphic = cachedTitle?.inputs.graphic {
-            let width = drawGraphic(withCellFrame: cellFrame, image: graphic, alpha: 1 - closeButtonAlpha)
-            if _orientation == .horizontalOrientation {
-                reservedSpace = max(reservedSpace, width)
-            } else {
-                labelPosition = max(labelPosition, width + kPSMTabBarCellPadding)
+        var debugDescription: String {
+            switch self {
+            case .fixed(let value): "Fixed \(value)"
+            case .expanding(minWidth: let minValue, maxWidth: let maxValue): "Expanding \(minValue)…\(maxValue)"
+            }
+        }
+    }
+    enum Gravity: Int {
+        case left
+        case center
+        case right
+    }
+    
+    protocol LayoutableObject {
+        var name: String { get }
+        var sizingMode: SizingMode { get }
+        // priority=0 means required, otherwise higher priorities are removed before lower ones.
+        var priority: Int { get }
+        var gravity: Gravity { get }
+        var draw: (ResolvedLayout) -> () { get }
+    }
+    struct ResolvedLayout: CustomDebugStringConvertible {
+        var debugDescription: String {
+            return "\(type(of: object)) \(object.name) \(object.sizingMode) width=\(width) minX=\(frame.minX)"
+        }
+        var object: any LayoutableObject
+        var width: CGFloat
+        var frame: NSRect
+        var originalIndex: Int
+    }
+    struct NewLayout {
+        var objects = [any LayoutableObject]()
+        var enclosingFrame: NSRect
+        
+        init(objects: [any LayoutableObject],
+             enclosingFrame: NSRect) {
+            self.objects = objects
+            self.enclosingFrame = enclosingFrame
+            // Gravity must increase monotonically
+            for i in 1..<objects.count {
+                it_assert(objects[i - 1].gravity.rawValue <= objects[i].gravity.rawValue)
             }
         }
         
-        // icon
-        var drewIcon = false
-        var iconRect = NSZeroRect
-        if cell.hasIcon {
-            // There is an icon. Draw it as long as the amount of space left for the label is more than
-            // the size of the icon. This is a heuristic to roughly prioritize the label over the icon.
-            var boundingSize = NSSize()
-            var truncate = false
-            let labelWidth = widthForLabel(inCell: cell,
-                                          labelPosition: labelPosition,
-                                          hasIcon: true,
-                                          iconRect: iconRect,
-                                          cachedTitle: cachedTitle!,
-                                          reservedSpace: reservedSpace,
-                                          boundingSize: &boundingSize,
-                                          truncate: &truncate)
-            let tabViewItem = cell.representedObject as? NSTabViewItem
-            let tab = tabViewItem?.identifier as? PSMTabBarControlRepresentedObjectIdentifierProtocol
-            let icon = tab?.icon?()
-            let minimumLabelWidth = (tabBar?.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.minimumSpaceForLabel) as? NSNumber)?.doubleValue ?? 0
+        func resolve(y: CGFloat) -> [ResolvedLayout] {
+            var resolved: [ResolvedLayout] = objects.enumerated().map { ResolvedLayout(object: $1, width: $1.minimumSize, frame: .zero, originalIndex: $0) }
+            var minWidth = objects
+                .map { $0.minimumSize }
+                .reduce(0.0, +)
+            var maxWidth = objects
+                .map { $0.maximumSize }
+                .reduce(0.0, +)
+            resolved.sort(by: {
+                $0.object.priority < $1.object.priority
+            })
+            // Remove optional objects until everything fits in the available space
+            while minWidth > enclosingFrame.width {
+                let obj = resolved.removeLast()
+                minWidth -= obj.object.minimumSize
+                maxWidth -= obj.object.maximumSize
+            }
             
-            if labelWidth > minimumLabelWidth {
-                drewIcon = true
-                iconRect = self.iconRect(forTabCell: cell)
-                
-                // center in available space (in case icon image is smaller than kPSMTabBarIconWidth)
-                if let iconSize = icon?.size {
-                    if iconSize.width < kPSMTabBarIconWidth {
-                        iconRect.origin.x += (kPSMTabBarIconWidth - iconSize.width) / 2.0
-                    }
-                    if iconSize.height < kPSMTabBarIconWidth {
-                        iconRect.origin.y -= (kPSMTabBarIconWidth - iconSize.height) / 2.0
-                    }
+            
+            // Grow objects while there is room
+            var unassignedSpace = enclosingFrame.width - minWidth
+            for cursor in 0..<resolved.count {
+                if unassignedSpace <= 0 {
+                    break
                 }
-                
-                icon?.draw(in: iconRect,
-                          from: NSZeroRect,
-                          operation: .sourceOver,
-                          fraction: 1.0,
-                          respectFlipped: true,
-                          hints: nil)
-            }
-        }
-        
-        // object counter
-        if cell.count > 0 {
-            let myRect = objectCounterRect(forTabCell: cell)
-            // draw attributed string centered in area
-            var counterStringRect = NSRect()
-            let counterString = attributedObjectCountValue(forTabCell: cell)
-            counterStringRect.size = counterString.size()
-            counterStringRect.origin.x = myRect.origin.x + floor((myRect.size.width - counterStringRect.size.width) / 2.0)
-            counterStringRect.origin.y = myRect.origin.y + floor((myRect.size.height - counterStringRect.size.height) / 2.0)
-            counterString.draw(in: counterStringRect)
-        }
-        
-        // label rect
-        var mainLabelHeight: CGFloat = 0
-        let cachedSubtitle = cell.cachedSubtitle
-        let labelOffset = willDrawSubtitle(cachedSubtitle) ? verticalOffsetForTitleWhenSubtitlePresent() : 0
-        
-        if let cachedTitle = cachedTitle, !cachedTitle.isEmpty {
-            var labelRect = NSRect()
-            labelRect.origin.x = labelPosition
-            var boundingSize = NSSize()
-            var truncate = false
-            
-            labelRect.size.width = widthForLabel(inCell: cell,
-                                                labelPosition: labelPosition,
-                                                hasIcon: drewIcon,
-                                                iconRect: iconRect,
-                                                cachedTitle: cachedTitle,
-                                                reservedSpace: reservedSpace,
-                                                boundingSize: &boundingSize,
-                                                truncate: &truncate)
-            
-            labelRect.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - boundingSize.height) / 2.0) + labelOffset
-            labelRect.size.height = boundingSize.height
-            
-            let attributedString = cachedTitle.attributedStringForcingLeftAlignment(truncate,
-                                                                                    truncatedForWidth: labelRect.size.width)
-            if truncate {
-                labelRect.origin.x += reservedSpace
+                let maxGrowth = resolved[cursor].object.maximumSize - resolved[cursor].object.minimumSize
+                if maxGrowth > 0 {
+                    let growth = min(maxGrowth, unassignedSpace)
+                    resolved[cursor].width += growth
+                    unassignedSpace -= growth
+                }
             }
             
-            attributedString.draw(in: labelRect)
-            mainLabelHeight = labelRect.height
-        }
-        
-        if supportsMultiLineLabels {
-            drawSubtitle(cachedSubtitle,
-                        x: labelPosition,
-                        cell: cell,
-                        hasIcon: drewIcon,
-                        iconRect: iconRect,
-                        reservedSpace: reservedSpace,
-                        cellFrame: cellFrame,
-                        labelOffset: labelOffset,
-                        mainLabelHeight: mainLabelHeight)
+            resolved.sort(by: { $0.originalIndex < $1.originalIndex })
+            
+            var lefts: [ResolvedLayout]
+            var centers: [ResolvedLayout]
+            var rights: [ResolvedLayout]
+            
+            let lastLeftIndex = resolved.lastIndex(where: { $0.object.gravity == .left })
+            if let lastLeftIndex {
+                lefts = Array(resolved[0...lastLeftIndex])
+            } else {
+                lefts = []
+            }
+            if let lastCenterIndex = resolved.lastIndex(where: { $0.object.gravity == .center }) {
+                let firstCenterIndex = lastLeftIndex.map { $0 + 1 } ?? 0
+                centers = Array(resolved[firstCenterIndex...lastCenterIndex])
+            } else {
+                centers = []
+            }
+            if let firstRightIndex = resolved.firstIndex(where: { $0.object.gravity == .right}) {
+                rights = Array(resolved[firstRightIndex...]).reversed()
+            } else {
+                rights = []
+            }
+            
+            var x = enclosingFrame.minX
+            for i in 0..<lefts.count {
+                lefts[i].frame = NSRect(x: x, y: y, width: lefts[i].width, height: 0)
+                x += lefts[i].width
+            }
+            let maxLeft = x
+            
+            x = enclosingFrame.maxX
+            for i in 0..<rights.count {
+                x -= rights[i].width
+                rights[i].frame = NSRect(x: x, y: y, width: rights[i].width, height: 0)
+            }
+            let minRight = x
+            
+            let totalCenterWidth = centers.reduce(0.0, { $0 + $1.width })
+            let availableWidth = minRight - maxLeft
+            x = maxLeft + (availableWidth - totalCenterWidth) / 2.0
+            for i in 0..<centers.count {
+                centers[i].frame = NSRect(x: x, y: y, width: centers[i].width, height: 0)
+                x += centers[i].width
+            }
+            return lefts + centers + rights.reversed()
         }
     }
     
-    private func drawGraphic(withCellFrame cellFrame: NSRect, image: NSImage, alpha: CGFloat) -> CGFloat {
-        let rect = NSRect(x: cellFrame.minX + 6,
-                         y: cellFrame.minY + (cellFrame.height - kPSMTabBarIconWidth) / 2.0,
-                         width: kPSMTabBarIconWidth,
-                         height: kPSMTabBarIconWidth)
-        image.draw(in: rect,
-                  from: NSZeroRect,
-                  operation: .sourceOver,
-                  fraction: alpha,
-                  respectFlipped: true,
-                  hints: nil)
-        return rect.width + kPSMTabBarCellPadding + 2
+    struct FixedSpacerLO: LayoutableObject, Equatable {
+        var name: String
+        var width: CGFloat
+        var priority: Int
+        var gravity: Gravity
+        var sizingMode: SizingMode { .fixed(width) }
+        var draw: (ResolvedLayout) -> () = { _ in }
+        static func == (lhs: FixedSpacerLO, rhs: FixedSpacerLO) -> Bool {
+            lhs.name == rhs.name
+        }
+    }
+    
+    struct ImageLO: LayoutableObject, Equatable {
+        var name: String
+        var image: NSImage
+        var priority: Int
+        var gravity: Gravity
+        
+        var sizingMode: SizingMode { .fixed(image.size.width) }
+        var draw: (ResolvedLayout) -> ()
+        static func == (lhs: ImageLO, rhs: ImageLO) -> Bool {
+            lhs.name == rhs.name
+        }
+    }
+    
+    struct TextLO: LayoutableObject, Equatable {
+        var name: String
+        var priority: Int
+        var minWidth: CGFloat
+        var attributedStringWidth: CGFloat
+        var gravity: Gravity
+        var sizingMode: SizingMode { .expanding(minWidth: minWidth, maxWidth: attributedStringWidth) }
+        var draw: (ResolvedLayout) -> ()
+        static func == (lhs: TextLO, rhs: TextLO) -> Bool {
+            lhs.name == rhs.name
+        }
+    }
+    
+    struct GroupLO: LayoutableObject, Equatable, CustomDebugStringConvertible {
+        var debugDescription: String {
+            let memberStrings: [String] = members.map { "  " + $0.description }
+            let parts = [description] + memberStrings
+            return parts.joined(separator: "\n")
+        }
+        var name: String
+        var priority: Int
+        var gravity: Gravity
+        var members: [any LayoutableObject]
+        
+        var draw: (ResolvedLayout) -> () {
+            return { resolved in
+                // Lay out members and then draw them.
+                let nestedLayout = NewLayout(objects: members, enclosingFrame: resolved.frame)
+                for resolved in nestedLayout.resolve(y: resolved.frame.minY) {
+                    resolved.object.draw(resolved)
+                    if PSMTahoeTabStyleDebuggingEnabled {
+                        let frame = resolved.frame
+                        NSColor.blue.set()
+                        NSRect(x: frame.minX, y: 0, width: frame.width, height: 20).frame()
+                    }
+                }
+            }
+        }
+            
+        var sizingMode: PSMTahoeTabStyle.SizingMode {
+            var mode = SizingMode.fixed(0)
+            for member in members {
+                let lowerBoundForElision = if member.priority > 0 {
+                    CGFloat(0)
+                } else {
+                    CGFloat.infinity
+                }
+                switch member.sizingMode {
+                case .fixed(let memberWidth):
+                    switch mode {
+                    case .fixed(let width):
+                        mode = .fixed(width + min(lowerBoundForElision, memberWidth))
+                    case .expanding(minWidth: let minWidth, maxWidth: let maxWidth):
+                        mode = .expanding(minWidth: minWidth + min(lowerBoundForElision, memberWidth), maxWidth: maxWidth + memberWidth)
+                    }
+                case .expanding(let minMemberWidth, let maxMemberWidth):
+                    switch mode {
+                    case .fixed(let width):
+                        mode = .expanding(minWidth: min(lowerBoundForElision, minMemberWidth) + width,
+                                          maxWidth: maxMemberWidth + width)
+                    case .expanding(minWidth: let memberMinWidth, maxWidth: let memberMaxWidth):
+                        mode = .expanding(minWidth: min(lowerBoundForElision, minMemberWidth) + memberMinWidth,
+                                          maxWidth: maxMemberWidth + memberMaxWidth)
+                    }
+                }
+            }
+            return mode
+        }
+        static func == (lhs: PSMTahoeTabStyle.GroupLO, rhs: PSMTahoeTabStyle.GroupLO) -> Bool {
+            lhs.name == rhs.name
+        }
+    }
+    
+    
+    private func drawInterior(with cell: PSMTabBarCell, inView controlView: NSView?, highlightAmount: CGFloat) {
+        var objects = [any LayoutableObject]()
+        
+        enum Priority: Int {
+            case required
+            case graphic
+            case objectCounter
+            case icon
+            case closeButton
+        }
+        enum Name: String {
+            case closeButton
+            case graphic
+            case preLabelSpace
+            case label
+            case icon
+            case objectCounter
+        }
+        let orientation = self.orientation
+        let edgePadding = 6.0
+        
+        // Close button
+        if cell.hasCloseButton, let image = _closeButton {
+            objects.append(FixedSpacerLO(name: "Leading Spacer", width: edgePadding, priority: Priority.required.rawValue, gravity: .left))
+            
+            let closeButton = tintedCloseButtonImage(cell: cell)
+            let closeButtonAlpha = self.closeButtonAlpha(cell: cell, highlightAmount: highlightAmount)
+            objects.append(GroupLO(name: Name.closeButton.rawValue, priority: Priority.closeButton.rawValue, gravity: .left, members: [
+                ImageLO(name: "Close Button", image: image, priority: Priority.required.rawValue, gravity: .left) { resolved in
+                    if cell.closeButtonVisible {
+                        var closeButtonRect = cell.closeButtonRect(forFrame: cell.frame)
+                        closeButtonRect.origin.x = resolved.frame.minX
+                        closeButton?.draw(at: closeButtonRect.origin,
+                                          from: NSZeroRect,
+                                          operation: .sourceOver,
+                                          fraction: closeButtonAlpha)
+                    }
+                },
+            ]))
+        } else {
+            objects.append(FixedSpacerLO(name: "Leading Spacer", width: edgePadding, priority: Priority.required.rawValue, gravity: .left))
+        }
+        
+        // Graphic
+        if let image = cell.cachedTitle?.inputs.graphic {
+            let drawGraphic: (ResolvedLayout) -> () = { resolved in
+                var rect = resolved.frame
+                rect.origin.y = cell.frame.minY + (cell.frame.height - kPSMTabBarIconWidth) / 2.0
+                rect.size.height = kPSMTabBarIconWidth
+                image.draw(in: rect,
+                             from: .zero,
+                             operation: .sourceOver,
+                             fraction: 1,
+                             respectFlipped: true,
+                             hints: nil)
+            }
+
+            objects.append(GroupLO(name: Name.graphic.rawValue, priority: Priority.graphic.rawValue, gravity: orientation == .horizontalOrientation ? .center : .left, members: [
+                ImageLO(name: "Graphic", image: image, priority: Priority.required.rawValue, gravity: .left, draw: drawGraphic),
+                FixedSpacerLO(name: Name.preLabelSpace.rawValue, width: 2.0, priority: Priority.required.rawValue, gravity: .left)
+            ]))
+        }
+        
+        
+        // Label and subtitle
+        let subtitleWidth = subtitleWidth(cell: cell, orientation: orientation)
+        let labelWidth = max(widthOfAttributedStringInCell(cell), subtitleWidth)
+        let supportsMultiLineLabels = self.supportsMultiLineLabels
+        // Amount to shift text down from vertically centered so that it matches the OS's rendering
+        let textShift = 1.0
+        objects.append(TextLO(name: Name.label.rawValue,
+                              priority: Priority.required.rawValue,
+                              minWidth: 8,
+                              attributedStringWidth: labelWidth,
+                              gravity: orientation == .horizontalOrientation ? .center : .left) { resolved in
+            let labelOffset: CGFloat
+            let mainLabelHeight: CGFloat
+            if let cachedTitle = cell.cachedTitle,
+               !cachedTitle.isEmpty {
+                let attributedString = cachedTitle.attributedStringForcingLeftAlignment(
+                    orientation == .verticalOrientation,
+                    truncatedForWidth: resolved.frame.size.width)
+                var rect = resolved.frame
+                let boundingSize = cachedTitle.boundingRect(with: NSSize(width: resolved.frame.width, height: cell.frame.height)).size
+                mainLabelHeight = boundingSize.height
+                labelOffset = PSMTahoeTabStyle.willDrawSubtitle(cell.cachedSubtitle) ? PSMTahoeTabStyle.verticalOffsetForTitleWhenSubtitlePresent : 0
+                rect.origin.y = cell.frame.origin.y + floor((cell.frame.size.height - boundingSize.height) / 2.0) + labelOffset + textShift
+                rect.size.height = boundingSize.height
+                attributedString.draw(in: rect)
+            } else {
+                labelOffset = 0
+                mainLabelHeight = 0
+            }
+            
+            // Draw subtitle
+            if supportsMultiLineLabels {
+                self.drawSubtitle(cell: cell,
+                                  orientation: orientation,
+                                  xOrigin: resolved.frame.minX,
+                                  maxWidth: resolved.frame.width,
+                                  labelOffset: labelOffset,
+                                  mainLabelHeight: mainLabelHeight)
+            }
+        })
+
+        // Icon
+        if cell.hasIcon, let icon = icon(cell: cell) {
+            objects.append(GroupLO(name: Name.icon.rawValue, priority: Priority.icon.rawValue, gravity: orientation == .horizontalOrientation ? .center : .left, members: [
+                FixedSpacerLO(name: "Pre-Icon Space", width: kPSMTabBarCellIconPadding, priority: Priority.required.rawValue, gravity: .left),
+                ImageLO(name: "Icon", image: icon, priority: Priority.required.rawValue, gravity: .left) { resolved in
+                    var rect = resolved.frame
+                    rect.size.height = kPSMTabBarIconWidth
+                    rect.origin.y = Self.centeredMinY(cell: cell, height: kPSMTabBarIconWidth)
+                    icon.draw(in: rect,
+                              from: NSZeroRect,
+                              operation: .sourceOver,
+                              fraction: 1.0,
+                              respectFlipped: true,
+                              hints: nil)
+                },
+                FixedSpacerLO(name: "Post-Icon Space", width: 1.0, priority: Priority.required.rawValue, gravity: .left),
+            ]))
+        }
+        
+        // Counter
+        let counterString = attributedObjectCountValue(forTabCell: cell)
+        if !counterString.string.isEmpty {
+            let counterStringSize = counterString.size()
+            let fontSize = self.fontSize
+            let gravity: Gravity = orientation == .horizontalOrientation ? .center : .right
+            objects.append(GroupLO(name: Name.objectCounter.rawValue, priority: Priority.objectCounter.rawValue, gravity: gravity, members: [
+                FixedSpacerLO(name: "Pre-Counter Space", width: 4.0, priority: Priority.required.rawValue, gravity: .left),
+                TextLO(name: "Counter",
+                       priority: Priority.required.rawValue,
+                       minWidth: counterStringSize.width,
+                       attributedStringWidth: counterStringSize.width,
+                       gravity: .left) { resolved in
+                    if cell.count > 0 {
+                        let myRect = PSMTahoeTabStyle.objectCounterRect(forTabCell: cell, fontSize: fontSize)
+                        var rect = resolved.frame
+                        rect.origin.y = myRect.origin.y + floor((myRect.size.height - counterStringSize.height) / 2.0) + textShift
+                        rect.size.height = counterStringSize.height
+                        counterString.draw(in: rect)
+                    }
+                }
+            ]))
+        }
+
+        if !cell.indicator.isHidden {
+            objects.append(FixedSpacerLO(name: "Indicator Space", width: kPSMTabBarIndicatorWidth, priority: Priority.required.rawValue, gravity: .right))
+        }
+        objects.append(FixedSpacerLO(name: "Trailing Spacer", width: edgePadding + 8.0, priority: Priority.required.rawValue, gravity: .right))
+
+        let layout = NewLayout(objects: objects, enclosingFrame: cell.frame)
+        let resolved = layout.resolve(y: cell.frame.minY)
+        for (i, member) in resolved.enumerated() {
+            member.object.draw(member)
+            if PSMTahoeTabStyleDebuggingEnabled {
+                let frame = member.frame
+                NSColor.red.set()
+                NSRect(x: frame.minX, y: CGFloat(i), width: frame.width, height: 20).frame()
+            }
+        }
+    }
+    
+    private func icon(cell: PSMTabBarCell) -> NSImage? {
+        let tabViewItem = cell.representedObject as? NSTabViewItem
+        let tab = tabViewItem?.identifier as? PSMTabBarControlRepresentedObjectIdentifierProtocol
+        return tab?.icon?()
     }
 }
 
@@ -1179,7 +1498,187 @@ class PSMTahoeTabStyle: NSObject, NSCoding, PSMTabStyle {
 private func DLog(_ message: String) {
     // Implementation depends on how gDebugLogging is set up in your project
     // For now, this is a no-op in Swift
-    #if DEBUG
+#if DEBUG
     // print("[PSMTahoeTabStyle] \(message)")
-    #endif
+#endif
+}
+
+@available(macOS 26, *)
+extension PSMTahoeTabStyle.LayoutableObject {
+    var minimumSize: CGFloat {
+        switch sizingMode {
+        case .expanding(minWidth: let minWidth, _): minWidth
+        case .fixed(let width): width
+        }
+    }
+    
+    var maximumSize: CGFloat {
+        switch sizingMode {
+        case .expanding(_, maxWidth: let maxWidth): maxWidth
+        case .fixed(let width): width
+        }
+    }
+    
+    var description: String {
+        return "\(type(of: self)) \(self.name) \(self.sizingMode) \(self.gravity)"
+    }
+}
+
+@available(macOS 26, *)
+class PSMTahoeDarkTabStyle: PSMTahoeTabStyle {
+    @objc
+    override var tabBarColor: NSColor {
+        return NSColor(srgbRed: 45.0 / 255.0,
+                       green: 48.0 / 255.0,
+                       blue: 50.0 / 255.0,
+                       alpha: 1)
+    }
+    
+    override class var xmarkSymbolConfiguration: NSImage.SymbolConfiguration {
+        return super.xmarkSymbolConfiguration.applying(.init(paletteColors: [.white]))
+    }
+    
+    override class var backgroundColor: NSColor {
+        return NSColor(displayP3Red: 43.0 / 255.0,
+                       green:        46.0 / 255.0,
+                       blue:         48.0 / 255.0,
+                       alpha:        1.0)
+    }
+    
+    override func accessoryStrokeColor() -> NSColor {
+        return NSColor.darkGray
+    }
+    
+    override func backgroundColorSelected(_ selected: Bool, highlightAmount: CGFloat) -> NSColor {
+        if selected {
+            if tabBar?.window?.isMainWindow == true && NSApp.isActive {
+                return NSColor(displayP3Red:  98.0 / 255.0,
+                               green:        100.0 / 255.0,
+                               blue:         102.0 / 255.0,
+                               alpha: 1.0)
+            }
+            return NSColor(displayP3Red: 83.0 / 255.0,
+                           green:        85.0 / 255.0,
+                           blue:         87.0 / 255.0,
+                           alpha:        1.0)
+        } else {
+            if highlightAmount > 0 {
+                return NSColor(displayP3Red: 54.0 / 255.0,
+                               green:        56.0 / 255.0,
+                               blue:         58.0 / 255.0,
+                               alpha:        1.0)
+            } else {
+                return Self.backgroundColor
+            }
+        }
+    }
+    
+    override class func textColorDefaultSelected(_ selected: Bool,
+                                                 backgroundColor: NSColor?,
+                                                 windowIsMainAndAppIsActive mainAndActive: Bool) -> NSColor {
+        if mainAndActive {
+            if selected {
+                return NSColor(displayP3Red: 239.0 / 255.0,
+                               green:        239.0 / 255.0,
+                               blue:         239.0 / 255.0,
+                               alpha: 1.0)
+            } else {
+                return NSColor(displayP3Red: 126.0 / 255.0,
+                               green:        128.0 / 255.0,
+                               blue:         129.0 / 255.0,
+                               alpha: 1.0)
+            }
+        } else {
+            if selected {
+                return NSColor(displayP3Red: 126.0 / 255.0,
+                               green:        127.0 / 255.0,
+                               blue:         128.0 / 255.0,
+                               alpha: 1.0)
+            } else {
+                return NSColor(displayP3Red: 119.0 / 255.0,
+                               green:        119.0 / 255.0,
+                               blue:         119.0 / 255.0,
+                               alpha: 1.0)
+            }
+        }
+    }
+    
+    override func drawCellOutline(path: NSBezierPath, rect: NSRect, radius: CGFloat) {
+        let image = Self.leftTabCap
+        var dest = rect
+        dest.size = image.size
+        Self.leftTabCap.draw(in: dest)
+        
+        dest.origin.x = rect.maxX - image.size.width
+        Self.rightTabCap.draw(in: dest)
+        
+        dest.origin.x = rect.minX + image.size.width
+        dest.size.width = rect.width - (2 * image.size.width)
+        Self.tabMid.draw(in: dest)
+    }
+    
+    private static let leftTabCap: NSImage = {
+        Bundle(for: PSMTahoeTabStyle.self).image(forResource: "TahoeDarkLeftTab")!
+    }()
+    
+    private static let rightTabCap: NSImage = {
+        Bundle(for: PSMTahoeTabStyle.self).image(forResource: "TahoeDarkRightTab")!
+    }()
+    
+    private static let tabMid: NSImage = {
+        Bundle(for: PSMTahoeTabStyle.self).image(forResource: "TahoeDarkMidTab")!
+    }()
+    
+    override func drawDivider(betweenCell leftCell: PSMTabBarCell, andCell rightCell: PSMTabBarCell) {
+        if orientation != .horizontalOrientation {
+            return
+        }
+        if leftCell.isHighlighted || rightCell.isHighlighted {
+            return
+        }
+        NSColor.clear.set()
+        let rect = NSRect(x: leftCell.frame.maxX,
+                          y: leftCell.frame.minY + 3,
+                          width: 1.0,
+                          height: leftCell.frame.height - 6)
+        rect.fill(using: .clear)
+    }
+    
+    override func useLightControls() -> Bool {
+        return true
+    }
+}
+
+@available(macOS 26, *)
+class PSMTahoeOverflowButton: NSButton {
+    init() {
+        super.init(frame: .zero)
+        let symbol = NSImage(systemSymbolName: "ellipsis", accessibilityDescription: nil)!
+        symbol.isTemplate = true
+        image = symbol
+        imagePosition = .imageOnly
+        imageScaling = .scaleProportionallyDown
+        contentTintColor = .labelColor
+        bezelStyle = .glass
+        borderShape = .circle
+        isBordered = true
+        showsBorderOnlyWhileMouseInside = false
+        frame = frame
+    }
+    
+    required init?(coder: NSCoder) {
+        it_fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func acceptsFirstMouse(for theEvent: NSEvent?) -> Bool {
+        true
+    }
+    
+    override func mouseDown(with event: NSEvent) {
+        highlight(true)
+        menu?.popUp(positioning: nil,
+                    at: NSPoint(x: bounds.midX, y: bounds.midY),
+                    in: self)
+        highlight(false)
+    }
 }

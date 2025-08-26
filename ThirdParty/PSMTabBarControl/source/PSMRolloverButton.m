@@ -70,6 +70,10 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 
 - (void)updateTrackingAreas {
     [super updateTrackingAreas];
+    [self reallyUpdateTrackingAreas];
+}
+
+- (void)reallyUpdateTrackingAreas {
     if (_trackingArea) {
         [self removeTrackingArea:_trackingArea];
     }
@@ -88,19 +92,33 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 
 // override for rollover effect
 - (void)mouseEntered:(NSEvent *)theEvent {
+    if (![self mouseReallyEntered:theEvent]) {
+        [super mouseEntered:theEvent];
+    }
+}
+
+- (BOOL)mouseReallyEntered:(NSEvent *)theEvent {
     [self setTargetAlpha:PSMRolloverButtonMaxAlpha];
     // set rollover image
     [self setImage:_rolloverImage];
     [self setNeedsDisplay:YES];
     [[self superview] setNeedsDisplay:YES]; // eliminates a drawing artifact
+    return YES;
 }
 
 - (void)mouseExited:(NSEvent *)theEvent {
+    if (![self mouseReallyExited:theEvent]) {
+        [super mouseExited:theEvent];
+    }
+}
+
+- (BOOL)mouseReallyExited:(NSEvent *)theEvent {
     // restore usual image
     [self setTargetAlpha:0];
     [self setImage:_usualImage];
     [self setNeedsDisplay:YES];
     [[self superview] setNeedsDisplay:YES]; // eliminates a drawing artifact
+    return YES;
 }
 
 - (void)setTargetAlpha:(CGFloat)targetAlpha {
@@ -137,6 +155,12 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 
 // Must override mouseDown and mouseUp and not call super for mouseDragged: to work.
 - (void)mouseDown:(NSEvent *)theEvent {
+    if (![self mouseReallyDown:theEvent]) {
+        [super mouseDown:theEvent];
+    }
+}
+
+- (BOOL)mouseReallyDown:(NSEvent *)theEvent {
     // eliminates drawing artifact
     [[NSRunLoop currentRunLoop] performSelector:@selector(display)
                                          target:[self superview]
@@ -146,22 +170,35 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
     _dragDistance = 0;
     _lastDragLocation = theEvent.locationInWindow;
     DLog(@"mouseDown. Set dragDistance=0, lastDragLocation=%@", NSStringFromPoint(_lastDragLocation));
+    return YES;
 }
 
-- (void)mouseUp:(NSEvent *)event {
+- (void)mouseUp:(NSEvent *)theEvent {
+    if (![self mouseReallyUp:theEvent]) {
+        [super mouseUp:theEvent];
+    }
+}
+
+- (BOOL)mouseReallyUp:(NSEvent *)event {
     if (event.clickCount == 1 && _dragDistance < 4) {
         DLog(@"mouseUp. dragDistance=%@ so act like click", @(_dragDistance));
         [self performClick:self];
     }
     DLog(@"mouseUp. dragDistance=%@ so reset drag distance to 0", @(_dragDistance));
     _dragDistance = 0;
+    return YES;
 }
 
 - (void)mouseDragged:(NSEvent *)event {
+    if (![self mouseReallyDragged:event]) {
+        [super mouseDragged:event];
+    }
+}
+
+- (BOOL)mouseReallyDragged:(NSEvent *)event {
     if (!self.allowDrags) {
         DLog(@"mouseDragged. drags not allowed");
-        [super mouseDragged:event];
-        return;
+        return NO;
     }
     _dragDistance += sqrt(pow(event.locationInWindow.y - _lastDragLocation.y, 2) +
                           pow(event.locationInWindow.x - _lastDragLocation.x, 2));
@@ -169,6 +206,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
     DLog(@"mouseDragged. dragDistance<-%@ lastDragLocation<-%@", @(_dragDistance), @(_lastDragLocation));
     [self.window makeKeyAndOrderFront:nil];
     [self.window performWindowDragWithEvent:event];
+    return YES;
 }
 
 - (void)resetCursorRects {
@@ -176,26 +214,64 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
     [[self superview] setNeedsDisplay:YES]; // eliminates a drawing artifact
 }
 
-#pragma mark -  Archiving
+@end
 
-- (void)encodeWithCoder:(NSCoder *)aCoder {
-    [super encodeWithCoder:aCoder];
-    if ([aCoder allowsKeyedCoding]) {
-        [aCoder encodeObject:_rolloverImage forKey:@"rolloverImage"];
-        [aCoder encodeObject:_usualImage forKey:@"usualImage"];
-    }
-}
+NS_AVAILABLE_MAC(26)
+@implementation PSMTahoeRolloverButton
 
-- (id)initWithCoder:(NSCoder *)aDecoder {
-    self = [super initWithCoder:aDecoder];
+- (instancetype)initWithSymbolName:(NSString *)name {
+    self = [super initWithFrame:NSZeroRect];
     if (self) {
-        if ([aDecoder allowsKeyedCoding]) {
-            _rolloverImage = [aDecoder decodeObjectForKey:@"rolloverImage"];
-            _usualImage = [aDecoder decodeObjectForKey:@"usualImage"];
-        }
+        NSImage *symbol = [NSImage imageWithSystemSymbolName:name accessibilityDescription:nil];
+        symbol.template = YES;
+        self.image = symbol;
+
+        self.imagePosition = NSImageOnly;
+        self.imageScaling = NSImageScaleProportionallyDown;
+        self.contentTintColor = [NSColor labelColor];
+
+        // New Tahoe (macOS 26) look:
+        self.controlSize = NSControlSizeLarge;
+        self.bezelStyle = NSBezelStyleGlass;              // Liquid Glass bezel
+        self.borderShape = NSControlBorderShapeCircle;    // round/capsule shape
+        self.bordered = YES;
+        self.showsBorderOnlyWhileMouseInside = NO;
     }
     return self;
 }
 
+- (void)setUsualImage:(NSImage *)newImage {
+}
+
+- (NSImage *)usualImage {
+    return nil;
+}
+- (void)setRolloverImage:(NSImage *)newImage {
+}
+
+- (NSImage *)rolloverImage {
+    return nil;
+}
+
+- (void)reallyUpdateTrackingAreas {
+}
+
+- (BOOL)mouseReallyEntered:(NSEvent *)theEvent {
+    return NO;
+}
+
+- (BOOL)mouseReallyExited:(NSEvent *)theEvent {
+    return NO;
+}
+
+- (BOOL)mouseReallyDown:(NSEvent *)theEvent {
+    return NO;
+}
+- (BOOL)mouseReallyUp:(NSEvent *)event {
+    return NO;
+}
+- (BOOL)mouseReallyDragged:(NSEvent *)event {
+    return NO;
+}
 
 @end

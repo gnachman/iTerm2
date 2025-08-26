@@ -198,3 +198,12 @@ extension RangeReplaceableCollection where Iterator.Element: Equatable {
         }
     }
 }
+
+extension Array {
+    mutating func removeLast(where closure: (Element) throws -> Bool) rethrows -> Element? {
+        if let i = try lastIndex(where: closure) {
+            return remove(at: i)
+        }
+        return nil
+    }
+}

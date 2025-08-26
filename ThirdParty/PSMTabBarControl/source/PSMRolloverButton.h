@@ -21,3 +21,11 @@
 - (NSImage *)rolloverImage;
 
 @end
+
+NS_AVAILABLE_MAC(26)
+@interface PSMTahoeRolloverButton: PSMRolloverButton
+
+- (instancetype)initWithSymbolName:(NSString *)name;
+
+@end
+
