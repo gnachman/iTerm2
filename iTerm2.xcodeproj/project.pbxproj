@@ -3019,24 +3019,6 @@
 		A69A2FBF2E5D3BEC00803E66 /* TahoeDarkMidTab.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A2FB72E5D3BEC00803E66 /* TahoeDarkMidTab.png */; };
 		A69A2FC02E5D3BEC00803E66 /* TahoeDarkRightTab.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A2FB82E5D3BEC00803E66 /* TahoeDarkRightTab.png */; };
 		A69A2FC12E5D3BEC00803E66 /* TahoeDarkLeftTab.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A2FB62E5D3BEC00803E66 /* TahoeDarkLeftTab.png */; };
-		A69A2FC52E5D62A000803E66 /* TahoeLightAddTabButton.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A2FC32E5D62A000803E66 /* TahoeLightAddTabButton.png */; };
-		A69A2FC72E5D62A000803E66 /* TahoeLightAddTabButton.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A2FC32E5D62A000803E66 /* TahoeLightAddTabButton.png */; };
-		A69A2FC92E5D62A000803E66 /* TahoeLightAddTabButton.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A2FC32E5D62A000803E66 /* TahoeLightAddTabButton.png */; };
-		A69A2FCF2E5D6D0700803E66 /* TahoeDarkAddTabButton.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A2FCA2E5D6D0700803E66 /* TahoeDarkAddTabButton.png */; };
-		A69A2FD02E5D6D0700803E66 /* TahoeLightAddTabButtonRollover.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A2FCE2E5D6D0700803E66 /* TahoeLightAddTabButtonRollover.png */; };
-		A69A2FD12E5D6D0700803E66 /* TahoeLightAddTabButtonPressed.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A2FCD2E5D6D0700803E66 /* TahoeLightAddTabButtonPressed.png */; };
-		A69A2FD22E5D6D0700803E66 /* TahoeDarkAddTabButtonRollover.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A2FCC2E5D6D0700803E66 /* TahoeDarkAddTabButtonRollover.png */; };
-		A69A2FD32E5D6D0700803E66 /* TahoeDarkAddTabButtonPressed.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A2FCB2E5D6D0700803E66 /* TahoeDarkAddTabButtonPressed.png */; };
-		A69A2FD42E5D6D0700803E66 /* TahoeDarkAddTabButton.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A2FCA2E5D6D0700803E66 /* TahoeDarkAddTabButton.png */; };
-		A69A2FD52E5D6D0700803E66 /* TahoeLightAddTabButtonRollover.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A2FCE2E5D6D0700803E66 /* TahoeLightAddTabButtonRollover.png */; };
-		A69A2FD62E5D6D0700803E66 /* TahoeLightAddTabButtonPressed.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A2FCD2E5D6D0700803E66 /* TahoeLightAddTabButtonPressed.png */; };
-		A69A2FD72E5D6D0700803E66 /* TahoeDarkAddTabButtonRollover.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A2FCC2E5D6D0700803E66 /* TahoeDarkAddTabButtonRollover.png */; };
-		A69A2FD82E5D6D0700803E66 /* TahoeDarkAddTabButtonPressed.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A2FCB2E5D6D0700803E66 /* TahoeDarkAddTabButtonPressed.png */; };
-		A69A2FD92E5D6D0700803E66 /* TahoeDarkAddTabButton.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A2FCA2E5D6D0700803E66 /* TahoeDarkAddTabButton.png */; };
-		A69A2FDA2E5D6D0700803E66 /* TahoeLightAddTabButtonRollover.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A2FCE2E5D6D0700803E66 /* TahoeLightAddTabButtonRollover.png */; };
-		A69A2FDB2E5D6D0700803E66 /* TahoeLightAddTabButtonPressed.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A2FCD2E5D6D0700803E66 /* TahoeLightAddTabButtonPressed.png */; };
-		A69A2FDC2E5D6D0700803E66 /* TahoeDarkAddTabButtonRollover.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A2FCC2E5D6D0700803E66 /* TahoeDarkAddTabButtonRollover.png */; };
-		A69A2FDD2E5D6D0700803E66 /* TahoeDarkAddTabButtonPressed.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A2FCB2E5D6D0700803E66 /* TahoeDarkAddTabButtonPressed.png */; };
 		A69A2FEC2E5D790800803E66 /* PSMYosemiteTabStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = DD02572709CB9398008F320C /* PSMYosemiteTabStyle.m */; };
 		A69A2FED2E5D7D5500803E66 /* PSMOverflowPopUpButton.m in Sources */ = {isa = PBXBuildFile; fileRef = DD02572A09CB9398008F320C /* PSMOverflowPopUpButton.m */; };
 		A69B4577195F668500F5444D /* NSScreen+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B4575195F668500F5444D /* NSScreen+iTerm.h */; };
@@ -7929,12 +7911,6 @@
 		A69A2FB62E5D3BEC00803E66 /* TahoeDarkLeftTab.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = TahoeDarkLeftTab.png; path = images/TahoeDarkLeftTab.png; sourceTree = "<group>"; };
 		A69A2FB72E5D3BEC00803E66 /* TahoeDarkMidTab.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = TahoeDarkMidTab.png; path = images/TahoeDarkMidTab.png; sourceTree = "<group>"; };
 		A69A2FB82E5D3BEC00803E66 /* TahoeDarkRightTab.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = TahoeDarkRightTab.png; path = images/TahoeDarkRightTab.png; sourceTree = "<group>"; };
-		A69A2FC32E5D62A000803E66 /* TahoeLightAddTabButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = TahoeLightAddTabButton.png; path = images/TahoeLightAddTabButton.png; sourceTree = "<group>"; };
-		A69A2FCA2E5D6D0700803E66 /* TahoeDarkAddTabButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = TahoeDarkAddTabButton.png; path = images/TahoeDarkAddTabButton.png; sourceTree = "<group>"; };
-		A69A2FCB2E5D6D0700803E66 /* TahoeDarkAddTabButtonPressed.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = TahoeDarkAddTabButtonPressed.png; path = images/TahoeDarkAddTabButtonPressed.png; sourceTree = "<group>"; };
-		A69A2FCC2E5D6D0700803E66 /* TahoeDarkAddTabButtonRollover.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = TahoeDarkAddTabButtonRollover.png; path = images/TahoeDarkAddTabButtonRollover.png; sourceTree = "<group>"; };
-		A69A2FCD2E5D6D0700803E66 /* TahoeLightAddTabButtonPressed.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = TahoeLightAddTabButtonPressed.png; path = images/TahoeLightAddTabButtonPressed.png; sourceTree = "<group>"; };
-		A69A2FCE2E5D6D0700803E66 /* TahoeLightAddTabButtonRollover.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = TahoeLightAddTabButtonRollover.png; path = images/TahoeLightAddTabButtonRollover.png; sourceTree = "<group>"; };
 		A69B4575195F668500F5444D /* NSScreen+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSScreen+iTerm.h"; sourceTree = "<group>"; };
 		A69B4576195F668500F5444D /* NSScreen+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSScreen+iTerm.m"; sourceTree = "<group>"; };
 		A69B457A1967B03B00F5444D /* BrokenPipeDivider.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = BrokenPipeDivider.png; path = images/BrokenPipeDivider.png; sourceTree = "<group>"; };
@@ -9929,12 +9905,6 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
-				A69A2FCA2E5D6D0700803E66 /* TahoeDarkAddTabButton.png */,
-				A69A2FCB2E5D6D0700803E66 /* TahoeDarkAddTabButtonPressed.png */,
-				A69A2FCC2E5D6D0700803E66 /* TahoeDarkAddTabButtonRollover.png */,
-				A69A2FCD2E5D6D0700803E66 /* TahoeLightAddTabButtonPressed.png */,
-				A69A2FCE2E5D6D0700803E66 /* TahoeLightAddTabButtonRollover.png */,
-				A69A2FC32E5D62A000803E66 /* TahoeLightAddTabButton.png */,
 				A69A2FB62E5D3BEC00803E66 /* TahoeDarkLeftTab.png */,
 				A69A2FB72E5D3BEC00803E66 /* TahoeDarkMidTab.png */,
 				A69A2FB82E5D3BEC00803E66 /* TahoeDarkRightTab.png */,
@@ -16505,7 +16475,6 @@
 				A6EFF2331D2049A400806EEF /* Erase.png in Resources */,
 				A697CEB52D9862D70031583F /* VerticalSplit.png in Resources */,
 				53BBA0FA214236AC0074D061 /* iterm2_git_poll.sh in Resources */,
-				A69A2FC52E5D62A000803E66 /* TahoeLightAddTabButton.png in Resources */,
 				A6B577D62C0A9520003FEB4F /* ai-plugin.sb in Resources */,
 				A6E7AE82214394DD00DE9F3B /* graphic_curl@2x.png in Resources */,
 				A63011AD20E7EE06008114B7 /* iTermStatusBarKnobCheckboxViewController.xib in Resources */,
@@ -16722,11 +16691,6 @@
 				A66F52D52106F6F100571168 /* gitdown@2x.png in Resources */,
 				A6CBB8C42E0A696C00B2CCCB /* Readability.js in Resources */,
 				A65D97C124B19D2600DF45F9 /* iTermMinimalComposerViewController.xib in Resources */,
-				A69A2FD92E5D6D0700803E66 /* TahoeDarkAddTabButton.png in Resources */,
-				A69A2FDA2E5D6D0700803E66 /* TahoeLightAddTabButtonRollover.png in Resources */,
-				A69A2FDB2E5D6D0700803E66 /* TahoeLightAddTabButtonPressed.png in Resources */,
-				A69A2FDC2E5D6D0700803E66 /* TahoeDarkAddTabButtonRollover.png in Resources */,
-				A69A2FDD2E5D6D0700803E66 /* TahoeDarkAddTabButtonPressed.png in Resources */,
 				A6971F3720D8D3CE0075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib in Resources */,
 				A6E16C7124A8696D00C6DB06 /* WindowCornerFull_BigSur.png in Resources */,
 				A697CDC02D975AE20031583F /* Toolbelt-Screenshot@2x.png in Resources */,
@@ -17018,11 +16982,6 @@
 				A67F61BC214395C60093940A /* graphic_shell@2x.png in Resources */,
 				A686A1171C86A6DD0024C2DE /* NewOutputForDarkTheme.png in Resources */,
 				A6DC98A228A82608009D21C0 /* Window@2x.png in Resources */,
-				A69A2FCF2E5D6D0700803E66 /* TahoeDarkAddTabButton.png in Resources */,
-				A69A2FD02E5D6D0700803E66 /* TahoeLightAddTabButtonRollover.png in Resources */,
-				A69A2FD12E5D6D0700803E66 /* TahoeLightAddTabButtonPressed.png in Resources */,
-				A69A2FD22E5D6D0700803E66 /* TahoeDarkAddTabButtonRollover.png in Resources */,
-				A69A2FD32E5D6D0700803E66 /* TahoeDarkAddTabButtonPressed.png in Resources */,
 				A6D693E52E4137E4005E9AFE /* monitor-audio-context.js in Resources */,
 				A6F18B5A2AE2F39C006C08EE /* uniE0CF_lego_separator_thin.pdf in Resources */,
 				A67F61A8214395B70093940A /* graphic_rails.png in Resources */,
@@ -17158,7 +17117,6 @@
 				A6CBB7B82E08B64100B2CCCB /* geolocation-bridge.js in Resources */,
 				A65B72561B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
 				A6A3EDDD2E0D0C7E00D711DA /* urls-at-point.js in Resources */,
-				A69A2FC72E5D62A000803E66 /* TahoeLightAddTabButton.png in Resources */,
 				A69C93472121140100531438 /* iTermStatusBarLargeComposerViewController.xib in Resources */,
 				A6971F3620D8D3CB0075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib in Resources */,
 				A6E7AE62214394CA00DE9F3B /* graphic_atom@2x.png in Resources */,
@@ -17690,11 +17648,6 @@
 				A6CBB8F72E0A6FC800B2CCCB /* reader-mode.css in Resources */,
 				A697CE9B2D97C8E90031583F /* AIChatMenuTip@2x.png in Resources */,
 				A67D0D771A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */,
-				A69A2FD42E5D6D0700803E66 /* TahoeDarkAddTabButton.png in Resources */,
-				A69A2FD52E5D6D0700803E66 /* TahoeLightAddTabButtonRollover.png in Resources */,
-				A69A2FD62E5D6D0700803E66 /* TahoeLightAddTabButtonPressed.png in Resources */,
-				A69A2FD72E5D6D0700803E66 /* TahoeDarkAddTabButtonRollover.png in Resources */,
-				A69A2FD82E5D6D0700803E66 /* TahoeDarkAddTabButtonPressed.png in Resources */,
 				A6FE7A8C2E0E679800BEBCE4 /* autofill-demo.html in Resources */,
 				A6CB24A52C68149100005824 /* it2copy in Resources */,
 				A697CED12D9B0FB60031583F /* CommandSelectionHelp.md in Resources */,
@@ -17754,7 +17707,6 @@
 				A6F7A725213CB143004DE961 /* StatusBarIconHost.png in Resources */,
 				A6350298229B5F620042B779 /* YosemiteAddTab.png in Resources */,
 				53C5650821B8CDF5002B3167 /* PowerlineSolidLeftArrow.pdf in Resources */,
-				A69A2FC92E5D62A000803E66 /* TahoeLightAddTabButton.png in Resources */,
 				A65B72B41B33C07D00F947A7 /* NextTip@2x.png in Resources */,
 				A6EC8046281B391900493544 /* TextViewPortholeRenderer-dark.css in Resources */,
 				A6CBB7B42E088E5C00B2CCCB /* notifications-demo.html in Resources */,

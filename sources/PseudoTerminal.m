@@ -9736,7 +9736,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
             return [iTermAdvancedSettingsModel defaultTabBarHeight];
         }
         if (@available(macOS 26, *)) {
-            return PSMTahoeTabStyle.tabBarHeight;
+            return PSMTahoeTabStyle.horizontalTabBarHeight;
         }
         return [iTermAdvancedSettingsModel defaultTabBarHeight];
     }
