@@ -169,6 +169,10 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
                                                                      backing:NSBackingStoreBuffered
                                                                        defer:defer];
     myWindow.collectionBehavior = [self desiredWindowCollectionBehavior];
+    if (@available(macOS 26, *)) {
+        // macOS 26 seems to have changed things. A window without .title in the style mask draws a floating title half off the screen.
+        myWindow.titleVisibility = !!(styleMask & NSWindowStyleMaskTitled) ? NSWindowTitleVisible : NSWindowTitleHidden;
+    }
     if (windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
         // For some reason, you don't always get the frame you requested. I saw
         // this on OS 10.10 when creating normal windows on a 2-screen display. The

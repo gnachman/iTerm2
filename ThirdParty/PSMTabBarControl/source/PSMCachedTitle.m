@@ -181,6 +181,9 @@
 - (NSAttributedString *)truncatedAttributedStringForWidth:(CGFloat)width
                                               leftAligned:(BOOL)forceLeft {
     NSAttributedString *attributedString = forceLeft ? self.leftAlignedAttributedString : self.attributedString;
+    if (attributedString.string.length == 0) {
+        return attributedString;
+    }
     __block BOOL truncate = NO;
     [attributedString enumerateAttribute:NSAttachmentAttributeName
                                  inRange:NSMakeRange(0, 1)

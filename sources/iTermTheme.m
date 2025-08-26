@@ -65,13 +65,23 @@
         case TAB_STYLE_MINIMAL:
             assert(NO);
         case TAB_STYLE_LIGHT:
+            if (preferredStyle == TAB_STYLE_COMPACT) {
+                return [[PSMYosemiteTabStyle alloc] init];
+            }
             if (@available(macOS 26, *)) {
                 return [[PSMTahoeTabStyle alloc] init];
             } else {
                 return [[PSMYosemiteTabStyle alloc] init];
             }
         case TAB_STYLE_DARK:
-            return [[PSMDarkTabStyle alloc] init];
+            if (preferredStyle == TAB_STYLE_COMPACT) {
+                return [[PSMDarkTabStyle alloc] init];
+            }
+            if (@available(macOS 26, *)) {
+                return [[PSMTahoeDarkTabStyle alloc] init];
+            } else {
+                return [[PSMDarkTabStyle alloc] init];
+            }
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
             return [[PSMLightHighContrastTabStyle alloc] init];
         case TAB_STYLE_DARK_HIGH_CONTRAST:
