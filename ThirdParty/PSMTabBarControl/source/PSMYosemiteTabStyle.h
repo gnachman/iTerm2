@@ -31,7 +31,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 @interface PSMYosemiteTabStyle : NSObject<PSMTabStyle>
 
 @property(nonatomic, readonly, nullable) NSColor *tabBarColor;
-@property(nonatomic, readonly) PSMTabBarOrientation orientation;
+@property(nonatomic) PSMTabBarOrientation orientation;
 @property(nonatomic, readonly) BOOL windowIsMainAndAppIsActive;
 
 #pragma mark - For subclasses

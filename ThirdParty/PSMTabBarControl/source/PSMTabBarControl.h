@@ -149,6 +149,7 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkne
 - (void)tabViewDidClickAddTabButton:(PSMTabBarControl *)tabView;
 - (BOOL)tabViewShouldDragWindow:(NSTabView *)tabView event:(NSEvent *)event;
 - (BOOL)tabViewShouldAllowDragOnAddTabButton:(NSTabView *)tabView;
+- (CGFloat)tabViewDesiredTabBarHeight:(NSTabView *)tabView;
 
 @end
 
