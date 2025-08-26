@@ -243,7 +243,11 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
     [super setOrientation:orientation];
     if (@available(macOS 26, *)) {
         self.style.orientation = self.orientation;
-        self.height = self.style.tabBarHeight;
+        CGFloat tabBarHeight = self.style.tabBarHeight;
+        if (tabBarHeight <= 0) {
+            tabBarHeight = [self.delegate tabViewDesiredTabBarHeight:self.tabView];
+        }
+        self.height = tabBarHeight;
     }
     self.showAddTabButton = ![iTermAdvancedSettingsModel removeAddTabButton] && (orientation == PSMTabBarHorizontalOrientation);
 }
