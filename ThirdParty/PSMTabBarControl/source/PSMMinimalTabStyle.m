@@ -347,6 +347,9 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
 - (void)drawShadowForUnselectedTabInRect:(NSRect)backgroundRect {
 }
 
+- (CGFloat)tabBarHeight {
+    return 0;
+}
 - (void)drawCellBackgroundSelected:(BOOL)selected
                             inRect:(NSRect)cellFrame
                       withTabColor:(NSColor *)tabColor

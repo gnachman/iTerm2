@@ -7577,6 +7577,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return [iTermAdvancedSettingsModel allowDragOnAddTabButton];
 }
 
+- (CGFloat)tabViewDesiredTabBarHeight:(NSTabView *)tabView {
+    return [self desiredTabBarHeight];
+}
+
 - (BOOL)isInitialized
 {
     return _contentView.tabView != nil;
