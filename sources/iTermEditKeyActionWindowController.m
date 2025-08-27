@@ -158,12 +158,25 @@ const CGFloat sideMarginWidth = 40;
                 break;
 
             case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
+                _shortcutFieldDisableKeyRemapping = YES;
+                _parameterValue = @"";
+                _helpString = @"This action lets you exempt a keystroke from modifier remapping. For example, if you remap ⌘ to ⌥ but you want ⌘-Tab to work as though ⌘ were unmapped just for that keystroke, you would use this action and set the keyboard shortcut to ⌘-Tab";
+                _parameterValue = @"";
+                break;
+
             case KEY_ACTION_REMAP_LOCALLY:
                 _shortcutFieldDisableKeyRemapping = YES;
                 _parameterValue = @"";
-                _parameterLabelHidden = NO;
-                _parameterLabel = @"Modifier remapping disabled: type the actual key combo you want to affect.";
+                _helpString = @"This action applies modifier remapping but prevents other programs from seeing the keystroke. For example, if you've swapped ⌘ and ^ and want physical ^-tab to switch tabs in iTerm2 instead of triggering the app switcher: bind ^-tab to this action. The system won't see the remapped ⌘-tab (so no app switcher), but iTerm2 receives it and can switch tabs.";
                 _parameterValue = @"";
+                break;
+
+            case KEY_ACTION_BYPASS:
+                _helpString = @"Prevents the keystroke from being sent to the terminal while allowing macOS to handle it normally. For example, if F1 triggers a  macOS Shortcut, binding F1 to Bypass Terminal stops it from sending a control sequence to the terminal but still lets the system shortcut work.";
+                break;
+
+            case KEY_ACTION_IGNORE:
+                _helpString = @"Prevents the keystroke from having any effect within iTerm2. Modifier remapping remains unaffected.";
                 break;
 
             case KEY_ACTION_FIND_REGEX:
@@ -830,7 +843,10 @@ const CGFloat sideMarginWidth = 40;
 }
 
 - (CGFloat)desiredWidthExcludingMargins {
-    const CGFloat normalWidthExcludingMargins = 402;
+    CGFloat normalWidthExcludingMargins = 402;
+    if (!_helpButton.isHidden) {
+        normalWidthExcludingMargins += _helpButton.frame.size.width + 6;
+    }
     if (!_secondaryComboViewContainer.isHidden) {
         return NSMaxX(_detail.frame) - NSMinX(_sequenceContainer.frame);
     }
