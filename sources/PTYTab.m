@@ -1010,13 +1010,20 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)activateSessionInDirection:(int)offset {
     DLog(@"offset=%@", @(offset));
+    [self unmaximizeTemporarilyAndActivate:^PTYSession *{
+        return [self sessionInDirection:offset];
+    }];
+}
+
+- (void)unmaximizeTemporarilyAndActivate:(PTYSession *(^)(void))sessionPicker {
     BOOL maximize = NO;
     if (isMaximized_ && self.activeSession.isTmuxClient) {
         DLog(@"Set maximize to YES");
         maximize = YES;
         [self.activeSession toggleTmuxZoom];
     }
-    PTYSession *session = [self sessionInDirection:offset];
+    PTYSession *session = sessionPicker();
+    DLog(@"%@", session);
     if (session) {
         if (isMaximized_) {
             [root_ replaceSubview:[[root_ subviews] objectAtIndex:0]

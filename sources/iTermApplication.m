@@ -355,25 +355,30 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 - (BOOL)switchToPaneInWindowController:(PseudoTerminal *)currentTerminal byNumber:(NSEvent *)event {
     const int mask = NSEventModifierFlagShift | NSEventModifierFlagControl | NSEventModifierFlagOption | NSEventModifierFlagCommand;
     if (([event it_modifierFlags] & mask) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchPaneModifier]]) {
-        int digit = [self digitKeyForEvent:event];
+        const NSInteger digit = [self digitKeyForEvent:event];
         NSArray *orderedSessions = currentTerminal.currentTab.orderedSessions;
-        int numSessions = [orderedSessions count];
-        if (digit == 9 && numSessions > 0) {
-            // Modifier+9: Switch to last split pane if there are fewer than 9.
-            DLog(@"Switching to last split pane");
-            [currentTerminal.currentTab setActiveSession:[orderedSessions lastObject]];
-            return YES;
-        }
-        if (digit >= 1 && digit <= numSessions) {
-            // Modifier+number: Switch to split pane by number.
-            DLog(@"Switching to split pane");
-            [currentTerminal.currentTab setActiveSession:orderedSessions[digit - 1]];
-            return YES;
-        }
-        if (digit >= 1 && digit <= 9) {
-            // Ignore Modifier+Number if there's no matching split pane. Issue 6624.
-            return YES;
-        }
+        __block BOOL ok = NO;
+        [currentTerminal.currentTab unmaximizeTemporarilyAndActivate:^PTYSession *{
+            int numSessions = [orderedSessions count];
+            if (digit == 9 && numSessions > 0) {
+                // Modifier+9: Switch to last split pane if there are fewer than 9.
+                DLog(@"Switching to last split pane");
+                ok = YES;
+                return [orderedSessions lastObject];
+            }
+            if (digit >= 1 && digit <= numSessions) {
+                // Modifier+number: Switch to split pane by number.
+                DLog(@"Switching to split pane");
+                ok = YES;
+                return orderedSessions[digit - 1];
+            }
+            if (digit >= 1 && digit <= 9) {
+                // Ignore Modifier+Number if there's no matching split pane. Issue 6624.
+                ok = YES;
+            }
+            return nil;
+        }];
+        return ok;
     }
     return NO;
 }

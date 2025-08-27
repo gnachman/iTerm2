@@ -189,6 +189,7 @@ extern NSString *const PTYTabVariableTitleOverride;
 - (NSArray*)sessionViews;
 - (void)setFilter:(NSString *)query inSession:(PTYSession *)oldSession;
 - (void)replaceActiveSessionWithSyntheticSession:(PTYSession *)newSession;
+- (void)unmaximizeTemporarilyAndActivate:(PTYSession *(^)(void))sessionPicker;
 - (void)setDvrInSession:(PTYSession*)newSession;
 - (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession;
 - (BOOL)hasMultipleSessions;
