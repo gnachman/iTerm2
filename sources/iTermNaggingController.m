@@ -422,7 +422,7 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
     }];
 }
 
-- (void)offerToDisableTriggersInInteractiveApps {
+- (void)offerToDisableTriggersInInteractiveAppsWithStats:(NSString *)stats {
     if (![self.delegate naggingControllerCanShowMessageWithIdentifier:kTurnOffSlowTriggersOfferUserDefaultsKey]) {
         DLog(@"Don't show warning");
         return;
@@ -437,7 +437,7 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
                                      isQuestion:YES
                                       important:YES
                                      identifier:kTurnOffSlowTriggersOfferUserDefaultsKey
-                                        options:@[ @"_Yes", @"Stop Asking", @"Help" ]
+                                        options:@[ @"_Yes", @"Stop Asking", @"View Stats", @"Help" ]
                                      completion:^(int selection) {
         switch (selection) {
             case -2:  // Dismiss programmatically
@@ -455,11 +455,35 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
                                                         forKey:kTurnOffSlowTriggersOfferUserDefaultsKey];
                 break;
 
-            case 2: // Help
+            case 2:  { // View stats
+                [self showStats:stats];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self offerToDisableTriggersInInteractiveAppsWithStats:stats];
+                });
+                break;
+            }
+
+            case 4: // Help
                 [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/slow_triggers"]];
                 break;
         }
     }];
+}
+
+- (void)showStats:(NSString *)stats {
+    NSString *path = [NSTemporaryDirectory() stringByAppendingPathComponent:@"trigger-stats.txt"];
+
+    NSError *error = nil;
+    BOOL ok = [stats writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:&error];
+    if (!ok) {
+        DLog(@"Error writing file: %@", error);
+        return;
+    }
+
+    NSTask *task = [[NSTask alloc] init];
+    task.launchPath = @"/usr/bin/open";
+    task.arguments = @[ @"-a", @"TextEdit", path ];
+    [task launch];
 }
 
 - (void)tmuxDidUpdatePasteBuffer {

@@ -38,6 +38,7 @@ NSString * const kTriggerNameKey = @"name";
     id param_;
     iTermSwiftyStringWithBackreferencesEvaluator *_evaluator;
     NSRegularExpression *_compiledRegex;
+    iTermMovingHistogram *_stats;
 }
 
 @synthesize regex = regex_;
@@ -82,6 +83,7 @@ NSString * const kTriggerNameKey = @"name";
     self = [super init];
     if (self) {
         _lastLineNumber = -1;
+        _stats = [[iTermMovingHistogram alloc] initWithBucketSize:100 numberOfBuckets:10];
     }
     return self;
 }
@@ -233,6 +235,10 @@ NSString * const kTriggerNameKey = @"name";
     }
 }
 
+- (iTermHistogram *)performanceHistogram {
+    return _stats.histogram;
+}
+
 - (BOOL)tryString:(iTermStringLine *)stringLine
         inSession:(id<iTermTriggerSession>)aSession
       partialLine:(BOOL)partialLine
@@ -254,7 +260,24 @@ NSString * const kTriggerNameKey = @"name";
         // This trigger doesn't support partial lines.
         return NO;
     }
-    
+
+    __block BOOL result = NO;
+    const NSTimeInterval duration = [NSDate durationOfBlock:^{
+        result = [self reallyTryString:stringLine
+                             inSession:aSession
+                           partialLine:partialLine
+                            lineNumber:lineNumber
+                      useInterpolation:useInterpolation];
+    }];
+    [_stats addValue:duration * 1000];
+    return result;
+}
+
+- (BOOL)reallyTryString:(iTermStringLine *)stringLine
+              inSession:(id<iTermTriggerSession>)aSession
+            partialLine:(BOOL)partialLine
+             lineNumber:(long long)lineNumber
+       useInterpolation:(BOOL)useInterpolation {
     __block BOOL stopFutureTriggersFromRunningOnThisLine = NO;
     NSString *s = stringLine.stringValue;
     DLog(@"Search for regex %@ in string %@", regex_, s);

@@ -21,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol PTYAnnotationReading;
 @class Trigger;
 @class iTermBackgroundCommandRunnerPool;
+@class iTermHistogram;
 @protocol iTermObject;
 @class iTermRateLimitedUpdate;
 @class iTermStringLine;
@@ -134,6 +135,7 @@ extern NSString * const kTriggerNameKey;
 @property (nonatomic, readonly) BOOL detectsPrompt;
 @property (nullable, nonatomic, readonly) NSString *helpText;
 @property (nonatomic, readonly) NSSet<NSNumber *> *allowedMatchTypes;
+@property (nonatomic, readonly) iTermHistogram *performanceHistogram;
 
 + (nullable NSSet<NSString *> *)synonyms;
 + (nullable Trigger *)triggerFromDict:(NSDictionary *)dict;

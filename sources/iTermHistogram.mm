@@ -177,9 +177,6 @@ namespace iTerm2 {
 
 @implementation iTermHistogram {
 #if ENABLE_STATS
-    double _sum;
-    double _min;
-    double _max;
     iTerm2::Sampler *_sampler;
 #endif
 }
@@ -323,6 +320,10 @@ static double iTermSaneDouble(const double d) {
 #endif
 }
 
+- (double)percentile:(double)p {
+    return _sampler->value_for_percentile(p);
+}
+
 - (double)valueAtNTile:(double)ntile {
 #if ENABLE_STATS
     return _sampler->value_for_percentile(ntile);
@@ -347,10 +348,7 @@ static double iTermSaneDouble(const double d) {
     const double upperBound = multiplier * _sampler->value_for_percentile(1);
     NSMutableString *sparklines = [NSMutableString stringWithFormat:format, lowerBound];
     [sparklines appendString:@" "];
-    const double largestBucketCount = *std::max_element(buckets.begin(), buckets.end());
-    for (int i = 0; i < buckets.size(); i++) {
-        [sparklines appendString:[self sparkWithHeight:buckets[i] / largestBucketCount]];
-    }
+    [sparklines appendString:[self graphString]];
     [sparklines appendString:@" "];
     [sparklines appendFormat:format, upperBound];
 
@@ -358,6 +356,19 @@ static double iTermSaneDouble(const double d) {
 #else
     return @"stats disabled";
 #endif
+}
+
+- (NSString *)graphString {
+    std::vector<int> buckets = _sampler->get_histogram();
+    if (buckets.size() == 0) {
+        return @"";
+    }
+    const double largestBucketCount = *std::max_element(buckets.begin(), buckets.end());
+    NSMutableString *sparklines = [NSMutableString string];
+    for (int i = 0; i < buckets.size(); i++) {
+        [sparklines appendString:[self sparkWithHeight:buckets[i] / largestBucketCount]];
+    }
+    return sparklines;
 }
 
 #pragma mark - Private

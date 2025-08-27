@@ -82,7 +82,7 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 - (void)arrangementWithName:(NSString *)arrangementName
               hasInvalidPWD:(NSString *)badPWD
          forSessionWithGuid:(NSString *)sessionGUID;
-- (void)offerToDisableTriggersInInteractiveApps;
+- (void)offerToDisableTriggersInInteractiveAppsWithStats:(NSString *)stats;
 - (void)tmuxDidUpdatePasteBuffer;
 - (void)openURL:(NSURL *)url;
 - (void)openCommandDidFailWithSecureInputEnabled;

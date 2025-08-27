@@ -5536,7 +5536,7 @@ lengthExcludingInBandSignaling:data.length
     // Use unmanaged concurrency because this will be rare and it can't run as a regular side-
     // effect since it modifies the profile.
     [self addUnmanagedSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenOfferToDisableTriggersInInteractiveApps];
+        [delegate screenOfferToDisableTriggersInInteractiveApps:evaluator.stats];
     }];
 }
 

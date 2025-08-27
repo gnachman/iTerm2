@@ -16542,8 +16542,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [_pasteboardReporter handleRequestWithPasteboard:pasteboard completion:completion];
 }
 
-- (void)screenOfferToDisableTriggersInInteractiveApps {
-    [self.naggingController offerToDisableTriggersInInteractiveApps];
+- (void)screenOfferToDisableTriggersInInteractiveApps:(NSString *)stats {
+    [self.naggingController offerToDisableTriggersInInteractiveAppsWithStats:stats];
 }
 
 - (void)screenDidUpdateReturnCodeForMark:(id<VT100ScreenMarkReading>)mark

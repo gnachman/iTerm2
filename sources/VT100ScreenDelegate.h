@@ -389,7 +389,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
                lineBufferGeneration:(long long)lineBufferGeneration;
 - (void)screenApplicationKeypadModeDidChange:(BOOL)mode;
 - (void)screenRestoreColorsFromSlot:(VT100SavedColorsSlot * _Nonnull)slot;
-- (void)screenOfferToDisableTriggersInInteractiveApps;
+- (void)screenOfferToDisableTriggersInInteractiveApps:(NSString * _Nonnull)stats;
 - (void)screenDidUpdateReturnCodeForMark:(id<VT100ScreenMarkReading> _Nonnull)mark
                               remoteHost:(id<VT100RemoteHostReading> _Nullable)remoteHost;
 - (void)screenCopyStringToPasteboard:(NSString * _Nonnull)string;

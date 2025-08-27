@@ -76,6 +76,16 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
                           lineNumber:startAbsLineNumber];
 }
 
+- (NSString *)stats {
+    iTermTabularFormatter *formatter = [iTermHistogram tabularFormatterTime];
+    for (Trigger *trigger in _triggers) {
+        NSString *label = [NSString stringWithFormat:@"Trigger “%@” with regex “%@”",
+                           trigger.name, trigger.regex];
+        [trigger.performanceHistogram addTo:formatter precision:2 units:@"ms" label:label];
+    }
+    return [formatter formattedAsText];
+}
+
 - (void)resetRateLimit {
     DLog(@"reset rate limit");
     _lastPartialLineTriggerCheck = 0;

@@ -3547,7 +3547,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [NSSavePanel setDirectoryURL:[NSURL fileURLWithPath:path] onceForID:@"saveDocumentAs:" savePanel:aSavePanel];
     aSavePanel.nameFieldStringValue = nowStr;
     __weak __typeof(aSavePanel) weakSavePanel = aSavePanel;
-    [aSavePanel beginWithFallbackWindow:self.window completionHandler:^(NSModalResponse result) {
+    [aSavePanel beginWithFallbackWindow:self.window handler:^(NSModalResponse result, iTermSavePanelItem *item) {
         __strong __typeof(weakSavePanel) savePanel = weakSavePanel;
         if (!savePanel) {
             return;
@@ -3557,9 +3557,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         }
         const BOOL wantTimestamps = timestampsButton.state == NSControlStateValueOn;
         [[NSUserDefaults standardUserDefaults] setBool:wantTimestamps forKey:userDefaultsKey];
-        [[self dataToSaveWithTimestamps:wantTimestamps] writeToSaveItem:savePanel.item completionHandler:^(NSError *error) {
+        [[self dataToSaveWithTimestamps:wantTimestamps] writeToSaveItem:item completionHandler:^(NSError *error) {
             if (error) {
-                DLog(@"Beep: can't write to %@", savePanel.item);
+                DLog(@"Beep: can't write to %@", item);
                 NSBeep();
             }
         }];
