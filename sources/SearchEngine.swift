@@ -712,8 +712,10 @@ class SearchOperation: Pausable {
             // reached stop point
             SELog("searchOnce(): Reached stopping point")
             if  !positions.wrapped {
+                SELog("searchOnce(): Wrap")
                 wrap()
             } else {
+                SELog("searchOnce(): Finish")
                 finish()
             }
         case .Searching:
@@ -898,10 +900,18 @@ class SearchOperation: Pausable {
     private func handleMatches(searchInfo: SearchInfo) {
         let allPositions = snapshot.lineBuffer.convertPositions(results,
                                                                 withWidth: snapshot.width()) ?? []
-        let searchResults = allPositions.compactMap { xyrange in
+        let searchResults = allPositions.compactMap { xyrange -> SearchResult? in
+
             let result = SearchResult.withCoordRange(xyrange.coordRange,
                                                      overflow: snapshot.cumulativeOverflow)
             //SELog("handleMatches converted \(xyrange) to \(String(describing: result)) with overflow of \(snapshot.cumulativeOverflow)")
+            if let resultRange = result?.internalAbsCoordRange,
+               let requestRange = request.absLineRange,
+               (!requestRange.contains(resultRange.start.y) ||
+                !requestRange.contains(resultRange.end.y)) {
+                SELog("Ignore out-of-range resul \(result)t")
+                return nil
+            }
             return result
         }
         SELog("handleMatches conveted \(allPositions.count) XYRanges to \(searchResults.count) SearchResults from \(String(describing: allPositions.first))->\(String(describing: searchResults.first)) to \(String(describing: allPositions.last))->\(String(describing: searchResults.last))")
