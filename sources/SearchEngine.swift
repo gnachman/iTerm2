@@ -909,7 +909,7 @@ class SearchOperation: Pausable {
                let requestRange = request.absLineRange,
                (!requestRange.contains(resultRange.start.y) ||
                 !requestRange.contains(resultRange.end.y)) {
-                SELog("Ignore out-of-range resul \(result)t")
+                SELog("Ignore out-of-range result \(result.d)")
                 return nil
             }
             return result
