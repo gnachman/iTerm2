@@ -17936,6 +17936,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 - (void)updateSearchRange {
     if (!_selectedCommandMark) {
         _textview.findOnPageHelper.absLineRange = NSMakeRange(0, 0);
+        _view.findDriver.viewController.hasLineRange = NO;
         return;
     }
     VT100GridAbsCoordRange range = [self rangeOfCommandAndOutputForMark:_selectedCommandMark
@@ -17946,6 +17947,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     } else {
         _textview.findOnPageHelper.absLineRange = NSMakeRange(range.start.y, range.end.y - range.start.y + 1);
     }
+    _view.findDriver.viewController.hasLineRange = YES;
 }
 
 - (VT100GridAbsCoordRange)rangeOfCommandAndOutputForMark:(id<VT100ScreenMarkReading>)mark

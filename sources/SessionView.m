@@ -485,6 +485,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
                                        aRect.size.height - size.height);
     [dropDownViewController setOffsetFromTopRightOfSuperview:NSMakeSize(30, 0)];
     [dropDownViewController.view setFrame:NSMakeRect(origin.x, origin.y, size.width, size.height)];
+    [dropDownViewController layoutSubviews];
 }
 
 - (BOOL)isDropDownSearchVisible {

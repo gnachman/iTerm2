@@ -28,6 +28,7 @@
 #import "iTermDropDownFindViewController.h"
 
 #import "DebugLogging.h"
+#import "FindView.h"
 #import "iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
@@ -46,14 +47,17 @@
 // history can recall. This looks nicer to my eyes.
 static const float kAnimationDuration = 0.2;
 static const CGFloat kFilterHeight = 30;
+static const CGFloat kLineRangeHeight = 24;
 
-@interface iTermDropDownFindViewController()<iTermFocusReportingSearchFieldDelegate>
+@interface iTermDropDownFindViewController()<iTermFocusReportingSearchFieldDelegate, MinimalFindViewDelegate>
 @end
 
 @implementation iTermDropDownFindViewController {
     IBOutlet iTermFocusReportingSearchField *findBarTextField_;
     IBOutlet NSSearchField *_filterField;
     IBOutlet NSView *_filterWrapper;
+    IBOutlet NSView *_selectionNoticeWrapper;
+    IBOutlet NSView *_searchWrapper;
 
     // Fades out the progress indicator.
     NSTimer *_animationTimer;
@@ -94,9 +98,25 @@ static const CGFloat kFilterHeight = 30;
     [self.view makeBackingLayer];
     self.view.shadow = shadow;
     [self setFilterHidden:YES];
+    [self updateSelectionNoticeVisibility];
+    [self.minimalFindView setDelegate:self];
 }
 
 #pragma mark - iTermFindViewController
+
+- (void)updateSelectionNoticeVisibility {
+    const BOOL hidden = !self.hasLineRange;
+    if (hidden == _selectionNoticeWrapper.hidden) {
+        return;
+    }
+    _selectionNoticeWrapper.hidden = hidden;
+    [self.driver invalidateFrame];
+}
+
+- (void)setHasLineRange:(BOOL)hasLineRange {
+    _hasLineRange = hasLineRange;
+    [self updateSelectionNoticeVisibility];
+}
 
 - (BOOL)filterIsVisible {
     [self view];
@@ -117,8 +137,44 @@ static const CGFloat kFilterHeight = 30;
 }
 
 - (NSSize)desiredSize {
-    return NSMakeSize(NSWidth(self.view.bounds), _baseHeight - (self.filterIsVisible ? 0 : kFilterHeight));
+    CGFloat height = _baseHeight + 18;
+    if (!self.filterIsVisible) {
+        height -= kFilterHeight;
+    }
+    if (!self.hasLineRange) {
+        height -= kLineRangeHeight;
+    }
+    return NSMakeSize(NSWidth(self.view.bounds), height);
 }
+
+- (void)layoutSubviews {
+    CGFloat y = 19;
+    if (self.hasLineRange) {
+        NSRect rect = _selectionNoticeWrapper.frame;
+        rect.origin.y = y;
+        _selectionNoticeWrapper.frame = rect;
+        y += rect.size.height;
+
+    }
+    if (!_filterWrapper.isHidden) {
+        NSRect rect = _filterWrapper.frame;
+        rect.origin.y = y;
+        _filterWrapper.frame = rect;
+        y += 29;
+    }
+    NSRect frame = _searchWrapper.frame;
+    frame.origin.y = y;
+    _searchWrapper.frame = frame;
+
+    frame = self.minimalFindView.closeButton.frame;
+    frame.origin.y = y;
+    self.minimalFindView.closeButton.frame = frame;
+}
+
+- (MinimalFindView *)minimalFindView {
+    return [MinimalFindView castFrom:self.view];
+}
+
 - (void)toggleFilter {
     [self setFilterHidden:!_filterWrapper.isHidden];
 }
@@ -401,8 +457,7 @@ static const CGFloat kFilterHeight = 30;
 }
 
 - (NSRect)fullSizeFrame {
-    const CGFloat dy = self.filterIsVisible ? 0 : -kFilterHeight;
-    const CGFloat height = _baseHeight + dy;
+    const CGFloat height = self.desiredSize.height;
     const NSRect myFrame = self.view.frame;
     return NSMakeRect(NSWidth(self.superframe) - NSWidth(myFrame) - _offset.width,
                       NSHeight(self.superframe) - height - _offset.height,
@@ -468,6 +523,12 @@ static const CGFloat kFilterHeight = 30;
 
 - (NSInteger)focusReportingSearchFieldCurrentIndex:(iTermFocusReportingSearchField *)sender {
     return [self.driver currentIndex];
+}
+
+#pragma mark - MinimalFindViewDelegate
+
+- (void)minimalFindViewDidLayout {
+    [self layoutSubviews];
 }
 
 @end

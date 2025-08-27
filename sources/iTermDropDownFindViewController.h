@@ -31,5 +31,7 @@
 #import "iTermFindViewController.h"
 
 @interface iTermDropDownFindViewController : NSViewController <iTermFilterViewController, iTermFindViewController, NSTextFieldDelegate>
+@property (nonatomic) BOOL hasLineRange;
 - (NSSize)desiredSize;
+- (void)layoutSubviews;
 @end

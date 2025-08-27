@@ -15,6 +15,7 @@
 
 @interface iTermMiniSearchFieldViewController : NSViewController<iTermFindViewController>
 @property (nonatomic) BOOL canClose;
+@property (nonatomic) BOOL hasLineRange;
 
 - (void)sizeToFitSize:(NSSize)size;
 - (void)setFont:(NSFont *)font;

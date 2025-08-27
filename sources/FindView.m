@@ -70,7 +70,6 @@
 
 @implementation MinimalFindView {
     NSVisualEffectView *_vev NS_AVAILABLE_MAC(10_14);
-    IBOutlet NSButton *_closeButton;
 }
 
 - (void)awakeFromNib {
@@ -90,6 +89,7 @@
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
     [super resizeSubviewsWithOldSize:oldSize];
     _vev.frame = NSInsetRect(self.bounds, 9, 9);
+    [_delegate minimalFindViewDidLayout];
 }
 
 - (void)resetCursorRects {
