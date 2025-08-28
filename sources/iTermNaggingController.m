@@ -471,7 +471,7 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
 }
 
 - (void)showStats:(NSString *)stats {
-    NSString *path = [NSTemporaryDirectory() stringByAppendingPathComponent:@"trigger-stats.txt"];
+    NSString *path = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"trigger-stats-%@.txt", [NSUUID UUID].UUIDString]];
 
     NSError *error = nil;
     BOOL ok = [stats writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:&error];

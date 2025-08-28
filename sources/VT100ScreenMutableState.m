@@ -4475,6 +4475,12 @@ lengthExcludingInBandSignaling:data.length
             _postTriggerActions.count != 0);
 }
 
+- (NSArray<iTermHistogram *> *)triggerStats {
+    return [_triggerEvaluator.triggers mapWithBlock:^id _Nullable(Trigger *trigger) {
+        return [trigger.performanceHistogram clone];
+    }];
+}
+
 - (BOOL)appendAsciiDataToTriggerLine:(AsciiData *)asciiData {
     if (![self shouldEvaluateTriggers]) {
         DLog(@"No expectations or triggers so bail");

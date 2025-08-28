@@ -28,6 +28,39 @@ namespace iTerm2 {
             _values.reserve(capacity);
         }
 
+        Sampler(const Sampler &other) :
+        _values(other._values),
+        _capacity(other._capacity),
+        _weight(other._weight) { }
+
+        Sampler(NSDictionary *dict) :
+        _capacity([dict[@"capacity"] intValue]),
+        _weight([dict[@"weight"] intValue]) {
+            NSArray *values = dict[@"values"];
+            _values.reserve(_capacity);
+            for (NSNumber *num in values) {
+                _values.push_back([num doubleValue]);
+            }
+
+            // sanity checks
+            assert(_values.size() <= _capacity);
+            assert(_weight >= (int)_values.size());
+        }
+
+        Sampler &operator=(const Sampler &) = delete;
+
+        NSDictionary *dictionary_value() const {
+            NSMutableArray *values = [NSMutableArray arrayWithCapacity:_values.size()];
+            for (double v : _values) {
+                [values addObject:@(v)];
+            }
+            return @{
+                @"capacity": @(_capacity),
+                @"weight": @(_weight),
+                @"values": values
+            };
+        }
+
         void add(const double &value) {
             // Reservoir sampling
             if (_values.size() < _capacity) {
@@ -47,11 +80,20 @@ namespace iTerm2 {
             return _weight;
         }
 
+        // We assume that all concatenated samples were picked with equal probability.
+        void concatenate(const Sampler &other) {
+            assert(_values.size() + other._values.size() <= _capacity);
+            _weight += other._weight;
+            _values.insert(std::end(_values),
+                           std::begin(other._values),
+                           std::end(other._values));
+        }
+
         void merge_from(const Sampler &other) {
-            assert(other._capacity == _capacity);
             if (other._weight == 0) {
                 return;
             }
+            assert(other._capacity == _capacity);
             if (_weight == 0) {
                 _values = other._values;
                 _weight = other._weight;
@@ -161,6 +203,7 @@ namespace iTerm2 {
             return result;
         }
 
+        int weight() const { return _weight; }
     private:
         int clamp(int i, int min, int max) const {
             return std::min(std::max(min, i), max);
@@ -192,12 +235,82 @@ namespace iTerm2 {
     return self;
 }
 
+- (instancetype)initConcatenating:(NSArray<iTermHistogram *> *)histograms {
+    self = [super init];
+    if (self) {
+        _reservoirSize = 0;
+        _max = 0;
+        _min = INFINITY;
+        for (iTermHistogram *hist in histograms) {
+            _reservoirSize += hist.count;
+            _max = MAX(_max, hist.max);
+            _min = MIN(_min, hist.min);
+            _count += hist.count;
+            _sum += hist.sum;
+        }
+
+        _sampler = new iTerm2::Sampler(_reservoirSize);
+        for (iTermHistogram *hist in histograms) {
+            _sampler->concatenate(*hist->_sampler);
+        }
+    }
+    return self;
+}
+- (instancetype)initWithReservoirSize:(int)reservoirSize
+                              sampler:(const iTerm2::Sampler &)sampler {
+    self = [super init];
+    if (self) {
+        _reservoirSize = reservoirSize;
+        _sampler = new iTerm2::Sampler(sampler);
+    }
+    return self;
+}
+
+- (instancetype)initWithDictionary:(NSDictionary *)dictionary {
+    self = [super init];
+    if (self) {
+#if ENABLE_STATS
+        _reservoirSize = [dictionary[@"reservoirSize"] intValue] ?: 100;
+        _sampler = new iTerm2::Sampler(dictionary[@"sampler"]);
+        _sum = [dictionary[@"sum"] doubleValue];
+        _min = [dictionary[@"min"] doubleValue];
+        _max = [dictionary[@"max"] doubleValue];
+        _count = [dictionary[@"count"] longLongValue];
+#else
+        _reservoirSize = 0;
+#endif
+    }
+    return self;
+}
+
 - (void)dealloc {
 #if ENABLE_STATS
     delete _sampler;
 #endif
 }
 
+- (void)sanityCheck {
+    if (_sampler->weight() > 0) {
+        assert(_count > 0);
+    }
+}
+
+- (id)clone {
+    return [[iTermHistogram alloc] initWithDictionary:self.dictionaryValue];
+}
+
+- (NSDictionary *)dictionaryValue {
+#if ENABLE_STATS
+    return @{ @"reservoirSize": @(_reservoirSize),
+              @"sampler": _sampler->dictionary_value(),
+              @"sum": @(_sum),
+              @"min": @(_min),
+              @"max": @(_max),
+              @"count": @(_count) };
+#else
+    return @{};
+#endif
+}
 - (void)clear {
 #if ENABLE_STATS
     _sum = 0;
@@ -369,6 +482,37 @@ static double iTermSaneDouble(const double d) {
         [sparklines appendString:[self sparkWithHeight:buckets[i] / largestBucketCount]];
     }
     return sparklines;
+}
+
+- (NSArray<NSDictionary *> *)bucketData {
+#if ENABLE_STATS
+    if (_count == 0) {
+        return @[];
+    }
+    
+    std::vector<int> buckets = _sampler->get_histogram();
+    if (buckets.size() == 0) {
+        return @[];
+    }
+    
+    const double minimum = _sampler->value_for_percentile(0);
+    const double range = _sampler->value_for_percentile(1) - minimum;
+    const double binWidth = range / buckets.size();
+    
+    NSMutableArray<NSDictionary *> *result = [NSMutableArray array];
+    for (int i = 0; i < buckets.size(); i++) {
+        NSDictionary *bucket = @{
+            @"lowerBound": @(minimum + i * binWidth),
+            @"upperBound": @(minimum + (i + 1) * binWidth),
+            @"count": @(buckets[i])
+        };
+        [result addObject:bucket];
+    }
+    
+    return result;
+#else
+    return @[];
+#endif
 }
 
 #pragma mark - Private

@@ -1336,3 +1336,29 @@ extension PTYSession {
         return nil
     }
 }
+
+@objc
+extension PTYSession {
+    func willOpenEditSessionSettings() {
+        if var triggerDicts = self.profile[KEY_TRIGGERS] as? [NSDictionary] {
+            var haveStats = false
+            screen.performBlock(joinedThreads: { _, state, _ in
+                if let state {
+                    let stats = state.triggerStats()
+                    if stats.count == triggerDicts.count {
+                        for i in 0..<stats.count {
+                            if var dict = triggerDicts[i] as? [String: Any] {
+                                haveStats = true
+                                dict[kTriggerPerformanceKey] = stats[i].dictionaryValue
+                                triggerDicts[i] = dict as NSDictionary
+                            }
+                        }
+                    }
+                }
+            })
+            if haveStats {
+                setSessionSpecificProfileValues([KEY_TRIGGERS: triggerDicts])
+            }
+        }
+    }
+}

@@ -882,8 +882,10 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     
     _detailViewController.view.hidden = NO;
     NSInteger i = _tableView.selectedRow;
-    NSDictionary *dict = [self triggerDictionariesForCurrentProfile][i];
-    [_detailViewController setTrigger:[Trigger triggerFromDict:dict]];
+    NSArray *triggers = [self triggerDictionariesForCurrentProfile];
+    NSDictionary *dict = triggers[i];
+    Trigger *trigger = [Trigger triggerFromDict:dict];
+    [_detailViewController setTrigger:trigger];
 }
 
 #pragma mark NSWindowDelegate

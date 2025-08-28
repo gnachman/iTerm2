@@ -45,6 +45,9 @@ static const CGFloat kLabelWidth = 124;
     NSButton *_toggleVisualizationButton;
     NSButton *_contentRegexVisualizationButton;
     NSPopUpButton *_matchTypeButton;
+    NSView *_performanceGraphContainer;
+    NSView *_performanceRow;
+    NSView *_okCancelRow;
     
     NSArray<Trigger *> *_prototypes;
     Trigger *_currentTrigger;
@@ -234,6 +237,40 @@ static const CGFloat kLabelWidth = 124;
         [self updateContentRegexVisibility];
         _matchTypeButton.enabled = (trigger.allowedMatchTypes.count > 1);
     }
+    
+    // Show or hide the performance graph row based on whether the trigger has a performance histogram
+    BOOL shouldShowGraph = trigger.performanceHistogram.count > 0;
+
+    if (@available(macOS 13, *)) {
+        // Remove any existing chart view
+        [_performanceGraphContainer.subviews.firstObject removeFromSuperview];
+        
+        if (shouldShowGraph) {
+            _performanceRow.hidden = NO;
+            
+            iTermHistogram *histogram = trigger.performanceHistogram;
+            NSView *chart = [[iTermHistogramVisualizationView alloc] initWithHistogram:histogram];
+            if (chart) {
+                chart.translatesAutoresizingMaskIntoConstraints = NO;
+                [_performanceGraphContainer addSubview:chart];
+                
+                // Set up constraints to fill the container
+                [NSLayoutConstraint activateConstraints:@[
+                    [chart.leadingAnchor constraintEqualToAnchor:_performanceGraphContainer.leadingAnchor],
+                    [chart.trailingAnchor constraintEqualToAnchor:_performanceGraphContainer.trailingAnchor],
+                    [chart.topAnchor constraintEqualToAnchor:_performanceGraphContainer.topAnchor],
+                    [chart.bottomAnchor constraintEqualToAnchor:_performanceGraphContainer.bottomAnchor]
+                ]];
+            }
+        } else {
+            _performanceRow.hidden = YES;
+        }
+    } else {
+        _performanceRow.hidden = YES;
+    }
+    
+    // Force the view to re-layout after showing/hiding the graph row
+    [self.view setNeedsLayout:YES];
 }
 
 - (void)loadView {
@@ -323,9 +360,132 @@ static const CGFloat kLabelWidth = 124;
     
     [stackView addArrangedSubview:paramWrapperView];
     
+    // Performance graph row with label (initially hidden)
+    NSView *performanceRow = [[NSView alloc] init];
+    performanceRow.translatesAutoresizingMaskIntoConstraints = NO;
+    performanceRow.hidden = YES;
+    
+    // Create help button
+    NSString *helpText = @"This histogram shows how much CPU time was used evaluating the regular expression for this trigger over the lifetime of the current terminal session. The X axis gives time in microseconds while the Y axis gives the number of samples which fell in that duration bucket. The vertical red line indicates the mean duration. You can use this to diagnose triggers that cause performance problems.";
+    iTermPopoverHelpButton *helpButton = [[iTermPopoverHelpButton alloc] initWithHelpText:helpText];
+    helpButton.translatesAutoresizingMaskIntoConstraints = NO;
+    [performanceRow addSubview:helpButton];
+    
+    // Create label
+    NSTextField *performanceLabel = [[NSTextField alloc] init];
+    performanceLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    performanceLabel.stringValue = @"CPU Time:";
+    performanceLabel.editable = NO;
+    performanceLabel.bordered = NO;
+    performanceLabel.backgroundColor = [NSColor clearColor];
+    performanceLabel.alignment = NSTextAlignmentRight;
+    performanceLabel.lineBreakMode = NSLineBreakByClipping;
+    performanceLabel.usesSingleLineMode = YES;
+    [performanceRow addSubview:performanceLabel];
+    
+    // Create container for the chart
+    _performanceGraphContainer = [[NSView alloc] init];
+    _performanceGraphContainer.translatesAutoresizingMaskIntoConstraints = NO;
+    [performanceRow addSubview:_performanceGraphContainer];
+    
+    // Set up constraints for help button, label and container
+    // Help button positioned just before the label
+    [performanceRow addConstraint:[NSLayoutConstraint constraintWithItem:helpButton
+                                                               attribute:NSLayoutAttributeTrailing
+                                                               relatedBy:NSLayoutRelationEqual
+                                                                  toItem:performanceLabel
+                                                               attribute:NSLayoutAttributeLeading
+                                                              multiplier:1.0
+                                                                constant:-4]];  // Small gap before "CPU Time:"
+    [performanceRow addConstraint:[NSLayoutConstraint constraintWithItem:helpButton
+                                                               attribute:NSLayoutAttributeCenterY
+                                                               relatedBy:NSLayoutRelationEqual
+                                                                  toItem:performanceLabel
+                                                               attribute:NSLayoutAttributeCenterY
+                                                              multiplier:1.0
+                                                                constant:0]];
+    
+    // Label uses intrinsic content size and is positioned at the right edge of the label area
+    [performanceRow addConstraint:[NSLayoutConstraint constraintWithItem:performanceLabel
+                                                               attribute:NSLayoutAttributeTrailing
+                                                               relatedBy:NSLayoutRelationEqual
+                                                                  toItem:performanceRow
+                                                               attribute:NSLayoutAttributeLeading
+                                                              multiplier:1.0
+                                                                constant:kLabelWidth]];
+    [performanceRow addConstraint:[NSLayoutConstraint constraintWithItem:performanceLabel
+                                                               attribute:NSLayoutAttributeTop
+                                                               relatedBy:NSLayoutRelationEqual
+                                                                  toItem:performanceRow
+                                                               attribute:NSLayoutAttributeTop
+                                                              multiplier:1.0
+                                                                constant:12]];  // Move down by 12 points
+    
+    // Set content hugging priority to make the label hug its content
+    [performanceLabel setContentHuggingPriority:NSLayoutPriorityDefaultHigh forOrientation:NSLayoutConstraintOrientationHorizontal];
+    
+    [performanceRow addConstraint:[NSLayoutConstraint constraintWithItem:_performanceGraphContainer
+                                                               attribute:NSLayoutAttributeLeading
+                                                               relatedBy:NSLayoutRelationEqual
+                                                                  toItem:performanceLabel
+                                                               attribute:NSLayoutAttributeTrailing
+                                                              multiplier:1.0
+                                                                constant:6]];
+    [performanceRow addConstraint:[NSLayoutConstraint constraintWithItem:_performanceGraphContainer
+                                                               attribute:NSLayoutAttributeTrailing
+                                                               relatedBy:NSLayoutRelationEqual
+                                                                  toItem:performanceRow
+                                                               attribute:NSLayoutAttributeTrailing
+                                                              multiplier:1.0
+                                                                constant:0]];
+    [performanceRow addConstraint:[NSLayoutConstraint constraintWithItem:_performanceGraphContainer
+                                                               attribute:NSLayoutAttributeTop
+                                                               relatedBy:NSLayoutRelationEqual
+                                                                  toItem:performanceRow
+                                                               attribute:NSLayoutAttributeTop
+                                                              multiplier:1.0
+                                                                constant:0]];
+    [performanceRow addConstraint:[NSLayoutConstraint constraintWithItem:_performanceGraphContainer
+                                                               attribute:NSLayoutAttributeBottom
+                                                               relatedBy:NSLayoutRelationEqual
+                                                                  toItem:performanceRow
+                                                               attribute:NSLayoutAttributeBottom
+                                                              multiplier:1.0
+                                                                constant:0]];
+    
+    // Height constraint for the row
+    [performanceRow addConstraint:[NSLayoutConstraint constraintWithItem:performanceRow
+                                                                attribute:NSLayoutAttributeHeight
+                                                                relatedBy:NSLayoutRelationGreaterThanOrEqual
+                                                                   toItem:nil
+                                                                attribute:NSLayoutAttributeNotAnAttribute
+                                                               multiplier:1.0
+                                                                 constant:0]];
+    
+    // Store reference to the row for showing/hiding
+    _performanceRow = performanceRow;
+    
+    [stackView addArrangedSubview:performanceRow];
+    
+    // Constrain performance row to fill the width of the stack view
+    [stackView addConstraint:[NSLayoutConstraint constraintWithItem:performanceRow
+                                                          attribute:NSLayoutAttributeLeading
+                                                          relatedBy:NSLayoutRelationEqual
+                                                             toItem:stackView
+                                                          attribute:NSLayoutAttributeLeading
+                                                         multiplier:1.0
+                                                           constant:0]];
+    [stackView addConstraint:[NSLayoutConstraint constraintWithItem:performanceRow
+                                                          attribute:NSLayoutAttributeTrailing
+                                                          relatedBy:NSLayoutRelationEqual
+                                                             toItem:stackView
+                                                          attribute:NSLayoutAttributeTrailing
+                                                         multiplier:1.0
+                                                           constant:0]];
+    
     // OK/Cancel buttons row
-    NSView *okCancelRow = [self createOkCancelRow];
-    [stackView addArrangedSubview:okCancelRow];
+    _okCancelRow = [self createOkCancelRow];
+    [stackView addArrangedSubview:_okCancelRow];
     
     // Store the stack view for constraints
     [mainView addConstraint:[NSLayoutConstraint constraintWithItem:stackView
@@ -1061,6 +1221,7 @@ static const CGFloat kLabelWidth = 124;
 }
 
 - (void)removeOkCancel {
+    [_okCancelRow removeFromSuperview];
     _okButton.hidden = YES;
     _cancelButton.hidden = YES;
     _updateProfileButton.hidden = YES;

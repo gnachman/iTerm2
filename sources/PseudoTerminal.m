@@ -6085,6 +6085,7 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     NSString *newGuid = [session divorceAddressBookEntryFromPreferences];
+    [session willOpenEditSessionSettings];
     [[PreferencePanel sessionsInstance] openToProfileWithGuid:newGuid
                                              selectGeneralTab:makeKey
                                                          tmux:session.isTmuxClient

@@ -33,6 +33,7 @@ extern NSString * const kTriggerMatchTypeKey;
 extern NSString * const kTriggerRegexKey;
 extern NSString * const kTriggerContentRegexKey;
 extern NSString * const kTriggerActionKey;
+extern NSString * const kTriggerPerformanceKey;
 extern NSString * const kTriggerParameterKey;
 extern NSString * const kTriggerPartialLineKey;
 extern NSString * const kTriggerDisabledKey;
@@ -135,7 +136,7 @@ extern NSString * const kTriggerNameKey;
 @property (nonatomic, readonly) BOOL detectsPrompt;
 @property (nullable, nonatomic, readonly) NSString *helpText;
 @property (nonatomic, readonly) NSSet<NSNumber *> *allowedMatchTypes;
-@property (nonatomic, readonly) iTermHistogram *performanceHistogram;
+@property (nonatomic, strong) iTermHistogram *performanceHistogram;
 
 + (nullable NSSet<NSString *> *)synonyms;
 + (nullable Trigger *)triggerFromDict:(NSDictionary *)dict;

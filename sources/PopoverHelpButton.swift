@@ -12,6 +12,18 @@ import AppKit
 class PopoverHelpButton: NSButton {
     @IBInspectable var helpText: String = ""
 
+    @objc
+    init(helpText: String) {
+        self.helpText = helpText
+        super.init(frame: .zero)
+        bezelStyle = .helpButton
+        setButtonType(.momentaryPushIn)
+        isBordered = true
+        target = self
+        action = #selector(clicked(_:))
+        title = ""
+    }
+
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         target = self

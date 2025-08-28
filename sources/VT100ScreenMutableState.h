@@ -381,6 +381,7 @@ lengthExcludingInBandSignaling:(int)lengthExcludingInBandSignaling
 - (BOOL)appendAsciiDataToTriggerLine:(AsciiData *)asciiData;
 - (void)forceCheckTriggers;
 - (BOOL)shouldEvaluateTriggers;
+- (NSArray<iTermHistogram *> *)triggerStats;
 
 #pragma mark - Color
 

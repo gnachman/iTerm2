@@ -29,11 +29,13 @@ extension MovingHistogram {
 
     @objc
     var histogram: iTermHistogram {
-        let combined = iTermHistogram()
-        for bucket in histograms {
-            combined.merge(from: bucket)
-        }
-        return combined;
+        return iTermHistogram(concatenating: histograms)
+    }
+
+    @objc(setFromHistogram:)
+    func set(from histogram: iTermHistogram) {
+        histogram.sanityCheck()
+        histograms = [histogram.clone()]
     }
 }
 

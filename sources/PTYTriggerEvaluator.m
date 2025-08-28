@@ -81,7 +81,7 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
     for (Trigger *trigger in _triggers) {
         NSString *label = [NSString stringWithFormat:@"Trigger “%@” with regex “%@”",
                            trigger.name, trigger.regex];
-        [trigger.performanceHistogram addTo:formatter precision:2 units:@"ms" label:label];
+        [trigger.performanceHistogram addTo:formatter precision:2 units:@"µs" label:label];
     }
     return [formatter formattedAsText];
 }
@@ -235,7 +235,8 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
         NSArray<Trigger *> *triggers = table[dict];
         if (!triggers.count) {
             DLog(@"This is a new trigger");
-            return [Trigger triggerFromDict:profileDict];
+            NSDictionary *clean = [profileDict dictionaryByRemovingObjectForKey:kTriggerPerformanceKey];
+            return [Trigger triggerFromDict:clean];
         }
         DLog(@"Use second trigger from %@", triggers);
         table[dict] = [triggers arrayByRemovingFirstObject];

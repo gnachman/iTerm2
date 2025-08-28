@@ -25,6 +25,7 @@ NSString * const kTriggerParameterKey = @"parameter";
 NSString * const kTriggerPartialLineKey = @"partial";
 NSString * const kTriggerDisabledKey = @"disabled";
 NSString * const kTriggerNameKey = @"name";
+NSString * const kTriggerPerformanceKey = @"performance";
 
 @interface Trigger()
 @end
@@ -76,6 +77,10 @@ NSString * const kTriggerNameKey = @"name";
     trigger.disabled = [dict[kTriggerDisabledKey] boolValue];
     trigger->_matchType = [dict[kTriggerMatchTypeKey] unsignedIntegerValue];
     trigger->_name = [NSString castFrom:dict[kTriggerNameKey]];
+    if (dict[kTriggerPerformanceKey]) {
+        iTermHistogram *histogram = [[iTermHistogram alloc] initWithDictionary:dict[kTriggerPerformanceKey]];
+        trigger.performanceHistogram = histogram;
+    }
     return trigger;
 }
 
@@ -239,6 +244,10 @@ NSString * const kTriggerNameKey = @"name";
     return _stats.histogram;
 }
 
+- (void)setPerformanceHistogram:(iTermHistogram *)performanceHistogram {
+    [_stats setFromHistogram:performanceHistogram];
+}
+
 - (BOOL)tryString:(iTermStringLine *)stringLine
         inSession:(id<iTermTriggerSession>)aSession
       partialLine:(BOOL)partialLine
@@ -269,7 +278,7 @@ NSString * const kTriggerNameKey = @"name";
                             lineNumber:lineNumber
                       useInterpolation:useInterpolation];
     }];
-    [_stats addValue:duration * 1000];
+    [_stats addValue:duration * 1000000];
     return result;
 }
 
@@ -492,6 +501,7 @@ NSString * const kTriggerNameKey = @"name";
     if (!temp[kTriggerParameterKey]) {
         temp[kTriggerParameterKey] = @"";
     }
+    [temp removeObjectForKey:kTriggerPerformanceKey];
     return temp;
 }
 

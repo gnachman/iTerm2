@@ -23,6 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) double sum;
 @property (nonatomic, readonly) double min;
 @property (nonatomic, readonly) double max;
+@property (nonatomic, readonly) NSDictionary *dictionaryValue;
 
 - (void)addValue:(double)value;
 - (void)mergeFrom:(iTermHistogram *)other;
@@ -34,6 +35,14 @@ NS_ASSUME_NONNULL_BEGIN
 // p=0.5 returns median, p=0.95 returns 95th percentile value
 - (double)percentile:(double)p;
 - (NSString *)graphString;
+- (instancetype)clone;
+- (instancetype)initWithDictionary:(NSDictionary *)dictionary;
+- (instancetype)initConcatenating:(NSArray<iTermHistogram *> *)histograms;
+
+// Returns an array of dictionaries with bucket data for visualization
+// Each dictionary contains: @"lowerBound", @"upperBound", @"count"
+- (NSArray<NSDictionary *> *)bucketData;
+- (void)sanityCheck;
 
 @end
 
