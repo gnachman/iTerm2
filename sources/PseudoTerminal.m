@@ -6013,17 +6013,11 @@ ITERM_WEAKLY_REFERENCEABLE
     NSString *name = [NSString stringWithFormat:kWindowNameFormat, uniqueNumber_];
     const BOOL hadAutoSaveFrame = [window setFrameUsingName:name];
     if (hadAutoSaveFrame) {
-        DLog(@"Had an auto save frame of %@", NSStringFromRect(window.frame));
-        frame.origin = [window frame].origin;
-        frame.origin.y += [window frame].size.height - frame.size.height;
+        DLog(@"Autosave frame restored (possibly asynchronously! good luck)");
     } else {
         frame.origin = preferredOrigin_;
-    }
-    DLog(@"Update frame to %@", NSStringFromRect(frame));
-    [window setFrame:frame display:NO];
-    if (hadAutoSaveFrame) {
-        DLog(@"Replace autosaved frame");
-        [[self window] saveFrameUsingName:name];
+        [window setFrame:frame display:NO];
+        DLog(@"Update frame to %@", NSStringFromRect(frame));
     }
 }
 
