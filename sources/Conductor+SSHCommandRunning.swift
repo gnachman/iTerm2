@@ -20,7 +20,7 @@ extension Conductor: SSHCommandRunning {
             DLog("Declining to add second poll to queue")
             return
         }
-        send(.framerPoll, .handlePoll(StringArray(), completion))
+        send(.framerPoll, .handlePoll(StringArray(), .init(completion)))
     }
 
     @objc
@@ -49,7 +49,7 @@ extension Conductor: SSHCommandRunning {
     }
 
     func addBackgroundJob(_ pid: Int32, command: Command, completion: @escaping (Data, Int32) -> ()) {
-        let context = ExecutionContext(command: command, handler: .handleBackgroundJob(StringArray(), completion))
+        let context = ExecutionContext(command: command, handler: .handleBackgroundJob(StringArray(), .init(completion)))
         backgroundJobs[pid] = .executingPipeline(context, [])
         log("Added background job for pid \(pid), context \(context)")
     }
@@ -65,6 +65,6 @@ extension Conductor: SSHCommandRunning {
         // This command ends almost immediately, providing only the child process's pid as output,
         // but in actuality continues running in the background producing %output messages and
         // eventually %terminate.
-        send(.framerRun(commandLine), .handleRunRemoteCommand(commandLine, completion))
+        send(.framerRun(commandLine), .handleRunRemoteCommand(commandLine, .init(completion)))
     }
 }

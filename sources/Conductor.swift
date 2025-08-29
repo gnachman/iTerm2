@@ -907,6 +907,55 @@ extension Conductor {
         var strings = [String]()
     }
 
+    // TODO: When I set the deployment target to 14, use parameter packs
+    final class OneTimeClosure0<Output> {
+        private var closure: (() -> Output)?
+
+        init(_ closure: (() -> Output)?) {
+            self.closure = closure
+        }
+
+        func call() -> Output? {
+            guard let c = closure else {
+                return nil
+            }
+            closure = nil
+            return c()
+        }
+    }
+
+    final class OneTimeClosure1<A, Output> {
+        private var closure: ((A) -> Output)?
+
+        init(_ closure: ((A) -> Output)?) {
+            self.closure = closure
+        }
+
+        func call(_ a: A) -> Output? {
+            guard let c = closure else {
+                return nil
+            }
+            closure = nil
+            return c(a)
+        }
+    }
+
+    final class OneTimeClosure2<A, B, Output> {
+        private var closure: ((A, B) -> Output)?
+
+        init(_ closure: ((A, B) -> Output)?) {
+            self.closure = closure
+        }
+
+        func call(_ a: A, _ b: B) -> Output? {
+            guard let c = closure else {
+                return nil
+            }
+            closure = nil
+            return c(a, b)
+        }
+    }
+
     struct ExecutionContext: Codable, CustomDebugStringConvertible {
         var debugDescription: String {
             return "<ExecutionContext: command=\(command) handler=\(handler)\(canceled ? " CANCELED": ""))>"
@@ -953,11 +1002,11 @@ extension Conductor {
             case handleFramerLogin(StringArray)
             case handleJump(StringArray)
             case writeOnSuccess(String)  // see runPython
-            case handleRunRemoteCommand(String, (Data, Int32) -> ())
-            case handleBackgroundJob(StringArray, (Data, Int32) -> ())
-            case handlePoll(StringArray, (Data) -> ())
+            case handleRunRemoteCommand(String, OneTimeClosure2<Data, Int32, Void>)
+            case handleBackgroundJob(StringArray, OneTimeClosure2<Data, Int32, Void>)
+            case handlePoll(StringArray, OneTimeClosure1<Data, Void>)
             case handleGetShell(StringArray)
-            case handleFile(StringArray, (String, Int32) -> ())
+            case handleFile(StringArray, OneTimeClosure2<String, Int32, Void>)
             case handleNonFramerLogin
             case handleGetenv(String, StringArray)
             case handleReset(expected: String, lines: StringArray)
@@ -1060,15 +1109,15 @@ extension Conductor {
                 case .writeOnSuccess:
                     self = .writeOnSuccess(try container.decode(String.self, forKey: .string))
                 case .handleRunRemoteCommand:
-                    self = .handleRunRemoteCommand(try container.decode(String.self, forKey: .string), {_, _ in})
+                    self = .handleRunRemoteCommand(try container.decode(String.self, forKey: .string), .init({_, _ in}))
                 case .handleBackgroundJob:
-                    self = .handleBackgroundJob(try container.decode(StringArray.self, forKey: .stringArray), {_, _ in})
+                    self = .handleBackgroundJob(try container.decode(StringArray.self, forKey: .stringArray), .init({_, _ in}))
                 case .handlePoll:
-                    self = .handlePoll(try container.decode(StringArray.self, forKey: .stringArray), {_ in})
+                    self = .handlePoll(try container.decode(StringArray.self, forKey: .stringArray), .init({_ in}))
                 case .handleGetShell:
                     self = .handleGetShell(try container.decode(StringArray.self, forKey: .stringArray))
                 case .handleFile:
-                    self = .handleFile(StringArray(), { _, _ in })
+                    self = .handleFile(StringArray(), .init({ _, _ in }))
                 case .handleNonFramerLogin:
                     self = .handleNonFramerLogin
                 case .handleGetenv:
@@ -1091,7 +1140,7 @@ extension Conductor {
             switch handler {
             case .handleFile(_, let completion):
                 // Cause performFileOperation to throw .connectionclosed
-                completion("", -1)
+                completion.call("", -1)
             default:
                 break
             }
@@ -1602,7 +1651,7 @@ extension Conductor {
         log("Sending framerFile request \(subcommand)")
         send(.framerFile(subcommand),
              highPriority: highPriority,
-             .handleFile(StringArray(), completion))
+             .handleFile(StringArray(), .init(completion)))
     }
 
     private func framerSave(_ dict: [String: String]) {
@@ -1850,8 +1899,9 @@ extension Conductor {
                     return
                 }
                 addBackgroundJob(pid,
-                                 command: .framerRun(commandLine),
-                                 completion: completion)
+                                 command: .framerRun(commandLine)) { data, status in
+                    completion.call(data, status)
+                }
             case .sideChannelLine(_, _, _), .abort, .end(_), .canceled:
                 break
             }
@@ -1867,12 +1917,12 @@ extension Conductor {
                 }
                 lines.strings.append(line)
             case .abort, .canceled:
-                completion("", -1)
+                completion.call("", -1)
             case .sideChannelLine(line: _, channel: _, pid: _):
                 break
             case .end(let status):
                 DLog("Response from server complete for: \(executionContext.command)")
-                completion(lines.strings.joined(separator: ""), Int32(status))
+                completion.call(lines.strings.joined(separator: ""), Int32(status))
             }
         case .handlePoll(let output, let completion):
             switch result {
@@ -1882,7 +1932,7 @@ extension Conductor {
                 break
             case .end(_):
                 if let data = output.strings.joined(separator: "\n").data(using: .utf8) {
-                    completion(data)
+                    completion.call(data)
                 }
             }
             return
@@ -1942,11 +1992,11 @@ extension Conductor {
             case .sideChannelLine(line: let line, channel: 1, pid: _):
                 output.strings.append(line)
             case .abort, .sideChannelLine(_, _, _), .canceled:
-                completion(Data(), -2)
+                completion.call(Data(), -2)
             case .end(let status):
                 let combined = output.strings.joined(separator: "")
-                completion(combined.data(using: .utf8) ?? Data(),
-                           Int32(status))
+                completion.call(combined.data(using: .utf8) ?? Data(),
+                                Int32(status))
             }
             return
         }
