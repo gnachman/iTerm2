@@ -5988,7 +5988,7 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
 
-    if (![iTermAdvancedSettingsModel rememberWindowPositions]) {
+    if (![iTermPreferences boolForKey:kPreferenceKeyUseAutoSaveFrames]) {
         DLog(@"Not remembering window poasitions");
         return;
     }

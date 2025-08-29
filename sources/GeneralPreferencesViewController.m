@@ -124,6 +124,7 @@ enum {
 
     // Smart window placement
     IBOutlet NSButton *_smartPlacement;
+    IBOutlet NSButton *_useAutoSaveFrames;
 
     // Adjust window size when changing font size
     IBOutlet NSButton *_adjustWindowForFontSizeChange;
@@ -628,6 +629,15 @@ enum {
                     key:kPreferenceKeySmartWindowPlacement
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
+    info = [self defineControl:_useAutoSaveFrames
+                           key:kPreferenceKeyUseAutoSaveFrames
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.shouldBeEnabled = ^BOOL{
+        return ![weakSelf boolForKey:kPreferenceKeySmartWindowPlacement];
+    };
+    [info addShouldBeEnabledDependencyOnSetting:kPreferenceKeySmartWindowPlacement
+                                     controller:self];
 
     [self defineControl:_adjustWindowForFontSizeChange
                     key:kPreferenceKeyAdjustWindowForFontSizeChange

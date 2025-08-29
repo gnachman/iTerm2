@@ -609,7 +609,6 @@ DEFINE_STRING(errorSound, @"", SECTION_SESSION @"When Alert on Next Mark is conf
 #define SECTION_WINDOWS @"Windows: "
 
 DEFINE_BOOL(openFileInNewWindows, NO, SECTION_WINDOWS @"Open files in new windows, not new tabs.\nThis affects shell scripts opened from Finder, for example.");
-DEFINE_BOOL(rememberWindowPositions, YES, SECTION_WINDOWS @"Remember window locations even after the windows are closed.\nWhen a new window is opened, one of the recorded locations is used.");
 DEFINE_BOOL(disableWindowSizeSnap, NO, SECTION_WINDOWS @"Terminal windows resize smoothly.\nDisables snapping to character grid. Holding Control will temporarily disable snap-to-grid.");
 DEFINE_BOOL(profilesWindowJoinsActiveSpace, NO, SECTION_WINDOWS @"If the Profiles window is open, it always moves to join the active Space.\nYou must restart iTerm2 for a change in this setting to take effect.");
 DEFINE_BOOL(darkThemeHasBlackTitlebar, YES, SECTION_WINDOWS @"Dark themes give terminal windows black title bars by default.");

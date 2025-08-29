@@ -66,6 +66,7 @@ NSString *const kPreferenceKeyCopyLastNewline = @"CopyLastNewline";
 NSString *const kPreferenceKeyAllowClipboardAccessFromTerminal = @"AllowClipboardAccess";
 NSString *const kPreferenceKeyCharactersConsideredPartOfAWordForSelection = @"WordCharacters";
 NSString *const kPreferenceKeySmartWindowPlacement = @"SmartPlacement";
+NSString *const kPreferenceKeyUseAutoSaveFrames = @"RememberWindowPositions";
 NSString *const kPreferenceKeyAdjustWindowForFontSizeChange = @"AdjustWindowForFontSizeChange";
 NSString *const kPreferenceKeyMaximizeVerticallyOnly = @"MaxVertically";
 NSString *const kPreferenceKeyLionStyleFullscreen = @"UseLionStyleFullscreen";
@@ -477,6 +478,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyAllowClipboardAccessFromTerminal: @NO,
                   kPreferenceKeyCharactersConsideredPartOfAWordForSelection: @"/-+\\~_.",
                   kPreferenceKeySmartWindowPlacement: @NO,
+                  kPreferenceKeyUseAutoSaveFrames: @YES,
                   kPreferenceKeyAdjustWindowForFontSizeChange: @YES,
                   kPreferenceKeyMaximizeVerticallyOnly: @NO,
                   kPreferenceKeyLionStyleFullscreen: @YES,

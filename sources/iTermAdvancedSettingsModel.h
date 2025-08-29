@@ -348,10 +348,6 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)quickPasteDelayBetweenCalls;
 + (BOOL)remapModifiersWithoutEventTap;
 + (BOOL)rememberTmuxWindowSizes;
-
-// Remember window positions? If off, lets the OS pick the window position. Smart window placement takes precedence over this.
-+ (BOOL)rememberWindowPositions;
-
 + (BOOL)removeAddTabButton;
 + (BOOL)reportOnFirstMouse;
 + (BOOL)restrictSemanticHistoryPrefixAndSuffixToLogicalWindow;
