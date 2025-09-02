@@ -5541,8 +5541,9 @@ lengthExcludingInBandSignaling:data.length
 - (void)triggerEvaluatorOfferToDisableTriggersInInteractiveApps:(PTYTriggerEvaluator *)evaluator {
     // Use unmanaged concurrency because this will be rare and it can't run as a regular side-
     // effect since it modifies the profile.
+    NSString *stats = [evaluator stats];
     [self addUnmanagedSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenOfferToDisableTriggersInInteractiveApps:evaluator.stats];
+        [delegate screenOfferToDisableTriggersInInteractiveApps:stats];
     }];
 }
 
