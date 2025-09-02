@@ -39,7 +39,9 @@
       "Bash(ffprobe:*)",
       "Bash(ffmpeg:*)",
       "Bash(swift:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(git show:*)",
+      "WebSearch"
     ],
     "deny": []
   }
