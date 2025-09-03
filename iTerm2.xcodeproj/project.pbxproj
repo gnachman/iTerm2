@@ -2762,9 +2762,6 @@
 		A690555D241E09EC0020EA6A /* iTermResult.m in Sources */ = {isa = PBXBuildFile; fileRef = A690555B241E09EC0020EA6A /* iTermResult.m */; };
 		A6905560241E98CB0020EA6A /* iTermFileDescriptorMultiClientChild.h in Headers */ = {isa = PBXBuildFile; fileRef = A690555E241E98CB0020EA6A /* iTermFileDescriptorMultiClientChild.h */; };
 		A6905561241E98CB0020EA6A /* iTermFileDescriptorMultiClientChild.m in Sources */ = {isa = PBXBuildFile; fileRef = A690555F241E98CB0020EA6A /* iTermFileDescriptorMultiClientChild.m */; };
-		A690F7011B424C55009F76D8 /* Media.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A690F7001B424C55009F76D8 /* Media.xcassets */; };
-		A690F7021B424C55009F76D8 /* Media.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A690F7001B424C55009F76D8 /* Media.xcassets */; };
-		A690F7031B424C55009F76D8 /* Media.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A690F7001B424C55009F76D8 /* Media.xcassets */; };
 		A690F7041B424EF8009F76D8 /* OpenDirectory.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */; };
 		A690F7051B424F15009F76D8 /* OpenDirectory.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */; };
 		A691693B2813458F00083F99 /* PortholeFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69169392813457900083F99 /* PortholeFactory.swift */; };
@@ -3060,6 +3057,15 @@
 		A69D6AE527B649B5006E3991 /* RunLengthEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69D6AE427B649B5006E3991 /* RunLengthEncoder.swift */; };
 		A69D721B264716FC009D6EAC /* UnselectedTabShadow.png in Resources */ = {isa = PBXBuildFile; fileRef = A69D721A264716FC009D6EAC /* UnselectedTabShadow.png */; };
 		A69D721C264716FC009D6EAC /* UnselectedTabShadow.png in Resources */ = {isa = PBXBuildFile; fileRef = A69D721A264716FC009D6EAC /* UnselectedTabShadow.png */; };
+		A69EB7292E68CE0C00BD3181 /* iTerm2 App Icon for Beta.icon in Resources */ = {isa = PBXBuildFile; fileRef = A69EB7262E68CE0C00BD3181 /* iTerm2 App Icon for Beta.icon */; };
+		A69EB72A2E68CE0C00BD3181 /* iTerm2 App Icon for Nightly.icon in Resources */ = {isa = PBXBuildFile; fileRef = A69EB7272E68CE0C00BD3181 /* iTerm2 App Icon for Nightly.icon */; };
+		A69EB72B2E68CE0C00BD3181 /* iTerm2 App Icon for Release.icon in Resources */ = {isa = PBXBuildFile; fileRef = A69EB7282E68CE0C00BD3181 /* iTerm2 App Icon for Release.icon */; };
+		A69EB72C2E68CE0C00BD3181 /* iTerm2 App Icon for Beta.icon in Resources */ = {isa = PBXBuildFile; fileRef = A69EB7262E68CE0C00BD3181 /* iTerm2 App Icon for Beta.icon */; };
+		A69EB72D2E68CE0C00BD3181 /* iTerm2 App Icon for Nightly.icon in Resources */ = {isa = PBXBuildFile; fileRef = A69EB7272E68CE0C00BD3181 /* iTerm2 App Icon for Nightly.icon */; };
+		A69EB72E2E68CE0C00BD3181 /* iTerm2 App Icon for Release.icon in Resources */ = {isa = PBXBuildFile; fileRef = A69EB7282E68CE0C00BD3181 /* iTerm2 App Icon for Release.icon */; };
+		A69EB72F2E68CE0C00BD3181 /* iTerm2 App Icon for Beta.icon in Resources */ = {isa = PBXBuildFile; fileRef = A69EB7262E68CE0C00BD3181 /* iTerm2 App Icon for Beta.icon */; };
+		A69EB7302E68CE0C00BD3181 /* iTerm2 App Icon for Nightly.icon in Resources */ = {isa = PBXBuildFile; fileRef = A69EB7272E68CE0C00BD3181 /* iTerm2 App Icon for Nightly.icon */; };
+		A69EB7312E68CE0C00BD3181 /* iTerm2 App Icon for Release.icon in Resources */ = {isa = PBXBuildFile; fileRef = A69EB7282E68CE0C00BD3181 /* iTerm2 App Icon for Release.icon */; };
 		A69F59382E21C2C500B96E1B /* BrowserKeyValueStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69F59372E21C2C200B96E1B /* BrowserKeyValueStore.swift */; };
 		A69F593E2E21CBF900B96E1B /* iTermBrowserStorageProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69F593A2E21CB9B00B96E1B /* iTermBrowserStorageProvider.swift */; };
 		A69FEECD2E123B8700AFF7A8 /* iTermSwiftPackages.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A69FEEBA2E123B8700AFF7A8 /* iTermSwiftPackages.framework */; };
@@ -3241,7 +3247,6 @@
 		A6A5BDFF2A070C3D00F5FD44 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6A5BDFD2A070C3D00F5FD44 /* MainMenu.xib */; };
 		A6A5BE072A070C5E00F5FD44 /* ImportingWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A5BE062A070C5E00F5FD44 /* ImportingWindowController.swift */; };
 		A6A5BE0D2A070D4A00F5FD44 /* iTerm2ImportStatus.app in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6A5BDF72A070C3800F5FD44 /* iTerm2ImportStatus.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		A6A5BE102A080BD300F5FD44 /* Media.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A690F7001B424C55009F76D8 /* Media.xcassets */; };
 		A6A64E552508A9E10040490B /* iTermSnippetsMenuController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A64E532508A9E10040490B /* iTermSnippetsMenuController.h */; };
 		A6A64E562508A9E10040490B /* iTermSnippetsMenuController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A64E542508A9E10040490B /* iTermSnippetsMenuController.m */; };
 		A6A64E592508AF650040490B /* iTermActionsMenuController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A64E572508AF650040490B /* iTermActionsMenuController.h */; };
@@ -7797,7 +7802,6 @@
 		A690555B241E09EC0020EA6A /* iTermResult.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermResult.m; sourceTree = "<group>"; };
 		A690555E241E98CB0020EA6A /* iTermFileDescriptorMultiClientChild.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermFileDescriptorMultiClientChild.h; sourceTree = "<group>"; };
 		A690555F241E98CB0020EA6A /* iTermFileDescriptorMultiClientChild.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermFileDescriptorMultiClientChild.m; sourceTree = "<group>"; };
-		A690F7001B424C55009F76D8 /* Media.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Media.xcassets; sourceTree = "<group>"; };
 		A69169392813457900083F99 /* PortholeFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortholeFactory.swift; sourceTree = "<group>"; };
 		A691693C281345AF00083F99 /* SaneButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaneButton.swift; sourceTree = "<group>"; };
 		A691693E281345D000083F99 /* PortholeContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortholeContainerView.swift; sourceTree = "<group>"; };
@@ -7955,6 +7959,9 @@
 		A69D559A232A0CF3002E0F99 /* iTermSessionLauncher.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSessionLauncher.m; sourceTree = "<group>"; };
 		A69D6AE427B649B5006E3991 /* RunLengthEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunLengthEncoder.swift; sourceTree = "<group>"; };
 		A69D721A264716FC009D6EAC /* UnselectedTabShadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = UnselectedTabShadow.png; sourceTree = "<group>"; };
+		A69EB7262E68CE0C00BD3181 /* iTerm2 App Icon for Beta.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; name = "iTerm2 App Icon for Beta.icon"; path = "images/AppIcon/iTerm2 App Icon for Beta.icon"; sourceTree = "<group>"; };
+		A69EB7272E68CE0C00BD3181 /* iTerm2 App Icon for Nightly.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; name = "iTerm2 App Icon for Nightly.icon"; path = "images/AppIcon/iTerm2 App Icon for Nightly.icon"; sourceTree = "<group>"; };
+		A69EB7282E68CE0C00BD3181 /* iTerm2 App Icon for Release.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; name = "iTerm2 App Icon for Release.icon"; path = "images/AppIcon/iTerm2 App Icon for Release.icon"; sourceTree = "<group>"; };
 		A69F59372E21C2C200B96E1B /* BrowserKeyValueStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserKeyValueStore.swift; sourceTree = "<group>"; };
 		A69F593A2E21CB9B00B96E1B /* iTermBrowserStorageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserStorageProvider.swift; sourceTree = "<group>"; };
 		A69FEEBA2E123B8700AFF7A8 /* iTermSwiftPackages.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = iTermSwiftPackages.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -9907,6 +9914,9 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A69EB7262E68CE0C00BD3181 /* iTerm2 App Icon for Beta.icon */,
+				A69EB7272E68CE0C00BD3181 /* iTerm2 App Icon for Nightly.icon */,
+				A69EB7282E68CE0C00BD3181 /* iTerm2 App Icon for Release.icon */,
 				A69A2FB62E5D3BEC00803E66 /* TahoeDarkLeftTab.png */,
 				A69A2FB72E5D3BEC00803E66 /* TahoeDarkMidTab.png */,
 				A69A2FB82E5D3BEC00803E66 /* TahoeDarkRightTab.png */,
@@ -10164,7 +10174,6 @@
 				A68E333A1DE78D08003F1D8E /* Man Page Touch Bar Icon@2x.png */,
 				1DC2A1CA1949165D005769D5 /* Maximized.png */,
 				1DC2A1CB1949165D005769D5 /* Maximized@2x.png */,
-				A690F7001B424C55009F76D8 /* Media.xcassets */,
 				1D8BBA661B30F5C30005A852 /* Navigate.png */,
 				1D8BBA671B30F5C30005A852 /* Navigate@2x.png */,
 				1DEDF56719C917FD005B023A /* new-tab.png */,
@@ -16242,7 +16251,6 @@
 				A6D6944A2E448038005E9AFE /* find-constants.js in Resources */,
 				A6FE7A822E0E188F00BEBCE4 /* dragdrop-demo.html in Resources */,
 				A6F7A721213CB143004DE961 /* StatusBarIconCPU@2x.png in Resources */,
-				A690F7031B424C55009F76D8 /* Media.xcassets in Resources */,
 				1D8BBA6D1B30F5C30005A852 /* Navigate@2x.png in Resources */,
 				A69C93482121140100531438 /* iTermStatusBarLargeComposerViewController.xib in Resources */,
 				A67F6152214395870093940A /* graphic_less.png in Resources */,
@@ -16324,6 +16332,9 @@
 				A697CEBD2D987C5A0031583F /* OpenQuicklyNamedMark@2x.png in Resources */,
 				A65B72B31B33C07D00F947A7 /* NextTip.png in Resources */,
 				A67F6189214395A70093940A /* graphic_perl@2x.png in Resources */,
+				A69EB72F2E68CE0C00BD3181 /* iTerm2 App Icon for Beta.icon in Resources */,
+				A69EB7302E68CE0C00BD3181 /* iTerm2 App Icon for Nightly.icon in Resources */,
+				A69EB7312E68CE0C00BD3181 /* iTerm2 App Icon for Release.icon in Resources */,
 				A697CE782D97C3FA0031583F /* TriggersMenuTip.png in Resources */,
 				A697CE792D97C3FA0031583F /* TriggersMenuTip@2x.png in Resources */,
 				A6EC0B082C87DF5E00598D20 /* uniE0D7_Powerline_normal-left-inverse-cutout.pdf in Resources */,
@@ -16815,7 +16826,6 @@
 				A6E7AE90214394DD00DE9F3B /* graphic_composer.png in Resources */,
 				A6E7AE5C214394CA00DE9F3B /* graphic_bullhorn.png in Resources */,
 				A6D16EB62E07ED050099139D /* welcome-page.html in Resources */,
-				A690F7021B424C55009F76D8 /* Media.xcassets in Resources */,
 				1DB40A421B1FDC7F005B83C7 /* NoColor@2x.png in Resources */,
 				A6E7AEAD214394F600DE9F3B /* graphic_database.png in Resources */,
 				A67D0D5D1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib in Resources */,
@@ -17214,6 +17224,9 @@
 				A6D3205829C492410088BBE1 /* nerd.itse in Resources */,
 				A6109B652B969B4100D8E4E9 /* graphic_neovim@2x.png in Resources */,
 				A69A2FB92E5D3BEC00803E66 /* TahoeDarkMidTab.png in Resources */,
+				A69EB72C2E68CE0C00BD3181 /* iTerm2 App Icon for Beta.icon in Resources */,
+				A69EB72D2E68CE0C00BD3181 /* iTerm2 App Icon for Nightly.icon in Resources */,
+				A69EB72E2E68CE0C00BD3181 /* iTerm2 App Icon for Release.icon in Resources */,
 				A69A2FBA2E5D3BEC00803E66 /* TahoeDarkRightTab.png in Resources */,
 				A69A2FBB2E5D3BEC00803E66 /* TahoeDarkLeftTab.png in Resources */,
 				A6A64E6D2508C5B50040490B /* OpenQuicklySnippetIcon@2x.png in Resources */,
@@ -17596,6 +17609,9 @@
 				A61220EC2E106F9800F48E64 /* adblock-css-injection.js in Resources */,
 				A686C1951ADF62F200906FAE /* Zoomed.png in Resources */,
 				A6FE7A832E0E188F00BEBCE4 /* dragdrop-demo.html in Resources */,
+				A69EB7292E68CE0C00BD3181 /* iTerm2 App Icon for Beta.icon in Resources */,
+				A69EB72A2E68CE0C00BD3181 /* iTerm2 App Icon for Nightly.icon in Resources */,
+				A69EB72B2E68CE0C00BD3181 /* iTerm2 App Icon for Release.icon in Resources */,
 				1D94EAAD12D64022008225A9 /* UKCrashReporter Readme.txt in Resources */,
 				A6E16C5F24A85D5F00C6DB06 /* BigSurAddTab@2x.png in Resources */,
 				A6F7A737213CB143004DE961 /* StatusBarIconGitBranch@2x.png in Resources */,
@@ -17723,7 +17739,6 @@
 				A67D0D3B1A2EE12A003A8B35 /* Autocomplete.xib in Resources */,
 				A6F18B472AE2F39C006C08EE /* uniE0C0_flame-thick.pdf in Resources */,
 				A63821EF229E50CD005D74BE /* Warning@2x.png in Resources */,
-				A690F7011B424C55009F76D8 /* Media.xcassets in Resources */,
 				A6CBB8EC2E0A6C5D00B2CCCB /* exit-reader-mode.js in Resources */,
 				A6F2F21B250757FE00FC227F /* PrefsShortcuts.png in Resources */,
 				A67F61C1214395C60093940A /* graphic_read.png in Resources */,
@@ -18049,7 +18064,6 @@
 			files = (
 				A6A5BDFC2A070C3D00F5FD44 /* Assets.xcassets in Resources */,
 				A618692D2A0814C50052487D /* ImportingWindowController.xib in Resources */,
-				A6A5BE102A080BD300F5FD44 /* Media.xcassets in Resources */,
 				A6A5BDFF2A070C3D00F5FD44 /* MainMenu.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -20305,6 +20319,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD)";
+				ASSETCATALOG_COMPILER_APPICON_NAME = "iTerm2 App Icon for Nightly";
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
@@ -21580,6 +21596,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD)";
+				ASSETCATALOG_COMPILER_APPICON_NAME = "iTerm2 App Icon for Beta";
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
@@ -24235,6 +24253,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD)";
+				ASSETCATALOG_COMPILER_APPICON_NAME = "iTerm2 App Icon for Nightly";
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
@@ -24331,6 +24351,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD)";
+				ASSETCATALOG_COMPILER_APPICON_NAME = "iTerm2 App Icon for Nightly";
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;

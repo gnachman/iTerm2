@@ -20,9 +20,9 @@
                 </dict>  
             </dict>  
         </dict> 
-	<key>CFBundleIconFile</key>
-	<string>AppIcon-Nightly</string>
 	<key>CFBundleIconName</key>
+	<string>iTerm2 App Icon for Nightly</string>
+	<key>CFBundleIconFile</key>
 	<string>AppIcon-Nightly</string>
         <key>NSHumanReadableCopyright</key>
         <string>GPL v2</string>

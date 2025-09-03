@@ -1,0 +1,50 @@
+{
+  "color-space-for-untagged-svg-colors" : "display-p3",
+  "fill" : {
+    "linear-gradient" : [
+      "display-p3:0.00000,0.00000,0.00000,1.00000",
+      "display-p3:0.08178,0.00452,0.09262,1.00000"
+    ]
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "image-name" : "cursor@2x 4.png",
+          "name" : "cursor@2x 4",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              109.0859375,
+              191.1875
+            ]
+          }
+        },
+        {
+          "image-name" : "dollar@2x 2.png",
+          "name" : "dollar@2x 2",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              154.6640625,
+              185.5390625
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "squares" : [
+      "macOS"
+    ]
+  }
+}
