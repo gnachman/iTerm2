@@ -24,7 +24,7 @@ struct BrowserVisits {
         self.lastVisitDate = firstVisitDate
         self.url = url
     }
-    
+
     init(hostname: String, path: String, visitCount: Int, lastVisitDate: Date, firstVisitDate: Date, title: String?, url: String) {
         self.hostname = hostname
         self.path = path
@@ -35,7 +35,7 @@ struct BrowserVisits {
         self.url = url
     }
     
-    var fullUrl: String {
+    var schemelessURL: String {
         let cleanHostname = hostname.hasPrefix(".") ? String(hostname.dropFirst()) : hostname
         return path.isEmpty ? cleanHostname : "\(cleanHostname)\(path)"
     }

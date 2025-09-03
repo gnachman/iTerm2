@@ -67,6 +67,12 @@ class iTermBrowserLocalPageManager: NSObject {
     private var activePageContexts: [String: iTermBrowserPageContext] = [:]
     private let historyController: iTermBrowserHistoryController
     private let user: iTermBrowserUser
+    private lazy var welcomeHandler: iTermBrowserWelcomePageHandler? = {
+        iTermBrowserWelcomePageHandler(user: user)
+    }()
+    private lazy var onboardingHandler: iTermBrowserOnboardingHandler? = {
+        iTermBrowserOnboardingHandler(user: user)
+    }()
 
     init(user: iTermBrowserUser,
          historyController: iTermBrowserHistoryController) {
@@ -270,7 +276,19 @@ private extension iTermBrowserLocalPageManager {
             
         case iTermBrowserOnboardingHandler.setupURL.absoluteString,
              iTermBrowserOnboardingHandler.profileURL.absoluteString:
-            let handler = iTermBrowserOnboardingHandler(user: user)
+            guard let handler = onboardingHandler else {
+                context = nil
+                break
+            }
+            handler.delegate = self
+            context = iTermBrowserPageContext(handler: handler, requiresMessageHandler: true)
+
+        case iTermBrowserWelcomePageHandler.welcomeURL.absoluteString:
+            guard let handler = welcomeHandler else {
+                DLog("Failed to create welcome page handler")
+                context = nil
+                break
+            }
             handler.delegate = self
             context = iTermBrowserPageContext(handler: handler, requiresMessageHandler: true)
             
@@ -336,6 +354,16 @@ private extension iTermBrowserLocalPageManager {
                 return true
             }
             
+        case iTermBrowserWelcomePageHandler.welcomeURL.absoluteString:
+            if let welcomeHandler = context.handler as? iTermBrowserWelcomePageHandler,
+               let webView = message.webView {
+                DLog("Received welcome message, forwarding to handler")
+                Task { @MainActor in
+                    await welcomeHandler.handleWelcomeMessage(messageDict, webView: webView)
+                }
+                return true
+            }
+            
         default:
             DLog("Unknown message URL: \(messageURL)")
         }
@@ -386,6 +414,13 @@ extension iTermBrowserLocalPageManager: iTermBrowserPermissionsViewHandlerDelega
         // Notify the browser controller that permissions have been revoked
         // This allows the browser to update any cached permission state
         DLog("All permissions revoked for origin: \(origin)")
+    }
+}
+
+@MainActor
+extension iTermBrowserLocalPageManager: iTermBrowserWelcomePageHandlerDelegate {
+    func welcomePageHandlerDidNavigateToURL(_ handler: iTermBrowserWelcomePageHandler, url: String) {
+        delegate?.localPageManagerDidNavigateToURL(self, url: url)
     }
 }
 

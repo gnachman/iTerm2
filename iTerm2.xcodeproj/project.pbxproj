@@ -3305,6 +3305,10 @@
 		A6A832332E67ADBE00157F82 /* onboarding-profile.html in Resources */ = {isa = PBXBuildFile; fileRef = A6A832322E67ADBE00157F82 /* onboarding-profile.html */; };
 		A6A832342E67ADBE00157F82 /* onboarding-profile.html in Resources */ = {isa = PBXBuildFile; fileRef = A6A832322E67ADBE00157F82 /* onboarding-profile.html */; };
 		A6A832352E67ADBE00157F82 /* onboarding-profile.html in Resources */ = {isa = PBXBuildFile; fileRef = A6A832322E67ADBE00157F82 /* onboarding-profile.html */; };
+		A6A832372E6808E000157F82 /* welcome-page.js in Resources */ = {isa = PBXBuildFile; fileRef = A6A832362E6808E000157F82 /* welcome-page.js */; };
+		A6A832382E6808E000157F82 /* welcome-page.js in Resources */ = {isa = PBXBuildFile; fileRef = A6A832362E6808E000157F82 /* welcome-page.js */; };
+		A6A832392E6808E000157F82 /* welcome-page.js in Resources */ = {isa = PBXBuildFile; fileRef = A6A832362E6808E000157F82 /* welcome-page.js */; };
+		A6A8323B2E6808E900157F82 /* iTermBrowserWelcomePageHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A8323A2E6808E900157F82 /* iTermBrowserWelcomePageHandler.swift */; };
 		A6A93F582C49BD2F00F07BAB /* iTermTerminfoHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A93F562C49BD2F00F07BAB /* iTermTerminfoHelper.h */; };
 		A6A93F592C49BD2F00F07BAB /* iTermTerminfoHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A93F572C49BD2F00F07BAB /* iTermTerminfoHelper.m */; };
 		A6A9838C27E5A83C003319D1 /* PasswordManagerDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A9838B27E5A83C003319D1 /* PasswordManagerDataSource.swift */; };
@@ -8101,6 +8105,8 @@
 		A6A832262E67AA8F00157F82 /* onboarding-intro.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "onboarding-intro.html"; sourceTree = "<group>"; };
 		A6A832272E67AA8F00157F82 /* onboarding-setup.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "onboarding-setup.html"; sourceTree = "<group>"; };
 		A6A832322E67ADBE00157F82 /* onboarding-profile.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "onboarding-profile.html"; sourceTree = "<group>"; };
+		A6A832362E6808E000157F82 /* welcome-page.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "welcome-page.js"; sourceTree = "<group>"; };
+		A6A8323A2E6808E900157F82 /* iTermBrowserWelcomePageHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserWelcomePageHandler.swift; sourceTree = "<group>"; };
 		A6A93F562C49BD2F00F07BAB /* iTermTerminfoHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTerminfoHelper.h; sourceTree = "<group>"; };
 		A6A93F572C49BD2F00F07BAB /* iTermTerminfoHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTerminfoHelper.m; sourceTree = "<group>"; };
 		A6A9838B27E5A83C003319D1 /* PasswordManagerDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordManagerDataSource.swift; sourceTree = "<group>"; };
@@ -13469,21 +13475,23 @@
 		A6CBB8162E0A1B7400B2CCCB /* Local Pages */ = {
 			isa = PBXGroup;
 			children = (
-				A6F7D4BE2E037BB20065D09C /* iterm-browser-common.css */,
 				A6AA2F8D2E296849002998B3 /* cert-error.html */,
 				A671D6D32E1E37200087348B /* dev.html */,
 				A6F7D4C62E037E780065D09C /* error-page.html */,
+				A6F7D4BE2E037BB20065D09C /* iterm-browser-common.css */,
 				A6A832252E67AA8F00157F82 /* onboarding-features.html */,
 				A6A832262E67AA8F00157F82 /* onboarding-intro.html */,
 				A6A832322E67ADBE00157F82 /* onboarding-profile.html */,
 				A6A832272E67AA8F00157F82 /* onboarding-setup.html */,
 				A6D16EB42E07EC910099139D /* welcome-page.html */,
+				A6A832362E6808E000157F82 /* welcome-page.js */,
 				A6F7D4C22E037BC80065D09C /* iTermBrowserCSSLoader.swift */,
 				A6F7D4BA2E0373110065D09C /* iTermBrowserErrorHandler.swift */,
 				A6AF79F92E07E27D008D77BA /* iTermBrowserLocalPageManager.swift */,
 				A6A832212E67AA8800157F82 /* iTermBrowserOnboardingHandler.swift */,
 				A6D16EB22E07EBD00099139D /* iTermBrowserStaticPageHandler.swift */,
 				A6F7D4C42E037E520065D09C /* iTermBrowserTemplateLoader.swift */,
+				A6A8323A2E6808E900157F82 /* iTermBrowserWelcomePageHandler.swift */,
 			);
 			path = "Local Pages";
 			sourceTree = "<group>";
@@ -16276,6 +16284,7 @@
 				1D6ED99D19AEA20D005A7799 /* dead.png in Resources */,
 				A68CB85D2E3FD510002531F5 /* triggers.js in Resources */,
 				A6F7A733213CB143004DE961 /* StatusBarIconGitBranch.png in Resources */,
+				A6A832382E6808E000157F82 /* welcome-page.js in Resources */,
 				A6C838AE2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist in Resources */,
 				A6EA848527223B02009D14AB /* graphic_emacs.png in Resources */,
 				1D6ED9A119AEA20D005A7799 /* PresetKeyMappings.plist in Resources */,
@@ -16950,6 +16959,7 @@
 				A6F18B5A2AE2F39C006C08EE /* uniE0CF_lego_separator_thin.pdf in Resources */,
 				A67F61A8214395B70093940A /* graphic_rails.png in Resources */,
 				A610941E2A4A213D00AC2268 /* key-light.png in Resources */,
+				A6A832392E6808E000157F82 /* welcome-page.js in Resources */,
 				A6F7A71D213CB143004DE961 /* StatusBarIconFolder.png in Resources */,
 				A67F619F214395B70093940A /* graphic_psql@2x.png in Resources */,
 				A63011BC20E83082008114B7 /* iTermStatusBarKnobTextViewController.xib in Resources */,
@@ -17946,6 +17956,7 @@
 				53B93DE121F25E79001EC59C /* iterm2_git_wrapper.sh in Resources */,
 				A665C1FD2440461500F623F0 /* WindowCorner.png in Resources */,
 				53BBA0F8214236AC0074D061 /* iterm2_git_poll.sh in Resources */,
+				A6A832372E6808E000157F82 /* welcome-page.js in Resources */,
 				A6F7A707213CB143004DE961 /* StatusBarIconUser.png in Resources */,
 				A6F7A728213CB143004DE961 /* StatusBarIconComposer.png in Resources */,
 				A68ADA0729CCBE4B0008E092 /* CommandInfoViewController.xib in Resources */,
@@ -18863,6 +18874,7 @@
 				53E98E7C233C6B760094D8A9 /* iTermTmuxSessionObject.m in Sources */,
 				A6F7D4FE2E05C4890065D09C /* iTermBrowserNavigationState.swift in Sources */,
 				A66719621DCE3772000CE608 /* iTermSocketAddress.m in Sources */,
+				A6A8323B2E6808E900157F82 /* iTermBrowserWelcomePageHandler.swift in Sources */,
 				A6A4867E20B67FD100493302 /* SmartSelectionController.m in Sources */,
 				A6EEAED92836F0590039E850 /* ProcessInfoProvider.swift in Sources */,
 				A6E2A6162B86D6F700EC6070 /* SlownessDetector.swift in Sources */,

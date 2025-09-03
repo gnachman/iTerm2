@@ -51,7 +51,7 @@ class iTermBrowserVisitsFinder: NSObject {
 
     private static func triple(for visit: BrowserVisits,
                                in db: BrowserDatabase) -> iTermTriple<NSString, NSURL, NSString>? {
-        guard let url = URL(string: visit.fullUrl) else {
+        guard let url = URL(string: visit.url) else {
             return nil
         }
         let title = (visit.title ?? "")

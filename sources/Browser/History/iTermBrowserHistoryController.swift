@@ -32,7 +32,7 @@ class iTermBrowserHistoryController {
 
         for visit in visits {
             // Reconstruct full URL for display (add https:// if needed)
-            let displayUrl = visit.fullUrl.hasPrefix("http") ? visit.fullUrl : "https://\(visit.fullUrl)"
+            let displayUrl = visit.url
 
             let suggestion = if let title = visit.title, !title.isEmpty {
                 URLSuggestion(

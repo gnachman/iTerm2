@@ -1373,6 +1373,9 @@ extension iTermBrowserManager: WKNavigationDelegate {
 
             // Pre-register message handler if needed
             if localPageManager.shouldRegisterMessageHandler(for: urlString) {
+                webView.configuration.userContentController.removeScriptMessageHandler(
+                    forName: urlString,
+                    contentWorld: .page)
                 webView.configuration.userContentController.add(handlerProxy,
                                                                 contentWorld: .page,
                                                                 name: urlString)

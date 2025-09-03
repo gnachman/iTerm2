@@ -423,24 +423,6 @@ actor BrowserDatabase {
         }
     }
 
-    func urlSuggestions(forPrefix prefix: String, limit: Int = 10) async -> [String] {
-        return await withDatabase { db in
-            let (query, args) = BrowserVisits.suggestionsQuery(prefix: prefix, limit: limit)
-            guard let resultSet = self.executeQuery(db: db, sql: query, withArguments: args) else {
-                return []
-            }
-
-            var results: [String] = []
-            while resultSet.next() {
-                if let visit = BrowserVisits(dbResultSet: resultSet) {
-                    results.append(visit.fullUrl)
-                }
-            }
-            resultSet.close()
-            return results
-        }
-    }
-
     func getVisitSuggestions(forPrefix prefix: String, limit: Int = 10) async -> [BrowserVisits] {
         return await withDatabase { db in
             let (query, args) = BrowserVisits.suggestionsQuery(prefix: prefix, limit: limit)
