@@ -426,8 +426,8 @@ relocations:
   - { offset: 0x5E0D3, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser matchHandler]', symObjAddr: 0x2A0, symBinAddr: 0xDF53, symSize: 0xA }
   - { offset: 0x5E108, size: 0x8, addend: 0x0, symName: '-[CPRegexpRecogniser setMatchHandler:]', symObjAddr: 0x2AA, symBinAddr: 0xDF5D, symSize: 0xF }
   - { offset: 0x5E1D2, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) rulesByNonTerminal]', symObjAddr: 0x0, symBinAddr: 0xDF6C, symSize: 0x11 }
-  - { offset: 0x5E1EC, size: 0x8, addend: 0x0, symName: _rulesByNonTerminalKey, symObjAddr: 0x3E3D, symBinAddr: 0x216A8, symSize: 0x0 }
-  - { offset: 0x5E20A, size: 0x8, addend: 0x0, symName: _followCacheKey, symObjAddr: 0x3E3E, symBinAddr: 0x216A9, symSize: 0x0 }
+  - { offset: 0x5E1EC, size: 0x8, addend: 0x0, symName: _rulesByNonTerminalKey, symObjAddr: 0x3E45, symBinAddr: 0x216A8, symSize: 0x0 }
+  - { offset: 0x5E20A, size: 0x8, addend: 0x0, symName: _followCacheKey, symObjAddr: 0x3E46, symBinAddr: 0x216A9, symSize: 0x0 }
   - { offset: 0x5E253, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) rulesByNonTerminal]', symObjAddr: 0x0, symBinAddr: 0xDF6C, symSize: 0x11 }
   - { offset: 0x5E2ED, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) setRulesByNonTerminal:]', symObjAddr: 0x11, symBinAddr: 0xDF7D, symSize: 0x16 }
   - { offset: 0x5E381, size: 0x8, addend: 0x0, symName: '-[CPGrammar(CPGrammarPrivate) followCache]', symObjAddr: 0x27, symBinAddr: 0xDF93, symSize: 0x11 }
