@@ -223,6 +223,8 @@
         <string>iTerm2 Help</string>
         <key>CFBundleHelpBookName</key>
         <string>iTerm2 Help</string>
+	<key>CFBundleIconName</key>
+	<string>iTerm2 App Icon for Beta</string>
         <key>CFBundleIconFile</key>
         <string>iTerm2.icns</string>
         <key>CFBundleIdentifier</key>
