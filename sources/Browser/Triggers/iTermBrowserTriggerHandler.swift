@@ -137,7 +137,10 @@ extension iTermBrowserTriggerHandler {
 @MainActor
 private extension iTermBrowserTriggerHandler {
     var currentTriggersJSON: String {
-        let dicts = triggers.filter { $0.value.1.isEnabled }.mapValues(\.0)
+        let dicts = triggers.filter { $0.value.1.isEnabled }.mapValues(\.0).mapValues { dict in
+            return dict.removingObject(forKey: kTriggerPerformanceKey)
+        }
+
         return try! JSONSerialization.data(withJSONObject: dicts).lossyString
     }
 

@@ -41,6 +41,15 @@ protocol iTermBrowserLocalPageManagerDelegate: AnyObject {
     func localPageManagerDidNavigateToURL(_ manager: iTermBrowserLocalPageManager, url: String)
     func localPageManagerWebView(_ manager: iTermBrowserLocalPageManager) -> WKWebView?
     func localPageManagerExtensionManager(_ manager: iTermBrowserLocalPageManager) -> iTermBrowserExtensionManagerProtocol?
+    
+    // Onboarding delegate methods
+    func localPageManagerOnboardingEnableAdBlocker(_ manager: iTermBrowserLocalPageManager)
+    func localPageManagerOnboardingEnableInstantReplay(_ manager: iTermBrowserLocalPageManager)
+    func localPageManagerOnboardingCreateBrowserProfile(_ manager: iTermBrowserLocalPageManager) -> String?
+    func localPageManagerOnboardingSwitchToProfile(_ manager: iTermBrowserLocalPageManager, guid: String)
+    func localPageManagerOnboardingCheckBrowserProfileExists(_ manager: iTermBrowserLocalPageManager) -> Bool
+    func localPageManagerOnboardingFindBrowserProfileGuid(_ manager: iTermBrowserLocalPageManager) -> String?
+    func localPageManagerOnboardingGetSettings(_ manager: iTermBrowserLocalPageManager) -> iTermBrowserOnboardingSettings
 }
 
 // MARK: - Local Page Manager
@@ -259,6 +268,12 @@ private extension iTermBrowserLocalPageManager {
         case iTermBrowserSourceHandler.sourceURL.absoluteString:
             context = iTermBrowserPageContext(handler: iTermBrowserSourceHandler(), requiresMessageHandler: false)
             
+        case iTermBrowserOnboardingHandler.setupURL.absoluteString,
+             iTermBrowserOnboardingHandler.profileURL.absoluteString:
+            let handler = iTermBrowserOnboardingHandler(user: user)
+            handler.delegate = self
+            context = iTermBrowserPageContext(handler: handler, requiresMessageHandler: true)
+            
         default:
             // Check if this is a registered static page
             if let staticConfig = iTermBrowserStaticPageRegistry.shared.getConfig(for: urlString) {
@@ -313,6 +328,14 @@ private extension iTermBrowserLocalPageManager {
                 return true
             }
             
+        case iTermBrowserOnboardingHandler.setupURL.absoluteString,
+             iTermBrowserOnboardingHandler.profileURL.absoluteString:
+            if let onboardingHandler = context.handler as? iTermBrowserOnboardingHandler {
+                DLog("Received onboarding message, forwarding to handler")
+                onboardingHandler.handleOnboardingMessage(messageDict, webView: webView)
+                return true
+            }
+            
         default:
             DLog("Unknown message URL: \(messageURL)")
         }
@@ -363,5 +386,36 @@ extension iTermBrowserLocalPageManager: iTermBrowserPermissionsViewHandlerDelega
         // Notify the browser controller that permissions have been revoked
         // This allows the browser to update any cached permission state
         DLog("All permissions revoked for origin: \(origin)")
+    }
+}
+
+@MainActor
+extension iTermBrowserLocalPageManager: iTermBrowserOnboardingHandlerDelegate {
+    func onboardingHandlerEnableAdBlocker(_ handler: iTermBrowserOnboardingHandler) {
+        delegate?.localPageManagerOnboardingEnableAdBlocker(self)
+    }
+    
+    func onboardingHandlerEnableInstantReplay(_ handler: iTermBrowserOnboardingHandler) {
+        delegate?.localPageManagerOnboardingEnableInstantReplay(self)
+    }
+    
+    func onboardingHandlerCreateBrowserProfile(_ handler: iTermBrowserOnboardingHandler) -> String? {
+        return delegate?.localPageManagerOnboardingCreateBrowserProfile(self)
+    }
+    
+    func onboardingHandlerSwitchToProfile(_ handler: iTermBrowserOnboardingHandler, guid: String) {
+        delegate?.localPageManagerOnboardingSwitchToProfile(self, guid: guid)
+    }
+    
+    func onboardingHandlerCheckBrowserProfileExists(_ handler: iTermBrowserOnboardingHandler) -> Bool {
+        return delegate?.localPageManagerOnboardingCheckBrowserProfileExists(self) ?? false
+    }
+    
+    func onboardingHandlerFindBrowserProfileGuid(_ handler: iTermBrowserOnboardingHandler) -> String? {
+        return delegate?.localPageManagerOnboardingFindBrowserProfileGuid(self)
+    }
+    
+    func onboardingHandlerGetSettings(_ handler: iTermBrowserOnboardingHandler) -> iTermBrowserOnboardingSettings {
+        return delegate?.localPageManagerOnboardingGetSettings(self) ?? iTermBrowserOnboardingSettings(adBlockerEnabled: false, instantReplayEnabled: false)
     }
 }

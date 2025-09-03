@@ -7,6 +7,7 @@
 
 #import "iTermOnboardingWindowController.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "ITAddressBookMgr.h"
 #import "iTermClickableTextField.h"
 #import "iTermController.h"
@@ -21,10 +22,11 @@
 static NSString *const iTermOnboardingWindowControllerHasBeenShown = @"NoSyncOnboardingWindowHasBeenShown34";
 
 static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
-//    if ([path isEqualToString:@"/foo"]) {
-//        iTermTryFoo(window);
-//        return;
-//    }
+    if ([path isEqualToString:@"/browser"]) {
+        [[iTermController sharedInstance] openURLInNewBrowserTab:[NSURL URLWithString:@"iterm2-about:onboarding-intro"]
+                                                       selectTab:YES];
+        return;
+    }
 }
 
 @interface iTermOnboardingView : NSView
@@ -48,7 +50,14 @@ static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
 
 @implementation iTermOnboardingTextField
 
-- (void)openURL:(NSURL *)url {
+- (void)openURL:(id)urlOrString {
+    NSString *string = [NSString castFrom:urlOrString];
+    NSURL *url;
+    if (string) {
+        url = [NSURL URLWithString:string];
+    } else {
+        url = [NSURL castFrom:urlOrString];
+    }
     if ([url.scheme isEqualToString:@"iterm2whatsnew"]) {
         iTermOpenWhatsNewURL(url.path, self.window);
         return;
@@ -56,6 +65,13 @@ static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
     [super openURL:url];
 }
 
+- (void)awakeFromNib {
+    if ([self.stringValue containsString:@"<a href="]) {
+        self.attributedStringValue = [NSAttributedString attributedStringWithHTML:self.stringValue
+                                                                             font:self.font
+                                                                   paragraphStyle:[NSParagraphStyle defaultParagraphStyle]];
+    }
+}
 @end
 
 @interface iTermOnboardingWindowController ()<NSPageControllerDelegate, NSTextViewDelegate>

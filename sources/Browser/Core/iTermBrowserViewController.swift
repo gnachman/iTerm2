@@ -64,6 +64,15 @@ protocol iTermBrowserViewControllerDelegate: AnyObject, iTermBrowserFindManagerD
     func browserViewControllerDidBecomeFirstResponder(_ controller: iTermBrowserViewController)
     func browserViewController(_ controller: iTermBrowserViewController, didCopyString string: String)
     func browserViewController(_ controller: iTermBrowserViewController, runCommand command: String)
+    
+    // Onboarding delegate methods
+    func browserViewControllerOnboardingEnableAdBlocker(_ controller: iTermBrowserViewController)
+    func browserViewControllerOnboardingEnableInstantReplay(_ controller: iTermBrowserViewController)
+    func browserViewControllerOnboardingCreateBrowserProfile(_ controller: iTermBrowserViewController) -> String?
+    func browserViewControllerOnboardingSwitchToProfile(_ controller: iTermBrowserViewController, guid: String)
+    func browserViewControllerOnboardingCheckBrowserProfileExists(_ controller: iTermBrowserViewController) -> Bool
+    func browserViewControllerOnboardingFindBrowserProfileGuid(_ controller: iTermBrowserViewController) -> String?
+    func browserViewControllerOnboardingGetSettings(_ controller: iTermBrowserViewController) -> iTermBrowserOnboardingSettings
     func browserViewControllerScope(_ controller: iTermBrowserViewController) -> (iTermVariableScope, iTermObject)
     func browserViewControllerShouldInterpolateSmartSelectionParameters(_ controller: iTermBrowserViewController) -> Bool
     func browserViewController(_ controller: iTermBrowserViewController, openFile file: String)
@@ -1189,6 +1198,34 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
 
     func browserManagerDidBecomeFirstResponder(_ browserManager: iTermBrowserManager) {
         delegate?.browserViewControllerDidBecomeFirstResponder(self)
+    }
+    
+    func browserManagerOnboardingEnableAdBlocker(_ manager: iTermBrowserManager) {
+        delegate?.browserViewControllerOnboardingEnableAdBlocker(self)
+    }
+    
+    func browserManagerOnboardingEnableInstantReplay(_ manager: iTermBrowserManager) {
+        delegate?.browserViewControllerOnboardingEnableInstantReplay(self)
+    }
+    
+    func browserManagerOnboardingCreateBrowserProfile(_ manager: iTermBrowserManager) -> String? {
+        return delegate?.browserViewControllerOnboardingCreateBrowserProfile(self)
+    }
+    
+    func browserManagerOnboardingSwitchToProfile(_ manager: iTermBrowserManager, guid: String) {
+        delegate?.browserViewControllerOnboardingSwitchToProfile(self, guid: guid)
+    }
+    
+    func browserManagerOnboardingCheckBrowserProfileExists(_ manager: iTermBrowserManager) -> Bool {
+        return delegate?.browserViewControllerOnboardingCheckBrowserProfileExists(self) ?? false
+    }
+    
+    func browserManagerOnboardingFindBrowserProfileGuid(_ manager: iTermBrowserManager) -> String? {
+        return delegate?.browserViewControllerOnboardingFindBrowserProfileGuid(self)
+    }
+    
+    func browserManagerOnboardingGetSettings(_ manager: iTermBrowserManager) -> iTermBrowserOnboardingSettings {
+        return delegate?.browserViewControllerOnboardingGetSettings(self) ?? iTermBrowserOnboardingSettings(adBlockerEnabled: false, instantReplayEnabled: false)
     }
 
     func browserManager(_ browserManager: iTermBrowserManager, didCopyString string: String) {

@@ -53,6 +53,15 @@ protocol iTermBrowserManagerDelegate: AnyObject, iTermBrowserFindManagerDelegate
     func browserManager(_ browserManager: iTermBrowserManager,
                         didHoverURL url: String?, frame: NSRect)
     func browserManagerDidBecomeFirstResponder(_ browserManager: iTermBrowserManager)
+    
+    // Onboarding delegate methods
+    func browserManagerOnboardingEnableAdBlocker(_ manager: iTermBrowserManager)
+    func browserManagerOnboardingEnableInstantReplay(_ manager: iTermBrowserManager)
+    func browserManagerOnboardingCreateBrowserProfile(_ manager: iTermBrowserManager) -> String?
+    func browserManagerOnboardingSwitchToProfile(_ manager: iTermBrowserManager, guid: String)
+    func browserManagerOnboardingCheckBrowserProfileExists(_ manager: iTermBrowserManager) -> Bool
+    func browserManagerOnboardingFindBrowserProfileGuid(_ manager: iTermBrowserManager) -> String?
+    func browserManagerOnboardingGetSettings(_ manager: iTermBrowserManager) -> iTermBrowserOnboardingSettings
     func browserManager(_ browserManager: iTermBrowserManager, didCopyString: String)
     func browserManagerSmartSelectionRules(
         _ browserManager: iTermBrowserManager) -> [SmartSelectRule]
@@ -1706,6 +1715,34 @@ extension iTermBrowserManager: iTermBrowserLocalPageManagerDelegate {
     
     func localPageManagerExtensionManager(_ manager: iTermBrowserLocalPageManager) -> iTermBrowserExtensionManagerProtocol? {
         return userState.extensionManager
+    }
+    
+    func localPageManagerOnboardingEnableAdBlocker(_ manager: iTermBrowserLocalPageManager) {
+        delegate?.browserManagerOnboardingEnableAdBlocker(self)
+    }
+    
+    func localPageManagerOnboardingEnableInstantReplay(_ manager: iTermBrowserLocalPageManager) {
+        delegate?.browserManagerOnboardingEnableInstantReplay(self)
+    }
+    
+    func localPageManagerOnboardingCreateBrowserProfile(_ manager: iTermBrowserLocalPageManager) -> String? {
+        return delegate?.browserManagerOnboardingCreateBrowserProfile(self)
+    }
+    
+    func localPageManagerOnboardingSwitchToProfile(_ manager: iTermBrowserLocalPageManager, guid: String) {
+        delegate?.browserManagerOnboardingSwitchToProfile(self, guid: guid)
+    }
+    
+    func localPageManagerOnboardingCheckBrowserProfileExists(_ manager: iTermBrowserLocalPageManager) -> Bool {
+        return delegate?.browserManagerOnboardingCheckBrowserProfileExists(self) ?? false
+    }
+    
+    func localPageManagerOnboardingFindBrowserProfileGuid(_ manager: iTermBrowserLocalPageManager) -> String? {
+        return delegate?.browserManagerOnboardingFindBrowserProfileGuid(self)
+    }
+    
+    func localPageManagerOnboardingGetSettings(_ manager: iTermBrowserLocalPageManager) -> iTermBrowserOnboardingSettings {
+        return delegate?.browserManagerOnboardingGetSettings(self) ?? iTermBrowserOnboardingSettings(adBlockerEnabled: false, instantReplayEnabled: false)
     }
 }
 

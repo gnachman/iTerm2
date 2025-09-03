@@ -146,6 +146,97 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
         let frameInSessionView = view.convert(frame, from: webView)
         _ = view.setHoverURL(url, anchorFrame: frameInSessionView)
     }
+    
+    func browserViewControllerOnboardingEnableAdBlocker(_ controller: iTermBrowserViewController) {
+        // Enable ad blocking globally
+        iTermAdvancedSettingsModel.setWebKitAdblockEnabled(true)
+        DLog("Ad blocking enabled from onboarding")
+    }
+    
+    func browserViewControllerOnboardingEnableInstantReplay(_ controller: iTermBrowserViewController) {
+        // Update in my profile (which may be divorced)
+        let guid = profile[KEY_GUID]! as! String
+        let model = isDivorced ? ProfileModel.sessionsInstance()! : ProfileModel.sharedInstance()!
+        let mutator = iTermProfilePreferenceMutator(model: model, guid: guid)
+        mutator.set(key: KEY_INSTANT_REPLAY, value: true)
+
+        // If I am divorced also update the original profile
+        if let originalGuid = profile[KEY_ORIGINAL_GUID] as? String {
+            let mutator = iTermProfilePreferenceMutator(model: ProfileModel.sharedInstance(),
+                                                        guid: originalGuid)
+            mutator.set(key: KEY_INSTANT_REPLAY, value: true)
+        }
+    }
+    
+    func browserViewControllerOnboardingCreateBrowserProfile(_ controller: iTermBrowserViewController) -> String? {
+        if ProfileModel.sharedInstance().bookmarks().anySatisfies({ ($0 as NSDictionary).profileIsBrowser }) {
+            DLog("Already have a browser profile")
+            return nil
+        }
+        let guid = ProfileModel.freshGuid()!
+        let dict: [AnyHashable: Any] = [
+            KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeBrowserValue,
+            KEY_NAME: "Web Browser",
+            KEY_GUID: guid
+        ]
+        ProfileModel.sharedInstance().addBookmark(dict)
+        ProfileModel.sharedInstance().flush()
+        NotificationCenter.default.post(name: NSNotification.Name(kReloadAllProfiles),
+                                        object: nil,
+                                        userInfo:nil)
+        return guid
+    }
+    
+    func browserViewControllerOnboardingSwitchToProfile(_ controller: iTermBrowserViewController,
+                                                        guid: String) {
+        guard let newProfile = ProfileModel.sharedInstance().bookmark(withGuid: guid) else {
+            return
+        }
+        divorceAddressBookEntryFromPreferences()
+        let origGuid = profile[KEY_GUID] as! String
+        ProfileModel.sessionsInstance().setProfilePreservingGuidWithGuid(origGuid,
+                                                                         fromProfile: newProfile,
+                                                                         overrides: [:])
+    }
+    
+    func browserViewControllerOnboardingCheckBrowserProfileExists(_ controller: iTermBrowserViewController) -> Bool {
+        return ProfileModel.sharedInstance().bookmarks().anySatisfies({ ($0 as NSDictionary).profileIsBrowser })
+    }
+    
+    func browserViewControllerOnboardingFindBrowserProfileGuid(_ controller: iTermBrowserViewController) -> String? {
+        // First check if the current session's profile is a browser profile
+        if let currentGuid = profile[KEY_GUID] as? String,
+           let currentProfile = ProfileModel.sharedInstance().bookmark(withGuid: currentGuid) as? NSDictionary,
+           currentProfile.profileIsBrowser {
+            return currentGuid
+        }
+        
+        // If divorced, check the original profile
+        if let originalGuid = profile[KEY_ORIGINAL_GUID] as? String,
+           let originalProfile = ProfileModel.sharedInstance().bookmark(withGuid: originalGuid) as? NSDictionary,
+           originalProfile.profileIsBrowser {
+            return originalGuid
+        }
+        
+        // Otherwise find any browser profile
+        let browserProfile = ProfileModel.sharedInstance().bookmarks().first { profile in
+            (profile as NSDictionary).profileIsBrowser
+        }
+        return browserProfile?[KEY_GUID] as? String
+    }
+    
+    func browserViewControllerOnboardingGetSettings(_ controller: iTermBrowserViewController) -> iTermBrowserOnboardingSettings {
+        // Check if ad blocker is enabled globally
+        let adBlockerEnabled = iTermAdvancedSettingsModel.webKitAdblockEnabled()
+        
+        // Check if instant replay is enabled for the current profile
+        let instantReplayEnabled = iTermProfilePreferences.bool(forKey: KEY_INSTANT_REPLAY, inProfile: profile)
+        
+        return iTermBrowserOnboardingSettings(
+            adBlockerEnabled: adBlockerEnabled,
+            instantReplayEnabled: instantReplayEnabled
+        )
+    }
 
     func browserViewController(_ controller: iTermBrowserViewController,
                                didNavigateTo url: URL) {

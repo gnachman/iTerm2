@@ -6,25 +6,24 @@
     <title>Welcome to iTerm2 Browser</title>
     <style>
         {{COMMON_CSS}}
-        
+
         .onboarding-container {
             max-width: 700px;
             margin: 0 auto;
             padding: 60px 20px;
-            display: {{SHOW_ONBOARDING}};
         }
-        
+
         .onboarding-header {
             text-align: center;
             margin-bottom: 60px;
         }
-        
+
         .onboarding-icon {
             font-size: 5em;
             margin-bottom: 24px;
             display: block;
         }
-        
+
         .onboarding-title {
             font-size: 3em;
             font-weight: 700;
@@ -34,13 +33,13 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        
+
         .onboarding-subtitle {
             font-size: 1.3em;
             color: var(--secondary-text);
             line-height: 1.6;
         }
-        
+
         .concept-card {
             background: var(--section-bg);
             border: 1px solid var(--border-color);
@@ -48,21 +47,21 @@
             padding: 32px;
             margin-bottom: 32px;
         }
-        
+
         .concept-title {
             font-size: 1.5em;
             font-weight: 600;
             margin-bottom: 16px;
             color: var(--text-color);
         }
-        
+
         .concept-description {
             font-size: 1.1em;
             line-height: 1.8;
             color: var(--text-color);
             opacity: 0.9;
         }
-        
+
         .highlight-box {
             background: linear-gradient(135deg, var(--accent-color)10, #5ac8fa10);
             border-left: 4px solid var(--accent-color);
@@ -70,13 +69,13 @@
             border-radius: 8px;
             margin: 24px 0;
         }
-        
+
         .highlight-box p {
             font-size: 1.1em;
             line-height: 1.6;
             margin: 0;
         }
-        
+
         .navigation-footer {
             display: flex;
             justify-content: space-between;
@@ -85,7 +84,7 @@
             padding-top: 32px;
             border-top: 1px solid var(--border-color);
         }
-        
+
         .nav-button {
             display: inline-flex;
             align-items: center;
@@ -100,29 +99,29 @@
             transition: all 0.3s ease;
             box-shadow: 0 2px 12px var(--shadow);
         }
-        
+
         .nav-button:hover {
             background: var(--button-hover);
             transform: translateY(-2px);
             box-shadow: 0 6px 20px var(--shadow);
         }
-        
+
         .nav-button.secondary {
             background: transparent;
             color: var(--accent-color);
             border: 2px solid var(--accent-color);
         }
-        
+
         .nav-button.secondary:hover {
             background: var(--accent-color)10;
         }
-        
+
         .progress-dots {
             display: flex;
             gap: 12px;
             align-items: center;
         }
-        
+
         .progress-dot {
             width: 10px;
             height: 10px;
@@ -130,23 +129,23 @@
             background: var(--border-color);
             transition: all 0.3s ease;
         }
-        
+
         .progress-dot.active {
             width: 24px;
             border-radius: 5px;
             background: var(--accent-color);
         }
-        
+
         @media (max-width: 600px) {
             .onboarding-title {
                 font-size: 2.2em;
             }
-            
+
             .navigation-footer {
                 flex-direction: column;
                 gap: 20px;
             }
-            
+
             .nav-button {
                 width: 100%;
                 justify-content: center;
@@ -159,36 +158,28 @@
         <div class="onboarding-header">
             <span class="onboarding-icon">🌐</span>
             <h1 class="onboarding-title">Meet the iTerm2 Browser</h1>
-            <p class="onboarding-subtitle">A new kind of browsing experience, right in your terminal</p>
+            <p class="onboarding-subtitle">Terminal + Browser = Trowser</p>
         </div>
-        
+
         <div class="concept-card">
             <h2 class="concept-title">What is a Browser Profile?</h2>
             <p class="concept-description">
-                In iTerm2, profiles define what happens when you create a new session. 
-                You're familiar with terminal profiles—they open a shell. 
+                In iTerm2, profiles define how sessions look and behave.
+                Terminal profiles open a shell.
                 Browser profiles are different: they open a web browser instead.
             </p>
         </div>
-        
+
         <div class="concept-card">
             <h2 class="concept-title">How It Works</h2>
             <p class="concept-description">
-                When you create a new tab or split pane using a browser profile, 
-                you get a fully-featured web browser instead of a terminal. 
-                Mix and match browser and terminal panes however you like—they're 
+                When you create a new tab or split pane using a browser profile,
+                you get a fully-featured web browser instead of a terminal.
+                Mix and match browser and terminal panes however you like: they’re
                 all part of the same iTerm2 experience.
             </p>
         </div>
-        
-        <div class="highlight-box">
-            <p>
-                <strong>Pro tip:</strong> You can convert any iTerm2 profile into a browser profile. 
-                Just change the profile type in settings, and all your customizations 
-                (colors, keys, fonts) carry over.
-            </p>
-        </div>
-        
+
         <div class="navigation-footer">
             <div class="progress-dots">
                 <div class="progress-dot active"></div>
@@ -197,7 +188,7 @@
                 <div class="progress-dot"></div>
             </div>
             <a href="iterm2-about:onboarding-features" class="nav-button">
-                Learn What's Possible
+                Learn What’s Possible
                 <span>→</span>
             </a>
         </div>

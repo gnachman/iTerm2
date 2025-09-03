@@ -1664,7 +1664,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     if (![iTermAdvancedSettingsModel browserProfiles]) {
         return NO;
     }
-    Profile *profile = [[ProfileModel sharedInstance] defaultBrowserProfileCreatingIfNeeded];
+    Profile *profile = [[ProfileModel sharedInstance] defaultBrowserProfile] ?: [[ProfileModel sessionsInstance] defaultBrowserProfileCreatingIfNeeded];
 
     PseudoTerminal *term = [self currentTerminal];
     if (!term) {
@@ -1695,7 +1695,8 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     if (![iTermAdvancedSettingsModel browserProfiles]) {
         return nil;
     }
-    MutableProfile *windowProfile = [[[ProfileModel sharedInstance] defaultBrowserProfileCreatingIfNeeded] mutableCopy];
+    Profile *profile = [[ProfileModel sharedInstance] defaultBrowserProfile] ?: [[ProfileModel sessionsInstance] defaultBrowserProfileCreatingIfNeeded];
+    MutableProfile *windowProfile = [profile mutableCopy];
     if ([windowProfile[KEY_WINDOW_TYPE] integerValue] == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
         [windowProfile[KEY_WINDOW_TYPE] integerValue] == WINDOW_TYPE_LION_FULL_SCREEN) {
         windowProfile[KEY_WINDOW_TYPE] = @(iTermWindowDefaultType());

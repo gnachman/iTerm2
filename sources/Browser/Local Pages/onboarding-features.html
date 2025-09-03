@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iTerm2 Browser - Features</title>
+    <style>
+        {{COMMON_CSS}}
+        
+        .onboarding-container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+        
+        .onboarding-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        
+        .onboarding-title {
+            font-size: 2.8em;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--accent-color), #5ac8fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .onboarding-subtitle {
+            font-size: 1.2em;
+            color: var(--secondary-text);
+        }
+        
+        .features-section {
+            margin-bottom: 48px;
+        }
+        
+        .section-title {
+            font-size: 1.8em;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .section-icon {
+            font-size: 1.2em;
+        }
+        
+        .feature-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 20px;
+            background: var(--section-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-item:hover {
+            transform: translateX(4px);
+            border-color: var(--accent-color)40;
+            box-shadow: 0 4px 16px var(--shadow);
+        }
+        
+        .feature-check {
+            color: #34c759;
+            font-size: 1.3em;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+        
+        .feature-warning {
+            color: #ff9500;
+            font-size: 1.3em;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+        
+        .feature-text {
+            font-size: 1.05em;
+            line-height: 1.6;
+            color: var(--text-color);
+        }
+        
+        .feature-text strong {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+        
+        .navigation-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 60px;
+            padding-top: 32px;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 16px;
+        }
+        
+        .nav-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            background: var(--button-bg);
+            color: var(--button-text);
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 12px var(--shadow);
+        }
+        
+        .nav-button:hover {
+            background: var(--button-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--shadow);
+        }
+        
+        .nav-button.secondary {
+            background: transparent;
+            color: var(--accent-color);
+            border: 2px solid var(--accent-color);
+        }
+        
+        .nav-button.secondary:hover {
+            background: var(--accent-color)10;
+        }
+        
+        .progress-dots {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .progress-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .progress-dot.active {
+            width: 24px;
+            border-radius: 5px;
+            background: var(--accent-color);
+        }
+        
+        .divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 32px 0;
+        }
+        
+        @media (max-width: 600px) {
+            .onboarding-title {
+                font-size: 2em;
+            }
+            
+            .navigation-footer {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .nav-buttons {
+                width: 100%;
+                flex-direction: column;
+            }
+            
+            .nav-button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="onboarding-container">
+        <div class="onboarding-header">
+            <h1 class="onboarding-title">What Can It Do?</h1>
+            <p class="onboarding-subtitle">Power features and thoughtful limitations</p>
+        </div>
+        
+        <div class="features-section">
+            <h2 class="section-title">
+                <span class="section-icon">✨</span>
+                Why You’ll Love It
+            </h2>
+            <div class="feature-list">
+                <div class="feature-item">
+                    <span class="feature-check">✓</span>
+                    <div class="feature-text">
+                        <strong>SSH Integration Magic:</strong> View files on remote servers in the browser when using SSH integration.
+                    </div>
+                </div>
+                
+                <div class="feature-item">
+                    <span class="feature-check">✓</span>
+                    <div class="feature-text">
+                        <strong>iTerm2 Superpowers:</strong> Hotkey windows, split panes, and custom key bindings but for the web.
+                    </div>
+                </div>
+                
+                <div class="feature-item">
+                    <span class="feature-check">✓</span>
+                    <div class="feature-text">
+                        <strong>Built for Engineers:</strong> Copy on select, broadcast input, advanced paste, and regex search simplify workflows.
+                    </div>
+                </div>
+                
+                <div class="feature-item">
+                    <span class="feature-check">✓</span>
+                    <div class="feature-text">
+                        <strong>Productivity Tools:</strong> Instant replay, global search, named marks, and the Composer bring iTerm2 features into the browser.
+                    </div>
+                </div>
+                
+                <div class="feature-item">
+                    <span class="feature-check">✓</span>
+                    <div class="feature-text">
+                        <strong>Browser Basics:</strong> Integrates with the iTerm2 password manager, Webkit adblock lists, and iTerm2’s AI chat feature.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="features-section">
+            <h2 class="section-title">
+                <span class="section-icon">⚠️</span>
+                Know the Limits
+            </h2>
+            <div class="feature-list">
+                <div class="feature-item">
+                    <span class="feature-warning">!</span>
+                    <div class="feature-text">
+                        <strong>Beta Alert:</strong> This is the first release! Expect some turbulence. As always, <a href="https://iterm2.com/bugs">file an issue</a> if something goes wrong.
+                    </div>
+                </div>
+
+                <div class="feature-item">
+                    <span class="feature-warning">!</span>
+                    <div class="feature-text">
+                        <strong>Secondary Browser:</strong> iTerm2 doesn’t expect to be your primary browser. The purpose is to complement the terminal and facilitate particular tasks that other browser can’t.
+                    </div>
+                </div>
+                
+                <div class="feature-item">
+                    <span class="feature-warning">!</span>
+                    <div class="feature-text">
+                        <strong>Platform Constraints:</strong> Some features like Passkeys and advanced ad blocking are unavailable due to Apple’s restrictions on web views.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="navigation-footer">
+            <div class="progress-dots">
+                <div class="progress-dot"></div>
+                <div class="progress-dot active"></div>
+                <div class="progress-dot"></div>
+                <div class="progress-dot"></div>
+            </div>
+            <div class="nav-buttons">
+                <a href="iterm2-about:onboarding-intro" class="nav-button secondary">
+                    <span>←</span>
+                    Back
+                </a>
+                <a href="iterm2-about:onboarding-profile" class="nav-button">
+                    Get Started
+                    <span>→</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

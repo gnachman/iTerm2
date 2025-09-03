@@ -377,7 +377,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 }
 
 - (void)selectDefaultBrowserProfile {
-    NSString *guid = [[ProfileModel sharedInstance] defaultBrowserProfileCreatingIfNeeded][KEY_GUID];
+    NSString *guid = [[ProfileModel sharedInstance] defaultBrowserProfile][KEY_GUID];
     if (guid) {
         [self openToProfileWithGuid:guid];
     }

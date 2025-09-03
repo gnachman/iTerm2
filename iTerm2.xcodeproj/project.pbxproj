@@ -3292,6 +3292,19 @@
 		A6A802EA226ED20800BC70DC /* iTermPrintGuard.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A802E8226ED20800BC70DC /* iTermPrintGuard.m */; };
 		A6A802ED226EEAE900BC70DC /* PTYTask+MRR.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A802EB226EEAE900BC70DC /* PTYTask+MRR.h */; };
 		A6A802EE226EEAE900BC70DC /* PTYTask+MRR.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A802EC226EEAE900BC70DC /* PTYTask+MRR.m */; };
+		A6A832282E67AA8F00157F82 /* onboarding-intro.html in Resources */ = {isa = PBXBuildFile; fileRef = A6A832262E67AA8F00157F82 /* onboarding-intro.html */; };
+		A6A832292E67AA8F00157F82 /* onboarding-setup.html in Resources */ = {isa = PBXBuildFile; fileRef = A6A832272E67AA8F00157F82 /* onboarding-setup.html */; };
+		A6A8322A2E67AA8F00157F82 /* onboarding-features.html in Resources */ = {isa = PBXBuildFile; fileRef = A6A832252E67AA8F00157F82 /* onboarding-features.html */; };
+		A6A8322B2E67AA8F00157F82 /* onboarding-intro.html in Resources */ = {isa = PBXBuildFile; fileRef = A6A832262E67AA8F00157F82 /* onboarding-intro.html */; };
+		A6A8322C2E67AA8F00157F82 /* onboarding-setup.html in Resources */ = {isa = PBXBuildFile; fileRef = A6A832272E67AA8F00157F82 /* onboarding-setup.html */; };
+		A6A8322D2E67AA8F00157F82 /* onboarding-features.html in Resources */ = {isa = PBXBuildFile; fileRef = A6A832252E67AA8F00157F82 /* onboarding-features.html */; };
+		A6A8322E2E67AA8F00157F82 /* onboarding-intro.html in Resources */ = {isa = PBXBuildFile; fileRef = A6A832262E67AA8F00157F82 /* onboarding-intro.html */; };
+		A6A8322F2E67AA8F00157F82 /* onboarding-setup.html in Resources */ = {isa = PBXBuildFile; fileRef = A6A832272E67AA8F00157F82 /* onboarding-setup.html */; };
+		A6A832302E67AA8F00157F82 /* onboarding-features.html in Resources */ = {isa = PBXBuildFile; fileRef = A6A832252E67AA8F00157F82 /* onboarding-features.html */; };
+		A6A832312E67AABB00157F82 /* iTermBrowserOnboardingHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A832212E67AA8800157F82 /* iTermBrowserOnboardingHandler.swift */; };
+		A6A832332E67ADBE00157F82 /* onboarding-profile.html in Resources */ = {isa = PBXBuildFile; fileRef = A6A832322E67ADBE00157F82 /* onboarding-profile.html */; };
+		A6A832342E67ADBE00157F82 /* onboarding-profile.html in Resources */ = {isa = PBXBuildFile; fileRef = A6A832322E67ADBE00157F82 /* onboarding-profile.html */; };
+		A6A832352E67ADBE00157F82 /* onboarding-profile.html in Resources */ = {isa = PBXBuildFile; fileRef = A6A832322E67ADBE00157F82 /* onboarding-profile.html */; };
 		A6A93F582C49BD2F00F07BAB /* iTermTerminfoHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A93F562C49BD2F00F07BAB /* iTermTerminfoHelper.h */; };
 		A6A93F592C49BD2F00F07BAB /* iTermTerminfoHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A93F572C49BD2F00F07BAB /* iTermTerminfoHelper.m */; };
 		A6A9838C27E5A83C003319D1 /* PasswordManagerDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A9838B27E5A83C003319D1 /* PasswordManagerDataSource.swift */; };
@@ -8083,6 +8096,11 @@
 		A6A802E8226ED20800BC70DC /* iTermPrintGuard.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPrintGuard.m; sourceTree = "<group>"; };
 		A6A802EB226EEAE900BC70DC /* PTYTask+MRR.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PTYTask+MRR.h"; sourceTree = "<group>"; };
 		A6A802EC226EEAE900BC70DC /* PTYTask+MRR.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "PTYTask+MRR.m"; sourceTree = "<group>"; };
+		A6A832212E67AA8800157F82 /* iTermBrowserOnboardingHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserOnboardingHandler.swift; sourceTree = "<group>"; };
+		A6A832252E67AA8F00157F82 /* onboarding-features.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "onboarding-features.html"; sourceTree = "<group>"; };
+		A6A832262E67AA8F00157F82 /* onboarding-intro.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "onboarding-intro.html"; sourceTree = "<group>"; };
+		A6A832272E67AA8F00157F82 /* onboarding-setup.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "onboarding-setup.html"; sourceTree = "<group>"; };
+		A6A832322E67ADBE00157F82 /* onboarding-profile.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "onboarding-profile.html"; sourceTree = "<group>"; };
 		A6A93F562C49BD2F00F07BAB /* iTermTerminfoHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTerminfoHelper.h; sourceTree = "<group>"; };
 		A6A93F572C49BD2F00F07BAB /* iTermTerminfoHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTerminfoHelper.m; sourceTree = "<group>"; };
 		A6A9838B27E5A83C003319D1 /* PasswordManagerDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordManagerDataSource.swift; sourceTree = "<group>"; };
@@ -13451,16 +13469,21 @@
 		A6CBB8162E0A1B7400B2CCCB /* Local Pages */ = {
 			isa = PBXGroup;
 			children = (
+				A6F7D4BE2E037BB20065D09C /* iterm-browser-common.css */,
 				A6AA2F8D2E296849002998B3 /* cert-error.html */,
 				A671D6D32E1E37200087348B /* dev.html */,
+				A6F7D4C62E037E780065D09C /* error-page.html */,
+				A6A832252E67AA8F00157F82 /* onboarding-features.html */,
+				A6A832262E67AA8F00157F82 /* onboarding-intro.html */,
+				A6A832322E67ADBE00157F82 /* onboarding-profile.html */,
+				A6A832272E67AA8F00157F82 /* onboarding-setup.html */,
+				A6D16EB42E07EC910099139D /* welcome-page.html */,
 				A6F7D4C22E037BC80065D09C /* iTermBrowserCSSLoader.swift */,
 				A6F7D4BA2E0373110065D09C /* iTermBrowserErrorHandler.swift */,
 				A6AF79F92E07E27D008D77BA /* iTermBrowserLocalPageManager.swift */,
+				A6A832212E67AA8800157F82 /* iTermBrowserOnboardingHandler.swift */,
 				A6D16EB22E07EBD00099139D /* iTermBrowserStaticPageHandler.swift */,
 				A6F7D4C42E037E520065D09C /* iTermBrowserTemplateLoader.swift */,
-				A6F7D4C62E037E780065D09C /* error-page.html */,
-				A6D16EB42E07EC910099139D /* welcome-page.html */,
-				A6F7D4BE2E037BB20065D09C /* iterm-browser-common.css */,
 			);
 			path = "Local Pages";
 			sourceTree = "<group>";
@@ -16268,6 +16291,9 @@
 				A6EC0B082C87DF5E00598D20 /* uniE0D7_Powerline_normal-left-inverse-cutout.pdf in Resources */,
 				A65B725F1B1A630100F947A7 /* CheckMark@2x.png in Resources */,
 				A67F61CF214395C60093940A /* graphic_read@2x.png in Resources */,
+				A6A832282E67AA8F00157F82 /* onboarding-intro.html in Resources */,
+				A6A832292E67AA8F00157F82 /* onboarding-setup.html in Resources */,
+				A6A8322A2E67AA8F00157F82 /* onboarding-features.html in Resources */,
 				1D6ED9A219AEA20D005A7799 /* ColorPresets.plist in Resources */,
 				A67F6172214395990093940A /* graphic_mysql.png in Resources */,
 				A67F6192214395A70093940A /* graphic_npm.png in Resources */,
@@ -16284,6 +16310,7 @@
 				1D6ED9A619AEA20D005A7799 /* DefaultGlobalKeyMap.plist in Resources */,
 				A6643F132CA62190004B757B /* coderabbitai.png in Resources */,
 				53AA764B237E35A50094D75A /* OpenQuicklyActionIcon.png in Resources */,
+				A6A832342E67ADBE00157F82 /* onboarding-profile.html in Resources */,
 				A6CBB7BA2E08B64100B2CCCB /* geolocation-bridge.js in Resources */,
 				A6CC2D182E4AE09100F8D620 /* editing-detector.js in Resources */,
 				A6CBB8072E09208C00B2CCCB /* password-button.js in Resources */,
@@ -16988,6 +17015,7 @@
 				A66351472B659309009B93F7 /* PinnedIndicator@2x.png in Resources */,
 				A686C1991ADF62F200906FAE /* Zoomed@2x.png in Resources */,
 				A6D693E02E405AB8005E9AFE /* trigger-make-hyperlink.js in Resources */,
+				A6A832352E67ADBE00157F82 /* onboarding-profile.html in Resources */,
 				A65E6F592547F1D5008A4866 /* WindowCornerFull_Square.png in Resources */,
 				A6F31A28295BC41700C1A51E /* uniE0C9_PowerlineExtraSymbols.pdf in Resources */,
 				A671D6D52E1E372E0087348B /* dev.html in Resources */,
@@ -17167,6 +17195,9 @@
 				A67F6145214395870093940A /* graphic_java.png in Resources */,
 				A6F18B482AE2F39C006C08EE /* uniE0C0_flame-thick.pdf in Resources */,
 				A686A1181C86A6DD0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */,
+				A6A8322E2E67AA8F00157F82 /* onboarding-intro.html in Resources */,
+				A6A8322F2E67AA8F00157F82 /* onboarding-setup.html in Resources */,
+				A6A832302E67AA8F00157F82 /* onboarding-features.html in Resources */,
 				A6B3A7361AC74E02008E8D4E /* FindCursorCell4.png in Resources */,
 				1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */,
 				A60C0352208964FE00FE2F1F /* it2_api_wrapper.sh in Resources */,
@@ -17788,6 +17819,9 @@
 				A6FE7A7B2E0E120100BEBCE4 /* indexeddb-demo.html in Resources */,
 				1D48B28D165F3669000046EE /* TabClose_Front.png in Resources */,
 				A67F61B0214395B70093940A /* graphic_php.png in Resources */,
+				A6A8322B2E67AA8F00157F82 /* onboarding-intro.html in Resources */,
+				A6A8322C2E67AA8F00157F82 /* onboarding-setup.html in Resources */,
+				A6A8322D2E67AA8F00157F82 /* onboarding-features.html in Resources */,
 				A697CE322D976AFE0031583F /* AnnotationsMenuTip.png in Resources */,
 				A697CE332D976AFE0031583F /* AnnotationsMenuTip@2x.png in Resources */,
 				A6D693E42E4137E4005E9AFE /* monitor-audio-context.js in Resources */,
@@ -17894,6 +17928,7 @@
 				1DEF5E6D185F889600300319 /* Alert.png in Resources */,
 				9DB3D6E4176CB4D80071CCF8 /* PrefsProfile.png in Resources */,
 				A6D694732E44812C005E9AFE /* find-api.js in Resources */,
+				A6A832332E67ADBE00157F82 /* onboarding-profile.html in Resources */,
 				9DB3D6E5176CB4D80071CCF8 /* PrefsProfile@2x.png in Resources */,
 				9DB3D6E8176CBC0C0071CCF8 /* PrefsKeyboard.png in Resources */,
 				A6E16C6224A85D5F00C6DB06 /* BigSurAddTab.png in Resources */,
@@ -19007,6 +19042,7 @@
 				5370ECDB20F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.m in Sources */,
 				A6F7D4D12E03BE3A0065D09C /* iTermBrowserFindManager.swift in Sources */,
 				A6AFE93123FCFF8C00D489C7 /* iTermRestorableStateController.m in Sources */,
+				A6A832312E67AABB00157F82 /* iTermBrowserOnboardingHandler.swift in Sources */,
 				A631FCA220EF0BCC00EB824F /* iTermStatusBarKnobColorViewController.m in Sources */,
 				A6153D5D21F4EF6F002976FC /* iTermStatusBarBaseLayoutAlgorithm.m in Sources */,
 				A6F7D4F22E0536530065D09C /* BrowserHistory.swift in Sources */,

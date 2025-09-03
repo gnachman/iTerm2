@@ -21,4 +21,12 @@ class iTermProfilePreferenceMutator: NSObject {
             iTermProfilePreferences.setObject(value as NSArray, forKey: key, inProfile: profile, model: model)
         }
     }
+
+    func set(key: String, value: Bool) {
+        if let profile = model.bookmark(withGuid: guid) {
+            iTermProfilePreferences.setObject(NSNumber(value: value),
+                                              forKey: key,
+                                              inProfile: profile, model: model)
+        }
+    }
 }

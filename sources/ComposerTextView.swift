@@ -269,6 +269,8 @@ class ComposerTextView: MultiCursorTextView {
             } else {
                 composerDelegate?.composerForwardMenuItem(menuItem)
             }
+        } else if sender as? ComposerTextView === self || sender == nil {
+            super.copy(sender)
         }
     }
 

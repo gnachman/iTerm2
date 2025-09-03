@@ -87,9 +87,9 @@ import Foundation
 
 @available(macOS 11.0, *)
 struct iTermBrowserStaticPageConfig {
-    let url: URL
-    let templateName: String
-    let substitutions: [String: String]
+    var url: URL
+    var templateName: String
+    var substitutions: [String: String]
     
     init(urlPath: String, templateName: String, substitutions: [String: String] = [:]) {
         self.url = URL(string: "\(iTermBrowserSchemes.about):\(urlPath)")!
@@ -167,7 +167,10 @@ class iTermBrowserStaticPageRegistry {
     
     private func setupDefaultPages() {
         // Register all static pages here
+        // Note: welcome page substitutions are handled dynamically in getConfig
         registerStaticPage(urlPath: "welcome", templateName: "welcome-page", substitutions: [:])
+        registerStaticPage(urlPath: "onboarding-intro", templateName: "onboarding-intro", substitutions: [:])
+        registerStaticPage(urlPath: "onboarding-features", templateName: "onboarding-features", substitutions: [:])
         #if ITERM_DEBUG
         let pages = [
             "dev",
@@ -194,7 +197,15 @@ class iTermBrowserStaticPageRegistry {
     }
     
     func getConfig(for urlString: String) -> iTermBrowserStaticPageConfig? {
-        return staticPages[urlString]
+        guard var config = staticPages[urlString] else { return nil }
+        
+        // Handle dynamic substitutions for welcome page
+        if urlString == "iterm2-about:welcome" {
+            let onboardingCompleted = UserDefaults.standard.bool(forKey: "NoSyncBrowserOnboardingCompleted")
+            config.substitutions["SHOW_ONBOARDING"] = onboardingCompleted ? "none" : "block"
+        }
+        
+        return config
     }
     
     func isStaticPage(_ urlString: String) -> Bool {

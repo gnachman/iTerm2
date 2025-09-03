@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iTerm2 Browser - Create Profile</title>
+    <style>
+        {{COMMON_CSS}}
+        
+        .onboarding-container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+        
+        .onboarding-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        
+        .onboarding-title {
+            font-size: 2.8em;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--accent-color), #5ac8fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .onboarding-subtitle {
+            font-size: 1.2em;
+            color: var(--secondary-text);
+            line-height: 1.6;
+        }
+        
+        .profile-card {
+            background: var(--section-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+        
+        .profile-icon {
+            font-size: 4em;
+            margin-bottom: 24px;
+            display: block;
+        }
+        
+        .profile-title {
+            font-size: 1.6em;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-color);
+        }
+        
+        .profile-description {
+            font-size: 1.1em;
+            line-height: 1.8;
+            color: var(--text-color);
+            opacity: 0.9;
+            margin-bottom: 32px;
+        }
+        
+        .create-profile-button {
+            display: inline-block;
+            padding: 16px 36px;
+            background: linear-gradient(135deg, var(--accent-color), #5ac8fa);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px var(--shadow);
+        }
+        
+        .create-profile-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--shadow);
+        }
+        
+        .create-profile-button:disabled {
+            background: var(--border-color);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .success-message {
+            display: none;
+            background: linear-gradient(135deg, #34c75910, #30d15810);
+            border-left: 4px solid #34c759;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 24px 0;
+        }
+        
+        .success-message.show {
+            display: block;
+        }
+        
+        .success-message p {
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin: 0;
+            color: var(--text-color);
+        }
+        
+        .info-box {
+            background: linear-gradient(135deg, #5ac8fa10, var(--accent-color)10);
+            border-left: 4px solid #5ac8fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 32px 0;
+        }
+        
+        .info-box p {
+            font-size: 1.05em;
+            line-height: 1.6;
+            margin: 0;
+            color: var(--text-color);
+        }
+        
+        .navigation-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 60px;
+            padding-top: 32px;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 16px;
+        }
+        
+        .nav-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            background: var(--button-bg);
+            color: var(--button-text);
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 12px var(--shadow);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .nav-button:hover {
+            background: var(--button-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--shadow);
+        }
+        
+        .nav-button.secondary {
+            background: transparent;
+            color: var(--accent-color);
+            border: 2px solid var(--accent-color);
+        }
+        
+        .nav-button.secondary:hover {
+            background: var(--accent-color)10;
+        }
+        
+        .nav-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .progress-dots {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .progress-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .progress-dot.active {
+            width: 24px;
+            border-radius: 5px;
+            background: var(--accent-color);
+        }
+        
+        @media (max-width: 600px) {
+            .onboarding-title {
+                font-size: 2em;
+            }
+            
+            .navigation-footer {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .nav-buttons {
+                width: 100%;
+                flex-direction: column;
+            }
+            
+            .nav-button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+    <script>
+        const sessionSecret = '{{SECRET}}';
+        let profileReady = false;
+        
+        function createBrowserProfile() {
+            // Send message to create profile
+            window.webkit.messageHandlers['iterm2-about:onboarding-profile'].postMessage({
+                action: 'createBrowserProfile',
+                sessionSecret: sessionSecret
+            });
+        }
+        
+        function onProfileCreated(success) {
+            profileReady = true;  // Profile is ready whether it was just created or already existed
+            
+            const button = document.getElementById('create-profile-btn');
+            const successMsg = document.getElementById('success-message');
+            const continueBtn = document.getElementById('continue-btn');
+            
+            if (success) {
+                button.textContent = '✓ Profile Created';
+                button.disabled = true;
+                successMsg.classList.add('show');
+                continueBtn.disabled = false;
+            } else {
+                // Profile already exists
+                button.textContent = '✓ Profile Exists';
+                button.disabled = true;
+                successMsg.classList.add('show');
+                successMsg.querySelector('p').textContent = 'A browser profile already exists. You can continue to the next step.';
+                continueBtn.disabled = false;
+            }
+        }
+        
+        function continueToSetup() {
+            if (!profileReady) {
+                // This shouldn't happen since the button is disabled
+                return;
+            }
+            
+            // Switch to the new profile (placeholder for now)
+            window.webkit.messageHandlers['iterm2-about:onboarding-profile'].postMessage({
+                action: 'switchToProfile',
+                sessionSecret: sessionSecret
+            });
+            
+            // Navigate to setup page
+            window.location.href = 'iterm2-about:onboarding-setup';
+        }
+        
+        // Check on load if profile already exists
+        window.addEventListener('DOMContentLoaded', function() {
+            window.webkit.messageHandlers['iterm2-about:onboarding-profile'].postMessage({
+                action: 'checkProfileExists',
+                sessionSecret: sessionSecret
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="onboarding-container">
+        <div class="onboarding-header">
+            <h1 class="onboarding-title">First Things First</h1>
+            <p class="onboarding-subtitle">Let's create a browser profile to get started</p>
+        </div>
+        
+        <div class="profile-card">
+            <span class="profile-icon">👤</span>
+            <h2 class="profile-title">Create Your Browser Profile</h2>
+            <p class="profile-description">
+                A browser profile stores all your preferences and settings specifically for web browsing. 
+                This keeps your terminal and browser configurations separate and organized.
+            </p>
+            <button id="create-profile-btn" class="create-profile-button" onclick="createBrowserProfile()">
+                Create Browser Profile
+            </button>
+        </div>
+        
+        <div id="success-message" class="success-message">
+            <p>
+                <strong>Success!</strong> Your browser profile has been created. 
+                You can now continue to configure your browsing experience.
+            </p>
+        </div>
+        
+        <div class="info-box">
+            <p>
+                <strong>Note:</strong> You can create multiple browser profiles with different settings 
+                for different use cases. Each profile can have its own keyboard shortcuts 
+                and browser-specific configurations.
+            </p>
+        </div>
+        
+        <div class="navigation-footer">
+            <div class="progress-dots">
+                <div class="progress-dot"></div>
+                <div class="progress-dot"></div>
+                <div class="progress-dot active"></div>
+                <div class="progress-dot"></div>
+            </div>
+            <div class="nav-buttons">
+                <a href="iterm2-about:onboarding-features" class="nav-button secondary">
+                    <span>←</span>
+                    Back
+                </a>
+                <button id="continue-btn" onclick="continueToSetup()" class="nav-button" disabled>
+                    Continue to Setup
+                    <span>→</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

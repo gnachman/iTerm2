@@ -146,11 +146,11 @@
                     </textFieldCell>
                 </textField>
                 <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bGK-Us-rSz" customClass="iTermOnboardingTextField">
-                    <rect key="frame" x="18" y="20" width="589" height="41"/>
+                    <rect key="frame" x="18" y="20" width="589" height="48"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <textFieldCell key="cell" alignment="center" id="0Bk-78-p2L">
                         <font key="font" metaFont="system"/>
-                        <string key="title">Set a profile’s type to Browser and you can enjoy almost all the features of iTerm2—regex search, instant replay, split panes, hotkey windows, and more—to view web pages.</string>
+                        <string key="title">Set a profile’s type to Browser and you can enjoy almost all the features of iTerm2—regex search, instant replay, split panes, hotkey windows, and more—to view web pages. &lt;a href="iterm2whatsnew:/browser"&gt;Try it now!&lt;/a&gt;</string>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -159,7 +159,7 @@
                     </connections>
                 </textField>
                 <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jRF-f4-nke">
-                    <rect key="frame" x="20" y="59" width="585" height="235"/>
+                    <rect key="frame" x="20" y="76" width="585" height="205"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-Web" id="Q5w-FO-7Jc"/>
                 </imageView>

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iTerm2 Browser - Setup</title>
+    <style>
+        {{COMMON_CSS}}
+        
+        .onboarding-container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+        
+        .onboarding-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        
+        .onboarding-title {
+            font-size: 2.8em;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--accent-color), #5ac8fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .onboarding-subtitle {
+            font-size: 1.2em;
+            color: var(--secondary-text);
+        }
+        
+        .setup-card {
+            background: var(--section-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            transition: all 0.3s ease;
+        }
+        
+        .setup-card:hover {
+            box-shadow: 0 6px 20px var(--shadow);
+        }
+        
+        .setup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .setup-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        
+        .setup-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: var(--bg-color);
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        
+        .setup-status.enabled {
+            color: #34c759;
+            background: #34c75910;
+        }
+        
+        .setup-status.disabled {
+            color: var(--secondary-text);
+            background: var(--border-color)30;
+        }
+        
+        .setup-description {
+            font-size: 1.05em;
+            line-height: 1.6;
+            color: var(--text-color);
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+        
+        .setup-action {
+            display: inline-block;
+            padding: 12px 24px;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .setup-action:hover {
+            background: var(--button-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+        
+        .setup-action.secondary {
+            background: transparent;
+            color: var(--accent-color);
+            border: 2px solid var(--accent-color);
+        }
+        
+        .setup-action.secondary:hover {
+            background: var(--accent-color)10;
+        }
+        
+        .info-box {
+            background: linear-gradient(135deg, #5ac8fa10, var(--accent-color)10);
+            border-left: 4px solid #5ac8fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 32px 0;
+        }
+        
+        .info-box p {
+            font-size: 1.05em;
+            line-height: 1.6;
+            margin: 0;
+            color: var(--text-color);
+        }
+        
+        .navigation-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 60px;
+            padding-top: 32px;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 16px;
+        }
+        
+        .nav-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            background: var(--button-bg);
+            color: var(--button-text);
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 12px var(--shadow);
+        }
+        
+        .nav-button:hover {
+            background: var(--button-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--shadow);
+        }
+        
+        .nav-button.secondary {
+            background: transparent;
+            color: var(--accent-color);
+            border: 2px solid var(--accent-color);
+        }
+        
+        .nav-button.secondary:hover {
+            background: var(--accent-color)10;
+        }
+        
+        .nav-button.primary {
+            background: linear-gradient(135deg, #34c759, #30d158);
+        }
+        
+        .nav-button.primary:hover {
+            background: linear-gradient(135deg, #30d158, #34c759);
+        }
+        
+        .progress-dots {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .progress-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .progress-dot.active {
+            width: 24px;
+            border-radius: 5px;
+            background: var(--accent-color);
+        }
+        
+        @media (max-width: 600px) {
+            .onboarding-title {
+                font-size: 2em;
+            }
+            
+            .navigation-footer {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .nav-buttons {
+                width: 100%;
+                flex-direction: column;
+            }
+            
+            .nav-button {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .setup-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+        }
+    </style>
+    <script>
+        const sessionSecret = '{{SECRET}}';
+        
+        function enableAdBlocker() {
+            window.webkit.messageHandlers['iterm2-about:onboarding-setup'].postMessage({
+                action: 'enableAdBlocker',
+                sessionSecret: sessionSecret
+            });
+        }
+        
+        function enableInstantReplay() {
+            window.webkit.messageHandlers['iterm2-about:onboarding-setup'].postMessage({
+                action: 'enableInstantReplay',
+                sessionSecret: sessionSecret
+            });
+        }
+        
+        function createBrowserProfile() {
+            window.webkit.messageHandlers['iterm2-about:onboarding-setup'].postMessage({
+                action: 'createBrowserProfile',
+                sessionSecret: sessionSecret
+            });
+        }
+        
+        function updateStatus(elementId, enabled) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            
+            const statusTexts = {
+                'adblocker-status': enabled ? 'Enabled' : 'Disabled',
+                'replay-status': enabled ? 'Enabled' : 'Disabled',
+                'profile-status': enabled ? 'Created' : 'Not Created'
+            };
+            
+            element.textContent = statusTexts[elementId] || (enabled ? 'Enabled' : 'Disabled');
+            element.classList.remove('enabled', 'disabled');
+            element.classList.add(enabled ? 'enabled' : 'disabled');
+            
+            // Update button state
+            const button = element.closest('.setup-card').querySelector('.setup-action');
+            if (button && enabled) {
+                button.textContent = '✓ Done';
+                button.disabled = true;
+                button.style.opacity = '0.5';
+                button.style.cursor = 'default';
+            }
+        }
+        
+        function updateInitialStatus(status) {
+            // Update UI based on current settings
+            if (status.adBlockerEnabled) {
+                updateStatus('adblocker-status', true);
+            }
+            if (status.instantReplayEnabled) {
+                updateStatus('replay-status', true);
+            }
+            if (status.profileExists) {
+                updateStatus('profile-status', true);
+            }
+        }
+        
+        function finishSetup() {
+            // Mark onboarding as complete
+            window.webkit.messageHandlers['iterm2-about:onboarding-setup'].postMessage({
+                action: 'completeOnboarding',
+                sessionSecret: sessionSecret
+            });
+            // Navigate to a blank welcome page
+            window.location.href = 'iterm2-about:welcome';
+        }
+        
+        // Check settings status on load
+        window.addEventListener('DOMContentLoaded', function() {
+            window.webkit.messageHandlers['iterm2-about:onboarding-setup'].postMessage({
+                action: 'getSettingsStatus',
+                sessionSecret: sessionSecret
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="onboarding-container">
+        <div class="onboarding-header">
+            <h1 class="onboarding-title">Let’s Get You Set Up</h1>
+            <p class="onboarding-subtitle">Quick configuration to get the most out of your browser</p>
+        </div>
+        
+        <div class="setup-card">
+            <div class="setup-header">
+                <h3 class="setup-title">🛡️ Ad Blocker</h3>
+                <span id="adblocker-status" class="setup-status disabled">Disabled</span>
+            </div>
+            <p class="setup-description">
+                Blocks ads and trackers using WebKit content blockers.
+                Improves browsing speed and privacy without sacrificing compatibility.
+                If enabled, a new block list will be downloaded from the internet once a day.
+            </p>
+            <button class="setup-action" onclick="enableAdBlocker()">
+                Enable Ad Blocker
+            </button>
+        </div>
+        
+        <div class="setup-card">
+            <div class="setup-header">
+                <h3 class="setup-title">🎬 Instant Replay</h3>
+                <span id="replay-status" class="setup-status disabled">Disabled</span>
+            </div>
+            <p class="setup-description">
+                Instant Replay keeps a rolling screen recording of your browser window, storing only
+                the most recent contents. If you miss something, launch the player to review what
+                was on the screen.
+                Requires screen recording permission.
+            </p>
+            <button class="setup-action" onclick="enableInstantReplay()">
+                Enable Instant Replay
+            </button>
+        </div>
+        
+        <div class="info-box">
+            <p>
+                <strong>Tip:</strong>
+                To view or change browser settings, go to
+                <strong>Preferences → Profiles → Web</strong>
+                or by clicking the ☰ button in the browser
+                toolbar and then select <strong>Settings</strong>.
+            </p>
+        </div>
+        
+        <div class="navigation-footer">
+            <div class="progress-dots">
+                <div class="progress-dot"></div>
+                <div class="progress-dot"></div>
+                <div class="progress-dot"></div>
+                <div class="progress-dot active"></div>
+            </div>
+            <div class="nav-buttons">
+                <a href="iterm2-about:onboarding-profile" class="nav-button secondary">
+                    <span>←</span>
+                    Back
+                </a>
+                <button onclick="finishSetup()" class="nav-button primary">
+                    Start Browsing
+                    <span>🚀</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
