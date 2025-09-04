@@ -6006,18 +6006,8 @@ static NSString *iTermStringFromRange(NSRange range) {
     __block VT100GridCoordRange coordRange = [self accessibilityRangeOfCursor];
     [self withRelativeCoordRange:sub.absRange.coordRange block:^(VT100GridCoordRange initialCoordRange) {
         coordRange = initialCoordRange;
-        int minY = _dataSource.numberOfLines - _dataSource.height;
-        if (coordRange.start.y < minY) {
-            coordRange.start.y = 0;
-            coordRange.start.x = 0;
-        } else {
-            coordRange.start.y -= minY;
-        }
-        if (coordRange.end.y < minY) {
-            coordRange = [self accessibilityRangeOfCursor];
-        } else {
-            coordRange.end.y -= minY;
-        }
+        coordRange.start.y = MAX(0, [self accessibilityHelperAccessibilityLineNumberForLineNumber:coordRange.start.y]);
+        coordRange.end.y = MAX(0, [self accessibilityHelperAccessibilityLineNumberForLineNumber:coordRange.end.y]);
     }];
     return coordRange;
 }
