@@ -53,6 +53,7 @@
 @property (nonatomic, readwrite) BOOL autoComposerEnabled;
 @property (nonatomic, readwrite) BOOL useLineStyleMarks;
 @property (nonatomic, readwrite) BOOL optionIsMetaForSpecialChars;
+@property (nonatomic, readwrite) BOOL wantsCommandChangeNotifications;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -98,6 +99,7 @@
 @synthesize autoComposerEnabled = _autoComposerEnabled;
 @synthesize useLineStyleMarks = _useLineStyleMarks;
 @synthesize optionIsMetaForSpecialChars = _optionIsMetaForSpecialChars;
+@synthesize wantsCommandChangeNotifications = _wantsCommandChangeNotifications;
 
 @synthesize isDirty = _isDirty;
 @synthesize terminfoValues = _terminfoValues;
@@ -147,6 +149,7 @@
         _autoComposerEnabled = other.autoComposerEnabled;
         _useLineStyleMarks = other.useLineStyleMarks;
         _optionIsMetaForSpecialChars = other.optionIsMetaForSpecialChars;
+        _wantsCommandChangeNotifications = other.wantsCommandChangeNotifications;
 
         _isDirty = other.isDirty;
     }
@@ -204,6 +207,7 @@
                             @"autoComposerEnabled": @(_autoComposerEnabled),
                             @"useLineStyleMarks": @(_useLineStyleMarks),
                             @"optionIsMetaForSpecialChars": @(_optionIsMetaForSpecialChars),
+                            @"wantsCommandChangeNotifications": @(_wantsCommandChangeNotifications),
 
                             @"isDirty": @(_isDirty),
     };
@@ -264,6 +268,7 @@
 @dynamic autoComposerEnabled;
 @dynamic useLineStyleMarks;
 @dynamic optionIsMetaForSpecialChars;
+@dynamic wantsCommandChangeNotifications;
 
 @dynamic isDirty;
 

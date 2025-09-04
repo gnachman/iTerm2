@@ -2918,21 +2918,25 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             }];
         }
     }
-#warning TODO: We spend a lot of time here in commands with big output. I noticed in when using tmux w/ shell integration.
-    NSString *command = haveCommand ? [self commandInRange:current] : @"";
-
-    __weak __typeof(self) weakSelf = self;
-    [_commandRangeChangeJoiner setNeedsUpdateWithBlock:^{
-        // This runs as a side-effect
-        assert([NSThread isMainThread]);
-        [weakSelf performSideEffect:^(id<VT100ScreenDelegate> delegate) {
-            [weakSelf notifyDelegateOfCommandChange:command
-                                           atPrompt:atPrompt
-                                        haveCommand:haveCommand
-                                sideEffectPerformer:weakSelf.sideEffectPerformer
-                                           delegate:delegate];
+    if (self.config.wantsCommandChangeNotifications) {
+        // If semantic history goes nuts and the end-of-command code isn't received (which seems to be a
+        // common problem, probably because of buggy old versions of SH scripts) , the command can grow
+        // without bound. We'll limit the length of a command to avoid performance problems.
+        NSString *command = haveCommand ? [self commandInRange:current maxLines:2] : @"";
+        
+        __weak __typeof(self) weakSelf = self;
+        [_commandRangeChangeJoiner setNeedsUpdateWithBlock:^{
+            // This runs as a side-effect
+            assert([NSThread isMainThread]);
+            [weakSelf performSideEffect:^(id<VT100ScreenDelegate> delegate) {
+                [weakSelf notifyDelegateOfCommandChange:command
+                                               atPrompt:atPrompt
+                                            haveCommand:haveCommand
+                                    sideEffectPerformer:weakSelf.sideEffectPerformer
+                                               delegate:delegate];
+            }];
         }];
-    }];
+    }
 }
 
 - (void)notifyDelegateOfCommandChange:(NSString *)command

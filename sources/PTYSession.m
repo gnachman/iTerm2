@@ -15106,10 +15106,6 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 #pragma mark - FinalTerm
 
-- (NSString *)commandInRange:(VT100GridCoordRange)range {
-    return [_screen commandInRange:range];
-}
-
 - (NSString *)currentCommand {
     if (self.haveAutoComposer) {
         return _composerManager.contents;
@@ -15476,6 +15472,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     const BOOL autoComposerEnabled = [iTermPreferences boolForKey:kPreferenceAutoComposer];
     if (_config.autoComposerEnabled != autoComposerEnabled) {
         _config.autoComposerEnabled = autoComposerEnabled;
+        dirty = YES;
+    }
+
+    const BOOL wantsCommandChangeNotifications = [_delegate.realParentWindow autoCommandHistoryEnabledForSession:self];
+    if (_config.wantsCommandChangeNotifications != wantsCommandChangeNotifications) {
+        _config.wantsCommandChangeNotifications = wantsCommandChangeNotifications;
         dirty = YES;
     }
 

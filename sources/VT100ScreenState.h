@@ -369,6 +369,7 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 - (id<iTermPathMarkReading>)pathMarkAt:(VT100GridCoord)coord;
 
 - (NSString * _Nullable)commandInRange:(VT100GridCoordRange)range;
+- (NSString * _Nullable)commandInRange:(VT100GridCoordRange)range maxLines:(int)maxLines;
 
 - (id<IntervalTreeImmutableObject> _Nullable)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass;
 

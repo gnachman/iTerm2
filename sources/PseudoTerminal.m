@@ -8204,6 +8204,11 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     self.autoCommandHistorySessionGuid = nil;
 }
 
+- (BOOL)autoCommandHistoryEnabledForSession:(PTYSession *)session {
+    return ([session.guid isEqualToString:self.autoCommandHistorySessionGuid] ||
+            [iTermPreferences boolForKey:kPreferenceAutoCommandHistory]);
+}
+
 - (void)hideAutoCommandHistoryForSession:(PTYSession *)session {
     if ([session.guid isEqualToString:self.autoCommandHistorySessionGuid]) {
         [self hideAutoCommandHistory];

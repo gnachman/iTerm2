@@ -418,6 +418,7 @@
 
 // Should updateAutoCommandHistoryForPrefix:inSession:popIfNeeded: be called?
 - (BOOL)wantsCommandHistoryUpdatesFromSession:(PTYSession *)session;
+- (BOOL)autoCommandHistoryEnabledForSession:(PTYSession *)session;
 
 // Set the current command prefix for a given session, updating the ACH window
 // if open. If it was shown with showAutoCommandHistoryForSession but then
