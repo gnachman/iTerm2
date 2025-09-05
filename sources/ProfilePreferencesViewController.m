@@ -738,6 +738,14 @@ andEditComponentWithIdentifier:(NSString *)identifier
     [copyOfSource setObject:profileGuid forKey:KEY_GUID];
     [copyOfSource removeObjectForKey:KEY_ORIGINAL_GUID];
     [copyOfSource removeObjectForKey:KEY_SESSION_HOTKEY];
+    NSArray<NSDictionary *> *triggers = copyOfSource[KEY_TRIGGERS];
+    if (triggers) {
+        // Remove performance stats since those are only meaningful for this session.
+        triggers = [triggers mapWithBlock:^id _Nullable(NSDictionary *trigger) {
+            return [trigger dictionaryByRemovingObjectForKey:kTriggerPerformanceKey];
+        }];
+        copyOfSource[KEY_TRIGGERS] = triggers;
+    }
     [copyOfSource setObject:[destination objectForKey:KEY_NAME] forKey:KEY_NAME];
     [[ProfileModel sharedInstance] setBookmark:copyOfSource withGuid:profileGuid];
 
