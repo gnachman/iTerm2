@@ -208,7 +208,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
 
     // functions and functionValues are parallel arrays.
     NSArray<iTermTriple<NSString *, NSString *, NSNumber *>  *(^)(PTYSession *)> *functions = @[ pwd, command, hostname, badge ];
-    if ([iTermAdvancedSettingsModel browserProfiles]) {
+    if ([iTermBrowserGateway browserAllowedCheckingIfNot:NO]) {
         functions = [functions arrayByAddingObject:webSite];
     }
     NSMutableArray<NSMutableArray *> *functionValues = [NSMutableArray array];
@@ -484,7 +484,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
 
 - (void)addBookmarkToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
                withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
-    if (![iTermAdvancedSettingsModel browserProfiles]) {
+    if (![iTermBrowserGateway browserAllowedCheckingIfNot:NO]) {
         return;
     }
     for (iTermTriple<NSString *, NSURL *, NSString *> *triple in [iTermBrowserBookmarkFinder bookmarksMatchingSubstring:matcher.query]) {
@@ -524,7 +524,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
 
 - (void)addURLToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
            withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
-    if (![iTermAdvancedSettingsModel browserProfiles]) {
+    if (![iTermBrowserGateway browserAllowedCheckingIfNot:NO]) {
         return;
     }
     NSURL *url = [NSURL URLWithString:matcher.query];
@@ -854,7 +854,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
             [self addInvocation:queryString scope:scope toItems:items withMatcher:matcher];
         }
 #endif
-        if ([iTermAdvancedSettingsModel browserProfiles]) {
+        if ([iTermBrowserGateway browserAllowedCheckingIfNot:NO]) {
             if ([command supportsBookmarks]) {
                 [self addBookmarkToItems:items withMatcher:matcher];
             }

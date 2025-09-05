@@ -21,7 +21,7 @@ class MainMenuMangler: NSObject {
     private var conflictingMenuItems: [(menuItem: NSMenuItem, keyEquivalent: String, modifierMask: NSEvent.ModifierFlags)] = []
 
     @objc func start(web: NSMenuItem) {
-        if !iTermAdvancedSettingsModel.browserProfiles() {
+        if !iTermBrowserGateway.browserAllowed(checkIfNo: false) {
             if NSApp.mainMenu?.items.contains(web) ?? false {
                 NSApp.mainMenu?.removeItem(web)
             }

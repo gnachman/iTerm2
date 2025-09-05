@@ -1534,6 +1534,7 @@ CA
                 <outlet property="_customDirectory" destination="2189" id="msb-Cg-HLN"/>
                 <outlet property="_customTitleHelp" destination="kFr-1J-iPo" id="o1l-5V-ffb"/>
                 <outlet property="_directoryLabel" destination="2129" id="e8L-eh-dsw"/>
+                <outlet property="_downloadBrowserPluginButton" destination="nbT-jq-fVq" id="Fey-1P-UYJ"/>
                 <outlet property="_editAdvancedConfigButton" destination="5975" id="Xww-uf-BMr"/>
                 <outlet property="_editBadgeButton" destination="kmy-bS-CYF" id="kfJ-uZ-kgH"/>
                 <outlet property="_editCurrentSessionView" destination="IUK-Yc-d7G" id="6ba-10-vJC"/>
@@ -1953,6 +1954,18 @@ CA
                                 <action selector="settingChanged:" target="dVg-Ac-SiZ" id="2xi-lu-ZGn"/>
                             </connections>
                         </segmentedControl>
+                        <button hidden="YES" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="nbT-jq-fVq">
+                            <rect key="frame" x="391" y="10" width="188" height="18"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="bevel" title="Download Browser Plugin" bezelStyle="rounded" alignment="center" imageScaling="proportionallyDown" inset="2" id="1Gw-V8-8il">
+                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <color key="contentTintColor" name="linkColor" catalog="System" colorSpace="catalog"/>
+                            <connections>
+                                <action selector="downloadBrowserPlugin:" target="dVg-Ac-SiZ" id="UVa-p8-bSO"/>
+                            </connections>
+                        </button>
                     </subviews>
                 </customView>
                 <customView identifier="AfterProfileTypeContainer" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jFD-jQ-u7E" userLabel="After profile type container">

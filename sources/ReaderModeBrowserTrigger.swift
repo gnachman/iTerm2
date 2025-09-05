@@ -24,6 +24,9 @@ class ReaderModeBrowserTrigger: Trigger {
     override var matchType: iTermTriggerMatchType {
         .urlRegex
     }
+    override var isBrowserTrigger: Bool {
+        true
+    }
 }
 
 extension ReaderModeBrowserTrigger: BrowserTrigger {

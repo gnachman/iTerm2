@@ -3018,23 +3018,33 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     self.isUTF8 = isUTF8;
     self.substitutions = substitutions ?: @{};
     _sshState = ssh ? iTermSSHStateProfile : iTermSSHStateNone;
-    if (@available(macOS 11, *)) {
-        if (browser) {
-            if (![iTermAdvancedSettingsModel browserProfiles]) {
-                DLog(@"Declining to enter browser mode because advanced setting is off");
-                completion(NO);
-                return;
-            }
-            [self becomeBrowserWithConfiguration:webViewConfiguration
-                                 restorableState:_savedBrowserState];
-            [_savedBrowserState release];
-            _savedBrowserState = nil;
-            completion(YES);
-            return;
-        }
-    }
     if (browser) {
-        completion(NO);
+        const BOOL allowed = [self becomeBrowserWithConfiguration:webViewConfiguration
+                                                  restorableState:_savedBrowserState];
+        [_savedBrowserState release];
+        _savedBrowserState = nil;
+        completion(allowed);
+        if (!allowed) {
+            static int count;
+            count += 1;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self brokenPipe];
+                count -= 1;
+                if (count > 0) {
+                    return;
+                }
+                const iTermWarningSelection selection = [iTermWarning showWarningWithTitle:@"A browser session failed to start because the iTerm2 Browser Plugin couldn’t be found."
+                                           actions:@[ @"Download", @"Cancel" ]
+                                         accessory:nil
+                                        identifier:nil
+                                       silenceable:kiTermWarningTypePersistent
+                                           heading:@"Browser Plugin Missing"
+                                            window:nil];
+                if (selection == kiTermWarningSelection0) {
+                    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/browser-plugin.html"]];
+                }
+            });
+        }
         return;
     }
     [self computeArgvForCommand:command substitutions:substitutions completion:^(NSArray<NSString *> *argv) {
@@ -4094,6 +4104,13 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         [self queueRestartSessionAnnouncement];
     }
     [self updateDisplayBecause:@"session ended"];
+}
+
+- (iTermSessionEndAction)endAction {
+    if (self.profile.profileIsBrowser) {
+        return iTermSessionEndActionClose;
+    }
+    return _endAction;
 }
 
 - (void)queueRestartSessionAnnouncement {

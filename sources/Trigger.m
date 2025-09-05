@@ -608,6 +608,10 @@ NSString * const kTriggerPerformanceKey = @"performance";
                                            attributes:self.regularAttributes];
 }
 
+- (BOOL)isBrowserTrigger {
+    return NO;
+}
+
 #pragma mark - iTermObject
 
 - (iTermBuiltInFunctions *)objectMethodRegistry {

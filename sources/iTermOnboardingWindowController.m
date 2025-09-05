@@ -22,8 +22,16 @@
 static NSString *const iTermOnboardingWindowControllerHasBeenShown = @"NoSyncOnboardingWindowHasBeenShown34";
 
 static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
+    NSURL *url = [NSURL URLWithString:@"iterm2-about:onboarding-intro"];
+
     if ([path isEqualToString:@"/browser"]) {
-        [[iTermController sharedInstance] openURLInNewBrowserTab:[NSURL URLWithString:@"iterm2-about:onboarding-intro"]
+        if (![iTermBrowserGateway browserAllowedCheckingIfNot:YES]) {
+            if ([iTermBrowserGateway shouldOfferPlugin]) {
+                [iTermBrowserGateway offerPlugin];
+                return;
+            }
+        }
+        [[iTermController sharedInstance] openURLInNewBrowserTab:url
                                                        selectTab:YES];
         return;
     }

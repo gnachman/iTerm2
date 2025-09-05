@@ -1136,9 +1136,13 @@ extension PTYSession {
 
 @available(macOS 11, *)
 extension PTYSession {
+    @discardableResult
     @objc
     func becomeBrowser(configuration: WKWebViewConfiguration,
-                       restorableState: NSDictionary?) {
+                       restorableState: NSDictionary?) -> Bool {
+        if !iTermBrowserGateway.browserAllowed(checkIfNo: true) {
+            return false
+        }
         let nullValue = NSNull()
         let terminalOnlyKeys = [
             KEY_INITIAL_TEXT: nullValue,
@@ -1365,6 +1369,7 @@ extension PTYSession {
             vc, initialURL: iTermProfilePreferences.string(forKey: KEY_INITIAL_URL,
                                                            inProfile: profile),
             restorableState: restorableState as? [AnyHashable: Any])
+        return true
     }
 }
 

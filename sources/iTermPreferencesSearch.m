@@ -10,6 +10,7 @@
 #import "NSObject+iTerm.h"
 #import "NSSet+iTerm.h"
 #import "NSStringITerm.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 
 @implementation iTermPreferencesSearchDocument
@@ -235,7 +236,7 @@
 }
 
 - (void)addDocumentToIndex:(iTermPreferencesSearchDocument *)document {
-    if (document.profileTypes == ProfileTypeBrowser && ![iTermAdvancedSettingsModel browserProfiles]) {
+    if (document.profileTypes == ProfileTypeBrowser && ![iTermBrowserGateway browserAllowedCheckingIfNot:NO]) {
         return;
     }
     for (NSString *keyword in [NSSet setWithArray:document.allKeywords]) {

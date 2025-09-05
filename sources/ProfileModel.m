@@ -26,11 +26,13 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermProfileModelJournal.h"
 #import "iTermProfileSearchToken.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSThread+iTerm.h"
 #import "PreferencePanel.h"
@@ -775,7 +777,11 @@ static NSMutableArray<NSString *> *_combinedLog;
 
 - (Profile *)defaultBrowserProfile {
     NSString *guid = [[NSUserDefaults standardUserDefaults] stringForKey:KEY_DEFAULT_BROWSER_GUID];
-    return [self bookmarkWithGuid:guid];
+    Profile *profile = [self bookmarkWithGuid:guid];
+    if (!profile.profileIsBrowser) {
+        return nil;
+    }
+    return profile;
 }
 
 - (Profile*)bookmarkWithName:(NSString*)name

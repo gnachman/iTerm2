@@ -1661,7 +1661,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 }
 
 - (BOOL)openURLInNewBrowserTab:(NSURL *)url selectTab:(BOOL)selectTab {
-    if (![iTermAdvancedSettingsModel browserProfiles]) {
+    if (![iTermBrowserGateway browserAllowedCheckingIfNot:YES]) {
         return NO;
     }
     Profile *profile = [[ProfileModel sharedInstance] defaultBrowserProfile] ?: [[ProfileModel sessionsInstance] defaultBrowserProfileCreatingIfNeeded];
@@ -1692,7 +1692,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                                     configuration:(WKWebViewConfiguration *)configuration
                                           options:(iTermSingleUseWindowOptions)options
                                        completion:(void (^)(void))completion {
-    if (![iTermAdvancedSettingsModel browserProfiles]) {
+    if (![iTermBrowserGateway browserAllowedCheckingIfNot:YES]) {
         return nil;
     }
     Profile *profile = [[ProfileModel sharedInstance] defaultBrowserProfile] ?: [[ProfileModel sessionsInstance] defaultBrowserProfileCreatingIfNeeded];

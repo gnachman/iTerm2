@@ -1397,7 +1397,7 @@ extension Conductor {
             "application/x-gtar",
             "application/x-tar",
         ]
-        guard iTermAdvancedSettingsModel.browserProfiles(),
+        guard iTermBrowserGateway.browserAllowed(checkIfNo: false),
               let mimeType,
               let url = path.viewInBrowserURL,
               !unsupportedMimeTypes.contains(mimeType) else {

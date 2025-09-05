@@ -349,7 +349,7 @@
                         }
                     }];
                 } else {
-                    if ([iTermAdvancedSettingsModel browserProfiles]) {
+                    if ([iTermBrowserGateway browserAllowedCheckingIfNot:NO]) {
                         if ([object isKindOfClass:[iTermOpenQuicklyBookmarkItem class]]) {
                             iTermOpenQuicklyBookmarkItem *item = [iTermOpenQuicklyBookmarkItem castFrom:object];
                             PTYSession *session = iTermController.sharedInstance.currentTerminal.currentSession;

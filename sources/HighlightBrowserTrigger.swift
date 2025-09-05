@@ -27,6 +27,9 @@ class HighlightBrowserTrigger: Trigger, iTermColorSettable {
     override var matchType: iTermTriggerMatchType {
         .pageContentRegex
     }
+    override var isBrowserTrigger: Bool {
+        true
+    }
     var colors: (String, String) {
         if let components = (param as? String)?.components(separatedBy: ";"), components.count >= 2 {
             return (components[0], components[1])

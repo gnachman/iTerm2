@@ -138,6 +138,8 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     IBOutlet NSButton *_preventAutomaticProfileSwitching;
 
+    IBOutlet NSButton *_downloadBrowserPluginButton;
+
     BOOL _profileNameChangePending;
     iTermRateLimitedUpdate *_rateLimit;
     IBOutlet NSTabView *_tabView;
@@ -277,6 +279,10 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         NSString *value = [self stringForKey:KEY_CUSTOM_COMMAND];
         [self commandTypeDidChangeFrom:before to:value];
     };
+    info.observer = ^{
+        [weakSelf updateDownloadBrowserPluginButtonHidden];
+    };
+    [self updateDownloadBrowserPluginButtonHidden];
 
     _customCommand.cell.usesSingleLineMode = YES;
     _customCommand.hidden = YES;
@@ -451,6 +457,11 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                                              selector:@selector(updateSubtitlesAllowed)
                                                  name:kRefreshTerminalNotification
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(updateDownloadBrowserPluginButtonHidden)
+                                                 name:iTermBrowserGateway.didChange
+                                               object:nil];
+
     [self updateEditAdvancedConfigButton];
     [self updateCommandWarningImageView];
     [_commandWarningImageView addGestureRecognizer:[[NSClickGestureRecognizer alloc] initWithTarget:self action:@selector(handleCommandWarningClick:)]];
@@ -604,16 +615,6 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
 - (id<iTermSessionScope>)scope {
     return [self.profileDelegate profilesGeneralPreferencesScope];
-}
-
-- (void)updateBrowserSpecific {
-    [super updateBrowserSpecific];
-    NSMenuItem *item = [_icon.menu itemWithTag:iTermProfileIconAutomatic];
-    if ([[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue]) {
-        item.title = @"Favicon";
-    } else {
-        item.title = @"Built-in Icon for Current App";
-    }
 }
 
 - (void)reloadProfile {
@@ -802,6 +803,42 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     } else {
         _reasonShellIntegrationDisabledLabel.hidden = YES;
     }
+}
+
+#pragma mark - Browser
+
+- (void)updateBrowserSpecific {
+    [super updateBrowserSpecific];
+    NSMenuItem *item = [_icon.menu itemWithTag:iTermProfileIconAutomatic];
+    if ([[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue]) {
+        item.title = @"Favicon";
+    } else {
+        item.title = @"Built-in Icon for Current App";
+    }
+}
+
+- (void)updateDownloadBrowserPluginButtonHidden {
+    if (![iTermAdvancedSettingsModel browserProfiles]) {
+        // Browser disabled by user default
+        _downloadBrowserPluginButton.hidden = YES;
+        return;
+    }
+    if (![[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue]) {
+        // Selected type is terminal
+        _downloadBrowserPluginButton.hidden = YES;
+        return;
+    }
+    // NO here to prevent reentrancy
+    if ([iTermBrowserGateway browserAllowedCheckingIfNot:NO])  {
+        // Plugin already installed
+        _downloadBrowserPluginButton.hidden = YES;
+        return;
+    }
+    _downloadBrowserPluginButton.hidden = NO;
+}
+
+- (IBAction)downloadBrowserPlugin:(id)sender {
+    [iTermBrowserGateway openDownloadPage];
 }
 
 #pragma mark - SSH

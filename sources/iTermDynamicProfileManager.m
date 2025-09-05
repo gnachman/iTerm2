@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermMigrationHelper.h"
 #import "iTermProfileModelJournal.h"
@@ -456,7 +457,7 @@
     }
 
     for (Profile *profile in allProfiles) {
-        if (![iTermAdvancedSettingsModel browserProfiles] && [profile profileType] == ProfileTypeBrowser) {
+        if (![iTermBrowserGateway browserAllowedCheckingIfNot:NO] && [profile profileType] == ProfileTypeBrowser) {
             continue;
         }
         if ([guids containsObject:profile[KEY_GUID]]) {

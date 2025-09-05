@@ -62,18 +62,17 @@
     NSString *bundleID = [iTermAdvancedSettingsModel browserBundleID];
 
     if ([iTermAdvancedSettingsModel browserProfiles]) {
-        if (@available(macOS 11, *)) {
-            if ([iTermBrowserMetadata.supportedSchemes containsObject:url.scheme]) {
-                if ([bundleID isEqual:NSBundle.mainBundle.bundleIdentifier] || [self it_isDefaultAppForURL:url]) {
-                    // We are the default app. Skip all the machinery and open it directly.
-                    if ([self it_openURLLocally:url configuration:configuration]) {
-                        return;
-                    }
-                }
-                // This feature is new and this is the main way people will discover it. Sorry for the annoyance :(
-                if ([self it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:url configuration:configuration]) {
+        if ([iTermBrowserMetadata.supportedSchemes containsObject:url.scheme]) {
+            if ([iTermBrowserGateway browserAllowedCheckingIfNot:YES] &&
+                ([bundleID isEqual:NSBundle.mainBundle.bundleIdentifier] || [self it_isDefaultAppForURL:url])) {
+                // We are the default app. Skip all the machinery and open it directly.
+                if ([self it_openURLLocally:url configuration:configuration]) {
                     return;
                 }
+            }
+            // This feature is new and this is the main way people will discover it. Sorry for the annoyance :(
+            if ([self it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:url configuration:configuration]) {
+                return;
             }
         }
     }
@@ -121,8 +120,25 @@ withApplicationAtURL:appURL
 }
 
 - (BOOL)it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:(NSURL *)url configuration:(NSWorkspaceOpenConfiguration *)configuration {
-    if ([iTermAdvancedSettingsModel browserProfiles] &&
-        [iTermWarning showWarningWithTitle:@"iTerm2 can display web pages! Would you like to open this link in iTerm2?"
+    if (![iTermBrowserGateway browserAllowedCheckingIfNot:YES]) {
+        if ([iTermBrowserGateway shouldOfferPlugin]) {
+            switch ([iTermBrowserGateway upsell]) {
+                case iTermTriStateTrue:
+                    // User is downloading plugin. Return yes and you'll have to try again.
+                    return YES;
+                case iTermTriStateFalse:
+                    // Use system browser.
+                    return NO;
+                case iTermTriStateOther:
+                    // Cancel.
+                    return YES;
+            }
+        } else {
+            // Plugin not available, just use system browser.
+            return NO;
+        }
+    }
+    if ([iTermWarning showWarningWithTitle:@"iTerm2 can display web pages! Would you like to open this link in iTerm2?"
                                    actions:@[ @"Use Default Browser", @"Open in iTerm2"]
                                  accessory:nil
                                 identifier:@"NoSyncOpenLinksInApp"

@@ -17,6 +17,7 @@ class ModalEnclosure: NSView {
     }
 }
 
+// Visible if the profile being edited is in terminal mode
 @objc(iTermTerminalModeEnclosure)
 @IBDesignable
 class TerminalModeEnclosure: ModalEnclosure {
@@ -45,6 +46,7 @@ class TerminalModeEnclosure: ModalEnclosure {
     }
 }
 
+// Visible if the profile being edited is in browser mode
 @objc(iTermBrowserModeEnclosure)
 @IBDesignable
 class BrowserModeEnclosure: ModalEnclosure {
@@ -54,12 +56,13 @@ class BrowserModeEnclosure: ModalEnclosure {
     }
 }
 
+// Visible if browser is allowed, even if plugin is not installed.
 @objc(iTermHiddenModeEnclosure)
 @IBDesignable
 class HiddenModeEnclosure: ModalEnclosure {
     @objc
     override var visibleForProfileTypes: ProfileType {
-        if iTermAdvancedSettingsModel.browserProfiles() {
+        if iTermBrowserGateway.browserAllowed(checkIfNo: false) {
             return [.all]
         } else {
             return []
@@ -67,6 +70,7 @@ class HiddenModeEnclosure: ModalEnclosure {
     }
 }
 
+// Visible if editing a shared profile, not a divorced sessions instance profile.
 @objc(iTermSharedProfileEnclosure)
 @IBDesignable
 class SharedProfileEnclosure: ModalEnclosure {

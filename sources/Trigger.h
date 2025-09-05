@@ -137,6 +137,7 @@ extern NSString * const kTriggerNameKey;
 @property (nullable, nonatomic, readonly) NSString *helpText;
 @property (nonatomic, readonly) NSSet<NSNumber *> *allowedMatchTypes;
 @property (nonatomic, strong) iTermHistogram *performanceHistogram;
+@property (nonatomic, readonly) BOOL isBrowserTrigger;
 
 + (nullable NSSet<NSString *> *)synonyms;
 + (nullable Trigger *)triggerFromDict:(NSDictionary *)dict;

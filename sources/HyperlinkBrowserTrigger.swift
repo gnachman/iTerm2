@@ -34,6 +34,9 @@ class HyperlinkBrowserTrigger: Trigger {
     override var matchType: iTermTriggerMatchType {
         .pageContentRegex
     }
+    override var isBrowserTrigger: Bool {
+        true
+    }
 }
 
 extension HyperlinkBrowserTrigger: BrowserTrigger {

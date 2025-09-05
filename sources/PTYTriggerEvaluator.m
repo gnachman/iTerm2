@@ -229,7 +229,7 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
     NSMutableDictionary<NSDictionary *, NSArray<Trigger *> *> *table = [[_triggers classifyWithBlock:^id(Trigger *trigger) {
         return [trigger dictionaryValue];
     }] mutableCopy];
-    _triggers = [array mapWithBlock:^Trigger *(NSDictionary *profileDict) {
+    _triggers = [[array mapWithBlock:^Trigger *(NSDictionary *profileDict) {
         DLog(@"%@", profileDict);
         NSDictionary *dict = [Trigger triggerNormalizedDictionary:profileDict];
         NSArray<Trigger *> *triggers = table[dict];
@@ -241,6 +241,8 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
         DLog(@"Use second trigger from %@", triggers);
         table[dict] = [triggers arrayByRemovingFirstObject];
         return triggers[0];
+    }] filteredArrayUsingBlock:^BOOL(Trigger *trigger) {
+        return !trigger.isBrowserTrigger;
     }];
     if (mayNeedReset && _triggers.count > 0) {
         DLog(@"Reset");
