@@ -56,6 +56,7 @@ extension MessagePrepPipeline {
             let inlineFiles = inlineFilesFromSubparts(parts)
             try scheduleMultipartFetch(uploadFiles: uploads,
                                        text: text,
+                                       context: contextFromSubparts(parts),
                                        inlineFiles: inlineFiles,
                                        userMessage: userMessage,
                                        history: history,
@@ -112,7 +113,7 @@ private extension MessagePrepPipeline {
                     // No need for ingestion
                     return nil
                 }
-            case .markdown, .plainText:
+            case .markdown, .plainText, .context:
                 return nil
             }
         }
@@ -136,6 +137,19 @@ private extension MessagePrepPipeline {
                 }
             case .plainText(let text), .markdown(let text):
                 return text
+            case .context:
+                return nil
+            }
+        }.joined(separator: "\n")
+    }
+
+    func contextFromSubparts(_ parts: [Message.Subpart]) -> String {
+        return parts.compactMap { part -> String? in
+            switch part {
+            case .plainText, .markdown, .attachment:
+                return nil
+            case .context(let text):
+                return text
             }
         }.joined(separator: "\n")
     }
@@ -154,7 +168,7 @@ private extension MessagePrepPipeline {
                     }
                     return nil
                 }
-            case .plainText, .markdown:
+            case .plainText, .markdown, .context:
                 return nil
             }
         }
@@ -377,6 +391,7 @@ private extension MessagePrepPipeline {
 
     func scheduleMultipartFetch(uploadFiles files: [LLM.Message.Attachment.AttachmentType.File],
                                 text: String,
+                                context: String?,
                                 inlineFiles: [LLM.Message.Attachment.AttachmentType.File],
                                 userMessage: Message,
                                 history: [Message],
@@ -416,7 +431,11 @@ private extension MessagePrepPipeline {
                                                                   type: .file($0)))
             }
             var tweaked = userMessage
-            tweaked.content = .multipart([.plainText(text)] + attachments,
+            var subparts = [.plainText(text)] + attachments
+            if let context {
+                subparts.append(.context(context))
+            }
+            tweaked.content = .multipart(subparts,
                                          vectorStoreID: nil)
             try self?.delegate?.fetchCompletion(
                 userMessage: tweaked,

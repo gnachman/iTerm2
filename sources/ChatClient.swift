@@ -278,7 +278,7 @@ class ChatClient {
                 case .string(let string):
                     switch original.content {
                     case .plainText:
-                            .plainText(string)
+                            .plainText(string, context: nil)
                     case .markdown:
                             .markdown(string)
                     case .explanationRequest, .explanationResponse, .remoteCommandRequest,

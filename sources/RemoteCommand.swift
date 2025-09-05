@@ -113,6 +113,40 @@ struct RemoteCommand: Codable {
                     true
                 }
             }
+
+            var autopopulationTitle: String? {
+                switch self {
+                case .checkTerminalState:
+                    "Provide Terminal State Automatically"
+                case .runCommands, .viewHistory, .writeToClipboard, .typeForYou, .viewManpages,
+                        .writeToFilesystem, .actInWebBrowser:
+                    nil
+                }
+            }
+
+            var autopopulationWarningText: String? {
+                switch self {
+                case .checkTerminalState:
+                    "By setting this permission to “Always Allow”, terminal state will be sent automatically on every message you send in this chat.\nThis includes:\n • The current or last command and its exit status\n •The window size\n • Your shell\n • The current working directory, username, and hostname."
+                case .runCommands, .viewHistory, .writeToClipboard, .typeForYou, .viewManpages,
+                        .writeToFilesystem, .actInWebBrowser:
+                    nil
+                }
+            }
+
+            var regularTitle: String {
+                "AI can \(rawValue)"
+            }
+
+            var autopopulatedWhenAlways: Bool {
+                switch self {
+                case .checkTerminalState:
+                    true
+                case .runCommands, .viewHistory, .writeToClipboard, .typeForYou, .viewManpages,
+                        .writeToFilesystem, .actInWebBrowser:
+                    false
+                }
+            }
         }
 
         var permissionCategory: PermissionCategory {

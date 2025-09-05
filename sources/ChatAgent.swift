@@ -403,14 +403,16 @@ class ChatAgent {
                 nserror.code == iTermAIError.ErrorType.requestTooLarge.rawValue {
                 return Message(chatID: userMessage.chatID,
                                author: .agent,
-                               content: .plainText("🛑 The text to analyze was too long. Select a portion of it and try again."),
+                               content: .plainText("🛑 The text to analyze was too long. Select a portion of it and try again.",
+                                                   context: nil),
                                sentDate: Date(),
                                uniqueID: UUID())
             }
 
             return Message(chatID: userMessage.chatID,
                            author: .agent,
-                           content: .plainText("🛑 I ran into a problem: \(error.localizedDescription)"),
+                           content: .plainText("🛑 I ran into a problem: \(error.localizedDescription)",
+                                               context: nil),
                            sentDate: Date(),
                            uniqueID: UUID())
         }

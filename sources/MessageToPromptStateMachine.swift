@@ -23,7 +23,7 @@ struct MessageToPromptStateMachine {
 
     private mutating func body(agentMessage: Message) -> LLM.Message.Body {
         switch agentMessage.content {
-        case .plainText(let value), .markdown(let value):
+        case .plainText(let value, context: _), .markdown(let value):
             return .text(value)
         case .explanationResponse(let annotations, _, _):
             return .text(annotations.rawResponse)
@@ -52,6 +52,8 @@ struct MessageToPromptStateMachine {
                     }
                 case .markdown(let string), .plainText(let string):
                     return .text(string)
+                case .context:
+                    it_fatalError()
                 }
             })
         }
@@ -81,13 +83,13 @@ struct MessageToPromptStateMachine {
 
     private mutating func body(userMessage: Message) -> LLM.Message.Body {
         switch userMessage.content {
-        case .plainText(let value), .markdown(let value):
+        case .plainText(let value, context: let context):
             defer {
                 mode = .regular
             }
             switch mode {
             case .regular:
-                return .text(value)
+                return .text(value + (context.map { "\n" + $0 } ?? ""))
             case .initialExplanation:
                 return .text(AIExplanationRequest.conversationalPrompt(userPrompt: value))
             }
@@ -106,7 +108,7 @@ struct MessageToPromptStateMachine {
                     case .file, .fileID:
                         return .attachment(attachment)
                     }
-                case .markdown(let string), .plainText(let string):
+                case .markdown(let string), .plainText(let string), .context(let string):
                     return .text(string)
                 }
             }
@@ -128,7 +130,7 @@ struct MessageToPromptStateMachine {
             return .text(prompt(terminalCommand: cmd))
         case .explanationResponse, .append, .appendAttachment, .remoteCommandRequest,
                 .selectSessionRequest, .clientLocal, .renameChat, .commit, .setPermissions,
-                .vectorStoreCreated, .userCommand:
+                .vectorStoreCreated, .userCommand, .markdown:
             it_fatalError()
         }
     }
@@ -144,7 +146,7 @@ extension Message.Subpart {
             case .code, .statusUpdate:
                 false
             }
-        case .plainText, .markdown:
+        case .plainText, .markdown, .context:
             false
         }
     }

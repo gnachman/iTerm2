@@ -2918,7 +2918,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             }];
         }
     }
-    if (self.config.wantsCommandChangeNotifications) {
+    if (self.config.wantsCommandChangeNotifications && !self.terminal.softAlternateScreenMode) {
         // If semantic history goes nuts and the end-of-command code isn't received (which seems to be a
         // common problem, probably because of buggy old versions of SH scripts) , the command can grow
         // without bound. We'll limit the length of a command to avoid performance problems.

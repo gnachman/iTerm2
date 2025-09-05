@@ -64,13 +64,23 @@ class ChatBroker {
     }
 
     private var defaultPermissions: Set<RemoteCommand.Content.PermissionCategory> {
-        return Set(RemoteCommand.Content.PermissionCategory.allCases.filter { category in
+        let permissions = Set(RemoteCommand.Content.PermissionCategory.allCases.filter { category in
             let rawValue = iTermPreferences.unsignedInteger(forKey: category.userDefaultsKey)
             guard let setting = iTermAIPermission(rawValue: rawValue) else {
                 return false
             }
-            return setting != .never
+            switch setting {
+            case .ask:
+                return true
+            case .allow:
+                return !category.autopopulatedWhenAlways
+            case .never:
+                return false
+            @unknown default:
+                it_fatalError()
+            }
         })
+        return permissions
     }
 
     func create(chatWithTitle title: String, terminalSessionGuid: String?, browserSessionGuid: String?) throws -> String {

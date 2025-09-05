@@ -9,6 +9,47 @@ import WebKit
 
 // MARK: - AI Chat
 extension PTYSession {
+    var aiState: String {
+        var items = [String]()
+        if iTermShellHistoryController.sharedInstance().commandHistoryHasEverBeenUsed() {
+            if let currentCommand, !currentCommand.isEmpty {
+                items.append("This command is currently executing: \(currentCommand)")
+            } else {
+                items.append("The terminal is currently at the command prompt")
+            }
+
+            if let mark = screen.lastCommandMark(),
+               let command = mark.command,
+               mark.hasCode {
+                items.append("The last command exited with status \(mark.code). That command was: \(command)")
+            }
+            items.append("The terminal size is \(screen.width()) columns wide by \(screen.height()) rows tall")
+        }
+        let shell = genericScope.stringValue(forVariableName: iTermVariableKeyShell)
+        if !shell.isEmpty {
+            items.append("The current shell is \(shell)")
+        }
+        if let remoteHost = screen.lastRemoteHost() {
+            let username: String?
+            if !remoteHost.isLocalhost, let host = remoteHost.hostname {
+                items.append("The user is SSHed to \(host)")
+                username = remoteHost.username
+            } else {
+                username = NSUserName()
+            }
+            if let username {
+                items.append("The username is \(username)")
+            }
+        } else {
+            items.append("The username is \(NSUserName())")
+        }
+        let pwd = genericScope.stringValue(forVariableName: iTermVariableKeySessionPath)
+        if !pwd.isEmpty {
+            items.append("The current working directory is \(pwd)")
+        }
+        return items.map { "<info>" + $0.escapedForHTML + "</info>" }.joined(separator: "\n")
+    }
+
     func add(aiAnnotations annotations: [AITermAnnotation],
              baseOffset: Int64,
              locatedString: iTermLocatedString) -> [URL?] {

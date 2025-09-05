@@ -38,10 +38,12 @@ struct Message: Codable {
         case plainText(String)
         case markdown(String)
         case attachment(LLM.Message.Attachment)
+        // Extra info in user-sent messages to add to context
+        case context(String)
     }
 
     indirect enum Content: Codable {
-        case plainText(String)
+        case plainText(String, context: String?)
         case markdown(String)
         case explanationRequest(request: AIExplanationRequest)
         // The first value is empty for streaming responses and contains the entire value for
@@ -71,7 +73,7 @@ struct Message: Codable {
         var shortDescription: String {
             let maxLength = 256
             switch self {
-            case .plainText(let string), .markdown(let string):
+            case .plainText(let string, _), .markdown(let string):
                 return string.truncatedWithTrailingEllipsis(to: maxLength)
             case .explanationRequest(request: let request):
                 return "Explain \(request.originalString.string.truncatedWithTrailingEllipsis(to: maxLength))"
@@ -123,7 +125,7 @@ struct Message: Codable {
         var snippetText: String? {
             let maxLength = 40
             switch self {
-            case .plainText(let text): return text.truncatedWithTrailingEllipsis(to: maxLength)
+            case .plainText(let text, _): return text.truncatedWithTrailingEllipsis(to: maxLength)
             case .markdown(let text): return text.truncatedWithTrailingEllipsis(to: maxLength)
             case .explanationRequest(request: let request): return request.snippetText
             case .explanationResponse(_, _, let markdown):
@@ -151,8 +153,8 @@ struct Message: Codable {
             case .terminalCommand(let cmd):
                 return "Ran `\(cmd.command.truncatedWithTrailingEllipsis(to: maxLength - 4))`"
             case .multipart(let subparts, _):
-                if let last = subparts.last {
-                    switch last {
+                for subpart in subparts.reversed() {
+                    switch subpart {
                     case .plainText(let text), .markdown(let text):
                         return text.truncatedWithTrailingEllipsis(to: maxLength)
                     case .attachment(let attachment):
@@ -166,6 +168,8 @@ struct Message: Codable {
                         case .fileID(_, let name):
                             return "📄 " + name
                         }
+                    case .context(_):
+                        break
                     }
                 }
                 return "Empty message"
@@ -231,7 +235,7 @@ struct Message: Codable {
                         return true
                     }
                     return false
-                case .plainText, .markdown:
+                case .plainText, .markdown, .context:
                     return false
                 }
             }
@@ -241,7 +245,7 @@ struct Message: Codable {
 
     mutating func append(_ attachment: LLM.Message.Attachment, vectorStoreID: String?) {
         switch content {
-        case .plainText(let string):
+        case .plainText(let string, _):
             content = .multipart([.plainText(string),
                                   .attachment(attachment)],
                                  vectorStoreID: vectorStoreID)
@@ -266,10 +270,11 @@ struct Message: Codable {
             it_fatalError()
         }
     }
+
     mutating func append(_ chunk: String, useMarkdownIfAmbiguous: Bool) {
         switch content {
-        case .plainText(let string):
-            content = .plainText(string + chunk)
+        case .plainText(let string, _):
+            content = .plainText(string + chunk, context: nil)
         case .markdown(let string):
             content = .markdown(string + chunk)
         case .multipart(let subparts, vectorStoreID: let vectorStoreID):
@@ -285,7 +290,7 @@ struct Message: Codable {
                                          [.plainText(existingPlainText + chunk)],
                                          vectorStoreID: vectorStoreID)
                     return
-                case .attachment:
+                case .attachment, .context:
                     break
                 }
             }

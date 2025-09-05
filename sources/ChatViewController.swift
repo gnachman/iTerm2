@@ -594,6 +594,7 @@ extension ChatViewController {
             return
         }
         let menu = NSMenu()
+        
         menu.addItem(withTitle: "Delete Chat", action: #selector(deleteChat(_:)), target: self)
         menu.addItem(NSMenuItem.separator())
 
@@ -604,13 +605,13 @@ extension ChatViewController {
             menu.addItem(withTitle: "Reveal Linked Terminal Session", action: #selector(revealLinkedTerminalSession(_:)), target: self)
             menu.addItem(withTitle: "Unlink Terminal Session", action: #selector(unlinkTerminalSession(_:)), target: self)
             menu.addItem(NSMenuItem.separator())
-            
+
             let rce = RemoteCommandExecutor.instance
             for category in RemoteCommand.Content.PermissionCategory.allCases {
                 if category.isBrowserSpecific {
                     continue
                 }
-                menu.addItem(withTitle: "AI can \(category.rawValue)",
+                menu.addItem(withTitle: category.regularTitle,
                              action: #selector(toggleAlwaysAllow(_:)),
                              target: self,
                              state: rce.controlState(chatID: chatID,
@@ -742,10 +743,30 @@ extension ChatViewController {
         let existing = RemoteCommandExecutor.instance.permission(chatID: chatID,
                                                                  inSessionGuid: guid,
                                                                  category: category)
-        let newPermission: RemoteCommandExecutor.Permission = switch existing {
+        var newPermission: RemoteCommandExecutor.Permission = switch existing {
         case .always: .never
         case .never: .ask
         case .ask: .always
+        }
+        if newPermission == .always,
+           let autopopulationWarningText = category.autopopulationWarningText {
+            let sel = iTermWarning.show(withTitle: autopopulationWarningText,
+                                        actions: ["Send Automatically", "Ask Each Time", "Never Allow"],
+                                        accessory: nil,
+                                        identifier: nil,
+                                        silenceable: .kiTermWarningTypePersistent,
+                                        heading: "Confirm Change",
+                                        window: view.window)
+            switch sel {
+            case .kiTermWarningSelection0:
+                newPermission = .always
+            case .kiTermWarningSelection1:
+                newPermission = .ask
+            case .kiTermWarningSelection2:
+                newPermission = .never
+            default:
+                it_fatalError()
+            }
         }
         do {
             try listModel.setPermission(chat: chatID,
@@ -753,9 +774,13 @@ extension ChatViewController {
                                         guid: guid,
                                         category: category)
             let rce = RemoteCommandExecutor.instance
+            var allowedCategories = rce.allowedCategories(chatID: chatID, for: guid)
+            if shouldShareTerminalStateAutomatically {
+                allowedCategories.remove(.checkTerminalState)
+            }
             try ChatClient.instance?.publishUserMessage(
                 chatID: chatID,
-                content: .setPermissions(rce.allowedCategories(chatID: chatID, for: guid)))
+                content: .setPermissions(allowedCategories))
         } catch {
             DLog("\(error)")
         }
@@ -1011,7 +1036,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         guard let model,
               let i = model.index(ofMessageID: messageID),
               case .message(let message) = model.items[i],
-              case .plainText(let text) = message.message.content else {
+              case .plainText(let text, _) = message.message.content else {
             return
         }
         model.deleteFrom(index: i)
@@ -1273,7 +1298,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 .command(.init(command: cmd.command,
                                url: cmd.url))
         case .multipart(let subparts, _):
-                .multipart(subparts.map { subpart in
+                .multipart(subparts.compactMap { subpart in
                     switch subpart {
                     case .attachment(let attachment):
                         switch attachment.type {
@@ -1307,13 +1332,15 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                     case .plainText(let text):
                         MessageRendition.SubpartContainer(
                             kind: .regular,
-                            attributedString: Message.Content.plainText(text).attributedStringValue(
+                            attributedString: Message.Content.plainText(text, context: nil).attributedStringValue(
                                 linkColor: message.linkColor, textColor: message.textColor))
                     case .markdown(let text):
                         MessageRendition.SubpartContainer(
                             kind: .regular,
                             attributedString: Message.Content.markdown(text).attributedStringValue(
                                 linkColor: message.linkColor, textColor: message.textColor))
+                    case .context:
+                        nil
                     }
                 })
         default:
@@ -1507,22 +1534,35 @@ extension ChatViewController: ChatInputViewDelegate {
            let modelIdentifier = selectedItem.representedObject as? String {
             configuration.model = modelIdentifier
         }
-        var message = if attachments.isEmpty {
-            Message(chatID: chatID,
-                    author: .user,
-                    content: .plainText(text),
-                    sentDate: Date(),
-                    uniqueID: UUID(),
-                    configuration: configuration)
+
+        // Auto-populate terminal state. This must stay in sync with autopopulatedWhenAlways.
+        let context: String? = if shouldShareTerminalStateAutomatically, let session {
+            "<terminal-state>\n<description>This section provides information about the current state of the user’s terminal session.</description>\n" + session.aiState + "\n</terminal-state>"
         } else {
-            Message(chatID: chatID,
-                    author: .user,
-                    content: .multipart([.plainText(text)] + attachments,
-                                        vectorStoreID: listModel.chat(id: chatID)?.vectorStore),
-                    sentDate: Date(),
-                    uniqueID: UUID(),
-                    configuration: configuration)
+            nil
         }
+        var message = {
+            if attachments.isEmpty {
+                return Message(chatID: chatID,
+                               author: .user,
+                               content: .plainText(text, context: context),
+                               sentDate: Date(),
+                               uniqueID: UUID(),
+                               configuration: configuration)
+            } else {
+                var parts = [.plainText(text)] + attachments
+                if let context {
+                    parts.append(.context(context))
+                }
+                return Message(chatID: chatID,
+                               author: .user,
+                               content: .multipart(parts,
+                                                   vectorStoreID: listModel.chat(id: chatID)?.vectorStore),
+                               sentDate: Date(),
+                               uniqueID: UUID(),
+                               configuration: configuration)
+            }
+        }()
         if let lastAgentMessage = model?.items.last(where: { item in
             item.existingMessage?.message.author == .agent
         }) {
@@ -1539,6 +1579,25 @@ extension ChatViewController: ChatInputViewDelegate {
         } catch {
             DLog("\(error)")
         }
+    }
+
+    private var session: PTYSession? {
+        guard let guid = model?.terminalSessionGuid else {
+            return nil
+        }
+        return iTermController.sharedInstance().session(withGUID: guid)
+    }
+
+    private var shouldShareTerminalStateAutomatically: Bool {
+        let rce = RemoteCommandExecutor.instance
+        if let chatID,
+           let guid = model?.terminalSessionGuid,
+           session != nil {
+            return rce.permission(chatID: chatID,
+                                  inSessionGuid: guid,
+                                  category: .checkTerminalState) == .always
+        }
+        return false
     }
 }
 
@@ -1665,7 +1724,7 @@ extension Message.Content {
         case .renameChat, .append, .commit, .setPermissions, .terminalCommand, .appendAttachment,
                 .vectorStoreCreated, .userCommand:
             it_fatalError()
-        case .plainText(let string):
+        case .plainText(let string, context: _):
             let paragraphStyle = NSMutableParagraphStyle()
             paragraphStyle.lineBreakMode = .byWordWrapping
             let attributes: [NSAttributedString.Key: Any] = [
@@ -1782,5 +1841,20 @@ extension Message {
     var attributedStringValue: NSAttributedString {
         return content.attributedStringValue(linkColor: linkColor,
                                              textColor: textColor)
+    }
+}
+
+extension ChatViewController: NSMenuItemValidation {
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        if menuItem.action == #selector(toggleAlwaysAllow(_:)),
+           let category = menuItem.representedObject as?  RemoteCommand.Content.PermissionCategory,
+           let autoTitle = category.autopopulationTitle {
+            if menuItem.state == .on {
+                menuItem.title = autoTitle
+            } else {
+                menuItem.title = "AI can \(category.rawValue)"
+            }
+        }
+        return true
     }
 }

@@ -196,7 +196,7 @@ class ChatSearchResultCell: RegularMessageCellView {}
 extension Message.Content {
     func indexableString(linkColor: NSColor, textColor: NSColor) -> String? {
         switch self {
-        case let .plainText(value), let .append(string: value, _):
+        case let .plainText(value, context: _), let .append(string: value, _):
             return value
         case let .appendAttachment(attachment: attachment, uuid: _):
             return switch attachment.type {
@@ -214,6 +214,7 @@ extension Message.Content {
                     case .code(let text): text
                     case .statusUpdate, .file, .fileID: nil
                     }
+                case .context(_): nil
                 }
             }.joined(separator: "\n")
         case let .markdown(value):
