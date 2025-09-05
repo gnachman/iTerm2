@@ -175,9 +175,19 @@ class ChatListViewController: NSViewController {
         dataSource?.chatListViewController(self, chatAt: 0)
     }
 
-    func selectMostRecent() {
-        tableView.selectRowIndexes(IndexSet(integer: 0), byExtendingSelection: false)
+    func selectMostRecent(forGuid guid: String?) -> Bool {
+        let index: Int
+        let found: Bool
+        if let guid, let i = dataSource?.firstIndex(forGuid: guid) {
+            index = i
+            found = true
+        } else {
+            index = 0
+            found = false
+        }
+        tableView.selectRowIndexes(IndexSet(integer: index), byExtendingSelection: false)
         selectedChatID = findSelectedChatID()
+        return found
     }
 
     @objc private func createNewChat() {

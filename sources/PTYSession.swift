@@ -27,7 +27,7 @@ extension PTYSession {
         }
         let shell = genericScope.stringValue(forVariableName: iTermVariableKeyShell)
         if !shell.isEmpty {
-            items.append("The current shell is \(shell)")
+            items.append("The current shell is \(shell). Ensure commands you execute will work in this shell.")
         }
         if let remoteHost = screen.lastRemoteHost() {
             let username: String?

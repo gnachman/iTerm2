@@ -12,4 +12,5 @@ protocol ChatListDataSource: AnyObject, ChatSearchResultsDataSource {
     func chatListViewController(_ chatListViewController: ChatListViewController, chatAt index: Int) -> Chat
     func chatListViewController(_ viewController: ChatListViewController, indexOfChatID: String) -> Int?
     func snippet(forChatID: String) -> String?
+    func firstIndex(forGuid guid: String) -> Int?
 }

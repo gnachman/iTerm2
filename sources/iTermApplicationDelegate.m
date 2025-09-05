@@ -2349,7 +2349,7 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (IBAction)openAIChats:(id)sender {
     [[iTermChatWindowController instanceShowingErrors:YES] showChatWindow];
-    [[iTermChatWindowController instanceShowingErrors:NO] createNewChatIfNeeded];
+    [[iTermChatWindowController instanceShowingErrors:NO] createNewChatIfNeededWithCurrentSession:iTermController.sharedInstance.currentTerminal.currentSession];
 }
 
 - (IBAction)toggleToolbeltTool:(NSMenuItem *)menuItem {

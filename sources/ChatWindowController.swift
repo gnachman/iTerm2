@@ -197,15 +197,21 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
     }
 
     @objc
-    func createNewChatIfNeeded() {
+    func createNewChatIfNeeded(currentSession: PTYSession?) {
         if model.count == 0 {
-            createNewChat()
+            createNewChat(offerGuid: currentSession?.guid)
+        } else if let currentSession {
+            if chatListViewController.selectMostRecent(forGuid: currentSession.guid) {
+                return
+            } else {
+                createNewChat(offerGuid: currentSession.guid)
+            }
         } else if mostRecentChatIsEmpty {
-            chatListViewController.selectMostRecent()
+            _ = chatListViewController.selectMostRecent(forGuid: nil)
         } else if let ageOfMostRecentChat, ageOfMostRecentChat < 60 * 5 {
-            chatListViewController.selectMostRecent()
+            _ = chatListViewController.selectMostRecent(forGuid: nil)
         } else {
-            createNewChat()
+            createNewChat(offerGuid: nil)
         }
     }
 
@@ -259,13 +265,18 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
         return window
     }
 
-    private func createNewChat() {
+    private func createNewChat(offerGuid guid: String?) {
         do {
             let chatID = try client.create(chatWithTitle: "New Chat",
                                            terminalSessionGuid: nil,
                                            browserSessionGuid: nil)
             chatViewController.load(chatID: chatID)
             chatListViewController.select(chatID: chatID)
+            if let guid, let session = iTermController.sharedInstance().session(withGUID: guid) {
+                let terminal = !session.isBrowserSession()
+                let name = session.name
+                chatViewController.offerLink(to: guid, terminal: terminal, name: name)
+            }
         } catch {
             DLog("\(error)")
         }
@@ -391,7 +402,7 @@ extension ChatWindowController: NSToolbarDelegate {
 
 extension ChatWindowController: ChatListViewControllerDelegate {
     func chatListViewControllerDidTapNewChat(_ viewController: ChatListViewController) {
-        createNewChat()
+        createNewChat(offerGuid: nil)
     }
 
     func chatListViewController(_ chatListViewController: ChatListViewController,

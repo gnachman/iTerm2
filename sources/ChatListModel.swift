@@ -39,6 +39,12 @@ class ChatListModel: ChatListDataSource {
         return chatStorage[index]
     }
 
+    func firstIndex(forGuid guid: String) -> Int? {
+        return chatStorage.firstIndex { chat in
+            chat.terminalSessionGuid == guid || chat.browserSessionGuid == guid
+        }
+    }
+
     func chatListViewController(_ viewController: ChatListViewController,
                                 indexOfChatID chatID: String) -> Int? {
         return index(of: chatID)

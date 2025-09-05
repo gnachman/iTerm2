@@ -16,6 +16,8 @@ struct ClientLocal: Codable {
         case executingCommand(RemoteCommand)
         case notice(String)
         case streamingChanged(StreamingState)
+        case offerLink(terminal: Bool, guid: String, name: String?)
+        case permissions(terminal: Bool, guid: String)
 
         enum StreamingState: String, Codable {
             case stopped
@@ -100,6 +102,10 @@ struct Message: Codable {
                     return "Client-local: notice=\(string)"
                 case .streamingChanged(let state):
                     return "Client-local: streaming=\(state.rawValue)"
+                case let .offerLink(terminal: terminal, guid: guid, name: name):
+                    return "Client-local: offerLink terminal=\(terminal) guid=\(guid) name=\(name.d)"
+                case let .permissions(terminal: terminal, guid: guid):
+                    return "Client-local: permissions terminal=\(terminal) guid=\(guid)"
                 }
             case .renameChat(let name):
                 return "Rename chat to \(name)"
@@ -144,6 +150,8 @@ struct Message: Codable {
                     case .active:
                         "Sending commands to AI automatically"
                     }
+                case .offerLink, .permissions:
+                    return nil
                 }
             case .renameChat, .append, .appendAttachment, .commit, .setPermissions,
                     .vectorStoreCreated, .userCommand:

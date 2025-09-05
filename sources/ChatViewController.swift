@@ -96,6 +96,10 @@ class ChatViewController: NSViewController {
         userDefaultsObserver.observeKey(kPreferenceKeyAIVendor) { [weak self] in
             self?.updateToolbar()
         }
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(sessionWillTerminate(_:)),
+                                               name: NSNotification.Name.iTermSessionWillTerminate,
+                                               object: nil)
     }
     
     required init?(coder: NSCoder) {
@@ -104,6 +108,20 @@ class ChatViewController: NSViewController {
     
     deinit {
         brokerSubscription?.unsubscribe()
+    }
+
+    @objc
+    private func sessionWillTerminate(_ notif: Notification) {
+        let session = notif.object as? PTYSession
+        guard let guid = session?.guid else {
+            return
+        }
+        if guid == terminalSessionGuid {
+            unlinkTerminalSession(nil)
+        }
+        if guid == browserSessionGuid {
+            unlinkBrowserSession(nil)
+        }
     }
 
     private var lastTableViewWidth: CGFloat?
@@ -460,6 +478,14 @@ extension ChatViewController {
         return AITermController.provider
     }
 
+    func offerLink(to guid: String, terminal: Bool, name: String?) {
+        if let chatID {
+            try? ChatClient.instance?.publishClientLocalMessage(
+                chatID: chatID,
+                action: .offerLink(terminal: terminal, guid: guid, name: name))
+        }
+    }
+
     func load(chatID: String?) {
         if streaming {
             stopStreaming()
@@ -727,9 +753,15 @@ extension ChatViewController {
     }
 
     @objc private func toggleAlwaysAllow(_ sender: Any) {
-        guard let chatID,
-              let menuItem = sender as? NSMenuItem,
+        guard let menuItem = sender as? NSMenuItem,
               let category = menuItem.representedObject as? RemoteCommand.Content.PermissionCategory else {
+            return
+        }
+        toggle(permissionCategory: category)
+    }
+
+    private func toggle(permissionCategory category: RemoteCommand.Content.PermissionCategory) {
+        guard let chatID else {
             return
         }
         let maybeGuid = if category.isBrowserSpecific {
@@ -810,16 +842,9 @@ extension ChatViewController {
                                      uniqueID: UUID())
         if let pickSessionPromise {
             pickSessionPromise.then { [weak self] session in
-                if let self, let model = self.model {
+                if let self, self.model != nil {
                     do {
-                        if terminal {
-                            try model.setTerminalSessionGuid(session.guid)
-                        } else {
-                            try model.setBrowserSessionGuid(session.guid)
-                        }
-                        try ChatClient.instance?.publishNotice(
-                            chatID: chatID,
-                            notice: "This chat has been linked to \(terminal ? "terminal" : "web browser") session “\(session.name?.escapedForMarkdownCode ?? "(Unnamed session)")”")
+                        try link(terminal: terminal, guid: session.guid, name: session.name)
                         completion(session)
                         self.pickSessionPromise = nil
                         reloadCell(forMessageID: waitingMessage.uniqueID)
@@ -846,6 +871,23 @@ extension ChatViewController {
             pickSessionPromise = nil
             completion(nil)
         }
+    }
+
+    private func link(terminal: Bool, guid: String, name: String?) throws {
+        guard let model, let chatID else {
+            return
+        }
+        if terminal {
+            try model.setTerminalSessionGuid(guid)
+        } else {
+            try model.setBrowserSessionGuid(guid)
+        }
+        try ChatClient.instance?.publishNotice(
+            chatID: chatID,
+            notice: "This chat has been linked to \(terminal ? "terminal" : "web browser") session “\(name?.escapedForMarkdownCode ?? "(Unnamed session)")”")
+        try? ChatClient.instance?.publishClientLocalMessage(
+            chatID: chatID,
+            action: .permissions(terminal: terminal, guid: guid))
     }
 
     private var haveLinkedTerminalSession: Bool {
@@ -920,7 +962,7 @@ extension ChatViewController {
         }
     }
 
-    @objc private func unlinkTerminalSession(_ sender: Any) {
+    @objc private func unlinkTerminalSession(_ sender: Any?) {
         if let chatID {
             do {
                 try listModel.setTerminalGuid(for: chatID, to: nil)
@@ -933,7 +975,7 @@ extension ChatViewController {
         }
     }
 
-    @objc private func unlinkBrowserSession(_ sender: Any) {
+    @objc private func unlinkBrowserSession(_ sender: Any?) {
         if let chatID {
             do {
                 try listModel.setBrowserGuid(for: chatID, to: nil)
@@ -1103,6 +1145,29 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                         }
                         stopStreaming()
                     }
+                }
+            case .offerLink(terminal: let terminal, guid: let guid, name: let name):
+                cell.buttonClicked = { [weak self] identifier, messageID in
+                    guard let self else {
+                        return
+                    }
+                    guard messageID == originalMessageID else {
+                        return
+                    }
+                    try? link(terminal: terminal, guid: guid, name: name)
+                }
+            case .permissions:
+                cell.buttonClicked = { [weak self] identifier, messageID in
+                    guard let self else {
+                        return
+                    }
+                    guard messageID == originalMessageID else {
+                        return
+                    }
+                    guard let category = RemoteCommand.Content.PermissionCategory(rawValue: identifier) else {
+                        return
+                    }
+                    toggle(permissionCategory: category)
                 }
             }
         case .vectorStoreCreated, .userCommand:
@@ -1284,6 +1349,12 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 break
             case .streamingChanged:
                 enableButtons = streaming
+            case .offerLink(terminal: _, guid: let guid, name: _):
+                enableButtons = (iTermController.sharedInstance().session(withGUID: guid) != nil &&
+                                 terminalSessionGuid == nil &&
+                                 browserSessionGuid == nil)
+            case .permissions(terminal: _, guid: let guid):
+                enableButtons = (iTermController.sharedInstance().session(withGUID: guid) != nil)
             }
         default:
             break
@@ -1788,6 +1859,10 @@ extension Message.Content {
                 case .stoppedAutomatically:
                     AttributedStringForSystemMessageMarkdown("Terminal commands will no longer be sent to AI automatically. Automatic sending always terminates when iTerm2 restarts or the current chat changes.") {}
                 }
+            case let .offerLink(terminal: terminal, guid: _, name: name):
+                return AttributedStringForSystemMessageMarkdown("Link this chat to \(terminal ? "terminal" : "browser") session “\(name ?? "Unnamed session)")”? This gives the AI access to the \(terminal ? "terminal" : "browser") session subject to your permission.") {}
+            case .permissions:
+                return AttributedStringForSystemMessageMarkdown("You can use these buttons or the info button menu at the top of the chat window to control AI permissions for this chat.") {}
             }
 
         case .selectSessionRequest(_, terminal: let terminal):
@@ -1813,28 +1888,57 @@ extension Message {
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
                 .remoteCommandResponse, .renameChat, .append, .commit, .setPermissions,
                 .terminalCommand, .appendAttachment, .multipart, .vectorStoreCreated, .userCommand:
-            []
+            return []
         case .clientLocal(let clientLocal):
             switch clientLocal.action {
             case .pickingSession, .executingCommand:
-                [.init(title: "Cancel", destructive: true, identifier: "")]
-            case .notice: []
+                return [.init(title: "Cancel", destructive: true, identifier: "")]
+            case .notice: return []
             case .streamingChanged(let state):
                 switch state {
                 case .active:
-                    [.init(title: "Stop", destructive: true, identifier: "")]
+                    return [.init(title: "Stop", destructive: true, identifier: "")]
                 case .stopped, .stoppedAutomatically:
-                    []
+                    return []
                 }
+            case .offerLink(terminal: _, guid: _, name: _):
+                return [.init(title: "Link", destructive: false, identifier: "")]
+            case let .permissions(terminal: terminal, guid: guid):
+                let rce = RemoteCommandExecutor.instance
+                var buttons = [MessageRendition.Regular.Button]()
+                for category in RemoteCommand.Content.PermissionCategory.allCases {
+                    if category.isBrowserSpecific && terminal {
+                        continue
+                    }
+                    if !category.isBrowserSpecific && !terminal {
+                        continue
+                    }
+                    let state = switch rce.permission(chatID: chatID, inSessionGuid: guid, category: category) {
+                    case .always:
+                        if category.autopopulatedWhenAlways {
+                            "Provided automatically"
+                        } else {
+                            "Always"
+                        }
+                    case .never:
+                        "Never"
+                    case .ask:
+                        "Ask"
+                    }
+                    buttons.append(.init(title: category.rawValue + ": " + state,
+                                         destructive: false,
+                                         identifier: category.rawValue))
+                }
+                return buttons
             }
         case .selectSessionRequest:
-            [.init(title: "Select a Session", destructive: false, identifier: PickSessionButtonIdentifier.pickSession.rawValue),
-             .init(title: "Cancel", destructive: true, identifier: PickSessionButtonIdentifier.cancel.rawValue)]
+            return [.init(title: "Select a Session", destructive: false, identifier: PickSessionButtonIdentifier.pickSession.rawValue),
+                    .init(title: "Cancel", destructive: true, identifier: PickSessionButtonIdentifier.cancel.rawValue)]
         case .remoteCommandRequest:
-            [.init(title: "Allow Once", destructive: false, identifier: RemoteCommandButtonIdentifier.allowOnce.rawValue),
-             .init(title: "Always Allow", destructive: false, identifier: RemoteCommandButtonIdentifier.allowAlways.rawValue),
-             .init(title: "Deny this Time", destructive: true, identifier: RemoteCommandButtonIdentifier.denyOnce.rawValue),
-             .init(title: "Always Deny", destructive: true, identifier: RemoteCommandButtonIdentifier.denyAlways.rawValue)]
+            return [.init(title: "Allow Once", destructive: false, identifier: RemoteCommandButtonIdentifier.allowOnce.rawValue),
+                    .init(title: "Always Allow", destructive: false, identifier: RemoteCommandButtonIdentifier.allowAlways.rawValue),
+                    .init(title: "Deny this Time", destructive: true, identifier: RemoteCommandButtonIdentifier.denyOnce.rawValue),
+                    .init(title: "Always Deny", destructive: true, identifier: RemoteCommandButtonIdentifier.denyAlways.rawValue)]
         }
     }
 
