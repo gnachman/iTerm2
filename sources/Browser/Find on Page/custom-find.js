@@ -1,6 +1,7 @@
 (function() {
     'use strict';
 
+    let verbose = 0;
     {{INCLUDE:graph-discovery-api.js}}
     {{INCLUDE:find-security.js}}
     {{INCLUDE:find-constants.js}}

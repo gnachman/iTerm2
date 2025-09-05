@@ -58,6 +58,15 @@ class FindEngine {
         console.debug(message);
     }
 
+    debuglog(...args) {
+        if (verbose) {
+            const frameInfo = this.frameId ? `frame:${this.frameId.substring(0, 8)}` : 'frame:unknown';
+            const prefix = `${TAG} [${this.instanceId}|${frameInfo}]`;
+            const message = `${prefix} ${args.map(a => (typeof a === 'object' ? safeStringify(a) : a)).join(' ')}`;
+            console.debug(message);
+        }
+    }
+
     forceVisible(el) {
         try {
             if (el.tagName === 'DETAILS' && !el.open) {
@@ -1005,8 +1014,10 @@ class FindEngine {
             let match;
 
             this.log("text is", segment.textContent);
-            for (const node of segment.textNodes) {
-                console.debug('findLocalMatches: node', node, 'has textContent:', node.textContent);
+            if (verbose) {
+                for (const node of segment.textNodes) {
+                    console.debug('findLocalMatches: node', node, 'has textContent:', node.textContent);
+                }
             }
             while ((match = _RegExp_exec.call(regex, segment.textContent)) !== null) {
                 this.log("found a match");
@@ -1018,7 +1029,7 @@ class FindEngine {
                 localMatch.type = 'local';
                 localMatch.segment = segment;
                 localMatch.localStart = match.index;
-                this.log('findLocalMatches: assigned type "local" to match ID:', localMatch.id, 'frame:', (this.frameId?.substring(0, 8) || 'unknown'), 'coord:', localMatch.coordinates, 'in segment with text:', segment.textContent);
+                this.log('findLocalMatches: assigned type "local" to match ID:', localMatch.id, 'frame:', (this.frameId?.substring(0, 8) || 'unknown'), 'coord:', localMatch.coordinates, 'in segment with text:', verbose ? segment.textContent : (segment.textContent.substring(0, 100) + (segment.textContent.length > 100 ? '...' : '')));
                 localMatch.localEnd = match.index + match[0].length;
 
                 matches.push(localMatch);

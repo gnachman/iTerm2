@@ -22,7 +22,9 @@ class TextSegment extends Segment {
         for (let i = 0; i < freshTextNodes.length; i++) {
             const node = freshTextNodes[i];
             const nodeText = node.textContent;
-            console.debug(prefix, 'processing node', i + 1, 'offset:', currentOffset, 'length:', nodeText.length, 'content:', JSON.stringify(nodeText), 'parent:', node.parentElement?.tagName);
+            if (verbose) {
+                console.debug(prefix, 'processing node', i + 1, 'offset:', currentOffset, 'length:', nodeText.length, 'content:', JSON.stringify(nodeText), 'parent:', node.parentElement?.tagName);
+            }
             this.textContent += nodeText;
             currentOffset += nodeText.length;
         }
@@ -43,7 +45,9 @@ class TextSegment extends Segment {
         for (let i = 0; i < textNodes.length; i++) {
             const node = textNodes[i];
             const nodeText = node.textContent;
-            console.debug(prefix, 'processing node', i + 1, 'offset:', currentOffset, 'length:', nodeText.length, 'content:', JSON.stringify(nodeText), 'parent:', node.parentElement?.tagName);
+            if (verbose) {
+                console.debug(prefix, 'processing node', i + 1, 'offset:', currentOffset, 'length:', nodeText.length, 'content:', JSON.stringify(nodeText), 'parent:', node.parentElement?.tagName);
+            }
             this.textContent += nodeText;
             currentOffset += nodeText.length;
         }

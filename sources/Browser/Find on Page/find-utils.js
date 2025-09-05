@@ -240,8 +240,8 @@ function createTextNodeFilter(engine) {
                     return _FILTER_REJECT;
                 } else {
                     node._itermReveal = rev;
-                    if (engine.log) {
-                        engine.log('accept hidden via revealer', rev.tagName, node.textContent.slice(0, 40));
+                    if (engine.debuglog) {
+                        engine.debuglog('accept hidden via revealer', rev.tagName, node.textContent.slice(0, 40));
                     }
                 }
             }
@@ -259,8 +259,10 @@ function createTextNodeFilter(engine) {
 // Collect text nodes using the same logic as search phase
 function collectCurrentTextNodes(segment, engine, phase = 'highlight') {
     const prefix = `[TEXT_COLLECTION:${phase}]`;
-    console.debug(prefix, 'ENTER - collecting text nodes for segment with element:', segment.element.tagName);
-    
+    if (verbose) {
+        console.debug(prefix, 'ENTER - collecting text nodes for segment with element:', segment.element.tagName);
+    }
+
     const textNodes = [];
     const walker = _createTreeWalker(
         segment.element,
@@ -274,11 +276,14 @@ function collectCurrentTextNodes(segment, engine, phase = 'highlight') {
     while (node = _TreeWalker_nextNode.call(walker)) {
         nodeCount++;
         const nodeText = node.textContent;
-        console.debug(prefix, 'node', nodeCount, 'length:', nodeText.length, 'content:', JSON.stringify(nodeText), 'parent:', node.parentElement?.tagName);
+        if (verbose) {
+            console.debug(prefix, 'node', nodeCount, 'length:', nodeText.length, 'content:', JSON.stringify(nodeText), 'parent:', node.parentElement?.tagName);
+        }
         textNodes.push(node);
     }
     
     console.debug(prefix, 'EXIT - collected', textNodes.length, 'text nodes');
+
     return textNodes;
 }
 
@@ -305,9 +310,11 @@ function findTextNodeByCoordinates(segment, targetOffset, matchLength, engine) {
         const textContent = _textContentGetter ? _textContentGetter.call(node) : node.textContent;
         const nodeLength = textContent.length;
         nodeCount++;
-        
-        console.debug(prefix, 'node', nodeCount, 'textContent:', JSON.stringify(textContent), 'length:', nodeLength, 'currentOffset:', currentOffset, 'parent:', node.parentElement?.tagName);
 
+        if (verbose) {
+            console.debug(prefix, 'node', nodeCount, 'textContent:', JSON.stringify(textContent), 'length:', nodeLength, 'currentOffset:', currentOffset, 'parent:', node.parentElement?.tagName);
+        }
+    
         if (currentOffset + nodeLength > targetOffset) {
             // Start position is in this node
             if (startNode === null) {
