@@ -353,7 +353,7 @@
                         if ([object isKindOfClass:[iTermOpenQuicklyBookmarkItem class]]) {
                             iTermOpenQuicklyBookmarkItem *item = [iTermOpenQuicklyBookmarkItem castFrom:object];
                             PTYSession *session = iTermController.sharedInstance.currentTerminal.currentSession;
-                            if (session.profile.profileIsBrowser) {
+                            if (session.isBrowserSession) {
                                 [session openURL:item.url];
                             } else {
                                 [[iTermController sharedInstance] openURLInNewBrowserTab:item.url
@@ -362,7 +362,7 @@
                         } else if ([object isKindOfClass:[iTermOpenQuicklyURLItem class]]) {
                             iTermOpenQuicklyURLItem *item = [iTermOpenQuicklyURLItem castFrom:object];
                             PTYSession *session = iTermController.sharedInstance.currentTerminal.currentSession;
-                            if (session.profile.profileIsBrowser) {
+                            if (session.isBrowserSession) {
                                 [session openURL:item.url];
                             } else {
                                 [[iTermController sharedInstance] openURLInNewBrowserTab:item.url
