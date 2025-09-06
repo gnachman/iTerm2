@@ -269,7 +269,9 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
         do {
             let chatID = try client.create(chatWithTitle: "New Chat",
                                            terminalSessionGuid: nil,
-                                           browserSessionGuid: nil)
+                                           browserSessionGuid: nil,
+                                           initialMessages: [],
+                                           permissions: "")
             chatViewController.load(chatID: chatID)
             chatListViewController.select(chatID: chatID)
             if let guid, let session = iTermController.sharedInstance().session(withGUID: guid) {
@@ -365,7 +367,9 @@ extension ChatWindowController: NSToolbarDelegate {
             do {
                 let chatID = try client.create(chatWithTitle: "Chat about \(name)",
                                                terminalSessionGuid: terminal ? guid : nil,
-                                               browserSessionGuid: terminal ? nil : guid)
+                                               browserSessionGuid: terminal ? nil : guid,
+                                               initialMessages: [],
+                                               permissions: "")
                 chatViewController.load(chatID: chatID)
                 chatListViewController.select(chatID: chatID)
             } catch {
@@ -380,7 +384,9 @@ extension ChatWindowController: NSToolbarDelegate {
         do {
             let chatID = try client.create(chatWithTitle: name,
                                            terminalSessionGuid: nil,
-                                           browserSessionGuid: guid)
+                                           browserSessionGuid: guid,
+                                           initialMessages: [],
+                                           permissions: "")
             chatViewController.load(chatID: chatID)
             chatListViewController.select(chatID: chatID)
             if let inject {
@@ -450,6 +456,50 @@ extension ChatWindowController: ChatViewControllerDelegate {
         warning.warningActions = [ iTermWarningAction(label: "Cancel"), action ]
         warning.warningType = .kiTermWarningTypePersistent
         warning.runModal()
+    }
+
+    func chatViewController(_ controller: ChatViewController,
+                            forkAtIndex index: Int,
+                            ofChat originalChatID: String) {
+        guard let listModel = ChatListModel.instance else {
+            DLog("No chat list model")
+            return
+        }
+        guard let chat = ChatListModel.instance?.chat(id: originalChatID) else {
+            DLog("No chat with id \(originalChatID)")
+            return
+        }
+        do {
+            let allMessages = listModel.messages(forChat: originalChatID, createIfNeeded: false)
+            let sourceMessages: [Message] =
+                if let allMessages {
+                    Array(allMessages[0..<index])
+                } else {
+                    []
+                }
+            var initialMessages = [Message]()
+            var uuidMap = [UUID: UUID]()
+            var messageMap = [UUID: Message]()
+            for sourceMessage in sourceMessages {
+                let clone = sourceMessage.clone(&uuidMap, messages: messageMap)
+                initialMessages.append(clone)
+                messageMap[clone.uniqueID] = clone
+            }
+            let chatID = try client.create(chatWithTitle: chat.title,
+                                           terminalSessionGuid: chat.terminalSessionGuid,
+                                           browserSessionGuid: chat.browserSessionGuid,
+                                           initialMessages: initialMessages,
+                                           permissions: chat.permissions)
+            chatViewController.load(chatID: chatID)
+            chatListViewController.select(chatID: chatID)
+
+            if let allMessages {
+                let userMessage = allMessages[index]
+                chatViewController.stage(userMessage)
+            }
+        } catch {
+            DLog("\(error)")
+        }
     }
 }
 

@@ -56,6 +56,7 @@ class ChatAgent {
     private let broker: ChatBroker
     private var renameConversation: AIConversation?
     private let prepPipeline: MessagePrepPipeline
+    private var lastSystemMessage: String?
 
     struct PendingRemoteCommand {
         var completion: (Result<String, Error>) throws -> ()
@@ -126,6 +127,11 @@ class ChatAgent {
         parts.append("If a zip file is provided (this is rare), you should extract it and analyze the contents in the context of the accompanying messages.")
 
         conversation.systemMessage = parts.joined(separator: " ")
+        if conversation.systemMessage != lastSystemMessage {
+            // Force the whole conversation to be re-sent
+            conversation.systemMessageDirty = true
+            lastSystemMessage = conversation.systemMessage
+        }
         defineFunctions(in: &conversation, allowedCategories: permissions)
     }
 

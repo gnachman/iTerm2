@@ -63,42 +63,43 @@ class ChatBroker {
         try listModel.delete(chatID: chatID)
     }
 
-    private var defaultPermissions: Set<RemoteCommand.Content.PermissionCategory> {
-        let permissions = Set(RemoteCommand.Content.PermissionCategory.allCases.filter { category in
-            let rawValue = iTermPreferences.unsignedInteger(forKey: category.userDefaultsKey)
-            guard let setting = iTermAIPermission(rawValue: rawValue) else {
-                return false
-            }
-            switch setting {
-            case .ask:
-                return true
-            case .allow:
-                return !category.autopopulatedWhenAlways
-            case .never:
-                return false
-            @unknown default:
-                it_fatalError()
-            }
-        })
-        return permissions
-    }
-
-    func create(chatWithTitle title: String, terminalSessionGuid: String?, browserSessionGuid: String?) throws -> String {
+    func create(chatWithTitle title: String,
+                terminalSessionGuid: String?,
+                browserSessionGuid: String?,
+                permissions: String,  // use "" as default
+                initialMessages: [Message]) throws -> String {
         // Ensure the service is running
         _ = ChatService.instance
 
+        let rce = RemoteCommandExecutor.instance
         let chat = Chat(title: title,
                         terminalSessionGuid: terminalSessionGuid,
                         browserSessionGuid: browserSessionGuid,
-                        permissions: "")
+                        permissions: permissions)
+        let permissionsDict = rce.permissionsDict(encoded: permissions) ?? rce.defaultPermissions(
+            chatID: chat.id,
+            terminalGuid: terminalSessionGuid,
+            browserGuid: browserSessionGuid)
         try listModel.add(chat: chat)
-        try publish(message: Message(chatID: chat.id,
-                                     author: .user,
-                                     content: .setPermissions(defaultPermissions),
-                                     sentDate: Date(),
-                                     uniqueID: UUID()),
-                    toChatID: chat.id,
-                    partial: false)
+        if !initialMessages.contains(where: { $0.content.isSetPermissions }) {
+            try publish(message: Message(chatID: chat.id,
+                                         author: .user,
+                                         content: .setPermissions(
+                                            rce.allowedCategories(dict: permissionsDict)),
+                                         sentDate: Date(),
+                                         uniqueID: UUID()),
+                        toChatID: chat.id,
+                        partial: false)
+        }
+        for message in initialMessages {
+            do {
+                var temp = message
+                temp.chatID = chat.id
+                try listModel.append(message: temp, toChatID: chat.id)
+            } catch {
+                DLog("While preloading messages: \(error)")
+            }
+        }
         return chat.id
     }
 

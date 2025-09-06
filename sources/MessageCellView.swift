@@ -12,6 +12,7 @@ class MessageCellView: NSView {
     static let bottomInset: CGFloat = 8
     // Callback for the edit button.
     var editButtonClicked: ((UUID) -> Void)?
+    var forkButtonClicked: ((UUID) -> Void)?
     var maxWidthConstraint: NSLayoutConstraint?
 
     override init(frame frameRect: NSRect) {
@@ -89,11 +90,21 @@ class MessageCellView: NSView {
         let copyItem = NSMenuItem(title: "Copy", action: #selector(copyMenuItemClicked(_:)), keyEquivalent: "")
         copyItem.target = self
         menu.addItem(copyItem)
+
+        let forkItem = NSMenuItem(title: "Fork", action: #selector(forkMenuItemClicked(_:)), keyEquivalent: "")
+        forkItem.target = self
+        menu.addItem(forkItem)
+
         NSMenu.popUpContextMenu(menu, with: event, for: self)
     }
 
     @objc func copyMenuItemClicked(_ sender: Any) {
         it_fatalError("Subclass must implement this")
+    }
+    @objc func forkMenuItemClicked(_ sender: Any) {
+        if let id = messageUniqueID {
+            forkButtonClicked?(id)
+        }
     }
     @objc func editMenuItemClicked(_ sender: Any) {
         if let id = messageUniqueID {

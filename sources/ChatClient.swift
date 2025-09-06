@@ -73,10 +73,17 @@ class ChatClient {
         }
     }
 
-    func create(chatWithTitle title: String, terminalSessionGuid: String?, browserSessionGuid: String?) throws -> String {
+    // Use "" as default permissions
+    func create(chatWithTitle title: String,
+                terminalSessionGuid: String?,
+                browserSessionGuid: String?,
+                initialMessages: [Message],
+                permissions: String) throws -> String {
         return try broker.create(chatWithTitle: title,
                                  terminalSessionGuid: terminalSessionGuid,
-                                 browserSessionGuid: browserSessionGuid)
+                                 browserSessionGuid: browserSessionGuid,
+                                 permissions: permissions,
+                                 initialMessages: initialMessages)
     }
 
     func delete(chatID: String) throws {
@@ -238,7 +245,9 @@ class ChatClient {
         }
         let chatID = try broker.create(chatWithTitle: title,
                                        terminalSessionGuid: request.context.sessionID,
-                                       browserSessionGuid: nil)
+                                       browserSessionGuid: nil,
+                                       permissions: "",
+                                       initialMessages: [])
         let initialMessage = Message(chatID: chatID,
                                      author: .user,
                                      content: .explanationRequest(request: request),

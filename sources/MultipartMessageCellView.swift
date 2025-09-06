@@ -221,8 +221,8 @@ class MultipartMessageCellView: MessageCellView {
     }
 
     private func createRegularTextView(for subpart: MessageRendition.SubpartContainer,
-                                     maxBubbleWidth: CGFloat,
-                                     rendition: MessageRendition) -> AutoSizingTextView {
+                                       maxBubbleWidth: CGFloat,
+                                       rendition: MessageRendition) -> AutoSizingTextView {
         let textView = AutoSizingTextView()
         textView.isEditable = false
         textView.isSelectable = textSelectable
@@ -279,8 +279,8 @@ class MultipartMessageCellView: MessageCellView {
     }
 
     private func createCodeAttachmentTextView(for subpart: MessageRendition.SubpartContainer,
-                                            maxBubbleWidth: CGFloat,
-                                            rendition: MessageRendition) -> AutoSizingTextView {
+                                              maxBubbleWidth: CGFloat,
+                                              rendition: MessageRendition) -> AutoSizingTextView {
         let textView = CodeAttachmentTextView()
         textView.isEditable = false
         textView.isSelectable = textSelectable
@@ -493,5 +493,9 @@ class MultipartMessageCellView: MessageCellView {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.setString(allText, forType: .string)
+    }
+
+    override func forkMenuItemClicked(_ sender: Any) {
+        it_fatalError("Subclass must implement this")
     }
 }

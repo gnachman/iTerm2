@@ -158,6 +158,8 @@ struct AIConversation {
         }
     }
 
+    var systemMessageDirty = false
+
     var systemMessage: String? {
         didSet {
             if messages.first?.role == .system {
@@ -359,7 +361,13 @@ struct AIConversation {
         } else {
             controller.providerOverride = nil
         }
-        controller.previousResponseID = lastAssistantMessage?.responseID
+        if systemMessageDirty {
+            // Force it to send the whole conversation over again.
+            controller.previousResponseID = nil
+            systemMessageDirty = false
+        } else {
+            controller.previousResponseID = lastAssistantMessage?.responseID
+        }
         // This won't do anything if registration is needed. See the completion callback to
         // prepare() above for that case.
         controller.request(messages: truncatedMessages, stream: streaming != nil)

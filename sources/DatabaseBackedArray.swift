@@ -44,6 +44,14 @@ class DatabaseBackedArray<Element> where Element: iTermDatabaseElement {
         }
     }
 
+    subscript(_ range: ClosedRange<Int>) -> [Element] {
+        return Array(elements[range])
+    }
+
+    subscript(_ range: Range<Int>) -> [Element] {
+        return Array(elements[range])
+    }
+
     func modify(at i: Int, closure: (inout Element) -> ()) throws {
         var value = elements[i]
         closure(&value)

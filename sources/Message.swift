@@ -33,7 +33,7 @@ enum UserCommand: Codable {
 }
 
 struct Message: Codable {
-    let chatID: String
+    var chatID: String
     let author: Participant
 
     enum Subpart: Codable {
@@ -71,6 +71,43 @@ struct Message: Codable {
         // The vector store ID here gives the store to save files to. If not specified one will be
         // created.
         case multipart([Subpart], vectorStoreID: String?)
+
+        func clone(_ uuidMap: [UUID: UUID], messages: [UUID: Message]) -> Content {
+            switch self {
+            case .plainText, .markdown, .explanationRequest, .remoteCommandRequest, .clientLocal,
+                    .renameChat, .userCommand, .setPermissions, .vectorStoreCreated,
+                    .terminalCommand, .multipart:
+                return self
+            case .explanationResponse(let response, var update, let markdown):
+                if let updateID = update?.messageID, let replacement = uuidMap[updateID] {
+                    update?.messageID = replacement
+                }
+                return .explanationResponse(response, update, markdown: markdown)
+            case .remoteCommandResponse(let result, let uuid, let functionName, let functionCallID):
+                return .remoteCommandResponse(result, uuidMap[uuid] ?? uuid, functionName, functionCallID)
+            case .selectSessionRequest(let originalMessage, terminal: let terminal):
+                let message: Message
+                if let newID = uuidMap[originalMessage.uniqueID] {
+                    message = messages[newID] ?? originalMessage
+                } else {
+                    message = originalMessage
+                }
+                return .selectSessionRequest(message, terminal: terminal)
+            case .append(string: let string, uuid: let uuid):
+                return .append(string: string, uuid: uuidMap[uuid] ?? uuid)
+            case .appendAttachment(attachment: let attachment, uuid: let uuid):
+                return .appendAttachment(attachment: attachment, uuid: uuidMap[uuid] ?? uuid)
+            case .commit(let uuid):
+                return .commit(uuidMap[uuid] ?? uuid)
+            }
+        }
+
+        var isSetPermissions: Bool {
+            switch self {
+            case .setPermissions: true
+            default: false
+            }
+        }
 
         var shortDescription: String {
             let maxLength = 256
@@ -315,6 +352,14 @@ struct Message: Codable {
                 .userCommand:
             it_fatalError()
         }
+    }
+
+    func clone(_ uuidMap: inout [UUID: UUID], messages: [UUID: Message]) -> Message {
+        var copy = self
+        copy.uniqueID = UUID()
+        uuidMap[uniqueID] = copy.uniqueID
+        copy.content = content.clone(uuidMap, messages: messages)
+        return copy
     }
 }
 

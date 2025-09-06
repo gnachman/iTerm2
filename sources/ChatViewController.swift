@@ -9,10 +9,12 @@ import AppKit
 import SwiftyMarkdown
 import UniformTypeIdentifiers
 
-@objc(iTermChatViewControllerDelegate)
 protocol ChatViewControllerDelegate: AnyObject {
     func chatViewController(_ controller: ChatViewController, revealSessionWithGuid guid: String) -> Bool
     func chatViewControllerDeleteSession(_ controller: ChatViewController)
+    func chatViewController(_ controller: ChatViewController,
+                            forkAtIndex index: Int,
+                            ofChat chatID: String)
 }
 
 @objc class WebSearchButton: NSButton { }
@@ -24,7 +26,7 @@ class ChatViewControllerHeaderSpacerView: NSView {}
 
 @objc
 class ChatViewController: NSViewController {
-    @objc weak var delegate: ChatViewControllerDelegate?
+    weak var delegate: ChatViewControllerDelegate?
     private(set) var chatID: String? = UUID().uuidString
 
     private let inputView = ChatInputView()
@@ -399,14 +401,14 @@ extension ChatViewController {
               let headerStack = mainStack.arrangedSubviews.first(where: { $0 is ChatViewControllerHeaderStackView }) as? NSStackView else {
             return
         }
-        
+
         // Remove existing model selector if present
         if let modelSelectorButton = self.modelSelectorButton {
             headerStack.removeArrangedSubview(modelSelectorButton)
             modelSelectorButton.removeFromSuperview()
             self.modelSelectorButton = nil
         }
-        
+
         // Create new model selector if multiple models are available
         let availableModels = AITermController.allProvidersForCurrentVendor.map({ $0.model })
         if availableModels.count > 1 {
@@ -436,19 +438,19 @@ extension ChatViewController {
         let headerSpacer = headerStack.arrangedSubviews.first(where: {
             $0 is ChatViewControllerHeaderSpacerView
         })
-        
+
         // Rebuild the header stack in the correct order
         for view in headerStack.arrangedSubviews {
             headerStack.removeArrangedSubview(view)
         }
-        
+
         headerStack.addArrangedSubview(titleLabel)
         if let headerSpacer = headerSpacer {
             headerStack.addArrangedSubview(headerSpacer)
         }
         if let modelSelector = modelSelectorButton {
             headerStack.addArrangedSubview(modelSelector)
-            
+
             // Apply constraints for the model selector
             NSLayoutConstraint.activate([
                 modelSelector.firstBaselineAnchor.constraint(equalTo: titleLabel.firstBaselineAnchor),
@@ -463,7 +465,7 @@ extension ChatViewController {
             headerStack.addArrangedSubview(webSearchButton)
         }
         headerStack.addArrangedSubview(sessionButton)
-        
+
         // Update web search button state
         webSearchButton?.isEnabled = (provider?.supportsHostedWebSearch == true)
         thinkingButton?.isEnabled = (provider?.model.features.contains(.configurableThinking) == true)
@@ -561,6 +563,37 @@ extension ChatViewController {
         inputView.makeTextViewFirstResponder()
     }
 
+    // Pre-fill the input controls to send a message resembling `message`
+    func stage(_ message: Message) {
+        switch message.content {
+        case .plainText(let text, context: _), .markdown(let text):
+            inputView.stringValue = text
+        case .multipart(let subs, vectorStoreID: _):
+            for sub in subs {
+                switch sub {
+                case .plainText(let text), .markdown(let text):
+                    inputView.stringValue = text
+                case .attachment(let attachment):
+                    switch attachment.type {
+                    case .code, .statusUpdate, .fileID:
+                        break
+                    case .file(let file):
+                        attach(filename: file.name,
+                               content: file.content,
+                               mimeType: file.mimeType)
+                    }
+                case .context:
+                    break
+                }
+            }
+        case .explanationRequest, .explanationResponse, .remoteCommandRequest,
+                .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .append,
+                .appendAttachment, .commit, .userCommand, .setPermissions, .vectorStoreCreated,
+                .terminalCommand:
+            break
+        }
+    }
+
     func attach(filename: String,
                 content: Data,
                 mimeType: String) {
@@ -620,7 +653,7 @@ extension ChatViewController {
             return
         }
         let menu = NSMenu()
-        
+
         menu.addItem(withTitle: "Delete Chat", action: #selector(deleteChat(_:)), target: self)
         menu.addItem(NSMenuItem.separator())
 
@@ -805,17 +838,26 @@ extension ChatViewController {
                                         permission: newPermission,
                                         guid: guid,
                                         category: category)
-            let rce = RemoteCommandExecutor.instance
-            var allowedCategories = rce.allowedCategories(chatID: chatID, for: guid)
-            if shouldShareTerminalStateAutomatically {
-                allowedCategories.remove(.checkTerminalState)
-            }
-            try ChatClient.instance?.publishUserMessage(
-                chatID: chatID,
-                content: .setPermissions(allowedCategories))
+            try publishUpdatedPermissions()
         } catch {
             DLog("\(error)")
         }
+    }
+
+    private func publishUpdatedPermissions() throws {
+        guard let chatID else {
+            return
+        }
+        let rce = RemoteCommandExecutor.instance
+        var allowedCategories = rce.allowedCategories(chatID: chatID,
+                                                      terminalGuid: terminalSessionGuid,
+                                                      browserGuid: browserSessionGuid)
+        if shouldShareTerminalStateAutomatically {
+            allowedCategories.remove(.checkTerminalState)
+        }
+        try ChatClient.instance?.publishUserMessage(
+            chatID: chatID,
+            content: .setPermissions(allowedCategories))
     }
 
     @objc private func objcLinkTerminalSession(_ sender: Any) {
@@ -888,6 +930,7 @@ extension ChatViewController {
         try? ChatClient.instance?.publishClientLocalMessage(
             chatID: chatID,
             action: .permissions(terminal: terminal, guid: guid))
+        try publishUpdatedPermissions()
     }
 
     private var haveLinkedTerminalSession: Bool {
@@ -969,6 +1012,7 @@ extension ChatViewController {
                 try? ChatClient.instance?.publishNotice(
                     chatID: chatID,
                     notice: "This chat is no longer linked to a terminal session.")
+                try publishUpdatedPermissions()
             } catch {
                 DLog("\(error)")
             }
@@ -982,6 +1026,7 @@ extension ChatViewController {
                 try? ChatClient.instance?.publishNotice(
                     chatID: chatID,
                     notice: "This chat is no longer linked to a web browser session.")
+                try publishUpdatedPermissions()
             } catch {
                 DLog("\(error)")
             }
@@ -1085,6 +1130,15 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         inputView.stringValue = text
     }
 
+    private func fork(_ messageID: UUID) {
+        guard let model,
+              let chatID,
+              let i = model.index(ofMessageID: messageID) else {
+            return
+        }
+        delegate?.chatViewController(self, forkAtIndex: i, ofChat: chatID)
+    }
+
     private func configure(cell: MultipartMessageCellView,
                            for message: Message,
                            isLast: Bool) {
@@ -1106,6 +1160,9 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                        tableViewWidth: tableView.bounds.width)
         cell.editButtonClicked = { [weak self] messageID in
             self?.edit(messageID)
+        }
+        cell.forkButtonClicked = { [weak self] messageID in
+            self?.fork(messageID)
         }
         let originalMessageID = message.uniqueID
         let chatID = self.chatID

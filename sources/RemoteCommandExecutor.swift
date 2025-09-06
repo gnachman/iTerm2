@@ -18,6 +18,19 @@ class RemoteCommandExecutor {
         case always
         case never
         case ask
+
+        init(_ aiPermission: iTermAIPermission) {
+            switch aiPermission {
+            case .allow:
+                self = .always
+            case .ask:
+                self = .ask
+            case .never:
+                self = .never
+            @unknown default:
+                self = .ask
+            }
+        }
     }
 
     private func defaultPermission(for category: RemoteCommand.Content.PermissionCategory) -> Permission {
@@ -47,17 +60,44 @@ class RemoteCommandExecutor {
         storage[Key(chatID: chatID, guid: guid, category: category)] = permission
     }
 
+    // Here, "allowed" means we will tell the LLM about it. It's complicated by the fact that
+    // some categories are autopopulated in the message when in "always" mode so we don't expose
+    // those tools to the LLM.
+    private func categoryIsAllowed(category: RemoteCommand.Content.PermissionCategory,
+                                   permission: Permission) -> Bool {
+        switch permission {
+        case .always:
+            return !category.autopopulatedWhenAlways
+        case .ask:
+            return true
+        case .never:
+            return false
+        }
+    }
+
     // Permission categories with always or ask (default is ask)
-    func allowedCategories(chatID: String, for guid: String) -> Set<RemoteCommand.Content.PermissionCategory> {
+    func allowedCategories(chatID: String, terminalGuid: String?, browserGuid: String?) -> Set<RemoteCommand.Content.PermissionCategory> {
         var result = Set<RemoteCommand.Content.PermissionCategory>()
         for category in RemoteCommand.Content.PermissionCategory.allCases {
-            switch permission(chatID: chatID,
-                              inSessionGuid: guid,
-                              category: category) {
-            case .always, .ask:
+            let permission: Permission = if category.isBrowserSpecific {
+                if let browserGuid {
+                    permission(chatID: chatID,
+                               inSessionGuid: browserGuid,
+                               category: category)
+                } else {
+                    .never
+                }
+            } else {
+                if let terminalGuid {
+                    permission(chatID: chatID,
+                               inSessionGuid: terminalGuid,
+                               category: category)
+                } else {
+                    .never
+                }
+            }
+            if categoryIsAllowed(category: category, permission: permission) {
                 result.insert(category)
-            case .never:
-                break
             }
         }
         return result
@@ -70,8 +110,47 @@ class RemoteCommandExecutor {
         return (try? JSONEncoder().encode(sub).lossyString) ?? ""
     }
 
+    func defaultPermissions(chatID: String, terminalGuid: String?, browserGuid: String?) -> [Key: Permission] {
+        var result = [Key: Permission]()
+        for category in RemoteCommand.Content.PermissionCategory.allCases {
+            let rawValue = iTermPreferences.unsignedInteger(forKey: category.userDefaultsKey)
+            let key: Key? = if category.isBrowserSpecific {
+                if let browserGuid {
+                    Key(chatID: chatID, guid: browserGuid, category: category)
+                } else {
+                    nil
+                }
+            } else {
+                if let terminalGuid {
+                    Key(chatID: chatID, guid: terminalGuid, category: category)
+                } else {
+                    nil
+                }
+            }
+            if let key {
+                let setting = iTermAIPermission(rawValue: rawValue) ?? .never
+                result[key] = .init(setting)
+            }
+        }
+        return result
+    }
+
+    func permissionsDict(encoded encodedPermissions: String) -> [Key: Permission]? {
+         try? JSONDecoder().decode([Key: Permission].self, from: encodedPermissions.data(using: .utf8)!)
+    }
+
+    func allowedCategories(dict: [Key: Permission]) -> Set<RemoteCommand.Content.PermissionCategory> {
+        var result = Set<RemoteCommand.Content.PermissionCategory>()
+        for (key, permission) in dict {
+            if categoryIsAllowed(category: key.category, permission: permission) {
+                result.insert(key.category)
+            }
+        }
+        return result
+    }
+
     func load(encodedPermissions: String) {
-        let sub = try? JSONDecoder().decode([Key: Permission].self, from: encodedPermissions.data(using: .utf8)!)
+        let sub = permissionsDict(encoded: encodedPermissions)
         guard let sub else {
             DLog("Failed to decode \(encodedPermissions)")
             return
