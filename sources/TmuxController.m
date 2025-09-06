@@ -241,7 +241,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         _sharedProfile = [profile copy];
         _profileModel = profileModel;
         _sharedFontOverrides = iTermTmuxControllerDefaultFontOverridesFromProfile(profile);
-        _sharedKeyMappingOverrides = [iTermKeyMappings keyMappingsForProfile:profile];
+        _sharedKeyMappingOverrides = [iTermKeyMappings keyMappingsForProfile:profile] ?: @{};
 
         gateway_ = gateway;
         _paneIDs = [[NSMutableSet alloc] init];
