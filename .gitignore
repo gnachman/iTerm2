@@ -57,3 +57,5 @@ SignPlugin/SignPlugin.xcodeproj/xcuserdata/gnachman.xcuserdatad/xcschemes/xcsche
 WebExtensionsFramework/firefox/
 hudsucker-ffi/target/
 hudsucker-ffi/lib/
+
+iTermBrowserPlugin/iTermBrowserPlugin.xcodeproj/project.xcworkspace/xcuserdata/gnachman.xcuserdatad/
