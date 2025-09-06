@@ -61,6 +61,13 @@ class iTermBrowserGateway: NSObject {
     }
 
     @objc
+    static func revealInFinder() {
+        if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
+            NSWorkspace.shared.activateFileViewerSelecting([appURL])
+        }
+    }
+
+    @objc
     static func shouldOfferPlugin() -> Bool {
         return iTermAdvancedSettingsModel.browserProfiles() && !checkPluginInstalled()
     }

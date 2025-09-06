@@ -139,6 +139,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSButton *_preventAutomaticProfileSwitching;
 
     IBOutlet NSButton *_downloadBrowserPluginButton;
+    IBOutlet NSButton *_revealBrowserPlugin;
 
     BOOL _profileNameChangePending;
     iTermRateLimitedUpdate *_rateLimit;
@@ -146,6 +147,8 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     NSRect _desiredFrame;
     NSString *_shell;  // cached open directory userShell for performance
     iTermSSHConfigurationWindowController *_sshConfigurationWindowController;
+
+    NSTimer *_pluginTimer;
 }
 
 - (void)dealloc {
@@ -821,24 +824,40 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     if (![iTermAdvancedSettingsModel browserProfiles]) {
         // Browser disabled by user default
         _downloadBrowserPluginButton.hidden = YES;
+        _revealBrowserPlugin.hidden = YES;
         return;
     }
     if (![[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue]) {
         // Selected type is terminal
         _downloadBrowserPluginButton.hidden = YES;
+        _revealBrowserPlugin.hidden = YES;
         return;
     }
     // NO here to prevent reentrancy
     if ([iTermBrowserGateway browserAllowedCheckingIfNot:NO])  {
         // Plugin already installed
         _downloadBrowserPluginButton.hidden = YES;
+        _revealBrowserPlugin.hidden = NO;
         return;
     }
+    [_pluginTimer invalidate];
+    _pluginTimer = nil;
     _downloadBrowserPluginButton.hidden = NO;
+    _revealBrowserPlugin.hidden = YES;
+}
+
+- (IBAction)revealBrowserPlugin:(id)sender {
+    [iTermBrowserGateway revealInFinder];
 }
 
 - (IBAction)downloadBrowserPlugin:(id)sender {
     [iTermBrowserGateway openDownloadPage];
+    [_pluginTimer invalidate];
+    _pluginTimer = [NSTimer scheduledWeakTimerWithTimeInterval:10
+                                                        target:self
+                                                      selector:@selector(updateDownloadBrowserPluginButtonHidden)
+                                                      userInfo:nil
+                                                       repeats:YES];
 }
 
 #pragma mark - SSH

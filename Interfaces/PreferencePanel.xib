@@ -710,7 +710,7 @@ Gw
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="gZI-PG-peZ">
                             <rect key="frame" x="1" y="1" width="373" height="353"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" autosaveColumns="NO" id="5845">
                                     <rect key="frame" x="0.0" y="0.0" width="373" height="353"/>
@@ -917,7 +917,7 @@ DQ
                                 <autoresizingMask key="autoresizingMask" heightSizable="YES"/>
                                 <clipView key="contentView" drawsBackground="NO" id="Yde-8Q-TRE">
                                     <rect key="frame" x="1" y="1" width="256" height="133"/>
-                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                    <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" allowsUndo="YES" textCompletion="NO" id="235-ob-yuB">
                                             <rect key="frame" x="0.0" y="0.0" width="256" height="133"/>
@@ -972,7 +972,7 @@ DQ
                         <autoresizingMask key="autoresizingMask"/>
                         <clipView key="contentView" drawsBackground="NO" id="XnQ-nh-5wv">
                             <rect key="frame" x="1" y="1" width="379" height="83"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" textCompletion="NO" id="ucv-8U-BE7" customClass="iTermPlaygroundTextView">
                                     <rect key="frame" x="0.0" y="0.0" width="379" height="83"/>
@@ -1055,7 +1055,7 @@ DQ
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="Moz-RU-iUF">
                             <rect key="frame" x="1" y="1" width="343" height="375"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" autosaveColumns="NO" id="6283">
                                     <rect key="frame" x="0.0" y="0.0" width="343" height="375"/>
@@ -1555,6 +1555,7 @@ CA
                 <outlet property="_profileTypeContainer" destination="Mbz-sF-N6i" id="g1z-v3-Tvk"/>
                 <outlet property="_profiles" destination="15766" id="mhp-qy-IXj"/>
                 <outlet property="_reasonShellIntegrationDisabledLabel" destination="3BE-IU-euZ" id="Jkt-at-t9a"/>
+                <outlet property="_revealBrowserPlugin" destination="ny5-PE-Hbt" id="1yu-VL-it9"/>
                 <outlet property="_schemesLabel" destination="5035" id="zeB-oy-niN"/>
                 <outlet property="_sendTextAtStart" destination="5410" id="eUe-AY-v5Q"/>
                 <outlet property="_sendTextAtStartLabel" destination="5408" id="ZWa-zB-PeZ"/>
@@ -1964,6 +1965,17 @@ CA
                             <color key="contentTintColor" name="linkColor" catalog="System" colorSpace="catalog"/>
                             <connections>
                                 <action selector="downloadBrowserPlugin:" target="dVg-Ac-SiZ" id="UVa-p8-bSO"/>
+                            </connections>
+                        </button>
+                        <button hidden="YES" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ny5-PE-Hbt">
+                            <rect key="frame" x="391" y="10" width="188" height="18"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="bevel" title="✅ Browser Plugin Installed" bezelStyle="rounded" alignment="center" imageScaling="proportionallyDown" inset="2" id="74h-mB-lfd">
+                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="revealBrowserPlugin:" target="dVg-Ac-SiZ" id="4hM-D4-Bup"/>
                             </connections>
                         </button>
                     </subviews>
