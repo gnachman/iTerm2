@@ -8591,7 +8591,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return _newOutput;
 }
 - (BOOL)isBrowserSession {
-    return self.view.isBrowser || self.profile.profileIsBrowser;
+    return self.view.isBrowser;
 }
 
 - (BOOL)isCompatibleWith:(PTYSession *)otherSession
