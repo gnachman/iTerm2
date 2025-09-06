@@ -30,7 +30,6 @@
 #import "DebugLogging.h"
 #import "FindView.h"
 #import "iTerm.h"
-#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermFindDriver.h"
@@ -50,7 +49,7 @@ static const float kAnimationDuration = 0.2;
 static const CGFloat kFilterHeight = 30;
 static const CGFloat kLineRangeHeight = 24;
 
-@interface iTermDropDownFindViewController()<iTermFocusReportingSearchFieldDelegate, iTermViewLayoutDelegate>
+@interface iTermDropDownFindViewController()<iTermFocusReportingSearchFieldDelegate, MinimalFindViewDelegate>
 @end
 
 @implementation iTermDropDownFindViewController {
@@ -59,12 +58,7 @@ static const CGFloat kLineRangeHeight = 24;
     IBOutlet NSView *_filterWrapper;
     IBOutlet NSView *_selectionNoticeWrapper;
     IBOutlet NSView *_searchWrapper;
-    IBOutlet MinimalFindView *_minimalFindView;
-    IBOutlet NSTextField *_notice;
-    IBOutlet NSButton *_previousButton;
-    IBOutlet NSButton *_nextButton;
-    NSGlassEffectView *_glassEffectView NS_AVAILABLE_MAC(26);
-    
+
     // Fades out the progress indicator.
     NSTimer *_animationTimer;
     NSTimer *_filterAnimationTimer;
@@ -105,10 +99,7 @@ static const CGFloat kLineRangeHeight = 24;
     self.view.shadow = shadow;
     [self setFilterHidden:YES];
     [self updateSelectionNoticeVisibility];
-    if (@available(macOS 26, *)) {
-    } else {
-        _minimalFindView.delegate = self;
-    }
+    [self.minimalFindView setDelegate:self];
 }
 
 #pragma mark - iTermFindViewController
@@ -158,67 +149,30 @@ static const CGFloat kLineRangeHeight = 24;
 
 - (void)layoutSubviews {
     CGFloat y = 19;
-    CGFloat mainWidth = self.view.frame.size.width - 52;
-    if (@available(macOS 26, *))  {
-        y -= 10;
-        mainWidth -= 9;
-        _glassEffectView.frame = NSInsetRect(self.view.bounds, 9, 9);
-    }
     if (self.hasLineRange) {
         NSRect rect = _selectionNoticeWrapper.frame;
         rect.origin.y = y;
-        rect.size.width = mainWidth;
         _selectionNoticeWrapper.frame = rect;
         y += rect.size.height;
-
-        rect = _selectionNoticeWrapper.bounds;
-        rect.size.height -= 10;
-        _notice.frame = rect;
 
     }
     if (!_filterWrapper.isHidden) {
         NSRect rect = _filterWrapper.frame;
         rect.origin.y = y;
-        rect.size.width = mainWidth;
         _filterWrapper.frame = rect;
-
-        NSRect frame = _filterField.frame;
-        frame.size.width = mainWidth - 50;
-        _filterField.frame = frame;
-
         y += 29;
     }
     NSRect frame = _searchWrapper.frame;
     frame.origin.y = y;
-    frame.size.width = mainWidth;
     _searchWrapper.frame = frame;
-    
-    NSRect rect = _previousButton.frame;
-    if (@available(macOS 26, *)) {
-        rect.size.width = 18;
-    }
-    rect.origin.x = NSMaxX(findBarTextField_.frame) + 8;
-    _previousButton.frame = rect;
-    
-    frame = _nextButton.frame;
-    if (@available(macOS 26, *)) {
-        frame.size.width = 18;
-    }
-    frame.origin.x = NSMaxX(rect);
-    _nextButton.frame = frame;
 
-    frame = findBarTextField_.frame;
-    frame.size.width = mainWidth - 50;
-    findBarTextField_.frame = frame;
-    
-    frame = _minimalFindView.closeButton.frame;
-    frame.origin.x = NSMaxX(_searchWrapper.frame) + 3;
-    if (@available(macOS 26, *)) {
-        frame.origin.x -= 6;
-        y -= 1.5;
-    }
+    frame = self.minimalFindView.closeButton.frame;
     frame.origin.y = y;
-    _minimalFindView.closeButton.frame = frame;
+    self.minimalFindView.closeButton.frame = frame;
+}
+
+- (MinimalFindView *)minimalFindView {
+    return [MinimalFindView castFrom:self.view];
 }
 
 - (void)toggleFilter {
@@ -378,27 +332,6 @@ static const CGFloat kLineRangeHeight = 24;
 - (void)awakeFromNib {
     _baseHeight = NSHeight(self.view.bounds);
     [super awakeFromNib];
-    if (@available(macOS 26, *)) {
-        iTermLayoutReportingView *root = [[iTermLayoutReportingView alloc] initWithFrame:self.view.frame];
-        root.layoutDelegate = self;
-
-        _glassEffectView = [[NSGlassEffectView alloc] initWithFrame:self.view.frame];
-        _glassEffectView.autoresizesSubviews = NO;
-        [root addSubview:_glassEffectView];
-        _glassEffectView.frame = NSInsetRect(root.frame, 9, 9);
-
-        const NSRect bounds = _glassEffectView.bounds;
-        NSView *minimalFindView = self.view;
-        [minimalFindView removeFromSuperview];
-        _glassEffectView.contentView = minimalFindView;
-        minimalFindView.frame = bounds;
-        
-        self.view = root;
-        
-        _filterWrapper.autoresizesSubviews = NO;
-        _searchWrapper.autoresizesSubviews = NO;
-        minimalFindView.autoresizesSubviews = NO;
-    }
 }
 
 - (BOOL)validateUserInterfaceItem:(NSMenuItem *)item {
@@ -592,9 +525,9 @@ static const CGFloat kLineRangeHeight = 24;
     return [self.driver currentIndex];
 }
 
-#pragma mark - iTermViewLayoutDelegate
+#pragma mark - MinimalFindViewDelegate
 
-- (void)viewDidLayoutReliable:(NSView *)sender {
+- (void)minimalFindViewDidLayout {
     [self layoutSubviews];
 }
 

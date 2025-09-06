@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24123.1" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="23727" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24123.1"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="23727"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -10,10 +10,6 @@
             <connections>
                 <outlet property="_filterField" destination="el4-gq-4Pr" id="R4U-qt-nZu"/>
                 <outlet property="_filterWrapper" destination="TcP-cX-kgi" id="9LR-U4-PdO"/>
-                <outlet property="_minimalFindView" destination="1" id="KUF-CQ-r5P"/>
-                <outlet property="_nextButton" destination="qoR-tl-nVb" id="mjb-5a-Am6"/>
-                <outlet property="_notice" destination="xye-DV-xsx" id="bET-hw-Ex8"/>
-                <outlet property="_previousButton" destination="MyD-4t-63g" id="3iP-Iu-6OC"/>
                 <outlet property="_searchWrapper" destination="HCy-b1-UVb" id="fZz-oa-nOq"/>
                 <outlet property="_selectionNoticeWrapper" destination="RZ7-8d-QwL" id="6nP-3R-TZd"/>
                 <outlet property="findBarTextField_" destination="2" id="27"/>
