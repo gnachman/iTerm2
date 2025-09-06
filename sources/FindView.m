@@ -29,6 +29,7 @@
 #import "PseudoTerminal.h"
 #import "NSBezierPath+iTerm.h"
 #import "NSResponder+iTerm.h"
+#import "iTerm2SharedARC-Swift.h"
 
 @implementation FindView
 
@@ -69,27 +70,32 @@
 @end
 
 @implementation MinimalFindView {
-    NSVisualEffectView *_vev NS_AVAILABLE_MAC(10_14);
+    NSView *_maybeVev;
 }
 
 - (void)awakeFromNib {
     _closeButton.image.template = YES;
     _closeButton.alternateImage.template = YES;
-    _vev = [[NSVisualEffectView alloc] initWithFrame:NSInsetRect(self.bounds, 9, 9)];
-    _vev.wantsLayer = YES;
-    _vev.blendingMode = NSVisualEffectBlendingModeWithinWindow;
-    _vev.material = NSVisualEffectMaterialSheet;
-    _vev.state = NSVisualEffectStateActive;
-    _vev.layer.cornerRadius = 6;
-    _vev.layer.borderColor = [[NSColor grayColor] CGColor];
-    _vev.layer.borderWidth = 1;
-    [self addSubview:_vev positioned:NSWindowBelow relativeTo:self.subviews.firstObject];
+    if (@available(macOS 26, *)) {
+        _maybeVev = nil;
+    } else {
+        NSVisualEffectView *vev = [[NSVisualEffectView alloc] initWithFrame:NSInsetRect(self.bounds, 9, 9)];
+        vev.wantsLayer = YES;
+        vev.blendingMode = NSVisualEffectBlendingModeWithinWindow;
+        vev.material = NSVisualEffectMaterialSheet;
+        vev.state = NSVisualEffectStateActive;
+        vev.layer.cornerRadius = 6;
+        vev.layer.borderColor = [[NSColor grayColor] CGColor];
+        vev.layer.borderWidth = 1;
+        _maybeVev = vev;
+        [self addSubview:_maybeVev positioned:NSWindowBelow relativeTo:self.subviews.firstObject];
+    }
 }
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
     [super resizeSubviewsWithOldSize:oldSize];
-    _vev.frame = NSInsetRect(self.bounds, 9, 9);
-    [_delegate minimalFindViewDidLayout];
+    _maybeVev.frame = NSInsetRect(self.bounds, 9, 9);
+    [_delegate viewDidLayoutReliable:self];
 }
 
 - (void)resetCursorRects {

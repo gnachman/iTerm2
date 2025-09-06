@@ -27,15 +27,13 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface FindView : NSView
-@end
+@protocol iTermViewLayoutDelegate;
 
-@protocol MinimalFindViewDelegate<NSObject>
-- (void)minimalFindViewDidLayout;
+@interface FindView : NSView
 @end
 
 @interface MinimalFindView : NSView
 @property (nonatomic, strong) IBOutlet NSButton *closeButton;
-@property (nonatomic, weak) IBOutlet id<MinimalFindViewDelegate> delegate;
+@property (nonatomic, weak) IBOutlet id<iTermViewLayoutDelegate> delegate;
 @end
 
