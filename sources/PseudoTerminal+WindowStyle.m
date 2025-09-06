@@ -170,8 +170,10 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
                                                                        defer:defer];
     myWindow.collectionBehavior = [self desiredWindowCollectionBehavior];
     if (@available(macOS 26, *)) {
-        // macOS 26 seems to have changed things. A window without .title in the style mask draws a floating title half off the screen.
-        myWindow.titleVisibility = !!(styleMask & NSWindowStyleMaskTitled) ? NSWindowTitleVisible : NSWindowTitleHidden;
+	// macOS 26 forces me to use the .titled window style and set
+	// titleVisibility to .hidden. If I don't use .titled then the window
+	// gets ugly square corners.
+        myWindow.titleVisibility = [PseudoTerminal shouldHideWindowTitleForWindowType:windowType] ? NSWindowTitleHidden : NSWindowTitleVisible;
     }
     if (windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
         // For some reason, you don't always get the frame you requested. I saw
@@ -1004,6 +1006,32 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
 
 #pragma mark - Style Mask
 
+// See note at callsite on why this exists.
++ (BOOL)shouldHideWindowTitleForWindowType:(iTermWindowType)windowType {
+    if (@available(macOS 26, *)) {
+        switch (iTermThemedWindowType(windowType)) {
+            case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            case WINDOW_TYPE_LION_FULL_SCREEN:
+            case WINDOW_TYPE_ACCESSORY:
+            case WINDOW_TYPE_NORMAL:
+                return NO;
+            case WINDOW_TYPE_NO_TITLE_BAR:
+            case WINDOW_TYPE_TOP:
+            case WINDOW_TYPE_BOTTOM:
+            case WINDOW_TYPE_LEFT:
+            case WINDOW_TYPE_RIGHT:
+            case WINDOW_TYPE_TOP_PARTIAL:
+            case WINDOW_TYPE_BOTTOM_PARTIAL:
+            case WINDOW_TYPE_LEFT_PARTIAL:
+            case WINDOW_TYPE_RIGHT_PARTIAL:
+            case WINDOW_TYPE_COMPACT:
+            case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            case WINDOW_TYPE_MAXIMIZED:
+                return YES;
+        }
+    }
+    return NO;
+}
 + (NSWindowStyleMask)styleMaskForWindowType:(iTermWindowType)windowType
                             savedWindowType:(iTermWindowType)savedWindowType
                            hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType {
@@ -1014,6 +1042,11 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     NSWindowStyleMask resizable = NSWindowStyleMaskResizable;
     if (![iTermAdvancedSettingsModel allowLiveResize]) {
         resizable = 0;
+    }
+    NSWindowStyleMask tahoeTitled = 0;
+    if (@available(macOS 26, *)) {
+	// See note at callsite of shouldHideWindowTitleForWindowType:
+        tahoeTitled = NSWindowStyleMaskTitled;
     }
     switch (iTermThemedWindowType(windowType)) {
         case WINDOW_TYPE_TOP:
@@ -1026,6 +1059,7 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
         case WINDOW_TYPE_RIGHT_PARTIAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
             return (mask |
+                    tahoeTitled |
                     NSWindowStyleMaskFullSizeContentView |
                     NSWindowStyleMaskClosable |
                     NSWindowStyleMaskMiniaturizable |
@@ -1036,6 +1070,7 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
 
         case WINDOW_TYPE_COMPACT:
             return (mask |
+                    tahoeTitled |
                     NSWindowStyleMaskFullSizeContentView |
                     NSWindowStyleMaskClosable |
                     NSWindowStyleMaskMiniaturizable |
@@ -1043,6 +1078,7 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
 
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
             return (mask |
+                    tahoeTitled |
                     NSWindowStyleMaskFullSizeContentView |
                     NSWindowStyleMaskClosable |
                     NSWindowStyleMaskMiniaturizable |

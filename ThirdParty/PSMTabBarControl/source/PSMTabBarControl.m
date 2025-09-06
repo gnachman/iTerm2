@@ -1404,7 +1404,11 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
             NSMenuItem *menuItem;
             if (overflowMenu == nil) {
                 overflowMenu = [[[NSMenu alloc] initWithTitle:@"TITLE"] autorelease];
-                [overflowMenu insertItemWithTitle:@"FIRST" action:nil keyEquivalent:@"" atIndex:0]; // Because the overflowPupUpButton is a pull down menu
+                if (@available(macOS 26, *)) {
+                    // It's not a pulldown menu in 26
+                } else {
+                    [overflowMenu insertItemWithTitle:@"FIRST" action:nil keyEquivalent:@"" atIndex:0]; // Because the overflowPupUpButton is a pull down menu
+                }
             }
             NSString *title = [[cell attributedStringValue] string] ?: @"";
             menuItem = [[NSMenuItem alloc] initWithTitle:title action:@selector(overflowMenuAction:) keyEquivalent:@""];

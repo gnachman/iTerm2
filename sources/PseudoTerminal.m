@@ -4673,10 +4673,26 @@ ITERM_WEAKLY_REFERENCEABLE
                 case TAB_STYLE_LIGHT_HIGH_CONTRAST:
                 case TAB_STYLE_DARK:
                 case TAB_STYLE_DARK_HIGH_CONTRAST:
-                    return NSEdgeInsetsMake(0,
-                                            8,
-                                            8,
-                                            8);
+                    if (self.window.titleVisibility == NSWindowTitleHidden) {
+                        switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+                            case PSMTab_TopTab:
+                                return NSEdgeInsetsMake(4.5,  // top
+                                                        8,    // left
+                                                        3.5,  // bottom
+                                                        8);   // right
+                            case PSMTab_BottomTab:
+                                return NSEdgeInsetsMake(3.5,  // top
+                                                        8,    // left
+                                                        4.5,  // bottom
+                                                        8);   // right
+                            case PSMTab_LeftTab:
+                                break;
+                        }
+                    }
+                    return NSEdgeInsetsMake(0,  // top
+                                            8,  // left
+                                            8,  // bottom
+                                            8); // right
             }
         }
         return NSEdgeInsetsZero;

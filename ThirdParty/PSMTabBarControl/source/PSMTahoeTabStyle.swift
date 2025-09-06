@@ -135,7 +135,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     func frameForOverflowButton(withAddTabButton showAddTabButton: Bool, enclosureSize: NSSize, standardHeight: CGFloat) -> NSRect {
         if orientation == .horizontalOrientation {
             return NSRect(x: enclosureSize.width - 36,
-                          y: 0,
+                          y: containerTopInset,
                           width: 28,
                           height: 28)
         }
@@ -159,7 +159,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             return .zero
         }
         return NSRect(x: tabBar.bounds.width - 36,
-                      y: 0,
+                      y: containerTopInset,
                       width: 28,
                       height: 28)
     }
@@ -376,7 +376,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     func adjustedCellRect(_ rect: NSRect, generic: NSRect) -> NSRect {
         var frame = rect
         if _orientation == .horizontalOrientation {
-            frame.origin.y = 0.0
+            frame.origin.y = containerTopInset
         } else {
             frame = frame.insetBy(dx: 4, dy: 0)
         }
@@ -505,7 +505,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     private let barHeight = 28.0
     private var barRadius: CGFloat { barHeight / 2.0 }
     let containerSideInset = CGFloat(8)
-    let containerTopInset = CGFloat(0)
+    var containerTopInset: CGFloat {
+        tabBar?.insets.top ?? 0.0
+    }
     let containerBottomInset = CGFloat(0)
     
     private func clippingPath(rect: NSRect) -> NSBezierPath {
