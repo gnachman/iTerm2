@@ -297,20 +297,12 @@
         cellRect.size.width = enclosureSize.width;
     }
     return cellRect;
-    /*
-    return NSMakeRect(enclosureSize.width - [self rightMarginForTabBarControlWithOverflow:YES
-                                                                             addTabButton:showAddTabButton] + 1,
-                      0,
-                      [self rightMarginForTabBarControlWithOverflow:YES
-                                                         addTabButton:showAddTabButton] - 1,
-                      enclosureSize.height);
-     */
 }
 
 - (NSRect)frameForAddTabButtonWithCellWidths:(NSArray<NSNumber *> *)widths height:(CGFloat)height {
     NSRect cellRect;
     cellRect.origin.y = 0;
-    cellRect.origin.x = [[widths valueForKeyPath:@"@sum.floatValue"] floatValue];
+    cellRect.origin.x = [self leftMarginForTabBarControl] + [[widths valueForKeyPath:@"@sum.floatValue"] floatValue];
     cellRect.size.width = self.addTabButtonSize.width;
     cellRect.size.height = height;
     return cellRect;
