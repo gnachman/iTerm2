@@ -87,8 +87,9 @@ class SSHFilePanel: NSWindowController {
     private var cancelButton: NSButton!
     private var openButton: NSButton!
     private var newFolderButton: NSButton!
+    private var systemPanelButton: NSButton!
     private var sidebar: SSHFilePanelSidebar!
-    private var completionHandler: ((NSApplication.ModalResponse) -> Void)?
+    var completionHandler: ((NSApplication.ModalResponse) -> Void)?
     private var navigationHistory: [SSHFileDescriptor] = []
     private var historyIndex: Int = -1
     private var ignoreSidebarChange = 0
@@ -98,8 +99,9 @@ class SSHFilePanel: NSWindowController {
     var isSavePanel = false
     var defaultFilename: String?
     var allowsOtherFileTypes = false
+    var systemPanelCallback: (() -> Void)?
     var showsHiddenFiles = false
-    private var saveAsTextField: NSTextField!
+    var saveAsTextField: NSTextField!
     private var saveAsLabel: NSTextField!
     private var newFolderNameTextField: NSTextField!
     private var newFolderSheet: NSPanel!
@@ -150,8 +152,8 @@ class SSHFilePanel: NSWindowController {
         }
     }
 
-    private var currentEndpoint: SSHEndpoint?
-    private var currentPath: SSHFileDescriptor? {
+    var currentEndpoint: SSHEndpoint?
+    var currentPath: SSHFileDescriptor? {
         didSet {
             updateSavePanelEnabled()
         }
@@ -239,6 +241,7 @@ extension SSHFilePanel {
 
     @MainActor
     private func dataSourceDidChange() {
+        DLog("dataSourceDidChange called, preferredSSHIdentity: \(String(describing: preferredSSHIdentity)), initialDirectory: \(String(describing: initialDirectory))")
         if !prepared {
             prepared = true
             prepareToShow()
@@ -246,6 +249,7 @@ extension SSHFilePanel {
         let connectedHosts = connectedHostsIncludingLocalhost()
         let defaultHost = preferredSSHIdentity ?? connectedHosts.first
         if let defaultHost {
+            DLog("Will select endpoint for host: \(defaultHost), initialPath: \(String(describing: initialDirectory?.path))")
             Task { @MainActor in
                 await selectEndpoint(forIdentity: defaultHost,
                                      initialPath: initialDirectory?.path,
@@ -269,20 +273,33 @@ extension SSHFilePanel {
     }
 
     private func defaultPath(for sshIdentity: SSHIdentity) -> String {
-        return defaultPathOptions(for: sshIdentity).first!
+        // If we have an explicit initialDirectory and it's for localhost, use it
+        if sshIdentity == .localhost, let initialDir = initialDirectory {
+            DLog("Using initialDirectory: \(initialDir.path)")
+            return initialDir.path
+        }
+        let result = defaultPathOptions(for: sshIdentity).first!
+        DLog("Using defaultPath: \(result) for \(sshIdentity)")
+        return result
     }
 
     @discardableResult
     private func selectEndpoint(forIdentity sshIdentity: SSHIdentity,
                                 initialPath: String?,
                                 withHistory: Bool) async -> Bool {
+        DLog("selectEndpoint called with sshIdentity: \(sshIdentity), initialPath: \(String(describing: initialPath)), withHistory: \(withHistory)")
         currentEndpoint = endpoint(for: sshIdentity)
         defer {
             delegate?.panel(self, didChangeToDirectory: currentPath)
         }
         if currentEndpoint != nil {
+            // Prevent sidebar selection from triggering navigation
+            ignoreSidebarChange += 1
             sidebar.selectedIdentity = sshIdentity
-            currentPath = SSHFileDescriptor(absolutePath: defaultPath(for: sshIdentity),
+            ignoreSidebarChange -= 1
+            // Use initialPath if provided, otherwise defaultPath
+            let pathToUse = initialPath ?? defaultPath(for: sshIdentity)
+            currentPath = SSHFileDescriptor(absolutePath: pathToUse,
                                             isDirectory: true,
                                             sshIdentity: sshIdentity)
             defer {
@@ -290,12 +307,12 @@ extension SSHFilePanel {
             }
             if withHistory {
                 return await navigateToPathWithHistory(SSHFileDescriptor(
-                    absolutePath: initialPath ?? defaultPath(for: sshIdentity),
+                    absolutePath: pathToUse,
                     isDirectory: true,
                     sshIdentity: sshIdentity))
             }
             return await navigateToPath(SSHFileDescriptor(
-                absolutePath: initialPath ?? defaultPath(for: sshIdentity),
+                absolutePath: pathToUse,
                 isDirectory: true,
                 sshIdentity: sshIdentity))
         } else {
@@ -777,6 +794,14 @@ extension SSHFilePanel {
             newFolderButton.action = #selector(newFolderButtonClicked)
         }
 
+        // Create Use System Panel button
+        systemPanelButton = NSButton()
+        systemPanelButton.translatesAutoresizingMaskIntoConstraints = false
+        systemPanelButton.title = "Use System Panel…"
+        systemPanelButton.bezelStyle = .rounded
+        systemPanelButton.target = self
+        systemPanelButton.action = #selector(systemPanelButtonClicked)
+
         // Create button stack with right alignment and proper spacing
         let spacerView = NSView()
         spacerView.translatesAutoresizingMaskIntoConstraints = false
@@ -792,6 +817,7 @@ extension SSHFilePanel {
             buttonViews.append(leftSpacer)
             buttonViews.append(newFolderButton)
         }
+        buttonViews.append(systemPanelButton)
         buttonViews.append(contentsOf: [spacerView, cancelButton, openButton, rightSpacer])
         
         buttonStackView = NSStackView(views: buttonViews)
@@ -804,6 +830,7 @@ extension SSHFilePanel {
         var constraints: [NSLayoutConstraint] = [
             cancelButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 80),
             openButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 80),
+            systemPanelButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 120),
             rightSpacer.widthAnchor.constraint(equalToConstant: 8)
         ]
         
@@ -822,6 +849,69 @@ extension SSHFilePanel {
 
     @objc private func newFolderButtonClicked(_ sender: NSButton) {
         showNewFolderSheet()
+    }
+
+    @objc private func systemPanelButtonClicked(_ sender: NSButton) {
+        if let callback = systemPanelCallback {
+            // The callback will handle closing the SSH panel
+            willClose()
+            callback()
+        } else {
+            // Fallback: Close SSH panel and open system panel directly
+            willClose()
+            if let sheetParent = window?.sheetParent {
+                // Sheet presentation
+                sheetParent.endSheet(window!, returnCode: .cancel)
+            } else if NSApp.modalWindow == window {
+                // Modal presentation
+                NSApp.stopModal(withCode: .cancel)
+                window?.orderOut(nil)
+            } else {
+                // Non-modal presentation
+                window?.orderOut(nil)
+            }
+            // Fallback: Open system panel directly (without SSH button)
+            let savePanel = isSavePanel ? NSSavePanel() : NSOpenPanel()
+            
+            // Copy settings from SSH panel
+            if let openPanel = savePanel as? NSOpenPanel {
+                openPanel.canChooseDirectories = canChooseDirectories
+                openPanel.canChooseFiles = canChooseFiles
+                openPanel.allowsMultipleSelection = allowsMultipleSelection
+            }
+            
+            // Copy all the properties
+            savePanel.canCreateDirectories = canCreateDirectories
+            savePanel.allowsOtherFileTypes = allowsOtherFileTypes
+            savePanel.showsHiddenFiles = showsHiddenFiles
+            savePanel.allowedContentTypes = allowedContentTypes
+            savePanel.accessoryView = accessoryView
+            savePanel.isExtensionHidden = false
+            savePanel.canSelectHiddenExtension = true
+            
+            // Set nameFieldStringValue for save panels
+            if isSavePanel {
+                savePanel.nameFieldStringValue = saveAsTextField?.stringValue ?? defaultFilename ?? ""
+            }
+            
+            // Set directory URL to current directory if on localhost
+            if let currentIdentity = currentEndpoint?.sshIdentity,
+               currentIdentity.isLocalhost,
+               let currentPath = currentPath {
+                savePanel.directoryURL = URL(fileURLWithPath: currentPath.absolutePath)
+            }
+            
+            // Present the system panel
+            if let sheetParent = window?.sheetParent {
+                savePanel.beginSheetModal(for: sheetParent) { [weak self] response in
+                    self?.completionHandler?(response)
+                }
+            } else {
+                savePanel.begin { [weak self] response in
+                    self?.completionHandler?(response)
+                }
+            }
+        }
     }
 
     @objc private func locationButtonChanged(_ sender: NSPopUpButton) {
@@ -1121,7 +1211,7 @@ extension SSHFilePanel {
         let menu = NSMenu()
 
         // Go to Folder (Cmd+Shift+G)
-        let goToFolderItem = NSMenuItem(title: "Go to Folder...",
+        let goToFolderItem = NSMenuItem(title: "Go to Folder…",
                                        action: #selector(goToFolder),
                                        keyEquivalent: "g")
         goToFolderItem.keyEquivalentModifierMask = [.command, .shift]

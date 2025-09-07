@@ -7,6 +7,14 @@
 
 import UniformTypeIdentifiers
 
+@MainActor
+private class SSHPanelButton: NSButton {
+    weak var savePanel: NSSavePanel?
+    weak var parentWindow: NSWindow?
+    var handler: ((NSApplication.ModalResponse, iTermSavePanelItem?) -> Void)?
+    weak var modernSavePanel: iTermModernSavePanel?
+}
+
 @objc
 @MainActor
 class iTermSavePanelItem: NSObject {
@@ -137,39 +145,18 @@ extension iTermModernSavePanel {
         beginWithFallback(window: nil, handler: handler)
     }
 
-    // Fall back to system picker if there are no ssh integration sessions active
+    // Always use system picker with SSH panel option
     @objc(beginWithFallbackWindow:handler:)
     func beginWithFallback(window: NSWindow?,
                            handler: @escaping (NSApplication.ModalResponse, iTermSavePanelItem?) -> Void) {
-        if ConductorRegistry.instance.isEmpty || requireLocalhost {
-            runSystem(window: window, handler: handler)
-            return
-        }
-        if let window {
-            beginSheetModal(for: window) { [weak self] response in
-                handler(response, self?.item)
-            }
-        } else {
-            begin { [weak self] response in
-                handler(response, self?.item)
-            }
-        }
+        runSystem(window: window, handler: handler)
     }
 
     // Show the panel non-modally with a completion handler
     func begin(_ handler: @escaping (NSApplication.ModalResponse) -> Void) {
-        if requireLocalhost {
-            runSystem(window: nil) { [weak self] response, item in
-                self?.item = item
-                handler(response)
-            }
-            return
-        }
-        let sshFilePanel = makePanel()
-
-        // Present non-modally
-        sshFilePanel.begin { [weak self] response in
-            self?.handle(response, panel: sshFilePanel, handler: handler)
+        runSystem(window: nil) { [weak self] response, item in
+            self?.item = item
+            handler(response)
         }
     }
 
@@ -184,24 +171,107 @@ extension iTermModernSavePanel {
 
     func beginSheetModal(for window: NSWindow,
                          completionHandler handler: @escaping (NSApplication.ModalResponse) -> Void) {
-        if requireLocalhost {
-            runSystem(window: window) { [weak self] response, item in
-                self?.item = item
-                handler(response)
-            }
+        runSystem(window: window) { [weak self] response, item in
+            self?.item = item
+            handler(response)
+        }
+    }
+    
+    @objc private func openSSHPanelButtonClicked(_ sender: SSHPanelButton) {
+        guard let savePanel = sender.savePanel,
+              let handler = sender.handler,
+              let modernSavePanel = sender.modernSavePanel else {
             return
         }
-        let sshFilePanel = makePanel()
-        sshFilePanel.beginSheetModal(for: window) { [weak self] response in
-            self?.handle(response, panel: sshFilePanel, handler: handler)
+        
+        // Store the parent window before canceling
+        let parentWindow = sender.parentWindow ?? savePanel.sheetParent
+        
+        // Preserve the current directory and filename from system panel
+        modernSavePanel.preferredSSHIdentity = .localhost  // Always set to localhost when coming from system panel
+        // Get the current directory from the system panel - use the current working directory if not set
+        let directoryURL = savePanel.directoryURL ?? URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        modernSavePanel._directoryURL = directoryURL
+        if !savePanel.nameFieldStringValue.isEmpty {
+            modernSavePanel.nameFieldStringValue = savePanel.nameFieldStringValue
+        }
+        
+        // Cancel the current save panel
+        savePanel.cancel(nil)
+        
+        // Open SSH panel
+        let sshFilePanel = modernSavePanel.makePanel()
+        
+        if let window = parentWindow {
+            sshFilePanel.beginSheetModal(for: window) { [weak modernSavePanel] response in
+                modernSavePanel?.handle(response, panel: sshFilePanel, handler: { modalResponse in
+                    handler(modalResponse, modernSavePanel?.item)
+                })
+            }
+        } else {
+            sshFilePanel.begin { [weak modernSavePanel] response in
+                modernSavePanel?.handle(response, panel: sshFilePanel, handler: { modalResponse in
+                    handler(modalResponse, modernSavePanel?.item)
+                })
+            }
         }
     }
 }
 
 @MainActor
 private extension iTermModernSavePanel {
+    func createAccessoryViewWithSSHButton(userAccessory: NSView?,
+                                          savePanel: NSSavePanel,
+                                          window: NSWindow?,
+                                          handler: @escaping (NSApplication.ModalResponse, iTermSavePanelItem?) -> Void) -> NSView {
+        let container = NSView()
+        
+        // Create SSH panel button
+        let sshButton = SSHPanelButton()
+        sshButton.title = "Open SSH Panel..."
+        sshButton.target = self
+        sshButton.action = #selector(openSSHPanelButtonClicked(_:))
+        sshButton.bezelStyle = .rounded
+        sshButton.translatesAutoresizingMaskIntoConstraints = false
+        sshButton.savePanel = savePanel
+        sshButton.parentWindow = window
+        sshButton.handler = handler
+        sshButton.modernSavePanel = self
+        
+        container.addSubview(sshButton)
+        
+        // Add user's accessory view if provided
+        if let userAccessory = userAccessory {
+            userAccessory.translatesAutoresizingMaskIntoConstraints = false
+            container.addSubview(userAccessory)
+            
+            // Layout constraints with centering and margins
+            NSLayoutConstraint.activate([
+                // Center SSH button horizontally with top margin
+                sshButton.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+                sshButton.topAnchor.constraint(equalTo: container.topAnchor, constant: 8),
+                
+                // User accessory view below SSH button
+                userAccessory.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+                userAccessory.topAnchor.constraint(equalTo: sshButton.bottomAnchor, constant: 12),
+                userAccessory.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+                userAccessory.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -8)
+            ])
+        } else {
+            // Layout constraints for button only - centered with margins
+            NSLayoutConstraint.activate([
+                sshButton.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+                sshButton.topAnchor.constraint(equalTo: container.topAnchor, constant: 8),
+                sshButton.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -8)
+            ])
+        }
+        
+        return container
+    }
+    
     func runSystem(window: NSWindow?,
                    handler: @escaping (NSApplication.ModalResponse, iTermSavePanelItem?) -> Void) {
+        Self.panels.append(self)
         let savePanel = NSSavePanel()
         savePanel.nameFieldStringValue = defaultFilename ?? ""
         if preferredSSHIdentity == .localhost {
@@ -210,7 +280,18 @@ private extension iTermModernSavePanel {
         savePanel.isExtensionHidden = isExtensionHidden
         savePanel.allowedContentTypes = allowedContentTypes
         savePanel.nameFieldStringValue = nameFieldStringValue
-        savePanel.accessoryView = accessoryView
+        
+        // Add SSH panel button if SSH connections are available and not requireLocalhost
+        let shouldShowSSHButton = !ConductorRegistry.instance.isEmpty && !requireLocalhost
+        if shouldShowSSHButton {
+            savePanel.accessoryView = createAccessoryViewWithSSHButton(userAccessory: accessoryView,
+                                                                       savePanel: savePanel,
+                                                                       window: window,
+                                                                       handler: handler)
+        } else {
+            savePanel.accessoryView = accessoryView
+        }
+        
         savePanel.allowsOtherFileTypes = allowsOtherFileTypes
         savePanel.showsHiddenFiles = showsHiddenFiles
         savePanel.canSelectHiddenExtension = canSelectHiddenExtension
@@ -219,8 +300,7 @@ private extension iTermModernSavePanel {
             savePanel.delegate = self
         }
 
-        // Present non-modally
-        savePanel.begin { [weak self] response in
+        let responseHandler = { [weak self] (response: NSApplication.ModalResponse) in
             guard let self else { return }
             if response == .OK,
                let url = savePanel.url {
@@ -237,6 +317,11 @@ private extension iTermModernSavePanel {
             handler(response, item)
             Self.panels.remove(object: self)
         }
+        if let window {
+            savePanel.beginSheetModal(for: window, completionHandler: responseHandler)
+        } else {
+            savePanel.begin(completionHandler: responseHandler)
+        }
     }
 
     func makePanel() -> SSHFilePanel {
@@ -250,12 +335,50 @@ private extension iTermModernSavePanel {
         sshFilePanel.defaultFilename = defaultFilename
         sshFilePanel.canCreateDirectories = canCreateDirectories
         sshFilePanel.accessoryView = accessoryView
+        DLog("makePanel: setting preferredSSHIdentity: \(String(describing: preferredSSHIdentity)), initialDirectory: \(String(describing: directoryURL))")
         sshFilePanel.preferredSSHIdentity = preferredSSHIdentity
         sshFilePanel.initialDirectory = directoryURL
         sshFilePanel.allowedContentTypes = allowedContentTypes
         sshFilePanel.defaultFilename = nameFieldStringValue
         sshFilePanel.allowsOtherFileTypes = allowsOtherFileTypes
         sshFilePanel.showsHiddenFiles = showsHiddenFiles
+        
+        // Set the callback to open system panel with SSH button
+        sshFilePanel.systemPanelCallback = { [weak self, weak sshFilePanel] in
+            guard let self = self, let sshFilePanel = sshFilePanel else { return }
+            // Preserve the parent window relationship and completion handler
+            let parentWindow = sshFilePanel.window?.sheetParent
+            let completionHandler = sshFilePanel.completionHandler
+            
+            // Preserve the current directory if on localhost
+            if let currentPath = sshFilePanel.currentPath,
+               let currentIdentity = sshFilePanel.currentEndpoint?.sshIdentity,
+               currentIdentity.isLocalhost {
+                self._directoryURL = URL(fileURLWithPath: currentPath.absolutePath)
+            }
+            
+            // Preserve the filename for save panels
+            if sshFilePanel.isSavePanel,
+               let saveAsValue = sshFilePanel.saveAsTextField?.stringValue {
+                self.nameFieldStringValue = saveAsValue
+            }
+            
+            // Close the SSH panel first
+            if let sheetParent = sshFilePanel.window?.sheetParent {
+                sheetParent.endSheet(sshFilePanel.window!)
+            } else if NSApp.modalWindow == sshFilePanel.window {
+                NSApp.stopModal(withCode: .cancel)
+                sshFilePanel.window?.orderOut(nil)
+            } else {
+                sshFilePanel.window?.orderOut(nil)
+            }
+            
+            // Now open the system panel
+            self.runSystem(window: parentWindow) { response, item in
+                self.item = item
+                completionHandler?(response)
+            }
+        }
         
         if delegate != nil {
             sshFilePanel.delegate = self
