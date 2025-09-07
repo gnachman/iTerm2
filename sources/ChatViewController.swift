@@ -13,7 +13,7 @@ protocol ChatViewControllerDelegate: AnyObject {
     func chatViewController(_ controller: ChatViewController, revealSessionWithGuid guid: String) -> Bool
     func chatViewControllerDeleteSession(_ controller: ChatViewController)
     func chatViewController(_ controller: ChatViewController,
-                            forkAtIndex index: Int,
+                            forkAtMessageID: UUID,
                             ofChat chatID: String)
 }
 
@@ -1136,7 +1136,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
               let i = model.index(ofMessageID: messageID) else {
             return
         }
-        delegate?.chatViewController(self, forkAtIndex: i, ofChat: chatID)
+        delegate?.chatViewController(self, forkAtMessageID: messageID, ofChat: chatID)
     }
 
     private func configure(cell: MultipartMessageCellView,

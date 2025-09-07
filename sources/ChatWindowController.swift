@@ -459,7 +459,7 @@ extension ChatWindowController: ChatViewControllerDelegate {
     }
 
     func chatViewController(_ controller: ChatViewController,
-                            forkAtIndex index: Int,
+                            forkAtMessageID: UUID,
                             ofChat originalChatID: String) {
         guard let listModel = ChatListModel.instance else {
             DLog("No chat list model")
@@ -467,6 +467,10 @@ extension ChatWindowController: ChatViewControllerDelegate {
         }
         guard let chat = ChatListModel.instance?.chat(id: originalChatID) else {
             DLog("No chat with id \(originalChatID)")
+            return
+        }
+        guard let index = listModel.index(ofMessageID: forkAtMessageID, inChat: chat.id) else {
+            DLog("No such message \(forkAtMessageID) in \(originalChatID)")
             return
         }
         do {
@@ -481,11 +485,31 @@ extension ChatWindowController: ChatViewControllerDelegate {
             var uuidMap = [UUID: UUID]()
             var messageMap = [UUID: Message]()
             for sourceMessage in sourceMessages {
+                if case .renameChat = sourceMessage.content {
+                    continue
+                }
                 let clone = sourceMessage.clone(&uuidMap, messages: messageMap)
                 initialMessages.append(clone)
                 messageMap[clone.uniqueID] = clone
             }
-            let chatID = try client.create(chatWithTitle: chat.title,
+            let originalTitle = chat.title
+
+            let formatter = DateFormatter()
+            formatter.dateStyle = .short
+            formatter.timeStyle = .short
+
+            let now = Date()
+            let nowString = formatter.string(from: now)
+
+            var title = originalTitle
+            let forkedAt = "(Forked at "
+            let desiredSuffix = forkedAt + nowString + ")"
+            if let range = title.range(of: forkedAt) {
+                title = originalTitle[..<range.lowerBound] + desiredSuffix
+            } else {
+                title += " " + desiredSuffix
+            }
+            let chatID = try client.create(chatWithTitle: title,
                                            terminalSessionGuid: chat.terminalSessionGuid,
                                            browserSessionGuid: chat.browserSessionGuid,
                                            initialMessages: initialMessages,

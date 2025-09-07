@@ -6437,7 +6437,7 @@ static NSString *iTermStringFromRange(NSRange range) {
                                                                          block:^(NSTimer * _Nonnull timer) {
                     [weakSelf selectCommandAt:selectAtCoord];
                 }] retain];
-            } else {
+            } else if (!handler.lastMouseDownRemovedSelection) {
                 DLog(@"mouseUp: select a command");
                 [self selectCommandAt:selectAtCoord];
             }

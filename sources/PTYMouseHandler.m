@@ -149,6 +149,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (BOOL)mouseDownImpl:(NSEvent *)event
           sideEffects:(iTermClickSideEffects *)sideEffects {
     DLog(@"mouseDownImpl: called %@", event);
+    _lastMouseDownRemovedSelection = NO;
     if ([self.mouseDelegate mouseHandlerMouseDownAt:event.locationInWindow]) {
         return NO;  // Don't call super because we handled it.
     }
@@ -313,6 +314,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [self.mouseDelegate mouseHandlerLockScrolling:self];
 
         if (event.clickCount == 1 && !cmdPressed && !shiftPressed && !imageBeingClickedOn && !mouseDownOnSelection) {
+            if (self.selection.hasSelection) {
+                _lastMouseDownRemovedSelection = YES;
+            }
             [self.selection clearSelection];
             *sideEffects |= iTermClickSideEffectsModifySelection;
         }
