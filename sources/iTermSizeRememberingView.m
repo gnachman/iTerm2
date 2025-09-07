@@ -16,6 +16,9 @@
     self = [super initWithFrame:frame];
     if (self) {
         _originalSize = frame.size;
+        if (@available(macOS 26, *)) {
+            self.prefersCompactControlSizeMetrics = YES;
+        }
     }
     return self;
 }
