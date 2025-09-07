@@ -74,6 +74,7 @@ class SSHMainContentView: iTermLayerBackedSolidColorView { }
 class SSHFilePanel: NSWindowController {
     static let connectedHostsDidChangeNotification = Notification.Name("SSHFilePanelConnectedHostsDidChange")
 
+    private var splitViewController: NSSplitViewController!
     private var splitView: NSSplitView!
     private var mainContentView: SSHMainContentView!
     private var toolbarView: NSView!
@@ -164,12 +165,19 @@ class SSHFilePanel: NSWindowController {
     // MARK: - Initialization
     init() {
         let window = SSHFilePanelWindow(contentRect: NSRect(x: 0, y: 0, width: 900, height: 600),
-                                        styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+                                        styleMask: [.titled, .resizable, .fullSizeContentView],
                                         backing: .buffered,
                                         defer: false)
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
-        window.isFloatingPanel = true
+        
+        // Hide traffic light buttons
+        if #available(macOS 26, *) {
+            window.standardWindowButton(.closeButton)?.isHidden = true
+                window.standardWindowButton(.miniaturizeButton)?.isHidden = true
+                window.standardWindowButton(.zoomButton)?.isHidden = true
+        }
+        
         window.isMovableByWindowBackground = true
         window.hidesOnDeactivate = false
         window.worksWhenModal = true
@@ -351,7 +359,7 @@ extension SSHFilePanel {
     private func setupUI() {
         guard let window = window, let contentView = window.contentView else { return }
 
-        setupSplitView(in: contentView)
+        setupSplitViewController(in: contentView)
         setupSidebar()
         setupMainContent()
     }
@@ -389,29 +397,52 @@ extension SSHFilePanel {
         window.minSize = NSSize(width: totalMinWidth, height: 400)
     }
 
-    private func setupSplitView(in contentView: NSView) {
-        splitView = NSSplitView()
-        splitView.translatesAutoresizingMaskIntoConstraints = false
-        splitView.dividerStyle = .thin
+    private func setupSplitViewController(in contentView: NSView) {
+        // Create NSSplitViewController for all versions
+        splitViewController = NSSplitViewController()
+        splitViewController.view.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Configure the split view
+        splitView = splitViewController.splitView
         splitView.isVertical = true
-        splitView.delegate = self
-
-        contentView.addSubview(splitView)
-
+        // Note: Cannot set delegate when using NSSplitViewController - it manages the split view
+        // Min/max constraints are handled via NSSplitViewItem properties instead
+        splitView.dividerStyle = .thin
+        
+        // Add split view controller to the window's content view
+        contentView.addSubview(splitViewController.view)
+        
         NSLayoutConstraint.activate([
-            splitView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            splitView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            splitView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            splitView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+            splitViewController.view.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            splitViewController.view.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            splitViewController.view.topAnchor.constraint(equalTo: contentView.topAnchor),
+            splitViewController.view.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
         ])
-        splitView.setHoldingPriority(NSLayoutConstraint.Priority(251), forSubviewAt: 0)
     }
 
     private func setupSidebar() {
         sidebar = SSHFilePanelSidebar(includeLocalhost: includeLocalhost)
         sidebar.translatesAutoresizingMaskIntoConstraints = false
-        splitView.addSubview(sidebar)
         sidebar.delegate = self
+        
+        // Create view controller for sidebar
+        let sidebarViewController = NSViewController()
+        sidebarViewController.view = sidebar
+        
+        // Create split view item with sidebar behavior
+        // In macOS 26, this will automatically get the floating glass effect
+        let sidebarItem = NSSplitViewItem(sidebarWithViewController: sidebarViewController)
+        sidebarItem.minimumThickness = minimumSidebarWidth
+        sidebarItem.maximumThickness = maximumSidebarWidth
+        sidebarItem.preferredThicknessFraction = 0.25
+        sidebarItem.canCollapse = false  // Match the delegate behavior
+        
+        // Disable automatic safe area adjustment for sidebar so it extends to top
+        if #available(macOS 26, *) {
+            sidebarItem.automaticallyAdjustsSafeAreaInsets = false
+        }
+        
+        splitViewController.addSplitViewItem(sidebarItem)
     }
 
     private func setupMainContent() {
@@ -471,13 +502,44 @@ extension SSHFilePanel {
         mainStackView.spacing = 0
         
         mainContentView.addSubview(mainStackView)
-        splitView.addSubview(mainContentView)
+        
+        // Create view controller for main content
+        let mainViewController = NSViewController()
+        mainViewController.view = mainContentView
+        
+        // Create content split view item
+        let contentItem = NSSplitViewItem(viewController: mainViewController)
+        contentItem.minimumThickness = 366  // Minimum main content width from toolbar constraints
+        contentItem.canCollapse = false
+        
+        // Enable automatic safe area inset adjustment for macOS 26's floating sidebar
+        // This property is new in macOS 26 and enables edge-to-edge content with the floating glass sidebar
+        if #available(macOS 26, *) {
+            contentItem.automaticallyAdjustsSafeAreaInsets = true
+        }
+        
+        splitViewController.addSplitViewItem(contentItem)
+        
+        // For macOS 26, use safe area for horizontal anchors to respect the floating sidebar
+        // Always use direct top anchor to extend content under the titlebar
+        let leadingAnchor: NSLayoutXAxisAnchor
+        let trailingAnchor: NSLayoutXAxisAnchor
+        
+        if #available(macOS 26, *) {
+            // Use safe area for floating sidebar in macOS 26
+            leadingAnchor = mainContentView.safeAreaLayoutGuide.leadingAnchor
+            trailingAnchor = mainContentView.safeAreaLayoutGuide.trailingAnchor
+        } else {
+            // Use direct edges
+            leadingAnchor = mainContentView.leadingAnchor
+            trailingAnchor = mainContentView.trailingAnchor
+        }
         
         NSLayoutConstraint.activate([
             spacer.heightAnchor.constraint(equalToConstant: 9),
 
-            mainStackView.leadingAnchor.constraint(equalTo: mainContentView.leadingAnchor),
-            mainStackView.trailingAnchor.constraint(equalTo: mainContentView.trailingAnchor),
+            mainStackView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            mainStackView.trailingAnchor.constraint(equalTo: trailingAnchor),
             mainStackView.topAnchor.constraint(equalTo: mainContentView.topAnchor),
             mainStackView.bottomAnchor.constraint(equalTo: mainContentView.bottomAnchor),
             
@@ -1039,41 +1101,6 @@ extension SSHFilePanel: NSWindowDelegate {
         }
 
         return newSize
-    }
-}
-
-// MARK: - NSSplitViewDelegate
-
-@available(macOS 11, *)
-extension SSHFilePanel: NSSplitViewDelegate {
-    func splitView(_ splitView: NSSplitView, constrainMinCoordinate proposedMinimumPosition: CGFloat, ofSubviewAt dividerIndex: Int) -> CGFloat {
-        return minimumSidebarWidth
-    }
-
-    func splitView(_ splitView: NSSplitView, constrainMaxCoordinate proposedMaximumPosition: CGFloat, ofSubviewAt dividerIndex: Int) -> CGFloat {
-        // Calculate max position based on minimum main content width
-        let minMainContentWidth: CGFloat = 366
-        let maxSidebarPosition = splitView.bounds.width - splitView.dividerThickness - minMainContentWidth
-
-        return min(maximumSidebarWidth, maxSidebarPosition)
-    }
-
-    func splitView(_ splitView: NSSplitView, canCollapseSubview subview: NSView) -> Bool {
-        return false // Don't allow collapsing either pane
-    }
-
-    func splitView(_ splitView: NSSplitView, resizeSubviewsWithOldSize oldSize: NSSize) {
-        // Let the split view handle resize automatically with our constraints
-        splitView.adjustSubviews()
-
-        // Update minimum window size when split view changes
-        updateMinimumWindowSize()
-    }
-
-    func splitViewDidResizeSubviews(_ notification: Notification) {
-        // Update minimum window size whenever subviews are resized
-        updateMinimumWindowSize()
-        saveWindowState()
     }
 }
 

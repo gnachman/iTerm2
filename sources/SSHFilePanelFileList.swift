@@ -164,7 +164,11 @@ class SSHFilePanelFileList: NSScrollView {
 
     init() {
         fileOutlineView = SSHFilePanelFileListOutlineView()
-        fileOutlineView.style = .fullWidth
+        if #available(macOS 26, *) {
+            fileOutlineView.style = .sourceList
+        } else {
+            fileOutlineView.style = .fullWidth
+        }
         fileOutlineView.selectionHighlightStyle = .regular
         fileOutlineView.allowsMultipleSelection = allowsMultipleSelection
         fileOutlineView.allowsEmptySelection = true
@@ -226,6 +230,12 @@ class SSHFilePanelFileList: NSScrollView {
         hasVerticalScroller = true
         hasHorizontalScroller = true
         autohidesScrollers = true
+        
+        if #available(macOS 26, *) {
+            drawsBackground = true
+            backgroundColor = NSColor.controlBackgroundColor
+            fileOutlineView.backgroundColor = NSColor.controlBackgroundColor
+        }
     }
 
     required init?(coder: NSCoder) {
