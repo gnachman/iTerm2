@@ -474,7 +474,6 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 - (void)updateSubtitlesAllowed {
     BOOL subtitlesAllowed;
     if (@available(macOS 26, *)) {
-#warning TODO: What about compact windows?
         subtitlesAllowed = YES;
     } else {
         subtitlesAllowed = ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL || [iTermAdvancedSettingsModel defaultTabBarHeight] >= 28);

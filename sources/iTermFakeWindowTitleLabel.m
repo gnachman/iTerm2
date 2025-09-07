@@ -134,10 +134,23 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _scratch = [iTermFakeWindowTitleLabel newLabelStyledTextField];
-        _scratch.alignment = NSTextAlignmentCenter;
+        [self initCommon];
     }
     return self;
+}
+
+// Although disallowed you can still reach this through any NSTextField category +createFoo that does [[self alloc] initWithFrame:]
+- (instancetype)initWithFrame:(NSRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        [self initCommon];
+    }
+    return self;
+}
+
+- (void)initCommon {
+    _scratch = [NSTextField newLabelStyledTextField];
+    _scratch.alignment = NSTextAlignmentCenter;
 }
 
 #pragma mark - NSTextField
