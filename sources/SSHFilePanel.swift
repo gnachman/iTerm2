@@ -817,6 +817,10 @@ extension SSHFilePanel {
             buttonViews.append(leftSpacer)
             buttonViews.append(newFolderButton)
         }
+        
+        let systemPanelSpacer = NSView()
+        systemPanelSpacer.translatesAutoresizingMaskIntoConstraints = false
+        buttonViews.append(systemPanelSpacer)
         buttonViews.append(systemPanelButton)
         buttonViews.append(contentsOf: [spacerView, cancelButton, openButton, rightSpacer])
         
@@ -833,6 +837,9 @@ extension SSHFilePanel {
             systemPanelButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 120),
             rightSpacer.widthAnchor.constraint(equalToConstant: 8)
         ]
+        
+        let systemPanelSpacerIndex = canCreateDirectories ? 2 : 0
+        constraints.append(buttonViews[systemPanelSpacerIndex].widthAnchor.constraint(equalToConstant: 11))
         
         if canCreateDirectories {
             constraints.append(contentsOf: [

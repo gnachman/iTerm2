@@ -351,6 +351,9 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     event.slow = slowly;
     event.progress = progress;
     event.isUpload = isUpload;
+    if (isUpload) {
+        event.flags |= kPasteFlagsDisableWarnings;
+    }
     return event;
 }
 

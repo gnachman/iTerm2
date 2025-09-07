@@ -128,6 +128,7 @@ class iTermModernSavePanel: NSObject {
     @objc var allowsOtherFileTypes = false
     @objc var showsHiddenFiles = false
     @objc var canSelectHiddenExtension = true
+    private var completionHandler: ((NSApplication.ModalResponse, iTermSavePanelItem?) -> Void)?
 }
 
 @objc
@@ -142,6 +143,7 @@ extension iTermModernSavePanel {
 extension iTermModernSavePanel {
     @objc(beginWithFallback:)
     func beginWithFallback(handler: @escaping (NSApplication.ModalResponse, iTermSavePanelItem?) -> Void) {
+        self.completionHandler = handler
         beginWithFallback(window: nil, handler: handler)
     }
 
@@ -149,11 +151,13 @@ extension iTermModernSavePanel {
     @objc(beginWithFallbackWindow:handler:)
     func beginWithFallback(window: NSWindow?,
                            handler: @escaping (NSApplication.ModalResponse, iTermSavePanelItem?) -> Void) {
+        self.completionHandler = handler
         runSystem(window: window, handler: handler)
     }
 
     // Show the panel non-modally with a completion handler
     func begin(_ handler: @escaping (NSApplication.ModalResponse) -> Void) {
+        self.completionHandler = { response, _ in handler(response) }
         runSystem(window: nil) { [weak self] response, item in
             self?.item = item
             handler(response)
@@ -171,6 +175,7 @@ extension iTermModernSavePanel {
 
     func beginSheetModal(for window: NSWindow,
                          completionHandler handler: @escaping (NSApplication.ModalResponse) -> Void) {
+        self.completionHandler = { response, _ in handler(response) }
         runSystem(window: window) { [weak self] response, item in
             self?.item = item
             handler(response)
@@ -179,7 +184,7 @@ extension iTermModernSavePanel {
     
     @objc private func openSSHPanelButtonClicked(_ sender: SSHPanelButton) {
         guard let savePanel = sender.savePanel,
-              let handler = sender.handler,
+              let handler = self.completionHandler,
               let modernSavePanel = sender.modernSavePanel else {
             return
         }
@@ -348,7 +353,7 @@ private extension iTermModernSavePanel {
             guard let self = self, let sshFilePanel = sshFilePanel else { return }
             // Preserve the parent window relationship and completion handler
             let parentWindow = sshFilePanel.window?.sheetParent
-            let completionHandler = sshFilePanel.completionHandler
+            let completionHandler = self.completionHandler
             
             // Preserve the current directory if on localhost
             if let currentPath = sshFilePanel.currentPath,
@@ -376,7 +381,7 @@ private extension iTermModernSavePanel {
             // Now open the system panel
             self.runSystem(window: parentWindow) { response, item in
                 self.item = item
-                completionHandler?(response)
+                completionHandler?(response, item)
             }
         }
         
