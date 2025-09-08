@@ -69,7 +69,11 @@
                 return [[PSMYosemiteTabStyle alloc] init];
             }
             if (@available(macOS 26, *)) {
+#ifdef MAC_OS_X_VERSION_26_0
                 return [[PSMTahoeTabStyle alloc] init];
+#else
+                return [[PSMYosemiteTabStyle alloc] init];
+#endif
             } else {
                 return [[PSMYosemiteTabStyle alloc] init];
             }
@@ -78,19 +82,31 @@
                 return [[PSMDarkTabStyle alloc] init];
             }
             if (@available(macOS 26, *)) {
+#ifdef MAC_OS_X_VERSION_26_0
                 return [[PSMTahoeDarkTabStyle alloc] init];
+#else
+                return [[PSMDarkTabStyle alloc] init];
+#endif
             } else {
                 return [[PSMDarkTabStyle alloc] init];
             }
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
             if (@available(macOS 26, *)) {
+#ifdef MAC_OS_X_VERSION_26_0
                 return [[PSMTahoeLightHighContrastTabStyle alloc] init];
+#else
+                return [[PSMLightHighContrastTabStyle alloc] init];
+#endif
             } else {
                 return [[PSMLightHighContrastTabStyle alloc] init];
             }
         case TAB_STYLE_DARK_HIGH_CONTRAST:
             if (@available(macOS 26, *)) {
+#ifdef MAC_OS_X_VERSION_26_0
                 return [[PSMTahoeDarkHighContrastTabStyle alloc] init];
+#else
+                return [[PSMDarkHighContrastTabStyle alloc] init];
+#endif
             } else {
                 return [[PSMDarkHighContrastTabStyle alloc] init];
             }

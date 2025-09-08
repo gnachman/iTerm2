@@ -44,7 +44,11 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
         // have different title formats.
         self.ignoreTrailingParentheticalsForSmartTruncation = YES;
         if (@available(macOS 26, *)) {
+#ifdef MAC_OS_X_VERSION_26_0
             self.height =  PSMTahoeTabStyle.horizontalTabBarHeight;
+#else
+            self.height = [iTermAdvancedSettingsModel defaultTabBarHeight];
+#endif
         } else {
             self.height = [iTermAdvancedSettingsModel defaultTabBarHeight];
         }
