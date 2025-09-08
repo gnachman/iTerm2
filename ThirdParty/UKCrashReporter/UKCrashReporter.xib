@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="22505" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24123.1" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22505"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24123.1"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -25,7 +25,7 @@
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="99" y="336" width="592" height="562"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1667"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1661"/>
             <view key="contentView" id="6">
                 <rect key="frame" x="0.0" y="0.0" width="592" height="562"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -56,15 +56,15 @@ Crash logs from Apple are not sent to other developers, so this is the only way 
                                             <rect key="frame" x="17" y="17" width="512" height="322"/>
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                             <clipView key="contentView" id="t9x-7R-LQm">
-                                                <rect key="frame" x="1" y="1" width="495" height="320"/>
+                                                <rect key="frame" x="1" y="1" width="510" height="320"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <textView importsGraphics="NO" richText="NO" verticallyResizable="YES" findStyle="panel" continuousSpellChecking="YES" quoteSubstitution="YES" linkDetection="YES" dashSubstitution="YES" textReplacement="YES" spellingCorrection="YES" grammarChecking="YES" smartInsertDelete="YES" id="20">
-                                                        <rect key="frame" x="0.0" y="0.0" width="495" height="320"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="510" height="320"/>
                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                         <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                                        <size key="minSize" width="495" height="320"/>
+                                                        <size key="minSize" width="510" height="320"/>
                                                         <size key="maxSize" width="512" height="10000000"/>
                                                         <attributedString key="textStorage">
                                                             <fragment>
@@ -194,7 +194,7 @@ My E-Mail address is %%EMAILADDRESS, in case you want to get back to me.
                                                 <autoresizingMask key="autoresizingMask"/>
                                             </scroller>
                                             <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="89">
-                                                <rect key="frame" x="496" y="1" width="15" height="320"/>
+                                                <rect key="frame" x="494" y="1" width="17" height="320"/>
                                                 <autoresizingMask key="autoresizingMask"/>
                                             </scroller>
                                         </scrollView>
@@ -211,7 +211,7 @@ My E-Mail address is %%EMAILADDRESS, in case you want to get back to me.
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                             <clipView key="contentView" id="tbY-ci-pzg">
                                                 <rect key="frame" x="1" y="1" width="510" height="269"/>
-                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                <autoresizingMask key="autoresizingMask"/>
                                                 <subviews>
                                                     <textView importsGraphics="NO" richText="NO" verticallyResizable="YES" findStyle="panel" continuousSpellChecking="YES" allowsUndo="YES" quoteSubstitution="YES" linkDetection="YES" dashSubstitution="YES" textReplacement="YES" spellingCorrection="YES" grammarChecking="YES" smartInsertDelete="YES" id="18">
                                                         <rect key="frame" x="0.0" y="0.0" width="510" height="269"/>
@@ -374,7 +374,7 @@ DQ
                         </connections>
                     </button>
                     <button imageHugsTitle="YES" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="25">
-                        <rect key="frame" x="107" y="12" width="157" height="32"/>
+                        <rect key="frame" x="119" y="12" width="157" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="push" title="Remind Me Later" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="87">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>

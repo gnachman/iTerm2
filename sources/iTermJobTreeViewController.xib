@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="22154" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24123.1" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22154"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24123.1"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -26,14 +26,14 @@
                     <autoresizingMask key="autoresizingMask"/>
                 </visualEffectView>
                 <scrollView borderType="none" autohidesScrollers="YES" horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="4fR-ry-Sex">
-                    <rect key="frame" x="0.0" y="29" width="480" height="237"/>
+                    <rect key="frame" x="0.0" y="27" width="480" height="239"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     <clipView key="contentView" id="f7I-tG-N0T">
-                        <rect key="frame" x="0.0" y="0.0" width="480" height="237"/>
+                        <rect key="frame" x="0.0" y="0.0" width="480" height="239"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <outlineView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="firstColumnOnly" tableStyle="fullWidth" columnReordering="NO" autosaveColumns="NO" rowSizeStyle="automatic" headerView="4a9-KI-W3k" viewBased="YES" indentationPerLevel="16" outlineTableColumn="5d6-Bf-wD7" id="5Km-gR-LVc">
-                                <rect key="frame" x="0.0" y="0.0" width="480" height="212"/>
+                                <rect key="frame" x="0.0" y="0.0" width="480" height="214"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <size key="intercellSpacing" width="3" height="2"/>
                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -52,7 +52,7 @@
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView id="ZFX-PD-oCG">
-                                                <rect key="frame" x="1" y="1" width="355" height="17"/>
+                                                <rect key="frame" x="1" y="1" width="356" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                             </tableCellView>
                                         </prototypeCellViews>
@@ -109,7 +109,7 @@
                     </connections>
                 </comboBox>
                 <button id="ACM-dM-BU4">
-                    <rect key="frame" x="139" y="4" width="17" height="17"/>
+                    <rect key="frame" x="141" y="4" width="17" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSRightFacingTriangleTemplate" imagePosition="only" alignment="center" controlSize="small" imageScaling="proportionallyDown" inset="2" id="D3j-RL-nOt">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>

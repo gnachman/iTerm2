@@ -225,15 +225,30 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
             _defaultButton.title = @"Enter Password";
         }
     }
-
-    NSView *rightmostVisibleButton = _defaultButton.isHidden ? _secondaryButton : _defaultButton;
-
+    NSArray<NSButton *> *views = @[_defaultButton, _secondaryButton, _closeButton];
+    NSButton *rightmostVisibleButton = [views objectPassingTest:^BOOL(NSButton *view, NSUInteger index, BOOL *stop) {
+        return !view.isHidden;
+    }];
     const CGFloat desiredMaxX = NSMaxX(rightmostVisibleButton.frame);
+    CGFloat x = desiredMaxX;
+    const CGFloat spacing = NSMinX(views[0].frame) - NSMaxX(views[1].frame);
+    for (NSButton *view in views) {
+        if (view.isHidden) {
+            continue;
+        }
+        [view sizeToFit];
+        NSRect frame = view.frame;
+        frame.origin.x = x - NSWidth(frame);
+        view.frame = frame;
+        
+        x -= NSWidth(frame) + spacing;
+    }
+
+    /*
+
     [_secondaryButton sizeToFit];
     [_defaultButton sizeToFit];
-
-    CGFloat x = desiredMaxX;
-    for (NSView *view in @[_defaultButton, _secondaryButton, _closeButton]) {
+    
         if (view.isHidden) {
             continue;
         }
@@ -244,8 +259,9 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         DLog(@"With desired right edge at %@, set %@ frame to %@",
               @(x), [(NSButton *)view title], NSStringFromRect(frame));
 
-        x = NSMinX(frame);
+        x = NSMinX(frame) - spacing;
     }
+ */
 }
 
 - (void)setDidSendUserName:(void (^)(void))didSendUserName {
