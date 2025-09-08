@@ -79,4 +79,32 @@ void *iTermMemdup(const void *data, size_t count, size_t size) {
     return dest;
 }
 
+NSInteger iTermSafeDivisionToInteger(double dividend, double divisor, BOOL *ok) {
+    // Perform the division
+    const double result = dividend / divisor;
+    
+    // Check if the result is valid (not NaN, not infinite)
+    // This also catches division by zero
+    if (!isfinite(result)) {
+        if (ok) {
+            *ok = NO;
+        }
+        return 0;
+    }
+    
+    // Check if the result would overflow NSInteger (both positive and negative)
+    if (result > (double)NSIntegerMax || result < (double)NSIntegerMin) {
+        if (ok) {
+            *ok = NO;
+        }
+        return 0;
+    }
+    
+    // Success - safe to convert to NSInteger
+    if (ok) {
+        *ok = YES;
+    }
+    return (NSInteger)result;
+}
+
 NS_ASSUME_NONNULL_END

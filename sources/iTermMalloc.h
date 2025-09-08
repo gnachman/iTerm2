@@ -27,4 +27,10 @@ void *iTermZeroingRealloc(void *p, NSInteger formerCount, NSInteger count, size_
 // Copy a chunk of data into a newly malloced region.
 void *iTermMemdup(const void *data, size_t count, size_t size);
 
+// Safely divide a double by a double and convert to NSInteger.
+// Sets *ok to NO if the division would result in NaN, infinity,
+// or overflow when converting to NSInteger. Otherwise sets *ok to YES.
+// If ok is NULL, it will be ignored.
+NSInteger iTermSafeDivisionToInteger(double dividend, double divisor, BOOL *ok);
+
 NS_ASSUME_NONNULL_END
