@@ -183,6 +183,10 @@ static NSMutableArray<NSString *> *_combinedLog;
         [self postChangeNotification];
         profile = tmuxProfile;
     }
+    if (profile.profileIsBrowser) {
+        MutableProfile *sanitized = [[profile mutableCopy] autorelease];
+        sanitized[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeLoginShellValue;
+    }
     return profile;
 }
 
