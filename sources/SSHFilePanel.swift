@@ -455,7 +455,7 @@ extension SSHFilePanel {
         sidebarItem.canCollapse = false  // Match the delegate behavior
         
         // Disable automatic safe area adjustment for sidebar so it extends to top
-#if(MAC_OS_X_VERSION_26_0)
+#if(MAC_OS_VERSION_26_0)
         if #available(macOS 26, *) {
             sidebarItem.automaticallyAdjustsSafeAreaInsets = false
         }
@@ -532,7 +532,7 @@ extension SSHFilePanel {
         
         // Enable automatic safe area inset adjustment for macOS 26's floating sidebar
         // This property is new in macOS 26 and enables edge-to-edge content with the floating glass sidebar
-        #if(MAC_OS_X_VERSION_26_0)
+        #if(MAC_OS_VERSION_26_0)
         if #available(macOS 26, *) {
             contentItem.automaticallyAdjustsSafeAreaInsets = true
         }
