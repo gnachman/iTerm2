@@ -455,10 +455,11 @@ extension SSHFilePanel {
         sidebarItem.canCollapse = false  // Match the delegate behavior
         
         // Disable automatic safe area adjustment for sidebar so it extends to top
+#if(MAC_OS_X_VERSION_26_0)
         if #available(macOS 26, *) {
             sidebarItem.automaticallyAdjustsSafeAreaInsets = false
         }
-        
+#endif
         splitViewController.addSplitViewItem(sidebarItem)
     }
 
@@ -531,10 +532,12 @@ extension SSHFilePanel {
         
         // Enable automatic safe area inset adjustment for macOS 26's floating sidebar
         // This property is new in macOS 26 and enables edge-to-edge content with the floating glass sidebar
+        #if(MAC_OS_X_VERSION_26_0)
         if #available(macOS 26, *) {
             contentItem.automaticallyAdjustsSafeAreaInsets = true
         }
-        
+        #endif
+
         splitViewController.addSplitViewItem(contentItem)
         
         // For macOS 26, use safe area for horizontal anchors to respect the floating sidebar
