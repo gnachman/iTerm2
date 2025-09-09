@@ -3507,6 +3507,7 @@
 		A6BF8D1921EB188E003CF805 /* iTermDependencyEditorWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BF8D1421EB188E003CF805 /* iTermDependencyEditorWindowController.m */; };
 		A6BF8D1A21EB188E003CF805 /* iTermDependencyEditorWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6BF8D1521EB188E003CF805 /* iTermDependencyEditorWindowController.xib */; };
 		A6C1207A1E39C3A4004021BB /* iTermBuriedSessions.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C120781E39C3A4004021BB /* iTermBuriedSessions.h */; };
+		A6C156FA2E6FFAE900815BC1 /* iTermLayoutReportingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C156F92E6FFAE300815BC1 /* iTermLayoutReportingView.swift */; };
 		A6C1FD4E1FC2A65E006B9A69 /* Licenses.txt in Resources */ = {isa = PBXBuildFile; fileRef = A6C1FD4D1FC2A65D006B9A69 /* Licenses.txt */; };
 		A6C1FD521FC2AC9B006B9A69 /* iTermMarginRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C1FD501FC2AC9B006B9A69 /* iTermMarginRenderer.swift */; };
 		A6C1FD541FC2B210006B9A69 /* iTermMargin.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6C1FD531FC2B210006B9A69 /* iTermMargin.metal */; };
@@ -8286,6 +8287,7 @@
 		A6BF8D1521EB188E003CF805 /* iTermDependencyEditorWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermDependencyEditorWindowController.xib; sourceTree = "<group>"; };
 		A6C120781E39C3A4004021BB /* iTermBuriedSessions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermBuriedSessions.h; sourceTree = "<group>"; };
 		A6C120791E39C3A4004021BB /* iTermBuriedSessions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermBuriedSessions.m; sourceTree = "<group>"; };
+		A6C156F92E6FFAE300815BC1 /* iTermLayoutReportingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermLayoutReportingView.swift; sourceTree = "<group>"; };
 		A6C1FD4D1FC2A65D006B9A69 /* Licenses.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Licenses.txt; sourceTree = "<group>"; };
 		A6C1FD501FC2AC9B006B9A69 /* iTermMarginRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = iTermMarginRenderer.swift; path = Metal/Renderers/iTermMarginRenderer.swift; sourceTree = "<group>"; };
 		A6C1FD531FC2B210006B9A69 /* iTermMargin.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermMargin.metal; path = Metal/Shaders/iTermMargin.metal; sourceTree = "<group>"; };
@@ -10329,6 +10331,7 @@
 		1D373E4618F360C600773D3E /* Misc. Views */ = {
 			isa = PBXGroup;
 			children = (
+				A6C156F92E6FFAE300815BC1 /* iTermLayoutReportingView.swift */,
 				A6D90D632E2F626700BA9F4F /* ImageViewWithPopoverMessage.swift */,
 				A68BE9272DE387FE002DD513 /* LinkButton.swift */,
 				A68BE9252DE27DA3002DD513 /* PlaygroundTextView.swift */,
@@ -19761,6 +19764,7 @@
 				A608F22120F07658008E8009 /* iTermImageMark.m in Sources */,
 				A605128F2E38525800507125 /* PseudoTerminal.swift in Sources */,
 				A61A859524EFA01800B03880 /* iTermBackgroundCommandRunner.m in Sources */,
+				A6C156FA2E6FFAE900815BC1 /* iTermLayoutReportingView.swift in Sources */,
 				A6153D5921F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.m in Sources */,
 				A6631A292D6FB659006C603B /* iTermRegularCharacterSource.m in Sources */,
 				A63F34D121E1E0F8000C9D52 /* iTermSessionPicker.m in Sources */,
