@@ -14079,9 +14079,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         }];
         self.currentMarkOrNotePosition = mark.doppelganger.entry.interval;
 
-        const long long actualLine = [mutableState absCoordRangeForInterval:mark.entry.interval].end.y;
-        [mutableState addNoteWithText:[PTYAnnotation textForAnnotationForNamedMarkWithName:name]
-                      inAbsoluteRange:VT100GridAbsCoordRangeMake(0, actualLine, mutableState.width, actualLine)];
+        if (name) {
+            const long long actualLine = [mutableState absCoordRangeForInterval:mark.entry.interval].end.y;
+            [mutableState addNoteWithText:[PTYAnnotation textForAnnotationForNamedMarkWithName:name]
+                          inAbsoluteRange:VT100GridAbsCoordRangeMake(0, actualLine, mutableState.width, actualLine)];
+        }
     }];
 }
 
