@@ -1742,20 +1742,23 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                 PtyLog(@"Case 2");
                 // splitView is not root
                 NSSplitView *splitViewParent = (NSSplitView *)[splitView superview];
-
-                NSUInteger splitViewIndex = [[splitViewParent subviews] indexOfObjectIdenticalTo:splitView];
-                assert(splitViewIndex != NSNotFound);
-                NSView *referencePoint = splitViewIndex > 0 ? [[splitViewParent subviews] objectAtIndex:splitViewIndex - 1] : nil;
-
-                // Remove splitView
-                [splitView removeFromSuperview];
-
-                // Move grandchildren into grandparent.
-                for (NSView *grandchild in [[onlyChild subviews] copy]) {
-                    [grandchild removeFromSuperview];
-                    [splitViewParent addSubview:grandchild positioned:NSWindowAbove relativeTo:referencePoint];
-                    ++splitViewIndex;
-                    referencePoint = [[splitViewParent subviews] objectAtIndex:splitViewIndex - 1];
+                // Replace splitView (which has only one subview, a split view) with its grandchildren.
+                //
+                //        BEFORE                               AFTER
+                // --------------------------------------------------------------
+                //    splitViewParent            |         splitViewParent
+                //    /     |        \           |        /       |       \
+                //  ...  splitView    ...        |      ...       |        ...
+                //          |                    |         [grandchildren]
+                //   needless splitview          |
+                //        /  |  \                |
+                //     [grandchildren]           |
+                {
+                    NSMutableArray<NSView *> *newSubviews = [splitViewParent.subviews mutableCopy];
+                    const NSUInteger i = [newSubviews indexOfObject:splitView];
+                    [newSubviews replaceObjectsInRange:NSMakeRange(i, 1)
+                                  withObjectsFromArray:onlyChild.subviews];
+                    splitViewParent.subviews = newSubviews;
                 }
             }
         } else {
