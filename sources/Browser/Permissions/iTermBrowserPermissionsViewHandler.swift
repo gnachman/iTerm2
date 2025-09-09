@@ -55,7 +55,7 @@ extension iTermBrowserPermissionsViewHandler {
         urlSchemeTask.didFinish()
     }
     
-    func handlePermissionMessage(_ message: [String: Any], webView: WKWebView) async {
+    func handlePermissionMessage(_ message: [String: Any], webView: iTermBrowserWebView) async {
         DLog("Permission message received: \(message)")
 
         guard let action = message["action"] as? String else {
@@ -100,7 +100,7 @@ extension iTermBrowserPermissionsViewHandler {
     
     // MARK: - Private Implementation
     
-    private func loadPermissions(offset: Int, limit: Int, searchQuery: String, permissionTypeFilter: String, statusFilter: String, webView: WKWebView) async {
+    private func loadPermissions(offset: Int, limit: Int, searchQuery: String, permissionTypeFilter: String, statusFilter: String, webView: iTermBrowserWebView) async {
         DLog("Loading permissions: offset=\(offset), limit=\(limit), query='\(searchQuery)', typeFilter='\(permissionTypeFilter)', statusFilter='\(statusFilter)'")
         
         guard let database = await BrowserDatabase.instance(for: user) else {
@@ -160,7 +160,7 @@ extension iTermBrowserPermissionsViewHandler {
         await sendPermissions(permissionsData, hasMore: hasMore, to: webView)
     }
     
-    private func revokePermission(origin: String, permissionType: BrowserPermissionType, webView: WKWebView) async {
+    private func revokePermission(origin: String, permissionType: BrowserPermissionType, webView: iTermBrowserWebView) async {
         guard let database = await BrowserDatabase.instance(for: user) else { return }
 
         let success = await database.revokePermission(origin: origin, permissionType: permissionType)
@@ -172,7 +172,7 @@ extension iTermBrowserPermissionsViewHandler {
         }
     }
     
-    private func revokeAllPermissions(for origin: String, webView: WKWebView) async {
+    private func revokeAllPermissions(for origin: String, webView: iTermBrowserWebView) async {
         guard let database = await BrowserDatabase.instance(for: user) else { return }
 
         let success = await database.revokeAllPermissions(for: origin)
@@ -185,7 +185,7 @@ extension iTermBrowserPermissionsViewHandler {
         }
     }
     
-    private func clearAllPermissions(webView: WKWebView) async {
+    private func clearAllPermissions(webView: iTermBrowserWebView) async {
         guard let database = await BrowserDatabase.instance(for: user) else { return }
         
         // Get all permissions to revoke them properly
@@ -208,7 +208,7 @@ extension iTermBrowserPermissionsViewHandler {
     }
     
     @MainActor
-    private func sendPermissions(_ permissions: [[String: Any]], hasMore: Bool, to webView: WKWebView) async {
+    private func sendPermissions(_ permissions: [[String: Any]], hasMore: Bool, to webView: iTermBrowserWebView) async {
         do {
             let jsonData = try JSONSerialization.data(withJSONObject: [
                 "permissions": permissions,
@@ -230,7 +230,7 @@ extension iTermBrowserPermissionsViewHandler {
     }
     
     @MainActor
-    private func sendPermissionRevokedConfirmation(origin: String, permissionType: BrowserPermissionType, to webView: WKWebView) async {
+    private func sendPermissionRevokedConfirmation(origin: String, permissionType: BrowserPermissionType, to webView: iTermBrowserWebView) async {
         let script = "window.onPermissionRevoked && window.onPermissionRevoked('\(origin.replacingOccurrences(of: "'", with: "\\'"))', '\(permissionType.rawValue.replacingOccurrences(of: "'", with: "\\'"))'); 1"
         do {
             let result = try await webView.evaluateJavaScript(script)
@@ -241,7 +241,7 @@ extension iTermBrowserPermissionsViewHandler {
     }
     
     @MainActor
-    private func sendAllPermissionsRevokedConfirmation(origin: String, to webView: WKWebView) async {
+    private func sendAllPermissionsRevokedConfirmation(origin: String, to webView: iTermBrowserWebView) async {
         let script = "window.onAllPermissionsRevoked && window.onAllPermissionsRevoked('\(origin.replacingOccurrences(of: "'", with: "\\'"))'); 1"
         do {
             let result = try await webView.evaluateJavaScript(script)
@@ -252,7 +252,7 @@ extension iTermBrowserPermissionsViewHandler {
     }
     
     @MainActor
-    private func sendAllPermissionsClearedConfirmation(to webView: WKWebView) async {
+    private func sendAllPermissionsClearedConfirmation(to webView: iTermBrowserWebView) async {
         let script = "window.onAllPermissionsCleared && window.onAllPermissionsCleared(); 1"
         do {
             let result = try await webView.evaluateJavaScript(script)
@@ -264,7 +264,7 @@ extension iTermBrowserPermissionsViewHandler {
     
     // MARK: - iTermBrowserPageHandler Protocol
     
-    func injectJavaScript(into webView: WKWebView) {
+    func injectJavaScript(into webView: iTermBrowserWebView) {
         // Permissions pages don't need JavaScript injection beyond what's in the HTML
     }
     

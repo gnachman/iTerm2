@@ -3,10 +3,10 @@ import WebKit
 @available(macOS 11.0, *)
 @MainActor
 final class iTermBrowserAutofillWriter {
-    private let webView: WKWebView
+    private let webView: iTermBrowserWebView
     private let mutex = AsyncMutex()
     
-    init(webView: WKWebView) {
+    init(webView: iTermBrowserWebView) {
         self.webView = webView
     }
     
@@ -33,7 +33,7 @@ final class iTermBrowserAutofillWriter {
             ])
         
         do {
-            let result = try await webView.evaluateJavaScript(js)
+            let result = try await webView.safelyEvaluateJavaScript(js, contentWorld: .page)
             return (result as? Bool) ?? false
         } catch {
             DLog("Failed to fill field (id: \(fieldId), name: \(fieldName)): \(error)")

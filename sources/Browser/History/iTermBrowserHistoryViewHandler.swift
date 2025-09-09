@@ -55,7 +55,7 @@ class iTermBrowserHistoryViewHandler: NSObject, iTermBrowserPageHandler {
     }
     
     
-    func handleHistoryMessage(_ message: [String: Any], webView: WKWebView) async {
+    func handleHistoryMessage(_ message: [String: Any], webView: iTermBrowserWebView) async {
         DLog("History message received: \(message)")
 
         guard let action = message["action"] as? String else {
@@ -95,7 +95,7 @@ class iTermBrowserHistoryViewHandler: NSObject, iTermBrowserPageHandler {
     
     // MARK: - Private Implementation
     
-    private func loadHistoryEntries(offset: Int, limit: Int, searchQuery: String, webView: WKWebView) async {
+    private func loadHistoryEntries(offset: Int, limit: Int, searchQuery: String, webView: iTermBrowserWebView) async {
         DLog("Loading history entries: offset=\(offset), limit=\(limit), query='\(searchQuery)'")
         
         guard let database = await BrowserDatabase.instance(for: user) else {
@@ -121,7 +121,7 @@ class iTermBrowserHistoryViewHandler: NSObject, iTermBrowserPageHandler {
         await sendHistoryEntries(limitedEntries, hasMore: hasMore, to: webView)
     }
     
-    private func deleteHistoryEntry(entryId: String, webView: WKWebView) async {
+    private func deleteHistoryEntry(entryId: String, webView: iTermBrowserWebView) async {
         guard let database = await BrowserDatabase.instance(for: user) else { return }
         await database.deleteHistoryEntry(id: entryId)
         
@@ -129,7 +129,7 @@ class iTermBrowserHistoryViewHandler: NSObject, iTermBrowserPageHandler {
         await sendEntryDeletedConfirmation(entryId: entryId, to: webView)
     }
     
-    private func clearAllHistory(webView: WKWebView) async {
+    private func clearAllHistory(webView: iTermBrowserWebView) async {
         guard let database = await BrowserDatabase.instance(for: user) else { return }
         await database.deleteAllHistory()
         
@@ -138,7 +138,7 @@ class iTermBrowserHistoryViewHandler: NSObject, iTermBrowserPageHandler {
     }
     
     @MainActor
-    private func sendHistoryEntries(_ entries: [BrowserHistory], hasMore: Bool, to webView: WKWebView) async {
+    private func sendHistoryEntries(_ entries: [BrowserHistory], hasMore: Bool, to webView: iTermBrowserWebView) async {
         let entriesData = entries.map { entry in
             [
                 "id": entry.id,
@@ -171,7 +171,7 @@ class iTermBrowserHistoryViewHandler: NSObject, iTermBrowserPageHandler {
     }
     
     @MainActor
-    private func sendEntryDeletedConfirmation(entryId: String, to webView: WKWebView) async {
+    private func sendEntryDeletedConfirmation(entryId: String, to webView: iTermBrowserWebView) async {
         // NOTE: evaluateJavaScript crashes if the script doesn't return a value. So return 1.
         let script = "window.onHistoryEntryDeleted && window.onHistoryEntryDeleted('\(entryId)'); 1"
         do {
@@ -183,7 +183,7 @@ class iTermBrowserHistoryViewHandler: NSObject, iTermBrowserPageHandler {
     }
     
     @MainActor
-    private func sendHistoryClearedConfirmation(to webView: WKWebView) async {
+    private func sendHistoryClearedConfirmation(to webView: iTermBrowserWebView) async {
         // NOTE: evaluateJavaScript crashes if the script doesn't return a value. So return 1.
         let script = "window.onHistoryCleared && window.onHistoryCleared(); 1"
         do {
@@ -196,7 +196,7 @@ class iTermBrowserHistoryViewHandler: NSObject, iTermBrowserPageHandler {
     
     // MARK: - iTermBrowserPageHandler Protocol
     
-    func injectJavaScript(into webView: WKWebView) {
+    func injectJavaScript(into webView: iTermBrowserWebView) {
         // History pages don't need JavaScript injection beyond what's in the HTML
     }
     

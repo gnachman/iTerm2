@@ -28,13 +28,13 @@ class iTermBrowserReaderModeManager: NSObject {
         return isReaderModeActive
     }
     
-    @objc func toggle(webView: WKWebView) {
+    @objc func toggle(webView: iTermBrowserWebView) {
         Task {
             await toggleReaderMode(webView: webView)
         }
     }
 
-    func plainTextContent(webView: WKWebView) async -> String? {
+    func plainTextContent(webView: iTermBrowserWebView) async -> String? {
         if let cached {
             return cached
         }
@@ -62,14 +62,14 @@ class iTermBrowserReaderModeManager: NSObject {
         }
     }
 
-    func markdown(fromContentsOf webView: WKWebView, skipChrome: Bool) async throws -> String {
+    func markdown(fromContentsOf webView: iTermBrowserWebView, skipChrome: Bool) async throws -> String {
         let turndown = iTermBrowserTemplateLoader.loadTemplate(named: "convert-to-markdown",
                                                                type: "js",
                                                                substitutions: ["SKIP_CHROME": skipChrome ? "true" : "false"])
         return try await webView.evaluateJavaScript(turndown, contentWorld: .defaultClient) as? String ?? "No content found on page"
     }
 
-    private func toggleReaderMode(webView: WKWebView) async {
+    private func toggleReaderMode(webView: iTermBrowserWebView) async {
         if isReaderModeActive {
             await exitReaderMode(webView: webView)
         } else {
@@ -77,7 +77,7 @@ class iTermBrowserReaderModeManager: NSObject {
         }
     }
     
-    func enterReaderMode(webView: WKWebView) async {
+    func enterReaderMode(webView: iTermBrowserWebView) async {
         if isReaderModeActive {
             return
         }
@@ -96,7 +96,7 @@ class iTermBrowserReaderModeManager: NSObject {
         }
     }
     
-    private func exitReaderMode(webView: WKWebView) async {
+    private func exitReaderMode(webView: iTermBrowserWebView) async {
         do {
             let script = iTermBrowserTemplateLoader.loadTemplate(named: "exit-reader-mode",
                                                                type: "js",
@@ -108,7 +108,7 @@ class iTermBrowserReaderModeManager: NSObject {
         }
     }
 
-    func removeElement(webView: WKWebView, at point: NSPoint) {
+    func removeElement(webView: iTermBrowserWebView, at point: NSPoint) {
         Task {
             do {
                 let script = iTermBrowserTemplateLoader.loadTemplate(named: "remove-element-at-point",
@@ -124,7 +124,7 @@ class iTermBrowserReaderModeManager: NSObject {
         }
     }
 
-    func toggleDistractionRemovalMode(webView: WKWebView) async {
+    func toggleDistractionRemovalMode(webView: iTermBrowserWebView) async {
         if isDistractionRemovalActive {
             await exitDistractionRemovalMode(webView: webView)
         } else {
@@ -132,7 +132,7 @@ class iTermBrowserReaderModeManager: NSObject {
         }
     }
     
-    private func enterDistractionRemovalMode(webView: WKWebView) async {
+    private func enterDistractionRemovalMode(webView: iTermBrowserWebView) async {
         guard await ensureScriptsInjected(webView: webView) else { return }
 
         do {
@@ -155,7 +155,7 @@ class iTermBrowserReaderModeManager: NSObject {
         }
     }
     
-    private func exitDistractionRemovalMode(webView: WKWebView) async {
+    private func exitDistractionRemovalMode(webView: iTermBrowserWebView) async {
         do {
             let script = iTermBrowserTemplateLoader.loadTemplate(named: "exit-distraction-removal",
                                                                type: "js",
@@ -167,7 +167,7 @@ class iTermBrowserReaderModeManager: NSObject {
         }
     }
 
-    private func ensureScriptsInjected(webView: WKWebView) async -> Bool {
+    private func ensureScriptsInjected(webView: iTermBrowserWebView) async -> Bool {
         if scriptsInjected {
             return true
         }

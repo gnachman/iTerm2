@@ -9,7 +9,7 @@ import Foundation
 import WebKit
 
 class iTermBrowserCopyModeState: NSObject {
-    let webView: WKWebView
+    let webView: iTermBrowserWebView
     private let sessionSecret: String
     private var continuation: CheckedContinuation<Bool, Never>?
 
@@ -30,7 +30,7 @@ class iTermBrowserCopyModeState: NSObject {
         }
     }
 
-    init(webView: WKWebView, sessionSecret: String) {
+    init(webView: iTermBrowserWebView, sessionSecret: String) {
         self.webView = webView
         self.sessionSecret = sessionSecret
     }

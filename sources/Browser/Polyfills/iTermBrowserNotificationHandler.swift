@@ -31,7 +31,7 @@ class iTermBrowserNotificationHandler {
 
     }
 
-    func handleMessage(webView: WKWebView,
+    func handleMessage(webView: iTermBrowserWebView,
                        message: WKScriptMessage) {
         guard let messageDict = message.body as? [String: Any],
               let type = messageDict["type"] as? String,
@@ -72,7 +72,7 @@ class iTermBrowserNotificationHandler {
         return disposition == .granted
     }
 
-    private func handlePermissionRequest(webView: WKWebView,
+    private func handlePermissionRequest(webView: iTermBrowserWebView,
                                          messageDict: [String: Any],
                                          originString: String,
                                          sessionSecret: String) async {
@@ -167,7 +167,7 @@ class iTermBrowserNotificationHandler {
     
     // MARK: - Permission State Updates
     
-    func updatePermissionState(for origin: String, webView: WKWebView) async {
+    func updatePermissionState(for origin: String, webView: iTermBrowserWebView) async {
         let decision = await iTermBrowserPermissionManager(user: user).getPermissionDecision(
             for: .notification,
             origin: origin

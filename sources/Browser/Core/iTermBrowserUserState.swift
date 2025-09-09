@@ -97,13 +97,13 @@ extension iTermBrowserUserState {
         return state
     }
 
-    public func registerWebView(_ webView: WKWebView, contentManager: BrowserExtensionUserContentManager) {
+    public func registerWebView(_ webView: iTermBrowserWebView, contentManager: BrowserExtensionUserContentManager) {
         Task { @MainActor in
             await extensionManager?.addWebView(webView, contentManager: contentManager)
         }
     }
 
-    public func unregisterWebView(_ webView: WKWebView) {
+    public func unregisterWebView(_ webView: iTermBrowserWebView) {
         extensionManager?.removeWebView(webView)
     }
 }

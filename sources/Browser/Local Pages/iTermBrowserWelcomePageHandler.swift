@@ -88,7 +88,7 @@ class iTermBrowserWelcomePageHandler: NSObject, iTermBrowserPageHandler {
         urlSchemeTask.didFinish()
     }
     
-    func handleWelcomeMessage(_ message: [String: Any], webView: WKWebView) async {
+    func handleWelcomeMessage(_ message: [String: Any], webView: iTermBrowserWebView) async {
         DLog("Welcome message received: \(message)")
 
         guard let action = message["action"] as? String,
@@ -116,7 +116,7 @@ class iTermBrowserWelcomePageHandler: NSObject, iTermBrowserPageHandler {
     
     // MARK: - iTermBrowserPageHandler Protocol
     
-    func injectJavaScript(into webView: WKWebView) {
+    func injectJavaScript(into webView: iTermBrowserWebView) {
         // JavaScript will be injected via the template
     }
     
@@ -126,7 +126,7 @@ class iTermBrowserWelcomePageHandler: NSObject, iTermBrowserPageHandler {
     
     // MARK: - Private Implementation
     
-    private func loadTopSites(webView: WKWebView) async {
+    private func loadTopSites(webView: iTermBrowserWebView) async {
         DLog("Loading top visited sites")
         
         guard let database = await BrowserDatabase.instance(for: user) else {
@@ -152,21 +152,18 @@ class iTermBrowserWelcomePageHandler: NSObject, iTermBrowserPageHandler {
         await sendTopSitesResponse(sitesData, webView: webView)
     }
     
-    private func sendTopSitesResponse(_ sites: [[String: Any]], webView: WKWebView) async {
+    private func sendTopSitesResponse(_ sites: [[String: Any]], webView: iTermBrowserWebView) async {
         do {
             let jsonData = try JSONSerialization.data(withJSONObject: sites, options: [])
             let jsonString = String(data: jsonData, encoding: .utf8) ?? "[]"
             
             let script = "window.handleTopSitesResponse(\(jsonString));"
             
-            await MainActor.run {
-                webView.evaluateJavaScript(script) { result, error in
-                    if let error = error {
-                        DLog("Error sending top sites response: \(error)")
-                    } else {
-                        DLog("Successfully sent top sites to page")
-                    }
-                }
+            do {
+                _ = try await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
+                DLog("Successfully sent top sites to page")
+            } catch {
+                DLog("Error sending top sites response: \(error)")
             }
         } catch {
             DLog("Error serializing top sites: \(error)")

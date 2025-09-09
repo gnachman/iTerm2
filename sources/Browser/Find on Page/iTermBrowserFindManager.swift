@@ -83,7 +83,7 @@ class iTermBrowserFindManager: NSObject {
     @MainActor
     fileprivate class Shared: NSObject {
         let secret: String
-        weak var webView: WKWebView!
+        weak var webView: iTermBrowserWebView!
         var isJavaScriptInjected = false
 
         init(secret: String) {
@@ -353,7 +353,7 @@ class iTermBrowserFindManager: NSObject {
         return script
     }
 
-    var webView: WKWebView? {
+    var webView: iTermBrowserWebView? {
         didSet {
             sharedState.webView = webView
         }
@@ -534,7 +534,7 @@ class iTermBrowserFindManager: NSObject {
         clearFind()
     }
 
-    func handleMessage(webView: WKWebView, message: WKScriptMessage) {
+    func handleMessage(webView: iTermBrowserWebView, message: WKScriptMessage) {
         guard message.name == "iTermCustomFind",
               let body = message.body as? [String: Any],
               let sessionSecret = body["sessionSecret"] as? String,
@@ -590,7 +590,7 @@ class iTermBrowserGlobalSearchResultStream: NSObject {
     }
 }
 
-extension WKWebView {
+extension iTermBrowserWebView {
     func waitForScrollingToComplete() async {
         // Poll until the current match position is stable
         let checkScript = """
@@ -638,7 +638,7 @@ extension WKWebView {
 // MARK: - Graph discovery
 @MainActor
 extension iTermBrowserFindManager {
-    private func handleGraphDiscoveryMessage(webView: WKWebView, message: WKScriptMessage) {
+    private func handleGraphDiscoveryMessage(webView: iTermBrowserWebView, message: WKScriptMessage) {
         DLog("[IFD] NATIVE - got a message: \(message.body)")
         if let body = message.body as? [String: Any],
            let type = body["type"] as? String,

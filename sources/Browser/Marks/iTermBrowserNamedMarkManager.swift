@@ -133,7 +133,7 @@ extension iTermBrowserNamedMarkManager {
     }
 
     func add(with name: String,
-             webView: WKWebView,
+             webView: iTermBrowserWebView,
              httpMethod: String?,
              clickPoint: NSPoint) async throws {
         // Check if the current page was loaded with GET
@@ -163,7 +163,7 @@ extension iTermBrowserNamedMarkManager {
         }
     }
 
-    func remove(_ mark: iTermBrowserNamedMark, webView: WKWebView) {
+    func remove(_ mark: iTermBrowserNamedMark, webView: iTermBrowserWebView) {
         Task {
             do {
                 try await dbRemove(guid: mark.guid)
@@ -178,7 +178,7 @@ extension iTermBrowserNamedMarkManager {
         }
     }
 
-    func reveal(_ namedMark: iTermBrowserNamedMark, webView: WKWebView) {
+    func reveal(_ namedMark: iTermBrowserNamedMark, webView: iTermBrowserWebView) {
         pendingNavigationMark = namedMark
 
         // Check if we're already at the correct URL (ignoring fragment)
@@ -192,7 +192,7 @@ extension iTermBrowserNamedMarkManager {
         }
     }
 
-    func rename(_ mark: iTermBrowserNamedMark, to newName: String, webView: WKWebView) {
+    func rename(_ mark: iTermBrowserNamedMark, to newName: String, webView: iTermBrowserWebView) {
         Task {
             do {
                 try await dbRename(guid: mark.guid, newName: newName)
@@ -208,7 +208,7 @@ extension iTermBrowserNamedMarkManager {
         }
     }
 
-    func didFinishNavigation(webView: WKWebView, success: Bool) {
+    func didFinishNavigation(webView: iTermBrowserWebView, success: Bool) {
         if success {
             if pendingNavigationMark != nil {
                 navigateToMark(webView: webView)
@@ -223,7 +223,7 @@ extension iTermBrowserNamedMarkManager {
         }
     }
 
-    func handleMessage(webView: WKWebView, message: WKScriptMessage) -> Bool {
+    func handleMessage(webView: iTermBrowserWebView, message: WKScriptMessage) -> Bool {
         guard let messageData = message.body as? [String: Any],
               let guid = messageData["guid"] as? String,
               let sessionSecret = messageData["sessionSecret"] as? String,
@@ -249,7 +249,7 @@ extension iTermBrowserNamedMarkManager {
         return false
     }
 
-    func handleLayoutUpdateMessage(webView: WKWebView, message: WKScriptMessage) {
+    func handleLayoutUpdateMessage(webView: iTermBrowserWebView, message: WKScriptMessage) {
         NSLog("Handle layout update")
         guard let messageData = message.body as? [String: Any],
               let type = messageData["type"] as? String,
@@ -266,19 +266,19 @@ extension iTermBrowserNamedMarkManager {
 
 @MainActor
 private extension iTermBrowserNamedMarkManager {
-    func setLocationChangeMonitoringEnabled(in webView: WKWebView, _ value: Bool) async {
+    func setLocationChangeMonitoringEnabled(in webView: iTermBrowserWebView, _ value: Bool) async {
         if value {
-            _ = try? await webView.callAsyncJavaScript(
+            _ = try? await webView.safelyCallAsyncJavaScript(
                 "console.log('Swift enabling monitor.'); window.iTermLayoutChangeMonitor.reenableLayoutChangeMonitoring()",
                 contentWorld: .defaultClient)
         } else {
-            _ = try? await webView.callAsyncJavaScript(
+            _ = try? await webView.safelyCallAsyncJavaScript(
                 "console.log('Swift disabling monitor.'); window.iTermLayoutChangeMonitor.disableLayoutChangeMonitoring()",
                 contentWorld: .defaultClient)
         }
     }
 
-    func safelyModifyDOM(in webView: WKWebView, _ closure: () async throws -> ()) async rethrows {
+    func safelyModifyDOM(in webView: iTermBrowserWebView, _ closure: () async throws -> ()) async rethrows {
         await setLocationChangeMonitoringEnabled(in: webView, false)
         do {
             try await closure()
@@ -310,7 +310,7 @@ private extension iTermBrowserNamedMarkManager {
         NamedMarksDidChangeNotification(sessionGuid: nil).post()
     }
     
-    func navigateToMark(webView: WKWebView) {
+    func navigateToMark(webView: iTermBrowserWebView) {
         guard let mark = pendingNavigationMark else {
             DLog("No pending navigation mark")
             return
@@ -328,7 +328,7 @@ private extension iTermBrowserNamedMarkManager {
         jsNavigate(location, webView: webView)
     }
 
-    func reloadAnnotations(webView: WKWebView) {
+    func reloadAnnotations(webView: iTermBrowserWebView) {
         guard let currentURL = webView.url else {
             return
         }
@@ -351,7 +351,7 @@ private extension iTermBrowserNamedMarkManager {
         }
     }
 
-    func showAnnotations(marksForPage: [iTermBrowserNamedMark], webView: WKWebView) async {
+    func showAnnotations(marksForPage: [iTermBrowserNamedMark], webView: iTermBrowserWebView) async {
         await safelyModifyDOM(in: webView) {
             let markData = marksForPage.compactMap { $0.jsDict }
             await jsShow(markData: markData, webView: webView)
@@ -362,7 +362,7 @@ private extension iTermBrowserNamedMarkManager {
         return string.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? string
     }
 
-    func updateMarkPositions(webView: WKWebView) {
+    func updateMarkPositions(webView: iTermBrowserWebView) {
         guard let currentURL = webView.url else {
             return
         }
@@ -378,7 +378,7 @@ private extension iTermBrowserNamedMarkManager {
         jsUpdatePositions(webView: webView)
     }
     
-    func processMarkPositionUpdates(updates: [[String: Any]], webView: WKWebView) async {
+    func processMarkPositionUpdates(updates: [[String: Any]], webView: iTermBrowserWebView) async {
         // Position updates from layout changes should not modify the stored URL
         // The URL contains XPath and text fragment which are stable identifiers
         // We just update the annotations to reflect new positions visually
@@ -403,7 +403,7 @@ private extension iTermBrowserNamedMarkManager {
 // MARK: - Calls to JS
 
 private extension iTermBrowserNamedMarkManager {
-    private func jsLocation(clickPoint: NSPoint, inWebView webView: WKWebView) async throws -> Location {
+    private func jsLocation(clickPoint: NSPoint, inWebView webView: iTermBrowserWebView) async throws -> Location {
         let script: String
         // Use click point to get XPath
         script = iTermBrowserTemplateLoader.loadTemplate(
@@ -415,7 +415,7 @@ private extension iTermBrowserNamedMarkManager {
             ]
         )
 
-        let result = try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
+        let result = try await webView.safelyEvaluateJavaScript(script, contentWorld: .defaultClient)
 
         guard let data = result as? [String: Any] else {
             throw iTermError("Bad result from js")
@@ -426,20 +426,20 @@ private extension iTermBrowserNamedMarkManager {
         return location
     }
 
-    func jsSetupLayoutChangeMonitoring(webView: WKWebView) {
+    func jsSetupLayoutChangeMonitoring(webView: iTermBrowserWebView) {
         let script = iTermBrowserTemplateLoader.load(template: "layout-change-monitor.js",
                                                      substitutions: [:])
 
         Task {
             do {
-                _ = try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
+                _ = try await webView.safelyEvaluateJavaScript(script, contentWorld: .defaultClient)
             } catch {
                 DLog("Error setting up layout change monitoring: \(error)")
             }
         }
     }
 
-    func jsNavigate(_ location: Location, webView: WKWebView) {
+    func jsNavigate(_ location: Location, webView: iTermBrowserWebView) {
         var substitutions: [String: String] = [
             "XPATH": location.xpath,
             "OFFSET_Y": String(location.offsetY),
@@ -462,7 +462,7 @@ private extension iTermBrowserNamedMarkManager {
         Task {
             do {
                 try await safelyModifyDOM(in: webView) {
-                    let result = try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
+                    let result = try await webView.safelyEvaluateJavaScript(script, contentWorld: .defaultClient)
                     if let success = result as? Bool, !success {
                         DLog("Failed to navigate to mark - element not found")
                     }
@@ -473,7 +473,7 @@ private extension iTermBrowserNamedMarkManager {
         }
     }
 
-    func jsShow(markData: [[String: Any]], webView: WKWebView) async {
+    func jsShow(markData: [[String: Any]], webView: iTermBrowserWebView) async {
         NSLog("%@", "jsShow \(markData)")
         if markData.isEmpty {
             // This would be a no-op
@@ -498,13 +498,13 @@ private extension iTermBrowserNamedMarkManager {
             ])
 
         do {
-            _ = try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
+            _ = try await webView.safelyEvaluateJavaScript(script, contentWorld: .defaultClient)
         } catch {
             DLog("Error showing mark annotations: \(error)")
         }
     }
 
-    func jsUpdatePositions(webView: WKWebView) {
+    func jsUpdatePositions(webView: iTermBrowserWebView) {
         let script = iTermBrowserTemplateLoader.loadTemplate(
             named: "update-mark-positions",
             type: "js",
@@ -515,7 +515,7 @@ private extension iTermBrowserNamedMarkManager {
         Task {
             do {
                 try await safelyModifyDOM(in: webView) {
-                    let result = try await webView.evaluateJavaScript(script,
+                    let result = try await webView.safelyEvaluateJavaScript(script,
                                                                       contentWorld: .defaultClient)
                     if let updates = result as? [[String: Any]] {
                         await processMarkPositionUpdates(updates: updates, webView: webView)

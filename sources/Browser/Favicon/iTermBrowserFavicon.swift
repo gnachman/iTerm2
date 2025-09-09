@@ -12,7 +12,7 @@ struct FaviconError: Error {}
 
 @MainActor
 func detectFavicon(
-    webView: WKWebView,
+    webView: iTermBrowserWebView,
     appearance: NSAppearance,
     isRetina: Bool
 ) async throws -> Either<NSImage, URL> {
@@ -34,7 +34,7 @@ func detectFavicon(
 
     let script = iTermBrowserTemplateLoader
         .loadTemplate(named: "detect-favicon", type: "js", substitutions: [:])
-    let result = try await webView.evaluateJavaScript(script)
+    let result = try await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
 
     guard let rawArray = result as? [[String: Any]] else {
         throw FaviconError()

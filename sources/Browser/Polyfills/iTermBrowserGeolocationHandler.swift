@@ -40,14 +40,14 @@ class iTermBrowserGeolocationHandler: NSObject {
     
     private struct LocationRequest {
         let operationId: Int
-        weak var webView: WKWebView?
+        weak var webView: iTermBrowserWebView?
         let options: GeolocationOptions
         let startTime: Date
     }
     
     private struct WatchRequest {
         let watchId: Int
-        weak var webView: WKWebView?
+        weak var webView: iTermBrowserWebView?
         let options: GeolocationOptions
     }
     
@@ -124,7 +124,7 @@ class iTermBrowserGeolocationHandler: NSObject {
                                                        substitutions: [ "SECRET": secret ])
     }
     
-    func handleMessage(webView: WKWebView, message: WKScriptMessage) {
+    func handleMessage(webView: iTermBrowserWebView, message: WKScriptMessage) {
         guard let messageDict = message.body as? [String: Any],
               let type = messageDict["type"] as? String,
               let sessionSecret = messageDict["sessionSecret"] as? String,
@@ -162,7 +162,7 @@ class iTermBrowserGeolocationHandler: NSObject {
 
 @MainActor
 extension iTermBrowserGeolocationHandler {
-    private func handleGetCurrentPosition(webView: WKWebView, messageDict: [String: Any]) async {
+    private func handleGetCurrentPosition(webView: iTermBrowserWebView, messageDict: [String: Any]) async {
         guard let operationId = messageDict["operationId"] as? Int else {
             DLog("Missing operationId in getCurrentPosition request")
             return
@@ -195,7 +195,7 @@ extension iTermBrowserGeolocationHandler {
         locationManager.startUpdatingLocation()
     }
     
-    private func handleWatchPosition(webView: WKWebView, messageDict: [String: Any]) async {
+    private func handleWatchPosition(webView: iTermBrowserWebView, messageDict: [String: Any]) async {
         guard let watchId = messageDict["watchId"] as? Int else {
             DLog("Missing watchId in watchPosition request")
             return
@@ -260,7 +260,7 @@ extension iTermBrowserGeolocationHandler {
         return age <= maxAgeSeconds ? lastLocation : nil
     }
     
-    private func sendPositionSuccess(webView: WKWebView, operationId: Int, location: CLLocation) async {
+    private func sendPositionSuccess(webView: iTermBrowserWebView, operationId: Int, location: CLLocation) async {
         let coords = locationToCoordinates(location)
         let timestamp = Int64(location.timestamp.timeIntervalSince1970 * 1000) // JavaScript expects milliseconds
         
@@ -275,7 +275,7 @@ extension iTermBrowserGeolocationHandler {
         }
     }
     
-    private func sendPositionError(webView: WKWebView, operationId: Int, code: Int, message: String) async {
+    private func sendPositionError(webView: iTermBrowserWebView, operationId: Int, code: Int, message: String) async {
         let escapedMessage = message.replacingOccurrences(of: "'", with: "\\'")
         let jsCode = """
             window.iTermGeolocationHandler.handlePositionError('\(secret)', \(operationId), \(code), '\(escapedMessage)');
@@ -288,7 +288,7 @@ extension iTermBrowserGeolocationHandler {
         }
     }
     
-    private func sendWatchPositionUpdate(webView: WKWebView, watchId: Int, location: CLLocation) async {
+    private func sendWatchPositionUpdate(webView: iTermBrowserWebView, watchId: Int, location: CLLocation) async {
         let coords = locationToCoordinates(location)
         let timestamp = Int64(location.timestamp.timeIntervalSince1970 * 1000)
         
@@ -303,7 +303,7 @@ extension iTermBrowserGeolocationHandler {
         }
     }
     
-    private func sendWatchError(webView: WKWebView, watchId: Int, code: Int, message: String) async {
+    private func sendWatchError(webView: iTermBrowserWebView, watchId: Int, code: Int, message: String) async {
         let escapedMessage = message.replacingOccurrences(of: "'", with: "\\'")
         let jsCode = """
             window.iTermGeolocationHandler.handleWatchError('\(secret)', \(watchId), \(code), '\(escapedMessage)');
@@ -336,7 +336,7 @@ extension iTermBrowserGeolocationHandler {
     
     // MARK: - Permission State Updates
     
-    func updatePermissionState(for origin: String, webView: WKWebView) async {
+    func updatePermissionState(for origin: String, webView: iTermBrowserWebView) async {
         let decision = await iTermBrowserPermissionManager(user: user).getPermissionDecision(
             for: .geolocation,
             origin: origin

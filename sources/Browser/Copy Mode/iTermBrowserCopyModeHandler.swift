@@ -17,7 +17,7 @@ protocol iTermBrowserCopyModeHandlerDelegate: AnyObject {
 class iTermBrowserCopyModeHandler: NSObject {
     static let messageHandlerName = "iTerm2CopyMode"
     private let realHandler = iTermCopyModeHandler()
-    var webView: WKWebView?
+    var webView: iTermBrowserWebView?
 
     weak var delegate: iTermBrowserCopyModeHandlerDelegate?
 

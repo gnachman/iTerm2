@@ -49,7 +49,7 @@ class iTermBrowserAudioHandler {
         }
     }
 
-    func handleMessage(webView: WKWebView, message: WKScriptMessage) {
+    func handleMessage(webView: iTermBrowserWebView, message: WKScriptMessage) {
         guard let body = message.body as? [String: Any],
               let secret = body["sessionSecret"] as? String,
               secret == self.secret,
@@ -78,9 +78,9 @@ class iTermBrowserAudioHandler {
         }
     }
 
-    func mute(_ webView: WKWebView, frame: WKFrameInfo) async {
+    func mute(_ webView: iTermBrowserWebView, frame: WKFrameInfo) async {
         do {
-            _ = try await webView.evaluateJavaScript("window.iTerm2AudioMuting.mute('\(secret)');",
+            _ = try await webView.safelyEvaluateJavaScript("window.iTerm2AudioMuting.mute('\(secret)');",
                                                      in: frame,
                                                      contentWorld: .page)
             mutedFrames.append(frame)
@@ -89,9 +89,9 @@ class iTermBrowserAudioHandler {
         }
     }
 
-    func unmute(_ webView: WKWebView, frame: WKFrameInfo) async {
+    func unmute(_ webView: iTermBrowserWebView, frame: WKFrameInfo) async {
         do {
-            _ = try await webView.evaluateJavaScript("window.iTerm2AudioMuting.unmute('\(secret)');",
+            _ = try await webView.safelyEvaluateJavaScript("window.iTerm2AudioMuting.unmute('\(secret)');",
                                                      in: frame,
                                                      contentWorld: .page)
             mutedFrames.remove(object: frame)

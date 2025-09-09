@@ -11481,10 +11481,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                          ready:nil];
 }
 
-- (WKWebView *)openTabWithURL:(NSURL *)url
-                  baseProfile:(Profile *)base
-              nearSessionGuid:(NSString *)sessionGuid
-                configuration:(WKWebViewConfiguration *)configuration NS_AVAILABLE_MAC(11_0) {
+- (iTermBrowserWebView *)openTabWithURL:(NSURL *)url
+                            baseProfile:(Profile *)base
+                        nearSessionGuid:(NSString *)sessionGuid
+                          configuration:(WKWebViewConfiguration *)configuration NS_AVAILABLE_MAC(11_0) {
     MutableProfile *profile = [[base mutableCopy] autorelease];
     profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeBrowserValue;
     profile[KEY_INITIAL_URL] = url.absoluteString;

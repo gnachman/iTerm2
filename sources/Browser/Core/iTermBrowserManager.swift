@@ -31,7 +31,7 @@ protocol iTermBrowserManagerDelegate: AnyObject, iTermBrowserFindManagerDelegate
     func browserManager(_ manager: iTermBrowserManager, didStartNavigation navigation: WKNavigation?)
     func browserManager(_ manager: iTermBrowserManager, didFinishNavigation navigation: WKNavigation?)
     func browserManager(_ manager: iTermBrowserManager, didFailNavigation navigation: WKNavigation?, withError error: Error)
-    func browserManager(_ manager: iTermBrowserManager, requestNewWindowForURL url: URL, configuration: WKWebViewConfiguration) -> WKWebView?
+    func browserManager(_ manager: iTermBrowserManager, requestNewWindowForURL url: URL, configuration: WKWebViewConfiguration) -> iTermBrowserWebView?
     func browserManager(_ manager: iTermBrowserManager, openNewTabForURL url: URL)
     func browserManager(_ manager: iTermBrowserManager, openNewSplitPaneForURL url: URL, vertical: Bool)
     func browserManager(_ manager: iTermBrowserManager, openPasswordManagerForHost host: String?, forUser: Bool, didSendUserName: (() -> ())?)
@@ -531,7 +531,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                                                                           substitutions: [:])
         
         do {
-            let result = try await webView.evaluateJavaScript(checkIframesScript)
+            let result = try await webView.safelyEvaluateJavaScript(checkIframesScript, contentWorld: .page)
             if let origins = result as? [String] {
                 return origins.contains(origin)
             }
@@ -1244,6 +1244,7 @@ extension iTermBrowserManager: WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        it_assert(webView === self.webView)
         // Clear failed URL on successful navigation to a real page (not error pages)
         if webView.url != iTermBrowserErrorHandler.errorURL {
             lastFailedURL = nil
@@ -1265,7 +1266,7 @@ extension iTermBrowserManager: WKNavigationDelegate {
             Task {
                 await iTermBrowserGeolocationHandler.instance(for: user)?.updatePermissionState(
                     for: originString,
-                    webView: webView)
+                    webView: self.webView)
             }
         }
 
@@ -1325,7 +1326,8 @@ extension iTermBrowserManager: WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-        localPageManager.unregisterAllMessageHandlers(webView: webView)
+        it_assert(webView === self.webView)
+        localPageManager.unregisterAllMessageHandlers(webView: self.webView)
 
         // Track HTTP method for main frame navigations only
         if navigationAction.targetFrame?.isMainFrame == true {
@@ -1524,7 +1526,8 @@ extension iTermBrowserManager: WKUIDelegate {
         guard navigationAction.targetFrame == nil, let url = navigationAction.request.url else {
             return nil
         }
-        localPageManager.unregisterAllMessageHandlers(webView: webView)
+        it_assert(webView === self.webView)
+        localPageManager.unregisterAllMessageHandlers(webView: self.webView)
         return delegate?.browserManager(self,
                                         requestNewWindowForURL: url,
                                         configuration: configuration)
@@ -1608,7 +1611,7 @@ extension iTermBrowserManager: WKUIDelegate {
                 }
             } else {
                 // Fallback to DOM source if network fetch fails
-                self.webView.evaluateJavaScript("document.documentElement.outerHTML") { [weak self] result, error in
+                self.webView.safelyEvaluateJavaScript("document.documentElement.outerHTML") { [weak self] result, error in
                     guard let self = self else { return }
                     
                     if let error = error {
@@ -1686,8 +1689,9 @@ extension iTermBrowserManager: WKUIDelegate {
                  decideMediaCapturePermissionsFor origin: WKSecurityOrigin,
                  initiatedBy frame: WKFrameInfo,
                  type: WKMediaCaptureType) async -> WKPermissionDecision {
+        it_assert(webView === self.webView)
         return await iTermBrowserPermissionManager(user: user).handleMediaCapturePermissionRequest(
-            from: webView,
+            from: self.webView,
             origin: origin,
             frame: frame,
             type: type
@@ -1712,7 +1716,7 @@ extension iTermBrowserManager: iTermBrowserLocalPageManagerDelegate {
         loadURL(url)
     }
     
-    func localPageManagerWebView(_ manager: iTermBrowserLocalPageManager) -> WKWebView? {
+    func localPageManagerWebView(_ manager: iTermBrowserLocalPageManager) -> iTermBrowserWebView? {
         return webView
     }
     
@@ -1792,7 +1796,7 @@ extension iTermBrowserManager {
     // MARK: - Key-Value Observing
     
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
-        if keyPath == "title", let webView = object as? WKWebView, webView == self.webView {
+        if keyPath == "title", let webView = object as? iTermBrowserWebView, webView == self.webView {
             // Title changed - notify delegate
             notifyDelegateOfUpdates()
             
@@ -1924,7 +1928,7 @@ extension iTermBrowserManager: iTermBrowserAutofillHandlerDelegate {
     func debugAutofillFields() {
         guard let webView = webView else { return }
         let js = "if (window.debugAutofillFields) { window.debugAutofillFields(); }"
-        webView.evaluateJavaScript(js) { result, error in
+        webView.safelyEvaluateJavaScript(js) { result, error in
             if let error = error {
                 NSLog("Debug autofill fields error: \(error)")
             }

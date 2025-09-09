@@ -118,6 +118,50 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
         threeFingerTapGestureRecognizer.disconnectTarget()
     }
 
+    @MainActor @preconcurrency public func safelyCallAsyncJavaScript(_ functionBody: String,
+                                                                     arguments: [String : Any] = [:],
+                                                                     in frame: WKFrameInfo? = nil,
+                                                                     contentWorld: WKContentWorld) async throws -> Any? {
+        return try await callAsyncJavaScript(functionBody,
+                                             arguments: arguments,
+                                             in: frame,
+                                             contentWorld: contentWorld)
+    }
+
+    @MainActor @preconcurrency public func safelyEvaluateJavaScript(_ javaScript: String,
+                                                                    in frame: WKFrameInfo? = nil,
+                                                                    contentWorld: WKContentWorld) async throws -> Any? {
+        return try await evaluateJavaScript(javaScript, in: frame, contentWorld: contentWorld)
+    }
+    
+    // Convenience methods with completion handlers for easier migration
+    @MainActor public func safelyEvaluateJavaScript(_ javaScript: String,
+                                                     contentWorld: WKContentWorld = .page,
+                                                     completionHandler: ((Any?, Error?) -> Void)? = nil) {
+        Task { @MainActor in
+            do {
+                let result = try await safelyEvaluateJavaScript(javaScript, contentWorld: contentWorld)
+                completionHandler?(result, nil)
+            } catch {
+                completionHandler?(nil, error)
+            }
+        }
+    }
+    
+    @MainActor public func safelyCallAsyncJavaScript(_ functionBody: String,
+                                                      arguments: [String : Any] = [:],
+                                                      contentWorld: WKContentWorld,
+                                                      completionHandler: ((Any?, Error?) -> Void)? = nil) {
+        Task { @MainActor in
+            do {
+                let result = try await safelyCallAsyncJavaScript(functionBody, arguments: arguments, contentWorld: contentWorld)
+                completionHandler?(result, nil)
+            } catch {
+                completionHandler?(nil, error)
+            }
+        }
+    }
+
     @objc(threeFingerTap:)
     private func threeFingerTap(_ event: NSEvent) {
         if !pointerController.threeFingerTap(event) {
@@ -153,7 +197,7 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
         }
         Task { @MainActor in
             DLog("fetching selection")
-            currentSelection = try? await evaluateJavaScript("window.getSelection().toString();") as? String
+            currentSelection = try? await safelyEvaluateJavaScript("window.getSelection().toString();", contentWorld: .page) as? String
             DLog("selection is \(currentSelection.d)")
             // For the event location, we might need to use the original window coordinates
             // since the menu positioning could be relative to the window
@@ -386,7 +430,7 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
         super.mouseUp(with: event)
         Task { @MainActor in
             DLog("fetching selection")
-            currentSelection = try? await evaluateJavaScript("window.getSelection().toString();") as? String
+            currentSelection = try? await safelyEvaluateJavaScript("window.getSelection().toString();", contentWorld: .page) as? String
         }
     }
 
@@ -910,7 +954,7 @@ extension iTermBrowserWebView {
             })();
             """
             do {
-                let result = try await evaluateJavaScript(script)
+                let result = try await safelyEvaluateJavaScript(script, contentWorld: .page)
                 return result as? String
             } catch {
                 DLog("\(error)")

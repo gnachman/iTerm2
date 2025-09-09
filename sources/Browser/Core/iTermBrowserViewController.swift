@@ -21,7 +21,7 @@ protocol iTermBrowserViewControllerDelegate: AnyObject, iTermBrowserFindManagerD
                                didUpdateFavicon favicon: NSImage?)
     func browserViewController(_ controller: iTermBrowserViewController,
                                requestNewWindowForURL url: URL,
-                               configuration: WKWebViewConfiguration) -> WKWebView?
+                               configuration: WKWebViewConfiguration) -> iTermBrowserWebView?
     func browserViewControllerShowFindPanel(_ controller: iTermBrowserViewController)
     func browserViewController(_ controller: iTermBrowserViewController,
                                openNewTabForURL url: URL)
@@ -277,7 +277,7 @@ extension iTermBrowserViewController {
 
     @objc
     func jumpToSelection() {
-        browserManager.webView?.evaluateJavaScript("""
+        browserManager.webView?.safelyEvaluateJavaScript("""
         (function() {
           try {
             const sel = window.getSelection();
@@ -1114,7 +1114,7 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
         delegate?.browserViewControllerDidFinishNavigation(self)
     }
 
-    func browserManager(_ manager: iTermBrowserManager, requestNewWindowForURL url: URL, configuration: WKWebViewConfiguration) -> WKWebView? {
+    func browserManager(_ manager: iTermBrowserManager, requestNewWindowForURL url: URL, configuration: WKWebViewConfiguration) -> iTermBrowserWebView? {
         return delegate?.browserViewController(self,
                                                requestNewWindowForURL: url,
                                                configuration: configuration)

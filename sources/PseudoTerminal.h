@@ -23,6 +23,7 @@
 
 @class PTYSession;
 @class PSMTabBarControl;
+@class iTermBrowserWebView;
 @class iTermPromptOnCloseReason;
 @class iTermSessionFactory;
 @class iTermToolbeltView;
@@ -423,10 +424,10 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 
 #pragma mark - Web
 
-- (WKWebView *)openTabWithURL:(NSURL *)url
-                  baseProfile:(Profile *)base
-              nearSessionGuid:(NSString *)sessionGuid
-                configuration:(WKWebViewConfiguration *)configuration NS_AVAILABLE_MAC(11_0);
+- (iTermBrowserWebView *)openTabWithURL:(NSURL *)url
+                            baseProfile:(Profile *)base
+                        nearSessionGuid:(NSString *)sessionGuid
+                          configuration:(WKWebViewConfiguration *)configuration NS_AVAILABLE_MAC(11_0);
 
 - (void)openSplitPaneWithURL:(NSURL *)url
                  baseProfile:(Profile *)base

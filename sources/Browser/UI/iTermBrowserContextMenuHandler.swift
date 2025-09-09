@@ -10,10 +10,10 @@ import WebKit
 
 @available(macOS 11.0, *)
 class iTermBrowserContextMenuHandler {
-    private let webView: WKWebView
+    private let webView: iTermBrowserWebView
     private weak var parentWindow: NSWindow?
     
-    init(webView: WKWebView, parentWindow: NSWindow?) {
+    init(webView: iTermBrowserWebView, parentWindow: NSWindow?) {
         self.webView = webView
         self.parentWindow = parentWindow
     }

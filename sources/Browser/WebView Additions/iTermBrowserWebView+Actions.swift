@@ -35,7 +35,7 @@ extension iTermBrowserWebView {
             script = "window.scrollBy(0, -window.innerHeight);"
         }
         
-        evaluateJavaScript(script) { _, _ in }
+        safelyEvaluateJavaScript(script)
     }
     
     func sendText(_ string: String) async {
@@ -53,7 +53,7 @@ extension iTermBrowserWebView {
         )
         
         do {
-            let result = try await evaluateJavaScript(script)
+            let result = try await safelyEvaluateJavaScript(script, contentWorld: .page)
             if let success = result as? Bool, !success {
                 await MainActor.run {
                     self.sendTextViaClipboard(string)
@@ -135,7 +135,7 @@ extension iTermBrowserWebView {
             ]
         )
         
-        evaluateJavaScript(script) { _, _ in }
+        safelyEvaluateJavaScript(script)
     }
 
     @MainActor
@@ -153,7 +153,7 @@ extension iTermBrowserWebView {
                 ]
             )
             
-            guard let result = try? await evaluateJavaScript(script),
+            guard let result = try? await safelyEvaluateJavaScript(script, contentWorld: .page),
                   let linkInfo = result as? [String: Any],
                   let urlString = linkInfo["url"] as? String,
                   let url = URL(string: urlString) else {
@@ -185,7 +185,7 @@ extension iTermBrowserWebView {
             ]
         )
         
-        guard let result = try? await evaluateJavaScript(script),
+        guard let result = try? await safelyEvaluateJavaScript(script, contentWorld: .page),
               let textInfo = result as? [String: Any],
               let beforeText = textInfo["before"] as? String,
               let afterText = textInfo["after"] as? String else {
@@ -217,7 +217,7 @@ extension iTermBrowserWebView {
             ]
         )
         
-        _ = try? await evaluateJavaScript(script)
+        _ = try? await safelyEvaluateJavaScript(script, contentWorld: .page)
 
         if requireAction {
             return match
@@ -243,7 +243,7 @@ extension iTermBrowserWebView {
             ]
         )
         
-        guard let result = try? await evaluateJavaScript(script),
+        guard let result = try? await safelyEvaluateJavaScript(script, contentWorld: .page),
               let urlStrings = result as? [String] else {
             return []
         }
@@ -395,7 +395,7 @@ extension iTermBrowserWebView {
             return
         }
         
-        evaluateJavaScript(script) { _, _ in }
+        safelyEvaluateJavaScript(script)
     }
     
     func hasSelection() async -> Bool {
@@ -405,7 +405,7 @@ extension iTermBrowserWebView {
         )
         
         do {
-            let result = try await evaluateJavaScript(script)
+            let result = try await safelyEvaluateJavaScript(script, contentWorld: .page)
             return result as? Bool ?? false
         } catch {
             return false

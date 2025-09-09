@@ -67,7 +67,7 @@ class iTermBrowserSourceHandler: NSObject, iTermBrowserPageHandler {
     
     // MARK: - iTermBrowserPageHandler Protocol
     
-    func injectJavaScript(into webView: WKWebView) {
+    func injectJavaScript(into webView: iTermBrowserWebView) {
         // Source pages don't need JavaScript injection
     }
     

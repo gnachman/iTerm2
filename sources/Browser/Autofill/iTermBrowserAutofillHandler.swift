@@ -15,7 +15,7 @@ class iTermBrowserAutofillHandler {
     weak var delegate: iTermBrowserAutofillHandlerDelegate?
     
     private let sessionSecret: String
-    private var pendingAutofillWebView: WKWebView?
+    private var pendingAutofillWebView: iTermBrowserWebView?
     private let contactSource = iTermBrowserAutofillContactSource()
     
     init?() {
@@ -36,7 +36,7 @@ class iTermBrowserAutofillHandler {
         case autofillRequest
     }
     
-    func handleMessage(webView: WKWebView, message: WKScriptMessage) -> AutofillAction? {
+    func handleMessage(webView: iTermBrowserWebView, message: WKScriptMessage) -> AutofillAction? {
         guard let body = message.body as? [String: Any],
               let secret = body["sessionSecret"] as? String,
               secret == sessionSecret,
@@ -53,7 +53,7 @@ class iTermBrowserAutofillHandler {
         return action
     }
     
-    private func handleAutofillRequest(webView: WKWebView, body: [String: Any]) {
+    private func handleAutofillRequest(webView: iTermBrowserWebView, body: [String: Any]) {
         guard body["activeField"] as? [String: Any] != nil,
               let fields = body["fields"] as? [[String: Any]] else {
             return
@@ -74,7 +74,7 @@ class iTermBrowserAutofillHandler {
         await writer.fillFields(fields)
     }
 
-    func fillAll(webView: WKWebView) async {
+    func fillAll(webView: iTermBrowserWebView) async {
         DLog("fillAll() method called")
         
         // Create JavaScript that rediscovers autofillable fields and fills them all
@@ -86,7 +86,7 @@ class iTermBrowserAutofillHandler {
         DLog("fillAll() loaded JavaScript template, length: \(js.count)")
         
         do {
-            let result = try await webView.evaluateJavaScript(js, contentWorld: .defaultClient)
+            let result = try await webView.safelyEvaluateJavaScript(js, contentWorld: .defaultClient)
             if let resultDict = result as? [String: Any],
                let success = resultDict["success"] as? Bool,
                let fieldsFound = resultDict["fieldsFound"] as? Int {
