@@ -1394,7 +1394,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         NSString *command = [[dict[@"command"] componentsSeparatedByString:@" "] firstObject];
         return [dict[@"flags"][@"T"] isEqual:@[@"prefix"]] && ![forbiddenCommands containsObject:command];
     }];
-    NSMutableDictionary *fakeProfile = [@{ KEY_KEYBOARD_MAP: _sharedKeyMappingOverrides } mutableCopy];
+    NSMutableDictionary *fakeProfile = [@{ KEY_KEYBOARD_MAP: _sharedKeyMappingOverrides ?: @{} } mutableCopy];
 
     for (NSDictionary *dict in dicts) {
         iTermKeystroke *keystroke = [iTermKeystroke withTmuxKey:dict[@"key"]];
