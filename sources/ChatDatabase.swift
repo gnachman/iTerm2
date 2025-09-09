@@ -101,8 +101,8 @@ class ChatDatabase {
 
     private func createTables() -> Bool {
         do {
-            try db.executeUpdate(Chat.schema(), withArguments: [])
             do {
+                try db.executeUpdate(Chat.schema(), withArguments: [])
                 let migrations = Chat.migrations(existingColumns:
                                                     listColumns(
                                                         resultSet: try db.executeQuery(
@@ -112,7 +112,9 @@ class ChatDatabase {
                     try db.executeUpdate(migration.query, withArguments: migration.args)
                 }
             }
+            
             do {
+                try db.executeUpdate(Message.schema(), withArguments: [])
                 let migrations = Message.migrations(existingColumns:
                                                     listColumns(
                                                         resultSet: try db.executeQuery(
