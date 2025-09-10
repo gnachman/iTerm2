@@ -521,19 +521,19 @@ DQ
                                                 <action selector="renderSelection:" target="-1" id="CYd-u9-J4s"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Replace with Pretty-Printed JSON" id="Fsl-eD-Noh">
+                                        <menuItem title="Replace with Pretty-Printed JSON" identifier="Replace Selection.Replace with Pretty-Printed JSON" id="Fsl-eD-Noh">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="replaceSelectionWithPrettyPrintedJSON:" target="-1" id="9Ho-k9-mP3"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Replace with Base 64-Encoded Value" id="ZaV-ga-7GF">
+                                        <menuItem title="Replace with Base 64-Encoded Value" identifier="Replace Selection.Replace with Base 64-Encoded Value" id="ZaV-ga-7GF">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="replaceSelectionWithBase64Encoded:" target="-1" id="42k-hZ-25i"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Replace with Base 64-Decoded Value" id="3Es-XB-YYS">
+                                        <menuItem title="Replace with Base 64-Decoded Value" identifier="Replace Selection.Replace with Base 64-Decoded Value" id="3Es-XB-YYS">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="replaceSelectionWithBase64Decoded:" target="-1" id="tSe-ze-5zO"/>

@@ -37,6 +37,7 @@ class MainMenuMangler: NSObject {
         "Make Terminal Default Term": "star",
         "Install Shell Integration": "square.and.arrow.down.fill",
         "Remove Recent Profiles from Dock Menu": "person.fill.xmark",
+        "About iTerm2": "info.circle.fill",
         "Quit iTerm2": "power",
 
         // Shell menu
@@ -46,11 +47,14 @@ class MainMenuMangler: NSObject {
         "New Tab with Current Profile": "plus.rectangle.on.folder.fill",
         "Duplicate Tab": "document.on.document",
         "Duplicate Window": "document.on.document.fill",
+        "Duplicate Session": "rectangle.on.rectangle",
+        "Press Option for New Window": "option",
         "Split Horizontally with Current Profile": "square.split.1x2.fill",
         "Split Vertically with Current Profile": "square.split.2x1.fill",
         "Split Horizontally…": "square.split.1x2",
         "Split Vertically…": "square.split.2x1",
         "Log.SaveContents": "square.and.arrow.down",
+        "Log.Toggle": "record.circle",
         // Log.Start and Log.Stop removed - no identifiers in XIB
         "Log.ImportRecording": "square.and.arrow.down",
         "Log.ExportRecording": "square.and.arrow.up",
@@ -63,18 +67,27 @@ class MainMenuMangler: NSObject {
         "Broadcast Input.Broadcast Input to All Panes in All Tabs": "dot.radiowaves.right",
         "Broadcast Input.Broadcast Input to All Panes in Current Tab": "dot.radiowaves.right",
         "Broadcast Input.Toggle Broadcast Input to Current Session": "dot.radiowaves.right",
-        "tmux.Dashboard": "rectangle.split.3x3",
-        "tmux.Detach": "rectangle.split.3x3",
-        "tmux.Force Detach": "rectangle.split.3x3",
-        "tmux.New Tmux Window": "rectangle.split.3x3",
-        "tmux.New Tmux Tab": "rectangle.split.3x3",
+        "Broadcast Input.Show Background Pattern Indicator": "dot.radiowaves.up.forward",
+        "tmux.Dashboard": "rectangle.grid.2x2",
+        "tmux.Detach": "arrow.up.right.square",
+        "tmux.Force Detach": "bolt.slash",
+        "tmux.New Tmux Window": "plus.rectangle.on.rectangle",
+        "tmux.New Tmux Tab": "plus.square.on.square",
+        "trmux.Pause Pane": "pause.circle",
         // tmux.Pause Pane removed - no identifier in XIB
         // ssh menu items have individual identifiers, not a general one
+        "ssh.Download Files": "arrow.down.doc",
+        "ssh.Disconnect": "network.badge.xmark",
         // Print submenu items removed - no identifiers in XIB
+        "Print.Selection": "printer",
+        "Print.Buffer": "printer",
+        "Print.Screen": "printer",
+        "Page Setup...": "doc.text",
 
         // Edit menu
         "Undo": "arrow.uturn.backward",
         "Redo": "arrow.uturn.forward",
+        "Cut": "scissors",
         "Copy": "document.on.document",
         "Copy with Styles": "document.on.document.fill",
         "Copy with Control Sequences": "document.on.document",
@@ -91,6 +104,7 @@ class MainMenuMangler: NSObject {
         "Paste Special.Limit Multi-Line Paste Warning to Shell Prompt": "bolt.trianglebadge.exclamationmark.fill",
         "Paste Special.Prompt to Convert Tabs to Spaces when Pasting": "convertible.side",
         "Paste Special.Warn Before Pasting One Line Ending in a Newline at Shell Prompt": "exclamationmark.triangle.text.page",
+        "Paste Special.Paste Slowly": "tortoise.fill",
         "Open Selection": "arrow.up.right",
         "Find.Jump to Selection": "arrow.turn.up.right",
         "Find.Find...": "magnifyingglass",
@@ -100,20 +114,37 @@ class MainMenuMangler: NSObject {
         // Find.Jump Again removed - no identifier in XIB
         "Find.Find Globally...": "globe",
         "Find.Find URLs": "network",
+        "Find.Pick Result To Open": "hand.tap",
+        "Find.Filter": "line.3.horizontal.decrease.circle",
+        "Find.Find All Smart Selection  Matches": "sparkle.magnifyingglass",
+        "Find.ConvertMatchesToSelections": "checkmark.rectangle.stack",
+        "Find.Clear Find": "xmark.circle",
         "Select All": "a.circle",
         "Selection Respects Soft Boundaries": "text.justify.leading",
+        "Select Current Command": "text.cursor",
+        "Select Output of Last Command": "text.line.last.and.arrowtriangle.forward",
+        "Save Selected Text…": "square.and.arrow.down.on.square",
         "Open Autocomplete…": "text.badge.xmark",
         "Marks and Annotations.Set Mark": "bookmark",
         "Marks and Annotations.Add Annotation at Cursor": "pencil",
         "Marks and Annotations.Alerts.Alert on Next Mark": "bolt.badge.clock",
         "Marks and Annotations.Next Mark": "arrow.down",
         "Marks and Annotations.Previous Mark": "arrow.up",
+        "Marks and Annotations.Next  Annotation": "arrow.down.circle",
+        "Marks and Annotations.Previous  Annotation": "arrow.up.circle",
+        "Marks and Annotations.Jump to Mark": "location",
+        "Set Named Mark": "bookmark.fill",
+        "Marks and Annotations.Alerts.Show Modal Alert Box": "exclamationmark.square",
+        "Marks and Annotations.Alerts.Post Notification": "bell",
+        "Marks and Notes.Alerts.Play a Sound": "speaker.wave.2",
+        "Marks and Alerts.Alerts.Alert on Marks in Offscreen Sessions": "bell.badge",
         // Annotations navigation removed - no identifiers in XIB
         // Clear Transcript removed - no identifier in XIB
         "Clear Buffer": "xmark.rectangle",
         "Clear to Start of Selection": "arrow.up.left.and.arrow.down.right",
         "Clear to Last Mark": "bookmark",
         "Clear Scrollback Buffer": "xmark.diamond",
+        "Fold Selected Lines": "text.line.first.and.arrowtriangle.forward",
 
         // View menu
         "Show Tabs in Fullscreen": "macwindow",
@@ -132,13 +163,20 @@ class MainMenuMangler: NSObject {
         "Make Text Smaller": "textformat.size.smaller",
         "Make Text Normal Size": "textformat.size",
         "Start Instant Replay": "restart.circle",
+        "Clear Instant Replay": "xmark.circle",
+        "Pin Hotkey Window": "pin.fill",
+        "Render Selection Natively": "square.dashed",
+        "Replace Selection.Replace with Pretty-Printed JSON": "curlybraces.square",
+        "Replace Selection.Replace with Base 64-Encoded Value": "arrow.up.to.line.compact",
+        "Replace Selection.Replace with Base 64-Decoded Value": "arrow.down.to.line.compact",
+        "Disable Transparency for Active Window": "cube.fill",
         // Pin Broadcast Input removed - no identifier in XIB
 
         // Session menu
         "Edit Session…": "wrench.and.screwdriver",
         "Run Coprocess…": "figure.run.square.stack",
         "Stop Coprocess": "figure.run",
-        "Restart Session": "restart",
+        "Restart Session": "arrow.clockwise",
         "Open Command History…": "book.pages",
         "Open Recent Directories…": "folder",
         "Open Paste History…": "book.pages",
@@ -148,6 +186,45 @@ class MainMenuMangler: NSObject {
         // Log.Save Contents removed - no identifier in XIB
         // Log.Append to File removed - no identifier in XIB
         "Bury Session": "memories.badge.xmark",
+        "Reset Terminal State": "arrow.clockwise",
+        "Restore Text and Session Size": "arrow.counterclockwise",
+        "Terminal State.Literal Mode": "textformat.abc",
+        "Terminal State.Emulation Level.VT100": "display",
+        "Terminal State.Emulation Level.VT200": "display",
+        "Terminal State.Emulation Level.VT300": "display",
+        "Terminal State.Emulation Level.VT400": "display",
+        "Terminal State.Emulation Level.VT500": "display",
+        "Terminal State.Raw Key Reporting": "keyboard.badge.ellipsis",
+        "Terminal State.Standard Key Reporting": "keyboard",
+        "Terminal State.Disambiguate Escape": "escape",
+        "Terminal State.Report Modifiers like xterm 1": "keyboard.badge.1",
+        "Terminal State.Report Modifiers like xterm 2": "keyboard.badge.2",
+        "Terminal State.Report Modifiers with CSI u": "keyboard.badge.ellipsis",
+        "Terminal State.Report All Event Types": "list.bullet.rectangle",
+        "Terminal State.Report Alternate Keys": "keyboard.chevron.compact.left",
+        "Terminal State.Report Associated Text": "text.badge.plus",
+        "Terminal State.Report All Keys as Escape Codes": "keyboard.fill",
+        "Application Keypad": "keyboard",
+        "Application Cursor": "cursorarrow",
+        "Mouse Reporting": "computermouse",
+        "Focus Reporting": "target",
+        "Paste Bracketing": "brackets",
+        "Alternate Screen": "rectangle.badge.arrow.up.right",
+        "Move Session to Window": "macwindow.badge.plus",
+        "Move Session to Tab": "plus.rectangle.on.folder",
+        "Move Session to Split Pane": "rectangle.split.2x1",
+        "Lock Split Pane Width": "lock.rectangle",
+        "Triggers.Enable All": "checkmark.circle",
+        "Triggers.Disable All": "xmark.circle",
+        "Edit Triggers": "pencil.circle",
+        "Add Trigger": "plus.diamond",
+        "Enable Triggers in Interactive Apps": "play.circle",
+        "Auto Composer": "wand.and.stars",
+        "Open AI Chat": "questionmark.bubble",
+        "AI Chats": "bubble.left.and.bubble.right",
+        "Engage Artificial Intelligence": "brain",
+        "Explain Output with AI": "sparkles.rectangle.stack",
+        "Open Interactive Window": "terminal",
 
         // Scripts menu
         // Manage removed - no identifier in XIB
@@ -156,16 +233,21 @@ class MainMenuMangler: NSObject {
         "Import Script": "square.and.arrow.down",
         "Export Script": "square.and.arrow.up",
         "Script Console": "greaterthan.square",
+        "Reveal in Finder": "folder.circle",
+        "Install Python Runtime": "arrow.down.circle",
+        "Install Already-Downloaded Python Runtime": "arrow.down.circle.fill",
+        "Manage Dependencies": "gearshape.2",
         // Reveal Scripts in Finder removed - no identifier in XIB
 
         // Profiles menu
         "Open Profiles…": "person",
         // Press Option to Show Alternate Profiles removed - no identifier in XIB
         "Open In New Window": "macwindow",
+        "Change Profile in Arrangement…": "person.crop.rectangle",
 
         // Toolbelt menu
         "Show Toolbelt": "wrench.and.screwdriver",
-        "Set Default Width": "line.3.horizontal.decrease",
+        "Set Default Width": "guidepoint.horizontal",
 
         // Window menu
         "Minimize": "arrow.down.left.and.arrow.up.right",
@@ -178,8 +260,25 @@ class MainMenuMangler: NSObject {
         "Arrange Split Panes Evenly": "rectangle.split.2x1",
         "Arrange Windows Horizontally": "square.split.2x1",
         "Bring All To Front": "macwindow",
-        "Arrangements": "folder",
+        "Move Tab Left": "arrow.left.square",
+        "Move Tab Right": "arrow.right.square",
+        "Size Changes Update Profile": "arrow.up.and.down.and.arrow.left.and.right",
+        "Window Style.FullHeight Right of Screen": "rectangle.righthalf.inset.filled",
+        "Window Style..FullHeight Left of Screen": "rectangle.lefthalf.inset.filled",
+        "Window Style.Right of Screen": "rectangle.righthalf.inset.filled",
+        "Window Style.Left of Screen": "rectangle.lefthalf.inset.filled",
+        "Window Style.Top of Screen": "rectangle.tophalf.inset.filled",
+        "Window Style.Bottom of Screen": "rectangle.bottomhalf.inset.filled",
+        "Window Style.FullWidth Bottom of Screen": "rectangle.bottomhalf.filled",
+        "Window Style.FullWidth Top of Screen": "rectangle.tophalf.filled",
+        "Window Style.Normal": "rectangle",
+        "Window Style.Maximized": "rectangle.fill",
+        "Window Style.Full Screen": "arrow.up.left.and.arrow.down.right",
+        "Window Style.No Title Bar": "rectangle.dashed",
         "Save Window Arrangement": "square.and.arrow.down",
+        "Save Current Window as Arrangement": "square.and.arrow.down",
+        "Load Arrangement from File…": "doc.badge.arrow.up",
+        "changeTabColorToMenuAction:": "paintpalette",
         // Arrangement as Tabs items removed - no identifiers in XIB
         // Name Window removed - no identifier in XIB
         "Select Split Pane.Select Pane Above": "arrow.up",
@@ -194,10 +293,10 @@ class MainMenuMangler: NSObject {
         "Resize Split Pane.Move Divider Right": "arrow.right",
         "Select Next Tab": "arrow.right",
         "Select Previous Tab": "arrow.left",
-        "Resize Window.Decrease Height": "arrow.up.and.down.and.arrow.left.and.right",
-        "Resize Window.Increase Height": "arrow.up.and.down.and.arrow.left.and.right",
-        "Resize Window.Decrease Width": "arrow.up.and.down.and.arrow.left.and.right",
-        "Resize Window.Increase Width": "arrow.up.and.down.and.arrow.left.and.right",
+        "Resize Window.Decrease Height": "arrow.down.and.line.horizontal.and.arrow.up",
+        "Resize Window.Increase Height": "arrow.up.and.line.horizontal.and.arrow.down",
+        "Resize Window.Decrease Width": "arrow.right.and.line.vertical.and.arrow.left",
+        "Resize Window.Increase Width": "arrow.left.and.line.vertical.and.arrow.right",
         "Password Manager": "lock",
         // Notifications removed - no identifier in XIB
         "Composer": "music.note.list",
@@ -227,13 +326,19 @@ class MainMenuMangler: NSObject {
             NSFuckingLog("%@", "Some keys have wrong identifiers: \(keys.subtracting(identifiers))")
             it_fatalError()
         }
-        NSFuckingLog("%@", "These identifiers lack icons: \(identifiers.subtracting(keys))")
+        let bad = identifiers.subtracting(keys).filter { !$0.hasPrefix("_NS") }.subtracting(Set(["bogus", "sendSnippet:"]))
+        if !bad.isEmpty {
+            NSFuckingLog("%@", "These identifiers lack icons: \(bad)")
+        }
     }
 
     private func allIdentifiers(in menu: NSMenu) -> Set<String> {
         var result = Set<String>()
         for item in menu.items {
-            if let identifier = item.identifier?.rawValue {
+            if item.isSeparatorItem {
+                continue
+            }
+            if !item.hasSubmenu, let identifier = item.identifier?.rawValue {
                 result.insert(identifier)
             }
             if item.hasSubmenu, let submenu = item.submenu {
@@ -247,6 +352,11 @@ class MainMenuMangler: NSObject {
         for item in menu.items {
             if let identifier = item.identifier?.rawValue,
                let iconName = iconMap[identifier] {
+                #if(DEBUG)
+                if item.hasSubmenu {
+                    it_fatalError("Submenus should not have icons: \(identifier)")
+                }
+                #endif
                 item.image = NSImage(systemSymbolName: iconName, accessibilityDescription: nil)
             }
             if item.hasSubmenu, let submenu = item.submenu {

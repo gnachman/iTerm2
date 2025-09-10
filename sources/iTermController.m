@@ -872,6 +872,10 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         aMenuItem = [[NSMenuItem alloc] initWithTitle:@"Open All"
                                                action:openAllSelector
                                         keyEquivalent:@""];
+        if (@available(macOS 26, *)) {
+            aMenuItem.image = [NSImage imageWithSystemSymbolName:@"person.3.sequence"
+                                        accessibilityDescription:nil];
+        }
         unsigned int modifierMask = NSEventModifierFlagCommand | NSEventModifierFlagControl;
         [aMenuItem setKeyEquivalentModifierMask:modifierMask];
         [aMenuItem setRepresentedObject:subMenu];
