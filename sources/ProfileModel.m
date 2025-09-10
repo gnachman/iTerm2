@@ -56,7 +56,7 @@ static NSMutableArray<NSString *> *_combinedLog;
     NSMutableArray<NSNotification *> *_delayedNotifications;
 //    NSMutableSet<NSString *> *_debugGuids;
 //    NSMutableDictionary<NSString *, NSMutableArray<NSString *> *> *_debugHistory;
-    NSMutableArray* bookmarks_;
+    NSMutableArray<Profile *> *bookmarks_;
     NSString* defaultBookmarkGuid_;
 
     // The journal is an array of actions since the last change notification was
