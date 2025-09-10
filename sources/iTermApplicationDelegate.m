@@ -356,6 +356,14 @@ static BOOL hasBecomeActive = NO;
     _triggers.submenu.delegate = self;
     _namedMarksMenuItem.submenu.delegate = self;
     [[iTermMainMenuMangler instance] startWithWeb:_webMenuItem];
+    
+    // Set menu item icons for macOS 26+
+#if DEBUG
+    [[iTermMainMenuMangler instance] checkIcons];
+#endif
+    if (@available(macOS 26.0, *)) {
+        [[iTermMainMenuMangler instance] setIcons];
+    }
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
