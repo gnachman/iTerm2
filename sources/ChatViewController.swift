@@ -1133,7 +1133,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
     private func fork(_ messageID: UUID) {
         guard let model,
               let chatID,
-              let i = model.index(ofMessageID: messageID) else {
+              model.index(ofMessageID: messageID) != nil else {
             return
         }
         delegate?.chatViewController(self, forkAtMessageID: messageID, ofChat: chatID)
