@@ -7,6 +7,7 @@
 
 import Cocoa
 
+#if(MAC_OS_VERSION_26_0)
 fileprivate let kPSMMetalObjectCounterRadius: CGFloat = 7.0
 fileprivate let kPSMMetalCounterMinWidth: CGFloat = 20
 fileprivate let PSMTahoeTabStyleDebuggingEnabled: Bool = false
@@ -1850,3 +1851,4 @@ class PSMTahoeLightHighContrastTabStyle: PSMTahoeTabStyle {
     }
 }
 
+#endif

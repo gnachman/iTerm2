@@ -216,6 +216,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 
 @end
 
+#ifdef MAC_OS_VERSION_26_0
 NS_AVAILABLE_MAC(26)
 @implementation PSMTahoeRolloverButton
 
@@ -275,3 +276,4 @@ NS_AVAILABLE_MAC(26)
 }
 
 @end
+#endif

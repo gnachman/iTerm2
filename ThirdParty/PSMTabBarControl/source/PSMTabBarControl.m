@@ -228,7 +228,11 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
         _hasCloseButton = YES;
         _tabLocation = PSMTab_TopTab;
         if (@available(macOS 26, *)) {
+#ifdef MAC_OS_VERSION_26_0
             _style = [[PSMTahoeTabStyle alloc] init];
+#else
+            _style = [[PSMYosemiteTabStyle alloc] init];
+#endif
         } else {
             _style = [[PSMYosemiteTabStyle alloc] init];
         }
