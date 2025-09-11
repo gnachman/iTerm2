@@ -12,7 +12,6 @@ private class SSHOpenPanelButton: NSButton {
     weak var openPanel: NSOpenPanel?
     weak var parentWindow: NSWindow?
     var handler: ((NSApplication.ModalResponse, [URL]?) -> Void)?
-    weak var modernOpenPanel: iTermOpenPanel?
 }
 
 @objc
@@ -88,7 +87,52 @@ class iTermOpenPanel: NSObject {
     func beginWithFallback(window: NSWindow?,
                            handler: @escaping (NSApplication.ModalResponse, [URL]?) -> Void) {
         completionHandler = handler
-        runSystem(window: window, handler: handler)
+        if includeLocalhost || ConductorRegistry.instance.isEmpty {
+            runSystem(window: window, handler: handler)
+        } else {
+            runSSH(window: window, handler: handler)
+        }
+    }
+
+    private func runSSH(window: NSWindow?,
+                        handler: @escaping (NSApplication.ModalResponse, [URL]?) -> Void) {
+        let sshFilePanel = makePanel()
+
+        if let window = window {
+            sshFilePanel.beginSheetModal(for: window) { [weak self] response in
+                if self?.switchingPanels == true {
+                    return
+                }
+                self?.handleCompletion(sshFilePanel: sshFilePanel,
+                                       response: response,
+                                       handler: { modalResponse in
+                    if modalResponse == .OK {
+                        self?.loadURLs { urls in
+                            handler(modalResponse, urls)
+                        }
+                    } else {
+                        handler(modalResponse, nil)
+                    }
+                })
+            }
+        } else {
+            sshFilePanel.begin { [weak self] response in
+                self?.handleCompletion(sshFilePanel: sshFilePanel,
+                                       response: response,
+                                       handler: { [weak self] modalResponse in
+                    if self?.switchingPanels == true {
+                        return
+                    }
+                    if modalResponse == .OK {
+                        self?.loadURLs { urls in
+                            handler(modalResponse, urls)
+                        }
+                    } else {
+                        handler(modalResponse, nil)
+                    }
+                })
+            }
+        }
     }
 
     private func makePanel() -> SSHFilePanel {
@@ -177,9 +221,9 @@ class iTermOpenPanel: NSObject {
     }
 
     // Show the panel non-modally with a completion handler
-    @objc
-    func begin(_ handler: @escaping (NSApplication.ModalResponse) -> Void) {
-        runSystem(window: nil) { response, urls in
+    @objc(beginSSHWithWindow:handler:)
+    func beginSSH(window: NSWindow?, handler: @escaping (NSApplication.ModalResponse) -> Void) {
+        runSSH(window: window) { response, urls in
             if response == .OK {
                 self.items = (urls ?? []).map { url in
                     let promise = iTermRenegablePromise<NSURL>() { seal in
@@ -222,8 +266,7 @@ class iTermOpenPanel: NSObject {
     
     @objc private func openSSHPanelButtonClicked(_ sender: SSHOpenPanelButton) {
         guard let openPanel = sender.openPanel,
-              let handler = sender.handler,
-              let modernOpenPanel = sender.modernOpenPanel else {
+              let handler = sender.handler else {
             return
         }
         
@@ -231,9 +274,9 @@ class iTermOpenPanel: NSObject {
         let parentWindow = sender.parentWindow ?? openPanel.sheetParent
         
         // Preserve the current directory and settings from system panel
-        modernOpenPanel.preferredSSHIdentity = .localhost
+        preferredSSHIdentity = .localhost
         let directoryURL = openPanel.directoryURL ?? URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-        modernOpenPanel._directoryURL = directoryURL
+        _directoryURL = directoryURL
         
         // Cancel the current open panel
         switchingPanels = true
@@ -241,43 +284,7 @@ class iTermOpenPanel: NSObject {
         switchingPanels = false
 
         // Open SSH panel
-        let sshFilePanel = modernOpenPanel.makePanel()
-        
-        if let window = parentWindow {
-            sshFilePanel.beginSheetModal(for: window) { [weak modernOpenPanel, weak self] response in
-                if self?.switchingPanels == true {
-                    return
-                }
-                modernOpenPanel?.handleCompletion(sshFilePanel: sshFilePanel,
-                                                  response: response,
-                                                  handler: { modalResponse in
-                    if modalResponse == .OK {
-                        modernOpenPanel?.loadURLs { urls in
-                            handler(modalResponse, urls)
-                        }
-                    } else {
-                        handler(modalResponse, nil)
-                    }
-                })
-            }
-        } else {
-            sshFilePanel.begin { [weak modernOpenPanel] response in
-                modernOpenPanel?.handleCompletion(sshFilePanel: sshFilePanel,
-                                                  response: response,
-                                                  handler: { [weak self] modalResponse in
-                    if self?.switchingPanels == true {
-                        return
-                    }
-                    if modalResponse == .OK {
-                        modernOpenPanel?.loadURLs { urls in
-                            handler(modalResponse, urls)
-                        }
-                    } else {
-                        handler(modalResponse, nil)
-                    }
-                })
-            }
-        }
+        runSSH(window: parentWindow, handler: handler)
     }
 }
 
@@ -300,8 +307,7 @@ private extension iTermOpenPanel {
         sshButton.openPanel = openPanel
         sshButton.parentWindow = window
         sshButton.handler = handler
-        sshButton.modernOpenPanel = self
-        
+
         container.addSubview(sshButton)
         
         // Add user's accessory view if provided
