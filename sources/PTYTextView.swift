@@ -858,25 +858,11 @@ extension PTYTextView {
         panel.isSelectable = { remoteFile in
             return provider?.fileTypeIsSupported(extension: remoteFile.name.pathExtension.lowercased()) == true
         }
-        panel.begin { response in
+        panel.beginSSH(window: window) { response in
             guard response == .OK else {
                 return
             }
-            for item in panel.items {
-                let scpPath = SCPPath()
-                scpPath.username = item.host.username
-                scpPath.hostname = item.host.host
-                scpPath.path = item.filename
-                if #available(macOS 11, *) {
-                    if let conductor = ConductorRegistry.instance[item.host].first {
-                        conductor.download(path: scpPath)
-                    }
-                } else {
-                    let scpFile = SCPFile()
-                    scpFile.path = scpPath
-                    scpFile.download()
-                }
-            }
+            NSWorkspace.shared.activateFileViewerSelecting(panel.items.map { $0.urlPromise.maybeValue }.compactMap { $0 as? URL })
         }
     }
 }

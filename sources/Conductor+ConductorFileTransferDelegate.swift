@@ -171,12 +171,28 @@ extension Conductor: ConductorFileTransferDelegate {
 
         it_assert(remoteFile.kind.isRegularFile, "Only files can be downloaded")
 
+        let scpPath = SCPPath()
+        scpPath.path = remoteFile.absolutePath
+        scpPath.hostname = sshIdentity.hostname
+        scpPath.username = sshIdentity.username
+        let fileTransfer = ConductorFileTransfer(path: scpPath,
+                                                 localPath: nil,
+                                                 data: nil,
+                                                 delegate: self)
+        if let size = remoteFile.size {
+            fileTransfer.fileSize = size
+        }
+        if !fileTransfer.downloadChunked() {
+            return .file
+        }
+
         let chunkSize = 4096
         progress?.fraction = 0
         let state = DownloadState(remoteFile: remoteFile,
                                   chunkSize: chunkSize,
                                   cancellation: cancellation,
                                   progress: progress,
+                                  fileTransfer: fileTransfer,
                                   conductor: self)
         while state.shouldFetchMore {
             try await state.addTask(conductor: self)
@@ -199,6 +215,7 @@ extension Conductor: ConductorFileTransferDelegate {
         var cancellation: Cancellation?
         var progress: Progress?
         var content = Data()
+        var fileTransfer: ConductorFileTransfer
 
         private struct Pending {
             var uniqueID: String
@@ -211,15 +228,18 @@ extension Conductor: ConductorFileTransferDelegate {
              chunkSize: Int,
              cancellation: Cancellation?,
              progress: Progress?,
+             fileTransfer: ConductorFileTransfer,
              conductor: Conductor) {
             self.remoteFile = remoteFile
             self.chunkSize = chunkSize
             self.cancellation = cancellation
             self.progress = progress
+            self.fileTransfer = fileTransfer
 
             cancellation?.impl = { [weak self, weak conductor] in
                 conductor?.DLog("Cancellation requested")
                 Task { @MainActor in
+                    self?.fileTransfer.abort()
                     guard let self, let conductor else {
                         conductor?.DLog("Already dealloced")
                         return
@@ -246,6 +266,9 @@ extension Conductor: ConductorFileTransferDelegate {
                 uniqueID: uniqueID,
                 offset: taskOffset,
                 task: Task { @MainActor in
+                    if fileTransfer.isStopped {
+                        throw ConductorFileTransfer.ConductorFileTransferError("Canceled")
+                    }
                     let data = try await conductor.downloadOneChunk(
                         remoteFile: remoteFile,
                         offset: taskOffset,
@@ -258,12 +281,16 @@ extension Conductor: ConductorFileTransferDelegate {
                         } else {
                             progress?.fraction = min(1.0, max(0, Double(offset) / Double(remoteFile.size!)))
                         }
+                        fileTransfer.didTransferBytes(UInt(data.count))
                     }
                     return data
                 })
             tasks.append(pending)
             let maxConcurrency = 8
             while tasks.count >= maxConcurrency || (!tasks.isEmpty && !shouldFetchMore) {
+                if fileTransfer.isStopped {
+                    cancellation?.cancel()
+                }
                 if cancellation?.canceled == true {
                     break
                 }
