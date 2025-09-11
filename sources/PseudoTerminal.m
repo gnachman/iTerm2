@@ -10887,6 +10887,8 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                item.action == @selector(previousAnnotation:) ||
                item.action == @selector(clearBuffer:)) {
         return !self.currentSession.isBrowserSession;
+    } else if (item.action == @selector(moveTabToNewWindow:)) {
+        return [_contentView.tabView numberOfTabViewItems] > 1;
     }
 
     return result;
