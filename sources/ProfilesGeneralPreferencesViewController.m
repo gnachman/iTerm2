@@ -278,6 +278,8 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
             [self setCommandTypeToTag:iTermGeneralProfilePreferenceCustomCommandTagLoginShell];
         } else {
             [self setString:kProfilePreferenceCommandTypeBrowserValue forKey:KEY_CUSTOM_COMMAND];
+            [self setUnsignedInteger:iTermProfileIconAutomatic forKey:KEY_ICON];
+            [self updateControlForKey:KEY_ICON];
         }
         NSString *value = [self stringForKey:KEY_CUSTOM_COMMAND];
         [self commandTypeDidChangeFrom:before to:value];

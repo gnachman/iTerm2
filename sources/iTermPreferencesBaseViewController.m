@@ -681,6 +681,10 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
     return displayName;
 }
 
+- (void)updateControlForKey:(NSString *)key {
+    [self updateValueForInfo:[self infoForKey:key]];
+}
+
 - (void)updateValueForInfo:(PreferenceInfo *)info {
     if (_disableUpdates) {
         return;
