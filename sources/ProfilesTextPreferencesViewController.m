@@ -51,7 +51,6 @@
     IBOutlet NSButton *_unicodeVersion9;
     IBOutlet NSButton *_asciiLigatures;
     IBOutlet NSButton *_nonAsciiLigatures;
-    IBOutlet NSButton *_subpixelAA;
     IBOutlet NSButton *_powerline;
     IBOutlet BFPCompositeView *_asciiFontPicker;
     IBOutlet BFPCompositeView *_nonASCIIFontPicker;
@@ -227,10 +226,6 @@
         return [weakSelf unsignedIntegerForKey:KEY_UNICODE_VERSION] == 9;
     };
     [self updateNonDefaultIndicatorVisibleForInfo:info];
-    if (@available(macOS 10.16, *)) {
-        // 😢 See issue 9209
-        _subpixelAA.enabled = NO;
-    }
 
     _asciiFontPicker.delegate = self;
     _asciiFontPicker.mode = BFPCompositeViewModeFixedPitch;
@@ -411,7 +406,6 @@
         _nonAsciiLigatures.enabled = YES;
     }
 
-    [self updateThinStrokesEnabled];
     [self updateWarnings];
 }
 
@@ -431,20 +425,6 @@
     _shadow.enabled = [self cursorTypeSupportsShadow];
 }
 
-- (void)updateThinStrokesEnabled {
-    if (@available(macOS 10.16, *)) {
-        _subpixelAA.state = NSControlStateValueOff;
-        _subpixelAA.enabled = NO;
-    } else {
-        if (iTermTextIsMonochrome()) {
-            _subpixelAA.state = NSControlStateValueOff;
-        } else {
-            _subpixelAA.state = NSControlStateValueOn;
-        }
-        _subpixelAA.enabled = YES;
-    }
-}
-
 - (void)updateWarnings {
     [_normalFontWantsAntialiasing setHidden:!self.normalFont.futureShouldAntialias];
     [_nonasciiFontWantsAntialiasing setHidden:!self.nonAsciiFont.futureShouldAntialias];
@@ -452,20 +432,6 @@
 
 
 #pragma mark - Actions
-
-- (IBAction)didToggleSubpixelAntiAliasing:(id)sender {
-    NSString *const key = @"CGFontRenderingFontSmoothingDisabled";
-    if (_subpixelAA.state == NSControlStateValueOff) {
-        [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
-    } else {
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:key];
-    }
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"Subpixel Anti Aliasing";
-    alert.informativeText = @"This change will affect all profiles. You must restart iTerm2 for this change to take effect.";
-    [alert runModal];
-    [self updateWarnings];
-}
 
 - (IBAction)manageSpecialExceptions:(id)sender {
     _specialExceptionsWindowController = [SpecialExceptionsWindowController createWithConfigString:[self stringForKey:KEY_FONT_CONFIG]];

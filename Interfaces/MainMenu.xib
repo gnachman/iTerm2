@@ -158,16 +158,16 @@
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="1199"/>
-                            <menuItem title="Duplicate Tab" identifier="Duplicate Tab" id="Heo-Xb-RKN">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="duplicateTab:" target="-1" id="DcR-B7-VKj"/>
-                                </connections>
-                            </menuItem>
                             <menuItem title="Duplicate Window" identifier="Duplicate Window" id="9BQ-Nt-1uD">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="duplicateWindow:" target="-1" id="lzk-wL-GJ6"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Duplicate Tab" identifier="Duplicate Tab" id="Heo-Xb-RKN">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="duplicateTab:" target="-1" id="DcR-B7-VKj"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="w1g-nK-kOV"/>
