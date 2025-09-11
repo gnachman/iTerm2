@@ -1579,6 +1579,12 @@ DQ
                                                             <action selector="moveTabLeft:" target="-1" id="1410"/>
                                                         </connections>
                                                     </menuItem>
+                                                    <menuItem title="Move Tab to New Window" keyEquivalent="t" identifier="Move Tab to New Window" id="5Oz-oa-SHX">
+                                                        <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                                        <connections>
+                                                            <action selector="moveTabToNewWindow:" target="-1" id="eLK-fH-7Oo"/>
+                                                        </connections>
+                                                    </menuItem>
                                                     <menuItem title="Move Tab Right" keyEquivalent="]" identifier="Move Tab Right" id="1408">
                                                         <modifierMask key="keyEquivalentModifierMask" shift="YES" option="YES" command="YES"/>
                                                         <connections>
