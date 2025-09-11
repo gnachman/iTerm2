@@ -11471,7 +11471,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     }
     MutableProfile *profile = [[base mutableCopy] autorelease];
     profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeBrowserValue;
-    profile[KEY_COMMAND_LINE] = url.absoluteString;
+    profile[KEY_INITIAL_URL] = url.absoluteString;
 
     [self asyncSplitVertically:vertical
                         before:NO
