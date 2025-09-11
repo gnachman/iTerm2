@@ -1194,21 +1194,6 @@ extension iTermBrowserManager {
 
 @available(macOS 11.0, *)
 extension iTermBrowserManager: WKNavigationDelegate {
-    private func trustUsesProxyCA(_ serverTrust: SecTrust, proxyRoot: SecCertificate) -> Bool {
-        SecTrustSetAnchorCertificates(serverTrust, [proxyRoot] as CFArray)
-        SecTrustSetAnchorCertificatesOnly(serverTrust, false)
-
-        var error: CFError?
-
-        if SecTrustEvaluateWithError(serverTrust, &error) {
-            return true
-        }
-        if let error {
-            DLog("Proxy CA trust eval failed: \(error)")
-        }
-        return false
-    }
-
     func webView(_ webView: WKWebView,
                  didReceive challenge: URLAuthenticationChallenge,
                  completionHandler: @escaping @MainActor (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
