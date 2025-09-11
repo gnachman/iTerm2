@@ -181,7 +181,7 @@
 #define KEY_POWERLINE              @"Draw Powerline Glyphs"
 
 // Web
-#define KEY_BROWSER_ZOOM           @"Browser Zoom"
+#define KEY_BROWSER_ZOOM           @"Browser Zoom"  // 100 = 100%
 #define KEY_BROWSER_DEV_NULL       @"Dev Null Mode"
 #define KEY_BROWSER_EXTENSIONS_ROOT @"Browser Extensions Root"
 #define KEY_BROWSER_EXTENSION_ACTIVE_IDS @"Browser Extension Active IDs"
