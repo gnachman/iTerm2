@@ -664,7 +664,13 @@ static void SwapInt(int *a, int *b) {
                 }
             }
 
-            const VT100GridCoordRange promptRange = [self safeCoordRange:VT100GridCoordRangeFromAbsCoordRange(screenMark.promptRange, overflow)];
+            VT100GridCoordRange promptRange = [self safeCoordRange:VT100GridCoordRangeFromAbsCoordRange(screenMark.promptRange, overflow)];
+            // This is a cheap hack that will break with DWCs. I need a better way to make prompt range sane.
+            promptRange.start.y += promptRange.start.x / self.width;
+            promptRange.end.y += promptRange.start.x / self.width;
+            promptRange.start.x %= self.width;
+            promptRange.end.y += promptRange.end.x / self.width;
+            promptRange.end.x %= promptRange.end.x;
             if (promptRange.start.x >= 0) {
                 VT100GridCoordRange converted;
                 if ([self convertRange:promptRange
