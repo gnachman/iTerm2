@@ -7,7 +7,7 @@
 
 import Cocoa
 
-#if(MAC_OS_VERSION_26_0)
+#if compiler(>=6.2)
 fileprivate let kPSMMetalObjectCounterRadius: CGFloat = 7.0
 fileprivate let kPSMMetalCounterMinWidth: CGFloat = 20
 fileprivate let PSMTahoeTabStyleDebuggingEnabled: Bool = false
