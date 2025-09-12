@@ -782,7 +782,7 @@ extension PTYSession {
                     return
                 }
                 let sub = lines[args.startingLineNumber..<min(lines.count, args.startingLineNumber + args.numberOfLines)]
-                let combined = sub.joined(separator: "\n")
+                let combined = sub.joined(separator: "\n") + "\n\n[There are a total of \(lines.count) lines of text in this web page.]"
                 try? completion(combined, "Contents provided")
             case .failure(let error):
                 try? completion("The page could not be converted to markdown for reading: " + error.localizedDescription,
