@@ -6,7 +6,7 @@
 	<dict>
 		<key>Resources/Info.plist</key>
 		<data>
-		s0XYEeHVsXfQl0VszZtzDwpP/jE=
+		AlSrhFFWxjL/yh6lTbcqbADokbI=
 		</data>
 		<key>Resources/SearchableComboView.nib</key>
 		<data>
@@ -75,7 +75,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			22d/u9oj/Sc7QE2AoJAwXVs8DM8sFbyjDfjedpmJ4l8=
+			b7Ft4Ydns+4nFGGFRvIydrCwPmA/xSEF9rOK6xp73vs=
 			</data>
 		</dict>
 		<key>Modules/SearchableComboListView.swiftmodule/x86_64-apple-macos.abi.json</key>
@@ -110,7 +110,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			7qHJNcwRdhLPtA2GTJg179ZvTaC+EF1SFMxfo66fNp8=
+			pCiQv2TxWTec/mpUgl8+J/tIcJHGyZ3YJmOJ1oAfZJE=
 			</data>
 		</dict>
 		<key>Modules/module.modulemap</key>
@@ -124,7 +124,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			om5WCdy7sDCP7M53z7KulfNFJnl66DusLy1HDKypx8o=
+			RrFreMl7cJJ9daHBisgCcrHwbbUZ9MGjHkVtMlqH3wo=
 			</data>
 		</dict>
 		<key>Resources/SearchableComboView.nib</key>
