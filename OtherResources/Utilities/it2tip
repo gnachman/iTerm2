@@ -498,6 +498,35 @@ tips = [
         "body": "Reposition the Tip of the Day window conveniently on your screen, as it is now draggable."
         },
 
+    { "title": "AI Chat",
+        "body": "iTerm2 now has an AI Chat feature! Use \"Window > AI Chats\" or \"Edit > Explain Output with AI\". The assistant can interact with your terminal (with your permission) and explain command output, adding annotations right in the terminal."
+        },
+
+    { "title": "Web Browser Profiles",
+        "body": "You can configure a profile to be a web browser! In \"Settings > Profiles > General\", set \"Profile Type\" to \"Web Browser\". Key bindings, smart selection, and the password manager all work in browser sessions.",
+        "url": "https://iterm2.com/documentation-web.html"
+        },
+
+    { "title": "Adjacent Timestamps",
+        "body": "Timestamps can now be shown next to terminal content instead of overlapping. Configure it in \"Settings > Profiles > Session > Timestamps\". Right-click on any line and select \"Set Baseline for Relative Timestamps\" to see time elapsed between lines."
+        },
+
+    { "title": "Pretty-Print JSON",
+        "body": "Select a block of JSON text and choose \"Edit > Replace Selection > Replace with Pretty-Printed JSON\" to make it readable. Perfect for debugging API responses and log files."
+        },
+
+    { "title": "Command Palette",
+        "body": "Open Quickly (⇧⌘O) is now a command palette! Just type the name of a menu item to activate it."
+        },
+
+    { "title": "Click Paths in Shell Prompts",
+        "body": "Enable \"Settings > Profiles > Terminal > Click on a path in a shell prompt to open Navigator\" to navigate your filesystem by clicking on paths in your prompt. Requires Shell Integration."
+        },
+
+    { "title": "SSH File Browser",
+        "body": "When connected via SSH Integration, use \"Shell > ssh > Download Files\" to browse and download files from the remote host without opening a new connection. Files on SSH hosts also appear in file open/save dialogs!"
+        },
+
   ]
 
 

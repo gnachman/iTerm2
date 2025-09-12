@@ -1,0 +1,179 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+unset OS_ACTIVITY_DT_MODE
+
+if [ "$#" -eq 0 ]; then
+    ssh 2>&1 | sed -e 's/usage: ssh/usage: it2ssh/' >&2
+    exit 1
+fi
+
+function print_osc() {
+    if [[ $TERM == screen* ]]; then
+        printf "\033Ptmux;\033\033]"
+    else
+        printf "\033]"
+    fi
+}
+
+# More of the tmux workaround described above.
+function print_st() {
+    if [[ $TERM == screen* ]]; then
+        printf "\a\033\\"
+    else
+        printf "\a"
+    fi
+}
+
+mkdir -p ~/.ssh/controlmasters
+CONTROL_PATH="$HOME/.ssh/controlmasters/%r@%h:%p"
+
+if command -v base64 > /dev/null 2> /dev/null; then
+    base64_encode() { command base64 | command tr -d \\n\\r; }
+    base64_decode() { command base64 -d; }
+elif command -v b64encode > /dev/null 2> /dev/null; then
+    base64_encode() { command b64encode - | command sed '1d;$d' | command tr -d \\n\\r; }
+    base64_decode() { command fold -w 76 | command b64decode -r; }
+else
+    die "base64 executable not present on local host"
+fi
+
+eval_cmd=\''eval "$(echo "$0")"'\'
+
+SSH=${SSH:-/usr/bin/ssh}
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  TOKEN=""
+  for SOCKET in ~/.config/iterm2/sockets/secrets ~/.iterm2/sockets/secrets ~/.iterm2-1/sockets/secrets
+  do
+      [ -z "$TOKEN" ] && TOKEN=$(/usr/bin/nc -U $SOCKET || true)
+  done
+else
+  TOKEN="none"
+fi
+
+
+if [ ! -d ~/.ssh ]; then
+    mkdir ~/.ssh
+    chmod 700 ~/.ssh
+fi
+
+
+requote() {
+  printf "%q " "$@"
+}
+
+SSHARGS=$(requote "$@" | base64_encode)
+UNIQUEID=${RANDOM}${RANDOM}
+
+USER_ARGS=()
+HOSTNAME=""
+COMMAND=()
+ARGS_ALLOWED=1
+EXPECT_VALUE=0
+BOOLEAN_ARGS=$("$SSH" 2>&1 | tr -d '\n' | sed -e 's/^[^[]*\[-*\([a-z0-9A-Z]*\).*/\1/' || true)
+HAS_T=0
+
+while [[ $# -gt 0 ]]; do
+    if [[ $EXPECT_VALUE == 1 ]]; then
+        USER_ARGS+=("$1")
+        EXPECT_VALUE=0
+    elif [[ $ARGS_ALLOWED == 0 ]]; then
+        if [[ $HOSTNAME == "" ]]; then
+            HOSTNAME="$1"
+        else
+            COMMAND+=("$1")
+        fi
+    else
+        case $1 in
+            -N|-n|-f|-G)
+                echo "it2sh is meant for interactive use via SSH only and is not compatible with the $1 argument."
+                exit 1
+                ;;
+            -t)
+                HAS_T=1
+                USER_ARGS+=("-t")
+                ;;
+            -*)
+                LETTER="${1:1}"
+                if (printf %s "$BOOLEAN_ARGS" | grep "$LETTER"  > /dev/null 2>&1)
+                then
+                    EXPECT_VALUE=0
+                else
+                    EXPECT_VALUE=1
+                fi
+                USER_ARGS+=("$1")
+                ;;
+            --)
+                ARGS_ALLOWED=0
+                ;;
+            *)
+                ARGS_ALLOWED=0
+                HOSTNAME="$1"
+                ;;
+        esac
+    fi
+    shift
+done
+
+if [[ $HAS_T == 0 ]]; then
+    USER_ARGS+=("-t")
+fi
+
+# Here we do /usr/bin/env sh rather than exec sh to avoid adding this command
+# to the login shell's history.
+ENCODED_BA=$(printf %s "$BOOLEAN_ARGS" | base64_encode)
+
+# Send arguments to conductor.sh
+myenv=$(command env | base64_encode)
+osc=$(print_osc)
+st=$(print_st)
+intro=$(
+printf "%s" "$osc"
+printf "1337;Env=report=all:"
+printf "%s" "$myenv"
+printf "%s" "$st"
+
+printf "%s" "$osc"
+printf "1337;it2ssh=$TOKEN ${UNIQUEID} $ENCODED_BA $SSHARGS"
+printf "%s" "$st"
+
+printf "%s" "$osc"
+printf "1337;SendConductor=v=3"
+printf "%s" "$st"
+)
+
+if [[ $TERM == screen* ]]; then
+    st='\a\033\\'
+else
+    st='\a'
+fi
+send_conductor='printf "%s '"$intro"'"'
+
+# Run a command on the remote host that instructs iTerm2 to send a script, then reads the script and executes it.
+# I tried many ways to concatenate s and l and this is the only one that works on both Ubuntu 18 and Ubuntu 20.
+esc=$(printf "\033")
+sanitized="stty -echo; $send_conductor"';s="";IFS=""; while read -r l;do [ "$l" = "-- BEGIN CONDUCTOR --" ]&&break; done; while read -r l; do [ "$l" = "'$esc'" ]&&break; s=$(printf "%s\n%s" "$s" "$l"); done; unset IFS; s=$(echo "$s" | { command -v base64 > /dev/null 2> /dev/null && command base64 -d || { command -v b64encode > /dev/null 2> /dev/null && command fold -w 76 | command b64decode -r; } || echo "echo base64 not available on remote host"; }); eval "$s"'
+
+# If ssh gets a signal, let it2ssh keep running.
+set +e
+
+$SSH \
+"${USER_ARGS[@]}" \
+-- \
+"$HOSTNAME" \
+exec \
+sh \
+-c \
+"$eval_cmd" \
+\'"$sanitized"\'
+
+print_osc
+printf "1337;EndSSH=%s" "${UNIQUEID}"
+print_st
+
+# If ssh dies after send_conductor is sent, we don't want conductor.sh to go to
+# the command line. Read until EndSSH causes a blank line to be sent.
+while read l; do
+    [ -z "$l" ] && break
+done
+

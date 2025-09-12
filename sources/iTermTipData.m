@@ -394,6 +394,28 @@
             @"0116": @{ kTipTitleKey: @"Draggable Tip Window",
                         kTipBodyKey: @"Reposition the Tip of the Day window conveniently on your screen, as it is now draggable." },
 
+            @"0117": @{ kTipTitleKey: @"AI Chat",
+                        kTipBodyKey: @"iTerm2 now has an AI Chat feature! Use “Window > AI Chats” or “Edit > Explain Output with AI”. The assistant can interact with your terminal (with your permission) and explain command output, adding annotations right in the terminal." },
+
+            @"0118": @{ kTipTitleKey: @"Web Browser Profiles",
+                        kTipBodyKey: @"You can configure a profile to be a web browser! In “Settings > Profiles > General”, set “Profile Type” to “Web Browser”. Key bindings, smart selection, and the password manager all work in browser sessions.",
+                        kTipUrlKey: @"https://iterm2.com/documentation-web.html" },
+
+            @"0119": @{ kTipTitleKey: @"Adjacent Timestamps",
+                        kTipBodyKey: @"Timestamps can now be shown next to terminal content instead of overlapping. Configure it in “Settings > Profiles > Session > Timestamps”. Right-click on any line and select “Set Baseline for Relative Timestamps” to see time elapsed between lines." },
+
+            @"0120": @{ kTipTitleKey: @"Pretty-Print JSON",
+                        kTipBodyKey: @"Select a block of JSON text and choose “Edit > Replace Selection > Replace with Pretty-Printed JSON” to make it readable. Perfect for debugging API responses and log files." },
+
+            @"0121": @{ kTipTitleKey: @"Command Palette",
+                        kTipBodyKey: @"Open Quickly (⇧⌘O) is now a command palette! Just type the name of a menu item to activate it." },
+
+            @"0122": @{ kTipTitleKey: @"Click Paths in Shell Prompts",
+                        kTipBodyKey: @"Enable “Settings > Profiles > Terminal > Click on a path in a shell prompt to open Navigator” to navigate your filesystem by clicking on paths in your prompt. Requires Shell Integration." },
+
+            @"0123": @{ kTipTitleKey: @"SSH File Browser",
+                        kTipBodyKey: @"When connected via SSH Integration, use “Shell > ssh > Download Files” to browse and download files from the remote host without opening a new connection. Files on SSH hosts also appear in file open/save dialogs!" },
+
 // IMPORTANT: When updating this, also update it2tip
             };
 }
