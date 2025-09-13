@@ -68,7 +68,8 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 
     IBOutlet iTermKeyMappingViewController *_keyMappingViewController;
     IBOutlet NSView *_keyMappingView;
-    
+    IBOutlet NSView *_remapModifiersGlobally;
+
     // Hotkey
     IBOutlet NSButton *_hotkeyEnabled;
     IBOutlet NSTextField *_shortcutOverloaded;
@@ -232,6 +233,12 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
                            key:kPreferenceKeyKeyboardLocale
                    displayName:@"Keyboard locale"
                           type:kPreferenceInfoTypeStringPopup];
+
+    [self defineControl:_remapModifiersGlobally
+                    key:kPreferenceKeyRemapModifiersGlobally
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
     [self rebuildKeyboardLocales];
     [self updateKeyboardLocaleEnabled];
 

@@ -152,7 +152,7 @@ NSString *const kPreferenceKeyVisualIndicatorForEsc = @"VisualIndicatorForEsc";
 NSString *const kPreferenceKeyLanguageAgnosticKeyBindings = @"LanguageAgnosticKeyBindings";
 NSString *const kPreferenceKeyForceKeyboard = @"ForceKeyboard";  // bool
 NSString *const kPreferenceKeyKeyboardLocale = @"KeyboardLocale";  // string
-
+NSString *const kPreferenceKeyRemapModifiersGlobally = @"RemapModifiersGlobally";  // bool
 NSString *const kPreferenceKeyHotKeyTogglesWindow_Deprecated = @"HotKeyTogglesWindow";  // deprecated
 NSString *const kPreferenceKeyHotkeyProfileGuid_Deprecated = @"HotKeyBookmark";  // deprecated
 NSString *const kPreferenceKeyHotkeyAutoHides_Deprecated = @"HotkeyAutoHides";  // deprecated
@@ -591,6 +591,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeySwitchWindowModifier: @(kPreferencesModifierTagCommandAndOption),
                   kPreferenceKeyEmulateUSKeyboard: @NO,
                   kPreferenceKeyHotkeyEnabled: @NO,
+                  kPreferenceKeyRemapModifiersGlobally: @YES,
                   kPreferenceKeyForceKeyboard: @NO,
                   kPreferenceKeyHotKeyCode: @0,
                   kPreferenceKeyHotkeyCharacter: @0,

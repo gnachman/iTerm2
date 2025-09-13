@@ -258,6 +258,7 @@ extern NSString *const kPreferenceKeyHotkeyModifiers;
 extern NSString *const kPreferenceKeyEnableHapticFeedbackForEsc;
 extern NSString *const kPreferenceKeyEnableSoundForEsc;
 extern NSString *const kPreferenceKeyVisualIndicatorForEsc;
+extern NSString *const kPreferenceKeyRemapModifiersGlobally;
 
 extern NSString *const kPreferenceKeyLanguageAgnosticKeyBindings;
 

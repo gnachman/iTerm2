@@ -1442,6 +1442,7 @@ CA
                 <outlet property="_leftControlButtonLabel" destination="3673" id="vOw-Wy-kUC"/>
                 <outlet property="_leftOptionButton" destination="4383" id="kbJ-KW-Hkc"/>
                 <outlet property="_leftOptionButtonLabel" destination="3689" id="DKy-sQ-KLh"/>
+                <outlet property="_remapModifiersGlobally" destination="C3A-2m-fqE" id="Tle-Cv-gbH"/>
                 <outlet property="_resetRemappingButton" destination="zye-UW-rZn" id="Qrc-2l-4Bb"/>
                 <outlet property="_rightCommandButton" destination="4410" id="xeL-Ll-jEw"/>
                 <outlet property="_rightCommandButtonLabel" destination="4335" id="B5y-Bj-9pM"/>
@@ -8832,11 +8833,11 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hJ4-9y-ajU" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="231" y="173" width="438" height="240"/>
+                                        <rect key="frame" x="231" y="140" width="438" height="273"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3673">
-                                                <rect key="frame" x="34" y="217" width="184" height="16"/>
+                                                <rect key="frame" x="34" y="250" width="184" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap left control (⌃) key to:" id="3674">
                                                     <font key="font" metaFont="system"/>
@@ -8845,7 +8846,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4392">
-                                                <rect key="frame" x="221" y="133" width="163" height="26"/>
+                                                <rect key="frame" x="221" y="166" width="163" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="⌃ Left Control" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="11" imageScaling="proportionallyDown" inset="2" selectedItem="F2b-XO-En1" id="4401">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -8878,7 +8879,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </popUpButton>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4410">
-                                                <rect key="frame" x="221" y="82" width="163" height="26"/>
+                                                <rect key="frame" x="221" y="115" width="163" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="⌃ Left Control" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="11" imageScaling="proportionallyDown" inset="2" selectedItem="v6H-Ww-jJc" id="4411">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -8911,7 +8912,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </popUpButton>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3677">
-                                                <rect key="frame" x="16" y="115" width="202" height="16"/>
+                                                <rect key="frame" x="16" y="148" width="202" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap left command (⌘) key to:" id="3678">
                                                     <font key="font" metaFont="system"/>
@@ -8920,7 +8921,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3689">
-                                                <rect key="frame" x="36" y="165" width="182" height="16"/>
+                                                <rect key="frame" x="36" y="198" width="182" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap left option (⌥) key to:" id="3690">
                                                     <font key="font" metaFont="system"/>
@@ -8929,7 +8930,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4393">
-                                                <rect key="frame" x="221" y="108" width="163" height="26"/>
+                                                <rect key="frame" x="221" y="141" width="163" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="⌃ Left Control" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="11" imageScaling="proportionallyDown" inset="2" selectedItem="e5D-gm-JgT" id="4394">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -8961,7 +8962,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </popUpButton>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4383">
-                                                <rect key="frame" x="221" y="158" width="163" height="26"/>
+                                                <rect key="frame" x="221" y="191" width="163" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="⌃ Left Control" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="11" imageScaling="proportionallyDown" inset="2" selectedItem="QwO-Ii-G0z" id="4384">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -8994,7 +8995,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </popUpButton>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4335">
-                                                <rect key="frame" x="8" y="89" width="210" height="16"/>
+                                                <rect key="frame" x="8" y="122" width="210" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap right command (⌘) key to:" id="4343">
                                                     <font key="font" metaFont="system"/>
@@ -9003,7 +9004,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0ov-Pi-2Zd">
-                                                <rect key="frame" x="221" y="56" width="163" height="26"/>
+                                                <rect key="frame" x="221" y="89" width="163" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="⌃ Left Control" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="11" imageScaling="proportionallyDown" inset="2" selectedItem="dI5-Wy-HCI" id="98N-8u-4vU">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -9035,7 +9036,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </popUpButton>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oJW-wG-mC7">
-                                                <rect key="frame" x="112" y="63" width="106" height="16"/>
+                                                <rect key="frame" x="112" y="96" width="106" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap fn key to:" id="mBL-Vc-973">
                                                     <font key="font" metaFont="system"/>
@@ -9044,7 +9045,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3675">
-                                                <rect key="frame" x="28" y="140" width="190" height="16"/>
+                                                <rect key="frame" x="28" y="173" width="190" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap right option (⌥) key to:" id="3676">
                                                     <font key="font" metaFont="system"/>
@@ -9053,7 +9054,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4237">
-                                                <rect key="frame" x="221" y="210" width="163" height="26"/>
+                                                <rect key="frame" x="221" y="243" width="163" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="⌃ Left Control" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="11" imageScaling="proportionallyDown" inset="2" selectedItem="4242" id="4238">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -9086,7 +9087,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </popUpButton>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="xE0-OH-XJn">
-                                                <rect key="frame" x="26" y="191" width="193" height="16"/>
+                                                <rect key="frame" x="26" y="224" width="193" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap right control (⌃) key to:" id="61Z-aW-7Yn">
                                                     <font key="font" metaFont="system"/>
@@ -9095,7 +9096,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vsr-4J-ze6">
-                                                <rect key="frame" x="222" y="184" width="163" height="26"/>
+                                                <rect key="frame" x="222" y="217" width="163" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="⌃ Left Control" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="11" imageScaling="proportionallyDown" inset="2" selectedItem="r2j-sf-PTh" id="KwK-je-AUB">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -9128,7 +9129,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </popUpButton>
                                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zye-UW-rZn">
-                                                <rect key="frame" x="151" y="13" width="138" height="32"/>
+                                                <rect key="frame" x="151" y="51" width="138" height="32"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="push" title="Reset to Defaults" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="wh0-TX-q91">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -9137,6 +9138,30 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 <connections>
                                                     <action selector="resetModifierRemapping:" target="8TE-cq-5cL" id="6X7-ok-Tum"/>
                                                 </connections>
+                                            </button>
+                                            <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="C3A-2m-fqE">
+                                                <rect key="frame" x="130" y="21" width="179" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="check" title="Remap modifiers globally" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="QcA-jP-3dR">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="8TE-cq-5cL" id="XZO-Ee-uO0"/>
+                                                </connections>
+                                            </button>
+                                            <button horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1nd-Ff-Ldn" customClass="iTermPopoverHelpButton">
+                                                <rect key="frame" x="318" y="16" width="25" height="25"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="1fj-Dn-eBd">
+                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <userDefinedRuntimeAttributes>
+                                                    <userDefinedRuntimeAttribute type="string" keyPath="helpText">
+                                                        <mutableString key="value">When enabled, modifiers are remapped in a way that affects system shortcuts and third-party apps that receive keystrokes in the background. For example, if you remap the  ⌥ to ⌘ and **Remap modifiers globally** is enabled then you could press ⌥-Tab to switch apps.</mutableString>
+                                                    </userDefinedRuntimeAttribute>
+                                                </userDefinedRuntimeAttributes>
                                             </button>
                                         </subviews>
                                     </customView>
