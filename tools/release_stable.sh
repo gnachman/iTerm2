@@ -131,8 +131,8 @@ ORIG_DIR=`pwd`
 
 
 echo "Build deployment release"
-make clean
-make release
+#make clean
+#make release
 
 BUILDTYPE=Deployment
 
@@ -147,5 +147,4 @@ git push origin HEAD
 git push --tags
 cd $SVNDIR
 git commit -am v${VERSION}
-git push origin HEAD
 
