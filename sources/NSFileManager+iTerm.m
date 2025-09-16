@@ -501,5 +501,11 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     dispatch_source_cancel(source);
 }
 
+- (int)it_shmOpen:(NSString *)name
+            oflag:(int)oflag
+             mode:(mode_t)mode {
+    return shm_open(name.UTF8String, oflag, mode);
+}
+
 @end
 

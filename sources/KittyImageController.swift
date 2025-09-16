@@ -7,6 +7,7 @@
 
 import Foundation
 import Compression
+import Darwin
 import zlib
 
 @objc(iTermKittyImageControllerDelegate)
@@ -372,6 +373,12 @@ class KittyImageController: NSObject {
         guard let data = decodeDirectTransmission(command, payload: payload) else {
             return "could not decode payload"
         }
+        return handle(command: command, data: data, query: query)
+    }
+
+    private func handle(command: KittyImageCommand.ImageTransmission,
+                        data: Data,
+                        query: Bool) -> String? {
         let image = switch command.format {
         case .raw24:
             image(data: data, bpp: 3, width: command.width, height: command.height)
@@ -411,7 +418,7 @@ class KittyImageController: NSObject {
         return rgbaData
     }
 
-    private func image(data: Data, bpp: UInt, width: UInt, height: UInt) -> iTermImage? {
+    private func image(data rawData: Data, bpp: UInt, width: UInt, height: UInt) -> iTermImage? {
         guard bpp == 3 || bpp == 4 else {
             return nil
         }
@@ -420,9 +427,11 @@ class KittyImageController: NSObject {
         let bytesPerRow = Int(clamping: width) * bytesPerPixel
         let unpaddedBytes = Int(clamping: bpp) * Int(clamping: width) * Int(clamping: height)
 
-        guard data.count == unpaddedBytes else {
+        guard rawData.count >= unpaddedBytes else {
             return nil
         }
+        var data = rawData
+        data.count = unpaddedBytes
 
         let colorSpace = CGColorSpace(name: CGColorSpace.sRGB)!
         let bitmapInfo: CGBitmapInfo = [.byteOrder32Big, CGBitmapInfo(rawValue: CGImageAlphaInfo.last.rawValue)]
@@ -527,21 +536,124 @@ class KittyImageController: NSObject {
     func executeTransmitFile(_ command: KittyImageCommand.ImageTransmission,
                              payload: String,
                              query: Bool) -> String? {
-        return "EBADF:Unimplemented"  // TODO
+        let fileURL = URL(fileURLWithPath: payload.base64Decoded ?? "").resolvingSymlinksInPath().standardizedFileURL.absoluteURL
+        return handle(command: command, fileURL: fileURL, query: query)
     }
 
     func executeTransmitTemporaryFile(_ command: KittyImageCommand.ImageTransmission,
                                       payload: String,
                                       query: Bool) -> String? {
-        return "EBADF:Unimplemented"  // TODO
+        let tempPath = FileManager.default.temporaryDirectory.resolvingSymlinksInPath().standardizedFileURL.path
+        let fileURL = URL(fileURLWithPath: payload.base64Decoded ?? "").resolvingSymlinksInPath().standardizedFileURL.absoluteURL
+        if !fileURL.path.hasPrefix("/tmp/") && !fileURL.path.hasPrefix(tempPath) {
+            return "EBADF:Invalid filename"
+        }
+        guard fileURL.path.contains("tty-graphics-protocol") else {
+            return "EBADF:Bad filename"
+        }
+        defer {
+            try? FileManager.default.removeItem(at: fileURL)
+        }
+        return handle(command: command, fileURL: fileURL, query: query)
+    }
+
+    private func filenameIsSafe(fileURL: URL) -> Bool {
+        let sensitivePatterns = [
+            "/dev/",
+            "/System/",
+            "/private/var/db/",
+            "/private/etc/",
+            "/private/var/root/",
+            "/Library/Keychains/",
+            "/.ssh/"
+        ]
+        return !sensitivePatterns.anySatisfies({ fileURL.path.contains($0) })
+    }
+
+    private func handle(command: KittyImageCommand.ImageTransmission,
+                        fileURL: URL,
+                        query: Bool) -> String? {
+        do {
+            let values = try fileURL.resourceValues(forKeys: [.isRegularFileKey])
+            guard values.isRegularFile == true else {
+                return "EBADF:Not a file"
+            }
+            guard filenameIsSafe(fileURL: fileURL) else {
+                return "EBADF:Invalid path"
+            }
+            let content = try Data(contentsOf: fileURL)
+            return handle(command: command, data: content, query: query)
+        } catch {
+            return "EBADF:\(error.localizedDescription)"
+        }
     }
 
     func executeTransmitSharedMemory(_ command: KittyImageCommand.ImageTransmission,
                                      payload: String,
                                      query: Bool) -> String? {
-        return "EBADF:Unimplemented"  // TODO
+        do {
+            guard let name = payload.base64Decoded else {
+                return "EBADF:Invalid name"
+            }
+            let data = try readPOSIXSharedMemory(named: name)
+            return handle(command: command, data: data, query: query)
+        } catch {
+            return "EBADF:\(error.localizedDescription)"
+        }
     }
 
+    /// Reads a POSIX shared memory object and then unlinks and closes it.
+    /// - Parameter name: The shm object name, with or without a leading "/".
+    /// - Returns: The contents as `Data`.
+    /// - Throws: A POSIX error if any step fails.
+    func readPOSIXSharedMemory(named name: String) throws -> Data {
+        let fd = FileManager.default.it_shmOpen(name, oflag: O_RDONLY, mode: 0)
+        if fd == -1 {
+            throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EINVAL)
+        }
+
+        var unlinkDone = false
+        defer {
+            if !unlinkDone {
+                _ = shm_unlink(name)
+            }
+            _ = close(fd)
+        }
+
+        var st = stat()
+        if fstat(fd, &st) == -1 {
+            let err = errno
+            _ = shm_unlink(name)
+            unlinkDone = true
+            throw POSIXError(POSIXErrorCode(rawValue: err) ?? .EINVAL)
+        }
+
+        let size = Int(st.st_size)
+        if size == 0 {
+            _ = shm_unlink(name)
+            unlinkDone = true
+            return Data()
+        }
+
+        let ptr = mmap(nil, size, PROT_READ, MAP_SHARED, fd, 0)
+        if ptr == MAP_FAILED {
+            let err = errno
+            _ = shm_unlink(name)
+            unlinkDone = true
+            throw POSIXError(POSIXErrorCode(rawValue: err) ?? .EINVAL)
+        }
+
+        defer {
+            _ = munmap(ptr, size)
+        }
+
+        let data = Data(bytes: ptr!, count: size)
+
+        _ = shm_unlink(name)
+        unlinkDone = true
+
+        return data
+    }
     func respondToTransmit(_ imageTransmission: KittyImageCommand.ImageTransmission,
                             display: KittyImageCommand.ImageDisplay?,
                             error: String?) {
@@ -550,11 +662,9 @@ class KittyImageController: NSObject {
             return
         }
         var args = [String]()
+        args.append("i=\(imageTransmission.identifier)")
         if imageTransmission.imageNumber > 0 {
-            args.append("i=\(imageTransmission.identifier)")
             args.append("I=\(imageTransmission.imageNumber)")
-        } else if error != nil {
-            args.append("i=\(imageTransmission.identifier)")
         }
         if let p = display?.placement {
             args.append("p=\(p)")
@@ -562,6 +672,7 @@ class KittyImageController: NSObject {
         let semi = args.isEmpty ? "" : ";"
         let payload = args.joined(separator: ",") + semi + (error ?? "OK")
         let message = "\u{1B}_G\(payload)\u{1B}\\"
+
         switch imageTransmission.verbosity {
         case .normal:
             delegate?.kittyImageControllerReport(message: message)
