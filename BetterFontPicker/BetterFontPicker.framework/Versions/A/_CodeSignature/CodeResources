@@ -18,7 +18,7 @@
 		</data>
 		<key>Resources/Info.plist</key>
 		<data>
-		qWT8CQLiVAc5+w/DHRSKQEyOBI0=
+		myprmWr5D6sASsx4aDLtwBgZmyM=
 		</data>
 		<key>Resources/MainViewController.nib</key>
 		<data>
@@ -49,21 +49,21 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			XhXNJFSgJqDUM+uwTbivjG28ySf9vH5QQguRpIkGcwk=
+			KcH5pSD2oL8eFug6FR15aer8kbiUp6fxjXGeoJaAKYc=
 			</data>
 		</dict>
 		<key>Modules/BetterFontPicker.swiftmodule/Project/x86_64-apple-macos.swiftsourceinfo</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			g3YvUuIXlXtVWZX3IrG6wZNvwu4D1M5tCd3tSMMdItU=
+			xtmPZ7krBtT6D1/+YO4EBD+tgnJurw+tojljvY+G0eE=
 			</data>
 		</dict>
 		<key>Modules/BetterFontPicker.swiftmodule/arm64-apple-macos.abi.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			T/oEqPRBEveA2re30vN+wuDcGES9SSm+AIfcc2wEWKM=
+			hkV1LfAwrtq0aMebJqoje7tmmCjSXJ4V/Win64apJn8=
 			</data>
 		</dict>
 		<key>Modules/BetterFontPicker.swiftmodule/arm64-apple-macos.private.swiftinterface</key>
@@ -91,14 +91,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			50Aj/mh9JKuDi3tqhyWTGT+ZPVNdSnJ2i203BH9Frsk=
+			c2wUv6FNiYU5ZRI9EFiLTpYq8TD8Wdl38C+828v0FhM=
 			</data>
 		</dict>
 		<key>Modules/BetterFontPicker.swiftmodule/x86_64-apple-macos.abi.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			T/oEqPRBEveA2re30vN+wuDcGES9SSm+AIfcc2wEWKM=
+			hkV1LfAwrtq0aMebJqoje7tmmCjSXJ4V/Win64apJn8=
 			</data>
 		</dict>
 		<key>Modules/BetterFontPicker.swiftmodule/x86_64-apple-macos.private.swiftinterface</key>
@@ -126,7 +126,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			Vtcy+ZPw7z2LnulpEA+pN3aKRHp2P3F+ugSZBVX0BVo=
+			P1VnzFvg233UuBZv2CdQ5QtFTWmR3kRgmyOJUc/VEF4=
 			</data>
 		</dict>
 		<key>Modules/module.modulemap</key>
@@ -161,7 +161,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			UvfO7pZ3LLU+gsLuI7BVzqEwcNHFLjDherdwS8olxVU=
+			RViG/4GwThIjL+RTmgoaEWOOHdVD3MiDeVD9tQrwupY=
 			</data>
 		</dict>
 		<key>Resources/MainViewController.nib</key>

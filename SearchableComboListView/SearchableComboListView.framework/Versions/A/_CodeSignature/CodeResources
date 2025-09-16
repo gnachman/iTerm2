@@ -6,7 +6,7 @@
 	<dict>
 		<key>Resources/Info.plist</key>
 		<data>
-		AlSrhFFWxjL/yh6lTbcqbADokbI=
+		ymFm8pPmErGea4761rx1WkWcHeI=
 		</data>
 		<key>Resources/SearchableComboView.nib</key>
 		<data>
@@ -33,21 +33,21 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			CXpxvm48GFbKGAHtkrZ0QyZNTgQF9YrQ6rGwMf9P7hE=
+			KGY6HEfpGmYGE7WBDI9yO1rdz20bDurFP9BigWYyGak=
 			</data>
 		</dict>
 		<key>Modules/SearchableComboListView.swiftmodule/Project/x86_64-apple-macos.swiftsourceinfo</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			f878ICFng/fL2WL+5F61m77mEUWVkQv+EIHDxYfyyOM=
+			nJDUJoxrPEx6X3kGyouwZxzZTgaL5YE9nzPHr4sHO0w=
 			</data>
 		</dict>
 		<key>Modules/SearchableComboListView.swiftmodule/arm64-apple-macos.abi.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			xBxSiDEp75CURBF/PXVWkpU5Mo1KRTLGIcdm0Vtq/8k=
+			xIm3GeI5Ncz+OIMPnIfHXuUb9ZqubIfpGOsWMqnPCkc=
 			</data>
 		</dict>
 		<key>Modules/SearchableComboListView.swiftmodule/arm64-apple-macos.private.swiftinterface</key>
@@ -75,14 +75,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			b7Ft4Ydns+4nFGGFRvIydrCwPmA/xSEF9rOK6xp73vs=
+			F98bb9TK2nUBd2iRnu0rn5opXcjomMvIKjvffdybqyo=
 			</data>
 		</dict>
 		<key>Modules/SearchableComboListView.swiftmodule/x86_64-apple-macos.abi.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			xBxSiDEp75CURBF/PXVWkpU5Mo1KRTLGIcdm0Vtq/8k=
+			xIm3GeI5Ncz+OIMPnIfHXuUb9ZqubIfpGOsWMqnPCkc=
 			</data>
 		</dict>
 		<key>Modules/SearchableComboListView.swiftmodule/x86_64-apple-macos.private.swiftinterface</key>
@@ -110,7 +110,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			pCiQv2TxWTec/mpUgl8+J/tIcJHGyZ3YJmOJ1oAfZJE=
+			ttL481P6gJmyeqCGb8PAMOgtM/G3zPgwODAMn72wuoE=
 			</data>
 		</dict>
 		<key>Modules/module.modulemap</key>
@@ -124,7 +124,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			RrFreMl7cJJ9daHBisgCcrHwbbUZ9MGjHkVtMlqH3wo=
+			OxW+BfT6a1FhTgHMKfJ+/leziNL1HYdKg9+LXHlPEGs=
 			</data>
 		</dict>
 		<key>Resources/SearchableComboView.nib</key>

@@ -6,7 +6,7 @@
 	<dict>
 		<key>Resources/Info.plist</key>
 		<data>
-		wfl4AKYajt7RyLPsEOQZ/FIps5A=
+		N1oE1cVopIdofCDlFLEwZMirTfg=
 		</data>
 	</dict>
 	<key>files2</key>
@@ -22,14 +22,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			5PULhmQACwSSuh6Prf0ep6N5yRbs1oU1mNw8kIeA2CQ=
+			/6QRtsYQvn3lpHlWWQYsVQ+oW6B6ahhvVWlPrJFtCcQ=
 			</data>
 		</dict>
 		<key>Modules/SwiftyMarkdown.swiftmodule/Project/x86_64-apple-macos.swiftsourceinfo</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			mnGZ+IFbbHMssfKdTr7Xeq1AOjBoTpowMmQMBEhyIpI=
+			ZRSjhShKXTmDtamBhHlClT6YunoX2na2x43QSGTS9Oc=
 			</data>
 		</dict>
 		<key>Modules/SwiftyMarkdown.swiftmodule/arm64-apple-macos.abi.json</key>
@@ -50,7 +50,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			SqRFgvxeo35IkIdJxFir3uuPZRJvAtwz+xeXEDGGjMw=
+			iuh4BismAnqeT+x7TxNctxZHJhB4OiMHeKXd3zUFb+c=
 			</data>
 		</dict>
 		<key>Modules/SwiftyMarkdown.swiftmodule/x86_64-apple-macos.abi.json</key>
@@ -71,14 +71,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			Uip+lreSlS55beP1CTUSDMILZB7bFLolDym4ACfJscw=
+			6p5FKQ0anQ5PS0ZNmD6ZWdDBfi4tFBuF72reYKq8oTY=
 			</data>
 		</dict>
 		<key>Resources/Info.plist</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			OpGqW6E+iFLrbdA6ESjZl0AdIp+9rlh9sBvJAwMy6a0=
+			2qtwSCQhiuLSP1YbFIzBMhAFZJqRnj/8u6rEb+9DABU=
 			</data>
 		</dict>
 	</dict>
