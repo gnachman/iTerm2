@@ -136,7 +136,7 @@ echo "Build deployment release"
 
 BUILDTYPE=Deployment
 
-Build $BUILDTYPE "" "OS 10.15+" "This is the recommended build for most users." "" "--deep"
+Build $BUILDTYPE "" "macOS 12.4+" "This is the recommended build for most users." "" "--deep"
 
 git checkout -- version.txt
 #set -x
