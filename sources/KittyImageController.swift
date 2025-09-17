@@ -523,7 +523,7 @@ class KittyImageController: NSObject {
     }
 
     private func decompressAndDecode(_ payload: String) -> Data? {
-        guard let compressed = Data(base64Encoded: payload) else {
+        guard let compressed = payload.base64DecodedData else {
             return nil
         }
         return inflate(data: compressed)
