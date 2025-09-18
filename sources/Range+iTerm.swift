@@ -7,10 +7,14 @@
 
 extension ClosedRange where Bound: Strideable, Bound.Stride: SignedInteger {
     init?(_ range: Range<Bound>) {
-        if range.isEmpty {
+        guard !range.isEmpty, range.upperBound > range.lowerBound else {
             return nil
         }
-        self = range.lowerBound...(range.upperBound.advanced(by: -1))
+        let inclusiveUpperBound = range.upperBound.advanced(by: -1)
+        guard inclusiveUpperBound >= range.lowerBound else {
+            return nil
+        }
+        self = range.lowerBound...inclusiveUpperBound
     }
 
     func clamping(_ value: Bound) -> Bound {
