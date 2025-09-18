@@ -255,7 +255,7 @@ private extension InstantReplayMovieBuilder {
             let availableContent = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
             
             guard let window = view.window,
-                  let scWindow = availableContent.windows.first(where: { $0.windowID == CGWindowID(window.windowNumber) }) else {
+                  let scWindow = availableContent.windows.first(where: { $0.windowID == CGWindowID(exactly: window.windowNumber) }) else {
                 DLog("Could not find window for screen capture")
                 return
             }
