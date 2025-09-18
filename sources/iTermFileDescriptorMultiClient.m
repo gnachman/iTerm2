@@ -842,8 +842,25 @@ static NSString *iTermMultiServerStringForMessageFromClient(iTermMultiServerClie
     if ([self shouldCopyServerTo:desiredPath]) {
         [self deleteDisusedServerBinaries];
         [fileManager removeItemAtPath:desiredPath error:nil];
-        
+
         NSString *sourcePath = [self pathToServerInBundle];
+
+        // Check if the source file exists in the bundle
+        if (!sourcePath || ![fileManager fileExistsAtPath:sourcePath]) {
+            dispatch_sync(dispatch_get_main_queue(), ^{
+                NSAlert *alert = [[NSAlert alloc] init];
+                alert.messageText = @"Required File Missing";
+                alert.informativeText = @"The iTermServer executable is missing from the application bundle. This indicates iTerm2 is corrupted or incomplete. Please reinstall iTerm2 from the official website.";
+                alert.alertStyle = NSAlertStyleCritical;
+                [alert addButtonWithTitle:@"Quit"];
+                [alert runModal];
+
+                // Terminate the application
+                [[NSApplication sharedApplication] terminate:nil];
+            });
+            return nil;
+        }
+
         NSError *error = nil;
         [fileManager copyItemAtPath:sourcePath
                              toPath:desiredPath
