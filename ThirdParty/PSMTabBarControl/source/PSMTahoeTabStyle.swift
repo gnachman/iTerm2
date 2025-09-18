@@ -1266,8 +1266,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         var image: NSImage
         var priority: Int
         var gravity: Gravity
-        
-        var sizingMode: SizingMode { .fixed(image.size.width) }
+        var preferredWidth: CGFloat?
+
+        var sizingMode: SizingMode { .fixed(preferredWidth ?? image.size.width) }
         var draw: (ResolvedLayout) -> ()
         static func == (lhs: ImageLO, rhs: ImageLO) -> Bool {
             lhs.name == rhs.name
@@ -1404,6 +1405,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                 var rect = resolved.frame
                 rect.origin.y = cell.frame.minY + (cell.frame.height - kPSMTabBarIconWidth) / 2.0 + orientationShift
                 rect.size.height = kPSMTabBarIconWidth
+                rect.size.width = kPSMTabBarIconWidth
                 image.draw(in: rect,
                              from: .zero,
                              operation: .sourceOver,
@@ -1413,7 +1415,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             }
 
             objects.append(GroupLO(name: Name.graphic.rawValue, priority: Priority.graphic.rawValue, gravity: orientation == .horizontalOrientation ? .center : .left, members: [
-                ImageLO(name: "Graphic", image: image, priority: Priority.required.rawValue, gravity: .left, draw: drawGraphic),
+                ImageLO(name: "Graphic", image: image, priority: Priority.required.rawValue, gravity: .left, preferredWidth: kPSMTabBarIconWidth, draw: drawGraphic),
                 FixedSpacerLO(name: Name.preLabelSpace.rawValue, width: 2.0, priority: Priority.required.rawValue, gravity: .left)
             ]))
         }
