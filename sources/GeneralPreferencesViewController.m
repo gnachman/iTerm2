@@ -728,7 +728,7 @@ enum {
     };
     info.syntheticSetter = ^(id newValue) {
         NSString *key = [weakSelf keyForCurrentlySelectedAIPrompt];
-        [iTermPreferences setString:newValue forKey:key];
+        [iTermPreferences setWithoutSideEffectsObject:newValue forKey:key];
     };
 
     [AIMetadata.instance enumerateModels:^(NSString * _Nonnull name, NSInteger context, NSString *url) {

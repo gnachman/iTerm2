@@ -747,6 +747,16 @@ static NSString *sPreviousVersion;
     return object;
 }
 
++ (void)setWithoutSideEffectsObject:(id)object forKey:(NSString *)key {
+    if (object) {
+        DLog(@"Set NSUserDefaults[%@] <- %@", key, object);
+        [[NSUserDefaults standardUserDefaults] setObject:object forKey:key];
+    } else {
+        DLog(@"Delete %@ from NSUserDefaults", key);
+        [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
+    }
+}
+
 + (void)setObject:(id)object forKey:(NSString *)key {
     DLog(@"setObject:%@ forKey:%@", object, key);
     NSArray *observers = gObservers[key];
@@ -761,13 +771,7 @@ static NSString *sPreviousVersion;
             observers = nil;
         }
     }
-    if (object) {
-        DLog(@"Set NSUserDefaults[%@] <- %@", key, object);
-        [[NSUserDefaults standardUserDefaults] setObject:object forKey:key];
-    } else {
-        DLog(@"Delete %@ from NSUserDefaults", key);
-        [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
-    }
+    [self setWithoutSideEffectsObject:object forKey:key];
 
     for (void (^block)(id, id) in observers) {
         block(before, object);

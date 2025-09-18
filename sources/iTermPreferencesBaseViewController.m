@@ -742,8 +742,10 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
             NSTextView *textView = [NSTextView castFrom:info.control];
             assert(textView != nil);
             NSString *string = [self stringForKey:info.key] ?: @"";
-            [textView.textStorage setAttributedString:[NSAttributedString attributedStringWithString:string
-                                                                                          attributes:textView.typingAttributes]];
+            if (![string isEqualToString:textView.textStorage.string]) {
+                [textView.textStorage setAttributedString:[NSAttributedString attributedStringWithString:string
+                                                                                              attributes:textView.typingAttributes]];
+            }
             break;
         }
 

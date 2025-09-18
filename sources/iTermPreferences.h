@@ -340,6 +340,8 @@ extern NSString *const iTermDefaultAIPrompt;
 + (void)setObject:(id)object forKey:(NSString *)key;
 + (NSObject *)objectForKey:(NSString *)key;
 
++ (void)setWithoutSideEffectsObject:(id)object forKey:(NSString *)key;
+
 + (BOOL)boolForKey:(NSString *)key;
 + (void)setBool:(BOOL)value forKey:(NSString *)key;
 
