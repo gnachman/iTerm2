@@ -90,11 +90,7 @@ final class InstantReplayMovieBuilder: NSObject {
         viewWindowObservation?.invalidate()
         frameObservations.forEach { $0.invalidate() }
         frameObservations.removeAll()
-        if let stream = self.stream {
-            Task {
-                try? await stream.stopCapture()
-            }
-        }
+        stream?.stopCapture { _ in }
     }
 }
 
