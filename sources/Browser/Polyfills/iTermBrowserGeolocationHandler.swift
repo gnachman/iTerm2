@@ -269,7 +269,7 @@ extension iTermBrowserGeolocationHandler {
         """
 
         do {
-            _ = try await webView.evaluateJavaScript(jsCode, contentWorld: .page)
+            _ = try await webView.safelyEvaluateJavaScript(iife(jsCode), contentWorld: .page)
         } catch {
             DLog("Error sending position success: \(error)")
         }
@@ -282,7 +282,7 @@ extension iTermBrowserGeolocationHandler {
         """
         
         do {
-            _ = try await webView.evaluateJavaScript(jsCode, contentWorld: .page)
+            _ = try await webView.safelyEvaluateJavaScript(iife(jsCode), contentWorld: .page)
         } catch {
             DLog("Error sending position error: \(error)")
         }
@@ -297,7 +297,7 @@ extension iTermBrowserGeolocationHandler {
         """
         
         do {
-            _ = try await webView.evaluateJavaScript(jsCode, contentWorld: .page)
+            _ = try await webView.safelyEvaluateJavaScript(iife(jsCode), contentWorld: .page)
         } catch {
             DLog("Error sending watch position update: \(error)")
         }
@@ -310,7 +310,7 @@ extension iTermBrowserGeolocationHandler {
         """
         
         do {
-            _ = try await webView.evaluateJavaScript(jsCode, contentWorld: .page)
+            _ = try await webView.safelyEvaluateJavaScript(iife(jsCode), contentWorld: .page)
         } catch {
             DLog("Error sending watch error: \(error)")
         }
@@ -346,7 +346,7 @@ extension iTermBrowserGeolocationHandler {
         let jsCode = "window.iTermGeolocationHandler.setPermission('\(secret)', '\(permissionString)');"
         
         do {
-            _ = try await webView.evaluateJavaScript(jsCode, contentWorld: .page)
+            _ = try await webView.safelyEvaluateJavaScript(iife(jsCode), contentWorld: .page)
         } catch {
             DLog("Error updating geolocation permission state: \(error)")
         }

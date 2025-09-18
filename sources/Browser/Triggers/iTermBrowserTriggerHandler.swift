@@ -115,7 +115,7 @@ extension iTermBrowserTriggerHandler {
                 "null"
             }
             let script = "window.iTerm2Triggers?.highlightText(\(jsonMatchID), \(jsonTextColor), \(jsonBackgroundColor));"
-            _ = try? await webView.safelyEvaluateJavaScript(script, contentWorld: .defaultClient)
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .defaultClient)
         }
     }
 
@@ -127,7 +127,7 @@ extension iTermBrowserTriggerHandler {
             let jsonMatchID = try! JSONEncoder().encode(matchID).lossyString
             let jsonURL = try! JSONEncoder().encode(url).lossyString
             let script = "window.iTerm2Triggers?.makeHyperlink(\(jsonMatchID), \(jsonURL));"
-            _ = try? await webView.safelyEvaluateJavaScript(script, contentWorld: .defaultClient)
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .defaultClient)
         }
     }
 }

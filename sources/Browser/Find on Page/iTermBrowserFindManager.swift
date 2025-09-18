@@ -194,7 +194,7 @@ class iTermBrowserFindManager: NSObject {
                                                                         identifier: \(json(identifier) ) }); 
             """
             do {
-                let raw = try await webView.callAsyncJavaScript(script, contentWorld: world)
+                let raw = try await webView.safelyCallAsyncJavaScript(script, contentWorld: world)
                 guard let dict = raw as? [String: Double] else {
                     DLog("Bad result: \(String(describing: raw)) in \(script)")
                     throw InvalidResponseError()
@@ -226,10 +226,10 @@ class iTermBrowserFindManager: NSObject {
             temp["sessionSecret"] = sharedState.secret
             let jsonData = try JSONSerialization.data(withJSONObject: temp)
             let jsonString = String(data: jsonData, encoding: .utf8) ?? "{}"
-            let script = "window.iTermCustomFind &&await  window.iTermCustomFind.handleCommand(\(jsonString))"
+            let script = "window.iTermCustomFind && await window.iTermCustomFind.handleCommand(\(jsonString))"
 
             do {
-                return try await webView.callAsyncJavaScript(script, contentWorld: world)
+                return try await webView.safelyCallAsyncJavaScript(script, contentWorld: world)
             } catch {
                 DLog("\(error) while executing \(script)")
                 throw error
@@ -407,7 +407,7 @@ class iTermBrowserFindManager: NSObject {
             lastSearchWasGlobal = true
             do {
                 // The user script won't be installed until documentStart. If it isn't there now it may never arrive.
-                let myFunction = try await sharedState.webView?.evaluateJavaScript("typeof window.iTermCustomFind", contentWorld: world)
+                let myFunction = try await sharedState.webView?.safelyEvaluateJavaScript(iife("return typeof window.iTermCustomFind"), contentWorld: world)
                 if myFunction as? String == "undefined" {
                     stream.done = true
                     return

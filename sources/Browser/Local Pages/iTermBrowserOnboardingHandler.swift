@@ -98,14 +98,14 @@ class iTermBrowserOnboardingHandler: NSObject, iTermBrowserPageHandler {
                 createdProfileGuid = guid
                 let script = "onProfileCreated(true);"
                 Task { @MainActor in
-                    _ = try? await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
+                    _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
                 }
             } else {
                 // Profile already existed
                 createdProfileGuid = delegate?.onboardingHandlerFindBrowserProfileGuid(self)
                 let script = "onProfileCreated(false);"
                 Task { @MainActor in
-                    _ = try? await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
+                    _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
                 }
             }
             
@@ -115,7 +115,7 @@ class iTermBrowserOnboardingHandler: NSObject, iTermBrowserPageHandler {
                 createdProfileGuid = delegate?.onboardingHandlerFindBrowserProfileGuid(self)
                 let script = "onProfileCreated(false);" // false means it already existed
                 Task { @MainActor in
-                    _ = try? await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
+                    _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
                 }
             }
             
@@ -140,7 +140,7 @@ class iTermBrowserOnboardingHandler: NSObject, iTermBrowserPageHandler {
     private func updateUIStatus(_ statusId: String, enabled: Bool, webView: iTermBrowserWebView) {
         let script = "updateStatus('\(statusId)', \(enabled));"
         Task { @MainActor in
-            _ = try? await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
         }
     }
     
@@ -156,7 +156,7 @@ class iTermBrowserOnboardingHandler: NSObject, iTermBrowserPageHandler {
         });
         """
         Task { @MainActor in
-            _ = try? await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
         }
     }
     

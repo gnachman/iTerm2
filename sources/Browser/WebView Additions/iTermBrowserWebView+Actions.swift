@@ -35,7 +35,7 @@ extension iTermBrowserWebView {
             script = "window.scrollBy(0, -window.innerHeight);"
         }
         
-        safelyEvaluateJavaScript(script)
+        safelyEvaluateJavaScript(iife(script), contentWorld: .page)
     }
     
     func sendText(_ string: String) async {
@@ -135,7 +135,7 @@ extension iTermBrowserWebView {
             ]
         )
         
-        safelyEvaluateJavaScript(script)
+        safelyEvaluateJavaScript(script, contentWorld: .page)
     }
 
     @MainActor
@@ -395,7 +395,7 @@ extension iTermBrowserWebView {
             return
         }
         
-        safelyEvaluateJavaScript(script)
+        safelyEvaluateJavaScript(script, contentWorld: .page)
     }
     
     func hasSelection() async -> Bool {

@@ -157,9 +157,9 @@ class iTermBrowserHistoryViewHandler: NSObject, iTermBrowserPageHandler {
 
             if let jsonString = String(data: jsonData, encoding: .utf8) {
                 // NOTE: evaluateJavaScript crashes if the script doesn't return a value. So return 1.
-                let script = "window.onHistoryEntriesLoaded && window.onHistoryEntriesLoaded(\(jsonString)); 1"
+                let script = "return window.onHistoryEntriesLoaded && window.onHistoryEntriesLoaded(\(jsonString))"
                 do {
-                    let result = try await webView.evaluateJavaScript(script)
+                    let result = try await webView.safelyEvaluateJavaScript(iife(script))
                     DLog("JavaScript executed successfully: \(String(describing: result))")
                 } catch {
                     DLog("Failed to execute JavaScript: \(error)")
@@ -173,9 +173,9 @@ class iTermBrowserHistoryViewHandler: NSObject, iTermBrowserPageHandler {
     @MainActor
     private func sendEntryDeletedConfirmation(entryId: String, to webView: iTermBrowserWebView) async {
         // NOTE: evaluateJavaScript crashes if the script doesn't return a value. So return 1.
-        let script = "window.onHistoryEntryDeleted && window.onHistoryEntryDeleted('\(entryId)'); 1"
+        let script = "return window.onHistoryEntryDeleted && window.onHistoryEntryDeleted('\(entryId)')"
         do {
-            let result = try await webView.evaluateJavaScript(script)
+            let result = try await webView.safelyEvaluateJavaScript(iife(iife(script)))
             DLog("JavaScript executed successfully: \(String(describing: result))")
         } catch {
             DLog("Failed to execute JavaScript: \(error)")
@@ -185,9 +185,9 @@ class iTermBrowserHistoryViewHandler: NSObject, iTermBrowserPageHandler {
     @MainActor
     private func sendHistoryClearedConfirmation(to webView: iTermBrowserWebView) async {
         // NOTE: evaluateJavaScript crashes if the script doesn't return a value. So return 1.
-        let script = "window.onHistoryCleared && window.onHistoryCleared(); 1"
+        let script = "return window.onHistoryCleared && window.onHistoryCleared()"
         do {
-            let result = try await webView.evaluateJavaScript(script)
+            let result = try await webView.safelyEvaluateJavaScript(iife(script))
             DLog("JavaScript executed successfully: \(String(describing: result))")
         } catch {
             DLog("Failed to execute JavaScript: \(error)")

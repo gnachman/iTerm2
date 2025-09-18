@@ -1037,7 +1037,7 @@ extension iTermBrowserManager {
 #endif
                 default:
 #if ITERM_DEBUG
-                    NSLog("%@", "Javascript Console: \(logMessage)")
+                    NSFuckingLog("%@", "Javascript Console: \(logMessage)")
 #else
                     XLog("Javascript Console: \(logMessage)")
 #endif
@@ -1596,7 +1596,8 @@ extension iTermBrowserManager: WKUIDelegate {
                 }
             } else {
                 // Fallback to DOM source if network fetch fails
-                self.webView.safelyEvaluateJavaScript("document.documentElement.outerHTML") { [weak self] result, error in
+                self.webView.safelyEvaluateJavaScript(iife("return document.documentElement.outerHTML"),
+                                                      contentWorld: .page) { [weak self] result, error in
                     guard let self = self else { return }
                     
                     if let error = error {

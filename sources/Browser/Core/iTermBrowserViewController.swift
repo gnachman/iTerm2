@@ -291,7 +291,7 @@ extension iTermBrowserViewController {
             console.error(e);
           }
         })();
-        """)
+        """, contentWorld: .page)
     }
 
     @objc

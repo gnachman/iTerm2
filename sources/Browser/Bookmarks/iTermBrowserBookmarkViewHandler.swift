@@ -200,7 +200,7 @@ extension iTermBrowserBookmarkViewHandler {
             if let jsonString = String(data: jsonData, encoding: .utf8) {
                 let script = "window.onBookmarksLoaded && window.onBookmarksLoaded(\(jsonString)); 1"
                 do {
-                    let result = try await webView.evaluateJavaScript(script)
+                    let result = try await webView.safelyEvaluateJavaScript(script)
                     DLog("JavaScript executed successfully: \(String(describing: result))")
                 } catch {
                     DLog("Failed to execute JavaScript: \(error)")
@@ -221,7 +221,7 @@ extension iTermBrowserBookmarkViewHandler {
             if let jsonString = String(data: jsonData, encoding: .utf8) {
                 let script = "window.onTagsLoaded && window.onTagsLoaded(\(jsonString)); 1"
                 do {
-                    let result = try await webView.evaluateJavaScript(script)
+                    let result = try await webView.safelyEvaluateJavaScript(script)
                     DLog("JavaScript executed successfully: \(String(describing: result))")
                 } catch {
                     DLog("Failed to execute JavaScript: \(error)")
@@ -236,7 +236,7 @@ extension iTermBrowserBookmarkViewHandler {
     private func sendBookmarkDeletedConfirmation(url: String, to webView: iTermBrowserWebView) async {
         let script = "window.onBookmarkDeleted && window.onBookmarkDeleted('\(url.replacingOccurrences(of: "'", with: "\\'"))'); 1"
         do {
-            let result = try await webView.evaluateJavaScript(script)
+            let result = try await webView.safelyEvaluateJavaScript(script)
             DLog("JavaScript executed successfully: \(String(describing: result))")
         } catch {
             DLog("Failed to execute JavaScript: \(error)")
@@ -247,7 +247,7 @@ extension iTermBrowserBookmarkViewHandler {
     private func sendBookmarksClearedConfirmation(to webView: iTermBrowserWebView) async {
         let script = "window.onBookmarksCleared && window.onBookmarksCleared(); 1"
         do {
-            let result = try await webView.evaluateJavaScript(script)
+            let result = try await webView.safelyEvaluateJavaScript(script)
             DLog("JavaScript executed successfully: \(String(describing: result))")
         } catch {
             DLog("Failed to execute JavaScript: \(error)")

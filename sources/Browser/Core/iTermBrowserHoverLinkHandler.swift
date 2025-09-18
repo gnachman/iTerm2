@@ -74,7 +74,7 @@ class iTermBrowserHoverLinkHandler {
         let script = "window.iTermHoverLinkHandler?.clearHover('\(secret)');"
         Task {
             do {
-                _ = try await webView.safelyEvaluateJavaScript(script, contentWorld: .defaultClient)
+                _ = try await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .defaultClient)
             } catch {
                 DLog("Failed to clear hover: \(error)")
             }

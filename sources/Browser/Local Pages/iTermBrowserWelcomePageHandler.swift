@@ -157,10 +157,10 @@ class iTermBrowserWelcomePageHandler: NSObject, iTermBrowserPageHandler {
             let jsonData = try JSONSerialization.data(withJSONObject: sites, options: [])
             let jsonString = String(data: jsonData, encoding: .utf8) ?? "[]"
             
-            let script = "window.handleTopSitesResponse(\(jsonString));"
-            
+            let script = "return window.handleTopSitesResponse(\(jsonString));"
+
             do {
-                _ = try await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
+                _ = try await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
                 DLog("Successfully sent top sites to page")
             } catch {
                 DLog("Error sending top sites response: \(error)")

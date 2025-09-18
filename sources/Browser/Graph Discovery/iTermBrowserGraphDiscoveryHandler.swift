@@ -143,7 +143,7 @@ class iTermBrowserGraphDiscoveryHandler {
                 } 
             })()
             """
-            let result = try await webView.evaluateJavaScript(
+            let result = try await webView.safelyEvaluateJavaScript(
                 wrapped,
                 in: frameInfo,
                 contentWorld: world) as? String

@@ -216,9 +216,9 @@ extension iTermBrowserPermissionsViewHandler {
             ], options: [])
 
             if let jsonString = String(data: jsonData, encoding: .utf8) {
-                let script = "window.onPermissionsLoaded && window.onPermissionsLoaded(\(jsonString)); 1"
+                let script = "return window.onPermissionsLoaded && window.onPermissionsLoaded(\(jsonString))"
                 do {
-                    let result = try await webView.evaluateJavaScript(script)
+                    let result = try await webView.safelyEvaluateJavaScript(iife(script))
                     DLog("JavaScript executed successfully: \(String(describing: result))")
                 } catch {
                     DLog("Failed to execute JavaScript: \(error)")
@@ -231,9 +231,9 @@ extension iTermBrowserPermissionsViewHandler {
     
     @MainActor
     private func sendPermissionRevokedConfirmation(origin: String, permissionType: BrowserPermissionType, to webView: iTermBrowserWebView) async {
-        let script = "window.onPermissionRevoked && window.onPermissionRevoked('\(origin.replacingOccurrences(of: "'", with: "\\'"))', '\(permissionType.rawValue.replacingOccurrences(of: "'", with: "\\'"))'); 1"
+        let script = "return window.onPermissionRevoked && window.onPermissionRevoked('\(origin.replacingOccurrences(of: "'", with: "\\'"))', '\(permissionType.rawValue.replacingOccurrences(of: "'", with: "\\'"))')"
         do {
-            let result = try await webView.evaluateJavaScript(script)
+            let result = try await webView.safelyEvaluateJavaScript(iife(script))
             DLog("JavaScript executed successfully: \(String(describing: result))")
         } catch {
             DLog("Failed to execute JavaScript: \(error)")
@@ -242,9 +242,9 @@ extension iTermBrowserPermissionsViewHandler {
     
     @MainActor
     private func sendAllPermissionsRevokedConfirmation(origin: String, to webView: iTermBrowserWebView) async {
-        let script = "window.onAllPermissionsRevoked && window.onAllPermissionsRevoked('\(origin.replacingOccurrences(of: "'", with: "\\'"))'); 1"
+        let script = "return window.onAllPermissionsRevoked && window.onAllPermissionsRevoked('\(origin.replacingOccurrences(of: "'", with: "\\'"))')"
         do {
-            let result = try await webView.evaluateJavaScript(script)
+            let result = try await webView.safelyEvaluateJavaScript(iife(script))
             DLog("JavaScript executed successfully: \(String(describing: result))")
         } catch {
             DLog("Failed to execute JavaScript: \(error)")
@@ -253,9 +253,9 @@ extension iTermBrowserPermissionsViewHandler {
     
     @MainActor
     private func sendAllPermissionsClearedConfirmation(to webView: iTermBrowserWebView) async {
-        let script = "window.onAllPermissionsCleared && window.onAllPermissionsCleared(); 1"
+        let script = "return window.onAllPermissionsCleared && window.onAllPermissionsCleared()"
         do {
-            let result = try await webView.evaluateJavaScript(script)
+            let result = try await webView.safelyEvaluateJavaScript(iife(script))
             DLog("JavaScript executed successfully: \(String(describing: result))")
         } catch {
             DLog("Failed to execute JavaScript: \(error)")

@@ -96,7 +96,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         """
         
         Task { @MainActor in
-            _ = try? await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
         }
     }
     
@@ -207,7 +207,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
                 }
                 DispatchQueue.main.async {
                     Task { @MainActor in
-                        _ = try? await webView.safelyEvaluateJavaScript("alert('\(message)');", contentWorld: .page)
+                        _ = try? await webView.safelyEvaluateJavaScript(iife("alert('\(message)');"), contentWorld: .page)
                     }
                 }
             }
@@ -257,7 +257,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             
             let script = "updateAdblockUI(\(jsonString));"
             Task { @MainActor in
-            _ = try? await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
         }
         } catch {
             DLog("Failed to encode adblock settings: \(error)")
@@ -279,7 +279,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             
             let script = "updateAdblockStats(\(jsonString));"
             Task { @MainActor in
-            _ = try? await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
         }
         } catch {
             DLog("Failed to encode adblock stats: \(error)")
@@ -290,7 +290,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         let escapedMessage = message.replacingOccurrences(of: "'", with: "\\'")
         let script = "showStatus('\(escapedMessage)', '\(type)');"
         Task { @MainActor in
-            _ = try? await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
         }
     }
     
@@ -345,7 +345,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             
             let script = "updateSearchEngineUI(\(jsonString));"
             Task { @MainActor in
-            _ = try? await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
         }
         } catch {
             DLog("Failed to encode search settings: \(error)")
@@ -410,7 +410,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             
             let script = "updateProxyUI(\(jsonString));"
             Task { @MainActor in
-            _ = try? await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
         }
         } catch {
             DLog("Failed to encode proxy settings: \(error)")
@@ -426,7 +426,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             // Extensions not supported on macOS < 14
             let script = "updateExtensionsUI([]);"
             Task { @MainActor in
-            _ = try? await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
         }
         }
     }
@@ -437,7 +437,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             // Send empty array if extension manager is not available
             let script = "updateExtensionsUI([]);"
             Task { @MainActor in
-            _ = try? await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
         }
             return
         }

@@ -92,7 +92,7 @@ class iTermBrowserNotificationHandler {
         let jsCode = "window.iTermNotificationHandler.handlePermissionResponse('\(sessionSecret)', \(requestId), '\(permissionString)');"
         
         do {
-            _ = try await webView.evaluateJavaScript(jsCode, contentWorld: .page)
+            _ = try await webView.safelyEvaluateJavaScript(iife(jsCode), contentWorld: .page)
         } catch {
             DLog("Error sending permission response: \(error)")
         }
@@ -177,7 +177,7 @@ class iTermBrowserNotificationHandler {
         let jsCode = "window.iTermNotificationHandler.setPermission('\(permissionString)');"
 
         do {
-            _ = try await webView.evaluateJavaScript(jsCode, contentWorld: .page)
+            _ = try await webView.safelyEvaluateJavaScript(iife(jsCode), contentWorld: .page)
         } catch {
             DLog("Error updating permission state: \(error)")
         }

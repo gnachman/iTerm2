@@ -56,7 +56,7 @@ final class iTermBrowserPasswordWriter {
 
         return await mutex.sync {
             do {
-                _ = try await webView.evaluateJavaScript(js)
+                _ = try await webView.safelyEvaluateJavaScript(js)
                 return true
             } catch {
                 return false
@@ -88,7 +88,7 @@ private extension iTermBrowserPasswordWriter {
                                                          substitutions: [:])
 
 
-        let anyResult = try? await webView.evaluateJavaScript(js)
+        let anyResult = try? await webView.safelyEvaluateJavaScript(js)
         guard let info = anyResult as? [String: Any],
               let found = info["found"] as? Bool else {
             return .notAnInput
@@ -125,7 +125,7 @@ private extension iTermBrowserPasswordWriter {
                             "FOCUS_NEXT_PW": focusNextPw ? "true" : "false"])
 
         do {
-            _ = try await webView.evaluateJavaScript(js)
+            _ = try await webView.safelyEvaluateJavaScript(js)
             return true
         } catch {
             return false
