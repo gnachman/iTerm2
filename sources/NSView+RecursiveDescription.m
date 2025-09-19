@@ -77,7 +77,7 @@
      self.isHidden ? @"YES" : @"no",
      self.alphaValue,
      [arm componentsJoinedByString:@","],
-     self.translatesAutoresizingMaskIntoConstraints ? @"No" : @"*AUTO LAYOUT IN EFFECT*",
+     self.translatesAutoresizingMaskIntoConstraints ? @"No" : [NSString stringWithFormat:@"*AUTO LAYOUT IN EFFECT* intrinsicContentSize=%@", NSStringFromSize(self.intrinsicContentSize)],
      detail,
      self.trackingAreas.count ? self.trackingAreas : @"none"];
     return s;
