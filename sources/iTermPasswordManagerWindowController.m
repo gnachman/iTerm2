@@ -214,6 +214,11 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 }
 
 - (void)updateKeyEquivalents {
+    if (!_defaultButton || !_secondaryButton || !_closeButton) {
+        // Outlets not connected yet, XIB may not be fully loaded
+        return;
+    }
+
     if (_sendUserByDefault && _didSendUserName == nil) {
         _secondaryButton.hidden = YES;
         _defaultButton.title = @"Enter User Name";
@@ -225,6 +230,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
             _defaultButton.title = @"Enter Password";
         }
     }
+
     NSArray<NSButton *> *views = @[_defaultButton, _secondaryButton, _closeButton];
     NSButton *rightmostVisibleButton = [views objectPassingTest:^BOOL(NSButton *view, NSUInteger index, BOOL *stop) {
         return !view.isHidden;
@@ -243,25 +249,6 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         
         x -= NSWidth(frame) + spacing;
     }
-
-    /*
-
-    [_secondaryButton sizeToFit];
-    [_defaultButton sizeToFit];
-    
-        if (view.isHidden) {
-            continue;
-        }
-
-        NSRect frame = view.frame;
-        frame.origin.x = x - NSWidth(frame);
-        view.frame = frame;
-        DLog(@"With desired right edge at %@, set %@ frame to %@",
-              @(x), [(NSButton *)view title], NSStringFromRect(frame));
-
-        x = NSMinX(frame) - spacing;
-    }
- */
 }
 
 - (void)setDidSendUserName:(void (^)(void))didSendUserName {
