@@ -322,6 +322,19 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
                                      self.frame.size.height - titleHeight - reservedSpaceOnBottom);
     _browserViewController.view.frame = initialFrame;
 
+    // This magic incantation prevents auto layout from virally eating everything in the window preventing it from resizing.
+    // I am so unbelievably lucky that this works. It seems like the only real fix is to make *everything* use auto layout
+    // and I would sooner die.
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        __typeof(self) strongSelf = weakSelf;
+        [strongSelf finishInstallingBrowserWithInitialURL:initialURL
+                                          restorableState:restorableState];
+    });
+}
+
+- (void)finishInstallingBrowserWithInitialURL:(NSString *)initialURL
+                              restorableState:(NSDictionary *)restorableState {
     [self insertSubview:_browserViewController.view atIndex:_contentViewIndex + 1];
 
     // Hide terminal views when in browser mode

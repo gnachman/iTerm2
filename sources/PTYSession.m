@@ -6515,12 +6515,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         return;
     }
     DLog(@"Line height was %f", [_textview lineHeight]);
+    [_textview setFontTable:newFontTable
+          horizontalSpacing:horizontalSpacing
+            verticalSpacing:verticalSpacing];
     if (self.isBrowserSession) {
         [_textview configureAsBrowser];
-    } else {
-        [_textview setFontTable:newFontTable
-              horizontalSpacing:horizontalSpacing
-                verticalSpacing:verticalSpacing];
     }
     if (@available(macOS 11, *)) {
         _view.browserViewController.zoom = newFontTable.browserZoom;
@@ -8591,7 +8590,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return _newOutput;
 }
 - (BOOL)isBrowserSession {
-    return self.view.isBrowser;
+    return self.view.isBrowser || self.profile.profileIsBrowser;
 }
 
 - (BOOL)isCompatibleWith:(PTYSession *)otherSession
@@ -8599,7 +8598,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     // Browser sessions cannot be split panes with tmux sessions
     BOOL selfIsBrowser = [self isBrowserSession];
     BOOL otherIsBrowser = [otherSession isBrowserSession];
-    
+
     if ((selfIsBrowser && otherSession.tmuxMode == TMUX_CLIENT) ||
         (self.tmuxMode == TMUX_CLIENT && otherIsBrowser)) {
         return NO;
