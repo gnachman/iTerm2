@@ -4099,6 +4099,17 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([self currentSession]) {
         PtyLog(@"makeCurrentSessionFirstResponder. New first responder will be %@. The current first responder is %@",
                [[self currentSession] textview], [[self window] firstResponder]);
+        NSView *view = [NSView castFrom:[[self currentSession] mainResponder]];
+        if (view && view.window != self.window) {
+            // Browser is added after a delay so we need to retry for it.
+            __weak __typeof(self) weakSelf = self;
+            NSLog(@"Retry");
+            dispatch_async(dispatch_get_main_queue(), ^{
+                NSLog(@"Retrying");
+                [weakSelf makeCurrentSessionFirstResponder];
+            });
+            return;
+        }
         [[self window] makeFirstResponder:[[self currentSession] mainResponder]];
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBecameKey
                                                             object:[self currentSession]
