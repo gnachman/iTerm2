@@ -168,7 +168,7 @@ private extension iTermBrowserTriggerHandler {
         """
         Task { @MainActor in
             do {
-                _ = try await webView?.safelyEvaluateJavaScript(call, contentWorld: .defaultClient)
+                _ = try await webView?.safelyEvaluateJavaScript(iife(call), contentWorld: .defaultClient)
             } catch {
                 DLog("\(call): \(error)")
             }
