@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="23727" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24127" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="23727"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24127"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -1573,10 +1573,17 @@ DQ
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <menu key="submenu" title="Move Tab" id="0pG-gd-cTc">
                                                 <items>
-                                                    <menuItem title="Move Tab Left" keyEquivalent="[" identifier="Move Tab Left" id="1406">
+                                                    <menuItem title="Move Tab to New Window" identifier="Move Tab to New Window" id="1406">
+                                                        <modifierMask key="keyEquivalentModifierMask"/>
+                                                        <connections>
+                                                            <action selector="moveTabToNewWindow:" target="-1" id="Mk4-zW-mB4"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem isSeparatorItem="YES" id="1Tc-Uv-0ga"/>
+                                                    <menuItem title="Move Tab Left" keyEquivalent="[" identifier="Move Tab Left" id="Tf4-UH-zAS">
                                                         <modifierMask key="keyEquivalentModifierMask" shift="YES" option="YES" command="YES"/>
                                                         <connections>
-                                                            <action selector="moveTabLeft:" target="-1" id="1410"/>
+                                                            <action selector="moveTabLeft:" target="-1" id="pqB-NX-qSz"/>
                                                         </connections>
                                                     </menuItem>
                                                     <menuItem title="Move Tab Right" keyEquivalent="]" identifier="Move Tab Right" id="1408">
