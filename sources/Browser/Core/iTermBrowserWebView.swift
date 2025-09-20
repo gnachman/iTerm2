@@ -164,10 +164,15 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
                                              in frame: WKFrameInfo? = nil,
                                              contentWorld: WKContentWorld) async throws -> Any? {
         let javaScript = makeSafe(unsafeScript)
+        DLog("Evaluate:\n" + javaScript)
         do {
             let result = try await evaluateJavaScript(javaScript, in: frame, contentWorld: contentWorld)
             return result
         } catch {
+#if ITERM_DEBUG
+            NSFuckingLog("JavaScript evaluation failed with error: %@", String(describing: error))
+#endif
+            DLog("JavaScript evaluation failed with error:\(error)")
             throw error
         }
     }
