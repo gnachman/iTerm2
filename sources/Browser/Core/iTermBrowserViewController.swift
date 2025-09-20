@@ -1605,4 +1605,8 @@ extension iTermBrowserViewController: iTermBrowserTriggerHandlerDelegate {
     func triggerHandlerObject(_ sender: iTermBrowserTriggerHandler) -> iTermObject? {
         return delegate?.browserViewControllerScope(self).1
     }
+
+    func browserTriggerInject(_ script: String) {
+        browserManager.triggerHandler?.inject(script)
+    }
 }

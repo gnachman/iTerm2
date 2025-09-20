@@ -130,6 +130,12 @@ extension iTermBrowserTriggerHandler {
             _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .defaultClient)
         }
     }
+
+    func inject(_ script: String) {
+        Task {
+            _ = try? await webView?.safelyEvaluateJavaScript(iife(script))
+        }
+    }
 }
 
 // MARK: - Private

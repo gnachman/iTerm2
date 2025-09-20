@@ -3368,6 +3368,8 @@
 		A6AE1ECF191FFA1C00780C19 /* iTermMouseCursor.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1ECE191FFA1C00780C19 /* iTermMouseCursor.h */; };
 		A6AE1ED81926F89B00780C19 /* iTermAnnouncementViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1ED61926F89B00780C19 /* iTermAnnouncementViewController.h */; };
 		A6AE1EDD192723F700780C19 /* iTermAnnouncementView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1EDB192723F700780C19 /* iTermAnnouncementView.h */; };
+		A6AE580B2E7E63B600762C1D /* ReloadBrowserTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AE58092E7E610D00762C1D /* ReloadBrowserTrigger.swift */; };
+		A6AE588D2E7E667E00762C1D /* InjectJavascriptTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AE588C2E7E667E00762C1D /* InjectJavascriptTrigger.swift */; };
 		A6AF79C62E06586A008D77BA /* BrowserBookmarks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79C52E06586A008D77BA /* BrowserBookmarks.swift */; };
 		A6AF79CA2E06593C008D77BA /* BrowserBookmarkTags.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79C92E06593C008D77BA /* BrowserBookmarkTags.swift */; };
 		A6AF79CC2E065AA5008D77BA /* bookmarks-page.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AF79CB2E065AA5008D77BA /* bookmarks-page.html */; };
@@ -8170,6 +8172,8 @@
 		A6AE1ED71926F89B00780C19 /* iTermAnnouncementViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAnnouncementViewController.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6AE1EDB192723F700780C19 /* iTermAnnouncementView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermAnnouncementView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6AE1EDC192723F700780C19 /* iTermAnnouncementView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAnnouncementView.m; sourceTree = "<group>"; tabWidth = 4; };
+		A6AE58092E7E610D00762C1D /* ReloadBrowserTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReloadBrowserTrigger.swift; sourceTree = "<group>"; };
+		A6AE588C2E7E667E00762C1D /* InjectJavascriptTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InjectJavascriptTrigger.swift; sourceTree = "<group>"; };
 		A6AF79C52E06586A008D77BA /* BrowserBookmarks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserBookmarks.swift; sourceTree = "<group>"; };
 		A6AF79C92E06593C008D77BA /* BrowserBookmarkTags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserBookmarkTags.swift; sourceTree = "<group>"; };
 		A6AF79CB2E065AA5008D77BA /* bookmarks-page.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "bookmarks-page.html"; sourceTree = "<group>"; };
@@ -10495,6 +10499,8 @@
 		1D9DDE2D142E730700275650 /* Triggers */ = {
 			isa = PBXGroup;
 			children = (
+				A6AE58092E7E610D00762C1D /* ReloadBrowserTrigger.swift */,
+				A6AE588C2E7E667E00762C1D /* InjectJavascriptTrigger.swift */,
 				A6C6824E2E4043F700B8B021 /* HyperlinkBrowserTrigger.swift */,
 				A68CB8622E4006A3002531F5 /* HighlightBrowserTrigger.swift */,
 				A68CB8582E3FC40A002531F5 /* ReaderModeBrowserTrigger.swift */,
@@ -19043,6 +19049,7 @@
 				A692666D210A364900A980C7 /* PTYTextViewDataSource.m in Sources */,
 				A6A4867F20B6812A00493302 /* TriggerController.m in Sources */,
 				A68CB8592E3FC40E002531F5 /* ReaderModeBrowserTrigger.swift in Sources */,
+				A6AE580B2E7E63B600762C1D /* ReloadBrowserTrigger.swift in Sources */,
 				A6D10E3827F7C2BC0026DB56 /* NSEvent+MultiCursor.swift in Sources */,
 				A653F6B524D1437B0062377E /* iTermEncoderAdapter.m in Sources */,
 				A653F66424CD6A7E0062377E /* iTermRestorableStateSaver.m in Sources */,
@@ -19068,6 +19075,7 @@
 				A653F6BA24D2ACA90062377E /* iTermRestorableSession.m in Sources */,
 				A653F68524CF4EC70062377E /* FMResultSet.m in Sources */,
 				A6F385DF1FA55E2000739939 /* iTermSmartCursorColor.m in Sources */,
+				A6AE588D2E7E667E00762C1D /* InjectJavascriptTrigger.swift in Sources */,
 				A629F5AF23AFF65600C2F16B /* iTermShellIntegrationPasteShellCommandsViewController.m in Sources */,
 				A629F58B23AF38CA00C2F16B /* iTermClickableTextField.m in Sources */,
 				A6BF035921E179680097DA86 /* iTermRecordedVariable.m in Sources */,
