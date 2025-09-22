@@ -739,7 +739,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         }
         
         if let tabColor {
-            let color = cellBackgroundColor(forTabColor: tabColor, selected: selected)
+            let color = cellBackgroundColor(forTabColor: tabColor, selected: true)
             color.set()
             if selected {
                 // Tint the outline if this cell is selected.
@@ -753,10 +753,23 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             }
             
             // Tint the inside.
-            let path2 = NSBezierPath(roundedRect: rect.insetBy(dx: 1.0, dy: 1.0),
-                                     xRadius: radius - 1.0,
-                                     yRadius: radius - 1.0)
-            path2.fill()
+            if selected {
+                let path2 = NSBezierPath(roundedRect: rect.insetBy(dx: 1.0, dy: 1.0),
+                                         xRadius: radius - 1.0,
+                                         yRadius: radius - 1.0)
+                path2.fill()
+            } else {
+                let path2 = NSBezierPath(roundedRect: rect,
+                                         xRadius: radius,
+                                         yRadius: radius)
+                NSGraphicsContext.current?.saveGraphicsState()
+                defer {
+                    NSGraphicsContext.current?.restoreGraphicsState()
+                }
+                path2.addClip()
+                path2.lineWidth = 4.0
+                path2.stroke()
+            }
         }
     }
     
@@ -924,31 +937,23 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                     return NSColor.white
                 }
             } else {
-                DLog("Not selected")
-                // Non-selected cell when any cell has a tab color
-                let prominence = (tabBar?.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.coloredUnselectedTabTextProminence) as? NSNumber)?.doubleValue ?? 0.5
-                if cellBrightness > 0.5 {
-                    // Light tab
-                    return NSColor(white: 0, alpha: prominence)
-                } else {
-                    // Dark tab
-                    return NSColor(white: 1, alpha: prominence)
-                }
-            }
-        } else {
-            DLog("No tab has color")
-            // No cell has a tab color
-            let mainAndActive = windowIsMainAndAppIsActive
-            if selected {
-                DLog("selected")
-                return textColorDefaultSelected(true, backgroundColor: nil, windowIsMainAndAppIsActive: mainAndActive)
-            } else {
-                DLog("not selected")
-                return textColorDefaultSelected(false, backgroundColor: nil, windowIsMainAndAppIsActive: mainAndActive)
+                let color = textColorDefaultSelected(false,
+                                                     backgroundColor: nil,
+                                                     windowIsMainAndAppIsActive: windowIsMainAndAppIsActive)
+                return color.withAlphaComponent(0.8)
             }
         }
+
+        let mainAndActive = windowIsMainAndAppIsActive
+        if selected {
+            DLog("selected")
+            return textColorDefaultSelected(true, backgroundColor: nil, windowIsMainAndAppIsActive: mainAndActive)
+        } else {
+            DLog("not selected")
+            return textColorDefaultSelected(false, backgroundColor: nil, windowIsMainAndAppIsActive: mainAndActive)
+        }
     }
-    
+
     @objc func backgroundColorSelected(_ selected: Bool, highlightAmount: CGFloat) -> NSColor {
         if selected {
             return NSColor(white: 0.97, alpha: 1.0)
