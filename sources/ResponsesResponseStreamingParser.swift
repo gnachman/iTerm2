@@ -47,7 +47,7 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
         var object: String
         var status: String
         var background: Bool
-        var error: String?
+        var error: ResponseError?
         var incompleteDetails: String?
         var instructions: String?
         var output: [AnyCodable]
@@ -69,11 +69,28 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
         }
     }
 
+    struct ResponseError: Codable {
+        var code: String
+        var message: String
+    }
+
     // MARK: - Event Types
 
     // 1. Response Created
     struct ResponseCreatedEvent: ResponseEvent {
         let type: String = "response.created"
+        var sequenceNumber: Int
+        var response: ResponseObject
+
+        enum CodingKeys: String, CodingKey {
+            case type
+            case sequenceNumber = "sequence_number"
+            case response
+        }
+    }
+
+    struct ResponseFailedEvent: ResponseEvent {
+        let type: String = "response.failed"
         var sequenceNumber: Int
         var response: ResponseObject
 
@@ -338,6 +355,7 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
         case codeInterpreterCallInterpreting = "response.code_interpreter_call.interpreting"
         case codeInterpreterDelta = "response.code_interpreter_call_code.delta"
         case reasoningSummaryTextDone = "response.reasoning_summary_text.done"
+        case responseFailed = "response.failed"
     }
 
     // MARK: - Universal Event Parser
@@ -382,6 +400,8 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
                 return try JSONDecoder().decode(ResponseCodeInterpreterDeltaEvent.self, from: data)
             case .reasoningSummaryTextDone:
                 return try JSONDecoder().decode(ResponseReasoningSummaryTextDoneEvent.self, from: data)
+            case .responseFailed:
+                return try JSONDecoder().decode(ResponseFailedEvent.self, from: data)
             case .none:
                 DLog("Unrecognized event \(jsonString)")
                 throw ResponseEventError.unknownEventType(typeContainer.type)
@@ -483,6 +503,11 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
             let event = try ResponseEventParser.parseEvent(from: jsonString)
             var choiceMessages = [LLM.Message]()
             switch event {
+            case let errorEvent as ResponseFailedEvent:
+                choiceMessages.append(LLM.Message(
+                    role: .assistant,
+                    content: "Something went wrong: " + (errorEvent.response.error?.message ?? "Unknown error")))
+                parsedResponse?.ignore = false
             case let deltaEvent as ResponseOutputTextDeltaEvent:
                 choiceMessages.append(LLM.Message(role: .assistant,
                                                   content: deltaEvent.delta))
