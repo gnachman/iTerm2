@@ -1879,7 +1879,9 @@ ITERM_WEAKLY_REFERENCEABLE
     NSString *tmuxDCSIdentifier = nil;
     BOOL shouldEnterTmuxMode = NO;
     NSDictionary *contents = arrangement[SESSION_ARRANGEMENT_CONTENTS];
-    BOOL restoreContents = !tmuxPaneNumber && contents && [iTermAdvancedSettingsModel restoreWindowContents];
+    BOOL restoreContents = (!tmuxPaneNumber &&
+                            (arrangement[SESSION_ARRANGEMENT_BROWSER_STATE] != nil || contents) &&
+                            [iTermAdvancedSettingsModel restoreWindowContents]);
     BOOL attachedToServer = NO;
     typedef void (^iTermSessionCreationCompletionBlock)(PTYSession *, BOOL ok);
     void (^runCommandBlock)(iTermSessionCreationCompletionBlock) =
@@ -2007,7 +2009,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         DLog(@"Have contents=%@", @(contents != nil));
         DLog(@"Restore window contents=%@", @([iTermAdvancedSettingsModel restoreWindowContents]));
-        if (restoreContents) {
+        if (restoreContents && contents) {
             DLog(@"Loading content from line buffer dictionary");
             [aSession setContentsFromLineBufferDictionary:contents
                                  includeRestorationBanner:runCommand
@@ -2021,7 +2023,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if (arrangement[SESSION_ARRANGEMENT_KEYLABELS]) {
             // restoreKeyLabels wants the cursor position to be set so do it after restoring contents.
             [aSession restoreKeyLabels:[NSDictionary castFrom:arrangement[SESSION_ARRANGEMENT_KEYLABELS]]
-               updateStatusChangedLine:restoreContents];
+               updateStatusChangedLine:(restoreContents && contents != nil)];
             NSArray *labels = arrangement[SESSION_ARRANGEMENT_KEYLABELS_STACK];
             if (labels) {
                 [aSession->_keyLabelsStack release];
@@ -2112,7 +2114,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                              arrangementName:arrangementName
                                             attachedToServer:attachedToServer
                                                     delegate:delegate
-                                          didRestoreContents:restoreContents
+                                          didRestoreContents:restoreContents && contents != nil
                                                  needDivorce:needDivorce
                                                   objectType:objectType
                                                  sessionView:sessionView
@@ -2139,7 +2141,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [aSession autorelease];
             runCommandBlock(finish);
         };
-        if (arrangement[SESSION_ARRANGEMENT_AUTOLOG_FILENAME] && restoreContents) {
+        if (arrangement[SESSION_ARRANGEMENT_AUTOLOG_FILENAME] && restoreContents && contents != nil) {
             startLogging(arrangement[SESSION_ARRANGEMENT_AUTOLOG_FILENAME]);
         } else {
             [aSession fetchAutoLogFilenameWithCompletion:startLogging];
@@ -6058,11 +6060,13 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     result[SESSION_ARRANGEMENT_NAME_CONTROLLER_STATE] = [_nameController stateDictionary];
     if (includeContents) {
         __block int numberOfLinesDropped = 0;
-        [result encodeDictionaryWithKey:SESSION_ARRANGEMENT_CONTENTS
-                             generation:iTermGenerationAlwaysEncode
-                                  block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
-            return [_screen encodeContents:encoder linesDropped:&numberOfLinesDropped];
-        }];
+        if (!self.isBrowserSession) {
+            [result encodeDictionaryWithKey:SESSION_ARRANGEMENT_CONTENTS
+                                 generation:iTermGenerationAlwaysEncode
+                                      block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
+                return [_screen encodeContents:encoder linesDropped:&numberOfLinesDropped];
+            }];
+        }
         result[SESSION_ARRANGEMENT_VARIABLES] = _variables.encodableDictionaryValue;
         result[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] = @(_alertOnNextMark);
         result[SESSION_ARRANGEMENT_CURSOR_GUIDE] = @(_textview.highlightCursorLine);
