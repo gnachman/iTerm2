@@ -3370,6 +3370,7 @@
 		A6AE1EDD192723F700780C19 /* iTermAnnouncementView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1EDB192723F700780C19 /* iTermAnnouncementView.h */; };
 		A6AE580B2E7E63B600762C1D /* ReloadBrowserTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AE58092E7E610D00762C1D /* ReloadBrowserTrigger.swift */; };
 		A6AE588D2E7E667E00762C1D /* InjectJavascriptTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AE588C2E7E667E00762C1D /* InjectJavascriptTrigger.swift */; };
+		A6AE58962E820FFF00762C1D /* AppSignatureValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AE58952E820FFF00762C1D /* AppSignatureValidator.swift */; };
 		A6AF79C62E06586A008D77BA /* BrowserBookmarks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79C52E06586A008D77BA /* BrowserBookmarks.swift */; };
 		A6AF79CA2E06593C008D77BA /* BrowserBookmarkTags.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79C92E06593C008D77BA /* BrowserBookmarkTags.swift */; };
 		A6AF79CC2E065AA5008D77BA /* bookmarks-page.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AF79CB2E065AA5008D77BA /* bookmarks-page.html */; };
@@ -8174,6 +8175,7 @@
 		A6AE1EDC192723F700780C19 /* iTermAnnouncementView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAnnouncementView.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6AE58092E7E610D00762C1D /* ReloadBrowserTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReloadBrowserTrigger.swift; sourceTree = "<group>"; };
 		A6AE588C2E7E667E00762C1D /* InjectJavascriptTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InjectJavascriptTrigger.swift; sourceTree = "<group>"; };
+		A6AE58952E820FFF00762C1D /* AppSignatureValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSignatureValidator.swift; sourceTree = "<group>"; };
 		A6AF79C52E06586A008D77BA /* BrowserBookmarks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserBookmarks.swift; sourceTree = "<group>"; };
 		A6AF79C92E06593C008D77BA /* BrowserBookmarkTags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserBookmarkTags.swift; sourceTree = "<group>"; };
 		A6AF79CB2E065AA5008D77BA /* bookmarks-page.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "bookmarks-page.html"; sourceTree = "<group>"; };
@@ -12837,6 +12839,7 @@
 				A6CFDAD1185D2587005DC94B /* URLAction.m */,
 				A63EB05A284DCAF300B2AB89 /* WeakBox.swift */,
 				A6D1A3F62C7E9B2000FECDF2 /* KittyImageCommand.swift */,
+				A6AE58952E820FFF00762C1D /* AppSignatureValidator.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -18863,6 +18866,7 @@
 				A6110C3B2526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.m in Sources */,
 				A6A453931FF318D8009FD3B7 /* iTermTexturePageCollection.mm in Sources */,
 				A6DBC05220073CBA00F1466D /* NSResponder+iTerm.m in Sources */,
+				A6AE58962E820FFF00762C1D /* AppSignatureValidator.swift in Sources */,
 				A62DBBA820F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.m in Sources */,
 				A6E304412DFA55B00029CAB4 /* Llama.swift in Sources */,
 				A68769562C0E5F2300F7FFEC /* LLM.swift in Sources */,
