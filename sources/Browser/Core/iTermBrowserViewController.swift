@@ -220,6 +220,15 @@ extension iTermBrowserViewController {
     @objc
     var currentURL: URL? { browserManager.webView.url }
 
+    @objc
+    func terminate() {
+        browserManager.webView.stopLoading()
+        browserManager.webView.loadHTMLString("", baseURL: URL("about:empty"))
+        browserManager.webView.navigationDelegate = nil
+        browserManager.webView.uiDelegate = nil
+        browserManager.webView.removeFromSuperview()
+    }
+
     @objc(convertVisibleSearchResultsToContentNavigationShortcutsWithAction:clearOnEnd:)
     func convertVisibleSearchResultsToContentNavigationShortcuts(action: iTermContentNavigationAction,
                                                                  clearOnEnd: Bool) {

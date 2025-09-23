@@ -1371,6 +1371,11 @@ extension PTYSession {
             restorableState: restorableState as? [AnyHashable: Any])
         return true
     }
+
+    @objc
+    func terminateBrowser(){
+        view.browserViewController.terminate()
+    }
 }
 
 @objc

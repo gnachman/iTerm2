@@ -3338,6 +3338,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // "restart", which is done by first calling revive and then replaceTerminatedShellWithNewInstance.
 - (void)terminate {
     DLog(@"terminate called from %@", [NSThread callStackSymbols]);
+    if (self.isBrowserSession) {
+        [self terminateBrowser];
+    }
     if ([[self textview] isFindingCursor]) {
         [[self textview] endFindCursor];
     }
