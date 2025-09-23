@@ -2791,7 +2791,16 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         // happen if the shell sends OSC 7 and also has shell integration installed.
         [self removeUnusedPromptMarkOnLine:line - 1];
     }
-    VT100ScreenMark *mark = (VT100ScreenMark *)[self addMarkOnLine:line ofClass:[VT100ScreenMark class]];
+    VT100ScreenMark *mark = nil;
+    VT100ScreenMark *existing = [VT100ScreenMark castFrom:[self screenMarkOnLine:line]];
+    DLog(@"Set prompt at line %d\n%@", line, [NSThread callStackSymbols]);
+    if (existing && existing.command == nil) {
+        mark = existing;
+        DLog(@"Reuse existing %@", existing);
+    } else {
+        mark = (VT100ScreenMark *)[self addMarkOnLine:line ofClass:[VT100ScreenMark class]];
+        DLog(@"Create new %@", mark);
+    }
     if (mark) {
         const VT100GridAbsCoordRange promptRange = VT100GridAbsCoordRangeMake(0, lastPromptLine, 0, lastPromptLine);
         [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
