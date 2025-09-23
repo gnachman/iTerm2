@@ -685,6 +685,28 @@ static void SwapInt(int *a, int *b) {
                     }];
                 }
             }
+
+            if (screenMark.outputStart.x != -1) {
+                BOOL ok = NO;
+                const VT100GridCoord outputStart = VT100GridCoordFromAbsCoord(screenMark.outputStart, overflow, &ok);
+                if (!ok) {
+                    screenMark.outputStart = VT100GridAbsCoordMake(-1, -1);
+                } else {
+                    VT100GridCoordRange converted;
+                    if ([self convertRange:VT100GridCoordRangeMake(outputStart.x,
+                                                                   outputStart.y,
+                                                                   outputStart.x + 1,
+                                                                   outputStart.y)
+                                   toWidth:newWidth
+                                        to:&converted
+                              inLineBuffer:self.linebuffer
+                             tolerateEmpty:tolerateEmptyScreenMarks]) {
+                        [self.mutableIntervalTree mutateObject:note block:^(id<IntervalTreeObject> mutableMark) {
+                            [VT100ScreenMark castFrom:mutableMark].outputStart = VT100GridAbsCoordFromCoord(converted.start, overflow);
+                        }];
+                    }
+                }
+            }
         }
     }];
 }
