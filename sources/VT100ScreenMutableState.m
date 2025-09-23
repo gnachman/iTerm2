@@ -3516,7 +3516,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         }] componentsJoinedByString:@"\n"];
 
         DLog(@"Removing last command mark %@", screenMark);
-        const NSInteger line = [self coordRangeForInterval:screenMark.entry.interval].start.y + self.cumulativeScrollbackOverflow;
+        const int relativeLine = [self coordRangeForInterval:screenMark.entry.interval].start.y;
+        const NSInteger line = relativeLine + self.cumulativeScrollbackOverflow;
         [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
             [observer intervalTreeDidRemoveObjectOfType:iTermIntervalTreeObjectTypeForObject(screenMark)
                                                  onLine:line];
@@ -3524,6 +3525,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         DLog(@"Command was aborted. Remove %@", screenMark);
         [self.mutableIntervalTree removeObject:(VT100ScreenMark *)screenMark];
         [self.mutableSavedIntervalTree removeObject:(VT100ScreenMark *)screenMark];
+        [self.mutableMarkCache removeMark:screenMark onLine:relativeLine];
     }
     [self invalidateCommandStartCoordWithoutSideEffects];
     [self didUpdatePromptLocation];
