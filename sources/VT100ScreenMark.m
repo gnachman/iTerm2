@@ -8,6 +8,7 @@
 
 #import "VT100ScreenMark.h"
 #import "CapturedOutput.h"
+#import "DebugLogging.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -285,6 +286,7 @@ static NSString *const kMarkOutputStart = @"Output Start";
 }
 
 - (void)setCommand:(NSString *)command {
+    DLog(@"Set command of %@ to %@", self.guid, command);
     if (!_command) {
         [self.delegate markDidBecomeCommandMark:self];
     }
