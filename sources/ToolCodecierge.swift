@@ -1071,11 +1071,16 @@ class CodeciergeSuggestionView: NSView, NSTextFieldDelegate {
                                  width: endButton.bounds.width,
                                  height: endButton.bounds.height)
 
+        let vmargin = if #available(macOS 26, *) {
+            8.0
+        } else {
+            4.0
+        }
         scrollView.frame = NSRect(x: 2,
-                                  y: goalLabel.frame.maxY + 4,
-                                  width: bounds.width - 4,
-                                  height: max(4.0, 
-                                              endButton.frame.minY - goalLabel.frame.maxY - 4.0))
+                                  y: goalLabel.frame.maxY + 4.0,
+                                  width: bounds.width - 4.0,
+                                  height: max(4.0,
+                                              endButton.frame.minY - goalLabel.frame.maxY - vmargin))
         if let textContainer = textView.textContainer {
             var frame = textView.frame
             frame.size.width = scrollView.contentSize.width
