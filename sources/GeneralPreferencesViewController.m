@@ -1225,6 +1225,7 @@ enum {
     [alert addButtonWithTitle:@"Cancel"];
 
     NSSecureTextField *apiKey = [[NSSecureTextField alloc] initWithFrame:NSMakeRect(0, 0, 500, 24)];
+    apiKey.usesSingleLineMode = YES;
     apiKey.editable = YES;
     apiKey.selectable = YES;
     apiKey.stringValue = [AITermControllerObjC apiKey] ?: @"";
@@ -1232,15 +1233,18 @@ enum {
     [alert layout];
     [[alert window] makeFirstResponder:apiKey];
 
-    switch ([alert runSheetModalForWindow:self.view.window]) {
-        case NSAlertFirstButtonReturn: {
-            [AITermControllerObjC setAPIKeyAsync:apiKey.stringValue];
-            break;
+    [NSApp activateIgnoringOtherApps:YES];
+    [alert beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse returnCode) {
+        switch (returnCode) {
+            case NSAlertFirstButtonReturn: {
+                [AITermControllerObjC setAPIKeyAsync:apiKey.stringValue];
+                break;
+            }
+            case NSAlertSecondButtonReturn: {
+                break;
+            }
         }
-        case NSAlertSecondButtonReturn: {
-            break;
-        }
-    }
+    }];
 }
 
 - (IBAction)showManualAIConfigurationPanel:(NSButton *)button {
