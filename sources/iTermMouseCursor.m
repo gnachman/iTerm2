@@ -99,11 +99,9 @@ enum {
 
 - (NSImage *)ibeamWithCircleImage {
     if ([iTermAdvancedSettingsModel useSystemCursorWhenPossible]) {
-        if (@available(macOS 10.15, *)) {
-            NSImage *image = [self catalinaIBeamWithCircleImage];
-            if (image) {
-                return image;
-            }
+        NSImage *image = [self catalinaIBeamWithCircleImage];
+        if (image) {
+            return image;
         }
     }
     return [NSImage it_imageNamed:@"IBarCursorXMR" forClass:self.class];
@@ -112,8 +110,10 @@ enum {
 - (instancetype)initWithType:(iTermMouseCursorType)cursorType {
     switch (cursorType) {
         case iTermMouseCursorTypeIBeamWithCircle: {
-            self = [super initWithImage:[self ibeamWithCircleImage]
-                                hotSpot:NSMakePoint(4, 8)];
+            NSImage *image = [self ibeamWithCircleImage];
+            const NSSize size = image.size;
+            self = [super initWithImage:image
+                                hotSpot:NSMakePoint(size.width / 2.0, size.height / 2.0)];
             if (self) {
                 _hasImage = YES;
             }
@@ -126,8 +126,10 @@ enum {
                     _type = kIBeamCursor;
                 }
             } else {
-                self = [super initWithImage:[NSImage it_imageNamed:@"IBarCursor" forClass:self.class]
-                                    hotSpot:NSMakePoint(4, 8)];
+                NSImage *image = [NSImage it_imageNamed:@"IBarCursor" forClass:self.class];
+                const NSSize size = image.size;
+                self = [super initWithImage:image
+                                    hotSpot:NSMakePoint(size.width / 2.0, size.height / 2.0)];
                 if (self) {
                     _hasImage = YES;
                 }
