@@ -2506,6 +2506,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (void)didRemoveObjectFromIntervalTree:(id<IntervalTreeObject>)obj formerInterval:(Interval *)interval {
+    if ([obj isKindOfClass:[VT100ScreenMark class]]) {
+        DLog(@"Removed %@ from:\n%@", obj, [NSThread callStackSymbols]);
+    }
     const VT100GridAbsCoordRange range = [self absCoordRangeForInterval:interval];
     iTermIntervalTreeObjectType type = iTermIntervalTreeObjectTypeForObject(obj);
     if (type != iTermIntervalTreeObjectTypeUnknown) {
@@ -2777,6 +2780,22 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     self.mutableMarkCache[line] = nil;
 }
 
+- (NSString *)intervalTreeDump {
+    NSMutableArray<NSString *> *lines = [NSMutableArray array];
+    for (NSArray *objects in [self.intervalTree forwardLocationEnumeratorAt:0]) {
+        for (id<IntervalTreeImmutableObject> object in objects) {
+            Interval *interval = object.entry.interval;
+            if (!interval) {
+                continue;
+            }
+            [lines addObject:[NSString stringWithFormat:@"In range %@: %@",
+                              VT100GridAbsCoordRangeDescription([self absCoordRangeForInterval:interval]),
+                             object]];
+        }
+    }
+    return [lines componentsJoinedByString:@"\n"];
+}
+
 - (VT100ScreenMark *)setPromptStartLine:(int)line detectedByTrigger:(BOOL)detectedByTrigger {
     DLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine.", line);
     // Reset this in case it's taking the "real" shell integration path.
@@ -2815,6 +2834,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenPromptDidStartAtLine:line];
     }];
+    DLog(@"After setPromptStartLine:\n%@", [self intervalTreeDump]);
     return mark;
 }
 
