@@ -3371,6 +3371,7 @@
 		A6AE580B2E7E63B600762C1D /* ReloadBrowserTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AE58092E7E610D00762C1D /* ReloadBrowserTrigger.swift */; };
 		A6AE588D2E7E667E00762C1D /* InjectJavascriptTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AE588C2E7E667E00762C1D /* InjectJavascriptTrigger.swift */; };
 		A6AE58962E820FFF00762C1D /* AppSignatureValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AE58952E820FFF00762C1D /* AppSignatureValidator.swift */; };
+		A6AE58CB2E83463300762C1D /* iTermSymbolicHotkeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AE58CA2E83463300762C1D /* iTermSymbolicHotkeys.swift */; };
 		A6AF79C62E06586A008D77BA /* BrowserBookmarks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79C52E06586A008D77BA /* BrowserBookmarks.swift */; };
 		A6AF79CA2E06593C008D77BA /* BrowserBookmarkTags.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79C92E06593C008D77BA /* BrowserBookmarkTags.swift */; };
 		A6AF79CC2E065AA5008D77BA /* bookmarks-page.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AF79CB2E065AA5008D77BA /* bookmarks-page.html */; };
@@ -8176,6 +8177,7 @@
 		A6AE58092E7E610D00762C1D /* ReloadBrowserTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReloadBrowserTrigger.swift; sourceTree = "<group>"; };
 		A6AE588C2E7E667E00762C1D /* InjectJavascriptTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InjectJavascriptTrigger.swift; sourceTree = "<group>"; };
 		A6AE58952E820FFF00762C1D /* AppSignatureValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSignatureValidator.swift; sourceTree = "<group>"; };
+		A6AE58CA2E83463300762C1D /* iTermSymbolicHotkeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermSymbolicHotkeys.swift; sourceTree = "<group>"; };
 		A6AF79C52E06586A008D77BA /* BrowserBookmarks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserBookmarks.swift; sourceTree = "<group>"; };
 		A6AF79C92E06593C008D77BA /* BrowserBookmarkTags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserBookmarkTags.swift; sourceTree = "<group>"; };
 		A6AF79CB2E065AA5008D77BA /* bookmarks-page.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "bookmarks-page.html"; sourceTree = "<group>"; };
@@ -12445,6 +12447,7 @@
 			isa = PBXGroup;
 			children = (
 				A61582A12E5FC3760094B718 /* iTermHistogramVisualizationView.swift */,
+				A6AE58CA2E83463300762C1D /* iTermSymbolicHotkeys.swift */,
 				A615829F2E5E7BA40094B718 /* iTermHistogram.swift */,
 				A615829D2E5E78D80094B718 /* TabularFormatter.swift */,
 				A615829B2E5E6F890094B718 /* MovingHistogram.swift */,
@@ -18715,6 +18718,7 @@
 				A6F718B8226583600053488E /* iTermURLActionFactory.m in Sources */,
 				A630119920E70CDA008114B7 /* iTermStatusBarSetupElement.m in Sources */,
 				A6E312862E388A9B008222DE /* iTermModernSavePanel.swift in Sources */,
+				A6AE58CB2E83463300762C1D /* iTermSymbolicHotkeys.swift in Sources */,
 				A6A64E562508A9E10040490B /* iTermSnippetsMenuController.m in Sources */,
 				A630118420E6A613008114B7 /* iTermStatusBarSetupViewController.m in Sources */,
 				A6AF79FA2E07E27D008D77BA /* iTermBrowserLocalPageManager.swift in Sources */,

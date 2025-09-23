@@ -88,6 +88,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 
     IBOutlet NSButton *_forceKeyboard;
     IBOutlet NSPopUpButton *_keyboardLocale;
+    IBOutlet NSButton *_allowSymbolicHotKeys;
 }
 
 - (void)dealloc {
@@ -228,6 +229,11 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
                    relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() { [weakSelf updateKeyboardLocaleEnabled]; };
+
+    info = [self defineControl:_allowSymbolicHotKeys
+                           key:kPreferenceKeyAllowSymbolicHotKeys
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
 
     info = [self defineControl:_keyboardLocale
                            key:kPreferenceKeyKeyboardLocale

@@ -668,6 +668,12 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
         NSLog(@"super performed it");
         return YES;
     }
+    if (@available(macOS 26, *)) {
+        if ([iTermPreferences boolForKey:kPreferenceKeyAllowSymbolicHotKeys] &&
+            [iTermSymbolicHotkeys haveBoundKeyForKeycode:theEvent.keyCode modifiers:theEvent.it_modifierFlags]) {
+            return NO;
+        }
+    }
     if (self.window.firstResponder != self) {
         // Don't let it go to the key mapper if I'm not first responder. This
         // is probably a bug in macOS if you get here.
