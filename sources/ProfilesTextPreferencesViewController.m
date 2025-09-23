@@ -55,6 +55,7 @@
     IBOutlet BFPCompositeView *_asciiFontPicker;
     IBOutlet BFPCompositeView *_nonASCIIFontPicker;
     IBOutlet NSTextField *_ligatureWarning;
+    IBOutlet NSTextField *_ligatureWarningNonAscii;
     BFPSizePickerView *_horizontalSpacingView;
     BFPSizePickerView *_verticalSpacingView;
 
@@ -297,7 +298,8 @@
 }
 
 - (void)updateLigatureWarning {
-    _ligatureWarning.hidden = ![self shouldShowLigaturesWarning];
+    _ligatureWarning.hidden = ![self shouldShowASCIILigaturesWarning];
+    _ligatureWarningNonAscii.hidden = ![self shouldShowNonASCIILigaturesWarning];
 
     // Show the options button only when ligatures are enabled. I didn't want to do this but the
     // only way to prevent ligatures from being drawn is to use the "fast path" drawing code.
@@ -318,12 +320,22 @@
     }
 }
 
-- (BOOL)shouldShowLigaturesWarning {
+- (BOOL)shouldShowASCIILigaturesWarning {
+    if ([iTermPreferences boolForKey:kPreferenceKeyBidi]) {
+        return NO;
+    }
     if (self.normalFont.it_defaultLigatures) {
         return NO;
     }
     if (self.normalFont.it_ligatureLevel > 0 && [self boolForKey:KEY_ASCII_LIGATURES]) {
         return YES;
+    }
+    return NO;
+}
+
+- (BOOL)shouldShowNonASCIILigaturesWarning {
+    if ([iTermPreferences boolForKey:kPreferenceKeyBidi]) {
+        return NO;
     }
     if (![self boolForKey:KEY_USE_NONASCII_FONT]) {
         return NO;
@@ -337,6 +349,7 @@
     }
     return NO;
 }
+
 
 - (void)unicodeVersionDidChange {
     [self infoForControl:_unicodeVersion9].onUpdate();

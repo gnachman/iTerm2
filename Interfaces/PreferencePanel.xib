@@ -1665,6 +1665,7 @@ CA
                 <outlet property="_cursorTypeLabel" destination="4772" id="h5G-5R-9bQ"/>
                 <outlet property="_hideOnLostFocus" destination="5zv-42-e9U" id="LWf-h6-Bss"/>
                 <outlet property="_ligatureWarning" destination="JNC-H4-Kuf" id="mRU-9S-27Y"/>
+                <outlet property="_ligatureWarningNonAscii" destination="weN-Tb-wSb" id="10G-Jn-ZVL"/>
                 <outlet property="_nonASCIIFontPicker" destination="e3h-Ex-Npu" id="9Sh-d5-Ydb"/>
                 <outlet property="_nonAsciiFontView" destination="15P-ty-S1w" id="zin-qX-W0C"/>
                 <outlet property="_nonAsciiLigatures" destination="6Fq-pl-5nd" id="x1S-bR-tKg"/>
@@ -3270,6 +3271,15 @@ CA
                                 </button>
                             </subviews>
                         </customView>
+                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="weN-Tb-wSb">
+                            <rect key="frame" x="231" y="51" width="180" height="14"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" controlSize="small" lineBreakMode="clipping" alignment="left" title="⚠️ This may reduce performance" id="lb0-FE-0Pi">
+                                <font key="font" metaFont="menu" size="11"/>
+                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="QMj-Rf-IwZ">
                             <rect key="frame" x="208" y="144" width="175" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
