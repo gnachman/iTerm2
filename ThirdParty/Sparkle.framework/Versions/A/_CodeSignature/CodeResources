@@ -10,11 +10,11 @@
 		</data>
 		<key>Resources/Autoupdate.app/Contents/MacOS/Autoupdate</key>
 		<data>
-		lky4COIVDMcehPw4vPCnLrCu8ts=
+		rR4JhlKWyOY8m07ZsTKlDTvo9Pc=
 		</data>
 		<key>Resources/Autoupdate.app/Contents/MacOS/fileop</key>
 		<data>
-		OE+gyttIO9fFO4PYgBhZloiUOZQ=
+		pQlLnpBR4vRX2C1BEBvEq+yasmI=
 		</data>
 		<key>Resources/Autoupdate.app/Contents/PkgInfo</key>
 		<data>
@@ -26,7 +26,7 @@
 		</data>
 		<key>Resources/Autoupdate.app/Contents/Resources/SUStatus.nib</key>
 		<data>
-		mxCbSqCHOIoPnOLBdUHuxuw4qx8=
+		jjp6YzN/v/NgN8p1VdRf1tHAFcQ=
 		</data>
 		<key>Resources/Autoupdate.app/Contents/Resources/ar.lproj/Sparkle.strings</key>
 		<dict>
@@ -318,7 +318,7 @@
 		</dict>
 		<key>Resources/Autoupdate.app/Contents/_CodeSignature/CodeResources</key>
 		<data>
-		VZU7sw6VDXRaGa+01H5je6MiLmE=
+		31tQhSh7DBo/9GWIiTcSCf4rF5M=
 		</data>
 		<key>Resources/DarkAqua.css</key>
 		<data>
@@ -334,7 +334,7 @@
 		</data>
 		<key>Resources/SUStatus.nib</key>
 		<data>
-		Dw6YLZHoJIxPtfeGCwlFYKJG28w=
+		jjp6YzN/v/NgN8p1VdRf1tHAFcQ=
 		</data>
 		<key>Resources/ar.lproj/SUAutomaticUpdateAlert.nib</key>
 		<dict>
@@ -354,11 +354,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/ar.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/ar.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			SZkmzJX4kyQUKKYrWCboseHwTDA=
+			7a1mWlCz7Zh1OVIag28REO7Oojk=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/ar.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			FTzE8ZOBCdIbzcuQVtwmEDN/EeU=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -399,11 +408,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/cs.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/cs.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			2Q7C/HegsfhDrAlVtR5qdZjixFc=
+			IZyhhxtMnAzuzSdQXssmC8cJ+T8=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/cs.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			QY7eCUfDD3W28h/7J6xDNekzxWQ=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -435,11 +453,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/da.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/da.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			5jRWp93AMwTO21EWljLYZE7EHd8=
+			3Ad+QnWfIJeYfvaiPF7NIw7Y15w=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/da.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			AAiaOap7sjOluQxCKarl2gqm+M4=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -471,11 +498,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/de.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/de.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			P3Mi0zBNFkfrcINlXhNEtk6JdsA=
+			pgqHiUI9syCVm2fn+Yp6W2BxJeU=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/de.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			Ok0t23ScCXHU80LcINfOJWqMdAE=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -511,7 +547,7 @@
 		<dict>
 			<key>hash</key>
 			<data>
-			1plScphodpWAwy1yZ2CM9MhnB/o=
+			8eNOLIDOGX34iQr8XInoQJfh9BE=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -520,7 +556,7 @@
 		<dict>
 			<key>hash</key>
 			<data>
-			q+tbYDXic+MRh/eqeMjoL9T40jE=
+			vOX5JqFzN12Ged0qMv0YjAY093M=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -547,16 +583,25 @@
 		<dict>
 			<key>hash</key>
 			<data>
-			KZZ7O02iFXt4oF+Y+jcR7JBFdbI=
+			kWikwXqteyVrR193sipndMKhir4=
 			</data>
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/en.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/en.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			fsXLFzupkw+km1mxNUIoZRjhvSU=
+			lggAElV0QDDH9E4q9+q06JoLslg=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/en.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			z6a9LzJ7bJiBt0Nk3vW2M5pa9js=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -588,11 +633,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/es.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/es.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			s6E5+jBfV7HhCDFhj/VXJ7YOf/w=
+			qftAFt6bSSXZDpcfcvxsKPHzucU=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/es.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			g4oPXfN4gRjTT6BUQEgL4tcph6c=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -624,11 +678,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/fi.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/fi.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			WUvlFZHt0FfDAvVWQBTbG1kPZYg=
+			fyX1xXrPQKaLqBRDdUXJTIQxekU=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/fi.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			V7CJR7fGPvjYfAZCfudg6FUr0hM=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -660,11 +723,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/fr.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/fr.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			Zh1s/kpIkACRQUMBdOS8jWUhuLc=
+			wwplwnVjxaogJS8jzykZv4xLjNo=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/fr.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			i3Trk8gfQItXq8qY5urqEq4gKgg=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -705,11 +777,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/hr.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/hr.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			/G8b1bfIWgJ0RpE6Ok/FIH659l8=
+			Ybfv7zjZhup8PrYXo1SABTj3mvw=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/hr.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			0QzQY4z1x0M+6/0BfRW7Mn1Z8oY=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -741,11 +822,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/hu.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/hu.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			A/plC19MbTAo6OERoY35ksNgPUc=
+			UfzOsxDYVbBsFdYA7sBZ8wJVl1E=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/hu.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			GGRx2cSt/mER97rIk+1pcQbIqlk=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -777,11 +867,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/is.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/is.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			Q/ISIxLJfQFJZMmiWI682n5f6Ls=
+			GVfSxz8TF/WTOQErV1h6TxzR/zY=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/is.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			2krdYYcQC41sAGHJfmll3pNTZTc=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -813,11 +912,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/it.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/it.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			SpXWcWPsRR3OPXHPVSWUr+9tRqs=
+			MQKBSHSsY8cW4LU6dg8xTVm5U20=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/it.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			U+N76vcB6WGY9B91PP2h+gu6dAM=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -849,11 +957,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/ja.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/ja.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			9uw/H9Z5QiZEBn6pD657LN6S0Gs=
+			PgfIgvkr6FIa+SHlID85RH1SbHU=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/ja.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			93lJ/qPaTXlMtbKLJYptCWLHGFA=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -885,11 +1002,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/ko.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/ko.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			FCDntjLi8ySfhvYgBfLhJEVn/RE=
+			EfqHw9zFHiq2VhNCXwswwSfhZU4=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/ko.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			gYaNuvvMrGiUCyUWe5wP2OqwLGw=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -921,11 +1047,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/nb.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/nb.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			HHrUh8Rp89e9vmtqUMCghQ3tF2c=
+			7lwciM1wFll2UuC30uaKLRfLD/Y=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/nb.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			+7X1JC2RTPBuZMrbh6MxGUlaHsw=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -957,11 +1092,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/nl.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/nl.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			xeSp5TlTSTKJ2jV1T52ks2MlsBM=
+			3+DVXt79FsVT1owC+JORa7RXPOM=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/nl.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			Ya877FmMwnDmigfmWJAXfSgCCl0=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -993,11 +1137,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/pl.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/pl.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			FdSjRQsfgiUSxxyCsjdyvdYX0Kg=
+			w5+hxjetY50lTJAAFEOnl0nVFMk=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/pl.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			RHN7HJcCV+yD7wbW2jNcCI4iqjI=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -1029,11 +1182,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/pt_BR.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/pt_BR.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			f/oDooflT3aaj816CTo7Ypb9z6w=
+			QlIwDTJqxRtN30MpEbnX8teo8V4=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/pt_BR.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			ZYhJOgdGBba39X3wBfywBsTwYvs=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -1065,11 +1227,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/pt_PT.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/pt_PT.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			xSJy+DjSz9FMEkQqev6rII2JIbg=
+			A2sRdTyPqfjVOAqvIbKrFxjvXUE=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/pt_PT.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			GJqhEbQ/EksRKvaakNIpHurGgjU=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -1101,11 +1272,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/ro.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/ro.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			mEqOlSdRepouDCXn6+PgiXoKsqY=
+			kZxcSEIIgZxls2FLZ0aICyrkdcU=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/ro.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			vku/T3aBwuPGw0a8KHkb71b/Py4=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -1137,11 +1317,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/ru.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/ru.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			mMQWLRdUIZb+H1jsmQzNL3E6qOE=
+			mbTCHb1z33Z+PXh3mJM9QvCOFFw=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/ru.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			vp9TZNq5ivc2NqRJHi+XEXD2M5E=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -1173,11 +1362,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/sk.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/sk.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			3COQvZxtaZi/HVVKoDvCio3Hqdk=
+			t/82opzAyf0N/Lx1eMTvxd5F3pA=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/sk.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			U4CTE8cYIX1fQaQYbRoYLYeQXyg=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -1209,11 +1407,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/sl.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/sl.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			pVUs1mXg4sXn2sBoXkAvaqCQoes=
+			1yHvmhdE9/GAWnkXd2VkdUAjtkY=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/sl.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			4nJf5I+tBy2j7d+ejnEV6zF82KI=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -1245,11 +1452,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/sv.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/sv.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			zHYhMhPcWPPSEn1Gtldrqz0HJBc=
+			DlBQnRuY0T054kHhOBJ7b6sXllo=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/sv.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			7iHqqT8gxd/CeBpPGyummm+IGI0=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -1281,11 +1497,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/th.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/th.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			CBybJj3Mh/tZtQhwppnYU/NeBvQ=
+			XyTBDi6p9Dai92VjfM7LN1/nUx0=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/th.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			mIEHajSLAdQ8Usp3MEwfHCRtlGg=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -1317,11 +1542,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/tr.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/tr.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			FxnLsSY1O8zaTn3fY8JU7m2RLtA=
+			KsG7GhDTFPESshrFi6xIcomnHUw=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/tr.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			ta869mh35RN53pz8ldcaGaGq3AE=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -1353,11 +1587,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/uk.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/uk.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			j1ibj1IT1/vipPwxte+8E9fxkWM=
+			eyy9mlr1G3s9hEcvrVTcVSOn8KI=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/uk.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			BL5/u7C9cUm5zG/VDsVrmn6xX48=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -1389,11 +1632,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/zh_CN.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/zh_CN.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			fhGL02YXvJCBQa7XK5e7jBUiXLY=
+			0na/8BVUGfJ8PBf751p/+OwtXF8=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/zh_CN.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			PuAYkRqDgEj//XM51j1KJNRM508=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -1425,11 +1677,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/zh_TW.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/zh_TW.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			mRiLWGZZZWOThZbu6BBZd2o10k0=
+			0pMXKAdXH5xaYX6nTA873m0nptM=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/zh_TW.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			4WSCtzbsqcTzjidOaCbyf3WcXNo=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -1597,14 +1858,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			6Rk3AJPrvGfVh56JtRvOj9VRjg/LU35Ve6ThcGRPbi4=
+			rJLiDn1RLVZNJDs2f6pwD8e/BI5oLYnFrwn1G1yDJcI=
 			</data>
 		</dict>
 		<key>Resources/Autoupdate.app/Contents/MacOS/fileop</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			M/Ly9dliM0H4+nnqK2zk8u3DjsXONFgXRxM5r4WMhx8=
+			BMV3nCOMq3k5UC67IIEkliqaTg85Pc7Il1Zy6uElZXw=
 			</data>
 		</dict>
 		<key>Resources/Autoupdate.app/Contents/PkgInfo</key>
@@ -1625,7 +1886,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			A7yZQClayiM+ZNEwJblbt/esbVYnQkX9gfEE1dHbnTo=
+			VNx1GUkgnwr940XrZAXe4WfpX5kq+PW+kybT/u73wIg=
 			</data>
 		</dict>
 		<key>Resources/Autoupdate.app/Contents/Resources/ar.lproj/Sparkle.strings</key>
@@ -1920,7 +2181,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			24Hse9FsatMJOrQyVpNwPhKCFnbExeApI8xCCaItQ1w=
+			NFofblD4GSS5ADrhzvRRVM2pjPgLgTmILHb495Jtsec=
 			</data>
 		</dict>
 		<key>Resources/DarkAqua.css</key>
@@ -1948,7 +2209,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			rBgisrCXp8iyTBDu3ISrX+WjbyqT/foWI0Dk5i3P4j4=
+			VNx1GUkgnwr940XrZAXe4WfpX5kq+PW+kybT/u73wIg=
 			</data>
 		</dict>
 		<key>Resources/ar.lproj/SUAutomaticUpdateAlert.nib</key>
@@ -1969,11 +2230,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/ar.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/ar.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			hW6amyC5KRb5GEZIHa7ltoQqtsWEsLdUhlY8Nz1gBkk=
+			fAXmcPtG+D0WPXrbC1CJlJgZKlUo+2xWqS6JjuC4gps=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/ar.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			V3zpo+4GPkUkWSkqaLe/vWAaFID+Y3BVWUTcGQvqt/U=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2014,11 +2284,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/cs.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/cs.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			jmDPoiwwhltbmMIq4QX8Pf7LBnZBHo/qGsmwIG2tYcY=
+			JGO4tNhEMS/LZ7ZLGw3W3pjkaRLReIffKlDgQUtfw4c=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/cs.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			VvQy7fxBzYRT28TnH0pOX/ArQKs88uX4tqiSLhH+s4U=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2050,11 +2329,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/da.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/da.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			hvK3ncU3e+ubfFPITKHoALvMM1JRK4zLqjfD6+YGhZM=
+			DKu1z0EihW+HDMXPHFW4QA1Ih8N52NXgilb+x3AH1a4=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/da.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			W14UV0E/GosiZJoWia7ImyTvY8jYcfVDbwOpeLbXbLk=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2086,11 +2374,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/de.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/de.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			2fsa6SgfgzDCq7zGJx0mRGrGwa8kBsLul6LVSoDnLkQ=
+			sX9n8XRZs+m7GsaTnuuVq87UJb8hmF8Re2lcpBBepls=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/de.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			vSlqKtp0XBAeZNHGfyIgG2e/u7kkfTUF2vrSFavPbg0=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2126,7 +2423,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			X29Ajy/VpsAB4tybpkpLsrSuEw+qmR/vn4LSPOdRBIw=
+			EV7Z/NTUyd8n+3C16ibODKbKDDuGUzOB1JKRMPlXq2s=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2135,7 +2432,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			ozBZ6SYCIutQIfKdQAYREiDFcVXDgDLVP97M6Z9ZqSY=
+			yIQbPdLZVDBVv0nNSm4kDP/EDwQ6W17w+ApoOe+aMrM=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2162,16 +2459,25 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			VUK3P4mlSVlDr3zuaxMVD/ADdLnSosmxBfXV5ffzJwo=
+			w4Tu1t3/kkOnb/27v59TCIWPB+iGkZPmmh47QIy7Peo=
 			</data>
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/en.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/en.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			17eEJahPl/RdXduswM1ikcOWdSTf02gAGN9er/PvwdQ=
+			aoyEzm5ewTv7loJW0e642QTY5KhnVWSatTGazG9wMgI=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/en.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			V2+J4ljam3xNRMzVyoWSRAV9qmwzULk//tGmXygcUZs=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2203,11 +2509,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/es.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/es.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			AG85GOIzEqPLGSZVWCPEgL41R46cBLPVcAj8tQbh83c=
+			INLA8fVx68nO+JfSOwb5Vv3LK8dYkIy3/eZg+HCWrxo=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/es.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			7aRJEZsNtVv4baGDwFZkUPDtrYZ86YEuWf4GWZWC7Yk=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2239,11 +2554,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/fi.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/fi.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			yZfOvNKC3TspdbduczM81HOee3neZJ98ui15ULXcalw=
+			oa3JmLgY9T3xic3kOR7t4bDTbotDA9zkneegpk+z6hk=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/fi.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			LOOuvlnIgpDKUvGDRCYIxoPhWZ/Kx5KOmEjhp060dOI=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2275,11 +2599,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/fr.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/fr.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			WKW3dNzEXYBcR+CobA1ktvO/Uvrx4/ebBE5z/GDuHRo=
+			g3XtbSVwm8WOFTTQZYsMptqj/So6EROdc4F3PkPKnVs=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/fr.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			vHnDmbzN0TpFD25n2ucGGtwhh8s3TL3yiFk9t6PhuAg=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2325,11 +2658,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/hr.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/hr.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			SUXXzJB8PpP9qBMlBdVAHiWpDh7qbR7dHFSUzxOxsxY=
+			eLlO+8suGkB9hV6cIMw8Q/rxaEUpftCAIRWRisUEeVM=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/hr.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Wxl18UFZ7dE07n7EXWsMtaEN5kUcUgctgVGM7ghSyEg=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2361,11 +2703,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/hu.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/hu.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			bj77pKL3LwvkgOTqCYn6f6qTGy6xoXrP3yT3zxlOuVw=
+			2TUsUKEdqnf2weAFrq1kj6ULPhS4CdPrdC9HraFIuD0=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/hu.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			j93MM3UF7sg8XM0z4RVVM176bx2ktUHGefE13xSLEb0=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2397,11 +2748,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/is.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/is.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			91ZXQQtJZNQmiZhtdSWB/iKEsDz1jldRS/WhR4x5kq0=
+			j6RhCT9kYzS0L1BSOO2noI8gcvhwk/HHVPRDY2UkcDk=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/is.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			dE1BIGKB6VaF5wBXBEbVrbIL5Mk/vYb3V36EnRrmrIU=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2433,11 +2793,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/it.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/it.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			mB9A2OCpChX1omkbvppy1n7+OL5a8FpMmQPEwzSbUR4=
+			Ono/bud/JFmYr+E4+1Yk+SluR5UvlBXupMLs2AyNMPg=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/it.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			1Fg9fHOHVFp7KpDeMlMoUETTZcUYdL5iWm4KdO/eeFs=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2469,11 +2838,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/ja.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/ja.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			fwzOeaCVxgsc9HH+uIsDvWeM889pBhKAhoDDWWQ/zSM=
+			OLjpisfxn3uotSkyZbxUQq6lAFprlQDDkDGa2VvvJGc=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/ja.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			C4lQ9N18kDRB5vPr8HMyO4tBbfXbayO9lwOXYM64wXg=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2505,11 +2883,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/ko.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/ko.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			msO3B/H8m7+S3d1VyIJcnWR30F52OCzVd+WTAWezE/A=
+			3qErhjlEzjll8tgW/atAA5pNNpbp42o/7oCEtNWt9qo=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/ko.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			fA7d8KjNgCfsHq5SWzXR3sfKYVvxDBgBfguWEiSyP7g=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2541,11 +2928,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/nb.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/nb.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			7n2GUPvLtLo/TqidZVqHyNaksEumcnh9KZTNKnsSjXk=
+			YSIcbQx8kLDDoIoWHXcsgkm/XFzP75IDvsCT30IQ2oM=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/nb.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			xvx4zPCfM5FSjV8FURN7fB6UN6JYt09FFbNCs4JJAY8=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2577,11 +2973,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/nl.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/nl.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			9XxR+LiPW41C9RZo1QeUZGwc3xH984X789+HnE7Dymc=
+			VdjlALAlZsLb6Z66FLB4cr3NXT21O+B4Aty1clhbBBU=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/nl.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			sLbUHijWKK7tqhhy1YbhV1BCVO7tXEtbD4Fp/CT7k6Y=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2613,11 +3018,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/pl.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/pl.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			xpiQET4J0MiP293dLfYf7vGD4keca86v2RuKVxWwbIY=
+			SIE9BSb0LX0uxTr6Fpn+teOts3kn0Ml8zXCQP9wqVFE=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/pl.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			ij9JlNAt5lwOTL+7AOPQfZTYG9qV6PWtGiVKabNuAas=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2654,11 +3068,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/pt_BR.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/pt_BR.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			houhI6MFxcjsnizUTtOdEn771eAoR3A6CCXmd33Mx1o=
+			XcoB7XuNMgNcXF+POF7t2J56YiewQBUe/pYIQuxWTFY=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/pt_BR.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			CqWxZojORzG5xCfaDdP5Xr4e6kXZ4Yl9Acw9OIAFsVg=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2690,11 +3113,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/pt_PT.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/pt_PT.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			C6dJKqmusJzJu5GzeqmxO2+t5m7KAOsaXWaJoPV3FMQ=
+			2GSdVXcw3gTVB+GZtSMz6NMRjlGq/X34CbpXPBED1L0=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/pt_PT.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			VGge+Q83hgSpv05oOyUgz3J2wUdvnxO5z5Yjp6wys58=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2726,11 +3158,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/ro.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/ro.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			ZIlAvUlnXjhrCjH5KwwQACZMgiDjKY3oi/VnGBCI1g8=
+			h9UTajOjXsQkO4X5Ia5S9iGjltUujMKMUZBgjyPyrb0=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/ro.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			QJpGJr09Ka5WvflUN+maulB4FMjJArGZLIGlCxVWatI=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2762,11 +3203,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/ru.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/ru.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			4yUrhgYPfbX5l0o0uJBBcNgmiuVu3Sf5HZtfBkhSi40=
+			8LZlJHhPGNUb77RzNzLR8MAs4urVN1k2KSUAmBSbpqY=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/ru.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			p1COXoE5hvT8pL5RIQxuylf8Q4430kk5AV9r+r8VlIk=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2798,11 +3248,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/sk.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/sk.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			1yshIqNzJuVOUwwMHTvlC8gR1txVFdHCIbQGQQpN6go=
+			rEOb+V/4CZS4h/VPMgs0AU5hBDtHy2yrx4FFVzpM+X0=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/sk.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			C6TWm6R3tLzfUFDclMaywB/0lBgFn+tCyfq1vCPnKfE=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2834,11 +3293,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/sl.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/sl.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			E9XFnhmXaIV89Z3lmnZQFdsn3Kg9K2Fd7U7ylyKtWHs=
+			qwi2z9TDDE1Z3Wk7hTdkej9bhN85gosBrMMsMhFvwlY=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/sl.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			8mQsvQXq3F4PSvaaSWtBX0pS0Yrkd+0myKQKtN58aos=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2870,11 +3338,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/sv.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/sv.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			aQ6ANph/uh2cznHp3hHIWzgS36B1XPUzvLd+0ClAzyY=
+			8ji3SPZ2fgpnLPQurnWwmFlM72UWtwxzv5mDmCyAzXQ=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/sv.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			7r+dFNmR8Jl5wJr8aUYeM7wXpiXKgNDj3EGvAcxEHj8=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2906,11 +3383,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/th.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/th.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			Uc9l7KH5rkC30q5gPDzeafyp7MRLKupw3zc3ooBOcvk=
+			U40yb0kOXJCJg1EY4YUkubHchEdBh2Fna8X+WxAL0IM=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/th.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			MOL+C8dFmPLzWKAZtf1limUIUMLb/7iITUKq6r83sp4=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2942,11 +3428,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/tr.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/tr.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			DeVMsOuiir0jPVOs9xR7jyQsDax18vICPbsIlehDBus=
+			iVNGpxnpdLFPdjfd+w5lp6+WgJn+RK6zvs6vK99Cfrs=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/tr.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Rh+WSfEDUGs0qumqBzGmdmFwMyf8Z/AwaV78OpzqMUI=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -2978,11 +3473,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/uk.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/uk.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			uhKy6rUkV9ZS15YmFzZW1sDzK1KkDKc4QCjjKX01VVI=
+			9Q6KpwHauUPQO7ZYMgYZEPkh8XWRsxAfM8ShD69N7Mg=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/uk.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			eJk9VYYS6PGl1oncJ/giPCa5jUOxOJWklTP/MWv/E1I=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -3014,11 +3518,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/zh_CN.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/zh_CN.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			3dvdyF3PmuUS1ctl+uXi9tr5axdWI0qGBgz7Nvrhaiw=
+			e1hEZPTdlarbq0g7V/nWiYh6uR+8gjj9Iifop78fn58=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/zh_CN.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			fyHq8wuo7B/qnFynYilwd0fI+7TWN9HjmKQYG82uUhw=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -3050,11 +3563,20 @@
 			<key>optional</key>
 			<true/>
 		</dict>
-		<key>Resources/zh_TW.lproj/SUUpdatePermissionPrompt.nib</key>
+		<key>Resources/zh_TW.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101500.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			7D28Mk0OgH8AUbZ92oFEln1602k/beOiGVGqQAF2y5U=
+			3AHAof3jv4Ft0hvd9EQrFbM2Du0pKaPUcv/pVSxsVZw=
+			</data>
+			<key>optional</key>
+			<true/>
+		</dict>
+		<key>Resources/zh_TW.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			C5Iu1pmGxcq95wwblnoywvPJBGmKS6zecCOby5eE0tU=
 			</data>
 			<key>optional</key>
 			<true/>
