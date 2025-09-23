@@ -28,7 +28,8 @@ class CursorSmearView: NSView {
                         end: NSRect,
                         color: NSColor) {
         DLog("Run smear from \(start) to \(end) with color \(color)")
-        if distanceSquared(start.origin, end.origin) < 150.0 * 150.0 {
+        let minDistance = iTermAdvancedSettingsModel.cursorAnimationMinDistance()
+        if distanceSquared(start.origin, end.origin) < minDistance * minDistance {
             DLog("Too close")
             return
         }

@@ -542,6 +542,7 @@ DEFINE_BOOL(supportPowerlineExtendedSymbols, YES, SECTION_DRAWING @"Include exte
 DEFINE_BOOL(alwaysUseLineStyleMarks, NO, SECTION_DRAWING @"Always use line-style marks?");
 DEFINE_FLOAT(alphaForDeselectedCommandShade, 0.25, SECTION_DRAWING @"Alpha value for shade that covers areas outside the currently selected command.");
 DEFINE_BOOL(showURLPreviewForSemanticHistory, YES, SECTION_DRAWING @"Show URL preview on cmd-hover for semantic history matches.");
+DEFINE_FLOAT(cursorAnimationMinDistance, 150.0, SECTION_DRAWING @"When animated cursor movement is enabled, only perform animation if the cursor moves at least this distance in points.");
 
 #pragma mark - Semantic History
 

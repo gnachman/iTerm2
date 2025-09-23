@@ -122,6 +122,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)convertTabDragToWindowDragForSolitaryTabInCompactOrMinimalTheme;
 + (BOOL)copyBackgroundColor;
 + (BOOL)copyWithStylesByDefault;
++ (CGFloat)cursorAnimationMinDistance;
 + (CGFloat)customTabBarFontSize;
 + (double)darkModeInactiveTabDarkness;
 + (BOOL)darkThemeHasBlackTitlebar;
