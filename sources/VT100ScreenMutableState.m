@@ -2632,8 +2632,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                 // This code path should not be taken with auto-composer because mark.command gets
                 // set prior to sending the command.
                 const VT100GridAbsCoordRange commandRange = VT100GridAbsCoordRangeFromCoordRange(range, self.cumulativeScrollbackOverflow);
-                const VT100GridAbsCoord outputStart = VT100GridAbsCoordMake(self.currentGrid.cursor.x,
-                                                                            self.currentGrid.cursor.y + [self.linebuffer numLinesWithWidth:self.currentGrid.size.width] + self.cumulativeScrollbackOverflow);
+                VT100GridAbsCoord outputStart = VT100GridAbsCoordMake(self.currentGrid.cursor.x,
+                                                                      self.currentGrid.cursor.y + [self.linebuffer numLinesWithWidth:self.currentGrid.size.width] + self.cumulativeScrollbackOverflow);
+                if (outputStart.x > 0) {
+                    outputStart.x = 0;
+                    outputStart.y += 1;
+                }
                 DLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
                      self.lastPromptLine - self.cumulativeScrollbackOverflow, mark, command);
                 [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
