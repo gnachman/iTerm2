@@ -63,7 +63,7 @@ static BOOL iTermSignedRangeContainsValue(iTermSignedRange range, NSInteger valu
 static iTermSignedRange iTermSignedRangeWithBounds(NSInteger minValue, NSInteger halfOpenUpperBound) {
     return (iTermSignedRange) { .minValue = minValue, .halfOpenUpperBound = halfOpenUpperBound };
 }
-
+const CGFloat iTermCursorGuideAlphaThreshold = 0.3;
 static const int kBadgeMargin = 4;
 const CGFloat iTermOffscreenCommandLineVerticalPadding = 8.0;
 
@@ -482,7 +482,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     // Draw other background-like stuff that goes behind text.
     [self drawAccessoriesInRect:boundingRect
                   virtualOffset:virtualOffset];
-    const BOOL shouldDrawCursorGuideBelowText = !self.useNativePowerlineGlyphs;
+    const BOOL shouldDrawCursorGuideBelowText = !self.useNativePowerlineGlyphs || _cursorGuideColor.alphaComponent > iTermCursorGuideAlphaThreshold;
     if (shouldDrawCursorGuideBelowText) {
         [self drawCursrGuideIfNeededInRect:boundingRect
                              virtualOffset:virtualOffset];
