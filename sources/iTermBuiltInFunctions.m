@@ -162,6 +162,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
     [iTermArrayCountBuiltInFunction registerBuiltInFunction];
     [iTermAlertBuiltInFunction registerBuiltInFunction];
     [iTermGetStringBuiltInFunction registerBuiltInFunction];
+    [iTermGetPolyModalAlertBuiltInFunction   registerBuiltInFunction];
     [iTermFocusBuiltInFunction registerBuiltInFunction];
     [iTermSetStatusBarComponentUnreadCountBuiltInFunction registerBuiltInFunction];
     [iTermOpenPanelBuiltInFunction registerBuiltInFunction];
