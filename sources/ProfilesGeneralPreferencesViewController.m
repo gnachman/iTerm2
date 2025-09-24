@@ -887,7 +887,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 }
 
 - (void)didLocatePlugin:(NSURL *)url {
-    iTermBrowserPluginFinder.instance = nil
+    iTermBrowserPluginFinder.instance = nil;
     if (!url) {
         return;
     }
