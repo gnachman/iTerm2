@@ -35,7 +35,6 @@
     IBOutlet TriggerController *_triggerWindowController;
     IBOutlet SmartSelectionController *_smartSelectionWindowController;
     IBOutlet iTermSemanticHistoryPrefsController *_semanticHistoryPrefController;
-    IBOutlet NSButton *_removeHost;
     IBOutlet NSTableView *_boundHostsTableView;
 
     IBOutlet NSControl *_boundHostTitle;
@@ -396,13 +395,13 @@
     dataCellForTableColumn:(NSTableColumn *)tableColumn
                        row:(NSInteger)row {
     NSTextFieldCell *cell = [[NSTextFieldCell alloc] initTextCell:@"hostname"];
-    [cell setPlaceholderString:@"Hostname, username@hostname, or username@"];
+    [cell setPlaceholderString:@"Enter a rule…"];
     [cell setEditable:YES];
     return cell;
 }
 
 - (void)tableViewSelectionDidChange:(NSNotification *)notification {
-    [_removeHost setEnabled:[_boundHostsTableView numberOfSelectedRows] > 0];
+    [_removeBoundHost setEnabled:[_boundHostsTableView numberOfSelectedRows] > 0];
 
     if (!_addingBoundHost) {
         [self removeNamelessHosts];
