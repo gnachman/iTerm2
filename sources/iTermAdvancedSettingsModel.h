@@ -54,6 +54,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)aggressiveBaseCharacterDetection;
 + (BOOL)aggressiveFocusFollowsMouse;
 + (NSString *)aiModernModelPrefixes;
++ (NSString *)aiProxy;
 + (double)alertTriggerRateLimit;
 + (BOOL)alertsIndicateShortcuts;
 + (BOOL)allowDragOfTabIntoNewWindow;

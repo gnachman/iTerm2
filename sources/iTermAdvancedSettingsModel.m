@@ -812,6 +812,7 @@ DEFINE_BOOL(fastTriggerRegexes, YES, SECTION_EXPERIMENTAL @"Fast regular express
 DEFINE_BOOL(postFakeFlagsChangedEvents, NO, SECTION_EXPERIMENTAL @"Post fake flags-changed events when remapping modifiers with an event tap.\nThis is an attempt to work around incompatibilities with AltTab in issue 10220.");
 DEFINE_BOOL(fullWidthFlags, YES, SECTION_EXPERIMENTAL @"Flag emoji render full-width");
 DEFINE_STRING(aiModernModelPrefixes, @"gpt-", SECTION_EXPERIMENTAL @"AI model name prefixes that use the modern “completions” API.\nPrefixes should be space-delimited. Note that o1 models use a different API and have hard-coded behavior.");
+DEFINE_STRING(aiProxy, @"", SECTION_EXPERIMENTAL @"Host and port for proxy for AI requests.\ni.e., example.com:8080")
 DEFINE_BOOL(addUtilitiesToPATH, YES, SECTION_EXPERIMENTAL @"Add path to iTerm2 utilities to $PATH for new sessions?");
 DEFINE_BOOL(autoSearch, NO, SECTION_EXPERIMENTAL @"Automatically search for selected text after making a selection?");
 DEFINE_BOOL(smartLoggingWithAutoComposer, NO, SECTION_EXPERIMENTAL @"Enable more compact logging when using auto composer?\nThis will avoid logging raw data in your prompt and your interactions with it. Instead, the prompt is logged once in plain text and the command is logged when sent.");

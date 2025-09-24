@@ -137,6 +137,18 @@ class PluginClient {
             }
             callback(first, second)
         }
+        let proxyString = iTermAdvancedSettingsModel.aiProxy()
+        if let proxyString, !proxyString.isEmpty {
+            let parts = proxyString.split(separator: ":", maxSplits: 1)
+            if parts.count == 2, let port = Int(parts[1]) {
+                let host = String(parts[0])
+                config.connectionProxyDictionary = [
+                    kCFNetworkProxiesHTTPSEnable as String: true,
+                    kCFNetworkProxiesHTTPSProxy as String: host,
+                    kCFNetworkProxiesHTTPSPort as String: port
+                ]
+            }
+        }
 
         delegate.streaming = streaming
         DLog("Request with delegate \(delegate.it_addressString):\n\(body)")
