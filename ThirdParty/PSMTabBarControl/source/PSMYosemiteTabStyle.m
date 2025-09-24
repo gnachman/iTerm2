@@ -258,14 +258,17 @@
     PSMRolloverButton *_addTabButton = [[PSMRolloverButton alloc] initWithFrame:addTabButtonRect];
     if (_addTabButton) {
         NSImage *newButtonImage = [self addTabButtonImage];
-        if (newButtonImage)
+        if (newButtonImage) {
             [_addTabButton setUsualImage:newButtonImage];
+        }
         newButtonImage = [self addTabButtonPressedImage];
-        if (newButtonImage)
+        if (newButtonImage) {
             [_addTabButton setAlternateImage:newButtonImage];
+        }
         newButtonImage = [self addTabButtonRolloverImage];
-        if (newButtonImage)
+        if (newButtonImage) {
             [_addTabButton setRolloverImage:newButtonImage];
+        }
         [_addTabButton setTitle:@""];
         [_addTabButton setImagePosition:NSImageOnly];
         [_addTabButton setButtonType:NSButtonTypeMomentaryChange];

@@ -464,6 +464,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)useCustomTabBarFontSize;
 + (BOOL)useDoubleClickDelayForCommandSelection;
 + (BOOL)useRestorableStateController;
++ (BOOL)useSequoiaStyleTabs;
 + (BOOL)useShortcutAccessoryViewController;
 + (NSString *)URLCharacterSet;
 + (NSString *)URLCharacterSetExclusions;

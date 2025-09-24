@@ -69,47 +69,35 @@
                 return [[PSMYosemiteTabStyle alloc] init];
             }
             if (@available(macOS 26, *)) {
-#ifdef MAC_OS_VERSION_26_0
-                return [[PSMTahoeTabStyle alloc] init];
-#else
-                return [[PSMYosemiteTabStyle alloc] init];
-#endif
-            } else {
-                return [[PSMYosemiteTabStyle alloc] init];
+                if (![iTermAdvancedSettingsModel useSequoiaStyleTabs]) {
+                    return [[PSMTahoeTabStyle alloc] init];
+                }
             }
+            return [[PSMYosemiteTabStyle alloc] init];
         case TAB_STYLE_DARK:
             if (preferredStyle == TAB_STYLE_COMPACT) {
                 return [[PSMDarkTabStyle alloc] init];
             }
             if (@available(macOS 26, *)) {
-#ifdef MAC_OS_VERSION_26_0
-                return [[PSMTahoeDarkTabStyle alloc] init];
-#else
-                return [[PSMDarkTabStyle alloc] init];
-#endif
-            } else {
-                return [[PSMDarkTabStyle alloc] init];
+                if (![iTermAdvancedSettingsModel useSequoiaStyleTabs]) {
+                    return [[PSMTahoeDarkTabStyle alloc] init];
+                }
             }
+            return [[PSMDarkTabStyle alloc] init];
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
             if (@available(macOS 26, *)) {
-#ifdef MAC_OS_VERSION_26_0
-                return [[PSMTahoeLightHighContrastTabStyle alloc] init];
-#else
-                return [[PSMLightHighContrastTabStyle alloc] init];
-#endif
-            } else {
-                return [[PSMLightHighContrastTabStyle alloc] init];
+                if (![iTermAdvancedSettingsModel useSequoiaStyleTabs]) {
+                    return [[PSMTahoeLightHighContrastTabStyle alloc] init];
+                }
             }
+            return [[PSMLightHighContrastTabStyle alloc] init];
         case TAB_STYLE_DARK_HIGH_CONTRAST:
             if (@available(macOS 26, *)) {
-#ifdef MAC_OS_VERSION_26_0
-                return [[PSMTahoeDarkHighContrastTabStyle alloc] init];
-#else
-                return [[PSMDarkHighContrastTabStyle alloc] init];
-#endif
-            } else {
-                return [[PSMDarkHighContrastTabStyle alloc] init];
+                if (![iTermAdvancedSettingsModel useSequoiaStyleTabs]) {
+                    return [[PSMTahoeDarkHighContrastTabStyle alloc] init];
+                }
             }
+            return [[PSMDarkHighContrastTabStyle alloc] init];
     }
     assert(NO);
     return nil;

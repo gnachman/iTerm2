@@ -228,11 +228,11 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
         _hasCloseButton = YES;
         _tabLocation = PSMTab_TopTab;
         if (@available(macOS 26, *)) {
-#ifdef MAC_OS_VERSION_26_0
-            _style = [[PSMTahoeTabStyle alloc] init];
-#else
-            _style = [[PSMYosemiteTabStyle alloc] init];
-#endif
+            if (![iTermAdvancedSettingsModel useSequoiaStyleTabs]) {
+                _style = [[PSMTahoeTabStyle alloc] init];
+            } else {
+                _style = [[PSMYosemiteTabStyle alloc] init];
+            }
         } else {
             _style = [[PSMYosemiteTabStyle alloc] init];
         }
@@ -265,36 +265,59 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
 
 - (void)setupButtons {
     if (@available(macOS 26, *)) {
-        NSRect overflowButtonRect = [_style frameForOverflowButtonWithAddTabButton:self.showAddTabButton
-                                                                     enclosureSize:self.frame.size
-                                                                    standardHeight:self.height];
-        [_overflowPopUpButton autorelease];
-        [_overflowPopUpButton removeFromSuperview];
-        _overflowPopUpButton = [[self.style makeOverflowButtonWithFrame:overflowButtonRect] retain];
-        if (_overflowPopUpButton) {
-            // configure
-            [_overflowPopUpButton setAutoresizingMask:NSViewNotSizable|NSViewMinXMargin];
-            _overflowPopUpButton.accessibilityLabel = @"More tabs";
+        if (![iTermAdvancedSettingsModel useSequoiaStyleTabs]) {
+            NSRect overflowButtonRect = [_style frameForOverflowButtonWithAddTabButton:self.showAddTabButton
+                                                                         enclosureSize:self.frame.size
+                                                                        standardHeight:self.height];
+            [_overflowPopUpButton autorelease];
+            [_overflowPopUpButton removeFromSuperview];
+            _overflowPopUpButton = [[self.style makeOverflowButtonWithFrame:overflowButtonRect] retain];
+            if (_overflowPopUpButton) {
+                // configure
+                [_overflowPopUpButton setAutoresizingMask:NSViewNotSizable|NSViewMinXMargin];
+                _overflowPopUpButton.accessibilityLabel = @"More tabs";
+            }
+
+            // new tab button
+            NSRect addTabButtonRect = NSMakeRect([self frame].size.width - [_style rightMarginForTabBarControlWithOverflow:YES
+                                                                                                              addTabButton:self.showAddTabButton],
+                                                 3,
+                                                 23,
+                                                 22);
+            [_addTabButton autorelease];
+            [_addTabButton removeFromSuperview];
+            _addTabButton = [[_style makeAddTabButtonWithFrame:addTabButtonRect] retain];
+            if (_showAddTabButton) {
+                [_addTabButton setHidden:NO];
+            } else {
+                [_addTabButton setHidden:YES];
+            }
+            [_addTabButton setNeedsDisplay:YES];
+            _addTabButton.action = @selector(addTab:);
+            _addTabButton.target = self;
+            return;
         }
-        
-        // new tab button
-        NSRect addTabButtonRect = NSMakeRect([self frame].size.width - [_style rightMarginForTabBarControlWithOverflow:YES
-                                                                                                          addTabButton:self.showAddTabButton],
-                                             3,
-                                             23,
-                                             22);
-        [_addTabButton autorelease];
-        [_addTabButton removeFromSuperview];
-        _addTabButton = [[_style makeAddTabButtonWithFrame:addTabButtonRect] retain];
-        if (_showAddTabButton){
-            [_addTabButton setHidden:NO];
-        } else {
-            [_addTabButton setHidden:YES];
-        }
-        [_addTabButton setNeedsDisplay:YES];
-        _addTabButton.action = @selector(addTab:);
-        _addTabButton.target = self;
-    } else {
+    }
+    NSRect overflowButtonRect = NSMakeRect([self frame].size.width - [_style rightMarginForTabBarControlWithOverflow:YES
+                                                                                                        addTabButton:self.showAddTabButton] + 1,
+                                           0,
+                                           [_style rightMarginForTabBarControlWithOverflow:YES
+                                                                              addTabButton:self.showAddTabButton] - 1,
+                                           [self frame].size.height);
+    _overflowPopUpButton = [[PSMOverflowPopUpButton alloc] initWithFrame:overflowButtonRect pullsDown:YES];
+    if (_overflowPopUpButton) {
+        // configure
+        [_overflowPopUpButton setAutoresizingMask:NSViewNotSizable|NSViewMinXMargin];
+        _overflowPopUpButton.accessibilityLabel = @"More tabs";
+    }
+
+    NSRect addTabButtonRect = NSMakeRect([self frame].size.width - [_style rightMarginForTabBarControlWithOverflow:YES
+                                                                                                      addTabButton:self.showAddTabButton],
+                                         3,
+                                         23,
+                                         22);
+    _addTabButton = [[PSMRolloverButton alloc] initWithFrame:addTabButtonRect];
+    if (_addTabButton) {
         NSImage *newButtonImage = [_style addTabButtonImage];
         if (newButtonImage) {
             [_addTabButton setUsualImage:newButtonImage];
@@ -307,6 +330,19 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
         if (newButtonImage) {
             [_addTabButton setRolloverImage:newButtonImage];
         }
+        [_addTabButton setTitle:@""];
+        [_addTabButton setImagePosition:NSImageOnly];
+        [_addTabButton setButtonType:NSButtonTypeMomentaryChange];
+        [_addTabButton setBordered:NO];
+        [_addTabButton setBezelStyle:NSBezelStyleShadowlessSquare];
+        if (_showAddTabButton){
+            [_addTabButton setHidden:NO];
+        } else {
+            [_addTabButton setHidden:YES];
+        }
+        [_addTabButton setNeedsDisplay:YES];
+        _addTabButton.action = @selector(addTab:);
+        _addTabButton.target = self;
     }
 }
 
