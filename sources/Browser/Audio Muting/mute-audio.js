@@ -2,11 +2,48 @@
     'use strict';
     try {
         const secret = '{{SECRET}}';
+        console.debug('[iTerm2-AudioMute] mute-audio.js loading in frame:', window.location.href);
 
         // internal state
         const gainNodes = [];
         const originalGainValues = new WeakMap();
         const originalVolumes = new WeakMap();
+
+        // Iterable weak collection for tracking media elements
+        const trackedElements = new Set(); // Set of WeakRefs
+        const alreadyTracked = new WeakSet(); // To prevent double-tracking
+        const elementRegistry = new FinalizationRegistry(ref => {
+            trackedElements.delete(ref);
+        });
+
+        function trackElement(element) {
+            // Avoid double-tracking
+            if (alreadyTracked.has(element)) {
+                return;
+            }
+            alreadyTracked.add(element);
+
+            const ref = new WeakRef(element);
+            trackedElements.add(ref);
+            elementRegistry.register(element, ref);
+        }
+
+        function* getTrackedElements() {
+            // Clean up dead refs as we iterate
+            const deadRefs = [];
+            for (const ref of trackedElements) {
+                const element = ref.deref();
+                if (element !== undefined) {
+                    yield element;
+                } else {
+                    // Mark for cleanup
+                    deadRefs.push(ref);
+                }
+            }
+            // Clean up dead refs
+            deadRefs.forEach(ref => trackedElements.delete(ref));
+        }
+
         let muted = false;
 
         // apply muted/unmuted state to an HTMLMediaElement
@@ -64,6 +101,7 @@
                 const OriginalAudioContext = window.AudioContext;
                 window.AudioContext = wrapContext(OriginalAudioContext);
                 window.AudioContext.prototype = OriginalAudioContext.prototype;
+                console.debug("[iTerm2-AudioMute] Successfully wrapped AudioContext");
             } catch (err) {
                 console.warn("[iTerm2-AudioMute] Failed to wrap AudioContext:", err);
             }
@@ -89,21 +127,47 @@
         // API methods
         function mute(sessionSecret) {
             if (sessionSecret != secret) return;
+            console.debug('[iTerm2-AudioMute] Muting audio in frame:', window.location.href);
             muted = true;
+
+            // Mute all tracked elements (whether in DOM or not)
+            let trackedCount = 0;
+            for (const element of getTrackedElements()) {
+                applyStateToElem(element);
+                trackedCount++;
+            }
+            console.debug('[iTerm2-AudioMute] Applied mute to', trackedCount, 'tracked audio/video elements');
+
+            // Also check DOM in case we missed any
             const elements = document.querySelectorAll('audio,video');
-            elements.forEach(applyStateToElem);
+            console.debug('[iTerm2-AudioMute] Found', elements.length, 'audio/video elements in DOM');
+            elements.forEach(elem => {
+                trackElement(elem); // Track them for future
+                applyStateToElem(elem);
+            });
+
+            console.debug('[iTerm2-AudioMute] Found', gainNodes.length, 'gain nodes to mute');
             gainNodes.forEach(g => {
                 if (!originalGainValues.has(g)) {
                     originalGainValues.set(g, g.gain.value);
                 }
                 g.gain.value = 0;
             });
+            console.debug('[iTerm2-AudioMute] Mute complete');
         }
         function unmute(sessionSecret) {
             if (sessionSecret != secret) return;
             muted = false;
+
+            // Unmute all tracked elements
+            for (const element of getTrackedElements()) {
+                applyStateToElem(element);
+            }
+
+            // Also check DOM elements
             const elements = document.querySelectorAll('audio,video');
             elements.forEach(applyStateToElem);
+
             gainNodes.forEach(g => {
                 const originalValue = originalGainValues.get(g);
                 g.gain.value = originalValue !== undefined ? originalValue : 1;
@@ -151,17 +215,55 @@
             }
         }
 
-        // catch existing and future media elements
+        // Intercept Audio constructor to track elements
+        const OriginalAudio = window.Audio;
+        if (OriginalAudio) {
+            function WrappedAudio(...args) {
+                const audio = new OriginalAudio(...args);
+                trackElement(audio);
+                // If already muted, apply immediately
+                if (muted) {
+                    applyStateToElem(audio);
+                }
+                return audio;
+            }
+            // Preserve prototype chain
+            WrappedAudio.prototype = OriginalAudio.prototype;
+            window.Audio = WrappedAudio;
+        }
+
+        // Intercept createElement to track audio/video elements
+        const originalCreateElement = document.createElement;
+        document.createElement = function(tagName, ...args) {
+            const element = originalCreateElement.call(this, tagName, ...args);
+            if (tagName.toLowerCase() === 'audio' || tagName.toLowerCase() === 'video') {
+                trackElement(element);
+                // If already muted, apply immediately
+                if (muted) {
+                    applyStateToElem(element);
+                }
+            }
+            return element;
+        };
+
+        // catch existing and future media elements in DOM
         document.addEventListener("DOMContentLoaded", function() {
-            document.querySelectorAll("audio,video").forEach(applyStateToElem);
+            document.querySelectorAll("audio,video").forEach(elem => {
+                trackElement(elem);
+                if (muted) applyStateToElem(elem);
+            });
         });
         new MutationObserver(function(records) {
             for (let rec of records) {
                 for (let node of rec.addedNodes) {
                     if (node.tagName === "AUDIO" || node.tagName === "VIDEO") {
-                        applyStateToElem(node);
+                        trackElement(node);
+                        if (muted) applyStateToElem(node);
                     } else if (node.querySelectorAll) {
-                        node.querySelectorAll("audio,video").forEach(applyStateToElem);
+                        node.querySelectorAll("audio,video").forEach(elem => {
+                            trackElement(elem);
+                            if (muted) applyStateToElem(elem);
+                        });
                     }
                 }
             }

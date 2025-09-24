@@ -2,29 +2,33 @@
     'use strict';
     const secret = "{{SECRET}}";
 
+    console.debug('[iTerm2 Audio] monitor-audio-context.js loaded');
+
     // Grab the originals
     const RealAC = window.AudioContext;
     const RealOAC = window.OfflineAudioContext;
     const RealWAC = window.webkitAudioContext;
 
-    // Build wrappers that still call the real constructors
-    function WrappedAC(...args) {
-        console.debug('[iTerm2 Audio] AudioContext created on', window.location.href);
-        window.webkit.messageHandlers.audioHandler.postMessage({
-            event: 'audioContextCreated', sessionSecret: secret
-        });
-        return new RealAC(...args);
+    // Build proper wrapper classes that extend the real constructors
+    class WrappedAC extends RealAC {
+        constructor(...args) {
+            console.debug('[iTerm2 Audio] AudioContext created on', window.location.href);
+            super(...args);
+            window.webkit.messageHandlers.iTerm2AudioHandler.postMessage({
+                event: 'audioContextCreated', sessionSecret: secret
+            });
+        }
     }
-    WrappedAC.prototype = RealAC.prototype;
 
-    function WrappedOAC(...args) {
-        console.debug('[iTerm2 Audio] OfflineAudioContext created on', window.location.href);
-        window.webkit.messageHandlers.audioHandler.postMessage({
-            event: 'offlineAudioContextCreated', sessionSecret: secret
-        });
-        return new RealOAC(...args);
+    class WrappedOAC extends RealOAC {
+        constructor(...args) {
+            console.debug('[iTerm2 Audio] OfflineAudioContext created on', window.location.href);
+            super(...args);
+            window.webkit.messageHandlers.iTerm2AudioHandler.postMessage({
+                event: 'offlineAudioContextCreated', sessionSecret: secret
+            });
+        }
     }
-    WrappedOAC.prototype = RealOAC.prototype;
 
     // 3. Redefine on window as non-writable, non-configurable
     Object.defineProperty(window, 'AudioContext', {
@@ -50,7 +54,7 @@
         });
     }
 
-    // 5. Freeze the prototypes so methods can’t be altered
+    // 5. Freeze the prototypes so methods can't be altered
     Object.freeze(RealAC.prototype);
     Object.freeze(RealOAC.prototype);
 
