@@ -102,6 +102,8 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 #if ITERM2_SHARED_ARC
 + (NSString *)browserBundleID;
 #endif  // ITERM2_SHARED_ARC
++ (NSString *)browserPluginPathHint;
++ (void)setBrowserPluginPathHint:(NSString *)newValue;
 + (BOOL)browserProfiles;
 + (int)bufferDepth;
 + (BOOL)chaseAnchoredScreen;

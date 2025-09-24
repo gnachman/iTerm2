@@ -44,6 +44,27 @@ class iTermBrowserGateway: NSObject {
     private static let teamID = "H7V7XYVQ7D"
     @objc static let didChange = Notification.Name(rawValue: "iTermBrowserGatewayDidChange")
 
+    @objc
+    static func reload() {
+        cached.expire()
+    }
+
+    @objc(didLocateBundleManually:)
+    static func didLocateBundleManually(_ url: URL) -> String? {
+        guard let bundle = Bundle(url: url) else {
+            return "The file at \(url.path) is not a valid app bundle."
+        }
+        if bundle.bundleIdentifier != Self.bundleID {
+            return "This is not the browser plugin. This file’s bundle ID is “\(bundle.bundleIdentifier ?? "not set")”.\n The expected ID is “\(Self.bundleID)”."
+        }
+        if !verifyCodeSignature(at: url, teamID: teamID) {
+            return "The code signature of the plugin at \(url.path) is invalid. Download it again, and ensure your anti-virus does not quarantine it."
+        }
+        iTermAdvancedSettingsModel.setBrowserPluginPathHint(url.path)
+        cached.expire()
+        return nil
+    }
+
     @objc(browserAllowedCheckingIfNot:)
     static func browserAllowed(checkIfNo: Bool) -> Bool {
         if let cached = cached.value {
@@ -120,7 +141,19 @@ class iTermBrowserGateway: NSObject {
     }
 
     private static func checkPluginInstalled() -> Bool {
-        return verifyApp(bundleID: bundleID, teamID: teamID)
+        if verifyApp(bundleID: bundleID, teamID: teamID) {
+            return true
+        }
+        guard let hint = iTermAdvancedSettingsModel.browserPluginPathHint() else {
+            DLog("No hint")
+            return false
+        }
+        if hint.isEmpty {
+            DLog("Empty hint")
+            return false
+        }
+        DLog("Check hint \(hint)")
+        return verifyCodeSignature(at: URL(fileURLWithPath: hint), teamID: teamID)
     }
 
     private static func verifyApp(bundleID: String, teamID: String) -> Bool {
@@ -134,6 +167,7 @@ class iTermBrowserGateway: NSObject {
     }
 
     private static func verifyCodeSignature(at url: URL, teamID: String) -> Bool {
+        DLog("Verify that \(url) has signature with team \(teamID)")
         var staticCode: SecStaticCode?
 
         // Create a static code object from the app URL

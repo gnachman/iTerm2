@@ -1547,6 +1547,7 @@ CA
                 <outlet property="_initialDirectoryType" destination="2190" id="LYF-0C-gAo"/>
                 <outlet property="_initialURL" destination="yb0-Wq-WSQ" id="onp-UG-jVD"/>
                 <outlet property="_loadShellIntegrationAutomatically" destination="iWk-HJ-EKg" id="YGt-lQ-NrZ"/>
+                <outlet property="_locatePlugin" destination="ehw-7A-A75" id="GMk-vk-oRW"/>
                 <outlet property="_locked" destination="imM-Ma-mjV" id="Oy4-Ab-2k5"/>
                 <outlet property="_preventAutomaticProfileSwitching" destination="N23-uy-3RA" id="cRM-BE-TkQ"/>
                 <outlet property="_profileNameField" destination="2133" id="6VF-gN-bGW"/>
@@ -1977,6 +1978,18 @@ CA
                             </buttonCell>
                             <connections>
                                 <action selector="revealBrowserPlugin:" target="dVg-Ac-SiZ" id="4hM-D4-Bup"/>
+                            </connections>
+                        </button>
+                        <button hidden="YES" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ehw-7A-A75" userLabel="Locate Browser Plugin">
+                            <rect key="frame" x="572" y="5" width="30.5" height="25"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <string key="toolTip">Use this button to manually locate the browser plugin. If it can’t be found automatically, or if something is wrong with the plugin that prevents automatic identification from working, use this to fix the problem or learn why it is failing.</string>
+                            <buttonCell key="cell" type="bevel" bezelStyle="rounded" image="rectangle.and.text.magnifyingglass" catalog="system" imagePosition="overlaps" alignment="center" imageScaling="proportionallyDown" inset="2" id="JCm-5y-us3">
+                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="locateBrowserPlugin:" target="dVg-Ac-SiZ" id="yLG-1s-r48"/>
                             </connections>
                         </button>
                     </subviews>
@@ -10319,5 +10332,6 @@ instead of the system keyboard.</string>
         <image name="PrefsShortcuts" width="32" height="32"/>
         <image name="Warning" width="16" height="16"/>
         <image name="WarningSign" width="16" height="16"/>
+        <image name="rectangle.and.text.magnifyingglass" catalog="system" width="19" height="16"/>
     </resources>
 </document>

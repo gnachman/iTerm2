@@ -140,6 +140,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     IBOutlet NSButton *_downloadBrowserPluginButton;
     IBOutlet NSButton *_revealBrowserPlugin;
+    IBOutlet NSButton *_locatePlugin;
 
     BOOL _profileNameChangePending;
     iTermRateLimitedUpdate *_rateLimit;
@@ -836,12 +837,14 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         // Browser disabled by user default
         _downloadBrowserPluginButton.hidden = YES;
         _revealBrowserPlugin.hidden = YES;
+        _locatePlugin.hidden = _downloadBrowserPluginButton.hidden;
         return;
     }
     if (![[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue]) {
         // Selected type is terminal
         _downloadBrowserPluginButton.hidden = YES;
         _revealBrowserPlugin.hidden = YES;
+        _locatePlugin.hidden = _downloadBrowserPluginButton.hidden;
         return;
     }
     // NO here to prevent reentrancy
@@ -849,15 +852,19 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         // Plugin already installed
         _downloadBrowserPluginButton.hidden = YES;
         _revealBrowserPlugin.hidden = NO;
+        _locatePlugin.hidden = _downloadBrowserPluginButton.hidden;
         return;
     }
     [_pluginTimer invalidate];
     _pluginTimer = nil;
     _downloadBrowserPluginButton.hidden = NO;
     _revealBrowserPlugin.hidden = YES;
+    _locatePlugin.hidden = _downloadBrowserPluginButton.hidden;
 }
 
 - (IBAction)revealBrowserPlugin:(id)sender {
+    [iTermBrowserGateway reload];
+    [self updateDownloadBrowserPluginButtonHidden];
     [iTermBrowserGateway revealInFinder];
 }
 
@@ -869,6 +876,31 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                                                       selector:@selector(updateDownloadBrowserPluginButtonHidden)
                                                       userInfo:nil
                                                        repeats:YES];
+}
+
+- (IBAction)locateBrowserPlugin:(id)sender {
+    iTermBrowserPluginFinder.instance = [[iTermBrowserPluginFinder alloc] init];
+    __weak __typeof(self) weakSelf = self;
+    [iTermBrowserPluginFinder.instance openFindPanelWithCompletion:^(NSURL *url) {
+        [weakSelf didLocatePlugin:url];
+    }];
+}
+
+- (void)didLocatePlugin:(NSURL *)url {
+    iTermBrowserPluginFinder.instance = nil
+    if (!url) {
+        return;
+    }
+    NSString *error = [iTermBrowserGateway didLocateBundleManually:url];
+    if (!error) {
+        [self updateDownloadBrowserPluginButtonHidden];
+        return;
+    }
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Plugin Invalid";
+    alert.informativeText = error;
+    [alert addButtonWithTitle:@"OK"];
+    [alert runSheetModalForWindow:self.view.window];
 }
 
 #pragma mark - SSH
