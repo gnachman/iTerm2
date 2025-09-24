@@ -643,6 +643,7 @@ struct AnthropicRequestBuilder {
         var stream: Bool?
         var tools: [AnthropicTool]?
         var tool_choice: AnthropicToolChoice?
+        var disable_parallel_tool_use: Bool?
     }
 
     private struct AnthropicTool: Codable {
@@ -654,8 +655,9 @@ struct AnthropicRequestBuilder {
     private struct AnthropicToolChoice: Codable {
         var type: String
         var name: String?
+        var disable_parallel_tool_use: Bool?
 
-        static let auto = AnthropicToolChoice(type: "auto", name: nil)
+        static let auto = AnthropicToolChoice(type: "auto", name: nil, disable_parallel_tool_use: true)
     }
 
     // Convert messages ensuring tool_result blocks are properly formatted
