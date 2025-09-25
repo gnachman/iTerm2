@@ -1760,7 +1760,9 @@ extension iTermBrowserManager {
     }
 
     private func applyProxyConfiguration(to dataStore: WKWebsiteDataStore) {
-        guard #available(macOS 14.0, *) else { return }
+        guard #available(macOS 14.0, *) else {
+            return
+        }
 
         if iTermAdvancedSettingsModel.browserProxyEnabled() {
             let proxyHost = iTermAdvancedSettingsModel.browserProxyHost() ?? "127.0.0.1"
@@ -1770,7 +1772,9 @@ extension iTermBrowserManager {
             let proxyConfig = ProxyConfiguration(httpCONNECTProxy: endpoint)
             dataStore.proxyConfigurations = [proxyConfig]
             DLog("Configured browser proxy: \(proxyHost):\(proxyPort)")
-            return
+        } else {
+            DLog("Proxy disabled")
+            dataStore.proxyConfigurations = []
         }
     }
 }
