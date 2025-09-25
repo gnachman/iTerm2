@@ -8,6 +8,6 @@
 @objc
 class iTermBrowserMetadata: NSObject {
     @objc static var supportedSchemes: [String] {
-        ["https"]
+        ["http", "https"]
     }
 }

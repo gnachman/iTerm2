@@ -1619,7 +1619,7 @@ extension iTermBrowserManager: WKUIDelegate {
     }
     
     private func fetchOriginalSource(url: URL, completion: @escaping (String?) -> Void) {
-        // Skip non-HTTP URLs
+        // Skip non-HTTP(s) URLs
         guard iTermBrowserMetadata.supportedSchemes.contains(url.scheme?.lowercased() ?? "") else {
             completion(nil)
             return
