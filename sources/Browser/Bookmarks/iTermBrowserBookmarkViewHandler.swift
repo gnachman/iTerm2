@@ -57,7 +57,7 @@ extension iTermBrowserBookmarkViewHandler {
         urlSchemeTask.didFinish()
     }
     
-    func handleBookmarkMessage(_ message: [String: Any], webView: WKWebView) async {
+    func handleBookmarkMessage(_ message: [String: Any], webView: iTermBrowserWebView) async {
         DLog("Bookmark message received: \(message)")
 
         guard let action = message["action"] as? String else {
@@ -103,7 +103,7 @@ extension iTermBrowserBookmarkViewHandler {
     
     // MARK: - Private Implementation
     
-    private func loadBookmarks(offset: Int, limit: Int, searchQuery: String, sortBy: String, tags: [String], webView: WKWebView) async {
+    private func loadBookmarks(offset: Int, limit: Int, searchQuery: String, sortBy: String, tags: [String], webView: iTermBrowserWebView) async {
         DLog("Loading bookmarks: offset=\(offset), limit=\(limit), query='\(searchQuery)', sortBy=\(sortBy), tags=\(tags)")
         
         guard let database = await BrowserDatabase.instance(for: user) else {
@@ -164,7 +164,7 @@ extension iTermBrowserBookmarkViewHandler {
         await sendBookmarks(bookmarksWithTags, hasMore: hasMore, to: webView)
     }
     
-    private func loadTags(webView: WKWebView) async {
+    private func loadTags(webView: iTermBrowserWebView) async {
         guard let database = await BrowserDatabase.instance(for: user) else {
             await sendTags([], to: webView)
             return
@@ -174,7 +174,7 @@ extension iTermBrowserBookmarkViewHandler {
         await sendTags(tags, to: webView)
     }
     
-    private func deleteBookmark(url: String, webView: WKWebView) async {
+    private func deleteBookmark(url: String, webView: iTermBrowserWebView) async {
         guard let database = await BrowserDatabase.instance(for: user) else { return }
 
         let success = await database.removeBookmark(url: url)
@@ -183,14 +183,14 @@ extension iTermBrowserBookmarkViewHandler {
         }
     }
     
-    private func clearAllBookmarks(webView: WKWebView) async {
+    private func clearAllBookmarks(webView: iTermBrowserWebView) async {
         guard let database = await BrowserDatabase.instance(for: user) else { return }
         await database.deleteAllBookmarks()
         await sendBookmarksClearedConfirmation(to: webView)
     }
     
     @MainActor
-    private func sendBookmarks(_ bookmarks: [[String: Any]], hasMore: Bool, to webView: WKWebView) async {
+    private func sendBookmarks(_ bookmarks: [[String: Any]], hasMore: Bool, to webView: iTermBrowserWebView) async {
         do {
             let jsonData = try JSONSerialization.data(withJSONObject: [
                 "bookmarks": bookmarks,
@@ -200,7 +200,7 @@ extension iTermBrowserBookmarkViewHandler {
             if let jsonString = String(data: jsonData, encoding: .utf8) {
                 let script = "window.onBookmarksLoaded && window.onBookmarksLoaded(\(jsonString)); 1"
                 do {
-                    let result = try await webView.evaluateJavaScript(script)
+                    let result = try await webView.safelyEvaluateJavaScript(script)
                     DLog("JavaScript executed successfully: \(String(describing: result))")
                 } catch {
                     DLog("Failed to execute JavaScript: \(error)")
@@ -212,7 +212,7 @@ extension iTermBrowserBookmarkViewHandler {
     }
     
     @MainActor
-    private func sendTags(_ tags: [String], to webView: WKWebView) async {
+    private func sendTags(_ tags: [String], to webView: iTermBrowserWebView) async {
         do {
             let jsonData = try JSONSerialization.data(withJSONObject: [
                 "tags": tags
@@ -221,7 +221,7 @@ extension iTermBrowserBookmarkViewHandler {
             if let jsonString = String(data: jsonData, encoding: .utf8) {
                 let script = "window.onTagsLoaded && window.onTagsLoaded(\(jsonString)); 1"
                 do {
-                    let result = try await webView.evaluateJavaScript(script)
+                    let result = try await webView.safelyEvaluateJavaScript(script)
                     DLog("JavaScript executed successfully: \(String(describing: result))")
                 } catch {
                     DLog("Failed to execute JavaScript: \(error)")
@@ -233,10 +233,10 @@ extension iTermBrowserBookmarkViewHandler {
     }
     
     @MainActor
-    private func sendBookmarkDeletedConfirmation(url: String, to webView: WKWebView) async {
+    private func sendBookmarkDeletedConfirmation(url: String, to webView: iTermBrowserWebView) async {
         let script = "window.onBookmarkDeleted && window.onBookmarkDeleted('\(url.replacingOccurrences(of: "'", with: "\\'"))'); 1"
         do {
-            let result = try await webView.evaluateJavaScript(script)
+            let result = try await webView.safelyEvaluateJavaScript(script)
             DLog("JavaScript executed successfully: \(String(describing: result))")
         } catch {
             DLog("Failed to execute JavaScript: \(error)")
@@ -244,10 +244,10 @@ extension iTermBrowserBookmarkViewHandler {
     }
     
     @MainActor
-    private func sendBookmarksClearedConfirmation(to webView: WKWebView) async {
+    private func sendBookmarksClearedConfirmation(to webView: iTermBrowserWebView) async {
         let script = "window.onBookmarksCleared && window.onBookmarksCleared(); 1"
         do {
-            let result = try await webView.evaluateJavaScript(script)
+            let result = try await webView.safelyEvaluateJavaScript(script)
             DLog("JavaScript executed successfully: \(String(describing: result))")
         } catch {
             DLog("Failed to execute JavaScript: \(error)")
@@ -256,7 +256,7 @@ extension iTermBrowserBookmarkViewHandler {
     
     // MARK: - iTermBrowserPageHandler Protocol
     
-    func injectJavaScript(into webView: WKWebView) {
+    func injectJavaScript(into webView: iTermBrowserWebView) {
         // Bookmark pages don't need JavaScript injection beyond what's in the HTML
     }
     

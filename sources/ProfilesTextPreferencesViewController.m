@@ -51,11 +51,11 @@
     IBOutlet NSButton *_unicodeVersion9;
     IBOutlet NSButton *_asciiLigatures;
     IBOutlet NSButton *_nonAsciiLigatures;
-    IBOutlet NSButton *_subpixelAA;
     IBOutlet NSButton *_powerline;
     IBOutlet BFPCompositeView *_asciiFontPicker;
     IBOutlet BFPCompositeView *_nonASCIIFontPicker;
     IBOutlet NSTextField *_ligatureWarning;
+    IBOutlet NSTextField *_ligatureWarningNonAscii;
     BFPSizePickerView *_horizontalSpacingView;
     BFPSizePickerView *_verticalSpacingView;
 
@@ -227,10 +227,6 @@
         return [weakSelf unsignedIntegerForKey:KEY_UNICODE_VERSION] == 9;
     };
     [self updateNonDefaultIndicatorVisibleForInfo:info];
-    if (@available(macOS 10.16, *)) {
-        // 😢 See issue 9209
-        _subpixelAA.enabled = NO;
-    }
 
     _asciiFontPicker.delegate = self;
     _asciiFontPicker.mode = BFPCompositeViewModeFixedPitch;
@@ -302,7 +298,8 @@
 }
 
 - (void)updateLigatureWarning {
-    _ligatureWarning.hidden = ![self shouldShowLigaturesWarning];
+    _ligatureWarning.hidden = ![self shouldShowASCIILigaturesWarning];
+    _ligatureWarningNonAscii.hidden = ![self shouldShowNonASCIILigaturesWarning];
 
     // Show the options button only when ligatures are enabled. I didn't want to do this but the
     // only way to prevent ligatures from being drawn is to use the "fast path" drawing code.
@@ -323,12 +320,22 @@
     }
 }
 
-- (BOOL)shouldShowLigaturesWarning {
+- (BOOL)shouldShowASCIILigaturesWarning {
+    if ([iTermPreferences boolForKey:kPreferenceKeyBidi]) {
+        return NO;
+    }
     if (self.normalFont.it_defaultLigatures) {
         return NO;
     }
     if (self.normalFont.it_ligatureLevel > 0 && [self boolForKey:KEY_ASCII_LIGATURES]) {
         return YES;
+    }
+    return NO;
+}
+
+- (BOOL)shouldShowNonASCIILigaturesWarning {
+    if ([iTermPreferences boolForKey:kPreferenceKeyBidi]) {
+        return NO;
     }
     if (![self boolForKey:KEY_USE_NONASCII_FONT]) {
         return NO;
@@ -342,6 +349,7 @@
     }
     return NO;
 }
+
 
 - (void)unicodeVersionDidChange {
     [self infoForControl:_unicodeVersion9].onUpdate();
@@ -411,7 +419,6 @@
         _nonAsciiLigatures.enabled = YES;
     }
 
-    [self updateThinStrokesEnabled];
     [self updateWarnings];
 }
 
@@ -431,20 +438,6 @@
     _shadow.enabled = [self cursorTypeSupportsShadow];
 }
 
-- (void)updateThinStrokesEnabled {
-    if (@available(macOS 10.16, *)) {
-        _subpixelAA.state = NSControlStateValueOff;
-        _subpixelAA.enabled = NO;
-    } else {
-        if (iTermTextIsMonochrome()) {
-            _subpixelAA.state = NSControlStateValueOff;
-        } else {
-            _subpixelAA.state = NSControlStateValueOn;
-        }
-        _subpixelAA.enabled = YES;
-    }
-}
-
 - (void)updateWarnings {
     [_normalFontWantsAntialiasing setHidden:!self.normalFont.futureShouldAntialias];
     [_nonasciiFontWantsAntialiasing setHidden:!self.nonAsciiFont.futureShouldAntialias];
@@ -452,20 +445,6 @@
 
 
 #pragma mark - Actions
-
-- (IBAction)didToggleSubpixelAntiAliasing:(id)sender {
-    NSString *const key = @"CGFontRenderingFontSmoothingDisabled";
-    if (_subpixelAA.state == NSControlStateValueOff) {
-        [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
-    } else {
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:key];
-    }
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"Subpixel Anti Aliasing";
-    alert.informativeText = @"This change will affect all profiles. You must restart iTerm2 for this change to take effect.";
-    [alert runModal];
-    [self updateWarnings];
-}
 
 - (IBAction)manageSpecialExceptions:(id)sender {
     _specialExceptionsWindowController = [SpecialExceptionsWindowController createWithConfigString:[self stringForKey:KEY_FONT_CONFIG]];

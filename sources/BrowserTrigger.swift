@@ -10,6 +10,7 @@ protocol BrowserTriggerDelegate {
     func browserTriggerEnterReaderMode() async
     func browserTriggerHighlightText(matchID: String, textColor: String?, backgroundColor: String?)
     func browserTriggerMakeHyperlink(matchID: String, url: String)
+    func browserTriggerInject(_ script: String)
 }
 
 @MainActor

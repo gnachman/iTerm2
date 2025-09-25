@@ -21,6 +21,7 @@
 #import "iTermImageInfo.h"
 #import "iTermKeyboardHandler.h"
 #import "iTermLaunchServices.h"
+#import "iTermMalloc.h"
 #import "iTermMetalClipView.h"
 #import "iTermMetalDisabling.h"
 #import "iTermMouseCursor.h"
@@ -667,6 +668,12 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
         NSLog(@"super performed it");
         return YES;
     }
+    if (@available(macOS 26, *)) {
+        if ([iTermPreferences boolForKey:kPreferenceKeyAllowSymbolicHotKeys] &&
+            [iTermSymbolicHotkeys haveBoundKeyForKeycode:theEvent.keyCode modifiers:theEvent.it_modifierFlags]) {
+            return NO;
+        }
+    }
     if (self.window.firstResponder != self) {
         // Don't let it go to the key mapper if I'm not first responder. This
         // is probably a bug in macOS if you get here.
@@ -895,14 +902,35 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 
 - (NSRange)visibleRelativeRange {
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    const int firstVisibleLine = visibleRect.origin.y / _lineHeight;
-    const int lastVisibleLine = firstVisibleLine + [_dataSource height];
-    const NSRange currentlyVisibleRange = NSMakeRange(firstVisibleLine, lastVisibleLine - firstVisibleLine);
+    
+    // Guard against invalid line height
+    if (_lineHeight < 1) {
+        return NSMakeRange(NSNotFound, 0);
+    }
+    
+    // Use safe division to avoid overflow/underflow
+    BOOL ok = NO;
+    const NSInteger firstVisibleLine = iTermSafeDivisionToInteger(visibleRect.origin.y, _lineHeight, &ok);
+    if (!ok || firstVisibleLine < 0) {
+        return NSMakeRange(NSNotFound, 0);
+    }
+    
+    const NSInteger height = [_dataSource height];
+    ITAssertWithMessage(firstVisibleLine < NSIntegerMax - height, @"Addition would overflow: %@ + %@", @(firstVisibleLine), @(height));
+    const NSInteger lastVisibleLine = firstVisibleLine + height;
+    
+    // Ensure the length is non-negative
+    const NSInteger length = MAX(0, lastVisibleLine - firstVisibleLine);
+    
+    const NSRange currentlyVisibleRange = NSMakeRange(firstVisibleLine, length);
     return currentlyVisibleRange;
 }
 
 - (NSRange)visibleAbsoluteRangeIncludingOffscreenCommandLineIfVisible:(BOOL)includeOffscreenCommandLine {
     const NSRange relativeRange = [self visibleRelativeRange];
+    if (relativeRange.location == NSNotFound) {
+        return NSMakeRange(NSNotFound, 0);
+    }
     NSRange range = relativeRange;
     range.location += _dataSource.totalScrollbackOverflow;
     if (includeOffscreenCommandLine) {
@@ -933,6 +961,9 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 - (void)scrollLineNumberRangeIntoView:(VT100GridRange)range {
     const NSRange desiredRange = NSMakeRange(range.location, range.length);
     const NSRange currentlyVisibleRange = [self visibleRelativeRange];
+    if (currentlyVisibleRange.location == NSNotFound) {
+        return;
+    }
     if (NSIntersectionRange(desiredRange, currentlyVisibleRange).length == MIN(desiredRange.length, currentlyVisibleRange.length)) {
       // Already visible
       return;
@@ -5383,8 +5414,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         const VT100GridAbsCoordRange markAbsCoordRange = [_delegate textViewCoordRangeForCommandAndOutputAtMark:mark];
         const NSRange markRange = NSMakeRange(markAbsCoordRange.start.y,
                                               markAbsCoordRange.end.y - markAbsCoordRange.start.y + 1);
-        const NSRange intersectionRange = NSIntersectionRange(markRange,
-                                                              [self visibleAbsoluteRangeIncludingOffscreenCommandLineIfVisible:NO]);
+        const NSRange visibleRange = [self visibleAbsoluteRangeIncludingOffscreenCommandLineIfVisible:NO];
+        if (visibleRange.location == NSNotFound) {
+            return VT100GridAbsCoordMake(-1, -1);
+        }
+        const NSRange intersectionRange = NSIntersectionRange(markRange, visibleRange);
         return VT100GridAbsCoordMake(self.dataSource.width + markButton.dx,
                                      intersectionRange.location);
     }

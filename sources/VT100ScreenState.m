@@ -940,12 +940,21 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
         if (![nextMark conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
             continue;
         }
-        if (((id<VT100ScreenMarkReading>)nextMark).isPrompt) {
+        id<VT100ScreenMarkReading> nextScreenMark = (id<VT100ScreenMarkReading>)nextMark;
+        if (nextScreenMark.isPrompt) {
             VT100GridCoordRange range;
-            range.start = [self coordRangeForInterval:mark.entry.interval].end;
-            range.start.x = 0;
-            range.start.y++;
-            range.end = [self coordRangeForInterval:nextMark.entry.interval].start;
+            BOOL ok = NO;
+            range.start = VT100GridCoordFromAbsCoord(mark.outputStart, self.cumulativeScrollbackOverflow, &ok);
+            if (!ok) {
+                range.start = [self coordRangeForInterval:mark.entry.interval].end;
+                range.start.x = 0;
+                range.start.y++;
+            }
+            range.end = [self coordRangeForInterval:nextScreenMark.entry.interval].start;
+            if (nextScreenMark.lineStyle) {
+                DLog(@"Move end up one line for line-style mark at next prompt");
+                range.end.y -= 1;
+            }
             return range;
         }
     }

@@ -1271,7 +1271,12 @@ static const CGFloat kLabelWidth = 124;
 }
 
 - (IBAction)selectionDidChange:(id)sender {
-    [self setTrigger:[self currentPrototype]];
+    Trigger *prototype = [self currentPrototype];
+    NSMutableDictionary *dict = prototype.dictionaryValue.mutableCopy;
+    dict[kTriggerRegexKey] = _regexTextField.stringValue ?: @"";
+    dict[kTriggerNameKey] = _nameTextField.stringValue ?: @"";
+    prototype = [Trigger triggerFromDict:dict];
+    [self setTrigger:prototype];
     if (_didChange) {
         _didChange();
     }
@@ -1557,7 +1562,7 @@ static const CGFloat kLabelWidth = 124;
 
 - (void)parameterPopUpButtonDidChange:(id)sender {
     const NSUInteger i = [sender indexOfSelectedItem];
-    _currentTrigger.param = _prototypes[i].param;
+    [_currentTrigger setParam:[_currentTrigger objectAtIndex:i]];
     if (_didChange) {
         _didChange();
     }

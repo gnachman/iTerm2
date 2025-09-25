@@ -5,6 +5,6 @@
 (allow file* (subpath "/opt/homebrew/bin/cmake"))
 (allow file* (subpath "/opt/homebrew/Cellar/cmake/"))
 (allow file* (subpath "/opt/homebrew/bin/rustup"))
-(allow file* (subpath "/opt/homebrew/Cellar/rustup"))
+(allow file* (subpath "/opt/homebrew/Cellar/rustup/"))
 (allow file* (subpath "/opt/homebrew/bin/pkg-config"))
 (allow file* (subpath "/opt/homebrew/Cellar/pkgconf/"))

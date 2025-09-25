@@ -11,7 +11,7 @@ import JavaScriptCore
 class PluginClient {
     static let instance = PluginClient()
     private var session: URLSession?
-    private var task: URLSessionDataTask?
+    private let task = MutableAtomicObject<URLSessionDataTask?>(nil)
 
     private class HTTPStreamDelegate: NSObject, URLSessionDataDelegate {
         var receivedData = Data()
@@ -63,8 +63,10 @@ class PluginClient {
     }
 
     func cancel() {
-        task?.cancel()
-        task = nil
+        task.mutableAccess { currentTask in
+            currentTask?.cancel()
+            currentTask = nil
+        }
     }
 
     func call<RequestType: Codable & CustomDebugStringConvertible,
@@ -129,9 +131,23 @@ class PluginClient {
         config.timeoutIntervalForResource =  iTermPreferences.double(forKey: kPreferenceKeyAITimeout)
         let delegate = HTTPStreamDelegate { [weak self] first, second in
             if second != nil {
-                self?.task = nil
+                self?.task.mutableAccess { currentTask in
+                    currentTask = nil
+                }
             }
             callback(first, second)
+        }
+        let proxyString = iTermAdvancedSettingsModel.aiProxy()
+        if let proxyString, !proxyString.isEmpty {
+            let parts = proxyString.split(separator: ":", maxSplits: 1)
+            if parts.count == 2, let port = Int(parts[1]) {
+                let host = String(parts[0])
+                config.connectionProxyDictionary = [
+                    kCFNetworkProxiesHTTPSEnable as String: true,
+                    kCFNetworkProxiesHTTPSProxy as String: host,
+                    kCFNetworkProxiesHTTPSPort as String: port
+                ]
+            }
         }
 
         delegate.streaming = streaming
@@ -139,9 +155,12 @@ class PluginClient {
         session = URLSession(configuration: config,
                              delegate: delegate,
                              delegateQueue: nil)
-        self.task = session?.dataTask(with: request)
+        let newTask = session?.dataTask(with: request)
+        task.mutableAccess { currentTask in
+            currentTask = newTask
+        }
         DLog("resume session")
-        self.task?.resume()
+        newTask?.resume()
     }
 
     private func registerFunctions(context: JSContext, stream: ((String) -> ())?) {

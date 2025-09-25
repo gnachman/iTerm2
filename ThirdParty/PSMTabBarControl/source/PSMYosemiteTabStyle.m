@@ -8,7 +8,9 @@
 
 #import "PSMYosemiteTabStyle.h"
 
+#import "iTermAdvancedSettingsModel.h"
 #import "NSColor+PSM.h"
+#import "PSMOverflowPopUpButton.h"
 #import "PSMRolloverButton.h"
 #import "PSMTabBarCell.h"
 #import "PSMTabBarControl.h"
@@ -21,12 +23,6 @@
 - (NSImage *)it_cachingImageWithTintColor:(NSColor *)tintColor key:(const void *)key;
 @end
 
-@interface PSMTabBarCell(PSMYosemiteTabStyle)
-
-@property(nonatomic) NSAttributedString *previousAttributedString;
-@property(nonatomic) CGFloat previousWidthOfAttributedString;
-
-@end
 
 @implementation PSMTabBarCell(PSMYosemiteTabStyle)
 
@@ -44,7 +40,7 @@
 }
 
 - (void)setPreviousAttributedString:(NSAttributedString *)previousAttributedString {
-    self.psm_yosemiteAssociatedDictionary[@"attributedString"] = [[previousAttributedString copy] autorelease];
+    self.psm_yosemiteAssociatedDictionary[@"attributedString"] = [previousAttributedString copy];
 }
 
 - (CGFloat)previousWidthOfAttributedString {
@@ -78,39 +74,25 @@
 - (id)init {
     if ((self = [super init]))  {
         // Load close buttons 
-        _closeButton = [[[NSBundle bundleForClass:self.class] imageForResource:@"TabClose_Front"] retain];
+        _closeButton = [[NSBundle bundleForClass:self.class] imageForResource:@"TabClose_Front"];
         _closeButton.template = YES;
-        _closeButtonDown = [[[NSBundle bundleForClass:self.class] imageForResource:@"TabClose_Front_Pressed"] retain];
+        _closeButtonDown = [[NSBundle bundleForClass:self.class] imageForResource:@"TabClose_Front_Pressed"];
         _closeButtonDown.template = YES;
-        _closeButtonOver = [[[NSBundle bundleForClass:self.class] imageForResource:@"TabClose_Front_Rollover"] retain];
+        _closeButtonOver = [[NSBundle bundleForClass:self.class] imageForResource:@"TabClose_Front_Rollover"];
         _closeButtonOver.template = YES;
 
         // Load "new tab" buttons
         NSString *addTabImageName = @"YosemiteAddTab";
-        if (@available(macOS 10.16, *)) {
-            addTabImageName = @"BigSurAddTab";
-        }
+        addTabImageName = @"BigSurAddTab";
+
         _addTabButtonImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:addTabImageName]];
         _addTabButtonPressedImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:addTabImageName]];
         _addTabButtonRolloverImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:addTabImageName]];
-        if (@available(macOS 10.16, *)) {
-            _addTabButtonImage.template = YES;
-            _addTabButtonPressedImage.template = YES;
-            _addTabButtonRolloverImage.template = YES;
-        }
+        _addTabButtonImage.template = YES;
+        _addTabButtonPressedImage.template = YES;
+        _addTabButtonRolloverImage.template = YES;
     }
     return self;
-}
-
-- (void)dealloc {
-    [_closeButton release];
-    [_closeButtonDown release];
-    [_closeButtonOver release];
-    [_addTabButtonImage release];
-    [_addTabButtonPressedImage release];
-    [_addTabButtonRolloverImage release];
-
-    [super dealloc];
 }
 
 #pragma mark - Utility
@@ -146,6 +128,10 @@
 - (CGFloat)edgeDragHeight {
     NSNumber *size = [self.tabBar.delegate tabView:self.tabBar valueOfOption:PSMTabBarControlOptionDragEdgeHeight];
     return size.doubleValue;
+}
+
+- (CGFloat)intercellSpacing {
+    return 0.0;
 }
 
 #pragma mark - Add Tab Button
@@ -260,6 +246,79 @@
     return result;
 }
 
+- (NSRect)adjustedCellRect:(NSRect)rect generic:(NSRect)generic {
+    return rect;
+}
+
+- (NSRect)dirtyFrameForCell:(PSMTabBarCell *)cell {
+    return NSInsetRect(cell.frame, -2, -2);
+}
+
+- (PSMRolloverButton *)makeAddTabButtonWithFrame:(NSRect)addTabButtonRect {
+    PSMRolloverButton *_addTabButton = [[PSMRolloverButton alloc] initWithFrame:addTabButtonRect];
+    if (_addTabButton) {
+        NSImage *newButtonImage = [self addTabButtonImage];
+        if (newButtonImage) {
+            [_addTabButton setUsualImage:newButtonImage];
+        }
+        newButtonImage = [self addTabButtonPressedImage];
+        if (newButtonImage) {
+            [_addTabButton setAlternateImage:newButtonImage];
+        }
+        newButtonImage = [self addTabButtonRolloverImage];
+        if (newButtonImage) {
+            [_addTabButton setRolloverImage:newButtonImage];
+        }
+        [_addTabButton setTitle:@""];
+        [_addTabButton setImagePosition:NSImageOnly];
+        [_addTabButton setButtonType:NSButtonTypeMomentaryChange];
+        [_addTabButton setBordered:NO];
+        [_addTabButton setBezelStyle:NSBezelStyleShadowlessSquare];
+    }
+    return _addTabButton;
+}
+
+- (NSButton *)makeOverflowButtonWithFrame:(NSRect)frame {
+    return [[PSMOverflowPopUpButton alloc] initWithFrame:frame pullsDown:YES];
+}
+
+- (NSRect)frameForOverflowButtonWithAddTabButton:(BOOL)showAddTabButton
+                                   enclosureSize:(NSSize)enclosureSize
+                                  standardHeight:(CGFloat)standardHeight {
+    NSRect cellRect;
+
+    cellRect.size.height = standardHeight;
+    cellRect.size.width = [self rightMarginForTabBarControlWithOverflow:YES
+                                                           addTabButton:showAddTabButton];
+    if ([self orientation] == PSMTabBarHorizontalOrientation) {
+        cellRect.origin.y = 0;
+        cellRect.origin.x = enclosureSize.width - [self rightMarginForTabBarControlWithOverflow:YES
+                                                                                   addTabButton:showAddTabButton] + 1;
+    } else {
+        cellRect.origin.x = 0;
+        cellRect.origin.y = enclosureSize.height - standardHeight;
+        cellRect.size.width = enclosureSize.width;
+    }
+    return cellRect;
+}
+
+- (NSRect)frameForAddTabButtonWithCellWidths:(NSArray<NSNumber *> *)widths height:(CGFloat)height {
+    NSRect cellRect;
+    cellRect.origin.y = 0;
+    cellRect.origin.x = [self leftMarginForTabBarControl] + [[widths valueForKeyPath:@"@sum.floatValue"] floatValue];
+    cellRect.size.width = self.addTabButtonSize.width;
+    cellRect.size.height = height;
+    return cellRect;
+}
+
+- (NSSize)addTabButtonSize {
+    return NSMakeSize(24, 24);
+}
+
+- (CGFloat)tabBarHeight {
+    return [iTermAdvancedSettingsModel defaultTabBarHeight];
+}
+
 - (NSRect)objectCounterRectForTabCell:(PSMTabBarCell *)cell {
     NSRect cellFrame = [cell frame];
 
@@ -356,7 +415,7 @@
     NSDictionary *attributes =
         @{ NSFontAttributeName: [NSFont systemFontOfSize:self.fontSize],
            NSForegroundColorAttributeName: [self textColorForCell:cell] };
-    return [[[NSAttributedString alloc] initWithString:contents attributes:attributes] autorelease];
+    return [[NSAttributedString alloc] initWithString:contents attributes:attributes];
 }
 
 - (NSColor *)textColorDefaultSelected:(BOOL)selected backgroundColor:(NSColor *)backgroundColor windowIsMainAndAppIsActive:(BOOL)mainAndActive {
@@ -420,13 +479,13 @@
 
 - (PSMCachedTitleInputs *)cachedTitleInputsForTabCell:(PSMTabBarCell *)cell {
     const BOOL parseHTML = [[_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionHTMLTabTitles] boolValue];
-    PSMCachedTitleInputs *inputs = [[[PSMCachedTitleInputs alloc] initWithTitle:cell.stringValue
-                                                                truncationStyle:cell.truncationStyle
-                                                                          color:[self textColorForCell:cell]
-                                                                        graphic:[(id)[[cell representedObject] identifier] psmTabGraphic]
-                                                                    orientation:_orientation
-                                                                       fontSize:self.fontSize
-                                                                      parseHTML:parseHTML] autorelease];
+    PSMCachedTitleInputs *inputs = [[PSMCachedTitleInputs alloc] initWithTitle:cell.stringValue
+                                                               truncationStyle:cell.truncationStyle
+                                                                         color:[self textColorForCell:cell]
+                                                                       graphic:[(id)[[cell representedObject] identifier] psmTabGraphic]
+                                                                   orientation:_orientation
+                                                                      fontSize:self.fontSize
+                                                                     parseHTML:parseHTML];
     return inputs;
 }
 
@@ -436,13 +495,13 @@
     }
     const BOOL parseHTML = [[_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionHTMLTabTitles] boolValue];
     NSColor *color = [self textColorForCell:cell];
-    PSMCachedTitleInputs *inputs = [[[PSMCachedTitleInputs alloc] initWithTitle:cell.subtitleString ?: @""
-                                                                truncationStyle:cell.truncationStyle
-                                                                          color:[color colorWithAlphaComponent:color.alphaComponent * 0.7]
-                                                                        graphic:nil
-                                                                    orientation:_orientation
-                                                                       fontSize:self.subtitleFontSize
-                                                                      parseHTML:parseHTML] autorelease];
+    PSMCachedTitleInputs *inputs = [[PSMCachedTitleInputs alloc] initWithTitle:cell.subtitleString ?: @""
+                                                               truncationStyle:cell.truncationStyle
+                                                                         color:[color colorWithAlphaComponent:color.alphaComponent * 0.7]
+                                                                       graphic:nil
+                                                                   orientation:_orientation
+                                                                      fontSize:self.subtitleFontSize
+                                                                     parseHTML:parseHTML];
     return inputs;
 }
 
@@ -461,40 +520,18 @@
 #pragma mark - Drawing
 
 - (NSColor *)topLineColorSelected:(BOOL)selected {
-    const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
-    if (@available(macOS 10.16, *)) {
-        return [NSColor clearColor];
-    }
-    if (keyMainAndActive) {
-        return [NSColor colorWithSRGBRed:180.0/255.0 green:180.0/255.0 blue:180.0/255.0 alpha:1];
-    } else {
-        return [NSColor colorWithSRGBRed:209.0/255.0 green:209.0/255.0 blue:209.0/255.0 alpha:1];
-    }
+    return [NSColor clearColor];
 }
 
 - (NSColor *)verticalLineColorSelected:(BOOL)selected {
-    const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
-    if (@available(macOS 10.16, *)) {
-        return [NSColor colorWithWhite:0 alpha:0.07];
-    }
-    if (keyMainAndActive) {
-        return [NSColor colorWithSRGBRed:174.0/255.0 green:174.0/255.0 blue:174.0/255.0 alpha:1];
-    } else {
-        return [NSColor colorWithSRGBRed:209.0/255.0 green:209.0/255.0 blue:209.0/255.0 alpha:1];
-    }
+    return [NSColor colorWithWhite:0 alpha:0.07];
 }
 
 - (NSColor *)bottomLineColorSelected:(BOOL)selected {
-    if (@available(macOS 12.0, *)) {
-        return [NSColor colorWithSRGBRed:230.0/255.0 green:230.0/255.0 blue:230.0/255.0 alpha:1];
-    } else if (@available(macOS 10.16, *)) {
-        return [NSColor colorWithSRGBRed:180.0/255.0 green:180.0/255.0 blue:180.0/255.0 alpha:1];
-    } else {
-        return [NSColor colorWithWhite:0 alpha:0.15];
-    }
+    return [NSColor colorWithSRGBRed:230.0/255.0 green:230.0/255.0 blue:230.0/255.0 alpha:1];
 }
 
-- (NSColor *)bigSurBackgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount NS_AVAILABLE_MAC(10_16) {
+- (NSColor *)bigSurBackgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
     if (selected) {
         // Reveal the visual effect view with material NSVisualEffectMaterialTitlebar beneath the tab bar.
         // Per NSColor.h, windowFrameColor is described as:
@@ -548,11 +585,7 @@
 }
 
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
-    if (@available(macOS 10.16, *)) {
-        return [self bigSurBackgroundColorSelected:selected highlightAmount:highlightAmount];
-    } else  {
-        return [self mojaveBackgroundColorSelected:selected highlightAmount:highlightAmount];
-    }
+    return [self bigSurBackgroundColorSelected:selected highlightAmount:highlightAmount];
 }
 
 - (void)drawHorizontalLineInFrame:(NSRect)rect y:(CGFloat)y {
@@ -628,7 +661,7 @@
     static NSImage *image;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        image = [[[NSBundle bundleForClass:[self class]] imageForResource:@"UnselectedTabShadow"] retain];
+        image = [[NSBundle bundleForClass:[self class]] imageForResource:@"UnselectedTabShadow"];
     });
     [image drawInRect:shadowRect];
 }
@@ -659,27 +692,13 @@
         NSRectFillUsingOperation(cellFrame, NSCompositingOperationSourceOver);
     }
 
-    if (@available(macOS 10.16, *)) {
-        if (!selected && _orientation == PSMTabBarHorizontalOrientation) {
-            [self drawShadowForUnselectedTabInRect:backgroundRect];
-        }
+    if (!selected && _orientation == PSMTabBarHorizontalOrientation) {
+        [self drawShadowForUnselectedTabInRect:backgroundRect];
     }
 }
 
 - (NSEdgeInsets)backgroundInsetsWithHorizontalOrientation:(BOOL)horizontal {
     NSEdgeInsets insets = NSEdgeInsetsZero;
-    if (@available(macOS 10.16, *)) {
-        return insets;
-    } else {
-        insets.top = 1;
-        insets.bottom = 1;
-        insets.left = 1;
-    }
-    if (!horizontal) {
-        insets.left = 0.5;
-        insets.top = 0;
-        insets.right = 1;
-    }
     return insets;
 }
 
@@ -714,21 +733,12 @@
         // Right line
         [[self verticalLineColorSelected:selected] set];
         CGFloat rightAdjustment = 0;
-        if (@available(macOS 10.16, *)) {
-            rightAdjustment = isLast ? 0 : 1;
-        }
+        rightAdjustment = isLast ? 0 : 1;
         [self drawVerticalLineInFrame:cellFrame x:NSMaxX(cellFrame) - rightAdjustment];
 
         // Top line
         [[self topLineColorSelected:selected] set];
         // Bottom line
-        if (@available(macOS 10.16, *)) { } else {
-            const BOOL drawBottomLine = [[_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionColoredDrawBottomLineForHorizontalTabBar] boolValue];
-            if (drawBottomLine) {
-                [[self bottomLineColorSelected:selected] set];
-                [self drawHorizontalLineInFrame:cellFrame y:NSMaxY(cellFrame) - 1];
-            }
-        }
     } else {
         // Bottom line
         [[self verticalLineColorSelected:selected] set];
@@ -736,12 +746,6 @@
         cellFrame.origin.x += insets.left;
         cellFrame.size.width -= (insets.left + insets.right);
         [self drawHorizontalLineInFrame:cellFrame y:NSMaxY(cellFrame) - 1];
-        cellFrame.origin.x -= insets.left;
-        cellFrame.size.width += (insets.left + insets.right);
-
-        cellFrame.size.width -= 1;
-        cellFrame.origin.y -= 1;
-        cellFrame.size.height += 2;
     }
 }
 
@@ -766,26 +770,22 @@
                                                              selected:(cell.state == NSControlStateValueOn)
                                                       highlightAmount:0
                                                                window:cell.controlView.window];
-    if (@available(macOS 10.16, *)) {
-        // This gets blended over a NSVisualEffectView, whose color is a mystery. Assume it's
-        // related to light/dark mode.
-        NSAppearanceName bestMatch = [_tabBar.effectiveAppearance bestMatchFromAppearancesWithNames:@[ NSAppearanceNameDarkAqua,
-                                                                                                       NSAppearanceNameVibrantDark,
-                                                                                                       NSAppearanceNameAqua,
-                                                                                                       NSAppearanceNameVibrantLight ]];
-        const CGFloat frontAlpha = color.alphaComponent;
-        CGFloat backBrightness;
-        const CGFloat frontBrightness = [color it_hspBrightness];
-        if ([bestMatch isEqualToString:NSAppearanceNameDarkAqua] ||
-            [bestMatch isEqualToString:NSAppearanceNameVibrantDark]) {
-            backBrightness = 0;
-        } else {
-            backBrightness = 1;
-        }
-        return backBrightness * (1 - frontAlpha) + frontAlpha * frontBrightness;
+    // This gets blended over a NSVisualEffectView, whose color is a mystery. Assume it's
+    // related to light/dark mode.
+    NSAppearanceName bestMatch = [_tabBar.effectiveAppearance bestMatchFromAppearancesWithNames:@[ NSAppearanceNameDarkAqua,
+                                                                                                   NSAppearanceNameVibrantDark,
+                                                                                                   NSAppearanceNameAqua,
+                                                                                                   NSAppearanceNameVibrantLight ]];
+    const CGFloat frontAlpha = color.alphaComponent;
+    CGFloat backBrightness;
+    const CGFloat frontBrightness = [color it_hspBrightness];
+    if ([bestMatch isEqualToString:NSAppearanceNameDarkAqua] ||
+        [bestMatch isEqualToString:NSAppearanceNameVibrantDark]) {
+        backBrightness = 0;
     } else {
-        return [color it_hspBrightness];
+        backBrightness = 1;
     }
+    return backBrightness * (1 - frontAlpha) + frontAlpha * frontBrightness;
 }
 
 - (BOOL)anyTabHasColor {
@@ -830,6 +830,9 @@
     }
 }
 
+const void *PSMTabStyleLightColorKey = "light";
+const void *PSMTabStyleDarkColorKey = "dark";
+
 - (void)drawInteriorWithTabCell:(PSMTabBarCell *)cell
                          inView:(NSView*)controlView
                 highlightAmount:(CGFloat)highlightAmount {
@@ -851,10 +854,10 @@
     NSColor *closeButtonTintColor;
     const void *colorKey;
     if ([self tabColorBrightness:cell] < 0.5) {
-        colorKey = "light";
+        colorKey = PSMTabStyleLightColorKey;
         closeButtonTintColor = [NSColor whiteColor];
     } else {
-        colorKey = "dark";
+        colorKey = PSMTabStyleDarkColorKey;
         closeButtonTintColor = [NSColor blackColor];
     }
     closeButton = [closeButton it_cachingImageWithTintColor:closeButtonTintColor
@@ -1111,25 +1114,10 @@
 }
 
 - (NSColor *)tabBarColor {
-    const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
-    if (@available(macOS 10.16, *)) {
-        return [NSColor colorWithSRGBRed:225.0 / 255.0
-                                   green:225.0 / 255.0
-                                    blue:225.0 / 255.0
-                                   alpha:1];
-    } else {
-        if (keyMainAndActive) {
-            return [NSColor colorWithSRGBRed:188.0 / 255.0
-                                       green:188.0 / 255.0
-                                        blue:188.0 / 255.0
-                                       alpha:1];
-        } else {
-            return [NSColor colorWithSRGBRed:221.0 / 255.0
-                                       green:221.0 / 255.0
-                                        blue:221.0 / 255.0
-                                       alpha:1];
-        }
-    }
+    return [NSColor colorWithSRGBRed:225.0 / 255.0
+                               green:225.0 / 255.0
+                                blue:225.0 / 255.0
+                               alpha:1];
 }
 
 - (void)drawBackgroundInRect:(NSRect)rect
@@ -1220,16 +1208,7 @@
     NSColor *topLineColor = [self topLineColorSelected:NO];
     [topLineColor set];
     NSRect insetRect;
-    if (@available(macOS 10.16, *)) {
-        insetRect = clipRect;
-    } else {
-        insetRect = NSInsetRect(rect, 1, 0);
-        insetRect.size.width -= 1;
-    }
-    if (@available(macOS 10.16, *)) { } else {
-        const NSRect insetClipIntersection = NSIntersectionRect(clipRect, insetRect);
-        [self drawHorizontalLineInFrame:insetClipIntersection y:0];
-    }
+    insetRect = clipRect;
 
     // no tab view == not connected
     if (![bar tabView]) {
@@ -1237,14 +1216,12 @@
         labelRect.size.height -= 4.0;
         labelRect.origin.y += 4.0;
         NSString *contents = @"PSMTabBarControl";
-        NSMutableAttributedString *attrStr =
-            [[[NSMutableAttributedString alloc] initWithString:contents] autorelease];
+        NSMutableAttributedString *attrStr = [[NSMutableAttributedString alloc] initWithString:contents];
         NSRange range = NSMakeRange(0, [contents length]);
         [attrStr addAttribute:NSFontAttributeName
                         value:[NSFont systemFontOfSize:self.fontSize]
                         range:range];
-        NSMutableParagraphStyle *centeredParagraphStyle =
-            [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] autorelease];
+        NSMutableParagraphStyle *centeredParagraphStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
         [centeredParagraphStyle setAlignment:NSTextAlignmentCenter];
         [attrStr addAttribute:NSParagraphStyleAttributeName
                         value:centeredParagraphStyle
@@ -1261,11 +1238,9 @@
             if (![cell isInOverflowMenu] && NSIntersectsRect(NSInsetRect([cell frame], -1, -1), clipRect)) {
                 if (cell.state == stateToDraw) {
                     [cell drawWithFrame:[cell frame] inView:bar];
-                    if (@available(macOS 10.16, *)) {
-                        if ([self shouldDrawTopLineSelected:(stateToDraw == NSControlStateValueOn) attached:attachedToTitleBar position:bar.tabLocation]) {
-                            [topLineColor set];
-                            NSRectFill(NSMakeRect(NSMinX(cell.frame), 0, NSWidth(cell.frame), 1));
-                        }
+                    if ([self shouldDrawTopLineSelected:(stateToDraw == NSControlStateValueOn) attached:attachedToTitleBar position:bar.tabLocation]) {
+                        [topLineColor set];
+                        NSRectFill(NSMakeRect(NSMinX(cell.frame), 0, NSWidth(cell.frame), 1));
                     }
                     if (stateToDraw == NSControlStateValueOn) {
                         // Can quit early since only one can be selected
@@ -1276,15 +1251,13 @@
         }
     }
 
-    if (@available(macOS 10.16, *)) {
-        if (bar.showAddTabButton && attachedToTitleBar) {
-            NSRect frame = bar.addTabButton.frame;
-            frame.size.width = NSWidth(bar.bounds) - NSMinX(frame);
-            [topLineColor set];
-            frame.size.width = INFINITY;
-            frame = NSIntersectionRect(frame, NSIntersectionRect(clipRect, insetRect));
-            NSRectFill(NSMakeRect(NSMinX(frame), 0, NSWidth(frame), 1));
-        }
+    if (bar.showAddTabButton && attachedToTitleBar) {
+        NSRect frame = bar.addTabButton.frame;
+        frame.size.width = NSWidth(bar.bounds) - NSMinX(frame);
+        [topLineColor set];
+        frame.size.width = INFINITY;
+        frame = NSIntersectionRect(frame, NSIntersectionRect(clipRect, insetRect));
+        NSRectFill(NSMakeRect(NSMinX(frame), 0, NSWidth(frame), 1));
     }
 
     [self drawDividerBetweenTabBarAndContent:rect bar:bar];
@@ -1303,28 +1276,26 @@
         rightLineRect.origin.y -= 1;
         [self drawVerticalLineInFrame:rightLineRect x:NSMaxX(rect) - 1];
     } else {
-        if (@available(macOS 10.16, *)) {
-            switch (bar.tabLocation) {
-                case PSMTab_LeftTab:
-                    break;
-                case PSMTab_TopTab:
-                    // Bottom line
-                    [[self bottomLineColorSelected:YES] set];
-                    NSRectFill(NSMakeRect(0, NSMaxY(rect) - 1, NSWidth(rect), 1));
-                    break;
-                case PSMTab_BottomTab:
-                    // Top line
-                    [[self bottomLineColorSelected:YES] set];
-                    NSRectFill(NSMakeRect(0, NSMinY(rect), NSWidth(rect), 1));
-                    break;
-            }
+        switch (bar.tabLocation) {
+            case PSMTab_LeftTab:
+                break;
+            case PSMTab_TopTab:
+                // Bottom line
+                [[self bottomLineColorSelected:YES] set];
+                NSRectFill(NSMakeRect(0, NSMaxY(rect) - 1, NSWidth(rect), 1));
+                break;
+            case PSMTab_BottomTab:
+                // Top line
+                [[self bottomLineColorSelected:YES] set];
+                NSRectFill(NSMakeRect(0, NSMinY(rect), NSWidth(rect), 1));
+                break;
         }
     }
 }
 
 - (BOOL)shouldDrawTopLineSelected:(BOOL)selected
                          attached:(BOOL)attached
-                         position:(PSMTabPosition)position NS_AVAILABLE_MAC(10_16) {
+                         position:(PSMTabPosition)position {
     switch (position) {
         case PSMTab_BottomTab:
         case PSMTab_LeftTab:
@@ -1341,35 +1312,6 @@
             // it's the same surface.
             return NO;
     }
-}
-
-#pragma mark - Archiving
-
-- (void)encodeWithCoder:(NSCoder *)aCoder
-{
-    if ([aCoder allowsKeyedCoding]) {
-        [aCoder encodeObject:_closeButton forKey:@"metalCloseButton"];
-        [aCoder encodeObject:_closeButtonDown forKey:@"metalCloseButtonDown"];
-        [aCoder encodeObject:_closeButtonOver forKey:@"metalCloseButtonOver"];
-        [aCoder encodeObject:_addTabButtonImage forKey:@"addTabButtonImage"];
-        [aCoder encodeObject:_addTabButtonPressedImage forKey:@"addTabButtonPressedImage"];
-        [aCoder encodeObject:_addTabButtonRolloverImage forKey:@"addTabButtonRolloverImage"];
-    }
-}
-
-- (id)initWithCoder:(NSCoder *)aDecoder {
-    self = [super init];
-    if (self) {
-        if ([aDecoder allowsKeyedCoding]) {
-            _closeButton = [[aDecoder decodeObjectForKey:@"metalCloseButton"] retain];
-            _closeButtonDown = [[aDecoder decodeObjectForKey:@"metalCloseButtonDown"] retain];
-            _closeButtonOver = [[aDecoder decodeObjectForKey:@"metalCloseButtonOver"] retain];
-            _addTabButtonImage = [[aDecoder decodeObjectForKey:@"addTabButtonImage"] retain];
-            _addTabButtonPressedImage = [[aDecoder decodeObjectForKey:@"addTabButtonPressedImage"] retain];
-            _addTabButtonRolloverImage = [[aDecoder decodeObjectForKey:@"addTabButtonRolloverImage"] retain];
-        }
-    }
-    return self;
 }
 
 @end

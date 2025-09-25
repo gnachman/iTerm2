@@ -356,6 +356,14 @@ static BOOL hasBecomeActive = NO;
     _triggers.submenu.delegate = self;
     _namedMarksMenuItem.submenu.delegate = self;
     [[iTermMainMenuMangler instance] startWithWeb:_webMenuItem];
+    
+    // Set menu item icons for macOS 26+
+#if DEBUG
+    [[iTermMainMenuMangler instance] checkIcons];
+#endif
+    if (@available(macOS 26.0, *)) {
+        [[iTermMainMenuMangler instance] setIcons];
+    }
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
@@ -3086,11 +3094,13 @@ static iTermKeyEventReplayer *gReplayer;
 
     void (^makeSession)(NSDictionary * _Nonnull,
                         PseudoTerminal * _Nonnull,
-                        void (^ _Nonnull)(PTYSession * _Nonnull)) =
-    ^(NSDictionary * _Nonnull profile,
-      PseudoTerminal * _Nonnull term,
-      void (^ _Nonnull didMakeSession)(PTYSession * _Nonnull)) {
-        [self makeSessionWithConnection:generalConnection windowController:term completion:didMakeSession];
+                        void (^ _Nonnull)(PTYSession * _Nonnull)) = ^(NSDictionary *profile,
+                                                                      PseudoTerminal *term,
+                                                                      void (^didMakeSession)(PTYSession *)) {
+        [self makeSessionWithConnection:generalConnection
+                       windowController:term
+                                profile:profile
+                             completion:didMakeSession];
     };
 
     [iTermSessionLauncher launchBookmark:nil
@@ -3145,8 +3155,9 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (void)makeSessionWithConnection:(iTermGeneralServerConnection)generalConnection
                  windowController:(PseudoTerminal *)term
+                          profile:(Profile *)preferredProfile
                        completion:(void (^)(PTYSession *))didMakeSession {
-    Profile *defaultProfile = [[ProfileModel sharedInstance] defaultBookmark];
+    Profile *defaultProfile = preferredProfile ?: [[ProfileModel sharedInstance] defaultBookmark];
     PTYSession *session = [[term.sessionFactory newSessionWithProfile:defaultProfile
                                                                parent:nil] autorelease];
     [term addSessionInNewTab:session];

@@ -37,7 +37,6 @@ extern const NSInteger kPSMIsNotBeingResized;
 // Value used in _currentStep when a resizing operation has just been started
 extern const NSInteger kPSMStartResizeAnimation;
 
-@class PSMOverflowPopUpButton;
 @class PSMRolloverButton;
 @class PSMTabBarCell;
 @class PSMTabBarControl;
@@ -150,6 +149,7 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkne
 - (void)tabViewDidClickAddTabButton:(PSMTabBarControl *)tabView;
 - (BOOL)tabViewShouldDragWindow:(NSTabView *)tabView event:(NSEvent *)event;
 - (BOOL)tabViewShouldAllowDragOnAddTabButton:(NSTabView *)tabView;
+- (CGFloat)tabViewDesiredTabBarHeight:(NSTabView *)tabView;
 
 @end
 
@@ -163,11 +163,11 @@ enum {
     PSMTab_PositionSingleMask = 1 << 7
 };
 
-typedef enum {
+typedef NS_ENUM(int, PSMTabPosition) {
     PSMTab_TopTab = 0,
     PSMTab_BottomTab = 1,
     PSMTab_LeftTab = 2,
-} PSMTabPosition;
+};
 
 // This view provides a control interface to manage a regular NSTabView.  It looks and works like
 // the tabbed browsing interface of many popular browsers.
@@ -204,7 +204,7 @@ typedef enum {
 @property(nonatomic, retain) IBOutlet NSTabView *tabView;
 @property(nonatomic, assign) id<PSMTabBarControlDelegate> delegate;
 @property(nonatomic, retain) id partnerView;
-@property(nonatomic, readonly) PSMOverflowPopUpButton *overflowPopUpButton;
+@property(nonatomic, readonly) NSButton *overflowPopUpButton;
 @property(nonatomic, assign) BOOL ignoreTrailingParentheticalsForSmartTruncation;
 
 // control characteristics

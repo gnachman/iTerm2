@@ -192,7 +192,7 @@ static NSInteger sWindowArrangementGeneration;
     }
     [alert addButtonWithTitle:@"Cancel"];
 
-    NSTextField *input = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)];
+    NSTextField *input = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 300, 24)];
     [input setStringValue:defaultValue];
     [alert setAccessoryView:input];
     [alert layout];
@@ -222,9 +222,50 @@ static NSInteger sWindowArrangementGeneration;
     }
 }
 
++ (NSString *)nameForNewArrangement {
+    NSDate *now = [NSDate date];
+    NSLocale *locale = [NSLocale currentLocale];
+
+    NSArray<NSString *> *templates = @[
+        @"MM d, yyyy",
+        @"MM d, yyyy, j:mm",
+        @"MM d, yyyy, j:mm:ss",
+        @"MM d, yyyy, j:mm:ss.SSS"
+    ];
+
+    for (NSString *templ in templates) {
+        NSString *format = [NSDateFormatter dateFormatFromTemplate:templ options:0 locale:locale];
+        NSDateFormatter *df = [[NSDateFormatter alloc] init];
+        df.locale = locale;
+        df.dateFormat = format;
+
+        NSString *dateString = [df stringFromDate:now];
+        NSString *name = [NSString stringWithFormat:@"Arrangement (%@)", dateString];
+
+        if (![WindowArrangements hasWindowArrangement:name]) {
+            return name;
+        }
+    }
+
+    // Fallback if even millisecond-precision collides: append a counter.
+    NSString *msFormat = [NSDateFormatter dateFormatFromTemplate:@"EEEE, MMMM d, yyyy, j:mm:ss.SSS" options:0 locale:locale];
+    NSDateFormatter *msDF = [[NSDateFormatter alloc] init];
+    msDF.locale = locale;
+    msDF.dateFormat = msFormat;
+
+    for (NSInteger i = 2; ; i++) {
+        NSString *dateString = [msDF stringFromDate:now];
+        NSString *name = [NSString stringWithFormat:@"Arrangement (%@) %ld", dateString, (long)i];
+
+        if (![WindowArrangements hasWindowArrangement:name]) {
+            return name;
+        }
+    }
+}
+
 + (void)nameForNewArrangement:(void (^)(NSString *))completion {
     [WindowArrangements showAlertWithText:@"Name for saved window arrangement:"
-                             defaultInput:[NSString stringWithFormat:@"Arrangement %d", 1 + [WindowArrangements count]]
+                             defaultInput:[self nameForNewArrangement]
                               offerExport:NO
                                completion:^(NSString *name, iTermSavePanelItem *saveItem) {
         if (!name) {
@@ -248,7 +289,7 @@ static NSInteger sWindowArrangementGeneration;
 
 + (void)selectNameAndWhetherToIncludeContentsWithCompletion:(void (^)(NSString *name, iTermSavePanelItem *saveItem))completion {
     [self showAlertWithText:@"Name for saved window arrangement:"
-               defaultInput:[NSString stringWithFormat:@"Arrangement %d", 1 + [WindowArrangements count]]
+               defaultInput:[self nameForNewArrangement]
                 offerExport:YES
                  completion:completion];
 }

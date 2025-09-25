@@ -10,6 +10,11 @@
 #import "PSMTabStyle.h"
 #import "PSMTabBarControl.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
+extern const void *PSMTabStyleLightColorKey;
+extern const void *PSMTabStyleDarkColorKey;
+
 extern BOOL gDebugLogging;
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
 #define DLog(args...) \
@@ -23,10 +28,10 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 @property (nonatomic, readonly) CGFloat it_hspBrightness;
 @end
 
-@interface PSMYosemiteTabStyle : NSObject<NSCoding, PSMTabStyle>
+@interface PSMYosemiteTabStyle : NSObject<PSMTabStyle>
 
-@property(nonatomic, readonly) NSColor *tabBarColor;
-@property(nonatomic, readonly) PSMTabBarOrientation orientation;
+@property(nonatomic, readonly, nullable) NSColor *tabBarColor;
+@property(nonatomic) PSMTabBarOrientation orientation;
 @property(nonatomic, readonly) BOOL windowIsMainAndAppIsActive;
 
 #pragma mark - For subclasses
@@ -40,15 +45,15 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (NSColor *)effectiveBackgroundColorForTabWithTabColor:(NSColor *)tabColor
                                                selected:(BOOL)selected
                                         highlightAmount:(CGFloat)highlightAmount
-                                                 window:(NSWindow *)window;
+                                                 window:(NSWindow * _Nullable)window;
 - (void)drawCellBackgroundSelected:(BOOL)selected
                             inRect:(NSRect)cellFrame
-                      withTabColor:(NSColor *)tabColor
+                      withTabColor:(NSColor * _Nullable)tabColor
                    highlightAmount:(CGFloat)highlightAmount
                         horizontal:(BOOL)horizontal;
 - (void)drawShadowForUnselectedTabInRect:(NSRect)backgroundRect;
 
-- (void)drawSubtitle:(PSMCachedTitle *)cachedSubtitle
+- (void)drawSubtitle:(PSMCachedTitle * _Nullable)cachedSubtitle
                    x:(CGFloat)labelPosition
                 cell:(PSMTabBarCell *)cell
              hasIcon:(BOOL)drewIcon
@@ -62,17 +67,26 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
                  labelPosition:(CGFloat)labelPosition
                        hasIcon:(BOOL)drewIcon
                       iconRect:(NSRect)iconRect
-                   cachedTitle:(PSMCachedTitle *)cachedTitle
+                   cachedTitle:(PSMCachedTitle * _Nullable)cachedTitle
                  reservedSpace:(CGFloat)reservedSpace
-                  boundingSize:(NSSize *)boundingSizeOut
-                      truncate:(BOOL *)truncateOut;
+                  boundingSize:(NSSize * _Nullable)boundingSizeOut
+                      truncate:(BOOL * _Nullable)truncateOut;
 
-- (BOOL)willDrawSubtitle:(PSMCachedTitle *)subtitle;
+- (BOOL)willDrawSubtitle:(PSMCachedTitle * _Nullable)subtitle;
 - (CGFloat)verticalOffsetForTitleWhenSubtitlePresent;
 - (CGFloat)verticalOffsetForSubtitle;
 
 - (BOOL)shouldDrawTopLineSelected:(BOOL)selected
                          attached:(BOOL)attached
-                         position:(PSMTabPosition)position NS_AVAILABLE_MAC(10_16);
+                         position:(PSMTabPosition)position;
 
 @end
+
+@interface PSMTabBarCell(PSMYosemiteTabStyle)
+
+@property(nonatomic, nullable) NSAttributedString *previousAttributedString;
+@property(nonatomic) CGFloat previousWidthOfAttributedString;
+
+@end
+
+NS_ASSUME_NONNULL_END

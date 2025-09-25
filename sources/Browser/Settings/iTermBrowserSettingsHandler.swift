@@ -14,7 +14,7 @@ import AppKit
 protocol iTermBrowserSettingsHandlerDelegate: AnyObject {
     @MainActor func settingsHandlerDidUpdateAdblockSettings(_ handler: iTermBrowserSettingsHandler)
     @MainActor func settingsHandlerDidRequestAdblockUpdate(_ handler: iTermBrowserSettingsHandler)
-    @MainActor func settingsHandlerWebView(_ handler: iTermBrowserSettingsHandler) -> WKWebView?
+    @MainActor func settingsHandlerWebView(_ handler: iTermBrowserSettingsHandler) -> iTermBrowserWebView?
     @MainActor func settingsHandlerExtensionManager(_ handler: iTermBrowserSettingsHandler) -> iTermBrowserExtensionManagerProtocol?
 }
 
@@ -78,7 +78,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         urlSchemeTask.didFinish()
     }
     
-    func injectSettingsJavaScript(into webView: WKWebView) {
+    func injectSettingsJavaScript(into webView: iTermBrowserWebView) {
         let script = """
         // Direct functions that call Swift
         window.clearCookies = function() {
@@ -95,10 +95,12 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         
         """
         
-        webView.evaluateJavaScript(script, completionHandler: nil)
+        Task { @MainActor in
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
+        }
     }
     
-    func handleSettingsMessage(_ message: [String: Any], webView: WKWebView) {
+    func handleSettingsMessage(_ message: [String: Any], webView: iTermBrowserWebView) {
         guard let action = message["action"] as? String,
               let sessionSecret = message["sessionSecret"] as? String,
               sessionSecret == secret else {
@@ -175,7 +177,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         }
     }
     
-    private func clearCookies(webView: WKWebView) {
+    private func clearCookies(webView: iTermBrowserWebView) {
         let cookieStore = webView.configuration.websiteDataStore.httpCookieStore
         cookieStore.getAllCookies { cookies in
             for cookie in cookies {
@@ -186,7 +188,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         }
     }
     
-    private func clearAllWebsiteData(webView: WKWebView) {
+    private func clearAllWebsiteData(webView: iTermBrowserWebView) {
         let websiteDataStore = webView.configuration.websiteDataStore
         let dataTypes = WKWebsiteDataStore.allWebsiteDataTypes()
         
@@ -204,7 +206,9 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
                     }
                 }
                 DispatchQueue.main.async {
-                    webView.evaluateJavaScript("alert('\(message)');", completionHandler: nil)
+                    Task { @MainActor in
+                        _ = try? await webView.safelyEvaluateJavaScript(iife("alert('\(message)');"), contentWorld: .page)
+                    }
                 }
             }
         }
@@ -213,7 +217,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     // MARK: - Adblock Settings
 
     // This is for webkit adblocking
-    private func setAdblockEnabled(_ enabled: Bool, webView: WKWebView) {
+    private func setAdblockEnabled(_ enabled: Bool, webView: iTermBrowserWebView) {
         iTermAdvancedSettingsModel.setWebKitAdblockEnabled(enabled)
         delegate?.settingsHandlerDidUpdateAdblockSettings(self)
         
@@ -223,7 +227,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         showStatusMessage(message, type: "success", in: webView)
     }
     
-    private func setAdblockURL(_ url: String, webView: WKWebView) {
+    private func setAdblockURL(_ url: String, webView: iTermBrowserWebView) {
         guard !url.isEmpty else { return }
         
         iTermAdvancedSettingsModel.setAdblockListURL(url)
@@ -233,12 +237,12 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         showStatusMessage("Filter list URL updated", type: "success", in: webView)
     }
     
-    private func forceAdblockUpdate(webView: WKWebView) {
+    private func forceAdblockUpdate(webView: iTermBrowserWebView) {
         delegate?.settingsHandlerDidRequestAdblockUpdate(self)
         DLog("Force update of ad block rules requested")
     }
     
-    private func sendAdblockSettings(to webView: WKWebView) {
+    private func sendAdblockSettings(to webView: iTermBrowserWebView) {
         let enabled = iTermAdvancedSettingsModel.webKitAdblockEnabled()
         let url = iTermAdvancedSettingsModel.adblockListURL() ?? ""
         
@@ -252,13 +256,15 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             let jsonString = String(data: jsonData, encoding: .utf8)!
             
             let script = "updateAdblockUI(\(jsonString));"
-            webView.evaluateJavaScript(script, completionHandler: nil)
+            Task { @MainActor in
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
+        }
         } catch {
             DLog("Failed to encode adblock settings: \(error)")
         }
     }
     
-    private func sendAdblockStats(to webView: WKWebView) {
+    private func sendAdblockStats(to webView: iTermBrowserWebView) {
         let ruleCount = iTermBrowserAdblockManager.shared.getRuleCount()
         let lastUpdate = UserDefaults.standard.object(forKey: "NoSyncAdblockLastUpdate") as? Date
         
@@ -272,29 +278,33 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             let jsonString = String(data: jsonData, encoding: .utf8)!
             
             let script = "updateAdblockStats(\(jsonString));"
-            webView.evaluateJavaScript(script, completionHandler: nil)
+            Task { @MainActor in
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
+        }
         } catch {
             DLog("Failed to encode adblock stats: \(error)")
         }
     }
     
-    private func showStatusMessage(_ message: String, type: String, in webView: WKWebView) {
+    private func showStatusMessage(_ message: String, type: String, in webView: iTermBrowserWebView) {
         let escapedMessage = message.replacingOccurrences(of: "'", with: "\\'")
         let script = "showStatus('\(escapedMessage)', '\(type)');"
-        webView.evaluateJavaScript(script, completionHandler: nil)
+        Task { @MainActor in
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
+        }
     }
     
-    @objc func showAdblockUpdateSuccess(in webView: WKWebView) {
+    @objc func showAdblockUpdateSuccess(in webView: iTermBrowserWebView) {
         showStatusMessage("Ad block rules updated successfully", type: "success", in: webView)
     }
     
-    @objc func showAdblockUpdateError(_ error: String, in webView: WKWebView) {
+    @objc func showAdblockUpdateError(_ error: String, in webView: iTermBrowserWebView) {
         showStatusMessage("Failed to update ad block rules: \(error)", type: "error", in: webView)
     }
     
     // MARK: - Search Settings
     
-    private func setSearchCommand(_ url: String, webView: WKWebView) {
+    private func setSearchCommand(_ url: String, webView: iTermBrowserWebView) {
         guard !url.isEmpty, url.contains("%@") else {
             showStatusMessage("Invalid search URL: must contain %@ placeholder", type: "error", in: webView)
             return
@@ -305,7 +315,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         showStatusMessage("Search engine updated", type: "success", in: webView)
     }
     
-    private func setSearchSuggestURL(_ url: String, webView: WKWebView) {
+    private func setSearchSuggestURL(_ url: String, webView: iTermBrowserWebView) {
         if !url.isEmpty && !url.contains("%@") {
             showStatusMessage("Invalid suggestion URL: must contain %@ placeholder", type: "error", in: webView)
             return
@@ -320,7 +330,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         }
     }
     
-    private func sendSearchSettings(to webView: WKWebView) {
+    private func sendSearchSettings(to webView: iTermBrowserWebView) {
         let searchCommand = iTermAdvancedSettingsModel.searchCommand()!
         let searchSuggestURL = iTermAdvancedSettingsModel.searchSuggestURL()!
         
@@ -334,7 +344,9 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             let jsonString = String(data: jsonData, encoding: .utf8)!
             
             let script = "updateSearchEngineUI(\(jsonString));"
-            webView.evaluateJavaScript(script, completionHandler: nil)
+            Task { @MainActor in
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
+        }
         } catch {
             DLog("Failed to encode search settings: \(error)")
         }
@@ -342,7 +354,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     
     // MARK: - Proxy Settings
     
-    private func setProxyEnabled(_ enabled: Bool, webView: WKWebView) {
+    private func setProxyEnabled(_ enabled: Bool, webView: iTermBrowserWebView) {
         iTermAdvancedSettingsModel.setBrowserProxyEnabled(enabled)
         
         DLog("Browser proxy \(enabled ? "enabled" : "disabled")")
@@ -354,7 +366,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         delegate?.settingsHandlerDidUpdateAdblockSettings(self)
     }
     
-    private func setProxyHost(_ host: String, webView: WKWebView) {
+    private func setProxyHost(_ host: String, webView: iTermBrowserWebView) {
         guard !host.isEmpty else { return }
         
         iTermAdvancedSettingsModel.setBrowserProxyHost(host)
@@ -366,7 +378,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         delegate?.settingsHandlerDidUpdateAdblockSettings(self)
     }
     
-    private func setProxyPort(_ port: Int, webView: WKWebView) {
+    private func setProxyPort(_ port: Int, webView: iTermBrowserWebView) {
         guard port >= 1 && port <= 65535 else {
             showStatusMessage("Invalid port number", type: "error", in: webView)
             return
@@ -381,7 +393,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         delegate?.settingsHandlerDidUpdateAdblockSettings(self)
     }
     
-    private func sendProxySettings(to webView: WKWebView) {
+    private func sendProxySettings(to webView: iTermBrowserWebView) {
         let enabled = iTermAdvancedSettingsModel.browserProxyEnabled()
         let host = iTermAdvancedSettingsModel.browserProxyHost() ?? "127.0.0.1"
         let port = iTermAdvancedSettingsModel.browserProxyPort()
@@ -397,7 +409,9 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             let jsonString = String(data: jsonData, encoding: .utf8)!
             
             let script = "updateProxyUI(\(jsonString));"
-            webView.evaluateJavaScript(script, completionHandler: nil)
+            Task { @MainActor in
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
+        }
         } catch {
             DLog("Failed to encode proxy settings: \(error)")
         }
@@ -405,22 +419,26 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     
     // MARK: - Extension Settings
     
-    private func sendExtensions(to webView: WKWebView) {
+    private func sendExtensions(to webView: iTermBrowserWebView) {
         if #available(macOS 14, *) {
             sendExtensionsForMacOS14(to: webView)
         } else {
             // Extensions not supported on macOS < 14
             let script = "updateExtensionsUI([]);"
-            webView.evaluateJavaScript(script, completionHandler: nil)
+            Task { @MainActor in
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
+        }
         }
     }
     
     @available(macOS 14, *)
-    private func sendExtensionsForMacOS14(to webView: WKWebView) {
+    private func sendExtensionsForMacOS14(to webView: iTermBrowserWebView) {
         guard let extensionManager = delegate?.settingsHandlerExtensionManager(self) else {
             // Send empty array if extension manager is not available
             let script = "updateExtensionsUI([]);"
-            webView.evaluateJavaScript(script, completionHandler: nil)
+            Task { @MainActor in
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
+        }
             return
         }
         
@@ -444,15 +462,19 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             let jsonString = String(data: jsonData, encoding: .utf8)!
             
             let script = "updateExtensionsUI(\(jsonString));"
-            webView.evaluateJavaScript(script, completionHandler: nil)
+            Task { @MainActor in
+            _ = try? await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
+        }
         } catch {
             DLog("Failed to encode extensions data: \(error)")
             let script = "updateExtensionsUI([]);"
-            webView.evaluateJavaScript(script, completionHandler: nil)
+            Task { @MainActor in
+            _ = try? await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
+        }
         }
     }
     
-    private func setExtensionEnabled(_ extensionIdString: String, enabled: Bool, webView: WKWebView) {
+    private func setExtensionEnabled(_ extensionIdString: String, enabled: Bool, webView: iTermBrowserWebView) {
         if #available(macOS 14, *) {
             setExtensionEnabledForMacOS14(extensionIdString, enabled: enabled, webView: webView)
         } else {
@@ -461,7 +483,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     }
     
     @available(macOS 14, *)
-    private func setExtensionEnabledForMacOS14(_ extensionIdString: String, enabled: Bool, webView: WKWebView) {
+    private func setExtensionEnabledForMacOS14(_ extensionIdString: String, enabled: Bool, webView: iTermBrowserWebView) {
         guard let extensionManager = delegate?.settingsHandlerExtensionManager(self) else {
             showStatusMessage("Extension management not available", type: "error", in: webView)
             return
@@ -479,7 +501,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         // when the profile observer detects the change
     }
     
-    private func revealExtensionsDirectory(webView: WKWebView) {
+    private func revealExtensionsDirectory(webView: iTermBrowserWebView) {
         if #available(macOS 14, *) {
             revealExtensionsDirectoryForMacOS14(webView: webView)
         } else {
@@ -488,7 +510,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     }
     
     @available(macOS 14, *)
-    private func revealExtensionsDirectoryForMacOS14(webView: WKWebView) {
+    private func revealExtensionsDirectoryForMacOS14(webView: iTermBrowserWebView) {
         guard let extensionManager = delegate?.settingsHandlerExtensionManager(self) else {
             showStatusMessage("Extension management not available", type: "error", in: webView)
             return
@@ -519,7 +541,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     
     // MARK: - iTermBrowserPageHandler Protocol
     
-    func injectJavaScript(into webView: WKWebView) {
+    func injectJavaScript(into webView: iTermBrowserWebView) {
         injectSettingsJavaScript(into: webView)
     }
     

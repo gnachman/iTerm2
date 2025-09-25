@@ -10,7 +10,8 @@
 #import "NSView+iTerm.h"
 
 @implementation iTermOpenQuicklyView {
-    NSVisualEffectView *_visualEffectView;
+    NSView *_backgroundEffectView;
+    NSView *_glassContentView;
     NSView *_container;
 }
 
@@ -31,15 +32,26 @@
     _container = [[NSView alloc] initWithFrame:self.bounds];
     [self insertSubview:_container atIndex:0];
 
-    _visualEffectView = [[NSVisualEffectView alloc] initWithFrame:self.bounds];
-    _visualEffectView.blendingMode = NSVisualEffectBlendingModeBehindWindow;
-    if (@available(macOS 10.16, *)) {
-        _visualEffectView.material = NSVisualEffectMaterialMenu;
+    if (@available(macOS 26, *)) {
+        NSGlassEffectView *glassView = [[NSGlassEffectView alloc] initWithFrame:self.bounds];
+        _backgroundEffectView = glassView;
+        glassView.tintColor = [[NSColor controlBackgroundColor] colorWithAlphaComponent:0.2];
+        _glassContentView = [[NSView alloc] initWithFrame:_backgroundEffectView.bounds];
+        glassView.contentView = _glassContentView;
+        [_container addSubview:_backgroundEffectView];
     } else {
-        _visualEffectView.material = NSVisualEffectMaterialSheet;
+        // Fallback for older macOS versions: use NSVisualEffectView
+        NSVisualEffectView *visual = [[NSVisualEffectView alloc] initWithFrame:self.bounds];
+        visual.blendingMode = NSVisualEffectBlendingModeBehindWindow;
+        if (@available(macOS 10.16, *)) {
+            visual.material = NSVisualEffectMaterialMenu;
+        } else {
+            visual.material = NSVisualEffectMaterialSheet;
+        }
+        visual.state = NSVisualEffectStateActive;
+        _backgroundEffectView = visual;
+        [_container addSubview:_backgroundEffectView];
     }
-    _visualEffectView.state = NSVisualEffectStateActive;
-    [_container addSubview:_visualEffectView];
 
     // Even though this is set in IB, we have to set it manually.
     self.autoresizesSubviews = NO;
@@ -52,13 +64,15 @@
 - (void)setFrameSize:(NSSize)newSize {
     [super setFrameSize:newSize];
     _container.frame = self.bounds;
-    _visualEffectView.frame = _container.bounds;
+    _backgroundEffectView.frame = _container.bounds;
+    _glassContentView.frame = _backgroundEffectView.bounds;
 }
 
 - (void)resizeWithOldSuperviewSize:(NSSize)oldSize {
     [super resizeWithOldSuperviewSize:oldSize];
     _container.frame = self.bounds;
-    _visualEffectView.frame = _container.bounds;
+    _backgroundEffectView.frame = _container.bounds;
+    _glassContentView.frame = _backgroundEffectView.bounds;
 }
 
 @end

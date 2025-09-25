@@ -251,6 +251,7 @@ extern NSString *const kPreferenceKeyEmulateUSKeyboard;  // See issue 6994
 
 extern NSString *const kPreferenceKeyHotkeyEnabled;
 extern NSString *const kPreferenceKeyForceKeyboard;
+extern NSString *const kPreferenceKeyAllowSymbolicHotKeys;
 extern NSString *const kPreferenceKeyKeyboardLocale;
 extern NSString *const kPreferenceKeyHotKeyCode;
 extern NSString *const kPreferenceKeyHotkeyCharacter;
@@ -258,6 +259,7 @@ extern NSString *const kPreferenceKeyHotkeyModifiers;
 extern NSString *const kPreferenceKeyEnableHapticFeedbackForEsc;
 extern NSString *const kPreferenceKeyEnableSoundForEsc;
 extern NSString *const kPreferenceKeyVisualIndicatorForEsc;
+extern NSString *const kPreferenceKeyRemapModifiersGlobally;
 
 extern NSString *const kPreferenceKeyLanguageAgnosticKeyBindings;
 
@@ -338,6 +340,8 @@ extern NSString *const iTermDefaultAIPrompt;
 
 + (void)setObject:(id)object forKey:(NSString *)key;
 + (NSObject *)objectForKey:(NSString *)key;
+
++ (void)setWithoutSideEffectsObject:(id)object forKey:(NSString *)key;
 
 + (BOOL)boolForKey:(NSString *)key;
 + (void)setBool:(BOOL)value forKey:(NSString *)key;

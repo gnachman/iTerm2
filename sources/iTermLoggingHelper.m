@@ -101,10 +101,10 @@ asciicastMetadata:(iTermAsciicastMetadata *)asciicastMetadata
          append:(nullable NSNumber *)append
          window:(nullable NSWindow *)window {
     if (path) {
-        const BOOL ok =[[NSFileManager defaultManager] it_promptToCreateEnclosingDirectoryFor:path
-                                                                                        title:@"Logging Folder Not Found"
-                                                                                   identifier:@"LoggingFolder"
-                                                                                       window:window];
+        const BOOL ok = [[NSFileManager defaultManager] it_promptToCreateEnclosingDirectoryFor:path
+                                                                                         title:@"Logging Folder Not Found"
+                                                                                    identifier:@"LoggingFolder"
+                                                                                        window:window];
         if (!ok) {
             return;
         }

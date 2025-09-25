@@ -110,7 +110,7 @@ class iTermBrowserDownload: TransferrableFile {
     }
     
     override func isDownloading() -> Bool {
-        return state == .downloading
+        return true
     }
     
     // MARK: - Progress Observation

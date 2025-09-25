@@ -237,43 +237,81 @@ class SSHFilePanelSidebar: NSView {
         sidebarOutlineView.reloadData()
     }
 
+    private func getStandardFavorites() -> [(name: String, url: URL)] {
+        var favorites: [(name: String, url: URL)] = []
+        let fileManager = FileManager.default
+
+        // Standard user directories that appear in sidebar
+        let standardLocations: [(FileManager.SearchPathDirectory, String)] = [
+            (.desktopDirectory, "Desktop"),
+            (.documentDirectory, "Documents"),
+            (.downloadsDirectory, "Downloads"),
+            (.moviesDirectory, "Movies"),
+            (.musicDirectory, "Music"),
+            (.picturesDirectory, "Pictures"),
+            (.userDirectory, "Home")
+        ]
+
+        for (directory, name) in standardLocations {
+            if let url = fileManager.urls(for: directory, in: .userDomainMask).first {
+                favorites.append((name: name, url: url))
+            }
+        }
+
+        // Add Applications
+        if let appsURL = fileManager.urls(for: .applicationDirectory, in: .localDomainMask).first {
+            favorites.append((name: "Applications", url: appsURL))
+        }
+
+        return favorites
+    }
+    
     private func loadFavorites() {
         if let dicts = UserDefaults.standard.array(
             forKey: favoritesKey
         ) as? [[String: Any]] {
             unfilteredFavorites = dicts.compactMap { Favorite($0) }
         } else {
-            // Import favorites from finder one time.
-            let path = NSHomeDirectory() + "/Library/Application Support/com.apple.sharedfilelist/com.apple.LSSharedFileList.FavoriteItems.sfl3"
-            guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)) else {
-                return
-            }
-
-            let allowedClasses: NSSet = [
-                NSDictionary.self,
-                NSArray.self,
-                NSData.self,
-                NSString.self,
-                NSURL.self
-            ]
-
-            guard let plist = try? NSKeyedUnarchiver.unarchivedObject(ofClasses: allowedClasses as! Set<AnyHashable>, from: data),
-                  let rootDict = plist as? NSDictionary,
-                  let items = rootDict["items"] as? [NSDictionary] else {
-                return
-            }
-
-            for item in items {
-                guard let bookmarkData = item["Bookmark"] as? Data else { continue }
-
-                var isStale = false
-                if let url = try? URL(resolvingBookmarkData: bookmarkData,
-                                      options: [.withoutUI, .withoutMounting],
-                                      relativeTo: nil,
-                                      bookmarkDataIsStale: &isStale) {
-                    unfilteredFavorites.append(Favorite(host: .localhost,
-                                                        path: url.path,
-                                                        shortenedPath: url.path.lastPathComponent))
+            if #available(macOS 26, *) {
+                let faves = getStandardFavorites()
+                unfilteredFavorites = faves.map { tuple in
+                        .init(host: .localhost,
+                              path: tuple.url.path,
+                              shortenedPath: tuple.url.path.lastPathComponent)
+                }
+            } else {
+                // Import favorites from finder one time. This worked until macOS 26.
+                let path = NSHomeDirectory() + "/Library/Application Support/com.apple.sharedfilelist/com.apple.LSSharedFileList.FavoriteItems.sfl3"
+                guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)) else {
+                    return
+                }
+                
+                let allowedClasses: NSSet = [
+                    NSDictionary.self,
+                    NSArray.self,
+                    NSData.self,
+                    NSString.self,
+                    NSURL.self
+                ]
+                
+                guard let plist = try? NSKeyedUnarchiver.unarchivedObject(ofClasses: allowedClasses as! Set<AnyHashable>, from: data),
+                      let rootDict = plist as? NSDictionary,
+                      let items = rootDict["items"] as? [NSDictionary] else {
+                    return
+                }
+                
+                for item in items {
+                    guard let bookmarkData = item["Bookmark"] as? Data else { continue }
+                    
+                    var isStale = false
+                    if let url = try? URL(resolvingBookmarkData: bookmarkData,
+                                          options: [.withoutUI, .withoutMounting],
+                                          relativeTo: nil,
+                                          bookmarkDataIsStale: &isStale) {
+                        unfilteredFavorites.append(Favorite(host: .localhost,
+                                                            path: url.path,
+                                                            shortenedPath: url.path.lastPathComponent))
+                    }
                 }
             }
             saveFavorites()

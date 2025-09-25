@@ -8,37 +8,38 @@
 import Foundation
 import WebKit
 
+@MainActor
 class iTermBrowserCopyModeState: NSObject {
-    let webView: WKWebView
+    let webView: iTermBrowserWebView
     private let sessionSecret: String
     private var continuation: CheckedContinuation<Bool, Never>?
 
     var selecting: Bool = false {
         didSet {
-            webView.evaluateJavaScript("iTerm2CopyMode.selecting = \(selecting)",
-                                       in: nil,
-                                       in: .defaultClient,
-                                       completionHandler: nil)
+            webView.safelyEvaluateJavaScript(iife("iTerm2CopyMode.selecting = \(selecting)"),
+                                             in: nil,
+                                             in: .defaultClient,
+                                             completionHandler: nil)
         }
     }
     var mode: iTermSelectionMode = .kiTermSelectionModeCharacter {
         didSet {
-            webView.evaluateJavaScript("iTerm2CopyMode.mode = \(mode.rawValue)",
-                                       in: nil,
-                                       in: .defaultClient,
-                                       completionHandler: nil)
+            webView.safelyEvaluateJavaScript(iife("iTerm2CopyMode.mode = \(mode.rawValue)"),
+                                             in: nil,
+                                             in: .defaultClient,
+                                             completionHandler: nil)
         }
     }
 
-    init(webView: WKWebView, sessionSecret: String) {
+    init(webView: iTermBrowserWebView, sessionSecret: String) {
         self.webView = webView
         self.sessionSecret = sessionSecret
     }
-    
+
     private func callJavaScriptSync(_ script: String) -> Bool {
         let c = continuation
         continuation = nil
-        webView.evaluateJavaScript(script, in: nil, in: .defaultClient) { evalResult in
+        webView.safelyEvaluateJavaScript(iife("return " + script), in: nil, in: .defaultClient) { evalResult in
             switch evalResult {
             case .success(let response):
                 if let boolResponse = response as? Bool {
@@ -55,7 +56,8 @@ class iTermBrowserCopyModeState: NSObject {
     }
 }
 
-extension iTermBrowserCopyModeState: iTermCopyModeStateProtocol {
+@MainActor
+extension iTermBrowserCopyModeState: @preconcurrency iTermCopyModeStateProtocol {
     func moveBackwardWord() -> Bool {
         return callJavaScriptSync("iTerm2CopyMode.moveBackwardWord('\(sessionSecret)')")
     }
@@ -178,27 +180,27 @@ extension iTermBrowserCopyModeState: iTermCopyModeStateProtocol {
 // MARK: - Additional Helper Methods
 extension iTermBrowserCopyModeState {
     func enableCopyMode() {
-        webView.evaluateJavaScript("iTerm2CopyMode.enable('\(sessionSecret)')",
-                                   in: nil,
-                                   in: .defaultClient,
-                                   completionHandler: nil)
+        webView.safelyEvaluateJavaScript("iTerm2CopyMode.enable('\(sessionSecret)')",
+                                         in: nil,
+                                         in: .defaultClient,
+                                         completionHandler: nil)
     }
-    
+
     func disableCopyMode() {
-        webView.evaluateJavaScript("iTerm2CopyMode.disable('\(sessionSecret)')",
-                                   in: nil,
-                                   in: .defaultClient,
-                                   completionHandler: nil)
+        webView.safelyEvaluateJavaScript("iTerm2CopyMode.disable('\(sessionSecret)')",
+                                         in: nil,
+                                         in: .defaultClient,
+                                         completionHandler: nil)
     }
-    
+
     func copySelection() -> Bool {
         return callJavaScriptSync("iTerm2CopyMode.copySelection('\(sessionSecret)')")
     }
-    
+
     func scrollCursorIntoView() {
-        webView.evaluateJavaScript("iTerm2CopyMode.scrollCursorIntoView('\(sessionSecret)')",
-                                   in: nil,
-                                   in: .defaultClient,
-                                   completionHandler: nil)
+        webView.safelyEvaluateJavaScript("iTerm2CopyMode.scrollCursorIntoView('\(sessionSecret)')",
+                                         in: nil,
+                                         in: .defaultClient,
+                                         completionHandler: nil)
     }
 }

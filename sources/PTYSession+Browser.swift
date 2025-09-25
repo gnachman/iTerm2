@@ -28,7 +28,7 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
 
     func browserViewController(_ controller: iTermBrowserViewController,
                                requestNewWindowForURL url: URL,
-                               configuration: WKWebViewConfiguration) -> WKWebView? {
+                               configuration: WKWebViewConfiguration) -> iTermBrowserWebView? {
         /* If you ever want to open in a window, do:
          return iTermController.sharedInstance().openSingleUserBrowserWindow(with: url,
          configuration: configuration,

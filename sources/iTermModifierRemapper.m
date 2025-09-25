@@ -334,7 +334,7 @@
 }
 
 - (BOOL)isRemappingModifiers {
-  return [_keyDown isEnabled];
+    return [_keyDown isEnabled] && [iTermPreferences boolForKey:kPreferenceKeyRemapModifiersGlobally];
 }
 
 - (iTermPreferencesModifierTag)leftControlRemapping {
@@ -435,6 +435,10 @@
                                withType:(CGEventType)type
                                   event:(CGEventRef)event {
     DLog(@"Modifier remapper event tap got an event: %@", [NSEvent eventWithCGEvent:event]);
+    if (![iTermPreferences boolForKey:kPreferenceKeyRemapModifiersGlobally]) {
+        DLog(@"Flags changed remapping disabled by advanced setting");
+        return event;
+    }
     if ([NSApp isActive]) {
         DLog(@"App is active, performing remapping");
         // Remap modifier keys only while iTerm2 is active; otherwise you could just use the

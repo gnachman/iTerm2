@@ -2506,6 +2506,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (void)didRemoveObjectFromIntervalTree:(id<IntervalTreeObject>)obj formerInterval:(Interval *)interval {
+    if ([obj isKindOfClass:[VT100ScreenMark class]]) {
+        DLog(@"Removed %@ from:\n%@", obj, [NSThread callStackSymbols]);
+    }
     const VT100GridAbsCoordRange range = [self absCoordRangeForInterval:interval];
     iTermIntervalTreeObjectType type = iTermIntervalTreeObjectTypeForObject(obj);
     if (type != iTermIntervalTreeObjectTypeUnknown) {
@@ -2632,8 +2635,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                 // This code path should not be taken with auto-composer because mark.command gets
                 // set prior to sending the command.
                 const VT100GridAbsCoordRange commandRange = VT100GridAbsCoordRangeFromCoordRange(range, self.cumulativeScrollbackOverflow);
-                const VT100GridAbsCoord outputStart = VT100GridAbsCoordMake(self.currentGrid.cursor.x,
-                                                                            self.currentGrid.cursor.y + [self.linebuffer numLinesWithWidth:self.currentGrid.size.width] + self.cumulativeScrollbackOverflow);
+                VT100GridAbsCoord outputStart = VT100GridAbsCoordMake(self.currentGrid.cursor.x,
+                                                                      self.currentGrid.cursor.y + [self.linebuffer numLinesWithWidth:self.currentGrid.size.width] + self.cumulativeScrollbackOverflow);
+                if (outputStart.x > 0) {
+                    outputStart.x = 0;
+                    outputStart.y += 1;
+                }
                 DLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
                      self.lastPromptLine - self.cumulativeScrollbackOverflow, mark, command);
                 [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
@@ -2773,6 +2780,22 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     self.mutableMarkCache[line] = nil;
 }
 
+- (NSString *)intervalTreeDump {
+    NSMutableArray<NSString *> *lines = [NSMutableArray array];
+    for (NSArray *objects in [self.intervalTree forwardLocationEnumeratorAt:0]) {
+        for (id<IntervalTreeImmutableObject> object in objects) {
+            Interval *interval = object.entry.interval;
+            if (!interval) {
+                continue;
+            }
+            [lines addObject:[NSString stringWithFormat:@"In range %@: %@",
+                              VT100GridAbsCoordRangeDescription([self absCoordRangeForInterval:interval]),
+                             object]];
+        }
+    }
+    return [lines componentsJoinedByString:@"\n"];
+}
+
 - (VT100ScreenMark *)setPromptStartLine:(int)line detectedByTrigger:(BOOL)detectedByTrigger {
     DLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine.", line);
     // Reset this in case it's taking the "real" shell integration path.
@@ -2787,7 +2810,16 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         // happen if the shell sends OSC 7 and also has shell integration installed.
         [self removeUnusedPromptMarkOnLine:line - 1];
     }
-    VT100ScreenMark *mark = (VT100ScreenMark *)[self addMarkOnLine:line ofClass:[VT100ScreenMark class]];
+    VT100ScreenMark *mark = nil;
+    VT100ScreenMark *existing = [VT100ScreenMark castFrom:[self screenMarkOnLine:line]];
+    DLog(@"Set prompt at line %d\n%@", line, [NSThread callStackSymbols]);
+    if (existing && existing.command == nil) {
+        mark = existing;
+        DLog(@"Reuse existing %@", existing);
+    } else {
+        mark = (VT100ScreenMark *)[self addMarkOnLine:line ofClass:[VT100ScreenMark class]];
+        DLog(@"Create new %@", mark);
+    }
     if (mark) {
         const VT100GridAbsCoordRange promptRange = VT100GridAbsCoordRangeMake(0, lastPromptLine, 0, lastPromptLine);
         [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
@@ -2802,6 +2834,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenPromptDidStartAtLine:line];
     }];
+    DLog(@"After setPromptStartLine:\n%@", [self intervalTreeDump]);
     return mark;
 }
 
@@ -3483,7 +3516,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         }] componentsJoinedByString:@"\n"];
 
         DLog(@"Removing last command mark %@", screenMark);
-        const NSInteger line = [self coordRangeForInterval:screenMark.entry.interval].start.y + self.cumulativeScrollbackOverflow;
+        const int relativeLine = [self coordRangeForInterval:screenMark.entry.interval].start.y;
+        const NSInteger line = relativeLine + self.cumulativeScrollbackOverflow;
         [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
             [observer intervalTreeDidRemoveObjectOfType:iTermIntervalTreeObjectTypeForObject(screenMark)
                                                  onLine:line];
@@ -3491,6 +3525,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         DLog(@"Command was aborted. Remove %@", screenMark);
         [self.mutableIntervalTree removeObject:(VT100ScreenMark *)screenMark];
         [self.mutableSavedIntervalTree removeObject:(VT100ScreenMark *)screenMark];
+        [self.mutableMarkCache removeMark:screenMark onLine:relativeLine];
     }
     [self invalidateCommandStartCoordWithoutSideEffects];
     [self didUpdatePromptLocation];
@@ -5118,7 +5153,8 @@ lengthExcludingInBandSignaling:data.length
         // This is to prevent a crash if the dictionary is bad (i.e., non-backward compatible change in a future version).
         self.primaryGrid = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(2, 2) delegate:self];
     }
-    if ([dictionary[@"AltGrid"] count]) {
+    NSDictionary *altGrid = dictionary[@"AltGrid"];
+    if ([altGrid count]) {
         self.altGrid = [[VT100Grid alloc] initWithDictionary:dictionary[@"AltGrid"]
                                                     delegate:self];
     }

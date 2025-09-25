@@ -141,6 +141,9 @@ typedef struct {
 }
 
 + (instancetype)instanceForSessionID:(NSString *)sessionID {
+    if (!sessionID) {
+        return nil;
+    }
     iTermCPUUtilization *instance = self.sessionInstances[sessionID];
     if (instance) {
         return instance;

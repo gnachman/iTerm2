@@ -21,7 +21,7 @@ protocol iTermBrowserViewControllerDelegate: AnyObject, iTermBrowserFindManagerD
                                didUpdateFavicon favicon: NSImage?)
     func browserViewController(_ controller: iTermBrowserViewController,
                                requestNewWindowForURL url: URL,
-                               configuration: WKWebViewConfiguration) -> WKWebView?
+                               configuration: WKWebViewConfiguration) -> iTermBrowserWebView?
     func browserViewControllerShowFindPanel(_ controller: iTermBrowserViewController)
     func browserViewController(_ controller: iTermBrowserViewController,
                                openNewTabForURL url: URL)
@@ -220,6 +220,15 @@ extension iTermBrowserViewController {
     @objc
     var currentURL: URL? { browserManager.webView.url }
 
+    @objc
+    func terminate() {
+        browserManager.webView.stopLoading()
+        browserManager.webView.loadHTMLString("", baseURL: URL("about:empty"))
+        browserManager.webView.navigationDelegate = nil
+        browserManager.webView.uiDelegate = nil
+        browserManager.webView.removeFromSuperview()
+    }
+
     @objc(convertVisibleSearchResultsToContentNavigationShortcutsWithAction:clearOnEnd:)
     func convertVisibleSearchResultsToContentNavigationShortcuts(action: iTermContentNavigationAction,
                                                                  clearOnEnd: Bool) {
@@ -277,7 +286,7 @@ extension iTermBrowserViewController {
 
     @objc
     func jumpToSelection() {
-        browserManager.webView?.evaluateJavaScript("""
+        browserManager.webView?.safelyEvaluateJavaScript("""
         (function() {
           try {
             const sel = window.getSelection();
@@ -291,7 +300,7 @@ extension iTermBrowserViewController {
             console.error(e);
           }
         })();
-        """)
+        """, contentWorld: .page)
     }
 
     @objc
@@ -1114,7 +1123,7 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
         delegate?.browserViewControllerDidFinishNavigation(self)
     }
 
-    func browserManager(_ manager: iTermBrowserManager, requestNewWindowForURL url: URL, configuration: WKWebViewConfiguration) -> WKWebView? {
+    func browserManager(_ manager: iTermBrowserManager, requestNewWindowForURL url: URL, configuration: WKWebViewConfiguration) -> iTermBrowserWebView? {
         return delegate?.browserViewController(self,
                                                requestNewWindowForURL: url,
                                                configuration: configuration)
@@ -1604,5 +1613,9 @@ extension iTermBrowserViewController: iTermBrowserTriggerHandlerDelegate {
 
     func triggerHandlerObject(_ sender: iTermBrowserTriggerHandler) -> iTermObject? {
         return delegate?.browserViewControllerScope(self).1
+    }
+
+    func browserTriggerInject(_ script: String) {
+        browserManager.triggerHandler?.inject(script)
     }
 }

@@ -205,8 +205,10 @@ struct LLMProvider {
             return LLMLegacyResponseParser()
         case .gemini:
             return LLMGeminiResponseParser()
-        case .llama, .deepSeek:
+        case .llama:
             return LlamaResponseParser()
+        case .deepSeek:
+            return DeepSeekResponseParser()
         case .anthropic:
             return AnthropicResponseParser()
         @unknown default:

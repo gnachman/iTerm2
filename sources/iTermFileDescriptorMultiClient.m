@@ -163,8 +163,9 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
             DLog(@"Fatal error attaching to %@.", _socketPath);
             assert(state.readFD < 0);
             if (state.writeFD >= 0) {
-                close(state.writeFD);
+                int fd = state.writeFD;
                 state.writeFD = -1;
+                close(fd);
             }
             [callback invokeWithObject:@NO];
             return;
@@ -221,8 +222,9 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
             ok = NO;
         }];
         if (!ok) {
-            close(state.readFD);
+            int fd = state.readFD;
             state.readFD = -1;
+            close(fd);
             // You can get here if the server crashes right after accepting the connection. It can
             // also happen if the server already has a connected client and rejects.
             DLog(@"tryAttachWithState(%@): Fatal error (see above)", strongSelf->_socketPath);
@@ -840,8 +842,25 @@ static NSString *iTermMultiServerStringForMessageFromClient(iTermMultiServerClie
     if ([self shouldCopyServerTo:desiredPath]) {
         [self deleteDisusedServerBinaries];
         [fileManager removeItemAtPath:desiredPath error:nil];
-        
+
         NSString *sourcePath = [self pathToServerInBundle];
+
+        // Check if the source file exists in the bundle
+        if (!sourcePath || ![fileManager fileExistsAtPath:sourcePath]) {
+            dispatch_sync(dispatch_get_main_queue(), ^{
+                NSAlert *alert = [[NSAlert alloc] init];
+                alert.messageText = @"Required File Missing";
+                alert.informativeText = @"The iTermServer executable is missing from the application bundle. This indicates iTerm2 is corrupted or incomplete. Please reinstall iTerm2 from the official website.";
+                alert.alertStyle = NSAlertStyleCritical;
+                [alert addButtonWithTitle:@"Quit"];
+                [alert runModal];
+
+                // Terminate the application
+                [[NSApplication sharedApplication] terminate:nil];
+            });
+            return nil;
+        }
+
         NSError *error = nil;
         [fileManager copyItemAtPath:sourcePath
                              toPath:desiredPath
@@ -943,15 +962,20 @@ static NSString *iTermMultiServerStringForMessageFromClient(iTermMultiServerClie
     }
     DLog(@"CLOSE %@", _socketPath);
 
-    if (state.readFD >= 0) {
-        close(state.readFD);
-    }
-    if (state.writeFD >= 0) {
-        close(state.writeFD);
-    }
-
+    // Use the property setters to ensure dispatch sources are properly canceled
+    // Set to -1 first to trigger cleanup, then close the actual FDs
+    int readFD = state.readFD;
+    int writeFD = state.writeFD;
+    
     state.readFD = -1;
     state.writeFD = -1;
+    
+    if (readFD >= 0) {
+        close(readFD);
+    }
+    if (writeFD >= 0) {
+        close(writeFD);
+    }
 
     NSDictionary<NSNumber *, iTermFileDescriptorMultiClientPendingLaunch *> *pendingLaunches = [state.pendingLaunches copy];
     [state.pendingLaunches removeAllObjects];

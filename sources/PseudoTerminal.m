@@ -4099,6 +4099,17 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([self currentSession]) {
         PtyLog(@"makeCurrentSessionFirstResponder. New first responder will be %@. The current first responder is %@",
                [[self currentSession] textview], [[self window] firstResponder]);
+        NSView *view = [NSView castFrom:[[self currentSession] mainResponder]];
+        if (view && view.window != self.window) {
+            // Browser is added after a delay so we need to retry for it.
+            __weak __typeof(self) weakSelf = self;
+            NSLog(@"Retry");
+            dispatch_async(dispatch_get_main_queue(), ^{
+                NSLog(@"Retrying");
+                [weakSelf makeCurrentSessionFirstResponder];
+            });
+            return;
+        }
         [[self window] makeFirstResponder:[[self currentSession] mainResponder]];
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBecameKey
                                                             object:[self currentSession]
@@ -4662,6 +4673,39 @@ ITERM_WEAKLY_REFERENCEABLE
         effectiveWindowType = self.savedWindowType;
     }
     if (!iTermWindowTypeIsCompact(effectiveWindowType)) {
+        if (@available(macOS 26, *)) {
+            switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+                case TAB_STYLE_MINIMAL:
+                case TAB_STYLE_COMPACT:
+                    return NSEdgeInsetsZero;
+                    
+                case TAB_STYLE_AUTOMATIC:
+                case TAB_STYLE_LIGHT:
+                case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                case TAB_STYLE_DARK:
+                case TAB_STYLE_DARK_HIGH_CONTRAST:
+                    if (self.window.titleVisibility == NSWindowTitleHidden) {
+                        switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+                            case PSMTab_TopTab:
+                                return NSEdgeInsetsMake(4.5,  // top
+                                                        8,    // left
+                                                        3.5,  // bottom
+                                                        8);   // right
+                            case PSMTab_BottomTab:
+                                return NSEdgeInsetsMake(3.5,  // top
+                                                        8,    // left
+                                                        4.5,  // bottom
+                                                        8);   // right
+                            case PSMTab_LeftTab:
+                                break;
+                        }
+                    }
+                    return NSEdgeInsetsMake(0,  // top
+                                            8,  // left
+                                            8,  // bottom
+                                            8); // right
+            }
+        }
         return NSEdgeInsetsZero;
     }
     if (!exitingLionFullscreen_) {
@@ -5794,13 +5838,15 @@ ITERM_WEAKLY_REFERENCEABLE
             return !exitingLionFullscreen_;
 
         case WINDOW_TYPE_NORMAL:
+            if (@available(macOS 26, *)) {
+                DLog(@"YES - macOS 26 with window type %@", @(self.windowType));
+                return YES;
+            }
+            // FALL THROUGH
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_MAXIMIZED:
             if (![iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur]) {
-                if (@available(macOS 10.16, *)) {
-                    DLog(@"NO - big sur");
-                    return NO;
-                }
+                return NO;
             }
             DLog(@"YES - normal, accessory, or maximized");
             return YES;
@@ -7556,6 +7602,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (BOOL)tabViewShouldAllowDragOnAddTabButton:(NSTabView *)tabView {
     return [iTermAdvancedSettingsModel allowDragOnAddTabButton];
+}
+
+- (CGFloat)tabViewDesiredTabBarHeight:(NSTabView *)tabView {
+    return [self desiredTabBarHeight];
 }
 
 - (BOOL)isInitialized
@@ -9718,6 +9768,14 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     if ([self shouldHaveTallTabBar]) {
         return [iTermAdvancedSettingsModel compactMinimalTabBarHeight];
     } else {
+        if (iTermWindowTypeIsCompact(self.windowType)) {
+            return [iTermAdvancedSettingsModel defaultTabBarHeight];
+        }
+        if (@available(macOS 26, *)) {
+            if (![iTermAdvancedSettingsModel useSequoiaStyleTabs]) {
+                return PSMTahoeTabStyle.horizontalTabBarHeight;
+            }
+        }
         return [iTermAdvancedSettingsModel defaultTabBarHeight];
     }
 }
@@ -9739,7 +9797,28 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 - (NSString *)rootTerminalViewCurrentTabSubtitle {
-    return self.currentSession.subtitle;
+    const iTermWindowType windowType = exitingLionFullscreen_ ? _savedWindowType : _windowType;
+    switch (windowType) {
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            return nil;
+            
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            return self.currentSession.subtitle;
+    }
 }
 
 - (BOOL)rootTerminalViewShouldRevealStandardWindowButtons {
@@ -11403,7 +11482,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     }
     MutableProfile *profile = [[base mutableCopy] autorelease];
     profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeBrowserValue;
-    profile[KEY_COMMAND_LINE] = url.absoluteString;
+    profile[KEY_INITIAL_URL] = url.absoluteString;
 
     [self asyncSplitVertically:vertical
                         before:NO
@@ -11413,10 +11492,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                          ready:nil];
 }
 
-- (WKWebView *)openTabWithURL:(NSURL *)url
-                  baseProfile:(Profile *)base
-              nearSessionGuid:(NSString *)sessionGuid
-                configuration:(WKWebViewConfiguration *)configuration NS_AVAILABLE_MAC(11_0) {
+- (iTermBrowserWebView *)openTabWithURL:(NSURL *)url
+                            baseProfile:(Profile *)base
+                        nearSessionGuid:(NSString *)sessionGuid
+                          configuration:(WKWebViewConfiguration *)configuration NS_AVAILABLE_MAC(11_0) {
     MutableProfile *profile = [[base mutableCopy] autorelease];
     profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeBrowserValue;
     profile[KEY_INITIAL_URL] = url.absoluteString;

@@ -247,4 +247,10 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
     }
 }
 
+- (NSString *)finalDestinationForPath:(NSString *)originalBaseName
+                 destinationDirectory:(NSString *)destinationDirectory
+                               prompt:(BOOL)prompt {
+    return originalBaseName;
+}
+
 @end

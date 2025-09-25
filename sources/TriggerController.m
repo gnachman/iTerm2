@@ -285,7 +285,10 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     } else {
         allClasses = @[ [ReaderModeBrowserTrigger class],
                         [HighlightBrowserTrigger class],
-                        [HyperlinkBrowserTrigger class] ];
+                        [HyperlinkBrowserTrigger class],
+                        [ReloadBrowserTrigger class],
+                        [InjectJavascriptURLTrigger class],
+                        [InjectJavascriptContentTrigger class]];
     }
     return [allClasses sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
                   return [[obj1 title] compare:[obj2 title]];
@@ -746,8 +749,8 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
                 [theMenu addItem:[NSMenuItem separatorItem]];
             }
             isFirst = NO;
-            for (id object in [trigger objectsSortedByValueInDict:items]) {
-                NSString *theTitle = [items objectForKey:object];
+            for (id key in [trigger objectsSortedByValueInDict:items]) {
+                NSString *theTitle = [items objectForKey:key];
                 if (theTitle) {
                     NSMenuItem *anItem = [[NSMenuItem alloc] initWithTitle:theTitle
                                                                     action:nil
@@ -762,7 +765,12 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
             // Force popup buttons to have the first item selected by default
             [popUpButton selectItemAtIndex:trigger.defaultIndex];
         } else {
-            [popUpButton selectItemAtIndex:[trigger indexForObject:param]];
+            const NSInteger i = [trigger indexForObject:param];
+            if (i >= 0) {
+                [popUpButton selectItemAtIndex:i];
+            } else {
+                [popUpButton selectItemAtIndex:trigger.defaultIndex];
+            }
         }
         popUpButton.target = receiver;
         popUpButton.action = @selector(parameterPopUpButtonDidChange:);

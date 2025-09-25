@@ -7,6 +7,8 @@
 //
 
 #import "iTermTabBarControlView.h"
+
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermPreferences.h"
 #import "DebugLogging.h"
@@ -41,7 +43,15 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
         // This used to depend on job but it's too difficult to do now that different sessions might
         // have different title formats.
         self.ignoreTrailingParentheticalsForSmartTruncation = YES;
-        self.height = [iTermAdvancedSettingsModel defaultTabBarHeight];
+        if (@available(macOS 26, *)) {
+            if (![iTermAdvancedSettingsModel useSequoiaStyleTabs]) {
+                self.height =  PSMTahoeTabStyle.horizontalTabBarHeight;
+            } else {
+                self.height = [iTermAdvancedSettingsModel defaultTabBarHeight];
+            }
+        } else {
+            self.height = [iTermAdvancedSettingsModel defaultTabBarHeight];
+        }
         self.showAddTabButton = ![iTermAdvancedSettingsModel removeAddTabButton];
         self.selectsTabsOnMouseDown = [iTermAdvancedSettingsModel selectsTabsOnMouseDown];
     }
@@ -235,6 +245,14 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
 
 - (void)setOrientation:(PSMTabBarOrientation)orientation {
     [super setOrientation:orientation];
+    if (@available(macOS 26, *)) {
+        self.style.orientation = self.orientation;
+        CGFloat tabBarHeight = self.style.tabBarHeight;
+        if (tabBarHeight <= 0) {
+            tabBarHeight = [self.delegate tabViewDesiredTabBarHeight:self.tabView];
+        }
+        self.height = tabBarHeight;
+    }
     self.showAddTabButton = ![iTermAdvancedSettingsModel removeAddTabButton] && (orientation == PSMTabBarHorizontalOrientation);
 }
 

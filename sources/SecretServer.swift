@@ -17,7 +17,7 @@ class SecretServer: NSObject {
     private let socketURL: URL
     private let unixSocket: iTermSocket
     private var secrets = Set<String>()
-    private static let defaultURLBase = URL(fileURLWithPath: FileManager.default.homeDirectoryDotDir())
+    private static let defaultURLBase = URL(fileURLWithPath: FileManager.default.homeDirectoryDotDir() ?? NSHomeDirectory())
     private static let defaultURL = defaultURLBase.appendingPathComponents(["sockets", "secrets"])
     @objc static let instance = SecretServer(socketURL: defaultURL)
     @objc init?(socketURL: URL) {

@@ -483,19 +483,13 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 
 - (void)saveWindowArrangement:(BOOL)allWindows {
     [WindowArrangements selectNameAndWhetherToIncludeContentsWithCompletion:^(NSString *name, iTermSavePanelItem *saveItem) {
-        if (!name) {
-            return;
-        }
-        if (name) {
-            if (saveItem) {
-                [self saveWindowArrangementForAllWindows:allWindows name:name saveItem:saveItem];
-            } else {
-                [self saveWindowArrangementForAllWindows:allWindows name:name saveItem:saveItem];
-            }
+        if (name != nil || saveItem != nil) {
+            [self saveWindowArrangementForAllWindows:allWindows name:name saveItem:saveItem];
         }
     }];
 }
 
+// Precondition: at least one of name,saveItem is nonnil.
 - (void)saveWindowArrangementForAllWindows:(BOOL)allWindows name:(NSString *)name saveItem:(iTermSavePanelItem *)saveItem {
     if (allWindows) {
         NSArray<PseudoTerminal *> *sortedTerminalWindows = [_terminalWindows sortedArrayUsingComparator:^NSComparisonResult(PseudoTerminal *lhs, PseudoTerminal *rhs) {
@@ -527,6 +521,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     }
 }
 
+// Precondition: at least one of name,saveItem is nonnil.
 - (void)saveWindowArrangementForWindow:(PseudoTerminal *)currentTerminal name:(NSString *)name saveItem:(iTermSavePanelItem *)saveItem {
     NSMutableArray *terminalArrangements = [NSMutableArray arrayWithCapacity:[_terminalWindows count]];
     NSDictionary *arrangement = [currentTerminal arrangement];
@@ -872,6 +867,10 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         aMenuItem = [[NSMenuItem alloc] initWithTitle:@"Open All"
                                                action:openAllSelector
                                         keyEquivalent:@""];
+        if (@available(macOS 26, *)) {
+            aMenuItem.image = [NSImage imageWithSystemSymbolName:@"person.3.sequence"
+                                        accessibilityDescription:nil];
+        }
         unsigned int modifierMask = NSEventModifierFlagCommand | NSEventModifierFlagControl;
         [aMenuItem setKeyEquivalentModifierMask:modifierMask];
         [aMenuItem setRepresentedObject:subMenu];

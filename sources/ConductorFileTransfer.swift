@@ -72,6 +72,14 @@ class ConductorFileTransfer: TransferrableFile {
         return "SSH Integration"
     }
 
+    private var chunked = false
+
+    func downloadChunked() -> Bool {
+        chunked = true
+        download()
+        return status == .transferring
+    }
+
     override func download() {
         state = .downloading
         status = .starting
@@ -80,7 +88,9 @@ class ConductorFileTransfer: TransferrableFile {
             FileTransferManager.sharedInstance().files.add(self)
             FileTransferManager.sharedInstance().transferrableFileDidStartTransfer(self)
             status = .transferring
-            delegate?.beginDownload(fileTransfer: self)
+            if !chunked {
+                delegate?.beginDownload(fileTransfer: self)
+            }
         } catch {
             state = .failed
         }

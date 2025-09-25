@@ -1,7 +1,7 @@
 // swift-interface-format-version: 1.0
-// swift-compiler-version: Apple Swift version 6.1.2 effective-5.10 (swiftlang-6.1.2.1.2 clang-1700.0.13.5)
+// swift-compiler-version: Apple Swift version 6.2 effective-5.10 (swiftlang-6.2.0.19.9 clang-1700.3.19.1)
 // swift-module-flags: -target arm64-apple-macos12.4 -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -O -enable-experimental-feature DebugDescriptionMacro -enable-bare-slash-regex -module-name SearchableComboListView
-// swift-module-flags-ignorable: -no-verify-emitted-module-interface -interface-compiler-version 6.1.2
+// swift-module-flags-ignorable: -no-verify-emitted-module-interface -formal-cxx-interoperability-mode=off -interface-compiler-version 6.2
 import AppKit
 import Foundation
 @_exported import SearchableComboListView
@@ -10,7 +10,9 @@ import _Concurrency
 import _StringProcessing
 import _SwiftConcurrencyShims
 @objc(iTermSearchableComboViewDelegate) public protocol SearchableComboViewDelegate {
+  #if compiler(>=5.3) && $NonescapableTypes
   @objc func searchableComboView(_ view: SearchableComboListView.SearchableComboView, didSelectItem: SearchableComboListView.SearchableComboViewItem?)
+  #endif
 }
 @objc(iTermSearchableComboViewGroup) public class SearchableComboViewGroup : ObjectiveC.NSObject {
   @objc(initWithLabel:items:) public init(_ label: Swift.String, items: [SearchableComboListView.SearchableComboViewItem])
@@ -25,7 +27,9 @@ import _SwiftConcurrencyShims
     get
   }
   @objc(initWithLabel:tag:) public init(_ label: Swift.String, tag: Swift.Int)
+  #if compiler(>=5.3) && $NonescapableTypes
   @objc(initWithLabel:tag:identifier:) public init(_ label: Swift.String, tag: Swift.Int, identifier: Swift.String?)
+  #endif
   @objc deinit
 }
 @objc(iTermSearchableComboView) @_Concurrency.MainActor @preconcurrency open class SearchableComboView : AppKit.NSPopUpButton {
@@ -34,7 +38,9 @@ import _SwiftConcurrencyShims
       @objc get
     }
     @_Concurrency.MainActor @preconcurrency @objc override dynamic public func animationResizeTime(_ newFrame: Foundation.NSRect) -> Foundation.TimeInterval
+    #if compiler(>=5.3) && $NonescapableTypes
     @_Concurrency.MainActor @preconcurrency @objc override dynamic public func cancelOperation(_ sender: Any?)
+    #endif
     @_Concurrency.MainActor @preconcurrency @objc override dynamic public func resignKey()
     @_Concurrency.MainActor @preconcurrency @objc override dynamic public init(contentRect: Foundation.NSRect, styleMask style: AppKit.NSWindow.StyleMask, backing backingStoreType: AppKit.NSWindow.BackingStoreType, defer flag: Swift.Bool)
     @objc deinit
@@ -42,7 +48,9 @@ import _SwiftConcurrencyShims
   @objc @_Concurrency.MainActor @preconcurrency weak public var delegate: (any SearchableComboListView.SearchableComboViewDelegate)?
   @objc @_Concurrency.MainActor @preconcurrency open class func groups() -> [SearchableComboListView.SearchableComboViewGroup]
   @_Concurrency.MainActor @preconcurrency open class func defaultTitleValue() -> Swift.String
+  #if compiler(>=5.3) && $NonescapableTypes
   @_Concurrency.MainActor @preconcurrency @objc required dynamic public init?(coder: Foundation.NSCoder)
+  #endif
   @objc(initWithGroups:defaultTitle:) @_Concurrency.MainActor @preconcurrency public init(_ groups: [SearchableComboListView.SearchableComboViewGroup], defaultTitle: Swift.String)
   @objc deinit
   @_Concurrency.MainActor @preconcurrency @objc override dynamic public func selectItem(withTag tag: Swift.Int) -> Swift.Bool
@@ -50,7 +58,9 @@ import _SwiftConcurrencyShims
   @_Concurrency.MainActor @preconcurrency @objc override dynamic open func selectItem(withTitle title: Swift.String)
   @_Concurrency.MainActor @preconcurrency @objc override dynamic public func selectedTag() -> Swift.Int
   @_Concurrency.MainActor @preconcurrency @objc override dynamic public func willOpenMenu(_ menu: AppKit.NSMenu, with event: AppKit.NSEvent)
+  #if compiler(>=5.3) && $NonescapableTypes
   @_Concurrency.MainActor @preconcurrency @objc override dynamic open var selectedItem: AppKit.NSMenuItem? {
     @objc get
   }
+  #endif
 }

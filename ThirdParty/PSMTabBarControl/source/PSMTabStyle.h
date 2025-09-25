@@ -19,6 +19,7 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 @property(nonatomic, readonly) NSAppearance *accessoryAppearance NS_AVAILABLE_MAC(10_14);
 @property(nonatomic, readonly) CGFloat edgeDragHeight;
 @property(nonatomic, readonly) BOOL supportsMultiLineLabels;
+@property(nonatomic, readonly) CGFloat intercellSpacing;
 
 // identity
 - (NSString *)name;
@@ -37,7 +38,6 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 // cell specific parameters
 - (NSRect)dragRectForTabCell:(PSMTabBarCell *)cell orientation:(PSMTabBarOrientation)orientation;
 - (NSRect)closeButtonRectForTabCell:(PSMTabBarCell *)cell;
-- (NSRect)iconRectForTabCell:(PSMTabBarCell *)cell;
 - (NSRect)indicatorRectForTabCell:(PSMTabBarCell *)cell;
 - (NSRect)objectCounterRectForTabCell:(PSMTabBarCell *)cell;
 - (float)minimumWidthOfTabCell:(PSMTabBarCell *)cell;
@@ -65,7 +65,6 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 // Should light-tinted controls be used?
 - (BOOL)useLightControls;
 
-- (NSColor *)verticalLineColorSelected:(BOOL)selected;
 - (NSColor *)textColorDefaultSelected:(BOOL)selected
                       backgroundColor:(NSColor *)backgroundColor
                    windowIsMainAndAppIsActive:(BOOL)mainAndActive;
@@ -73,6 +72,19 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 - (void)drawPostHocDecorationsOnSelectedCell:(PSMTabBarCell *)cell
                                tabBarControl:(PSMTabBarControl *)bar;
 - (NSColor *)textColorForCell:(PSMTabBarCell *)cell;
+- (NSRect)adjustedCellRect:(NSRect)rect generic:(NSRect)generic;
+- (NSRect)dirtyFrameForCell:(PSMTabBarCell *)cell;
+- (NSRect)frameForAddTabButtonWithCellWidths:(NSArray<NSNumber *> *)widths
+                                      height:(CGFloat)height;
+- (PSMRolloverButton *)makeAddTabButtonWithFrame:(NSRect)frame;
+- (NSRect)frameForOverflowButtonWithAddTabButton:(BOOL)showAddTabButton
+                                   enclosureSize:(NSSize)enclosureSize
+                                  standardHeight:(CGFloat)standardHeight;
+- (NSButton *)makeOverflowButtonWithFrame:(NSRect)frame;
+
+@property (nonatomic, readonly) NSSize addTabButtonSize;
+@property (nonatomic, readonly) CGFloat tabBarHeight;
+@property (nonatomic) PSMTabBarOrientation orientation;
 
 @end
 

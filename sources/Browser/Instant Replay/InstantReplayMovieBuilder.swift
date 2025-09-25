@@ -90,11 +90,7 @@ final class InstantReplayMovieBuilder: NSObject {
         viewWindowObservation?.invalidate()
         frameObservations.forEach { $0.invalidate() }
         frameObservations.removeAll()
-        if let stream = self.stream {
-            Task {
-                try? await stream.stopCapture()
-            }
-        }
+        stream?.stopCapture { _ in }
     }
 }
 
@@ -259,7 +255,7 @@ private extension InstantReplayMovieBuilder {
             let availableContent = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
             
             guard let window = view.window,
-                  let scWindow = availableContent.windows.first(where: { $0.windowID == CGWindowID(window.windowNumber) }) else {
+                  let scWindow = availableContent.windows.first(where: { $0.windowID == CGWindowID(exactly: window.windowNumber) }) else {
                 DLog("Could not find window for screen capture")
                 return
             }

@@ -1,0 +1,45 @@
+{
+  "color-space-for-untagged-svg-colors" : "display-p3",
+  "fill" : {
+    "linear-gradient" : [
+      "display-p3:0.00000,0.00000,0.00000,1.00000",
+      "display-p3:0.08178,0.00452,0.09262,1.00000"
+    ]
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:0.37655,0.81429,0.26081,1.00000",
+              "display-p3:0.35253,0.77410,0.27236,1.00000"
+            ]
+          },
+          "image-name" : "globe.svg",
+          "name" : "globe",
+          "position" : {
+            "scale" : 20,
+            "translation-in-points" : [
+              3.25,
+              -1.71875
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "squares" : [
+      "macOS"
+    ]
+  }
+}

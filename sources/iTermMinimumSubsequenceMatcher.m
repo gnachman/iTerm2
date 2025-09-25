@@ -19,9 +19,10 @@
     self = [super init];
     if (self) {
         _query = [query copy];
+        NSString *normalized = query.lowercaseString;
         NSMutableArray *temp = [NSMutableArray array];
-        for (int i = 0; i < query.length; i++) {
-            [temp addObject:@([query characterAtIndex:i])];
+        for (int i = 0; i < normalized.length; i++) {
+            [temp addObject:@([normalized characterAtIndex:i])];
         }
         _queryChars = [temp retain];
     }

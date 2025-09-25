@@ -74,6 +74,7 @@ class SSHMainContentView: iTermLayerBackedSolidColorView { }
 class SSHFilePanel: NSWindowController {
     static let connectedHostsDidChangeNotification = Notification.Name("SSHFilePanelConnectedHostsDidChange")
 
+    private var splitViewController: NSSplitViewController!
     private var splitView: NSSplitView!
     private var mainContentView: SSHMainContentView!
     private var toolbarView: NSView!
@@ -86,8 +87,9 @@ class SSHFilePanel: NSWindowController {
     private var cancelButton: NSButton!
     private var openButton: NSButton!
     private var newFolderButton: NSButton!
+    private var systemPanelButton: NSButton!
     private var sidebar: SSHFilePanelSidebar!
-    private var completionHandler: ((NSApplication.ModalResponse) -> Void)?
+    var completionHandler: ((NSApplication.ModalResponse) -> Void)?
     private var navigationHistory: [SSHFileDescriptor] = []
     private var historyIndex: Int = -1
     private var ignoreSidebarChange = 0
@@ -97,8 +99,9 @@ class SSHFilePanel: NSWindowController {
     var isSavePanel = false
     var defaultFilename: String?
     var allowsOtherFileTypes = false
+    var systemPanelCallback: (() -> Void)?
     var showsHiddenFiles = false
-    private var saveAsTextField: NSTextField!
+    var saveAsTextField: NSTextField!
     private var saveAsLabel: NSTextField!
     private var newFolderNameTextField: NSTextField!
     private var newFolderSheet: NSPanel!
@@ -149,8 +152,8 @@ class SSHFilePanel: NSWindowController {
         }
     }
 
-    private var currentEndpoint: SSHEndpoint?
-    private var currentPath: SSHFileDescriptor? {
+    var currentEndpoint: SSHEndpoint?
+    var currentPath: SSHFileDescriptor? {
         didSet {
             updateSavePanelEnabled()
         }
@@ -164,12 +167,19 @@ class SSHFilePanel: NSWindowController {
     // MARK: - Initialization
     init() {
         let window = SSHFilePanelWindow(contentRect: NSRect(x: 0, y: 0, width: 900, height: 600),
-                                        styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+                                        styleMask: [.titled, .resizable, .fullSizeContentView],
                                         backing: .buffered,
                                         defer: false)
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
-        window.isFloatingPanel = true
+        
+        // Hide traffic light buttons
+        if #available(macOS 26, *) {
+            window.standardWindowButton(.closeButton)?.isHidden = true
+                window.standardWindowButton(.miniaturizeButton)?.isHidden = true
+                window.standardWindowButton(.zoomButton)?.isHidden = true
+        }
+        
         window.isMovableByWindowBackground = true
         window.hidesOnDeactivate = false
         window.worksWhenModal = true
@@ -231,6 +241,7 @@ extension SSHFilePanel {
 
     @MainActor
     private func dataSourceDidChange() {
+        DLog("dataSourceDidChange called, preferredSSHIdentity: \(String(describing: preferredSSHIdentity)), initialDirectory: \(String(describing: initialDirectory))")
         if !prepared {
             prepared = true
             prepareToShow()
@@ -238,6 +249,7 @@ extension SSHFilePanel {
         let connectedHosts = connectedHostsIncludingLocalhost()
         let defaultHost = preferredSSHIdentity ?? connectedHosts.first
         if let defaultHost {
+            DLog("Will select endpoint for host: \(defaultHost), initialPath: \(String(describing: initialDirectory?.path))")
             Task { @MainActor in
                 await selectEndpoint(forIdentity: defaultHost,
                                      initialPath: initialDirectory?.path,
@@ -261,20 +273,33 @@ extension SSHFilePanel {
     }
 
     private func defaultPath(for sshIdentity: SSHIdentity) -> String {
-        return defaultPathOptions(for: sshIdentity).first!
+        // If we have an explicit initialDirectory and it's for localhost, use it
+        if sshIdentity == .localhost, let initialDir = initialDirectory {
+            DLog("Using initialDirectory: \(initialDir.path)")
+            return initialDir.path
+        }
+        let result = defaultPathOptions(for: sshIdentity).first!
+        DLog("Using defaultPath: \(result) for \(sshIdentity)")
+        return result
     }
 
     @discardableResult
     private func selectEndpoint(forIdentity sshIdentity: SSHIdentity,
                                 initialPath: String?,
                                 withHistory: Bool) async -> Bool {
+        DLog("selectEndpoint called with sshIdentity: \(sshIdentity), initialPath: \(String(describing: initialPath)), withHistory: \(withHistory)")
         currentEndpoint = endpoint(for: sshIdentity)
         defer {
             delegate?.panel(self, didChangeToDirectory: currentPath)
         }
         if currentEndpoint != nil {
+            // Prevent sidebar selection from triggering navigation
+            ignoreSidebarChange += 1
             sidebar.selectedIdentity = sshIdentity
-            currentPath = SSHFileDescriptor(absolutePath: defaultPath(for: sshIdentity),
+            ignoreSidebarChange -= 1
+            // Use initialPath if provided, otherwise defaultPath
+            let pathToUse = initialPath ?? defaultPath(for: sshIdentity)
+            currentPath = SSHFileDescriptor(absolutePath: pathToUse,
                                             isDirectory: true,
                                             sshIdentity: sshIdentity)
             defer {
@@ -282,12 +307,12 @@ extension SSHFilePanel {
             }
             if withHistory {
                 return await navigateToPathWithHistory(SSHFileDescriptor(
-                    absolutePath: initialPath ?? defaultPath(for: sshIdentity),
+                    absolutePath: pathToUse,
                     isDirectory: true,
                     sshIdentity: sshIdentity))
             }
             return await navigateToPath(SSHFileDescriptor(
-                absolutePath: initialPath ?? defaultPath(for: sshIdentity),
+                absolutePath: pathToUse,
                 isDirectory: true,
                 sshIdentity: sshIdentity))
         } else {
@@ -351,7 +376,7 @@ extension SSHFilePanel {
     private func setupUI() {
         guard let window = window, let contentView = window.contentView else { return }
 
-        setupSplitView(in: contentView)
+        setupSplitViewController(in: contentView)
         setupSidebar()
         setupMainContent()
     }
@@ -389,29 +414,53 @@ extension SSHFilePanel {
         window.minSize = NSSize(width: totalMinWidth, height: 400)
     }
 
-    private func setupSplitView(in contentView: NSView) {
-        splitView = NSSplitView()
-        splitView.translatesAutoresizingMaskIntoConstraints = false
-        splitView.dividerStyle = .thin
+    private func setupSplitViewController(in contentView: NSView) {
+        // Create NSSplitViewController for all versions
+        splitViewController = NSSplitViewController()
+        splitViewController.view.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Configure the split view
+        splitView = splitViewController.splitView
         splitView.isVertical = true
-        splitView.delegate = self
-
-        contentView.addSubview(splitView)
-
+        // Note: Cannot set delegate when using NSSplitViewController - it manages the split view
+        // Min/max constraints are handled via NSSplitViewItem properties instead
+        splitView.dividerStyle = .thin
+        
+        // Add split view controller to the window's content view
+        contentView.addSubview(splitViewController.view)
+        
         NSLayoutConstraint.activate([
-            splitView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            splitView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            splitView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            splitView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+            splitViewController.view.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            splitViewController.view.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            splitViewController.view.topAnchor.constraint(equalTo: contentView.topAnchor),
+            splitViewController.view.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
         ])
-        splitView.setHoldingPriority(NSLayoutConstraint.Priority(251), forSubviewAt: 0)
     }
 
     private func setupSidebar() {
         sidebar = SSHFilePanelSidebar(includeLocalhost: includeLocalhost)
         sidebar.translatesAutoresizingMaskIntoConstraints = false
-        splitView.addSubview(sidebar)
         sidebar.delegate = self
+        
+        // Create view controller for sidebar
+        let sidebarViewController = NSViewController()
+        sidebarViewController.view = sidebar
+        
+        // Create split view item with sidebar behavior
+        // In macOS 26, this will automatically get the floating glass effect
+        let sidebarItem = NSSplitViewItem(sidebarWithViewController: sidebarViewController)
+        sidebarItem.minimumThickness = minimumSidebarWidth
+        sidebarItem.maximumThickness = maximumSidebarWidth
+        sidebarItem.preferredThicknessFraction = 0.25
+        sidebarItem.canCollapse = false  // Match the delegate behavior
+        
+        // Disable automatic safe area adjustment for sidebar so it extends to top
+#if(MAC_OS_VERSION_26_0)
+        if #available(macOS 26, *) {
+            sidebarItem.automaticallyAdjustsSafeAreaInsets = false
+        }
+#endif
+        splitViewController.addSplitViewItem(sidebarItem)
     }
 
     private func setupMainContent() {
@@ -471,13 +520,46 @@ extension SSHFilePanel {
         mainStackView.spacing = 0
         
         mainContentView.addSubview(mainStackView)
-        splitView.addSubview(mainContentView)
+        
+        // Create view controller for main content
+        let mainViewController = NSViewController()
+        mainViewController.view = mainContentView
+        
+        // Create content split view item
+        let contentItem = NSSplitViewItem(viewController: mainViewController)
+        contentItem.minimumThickness = 366  // Minimum main content width from toolbar constraints
+        contentItem.canCollapse = false
+        
+        // Enable automatic safe area inset adjustment for macOS 26's floating sidebar
+        // This property is new in macOS 26 and enables edge-to-edge content with the floating glass sidebar
+        #if(MAC_OS_VERSION_26_0)
+        if #available(macOS 26, *) {
+            contentItem.automaticallyAdjustsSafeAreaInsets = true
+        }
+        #endif
+
+        splitViewController.addSplitViewItem(contentItem)
+        
+        // For macOS 26, use safe area for horizontal anchors to respect the floating sidebar
+        // Always use direct top anchor to extend content under the titlebar
+        let leadingAnchor: NSLayoutXAxisAnchor
+        let trailingAnchor: NSLayoutXAxisAnchor
+        
+        if #available(macOS 26, *) {
+            // Use safe area for floating sidebar in macOS 26
+            leadingAnchor = mainContentView.safeAreaLayoutGuide.leadingAnchor
+            trailingAnchor = mainContentView.safeAreaLayoutGuide.trailingAnchor
+        } else {
+            // Use direct edges
+            leadingAnchor = mainContentView.leadingAnchor
+            trailingAnchor = mainContentView.trailingAnchor
+        }
         
         NSLayoutConstraint.activate([
             spacer.heightAnchor.constraint(equalToConstant: 9),
 
-            mainStackView.leadingAnchor.constraint(equalTo: mainContentView.leadingAnchor),
-            mainStackView.trailingAnchor.constraint(equalTo: mainContentView.trailingAnchor),
+            mainStackView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            mainStackView.trailingAnchor.constraint(equalTo: trailingAnchor),
             mainStackView.topAnchor.constraint(equalTo: mainContentView.topAnchor),
             mainStackView.bottomAnchor.constraint(equalTo: mainContentView.bottomAnchor),
             
@@ -715,6 +797,14 @@ extension SSHFilePanel {
             newFolderButton.action = #selector(newFolderButtonClicked)
         }
 
+        // Create Use System Panel button
+        systemPanelButton = NSButton()
+        systemPanelButton.translatesAutoresizingMaskIntoConstraints = false
+        systemPanelButton.title = "Use System Panel…"
+        systemPanelButton.bezelStyle = .rounded
+        systemPanelButton.target = self
+        systemPanelButton.action = #selector(systemPanelButtonClicked)
+
         // Create button stack with right alignment and proper spacing
         let spacerView = NSView()
         spacerView.translatesAutoresizingMaskIntoConstraints = false
@@ -730,6 +820,11 @@ extension SSHFilePanel {
             buttonViews.append(leftSpacer)
             buttonViews.append(newFolderButton)
         }
+        
+        let systemPanelSpacer = NSView()
+        systemPanelSpacer.translatesAutoresizingMaskIntoConstraints = false
+        buttonViews.append(systemPanelSpacer)
+        buttonViews.append(systemPanelButton)
         buttonViews.append(contentsOf: [spacerView, cancelButton, openButton, rightSpacer])
         
         buttonStackView = NSStackView(views: buttonViews)
@@ -742,8 +837,12 @@ extension SSHFilePanel {
         var constraints: [NSLayoutConstraint] = [
             cancelButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 80),
             openButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 80),
+            systemPanelButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 120),
             rightSpacer.widthAnchor.constraint(equalToConstant: 8)
         ]
+        
+        let systemPanelSpacerIndex = canCreateDirectories ? 2 : 0
+        constraints.append(buttonViews[systemPanelSpacerIndex].widthAnchor.constraint(equalToConstant: 11))
         
         if canCreateDirectories {
             constraints.append(contentsOf: [
@@ -760,6 +859,69 @@ extension SSHFilePanel {
 
     @objc private func newFolderButtonClicked(_ sender: NSButton) {
         showNewFolderSheet()
+    }
+
+    @objc private func systemPanelButtonClicked(_ sender: NSButton) {
+        if let callback = systemPanelCallback {
+            // The callback will handle closing the SSH panel
+            willClose()
+            callback()
+        } else {
+            // Fallback: Close SSH panel and open system panel directly
+            willClose()
+            if let sheetParent = window?.sheetParent {
+                // Sheet presentation
+                sheetParent.endSheet(window!, returnCode: .cancel)
+            } else if NSApp.modalWindow == window {
+                // Modal presentation
+                NSApp.stopModal(withCode: .cancel)
+                window?.orderOut(nil)
+            } else {
+                // Non-modal presentation
+                window?.orderOut(nil)
+            }
+            // Fallback: Open system panel directly (without SSH button)
+            let savePanel = isSavePanel ? NSSavePanel() : NSOpenPanel()
+            
+            // Copy settings from SSH panel
+            if let openPanel = savePanel as? NSOpenPanel {
+                openPanel.canChooseDirectories = canChooseDirectories
+                openPanel.canChooseFiles = canChooseFiles
+                openPanel.allowsMultipleSelection = allowsMultipleSelection
+            }
+            
+            // Copy all the properties
+            savePanel.canCreateDirectories = canCreateDirectories
+            savePanel.allowsOtherFileTypes = allowsOtherFileTypes
+            savePanel.showsHiddenFiles = showsHiddenFiles
+            savePanel.allowedContentTypes = allowedContentTypes
+            savePanel.accessoryView = accessoryView
+            savePanel.isExtensionHidden = false
+            savePanel.canSelectHiddenExtension = true
+            
+            // Set nameFieldStringValue for save panels
+            if isSavePanel {
+                savePanel.nameFieldStringValue = saveAsTextField?.stringValue ?? defaultFilename ?? ""
+            }
+            
+            // Set directory URL to current directory if on localhost
+            if let currentIdentity = currentEndpoint?.sshIdentity,
+               currentIdentity.isLocalhost,
+               let currentPath = currentPath {
+                savePanel.directoryURL = URL(fileURLWithPath: currentPath.absolutePath)
+            }
+            
+            // Present the system panel
+            if let sheetParent = window?.sheetParent {
+                savePanel.beginSheetModal(for: sheetParent) { [weak self] response in
+                    self?.completionHandler?(response)
+                }
+            } else {
+                savePanel.begin { [weak self] response in
+                    self?.completionHandler?(response)
+                }
+            }
+        }
     }
 
     @objc private func locationButtonChanged(_ sender: NSPopUpButton) {
@@ -1042,41 +1204,6 @@ extension SSHFilePanel: NSWindowDelegate {
     }
 }
 
-// MARK: - NSSplitViewDelegate
-
-@available(macOS 11, *)
-extension SSHFilePanel: NSSplitViewDelegate {
-    func splitView(_ splitView: NSSplitView, constrainMinCoordinate proposedMinimumPosition: CGFloat, ofSubviewAt dividerIndex: Int) -> CGFloat {
-        return minimumSidebarWidth
-    }
-
-    func splitView(_ splitView: NSSplitView, constrainMaxCoordinate proposedMaximumPosition: CGFloat, ofSubviewAt dividerIndex: Int) -> CGFloat {
-        // Calculate max position based on minimum main content width
-        let minMainContentWidth: CGFloat = 366
-        let maxSidebarPosition = splitView.bounds.width - splitView.dividerThickness - minMainContentWidth
-
-        return min(maximumSidebarWidth, maxSidebarPosition)
-    }
-
-    func splitView(_ splitView: NSSplitView, canCollapseSubview subview: NSView) -> Bool {
-        return false // Don't allow collapsing either pane
-    }
-
-    func splitView(_ splitView: NSSplitView, resizeSubviewsWithOldSize oldSize: NSSize) {
-        // Let the split view handle resize automatically with our constraints
-        splitView.adjustSubviews()
-
-        // Update minimum window size when split view changes
-        updateMinimumWindowSize()
-    }
-
-    func splitViewDidResizeSubviews(_ notification: Notification) {
-        // Update minimum window size whenever subviews are resized
-        updateMinimumWindowSize()
-        saveWindowState()
-    }
-}
-
 // MARK: - Keyboard Shortcuts Extension
 @available(macOS 11, *)
 extension SSHFilePanel {
@@ -1094,7 +1221,7 @@ extension SSHFilePanel {
         let menu = NSMenu()
 
         // Go to Folder (Cmd+Shift+G)
-        let goToFolderItem = NSMenuItem(title: "Go to Folder...",
+        let goToFolderItem = NSMenuItem(title: "Go to Folder…",
                                        action: #selector(goToFolder),
                                        keyEquivalent: "g")
         goToFolderItem.keyEquivalentModifierMask = [.command, .shift]

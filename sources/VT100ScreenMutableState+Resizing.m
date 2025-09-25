@@ -650,8 +650,10 @@ static void SwapInt(int *a, int *b) {
 
         VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:note];
         if (screenMark) {
+            const int width = self.width;
             const VT100GridCoordRange commandRange = [self safeCoordRange:VT100GridCoordRangeFromAbsCoordRange(screenMark.commandRange, overflow)];
-            if (commandRange.start.x >= 0) {
+#warning TODO: Deal with this problem better. We should not have out of range commandRange to begin with.
+            if (commandRange.start.x >= 0 && commandRange.start.x < width && commandRange.end.x <= width) {
                 VT100GridCoordRange converted;
                 if ([self convertRange:commandRange
                            toWidth:newWidth
@@ -664,7 +666,13 @@ static void SwapInt(int *a, int *b) {
                 }
             }
 
-            const VT100GridCoordRange promptRange = [self safeCoordRange:VT100GridCoordRangeFromAbsCoordRange(screenMark.promptRange, overflow)];
+            VT100GridCoordRange promptRange = [self safeCoordRange:VT100GridCoordRangeFromAbsCoordRange(screenMark.promptRange, overflow)];
+            // This is a cheap hack that will break with DWCs. I need a better way to make prompt range sane.
+            promptRange.start.y += promptRange.start.x / self.width;
+            promptRange.end.y += promptRange.start.x / self.width;
+            promptRange.start.x %= self.width;
+            promptRange.end.y += promptRange.end.x / self.width;
+            promptRange.end.x %= promptRange.end.x;
             if (promptRange.start.x >= 0) {
                 VT100GridCoordRange converted;
                 if ([self convertRange:promptRange
@@ -675,6 +683,28 @@ static void SwapInt(int *a, int *b) {
                     [self.mutableIntervalTree mutateObject:note block:^(id<IntervalTreeObject> mutableMark) {
                         [VT100ScreenMark castFrom:mutableMark].promptRange = VT100GridAbsCoordRangeFromCoordRange(converted, overflow);
                     }];
+                }
+            }
+
+            if (screenMark.outputStart.x != -1) {
+                BOOL ok = NO;
+                const VT100GridCoord outputStart = VT100GridCoordFromAbsCoord(screenMark.outputStart, overflow, &ok);
+                if (!ok) {
+                    screenMark.outputStart = VT100GridAbsCoordMake(-1, -1);
+                } else {
+                    VT100GridCoordRange converted;
+                    if ([self convertRange:VT100GridCoordRangeMake(outputStart.x,
+                                                                   outputStart.y,
+                                                                   outputStart.x + 1,
+                                                                   outputStart.y)
+                                   toWidth:newWidth
+                                        to:&converted
+                              inLineBuffer:self.linebuffer
+                             tolerateEmpty:tolerateEmptyScreenMarks]) {
+                        [self.mutableIntervalTree mutateObject:note block:^(id<IntervalTreeObject> mutableMark) {
+                            [VT100ScreenMark castFrom:mutableMark].outputStart = VT100GridAbsCoordFromCoord(converted.start, overflow);
+                        }];
+                    }
                 }
             }
         }

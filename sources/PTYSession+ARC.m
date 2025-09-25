@@ -142,8 +142,12 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
                                scope:self.variablesScope
                              timeout:5
                            retryTime:5
-                             success:^(NSArray * _Nonnull values) {
-        NSString *joined = [self joinedNameWithFolder:values[0] filename:values[1]];
+                             success:^(NSArray<NSString *> *values) {
+        NSString *folder = values[0];
+        if (folder.length == 0) {
+            folder = NSHomeDirectory();
+        }
+        NSString *joined = [self joinedNameWithFolder:folder filename:values[1]];
         completion(joined);
     } error:^(NSError * _Nonnull error) {
         [self failWithError:error];

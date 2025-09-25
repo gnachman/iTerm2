@@ -515,6 +515,9 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
                    settingChanged:(void (^)(id))settingChanged
                            update:(BOOL (^)(void))update
                        searchable:(BOOL)searchable {
+    if (!control) {
+        [self checkAppSignatureForMissingControlWithKey:key];
+    }
     assert(![_keyMap objectForKey:(id)key]);
     assert(key);
     assert(control);
@@ -535,6 +538,23 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
                           searchable:searchable];
 }
 
+- (void)checkAppSignatureForMissingControlWithKey:(NSString *)key {
+    NSString *team = [iTermAppSignatureValidator currentAppTeamID];
+    NSString *message;
+    if (!team) {
+        message = @"A required file appears to be missing or corrupted and iTerm2’s code signature could not be verified. You should download a fresh copy of the app and reinstall it.";
+    } else if (![team isEqualToString:@"H7V7XYVQ7D"]) {
+        message = @"A required file appears to be missing or corrupted and iTerm2’s code signature did not match that of the official distribution. You should download a fresh copy of the app and reinstall it.";
+    } else {
+        message = @"A required file appears to be missing or corrupted, yet against all odds the code signature for iTerm2 is valid. Please file a bug at https://iterm2.com/bugs";
+    }
+    NSAlert *alert = [[NSAlert alloc] init];
+    [alert setMessageText:@"Application Corrupt"];
+    [alert setInformativeText:[NSString stringWithFormat:@"While trying to load the setting for “%@”: %@", key, message]];
+    [alert addButtonWithTitle:@"OK"];
+    [alert setAlertStyle:NSAlertStyleCritical];
+    [alert runModal];
+}
 - (PreferenceInfo *)unsafeDefineControl:(NSView *)control
                                     key:(NSString *)key
                             relatedView:(NSView *)relatedView
@@ -681,6 +701,10 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
     return displayName;
 }
 
+- (void)updateControlForKey:(NSString *)key {
+    [self updateValueForInfo:[self infoForKey:key]];
+}
+
 - (void)updateValueForInfo:(PreferenceInfo *)info {
     if (_disableUpdates) {
         return;
@@ -738,8 +762,10 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
             NSTextView *textView = [NSTextView castFrom:info.control];
             assert(textView != nil);
             NSString *string = [self stringForKey:info.key] ?: @"";
-            [textView.textStorage setAttributedString:[NSAttributedString attributedStringWithString:string
-                                                                                          attributes:textView.typingAttributes]];
+            if (![string isEqualToString:textView.textStorage.string]) {
+                [textView.textStorage setAttributedString:[NSAttributedString attributedStringWithString:string
+                                                                                              attributes:textView.typingAttributes]];
+            }
             break;
         }
 

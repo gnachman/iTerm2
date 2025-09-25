@@ -48,6 +48,10 @@
     return @"Minimal";
 }
 
+- (NSRect)adjustedCellRect:(NSRect)rect generic:(NSRect)generic {
+    return rect;
+}
+
 - (NSAppearance *)accessoryAppearance NS_AVAILABLE_MAC(10_14) {
     if (self.backgroundIsDark) {
         return [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
@@ -343,6 +347,9 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
 - (void)drawShadowForUnselectedTabInRect:(NSRect)backgroundRect {
 }
 
+- (CGFloat)tabBarHeight {
+    return 0;
+}
 - (void)drawCellBackgroundSelected:(BOOL)selected
                             inRect:(NSRect)cellFrame
                       withTabColor:(NSColor *)tabColor

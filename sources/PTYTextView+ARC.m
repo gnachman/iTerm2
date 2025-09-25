@@ -583,11 +583,11 @@ iTermCommandInfoViewControllerDelegate>
 
     iTermSelection *selection = [[iTermSelection alloc] init];
     selection.delegate = self;
-    [selection beginSelectionAtAbsCoord:VT100GridAbsCoordMake(0, absCoordRange.start.y)
-                                   mode:kiTermSelectionModeLine
+    [selection beginSelectionAtAbsCoord:absCoordRange.start
+                                   mode:kiTermSelectionModeCharacter
                                  resume:NO
                                  append:NO];
-    [selection moveSelectionEndpointTo:VT100GridAbsCoordMake(self.dataSource.width, absCoordRange.end.y - 1)];
+    [selection moveSelectionEndpointTo:absCoordRange.end];
     [selection endLiveSelection];
     return [self promisedStringForSelectedTextCappedAtSize:INT_MAX
                                          minimumLineNumber:0

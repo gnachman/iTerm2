@@ -654,7 +654,7 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
         return [@(obj1.length) compare:@(obj2.length)];
     }];
     const NSUInteger length = [[line asScreenCharArray] length];
-    return MAX(2, length);
+    return MAX(2, length + 1);
 }
 
 @end

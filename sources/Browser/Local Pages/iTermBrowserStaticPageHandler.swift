@@ -134,7 +134,7 @@ class iTermBrowserStaticPageHandler: NSObject, iTermBrowserPageHandler {
         urlSchemeTask.didFinish()
     }
     
-    func injectJavaScript(into webView: WKWebView) {
+    func injectJavaScript(into webView: iTermBrowserWebView) {
         // Static pages don't need JavaScript injection
     }
     

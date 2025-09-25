@@ -95,6 +95,10 @@ static id gAltOpenAllRepresentedObject;
     // Add separator + open all menu items
     [menu addItem:[NSMenuItem separatorItem]];
     NSMenuItem *openAll = [menu addItemWithTitle:@"Open All" action:params.openAllSelector keyEquivalent:@""];
+    if (@available(macOS 26, *)) {
+        openAll.image = [NSImage imageWithSystemSymbolName:@"person.3.sequence"
+                                  accessibilityDescription:nil];
+    }
     openAll.identifier = identifier ?: @"Open All";
     [openAll setTarget:params.target];
 

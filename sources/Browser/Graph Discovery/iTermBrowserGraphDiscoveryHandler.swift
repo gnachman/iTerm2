@@ -17,7 +17,7 @@ class iTermBrowserGraphDiscoveryHandler {
         frames = [:]
     }
 
-    func handleMessage(webView: WKWebView, message: WKScriptMessage) {
+    func handleMessage(webView: iTermBrowserWebView, message: WKScriptMessage) {
         DLog("[IFD] NATIVE - got a message: \(message.body)")
         guard let body = message.body as? [String: Any],
               let type = body["type"] as? String else {
@@ -76,7 +76,7 @@ class iTermBrowserGraphDiscoveryHandler {
         }
     }
 
-    private func sendEvalResponse(webView: WKWebView,
+    private func sendEvalResponse(webView: iTermBrowserWebView,
                                   to frameInfo: WKFrameInfo,
                                   requestID: String,
                                   value: String?) async {
@@ -93,7 +93,7 @@ class iTermBrowserGraphDiscoveryHandler {
                             code: js)
     }
 
-    private func requestReport(webView: WKWebView, requestId: String) {
+    private func requestReport(webView: iTermBrowserWebView, requestId: String) {
         Task {
             let encodedRequestID = (try? JSONEncoder().encode(requestId))?.lossyString ?? "\"\""
 
@@ -121,7 +121,7 @@ class iTermBrowserGraphDiscoveryHandler {
         }
     }
 
-    private func eval(webView: WKWebView, frameID: String, code: String) async {
+    private func eval(webView: iTermBrowserWebView, frameID: String, code: String) async {
         guard let frameInfo = frames[frameID] else {
             DLog("[IFD] No such frame \(frameID)")
             return
@@ -129,7 +129,7 @@ class iTermBrowserGraphDiscoveryHandler {
         _ = await eval(webView: webView, frameInfo: frameInfo, code: code)
     }
 
-    private func eval(webView: WKWebView, frameInfo: WKFrameInfo?, code: String) async -> String? {
+    private func eval(webView: iTermBrowserWebView, frameInfo: WKFrameInfo?, code: String) async -> String? {
         do {
             let wrapped = """
             (() => { 
@@ -143,7 +143,7 @@ class iTermBrowserGraphDiscoveryHandler {
                 } 
             })()
             """
-            let result = try await webView.evaluateJavaScript(
+            let result = try await webView.safelyEvaluateJavaScript(
                 wrapped,
                 in: frameInfo,
                 contentWorld: world) as? String

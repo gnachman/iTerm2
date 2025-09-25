@@ -28,13 +28,13 @@ class iTermBrowserReaderModeManager: NSObject {
         return isReaderModeActive
     }
     
-    @objc func toggle(webView: WKWebView) {
+    @objc func toggle(webView: iTermBrowserWebView) {
         Task {
             await toggleReaderMode(webView: webView)
         }
     }
 
-    func plainTextContent(webView: WKWebView) async -> String? {
+    func plainTextContent(webView: iTermBrowserWebView) async -> String? {
         if let cached {
             return cached
         }
@@ -47,7 +47,7 @@ class iTermBrowserReaderModeManager: NSObject {
             let script = iTermBrowserTemplateLoader.loadTemplate(named: "extract-plain-text",
                                                                type: "js",
                                                                substitutions: [:])
-            let result = try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
+            let result = try await webView.safelyEvaluateJavaScript(script, contentWorld: .defaultClient)
             if let string = result as? String, !string.isEmpty {
                 cached = string
                 return string
@@ -62,14 +62,14 @@ class iTermBrowserReaderModeManager: NSObject {
         }
     }
 
-    func markdown(fromContentsOf webView: WKWebView, skipChrome: Bool) async throws -> String {
+    func markdown(fromContentsOf webView: iTermBrowserWebView, skipChrome: Bool) async throws -> String {
         let turndown = iTermBrowserTemplateLoader.loadTemplate(named: "convert-to-markdown",
                                                                type: "js",
                                                                substitutions: ["SKIP_CHROME": skipChrome ? "true" : "false"])
-        return try await webView.evaluateJavaScript(turndown, contentWorld: .defaultClient) as? String ?? "No content found on page"
+        return try await webView.safelyEvaluateJavaScript(turndown, contentWorld: .defaultClient) as? String ?? "No content found on page"
     }
 
-    private func toggleReaderMode(webView: WKWebView) async {
+    private func toggleReaderMode(webView: iTermBrowserWebView) async {
         if isReaderModeActive {
             await exitReaderMode(webView: webView)
         } else {
@@ -77,7 +77,7 @@ class iTermBrowserReaderModeManager: NSObject {
         }
     }
     
-    func enterReaderMode(webView: WKWebView) async {
+    func enterReaderMode(webView: iTermBrowserWebView) async {
         if isReaderModeActive {
             return
         }
@@ -87,7 +87,7 @@ class iTermBrowserReaderModeManager: NSObject {
             let script = iTermBrowserTemplateLoader.loadTemplate(named: "enter-reader-mode",
                                                                type: "js",
                                                                substitutions: [:])
-            if let result = try await webView.evaluateJavaScript(script, contentWorld: .defaultClient) as? Bool,
+            if let result = try await webView.safelyEvaluateJavaScript(script, contentWorld: .defaultClient) as? Bool,
                result {
                 updateReaderModeState(true)
             }
@@ -96,19 +96,19 @@ class iTermBrowserReaderModeManager: NSObject {
         }
     }
     
-    private func exitReaderMode(webView: WKWebView) async {
+    private func exitReaderMode(webView: iTermBrowserWebView) async {
         do {
             let script = iTermBrowserTemplateLoader.loadTemplate(named: "exit-reader-mode",
                                                                type: "js",
                                                                substitutions: [:])
-            _ = try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
+            _ = try await webView.safelyEvaluateJavaScript(script, contentWorld: .defaultClient)
             updateReaderModeState(false)
         } catch {
             DLog("Error exiting reader mode: \(error)")
         }
     }
 
-    func removeElement(webView: WKWebView, at point: NSPoint) {
+    func removeElement(webView: iTermBrowserWebView, at point: NSPoint) {
         Task {
             do {
                 let script = iTermBrowserTemplateLoader.loadTemplate(named: "remove-element-at-point",
@@ -117,14 +117,14 @@ class iTermBrowserReaderModeManager: NSObject {
                                                                         "POINT_X": "\(point.x)",
                                                                         "POINT_Y": "\(point.y)"
                                                                      ])
-                _ = try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
+                _ = try await webView.safelyEvaluateJavaScript(script, contentWorld: .defaultClient)
             } catch {
                 DLog("Error in removeElement: \(error)")
             }
         }
     }
 
-    func toggleDistractionRemovalMode(webView: WKWebView) async {
+    func toggleDistractionRemovalMode(webView: iTermBrowserWebView) async {
         if isDistractionRemovalActive {
             await exitDistractionRemovalMode(webView: webView)
         } else {
@@ -132,7 +132,7 @@ class iTermBrowserReaderModeManager: NSObject {
         }
     }
     
-    private func enterDistractionRemovalMode(webView: WKWebView) async {
+    private func enterDistractionRemovalMode(webView: iTermBrowserWebView) async {
         guard await ensureScriptsInjected(webView: webView) else { return }
 
         do {
@@ -140,13 +140,13 @@ class iTermBrowserReaderModeManager: NSObject {
             let distractionRemovalJS = iTermBrowserTemplateLoader.loadTemplate(named: "distraction-removal",
                                                                              type: "js",
                                                                              substitutions: [:])
-            _ = try await webView.evaluateJavaScript(distractionRemovalJS, contentWorld: .defaultClient)
+            _ = try await webView.safelyEvaluateJavaScript(distractionRemovalJS, contentWorld: .defaultClient)
 
             // Then enter distraction removal mode
             let script = iTermBrowserTemplateLoader.loadTemplate(named: "enter-distraction-removal",
                                                                type: "js",
                                                                substitutions: [:])
-            if let result = try await webView.evaluateJavaScript(script, contentWorld: .defaultClient) as? Bool,
+            if let result = try await webView.safelyEvaluateJavaScript(script, contentWorld: .defaultClient) as? Bool,
                result {
                 updateDistractionRemovalState(true)
             }
@@ -155,19 +155,19 @@ class iTermBrowserReaderModeManager: NSObject {
         }
     }
     
-    private func exitDistractionRemovalMode(webView: WKWebView) async {
+    private func exitDistractionRemovalMode(webView: iTermBrowserWebView) async {
         do {
             let script = iTermBrowserTemplateLoader.loadTemplate(named: "exit-distraction-removal",
                                                                type: "js",
                                                                substitutions: [:])
-            _ = try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
+            _ = try await webView.safelyEvaluateJavaScript(script, contentWorld: .defaultClient)
             updateDistractionRemovalState(false)
         } catch {
             DLog("Error exiting distraction removal mode: \(error)")
         }
     }
 
-    private func ensureScriptsInjected(webView: WKWebView) async -> Bool {
+    private func ensureScriptsInjected(webView: iTermBrowserWebView) async -> Bool {
         if scriptsInjected {
             return true
         }
@@ -191,10 +191,10 @@ class iTermBrowserReaderModeManager: NSObject {
         
         do {
             // Inject Readability.js first
-            _ = try await webView.evaluateJavaScript(loadReadabilityScript, contentWorld: .defaultClient)
+            _ = try await webView.safelyEvaluateJavaScript(loadReadabilityScript, contentWorld: .defaultClient)
 
             // Then inject reader mode script
-            _ = try await webView.evaluateJavaScript(loadReaderModeScript, contentWorld: .defaultClient)
+            _ = try await webView.safelyEvaluateJavaScript(loadReaderModeScript, contentWorld: .defaultClient)
 
             scriptsInjected = true
             return true

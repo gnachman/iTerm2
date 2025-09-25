@@ -56,6 +56,7 @@ NSString *const kSavedCursorOriginKey = @"Origin";
 NSString *const kSavedCursorWraparoundKey = @"Wraparound";
 NSString *const kSavedCursorUnicodeVersion = @"Unicode Version";
 NSString *const kSavedCursorProtectedMode = @"Protected Mode";
+NSString *const kSavedCursorInvalid = @"Invalid";
 
 NSString *const kTerminalStateTermTypeKey = @"Term Type";
 NSString *const kTerminalStateAnswerBackStringKey = @"Answerback String";
@@ -149,6 +150,7 @@ typedef struct {
     BOOL wraparound;
     NSInteger unicodeVersion;
     VT100TerminalProtectedMode protectedMode;
+    BOOL invalid;
 } VT100SavedCursor;
 
 typedef enum {
@@ -240,7 +242,8 @@ static const int kMaxScreenRows = 4096;
         _mainKeyReportingModeStack = [[NSMutableArray alloc] init];
         _alternateKeyReportingModeStack = [[NSMutableArray alloc] init];
         numLock_ = YES;
-        [self saveCursor];  // initialize save area
+        mainSavedCursor_.invalid = YES;
+        altSavedCursor_.invalid = YES;
         _unicodeVersionStack = [[NSMutableArray alloc] init];
         _savedColors = [[VT100SavedColors alloc] init];
         _vtLevel = iTermEmulationLevel500;
@@ -379,7 +382,6 @@ static const int kMaxScreenRows = 4096;
     [self resetGraphicRendition];
     self.mouseMode = MOUSE_REPORTING_NONE;
     self.mouseFormat = MOUSE_FORMAT_XTERM;
-    [self saveCursor];  // reset saved text attributes
     [_delegate terminalMouseModeDidChangeTo:_mouseMode];
     [_delegate terminalSetUseColumnScrollRegion:NO];
     self.reportFocus = NO;
@@ -391,10 +393,6 @@ static const int kMaxScreenRows = 4096;
     _parser.encoding = _canonicalEncoding;
     _vtLevel = iTermEmulationLevel500;
     _output.emulationLevel = _vtLevel;
-    for (int i = 0; i < NUM_CHARSETS; i++) {
-        mainSavedCursor_.lineDrawing[i] = NO;
-        altSavedCursor_.lineDrawing[i] = NO;
-    }
     [_mainKeyReportingModeStack removeAllObjects];
     [_alternateKeyReportingModeStack removeAllObjects];
     [self resetSavedCursorPositions];
@@ -1503,6 +1501,7 @@ static const int kMaxScreenRows = 4096;
     savedCursor->wraparound = self.wraparoundMode;
     savedCursor->unicodeVersion = [_delegate terminalUnicodeVersion];
     savedCursor->protectedMode = _protectedMode;
+    savedCursor->invalid = NO;
 }
 
 - (void)setReportFocus:(BOOL)reportFocus {
@@ -1525,8 +1524,10 @@ static const int kMaxScreenRows = 4096;
 
 - (void)resetSavedCursorPositions {
     self.dirty = YES;
-    mainSavedCursor_.position = VT100GridCoordMake(0, 0);
-    altSavedCursor_.position = VT100GridCoordMake(0, 0);
+    memset(&mainSavedCursor_, 0, sizeof(mainSavedCursor_));
+    memset(&altSavedCursor_, 0, sizeof(altSavedCursor_));
+    mainSavedCursor_.invalid = YES;
+    altSavedCursor_.invalid = YES;
 }
 
 - (void)clampSavedCursorToScreenSize:(VT100GridSize)newSize {
@@ -1557,9 +1558,11 @@ static const int kMaxScreenRows = 4096;
     [self updateDefaultChar];
 
     self.originMode = savedCursor->origin;
-    self.wraparoundMode = savedCursor->wraparound;
     self.protectedMode = savedCursor->protectedMode;
-    [_delegate terminalSetUnicodeVersion:savedCursor->unicodeVersion];
+    if (!savedCursor->invalid) {
+        self.wraparoundMode = savedCursor->wraparound;
+        [_delegate terminalSetUnicodeVersion:savedCursor->unicodeVersion];
+    }
 }
 
 // These steps are derived from xterm's source.
@@ -5258,7 +5261,8 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
               kSavedCursorOriginKey: @(savedCursor.origin),
               kSavedCursorWraparoundKey: @(savedCursor.wraparound),
               kSavedCursorUnicodeVersion: @(savedCursor.unicodeVersion),
-              kSavedCursorProtectedMode: @(savedCursor.protectedMode)
+              kSavedCursorProtectedMode: @(savedCursor.protectedMode),
+              kSavedCursorInvalid: @(savedCursor.invalid)
     };
 }
 
@@ -5266,7 +5270,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
     VT100SavedCursor savedCursor;
     savedCursor.position = [dict[kSavedCursorPositionKey] gridCoord];
     savedCursor.charset = [dict[kSavedCursorCharsetKey] intValue];
-    for (int i = 0; i < NUM_CHARSETS && i < [dict[kSavedCursorLineDrawingArrayKey] count]; i++) {
+    for (int i = 0; i < NUM_CHARSETS && i < [(NSArray *)dict[kSavedCursorLineDrawingArrayKey] count]; i++) {
         NSNumber *n = [dict[kSavedCursorLineDrawingArrayKey] objectAtIndex:i];
         savedCursor.lineDrawing[i] = [n boolValue];
     }
@@ -5275,6 +5279,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
     savedCursor.wraparound = [dict[kSavedCursorWraparoundKey] boolValue];
     savedCursor.unicodeVersion = [dict[kSavedCursorUnicodeVersion] integerValue];
     savedCursor.protectedMode = [dict[kSavedCursorProtectedMode] unsignedIntegerValue];
+    savedCursor.invalid = [dict[kSavedCursorInvalid] boolValue];
 
     return savedCursor;
 }

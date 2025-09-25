@@ -8,6 +8,7 @@
 #import "iTermTheme.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermColorMap.h"
 #import "iTermPreferences.h"
 #import "NSAppearance+iTerm.h"
@@ -64,12 +65,38 @@
         case TAB_STYLE_MINIMAL:
             assert(NO);
         case TAB_STYLE_LIGHT:
+            if (preferredStyle == TAB_STYLE_COMPACT) {
+                return [[PSMYosemiteTabStyle alloc] init];
+            }
+            if (@available(macOS 26, *)) {
+                if (![iTermAdvancedSettingsModel useSequoiaStyleTabs]) {
+                    return [[PSMTahoeTabStyle alloc] init];
+                }
+            }
             return [[PSMYosemiteTabStyle alloc] init];
         case TAB_STYLE_DARK:
+            if (preferredStyle == TAB_STYLE_COMPACT) {
+                return [[PSMDarkTabStyle alloc] init];
+            }
+            if (@available(macOS 26, *)) {
+                if (![iTermAdvancedSettingsModel useSequoiaStyleTabs]) {
+                    return [[PSMTahoeDarkTabStyle alloc] init];
+                }
+            }
             return [[PSMDarkTabStyle alloc] init];
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            if (@available(macOS 26, *)) {
+                if (![iTermAdvancedSettingsModel useSequoiaStyleTabs]) {
+                    return [[PSMTahoeLightHighContrastTabStyle alloc] init];
+                }
+            }
             return [[PSMLightHighContrastTabStyle alloc] init];
         case TAB_STYLE_DARK_HIGH_CONTRAST:
+            if (@available(macOS 26, *)) {
+                if (![iTermAdvancedSettingsModel useSequoiaStyleTabs]) {
+                    return [[PSMTahoeDarkHighContrastTabStyle alloc] init];
+                }
+            }
             return [[PSMDarkHighContrastTabStyle alloc] init];
     }
     assert(NO);

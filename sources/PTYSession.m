@@ -1879,7 +1879,9 @@ ITERM_WEAKLY_REFERENCEABLE
     NSString *tmuxDCSIdentifier = nil;
     BOOL shouldEnterTmuxMode = NO;
     NSDictionary *contents = arrangement[SESSION_ARRANGEMENT_CONTENTS];
-    BOOL restoreContents = !tmuxPaneNumber && contents && [iTermAdvancedSettingsModel restoreWindowContents];
+    BOOL restoreContents = (!tmuxPaneNumber &&
+                            (arrangement[SESSION_ARRANGEMENT_BROWSER_STATE] != nil || contents) &&
+                            [iTermAdvancedSettingsModel restoreWindowContents]);
     BOOL attachedToServer = NO;
     typedef void (^iTermSessionCreationCompletionBlock)(PTYSession *, BOOL ok);
     void (^runCommandBlock)(iTermSessionCreationCompletionBlock) =
@@ -2007,7 +2009,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         DLog(@"Have contents=%@", @(contents != nil));
         DLog(@"Restore window contents=%@", @([iTermAdvancedSettingsModel restoreWindowContents]));
-        if (restoreContents) {
+        if (restoreContents && contents) {
             DLog(@"Loading content from line buffer dictionary");
             [aSession setContentsFromLineBufferDictionary:contents
                                  includeRestorationBanner:runCommand
@@ -2021,7 +2023,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if (arrangement[SESSION_ARRANGEMENT_KEYLABELS]) {
             // restoreKeyLabels wants the cursor position to be set so do it after restoring contents.
             [aSession restoreKeyLabels:[NSDictionary castFrom:arrangement[SESSION_ARRANGEMENT_KEYLABELS]]
-               updateStatusChangedLine:restoreContents];
+               updateStatusChangedLine:(restoreContents && contents != nil)];
             NSArray *labels = arrangement[SESSION_ARRANGEMENT_KEYLABELS_STACK];
             if (labels) {
                 [aSession->_keyLabelsStack release];
@@ -2112,7 +2114,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                              arrangementName:arrangementName
                                             attachedToServer:attachedToServer
                                                     delegate:delegate
-                                          didRestoreContents:restoreContents
+                                          didRestoreContents:restoreContents && contents != nil
                                                  needDivorce:needDivorce
                                                   objectType:objectType
                                                  sessionView:sessionView
@@ -2139,7 +2141,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [aSession autorelease];
             runCommandBlock(finish);
         };
-        if (arrangement[SESSION_ARRANGEMENT_AUTOLOG_FILENAME] && restoreContents) {
+        if (arrangement[SESSION_ARRANGEMENT_AUTOLOG_FILENAME] && restoreContents && contents != nil) {
             startLogging(arrangement[SESSION_ARRANGEMENT_AUTOLOG_FILENAME]);
         } else {
             [aSession fetchAutoLogFilenameWithCompletion:startLogging];
@@ -3336,6 +3338,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // "restart", which is done by first calling revive and then replaceTerminatedShellWithNewInstance.
 - (void)terminate {
     DLog(@"terminate called from %@", [NSThread callStackSymbols]);
+    if (self.isBrowserSession) {
+        [self terminateBrowser];
+    }
     if ([[self textview] isFindingCursor]) {
         [[self textview] endFindCursor];
     }
@@ -6058,11 +6063,13 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     result[SESSION_ARRANGEMENT_NAME_CONTROLLER_STATE] = [_nameController stateDictionary];
     if (includeContents) {
         __block int numberOfLinesDropped = 0;
-        [result encodeDictionaryWithKey:SESSION_ARRANGEMENT_CONTENTS
-                             generation:iTermGenerationAlwaysEncode
-                                  block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
-            return [_screen encodeContents:encoder linesDropped:&numberOfLinesDropped];
-        }];
+        if (!self.isBrowserSession) {
+            [result encodeDictionaryWithKey:SESSION_ARRANGEMENT_CONTENTS
+                                 generation:iTermGenerationAlwaysEncode
+                                      block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
+                return [_screen encodeContents:encoder linesDropped:&numberOfLinesDropped];
+            }];
+        }
         result[SESSION_ARRANGEMENT_VARIABLES] = _variables.encodableDictionaryValue;
         result[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] = @(_alertOnNextMark);
         result[SESSION_ARRANGEMENT_CURSOR_GUIDE] = @(_textview.highlightCursorLine);
@@ -6515,12 +6522,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         return;
     }
     DLog(@"Line height was %f", [_textview lineHeight]);
+    [_textview setFontTable:newFontTable
+          horizontalSpacing:horizontalSpacing
+            verticalSpacing:verticalSpacing];
     if (self.isBrowserSession) {
         [_textview configureAsBrowser];
-    } else {
-        [_textview setFontTable:newFontTable
-              horizontalSpacing:horizontalSpacing
-                verticalSpacing:verticalSpacing];
     }
     if (@available(macOS 11, *)) {
         _view.browserViewController.zoom = newFontTable.browserZoom;
@@ -8591,7 +8597,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return _newOutput;
 }
 - (BOOL)isBrowserSession {
-    return self.view.isBrowser;
+    return self.view.isBrowser || self.profile.profileIsBrowser;
 }
 
 - (BOOL)isCompatibleWith:(PTYSession *)otherSession
@@ -8599,7 +8605,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     // Browser sessions cannot be split panes with tmux sessions
     BOOL selfIsBrowser = [self isBrowserSession];
     BOOL otherIsBrowser = [otherSession isBrowserSession];
-    
+
     if ((selfIsBrowser && otherSession.tmuxMode == TMUX_CLIENT) ||
         (self.tmuxMode == TMUX_CLIENT && otherIsBrowser)) {
         return NO;
@@ -14079,9 +14085,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         }];
         self.currentMarkOrNotePosition = mark.doppelganger.entry.interval;
 
-        const long long actualLine = [mutableState absCoordRangeForInterval:mark.entry.interval].end.y;
-        [mutableState addNoteWithText:[PTYAnnotation textForAnnotationForNamedMarkWithName:name]
-                      inAbsoluteRange:VT100GridAbsCoordRangeMake(0, actualLine, mutableState.width, actualLine)];
+        if (name) {
+            const long long actualLine = [mutableState absCoordRangeForInterval:mark.entry.interval].end.y;
+            [mutableState addNoteWithText:[PTYAnnotation textForAnnotationForNamedMarkWithName:name]
+                          inAbsoluteRange:VT100GridAbsCoordRangeMake(0, actualLine, mutableState.width, actualLine)];
+        }
     }];
 }
 

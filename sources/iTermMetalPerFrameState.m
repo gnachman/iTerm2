@@ -789,7 +789,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 }
 
 - (BOOL)shouldDrawCursorGuideBelowText {
-    return !_configuration->_useNativePowerlineGlyphs;
+    return !_configuration->_useNativePowerlineGlyphs || _configuration->_cursorGuideColor.alphaComponent > iTermCursorGuideAlphaThreshold;
 }
 
 - (vector_float4)shadeColor {

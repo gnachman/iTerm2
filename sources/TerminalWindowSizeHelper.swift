@@ -156,7 +156,7 @@ extension TerminalWindowSizeHelper {
 @MainActor
 private extension TerminalWindowSizeHelper {
     static func sessionSize(gridSize: VT100GridSize,
-                                    cellSize: NSSize) -> NSSize {
+                            cellSize: NSSize) -> NSSize {
         let hmargin = iTermPreferences.double(forKey: kPreferenceKeySideMargins)
         let vmargin = iTermPreferences.double(forKey: kPreferenceKeyTopBottomMargins)
         return NSSize(
@@ -165,9 +165,9 @@ private extension TerminalWindowSizeHelper {
     }
 
     static func scrollViewContentSize(frameSize: NSSize,
-                                              hasScrollbar: Bool,
-                                              scrollerStyle: NSScroller.Style,
-                                              rightExtra: CGFloat) -> NSSize {
+                                      hasScrollbar: Bool,
+                                      scrollerStyle: NSScroller.Style,
+                                      rightExtra: CGFloat) -> NSSize {
         return PTYScrollView.contentSize(forFrameSize: frameSize,
                                          horizontalScrollerClass: nil,
                                          verticalScrollerClass: hasScrollbar ? PTYScroller.self : nil,
@@ -188,7 +188,7 @@ private extension TerminalWindowSizeHelper {
     }
 
     func gridSizeFromState(andProfile profile: Profile,
-                                   forNewWindow: Bool) -> VT100GridSize {
+                           forNewWindow: Bool) -> VT100GridSize {
         var result = Self.gridSize(profile: profile)
         if forNewWindow, let desiredRows, let desiredColumns {
             result = VT100GridSize(width: desiredColumns, height: desiredRows)
@@ -216,13 +216,13 @@ private extension TerminalWindowSizeHelper {
     }
 
     static func gridSize(forContentSize contentSize: NSSize,
-                                 profile: Profile) -> VT100GridSize {
+                         profile: Profile) -> VT100GridSize {
         let cellSize = self.cellSize(profile: profile)
         return gridSize(forContentSize: contentSize, cellSize: cellSize)
     }
 
     static func gridSize(forContentSize contentSize: NSSize,
-                                 cellSize: NSSize) -> VT100GridSize {
+                         cellSize: NSSize) -> VT100GridSize {
         let hmargin = iTermPreferences.double(forKey: kPreferenceKeySideMargins)
         let vmargin = iTermPreferences.double(forKey: kPreferenceKeyTopBottomMargins)
         return VT100GridSize(

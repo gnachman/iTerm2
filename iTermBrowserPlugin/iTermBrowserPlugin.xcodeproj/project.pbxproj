@@ -6,7 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A64927312E6C0A89005E0F23 /* iTerm2 Browser Plugin App Icon.icon in Resources */ = {isa = PBXBuildFile; fileRef = A64927302E6C0A89005E0F23 /* iTerm2 Browser Plugin App Icon.icon */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		A64927302E6C0A89005E0F23 /* iTerm2 Browser Plugin App Icon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "iTerm2 Browser Plugin App Icon.icon"; sourceTree = "<group>"; };
 		A6BA32D02E6B60E3007C819F /* iTermBrowserPlugin.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iTermBrowserPlugin.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -32,6 +37,7 @@
 		A6BA32C72E6B60E3007C819F = {
 			isa = PBXGroup;
 			children = (
+				A64927302E6C0A89005E0F23 /* iTerm2 Browser Plugin App Icon.icon */,
 				A6BA32D22E6B60E3007C819F /* iTermBrowserPlugin */,
 				A6BA32D12E6B60E3007C819F /* Products */,
 			);
@@ -109,6 +115,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A64927312E6C0A89005E0F23 /* iTerm2 Browser Plugin App Icon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -248,7 +255,7 @@
 		A6BA32DE2E6B60E4007C819F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "iTerm2 Browser Plugin App Icon";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = iTermBrowserPlugin/iTermBrowserPlugin.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
@@ -280,7 +287,7 @@
 		A6BA32DF2E6B60E4007C819F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "iTerm2 Browser Plugin App Icon";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = iTermBrowserPlugin/iTermBrowserPlugin.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";

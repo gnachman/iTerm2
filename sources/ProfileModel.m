@@ -56,7 +56,7 @@ static NSMutableArray<NSString *> *_combinedLog;
     NSMutableArray<NSNotification *> *_delayedNotifications;
 //    NSMutableSet<NSString *> *_debugGuids;
 //    NSMutableDictionary<NSString *, NSMutableArray<NSString *> *> *_debugHistory;
-    NSMutableArray* bookmarks_;
+    NSMutableArray<Profile *> *bookmarks_;
     NSString* defaultBookmarkGuid_;
 
     // The journal is an array of actions since the last change notification was
@@ -182,6 +182,10 @@ static NSMutableArray<NSString *> *_combinedLog;
         [self addBookmark:tmuxProfile];
         [self postChangeNotification];
         profile = tmuxProfile;
+    }
+    if (profile.profileIsBrowser) {
+        MutableProfile *sanitized = [[profile mutableCopy] autorelease];
+        sanitized[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeLoginShellValue;
     }
     return profile;
 }

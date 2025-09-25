@@ -76,7 +76,7 @@ class iTermBrowserOnboardingHandler: NSObject, iTermBrowserPageHandler {
 
     // MARK: - Message Handling
 
-    func handleOnboardingMessage(_ message: [String: Any], webView: WKWebView) {
+    func handleOnboardingMessage(_ message: [String: Any], webView: iTermBrowserWebView) {
         guard let action = message["action"] as? String,
               let sessionSecret = message["sessionSecret"] as? String,
               sessionSecret == secret else {
@@ -97,12 +97,16 @@ class iTermBrowserOnboardingHandler: NSObject, iTermBrowserPageHandler {
             if let guid = delegate?.onboardingHandlerCreateBrowserProfile(self) {
                 createdProfileGuid = guid
                 let script = "onProfileCreated(true);"
-                webView.evaluateJavaScript(script, completionHandler: nil)
+                Task { @MainActor in
+                    _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
+                }
             } else {
                 // Profile already existed
                 createdProfileGuid = delegate?.onboardingHandlerFindBrowserProfileGuid(self)
                 let script = "onProfileCreated(false);"
-                webView.evaluateJavaScript(script, completionHandler: nil)
+                Task { @MainActor in
+                    _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
+                }
             }
             
         case "checkProfileExists":
@@ -110,7 +114,9 @@ class iTermBrowserOnboardingHandler: NSObject, iTermBrowserPageHandler {
             if exists {
                 createdProfileGuid = delegate?.onboardingHandlerFindBrowserProfileGuid(self)
                 let script = "onProfileCreated(false);" // false means it already existed
-                webView.evaluateJavaScript(script, completionHandler: nil)
+                Task { @MainActor in
+                    _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
+                }
             }
             
         case "switchToProfile":
@@ -131,12 +137,14 @@ class iTermBrowserOnboardingHandler: NSObject, iTermBrowserPageHandler {
         }
     }
 
-    private func updateUIStatus(_ statusId: String, enabled: Bool, webView: WKWebView) {
+    private func updateUIStatus(_ statusId: String, enabled: Bool, webView: iTermBrowserWebView) {
         let script = "updateStatus('\(statusId)', \(enabled));"
-        webView.evaluateJavaScript(script, completionHandler: nil)
+        Task { @MainActor in
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
+        }
     }
     
-    private func sendSettingsStatus(to webView: WKWebView) {
+    private func sendSettingsStatus(to webView: iTermBrowserWebView) {
         let settings = delegate?.onboardingHandlerGetSettings(self) ?? iTermBrowserOnboardingSettings(adBlockerEnabled: false, instantReplayEnabled: false)
         let profileExists = delegate?.onboardingHandlerCheckBrowserProfileExists(self) ?? false
         
@@ -147,10 +155,12 @@ class iTermBrowserOnboardingHandler: NSObject, iTermBrowserPageHandler {
             profileExists: \(profileExists)
         });
         """
-        webView.evaluateJavaScript(script, completionHandler: nil)
+        Task { @MainActor in
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
+        }
     }
     
-    func injectJavaScript(into webView: WKWebView) {
+    func injectJavaScript(into webView: iTermBrowserWebView) {
 
     }
 

@@ -68,7 +68,8 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 
     IBOutlet iTermKeyMappingViewController *_keyMappingViewController;
     IBOutlet NSView *_keyMappingView;
-    
+    IBOutlet NSView *_remapModifiersGlobally;
+
     // Hotkey
     IBOutlet NSButton *_hotkeyEnabled;
     IBOutlet NSTextField *_shortcutOverloaded;
@@ -87,6 +88,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 
     IBOutlet NSButton *_forceKeyboard;
     IBOutlet NSPopUpButton *_keyboardLocale;
+    IBOutlet NSButton *_allowSymbolicHotKeys;
 }
 
 - (void)dealloc {
@@ -228,10 +230,21 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() { [weakSelf updateKeyboardLocaleEnabled]; };
 
+    info = [self defineControl:_allowSymbolicHotKeys
+                           key:kPreferenceKeyAllowSymbolicHotKeys
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+
     info = [self defineControl:_keyboardLocale
                            key:kPreferenceKeyKeyboardLocale
                    displayName:@"Keyboard locale"
                           type:kPreferenceInfoTypeStringPopup];
+
+    [self defineControl:_remapModifiersGlobally
+                    key:kPreferenceKeyRemapModifiersGlobally
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
     [self rebuildKeyboardLocales];
     [self updateKeyboardLocaleEnabled];
 

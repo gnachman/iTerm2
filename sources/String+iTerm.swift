@@ -129,10 +129,20 @@ extension String {
     }
 
     var base64Decoded: String? {
-        guard let data = Data(base64Encoded: self) else {
+        guard let data = base64DecodedData else {
             return nil
         }
         return String(data: data, encoding: .utf8)
+    }
+
+    var base64DecodedData: Data? {
+        // Data(base64Encoded:) is strict about padding =s at the end so add them if needed.
+        var padded = self
+        let rem = padded.count % 4
+        if rem != 0 {
+            padded.append(String(repeating: "=", count: 4 - rem))
+        }
+        return Data(base64Encoded: padded)
     }
 
     var base64Encoded: String {

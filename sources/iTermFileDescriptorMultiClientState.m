@@ -28,6 +28,19 @@
     return self;
 }
 
+- (void)dealloc {
+    // Cancel dispatch sources before deallocation to prevent EV_VANISHED errors
+    if (_readSource) {
+        dispatch_source_cancel(_readSource);
+        _readSource = nil;
+    }
+    if (_writeSource) {
+        dispatch_source_cancel(_writeSource);
+        _writeSource = nil;
+    }
+    // Note: Don't close file descriptors here as they may be owned by another object
+}
+
 - (void)setFileDescriptorNonblocking:(int)fd {
     const int flags = fcntl(fd, F_GETFL, 0);
     if (flags != -1) {

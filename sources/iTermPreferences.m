@@ -151,8 +151,9 @@ NSString *const kPreferenceKeyEnableSoundForEsc = @"SoundForEsc";
 NSString *const kPreferenceKeyVisualIndicatorForEsc = @"VisualIndicatorForEsc";
 NSString *const kPreferenceKeyLanguageAgnosticKeyBindings = @"LanguageAgnosticKeyBindings";
 NSString *const kPreferenceKeyForceKeyboard = @"ForceKeyboard";  // bool
+NSString *const kPreferenceKeyAllowSymbolicHotKeys = @"AllowSymbolicHotKeys";  // bool
 NSString *const kPreferenceKeyKeyboardLocale = @"KeyboardLocale";  // string
-
+NSString *const kPreferenceKeyRemapModifiersGlobally = @"RemapModifiersGlobally";  // bool
 NSString *const kPreferenceKeyHotKeyTogglesWindow_Deprecated = @"HotKeyTogglesWindow";  // deprecated
 NSString *const kPreferenceKeyHotkeyProfileGuid_Deprecated = @"HotKeyBookmark";  // deprecated
 NSString *const kPreferenceKeyHotkeyAutoHides_Deprecated = @"HotkeyAutoHides";  // deprecated
@@ -591,7 +592,9 @@ static NSString *sPreviousVersion;
                   kPreferenceKeySwitchWindowModifier: @(kPreferencesModifierTagCommandAndOption),
                   kPreferenceKeyEmulateUSKeyboard: @NO,
                   kPreferenceKeyHotkeyEnabled: @NO,
+                  kPreferenceKeyRemapModifiersGlobally: @YES,
                   kPreferenceKeyForceKeyboard: @NO,
+                  kPreferenceKeyAllowSymbolicHotKeys: @YES,
                   kPreferenceKeyHotKeyCode: @0,
                   kPreferenceKeyHotkeyCharacter: @0,
                   kPreferenceKeyHotkeyModifiers: @0,
@@ -746,6 +749,16 @@ static NSString *sPreviousVersion;
     return object;
 }
 
++ (void)setWithoutSideEffectsObject:(id)object forKey:(NSString *)key {
+    if (object) {
+        DLog(@"Set NSUserDefaults[%@] <- %@", key, object);
+        [[NSUserDefaults standardUserDefaults] setObject:object forKey:key];
+    } else {
+        DLog(@"Delete %@ from NSUserDefaults", key);
+        [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
+    }
+}
+
 + (void)setObject:(id)object forKey:(NSString *)key {
     DLog(@"setObject:%@ forKey:%@", object, key);
     NSArray *observers = gObservers[key];
@@ -760,13 +773,7 @@ static NSString *sPreviousVersion;
             observers = nil;
         }
     }
-    if (object) {
-        DLog(@"Set NSUserDefaults[%@] <- %@", key, object);
-        [[NSUserDefaults standardUserDefaults] setObject:object forKey:key];
-    } else {
-        DLog(@"Delete %@ from NSUserDefaults", key);
-        [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
-    }
+    [self setWithoutSideEffectsObject:object forKey:key];
 
     for (void (^block)(id, id) in observers) {
         block(before, object);

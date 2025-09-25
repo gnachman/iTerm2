@@ -9,6 +9,7 @@
 #import "PSMTabBarControl.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "PSMTabBarCell.h"
 #import "PSMOverflowPopUpButton.h"
 #import "PSMRolloverButton.h"
@@ -130,12 +131,11 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
 
 @implementation PSMTabBarControl {
     // control basics
-    NSMutableArray *_cells; // the cells that draw the tabs
-    PSMOverflowPopUpButton *_overflowPopUpButton; // for too many tabs
+    NSMutableArray<PSMTabBarCell *> *_cells; // the cells that draw the tabs
+    NSButton *_overflowPopUpButton; // for too many tabs
     PSMRolloverButton *_addTabButton;
 
     // drawing style
-    int _resizeAreaCompensation;
     NSTimer *_animationTimer;
     float _animationDelta;
 
@@ -146,7 +146,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
     int _currentStep;
     BOOL _isHidden;
     BOOL _hideIndicators;
-    IBOutlet id partnerView; // gets resized when hide/show
+    NSView *partnerView; // gets resized when hide/show
     BOOL _awakenedFromNib;
     int _tabBarWidth;
 
@@ -183,17 +183,23 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
 
 - (float)availableCellWidthWithOverflow:(BOOL)withOverflow {
     float width = [self frame].size.width;
-    width = width - [_style leftMarginForTabBarControl] - [_style rightMarginForTabBarControlWithOverflow:withOverflow
-                                                                                             addTabButton:self.showAddTabButton] - _resizeAreaCompensation;
+    const CGFloat rightMargin = [_style rightMarginForTabBarControlWithOverflow:withOverflow
+                                                                   addTabButton:self.showAddTabButton];
+    const CGFloat leftMargin = [_style leftMarginForTabBarControl];
+    width = width - leftMargin - rightMargin;
     return width;
 }
 
 - (NSRect)genericCellRectWithOverflow:(BOOL)withOverflow {
     NSRect aRect = [self frame];
     aRect.origin.x = [_style leftMarginForTabBarControl];
-    aRect.origin.y = 0.0;
+    aRect.origin.y = self.insets.top;
     aRect.size.width = [self availableCellWidthWithOverflow:withOverflow];
-    aRect.size.height = self.height;
+    if (_orientation == PSMTabBarHorizontalOrientation) {
+        aRect.size.height = self.height - self.insets.top - self.insets.bottom;
+    } else {
+        aRect.size.height = self.height;
+    }
     return aRect;
 }
 
@@ -221,54 +227,19 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
         _minimumTabDragDistance = 10;
         _hasCloseButton = YES;
         _tabLocation = PSMTab_TopTab;
-        _style = [[PSMYosemiteTabStyle alloc] init];
+        if (@available(macOS 26, *)) {
+            if (![iTermAdvancedSettingsModel useSequoiaStyleTabs]) {
+                _style = [[PSMTahoeTabStyle alloc] init];
+            } else {
+                _style = [[PSMYosemiteTabStyle alloc] init];
+            }
+        } else {
+            _style = [[PSMYosemiteTabStyle alloc] init];
+        }
         _preDragSelectedTabIndex = NSNotFound;
 
         // the overflow button/menu
-        NSRect overflowButtonRect = NSMakeRect([self frame].size.width - [_style rightMarginForTabBarControlWithOverflow:YES
-                                                                                                            addTabButton:self.showAddTabButton] + 1,
-                                               0,
-                                               [_style rightMarginForTabBarControlWithOverflow:YES
-                                                                                  addTabButton:self.showAddTabButton] - 1,
-                                               [self frame].size.height);
-        _overflowPopUpButton = [[PSMOverflowPopUpButton alloc] initWithFrame:overflowButtonRect pullsDown:YES];
-        if (_overflowPopUpButton) {
-            // configure
-            [_overflowPopUpButton setAutoresizingMask:NSViewNotSizable|NSViewMinXMargin];
-            _overflowPopUpButton.accessibilityLabel = @"More tabs";
-        }
-
-        // new tab button
-        NSRect addTabButtonRect = NSMakeRect([self frame].size.width - [_style rightMarginForTabBarControlWithOverflow:YES
-                                                                                                          addTabButton:self.showAddTabButton],
-                                             3,
-                                             23,
-                                             22);
-        _addTabButton = [[PSMRolloverButton alloc] initWithFrame:addTabButtonRect];
-        if (_addTabButton) {
-            NSImage *newButtonImage = [_style addTabButtonImage];
-            if (newButtonImage)
-                [_addTabButton setUsualImage:newButtonImage];
-            newButtonImage = [_style addTabButtonPressedImage];
-            if (newButtonImage)
-                [_addTabButton setAlternateImage:newButtonImage];
-            newButtonImage = [_style addTabButtonRolloverImage];
-            if (newButtonImage)
-                [_addTabButton setRolloverImage:newButtonImage];
-            [_addTabButton setTitle:@""];
-            [_addTabButton setImagePosition:NSImageOnly];
-            [_addTabButton setButtonType:NSButtonTypeMomentaryChange];
-            [_addTabButton setBordered:NO];
-            [_addTabButton setBezelStyle:NSBezelStyleShadowlessSquare];
-            if (_showAddTabButton){
-                [_addTabButton setHidden:NO];
-            } else {
-                [_addTabButton setHidden:YES];
-            }
-            [_addTabButton setNeedsDisplay:YES];
-            _addTabButton.action = @selector(addTab:);
-            _addTabButton.target = self;
-        }
+        [self setupButtons];
 
         [self registerForDraggedTypes:[NSArray arrayWithObjects:@"com.iterm2.psm.controlitem", nil]];
 
@@ -290,6 +261,89 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
     }
     [self setTarget:self];
     return self;
+}
+
+- (void)setupButtons {
+    if (@available(macOS 26, *)) {
+        if (![iTermAdvancedSettingsModel useSequoiaStyleTabs]) {
+            NSRect overflowButtonRect = [_style frameForOverflowButtonWithAddTabButton:self.showAddTabButton
+                                                                         enclosureSize:self.frame.size
+                                                                        standardHeight:self.height];
+            [_overflowPopUpButton autorelease];
+            [_overflowPopUpButton removeFromSuperview];
+            _overflowPopUpButton = [[self.style makeOverflowButtonWithFrame:overflowButtonRect] retain];
+            if (_overflowPopUpButton) {
+                // configure
+                [_overflowPopUpButton setAutoresizingMask:NSViewNotSizable|NSViewMinXMargin];
+                _overflowPopUpButton.accessibilityLabel = @"More tabs";
+            }
+
+            // new tab button
+            NSRect addTabButtonRect = NSMakeRect([self frame].size.width - [_style rightMarginForTabBarControlWithOverflow:YES
+                                                                                                              addTabButton:self.showAddTabButton],
+                                                 3,
+                                                 23,
+                                                 22);
+            [_addTabButton autorelease];
+            [_addTabButton removeFromSuperview];
+            _addTabButton = [[_style makeAddTabButtonWithFrame:addTabButtonRect] retain];
+            if (_showAddTabButton) {
+                [_addTabButton setHidden:NO];
+            } else {
+                [_addTabButton setHidden:YES];
+            }
+            [_addTabButton setNeedsDisplay:YES];
+            _addTabButton.action = @selector(addTab:);
+            _addTabButton.target = self;
+            return;
+        }
+    }
+    NSRect overflowButtonRect = NSMakeRect([self frame].size.width - [_style rightMarginForTabBarControlWithOverflow:YES
+                                                                                                        addTabButton:self.showAddTabButton] + 1,
+                                           0,
+                                           [_style rightMarginForTabBarControlWithOverflow:YES
+                                                                              addTabButton:self.showAddTabButton] - 1,
+                                           [self frame].size.height);
+    _overflowPopUpButton = [[PSMOverflowPopUpButton alloc] initWithFrame:overflowButtonRect pullsDown:YES];
+    if (_overflowPopUpButton) {
+        // configure
+        [_overflowPopUpButton setAutoresizingMask:NSViewNotSizable|NSViewMinXMargin];
+        _overflowPopUpButton.accessibilityLabel = @"More tabs";
+    }
+
+    NSRect addTabButtonRect = NSMakeRect([self frame].size.width - [_style rightMarginForTabBarControlWithOverflow:YES
+                                                                                                      addTabButton:self.showAddTabButton],
+                                         3,
+                                         23,
+                                         22);
+    _addTabButton = [[PSMRolloverButton alloc] initWithFrame:addTabButtonRect];
+    if (_addTabButton) {
+        NSImage *newButtonImage = [_style addTabButtonImage];
+        if (newButtonImage) {
+            [_addTabButton setUsualImage:newButtonImage];
+        }
+        newButtonImage = [_style addTabButtonPressedImage];
+        if (newButtonImage) {
+            [_addTabButton setAlternateImage:newButtonImage];
+        }
+        newButtonImage = [_style addTabButtonRolloverImage];
+        if (newButtonImage) {
+            [_addTabButton setRolloverImage:newButtonImage];
+        }
+        [_addTabButton setTitle:@""];
+        [_addTabButton setImagePosition:NSImageOnly];
+        [_addTabButton setButtonType:NSButtonTypeMomentaryChange];
+        [_addTabButton setBordered:NO];
+        [_addTabButton setBezelStyle:NSBezelStyleShadowlessSquare];
+        if (_showAddTabButton){
+            [_addTabButton setHidden:NO];
+        } else {
+            [_addTabButton setHidden:YES];
+        }
+        [_addTabButton setNeedsDisplay:YES];
+        _addTabButton.action = @selector(addTab:);
+        _addTabButton.target = self;
+    }
 }
 
 - (void)dealloc {
@@ -318,6 +372,10 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
     [self unregisterDraggedTypes];
 
     [super dealloc];
+}
+
+- (void)setHeight:(CGFloat)height {
+    _height = height;
 }
 
 - (void)awakeFromNib
@@ -420,18 +478,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
     
     // restyle add tab button
     if (_addTabButton) {
-        NSImage *newButtonImage = [_style addTabButtonImage];
-        if (newButtonImage) {
-            [_addTabButton setUsualImage:newButtonImage];
-        }
-        newButtonImage = [_style addTabButtonPressedImage];
-        if (newButtonImage) {
-            [_addTabButton setAlternateImage:newButtonImage];
-        }
-        newButtonImage = [_style addTabButtonRolloverImage];
-        if (newButtonImage) {
-            [_addTabButton setRolloverImage:newButtonImage];
-        }
+        [self setupButtons];
     }
 
     [self update:_automaticallyAnimates];
@@ -1138,17 +1185,54 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
     } else {
         // Divide up the space evenly, but don't allow cells to be smaller than the minimum
         // width.
-        CGFloat widthRemaining = availableWidth;
         // If all cells are the smallest allowed size, do they fit?
-        const BOOL canFitAllCellsMinimally = (self.cellMinWidth * cellCount <= availableWidth);
-        NSInteger numberOfVisibleCells = canFitAllCellsMinimally ? cellCount : (availableWidth / _cellMinWidth);
-        for (int i = 0; i < numberOfVisibleCells; i++) {
-            CGFloat width = floor(widthRemaining / (numberOfVisibleCells - i));
-            [newWidths addObject:@(width)];
-            widthRemaining -= width;
+        const CGFloat intercellSpacing = _style.intercellSpacing;
+        const BOOL canFitAllCellsMinimally = (self.cellMinWidth * cellCount + intercellSpacing * MAX(0, (cellCount - 1)) <= availableWidth);
+        NSInteger numberOfVisibleCells;
+        if (canFitAllCellsMinimally) {
+            numberOfVisibleCells = cellCount;
+        } else {
+            numberOfVisibleCells = availableWidth / _cellMinWidth;
+            while (numberOfVisibleCells >= 0 && numberOfVisibleCells * _cellMinWidth + intercellSpacing > availableWidth) {
+                numberOfVisibleCells -= 1;
+            }
         }
+        [self computeCellFramesInContainerOfWidth:availableWidth
+                             numberOfVisibleCells:numberOfVisibleCells
+                                 intercellSpacing:intercellSpacing
+                                            scale:2.0
+                                           frames:newWidths];
     }
     return newWidths;
+}
+
+- (void)computeCellFramesInContainerOfWidth:(CGFloat)containerWidth
+                       numberOfVisibleCells:(NSInteger)n
+                           intercellSpacing:(CGFloat)intercellSpacing
+                                      scale:(CGFloat)scale
+                                     frames:(NSMutableArray<NSNumber *> *)outWidths {
+    if (n <= 0) {
+        return;
+    }
+
+    // Work in whole device pixels.
+    const NSInteger totalPx = llround(containerWidth * scale);
+    const NSInteger gapPx = llround(intercellSpacing * scale);
+
+    const NSInteger totalGapsPx = (n - 1) * gapPx;
+    const NSInteger contentPx = MAX(0, totalPx - totalGapsPx);
+
+    // Base width for each button and leftover pixels to distribute.
+    NSInteger basePx = contentPx / n;
+    NSInteger remPx = contentPx % n;
+
+    for (NSInteger i = 0; i < n; i++) {
+        NSInteger wPx = basePx + (i < remPx ? 1 : 0);
+
+        CGFloat w = ((CGFloat)wPx) / scale;
+
+        [outWidths addObject:@(w)];
+    }
 }
 
 - (void)removeCell:(PSMTabBarCell *)cell {
@@ -1245,10 +1329,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
         cellRect.size = [_addTabButton frame].size;
 
         if ([self orientation] == PSMTabBarHorizontalOrientation) {
-            cellRect.origin.y = 0;
-            cellRect.origin.x += [[newValues valueForKeyPath:@"@sum.floatValue"] floatValue];
-            cellRect.size.width = 24;
-            cellRect.size.height = self.bounds.size.height;
+            cellRect = [self.style frameForAddTabButtonWithCellWidths:newValues height:self.bounds.size.height];
         } else {
             cellRect.origin.x = 0;
             cellRect.origin.y = [[newValues lastObject] floatValue];
@@ -1264,7 +1345,9 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
     const int cellCount = [_cells count];
     const int numberOfVisibleCells = [newValues count];
     NSRect cellRect = [self genericCellRectWithOverflow:(_showAddTabButton || cellCount > numberOfVisibleCells)];
+    const NSRect generic = cellRect;
     NSMenu *overflowMenu = nil;
+    const CGFloat intercellSpacing = _style.intercellSpacing;
 
     // Set up cells with frames and rects
     for (int i = 0; i < cellCount; i++) {
@@ -1279,6 +1362,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
                 cellRect.origin.y = [[newValues objectAtIndex:i] floatValue];
                 cellRect.origin.x = 0;
             }
+            cellRect = [_style adjustedCellRect:cellRect generic:generic];
             [cell setFrame:cellRect];
 
             // close button tracking rect
@@ -1353,14 +1437,18 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
             }
 
             // next...
-            cellRect.origin.x += [[newValues objectAtIndex:i] floatValue];
+            cellRect.origin.x += [[newValues objectAtIndex:i] floatValue] + intercellSpacing;
 
         } else {
             // set up menu items
             NSMenuItem *menuItem;
             if (overflowMenu == nil) {
                 overflowMenu = [[[NSMenu alloc] initWithTitle:@"TITLE"] autorelease];
-                [overflowMenu insertItemWithTitle:@"FIRST" action:nil keyEquivalent:@"" atIndex:0]; // Because the overflowPupUpButton is a pull down menu
+                if (@available(macOS 26, *)) {
+                    // It's not a pulldown menu in 26
+                } else {
+                    [overflowMenu insertItemWithTitle:@"FIRST" action:nil keyEquivalent:@"" atIndex:0]; // Because the overflowPupUpButton is a pull down menu
+                }
             }
             NSString *title = [[cell attributedStringValue] string] ?: @"";
             menuItem = [[NSMenuItem alloc] initWithTitle:title action:@selector(overflowMenuAction:) keyEquivalent:@""];
@@ -1389,26 +1477,13 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
 }
 
 - (void)_setupOverflowMenu:(NSMenu *)overflowMenu {
-    NSRect cellRect;
-    int i;
-
-    cellRect.size.height = self.height;
-    cellRect.size.width = [_style rightMarginForTabBarControlWithOverflow:YES
-                                                             addTabButton:self.showAddTabButton];
-    if ([self orientation] == PSMTabBarHorizontalOrientation) {
-        cellRect.origin.y = 0;
-        cellRect.origin.x = [self frame].size.width - [_style rightMarginForTabBarControlWithOverflow:YES
-                                                                                         addTabButton:self.showAddTabButton] + (_resizeAreaCompensation ? -_resizeAreaCompensation : 1);
-    } else {
-        cellRect.origin.x = 0;
-        cellRect.origin.y = [self frame].size.height - self.height;
-        cellRect.size.width = [self frame].size.width;
-    }
+    _overflowPopUpButton.frame = [_style frameForOverflowButtonWithAddTabButton:self.showAddTabButton
+                                                                  enclosureSize:self.frame.size
+                                                                 standardHeight:self.height];
 
     if (![[self subviews] containsObject:_overflowPopUpButton]) {
         [self addSubview:_overflowPopUpButton];
     }
-    [_overflowPopUpButton setFrame:cellRect];
 
     if (overflowMenu) {
         // Have a candidate for new overflow menu. Does it contain the same information as the current one?
@@ -1416,7 +1491,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
         // while the user is visiting the menu. But reading it is fine.
         BOOL equal = YES;
         equal = [_overflowPopUpButton menu] && [[_overflowPopUpButton menu] numberOfItems ] == [overflowMenu numberOfItems];
-        for (i = 0; equal && i < [overflowMenu numberOfItems]; i++) {
+        for (int i = 0; equal && i < [overflowMenu numberOfItems]; i++) {
             NSMenuItem *currentItem = [[_overflowPopUpButton menu] itemAtIndex:i];
             NSMenuItem *newItem = [overflowMenu itemAtIndex:i];
             if (([newItem state] != [currentItem state]) ||
@@ -1441,7 +1516,10 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
         [_addTabButton setHidden:NO];
     }
 
-    [_addTabButton setImage:[_style addTabButtonImage]];
+    NSImage *image = [_style addTabButtonImage];
+    if (image) {
+        [_addTabButton setImage:image];
+    }
     [_addTabButton setFrame:frame];
     [_addTabButton setNeedsDisplay:YES];
 }
@@ -1624,6 +1702,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
 
     if (clickedInCloseButton &&
         cell.closeButtonVisible &&
+        cell.hasCloseButton &&
         [mouseDownCell closeButtonPressed]) {
         // Clicked on close button
         [self closeTabClick:cell button:theEvent.buttonNumber];
@@ -1901,13 +1980,6 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
     resizeWidgetFrame.size.width = 22;
     resizeWidgetFrame.size.height = 22;
 
-    if ([[self window] showsResizeIndicator] && NSIntersectsRect([self frame], resizeWidgetFrame)) {
-        // The resize widgets are larger on metal windows. I'm pretty sure this code path is dead.
-        _resizeAreaCompensation = 8;
-    } else {
-        _resizeAreaCompensation = 0;
-    }
-
     [self update];
     // trying to address the drawing artifacts for the progress indicators - hackery follows
     // this one fixes the "blanking" effect when the control hides and shows itself
@@ -2115,81 +2187,6 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
     return @"";
 }
 
-#pragma mark -
-#pragma mark Archiving
-
-- (void)encodeWithCoder:(NSCoder *)aCoder
-{
-    [super encodeWithCoder:aCoder];
-    if ([aCoder allowsKeyedCoding]) {
-        [aCoder encodeObject:_cells forKey:@"PSMcells"];
-        [aCoder encodeObject:_tabView forKey:@"PSMtabView"];
-        [aCoder encodeObject:_overflowPopUpButton forKey:@"PSMoverflowPopUpButton"];
-        [aCoder encodeObject:_addTabButton forKey:@"PSMaddTabButton"];
-        [aCoder encodeObject:_style forKey:@"PSMstyle"];
-        [aCoder encodeInt:_orientation forKey:@"PSMorientation"];
-        [aCoder encodeBool:_disableTabClose forKey:@"PSMdisableTabClose"];
-        [aCoder encodeBool:_hideForSingleTab forKey:@"PSMhideForSingleTab"];
-        [aCoder encodeBool:_allowsBackgroundTabClosing forKey:@"PSMallowsBackgroundTabClosing"];
-        [aCoder encodeBool:_allowsResizing forKey:@"PSMallowsResizing"];
-        [aCoder encodeBool:_selectsTabsOnMouseDown forKey:@"PSMselectsTabsOnMouseDown"];
-        [aCoder encodeBool:_showAddTabButton forKey:@"PSMshowAddTabButton"];
-        [aCoder encodeBool:_sizeCellsToFit forKey:@"PSMsizeCellsToFit"];
-        [aCoder encodeBool:_stretchCellsToFit forKey:@"PSMstretchCellsToFit"];
-        [aCoder encodeInt:_cellMinWidth forKey:@"PSMcellMinWidth"];
-        [aCoder encodeInt:_cellMaxWidth forKey:@"PSMcellMaxWidth"];
-        [aCoder encodeInt:_cellOptimumWidth forKey:@"PSMcellOptimumWidth"];
-        [aCoder encodeInt:_currentStep forKey:@"PSMcurrentStep"];
-        [aCoder encodeBool:_isHidden forKey:@"PSMisHidden"];
-        [aCoder encodeBool:_hideIndicators forKey:@"PSMhideIndicators"];
-        [aCoder encodeObject:partnerView forKey:@"PSMpartnerView"];
-        [aCoder encodeBool:_awakenedFromNib forKey:@"PSMawakenedFromNib"];
-        [aCoder encodeObject:_lastMouseDownEvent forKey:@"PSMlastMouseDownEvent"];
-        [aCoder encodeObject:_lastMiddleMouseDownEvent forKey:@"PSMlastMiddleMouseDownEvent"];
-        [aCoder encodeObject:_delegate forKey:@"PSMdelegate"];
-        [aCoder encodeBool:_useOverflowMenu forKey:@"PSMuseOverflowMenu"];
-        [aCoder encodeBool:_automaticallyAnimates forKey:@"PSMautomaticallyAnimates"];
-
-    }
-}
-
-- (id)initWithCoder:(NSCoder *)aDecoder
-{
-    self = [super initWithCoder:aDecoder];
-    if (self) {
-        if ([aDecoder allowsKeyedCoding]) {
-            _cells = [[aDecoder decodeObjectForKey:@"PSMcells"] retain];
-            _tabView = [[aDecoder decodeObjectForKey:@"PSMtabView"] retain];
-            _overflowPopUpButton = [[aDecoder decodeObjectForKey:@"PSMoverflowPopUpButton"] retain];
-            _addTabButton = [[aDecoder decodeObjectForKey:@"PSMaddTabButton"] retain];
-            _style = [[aDecoder decodeObjectForKey:@"PSMstyle"] retain];
-            _orientation = [aDecoder decodeIntForKey:@"PSMorientation"];
-            _disableTabClose = [aDecoder decodeBoolForKey:@"PSMdisableTabClose"];
-            _hideForSingleTab = [aDecoder decodeBoolForKey:@"PSMhideForSingleTab"];
-            _allowsBackgroundTabClosing = [aDecoder decodeBoolForKey:@"PSMallowsBackgroundTabClosing"];
-            _allowsResizing = [aDecoder decodeBoolForKey:@"PSMallowsResizing"];
-            _selectsTabsOnMouseDown = [aDecoder decodeBoolForKey:@"PSMselectsTabsOnMouseDown"];
-            _showAddTabButton = [aDecoder decodeBoolForKey:@"PSMshowAddTabButton"];
-            _sizeCellsToFit = [aDecoder decodeBoolForKey:@"PSMsizeCellsToFit"];
-            _stretchCellsToFit = [aDecoder decodeBoolForKey:@"PSMstretchCellsToFit"];
-            _cellMinWidth = [aDecoder decodeIntForKey:@"PSMcellMinWidth"];
-            _cellMaxWidth = [aDecoder decodeIntForKey:@"PSMcellMaxWidth"];
-            _cellOptimumWidth = [aDecoder decodeIntForKey:@"PSMcellOptimumWidth"];
-            _currentStep = [aDecoder decodeIntForKey:@"PSMcurrentStep"];
-            _isHidden = [aDecoder decodeBoolForKey:@"PSMisHidden"];
-            _hideIndicators = [aDecoder decodeBoolForKey:@"PSMhideIndicators"];
-            partnerView = [[aDecoder decodeObjectForKey:@"PSMpartnerView"] retain];
-            _awakenedFromNib = [aDecoder decodeBoolForKey:@"PSMawakenedFromNib"];
-            _lastMouseDownEvent = [[aDecoder decodeObjectForKey:@"PSMlastMouseDownEvent"] retain];
-            _lastMiddleMouseDownEvent = [[aDecoder decodeObjectForKey:@"PSMlastMiddleMouseDownEvent"] retain];
-            _useOverflowMenu = [aDecoder decodeBoolForKey:@"PSMuseOverflowMenu"];
-            _automaticallyAnimates = [aDecoder decodeBoolForKey:@"PSMautomaticallyAnimates"];
-            _delegate = [[aDecoder decodeObjectForKey:@"PSMdelegate"] retain];
-        }
-        _tooltips = [[NSMutableArray alloc] init];
-    }
-    return self;
-}
 
 #pragma mark -
 #pragma mark IB Palette

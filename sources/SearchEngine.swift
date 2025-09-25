@@ -13,7 +13,7 @@ func _SELog(_ messageBlock: () -> String, file: String, line: Int, function: Str
         return
     }
     let message = messageBlock()
-    DebugLogImpl(file.cString(using: .utf8), Int32(line), function.cString(using: .utf8), message)
+    DebugLogImpl(file.cString(using: .utf8)!, Int32(line), function.cString(using: .utf8)!, message)
 #endif
 }
 

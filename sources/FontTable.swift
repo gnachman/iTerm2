@@ -118,6 +118,7 @@ class FontTable: NSObject, FontProviderProtocol {
     @objc
     let anyNonASCIIDefaultLigatures: Bool
 
+    // 1.0 = 100%
     @objc
     let browserZoom: CGFloat
 
@@ -430,7 +431,7 @@ class FontTable: NSObject, FontProviderProtocol {
                                                      inProfile: profile,
                                                      ligaturesEnabled: iTermProfilePreferences.bool(forKey: KEY_ASCII_LIGATURES,
                                                                                                     inProfile: profile)) ?? NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
-        let profileBrowserZoom = iTermProfilePreferences.double(forKey: KEY_BROWSER_ZOOM, inProfile: profile)
+        let profileBrowserZoom = iTermProfilePreferences.double(forKey: KEY_BROWSER_ZOOM, inProfile: profile) / 100.0
         let useNonASCIIFont = iTermProfilePreferences.bool(forKey: KEY_USE_NONASCII_FONT,
                                                            inProfile: profile)
         if !useNonASCIIFont {

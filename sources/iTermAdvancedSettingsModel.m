@@ -293,7 +293,7 @@ DEFINE_FLOAT(coloredUnselectedTabTextProminence, 0.5, SECTION_TABS @"How promine
 DEFINE_FLOAT(minimalTextLegibilityAdjustment, 1.0, SECTION_TABS @"How much should contrast be increased for text in tabs in the Minimal theme?\nChoose a value larger than 1 to increase contrast. Values between 0 and 1 have less contrast than the default.");
 DEFINE_BOOL(minimalTabStyleTreatLeftInsetAsPartOfFirstTab, NO, SECTION_TABS @"In the Minimal theme, should the area left of the tab bar be treated as part of the first tab?");
 DEFINE_FLOAT(compactMinimalTabBarHeight, 38, SECTION_TABS @"Tab bar height (points) for the Minimal theme.\nThe default is 38. Use 22 to match the compact theme's height.");
-DEFINE_SETTABLE_FLOAT(defaultTabBarHeight, DefaultTabBarHeight, 24, SECTION_TABS @"Default tab bar height")
+DEFINE_SETTABLE_FLOAT(defaultTabBarHeight, DefaultTabBarHeight, 24, SECTION_TABS @"Default tab bar height\nThis does not affect the minimal or compact themes. In macOS 26, the system standard height is used instead and this setting is ignored.")
 DEFINE_BOOL(doubleClickTabToEdit, YES, SECTION_TABS @"Should double-clicking a tab open a window to edit its title?");
 DEFINE_FLOAT(minimumTabLabelWidth, 35, SECTION_TABS @"Minimum width for tab labels.\nThe activity/bell icon will be hidden when the space for the label drops below this size (in points)");
 DEFINE_BOOL(disregardDockSettingToOpenTabsInsteadOfWindows, YES, SECTION_TABS @"Ignore System Settings > Dock > Prefer tabs when opening documents?\nWhen set to No, asking to open a window will open a tab instead when system settings is configured to prefer tabs over windows. When set to Yes, asking to open a window may open a tab instead.");
@@ -315,6 +315,7 @@ DEFINE_BOOL(saveProfilesToRecentDocuments, NO, SECTION_TABS @"Add items to Recen
 DEFINE_BOOL(placeTabsInTitlebarAccessoryInFullScreen, YES, SECTION_TABS @"Place the tabbar in the window's titlebar in full screen mode (macOS 13+ only)?\nThis can be disabled to work around a bug in macOS where tabs may not be visible in full screen.");
 DEFINE_BOOL(defaultIconsUsingLetters, YES, SECTION_TABS @"Use the running command's first letter as the tab's default icon if there isn't a built in one.\nThis takes effect when tabs are configured to use built-in icons.");
 DEFINE_BOOL(tabCloseButtonsAlwaysVisible, NO, SECTION_TABS @"Should tab close buttons always remain visible?");
+DEFINE_BOOL(useSequoiaStyleTabs, NO, SECTION_TABS @"Use Sequoia-style tabs in Tahoe and later?");
 
 #pragma mark Mouse
 
@@ -542,6 +543,7 @@ DEFINE_BOOL(supportPowerlineExtendedSymbols, YES, SECTION_DRAWING @"Include exte
 DEFINE_BOOL(alwaysUseLineStyleMarks, NO, SECTION_DRAWING @"Always use line-style marks?");
 DEFINE_FLOAT(alphaForDeselectedCommandShade, 0.25, SECTION_DRAWING @"Alpha value for shade that covers areas outside the currently selected command.");
 DEFINE_BOOL(showURLPreviewForSemanticHistory, YES, SECTION_DRAWING @"Show URL preview on cmd-hover for semantic history matches.");
+DEFINE_FLOAT(cursorAnimationMinDistance, 150.0, SECTION_DRAWING @"When animated cursor movement is enabled, only perform animation if the cursor moves at least this distance in points.");
 
 #pragma mark - Semantic History
 
@@ -752,6 +754,7 @@ DEFINE_SETTABLE_BOOL(browserProxyEnabled, BrowserProxyEnabled, NO, SECTION_WEB_B
 DEFINE_SETTABLE_STRING(browserProxyHost, BrowserProxyHost, @"127.0.0.1", SECTION_WEB_BROWSER @"HTTP proxy hostname or IP address\nThe address of the proxy server to use for browser connections.");
 DEFINE_SETTABLE_INT(browserProxyPort, BrowserProxyPort, 8118, SECTION_WEB_BROWSER @"HTTP proxy port\nThe port number of the proxy server.");
 DEFINE_FLOAT(webInstantReplayFrameRate, 60.0, SECTION_WEB_BROWSER @"Instant replay frame rate for web browser sessions");
+DEFINE_SETTABLE_STRING(browserPluginPathHint, BrowserPluginPathHint, @"", SECTION_WEB_BROWSER @"Location of browser plugin if it cannot be auto-detected");
 
 #pragma mark - Experimental Features
 
@@ -810,6 +813,7 @@ DEFINE_BOOL(fastTriggerRegexes, YES, SECTION_EXPERIMENTAL @"Fast regular express
 DEFINE_BOOL(postFakeFlagsChangedEvents, NO, SECTION_EXPERIMENTAL @"Post fake flags-changed events when remapping modifiers with an event tap.\nThis is an attempt to work around incompatibilities with AltTab in issue 10220.");
 DEFINE_BOOL(fullWidthFlags, YES, SECTION_EXPERIMENTAL @"Flag emoji render full-width");
 DEFINE_STRING(aiModernModelPrefixes, @"gpt-", SECTION_EXPERIMENTAL @"AI model name prefixes that use the modern “completions” API.\nPrefixes should be space-delimited. Note that o1 models use a different API and have hard-coded behavior.");
+DEFINE_STRING(aiProxy, @"", SECTION_EXPERIMENTAL @"Host and port for proxy for AI requests.\ni.e., example.com:8080")
 DEFINE_BOOL(addUtilitiesToPATH, YES, SECTION_EXPERIMENTAL @"Add path to iTerm2 utilities to $PATH for new sessions?");
 DEFINE_BOOL(autoSearch, NO, SECTION_EXPERIMENTAL @"Automatically search for selected text after making a selection?");
 DEFINE_BOOL(smartLoggingWithAutoComposer, NO, SECTION_EXPERIMENTAL @"Enable more compact logging when using auto composer?\nThis will avoid logging raw data in your prompt and your interactions with it. Instead, the prompt is logged once in plain text and the command is logged when sent.");

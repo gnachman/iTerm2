@@ -118,6 +118,29 @@ struct DeepSeekRequestBuilder {
     }
 }
 
+struct DeepSeekResponseParser: LLMResponseParser {
+    mutating func parse(data: Data) throws -> (any LLM.AnyResponse)? {
+        var lastException: Error?
+        for parser: LLMResponseParser in [LLMModernResponseParser(), LlamaResponseParser()] {
+            do {
+                var temp = parser
+                return try temp.parse(data: data)
+            } catch {
+                lastException = error
+            }
+        }
+        if let lastException {
+            throw lastException
+        } else {
+            return nil
+        }
+    }
+    
+    func splitFirstJSONEvent(from rawInput: String) -> (json: String?, remainder: String) {
+        return (nil, "")
+    }
+}
+
 struct DeepSeekStreamingResponseParser: LLMStreamingResponseParser {
     struct DeepSeekStreamingResponse: Codable, LLM.AnyStreamingResponse {
         var newlyCreatedResponseID: String? { nil }

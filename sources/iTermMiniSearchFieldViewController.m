@@ -8,6 +8,7 @@
 #import "iTermMiniSearchFieldViewController.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermFindDriver+Internal.h"
@@ -21,7 +22,7 @@
 #import "NSTextField+iTerm.h"
 #import "PSMTabBarControl.h"
 
-@interface iTermMiniSearchFieldViewController ()<NSMenuItemValidation, NSControlTextEditingDelegate>
+@interface iTermMiniSearchFieldViewController ()<NSMenuItemValidation, NSControlTextEditingDelegate, iTermLayoutReportingViewDelegate>
 
 @end
 
@@ -79,11 +80,11 @@
 }
 
 - (void)awakeFromNib {
-    [self updateSubviews];
-}
-
-- (void)viewWillLayout {
-    [super viewWillLayout];
+    // Set ourselves as the layout reporting delegate
+    if ([self.view isKindOfClass:[iTermLayoutReportingView class]]) {
+        iTermLayoutReportingView *layoutView = (iTermLayoutReportingView *)self.view;
+        layoutView.layoutReportingDelegate = self;
+    }
     [self updateSubviews];
 }
 
@@ -401,6 +402,12 @@ doCommandBySelector:(SEL)commandSelector {
 }
 
 - (void)encodeWithCoder:(nonnull NSCoder *)aCoder {
+}
+
+#pragma mark - iTermLayoutReportingViewDelegate
+
+- (void)layoutReportingViewDidLayout:(iTermLayoutReportingView *)view oldSize:(NSSize)oldSize {
+    [self updateSubviews];
 }
 
 @end

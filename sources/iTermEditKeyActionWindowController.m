@@ -32,6 +32,14 @@ const CGFloat sideMarginWidth = 40;
 @end
 
 @implementation iTermEditKeyActionDetailView
+
+- (NSView *)hitTest:(NSPoint)point {
+    NSView *subview = [super hitTest:point];
+    if (subview == self) {
+        return nil;
+    }
+    return subview;
+}
 @end
 
 @interface iTermEditKeyActionWindowConfiguration: NSObject

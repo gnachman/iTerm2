@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="23504" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24123.1" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="23504"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24123.1"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -34,14 +34,14 @@
         <window title="HotKey Window Preferences" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" hidesOnDeactivate="YES" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" titlebarAppearsTransparent="YES" id="J17-Oy-pHl" customClass="NSPanel">
             <windowStyleMask key="styleMask" closable="YES" miniaturizable="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="272" y="172" width="578" height="360"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1667"/>
+            <rect key="contentRect" x="272" y="172" width="578" height="399"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1661"/>
             <view key="contentView" id="Hz6-mo-xeY">
-                <rect key="frame" x="0.0" y="0.0" width="578" height="360"/>
+                <rect key="frame" x="0.0" y="0.0" width="578" height="399"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0RI-Fh-yjL">
-                        <rect key="frame" x="18" y="284" width="122" height="17"/>
+                        <rect key="frame" x="18" y="323" width="122" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Hotkey:" id="4F4-bg-0BG">
                             <font key="font" metaFont="system"/>
@@ -50,7 +50,7 @@
                         </textFieldCell>
                     </textField>
                     <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ko0-9s-c1g" customClass="iTermShortcutInputView">
-                        <rect key="frame" x="146" y="282" width="137" height="22"/>
+                        <rect key="frame" x="146" y="321" width="137" height="22"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="E8J-u2-HIs">
                             <font key="font" metaFont="system"/>
@@ -62,7 +62,7 @@
                         </connections>
                     </textField>
                     <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="96X-7E-xgf">
-                        <rect key="frame" x="18" y="312" width="525" height="28"/>
+                        <rect key="frame" x="18" y="351" width="525" height="28"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" controlSize="small" sendsActionOnEndEditing="YES" id="dHI-y9-qMI">
                             <font key="font" metaFont="smallSystem"/>
@@ -72,7 +72,7 @@
                         </textFieldCell>
                     </textField>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="T3p-0Y-eeA">
-                        <rect key="frame" x="144" y="224" width="413" height="18"/>
+                        <rect key="frame" x="144" y="261" width="413" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Pin hotkey window (stays open on loss of keyboard focus)" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="3jk-f9-QFs">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -83,7 +83,7 @@
                         </connections>
                     </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="TUZ-yR-tGv">
-                        <rect key="frame" x="21" y="256" width="119" height="18"/>
+                        <rect key="frame" x="21" y="291" width="119" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Double-tap key:" bezelStyle="regularSquare" imagePosition="left" alignment="right" state="on" inset="2" id="lBc-Et-eAS">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -94,7 +94,7 @@
                         </connections>
                     </button>
                     <button toolTip="Note: the window is reopened only if it was closed because another app became active." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6tA-bg-olR">
-                        <rect key="frame" x="144" y="204" width="270" height="18"/>
+                        <rect key="frame" x="144" y="235" width="270" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Automatically reopen on app reactivation" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="mrJ-OA-dYl">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -105,7 +105,7 @@
                         </connections>
                     </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="r46-pU-MRA">
-                        <rect key="frame" x="144" y="184" width="193" height="18"/>
+                        <rect key="frame" x="144" y="209" width="193" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Animate showing and hiding" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="UCE-Hu-AKa">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -116,7 +116,7 @@
                         </connections>
                     </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6yy-iw-U4s">
-                        <rect key="frame" x="144" y="164" width="120" height="18"/>
+                        <rect key="frame" x="144" y="183" width="120" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Floating window" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="vtv-eH-WbP">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -127,7 +127,7 @@
                         </connections>
                     </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="roD-me-xYz">
-                        <rect key="frame" x="145" y="104" width="176" height="18"/>
+                        <rect key="frame" x="145" y="123" width="176" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="radio" title="Don’t do anything special" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="EOt-Jx-9Xl">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -138,7 +138,7 @@
                         </connections>
                     </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="siA-bI-HmC">
-                        <rect key="frame" x="145" y="82" width="180" height="18"/>
+                        <rect key="frame" x="145" y="98" width="180" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="radio" title="Show this Hotkey Window" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="Hhf-xq-TzE">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -149,7 +149,7 @@
                         </connections>
                     </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ieU-bS-a2y">
-                        <rect key="frame" x="145" y="60" width="342" height="18"/>
+                        <rect key="frame" x="145" y="72" width="342" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="radio" title="Show this Hotkey Window if no other window is open" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="Njf-zs-yLP">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -160,7 +160,7 @@
                         </connections>
                     </button>
                     <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YvN-7J-69i">
-                        <rect key="frame" x="19" y="105" width="121" height="17"/>
+                        <rect key="frame" x="19" y="124" width="121" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="On Dock icon click:" id="t4R-9R-8yk">
                             <font key="font" metaFont="system"/>
@@ -169,7 +169,7 @@
                         </textFieldCell>
                     </textField>
                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YEr-4l-tkF">
-                        <rect key="frame" x="505" y="13" width="59" height="32"/>
+                        <rect key="frame" x="505" y="20" width="59" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="UUQ-aq-rDa">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -183,7 +183,7 @@ DQ
                         </connections>
                     </button>
                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="TUb-CR-y4c">
-                        <rect key="frame" x="423" y="13" width="82" height="32"/>
+                        <rect key="frame" x="411" y="20" width="82" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="OGS-mD-pmg">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -197,7 +197,7 @@ Gw
                         </connections>
                     </button>
                     <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jS4-oY-dcH">
-                        <rect key="frame" x="289" y="285" width="254" height="17"/>
+                        <rect key="frame" x="289" y="324" width="254" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="⚠️ Another profile uses this shortcut" id="kMo-jN-Ngc">
                             <font key="font" metaFont="systemBold"/>
@@ -206,7 +206,7 @@ Gw
                         </textFieldCell>
                     </textField>
                     <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0iX-Ti-IRV">
-                        <rect key="frame" x="289" y="257" width="259" height="17"/>
+                        <rect key="frame" x="289" y="292" width="259" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="⚠️ Another profile uses this double-tap" id="mtg-a1-mt3">
                             <font key="font" metaFont="systemBold"/>
@@ -215,7 +215,7 @@ Gw
                         </textFieldCell>
                     </textField>
                     <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rbU-t8-k9N">
-                        <rect key="frame" x="144" y="252" width="142" height="26"/>
+                        <rect key="frame" x="144" y="287" width="142" height="26"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="2Bc-gH-qmJ">
                             <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -234,7 +234,7 @@ Gw
                         </connections>
                     </popUpButton>
                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vZY-UR-it9">
-                        <rect key="frame" x="14" y="13" width="164" height="32"/>
+                        <rect key="frame" x="14" y="20" width="164" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="push" title="Additional Hotkeys…" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="y7i-Ti-5SX">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -248,7 +248,7 @@ Gw
                         </connections>
                     </button>
                     <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="HTr-Xd-Qib">
-                        <rect key="frame" x="163" y="130" width="397" height="28"/>
+                        <rect key="frame" x="163" y="149" width="397" height="28"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" controlSize="small" sendsActionOnEndEditing="YES" id="NTW-IM-ZXD">
                             <font key="font" metaFont="smallSystem"/>
@@ -259,13 +259,13 @@ Gw
                     </textField>
                 </subviews>
             </view>
-            <point key="canvasLocation" x="627" y="514"/>
+            <point key="canvasLocation" x="627" y="533.5"/>
         </window>
         <window title="Additional Hotkeys" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" hidesOnDeactivate="YES" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" titlebarAppearsTransparent="YES" id="bEG-lb-Vft" customClass="NSPanel">
             <windowStyleMask key="styleMask" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="283" y="305" width="306" height="229"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1667"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1661"/>
             <value key="minSize" type="size" width="306" height="229"/>
             <value key="maxSize" type="size" width="534" height="99999"/>
             <view key="contentView" id="RWW-iA-d7c">
@@ -299,7 +299,7 @@ Gw
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <clipView key="contentView" id="gbx-lC-uBV">
                             <rect key="frame" x="1" y="1" width="264" height="155"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" autosaveColumns="NO" typeSelect="NO" rowHeight="31" rowSizeStyle="automatic" viewBased="YES" id="W6A-ea-Crk">
                                     <rect key="frame" x="0.0" y="0.0" width="264" height="155"/>
@@ -322,7 +322,7 @@ Gw
                                             <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                             <prototypeCellViews>
                                                 <tableCellView id="vfU-ea-c7m" customClass="iTermAdditionalHotKeyTableCellView">
-                                                    <rect key="frame" x="1" y="1" width="232" height="31"/>
+                                                    <rect key="frame" x="11" y="1" width="232" height="31"/>
                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                     <subviews>
                                                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="aVv-r5-IVi">

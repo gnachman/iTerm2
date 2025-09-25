@@ -87,6 +87,7 @@ NSColor *iTermTextDrawingHelperTextColorForMatch(NSColor *bgColor);
 
 extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
 extern const int iTermTextDrawingHelperLineStyleMarkRightInsetCells;
+extern const CGFloat iTermCursorGuideAlphaThreshold;
 
 @interface iTermTextDrawingHelper : NSObject
 

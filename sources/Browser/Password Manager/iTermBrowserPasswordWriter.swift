@@ -12,7 +12,7 @@ final class iTermBrowserPasswordWriter {
     private let mutex = AsyncMutex()
 
     @MainActor
-    func fillPassword(webView: WKWebView, password: String) async throws -> Bool {
+    func fillPassword(webView: iTermBrowserWebView, password: String) async throws -> Bool {
         return await mutex.sync {
             switch await probe(webView: webView) {
             case .notAnInput:
@@ -36,7 +36,7 @@ final class iTermBrowserPasswordWriter {
     }
 
     @MainActor
-    func fillUsername(webView: WKWebView,
+    func fillUsername(webView: iTermBrowserWebView,
                       username: String) async throws -> Bool {
         return await mutex.sync {
             return await write(webView: webView,
@@ -47,7 +47,7 @@ final class iTermBrowserPasswordWriter {
     }
 
     @MainActor
-    func focus(webView: WKWebView,
+    func focus(webView: iTermBrowserWebView,
                id: String) async -> Bool {
         let js = iTermBrowserTemplateLoader.loadTemplate(
             named: "focus-password",
@@ -56,7 +56,7 @@ final class iTermBrowserPasswordWriter {
 
         return await mutex.sync {
             do {
-                _ = try await webView.evaluateJavaScript(js)
+                _ = try await webView.safelyEvaluateJavaScript(js)
                 return true
             } catch {
                 return false
@@ -82,13 +82,13 @@ private extension iTermBrowserPasswordWriter {
         case safe
     }
 
-    private func probe(webView: WKWebView) async -> ProbeResult {
+    private func probe(webView: iTermBrowserWebView) async -> ProbeResult {
         let js = iTermBrowserTemplateLoader.loadTemplate(named: "probe-password",
                                                          type: "js",
                                                          substitutions: [:])
 
 
-        let anyResult = try? await webView.evaluateJavaScript(js)
+        let anyResult = try? await webView.safelyEvaluateJavaScript(js)
         guard let info = anyResult as? [String: Any],
               let found = info["found"] as? Bool else {
             return .notAnInput
@@ -111,7 +111,7 @@ private extension iTermBrowserPasswordWriter {
         return alert.runModal() == .alertFirstButtonReturn
     }
 
-    private func write(webView: WKWebView,
+    private func write(webView: iTermBrowserWebView,
                        requireSecure: Bool,
                        string: String,
                        autofocusNextPasswordField: Bool) async -> Bool {
@@ -125,7 +125,7 @@ private extension iTermBrowserPasswordWriter {
                             "FOCUS_NEXT_PW": focusNextPw ? "true" : "false"])
 
         do {
-            _ = try await webView.evaluateJavaScript(js)
+            _ = try await webView.safelyEvaluateJavaScript(js)
             return true
         } catch {
             return false

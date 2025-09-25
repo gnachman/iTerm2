@@ -42,7 +42,7 @@ class iTermBrowserErrorHandler: NSObject, iTermBrowserPageHandler {
     
     // MARK: - iTermBrowserPageHandler Protocol
     
-    func injectJavaScript(into webView: WKWebView) {
+    func injectJavaScript(into webView: iTermBrowserWebView) {
         // Error pages don't need JavaScript injection
     }
     

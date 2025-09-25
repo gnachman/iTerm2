@@ -42,6 +42,7 @@
 #import "NSData+iTerm.h"
 #import "NSSet+iTerm.h"
 #import "RegexKitLite.h"
+#import <stdatomic.h>
 
 static NSString *const kLineBufferVersionKey = @"Version";
 static NSString *const kLineBufferBlocksKey = @"Blocks";

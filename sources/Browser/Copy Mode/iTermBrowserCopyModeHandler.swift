@@ -17,7 +17,7 @@ protocol iTermBrowserCopyModeHandlerDelegate: AnyObject {
 class iTermBrowserCopyModeHandler: NSObject {
     static let messageHandlerName = "iTerm2CopyMode"
     private let realHandler = iTermCopyModeHandler()
-    var webView: WKWebView?
+    var webView: iTermBrowserWebView?
 
     weak var delegate: iTermBrowserCopyModeHandlerDelegate?
 
@@ -28,13 +28,13 @@ class iTermBrowserCopyModeHandler: NSObject {
                 return
             }
             if enabled {
-                webView?.evaluateJavaScript(
+                webView?.safelyEvaluateJavaScript(
                     "window.iTerm2CopyMode.enable('\(sessionSecret)');",
                     in: nil,
                     in: .defaultClient)
                 realHandler.enabled = true
             } else {
-                webView?.evaluateJavaScript(
+                webView?.safelyEvaluateJavaScript(
                     "window.iTerm2CopyMode.disable('\(sessionSecret)');",
                     in: nil,
                     in: .defaultClient)
@@ -92,7 +92,7 @@ extension iTermBrowserCopyModeHandler: iTermCopyModeHandlerDelegate {
     nonisolated func copyModeHandler(_ handler: iTermCopyModeHandler,
                                      revealCurrentLineInState state: any iTermCopyModeStateProtocol) {
         MainActor.assumeIsolated {
-            webView?.evaluateJavaScript("iTerm2CopyMode.scrollCursorIntoView('\(sessionSecret)');",
+            webView?.safelyEvaluateJavaScript(iife("iTerm2CopyMode.scrollCursorIntoView('\(sessionSecret)');"),
                                         in: nil,
                                         in: .defaultClient)
         }
@@ -127,7 +127,7 @@ extension iTermBrowserCopyModeHandler: iTermCopyModeHandlerDelegate {
     nonisolated func copyModeHandlerCopySelection(_ handler: iTermCopyModeHandler) {
         Task { @MainActor in
             do {
-                _ = try await webView?.callAsyncJavaScript(
+                _ = try await webView?.safelyCallAsyncJavaScript(
                     "await iTerm2CopyMode.copySelection('\(sessionSecret)');",
                     contentWorld: .defaultClient)
             } catch {

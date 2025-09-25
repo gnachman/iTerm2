@@ -354,31 +354,9 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     return cached;
 }
 
-- (NSString *)xdgConfigHome {
-    __block NSString *result = [NSHomeDirectory() stringByAppendingPathComponent:@".config"];
-    dispatch_group_t group = dispatch_group_create();
-    dispatch_group_enter(group);
-    [[iTermSlowOperationGateway sharedInstance] exfiltrateEnvironmentVariableNamed:@"XDG_CONFIG_HOME"
-                                                                             shell:[iTermOpenDirectory userShell]
-                                                                        completion:^(NSString * _Nonnull value) {
-        DLog(@"xdgConfigHome=%@", value);
-        if (value.length > 0 && [[NSFileManager defaultManager] directoryIsWritable:value]) {
-            DLog(@"Using %@", value);
-            result = [value copy];
-        }
-        dispatch_group_leave(group);
-    }];
-    dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
-    return result;
-}
-
 - (NSString *)_homeDirectoryDotDir {
     NSString *homedir = NSHomeDirectory();
     __block NSString *xdgConfigHome = [homedir stringByAppendingPathComponent:@".config"];
-    if (![[NSFileManager defaultManager] directoryIsWritable:homedir]) {
-        DLog(@"Home directory is not writable. Try to get XDG_CONFIG_HOME.");
-        xdgConfigHome = [self xdgConfigHome];
-    }
     NSString *dotConfigIterm2 = [xdgConfigHome stringByAppendingPathComponent:@"iterm2"];
     NSString *dotIterm2 = [homedir stringByAppendingPathComponent:@".iterm2"];
     NSArray<NSString *> *options = @[ dotConfigIterm2, dotIterm2, @".iterm2-1" ];
@@ -499,6 +477,12 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     }
     dispatch_source_t source = token;
     dispatch_source_cancel(source);
+}
+
+- (int)it_shmOpen:(NSString *)name
+            oflag:(int)oflag
+             mode:(mode_t)mode {
+    return shm_open(name.UTF8String, oflag, mode);
 }
 
 @end

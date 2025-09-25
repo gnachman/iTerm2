@@ -1353,3 +1353,14 @@ andEditComponentWithIdentifier:(NSString *)identifier
 }
 
 @end
+
+@interface iTermPreferencesPanelRootView: NSView
+@end
+
+@implementation iTermPreferencesPanelRootView
+
+// Some day when support for macOS 15 is dropped, remove this and nudge everything around.
+- (BOOL)prefersCompactControlSizeMetrics {
+    return YES;
+}
+@end

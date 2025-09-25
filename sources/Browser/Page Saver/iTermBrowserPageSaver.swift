@@ -38,12 +38,12 @@ extension SSHLocation {
 @available(macOS 11.0, *)
 @MainActor
 class iTermBrowserPageSaver {
-    private let webView: WKWebView
+    private let webView: iTermBrowserWebView
     private let baseURL: URL
     private var downloadedResources: [String: String] = [:]
     private var resourcesFolder: SSHLocation!
 
-    init(webView: WKWebView, baseURL: URL) {
+    init(webView: iTermBrowserWebView, baseURL: URL) {
         self.webView = webView
         self.baseURL = baseURL
     }
@@ -82,7 +82,7 @@ class iTermBrowserPageSaver {
         let script = iTermBrowserTemplateLoader.loadTemplate(named: "extract-resources", type: "js")
         
         do {
-            let result = try await webView.evaluateJavaScript(script)
+            let result = try await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
             let urls = (result as? [String]) ?? []
             DLog("Extracted \(urls.count) resource URLs")
             return urls
@@ -107,7 +107,7 @@ class iTermBrowserPageSaver {
         )
         
         do {
-            _ = try await webView.evaluateJavaScript(script)
+            _ = try await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
             DLog("Added saved resource attributes")
         } catch {
             DLog("Error adding saved resource attributes: \(error)")
@@ -167,7 +167,7 @@ class iTermBrowserPageSaver {
         """
         
         do {
-            let result = try await webView.evaluateJavaScript(cloneAndProcessScript)
+            let result = try await webView.safelyEvaluateJavaScript(cloneAndProcessScript, contentWorld: .page)
             return result as? String
         } catch {
             DLog("Error getting HTML with saved attributes: \(error)")
@@ -334,7 +334,7 @@ enum PageSaveError: LocalizedError {
 
 extension iTermBrowserPageSaver {
     @MainActor
-    static func pickDestinationAndSave(webView: WKWebView, parentWindow: NSWindow) async {
+    static func pickDestinationAndSave(webView: iTermBrowserWebView, parentWindow: NSWindow) async {
         guard let url = webView.url else { return }
 
         let savePanel = iTermModernSavePanel()
@@ -355,7 +355,7 @@ extension iTermBrowserPageSaver {
 
     private static func performPageSave(url: URL,
                                         to location: SSHLocation,
-                                        webView: WKWebView,
+                                        webView: iTermBrowserWebView,
                                         window: NSWindow) async {
         let pageSaver = iTermBrowserPageSaver(webView: webView, baseURL: url)
 

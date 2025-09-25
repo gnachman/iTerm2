@@ -13,7 +13,7 @@ import Foundation
 @MainActor
 protocol iTermBrowserPageHandler {
     func start(urlSchemeTask: WKURLSchemeTask, url: URL)
-    func injectJavaScript(into webView: WKWebView)
+    func injectJavaScript(into webView: iTermBrowserWebView)
     func resetState()
 }
 
@@ -39,7 +39,7 @@ protocol iTermBrowserLocalPageManagerDelegate: AnyObject {
     func localPageManagerDidUpdateAdblockSettings(_ manager: iTermBrowserLocalPageManager)
     func localPageManagerDidRequestAdblockUpdate(_ manager: iTermBrowserLocalPageManager)
     func localPageManagerDidNavigateToURL(_ manager: iTermBrowserLocalPageManager, url: String)
-    func localPageManagerWebView(_ manager: iTermBrowserLocalPageManager) -> WKWebView?
+    func localPageManagerWebView(_ manager: iTermBrowserLocalPageManager) -> iTermBrowserWebView?
     func localPageManagerExtensionManager(_ manager: iTermBrowserLocalPageManager) -> iTermBrowserExtensionManagerProtocol?
     
     // Onboarding delegate methods
@@ -111,7 +111,7 @@ class iTermBrowserLocalPageManager: NSObject {
     }
     
     /// Setup message handlers for current page
-    func setupMessageHandlers(for webView: WKWebView, currentURL: String?) {
+    func setupMessageHandlers(for webView: iTermBrowserWebView, currentURL: String?) {
         guard let currentURL = currentURL else { return }
         
         // Setup context for current page if needed
@@ -121,7 +121,7 @@ class iTermBrowserLocalPageManager: NSObject {
     }
     
     /// Handle JavaScript message from local page
-    func handleMessage(_ message: WKScriptMessage, webView: WKWebView, currentURL: URL?) -> Bool {
+    func handleMessage(_ message: WKScriptMessage, webView: iTermBrowserWebView, currentURL: URL?) -> Bool {
         guard let messageDict = message.body as? [String: Any],
               let currentURL = currentURL else {
             return false
@@ -154,7 +154,7 @@ class iTermBrowserLocalPageManager: NSObject {
     }
     
     /// Show error page
-    func showErrorPage(for error: Error, failedURL: URL?, webView: WKWebView) {
+    func showErrorPage(for error: Error, failedURL: URL?, webView: iTermBrowserWebView) {
         let urlString = iTermBrowserErrorHandler.errorURL.absoluteString
         setupPageContext(for: urlString)
         
@@ -171,7 +171,7 @@ class iTermBrowserLocalPageManager: NSObject {
     }
     
     /// Show source page
-    func showSourcePage(htmlSource: String, url: URL, webView: WKWebView) {
+    func showSourcePage(htmlSource: String, url: URL, webView: iTermBrowserWebView) {
         let urlString = iTermBrowserSourceHandler.sourceURL.absoluteString
         setupPageContext(for: urlString)
         
@@ -191,7 +191,7 @@ class iTermBrowserLocalPageManager: NSObject {
     }
     
     /// Notify settings page of adblock update
-    func notifySettingsPageOfAdblockUpdate(success: Bool, error: String?, webView: WKWebView) {
+    func notifySettingsPageOfAdblockUpdate(success: Bool, error: String?, webView: iTermBrowserWebView) {
         let urlString = iTermBrowserSettingsHandler.settingsURL.absoluteString
         if let context = activePageContexts[urlString],
            let settingsHandler = context.handler as? iTermBrowserSettingsHandler {
@@ -209,7 +209,7 @@ class iTermBrowserLocalPageManager: NSObject {
         return context.requiresMessageHandler && !context.messageHandlerRegistered
     }
 
-    func unregisterAllMessageHandlers(webView: WKWebView) {
+    func unregisterAllMessageHandlers(webView: iTermBrowserWebView) {
         for url in activePageContexts.keys {
             if activePageContexts[url]?.messageHandlerRegistered == true {
                 webView.configuration.userContentController.removeScriptMessageHandler(forName: url)
@@ -226,7 +226,7 @@ class iTermBrowserLocalPageManager: NSObject {
     }
     
     /// Inject JavaScript for URL
-    func injectJavaScript(for urlString: String, webView: WKWebView) {
+    func injectJavaScript(for urlString: String, webView: iTermBrowserWebView) {
         guard let context = activePageContexts[urlString] else { return }
         context.handler.injectJavaScript(into: webView)
     }
@@ -308,7 +308,7 @@ private extension iTermBrowserLocalPageManager {
     }
     
     
-    func handleMessageForContext(_ context: iTermBrowserPageContext, messageURL: String, messageDict: [String: Any], message: WKScriptMessage, webView: WKWebView) -> Bool {
+    func handleMessageForContext(_ context: iTermBrowserPageContext, messageURL: String, messageDict: [String: Any], message: WKScriptMessage, webView: iTermBrowserWebView) -> Bool {
         switch messageURL {
         case iTermBrowserSettingsHandler.settingsURL.absoluteString:
             if let settingsHandler = context.handler as? iTermBrowserSettingsHandler {
@@ -318,7 +318,7 @@ private extension iTermBrowserLocalPageManager {
             
         case iTermBrowserHistoryViewHandler.historyURL.absoluteString:
             if let historyHandler = context.handler as? iTermBrowserHistoryViewHandler,
-               let webView = message.webView {
+               let webView = message.webView as? iTermBrowserWebView {
                 DLog("Received history message, forwarding to handler")
                 Task { @MainActor in
                     await historyHandler.handleHistoryMessage(messageDict, webView: webView)
@@ -328,7 +328,7 @@ private extension iTermBrowserLocalPageManager {
             
         case iTermBrowserBookmarkViewHandler.bookmarksURL.absoluteString:
             if let bookmarkHandler = context.handler as? iTermBrowserBookmarkViewHandler,
-               let webView = message.webView {
+               let webView = message.webView as? iTermBrowserWebView {
                 DLog("Received bookmark message, forwarding to handler")
                 Task { @MainActor in
                     await bookmarkHandler.handleBookmarkMessage(messageDict, webView: webView)
@@ -338,7 +338,7 @@ private extension iTermBrowserLocalPageManager {
             
         case iTermBrowserPermissionsViewHandler.permissionsURL.absoluteString:
             if let permissionsHandler = context.handler as? iTermBrowserPermissionsViewHandler,
-               let webView = message.webView {
+               let webView = message.webView as? iTermBrowserWebView {
                 DLog("Received permissions message, forwarding to handler")
                 Task { @MainActor in
                     await permissionsHandler.handlePermissionMessage(messageDict, webView: webView)
@@ -356,7 +356,7 @@ private extension iTermBrowserLocalPageManager {
             
         case iTermBrowserWelcomePageHandler.welcomeURL.absoluteString:
             if let welcomeHandler = context.handler as? iTermBrowserWelcomePageHandler,
-               let webView = message.webView {
+               let webView = message.webView as? iTermBrowserWebView {
                 DLog("Received welcome message, forwarding to handler")
                 Task { @MainActor in
                     await welcomeHandler.handleWelcomeMessage(messageDict, webView: webView)
@@ -385,7 +385,7 @@ extension iTermBrowserLocalPageManager: iTermBrowserSettingsHandlerDelegate {
         delegate?.localPageManagerDidRequestAdblockUpdate(self)
     }
     
-    func settingsHandlerWebView(_ handler: iTermBrowserSettingsHandler) -> WKWebView? {
+    func settingsHandlerWebView(_ handler: iTermBrowserSettingsHandler) -> iTermBrowserWebView? {
         return delegate?.localPageManagerWebView(self)
     }
     

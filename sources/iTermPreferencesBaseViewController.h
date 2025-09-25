@@ -11,6 +11,8 @@
 #import "iTermSearchableViewController.h"
 #import "PreferenceInfo.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 @protocol iTermPreferencePanelSizing<NSObject>
 - (CGFloat)preferencePanelMinimumWidth;
 @end
@@ -32,7 +34,7 @@ extern NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues;
 @property(nonatomic, readonly) NSMapTable *keyMap;
 @property(nonatomic, readonly) NSArray<NSString *> *keysForBulkCopy;
 
-@property(nonatomic, weak) NSWindowController<iTermPreferencePanelSizing> *preferencePanel;
+@property(nonatomic, weak) NSWindowController<iTermPreferencePanelSizing> * _Nullable preferencePanel;
 @property(nonatomic, readonly) NSMutableDictionary *internalState;
 
 #pragma mark - Core Methods
@@ -43,12 +45,12 @@ extern NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues;
 // Bind a preference control to a key defined in iTermPreferences.
 - (PreferenceInfo *)defineControl:(NSView *)control
                               key:(NSString *)key
-                      relatedView:(NSView *)relatedView
+                      relatedView:(NSView * _Nullable)relatedView
                              type:(PreferenceInfoType)type;
 
 - (PreferenceInfo *)defineControl:(NSView *)control
                               key:(NSString *)key
-                      displayName:(NSString *)displayName // for search
+                      displayName:(NSString * _Nullable)displayName // for search
                              type:(PreferenceInfoType)type;
 
 - (PreferenceInfo *)defineUnsearchableControl:(NSView *)control
@@ -61,43 +63,43 @@ extern NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues;
 // the default value is not type checked.
 - (PreferenceInfo *)defineControl:(NSView *)control
                               key:(NSString *)key
-                      relatedView:(NSView *)relatedView
+                      relatedView:(NSView * _Nullable)relatedView
                              type:(PreferenceInfoType)type
-                   settingChanged:(void (^)(id))settingChanged
-                           update:(BOOL (^)(void))update;
+                   settingChanged:(void (^ _Nullable)(id))settingChanged
+                           update:(BOOL (^ _Nullable)(void))update;
 
 - (PreferenceInfo *)defineControl:(NSView *)control
                               key:(NSString *)key
-                      displayName:(NSString *)displayName // for search
+                      displayName:(NSString * _Nullable)displayName // for search
                              type:(PreferenceInfoType)type
-                   settingChanged:(void (^)(id))settingChanged
-                           update:(BOOL (^)(void))update;
+                   settingChanged:(void (^ _Nullable)(id))settingChanged
+                           update:(BOOL (^ _Nullable)(void))update;
 
 - (PreferenceInfo *)defineControl:(NSView *)control
                               key:(NSString *)key
-                      relatedView:(NSView *)relatedView
-                      displayName:(NSString *)forceDisplayName
+                      relatedView:(NSView * _Nullable)relatedView
+                      displayName:(NSString * _Nullable)forceDisplayName
                              type:(PreferenceInfoType)type
-                   settingChanged:(void (^)(id))settingChanged
-                           update:(BOOL (^)(void))update
+                   settingChanged:(void (^ _Nullable)(id))settingChanged
+                           update:(BOOL (^ _Nullable)(void))update
                        searchable:(BOOL)searchable;
 
 // This can be useful for synthetic values.
 - (PreferenceInfo *)unsafeDefineControl:(NSView *)control
                                     key:(NSString *)key
-                            relatedView:(NSView *)relatedView
-                            displayName:(NSString *)forceDisplayName
+                            relatedView:(NSView * _Nullable)relatedView
+                            displayName:(NSString * _Nullable)forceDisplayName
                                    type:(PreferenceInfoType)type
-                         settingChanged:(void (^)(id))settingChanged
-                                 update:(BOOL (^)(void))update
+                         settingChanged:(void (^ _Nullable)(id))settingChanged
+                                 update:(BOOL (^ _Nullable)(void))update
                              searchable:(BOOL)searchable;
 
 - (void)setControl:(NSView *)control inPreference:(PreferenceInfo *)info;
 
 - (void)addViewToSearchIndex:(NSView *)control
-                 displayName:(NSString *)displayName
+                 displayName:(NSString * _Nullable)displayName
                      phrases:(NSArray<NSString *> *)phrases
-                         key:(NSString *)key;
+                         key:(NSString * _Nullable)key;
 
 // Call this after defining controls.
 - (void)commitControls;
@@ -105,7 +107,7 @@ extern NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues;
 #pragma mark - IBActions
 
 // Standard selector invoked by controls when their values changed, bound in XIB file.
-- (IBAction)settingChanged:(id)sender;
+- (IBAction)settingChanged:(id _Nullable)sender;
 
 #pragma mark - Helpers
 
@@ -119,8 +121,8 @@ extern NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues;
 - (void)updateEnabledStateForInfo:(PreferenceInfo *)info;
 
 // Returns PreferenceInfo for a control bound with defineControl:key:type:.
-- (PreferenceInfo *)infoForControl:(NSView *)control;
-- (PreferenceInfo *)safeInfoForControl:(NSView *)control;
+- (PreferenceInfo * _Nullable)infoForControl:(NSView *)control;
+- (PreferenceInfo * _Nullable)safeInfoForControl:(NSView *)control;
 
 - (void)postRefreshNotification;
 
@@ -149,15 +151,17 @@ extern NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues;
 - (double)doubleForKey:(NSString *)key;
 - (void)setDouble:(double)value forKey:(NSString *)key;
 
-- (NSString *)stringForKey:(NSString *)key;
-- (void)setString:(NSString *)value forKey:(NSString *)key;
+- (NSString * _Nullable)stringForKey:(NSString *)key;
+- (void)setString:(NSString * _Nullable)value forKey:(NSString *)key;
 
 - (BOOL)keyHasDefaultValue:(NSString *)key;
 - (BOOL)defaultValueForKey:(NSString *)key isCompatibleWithType:(PreferenceInfoType)type;
 - (id)defaultValueForKey:(NSString *)key;
 
-- (void)setObject:(NSObject *)object forKey:(NSString *)key;
-- (NSObject *)objectForKey:(NSString *)key;
+- (void)setObject:(NSObject * _Nullable)object forKey:(NSString *)key;
+- (NSObject * _Nullable)objectForKey:(NSString *)key;
+
+- (void)updateControlForKey:(NSString *)key;
 
 - (BOOL)valueOfKeyEqualsDefaultValue:(NSString *)key;
 
@@ -166,7 +170,7 @@ extern NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues;
 - (BOOL)shouldUpdateOtherPanels;
 
 // Override this to handle updates of preferences from other panels.
-- (void)preferenceDidChangeFromOtherPanel:(NSNotification *)notification NS_REQUIRES_SUPER;
+- (void)preferenceDidChangeFromOtherPanel:(NSNotification * _Nullable)notification NS_REQUIRES_SUPER;
 
 // The prefs panel this view controller belongs to will close. This implementation does nothing.
 - (void)windowWillClose;
@@ -177,15 +181,17 @@ extern NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues;
 - (void)resizeWindowForCurrentTabAnimated:(BOOL)animated;
 
 // Override this if you have a tab view.
-- (NSTabView *)tabView;
+- (NSTabView * _Nullable)tabView;
 - (CGFloat)minimumWidth;
 - (void)saveDeferredUpdates;
 
 - (BOOL)keyHasSyntheticGetter:(NSString *)key;
 - (BOOL)keyHasSyntheticSetter:(NSString *)key;
-- (id)syntheticObjectForKey:(NSString *)key;
+- (id _Nullable)syntheticObjectForKey:(NSString *)key;
 - (void)setSyntheticValue:(id)value forKey:(NSString *)key;
 - (void)updateNonDefaultIndicatorVisibleForInfo:(PreferenceInfo *)info;
 - (void)updateNonDefaultIndicators;
 
 @end
+
+NS_ASSUME_NONNULL_END

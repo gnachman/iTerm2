@@ -734,77 +734,10 @@
             }, 2000);
         }
         
-        function toggleRustAdblock(enabled) {
-            if (enabled) {
-                // Disable proxy when enabling Rust ad blocking
-                const proxyCheckbox = document.getElementById('proxyEnabled');
-                if (proxyCheckbox.checked) {
-                    proxyCheckbox.checked = false;
-                    window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
-                        action: 'setProxyEnabled',
-                        value: false,
-                        sessionSecret: sessionSecret
-                    });
-                    updateProxyFieldsState(false);
-                }
-            }
-            
-            window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
-                action: 'setRustAdblockEnabled',
-                value: enabled,
-                sessionSecret: sessionSecret
-            });
-            if (enabled) {
-                showStatus('Rust ad blocking enabled. Restart required for full effect.', 'info', 5000);
-            }
-        }
         
-        function updateRustAdblockURLs() {
-            const container = document.getElementById('rustAdblockURLContainer');
-            const inputs = container.querySelectorAll('input[type="url"]');
-            const urls = Array.from(inputs)
-                .map(input => input.value.trim())
-                .filter(url => url !== '');
-            
-            const urlString = urls.join(' ');
-            window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
-                action: 'setRustAdblockURL',
-                value: urlString,
-                sessionSecret: sessionSecret
-            });
-        }
         
-        function addRustAdblockURL() {
-            const container = document.getElementById('rustAdblockURLContainer');
-            const urlDiv = document.createElement('div');
-            urlDiv.className = 'url-item';
-            urlDiv.innerHTML = `
-                <input type="url" placeholder="https://easylist.to/easylist/easylist.txt" onchange="updateRustAdblockURLs()">
-                <button class="button small remove-url" onclick="removeRustAdblockURL(this)">-</button>
-            `;
-            container.appendChild(urlDiv);
-        }
         
-        function removeRustAdblockURL(button) {
-            const urlDiv = button.parentElement;
-            urlDiv.remove();
-            updateRustAdblockURLs();
-        }
         
-        function forceRustAdblockUpdate() {
-            showStatus('Reloading Rust ad blocking filter lists…', 'info');
-            window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
-                action: 'forceRustAdblockUpdate',
-                sessionSecret: sessionSecret
-            });
-            // Refresh stats after a brief delay
-            setTimeout(() => {
-                window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
-                    action: 'getRustAdblockStats',
-                    sessionSecret: sessionSecret
-                });
-            }, 3000);
-        }
         
         function openPermissions() {
             window.location.href = 'iterm2-about:permissions';
@@ -938,14 +871,6 @@
                 sessionSecret: sessionSecret
             });
             window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
-                action: 'getRustAdblockSettings',
-                sessionSecret: sessionSecret
-            });
-            window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
-                action: 'getRustAdblockStats',
-                sessionSecret: sessionSecret
-            });
-            window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
                 action: 'getProxySettings',
                 sessionSecret: sessionSecret
             });
@@ -960,7 +885,7 @@
                 document.getElementById('extensionsSection').classList.add('expanded');
             }
         });
-        
+
         // Function to update UI with current settings (called from Swift)
         function updateAdblockUI(settings) {
             document.getElementById('adblockEnabled').checked = settings.enabled;
@@ -1018,75 +943,10 @@
             statsText.textContent = text;
         }
         
-        function updateRustAdblockUI(settings) {
-            document.getElementById('rustAdblockEnabled').checked = settings.enabled;
-            
-            const container = document.getElementById('rustAdblockURLContainer');
-            container.innerHTML = '';
-            
-            if (settings.url) {
-                const urls = settings.url.split(' ').filter(url => url.trim() !== '');
-                urls.forEach(url => {
-                    const urlDiv = document.createElement('div');
-                    urlDiv.className = 'url-item';
-                    urlDiv.innerHTML = `
-                        <input type="url" value="${url.trim()}" placeholder="https://easylist.to/easylist/easylist.txt" onchange="updateRustAdblockURLs()">
-                        <button class="button small remove-url" onclick="removeRustAdblockURL(this)">-</button>
-                    `;
-                    container.appendChild(urlDiv);
-                });
-            }
-            
-            if (container.children.length === 0) {
-                addRustAdblockURL();
-            }
-        }
         
-        function updateRustAdblockStats(stats) {
-            const statsText = document.getElementById('rustAdblockStatsText');
-            
-            if (!stats.enabled) {
-                statsText.textContent = 'Rust ad blocking is disabled';
-                return;
-            }
-            
-            if (stats.isDownloading) {
-                statsText.textContent = 'Downloading filter lists…';
-                return;
-            }
-            
-            if (!stats.engineLoaded) {
-                statsText.textContent = 'No filter lists loaded';
-                return;
-            }
-            
-            const ruleCount = stats.ruleCount || 0;
-            const hiddenCount = stats.hiddenElementsCount || 0;
-            const blockedCount = stats.blockedRequestsCount || 0;
-            
-            let text = `${ruleCount.toLocaleString()} rules loaded`;
-            if (hiddenCount > 0 || blockedCount > 0) {
-                text += ` • ${hiddenCount} elements hidden, ${blockedCount} requests blocked`;
-            }
-            
-            statsText.textContent = text;
-        }
         
         // Proxy settings functions
         function toggleProxy(enabled) {
-            if (enabled) {
-                // Disable Rust ad blocking when enabling proxy
-                const rustAdblockCheckbox = document.getElementById('rustAdblockEnabled');
-                if (rustAdblockCheckbox.checked) {
-                    rustAdblockCheckbox.checked = false;
-                    window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
-                        action: 'setRustAdblockEnabled',
-                        value: false,
-                        sessionSecret: sessionSecret
-                    });
-                }
-            }
-            
             window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
                 action: 'setProxyEnabled',
                 value: enabled,

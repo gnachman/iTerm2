@@ -143,11 +143,11 @@ function escapeRegExp(string) {
 function getTextFragmentData(element, offsetY, y) {
     var baseData = getElementData(element, offsetY, y);
     var textFragment = createContextualTextFragment(element);
-    
+
     if (textFragment) {
         baseData.textFragment = textFragment;
     }
-    
+
     return baseData;
 }
 

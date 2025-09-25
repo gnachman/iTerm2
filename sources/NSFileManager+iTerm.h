@@ -77,4 +77,9 @@ extern NSNotificationName iTermScriptsFolderDidChange;
 
 // Returns ~/.iterm2, creating if needed, or nil.
 - (NSString *)homeDirectoryDotDir;
+
+- (int)it_shmOpen:(NSString *)name
+            oflag:(int)oflag
+             mode:(mode_t)mode;
+
 @end

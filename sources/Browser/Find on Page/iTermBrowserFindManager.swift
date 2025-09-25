@@ -83,7 +83,7 @@ class iTermBrowserFindManager: NSObject {
     @MainActor
     fileprivate class Shared: NSObject {
         let secret: String
-        weak var webView: WKWebView!
+        weak var webView: iTermBrowserWebView!
         var isJavaScriptInjected = false
 
         init(secret: String) {
@@ -194,7 +194,7 @@ class iTermBrowserFindManager: NSObject {
                                                                         identifier: \(json(identifier) ) }); 
             """
             do {
-                let raw = try await webView.callAsyncJavaScript(script, contentWorld: world)
+                let raw = try await webView.safelyCallAsyncJavaScript(script, contentWorld: world)
                 guard let dict = raw as? [String: Double] else {
                     DLog("Bad result: \(String(describing: raw)) in \(script)")
                     throw InvalidResponseError()
@@ -226,10 +226,10 @@ class iTermBrowserFindManager: NSObject {
             temp["sessionSecret"] = sharedState.secret
             let jsonData = try JSONSerialization.data(withJSONObject: temp)
             let jsonString = String(data: jsonData, encoding: .utf8) ?? "{}"
-            let script = "window.iTermCustomFind &&await  window.iTermCustomFind.handleCommand(\(jsonString))"
+            let script = "window.iTermCustomFind && await window.iTermCustomFind.handleCommand(\(jsonString))"
 
             do {
-                return try await webView.callAsyncJavaScript(script, contentWorld: world)
+                return try await webView.safelyCallAsyncJavaScript(script, contentWorld: world)
             } catch {
                 DLog("\(error) while executing \(script)")
                 throw error
@@ -353,7 +353,7 @@ class iTermBrowserFindManager: NSObject {
         return script
     }
 
-    var webView: WKWebView? {
+    var webView: iTermBrowserWebView? {
         didSet {
             sharedState.webView = webView
         }
@@ -407,7 +407,7 @@ class iTermBrowserFindManager: NSObject {
             lastSearchWasGlobal = true
             do {
                 // The user script won't be installed until documentStart. If it isn't there now it may never arrive.
-                let myFunction = try await sharedState.webView?.evaluateJavaScript("typeof window.iTermCustomFind", contentWorld: world)
+                let myFunction = try await sharedState.webView?.safelyEvaluateJavaScript(iife("return typeof window.iTermCustomFind"), contentWorld: world)
                 if myFunction as? String == "undefined" {
                     stream.done = true
                     return
@@ -534,7 +534,7 @@ class iTermBrowserFindManager: NSObject {
         clearFind()
     }
 
-    func handleMessage(webView: WKWebView, message: WKScriptMessage) {
+    func handleMessage(webView: iTermBrowserWebView, message: WKScriptMessage) {
         guard message.name == "iTermCustomFind",
               let body = message.body as? [String: Any],
               let sessionSecret = body["sessionSecret"] as? String,
@@ -590,7 +590,7 @@ class iTermBrowserGlobalSearchResultStream: NSObject {
     }
 }
 
-extension WKWebView {
+extension iTermBrowserWebView {
     func waitForScrollingToComplete() async {
         // Poll until the current match position is stable
         let checkScript = """
@@ -638,7 +638,7 @@ extension WKWebView {
 // MARK: - Graph discovery
 @MainActor
 extension iTermBrowserFindManager {
-    private func handleGraphDiscoveryMessage(webView: WKWebView, message: WKScriptMessage) {
+    private func handleGraphDiscoveryMessage(webView: iTermBrowserWebView, message: WKScriptMessage) {
         DLog("[IFD] NATIVE - got a message: \(message.body)")
         if let body = message.body as? [String: Any],
            let type = body["type"] as? String,

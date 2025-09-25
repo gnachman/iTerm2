@@ -35,7 +35,7 @@ class iTermBrowserPasswordManagerHandler {
 
     }
 
-    func handleMessage(webView: WKWebView,
+    func handleMessage(webView: iTermBrowserWebView,
                        message: WKScriptMessage) -> Action? {
         guard let messageDict = message.body as? [String: Any],
               let type = messageDict["type"] as? String,

@@ -31,7 +31,7 @@ class iTermBrowserHoverLinkHandler {
                                                        substitutions: ["SECRET": secret])
     }
     
-    func handleMessage(webView: WKWebView, message: WKScriptMessage) -> HoverInfo? {
+    func handleMessage(webView: iTermBrowserWebView, message: WKScriptMessage) -> HoverInfo? {
         guard let messageDict = message.body as? [String: Any],
               let type = messageDict["type"] as? String,
               let sessionSecret = messageDict["sessionSecret"] as? String,
@@ -70,11 +70,11 @@ class iTermBrowserHoverLinkHandler {
         }
     }
     
-    func clearHover(in webView: WKWebView) {
+    func clearHover(in webView: iTermBrowserWebView) {
         let script = "window.iTermHoverLinkHandler?.clearHover('\(secret)');"
         Task {
             do {
-                _ = try await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
+                _ = try await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .defaultClient)
             } catch {
                 DLog("Failed to clear hover: \(error)")
             }

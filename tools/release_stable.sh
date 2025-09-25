@@ -96,7 +96,6 @@ function Build {
   BUILDDATE=$(date +"%B %-d, %Y")
   echo "Version $VERSION of iTerm2 was built on $BUILDDATE." > $SVNDIR/downloads/stable/iTerm2-${NAME}.changelog
   echo '' >> $SVNDIR/downloads/stable/iTerm2-${NAME}.changelog
-  echo 'SHA-256 of the zip file is' >> $SVNDIR/downloads/stable/iTerm2-${NAME}.changelog
   shasum -a256 iTerm2-${NAME}.zip | awk '{print $1}' > /tmp/sum
   gpg --clearsign /tmp/sum
   echo "You can use the following to verify the zip file on https://keybase.io/verify:" >> $SVNDIR/downloads/stable/iTerm2-${NAME}.changelog
@@ -136,7 +135,7 @@ make release
 
 BUILDTYPE=Deployment
 
-Build $BUILDTYPE "" "OS 10.15+" "This is the recommended build for most users." "" "--deep"
+Build $BUILDTYPE "" "macOS 12.4+" "This is the recommended build for most users." "" "--deep"
 
 git checkout -- version.txt
 #set -x
@@ -147,5 +146,4 @@ git push origin HEAD
 git push --tags
 cd $SVNDIR
 git commit -am v${VERSION}
-git push origin HEAD
 

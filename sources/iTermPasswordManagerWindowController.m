@@ -172,7 +172,21 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 
     _scrim.wantsLayer = YES;
     _scrim.layer = [[CALayer alloc] init];
-    _scrim.layer.backgroundColor = [[[NSColor windowBackgroundColor] colorWithAlphaComponent:0.75] CGColor];
+    if (@available(macOS 26, *)) {
+        NSView *inner = _scrim.subviews.firstObject;
+        NSGlassEffectView *glass = [[NSGlassEffectView alloc] init];
+        glass.style = NSGlassEffectViewStyleClear;
+        glass.tintColor = [[NSColor controlBackgroundColor] colorWithAlphaComponent:0.25];
+        glass.frame = _scrim.bounds;
+        _scrim.autoresizesSubviews = YES;
+        glass.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+        [_scrim addSubview:glass];
+        NSView *content = [[NSView alloc] initWithFrame:_scrim.bounds];
+        [content addSubview:inner];
+        glass.contentView = content;
+    } else {
+        _scrim.layer.backgroundColor = [[[NSColor windowBackgroundColor] colorWithAlphaComponent:0.75] CGColor];
+    }
     _scrim.alphaValue = 0;
 
     _broadcastButton.state = NSControlStateValueOff;
@@ -214,6 +228,11 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 }
 
 - (void)updateKeyEquivalents {
+    if (!_defaultButton || !_secondaryButton || !_closeButton) {
+        // Outlets not connected yet, XIB may not be fully loaded
+        return;
+    }
+
     if (_sendUserByDefault && _didSendUserName == nil) {
         _secondaryButton.hidden = YES;
         _defaultButton.title = @"Enter User Name";
@@ -226,25 +245,23 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         }
     }
 
-    NSView *rightmostVisibleButton = _defaultButton.isHidden ? _secondaryButton : _defaultButton;
-
+    NSArray<NSButton *> *views = @[_defaultButton, _secondaryButton, _closeButton];
+    NSButton *rightmostVisibleButton = [views objectPassingTest:^BOOL(NSButton *view, NSUInteger index, BOOL *stop) {
+        return !view.isHidden;
+    }];
     const CGFloat desiredMaxX = NSMaxX(rightmostVisibleButton.frame);
-    [_secondaryButton sizeToFit];
-    [_defaultButton sizeToFit];
-
     CGFloat x = desiredMaxX;
-    for (NSView *view in @[_defaultButton, _secondaryButton, _closeButton]) {
+    const CGFloat spacing = NSMinX(views[0].frame) - NSMaxX(views[1].frame);
+    for (NSButton *view in views) {
         if (view.isHidden) {
             continue;
         }
-
+        [view sizeToFit];
         NSRect frame = view.frame;
         frame.origin.x = x - NSWidth(frame);
         view.frame = frame;
-        DLog(@"With desired right edge at %@, set %@ frame to %@",
-              @(x), [(NSButton *)view title], NSStringFromRect(frame));
-
-        x = NSMinX(frame);
+        
+        x -= NSWidth(frame) + spacing;
     }
 }
 
@@ -1433,3 +1450,17 @@ static NSArray<NSString *> *gBrowserCachedCombinedAccountNames;
 
 @end
 
+
+@interface iTermPasswordManagerScrim: NSView
+@end
+
+@implementation iTermPasswordManagerScrim
+
+- (NSView *)hitTest:(NSPoint)point {
+    if (self.alphaValue == 0) {
+        return nil;
+    }
+    return [super hitTest:point];
+}
+
+@end

@@ -101,7 +101,7 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
                                                                           selector: #selector(threeFingerTap(_:)))
         allowedTouchTypes = .indirect
         wantsRestingTouches = true
-        
+
         // Set up tracking area for mouse enter/exit
         updateTrackingAreas()
         NotificationCenter.default.addObserver(self,
@@ -116,6 +116,93 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
 
     deinit {
         threeFingerTapGestureRecognizer.disconnectTarget()
+    }
+
+    @MainActor public func safelyCallAsyncJavaScript(_ functionBody: String,
+                                                     arguments: [String : Any] = [:],
+                                                     in frame: WKFrameInfo? = nil,
+                                                     contentWorld: WKContentWorld) async throws -> Any? {
+        return try await callAsyncJavaScript(functionBody,
+                                             arguments: arguments,
+                                             in: frame,
+                                             contentWorld: contentWorld)
+    }
+
+    // On some mapsmcOS versions evaluateJavascript crashes if undefined is returned. <3
+    private func makeSafe(_ script: String) -> String {
+        """
+        (() => {
+            let __result__ = (function() {
+                return \(script)
+            })();
+            return typeof __result__ === 'undefined' ? null : __result__;
+        })()
+        """
+    }
+
+    @MainActor func safelyEvaluateJavaScript(_ unsafeScript: String,
+                                             in frame: WKFrameInfo? = nil) async throws -> Any? {
+        return try await safelyEvaluateJavaScript(unsafeScript, in: nil, contentWorld: .page)
+    }
+
+    @MainActor func safelyEvaluateJavaScript(_ javaScript: String,
+                                             in frame: WKFrameInfo? = nil,
+                                             in contentWorld: WKContentWorld,
+                                             completionHandler: (@MainActor @Sendable (Result<Any?, any Error>) -> Void)? = nil) {
+        Task { @MainActor in
+            do {
+                let result = try await safelyEvaluateJavaScript(javaScript, in: frame, contentWorld: contentWorld)
+                completionHandler?(.success(result))
+            } catch {
+                completionHandler?(.failure(error))
+            }
+        }
+    }
+
+
+    @MainActor func safelyEvaluateJavaScript(_ unsafeScript: String,
+                                             in frame: WKFrameInfo? = nil,
+                                             contentWorld: WKContentWorld) async throws -> Any? {
+        let javaScript = makeSafe(unsafeScript)
+        DLog("Evaluate:\n" + javaScript)
+        do {
+            let result = try await evaluateJavaScript(javaScript, in: frame, contentWorld: contentWorld)
+            return result
+        } catch {
+#if ITERM_DEBUG
+            NSFuckingLog("JavaScript evaluation failed with error: %@", String(describing: error))
+#endif
+            DLog("JavaScript evaluation failed with error:\(error)")
+            throw error
+        }
+    }
+
+    // Convenience methods with completion handlers for easier migration
+    @MainActor func safelyEvaluateJavaScript(_ javaScript: String,
+                                             contentWorld: WKContentWorld,
+                                             completionHandler: ((Any?, Error?) -> Void)? = nil) {
+        Task { @MainActor in
+            do {
+                let result = try await safelyEvaluateJavaScript(javaScript, contentWorld: contentWorld)
+                completionHandler?(result, nil)
+            } catch {
+                completionHandler?(nil, error)
+            }
+        }
+    }
+
+    @MainActor func safelyCallAsyncJavaScript(_ functionBody: String,
+                                              arguments: [String : Any] = [:],
+                                              contentWorld: WKContentWorld,
+                                              completionHandler: ((Any?, Error?) -> Void)? = nil) {
+        Task { @MainActor in
+            do {
+                let result = try await safelyCallAsyncJavaScript(functionBody, arguments: arguments, contentWorld: contentWorld)
+                completionHandler?(result, nil)
+            } catch {
+                completionHandler?(nil, error)
+            }
+        }
     }
 
     @objc(threeFingerTap:)
@@ -153,7 +240,8 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
         }
         Task { @MainActor in
             DLog("fetching selection")
-            currentSelection = try? await evaluateJavaScript("window.getSelection().toString();") as? String
+            currentSelection = try? await safelyEvaluateJavaScript(iife("return window.getSelection().toString();"),
+                                                                   contentWorld: .page) as? String
             DLog("selection is \(currentSelection.d)")
             // For the event location, we might need to use the original window coordinates
             // since the menu positioning could be relative to the window
@@ -386,7 +474,8 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
         super.mouseUp(with: event)
         Task { @MainActor in
             DLog("fetching selection")
-            currentSelection = try? await evaluateJavaScript("window.getSelection().toString();") as? String
+            currentSelection = try? await safelyEvaluateJavaScript(iife("return window.getSelection().toString();"),
+                                                                   contentWorld: .page) as? String
         }
     }
 
@@ -436,7 +525,7 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
 
         super.mouseUp(with: event)
         setMouseInfo(event: event, sideEffects: [])
-        
+
         return []
     }
 
@@ -607,10 +696,10 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
         op.showsProgressPanel = true
         op.view?.frame = bounds
         op.runModal(
-          for: window!,
-          delegate: self,
-          didRun: nil,
-          contextInfo: nil
+            for: window!,
+            delegate: self,
+            didRun: nil,
+            contextInfo: nil
         )
     }
 
@@ -621,7 +710,7 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
     }
 
     // MARK: - Deferred Interaction State
-    
+
     @available(macOS 12.0, *)
     @discardableResult
     func applyDeferredInteractionStateIfNeeded() -> Bool {
@@ -632,9 +721,9 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
         interactionState = deferred
         return true
     }
-    
+
     // MARK: - Override navigation methods to apply deferred state
-    
+
     @discardableResult
     override func load(_ request: URLRequest) -> WKNavigation? {
         if #available(macOS 12.0, *) {
@@ -642,7 +731,7 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
         }
         return super.load(request)
     }
-    
+
     @discardableResult
     override func loadHTMLString(_ string: String, baseURL: URL?) -> WKNavigation? {
         if #available(macOS 12.0, *) {
@@ -650,7 +739,7 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
         }
         return super.loadHTMLString(string, baseURL: baseURL)
     }
-    
+
     @discardableResult
     override func load(_ data: Data, mimeType MIMEType: String, characterEncodingName: String, baseURL: URL) -> WKNavigation? {
         if #available(macOS 12.0, *) {
@@ -658,7 +747,7 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
         }
         return super.load(data, mimeType: MIMEType, characterEncodingName: characterEncodingName, baseURL: baseURL)
     }
-    
+
     @discardableResult
     override func loadFileURL(_ URL: URL, allowingReadAccessTo readAccessURL: URL) -> WKNavigation? {
         if #available(macOS 12.0, *) {
@@ -666,7 +755,7 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
         }
         return super.loadFileURL(URL, allowingReadAccessTo: readAccessURL)
     }
-    
+
     @discardableResult
     override func reload() -> WKNavigation? {
         if #available(macOS 12.0, *) {
@@ -674,7 +763,7 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
         }
         return super.reload()
     }
-    
+
     @discardableResult
     override func reloadFromOrigin() -> WKNavigation? {
         if #available(macOS 12.0, *) {
@@ -682,7 +771,7 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
         }
         return super.reloadFromOrigin()
     }
-    
+
     @discardableResult
     override func goBack() -> WKNavigation? {
         if #available(macOS 12.0, *) {
@@ -690,7 +779,7 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
         }
         return super.goBack()
     }
-    
+
     @discardableResult
     override func goForward() -> WKNavigation? {
         if #available(macOS 12.0, *) {
@@ -698,7 +787,7 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
         }
         return super.goForward()
     }
-    
+
     @discardableResult
     override func go(to item: WKBackForwardListItem) -> WKNavigation? {
         if #available(macOS 12.0, *) {
@@ -714,15 +803,15 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
     }
 
     // MARK: - Mouse Tracking for Hover
-    
+
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
-        
+
         // Remove existing tracking area if present
         if let trackingArea = trackingArea {
             removeTrackingArea(trackingArea)
         }
-        
+
         // Create new tracking area for mouse enter/exit
         var options: NSTrackingArea.Options = [.mouseEnteredAndExited, .activeInKeyWindow]
         if focusFollowsMouse.focusFollowsMouse {
@@ -732,7 +821,7 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
                                       options: options,
                                       owner: self,
                                       userInfo: nil)
-        
+
         if let trackingArea = trackingArea {
             addTrackingArea(trackingArea)
         }
@@ -743,7 +832,7 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
         _ = focusFollowsMouse.mouseWillEnter(with: event)
         focusFollowsMouse.mouseEntered(with: event)
     }
-    
+
     override func mouseExited(with event: NSEvent) {
         super.mouseExited(with: event)
         _ = focusFollowsMouse.mouseExited(with: event)
@@ -757,7 +846,7 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
     func clearHover() {
         browserDelegate?.webViewDidHoverURL(self, url: nil, frame: NSZeroRect)
     }
-    
+
 }
 
 @available(macOS 11.0, *)
@@ -910,7 +999,7 @@ extension iTermBrowserWebView {
             })();
             """
             do {
-                let result = try await evaluateJavaScript(script)
+                let result = try await safelyEvaluateJavaScript(script, contentWorld: .page)
                 return result as? String
             } catch {
                 DLog("\(error)")
@@ -936,4 +1025,10 @@ extension iTermBrowserWebView {
             browserDelegate?.webView(self, didReceiveEvent: .doCommandBySelector(selector))
         }
     }
+}
+
+
+// safelyEvaluateJavaScript expects an IIFE. This makes it prettier to wrap a blob of code.
+func iife(_ value: String) -> String {
+    return "(function() {" + value + "})();"
 }

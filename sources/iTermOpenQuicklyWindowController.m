@@ -167,10 +167,11 @@
     _scrollView.frame = NSMakeRect(_scrollView.frame.origin.x,
                                    _scrollView.frame.origin.y,
                                    contentViewFrame.size.width,
-                                   contentViewFrame.size.height - 41);
+                                   contentViewFrame.size.height - _scrollView.frame.origin.y - 10);
     // Select the first item.
     if (self.model.items.count) {
         [_table selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
+        [_table scrollRowToVisible:0];
     }
 
     [self performSelector:@selector(resizeWindowAnimatedToFrame:)
@@ -487,6 +488,7 @@
             }
         }
         [_table selectRowIndexes:[NSIndexSet indexSetWithIndex:row] byExtendingSelection:NO];
+        [_table scrollRowToVisible:row];
         result = YES;
     }
     return result;

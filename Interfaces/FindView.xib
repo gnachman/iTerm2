@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24123.1" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14490.70"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24123.1"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -18,7 +18,7 @@
             <rect key="frame" x="0.0" y="0.0" width="288" height="28"/>
             <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
             <subviews>
-                <segmentedControl verticalHuggingPriority="750" id="13">
+                <segmentedControl verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="13">
                     <rect key="frame" x="219" y="4" width="44" height="20"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                     <segmentedCell key="cell" controlSize="small" borderStyle="border" alignment="left" style="rounded" trackingMode="selectOne" id="14">
@@ -32,7 +32,7 @@
                         <action selector="searchNextPrev:" target="-2" id="30"/>
                     </connections>
                 </segmentedControl>
-                <button id="23">
+                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="23">
                     <rect key="frame" x="261" y="3" width="24" height="23"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="TabClose_Front" imagePosition="only" alignment="center" alternateImage="TabClose_Front_Pressed" inset="2" id="24">
@@ -46,7 +46,7 @@ Gw
                         <action selector="closeFindView:" target="-2" id="29"/>
                     </connections>
                 </button>
-                <searchField wantsLayer="YES" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="2" customClass="iTermFocusReportingSearchField">
+                <searchField wantsLayer="YES" focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2" customClass="iTermFocusReportingSearchField">
                     <rect key="frame" x="8" y="4" width="206" height="19"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <searchFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" borderStyle="bezel" usesSingleLineMode="YES" bezelStyle="round" id="3" customClass="iTermSearchFieldCell">
@@ -60,6 +60,7 @@ Gw
                     </connections>
                 </searchField>
             </subviews>
+            <point key="canvasLocation" x="139" y="154"/>
         </customView>
         <menu id="15">
             <items>
@@ -106,9 +107,9 @@ Gw
         </menu>
     </objects>
     <resources>
-        <image name="NSGoLeftTemplate" width="9" height="12"/>
-        <image name="NSGoRightTemplate" width="9" height="12"/>
-        <image name="TabClose_Front" width="15" height="15"/>
-        <image name="TabClose_Front_Pressed" width="15" height="15"/>
+        <image name="NSGoLeftTemplate" width="12" height="17"/>
+        <image name="NSGoRightTemplate" width="12" height="17"/>
+        <image name="TabClose_Front" width="16" height="16"/>
+        <image name="TabClose_Front_Pressed" width="16" height="16"/>
     </resources>
 </document>

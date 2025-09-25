@@ -18,7 +18,7 @@ class iTermBrowserTriggerHandler: NSObject {
     static let messageHandlerName = "iTerm2Trigger"
     private var triggers: [String: (NSDictionary, BrowserTrigger)]!
     var delegate: iTermBrowserTriggerHandlerDelegate?
-    var webView: WKWebView?
+    var webView: iTermBrowserWebView?
 
     init?(profileObserver: iTermProfilePreferenceObserver) {
         guard let sessionSecret = String.makeSecureHexString() else {
@@ -70,7 +70,7 @@ extension iTermBrowserTriggerHandler {
         var matches: [Match]
     }
 
-    func handleMessage(webView: WKWebView, message: WKScriptMessage) async -> [BrowserTriggerAction] {
+    func handleMessage(webView: iTermBrowserWebView, message: WKScriptMessage) async -> [BrowserTriggerAction] {
         guard let body = message.body as? [String: Any],
               let secret = body["sessionSecret"] as? String,
               secret == sessionSecret else {
@@ -115,7 +115,7 @@ extension iTermBrowserTriggerHandler {
                 "null"
             }
             let script = "window.iTerm2Triggers?.highlightText(\(jsonMatchID), \(jsonTextColor), \(jsonBackgroundColor));"
-            _ = try? await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .defaultClient)
         }
     }
 
@@ -127,7 +127,13 @@ extension iTermBrowserTriggerHandler {
             let jsonMatchID = try! JSONEncoder().encode(matchID).lossyString
             let jsonURL = try! JSONEncoder().encode(url).lossyString
             let script = "window.iTerm2Triggers?.makeHyperlink(\(jsonMatchID), \(jsonURL));"
-            _ = try? await webView.evaluateJavaScript(script, contentWorld: .defaultClient)
+            _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .defaultClient)
+        }
+    }
+
+    func inject(_ script: String) {
+        Task {
+            _ = try? await webView?.safelyEvaluateJavaScript(iife(script))
         }
     }
 }
@@ -168,7 +174,7 @@ private extension iTermBrowserTriggerHandler {
         """
         Task { @MainActor in
             do {
-                _ = try await webView?.evaluateJavaScript(call, contentWorld: .defaultClient)
+                _ = try await webView?.safelyEvaluateJavaScript(iife(call), contentWorld: .defaultClient)
             } catch {
                 DLog("\(call): \(error)")
             }
