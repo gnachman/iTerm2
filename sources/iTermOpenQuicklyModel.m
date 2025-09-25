@@ -483,11 +483,15 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
 }
 
 - (void)addBookmarkToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
-               withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
+               withMatcher:(iTermMinimumSubsequenceMatcher *)matcher
+                      urls:(NSMutableSet<NSURL *> *)urls {
     if (![iTermBrowserGateway browserAllowedCheckingIfNot:NO]) {
         return;
     }
     for (iTermTriple<NSString *, NSURL *, NSString *> *triple in [iTermBrowserBookmarkFinder bookmarksMatchingSubstring:matcher.query]) {
+        if ([urls containsObject:triple.secondObject]) {
+            continue;
+        }
         iTermOpenQuicklyBookmarkItem *item = [[iTermOpenQuicklyBookmarkItem alloc] init];
         NSMutableAttributedString *attributedName = [[NSMutableAttributedString alloc] init];
         item.score = [self scoreForBookmarkTitle:triple.firstObject url:triple.secondObject matcher:matcher attributedName:attributedName];
@@ -501,10 +505,14 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
             item.bookmarkName = triple.firstObject;
             item.userID = triple.thirdObject;
             [items addObject:item];
+            [urls addObject:item.url];
         }
     }
     // Add matching recent visits items
     for (iTermTriple<NSString *, NSURL *, NSString *> *triple in [iTermBrowserVisitsFinder historyMatchingSubstring:matcher.query]) {
+        if ([urls containsObject:triple.secondObject]) {
+            continue;
+        }
         iTermOpenQuicklyBookmarkItem *item = [[iTermOpenQuicklyBookmarkItem alloc] init];
         NSMutableAttributedString *attributedName = [[NSMutableAttributedString alloc] init];
         item.score = [self scoreForBookmarkTitle:triple.firstObject url:triple.secondObject matcher:matcher attributedName:attributedName];
@@ -518,16 +526,21 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
             item.bookmarkName = triple.firstObject;
             item.userID = triple.thirdObject;
             [items addObject:item];
+            [urls addObject:item.url];
         }
     }
 }
 
 - (void)addURLToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
-           withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
+           withMatcher:(iTermMinimumSubsequenceMatcher *)matcher
+                 urls:(NSMutableSet<NSURL *> *)urls {
     if (![iTermBrowserGateway browserAllowedCheckingIfNot:NO]) {
         return;
     }
     NSURL *url = [NSURL URLWithString:matcher.query];
+    if ([urls containsObject:url]) {
+        return;
+    }
     if ([matcher.query hasPrefix:@"https://"] && url != nil) {
         iTermOpenQuicklyURLItem *item = [[iTermOpenQuicklyURLItem alloc] init];
 
@@ -541,6 +554,9 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
             item.identifier = matcher.query;
             item.url = [NSURL URLWithString:matcher.query];
             [items addObject:item];
+            [urls addObject:item.url];
+
+
         }
     }
 }
@@ -855,11 +871,12 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         }
 #endif
         if ([iTermBrowserGateway browserAllowedCheckingIfNot:NO]) {
+            NSMutableSet<NSURL *> *urls = [NSMutableSet set];
             if ([command supportsBookmarks]) {
-                [self addBookmarkToItems:items withMatcher:matcher];
+                [self addBookmarkToItems:items withMatcher:matcher urls:urls];
             }
             if ([command supportsURLs]) {
-                [self addURLToItems:items withMatcher:matcher];
+                [self addURLToItems:items withMatcher:matcher urls:urls];
             }
         }
     }
