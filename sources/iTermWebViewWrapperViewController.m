@@ -75,7 +75,8 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
     if ([URL isEqual:[NSURL URLWithString:@"about:blank"]]) {
         URL = self.backupURL;
     }
-    [[NSWorkspace sharedWorkspace] it_openURL:URL];
+    [[NSWorkspace sharedWorkspace] it_openURL:URL
+                                        style:iTermOpenStyleTab];
 }
 
 - (NSString *)browserName {

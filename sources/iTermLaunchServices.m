@@ -198,7 +198,8 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
         NSURLComponents *components = [NSURLComponents componentsWithURL:[NSURL fileURLWithPath:fullPath]
                                                  resolvingAgainstBaseURL:NO];
         components.fragment = fragment;
-        [[NSWorkspace sharedWorkspace] it_openURL:components.URL];
+        [[NSWorkspace sharedWorkspace] it_openURL:components.URL
+                                            style:iTermOpenStyleTab];
         return YES;
     }
     BOOL ok = [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:fullPath]];

@@ -44,11 +44,13 @@
     return [bundleIdentifier isEqualToString:@"com.apple.SecurityAgent"];
 }
 
-- (void)it_openURL:(NSURL *)url {
-    [self it_openURL:url configuration:[NSWorkspaceOpenConfiguration configuration]];
+- (void)it_openURL:(NSURL *)url style:(iTermOpenStyle)style {
+    [self it_openURL:url configuration:[NSWorkspaceOpenConfiguration configuration] style:iTermOpenStyleTab];
 }
 
-- (void)it_openURL:(NSURL *)url configuration:(NSWorkspaceOpenConfiguration *)configuration {
+- (void)it_openURL:(NSURL *)url
+     configuration:(NSWorkspaceOpenConfiguration *)configuration
+             style:(iTermOpenStyle)style {
     DLog(@"%@", url);
     if (!url) {
         return;
@@ -66,12 +68,16 @@
             if ([iTermBrowserGateway browserAllowedCheckingIfNot:YES] &&
                 ([bundleID isEqual:NSBundle.mainBundle.bundleIdentifier] || [self it_isDefaultAppForURL:url])) {
                 // We are the default app. Skip all the machinery and open it directly.
-                if ([self it_openURLLocally:url configuration:configuration]) {
+                if ([self it_openURLLocally:url
+                              configuration:configuration
+                                  openStyle:style]) {
                     return;
                 }
             }
             // This feature is new and this is the main way people will discover it. Sorry for the annoyance :(
-            if ([self it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:url configuration:configuration]) {
+            if ([self it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:url
+                                                            configuration:configuration
+                                                                    style:style]) {
                 return;
             }
         }
@@ -119,7 +125,9 @@ withApplicationAtURL:appURL
     return NO;
 }
 
-- (BOOL)it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:(NSURL *)url configuration:(NSWorkspaceOpenConfiguration *)configuration {
+- (BOOL)it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:(NSURL *)url
+                                              configuration:(NSWorkspaceOpenConfiguration *)configuration
+                                                      style:(iTermOpenStyle)style {
     if (![iTermBrowserGateway browserAllowedCheckingIfNot:YES]) {
         if ([iTermBrowserGateway shouldOfferPlugin]) {
             switch ([iTermBrowserGateway upsell]) {
@@ -145,14 +153,17 @@ withApplicationAtURL:appURL
                                silenceable:kiTermWarningTypePermanentlySilenceable
                                    heading:@"Open in iTerm2?"
                                     window:nil] == kiTermWarningSelection1) {
-        return [self it_openURLLocally:url configuration:configuration];
+        return [self it_openURLLocally:url configuration:configuration openStyle:style];
     }
     return NO;
 }
 
-- (BOOL)it_openURLLocally:(NSURL *)url configuration:(NSWorkspaceOpenConfiguration *)configuration {
-    return [[iTermController sharedInstance] openURLInNewBrowserTab:url
-                                                          selectTab:configuration.activates];
+- (BOOL)it_openURLLocally:(NSURL *)url
+            configuration:(NSWorkspaceOpenConfiguration *)configuration
+                openStyle:(iTermOpenStyle)openStyle {
+    return [[iTermController sharedInstance] openURL:url
+                                           openStyle:openStyle
+                                              select:configuration.activates];
 }
 
 static NSMutableSet<NSString * > *urlTokens;

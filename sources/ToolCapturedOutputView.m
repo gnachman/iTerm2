@@ -427,7 +427,8 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
 #pragma mark - Actions
 
 - (void)help:(id)sender {
-    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"http://iterm2.com/captured_output.html"]];
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"http://iterm2.com/captured_output.html"]
+                                        style:iTermOpenStyleTab];
 }
 
 @end

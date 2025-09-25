@@ -224,7 +224,15 @@ typedef NS_OPTIONS(NSUInteger, iTermSingleUseWindowOptions) {
                         didMakeSession:(void (^)(PTYSession *session))didMakeSession
                             completion:(void (^)(void))completion;
 - (NSWindow *)openSingleUseLoginWindowAndWrite:(NSData *)data completion:(void (^)(PTYSession *session))completion;
-- (BOOL)openURLInNewBrowserTab:(NSURL *)url selectTab:(BOOL)selectTab;
+
+typedef NS_ENUM(NSUInteger, iTermOpenStyle) {
+    iTermOpenStyleWindow,
+    iTermOpenStyleTab,
+    iTermOpenStyleVerticalSplit,
+    iTermOpenStyleHorizontalSplit
+};
+
+- (BOOL)openURL:(NSURL *)url openStyle:(iTermOpenStyle)openStyle select:(BOOL)select;
 - (WKWebView *)openSingleUserBrowserWindowWithURL:(NSURL *)url
                                     configuration:(WKWebViewConfiguration *)configuration
                                           options:(iTermSingleUseWindowOptions)options

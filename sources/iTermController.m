@@ -1659,13 +1659,33 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                               completion:completion];
 }
 
-- (BOOL)openURLInNewBrowserTab:(NSURL *)url selectTab:(BOOL)selectTab {
+- (BOOL)openURL:(NSURL *)url openStyle:(iTermOpenStyle)openStyle select:(BOOL)select {
     if (![iTermBrowserGateway browserAllowedCheckingIfNot:YES]) {
         return NO;
     }
     Profile *profile = [[ProfileModel sharedInstance] defaultBrowserProfile] ?: [[ProfileModel sessionsInstance] defaultBrowserProfileCreatingIfNeeded];
 
-    PseudoTerminal *term = [self currentTerminal];
+    PseudoTerminal *term = nil;
+    switch (openStyle) {
+        case iTermOpenStyleWindow:
+            term = nil;
+            break;
+        case iTermOpenStyleTab:
+            term = [self currentTerminal];
+            break;
+        case iTermOpenStyleVerticalSplit:
+        case iTermOpenStyleHorizontalSplit:
+            term = [self currentTerminal];
+            if (term) {
+                return [self openURLInSplitPane:url
+                                         window:term
+                                       vertical:openStyle == iTermOpenStyleVerticalSplit
+                                         select:select
+                                        profile:profile
+                               splitSessionGuid:term.currentSession.guid];
+            }
+            break;
+    }
     if (!term) {
         term = [[PseudoTerminal alloc] initWithSmartLayout:YES
                                                 windowType:WINDOW_TYPE_ACCESSORY
@@ -1679,11 +1699,30 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     iTermSessionLauncher *launcher = [[iTermSessionLauncher alloc] initWithProfile:profile windowController:term];
     launcher.url = url.absoluteString;
     launcher.hotkeyWindowType = iTermHotkeyWindowTypeNone;
-    launcher.makeKey = selectTab;
+    launcher.makeKey = select;
     launcher.canActivate = YES;
     launcher.respectTabbingMode = NO;
-    launcher.disableAutomaticTabSelection = !selectTab;
+    launcher.disableAutomaticTabSelection = !select;
     [launcher launchWithCompletion:nil];
+    return YES;
+}
+
+- (BOOL)openURLInSplitPane:(NSURL *)url
+                    window:(PseudoTerminal *)term
+                  vertical:(BOOL)verticalSplit
+                    select:(BOOL)select
+                   profile:(Profile *)profile
+          splitSessionGuid:(NSString *)guid {
+    [term openSplitPaneWithURL:url
+                   baseProfile:profile
+               nearSessionGuid:guid
+                      vertical:verticalSplit];
+    if (!select) {
+        PTYSession *session = [self sessionWithGUID:guid];
+        if (session) {
+            [term.currentTab setActiveSession:session];
+        }
+    }
     return YES;
 }
 

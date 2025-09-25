@@ -357,8 +357,9 @@
                             if (session.isBrowserSession) {
                                 [session openURL:item.url];
                             } else {
-                                [[iTermController sharedInstance] openURLInNewBrowserTab:item.url
-                                                                               selectTab:YES];
+                                [[iTermController sharedInstance] openURL:item.url
+                                                                openStyle:iTermOpenStyleTab
+                                                                select:YES];
                             }
                         } else if ([object isKindOfClass:[iTermOpenQuicklyURLItem class]]) {
                             iTermOpenQuicklyURLItem *item = [iTermOpenQuicklyURLItem castFrom:object];
@@ -366,8 +367,9 @@
                             if (session.isBrowserSession) {
                                 [session openURL:item.url];
                             } else {
-                                [[iTermController sharedInstance] openURLInNewBrowserTab:item.url
-                                                                               selectTab:YES];
+                                [[iTermController sharedInstance] openURL:item.url
+                                                                openStyle:iTermOpenStyleTab
+                                                                   select:YES];
                             }
                         }
                     }

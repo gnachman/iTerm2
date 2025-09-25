@@ -1234,7 +1234,7 @@ class ClickableTextView: NSTextView, NSTextStorageDelegate {
            clickedRange.contains(index) {
             action(window.convertPoint(toScreen: event.locationInWindow))
         } else if let url = linkURLAt(event: event) {
-            NSWorkspace.shared.it_open(url)
+            NSWorkspace.shared.it_open(url, style: .tab)
         }
         self.clickedRange = nil
         super.mouseUp(with: event)

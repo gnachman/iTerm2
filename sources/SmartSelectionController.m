@@ -242,11 +242,13 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
 }
 
 - (IBAction)syntaxHelp:(id)sender {
-    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://unicode-org.github.io/icu/userguide/strings/regexp.html"]];
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://unicode-org.github.io/icu/userguide/strings/regexp.html"]
+                                        style:iTermOpenStyleTab];
 }
 
 - (IBAction)help:(id)sender {
-    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"http://www.iterm2.com/smartselection.html"]];
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"http://www.iterm2.com/smartselection.html"]
+                                        style:iTermOpenStyleTab];
 }
 
 - (IBAction)addRule:(id)sender {

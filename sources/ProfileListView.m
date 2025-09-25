@@ -473,7 +473,8 @@ const CGFloat kDefaultTagsWidth = 80;
 }
 
 - (void)openHowToSearchHelp:(id)sender {
-    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/search_syntax.html"]];
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/search_syntax.html"]
+                                        style:iTermOpenStyleTab];
 }
 
 - (void)setUnderlyingDatasource:(ProfileModel*)dataSource {

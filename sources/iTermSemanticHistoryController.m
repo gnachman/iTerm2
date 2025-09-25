@@ -698,7 +698,8 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
                                   configuration:[NSWorkspaceOpenConfiguration configuration]
                               completionHandler:nil];
     } else {
-        [[NSWorkspace sharedWorkspace] it_openURL:url];
+        [[NSWorkspace sharedWorkspace] it_openURL:url
+                                            style:iTermOpenStyleTab];
     }
 }
 

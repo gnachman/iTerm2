@@ -1272,7 +1272,8 @@ enum {
 }
 
 - (IBAction)installPlugin:(id)sender {
-    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/ai-plugin.html"]];
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/ai-plugin.html"]
+                                        style:iTermOpenStyleTab];
 }
 
 - (void)revealPlugin:(id)sender {
@@ -1327,7 +1328,8 @@ enum {
                                heading:@"Window Restoration Disabled"
                                 window:self.view.window];
     if (selection == kiTermWarningSelection0) {
-        [[NSWorkspace sharedWorkspace] it_openURL:[NSURL fileURLWithPath:path]];
+        [[NSWorkspace sharedWorkspace] it_openURL:[NSURL fileURLWithPath:path]
+                                            style:iTermOpenStyleTab];
     }
 }
 
@@ -1350,7 +1352,8 @@ enum {
 }
 
 - (IBAction)pythonAPIAuthHelp:(id)sender {
-    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/python-api-auth.html"]];
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/python-api-auth.html"]
+                                        style:iTermOpenStyleTab];
 }
 
 - (IBAction)resetAIPrompt:(id)sender {

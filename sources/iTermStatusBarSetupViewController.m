@@ -327,7 +327,8 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (IBAction)help:(id)sender {
-    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/status-bar-layout"]];
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/status-bar-layout"]
+                                        style:iTermOpenStyleTab];
 }
 
 - (void)advancedPanelDidClose {

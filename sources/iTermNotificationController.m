@@ -372,7 +372,8 @@
 
     NSURL *url = [NSURL URLWithString:clickContext[@"URL"]];
     if (url) {
-        [[NSWorkspace sharedWorkspace] it_openURL:url];
+        [[NSWorkspace sharedWorkspace] it_openURL:url
+                                            style:iTermOpenStyleTab];
         return;
     }
 

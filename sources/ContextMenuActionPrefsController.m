@@ -235,7 +235,8 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
 }
 
 - (IBAction)help:(id)sender {
-    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/documentation-smart-selection.html"]];
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/documentation-smart-selection.html"]
+                                        style:iTermOpenStyleTab];
 }
 
 - (IBAction)didToggleUseInterpolatedStrings:(id)sender {

@@ -307,7 +307,8 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
             return YES;
             break;
         case kiTermWarningSelection1:  // lean more
-            [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://gitlab.com/gnachman/iterm2/-/wikis/Deprecated-Key-Mappings"]];
+            [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://gitlab.com/gnachman/iterm2/-/wikis/Deprecated-Key-Mappings"]
+                                                style:iTermOpenStyleTab];
             return [self askToRemoveDeprecatedKeyMappings:specialReason];
             break;
         default:  // cancel

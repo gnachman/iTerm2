@@ -1423,7 +1423,7 @@ extension Conductor {
             case .kiTermWarningSelection0:  // Download
                 download(path: path)
             case .kiTermWarningSelection1:  // View
-                iTermController.sharedInstance().openURL(inNewBrowserTab: url, selectTab: true)
+                iTermController.sharedInstance().open(url, openStyle: .tab, select: true)
             default:
                 break
             }

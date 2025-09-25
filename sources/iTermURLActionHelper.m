@@ -277,9 +277,9 @@
     if (background) {
         NSWorkspaceOpenConfiguration *config = [NSWorkspaceOpenConfiguration configuration];
         config.activates = NO;
-        [[NSWorkspace sharedWorkspace] it_openURL:url configuration:config];
+        [[NSWorkspace sharedWorkspace] it_openURL:url configuration:config style:iTermOpenStyleTab];
     } else {
-        [[NSWorkspace sharedWorkspace] it_openURL:url];
+        [[NSWorkspace sharedWorkspace] it_openURL:url style:iTermOpenStyleTab];
     }
 }
 

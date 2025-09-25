@@ -7,6 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "iTermController.h"
 
 @interface NSWorkspace (iTerm)
 
@@ -14,8 +15,10 @@
 - (NSString *)temporaryFileNameWithPrefix:(NSString *)prefix suffix:(NSString *)suffix;
 
 - (BOOL)it_securityAgentIsActive;
-- (void)it_openURL:(NSURL *)url;
-- (void)it_openURL:(NSURL *)url configuration:(NSWorkspaceOpenConfiguration *)configuration;
+- (void)it_openURL:(NSURL *)url style:(iTermOpenStyle)style;
+- (void)it_openURL:(NSURL *)url
+     configuration:(NSWorkspaceOpenConfiguration *)configuration
+             style:(iTermOpenStyle)style;
 - (NSString *)it_newToken;
 - (BOOL)it_checkToken:(NSString *)token;
 - (void)it_revealInFinder:(NSString *)path;
