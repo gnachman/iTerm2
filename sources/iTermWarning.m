@@ -440,6 +440,14 @@ static BOOL gShowingWarning;
     return NO;
 }
 
++ (NSNumber *)conditionalSavedSelectionForIdentifier:(NSString *)identifier {
+    if (![self identifierIsSilenced:identifier]) {
+        return nil;
+    }
+    const iTermWarningSelection selection = [self savedSelectionForIdentifier:identifier];
+    return @(selection);
+}
+
 + (NSString *)selectionKeyForIdentifier:(NSString *)identifier {
     return [NSString stringWithFormat:@"%@_selection", identifier];
 }

@@ -107,6 +107,15 @@ class iTermBrowserGateway: NSObject {
         }
     }
 
+    private static let upsellWarningIdentifier = "NoSyncBrowserUpsell"
+    @objc
+    static func wouldUpsell() -> Bool {
+        if let n = iTermWarning.conditionalSavedSelection(forIdentifier: upsellWarningIdentifier) {
+            return n.intValue == iTermWarningSelection.kiTermWarningSelection0.rawValue
+        }
+        return true
+    }
+
     // Return values:
     //   .true -> User will download plugin
     //   .false -> Use system browser
@@ -116,7 +125,7 @@ class iTermBrowserGateway: NSObject {
         let selection = iTermWarning.show(withTitle: "iTerm2 can display web pages! But first you must download the Browser Plugin.",
                                           actions: ["Download", "Use System Browser", "Cancel"],
                                           accessory: nil,
-                                          identifier: "NoSyncBrowserUpsell",
+                                          identifier: upsellWarningIdentifier,
                                           silenceable: .kiTermWarningTypePermanentlySilenceable,
                                           heading: "Plugin Required",
                                           window: nil)

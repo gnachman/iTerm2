@@ -69,6 +69,8 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 + (void)setWarningHandler:(id<iTermWarningHandler>)handler;
 + (id<iTermWarningHandler>)warningHandler;
 + (BOOL)showingWarning;
+// Nil if nothing saved, otherwise an iTermWarningSelection.
++ (NSNumber * _Nullable)conditionalSavedSelectionForIdentifier:(NSString *)identifier;
 
 // Show a warning, optionally with a suppression checkbox. It may not be shown
 // if it was previously suppressed.
