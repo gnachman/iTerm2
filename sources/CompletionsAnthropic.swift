@@ -772,7 +772,7 @@ struct AnthropicRequestBuilder {
 
         let bodyEncoder = JSONEncoder()
         let bodyData = try bodyEncoder.encode(body)
-        print("REQUEST:\n\(bodyData.lossyString)")
+        DLog("REQUEST:\n\(bodyData.lossyString)")
         return bodyData
     }
 }
