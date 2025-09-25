@@ -52,6 +52,7 @@
             completion:(void (^)(PTYSession *session))completion {
     return [self launchBookmark:bookmarkData
                      inTerminal:theTerm
+                          style:iTermOpenStyleTab
                         withURL:nil
                        hotkeyWindowType:iTermHotkeyWindowTypeNone
                         makeKey:YES
@@ -66,6 +67,7 @@
 
 + (void)launchBookmark:(NSDictionary *)bookmarkData
             inTerminal:(PseudoTerminal *)theTerm
+                 style:(iTermOpenStyle)style
                withURL:(NSString *)url
       hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                makeKey:(BOOL)makeKey
@@ -77,6 +79,7 @@
         didMakeSession:(void (^)(PTYSession *))didMakeSession
             completion:(void (^ _Nullable)(PTYSession *, BOOL))completion {
     iTermSessionLauncher *launcher = [[iTermSessionLauncher alloc] initWithProfile:bookmarkData windowController:theTerm];
+    launcher.style = style;
     launcher.url = url;
     launcher.hotkeyWindowType = hotkeyWindowType;
     launcher.makeKey = makeKey;
@@ -117,6 +120,7 @@
                windowController:(nullable PseudoTerminal *)windowController {
     self = [super init];
     if (self) {
+        _style = iTermOpenStyleTab;
         _profile = [profile copy];
         _windowController = windowController;
         _makeKey = YES;
@@ -300,9 +304,27 @@
     PTYSession *session = [windowController.sessionFactory newSessionWithProfile:profile
                                                                           parent:nil];
     const BOOL saved = windowController.automaticallySelectNewTabs;
-    windowController.automaticallySelectNewTabs = !self.disableAutomaticTabSelection;
-    [windowController addSessionInNewTab:session];
-    windowController.automaticallySelectNewTabs = saved;
+    switch (_style) {
+        case iTermOpenStyleVerticalSplit:
+        case iTermOpenStyleHorizontalSplit:
+            if (windowController.numberOfTabs > 0) {
+                [windowController splitVertically:_style == iTermOpenStyleVerticalSplit
+                                           before:NO
+                                    addingSession:session
+                                    targetSession:windowController.currentSession
+                                     performSetup:YES];
+                break;
+            } else {
+                // FALL THROUGH - create a new tab
+            }
+
+        case iTermOpenStyleWindow:
+        case iTermOpenStyleTab:
+            windowController.automaticallySelectNewTabs = !self.disableAutomaticTabSelection;
+            [windowController addSessionInNewTab:session];
+            windowController.automaticallySelectNewTabs = saved;
+            break;
+    }
     __weak __typeof(self) weakSelf = self;
 
     if ([[NSNumber castFrom:profile[KEY_LOCK_SCROLL_ON_LAUNCH]] boolValue]) {

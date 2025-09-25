@@ -101,6 +101,7 @@
 
     [iTermSessionLauncher launchBookmark:dictProfile
                               inTerminal:nil
+                                   style:iTermOpenStyleTab
                                  withURL:nil
                         hotkeyWindowType:iTermHotkeyWindowTypeNone
                                  makeKey:YES

@@ -1362,8 +1362,13 @@ iTermCommandInfoViewControllerDelegate>
     return self.lineHeight;
 }
 
-- (void)urlActionHelper:(iTermURLActionHelper *)helper launchProfileInCurrentTerminal:(Profile *)profile withURL:(NSURL *)url {
-    [self.delegate launchProfileInCurrentTerminal:profile withURL:url.absoluteString];
+- (void)urlActionHelper:(iTermURLActionHelper *)helper
+launchProfileInCurrentTerminal:(Profile *)profile
+                withURL:(NSURL *)url
+                  style:(iTermOpenStyle)style {
+    [self.delegate launchProfileInCurrentTerminal:profile
+                                          withURL:url.absoluteString
+                                            style:style];
 }
 
 - (iTermVariableScope *)urlActionHelperScope:(iTermURLActionHelper *)helper {

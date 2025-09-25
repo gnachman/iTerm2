@@ -109,7 +109,9 @@
     return canceller;
 }
 
-- (void)openTargetWithEvent:(NSEvent *)event inBackground:(BOOL)openInBackground {
+- (void)openTargetWithEvent:(NSEvent *)event
+               inBackground:(BOOL)openInBackground
+                      style:(iTermOpenStyle)style {
     // Command click in place.
     const VT100GridCoord coord = [self.delegate urlActionHelper:self coordForEvent:event allowRightMarginOverflow:NO];
     __weak __typeof(self) weakSelf = self;
@@ -124,12 +126,15 @@
                             [weakSelf finishOpeningTargetWithEvent:event
                                                              coord:coord
                                                       inBackground:openInBackground
+                                                             style:style
                                                             action:action
                                                         generation:generation];
                         }];
 }
 
-- (void)findUrlInString:(NSString *)aURLString andOpenInBackground:(BOOL)background {
+- (void)findUrlInString:(NSString *)aURLString
+    andOpenInBackground:(BOOL)background
+                  style:(iTermOpenStyle)style {
     DLog(@"findUrlInString:%@", aURLString);
     NSRange range = [aURLString rangeOfURLInString];
     if (range.location == NSNotFound) {
@@ -142,7 +147,7 @@
         return;
     }
     NSURL *url = [NSURL URLWithUserSuppliedString:trimmedURLString];
-    [self openURL:url inBackground:background workingDirectory:nil];
+    [self openURL:url inBackground:background workingDirectory:nil style:style];
 }
 
 - (void)downloadFileAtSecureCopyPath:(SCPPath *)scpPath
@@ -240,12 +245,18 @@
 
 // If iTerm2 is the handler for the scheme, then the profile is launched directly.
 // Otherwise it's passed to the OS to launch.
-- (void)openURL:(NSURL *)url inBackground:(BOOL)background workingDirectory:(NSString *)workingDirectory {
+- (void)openURL:(NSURL *)url
+   inBackground:(BOOL)background
+workingDirectory:(NSString *)workingDirectory
+          style:(iTermOpenStyle)style {
     DLog(@"openURL:%@ inBackground:%@", url, @(background));
 
     Profile *profile = [[iTermLaunchServices sharedInstance] profileForScheme:[url scheme]];
     if (profile) {
-        [self.delegate urlActionHelper:self launchProfileInCurrentTerminal:profile withURL:url];
+        [self.delegate urlActionHelper:self
+        launchProfileInCurrentTerminal:profile
+                               withURL:url
+                                 style:style];
         return;
     }
     if ([url.scheme isEqualToString:@"file"] && url.fragment) {
@@ -277,15 +288,16 @@
     if (background) {
         NSWorkspaceOpenConfiguration *config = [NSWorkspaceOpenConfiguration configuration];
         config.activates = NO;
-        [[NSWorkspace sharedWorkspace] it_openURL:url configuration:config style:iTermOpenStyleTab];
+        [[NSWorkspace sharedWorkspace] it_openURL:url configuration:config style:style];
     } else {
-        [[NSWorkspace sharedWorkspace] it_openURL:url style:iTermOpenStyleTab];
+        [[NSWorkspace sharedWorkspace] it_openURL:url style:style];
     }
 }
 
 - (void)finishOpeningTargetWithEvent:(NSEvent *)event
                                coord:(VT100GridCoord)coord
                         inBackground:(BOOL)openInBackground
+                               style:(iTermOpenStyle)style
                               action:(URLAction *)action
                           generation:(NSInteger)generation {
     if (generation != _openTargetGeneration) {
@@ -330,7 +342,8 @@
                                    completion:^(BOOL ok) {
                                        if (!ok) {
                                            [weakSelf findUrlInString:action.string
-                                                 andOpenInBackground:openInBackground];
+                                                 andOpenInBackground:openInBackground
+                                           style:style];
                                        }
                                    }];
                 break;
@@ -352,7 +365,10 @@
                                            displayName:url.path.lastPathComponent
                                         locationInView:action.visualRange.coordRange];
                 } else {
-                    [self openURL:url inBackground:openInBackground workingDirectory:action.workingDirectory];
+                    [self openURL:url
+                     inBackground:openInBackground
+                 workingDirectory:action.workingDirectory
+                            style:style];
                 }
                 break;
             }

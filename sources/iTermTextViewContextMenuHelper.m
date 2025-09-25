@@ -298,6 +298,8 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
         [item action] == @selector(addNote:) ||
         [item action] == @selector(mail:) ||
         [item action] == @selector(browse:) ||
+        [item action] == @selector(openURLInVerticalSplitPane:) ||
+        [item action] == @selector(openURLInHorizontalSplitPane:) ||
         [item action] == @selector(quickLook:) ||
         [item action] == @selector(searchInBrowser:) ||
         [item action] == @selector(addTrigger:) ||
@@ -494,7 +496,14 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
         [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
     };
     add(scpTitle, @selector(downloadWithSCP:));
-    add(@"Open Selection as URL", @selector(browse:));
+    if (shortSelectedText) {
+        add(@"Open Selection as URL", @selector(browse:));
+        if ([[NSWorkspace sharedWorkspace] it_urlIsConditionallyLocallyOpenable:[NSURL URLWithString:shortSelectedText]]) {
+            add(@"Open URL in Vertical Split Pane", @selector(openURLInVerticalSplitPane:));
+            add(@"Open URL in Horizontal Split Pane", @selector(openURLInHorizontalSplitPane:));
+            [theMenu addItem:[NSMenuItem separatorItem]];
+        }
+    }
     if (shortSelectedText && [self.delegate contextMenu:self canQuickLookURL:[NSURL URLWithUserSuppliedString:shortSelectedText]]) {
         add(@"Quick Look Link", @selector(quickLook:));
     }
@@ -1013,7 +1022,21 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
 }
 
 - (void)browse:(id)sender {
-    [_urlActionHelper findUrlInString:[self.delegate contextMenuSelectedText:self capped:0] andOpenInBackground:NO];
+    [_urlActionHelper findUrlInString:[self.delegate contextMenuSelectedText:self capped:0]
+                  andOpenInBackground:NO
+                                style:iTermOpenStyleTab];
+}
+
+- (void)openURLInVerticalSplitPane:(id)sender {
+    [_urlActionHelper findUrlInString:[self.delegate contextMenuSelectedText:self capped:0]
+                  andOpenInBackground:NO
+                                style:iTermOpenStyleVerticalSplit];
+}
+
+- (void)openURLInHorizontalSplitPane:(id)sender {
+    [_urlActionHelper findUrlInString:[self.delegate contextMenuSelectedText:self capped:0]
+                  andOpenInBackground:NO
+                                style:iTermOpenStyleHorizontalSplit];
 }
 
 - (void)quickLook:(id)sender {
@@ -1031,7 +1054,9 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
     NSURL *url = [NSURL urlByReplacingFormatSpecifier:@"%@"
                                              inString:[iTermAdvancedSettingsModel searchCommand]
                                             withValue:[self.delegate contextMenuSelectedText:self capped:0]];
-    [_urlActionHelper findUrlInString:url.absoluteString andOpenInBackground:NO];
+    [_urlActionHelper findUrlInString:url.absoluteString
+                  andOpenInBackground:NO
+                                style:iTermOpenStyleTab];
 }
 
 - (void)addTrigger:(id)sender {

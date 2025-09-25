@@ -41,6 +41,7 @@
         [self suspendExecution];
         [iTermSessionLauncher launchBookmark:profile
                                   inTerminal:nil
+                                       style:iTermOpenStyleTab
                                      withURL:nil
                             hotkeyWindowType:iTermHotkeyWindowTypeNone
                                      makeKey:YES

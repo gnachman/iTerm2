@@ -194,7 +194,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return nil;
 }
 
-- (void)launchProfileInCurrentTerminal:(NSDictionary *)profile withURL:(NSString *)url {
+- (void)launchProfileInCurrentTerminal:(NSDictionary *)profile withURL:(NSString *)url style:(iTermOpenStyle)style {
 }
 
 - (void)textViewSplitVertically:(BOOL)vertically withProfileGuid:(NSString *)guid {

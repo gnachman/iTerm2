@@ -504,7 +504,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // alt-click and then open the link. Note that cmd-alt-click isn't handled here
             // because you won't get here if alt is pressed. Note that openTargetWithEvent:
             // may not do anything if the pointer isn't over a clickable string.
-            [self.mouseDelegate mouseHandlerOpenTargetWithEvent:event inBackground:NO];
+            [self.mouseDelegate mouseHandlerOpenTargetWithEvent:event
+                                                   inBackground:NO
+                                                          style:iTermOpenStyleTab];
             result |= iTermClickSideEffectsOpenTarget;
         }
         DLog(@"Returning from mouseUp because the mouse event was reported.");
@@ -567,7 +569,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         VT100GridCoord clickCoord = VT100GridCoordInvalid;
 
         if (willFollowLink) {
-            [self.mouseDelegate mouseHandlerOpenTargetWithEvent:event inBackground:altPressed];
+            [self.mouseDelegate mouseHandlerOpenTargetWithEvent:event
+                                                   inBackground:altPressed
+                                                          style:iTermOpenStyleTab];
             result |= iTermClickSideEffectsOpenTarget;
         } else {
             clickCoord =

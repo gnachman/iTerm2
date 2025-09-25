@@ -11150,6 +11150,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         [copyOfTab updatePaneTitles];
         [iTermSessionLauncher launchBookmark:self.currentSession.profile
                                   inTerminal:nil
+                                       style:iTermOpenStyleTab
                                      withURL:nil
                             hotkeyWindowType:iTermHotkeyWindowTypeNone
                                      makeKey:YES

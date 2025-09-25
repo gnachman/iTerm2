@@ -45,7 +45,9 @@
 }
 
 - (void)it_openURL:(NSURL *)url style:(iTermOpenStyle)style {
-    [self it_openURL:url configuration:[NSWorkspaceOpenConfiguration configuration] style:iTermOpenStyleTab];
+    [self it_openURL:url
+       configuration:[NSWorkspaceOpenConfiguration configuration]
+               style:style];
 }
 
 - (BOOL)it_urlIsWeb:(NSURL *)url {
@@ -80,7 +82,6 @@
     if (![self it_localBrowserCouldHypotheticallyHandleURL:url]) {
         return NO;
     }
-    NSString *bundleID = [iTermAdvancedSettingsModel browserBundleID];
     if ([self it_isDefaultBrowserForWebURL:url]) {
         return YES;
     }
@@ -211,16 +212,28 @@ withApplicationAtURL:appURL
         }
         return YES;
     }
-    if ([iTermWarning showWarningWithTitle:@"iTerm2 can display web pages! Would you like to open this link in iTerm2?"
-                                   actions:@[ @"Use Default Browser", @"Open in iTerm2"]
-                                 accessory:nil
-                                identifier:identifier
-                               silenceable:kiTermWarningTypePermanentlySilenceable
-                                   heading:@"Open in iTerm2?"
-                                    window:nil] == kiTermWarningSelection1) {
-        return [self it_openURLLocally:url configuration:configuration openStyle:style];
+    BOOL consent = NO;
+    switch (style) {
+        case iTermOpenStyleWindow:
+        case iTermOpenStyleTab:
+            consent = ([iTermWarning showWarningWithTitle:@"iTerm2 can display web pages! Would you like to open this link in iTerm2?"
+                                                  actions:@[ @"Use Default Browser", @"Open in iTerm2"]
+                                                accessory:nil
+                                               identifier:identifier
+                                              silenceable:kiTermWarningTypePermanentlySilenceable
+                                                  heading:@"Open in iTerm2?"
+                                                   window:nil] == kiTermWarningSelection1);
+            break;
+        case iTermOpenStyleVerticalSplit:
+        case iTermOpenStyleHorizontalSplit:
+            // Implied consent - no way to open in a split otherwise!
+            consent = YES;
+            break;
     }
-    return NO;
+    if (!consent) {
+        return NO;
+    }
+    return [self it_openURLLocally:url configuration:configuration openStyle:style];
 }
 
 - (BOOL)it_openURLLocally:(NSURL *)url

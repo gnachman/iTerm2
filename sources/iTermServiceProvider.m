@@ -44,6 +44,7 @@
     __block PseudoTerminal *pseudoTerminal = windowController;
     [iTermSessionLauncher launchBookmark:nil
                               inTerminal:pseudoTerminal
+                                   style:iTermOpenStyleTab
                                  withURL:nil
                         hotkeyWindowType:iTermHotkeyWindowTypeNone
                                  makeKey:YES

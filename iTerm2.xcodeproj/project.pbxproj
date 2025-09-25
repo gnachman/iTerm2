@@ -3373,6 +3373,7 @@
 		A6AE58962E820FFF00762C1D /* AppSignatureValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AE58952E820FFF00762C1D /* AppSignatureValidator.swift */; };
 		A6AE58CB2E83463300762C1D /* iTermSymbolicHotkeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AE58CA2E83463300762C1D /* iTermSymbolicHotkeys.swift */; };
 		A6AE58E52E84936000762C1D /* iTermBrowserPluginFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AE58E42E84936000762C1D /* iTermBrowserPluginFinder.swift */; };
+		A6AE59072E85E71100762C1D /* iTermOpenStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE59062E85E70E00762C1D /* iTermOpenStyle.h */; };
 		A6AF79C62E06586A008D77BA /* BrowserBookmarks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79C52E06586A008D77BA /* BrowserBookmarks.swift */; };
 		A6AF79CA2E06593C008D77BA /* BrowserBookmarkTags.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79C92E06593C008D77BA /* BrowserBookmarkTags.swift */; };
 		A6AF79CC2E065AA5008D77BA /* bookmarks-page.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AF79CB2E065AA5008D77BA /* bookmarks-page.html */; };
@@ -8180,6 +8181,7 @@
 		A6AE58952E820FFF00762C1D /* AppSignatureValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSignatureValidator.swift; sourceTree = "<group>"; };
 		A6AE58CA2E83463300762C1D /* iTermSymbolicHotkeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermSymbolicHotkeys.swift; sourceTree = "<group>"; };
 		A6AE58E42E84936000762C1D /* iTermBrowserPluginFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserPluginFinder.swift; sourceTree = "<group>"; };
+		A6AE59062E85E70E00762C1D /* iTermOpenStyle.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermOpenStyle.h; sourceTree = "<group>"; };
 		A6AF79C52E06586A008D77BA /* BrowserBookmarks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserBookmarks.swift; sourceTree = "<group>"; };
 		A6AF79C92E06593C008D77BA /* BrowserBookmarkTags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserBookmarkTags.swift; sourceTree = "<group>"; };
 		A6AF79CB2E065AA5008D77BA /* bookmarks-page.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "bookmarks-page.html"; sourceTree = "<group>"; };
@@ -9509,7 +9511,6 @@
 				A6A13AA018C2D23300B241ED /* iTermColorMap.h */,
 				A6E7474B188C6394005355CF /* iTermCommandHistoryCommandUseMO+Additions.h */,
 				A6E74746188C6344005355CF /* iTermCommandHistoryEntryMO+Additions.h */,
-				1D407A2714BABE8700BD5035 /* iTermController.h */,
 				1D4F359F1813386600699FDF /* iTermCursor.h */,
 				A69B45BB197CB78B00F5444D /* iTermDragHandleView.h */,
 				1DF121071C344DF100E39F1F /* iTermDynamicProfileManager.h */,
@@ -11525,6 +11526,7 @@
 		A63F40AC1842988A003A6A6D /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				A6AE59062E85E70E00762C1D /* iTermOpenStyle.h */,
 				A6E312CF2E3C1D3E008222DE /* iTermTriState.h */,
 				A605128E2E38525500507125 /* PseudoTerminal.swift */,
 				A6A3CE162E3844C400710B09 /* TerminalWindowSizeHelper.swift */,
@@ -11558,6 +11560,7 @@
 				A6D463E4240447AF005D073D /* iTermBackgroundColorView.h */,
 				A6D463E5240447AF005D073D /* iTermBackgroundColorView.m */,
 				A6F1B3BA269379D000546767 /* iTermClickSideEffects.h */,
+				1D407A2714BABE8700BD5035 /* iTermController.h */,
 				E8A66F030272453F03A80106 /* iTermController.m */,
 				A6AB55E22173E18900142244 /* iTermCumulativeSumCache.h */,
 				A6AB55E32173E18900142244 /* iTermCumulativeSumCache.mm */,
@@ -15197,6 +15200,7 @@
 				A6352256238CA38A00FED5BC /* iTermMultiServerJobManager.h in Headers */,
 				A66719231DCE36C3000CE608 /* QLPreviewPanel+iTerm.h in Headers */,
 				A66719241DCE36C3000CE608 /* iTermCommandHistoryCommandUseMO+CoreDataProperties.h in Headers */,
+				A6AE59072E85E71100762C1D /* iTermOpenStyle.h in Headers */,
 				A653F68024CF4EC70062377E /* FMDatabaseAdditions.h in Headers */,
 				A66719251DCE36C3000CE608 /* iTermBoxDrawingBezierCurveFactory.h in Headers */,
 				A666D5E8221A191600D6184A /* iTermVariableScope+Session.h in Headers */,

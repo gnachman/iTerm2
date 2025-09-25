@@ -166,6 +166,7 @@ static NSString *const kArrangement = @"Arrangement";
         if (url) {
             [iTermSessionLauncher launchBookmark:self.profile
                                       inTerminal:windowController
+                                           style:iTermOpenStyleTab
                                          withURL:url.absoluteString
                                 hotkeyWindowType:[self hotkeyWindowType]
                                          makeKey:YES
@@ -1001,6 +1002,7 @@ static NSString *const kArrangement = @"Arrangement";
     self.birthingWindow = YES;
     [iTermSessionLauncher launchBookmark:hotkeyProfile
                               inTerminal:nil
+                                   style:iTermOpenStyleTab
                                  withURL:url.absoluteString
                         hotkeyWindowType:[self hotkeyWindowType]
                                  makeKey:YES

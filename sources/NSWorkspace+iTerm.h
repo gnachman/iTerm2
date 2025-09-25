@@ -22,5 +22,6 @@
 - (NSString *)it_newToken;
 - (BOOL)it_checkToken:(NSString *)token;
 - (void)it_revealInFinder:(NSString *)path;
+- (BOOL)it_urlIsConditionallyLocallyOpenable:(NSURL *)url;
 
 @end

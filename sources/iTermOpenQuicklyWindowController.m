@@ -247,6 +247,7 @@
                 // Create a new non-hotkey window
                 [iTermSessionLauncher launchBookmark:profile
                                           inTerminal:[[iTermController sharedInstance] currentTerminal]
+                                               style:iTermOpenStyleTab
                                              withURL:nil
                                     hotkeyWindowType:iTermHotkeyWindowTypeNone
                                              makeKey:YES

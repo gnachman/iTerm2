@@ -27,6 +27,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "ITAddressBookMgr.h"
+#import "iTermOpenStyle.h"
 #import "iTermRestorableSession.h"
 #import "PTYWindow.h"
 
@@ -224,13 +225,6 @@ typedef NS_OPTIONS(NSUInteger, iTermSingleUseWindowOptions) {
                         didMakeSession:(void (^)(PTYSession *session))didMakeSession
                             completion:(void (^)(void))completion;
 - (NSWindow *)openSingleUseLoginWindowAndWrite:(NSData *)data completion:(void (^)(PTYSession *session))completion;
-
-typedef NS_ENUM(NSUInteger, iTermOpenStyle) {
-    iTermOpenStyleWindow,
-    iTermOpenStyleTab,
-    iTermOpenStyleVerticalSplit,
-    iTermOpenStyleHorizontalSplit
-};
 
 - (BOOL)openURL:(NSURL *)url openStyle:(iTermOpenStyle)openStyle select:(BOOL)select;
 - (WKWebView *)openSingleUserBrowserWindowWithURL:(NSURL *)url

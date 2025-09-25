@@ -3193,10 +3193,12 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (void)launchProfileInCurrentTerminal:(Profile *)profile
-                               withURL:(NSString *)url {
+                               withURL:(NSString *)url
+                                 style:(iTermOpenStyle)style {
     PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
     [iTermSessionLauncher launchBookmark:profile
                               inTerminal:term
+                                   style:style
                                  withURL:url
                         hotkeyWindowType:iTermHotkeyWindowTypeNone
                                  makeKey:NO

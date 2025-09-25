@@ -41,6 +41,7 @@
     [scriptCommand suspendExecution];
     [iTermSessionLauncher launchBookmark:profile
                               inTerminal:(PseudoTerminal *)self.ptyDelegate
+                                   style:iTermOpenStyleTab
                                  withURL:nil
                         hotkeyWindowType:iTermHotkeyWindowTypeNone
                                  makeKey:YES
@@ -72,6 +73,7 @@
     [scriptCommand suspendExecution];
     [iTermSessionLauncher launchBookmark:profile
                               inTerminal:(PseudoTerminal *)self.ptyDelegate
+                                   style:iTermOpenStyleTab
                                  withURL:nil
                         hotkeyWindowType:iTermHotkeyWindowTypeNone
                                  makeKey:YES

@@ -7,6 +7,7 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "iTermOpenStyle.h"
 #import "ProfileModel.h"
 #import "VT100GridTypes.h"
 
@@ -55,7 +56,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSPoint)urlActionHelper:(iTermURLActionHelper *)helper pointForCoord:(VT100GridCoord)coord;
 - (NSScreen *)urlActionHelperScreen:(iTermURLActionHelper *)helper;
 - (CGFloat)urlActionHelperLineHeight:(iTermURLActionHelper *)helper;
-- (void)urlActionHelper:(iTermURLActionHelper *)helper launchProfileInCurrentTerminal:(Profile *)profile withURL:(NSURL *)url;
+- (void)urlActionHelper:(iTermURLActionHelper *)helper
+launchProfileInCurrentTerminal:(Profile *)profile
+                withURL:(NSURL *)url
+                  style:(iTermOpenStyle)style;
 - (iTermVariableScope *)urlActionHelperScope:(iTermURLActionHelper *)helper;
 - (id<iTermObject>)urlActionHelperOwner:(iTermURLActionHelper *)helper;
 - (void)urlActionHelperCopySelectionIfNeeded:(iTermURLActionHelper *)helper;
@@ -81,9 +85,11 @@ NS_ASSUME_NONNULL_BEGIN
                                                 alternate:(BOOL)alternate
                                                completion:(void (^)(URLAction * _Nullable))completion;
 
-- (void)openTargetWithEvent:(NSEvent *)event inBackground:(BOOL)openInBackground;
+- (void)openTargetWithEvent:(NSEvent *)event
+               inBackground:(BOOL)openInBackground
+                      style:(iTermOpenStyle)style;
 
-- (void)findUrlInString:(NSString *)aURLString andOpenInBackground:(BOOL)background;
+- (void)findUrlInString:(NSString *)aURLString andOpenInBackground:(BOOL)background style:(iTermOpenStyle)style;
 
 - (void)downloadFileAtSecureCopyPath:(SCPPath *)scpPath
                          displayName:(NSString *)name

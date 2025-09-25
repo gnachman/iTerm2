@@ -21,6 +21,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nullable, nonatomic, copy) NSString *url;
 
+// How should it be opened? Tab, window, split pane?
+@property (nonatomic) iTermOpenStyle style;
+
 // Make the new session key? Defaults to YES
 @property (nonatomic) BOOL makeKey;
 
@@ -66,6 +69,7 @@ NS_ASSUME_NONNULL_BEGIN
 // URL.
 + (void)launchBookmark:(nullable NSDictionary *)bookmarkData
             inTerminal:(nullable PseudoTerminal *)theTerm
+                 style:(iTermOpenStyle)style
                withURL:(nullable NSString *)url
       hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                makeKey:(BOOL)makeKey

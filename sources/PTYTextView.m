@@ -6583,8 +6583,11 @@ static NSString *iTermStringFromRange(NSRange range) {
 }
 
 - (void)mouseHandlerOpenTargetWithEvent:(NSEvent *)event
-                           inBackground:(BOOL)inBackground {
-    [_urlActionHelper openTargetWithEvent:event inBackground:inBackground];
+                           inBackground:(BOOL)inBackground
+                                  style:(iTermOpenStyle)style {
+    [_urlActionHelper openTargetWithEvent:event
+                             inBackground:inBackground
+                                    style:style];
 }
 
 - (BOOL)mouseHandlerIsScrolledToBottom:(PTYMouseHandler *)handler {
@@ -7029,11 +7032,11 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
 }
 
 - (void)openTargetWithEvent:(NSEvent *)event {
-    [_urlActionHelper openTargetWithEvent:event inBackground:NO];
+    [_urlActionHelper openTargetWithEvent:event inBackground:NO style:iTermOpenStyleTab];
 }
 
 - (void)openTargetInBackgroundWithEvent:(NSEvent *)event {
-    [_urlActionHelper openTargetWithEvent:event inBackground:YES];
+    [_urlActionHelper openTargetWithEvent:event inBackground:YES style:iTermOpenStyleTab];
 }
 
 - (void)smartSelectAndMaybeCopyWithEvent:(NSEvent *)event

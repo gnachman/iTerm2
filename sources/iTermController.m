@@ -378,6 +378,7 @@ static iTermController *gSharedInstance;
     } else {
         [iTermSessionLauncher launchBookmark:nil
                                   inTerminal:_frontTerminalWindowController
+                                       style:iTermOpenStyleTab
                                      withURL:nil
                             hotkeyWindowType:iTermHotkeyWindowTypeNone
                                      makeKey:YES
@@ -1562,6 +1563,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     };
     [iTermSessionLauncher launchBookmark:profile
                               inTerminal:term
+                                   style:iTermOpenStyleTab
                                  withURL:nil
                         hotkeyWindowType:iTermHotkeyWindowTypeNone
                                  makeKey:YES
@@ -1620,6 +1622,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     };
     [iTermSessionLauncher launchBookmark:profile
                               inTerminal:term
+                                   style:iTermOpenStyleTab
                                  withURL:nil
                         hotkeyWindowType:iTermHotkeyWindowTypeNone
                                  makeKey:YES
@@ -1914,6 +1917,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     };
     [iTermSessionLauncher launchBookmark:windowProfile
                               inTerminal:term
+                                   style:iTermOpenStyleTab
                                  withURL:nil
                         hotkeyWindowType:iTermHotkeyWindowTypeNone
                                  makeKey:YES

@@ -11,6 +11,7 @@
 #import "iTermKeyboardHandler.h"
 #import "iTermLogicalMovementHelper.h"
 #import "iTermObject.h"
+#import "iTermOpenStyle.h"
 #import "iTermPopupWindowController.h"
 #import "iTermSemanticHistoryController.h"
 #import "iTermTextDrawingHelper.h"
@@ -115,7 +116,8 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)startDownloadOverSCP:(SCPPath *)path;
 - (void)uploadFiles:(NSArray *)localFilenames toPath:(SCPPath *)destinationPath;
 - (void)launchProfileInCurrentTerminal:(Profile *)profile
-                               withURL:(NSString *)url;
+                               withURL:(NSString *)url
+                                 style:(iTermOpenStyle)style;
 - (void)selectPaneLeftInCurrentTerminal;
 - (void)selectPaneRightInCurrentTerminal;
 - (void)selectPaneAboveInCurrentTerminal;

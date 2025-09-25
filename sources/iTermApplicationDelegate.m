@@ -1930,6 +1930,7 @@ static iTermKeyEventReplayer *gReplayer;
         if (launch) {
             [iTermSessionLauncher launchBookmark:profile
                                       inTerminal:term
+                                           style:iTermOpenStyleTab
                                          withURL:urlStr
                                 hotkeyWindowType:iTermHotkeyWindowTypeNone
                                          makeKey:NO
@@ -3107,6 +3108,7 @@ static iTermKeyEventReplayer *gReplayer;
 
     [iTermSessionLauncher launchBookmark:nil
                               inTerminal:desiredWindow
+                                   style:iTermOpenStyleTab
                                  withURL:nil
                         hotkeyWindowType:iTermHotkeyWindowTypeNone
                                  makeKey:NO
@@ -3140,6 +3142,7 @@ static iTermKeyEventReplayer *gReplayer;
 
     [iTermSessionLauncher launchBookmark:nil
                               inTerminal:window
+                                   style:iTermOpenStyleTab
                                  withURL:nil
                         hotkeyWindowType:iTermHotkeyWindowTypeNone
                                  makeKey:NO

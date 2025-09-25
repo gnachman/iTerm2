@@ -8,6 +8,7 @@
 #import <Cocoa/Cocoa.h>
 
 #import "iTermClickSideEffects.h"
+#import "iTermOpenStyle.h"
 #import "iTermSwipeHandler.h"
 #import "PointerController.h"
 #import "VT100GridTypes.h"
@@ -47,7 +48,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)mouseHandlerAlternateScrollModeIsEnabled:(PTYMouseHandler *)handler
                                     verticalOnly:(out BOOL *)verticalOnly;
 - (void)mouseHandlerOpenTargetWithEvent:(NSEvent *)event
-                           inBackground:(BOOL)inBackground;
+                           inBackground:(BOOL)inBackground
+                                  style:(iTermOpenStyle)style;
 - (BOOL)mouseHandlerIsScrolledToBottom:(PTYMouseHandler *)handler;
 - (VT100GridCoord)mouseHandlerCoordForPointInWindow:(NSPoint)point;
 - (VT100GridCoord)mouseHandlerCoordForPointInView:(NSPoint)point;
