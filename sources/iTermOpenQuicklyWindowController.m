@@ -164,17 +164,10 @@
     } else {
         _divider.hidden = (self.model.items.count == 0);
     }
-    static const CGFloat kMarginAboveField = 12;
-    static const CGFloat kMarginBelowField = 9;
-    CGFloat nonTableSpace = kMarginAboveField + _textField.frame.size.height + kMarginBelowField;
-    CGFloat bottomPadding = 0;
-    if (@available(macOS 10.16, *)) {
-        bottomPadding = 10;
-    }
     _scrollView.frame = NSMakeRect(_scrollView.frame.origin.x,
                                    _scrollView.frame.origin.y,
                                    contentViewFrame.size.width,
-                                   contentViewFrame.size.height - nonTableSpace - bottomPadding);
+                                   contentViewFrame.size.height - _scrollView.frame.origin.y - 10);
     // Select the first item.
     if (self.model.items.count) {
         [_table selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
