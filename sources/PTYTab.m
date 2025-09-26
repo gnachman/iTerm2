@@ -372,9 +372,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         return NSMakeSize(80, 25);
     }
     const int columns = MIN(iTermMaxInitialSessionSize,
-                            [iTermProfilePreferences intForKey:KEY_COLUMNS inProfile:profile]);
+                            [profile[KEY_COLUMNS] intValue]);
     const int rows = MIN(iTermMaxInitialSessionSize,
-                         [iTermProfilePreferences intForKey:KEY_ROWS inProfile:profile]);
+                         [profile[KEY_ROWS] intValue]);
     return NSMakeSize(columns ?: 80, rows ?: 25);
 }
 
@@ -6686,8 +6686,8 @@ typedef struct {
     DLog(@"useExistingWindowSize=%@ useTmuxProfile=%@", @(useExistingWindowSize), @([iTermPreferences useTmuxProfile]));
     if ([iTermPreferences useTmuxProfile] && !useExistingWindowSize) {
         DLog(@"Return size from profile %@", profile);
-        return VT100GridSizeMake([iTermProfilePreferences intForKey:KEY_COLUMNS inProfile:profile],
-                                 [iTermProfilePreferences intForKey:KEY_ROWS inProfile:profile]);
+        return VT100GridSizeMake([[profile objectForKey:KEY_COLUMNS] intValue],
+                                 [[profile objectForKey:KEY_ROWS] intValue]);
     } else {
         NSSize frameSize = tabView_.frame.size;
         DLog(@"Compute size from frame %@", NSStringFromSize(frameSize));

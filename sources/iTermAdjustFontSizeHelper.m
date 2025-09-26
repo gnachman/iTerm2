@@ -53,9 +53,9 @@
         NSDictionary *abEntry = [session originalProfile];
         [frontTerminal sessionInitiatedResize:session
                                         width:MIN(iTermMaxInitialSessionSize,
-                                                  [iTermProfilePreferences intForKey:KEY_ROWS inProfile:abEntry])
+                                                  [[abEntry objectForKey:KEY_COLUMNS] intValue])
                                        height:MIN(iTermMaxInitialSessionSize,
-                                                  [iTermProfilePreferences intForKey:KEY_ROWS inProfile:abEntry])];
+                                                  [[abEntry objectForKey:KEY_ROWS] intValue])];
     }
 }
 
