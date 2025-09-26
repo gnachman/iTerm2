@@ -488,6 +488,9 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     if (![iTermBrowserGateway browserAllowedCheckingIfNot:NO]) {
         return;
     }
+    if ([matcher.query hasPrefix:@"/"]) {
+        return;
+    }
     for (iTermTriple<NSString *, NSURL *, NSString *> *triple in [iTermBrowserBookmarkFinder bookmarksMatchingSubstring:matcher.query]) {
         if ([urls containsObject:triple.secondObject]) {
             continue;
@@ -539,6 +542,9 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     }
     NSURL *url = [NSURL URLWithString:matcher.query];
     if ([urls containsObject:url]) {
+        return;
+    }
+    if ([matcher.query hasPrefix:@"/"]) {
         return;
     }
     if ([matcher.query hasPrefix:@"https://"] && url != nil) {
