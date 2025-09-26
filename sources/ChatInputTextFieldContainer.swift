@@ -18,7 +18,9 @@ fileprivate let horizontalInset = CGFloat(6)
 class ChatInputTextFieldContainer: NSView {
     private let scrollView: NSScrollView = {
         let sv = NSScrollView(frame: .zero)
-        sv.translatesAutoresizingMaskIntoConstraints = false
+        if #unavailable(macOS 26) {
+            sv.translatesAutoresizingMaskIntoConstraints = false
+        }
         sv.hasVerticalScroller = true
         sv.hasHorizontalScroller = false
         sv.autohidesScrollers = true
@@ -44,7 +46,13 @@ class ChatInputTextFieldContainer: NSView {
         return tv
     }()
 
-    private let scrim = NSView()
+    private lazy var scrim: NSView? = {
+        if #unavailable(macOS 26) {
+            return NSView()
+        } else {
+            return nil
+        }
+    }()
     var placeholder: String? {
         get {
             textView.it_placeholderString
@@ -123,51 +131,100 @@ class ChatInputTextFieldContainer: NSView {
         frame = NSRect(x: 0, y: 0, width: 100, height: 100)
 
         // Configure background.
-        let backgroundView = NSVisualEffectView()
-        backgroundView.translatesAutoresizingMaskIntoConstraints = false
-        backgroundView.blendingMode = .withinWindow
-        backgroundView.material = .menu
-        backgroundView.state = .active
-        backgroundView.wantsLayer = true
-        backgroundView.layer?.cornerRadius = 10
-        backgroundView.layer?.masksToBounds = true
-        backgroundView.layer?.borderWidth = 1
-        backgroundView.layer?.borderColor = NSColor.gray.withAlphaComponent(0.5).cgColor
+        let backgroundView: NSVisualEffectView?
+        if #available(macOS 26, *) {
+            backgroundView = nil
+            scrollView.translatesAutoresizingMaskIntoConstraints = false
+            let glassView = NSGlassEffectView()
+            glassView.contentView = scrollView
+            glassView.cornerRadius = 14
+            glassView.translatesAutoresizingMaskIntoConstraints = false
+            glassView.setContentHuggingPriority(.defaultLow, for: .horizontal)
 
-        scrim.translatesAutoresizingMaskIntoConstraints = false
-        scrim.wantsLayer = true
-        scrim.layer?.backgroundColor = effectiveAppearance.it_isDark ?
-        NSColor(white: 0, alpha: 0.3).cgColor :
-        NSColor(white: 1, alpha: 0.3).cgColor
-        scrim.layer?.cornerRadius = 10
-        scrim.layer?.masksToBounds = true
+            addSubview(glassView)
+            NSLayoutConstraint.activate([
+                glassView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 0),
+                glassView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: 0),
+                glassView.topAnchor.constraint(equalTo: topAnchor, constant: 0),
+                glassView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: 0),
+            ])
+            // Let the scrollView size itself based on content
+            NSLayoutConstraint.activate([
+                scrollView.leadingAnchor.constraint(equalTo: glassView.leadingAnchor),
+                scrollView.trailingAnchor.constraint(equalTo: glassView.trailingAnchor),
+                scrollView.topAnchor.constraint(equalTo: glassView.topAnchor),
+                scrollView.bottomAnchor.constraint(equalTo: glassView.bottomAnchor),
+            ])
+        } else {
+            scrollView.translatesAutoresizingMaskIntoConstraints = false
+            backgroundView = {
+                let backgroundView = NSVisualEffectView()
+                backgroundView.translatesAutoresizingMaskIntoConstraints = false
+                backgroundView.blendingMode = .withinWindow
+                backgroundView.material = .menu
+                backgroundView.state = .active
+                backgroundView.wantsLayer = true
+                backgroundView.layer?.cornerRadius = 10
+                backgroundView.layer?.masksToBounds = true
+                backgroundView.layer?.borderWidth = 1
+                backgroundView.layer?.borderColor = NSColor.gray.withAlphaComponent(0.5).cgColor
+                return backgroundView
+            }()
+        }
 
-        addSubview(backgroundView)
-        addSubview(scrim)
+        if let scrim {
+            scrim.translatesAutoresizingMaskIntoConstraints = false
+            scrim.wantsLayer = true
+            scrim.layer?.backgroundColor = effectiveAppearance.it_isDark ?
+            NSColor(white: 0, alpha: 0.3).cgColor :
+            NSColor(white: 1, alpha: 0.3).cgColor
+            scrim.layer?.cornerRadius = 10
+            scrim.layer?.masksToBounds = true
+            addSubview(scrim)
+        }
 
-        NSLayoutConstraint.activate([
-            backgroundView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            backgroundView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            backgroundView.topAnchor.constraint(equalTo: topAnchor),
-            backgroundView.bottomAnchor.constraint(equalTo: bottomAnchor),
+        if let backgroundView {
+            addSubview(backgroundView)
+            NSLayoutConstraint.activate([
+                backgroundView.leadingAnchor.constraint(equalTo: leadingAnchor),
+                backgroundView.trailingAnchor.constraint(equalTo: trailingAnchor),
+                backgroundView.topAnchor.constraint(equalTo: topAnchor),
+                backgroundView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            ])
+        }
 
-            scrim.leadingAnchor.constraint(equalTo: leadingAnchor),
-            scrim.trailingAnchor.constraint(equalTo: trailingAnchor),
-            scrim.topAnchor.constraint(equalTo: topAnchor),
-            scrim.bottomAnchor.constraint(equalTo: bottomAnchor)
-        ])
+        if let scrim {
+            NSLayoutConstraint.activate([
+                scrim.leadingAnchor.constraint(equalTo: leadingAnchor),
+                scrim.trailingAnchor.constraint(equalTo: trailingAnchor),
+                scrim.topAnchor.constraint(equalTo: topAnchor),
+                scrim.bottomAnchor.constraint(equalTo: bottomAnchor)
+            ])
+        }
 
         // Add the text view inside the scroll view.
         textView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.documentView = textView
-        addSubview(scrollView)
+        if #available(macOS 26, *) {
+            scrollView.automaticallyAdjustsContentInsets = false
+            scrollView.contentInsets = NSEdgeInsets(top: extraHeight / 2,
+                                                    left: horizontalInset,
+                                                    bottom: extraHeight / 2,
+                                                    right: horizontalInset)
+        }
+
+        if scrollView.superview == nil {
+            // Pre-26 code path when scrollView is not in a glass view
+            addSubview(scrollView)
+            NSLayoutConstraint.activate([
+                scrollView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: horizontalInset),
+                scrollView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -horizontalInset),
+                scrollView.topAnchor.constraint(equalTo: topAnchor, constant: extraHeight / 2),
+                scrollView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -extraHeight / 2),
+            ])
+        }
 
         NSLayoutConstraint.activate([
-            scrollView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: horizontalInset),
-            scrollView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -horizontalInset),
-            scrollView.topAnchor.constraint(equalTo: topAnchor, constant: extraHeight / 2),
-            scrollView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -extraHeight / 2),
-
             textView.leadingAnchor.constraint(equalTo: scrollView.contentView.leadingAnchor),
             textView.trailingAnchor.constraint(equalTo: scrollView.contentView.trailingAnchor),
             textView.topAnchor.constraint(equalTo: scrollView.contentView.topAnchor)
@@ -181,9 +238,9 @@ class ChatInputTextFieldContainer: NSView {
     }
 
     override func viewDidChangeEffectiveAppearance() {
-        scrim.layer?.backgroundColor = effectiveAppearance.it_isDark ?
-        NSColor(white: 0, alpha: 0.3).cgColor :
-        NSColor(white: 1, alpha: 0.3).cgColor
+        scrim?.layer?.backgroundColor = effectiveAppearance.it_isDark ?
+            NSColor(white: 0, alpha: 0.3).cgColor :
+            NSColor(white: 1, alpha: 0.3).cgColor
     }
 
     override var intrinsicContentSize: NSSize {

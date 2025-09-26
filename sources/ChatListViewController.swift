@@ -26,27 +26,29 @@ class ChatListViewController: NSViewController {
     private let searchField = {
         let field = NSSearchField()
         field.translatesAutoresizingMaskIntoConstraints = false
+        // Configure the underlying text field cell for proper scrolling
+        if let cell = field.cell as? NSSearchFieldCell {
+            cell.isScrollable = true
+            cell.wraps = false
+            cell.lineBreakMode = .byClipping
+        }
         return field
     }()
 
     // Header UI
     private let headerView = NSView()
-    private let titleLabel: NSTextField = {
-        let label = NSTextField(labelWithString: "Chats")
-        label.font = NSFont.systemFont(ofSize: 20, weight: .bold)
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
     private let newChatButton: NSButton = {
-        let button: NSButton
-        if #available(macOS 11.0, *),
-           let image = NSImage(systemSymbolName: SFSymbol.plus.rawValue, accessibilityDescription: nil) {
-            button = NSButton(image: image, target: nil, action: nil)
-            button.imageScaling = .scaleProportionallyUpOrDown
-            button.isBordered = false
+        let image = NSImage(systemSymbolName: SFSymbol.plus.rawValue, accessibilityDescription: nil)!
+        let button = NSButton(image: image, target: nil, action: nil)
+        if #available(macOS 26.0, *) {
+            button.controlSize = .large
+            button.bezelStyle = .glass
+            button.borderShape = .circle
+            button.isBordered = true
         } else {
-            button = NSButton(title: "New Chat", target: nil, action: nil)
+            button.isBordered = false
         }
+        button.imageScaling = .scaleProportionallyUpOrDown
         button.refusesFirstResponder = true
         button.setButtonType(.momentaryPushIn)
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -81,27 +83,42 @@ class ChatListViewController: NSViewController {
         // Setup header view
         headerView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(headerView)
-        headerView.addSubview(titleLabel)
         headerView.addSubview(newChatButton)
         headerView.addSubview(searchField)
 
+        if #available(macOS 26, *) {
+            NSLayoutConstraint.activate([
+                newChatButton.centerYAnchor.constraint(equalTo: searchField.centerYAnchor),
+                newChatButton.heightAnchor.constraint(equalTo: searchField.heightAnchor),
+                newChatButton.widthAnchor.constraint(equalTo: newChatButton.heightAnchor),
+
+                searchField.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 10),
+                searchField.topAnchor.constraint(equalTo: headerView.safeAreaLayoutGuide.topAnchor),
+                searchField.trailingAnchor.constraint(equalTo: newChatButton.leadingAnchor, constant: -8),
+
+                headerView.bottomAnchor.constraint(equalTo: searchField.bottomAnchor, constant: 8),
+            ])
+        } else {
+            NSLayoutConstraint.activate([
+                newChatButton.centerYAnchor.constraint(equalTo: searchField.centerYAnchor),
+                newChatButton.heightAnchor.constraint(equalTo: searchField.heightAnchor),
+                newChatButton.widthAnchor.constraint(equalTo: newChatButton.heightAnchor),
+                newChatButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor,
+                                                        constant: -4),
+
+                searchField.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 10),
+                searchField.topAnchor.constraint(equalTo: headerView.safeAreaLayoutGuide.topAnchor),
+                searchField.trailingAnchor.constraint(equalTo: newChatButton.leadingAnchor, constant: -4),
+
+                headerView.bottomAnchor.constraint(equalTo: searchField.bottomAnchor, constant: 10),
+            ])
+        }
         NSLayoutConstraint.activate([
             headerView.topAnchor.constraint(equalTo: view.topAnchor),
             headerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             headerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
 
-            titleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 10),
-            titleLabel.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 4),
-
             newChatButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -10),
-            newChatButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
-            newChatButton.heightAnchor.constraint(equalTo: titleLabel.heightAnchor),
-            newChatButton.widthAnchor.constraint(equalToConstant: 18),
-            searchField.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-            searchField.trailingAnchor.constraint(equalTo: newChatButton.trailingAnchor),
-            searchField.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
-            
-            headerView.bottomAnchor.constraint(equalTo: searchField.bottomAnchor, constant: 4),
         ])
         headerView.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
         newChatButton.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)

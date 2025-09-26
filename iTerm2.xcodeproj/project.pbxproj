@@ -3374,6 +3374,7 @@
 		A6AE58CB2E83463300762C1D /* iTermSymbolicHotkeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AE58CA2E83463300762C1D /* iTermSymbolicHotkeys.swift */; };
 		A6AE58E52E84936000762C1D /* iTermBrowserPluginFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AE58E42E84936000762C1D /* iTermBrowserPluginFinder.swift */; };
 		A6AE59072E85E71100762C1D /* iTermOpenStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE59062E85E70E00762C1D /* iTermOpenStyle.h */; };
+		A6AE59092E865A7500762C1D /* ChatToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AE59082E865A7500762C1D /* ChatToolbar.swift */; };
 		A6AF79C62E06586A008D77BA /* BrowserBookmarks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79C52E06586A008D77BA /* BrowserBookmarks.swift */; };
 		A6AF79CA2E06593C008D77BA /* BrowserBookmarkTags.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79C92E06593C008D77BA /* BrowserBookmarkTags.swift */; };
 		A6AF79CC2E065AA5008D77BA /* bookmarks-page.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AF79CB2E065AA5008D77BA /* bookmarks-page.html */; };
@@ -8182,6 +8183,7 @@
 		A6AE58CA2E83463300762C1D /* iTermSymbolicHotkeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermSymbolicHotkeys.swift; sourceTree = "<group>"; };
 		A6AE58E42E84936000762C1D /* iTermBrowserPluginFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserPluginFinder.swift; sourceTree = "<group>"; };
 		A6AE59062E85E70E00762C1D /* iTermOpenStyle.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermOpenStyle.h; sourceTree = "<group>"; };
+		A6AE59082E865A7500762C1D /* ChatToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatToolbar.swift; sourceTree = "<group>"; };
 		A6AF79C52E06586A008D77BA /* BrowserBookmarks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserBookmarks.swift; sourceTree = "<group>"; };
 		A6AF79C92E06593C008D77BA /* BrowserBookmarkTags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserBookmarkTags.swift; sourceTree = "<group>"; };
 		A6AF79CB2E065AA5008D77BA /* bookmarks-page.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "bookmarks-page.html"; sourceTree = "<group>"; };
@@ -11192,6 +11194,7 @@
 				A6DB145D2D6CEDEE00266394 /* SystemMessageCellView.swift */,
 				A65618712D6BDFEF0059CD35 /* TerminalCommandMessageCellView.swift */,
 				A6631A182D6E4C7A006C603B /* TypingIndicatorCellView.swift */,
+				A6AE59082E865A7500762C1D /* ChatToolbar.swift */,
 			);
 			name = AITerm;
 			sourceTree = "<group>";
@@ -18878,6 +18881,7 @@
 				A6A453931FF318D8009FD3B7 /* iTermTexturePageCollection.mm in Sources */,
 				A6DBC05220073CBA00F1466D /* NSResponder+iTerm.m in Sources */,
 				A6AE58962E820FFF00762C1D /* AppSignatureValidator.swift in Sources */,
+				A6AE59092E865A7500762C1D /* ChatToolbar.swift in Sources */,
 				A62DBBA820F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.m in Sources */,
 				A6E304412DFA55B00029CAB4 /* Llama.swift in Sources */,
 				A68769562C0E5F2300F7FFEC /* LLM.swift in Sources */,

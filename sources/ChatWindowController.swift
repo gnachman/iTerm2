@@ -76,6 +76,10 @@ extension DictionaryCodable {
 
 extension NSToolbarItem.Identifier {
     static let toggleChatList = NSToolbarItem.Identifier("ToggleChatList")
+    static let modelSelector = NSToolbarItem.Identifier("ModelSelector")
+    static let thinkingToggle = NSToolbarItem.Identifier("ThinkingToggle")
+    static let webSearchToggle = NSToolbarItem.Identifier("WebSearchToggle")
+    static let sessionButton = NSToolbarItem.Identifier("SessionButton")
 }
 
 @objc(iTermChatWindowController)
@@ -220,13 +224,15 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
         splitViewController = ChatSplitViewController(chatListViewController: chatListViewController,
                                                       chatViewController: chatViewController)
 
-        // Configure the window.
+        // Configure the window with full size content view for transparent toolbar
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 800, height: 600),
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
+
+        // Keep a window title for accessibility but hide it visually
         if let chatID = chatViewController.chatID,
            let model = model.chat(id: chatID) {
             window.title = model.title
@@ -234,8 +240,13 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
             window.title = "AI Chat"
         }
 
+        // Hide the native title
+        if #available(macOS 26, *) {
+            window.titleVisibility = .hidden
+            window.titlebarAppearsTransparent = true
+        }
+
         window.minSize = .init(width: 500, height: 500)
-        window.titlebarAppearsTransparent = false
         window.isMovableByWindowBackground = true
 
         self.window = window
@@ -244,25 +255,48 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
         window.center()
         window.setFrameAutosaveName("ChatWindow")
 
-        if #available(macOS 11.0, *) {
+        if #available(macOS 26, *) {
+            // On macOS 26, no toolbar - we'll use floating controls
+            window.titlebarSeparatorStyle = .none
+        } else if #available(macOS 11.0, *) {
+            // Use unified compact style for cleaner appearance
             window.toolbarStyle = .unifiedCompact
-            // Hiding the title gives the toolbar more room to show.
-            // A transparent title bar lets the toolbar appear as an overlay.
-            window.titlebarAppearsTransparent = true
+            // Remove the separator line for seamless blending
+            window.titlebarSeparatorStyle = .none
+
+            // Only create toolbar for pre-macOS 26
+            let toolbar = NSToolbar(identifier: "MainToolbar")
+            toolbar.delegate = self
+            toolbar.displayMode = .iconOnly
+            window.toolbar = toolbar
+            window.toolbar?.isVisible = true
+        } else {
+            // macOS 10.x
+            let toolbar = NSToolbar(identifier: "MainToolbar")
+            toolbar.delegate = self
+            toolbar.displayMode = .iconOnly
+            window.toolbar = toolbar
+            window.toolbar?.isVisible = true
         }
 
-        let toolbar = NSToolbar(identifier: "MainToolbar")
-        toolbar.delegate = self
-        toolbar.displayMode = .iconOnly
-        window.toolbar = toolbar
-        window.toolbar?.isVisible = true
         window.minSize = NSSize(width: 400, height: 300)
 
         chatListViewController.delegate = self
         chatViewController.delegate = self
         window.delegate = self
 
+        // Add floating controls on macOS 26
+        if #available(macOS 26, *) {
+            chatViewController.setupFloatingControls()
+        }
+
         return window
+    }
+
+    func updateTitle(_ title: String) {
+        // Update both the window title (for accessibility) and our custom label
+        window?.title = title
+        chatViewController.chatToolbar.titleLabel.stringValue = title
     }
 
     private func createNewChat(offerGuid guid: String?) {
@@ -317,32 +351,91 @@ extension ChatWindowController: NSWindowDelegate {
 
 extension ChatWindowController: NSToolbarDelegate {
     func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        return [.toggleChatList]
+        if #available(macOS 26, *) {
+            return []
+        } else {
+            return [.modelSelector, .thinkingToggle, .webSearchToggle, .sessionButton, .toggleChatList]
+        }
     }
 
     func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        return [.toggleChatList]
+        if #available(macOS 26, *) {
+            return []
+        } else {
+            return [.modelSelector, .thinkingToggle, .webSearchToggle, .sessionButton, .toggleChatList]
+        }
     }
 
     func toolbar(_ toolbar: NSToolbar,
                  itemForItemIdentifier itemIdentifier: NSToolbarItem.Identifier,
                  willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
-        guard itemIdentifier == .toggleChatList else {
-            return nil
-        }
-        let item = NSToolbarItem(itemIdentifier: itemIdentifier)
-        item.label = "Toggle Chat List"
-        item.paletteLabel = "Toggle Chat List"
-        item.toolTip = "Show or hide the chat list"
-        if #available(macOS 11.0, *) {
+
+        switch itemIdentifier {
+        case .toggleChatList:
+            let item = NSToolbarItem(itemIdentifier: itemIdentifier)
+            item.label = "Toggle Chat List"
+            item.paletteLabel = "Toggle Chat List"
+            item.toolTip = "Show or hide the chat list"
             item.image = NSImage(systemSymbolName: SFSymbol.sidebarLeft.rawValue,
                                  accessibilityDescription: "Toggle Chat List")
-        } else {
-            item.image = NSImage(named: NSImage.touchBarSidebarTemplateName)
+            item.target = self
+            item.action = #selector(toggleChatList)
+            // Standard toolbar buttons get automatic glass backing on macOS 26
+            if #available(macOS 26, *) {
+                item.isBordered = true  // Let the system handle the glass effect
+            } else if #available(macOS 11.0, *) {
+                item.isBordered = true
+            }
+            return item
+
+        case .modelSelector:
+            // Only create if we have multiple models
+            if let modelSelector = chatViewController.chatToolbar.modelSelectorButton {
+                let item = NSToolbarItem(itemIdentifier: itemIdentifier)
+                item.label = "Model"
+                item.paletteLabel = "AI Model"
+                item.toolTip = "Select AI model"
+                item.view = modelSelector
+                return item
+            }
+            return nil
+
+        case .thinkingToggle:
+            if let button = chatViewController.chatToolbar.thinkingButton {
+                let item = NSToolbarItem(itemIdentifier: itemIdentifier)
+                item.label = "Thinking"
+                item.paletteLabel = "Toggle Thinking"
+                item.toolTip = "Enable or disable thinking/reasoning mode"
+                item.view = button
+                return item
+            }
+            return nil
+
+        case .webSearchToggle:
+            if let button = chatViewController.chatToolbar.webSearchButton {
+                let item = NSToolbarItem(itemIdentifier: itemIdentifier)
+                item.label = "Web Search"
+                item.paletteLabel = "Toggle Web Search"
+                item.toolTip = "Enable or disable web search"
+                item.view = button
+                return item
+            }
+            return nil
+
+        case .sessionButton:
+            if let button = chatViewController.chatToolbar.sessionButton {
+                let item = NSToolbarItem(itemIdentifier: itemIdentifier)
+                item.label = "Session"
+                item.paletteLabel = "Link Session"
+                item.toolTip = "Link or unlink terminal/browser session"
+                item.view = button
+                return item
+            }
+            return nil
+
+        default:
+            return nil
         }
-        item.target = self
-        item.action = #selector(toggleChatList)
-        return item
     }
 
     private var currentChat: Chat? {
@@ -404,6 +497,38 @@ extension ChatWindowController: NSToolbarDelegate {
     @objc func toggleChatList() {
         splitViewController.toggleChatList()
     }
+
+    func updateToolbarItems() {
+        guard let toolbar = window?.toolbar else {
+            return
+        }
+
+        // Update visibility of toolbar items based on current state
+        var visibleIdentifiers: [NSToolbarItem.Identifier] = [.toggleChatList, .flexibleSpace]
+
+        // Add model selector if multiple models available
+        let availableModels = AITermController.allProvidersForCurrentVendor.map({ $0.model })
+        if availableModels.count > 1 {
+            visibleIdentifiers.append(.modelSelector)
+        }
+
+        // Add thinking button if supported
+        if let provider = chatViewController.provider,
+           provider.model.features.contains(.configurableThinking) {
+            visibleIdentifiers.append(.thinkingToggle)
+        }
+
+        // Add web search if available
+        if chatViewController.chatToolbar.webSearchButton != nil {
+            visibleIdentifiers.append(.webSearchToggle)
+        }
+
+        // Always show session button
+        visibleIdentifiers.append(.sessionButton)
+
+        // Validate visible items to update the toolbar
+        toolbar.validateVisibleItems()
+    }
 }
 
 extension ChatWindowController: ChatListViewControllerDelegate {
@@ -414,6 +539,10 @@ extension ChatWindowController: ChatListViewControllerDelegate {
     func chatListViewController(_ chatListViewController: ChatListViewController,
                                 didSelectChat chatID: String?) {
         chatViewController.load(chatID: chatID)
+        // Update window title using our custom method
+        updateTitle(chatViewController.chatTitle)
+        // Update toolbar items in case model or features changed
+        updateToolbarItems()
     }
 }
 
@@ -456,6 +585,10 @@ extension ChatWindowController: ChatViewControllerDelegate {
         warning.warningActions = [ iTermWarningAction(label: "Cancel"), action ]
         warning.warningType = .kiTermWarningTypePersistent
         warning.runModal()
+    }
+
+    func chatViewControllerDidUpdateToolbar(_ controller: ChatViewController) {
+        updateToolbarItems()
     }
 
     func chatViewController(_ controller: ChatViewController,

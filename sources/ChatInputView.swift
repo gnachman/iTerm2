@@ -24,7 +24,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
     private class SendButton: NSButton { }
     private class AddAttachmentButton: NSButton { }
 
-    private let vev = NSVisualEffectView()
+    private let vev: NSVisualEffectView?
     private let inputTextFieldContainer = ChatInputTextFieldContainer()
     private var sendButton: SendButton!
     private var addAttachmentButton: AddAttachmentButton!
@@ -47,7 +47,11 @@ class ChatInputView: NSView, NSTextFieldDelegate {
     init() {
         sendImage = NSImage(systemSymbolName: SFSymbol.paperplaneFill.rawValue, accessibilityDescription: "Send")!
         stopImage = NSImage(systemSymbolName: SFSymbol.stopCircleFill.rawValue, accessibilityDescription: "Stop")!
-
+        if #available(macOS 26, *) {
+            vev = nil
+        } else {
+            vev = NSVisualEffectView()
+        }
         super.init(frame: .zero)
 
         // Input Components
@@ -58,12 +62,24 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         inputTextFieldContainer.setContentHuggingPriority(.defaultLow, for: .horizontal)
         inputTextFieldContainer.textView.delegate = self
 
-
         sendButton = SendButton(image: sendImage, target: self, action: #selector(sendButtonClicked))
-        sendButton.imageScaling = .scaleProportionallyUpOrDown
-        sendButton.imagePosition = .imageOnly
-        sendButton.bezelStyle = .regularSquare
-        sendButton.isBordered = false
+        if #available(macOS 26, *) {
+            // New Tahoe (macOS 26) liquid glass look
+            sendButton.imagePosition = .imageOnly
+            sendButton.imageScaling = .scaleProportionallyDown
+            sendButton.contentTintColor = .it_dynamicColor(forLightMode: NSColor(white: 1, alpha: 0.3),
+                                                           darkMode: NSColor(white: 0, alpha: 0.3))
+            sendButton.controlSize = .large
+            sendButton.bezelStyle = .glass
+            sendButton.borderShape = .circle
+            sendButton.isBordered = true
+            sendButton.showsBorderOnlyWhileMouseInside = true
+        } else {
+            sendButton.imageScaling = .scaleProportionallyUpOrDown
+            sendButton.imagePosition = .imageOnly
+            sendButton.bezelStyle = .regularSquare
+            sendButton.isBordered = false
+        }
         sendButton.setButtonType(.momentaryPushIn)
 
         sendButton.translatesAutoresizingMaskIntoConstraints = false
@@ -77,16 +93,28 @@ class ChatInputView: NSView, NSTextFieldDelegate {
             addImage = addImage.withSymbolConfiguration(config)!
         }
         addAttachmentButton = AddAttachmentButton(image: addImage, target: self, action: #selector(attachmentButtonClicked))
-        addAttachmentButton.imageScaling = .scaleNone
-        addAttachmentButton.imagePosition = .imageOnly
-        addAttachmentButton.bezelStyle = .regularSquare
-        addAttachmentButton.isBordered = false
+        if #available(macOS 26, *) {
+            // New Tahoe (macOS 26) liquid glass look
+            addAttachmentButton.imagePosition = .imageOnly
+            addAttachmentButton.imageScaling = .scaleProportionallyDown
+            addAttachmentButton.contentTintColor = .it_dynamicColor(forLightMode: NSColor(white: 1, alpha: 0.3),
+                                                                    darkMode: NSColor(white: 0, alpha: 0.3))
+            addAttachmentButton.controlSize = .large
+            addAttachmentButton.bezelStyle = .glass
+            addAttachmentButton.borderShape = .circle
+            addAttachmentButton.isBordered = true
+            addAttachmentButton.showsBorderOnlyWhileMouseInside = true
+        } else {
+            addAttachmentButton.imageScaling = .scaleNone
+            addAttachmentButton.imagePosition = .imageOnly
+            addAttachmentButton.bezelStyle = .regularSquare
+            addAttachmentButton.isBordered = false
+        }
         addAttachmentButton.setButtonType(.momentaryPushIn)
         addAttachmentButton.toolTip = "Attach files"
         addAttachmentButton.translatesAutoresizingMaskIntoConstraints = false
         addAttachmentButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         addAttachmentButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-        addAttachmentButton.imageScaling = .scaleNone
 
         attachmentsView.translatesAutoresizingMaskIntoConstraints = false
         attachmentsView.onItemsWillBeDeleted = { _ in
@@ -107,20 +135,29 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         verticalStack.spacing = 0
         verticalStack.translatesAutoresizingMaskIntoConstraints = false
 
-        vev.translatesAutoresizingMaskIntoConstraints = false
-        vev.wantsLayer = true
-        vev.blendingMode = .withinWindow
-        vev.material = .underWindowBackground
-        vev.state = .active
+        if let vev {
+            vev.translatesAutoresizingMaskIntoConstraints = false
+            vev.wantsLayer = true
+            vev.blendingMode = .withinWindow
+            vev.material = .underWindowBackground
+            vev.state = .active
 
-        addSubview(vev)
+            addSubview(vev)
+        }
+
         addSubview(verticalStack)
 
         let inputStackVerticalInset = CGFloat(12)
 
+        let buttonHeight: CGFloat
+        if #available(macOS 26, *) {
+            buttonHeight = 28
+        } else {
+            buttonHeight = 18
+        }
         NSLayoutConstraint.activate([
-            addAttachmentButton.widthAnchor.constraint(equalToConstant: 18),
-            addAttachmentButton.heightAnchor.constraint(equalToConstant: 18),
+            addAttachmentButton.widthAnchor.constraint(equalToConstant: buttonHeight),
+            addAttachmentButton.heightAnchor.constraint(equalToConstant: buttonHeight),
 
             verticalStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
             verticalStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
@@ -129,15 +166,21 @@ class ChatInputView: NSView, NSTextFieldDelegate {
                                             constant: -inputStackVerticalInset),
             verticalStack.topAnchor.constraint(equalTo: topAnchor),
 
-            sendButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 18),
+            horizontalStack.leadingAnchor.constraint(equalTo: verticalStack.leadingAnchor),
+            horizontalStack.trailingAnchor.constraint(equalTo: verticalStack.trailingAnchor),
+
+            sendButton.widthAnchor.constraint(greaterThanOrEqualToConstant: buttonHeight),
+            sendButton.heightAnchor.constraint(equalToConstant: buttonHeight),
             sendButton.trailingAnchor.constraint(equalTo: horizontalStack.trailingAnchor),
-
-            vev.leftAnchor.constraint(equalTo: leftAnchor),
-            vev.rightAnchor.constraint(equalTo: rightAnchor),
-            vev.bottomAnchor.constraint(equalTo: bottomAnchor),
-            vev.heightAnchor.constraint(equalTo: heightAnchor),
         ])
-
+        if let vev {
+            NSLayoutConstraint.activate([
+                vev.leftAnchor.constraint(equalTo: leftAnchor),
+                vev.rightAnchor.constraint(equalTo: rightAnchor),
+                vev.bottomAnchor.constraint(equalTo: bottomAnchor),
+                vev.heightAnchor.constraint(equalTo: heightAnchor),
+            ])
+        }
         updateAttachmentsView()
         updateSendButtonEnabled()
         setupDragAndDrop()
@@ -227,7 +270,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
             sendButton.image = sendImage
         }
     }
-    
+
     private func updateAttachmentsView() {
         verticalStack.setVisibilityPriority(attachmentsView.files.isEmpty ? .notVisible : .mustHold,
                                             for: attachmentsView)

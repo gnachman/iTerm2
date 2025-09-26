@@ -15,14 +15,11 @@ protocol ChatViewControllerDelegate: AnyObject {
     func chatViewController(_ controller: ChatViewController,
                             forkAtMessageID: UUID,
                             ofChat chatID: String)
+    func chatViewControllerDidUpdateToolbar(_ controller: ChatViewController)
 }
 
-@objc class WebSearchButton: NSButton { }
-@objc class ThinkingButton: NSButton { }
 class ChatViewControllerMainStackView: NSStackView {}
-class ChatViewControllerHeaderStackView: NSStackView {}
 class ChatViewControllerSpacerView: NSView {}
-class ChatViewControllerHeaderSpacerView: NSView {}
 
 @objc
 class ChatViewController: NSViewController {
@@ -32,11 +29,6 @@ class ChatViewController: NSViewController {
     private let inputView = ChatInputView()
     private var scrollView: NSScrollView!
     private var tableView: NSTableView!
-    private var titleLabel = NSTextField()
-    private var modelSelectorButton: NSPopUpButton?
-    private var sessionButton: NSButton!
-    private var webSearchButton: WebSearchButton?
-    private var thinkingButton: ThinkingButton?
     private var sendButton: NSButton!
     private var showTypingIndicator: Bool {
         get {
@@ -83,25 +75,23 @@ class ChatViewController: NSViewController {
     var terminalSessionGuid: String? { model?.terminalSessionGuid }
     var browserSessionGuid: String? { model?.browserSessionGuid }
     private let userDefaultsObserver = iTermUserDefaultsObserver()
+    private(set) var chatToolbar: ChatToolbar!
 
     init(listModel: ChatListModel, client: ChatClient) {
         self.listModel = listModel
         self.client = client
+
         super.init(nibName: nil, bundle: nil)
 
-        userDefaultsObserver.observeKey(kPreferenceKeyAIFeatureHostedWebSearch) { [weak self] in
-            self?.webSearchButton?.isEnabled = (self?.provider?.supportsHostedWebSearch == true)
-        }
-        userDefaultsObserver.observeKey(kPreferenceKeyUseRecommendedAIModel) { [weak self] in
-            self?.updateToolbar()
-        }
-        userDefaultsObserver.observeKey(kPreferenceKeyAIVendor) { [weak self] in
-            self?.updateToolbar()
-        }
+        chatToolbar = ChatToolbar(dataSource: self)
+        chatToolbar.dataSource = self
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(sessionWillTerminate(_:)),
                                                name: NSNotification.Name.iTermSessionWillTerminate,
                                                object: nil)
+        userDefaultsObserver.observeKey(Self.preferredModelDefaultsKey) { [weak self] in
+            self?.chatToolbar.update()
+        }
     }
     
     required init?(coder: NSCoder) {
@@ -144,88 +134,7 @@ class ChatViewController: NSViewController {
     override func loadView() {
         let view = NSView(frame: NSRect(x: 0, y: 0, width: 400, height: 600))
 
-        // Title Label
-        titleLabel.font = NSFont.systemFont(ofSize: 20, weight: .bold)
-        titleLabel.isBordered = false
-        titleLabel.isBezeled = false
-        titleLabel.drawsBackground = false
-        titleLabel.alignment = .natural
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.isEditable = false
-        titleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        titleLabel.maximumNumberOfLines = 1
-        titleLabel.lineBreakMode = .byTruncatingTail
-
         // Session button
-        do {
-            let image = NSImage(systemSymbolName: SFSymbol.infoCircle.rawValue, accessibilityDescription: nil)!
-            sessionButton = NSButton(image: image, target: nil, action: nil)
-            sessionButton.imageScaling = .scaleProportionallyUpOrDown
-            sessionButton.controlSize = .large
-            sessionButton.isBordered = false
-        }
-
-        sessionButton.bezelStyle = .badge
-        sessionButton.isBordered = false
-        sessionButton.target = self
-        sessionButton.action = #selector(showSessionButtonMenu(_:))
-        sessionButton.sizeToFit()
-        sessionButton.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-        sessionButton.translatesAutoresizingMaskIntoConstraints = false
-        sessionButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-        sessionButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-
-        do {
-            let webSearchButton = WebSearchButton(image: NSImage.it_image(forSymbolName: SFSymbol.globe.rawValue,
-                                                                          accessibilityDescription: "Web search image",
-                                                                          fallbackImageName: "globe",
-                                                                          for: Self.self),
-                                                  target: nil,
-                                                  action: nil)
-            webSearchButton.imageScaling = .scaleProportionallyUpOrDown
-            webSearchButton.controlSize = .large
-            webSearchButton.contentTintColor = webSearchEnabled ? .controlAccentColor : nil
-            webSearchButton.isBordered = false
-            webSearchButton.bezelStyle = .badge
-            webSearchButton.isBordered = false
-            webSearchButton.target = self
-            webSearchButton.action = #selector(toggleWebSearch(_:))
-            webSearchButton.sizeToFit()
-            webSearchButton.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-            webSearchButton.translatesAutoresizingMaskIntoConstraints = false
-            webSearchButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-            webSearchButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-            webSearchButton.toolTip = "Allow AI to perform web search?"
-            self.webSearchButton = webSearchButton
-            webSearchButton.isEnabled = (provider?.supportsHostedWebSearch == true)
-        }
-
-        do {
-            let smallerConfig = NSImage.SymbolConfiguration(pointSize: 14, weight: .regular)
-
-            let image = NSImage(
-                systemSymbolName: SFSymbol.lightbulb.rawValue,
-                accessibilityDescription: "Enable high-effort reasoning?")?.withSymbolConfiguration(smallerConfig)
-            let thinkingButton = ThinkingButton(image: image!,
-                                                  target: nil,
-                                                action: nil)
-            thinkingButton.imageScaling = .scaleNone
-            thinkingButton.controlSize = .large
-            thinkingButton.contentTintColor = webSearchEnabled ? .controlAccentColor : nil
-            thinkingButton.isBordered = false
-            thinkingButton.bezelStyle = .badge
-            thinkingButton.isBordered = false
-            thinkingButton.target = self
-            thinkingButton.action = #selector(toggleThinking(_:))
-            thinkingButton.sizeToFit()
-            thinkingButton.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-            thinkingButton.translatesAutoresizingMaskIntoConstraints = false
-            thinkingButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-            thinkingButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-            thinkingButton.toolTip = "Enable high-effort reasoning? Slower but may produce better results."
-            self.thinkingButton = thinkingButton
-            thinkingButton.isEnabled = (provider?.model.features.contains(.configurableThinking) == true)
-        }
 
         // Configure Table View
         tableView = NSTableView()
@@ -263,33 +172,22 @@ class ChatViewController: NSViewController {
         scrollView.hasVerticalScroller = true
         scrollView.translatesAutoresizingMaskIntoConstraints = false
 
+        if #available(macOS 26, *) {
+            scrollView.scrollerStyle = .overlay
+            // Ensure content can scroll under the toolbar
+            scrollView.contentView.contentInsets = NSEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        }
+
         inputView.delegate = self
         inputView.translatesAutoresizingMaskIntoConstraints = false
 
-        let headerSpacer = ChatViewControllerHeaderSpacerView()
-        headerSpacer.setContentHuggingPriority(.init(1), for: .horizontal)
-        headerSpacer.setContentCompressionResistancePriority(.init(1), for: .horizontal)
-
-        // Header stack
-        let headerStack = ChatViewControllerHeaderStackView(views: [titleLabel, headerSpacer, thinkingButton, webSearchButton, sessionButton].compactMap { $0 })
-        headerStack.orientation = .horizontal
-        headerStack.spacing = 8
-        headerStack.translatesAutoresizingMaskIntoConstraints = false
-        headerStack.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        headerStack.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-
+        // Main container for scroll view and input
         class ChatViewControllerInnerContainer: NSView {}
         let innerContainer = ChatViewControllerInnerContainer()
         innerContainer.addSubview(scrollView)
         innerContainer.addSubview(inputView)
         innerContainer.translatesAutoresizingMaskIntoConstraints = false
-
-        // Main Layout including Title
-        let mainStack = ChatViewControllerMainStackView(views: [headerStack, innerContainer])
-        mainStack.orientation = .vertical
-        mainStack.spacing = 8
-        mainStack.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(mainStack)
+        view.addSubview(innerContainer)
 
         let mainStackInsets = NSEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
 
@@ -309,30 +207,21 @@ class ChatViewController: NSViewController {
         view.addSubview(divider)
 
         NSLayoutConstraint.activate([
-            headerStack.leadingAnchor.constraint(equalTo: mainStack.leadingAnchor, constant: 8),
-            headerStack.trailingAnchor.constraint(equalTo: mainStack.trailingAnchor, constant: -8),
-
             divider.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             divider.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
             divider.bottomAnchor.constraint(equalTo: scrollView.topAnchor),
             divider.heightAnchor.constraint(equalToConstant: 1),
 
-            sessionButton.widthAnchor.constraint(equalToConstant: 18),
-            sessionButton.topAnchor.constraint(equalTo: titleLabel.topAnchor),
-            sessionButton.bottomAnchor.constraint(equalTo: titleLabel.bottomAnchor),
-
-            mainStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: mainStackInsets.left),
-            mainStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -mainStackInsets.right),
-            mainStack.topAnchor.constraint(equalTo: view.topAnchor, constant: mainStackInsets.top),
-            mainStack.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -mainStackInsets.bottom),
+            innerContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: mainStackInsets.left),
+            innerContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -mainStackInsets.right),
+            // On macOS 26+, content should extend to top for scroll edge effect
+            innerContainer.topAnchor.constraint(equalTo: view.topAnchor, constant: mainStackInsets.top),
+            innerContainer.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -mainStackInsets.bottom),
 
             innerContainer.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             innerContainer.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
             innerContainer.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             innerContainer.topAnchor.constraint(equalTo: scrollView.topAnchor),
-
-            innerContainer.leadingAnchor.constraint(equalTo: mainStack.leadingAnchor),
-            innerContainer.trailingAnchor.constraint(equalTo: mainStack.trailingAnchor),
 
             documentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             documentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
@@ -352,25 +241,12 @@ class ChatViewController: NSViewController {
             inputView.bottomAnchor.constraint(equalTo: innerContainer.bottomAnchor),
             inputView.heightAnchor.constraint(equalTo: spacer.heightAnchor),
         ])
-        if let thinkingButton {
-            NSLayoutConstraint.activate([
-                thinkingButton.widthAnchor.constraint(equalToConstant: 18),
-                thinkingButton.topAnchor.constraint(equalTo: titleLabel.topAnchor),
-                thinkingButton.bottomAnchor.constraint(equalTo: titleLabel.bottomAnchor),
-            ])
-        }
-        if let webSearchButton {
-            NSLayoutConstraint.activate([
-                webSearchButton.widthAnchor.constraint(equalToConstant: 18),
-                webSearchButton.topAnchor.constraint(equalTo: titleLabel.topAnchor),
-                webSearchButton.bottomAnchor.constraint(equalTo: titleLabel.bottomAnchor),
-            ])
-        }
+        // Button constraints will be handled by toolbar items
         view.alphaValue = 0
         self.view = view
         
         // Initialize toolbar with model selector if needed
-        updateToolbar()
+        chatToolbar.update()
     }
 }
 
@@ -391,93 +267,13 @@ extension ChatViewController {
     private func modelIsValid(_ name: String) -> Bool {
         return AITermController.allProvidersForCurrentVendor.map({ $0.model }).contains { $0.name == name }
     }
-    private var effectiveModel: String? {
-        return provider?.model.name
-    }
 
-    func updateToolbar() {
-        // Find the header stack
-        guard let mainStack = view.subviews.first(where: { $0 is ChatViewControllerMainStackView }) as? NSStackView,
-              let headerStack = mainStack.arrangedSubviews.first(where: { $0 is ChatViewControllerHeaderStackView }) as? NSStackView else {
-            return
+    var chatTitle: String {
+        if let chatID,
+           let chat = listModel.chat(id: chatID) {
+            return chat.title
         }
-
-        // Remove existing model selector if present
-        if let modelSelectorButton = self.modelSelectorButton {
-            headerStack.removeArrangedSubview(modelSelectorButton)
-            modelSelectorButton.removeFromSuperview()
-            self.modelSelectorButton = nil
-        }
-
-        // Create new model selector if multiple models are available
-        let availableModels = AITermController.allProvidersForCurrentVendor.map({ $0.model })
-        if availableModels.count > 1 {
-            let modelSelector = NSPopUpButton()
-            modelSelector.translatesAutoresizingMaskIntoConstraints = false
-            modelSelector.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-            modelSelector.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-            modelSelector.target = self
-            modelSelector.action = #selector(selectModel(_:))
-
-            // Use a minimal, borderless style
-            modelSelector.isBordered = false
-            modelSelector.bezelStyle = .inline
-            modelSelector.font = NSFont.systemFont(ofSize: 20)
-
-            for model in availableModels {
-                modelSelector.addItem(withTitle: model.name)
-                modelSelector.lastItem?.representedObject = model.name
-            }
-
-            self.modelSelectorButton = modelSelector
-            if let selectedModel = effectiveModel {
-                modelSelector.selectItem(withTitle: selectedModel)
-            }
-        }
-        // Find the header spacer (it's the view that's not a button or text field)
-        let headerSpacer = headerStack.arrangedSubviews.first(where: {
-            $0 is ChatViewControllerHeaderSpacerView
-        })
-
-        // Rebuild the header stack in the correct order
-        for view in headerStack.arrangedSubviews {
-            headerStack.removeArrangedSubview(view)
-        }
-
-        headerStack.addArrangedSubview(titleLabel)
-        if let headerSpacer = headerSpacer {
-            headerStack.addArrangedSubview(headerSpacer)
-        }
-        if let modelSelector = modelSelectorButton {
-            headerStack.addArrangedSubview(modelSelector)
-
-            // Apply constraints for the model selector
-            NSLayoutConstraint.activate([
-                modelSelector.firstBaselineAnchor.constraint(equalTo: titleLabel.firstBaselineAnchor),
-            ])
-        }
-        if let thinkingButton, provider?.model.features.contains(.configurableThinking) == true {
-            headerStack.addArrangedSubview(thinkingButton)
-        } else {
-            thinkingButton?.removeFromSuperview()
-        }
-        if let webSearchButton = webSearchButton {
-            headerStack.addArrangedSubview(webSearchButton)
-        }
-        headerStack.addArrangedSubview(sessionButton)
-
-        // Update web search button state
-        webSearchButton?.isEnabled = (provider?.supportsHostedWebSearch == true)
-        thinkingButton?.isEnabled = (provider?.model.features.contains(.configurableThinking) == true)
-    }
-
-    var provider: LLMProvider? {
-        if let effectiveModelName = preferredModel,
-           modelIsValid(effectiveModelName),
-           let model = AIMetadata.instance.models.first(where: { $0.name == effectiveModelName }) {
-            return LLMProvider(model: model)
-        }
-        return AITermController.provider
+        return "AI Chat"
     }
 
     func offerLink(to guid: String, terminal: Bool, name: String?) {
@@ -507,8 +303,15 @@ extension ChatViewController {
         }
         inputView.isEnabled = chatID != nil
         model?.delegate = self
-        titleLabel.stringValue = chat?.title ?? ""
         self.chatID = chat?.id
+
+        // Update window title via window controller
+        if let windowController = view.window?.windowController as? ChatWindowController {
+            windowController.updateTitle(chat?.title ?? "AI Chat")
+        } else {
+            // Fallback for compatibility
+            view.window?.title = chat?.title ?? "AI Chat"
+        }
         tableView.reloadData()
         brokerSubscription?.unsubscribe()
         if let chat {
@@ -526,7 +329,13 @@ extension ChatViewController {
                         model.commit()
                     }
                     if case .renameChat(let newName) = message.content {
-                        titleLabel.stringValue = newName
+                        // Update window title when chat is renamed
+                        if let windowController = view.window?.windowController as? ChatWindowController {
+                            windowController.updateTitle(newName)
+                        } else {
+                            // Fallback for compatibility
+                            view.window?.title = newName
+                        }
                     }
                 case let .typingStatus(typing, participant):
                     switch participant {
@@ -643,128 +452,10 @@ extension ChatViewController {
         })
     }
 
-    @objc private func selectModel(_ sender: Any?)  {
-        preferredModel = modelSelectorButton?.selectedItem?.title
-        updateToolbar()
-    }
-
-    @objc private func showSessionButtonMenu(_ sender: NSButton) {
-        guard let chatID else {
-            return
-        }
-        let menu = NSMenu()
-
-        menu.addItem(withTitle: "Delete Chat", action: #selector(deleteChat(_:)), target: self)
-        menu.addItem(NSMenuItem.separator())
-
-        // Terminal session items
-        if let guid = model?.terminalSessionGuid,
-           iTermController.sharedInstance().session(withGUID: guid) != nil {
-
-            menu.addItem(withTitle: "Reveal Linked Terminal Session", action: #selector(revealLinkedTerminalSession(_:)), target: self)
-            menu.addItem(withTitle: "Unlink Terminal Session", action: #selector(unlinkTerminalSession(_:)), target: self)
-            menu.addItem(NSMenuItem.separator())
-
-            let rce = RemoteCommandExecutor.instance
-            for category in RemoteCommand.Content.PermissionCategory.allCases {
-                if category.isBrowserSpecific {
-                    continue
-                }
-                menu.addItem(withTitle: category.regularTitle,
-                             action: #selector(toggleAlwaysAllow(_:)),
-                             target: self,
-                             state: rce.controlState(chatID: chatID,
-                                                     guid: guid,
-                                                     category: category),
-                             object: category)
-
-            }
-            menu.addItem(NSMenuItem.separator())
-
-            if haveLinkedTerminalSession {
-                menu.addItem(withTitle: "Send Commands & Output to AI Automatically",
-                             action: #selector(toggleStream(_:)),
-                             target: self,
-                             state: streaming ? .on : .off,
-                             object: nil)
-                menu.addItem(NSMenuItem.separator())
-            }
-        } else {
-            menu.addItem(withTitle: "Link Terminal Session", action: #selector(objcLinkTerminalSession(_:)), target: self)
-            menu.addItem(NSMenuItem.separator())
-        }
-
-        // Browser session items
-        if let guid = model?.browserSessionGuid,
-           iTermController.sharedInstance().session(withGUID: guid) != nil {
-
-            menu.addItem(withTitle: "Reveal Linked Web Browser Session", action: #selector(revealLinkedBrowserSession(_:)), target: self)
-            menu.addItem(withTitle: "Unlink Web Browser Session", action: #selector(unlinkBrowserSession(_:)), target: self)
-            menu.addItem(NSMenuItem.separator())
-
-            let rce = RemoteCommandExecutor.instance
-            for category in RemoteCommand.Content.PermissionCategory.allCases {
-                if !category.isBrowserSpecific {
-                    continue
-                }
-                menu.addItem(withTitle: "AI can \(category.rawValue)",
-                             action: #selector(toggleAlwaysAllow(_:)),
-                             target: self,
-                             state: rce.controlState(chatID: chatID,
-                                                     guid: guid,
-                                                     category: category),
-                             object: category)
-
-            }
-            menu.addItem(NSMenuItem.separator())
-        } else {
-            menu.addItem(withTitle: "Link Browser Session", action: #selector(objcLinkBrowserSession(_:)), target: self)
-            menu.addItem(NSMenuItem.separator())
-        }
-
-
-        menu.addItem(withTitle: "Help", action: #selector(showLinkedSessionHelp(_:)), target: self)
-
-        // Position the menu just below the button
-        let location = NSPoint(x: 0, y: sender.bounds.height)
-        menu.popUp(positioning: nil, at: location, in: sender)
-    }
-
     private static let webSearchUserDefaultsKey = "AI Web Search Enabled"
     private static let thinkUserDefaultsKey = "AI High Effort Enabled"
     private static let preferredModelDefaultsKey = "NoSync AI Preferred Model"
 
-    private var webSearchEnabled: Bool {
-        get {
-            guard let model = provider?.model else {
-                return false
-            }
-            if !model.features.contains(.hostedWebSearch) {
-                return false
-            }
-            if #available(macOS 11, *) {
-                return UserDefaults.standard.bool(forKey: Self.webSearchUserDefaultsKey)
-            }
-            return false
-        }
-        set {
-            return UserDefaults.standard.set(newValue, forKey: Self.webSearchUserDefaultsKey)
-        }
-    }
-    private var thinkingEnabled: Bool {
-        get {
-            guard let model = provider?.model else {
-                return false
-            }
-            if !model.features.contains(.configurableThinking) {
-                return false
-            }
-            return UserDefaults.standard.bool(forKey: Self.thinkUserDefaultsKey)
-        }
-        set {
-            return UserDefaults.standard.set(newValue, forKey: Self.thinkUserDefaultsKey)
-        }
-    }
     // The last value selected in the model picker, but it might be invalid so check it with modelIsValid before use.
     private var preferredModel: String? {
         get {
@@ -773,16 +464,6 @@ extension ChatViewController {
         set {
             UserDefaults.standard.set(newValue, forKey: Self.preferredModelDefaultsKey)
         }
-    }
-
-    @objc private func toggleWebSearch(_ sender: Any) {
-        webSearchEnabled = !webSearchEnabled
-        webSearchButton?.contentTintColor = webSearchEnabled ? .controlAccentColor : nil
-    }
-
-    @objc private func toggleThinking(_ sender: Any) {
-        thinkingEnabled = !thinkingEnabled
-        thinkingButton?.contentTintColor = thinkingEnabled ? .controlAccentColor : nil
     }
 
     @objc private func toggleAlwaysAllow(_ sender: Any) {
@@ -986,7 +667,7 @@ extension ChatViewController {
     }
 
     @objc private func showLinkedSessionHelp(_ sender: Any) {
-        sessionButton.it_showWarning(withMarkdown: "When a terminal session is linked to this chat, the AI may view terminal contents and run commands in that session. You will be prompted to grant permission before it is able to view, type to, or modify a terminal session.")
+        chatToolbar.sessionButton.it_showWarning(withMarkdown: "When a terminal session is linked to this chat, the AI may view terminal contents and run commands in that session. You will be prompted to grant permission before it is able to view, type to, or modify a terminal session.")
     }
 
     @objc private func deleteChat(_ sender: Any) {
@@ -1047,6 +728,18 @@ extension ChatViewController {
                 scrollView.contentView.animator().setBoundsOrigin(.zero)
             }
         }
+    }
+
+    @available(macOS 26, *)
+    func setupFloatingControls() {
+        let floatingView = chatToolbar.createFloatingView()
+        view.addSubview(floatingView)
+        NSLayoutConstraint.activate([
+            floatingView.topAnchor.constraint(equalTo: view.topAnchor, constant: 8),
+            floatingView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            floatingView.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 16),
+            floatingView.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -16)
+        ])
     }
 }
 
@@ -1657,9 +1350,7 @@ extension ChatViewController: ChatInputViewDelegate {
                                                   shouldThink: thinkingEnabled)
 
         // Set the model if one is selected
-        if let modelSelectorButton,
-           let selectedItem = modelSelectorButton.selectedItem,
-           let modelIdentifier = selectedItem.representedObject as? String {
+        if let modelIdentifier = chatToolbar.selectedModelIdentifier {
             configuration.model = modelIdentifier
         }
 
@@ -2017,5 +1708,150 @@ extension ChatViewController: NSMenuItemValidation {
             }
         }
         return true
+    }
+}
+
+extension ChatViewController: ChatToolbarDataSource {
+    var provider: LLMProvider? {
+        if let effectiveModelName = preferredModel,
+           modelIsValid(effectiveModelName),
+           let model = AIMetadata.instance.models.first(where: { $0.name == effectiveModelName }) {
+            return LLMProvider(model: model)
+        }
+        return AITermController.provider
+    }
+
+    var webSearchEnabled: Bool {
+        get {
+            guard let model = provider?.model else {
+                return false
+            }
+            if !model.features.contains(.hostedWebSearch) {
+                return false
+            }
+            if #available(macOS 11, *) {
+                return UserDefaults.standard.bool(forKey: Self.webSearchUserDefaultsKey)
+            }
+            return false
+        }
+        set {
+            return UserDefaults.standard.set(newValue, forKey: Self.webSearchUserDefaultsKey)
+        }
+    }
+    var thinkingEnabled: Bool {
+        get {
+            guard let model = provider?.model else {
+                return false
+            }
+            if !model.features.contains(.configurableThinking) {
+                return false
+            }
+            return UserDefaults.standard.bool(forKey: Self.thinkUserDefaultsKey)
+        }
+        set {
+            return UserDefaults.standard.set(newValue, forKey: Self.thinkUserDefaultsKey)
+        }
+    }
+
+    func showSessionButtonMenu() {
+        guard let chatID else {
+            return
+        }
+        let menu = NSMenu()
+
+        menu.addItem(withTitle: "Delete Chat", action: #selector(deleteChat(_:)), target: self)
+        menu.addItem(NSMenuItem.separator())
+
+        // Terminal session items
+        if let guid = model?.terminalSessionGuid,
+           iTermController.sharedInstance().session(withGUID: guid) != nil {
+
+            menu.addItem(withTitle: "Reveal Linked Terminal Session", action: #selector(revealLinkedTerminalSession(_:)), target: self)
+            menu.addItem(withTitle: "Unlink Terminal Session", action: #selector(unlinkTerminalSession(_:)), target: self)
+            menu.addItem(NSMenuItem.separator())
+
+            let rce = RemoteCommandExecutor.instance
+            for category in RemoteCommand.Content.PermissionCategory.allCases {
+                if category.isBrowserSpecific {
+                    continue
+                }
+                menu.addItem(withTitle: category.regularTitle,
+                             action: #selector(toggleAlwaysAllow(_:)),
+                             target: self,
+                             state: rce.controlState(chatID: chatID,
+                                                     guid: guid,
+                                                     category: category),
+                             object: category)
+
+            }
+            menu.addItem(NSMenuItem.separator())
+
+            if haveLinkedTerminalSession {
+                menu.addItem(withTitle: "Send Commands & Output to AI Automatically",
+                             action: #selector(toggleStream(_:)),
+                             target: self,
+                             state: streaming ? .on : .off,
+                             object: nil)
+                menu.addItem(NSMenuItem.separator())
+            }
+        } else {
+            menu.addItem(withTitle: "Link Terminal Session", action: #selector(objcLinkTerminalSession(_:)), target: self)
+            menu.addItem(NSMenuItem.separator())
+        }
+
+        // Browser session items
+        if let guid = model?.browserSessionGuid,
+           iTermController.sharedInstance().session(withGUID: guid) != nil {
+
+            menu.addItem(withTitle: "Reveal Linked Web Browser Session", action: #selector(revealLinkedBrowserSession(_:)), target: self)
+            menu.addItem(withTitle: "Unlink Web Browser Session", action: #selector(unlinkBrowserSession(_:)), target: self)
+            menu.addItem(NSMenuItem.separator())
+
+            let rce = RemoteCommandExecutor.instance
+            for category in RemoteCommand.Content.PermissionCategory.allCases {
+                if !category.isBrowserSpecific {
+                    continue
+                }
+                menu.addItem(withTitle: "AI can \(category.rawValue)",
+                             action: #selector(toggleAlwaysAllow(_:)),
+                             target: self,
+                             state: rce.controlState(chatID: chatID,
+                                                     guid: guid,
+                                                     category: category),
+                             object: category)
+
+            }
+            menu.addItem(NSMenuItem.separator())
+        } else {
+            menu.addItem(withTitle: "Link Browser Session", action: #selector(objcLinkBrowserSession(_:)), target: self)
+            menu.addItem(NSMenuItem.separator())
+        }
+
+
+        menu.addItem(withTitle: "Help", action: #selector(showLinkedSessionHelp(_:)), target: self)
+
+        // Position the menu just below the button
+        let location = NSPoint(x: 0, y: chatToolbar.sessionButton.bounds.height)
+        menu.popUp(positioning: nil, at: location, in: chatToolbar.sessionButton)
+    }
+
+    func toggleWebSearch() {
+        webSearchEnabled = !webSearchEnabled
+    }
+
+    func toggleThinking() {
+        thinkingEnabled = !thinkingEnabled
+    }
+
+    func toolbarDidUpdate() {
+        delegate?.chatViewControllerDidUpdateToolbar(self)
+    }
+
+    func selectedModelDidChange() {
+        preferredModel = chatToolbar.modelSelectorButton?.selectedItem?.title
+    }
+
+    var effectiveModel: String? {
+        return provider?.model.name
     }
 }
