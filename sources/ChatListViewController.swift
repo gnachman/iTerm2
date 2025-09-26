@@ -242,7 +242,24 @@ extension ChatListViewController: NSTableViewDataSource {
     }
 }
 
+// Custom row view that maintains selection appearance when not first responder
+class ChatTableRowView: NSTableRowView {
+    override var isEmphasized: Bool {
+        // Keep blue selection when selected and window is key, even if table isn't first responder
+        get {
+            return isSelected && (window?.isKeyWindow == true || window == nil)
+        }
+        set {
+            super.isEmphasized = newValue
+        }
+    }
+}
+
 extension ChatListViewController: NSTableViewDelegate {
+    func tableView(_ tableView: NSTableView, rowViewForRow row: Int) -> NSTableRowView? {
+        return ChatTableRowView()
+    }
+
     private func view(forRow row: Int) -> NSView {
         let identifier = NSUserInterfaceItemIdentifier("ChatCell")
         var cell = tableView.makeView(withIdentifier: identifier, owner: self) as? ChatCellView
