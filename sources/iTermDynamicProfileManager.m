@@ -12,6 +12,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermColorPresets.h"
 #import "iTermMigrationHelper.h"
 #import "iTermProfileModelJournal.h"
 #import "iTermProfilePreferences.h"
@@ -515,11 +516,11 @@
                                       withGuid:merged[KEY_GUID]];
 }
 
-- (Profile *)profileByMergingParentAndApplyingHacks:(Profile *)newProfile {
-    Profile *prototype = [self prototypeForDynamicProfile:newProfile];
-    NSMutableDictionary *merged = [self profileByMergingProfile:newProfile
-                                                    intoProfile:prototype];
-    if ([self shouldDisableSeparateColorsForDynamicProfile:newProfile prototype:prototype]) {
+- (Profile *)profileByMergingParentAndApplyingHacks:(Profile *)dynamicProfile {
+    Profile *parent = [self prototypeForDynamicProfile:dynamicProfile];
+    NSMutableDictionary *merged = [self profileByMergingProfile:dynamicProfile
+                                                    intoProfile:parent];
+    if ([self shouldDisableSeparateColorsForDynamicProfile:dynamicProfile prototype:parent]) {
         merged[KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE] = @NO;
     }
     [merged profileAddDynamicTagIfNeeded];
@@ -527,30 +528,67 @@
 }
 
 - (BOOL)shouldDisableSeparateColorsForDynamicProfile:(Profile *)dynamicProfile
-                                           prototype:(Profile *)prototype {
-    // If it's off by default in the dynamic profile but on in the parent/prototype then treat it
-    // as off. Fixes a bug where colors are not respected because the DP doesn't have values for
-    // the light mode/dark mode keys.
-    return (dynamicProfile[KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE] == nil &&
-            ![iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE inProfile:dynamicProfile] &&
-            [iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE inProfile:prototype]);
+                                           prototype:(Profile *)parent {
+    // Consider this scenario:
+    //   1. A dynamic profile does not specify a value for
+    //      KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE.
+    //   2. The DP's parent uses separate colors by mode. This could be the default profile if no
+    //      parent is specified.
+    //   3. The dynamic profile has color values without the light/dark mode suffix in the keys.
+    //   4. The dynamic profile does not have color values *with* the light/dark mode suffix.
+    // If the DP inherits the parent's "use separate colors by mode" setting, then it would ignore
+    // the colors specified in the DP, using those in the parent instead.
+
+    // Check condition 1.
+    if (dynamicProfile[KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE] != nil) {
+        // Dynamic profile explicitly sets the flag, so respect it.
+        return NO;
+    }
+
+    // Check condition 2.
+    if (![iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE inProfile:parent]) {
+        // The parent does not set the flag, so there is nothing to disable.
+        return NO;
+    }
+
+    static NSSet *modelessColorKeys;
+    static NSSet *modefulColorKeys;
+
+    if (!modelessColorKeys) {
+        modelessColorKeys = [NSSet setWithArray:[ProfileModel colorKeysWithModes:NO]];
+        modefulColorKeys = [NSSet setWithArray:[ProfileModel colorKeysWithModes:YES]];
+    }
+    // Check condition 3.
+    if (![[NSSet setWithArray:dynamicProfile.allKeys] intersectsSet:modelessColorKeys]) {
+        // Dynamic profile has no modeless keys. Respect the parent settings.
+        return NO;
+    }
+
+    // Check condition 4.
+    if ([[NSSet setWithArray:dynamicProfile.allKeys] intersectsSet:modefulColorKeys]) {
+        // The dynamic profile has a modeful key. We can respect the parent settings.
+        return NO;
+    }
+
+    return YES;
 }
 
 // Copies fields from |profile| over those in |prototype| and returns a new
 // mutable dictionary.
-- (NSMutableDictionary *)profileByMergingProfile:(Profile *)profile
-                                     intoProfile:(Profile *)prototype {
-    NSMutableDictionary *merged = [profile mutableCopy];
-    for (NSString *key in prototype) {
-        if (profile[key]) {
-            merged[key] = profile[key];
+- (NSMutableDictionary *)profileByMergingProfile:(Profile *)child
+                                     intoProfile:(Profile *)parent {
+    NSMutableDictionary *merged = [child mutableCopy];
+    for (NSString *key in parent) {
+        if (child[key]) {
+            merged[key] = child[key];
         } else {
-            merged[key] = prototype[key];
+            merged[key] = parent[key];
         }
     }
     return merged;
 }
 
+// Returns the dictionary for the parent of `profile`.
 - (Profile *)prototypeForDynamicProfile:(Profile *)profile {
     Profile *prototype = nil;
     NSString *parentName = profile[KEY_DYNAMIC_PROFILE_PARENT_NAME];
