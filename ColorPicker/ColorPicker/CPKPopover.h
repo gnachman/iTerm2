@@ -1,5 +1,5 @@
 #import <Cocoa/Cocoa.h>
-#import "CPKMainViewController.h"
+#import <ColorPicker/CPKMainViewController.h>
 
 /**
  * A popover that houses a color picker.

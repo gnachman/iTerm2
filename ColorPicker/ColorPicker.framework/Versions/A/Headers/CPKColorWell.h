@@ -1,5 +1,5 @@
 #import <Cocoa/Cocoa.h>
-#import "CPKSwatchView.h"
+#import <ColorPicker/CPKSwatchView.h>
 
 /**
  * Shows a color well. When clicked, it opens a popover with a color picker attached to it.

@@ -1,7 +1,7 @@
 #import <Cocoa/Cocoa.h>
-#import "CPKColorWell.h"
-#import "CPKMainViewController.h"
-#import "CPKPopover.h"
+#import <ColorPicker/CPKColorWell.h>
+#import <ColorPicker/CPKMainViewController.h>
+#import <ColorPicker/CPKPopover.h>
 
 //! Project version number for ColorPicker.
 FOUNDATION_EXPORT double ColorPickerVersionNumber;

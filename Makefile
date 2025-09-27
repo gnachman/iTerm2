@@ -219,6 +219,9 @@ paranoidlibsixel: force
 paranoidlibrailroad: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) librailroad_dsl
 
+paranoid-colorpicker: force
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) ColorPicker
+	
 # You probably want make paranoiddeps to avoid depending on Hombrew stuff.
 deps: force fatlibsixel CoreParse NMSSH bindeps libgit2 sparkle librailroad_dsl sfsymbolenum
 
@@ -239,8 +242,11 @@ BetterFontPicker: force
 BetterFontPicker-Dev: force
 	cd BetterFontPicker && $(MAKE) dev
 
-bindeps: SwiftyMarkdown Highlightr BetterFontPicker
+ColorPicker: force
 	cd ColorPicker && $(MAKE)
+
+bindeps: SwiftyMarkdown Highlightr BetterFontPicker
+	$(MAKE) ColorPicker
 	$(MAKE) SearchableComboListView
 
 SearchableComboListView: force

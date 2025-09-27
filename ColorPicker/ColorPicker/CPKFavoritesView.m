@@ -346,11 +346,12 @@ NSString *const kCPFavoritesUserDefaultsKey = @"kCPFavoritesUserDefaultsKey";
     return shouldAccept ? NSDragOperationMove : NSDragOperationNone;
 }
 
-- (BOOL)tableView:(NSTableView *)aTableView
-    writeRowsWithIndexes:(NSIndexSet *)rowIndexes
-            toPasteboard:(NSPasteboard *)pboard {
-    [pboard writeObjects:[self objectsForRows:rowIndexes]];
-    return YES;
+- (id<NSPasteboardWriting>)tableView:(NSTableView *)tableView pasteboardWriterForRow:(NSInteger)row {
+    CPKFavorite *favorite = [self favoriteForRow:row];
+    if ([favorite conformsToProtocol:@protocol(NSPasteboardWriting)]) {
+        return (id<NSPasteboardWriting>)favorite;
+    }
+    return nil;
 }
 
 #pragma mark - NSTableViewDelegate

@@ -69,13 +69,13 @@
     const int bitmapByteCount     = (bitmapBytesPerRow * pixelsHigh);
 
     storage.length = bitmapByteCount;
-    CGContextRef context = CGBitmapContextCreate (storage.mutableBytes,
-                                                  pixelsWide,
-                                                  pixelsHigh,
-                                                  8,      // bits per component
-                                                  bitmapBytesPerRow,
-                                                  colorSpace,
-                                                  kCGImageAlphaPremultipliedFirst);
+    CGContextRef context = CGBitmapContextCreate(storage.mutableBytes,
+                                                 pixelsWide,
+                                                 pixelsHigh,
+                                                 8,      // bits per component
+                                                 bitmapBytesPerRow,
+                                                 colorSpace,
+                                                 (CGBitmapInfo)kCGImageAlphaPremultipliedFirst);
     return context;
 }
 
