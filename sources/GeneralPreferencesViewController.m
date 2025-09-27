@@ -1273,7 +1273,9 @@ enum {
 
 - (IBAction)installPlugin:(id)sender {
     [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/ai-plugin.html"]
-                                        style:iTermOpenStyleTab];
+                                configuration:[NSWorkspaceOpenConfiguration configuration]
+                                        style:iTermOpenStyleTab
+                                       upsell:NO];
 }
 
 - (void)revealPlugin:(id)sender {

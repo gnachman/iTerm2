@@ -105,6 +105,13 @@
 - (void)it_openURL:(NSURL *)url
      configuration:(NSWorkspaceOpenConfiguration *)configuration
              style:(iTermOpenStyle)style {
+    [self it_openURL:url configuration:configuration style:style upsell:YES];
+}
+
+- (void)it_openURL:(NSURL *)url
+     configuration:(NSWorkspaceOpenConfiguration *)configuration
+             style:(iTermOpenStyle)style
+            upsell:(BOOL)upsell {
     DLog(@"%@", url);
     if (!url) {
         return;
@@ -116,22 +123,25 @@
     }
 
     NSString *bundleID = [iTermAdvancedSettingsModel browserBundleID];
-
-    if ([self it_localBrowserCouldHypotheticallyHandleURL:url]) {
-        if ([self it_isDefaultBrowserForWebURL:url]) {
-            // We are the default app. Skip all the machinery and open it directly.
-            if ([self it_openURLLocally:url
-                          configuration:configuration
-                              openStyle:style]) {
-                return;
+    if (upsell || [iTermBrowserGateway browserAllowedCheckingIfNot:YES]) {
+        if ([self it_localBrowserCouldHypotheticallyHandleURL:url]) {
+            if ([self it_isDefaultBrowserForWebURL:url]) {
+                // We are the default app. Skip all the machinery and open it directly.
+                if ([self it_openURLLocally:url
+                              configuration:configuration
+                                  openStyle:style]) {
+                    return;
+                }
             }
-        }
-        // This feature is new and this is the main way people will discover it. Sorry for the annoyance :(
-        if ([self it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:url
-                                                        configuration:configuration
-                                                                style:style
-                                                             testOnly:NO]) {
-            return;
+            if (upsell) {
+                // This feature is new and this is the main way people will discover it. Sorry for the annoyance :(
+                if ([self it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:url
+                                                                configuration:configuration
+                                                                        style:style
+                                                                     testOnly:NO]) {
+                    return;
+                }
+            }
         }
     }
 

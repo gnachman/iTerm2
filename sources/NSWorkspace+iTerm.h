@@ -19,6 +19,10 @@
 - (void)it_openURL:(NSURL *)url
      configuration:(NSWorkspaceOpenConfiguration *)configuration
              style:(iTermOpenStyle)style;
+- (void)it_openURL:(NSURL *)url
+     configuration:(NSWorkspaceOpenConfiguration *)configuration
+             style:(iTermOpenStyle)style
+            upsell:(BOOL)upsell;
 - (NSString *)it_newToken;
 - (BOOL)it_checkToken:(NSString *)token;
 - (void)it_revealInFinder:(NSString *)path;
