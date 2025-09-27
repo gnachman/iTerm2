@@ -15,12 +15,12 @@ static const CGFloat kRightMargin = 8;
 static const CGFloat kTopMargin = 8;
 static const CGFloat kGradientHeight = 128;
 static const CGFloat kMarginBetweenGradientAndColorComponentSlider = 8;
-static const CGFloat kMarginBetweenPopupButtonAndGradient = 2;
+static const CGFloat kMarginBetweenPopupButtonAndGradient = 8;
 static const CGFloat kColorComponentSliderHeight = 24;
 static const CGFloat kAlphaSliderHeight = 12;
 static const CGFloat kMarginBetweenTextFields = 4;
 static const CGFloat kMarginBetweenLastSliderAndTextFields = 8;
-static const CGFloat kColorTextFieldWidth = 34;
+static const CGFloat kColorTextFieldWidth = 37;
 static const CGFloat kMarginBetweenTextFieldAndLabel = 0;
 static const CGFloat kBottomMargin = 4;
 static const CGFloat kMarginBetweenComponentSliders = 4;
@@ -197,6 +197,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
     self.modeButton = [[NSPopUpButton alloc] initWithFrame:NSZeroRect];
     [self.modeButton setTarget:self];
     [self.modeButton setAction:@selector(modeDidChange:)];
+    self.modeButton.focusRingType = NSFocusRingTypeNone;
 
     [self.modeButton addItemWithTitle:@"HSB with Hue Slider"];
     [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeHSBWithHueSliderTag];
@@ -316,6 +317,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
     if (alphaAllowed) {
         self.alphaTextField = [[NSTextField alloc] initWithFrame:NSZeroRect];
         self.alphaTextField.delegate = self;
+        self.alphaTextField.focusRingType = NSFocusRingTypeNone;
     }
 
     // Create text field containers
@@ -325,27 +327,34 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
     // Create HSB text fields
     self.brightnessTextField =[[NSTextField alloc] initWithFrame:NSZeroRect];
     self.brightnessTextField.delegate = self;
+    self.brightnessTextField.focusRingType = NSFocusRingTypeNone;
 
     self.saturationTextField = [[NSTextField alloc] initWithFrame:NSZeroRect];
     self.saturationTextField.delegate = self;
+    self.saturationTextField.focusRingType = NSFocusRingTypeNone;
 
     self.hueTextField = [[NSTextField alloc] initWithFrame:NSZeroRect];
     self.hueTextField.delegate = self;
+    self.hueTextField.focusRingType = NSFocusRingTypeNone;
 
     // Create RGB text fields
     self.blueTextField = [[NSTextField alloc] initWithFrame:NSZeroRect];
     self.blueTextField.delegate = self;
+    self.blueTextField.focusRingType = NSFocusRingTypeNone;
 
     self.greenTextField = [[NSTextField alloc] initWithFrame:NSZeroRect];
     self.greenTextField.delegate = self;
+    self.greenTextField.focusRingType = NSFocusRingTypeNone;
 
     self.redTextField = [[NSTextField alloc] initWithFrame:NSZeroRect];
     self.redTextField.delegate = self;
+    self.redTextField.focusRingType = NSFocusRingTypeNone;
 
     self.hexTextField = [[NSTextField alloc] initWithFrame:NSZeroRect];
     self.colorSpaceTextFieldLabel = [self labelWithTitle:self.colorSpace.cpk_shortLocalizedName origin:NSZeroPoint];
 
     self.hexTextField.delegate = self;
+    self.hexTextField.focusRingType = NSFocusRingTypeNone;
 
     self.hsbTextFields.subviews = @[ self.hueTextField,
                                      self.brightnessTextField,
@@ -585,16 +594,23 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
     [self layoutHeightOfTextField:self.hexTextField];
 
     const NSSize colorSpaceTextFieldLabelSize = [self.colorSpaceTextFieldLabel fittingSize];
-    self.colorSpaceTextFieldLabel.frame = NSMakeRect(kLeftMargin,
-                                                     y + 3,
-                                                     colorSpaceTextFieldLabelSize.width,
-                                                     colorSpaceTextFieldLabelSize.height);
-    self.hexTextField.frame = NSMakeRect(NSMaxX(self.colorSpaceTextFieldLabel.frame) + kMarginBetweenTextFields,
+
+    // First position the hex text field
+    self.hexTextField.frame = NSMakeRect(kLeftMargin + colorSpaceTextFieldLabelSize.width + kMarginBetweenTextFields,
                                          y,
                                          NSMinX(self.rgbTextFields.frame) -
-                                             NSMaxX(self.colorSpaceTextFieldLabel.frame) -
-                                             kMarginBetweenTextFields,
+                                             kLeftMargin - colorSpaceTextFieldLabelSize.width -
+                                             kMarginBetweenTextFields * 2,
                                          NSHeight(self.hexTextField.frame));
+
+    // Calculate baseline offset to align label with text field
+    CGFloat textFieldBaseline = NSMaxY(self.hexTextField.frame) - self.hexTextField.baselineOffsetFromBottom;
+    CGFloat labelY = textFieldBaseline - colorSpaceTextFieldLabelSize.height + self.colorSpaceTextFieldLabel.baselineOffsetFromBottom;
+
+    self.colorSpaceTextFieldLabel.frame = NSMakeRect(kLeftMargin,
+                                                     labelY,
+                                                     colorSpaceTextFieldLabelSize.width,
+                                                     colorSpaceTextFieldLabelSize.height);
 
     [self layoutHeightOfTextField:self.redTextField];
     [self layoutHeightOfTextField:self.greenTextField];
