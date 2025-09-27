@@ -315,6 +315,8 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)onePasswordAccount;
 + (void)setOnePasswordAccount:(NSString *)value;
 + (BOOL)openFileInNewWindows;
++ (BOOL)openFileInSplitPanes;
++ (BOOL)openFileInVerticalSplitPane;
 + (BOOL)openFileOverridesSendText;
 + (BOOL)openNewWindowAtStartup;
 + (BOOL)openUntitledFile;

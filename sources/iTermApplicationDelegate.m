@@ -750,10 +750,30 @@ static BOOL hasBecomeActive = NO;
             DLog(@"Disable auto frame. Profile is:\n%@", bookmark);
         }
         DLog(@"application:openFile: launching new session in window %@", windowController);
+        iTermOpenStyle style = iTermOpenStyleTab;
+        if ([iTermAdvancedSettingsModel openFileInNewWindows]) {
+            style = iTermOpenStyleWindow;
+        } else if ([iTermAdvancedSettingsModel openFileInSplitPanes]) {
+            if ([iTermAdvancedSettingsModel openFileInVerticalSplitPane]) {
+                style = iTermOpenStyleVerticalSplit;
+            } else {
+                style = iTermOpenStyleHorizontalSplit;
+            }
+        } else {
+            style = iTermOpenStyleTab;
+        }
         [iTermSessionLauncher launchBookmark:bookmark
                                   inTerminal:windowController
+                                       style:style
+                                     withURL:nil
+                            hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                     makeKey:YES
+                                 canActivate:YES
                           respectTabbingMode:NO
-                                  completion:^(PTYSession *session) {
+                                       index:nil
+                                     command:nil
+                                 makeSession:nil
+                              didMakeSession:^(PTYSession *session) {
             PseudoTerminal *term = (id)session.delegate.realParentWindow;
             if (!term) {
                 return;
@@ -765,7 +785,8 @@ static BOOL hasBecomeActive = NO;
             }
             DLog(@"application:openFile: revealing hotkey window");
             [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:profileHotkey url:nil];
-        }];
+        }
+                                  completion:nil];
     }
     return YES;
 }

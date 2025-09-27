@@ -281,9 +281,9 @@
                          windowController:windowController
                                completion:completion];
     } else {
-        [self makeSessionByCreatingTabWithProfile:profile
-                                 windowController:windowController
-                                       completion:completion];
+        [self makeSessionByDefaultWithProfile:profile
+                             windowController:windowController
+                                   completion:completion];
     }
 }
 
@@ -335,6 +335,97 @@
     iTermSessionAttachOrLaunchRequest *launchRequest =
     [iTermSessionAttachOrLaunchRequest launchRequestWithSession:session
                                                       canPrompt:YES
+                                                     objectType:iTermPaneObject
+                                            hasServerConnection:NO
+                                               serverConnection:(iTermGeneralServerConnection){}
+                                                      urlString:nil
+                                                   allowURLSubs:NO
+                                                    environment:@{}
+                                                    customShell:[ITAddressBookMgr customShellForProfile:profile]
+                                                         oldCWD:nil
+                                                 forceUseOldCWD:NO
+                                                        command:nil
+                                                         isUTF8:nil
+                                                  substitutions:nil
+                                               windowController:windowController
+                                                          ready:^(BOOL ok) {
+        if (ok) {
+            DLog(@"success");
+            completion(session, YES);
+        } else {
+            DLog(@"failure");
+            [self setFinishedWithSuccess:NO];
+            completion(nil, YES);
+        }
+    }
+                                                     completion:
+     ^(PTYSession *newSession, BOOL ok) {
+        DLog(@"launch by url finished with ok=%@", @(ok));
+        [newSession loadDeferredURLIfNeeded];
+        [weakSelf setFinishedWithSuccess:ok];
+    }];
+    [windowController.sessionFactory attachOrLaunchWithRequest:launchRequest];
+}
+
+- (void)makeSessionByDefaultWithProfile:(Profile *)profile
+                       windowController:(PseudoTerminal *)windowController
+                             completion:(void (^)(PTYSession *, BOOL willCallCompletionBlock))completion {
+    switch (_style) {
+        case iTermOpenStyleVerticalSplit:
+        case iTermOpenStyleHorizontalSplit:
+            if (windowController.numberOfTabs > 0) {
+                [self makeSessionByCreatingSplitPaneWithProfile:profile
+                                                       vertical:_style == iTermOpenStyleVerticalSplit
+                                               windowController:windowController
+                                                     completion:completion];
+                break;
+            } else {
+                // FALL THROUGH - create a new tab
+            }
+
+        case iTermOpenStyleTab:
+        case iTermOpenStyleWindow:
+            [self makeSessionByCreatingTabWithProfile:profile
+                                     windowController:windowController
+                                           completion:completion];
+            break;
+    }
+}
+
+- (void)makeSessionByCreatingTabWithProfile:(Profile *)profile
+                           windowController:(PseudoTerminal *)windowController
+                                 completion:(void (^)(PTYSession *, BOOL willCallCompletionBlock))completion {
+    DLog(@"Make session by creating tab");
+    __weak __typeof(self) weakSelf = self;
+    const BOOL saved = windowController.automaticallySelectNewTabs;
+    windowController.automaticallySelectNewTabs = !self.disableAutomaticTabSelection;
+    __weak __typeof(windowController) weakWindowController = windowController;
+    [windowController asyncCreateTabWithProfile:profile
+                                    withCommand:_command
+                                    environment:nil
+                                       tabIndex:self.index
+                                 didMakeSession:^(PTYSession *session) { completion(session, YES); }
+                                completion:^(PTYSession *newSession, BOOL ok) {
+        weakWindowController.automaticallySelectNewTabs = saved;
+        [weakSelf setFinishedWithSuccess:ok]; }]
+    ;
+}
+
+- (void)makeSessionByCreatingSplitPaneWithProfile:(Profile *)profile
+                                         vertical:(BOOL)vertical
+                                 windowController:(PseudoTerminal *)windowController
+                                       completion:(void (^)(PTYSession *, BOOL willCallCompletionBlock))completion {
+    PTYSession *session = [windowController.sessionFactory newSessionWithProfile:profile
+                                                                          parent:nil];
+    [windowController splitVertically:vertical
+                               before:NO
+                        addingSession:session
+                        targetSession:windowController.currentSession
+                         performSetup:YES];
+    __weak __typeof(self) weakSelf = self;
+    iTermSessionAttachOrLaunchRequest *launchRequest =
+    [iTermSessionAttachOrLaunchRequest launchRequestWithSession:session
+                                                      canPrompt:YES
                                                      objectType:self.objectType
                                             hasServerConnection:NO
                                                serverConnection:(iTermGeneralServerConnection){}
@@ -366,27 +457,7 @@
         }
         [weakSelf setFinishedWithSuccess:ok];
     }];
-    [windowController.sessionFactory attachOrLaunchWithRequest:launchRequest];
-}
-
-- (void)makeSessionByCreatingTabWithProfile:(Profile *)profile
-                           windowController:(PseudoTerminal *)windowController
-                                 completion:(void (^)(PTYSession *, BOOL willCallCompletionBlock))completion {
-    DLog(@"Make session by creating tab");
-    __weak __typeof(self) weakSelf = self;
-    const BOOL saved = windowController.automaticallySelectNewTabs;
-    windowController.automaticallySelectNewTabs = !self.disableAutomaticTabSelection;
-    __weak __typeof(windowController) weakWindowController = windowController;
-    [windowController asyncCreateTabWithProfile:profile
-                                    withCommand:_command
-                                    environment:nil
-                                       tabIndex:self.index
-                                 didMakeSession:^(PTYSession *session) { completion(session, YES); }
-                                completion:^(PTYSession *newSession, BOOL ok) {
-        weakWindowController.automaticallySelectNewTabs = saved;
-        [weakSelf setFinishedWithSuccess:ok]; }]
-    ;
-}
+    [windowController.sessionFactory attachOrLaunchWithRequest:launchRequest];}
 
 - (NSDictionary *)profile:(NSDictionary *)aDict
         modifiedToOpenURL:(NSString *)url
@@ -603,6 +674,9 @@
 
 - (iTermObjectType)objectType {
     if (_windowController) {
+        if (_style == iTermOpenStyleVerticalSplit || _style == iTermOpenStyleHorizontalSplit) {
+            return iTermPaneObject;
+        }
         return iTermTabObject;
     }
     return iTermWindowObject;
