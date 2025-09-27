@@ -3376,6 +3376,7 @@
 		A6AE59072E85E71100762C1D /* iTermOpenStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE59062E85E70E00762C1D /* iTermOpenStyle.h */; };
 		A6AE59092E865A7500762C1D /* ChatToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AE59082E865A7500762C1D /* ChatToolbar.swift */; };
 		A6AE592E2E87676E00762C1D /* SessionView+Nullability.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE592D2E87676900762C1D /* SessionView+Nullability.h */; };
+		A6AE592F2E8853BE00762C1D /* SplitSelectionView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D29732A14082A52004C5DBE /* SplitSelectionView.m */; };
 		A6AF79C62E06586A008D77BA /* BrowserBookmarks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79C52E06586A008D77BA /* BrowserBookmarks.swift */; };
 		A6AF79CA2E06593C008D77BA /* BrowserBookmarkTags.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79C92E06593C008D77BA /* BrowserBookmarkTags.swift */; };
 		A6AF79CC2E065AA5008D77BA /* bookmarks-page.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AF79CB2E065AA5008D77BA /* bookmarks-page.html */; };
@@ -3617,7 +3618,6 @@
 		A6C763491B45C52B00E3C992 /* iTermTabBarControlView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C537BD1938374600A08C18 /* iTermTabBarControlView.m */; };
 		A6C7634D1B45C52B00E3C992 /* PTYNoteView.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F4099183B3AA7003A6A6D /* PTYNoteView.m */; };
 		A6C763501B45C52B00E3C992 /* SolidColorView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DC38817148E840700B89F7C /* SolidColorView.m */; };
-		A6C763511B45C52B00E3C992 /* SplitSelectionView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D29732A14082A52004C5DBE /* SplitSelectionView.m */; };
 		A6C763541B45C52B00E3C992 /* iTermOpenQuicklyTableCellView.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B4599197319CA00F5444D /* iTermOpenQuicklyTableCellView.m */; };
 		A6C763551B45C52B00E3C992 /* iTermOpenQuicklyTableRowView.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B45941973198900F5444D /* iTermOpenQuicklyTableRowView.m */; };
 		A6C763561B45C52B00E3C992 /* iTermOpenQuicklyTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B458F1973193100F5444D /* iTermOpenQuicklyTableView.m */; };
@@ -18818,6 +18818,7 @@
 				A68400BD1FF98101008D3EE2 /* iTermTimestampsRenderer.m in Sources */,
 				A6069F262DF3ABE100EE6CC7 /* CompletionsOpenAI.swift in Sources */,
 				A6A4B2A2240B67A400184EAC /* PTYMouseHandler.m in Sources */,
+				A6AE592F2E8853BE00762C1D /* SplitSelectionView.m in Sources */,
 				A615829E2E5E78DD0094B718 /* TabularFormatter.swift in Sources */,
 				A6891DCA2818605500751F40 /* MarkdownPortholeRenderer.swift in Sources */,
 				A6F6990A2728C45800C4A3A6 /* Mux.swift in Sources */,
@@ -19990,7 +19991,6 @@
 				A6C7635B1B45C52B00E3C992 /* Autocomplete.m in Sources */,
 				A6C763A71B45C52B00E3C992 /* ToolNotes.m in Sources */,
 				A6C763E41B45C6F100E3C992 /* RegexKitLite.m in Sources */,
-				A6C763511B45C52B00E3C992 /* SplitSelectionView.m in Sources */,
 				A6C762FD1B45C52B00E3C992 /* SCPPath.m in Sources */,
 				A6C762D01B45C52B00E3C992 /* iTermSelection.m in Sources */,
 				A6DC814F285CF45C0050788C /* GPBDuration.pbobjc.m in Sources */,

@@ -6,6 +6,8 @@
 //
 
 #import "SplitSelectionView.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "NSColor+iTerm.h"
 
 @interface SplitSelectionView ()
 
@@ -17,7 +19,7 @@
     SplitSessionHalf half_;
     NSTrackingArea *trackingArea_;
     id<SplitSelectionViewDelegate> delegate_;  // weak
-    __unsafe_unretained PTYSession *session_;
+    __weak PTYSession *session_;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
@@ -44,12 +46,6 @@
     return self;
 }
 
-- (void)dealloc
-{
-    [trackingArea_ release];
-    [super dealloc];
-}
-
 - (void)_createTrackingArea
 {
     NSRect frame = self.frame;
@@ -65,7 +61,7 @@
     [super setFrameSize:newSize];
     if (trackingArea_) {
         [self removeTrackingArea:trackingArea_];
-        [trackingArea_ release];
+        trackingArea_ = nil;
         [self _createTrackingArea];
     }
 }
@@ -73,7 +69,7 @@
 - (void)_showMessage:(NSString *)message inRect:(NSRect)frame
 {
     [[NSColor whiteColor] set];
-    NSMutableParagraphStyle *pStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
+    NSMutableParagraphStyle *pStyle = [[NSMutableParagraphStyle alloc] init];
     [pStyle setParagraphStyle:[NSParagraphStyle defaultParagraphStyle]];
     [pStyle setAlignment:NSTextAlignmentCenter];
 
@@ -88,8 +84,8 @@
                 [NSColor whiteColor], NSForegroundColorAttributeName,
                 pStyle, NSParagraphStyleAttributeName,
                 nil];
-        attributedString = [[[NSMutableAttributedString alloc] initWithString:message
-                                                                   attributes:attrs] autorelease];
+        attributedString = [[NSMutableAttributedString alloc] initWithString:message
+                                                                  attributes:attrs];
         rect = NSMakeRect(frame.origin.x,
                           frame.origin.y + frame.size.height * 2.0 / 3.0,
                           frame.size.width,
@@ -102,7 +98,7 @@
              rect.size.height + rect.origin.y > frame.origin.y + frame.size.height);
 
 
-    NSShadow *theShadow = [[[NSShadow  alloc] init] autorelease];
+    NSShadow *theShadow = [[NSShadow  alloc] init];
     [theShadow setShadowOffset:NSMakeSize(0, 0)];
     [theShadow setShadowBlurRadius:4.0];
     [theShadow setShadowColor:[NSColor blackColor]];
@@ -173,14 +169,20 @@
             break;
     }
 
-    [[NSColor colorWithCalibratedRed:0.5 green:0 blue:0 alpha:1] set];
+    NSString *hexColor = [iTermAdvancedSettingsModel splitPaneTargetDropFillColor];
+    NSColor *color = [NSColor colorFromHexString:hexColor];
+    [color ?: [NSColor colorWithCalibratedRed:0.5 green:0 blue:0 alpha:1] set];
     NSRectFill(highlightRect);
 
-    [[NSColor whiteColor] set];
+    hexColor = [iTermAdvancedSettingsModel splitPaneTargetDropBorderColor];
+    color = [NSColor colorFromHexString:hexColor];
+    [color ?: [NSColor whiteColor] set];
     NSFrameRect(highlightRect);
 
     highlightRect = NSInsetRect(highlightRect, 1, 1);
-    [[NSColor blackColor] set];
+    hexColor = [iTermAdvancedSettingsModel splitPaneTargetDropInnerBorderColor];
+    color = [NSColor colorFromHexString:hexColor];
+    [color ?: [NSColor blackColor] set];
     NSFrameRect(highlightRect);
 
     if (delegate_ && half_ != kNoHalf) {
