@@ -16,4 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermGetStringBuiltInFunction : NSObject<iTermBuiltInFunction>
 @end
 
+@interface iTermGetPolyModalAlertBuiltInFunction : NSObject<iTermBuiltInFunction>
+@end
+
 NS_ASSUME_NONNULL_END
