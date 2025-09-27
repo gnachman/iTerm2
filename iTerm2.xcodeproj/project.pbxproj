@@ -3375,6 +3375,7 @@
 		A6AE58E52E84936000762C1D /* iTermBrowserPluginFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AE58E42E84936000762C1D /* iTermBrowserPluginFinder.swift */; };
 		A6AE59072E85E71100762C1D /* iTermOpenStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE59062E85E70E00762C1D /* iTermOpenStyle.h */; };
 		A6AE59092E865A7500762C1D /* ChatToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AE59082E865A7500762C1D /* ChatToolbar.swift */; };
+		A6AE592E2E87676E00762C1D /* SessionView+Nullability.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE592D2E87676900762C1D /* SessionView+Nullability.h */; };
 		A6AF79C62E06586A008D77BA /* BrowserBookmarks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79C52E06586A008D77BA /* BrowserBookmarks.swift */; };
 		A6AF79CA2E06593C008D77BA /* BrowserBookmarkTags.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AF79C92E06593C008D77BA /* BrowserBookmarkTags.swift */; };
 		A6AF79CC2E065AA5008D77BA /* bookmarks-page.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AF79CB2E065AA5008D77BA /* bookmarks-page.html */; };
@@ -8184,6 +8185,7 @@
 		A6AE58E42E84936000762C1D /* iTermBrowserPluginFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserPluginFinder.swift; sourceTree = "<group>"; };
 		A6AE59062E85E70E00762C1D /* iTermOpenStyle.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermOpenStyle.h; sourceTree = "<group>"; };
 		A6AE59082E865A7500762C1D /* ChatToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatToolbar.swift; sourceTree = "<group>"; };
+		A6AE592D2E87676900762C1D /* SessionView+Nullability.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SessionView+Nullability.h"; sourceTree = "<group>"; };
 		A6AF79C52E06586A008D77BA /* BrowserBookmarks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserBookmarks.swift; sourceTree = "<group>"; };
 		A6AF79C92E06593C008D77BA /* BrowserBookmarkTags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserBookmarkTags.swift; sourceTree = "<group>"; };
 		A6AF79CB2E065AA5008D77BA /* bookmarks-page.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "bookmarks-page.html"; sourceTree = "<group>"; };
@@ -9672,7 +9674,6 @@
 				1D9DCC10142D7F970016228A /* ScriptTrigger.h */,
 				1D24C282142EF334006B246F /* SendTextTrigger.h */,
 				1DEDC8FB1451F67D004F1615 /* SessionTitleView.h */,
-				1D2E812F12A18F7500F3D71E /* SessionView.h */,
 				1D8FC67917E673A400A82402 /* shell_launcher.h */,
 				A68A30C4186D0F36007F550F /* SmartMatch.h */,
 				1D24C2C3142FEACF006B246F /* SmartSelectionController.h */,
@@ -11529,6 +11530,7 @@
 		A63F40AC1842988A003A6A6D /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				A6AE592D2E87676900762C1D /* SessionView+Nullability.h */,
 				A6AE59062E85E70E00762C1D /* iTermOpenStyle.h */,
 				A6E312CF2E3C1D3E008222DE /* iTermTriState.h */,
 				A605128E2E38525500507125 /* PseudoTerminal.swift */,
@@ -11667,6 +11669,7 @@
 				A667C264277A3B29006B4DEF /* PTYTriggerEvaluator.m */,
 				F56B230B03A1B36701A8A066 /* PTYWindow.m */,
 				1D36155412CBF33E00803EA9 /* ScreenChar.m */,
+				1D2E812F12A18F7500F3D71E /* SessionView.h */,
 				1D2E813012A18F7500F3D71E /* SessionView.m */,
 				A6D24D3C26BC5FA600CCE211 /* SwiftDebugLogging.swift */,
 				A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */,
@@ -15503,6 +15506,7 @@
 				5365207121433ED2003C58FD /* iTermGitState.h in Headers */,
 				A636C3B12288887600A83E2F /* iTermResourceLimitsHelper.h in Headers */,
 				A653F6A824D00FFE0062377E /* iTermRestorableStateSQLite.h in Headers */,
+				A6AE592E2E87676E00762C1D /* SessionView+Nullability.h in Headers */,
 				A63011B120E7EE62008114B7 /* iTermStatusBarKnobNumericViewController.h in Headers */,
 				53197E7E220528E40000D95D /* iTermNotificationCenter.h in Headers */,
 				A667194F1DCE36C3000CE608 /* NSWindow+iTerm.h in Headers */,

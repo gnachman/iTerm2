@@ -212,7 +212,6 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property(nonatomic, readonly) NSEdgeInsets extraMargins;
 @property (nonatomic) CGFloat actualRightExtra;
 @property (nonatomic, readonly) BOOL isBrowser;
-@property (nonatomic, readonly) iTermBrowserViewController *browserViewController NS_AVAILABLE_MAC(11);
 
 - (void)setBrowserViewController:(iTermBrowserViewController *)browserViewController
                       initialURL:(NSString *)initialURL

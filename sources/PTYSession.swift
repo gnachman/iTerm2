@@ -719,7 +719,7 @@ extension PTYSession {
         }
     }
     private func searchBrowser(args: RemoteCommand.SearchBrowser, completion: @escaping (String, String) throws -> ()) rethrows {
-        view.browserViewController.findOnPage(query: args.query, maxResults: 20, contextLength: 100) { result in
+        view.browserViewController?.findOnPage(query: args.query, maxResults: 20, contextLength: 100) { result in
             switch result {
             case .success(let results):
                 let json = try! JSONEncoder().encode(results).lossyString
@@ -737,7 +737,7 @@ extension PTYSession {
             try completion("The URL \(args.url) is not well formed", "Navigation failed")
             return
         }
-        view.browserViewController.loadURL(url) { error in
+        view.browserViewController?.loadURL(url) { error in
             if let error {
                 try? completion("The web page could not be loaded: " + error.localizedDescription, "Navigation failed")
             } else {
@@ -747,13 +747,13 @@ extension PTYSession {
     }
 
     private func webSearch(args: RemoteCommand.WebSearch, completion: @escaping (String, String) throws -> ()) rethrows {
-        view.browserViewController.doWebSearch(for: args.query) { [weak self] error in
+        view.browserViewController?.doWebSearch(for: args.query) { [weak self] error in
             if let error {
                 DLog("\(error)")
                 try? completion("Web search is not currently available", "Web search failed")
                 return
             }
-            self?.view.browserViewController.convertToMarkdown(skipChrome: true) { (result: Result<String, Error>) in
+            self?.view.browserViewController?.convertToMarkdown(skipChrome: true) { (result: Result<String, Error>) in
                 if let markdown = result.successValue {
                     try? completion(markdown, "Web search complete")
                 } else {
@@ -764,7 +764,7 @@ extension PTYSession {
     }
 
     private func getURL(args: RemoteCommand.GetURL, completion: @escaping (String, String) throws -> ()) rethrows {
-        if let url = view.browserViewController.webView.url {
+        if let url = view.browserViewController?.webView.url {
             try completion(url.absoluteString, "URL provided")
         } else {
             try completion("about:blank", "URL provided")
@@ -772,7 +772,7 @@ extension PTYSession {
     }
 
     private func readWebPage(args: RemoteCommand.ReadWebPage, completion: @escaping (String, String) throws -> ()) rethrows {
-        view.browserViewController.convertToMarkdown(skipChrome: false) { (result: Result<String, Error>) in
+        view.browserViewController?.convertToMarkdown(skipChrome: false) { (result: Result<String, Error>) in
             switch result {
             case .success(let text):
                 let lines = text.components(separatedBy: "\n")
@@ -1374,7 +1374,7 @@ extension PTYSession {
 
     @objc
     func terminateBrowser(){
-        view.browserViewController.terminate()
+        view?.browserViewController?.terminate()
     }
 }
 
@@ -1382,7 +1382,7 @@ extension PTYSession {
 extension PTYSession {
     var defaultAccountNameForPasswordManager: String? {
         if isBrowserSession() {
-            return view.browserViewController.currentURL?.host
+            return view.browserViewController?.currentURL?.host
         }
         return nil
     }

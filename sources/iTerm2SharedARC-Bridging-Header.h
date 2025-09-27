@@ -182,6 +182,7 @@
 #import "ScreenCharArray.h"
 #import "SearchResult.h"
 #import "SessionView.h"
+#import "SessionView+Nullability.h"
 #import "SolidColorView.h"
 #import "TaskNotifier.h"
 #import "ToastWindowController.h"
