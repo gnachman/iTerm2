@@ -253,6 +253,12 @@
     }
 }
 
+// Work around a bug in macOS Tahoe that sometimes decides to blur the top of the view.
+// I can reproduce it in 26.0 by moving a split pane into its own window.
+- (long long)allowedPocketEdges {
+    return 0;
+}
+
 // The scroll wheel handling code is like Mr. Burns: it has every possible
 // disease and they are in perfect balance.
 //
