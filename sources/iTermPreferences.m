@@ -373,6 +373,9 @@ static NSString *sPreviousVersion;
         // Well, I am trying to do something clever and I damn well want it to work. With a bit of
         // the old disassembler, I found this user default which seems to turn off the stupid.
         @"NSOverlayScrollersFallBackForAccessoryViews": @NO,
+
+        // See https://github.com/ghostty-org/ghostty/pull/8625/files
+        @"NSAutoFillHeuristicControllerEnabled": @NO,
     };
 }
 
