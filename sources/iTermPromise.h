@@ -47,6 +47,7 @@ typedef NS_ENUM(NSUInteger, iTermPromiseErrorCode) {
 + (instancetype)promise:(void (^ NS_NOESCAPE)(id<iTermPromiseSeal> seal))block;
 // Nil gives default error
 + (instancetype)promiseValue:(T _Nullable)value;
++ (instancetype)promiseError:(NSError *)value;
 + (instancetype)promiseDefaultError;
 + (void)gather:(NSArray<iTermPromise<T> *> *)promises
          queue:(dispatch_queue_t)queue

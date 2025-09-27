@@ -180,6 +180,12 @@ typedef void (^iTermPromiseCallback)(iTermOr<id, NSError *> *);
     }];
 }
 
++ (instancetype)promiseError:(NSError *)value {
+    return [self promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
+        [seal reject:value];
+    }];
+}
+
 + (instancetype)promiseDefaultError {
     return [self promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
         [seal rejectWithDefaultError];

@@ -3111,6 +3111,13 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         NSString *decoded = [NSString stringWithHexEncodedString:hex];
         return decoded ?: @"";
     }];
+    NSError * (^error)(NSString *) = ^NSError *(NSString *key) {
+        return [NSError errorWithDomain:@"com.googlecode.iterm2.termcap-terminfo"
+                                   code:1
+                               userInfo:@{ @"code": key }];
+    };
+
+
     BOOL (^add)(NSString *,
                 NSMutableArray<iTermPromise<NSString *> *> *,
                 unsigned short,
@@ -3132,8 +3139,8 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             [[keyStringPromise then:^(NSString * _Nonnull value) {
                 NSString *kvp = [NSString stringWithFormat:kFormat, hexEncodedKey, value];
                 [seal fulfill:kvp];
-            }] catchError:^(NSError * _Nonnull error) {
-                [seal rejectWithDefaultError];
+            }] catchError:^(NSError *_error) {
+                [seal reject:error(hexEncodedKey)];
             }];
         }];
         DLog(@"Add %@", promise.maybeValue);
@@ -3330,7 +3337,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         NSString *cached = self.terminfoValues[key];
         if (cached) {
             if ([cached isKindOfClass:[NSNull class]]) {
-                [parts addObject:[iTermPromise promiseDefaultError]];
+                [parts addObject:[iTermPromise promiseError:error(hexEncodedKey)]];
             } else {
                 DLog(@"Use cached value %@ -> %@", key, cached);
                 NSString *response = [NSString stringWithFormat:kFormat, hexEncodedKey, cached.hexEncodedString];
@@ -3352,7 +3359,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                 ok = YES;
                 [parts addObject:[iTermPromise promiseValue:response]];
             } else {
-                [parts addObject:[iTermPromise promiseDefaultError]];
+                [parts addObject:[iTermPromise promiseError:error(hexEncodedKey)]];
             }
         }
     }
@@ -3361,13 +3368,26 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     DLog(@"Gather parts...");
     iTermTokenExecutorUnpauser *unpauser = [self.delegate terminalPause];
     [iTermPromise gather:parts queue:[self.delegate terminalQueue] completion:^(NSArray<iTermOr<id, NSError *> *> * _Nonnull values) {
-        NSArray<NSString *> *strings = [values mapWithBlock:^id(iTermOr<id,NSError *> *option) {
-            return option.maybeFirst;
-        }];
-        DLog(@"Got them all. It is %@", strings);
-        DLog(@"result is %@ for %@", [strings componentsJoinedByString:@", "], token);
-        [weakSelf finishRequestTermcapTerminfoWithValues:strings
-                                                      ok:ok];
+        DLog(@"Have %@ values", @(values.count));
+        for (iTermOr<id,NSError *> *option in values) {
+            NSString *value = option.maybeFirst;
+            if (value) {
+                DLog(@"Success: %@", value);
+            }
+            BOOL ok = YES;
+            if (!value) {
+                ok = NO;
+                NSError *error = option.maybeSecond;
+                value = error.userInfo[@"code"];
+                DLog(@"Error: %@", value);
+            }
+            if (!value) {
+                // Shouldn't happen
+                DLog(@"BUG - neither success nor error in %@", option);
+                value = @"";
+            }
+            [self finishRequestTermcapTerminfoWithValues:@[ value ] ok:ok];
+        }
         DLog(@"Unpause");
         [unpauser unpause];
     }];
