@@ -181,6 +181,9 @@ DEFINE_SECURE_BOILERPLATE(name, capitalizedName, NSString *, kiTermAdvancedSetti
 #define DEFINE_BOOL(name, theDefault, theDescription) \
 DEFINE_BOILERPLATE(name, BOOL, kiTermAdvancedSettingTypeBoolean, theDefault, theDescription, iTermAdvancedSettingsModelTransformBool, iTermAdvancedSettingsModelInverseTransformBool)
 
+#define DEFINE_BOOL(name, theDefault, theDescription) \
+DEFINE_BOILERPLATE(name, BOOL, kiTermAdvancedSettingTypeBoolean, theDefault, theDescription, iTermAdvancedSettingsModelTransformBool, iTermAdvancedSettingsModelInverseTransformBool)
+
 #define DEFINE_SETTABLE_BOOL(name, capitalizedName, theDefault, theDescription) \
 DEFINE_SETTABLE_BOILERPLATE(name, capitalizedName, BOOL, kiTermAdvancedSettingTypeBoolean, theDefault, theDescription, iTermAdvancedSettingsModelTransformBool, iTermAdvancedSettingsModelInverseTransformBool)
 
@@ -517,7 +520,16 @@ DEFINE_FLOAT(activeUpdateCadence, 60.0, SECTION_DRAWING @"Maximum frame rate (FP
 DEFINE_INT(adaptiveFrameRateThroughputThreshold, 10000, SECTION_DRAWING @"Throughput threshold for adaptive frame rate.\nIf more than this many bytes per second are received, use the lower frame rate of 30 fps.");
 DEFINE_FLOAT(maximumFrameRate, 60.0, SECTION_DRAWING @"Frame rate (FPS) when adaptive framerate is enabled and throughput is low but not 0.");
 DEFINE_BOOL(dwcLineCache, YES, SECTION_DRAWING @"Enable cache of double-width character locations?\nThis should improve performance. It is always on in nightly builds. You must restart iTerm2 for this setting to take effect.");
-DEFINE_BOOL(useGCDUpdateTimer, YES, SECTION_DRAWING @"Use GCD-based update timer instead of NSTimer.\nThis should cause more regular screen updates. Restart iTerm2 after changing this setting.");
+
+static BOOL iTermAdvancedSettingsUseGCDUpdateTimerDefaultValue(void) {
+    if (@available(macOS 26, *)) {
+        // Issue 12415
+        return NO;
+    }
+    return YES;
+}
+
+DEFINE_BOOL(useGCDUpdateTimer, iTermAdvancedSettingsUseGCDUpdateTimerDefaultValue(), SECTION_DRAWING @"Use GCD-based update timer instead of NSTimer.\nThis should cause more regular screen updates. Restart iTerm2 after changing this setting.");
 DEFINE_BOOL(drawOutlineAroundCursor, NO, SECTION_DRAWING @"Draw outline around underline and vertical bar cursors using background color.");
 DEFINE_BOOL(disableCustomBoxDrawing, NO, SECTION_DRAWING @"Use your typeface’s box-drawing characters instead of iTerm2’s custom drawing code.\nYou must restart iTerm2 after changing this setting.");
 DEFINE_INT(minimumWeightDifferenceForBoldFont, 4, SECTION_DRAWING @"Minimum weight difference between regular and bold font.\nThis affects selection of the bold version of a font. Font weights go from 0 to 9. If no font can be found that has a high enough weight then the regular font will be double-struck with a small offset.");
