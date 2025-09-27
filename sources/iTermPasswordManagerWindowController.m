@@ -648,41 +648,49 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
             [alert layout];
             [[alert window] makeFirstResponder:newPassword];
 
-            switch ([self runModal:alert]) {
-                case NSAlertFirstButtonReturn: {
-                    __weak __typeof(self) weakSelf = self;
-                    const NSInteger cancelCount = [self incrBusy];
-                    [_entries[row] setPassword:newPassword.stringValue completion:^(NSError * _Nullable error) {
-                        [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
-                            [weakSelf decrBusy];
-                            if (error) {
-                                DLog(@"%@", error);
-                                return;
-                            }
-                            [weakSelf passwordsDidChange];
-                        }];
-                    }];
-                    break;
-                }
-                case NSAlertSecondButtonReturn: {
-                    __weak __typeof(self) weakSelf = self;
-                    const NSInteger cancelCount = [self incrBusy];
-                    [_entries[row] setPassword:[iTermPasswordManagerWindowController randomPassword] completion:^(NSError * _Nullable error) {
-                        [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
-                            [weakSelf decrBusy];
-                            if (error) {
-                                DLog(@"%@", error);
-                                return;
-                            }
-                            [weakSelf passwordsDidChange];
-                        }];
-                    }];
-                    break;
-                }
-            }
+            __weak __typeof(self) weakSelf = self;
+            [self runModal:alert completion:^(NSModalResponse response) {
+                [weakSelf handleEditPasswordCompletion:response row:row newPassword:newPassword];
+            }];
         }
     }
 }
+
+- (void)handleEditPasswordCompletion:(NSModalResponse)response
+                                 row:(NSInteger)row
+                         newPassword:(NSSecureTextField *)newPassword {
+    __weak __typeof(self) weakSelf = self;
+    switch (response) {
+        case NSAlertFirstButtonReturn: {
+            const NSInteger cancelCount = [self incrBusy];
+            [_entries[row] setPassword:newPassword.stringValue completion:^(NSError * _Nullable error) {
+                [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
+                    [weakSelf decrBusy];
+                    if (error) {
+                        DLog(@"%@", error);
+                        return;
+                    }
+                    [weakSelf passwordsDidChange];
+                }];
+            }];
+            break;
+        }
+        case NSAlertSecondButtonReturn: {
+            __weak __typeof(self) weakSelf = self;
+            const NSInteger cancelCount = [self incrBusy];
+            [_entries[row] setPassword:[iTermPasswordManagerWindowController randomPassword] completion:^(NSError * _Nullable error) {
+                [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
+                    [weakSelf decrBusy];
+                    if (error) {
+                        DLog(@"%@", error);
+                        return;
+                    }
+                    [weakSelf passwordsDidChange];
+                }];
+            }];
+            break;
+        }
+    }}
 
 - (IBAction)performDefaultAction:(id)sender {
     if (_sendUserByDefault && _didSendUserName == nil) {
@@ -845,11 +853,18 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Copy"];
 
-    if ([self runModal:alert] == NSAlertSecondButtonReturn) {
-        NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-        [pasteboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
-        [pasteboard setString:password forType:NSPasteboardTypeString];
-    }
+    __weak __typeof(self) weakSelf = self;
+    [self runModal:alert completion:^(NSModalResponse response) {
+        if (response == NSAlertSecondButtonReturn) {
+            [weakSelf copy:password];
+        }
+    }];
+}
+
+- (void)copy:(NSString *)password {
+    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+    [pasteboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
+    [pasteboard setString:password forType:NSPasteboardTypeString];
 }
 
 - (IBAction)copyPassword:(id)sender {
@@ -1052,7 +1067,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
                 alert.messageText = [NSString stringWithFormat:@"Could not get password. Keychain query failed: %@",
                                      error.localizedDescription];
                 [alert addButtonWithTitle:@"OK"];
-                [self runModal:alert];
+                [self runModal:alert completion:^(NSModalResponse response) { }];
                 completion(nil, nil);
             } else {
                 DLog(@"passwordForRow: return nonnil password");
@@ -1062,11 +1077,13 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     }];
 }
 
-- (NSModalResponse)runModal:(NSAlert *)alert {
+- (void)runModal:(NSAlert *)alert completion:(void (^)(NSModalResponse))completion {
     if (self.windowLoaded && self.window.isVisible) {
-        return [alert runSheetModalForWindow:self.window];
+        [NSApp activateIgnoringOtherApps:YES];
+        [alert beginSheetModalForWindow:self.window completionHandler:completion];
     } else {
-        return [alert runModal];
+        const NSModalResponse response = [alert runModal];
+        completion(response);
     }
 }
 
