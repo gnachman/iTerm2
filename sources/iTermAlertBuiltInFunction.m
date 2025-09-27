@@ -121,11 +121,13 @@
 
     NSWindow *window = [[[iTermController sharedInstance] terminalWithGuid:windowID] window];
     if (window) {
-        [alert runSheetModalForWindow:window];
+        [alert beginSheetModalForWindow:window completionHandler:^(NSModalResponse returnCode) {
+            completion(textField.stringValue ?: @"", nil);
+        }];
     } else {
         [alert runModal];
+        completion(textField.stringValue ?: @"", nil);
     }
-    completion(textField.stringValue ?: @"", nil);
 }
 
 @end

@@ -10,7 +10,7 @@ import Cocoa
 @objc(iTermBookmarkDialogViewController)
 class BookmarkDialogViewController: NSObject {
     @objc(showInWindow:withDefaultName:completion:)
-    static func show(window: NSWindow, defaultName: String, completion: (String) -> ()) {
+    static func show(window: NSWindow, defaultName: String, completion: @escaping (String) -> ()) {
         // Create the modal dialog
         let alert = NSAlert()
         alert.messageText = "Enter Mark Name"
@@ -28,19 +28,19 @@ class BookmarkDialogViewController: NSObject {
         }
 
         // Run the modal dialog
-        let response = alert.runSheetModal(for: window)
-
-        if response == NSApplication.ModalResponse.alertFirstButtonReturn { // OK button clicked
-            let name = textField.stringValue
-            guard !name.isEmpty else {
-                return // Don't proceed with empty name
+        alert.beginSheetModal(for: window) { response in
+            if response == NSApplication.ModalResponse.alertFirstButtonReturn { // OK button clicked
+                let name = textField.stringValue
+                guard !name.isEmpty else {
+                    return // Don't proceed with empty name
+                }
+                completion(name)
             }
-            completion(name)
         }
     }
 
     @objc(showInWindow:withCompletion:)
-    static func show(window: NSWindow, completion: (String) -> ()) {
+    static func show(window: NSWindow, completion: @escaping (String) -> ()) {
         show(window: window, defaultName: currentDateTimeString(), completion: completion)
     }
 

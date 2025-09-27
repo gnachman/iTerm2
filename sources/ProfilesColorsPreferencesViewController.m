@@ -598,10 +598,17 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
 - (void)saveColorPreset:(id)sender {
     iTermColorPresetDictionary *customPresets = [iTermColorPresets customColorPresets];
-    NSString *name = [self showSaveColorPresetAlertWithItems:customPresets.allKeys];
-    if (!name) {
-        return;
-    }
+    __weak __typeof(self) weakSelf = self;
+    [self showSaveColorPresetAlertWithItems:customPresets.allKeys completion:^(NSString *name) {
+        if (!name) {
+            return;
+        }
+        [weakSelf reallySaveColorPresetWithName:name customPresets:customPresets];
+    }];
+}
+
+- (void)reallySaveColorPresetWithName:(NSString *)name
+                        customPresets:(iTermColorPresetDictionary *)customPresets {
     if (customPresets[name]) {
         [iTermColorPresets deletePresetWithName:name];
     }
@@ -627,7 +634,8 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     return best;
 }
 
-- (NSString *)showSaveColorPresetAlertWithItems:(NSArray<NSString *> *)items {
+- (void)showSaveColorPresetAlertWithItems:(NSArray<NSString *> *)items
+                               completion:(void (^)(NSString *name))completion {
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = @"Save Color Preset";
     alert.informativeText = @"Select preset name";
@@ -643,13 +651,14 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
 
-    NSInteger response = [alert runSheetModalForWindow:self.view.window];
-
-    if (response == NSAlertFirstButtonReturn) {
-        NSString *selectedName = [comboBox stringValue];
-        return selectedName;
-    }
-    return nil;
+    [alert beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse response) {
+        if (response == NSAlertFirstButtonReturn) {
+            NSString *selectedName = [comboBox stringValue];
+            completion(selectedName);
+        } else {
+            completion(nil);
+        }
+    }];
 }
 
 - (void)exportColorPreset:(id)sender {

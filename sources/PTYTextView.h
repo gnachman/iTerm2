@@ -292,7 +292,6 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)textViewExitShortcutNavigationMode;
 - (void)textViewWillHandleMouseDown:(NSEvent *)event;
 - (BOOL)textViewPasteFiles:(NSArray<NSString *> *)filenames;
-- (NSString *)textViewNaturalLanguageQuery;
 - (void)textViewPerformNaturalLanguageQuery;
 - (BOOL)textViewCanExplainOutputWithAI;
 - (void)textViewExplainOutputWithAI;

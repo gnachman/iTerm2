@@ -17293,11 +17293,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return YES;
 }
 
-- (NSString *)textViewNaturalLanguageQuery {
-    return [self naturalLanguageQuery];
-}
-
-- (NSString *)naturalLanguageQuery {
+- (void)fetchNaturalLanguageQuery:(void (^)(NSString *input))completion {
     NSString *query = nil;
     if (_textview.selection.hasSelection) {
         query = _textview.selectedText;
@@ -17305,26 +17301,32 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         query = self.currentCommand;
     }
     if (query.length == 0) {
-        return [self requestNaturalLanguageQuery:@"" reason:nil bypassable:NO];
+        [self requestNaturalLanguageQuery:@"" reason:nil bypassable:NO completion:completion];
+        return;
     }
     NSInteger maxLength = [iTermPreferences integerForKey:kPreferenceKeyAIResponseTokenLimit] / 8;
     if (query.length >= maxLength) {
-        return [self requestNaturalLanguageQuery:[query substringFromIndex:query.length - maxLength]
-                                          reason:@"⚠️ The selected text was rather long."
-                                      bypassable:NO];
+        [self requestNaturalLanguageQuery:[query substringFromIndex:query.length - maxLength]
+                                   reason:@"⚠️ The selected text was rather long."
+                               bypassable:NO
+                               completion:completion];
+        return;
     }
-    return [self requestNaturalLanguageQuery:query reason:nil bypassable:YES];
+    [self requestNaturalLanguageQuery:query reason:nil bypassable:YES completion:completion];
 }
 
-- (NSString *)requestNaturalLanguageQuery:(NSString *)defaultString
-                                   reason:(NSString *)reason
-                               bypassable:(BOOL)bypassable {
+- (void)requestNaturalLanguageQuery:(NSString *)defaultString
+                             reason:(NSString *)reason
+                         bypassable:(BOOL)bypassable
+                         completion:(void (^)(NSString *input))completion {
     if (![iTermAITermGatekeeper checkSilently:NO]) {
-        return nil;
+        completion(nil);
+        return;
     }
     NSString *const bypassKey = @"NoSyncBypassConfirmAIPrompt";
     if (defaultString.length > 0 && bypassable && [[NSUserDefaults standardUserDefaults] boolForKey:bypassKey]) {
-        return defaultString;
+        completion(defaultString);
+        return;
     }
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     [alert setMessageText:@"Describe the command you want to run in plain English. Press ⇧⏎ to send."];
@@ -17395,18 +17397,16 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     dispatch_async(dispatch_get_main_queue(), ^{
         [input.window makeFirstResponder:input];
     });
-    const NSInteger button = [alert runSheetModalForWindow:self.view.window];
-
-    if (button == NSAlertFirstButtonReturn) {
-        if (disableButton.state == NSControlStateValueOn) {
-            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:bypassKey];
+    __weak __typeof(self) weakSelf = self;
+    [alert beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse button) {
+        if (button == NSAlertFirstButtonReturn) {
+            if (disableButton.state == NSControlStateValueOn) {
+                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:bypassKey];
+            }
+            completion([[[input string] copy] autorelease]);
         }
-        return [[[input string] copy] autorelease];
-    } else if (button == NSAlertSecondButtonReturn) {
-        return nil;
-    }
-
-    return nil;
+        completion(nil);
+    }];
 }
 
 - (iTermSelection *)selectionForOutputToExplainWithAI:(out BOOL *)truncated {
@@ -17515,7 +17515,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)textViewPerformNaturalLanguageQuery {
-    [self reallyPerformNaturalLanguageQuery:[self naturalLanguageQuery] completion:nil];
+    __weak __typeof(self) weakSelf = self;
+    [self fetchNaturalLanguageQuery:^(NSString *input) {
+        [weakSelf reallyPerformNaturalLanguageQuery:input completion:nil];
+    }];
 }
 
 - (void)reallyPerformNaturalLanguageQuery:(NSString *)query
@@ -19821,10 +19824,12 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)naggingControllerAssignProfileToSession:(NSString *)arrangementName guid:(NSString *)guid {
-    [self changeProfileInArrangementNamed:arrangementName guid:guid];
+    [self changeProfileInArrangementNamed:arrangementName guid:guid completion:^(Profile *profile) {}];
 }
 
-- (Profile *)changeProfileInArrangementNamed:(NSString *)arrangementName guid:(NSString *)guid {
+- (void)changeProfileInArrangementNamed:(NSString *)arrangementName
+                                   guid:(NSString *)guid
+                             completion:(void (^)(Profile *))completion {
     NSAlert *alert = [[NSAlert alloc] init];
     [alert setMessageText:@"Select a profile to use for this session. Your selection will be saved back to the arrangement."];
     [alert addButtonWithTitle:@"OK"];
@@ -19837,18 +19842,30 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
     alert.accessoryView = profiles;
 
-    const NSInteger button = [alert runSheetModalForWindow:self.view.window];
-
-    if (button == NSAlertFirstButtonReturn) {
-        Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:profiles.selectedGuid];
-        if (profile) {
-            [self setProfileInArrangement:arrangementName
-                                 withGUID:guid
-                                toProfile:profile];
+    __weak __typeof(self) weakSelf = self;
+    [alert beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse button) {
+        if (button == NSAlertFirstButtonReturn) {
+            [weakSelf reallyChangeProfileInArrangement:arrangementName
+                                                  guid:guid
+                                              profiles:profiles
+                                            completion:completion];
+        } else {
+            completion(nil);
         }
-        return profile;
+    }];
+}
+
+- (void)reallyChangeProfileInArrangement:(NSString *)arrangementName
+                                    guid:(NSString *)guid
+                                profiles:(ProfileListView *)profiles
+                              completion:(void (^)(Profile *))completion {
+    Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:profiles.selectedGuid];
+    if (profile) {
+        [self setProfileInArrangement:arrangementName
+                             withGUID:guid
+                            toProfile:profile];
     }
-    return nil;
+    completion(profile);
 }
 
 - (BOOL)canChangeProfileInArrangement {
@@ -19884,11 +19901,14 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (![self canChangeProfileInArrangement]) {
         return;
     }
-    Profile *profile = [self changeProfileInArrangementNamed:_originatingArrangementName
-                                                        guid:_originatingArrangement[SESSION_ARRANGEMENT_GUID]];
-    if (profile) {
-        [self setProfile:profile preservingName:YES];
-    }
+    __weak __typeof(self) weakSelf = self;
+    [self changeProfileInArrangementNamed:_originatingArrangementName
+                                     guid:_originatingArrangement[SESSION_ARRANGEMENT_GUID]
+                               completion:^(NSDictionary *profile) {
+        if (profile) {
+            [weakSelf setProfile:profile preservingName:YES];
+        }
+    }];
 }
 
 - (void)setProfileInArrangement:(NSString *)arrangementName withGUID:(NSString *)guid toProfile:(Profile *)profile {
