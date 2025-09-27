@@ -167,6 +167,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     IBOutlet NSButton *_shareButton;
     iTermAddTriggerViewController *_detailViewController;
     IBOutlet NSView *_detailViewContainer;
+    IBOutlet NSTextField *_noTriggerSelected;
     NSArray *_cached;
 }
 
@@ -880,9 +881,11 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
             [_detailViewController willHide];
             _detailViewController.view.hidden = YES;
         }
+        _noTriggerSelected.hidden = NO;
         return;
     }
-    
+    _noTriggerSelected.hidden = YES;
+
     // Create detail view controller lazily when we actually need to show it
     if (!_detailViewController) {
         [self createDetailViewController];
