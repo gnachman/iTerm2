@@ -23,6 +23,13 @@
      configuration:(NSWorkspaceOpenConfiguration *)configuration
              style:(iTermOpenStyle)style
             upsell:(BOOL)upsell;
+
+- (void)it_asyncOpenURL:(NSURL *)url
+          configuration:(NSWorkspaceOpenConfiguration *)configuration
+                  style:(iTermOpenStyle)style
+                 upsell:(BOOL)upsell
+             completion:(void (^)(NSRunningApplication *app, NSError *error))completion;
+
 - (NSString *)it_newToken;
 - (BOOL)it_checkToken:(NSString *)token;
 - (void)it_revealInFinder:(NSString *)path;

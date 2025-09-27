@@ -1923,7 +1923,7 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
           openImage:(id<iTermImageInfoReading>)imageInfo {
     NSString *name = imageInfo.nameForNewSavedTempFile;
     if (name) {
-        [[iTermLaunchServices sharedInstance] openFile:name];
+        [[iTermLaunchServices sharedInstance] openFile:name completion:^(BOOL ok){}];
     }
 }
 

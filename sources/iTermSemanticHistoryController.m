@@ -682,7 +682,8 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 - (void)openFile:(NSString *)fullPath fragment:(NSString *)fragment {
     DLog(@"Open file %@", fullPath);
     [[iTermLaunchServices sharedInstance] openFile:fullPath
-                                          fragment:fragment];
+                                          fragment:fragment
+                                        completion:^(BOOL ok) {}];
 }
 
 - (void)openURL:(NSURL *)url editorIdentifier:(NSString *)editorIdentifier {

@@ -1702,7 +1702,6 @@
 		A64BD0DB296FDBF4001F3F7E /* conductor.sh in Resources */ = {isa = PBXBuildFile; fileRef = A64BD0DA296FDBF4001F3F7E /* conductor.sh */; };
 		A64BD0DC296FDBF4001F3F7E /* conductor.sh in Resources */ = {isa = PBXBuildFile; fileRef = A64BD0DA296FDBF4001F3F7E /* conductor.sh */; };
 		A64BD0DD296FDBF4001F3F7E /* conductor.sh in Resources */ = {isa = PBXBuildFile; fileRef = A64BD0DA296FDBF4001F3F7E /* conductor.sh */; };
-		A64D10B12E26FE310065F267 /* iTermProfilePreferenceObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A64D10AF2E26FE1C0065F267 /* iTermProfilePreferenceObserver.swift */; };
 		A64D10B42E271C430065F267 /* iTermProfilePreferenceMutator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A64D10B22E271C340065F267 /* iTermProfilePreferenceMutator.swift */; };
 		A64D6A042495608500FC0CDE /* iTermAboutWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A663011619CFE450004AF81C /* iTermAboutWindowController.m */; };
 		A64DE9AA237A8555002E390C /* iTermFakeWindowTitleLabel.h in Headers */ = {isa = PBXBuildFile; fileRef = A64DE9A8237A8555002E390C /* iTermFakeWindowTitleLabel.h */; };
@@ -3344,7 +3343,6 @@
 		A6A9839B27E6BDE1003319D1 /* ModalPasswordAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A9839A27E6BDE1003319D1 /* ModalPasswordAlert.swift */; };
 		A6A9839D27E7BD7C003319D1 /* OnePasswordTokenRequester.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A9839C27E7BD7C003319D1 /* OnePasswordTokenRequester.swift */; };
 		A6A983BB27E7F79E003319D1 /* LastPassDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A983BA27E7F79E003319D1 /* LastPassDataSource.swift */; };
-		A6AA2F682E28B257002998B3 /* iTermProfilePreferenceMutator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AA2F662E28B257002998B3 /* iTermProfilePreferenceMutator.swift */; };
 		A6AA2F692E28B257002998B3 /* iTermProfilePreferenceObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AA2F672E28B257002998B3 /* iTermProfilePreferenceObserver.swift */; };
 		A6AA2F8E2E296849002998B3 /* cert-error.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AA2F8D2E296849002998B3 /* cert-error.html */; };
 		A6AA2F8F2E296849002998B3 /* cert-error.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AA2F8D2E296849002998B3 /* cert-error.html */; };
@@ -19655,7 +19653,6 @@
 				A6B3E85F2DA06F2C0027FC63 /* BounceTrigger.m in Sources */,
 				A6EB643A2D5D800F00481D33 /* NSDictionaryCodableBox.swift in Sources */,
 				A6D1C420286192F600B68526 /* TextClipDrawing.swift in Sources */,
-				A6AA2F682E28B257002998B3 /* iTermProfilePreferenceMutator.swift in Sources */,
 				A6AA2F692E28B257002998B3 /* iTermProfilePreferenceObserver.swift in Sources */,
 				A6F7D4FA2E05BE860065D09C /* iTermBrowserSuggestionsController.swift in Sources */,
 				A6631A2D2D6FB68A006C603B /* iTermGlyphCharacterSource.m in Sources */,
@@ -19827,7 +19824,6 @@
 				A667C23D276C7859006B4DEF /* PSMTabBarCell.m in Sources */,
 				53BCAAFB22668A1E00949829 /* iTermCachingFileManager.m in Sources */,
 				A6D10E3227F7C2BC0026DB56 /* Array+MultiCursor.swift in Sources */,
-				A64D10B12E26FE310065F267 /* iTermProfilePreferenceObserver.swift in Sources */,
 				A635F1E2250761F9008C3038 /* iTermActionsEditingViewController.m in Sources */,
 				7577E2A22593B88700905402 /* iTermSandboxedWorkerClient.m in Sources */,
 				A6FE614C2AC252940078A66D /* BlockMark.swift in Sources */,

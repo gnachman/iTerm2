@@ -188,27 +188,39 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
     }
 }
 
-- (BOOL)openFile:(NSString *)fullPath {
-    return [self openFile:fullPath fragment:nil];
+- (void)openFile:(NSString *)fullPath completion:(void (^)(BOOL ok))completion {
+    [self openFile:fullPath fragment:nil completion:completion];
 }
 
-- (BOOL)openFile:(NSString *)fullPath fragment:(NSString *)fragment {
+- (void)openFile:(NSString *)fullPath fragment:(NSString *)fragment completion:(void (^)(BOOL ok))completion {
     DLog(@"openFile: %@ with fragment %@", fullPath, fragment);
+    NSURL *url;
+    BOOL shouldOfferToPickAppOnError = NO;
     if (fragment) {
         NSURLComponents *components = [NSURLComponents componentsWithURL:[NSURL fileURLWithPath:fullPath]
                                                  resolvingAgainstBaseURL:NO];
         components.fragment = fragment;
-        [[NSWorkspace sharedWorkspace] it_openURL:components.URL
-                                            style:iTermOpenStyleTab];
-        return YES;
+        url = components.URL;
+    } else {
+        url = [NSURL fileURLWithPath:fullPath];
+        shouldOfferToPickAppOnError = YES;
     }
-    BOOL ok = [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:fullPath]];
-    if (!ok && [self offerToPickApplicationToOpenFile:fullPath]) {
-        DLog(@"Try to open %@ again", fullPath);
-        ok = [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:fullPath]];
-        DLog(@"ok=%d", (int)ok);
-    }
-    return ok;
+    [[NSWorkspace sharedWorkspace] it_asyncOpenURL:url
+                                     configuration:[NSWorkspaceOpenConfiguration configuration]
+                                             style:iTermOpenStyleTab
+                                            upsell:YES
+                                        completion:^(NSRunningApplication *app, NSError *error) {
+        if (error &&
+            shouldOfferToPickAppOnError &&
+            [self offerToPickApplicationToOpenFile:fullPath]) {
+            DLog(@"Try to open %@ again", fullPath);
+            const BOOL ok = [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:fullPath]];
+            DLog(@"ok=%d", (int)ok);
+            completion(ok);
+            return;
+        }
+        completion(error == nil);
+    }];
 }
 
 #pragma mark - Default Terminal

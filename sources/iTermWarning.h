@@ -146,11 +146,11 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 @property(nonatomic, retain) NSArray<NSString *> *actionLabels;
 
 // 1:1 with buttons to show. First button is default.
-@property(nonatomic, retain) NSArray<iTermWarningAction *> * _Nullable warningActions;
+@property(nullable, nonatomic, retain) NSArray<iTermWarningAction *> *warningActions;
 
 // Optional. Should be 1:1 with actions. Provides a mapping from the index of the button actually
 // pressed to the index runModal reports.
-@property(nullable, nonatomic, retain) NSArray<NSNumber *> * _Nullable actionToSelectionMap;
+@property(nullable, nonatomic, retain) NSArray<NSNumber *> *actionToSelectionMap;
 
 // Optional view to show below main text.
 @property(nonatomic, retain) NSView * _Nullable accessory;
