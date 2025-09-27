@@ -3148,7 +3148,6 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         return YES;
     };
     NSMutableArray<iTermPromise<NSString *> *> *parts = [NSMutableArray array];
-    __block BOOL ok = NO;
 
     NSDictionary<id, BOOL (^)(NSString *, NSMutableArray<iTermPromise<NSString *> *> *)> *handlers = @{
         @"name": ^BOOL(NSString *hexEncodedKey, NSMutableArray<iTermPromise<NSString *> *> *parts) {
@@ -3343,20 +3342,16 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                 NSString *response = [NSString stringWithFormat:kFormat, hexEncodedKey, cached.hexEncodedString];
                 [parts addObject:[iTermPromise promiseValue:response]];
             }
-            ok = YES;
             continue;
         }
         DLog(@"requestTermcapTerminfo key=%@ for %@", key, token);
         BOOL (^handler)(NSString *, NSMutableArray<iTermPromise<NSString *> *> *) = handlers[key];
         if (handler) {
-            if (handler(hexEncodedKey, parts)) {
-                ok = YES;
-            }
+            handler(hexEncodedKey, parts);
         } else {
             NSString *value = [ti stringForStringKey:key];
             NSString *response = [NSString stringWithFormat:kFormat, hexEncodedKey, value.hexEncodedString];
             if (value) {
-                ok = YES;
                 [parts addObject:[iTermPromise promiseValue:response]];
             } else {
                 [parts addObject:[iTermPromise promiseError:error(hexEncodedKey)]];
@@ -3364,7 +3359,6 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         }
     }
 
-    __weak __typeof(self) weakSelf = self;
     DLog(@"Gather parts...");
     iTermTokenExecutorUnpauser *unpauser = [self.delegate terminalPause];
     [iTermPromise gather:parts queue:[self.delegate terminalQueue] completion:^(NSArray<iTermOr<id, NSError *> *> * _Nonnull values) {

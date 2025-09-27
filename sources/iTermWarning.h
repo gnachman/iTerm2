@@ -125,6 +125,17 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
                                   cancelLabel:(NSString * _Nullable)cancelLabel
                                        window:(NSWindow * _Nullable)window;
 
++ (void)asyncShowWarningWithTitle:(NSString *)title
+                                      actions:(NSArray *)actions
+                                actionMapping:(NSArray<NSNumber *> * _Nullable)actionToSelectionMap
+                                    accessory:(NSView * _Nullable)accessory
+                                   identifier:(NSString * _Nullable)identifier
+                                  silenceable:(iTermWarningType)warningType
+                                      heading:(NSString * _Nullable)heading
+                                  cancelLabel:(NSString * _Nullable)cancelLabel
+                                       window:(NSWindow * _Nullable)window
+                       completion:(void (^)(iTermWarningSelection selection,
+                                            iTermWarning *warning))completion;
 
 // If you prefer you can set the properties you care about and then invoke runModal.
 
@@ -139,7 +150,7 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 
 // Optional. Should be 1:1 with actions. Provides a mapping from the index of the button actually
 // pressed to the index runModal reports.
-@property(nonatomic, retain) NSArray<NSNumber *> * _Nullable actionToSelectionMap;
+@property(nullable, nonatomic, retain) NSArray<NSNumber *> * _Nullable actionToSelectionMap;
 
 // Optional view to show below main text.
 @property(nonatomic, retain) NSView * _Nullable accessory;
@@ -164,6 +175,7 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 
 // Modally show the alert. Returns the selection.
 - (iTermWarningSelection)runModal;
+- (void)runModalAsync:(void (^)(iTermWarningSelection result, iTermWarning *warning))completion;
 
 @end
 

@@ -139,6 +139,33 @@ static BOOL gShowingWarning;
     return [warning runModal];
 }
 
++ (void)asyncShowWarningWithTitle:(NSString *)title
+                          actions:(NSArray *)actions
+                    actionMapping:(NSArray<NSNumber *> *)actionToSelectionMap
+                        accessory:(NSView *)accessory
+                       identifier:(NSString *)identifier
+                      silenceable:(iTermWarningType)warningType
+                          heading:(NSString *)heading
+                      cancelLabel:(NSString *)cancelLabel
+                           window:(NSWindow *)window
+                       completion:(void (^)(iTermWarningSelection, iTermWarning *))completion {
+    iTermWarning *warning = [[iTermWarning alloc] init];
+    warning.title = title;
+    warning.actionLabels = actions;
+    warning.actionToSelectionMap = actionToSelectionMap;
+    warning.accessory = accessory;
+    warning.identifier = identifier;
+    warning.warningType = warningType;
+    warning.heading = heading;
+    warning.cancelLabel = cancelLabel;
+    NSWindow *deepestWindow = window;
+    while (deepestWindow.sheets.lastObject) {
+        deepestWindow = deepestWindow.sheets.lastObject;
+    }
+    warning.window = deepestWindow;
+    return [warning runModalAsync:completion];
+}
+
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p title=%@ heading=%@ actions=%@ identifier=%@>",
             NSStringFromClass([self class]), self, _title, _heading, _warningActions, _identifier];
@@ -167,6 +194,38 @@ static BOOL gShowingWarning;
     }
 
     return selection;
+}
+
+- (void)runModalAsync:(void (^)(iTermWarningSelection result, iTermWarning *warning))completion {
+    iTermWarningSelection preemptedSelection;
+    if ([self preempt:&preemptedSelection]) {
+        completion(preemptedSelection, self);
+        return;
+    }
+
+    NSAlert *alert = [self makeAlert];
+
+    NSInteger result;
+    if (gWarningHandler) {
+        result = [gWarningHandler warningWouldShowAlert:alert identifier:_identifier];
+    } else {
+        DLog(@"Show warning %@\n%@", self, [NSThread callStackSymbols]);
+        gShowingWarning = YES;
+        if (self.window) {
+            [alert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse result) {
+                DLog(@"Result for %@ is %@", self, @(result));
+                gShowingWarning = NO;
+                completion([self handleResult:result alert:alert], self);
+            }];
+            return;
+        } else {
+            result = [alert runModal];
+        }
+        DLog(@"Result for %@ is %@", self, @(result));
+        gShowingWarning = NO;
+    }
+
+    completion([self handleResult:result alert:alert], self);
 }
 
 + (void)unsilenceIdentifier:(NSString *)identifier ifSelectionEquals:(iTermWarningSelection)problemSelection {
@@ -237,16 +296,7 @@ static BOOL gShowingWarning;
     }
 }
 
-// Does not invoke the warning action's block
-- (iTermWarningSelection)runModalImpl {
-    if (!gWarningHandler &&
-        _warningType != kiTermWarningTypePersistent &&
-        [self.class identifierIsSilenced:_identifier]) {
-        const iTermWarningSelection selection = [self.class savedSelectionForIdentifier:_identifier];
-        DLog(@"%@ is silenced with saved selection %@", self, @(selection));
-        return selection;
-    }
-
+- (NSAlert *)makeAlert {
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = _heading ?: @"Warning";
     alert.informativeText = _title;
@@ -272,11 +322,11 @@ static BOOL gShowingWarning;
             if ([iTermAdvancedSettingsModel alertsIndicateShortcuts] && action.shortcutRange.length == 1) {
                 dispatch_async(dispatch_get_main_queue(),
                                ^{
-                                   NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] initWithString:button.title
-                                                                                                                        attributes:nil];
-                                   [attributedString setAttributes:@{ NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle) } range:action.shortcutRange];
-                                   button.attributedTitle = attributedString;
-                               });
+                    NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] initWithString:button.title
+                                                                                                         attributes:nil];
+                    [attributedString setAttributes:@{ NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle) } range:action.shortcutRange];
+                    button.attributedTitle = attributedString;
+                });
             }
         }
     }];
@@ -337,6 +387,29 @@ static BOOL gShowingWarning;
         alert.showsHelp = YES;
         alert.delegate = self;
     }
+    return alert;
+}
+
+- (BOOL)preempt:(out iTermWarningSelection *)selectionPtr {
+    if (!gWarningHandler &&
+        _warningType != kiTermWarningTypePersistent &&
+        [self.class identifierIsSilenced:_identifier]) {
+        const iTermWarningSelection selection = [self.class savedSelectionForIdentifier:_identifier];
+        DLog(@"%@ is silenced with saved selection %@", self, @(selection));
+        *selectionPtr = selection;
+        return YES;
+    }
+    return NO;
+}
+
+// Does not invoke the warning action's block
+- (iTermWarningSelection)runModalImpl {
+    iTermWarningSelection preemptedSelection;
+    if ([self preempt:&preemptedSelection]) {
+        return preemptedSelection;
+    }
+
+    NSAlert *alert = [self makeAlert];
 
     NSInteger result;
     if (gWarningHandler) {
@@ -353,6 +426,10 @@ static BOOL gShowingWarning;
         gShowingWarning = NO;
     }
 
+    return [self handleResult:result alert:alert];
+}
+
+- (iTermWarningSelection)handleResult:(NSInteger)result alert:(NSAlert *)alert {
     BOOL remember = NO;
     iTermWarningSelection selection;
     switch (result) {

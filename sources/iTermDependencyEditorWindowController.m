@@ -269,28 +269,32 @@
     [self didSelectScriptAtIndex:_scriptsButton.indexOfSelectedItem];
 }
 
-- (NSString *)requestDependencyName {
-    NSString *newDependencyName = nil;
-    do {
-        NSTextField *textField = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)];
-        [textField setEditable:YES];
-        [textField setSelectable:YES];
+- (void)requestDependencyName:(void (^)(NSString *name))completion {
+    NSTextField *textField = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)];
+    [textField setEditable:YES];
+    [textField setSelectable:YES];
 
-        iTermWarning *warning = [[iTermWarning alloc] init];
-        warning.heading = @"Add Dependency";
-        warning.title = @"What dependency would you like to add?";
-        warning.actionLabels = @[ @"OK", @"Cancel" ];
-        warning.accessory = textField;
-        warning.warningType = kiTermWarningTypePersistent;
-        warning.window = self.window;
-        warning.initialFirstResponder = textField;
-        iTermWarningSelection selection = [warning runModal];
+    iTermWarning *warning = [[iTermWarning alloc] init];
+    warning.heading = @"Add Dependency";
+    warning.title = @"What dependency would you like to add?";
+    warning.actionLabels = @[ @"OK", @"Cancel" ];
+    warning.accessory = textField;
+    warning.warningType = kiTermWarningTypePersistent;
+    warning.window = self.window;
+    warning.initialFirstResponder = textField;
+    __weak __typeof(self) weakSelf = self;
+    [warning runModalAsync:^(iTermWarningSelection selection, iTermWarning *warning) {
         if (selection == kiTermWarningSelection1) {
-            return nil;
+            completion(nil);
+            return;
         }
-        newDependencyName = [textField.stringValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-    } while (newDependencyName.length == 0);
-    return newDependencyName;
+        NSString *name = [textField.stringValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        if (name.length == 0) {
+            [weakSelf requestDependencyName:completion];
+        } else {
+            completion(name);
+        }
+    }];
 }
 
 - (void)runPip3WithArguments:(NSArray<NSString *> *)arguments completion:(void (^)(void))completion {
@@ -487,11 +491,13 @@
     if (!selectedScriptItem) {
         return;
     }
-    NSString *newDependencyName = [self requestDependencyName];
-    if (!newDependencyName) {
-        return;
-    }
-    [self install:newDependencyName selectedScriptPath:selectedScriptItem.path completion:nil];
+    __weak __typeof(self) weakSelf = self;
+    [self requestDependencyName:^(NSString *newDependencyName) {
+        if (!newDependencyName) {
+            return;
+        }
+        [weakSelf install:newDependencyName selectedScriptPath:selectedScriptItem.path completion:nil];
+    }];
 }
 
 - (void)install:(NSString *)newDependencyName selectedScriptPath:(NSString *)selectedScriptPath completion:(void (^)(void))completion {
