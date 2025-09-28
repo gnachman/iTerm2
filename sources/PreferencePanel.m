@@ -125,13 +125,17 @@ CGFloat iTermPreferencePanelGetWindowMinimumWidth(BOOL session) {
     if (session) {
         return 560;
     }
-    if (@available(macOS 10.16, *)) {
-        // Need extra space to keep search field from collapsing.
-        // Use 760 if you are OK with the search field hiding tabs when focused (I don't like it
-        // because it stays hidden after the search field loses focus if there's a query).
-        return 785;
+#if DEBUG
+    if (@available(macOS 26.1, *)) {} else if (@available(macOS 26, *)) {
+        // Work around a bug in macOS Tahoe that causes constraint failures
+        return 880;
     }
-    return 560;
+#endif
+
+    // Need extra space to keep search field from collapsing.
+    // Use 760 if you are OK with the search field hiding tabs when focused (I don't like it
+    // because it stays hidden after the search field loses focus if there's a query).
+    return 785;
 }
 
 // Strong references to the two preference panels.
@@ -523,19 +527,25 @@ static iTermPreferencesSearchEngine *gSearchEngine;
     [self.window setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
     [_toolbar setSelectedItemIdentifier:[_globalToolbarItem itemIdentifier]];
 
-#ifdef MAC_OS_X_VERSION_10_16
-    if (@available(macOS 10.16, *)) {
-        self.window.toolbarStyle = NSWindowToolbarStylePreference;
-        _globalToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolGearshape) accessibilityDescription:@"General"];
-        _appearanceToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolEye) accessibilityDescription:@"Appearance"];
-        _keyboardToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolKeyboard) accessibilityDescription:@"Keys"];
-        _arrangementsToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolMacwindowOnRectangle) accessibilityDescription:@"Arrangements"];
-        _profilesToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolPerson) accessibilityDescription:@"Profiles"];
-        _mouseToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolCursorarrowMotionlines) accessibilityDescription:@"Pointer"];
-        _advancedToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolGearshape2) accessibilityDescription:@"Advanced"];
-        _shortcutsToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolBoltCircle) accessibilityDescription:@"Shortcuts"];
+    BOOL setStyle = YES;
+#if DEBUG
+    if (@available(macOS 26.1, *)) {} else if (@available(macOS 26, *)) {
+        setStyle = NO;
     }
 #endif
+    if (setStyle) {
+        self.window.toolbarStyle = NSWindowToolbarStylePreference;
+    }
+
+    _globalToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolGearshape) accessibilityDescription:@"General"];
+    _appearanceToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolEye) accessibilityDescription:@"Appearance"];
+    _keyboardToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolKeyboard) accessibilityDescription:@"Keys"];
+    _arrangementsToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolMacwindowOnRectangle) accessibilityDescription:@"Arrangements"];
+    _profilesToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolPerson) accessibilityDescription:@"Profiles"];
+    _mouseToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolCursorarrowMotionlines) accessibilityDescription:@"Pointer"];
+    _advancedToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolGearshape2) accessibilityDescription:@"Advanced"];
+    _shortcutsToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolBoltCircle) accessibilityDescription:@"Shortcuts"];
+
     _globalTabViewItem.view = _generalPreferencesViewController.view;
     _appearanceTabViewItem.view = _appearancePreferencesViewController.view;
     _keyboardTabViewItem.view = _keysViewController.view;
@@ -567,8 +577,16 @@ static iTermPreferencesSearchEngine *gSearchEngine;
                                              selector:@selector(scrimMouseUp:)
                                                  name:iTermPrefsScrimMouseUpNotification
                                                object:nil];
-    iTermDonateViewController *vc = [[iTermDonateViewController alloc] init];
-    [self.window addTitlebarAccessoryViewController:vc];
+    BOOL addVC = YES;
+#if DEBUG
+    if (@available(macOS 26.1, *)) {} else if (@available(macOS 26, *)) {
+        addVC = NO;
+    }
+#endif
+    if (addVC) {
+        iTermDonateViewController *vc = [[iTermDonateViewController alloc] init];
+        [self.window addTitlebarAccessoryViewController:vc];
+    }
 
     if (@available(macOS 11, *)) {
         if (!_editCurrentSessionMode && iTermUserDefaultsUnsavedController.allowed) {
@@ -851,11 +869,10 @@ andEditComponentWithIdentifier:(NSString *)identifier
 #pragma mark - NSToolbarDelegate and ToolbarItemValidation
 
 - (BOOL)validateToolbarItem:(NSToolbarItem *)theItem {
-    return TRUE;
+    return YES;
 }
 
-#ifdef MAC_OS_X_VERSION_10_16
-- (NSSearchToolbarItem *)bigSurSearchFieldToolbarItem NS_AVAILABLE_MAC(10_16) {
+- (NSSearchToolbarItem *)bigSurSearchFieldToolbarItem {
     if (!_bigSurSearchFieldToolbarItem) {
         _bigSurSearchFieldToolbarItem = [[NSSearchToolbarItem alloc] initWithItemIdentifier:iTermPreferencePanelSearchFieldToolbarItemIdentifier];
         _bigSurSearchFieldToolbarItem.label = @"";
@@ -893,7 +910,6 @@ andEditComponentWithIdentifier:(NSString *)identifier
     }
     return YES;
 }
-#endif
 
 - (NSArray *)orderedToolbarIdentifiersExcludingSearch:(BOOL)excludesSearch {
     if (!_globalToolbarItem) {
@@ -919,19 +935,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
 }
 
 - (void)createSearchField {
-#ifdef MAC_OS_X_VERSION_10_16
-    if (@available(macOS 10.16, *)) {
-        _searchFieldToolbarItem = self.bigSurSearchFieldToolbarItem;
-        return;
-    }
-#endif
-    _searchFieldToolbarItem = [[NSToolbarItem alloc] initWithItemIdentifier:iTermPreferencePanelSearchFieldToolbarItemIdentifier];
-
-    NSSearchField *searchField = [[NSSearchField alloc] init];
-    searchField.delegate = self;
-    [searchField sizeToFit];
-
-    [_searchFieldToolbarItem setView:searchField];
+    _searchFieldToolbarItem = self.bigSurSearchFieldToolbarItem;
 }
 
 - (NSDictionary *)toolbarIdentifierToItemDictionary {
