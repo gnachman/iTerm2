@@ -7,7 +7,7 @@
 
 @objc(iTermAIModel)
 class AIModel: NSObject {
-    private var model: AIMetadata.Model
+    private(set) var model: AIMetadata.Model
 
     @objc(initWithModelName:url:legacy:)
     convenience init(modelName: String, url: String?, legacy: Bool) {

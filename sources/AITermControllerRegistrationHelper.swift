@@ -53,9 +53,30 @@ class AITermRegistrationWindowController: NSWindowController {
 
     override func awakeFromNib() {
         var temp = message.string
-        let urls = ["https://openai.com/join/",
-                    "https://platform.openai.com/api-keys",
-                    "https://iterm2.com/aiterm"]
+        let urls = switch LLMMetadata.effectiveVendor {
+        case .openAI, .llama:
+            ["https://auth.openai.com/create-account",
+             "https://platform.openai.com/api-keys",
+             "https://iterm2.com/aiterm",
+             "OpenAI"]
+        case .anthropic:
+            ["https://console.anthropic.com/login",
+             "https://console.anthropic.com/settings/keys",
+             "https://iterm2.com/aiterm",
+             "Claude"]
+        case .deepSeek:
+            ["https://chat.deepseek.com/sign_up",
+             "https://platform.deepseek.com/api_keys",
+             "https://iterm2.com/aiterm",
+             "Deep Seek"]
+        case .gemini:
+            ["https://aistudio.google.com/prompts/new_chat",
+             "https://aistudio.google.com/app/api-keys",
+             "https://iterm2.com/aiterm",
+             "Gemini"]
+        @unknown default:
+            it_fatalError()
+        }
         for (i, url) in urls.enumerated() {
             temp = temp.replacingOccurrences(of: "$\(i + 1)", with: url)
         }

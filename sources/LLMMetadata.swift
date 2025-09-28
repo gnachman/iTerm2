@@ -42,6 +42,19 @@ class LLMMetadata: NSObject {
         return (url?.host ?? "").hasSuffix(".anthropic.com")
     }
 
+    static var effectiveVendor: iTermAIVendor {
+        if iTermPreferences.bool(forKey: kPreferenceKeyUseRecommendedAIModel) {
+            DLog("Use \(String(describing: currentVendor?.rawValue))")
+            return currentVendor ?? .openAI
+        }
+        if let model = model(), let vendor = model.vendor {
+            DLog("Use \(vendor)")
+            return vendor
+        }
+        DLog("Fall back to openai")
+        return .openAI
+    }
+
     static var currentVendor: iTermAIVendor? {
         iTermAIVendor(rawValue: iTermPreferences.unsignedInteger(forKey: kPreferenceKeyAIVendor))
     }

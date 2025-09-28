@@ -109,13 +109,22 @@ class AITermController {
         }
     }
 
-    var registration: Registration?
+    private var _registration: Registration?
+    var registration: Registration? {
+        if let _registration {
+            return _registration
+        }
+        if isSelfHosted {
+            return Registration(apiKey: "Placeholder for self-hosted")
+        }
+        return nil
+    }
     weak var delegate: AITermControllerDelegate?
 
     init(registration: Registration?) {
         iTermMigrationHelper.migrateAISettings()
         state = .ground
-        self.registration = registration
+        _registration = registration
     }
 
     var supportsStreaming: Bool {
@@ -179,6 +188,15 @@ class AITermController {
 
     func cancelOutstandingOperation() {
         handle(event: .cancel)
+    }
+
+    private var isSelfHosted: Bool {
+        if let provider = llmProvider,
+           let url = NSURL(string: provider.model.url),
+           url.host == "localhost" || url.host == "127.0.0.1" || url.host == "[::1]" {
+            return true
+        }
+        return false
     }
 
     private func handle(event: Event) {
@@ -363,7 +381,7 @@ class AITermController {
     private func requestRegistration(continuation: State) {
         state = .ground
         delegate?.aitermControllerRequestRegistration(self) { [weak self] registration in
-            self?.registration = registration
+            self?._registration = registration
             self?.state = continuation
             self?.handle(event: .begin)
         }
