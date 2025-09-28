@@ -131,6 +131,14 @@
                                 <string>public.unix-executable</string>
                         </array>
                 </dict>
+                <dict>
+                        <key>CFBundleTypeRole</key>
+                        <string>Viewer</string>
+                        <key>LSItemContentTypes</key>
+                        <array>
+                                <string>public.html</string>
+                        </array>
+                </dict>
         </array>
         <key>NSSystemAdministrationUsageDescription</key>
         <string>The operation being performed by a program in iTerm2 requires elevated permission.</string>
@@ -233,17 +241,10 @@
         <array>
                 <dict>
                         <key>CFBundleURLName</key>
-                        <string>http URL</string>
+                        <string>Web URLs</string>
                         <key>CFBundleURLSchemes</key>
                         <array>
                                 <string>http</string>
-                        </array>
-                </dict>
-                <dict>
-                        <key>CFBundleURLName</key>
-                        <string>https URL</string>
-                        <key>CFBundleURLSchemes</key>
-                        <array>
                                 <string>https</string>
                         </array>
                 </dict>
@@ -355,7 +356,7 @@
         <key>CFBundleVersion</key>
         <string>unknown</string>
         <key>LSApplicationCategoryType</key>
-        <string>public.app-category.utilities</string>
+        <string>public.app-category.productivity</string>
         <key>NSAppleScriptEnabled</key>
         <string>YES</string>
         <key>OSAScriptingDefinition</key>
