@@ -247,6 +247,7 @@ class KittyImageController: NSObject {
 
     @objc(executeCommand:)
     func execute(command: KittyImageCommand) {
+        DLog("\(command.category)")
         switch command.category {
         case .imageTransmission(let imageTransmission):
             _ = executeTransmit(imageTransmission,
@@ -339,16 +340,49 @@ class KittyImageController: NSObject {
                                        payload: String,
                                        query: Bool) -> String? {
         if let accumulator {
+            // Validate this chunk belongs to the same image transmission
+            if command.identifier != 0 &&
+               accumulator.transmission.identifier != 0 &&
+               command.identifier != accumulator.transmission.identifier {
+                // Clear the abandoned accumulator and report error
+                self.accumulator = nil
+                return "EINVAL:Image ID mismatch in chunked transmission"
+            }
+
             if command.more == .expectMore {
                 self.accumulator?.payload += payload
                 return nil
             }
+
+            // Processing final chunk
+            let display = accumulator.display
             self.accumulator = nil
             var modifiedCommand = accumulator.transmission
             modifiedCommand.more = .finalChunk
-            return reallyExecuteTransmit(modifiedCommand,
-                                   payload: accumulator.payload + payload,
-                                   query: accumulator.query)
+
+            let result = reallyExecuteTransmit(modifiedCommand,
+                                               payload: accumulator.payload + payload,
+                                               query: accumulator.query)
+
+            // If transmission succeeded and we have saved display parameters, execute display
+            if result == nil, let display {
+                if let image = _images[UInt64(modifiedCommand.identifier)] {
+                    let displayError = executeDisplay(display, image: image)
+                    if displayError != nil {
+                        // Return display error as the overall error
+                        respondToTransmit(modifiedCommand, display: display, error: displayError)
+                        return displayError
+                    }
+                    // Send the combined response for successful transmit+display
+                    respondToTransmit(modifiedCommand, display: display, error: nil)
+                } else {
+                    let error = "ENOENT:Image not found after transmission"
+                    respondToTransmit(modifiedCommand, display: display, error: error)
+                    return error
+                }
+            }
+
+            return result
         } else if command.more == .expectMore {
             accumulator = Accumulator(transmission: command, payload: payload, query: query)
             return nil
