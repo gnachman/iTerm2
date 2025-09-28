@@ -482,7 +482,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyAllowClipboardAccessFromTerminal: @NO,
                   kPreferenceKeyCharactersConsideredPartOfAWordForSelection: @"/-+\\~_.",
                   kPreferenceKeySmartWindowPlacement: @NO,
-                  kPreferenceKeyUseAutoSaveFrames: @YES,
+                  kPreferenceKeyUseAutoSaveFrames: @NO,
                   kPreferenceKeyAdjustWindowForFontSizeChange: @YES,
                   kPreferenceKeyMaximizeVerticallyOnly: @NO,
                   kPreferenceKeyLionStyleFullscreen: @YES,
