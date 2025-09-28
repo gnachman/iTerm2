@@ -15,7 +15,13 @@ fileprivate class UnsavedUserDefaultsViewController: NSViewController {
     private let rightMargin = 8.0
     private let innerMargin = 0.0
     var onClick: (() -> ())?
-    let size = CGFloat(22)
+    var size: CGFloat {
+        if #available(macOS 26, *) {
+            23.0
+        } else {
+            22.0
+        }
+    }
 
     var disabled = false {
         didSet {
@@ -95,7 +101,11 @@ class UserDefaultsUnsavedController: NSTitlebarAccessoryViewController {
     override func loadView() {
         let size = innerVC.size
         view = UserDefaultsUnsavedView()
-        let topMargin = CGFloat(3)
+        let topMargin = if #available(macOS 26, *) {
+            4.5
+        } else {
+            3.0
+        }
         view.frame = NSRect(x: 0, y: 0, width: size, height: size + topMargin)
         view.autoresizingMask = []
 
