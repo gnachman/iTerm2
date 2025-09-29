@@ -54,9 +54,11 @@
                 range = NSMakeRange(lastLineStart, numberOfLines - lastLineStart);
                 break;
             }
-            case iTermGlobalSearchEngineCursorPassCurrentScreen:
-                range = NSMakeRange(0, 0);
+            case iTermGlobalSearchEngineCursorPassCurrentScreen: {
+                const long long offset = session.screen.totalScrollbackOverflow;
+                range = NSMakeRange(offset, session.screen.numberOfLines);
                 break;
+            }
         }
 
         iTermSearchRequest *request = [[iTermSearchRequest alloc] initWithQuery:query
