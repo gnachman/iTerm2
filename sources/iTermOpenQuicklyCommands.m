@@ -231,7 +231,8 @@
     return YES;
 }
 
-- (BOOL):(out BOOL *)tabsOnlyPtr {
+- (BOOL)supportsOpenArrangement:(out BOOL *)tabsOnlyPtr {
+    *tabsOnlyPtr = NO;
     return YES;
 }
 
