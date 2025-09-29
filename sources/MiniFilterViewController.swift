@@ -17,6 +17,18 @@ class MiniFilterField: iTermMiniSearchField {
     private var iconSet = false
     private var iconColor: NSColor?
 
+    override var font: NSFont? {
+        didSet {
+            updatePlaceholder()
+        }
+    }
+
+    override var textColor: NSColor? {
+        didSet {
+            updatePlaceholder()
+        }
+    }
+
     @objc override func viewDidMoveToWindow() {
         if let searchFieldCell = self.cell as? NSSearchFieldCell,
            let cell = searchFieldCell.searchButtonCell, !iconSet {
@@ -42,8 +54,21 @@ class MiniFilterField: iTermMiniSearchField {
             cell?.image = image.it_image(withTintColor: color)
         }
         textColor = color
-        if let placeholderString {
-            placeholderAttributedString = NSAttributedString(string: placeholderString, attributes: [.foregroundColor: color.withAlphaComponent(0.5)])
+        updatePlaceholder()
+    }
+
+    func updatePlaceholder() {
+        let string = placeholderString ?? placeholderAttributedString?.string
+        if let string {
+            var attributes: [NSAttributedString.Key: Any] = [:]
+            if let textColor {
+                attributes[.foregroundColor] = textColor.withAlphaComponent(0.5)
+            }
+            if let font {
+                attributes[.font] = font
+            }
+            placeholderAttributedString = NSAttributedString(string: string,
+                                                             attributes: attributes)
         }
     }
 }
@@ -93,11 +118,9 @@ class MiniFilterViewController: NSViewController, NSTextFieldDelegate, iTermFilt
 
     @objc func setFont(_ font: NSFont) {
         searchField.font = font
-        if #available(macOS 11, *) {
-            if shouldUseLargeControls {
-                searchField.controlSize = .large
-                closeButton.controlSize = .large
-            }
+        if shouldUseLargeControls {
+            searchField.controlSize = .large
+            closeButton.controlSize = .large
         }
         updateSubviews()
     }
