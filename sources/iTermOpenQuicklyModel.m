@@ -58,9 +58,6 @@ static const double kSnippetMultiplier = 0.3;
 // Named Marks
 static const double kNamedMarkMultiplier = 0.5;
 
-// Menu items
-static const double kMenuItemMultiplier = 0.2;
-
 // Multipliers for arrangement items. Arrangements rank just above profiles
 static const double kProfileNameMultiplierForArrangementItem = 0.11;
 
@@ -69,6 +66,10 @@ static const double kProfileNameMultiplierForProfileItem = 0.1;
 
 // Browser bookmarks
 static const double kProfileNameMultiplierForBookmarkItem = 0.097;
+
+// Menu items. Higher-scoring items are often duplicates of these; there are also many of them so
+// these tend to be lower precision results.
+static const double kMenuItemMultiplier = 0.096;
 
 // Multiplier for color preset name. Rank between scripts and profiles.
 static const double kProfileNameMultiplierForColorPresetItem = 0.095;
@@ -1096,7 +1097,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     NSMutableArray *nameFeature = [NSMutableArray array];
 
     const double score = [self scoreUsingMatcher:matcher
-                                       documents:@[ menuItem.title, menuItem.toolTip ?: @"" ]
+                                       documents:@[ menuItem.toolTip ?: @"", menuItem.title ]
                                       multiplier:kMenuItemMultiplier
                                             name:nil
                                         features:nameFeature
