@@ -1626,7 +1626,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
     tState.regularHorizontalColor = frameData.perFrameState.colorForHorizontalMargins;
     tState.regularVerticalColor = frameData.perFrameState.colorForVerticalMargins;
 
-    if (frameData.extendBackgroundColorIntoMargins) {
+    if (frameData.extendBackgroundColorIntoMargins && frameData.perFrameState.softAlternateScreenMode) {
         [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData *rowData, NSUInteger idx, BOOL * _Nonnull stop) {
             const iTermMetalBackgroundColorRLE *rles = (const iTermMetalBackgroundColorRLE *)rowData.backgroundColorRLEData.bytes;
             const NSInteger count = rowData.numberOfBackgroundRLEs;

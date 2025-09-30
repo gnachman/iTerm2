@@ -598,7 +598,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                        virtualOffset:(CGFloat)virtualOffset {
     NSColor *cursorBackgroundColor = nil;
     NSColor *defaultColor = [self colorForMarginsUsingDominant:NO];
-    const BOOL extend = [iTermAdvancedSettingsModel extendBackgroundColorIntoMargins];
+    const BOOL extend = [iTermAdvancedSettingsModel extendBackgroundColorIntoMargins] && self.softAlternateScreenMode;
     for (NSInteger i = 0; i < backgroundRunArrays.count; ) {
         iTermBackgroundColorRunsInLine *runArray = backgroundRunArrays[i];
         NSInteger rows = runArray.numberOfEquivalentRows;

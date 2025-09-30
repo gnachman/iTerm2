@@ -792,6 +792,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     return !_configuration->_useNativePowerlineGlyphs || _configuration->_cursorGuideColor.alphaComponent > iTermCursorGuideAlphaThreshold;
 }
 
+- (BOOL)softAlternateScreenMode {
+    return _configuration->_softAlternateScreenMode;
+}
+
 - (vector_float4)shadeColor {
     return _configuration->_shadeColor;
 }
