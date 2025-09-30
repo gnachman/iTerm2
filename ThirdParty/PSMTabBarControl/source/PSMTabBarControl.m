@@ -304,6 +304,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
                                            [_style rightMarginForTabBarControlWithOverflow:YES
                                                                               addTabButton:self.showAddTabButton] - 1,
                                            [self frame].size.height);
+    [_overflowPopUpButton autorelease];
+    [_overflowPopUpButton removeFromSuperview];
     _overflowPopUpButton = [[PSMOverflowPopUpButton alloc] initWithFrame:overflowButtonRect pullsDown:YES];
     if (_overflowPopUpButton) {
         // configure
@@ -316,6 +318,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
                                          3,
                                          23,
                                          22);
+    [_addTabButton removeFromSuperview];
+    [_addTabButton autorelease];
     _addTabButton = [[PSMRolloverButton alloc] initWithFrame:addTabButtonRect];
     if (_addTabButton) {
         NSImage *newButtonImage = [_style addTabButtonImage];
