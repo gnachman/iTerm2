@@ -206,7 +206,7 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
         }
     }
     Profile* bookmark = [self bookmark];
-    [[self modelForBookmark:bookmark] setObject:rules forKey:KEY_SMART_SELECTION_RULES inBookmark:bookmark];
+    [iTermProfilePreferences setObject:rules forKey:KEY_SMART_SELECTION_RULES inProfile:bookmark model:[self modelForBookmark:bookmark]];
     if (rowIndex < 0) {
         [tableView_ insertRowsAtIndexes:[NSIndexSet indexSetWithIndex:actualIndex]
                           withAnimation:NSTableViewAnimationEffectNone];
