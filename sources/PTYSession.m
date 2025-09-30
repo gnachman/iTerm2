@@ -662,6 +662,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     BOOL _xtermMouseReportingEverAllowed;
     NSMutableArray<iTermTmuxOptionMonitor *> *_userTmuxOptionMonitors;
     iTermExpectation *_turdDetector;
+    iTermExpectation *_composerClearTurdDetector;
 
     // Holds NSNull or ScreenCharArray. NSNull signals to remove the last line.
     NSMutableArray *_pendingFilterUpdates;
@@ -1120,6 +1121,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_userTmuxOptionMonitors release];
     [_runningRemoteCommand release];
     [_turdDetector release];
+    [_composerClearTurdDetector release];
     [_pathCompletionHelper release];
     [_channelClients release];
     [_channelUID release];
@@ -3538,6 +3540,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         DLog(@"writeTaskImpl session=%@ encoding=%@ forceEncoding=%@ canBroadcast=%@ reporting=%@: called from %@",
              self, @(encoding), @(forceEncoding), @(canBroadcast), @(reporting), stack);
         DLog(@"writeTaskImpl string=%@", string);
+    }
+    if (_composerClearTurdDetector) {
+        [_expect cancelExpectation:_composerClearTurdDetector];
+        [_composerClearTurdDetector autorelease];
+        _composerClearTurdDetector = nil;
     }
     if (string.length == 0) {
         DLog(@"String length is 0");
@@ -7130,12 +7137,72 @@ DLog(args); \
                  forceLarge:NO];
 }
 
+- (NSString *)regularExpressionForDataContainingOnlyControlCharacters:(NSData *)data {
+    const uint8_t *bytes = data.bytes;
+    NSUInteger length = data.length;
+    NSMutableArray<NSString *> *parts = [NSMutableArray arrayWithCapacity:length];
+
+    for (NSUInteger i = 0; i < length; i++) {
+        uint8_t c = bytes[i];
+        if (c == 0 || c > 31) {
+            continue;
+        }
+
+        unichar printable = (unichar)(c + 0x40);  // corresponding letter
+        NSString *caretForm = [NSString stringWithFormat:@"^%C", printable];
+        NSString *escaped = [NSRegularExpression escapedPatternForString:caretForm];
+        NSString *group = [NSString stringWithFormat:@"(%@)?", escaped];
+
+        [parts addObject:group];
+    }
+
+    return [parts componentsJoinedByString:@""];
+}
+
 - (void)setComposerString:(NSString *)string forceLarge:(BOOL)forceLarge {
-    [self sendHexCode:[iTermAdvancedSettingsModel composerClearSequence]];
+    DLog(@"begin");
+
+    NSString *hexClearSequence = [iTermAdvancedSettingsModel composerClearSequence];
+    NSData *data = [NSString dataForHexCodes:hexClearSequence];
+
+    // Create an expectation for some of the controls to be echoed back. If it happens, erase them.
+    DLog(@"Create expectation %@", [self regularExpressionForDataContainingOnlyControlCharacters:data]);
+    [_expect cancelExpectation:_composerClearTurdDetector];
+    [_composerClearTurdDetector autorelease];
+    _composerClearTurdDetector = nil;
+    __weak __typeof(self) weakSelf = self;
+    iTermExpectation *composerClearTurdDetector = [_expect expectRegularExpression:[self regularExpressionForDataContainingOnlyControlCharacters:data]
+                                                            after:nil
+                                                         deadline:[NSDate dateWithTimeIntervalSinceNow:0.1]
+                                                       willExpect:nil
+                                                       completion:^(NSArray<NSString *> * _Nonnull captureGroups) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf composerClearSequenceDidProduceTurds:captureGroups];
+        });
+    }];
+
+    // Sync so the expectation is in place before writing to avoid race conditions.
+    [self sync];
+
+    // Send the control sequences to clear the command line.
+    [self sendHexCode:hexClearSequence];
+
+    // Assign to it only after writing. Writes will cancel this to avoid matching newly entered text.
+    _composerClearTurdDetector = [composerClearTurdDetector retain];
+
+    // And populate the composer.
     if (forceLarge) {
         [self.composerManager showCommandInLargeComposer:string];
     } else {
         [self.composerManager placeCommandInComposer:string];
+    }
+}
+
+- (void)composerClearSequenceDidProduceTurds:(NSArray<NSString *> *)captureGroups {
+    DLog(@"Turds detected");
+    // Start at 1 to ignore the first capture group, which is the whole string.
+    for (NSInteger i = 1; i < captureGroups.count; i++) {
+        [self writeTaskNoBroadcast:[[self backspaceData] stringWithEncoding:self.encoding]];
     }
 }
 
@@ -9576,7 +9643,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 - (void)sync {
     DLog(@"sync\n%@", [NSThread callStackSymbols]);
     const VT100SyncResult result = [self syncCheckingTriggers:VT100ScreenTriggerCheckTypeNone
-                 resetOverflow:NO];
+                                                resetOverflow:NO];
     DLog(@"Sync done");
     // See comment in screenSync:
     [_textview refreshAfterSync:result];
@@ -16633,6 +16700,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)screenExecutorDidUpdate:(VT100ScreenTokenExecutorUpdate *)update {
+    DLog(@"screenExecutorDidUpdate");
     _estimatedThroughput = update.estimatedThroughput;
     DLog(@"estimated throughput: %@", @(_estimatedThroughput));
 
@@ -17397,7 +17465,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     dispatch_async(dispatch_get_main_queue(), ^{
         [input.window makeFirstResponder:input];
     });
-    __weak __typeof(self) weakSelf = self;
+
     [alert beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse button) {
         if (button == NSAlertFirstButtonReturn) {
             if (disableButton.state == NSControlStateValueOn) {

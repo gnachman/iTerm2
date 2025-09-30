@@ -64,12 +64,14 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p delegate=%@ active=%@ cadence=%@>",
+    const CGFloat cadence = _useGCDUpdateTimer ? _cadence : _updateTimer.timeInterval;
+    return [NSString stringWithFormat:@"<%@: %p delegate=%@ active=%@ cadence=%f (%f fps)>",
             NSStringFromClass([self class]),
             self,
             self.delegate,
             @(self.isActive),
-            @(_cadence)];
+            cadence,
+            1.0 / cadence];
 }
 
 - (void)changeCadenceIfNeeded {

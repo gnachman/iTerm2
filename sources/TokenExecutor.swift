@@ -728,11 +728,17 @@ class PeriodicScheduler: NSObject {
     }
 
     @objc func markNeedsUpdate() {
+        if !needsUpdate {
+            DLog("  did not need an update before! This should do something")
+        } else {
+            DLog(" Already needed an update, though")
+        }
         needsUpdate = true
         schedule(reset: false)
     }
 
     @objc func markNeedsUpdate(deferred delay: TimeInterval) {
+        DLog("markNeedsUpdate(deferred: \(delay))")
         let needsScheduling = mutex.sync {
             _needsUpdate = true
             defer {
@@ -757,11 +763,14 @@ class PeriodicScheduler: NSObject {
 
     private func schedule(reset: Bool) {
         mutex.sync {
+            DLog("schedule(reset: \(reset)) called")
             if reset {
+                DLog("set updatePending = false")
                 _updatePending = false
             }
             guard _needsUpdate else {
                 // Nothing changed.
+                DLog("No update needed")
                 return
             }
             let wasPending = _updatePending
@@ -769,11 +778,13 @@ class PeriodicScheduler: NSObject {
 
             if wasPending {
                 // Too soon to update.
+                DLog("Too soon to update")
                 return
             }
 
             resetAfterDelay()
             _needsUpdate = false
+            DLog("Periodic scheduler performing action")
             action()
         }
     }
@@ -783,6 +794,7 @@ class PeriodicScheduler: NSObject {
             guard let self = self else {
                 return
             }
+            DLog("Resetting after delay of \(period)")
             self.schedule(reset: true)
         }
     }

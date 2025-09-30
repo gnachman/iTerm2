@@ -46,7 +46,7 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
     const BOOL mayNeedReset = !_triggers.count && !_expect.maybeHasExpectations;
     _expect = expect;
     if (!mayNeedReset && _expect.maybeHasExpectations) {
-        DLog(@"Reset");
+        DLog(@"setExpect: Reset triggerLineNumber");
         _triggerLineNumber = -1;
         [self resetRateLimit];
     }
@@ -58,6 +58,7 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
     }
     if ([_triggers count] || _expect.maybeHasExpectations) {
         [self checkTriggers];
+        DLog(@"clearTriggerLine: reset triggerLineNumber");
         _triggerLineNumber = -1;
     }
 }
@@ -91,8 +92,24 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
     _lastPartialLineTriggerCheck = 0;
 }
 
+- (NSTimeInterval)squelchInterval {
+    if (_expect.expectations.count) {
+        iTermExpectation *soonest = [[_expect.expectations filteredArrayUsingBlock:^BOOL(iTermExpectation *expectation) {
+            return expectation.deadline != nil;
+        }] minWithBlock:^NSComparisonResult(iTermExpectation *lhs, iTermExpectation *rhs) {
+            return [lhs.deadline compare:rhs.deadline];
+        }];
+        NSDate *deadline = soonest.deadline;
+        if (deadline) {
+            const NSTimeInterval duration = deadline.timeIntervalSinceNow;
+            return MIN(kMinimumPartialLineTriggerCheckInterval, duration / 2);
+        }
+    }
+    return kMinimumPartialLineTriggerCheckInterval;
+}
+
 - (void)checkPartialLineTriggers {
-    DLog(@"begin");
+    DLog(@"checkPartialLineTriggers %@: begin", self);
     if (self.disableExecution) {
         DLog(@"Execution disabled");
         return;
@@ -102,7 +119,10 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
         return;
     }
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    if (now - _lastPartialLineTriggerCheck < kMinimumPartialLineTriggerCheckInterval) {
+    const NSTimeInterval squelchInterval = [self squelchInterval];
+    const NSTimeInterval elapsed = now - _lastPartialLineTriggerCheck;
+    DLog(@"Elapsed time is %f, squelch interval is %f", elapsed, squelchInterval);
+    if (elapsed < squelchInterval) {
         DLog(@"Rate limit squelch");
         return;
     }
@@ -136,7 +156,7 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
                               stringLine:(iTermStringLine *)stringLine
                               lineNumber:(long long)startAbsLineNumber
                       requireIdempotency:(BOOL)requireIdempotency {
-    DLog(@"begin");
+    DLog(@"reallyCheckTriggersOnPartialLine: begin with expectations %@, string %@", _expect.expectations, stringLine.stringValue);
     if (self.evaluating) {
         DLog(@"Already evaluating");
         return;
@@ -149,6 +169,7 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
                 DLog(@"Expectation %@ matched %@", expectation, stringLine.stringValue);
                 [expectation didMatchWithCaptureGroups:capture
                                             dispatcher:^(void (^closure)(void)) {
+                    DLog(@"Run expectation closure");
                     [self.delegate triggerEvaluatorScheduleSideEffect:self block:closure];
                 }];
             }
@@ -207,11 +228,16 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
 }
 
 - (void)appendStringToTriggerLine:(NSString *)s {
+    DLog(@"appendStringToTriggerLine:%@", s);
     if (self.disableExecution) {
+        DLog(@"   but trigger execution is disabled so don't update triggerLineNumber");
         return;
     }
     if (_triggerLineNumber == -1) {
         _triggerLineNumber = _dataSource.numberOfScrollbackLines + _dataSource.cursorY - 1 + _dataSource.totalScrollbackOverflow;
+        DLog(@"appendStringToTriggerLine: Set triggerLineNumber to %@", @(_triggerLineNumber));
+    }  else {
+        DLog(@"%@: triggerLineNumber is already %@", self, @(_triggerLineNumber));
     }
 
     // We used to build up the string so you could write triggers that included bells. That doesn't
@@ -245,7 +271,7 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
         return !trigger.isBrowserTrigger;
     }];
     if (mayNeedReset && _triggers.count > 0) {
-        DLog(@"Reset");
+        DLog(@"loadFromProfileArray: Reset triggerLineNumber");
         _triggerLineNumber = -1;
         [self resetRateLimit];
     }
@@ -305,9 +331,11 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
 
 - (NSString *)appendAsciiDataToCurrentLine:(AsciiData *)asciiData {
     if (self.disableExecution) {
+        DLog(@"appendAsciiDataToCurrentLine: disabled");
         return nil;
     }
     if (![_triggers count] && !_expect.expectations.count) {
+        DLog(@"appendAsciiDataToCurrentLine: no triggers or expectations");
         return nil;
     }
     NSString *string = [[NSString alloc] initWithBytes:asciiData->buffer

@@ -4522,7 +4522,7 @@ lengthExcludingInBandSignaling:data.length
 
 - (BOOL)appendAsciiDataToTriggerLine:(AsciiData *)asciiData {
     if (![self shouldEvaluateTriggers]) {
-        DLog(@"No expectations or triggers so bail");
+        DLog(@"appendAsciiDataToTriggerLine: No expectations or triggers so bail");
         return YES;
     }
     __block BOOL result = NO;
@@ -4537,6 +4537,7 @@ lengthExcludingInBandSignaling:data.length
                           triggerEvaluator:(PTYTriggerEvaluator *)triggerEvaluator {
     if (!_triggerEvaluator.haveTriggersOrExpectations && !self.config.loggingEnabled) {
         // Avoid making the string, which could be slow.
+        DLog(@"reallyAppendAsciiDataToTriggerLine returning early because there are no expectations");
         return YES;
     }
     NSString *string = [_triggerEvaluator appendAsciiDataToCurrentLine:asciiData];

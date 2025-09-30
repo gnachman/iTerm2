@@ -166,6 +166,7 @@
                                    completion:(void (^ _Nullable)(NSArray<NSString *> * _Nonnull))completion {
     assert(regex != nil);
     _dirty = YES;
+    DLog(@"Add expectation, set dirty");
     assert([NSThread isMainThread]);
     __weak __typeof(self) weakSelf = self;
     void (^internalWillExpect)(iTermExpectation *) = ^(iTermExpectation *expectation){
@@ -192,7 +193,9 @@
 }
 
 - (void)addExpectation:(iTermExpectation *)expectation {
+    DLog(@"addExpectation:%@", expectation);
     if (!expectation) {
+        DLog(@"  - fail, is nil");
         return;
     }
     [_expectations addObject:expectation];
@@ -205,11 +208,17 @@
 }
 
 - (void)removeExpectation:(iTermExpectation *)expectation {
+    if (expectation) {
+        DLog(@"Remove expectation %@", expectation);
+    }
     [_expectations removeObject:expectation];
 }
 
 - (void)cancelExpectation:(iTermExpectation *)expectation {
     _dirty = YES;
+    if (expectation != nil) {
+        DLog(@"cancel %@", expectation);
+    }
     [expectation cancel];
     [_expectations removeObject:expectation];
 }
@@ -219,7 +228,11 @@
         return;
     }
     [_expectations removeObjectsPassingTest:^BOOL(iTermExpectation *expectation) {
-        return expectation.deadline != nil && expectation.deadline.timeIntervalSinceNow < 0;
+        const BOOL didExpire = expectation.deadline != nil && expectation.deadline.timeIntervalSinceNow < 0;
+        if (didExpire) {
+            DLog(@"Remove expired expectation %@", expectation);
+        }
+        return didExpire;
     }];
 }
 
@@ -241,6 +254,7 @@
 }
 
 - (void)resetDirty {
+    DLog(@"resetDirty");
     _dirty = NO;
 }
 
