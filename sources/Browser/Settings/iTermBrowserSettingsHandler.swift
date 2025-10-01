@@ -199,7 +199,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
                 if await BrowserDatabase.instance(for: user)?.erase() == true {
                     message = "All website data has been cleared successfully!"
                 } else {
-                    if let url = BrowserDatabase.url(for: user) {
+                    if let url = BrowserDatabaseCollection.url(for: user) {
                         message = "The browser database could not be deleted. It is in \(url.path)"
                     } else {
                         message = "The browser database could not be deleted. Your application support folder could not be found."

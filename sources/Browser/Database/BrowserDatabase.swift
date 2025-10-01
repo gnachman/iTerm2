@@ -7,32 +7,9 @@
 
 import Foundation
 
-actor BrowserDatabase {
-    // Serial queue to ensure all SQLite operations happen on the same thread
-    private let databaseQueue = DispatchQueue(label: "com.iterm2.browser-db", qos: .utility)
-    let userID: String?
-
-    private static var _instances = [iTermBrowserUser: BrowserDatabase]()
-
-    static func instance(for user: iTermBrowserUser) async -> BrowserDatabase? {
-        if let instance = _instances[user] {
-            return instance
-        }
-        guard let url = url(for: user) else {
-            return nil
-        }
-        let userID: String? = switch user {
-        case .devNull: nil
-        case .regular(id: let id): id.uuidString
-        }
-        let instance = await BrowserDatabase(url: url, userID: userID)
-        _instances[user] = instance
-        return instance
-    }
-
-    static func makeEphemeralInstance() async -> BrowserDatabase {
-        return await BrowserDatabase(url: URL(string: "file::memory:?mode=memory&cache=shared")!, userID: nil)!
-    }
+actor BrowserDatabaseCollection {
+    static let instance = BrowserDatabaseCollection()
+    private var _instances = [iTermBrowserUser: BrowserDatabase]()
 
     static func url(for user: iTermBrowserUser) -> URL? {
         switch user {
@@ -47,6 +24,36 @@ actor BrowserDatabase {
             url.appendPathComponent("browserdb-\(userID).sqlite")
             return url
         }
+    }
+
+    func instance(for user: iTermBrowserUser) async -> BrowserDatabase? {
+        if let instance = _instances[user] {
+            return instance
+        }
+        guard let url = BrowserDatabaseCollection.url(for: user) else {
+            return nil
+        }
+        let userID: String? = switch user {
+        case .devNull: nil
+        case .regular(id: let id): id.uuidString
+        }
+        let instance = await BrowserDatabase(url: url, userID: userID)
+        _instances[user] = instance
+        return instance
+    }
+}
+
+actor BrowserDatabase {
+    // Serial queue to ensure all SQLite operations happen on the same thread
+    private let databaseQueue = DispatchQueue(label: "com.iterm2.browser-db", qos: .utility)
+    let userID: String?
+
+    static func instance(for user: iTermBrowserUser) async -> BrowserDatabase? {
+        return await BrowserDatabaseCollection.instance.instance(for: user)
+    }
+
+    static func makeEphemeralInstance() async -> BrowserDatabase {
+        return await BrowserDatabase(url: URL(string: "file::memory:?mode=memory&cache=shared")!, userID: nil)!
     }
 
     static var allPersistentInstances: [BrowserDatabase] {
@@ -111,7 +118,7 @@ actor BrowserDatabase {
         }
     }
 
-    private init?(url: URL, userID: String?) async {
+    fileprivate init?(url: URL, userID: String?) async {
         self.userID = userID
         let lockName = userID.map { "browserdb-lock-\($0)" }
         _db = iTermSqliteDatabaseImpl(url: url, lockName: lockName)
