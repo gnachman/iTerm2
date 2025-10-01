@@ -49,9 +49,12 @@
         NSRange range;
         switch (pass) {
             case iTermGlobalSearchEngineCursorPassMainScreen: {
+                // The main screen starts at the last line in the line buffer and extends
+                // for numberOfLines. Calculate the range carefully to avoid negative lengths.
                 const long long lastLineStart = [session.screen absLineNumberOfLastLineInLineBuffer];
                 const long long numberOfLines = session.screen.numberOfLines;
-                range = NSMakeRange(lastLineStart, numberOfLines - lastLineStart);
+                const long long length = MAX(0, numberOfLines - lastLineStart);
+                range = NSMakeRange(lastLineStart, length);
                 break;
             }
             case iTermGlobalSearchEngineCursorPassCurrentScreen: {

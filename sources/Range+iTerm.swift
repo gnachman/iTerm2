@@ -41,6 +41,41 @@ extension Range where Bound: Comparable {
     }
 }
 
+extension Range where Bound == Int64 {
+    // Safely convert NSRange to Range<Int64>, validating that the conversion won't overflow
+    // or produce an invalid range. NSRange uses NSUInteger (UInt64) for both location and length.
+    // When negative signed integers are cast to NSUInteger, they wrap to huge positive values.
+    // This can cause Range.init(_: NSRange) to overflow or create invalid ranges where
+    // lowerBound > upperBound.
+    init?(safe nsrange: NSRange) {
+        // Check for NSNotFound sentinel value
+        guard nsrange.location != NSNotFound,
+              nsrange.length != NSNotFound else {
+            return nil
+        }
+
+        // Check if location fits in Int64
+        guard nsrange.location <= Int64.max,
+              let location = Int64(exactly: nsrange.location) else {
+            return nil
+        }
+
+        // Check if length fits in Int64
+        guard nsrange.length <= Int64.max,
+              let length = Int64(exactly: nsrange.length) else {
+            return nil
+        }
+
+        // Check that location + length doesn't overflow
+        let (upperBound, overflow) = location.addingReportingOverflow(length)
+        guard !overflow, upperBound >= location else {
+            return nil
+        }
+
+        self = location..<upperBound
+    }
+}
+
 extension NSRange {
     func contains(_ other: Range<Int>) -> Bool {
         return lowerBound <= other.lowerBound && upperBound >= other.upperBound
