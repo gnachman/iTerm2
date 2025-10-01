@@ -148,17 +148,31 @@ static _Atomic int gPerformingJoinedBlock;
     DLog(@"Schedule side effect");
 
     // Schedule a side-effect to mutate the main-thread instance.
+    // We have to use a no-delegate side effect because this can run before the delegate is assigned.
+    // We have to use a paused side effect because this can cause relayout in this incredibly complex scenario:
+    // 1. A tab closes
+    // 2. The newly revealed tab's session view's viewDidChangeEffectiveAppearance is called because macOS can decide to do that just then
+    // 3. Changing appearance causes colors to change to the dark mode/light mode variant
+    // 4. Side effects are run synchronously because
+    //    reallyPerformBlockWithJoinedThreads:delegate:topmost: calls
+    //    TokenExecutor.executeSideEffectsImmediately(syncFirst:).
+    // 5. You get here. Eventually the color change leads to -[PTYTab sessionBackgroundColorDidChange:] being called.
+    // 6. That eventually calls -[PseudoTerminal updateForTransparency:]. The change to light/dark mode causes
+    //    window borders to be shown/hidden, which changes the frame of the sessions.
+    // 7. Resizing a session during an unpaused side effect is illegal and an assertion fires.
     __weak __typeof(self) weakSelf = self;
-    [self addNoDelegateSideEffect:^{
+    [self addPausedNoDelegateSideEffect:^(iTermTokenExecutorUnpauser *unpauser) {
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf) {
             DLog(@"dealloced");
+            [unpauser unpause];
             return;
         }
         DLog(@"Run color map mutation side effect");
         iTermColorMap *mainThreadColorMap = (iTermColorMap *)strongSelf.mainThreadCopy.colorMap;
         mainThreadColorMap.delegate = strongSelf;
         block(mainThreadColorMap);
+        [unpauser unpause];
     }];
 }
 
@@ -257,6 +271,15 @@ static _Atomic int gPerformingJoinedBlock;
     }];
 }
 
+- (void)addPausedNoDelegateSideEffect:(void (^)(iTermTokenExecutorUnpauser *unpauser))sideEffect {
+    DLog(@"Add side effect");
+    __weak __typeof(self) weakSelf = self;
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [_tokenExecutor addSideEffect:^{
+        [weakSelf performPausedNoDelegateSideEffect:unpauser block:sideEffect];
+    }];
+}
+
 - (void)addIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver> observer))sideEffect {
     DLog(@"Add interval tree side effect");
     __weak __typeof(self) weakSelf = self;
@@ -331,6 +354,19 @@ static _Atomic int gPerformingJoinedBlock;
     self.performingPausedSideEffect = YES;
     DLog(@"performing for delegate %@", delegate);
     block(delegate, unpauser);
+    self.performingPausedSideEffect = savedPausedSideEffect;
+    self.performingSideEffect = savedSideEffect;
+}
+
+- (void)performPausedNoDelegateSideEffect:(iTermTokenExecutorUnpauser *)unpauser
+                                    block:(void (^)(iTermTokenExecutorUnpauser *))block {
+    DLog(@"begin");
+    const BOOL savedSideEffect = self.performingSideEffect;
+    const BOOL savedPausedSideEffect = self.performingPausedSideEffect;
+    self.performingSideEffect = YES;
+    self.performingPausedSideEffect = YES;
+    DLog(@"performing for delegate %@", self.sideEffectPerformer.sideEffectPerformingScreenDelegate);
+    block(unpauser);
     self.performingPausedSideEffect = savedPausedSideEffect;
     self.performingSideEffect = savedSideEffect;
 }
