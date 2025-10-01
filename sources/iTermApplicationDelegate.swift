@@ -9,6 +9,9 @@
 extension iTermApplicationDelegate {
     @objc
     func registerMenuTips() {
+        guard let mainMenu = NSApp.mainMenu else {
+            return
+        }
         struct Tip {
             var identifier: String
             var imageName: String?
@@ -193,15 +196,20 @@ extension iTermApplicationDelegate {
                 }
             }
         }
-        makeIndex(menu: NSApp.mainMenu!)
+        makeIndex(menu: mainMenu)
         let controller = MenuItemTipController.instance
         for tip in tips {
-            let item = index[tip.identifier]!
-            controller.registerTip(forMenuItem: item,
-                                   image: tip.imageName.map { NSImage.it_imageNamed($0, for: Self.self) },
-            attributedString: NSAttributedString.attributedString(markdown: tip.text,
-                                                                  font: NSFont.systemFont(ofSize: NSFont.systemFontSize),
-                                                                  paragraphStyle: NSParagraphStyle.default)!)
+            if let item = index[tip.identifier] {
+                controller.registerTip(forMenuItem: item,
+                                       image: tip.imageName.map { NSImage.it_imageNamed($0, for: Self.self) },
+                                       attributedString: NSAttributedString.attributedString(markdown: tip.text,
+                                                                                             font: NSFont.systemFont(ofSize: NSFont.systemFontSize),
+                                                                                             paragraphStyle: NSParagraphStyle.default)!)
+            } else {
+                #if(DEBUG)
+                it_fatalError("Index missing \(tip.identifier)")
+                #endif
+            }
         }
     }
 }
