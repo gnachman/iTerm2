@@ -619,7 +619,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                         drawingMode:drawingMode
                       virtualOffset:virtualOffset];
 
-        for (NSInteger j = i; j < i + rows; j++) {
+        for (NSInteger j = i; j < MIN(i + rows, backgroundRunArrays.count); j++) {
             NSColor *leftColor = (!extend || runArray.array[0].isDefault) ? defaultColor : runArray.array[0].backgroundColor;
             NSColor *rightColor = (!extend || runArray.array.lastObject.isDefault) ? defaultColor : runArray.array.lastObject.backgroundColor;
             NSArray<NSColor *> *colors = @[ leftColor, rightColor ];
