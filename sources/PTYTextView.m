@@ -6501,6 +6501,40 @@ static NSString *iTermStringFromRange(NSRange range) {
 }
 
 - (void)mouseHandler:(PTYMouseHandler *)sender handleCommandShiftClickAtCoord:(VT100GridCoord)coord {
+    if ([iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs] &&
+        [self isInUnderlinedRangeAtCoord:coord]) {
+        const long long offset = self.dataSource.totalScrollbackOverflow;
+        const VT100GridAbsCoord absCoord = VT100GridAbsCoordFromCoord(coord, offset);
+        const VT100GridAbsWindowedRange absRange = [self selectionAbsRangeForSmartSelectionAt:absCoord];;
+        if (VT100GridAbsCoordRangeLength(absRange.coordRange, self.dataSource.width) > 0) {
+            iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+            BOOL valid;
+            VT100GridWindowedRange relativeRange = VT100GridWindowedRangeFromAbsWindowedRangeSafe(absRange, offset, &valid);
+            if (valid) {
+                NSString *string = [extractor contentInRange:relativeRange
+                                           attributeProvider:nil
+                                                  nullPolicy:kiTermTextExtractorNullPolicyFromLastToEnd
+                                                         pad:NO
+                                          includeLastNewline:NO
+                                      trimTrailingWhitespace:YES
+                                                cappedAtSize:-1
+                                                truncateTail:YES
+                                           continuationChars:nil
+                                                      coords:nil];
+                NSURL *url = [NSURL URLWithString:string];
+                if (string.stringIsUrlLike &&
+                    url != nil &&
+                    [[NSWorkspace sharedWorkspace] it_urlIsLocallyOpenableWithUpsell:url]) {
+                    const NSSize size = self.enclosingScrollView.frame.size;
+                    [[NSWorkspace sharedWorkspace] it_openURL:url
+                                                configuration:[NSWorkspaceOpenConfiguration configuration]
+                                                        style:size.width > size.height ? iTermOpenStyleVerticalSplit : iTermOpenStyleHorizontalSplit
+                                                       upsell:YES];
+                    return;
+                }
+            }
+        }
+    }
     id<VT100ScreenMarkReading> mark = [_delegate textViewMarkForCommandAt:coord];
     if (!mark) {
         return;
@@ -6521,6 +6555,10 @@ static NSString *iTermStringFromRange(NSRange range) {
 
 - (BOOL)mouseHandlerInUnderlinedRangeForEvent:(NSEvent *)event {
     const VT100GridCoord coord = [self coordForEvent:event];
+    return [self isInUnderlinedRangeAtCoord:coord];
+}
+
+- (BOOL)isInUnderlinedRangeAtCoord:(VT100GridCoord)coord {
     DLog(@"coord=%@", VT100GridCoordDescription(coord));
     if (VT100GridCoordEquals(coord, VT100GridCoordInvalid)) {
         return NO;

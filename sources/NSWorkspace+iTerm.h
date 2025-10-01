@@ -34,5 +34,6 @@
 - (BOOL)it_checkToken:(NSString *)token;
 - (void)it_revealInFinder:(NSString *)path;
 - (BOOL)it_urlIsConditionallyLocallyOpenable:(NSURL *)url;
+- (BOOL)it_urlIsLocallyOpenableWithUpsell:(NSURL *)url;
 
 @end

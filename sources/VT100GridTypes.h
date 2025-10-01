@@ -479,6 +479,26 @@ NS_INLINE VT100GridWindowedRange VT100GridWindowedRangeFromAbsWindowedRange(VT10
                                       absrange.columnWindow.length);
 }
 
+NS_INLINE VT100GridWindowedRange VT100GridWindowedRangeFromAbsWindowedRangeSafe(VT100GridAbsWindowedRange absrange,
+                                                                                long long offset,
+                                                                                BOOL *valid) {
+    if (absrange.coordRange.start.y < offset ||
+        absrange.coordRange.start.y - offset > INT_MAX ||
+        absrange.coordRange.end.y < offset ||
+        absrange.coordRange.end.y - offset > INT_MAX) {
+        *valid = NO;
+        return VT100GridWindowedRangeMake(VT100GridCoordRangeInvalid, -1, -1);
+    } else {
+        *valid = YES;
+    }
+    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(absrange.coordRange.start.x,
+                                                              (int)(absrange.coordRange.start.y - offset),
+                                                              absrange.coordRange.end.x,
+                                                              (int)(absrange.coordRange.end.y - offset)),
+                                      absrange.columnWindow.location,
+                                      absrange.columnWindow.length);
+}
+
 NS_INLINE BOOL VT100GridAbsCoordIsValid(VT100GridAbsCoord coord) {
     return coord.x >= 0 && coord.y >= 0;
 }

@@ -95,6 +95,20 @@
                                                             testOnly:YES];
 }
 
+- (BOOL)it_urlIsLocallyOpenableWithUpsell:(NSURL *)url {
+    DLog(@"%@", url);
+    if (![self it_urlIsWeb:url]) {
+        return NO;
+    }
+    if (![self it_localBrowserCouldHypotheticallyHandleURL:url]) {
+        return NO;
+    }
+    return [self it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:url
+                                                       configuration:nil
+                                                               style:iTermOpenStyleTab
+                                                            testOnly:YES];
+}
+
 // A high-confidence check of whether we'd open this URL ourselves.
 // Assumes a web URL (see it_urlIsWeb:).
 - (BOOL)it_isDefaultBrowserForWebURL:(NSURL *)url {
