@@ -1100,8 +1100,10 @@ andEditComponentWithIdentifier:(NSString *)identifier
         NSView *view = tuple[1];
         if (viewController.view == view) {
             BOOL changing = item != _tabView.selectedTabViewItem;
-            [_tabView selectTabViewItem:item];
-            return changing;
+            if ([_tabView.tabViewItems containsObject:item]) {
+                [_tabView selectTabViewItem:item];
+                return changing;
+            }
         }
     }
     return NO;

@@ -1173,9 +1173,16 @@ andEditComponentWithIdentifier:(NSString *)identifier
     }
 }
 
+- (ProfileType)currentProfileType {
+    NSString *guid = [self currentProfileGuid];
+    Profile *profile = [_profileModel bookmarkWithGuid:guid] ?: [_profileModel defaultProfile];
+    return profile.profileType ?: ProfileTypeAll;
+}
+
 - (NSArray<iTermPreferencesSearchDocument *> *)searchResults {
     [self buildSearchEngineIfNeeded];
-    return [gSearchEngine documentsMatchingQuery:self.searchField.stringValue];
+    return [gSearchEngine documentsMatchingQuery:self.searchField.stringValue
+                             allowedProfileTypes:self.currentProfileType];
 }
 
 - (void)controlTextDidEndEditing:(NSNotification *)obj {

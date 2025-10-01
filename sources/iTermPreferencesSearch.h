@@ -26,11 +26,13 @@ NS_ASSUME_NONNULL_BEGIN
                            profileTypes:(ProfileType)profileTypes;
 
 - (instancetype)init NS_UNAVAILABLE;
+
 @end
 
 @interface iTermPreferencesSearchEngine : NSObject
 - (void)addDocumentToIndex:(iTermPreferencesSearchDocument *)document;
-- (NSArray<iTermPreferencesSearchDocument *> *)documentsMatchingQuery:(NSString *)query;
+- (NSArray<iTermPreferencesSearchDocument *> *)documentsMatchingQuery:(NSString *)query
+                                                  allowedProfileTypes:(ProfileType)profileType;
 - (nullable iTermPreferencesSearchDocument *)documentWithKey:(NSString *)key;
 @end
 
