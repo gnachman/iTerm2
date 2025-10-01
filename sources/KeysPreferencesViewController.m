@@ -273,6 +273,9 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     for (NSInteger i = 0; i < CFArrayGetCount(inputSources); i++) {
         TISInputSourceRef inputSource = (TISInputSourceRef)CFArrayGetValueAtIndex(inputSources, i);
         CFStringRef category = (CFStringRef)TISGetInputSourceProperty(inputSource, kTISPropertyInputSourceCategory);
+        if (category == NULL) {
+            continue;
+        }
         if (CFStringCompare(category, kTISCategoryKeyboardInputSource, 0) != kCFCompareEqualTo) {
             continue;
         }
