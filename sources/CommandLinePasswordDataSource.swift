@@ -294,11 +294,21 @@ class CommandLinePasswordDataSource: NSObject {
         private var stderrData = Data()
         private var ran = false
 
+        deinit {
+            // Ensure the channels don't produce output after dealloc. I don't think it's possible but better to be safe.
+            stdoutChannel?.close(flags: [.stop])
+            stderrChannel?.close(flags: [.stop])
+            stdinChannel?.close(flags: [.stop])
+        }
+
         private static func readingChannel(_ pipe: ReadWriteFileHandleVending,
-                                    ioQueue: DispatchQueue,
-                                    handler: @escaping (Data?) -> ()) -> DispatchIO {
+                                           ioQueue: DispatchQueue,
+                                           handler: @escaping (Data?) -> ()) -> DispatchIO {
+            // dup the file descriptor because DispatchIO wants to own its file
+            // descriptor and we can't stop the prior owner (our callee) from
+            // closing it themselves.
             let channel = DispatchIO(type: .stream,
-                                     fileDescriptor: pipe.fileHandleForReading.fileDescriptor,
+                                     fileDescriptor: dup(pipe.fileHandleForReading.fileDescriptor),
                                      queue: ioQueue,
                                      cleanupHandler: { _ in })
             channel.setLimit(lowWater: 1)
@@ -309,8 +319,8 @@ class CommandLinePasswordDataSource: NSObject {
         private static func read(_ channel: DispatchIO,
                                  ioQueue: DispatchQueue,
                                  handler: @escaping (Data?) -> ()) {
-            channel.read(offset: 0, length: 1024, queue: ioQueue) { [channel] done, data, error in
-                Self.didRead(channel,
+            channel.read(offset: 0, length: 1024, queue: ioQueue) { [weak channel] done, data, error in
+                Self.didRead(error == ECANCELED ? nil : channel,
                              done: done,
                              data: data,
                              error: error,
@@ -367,7 +377,7 @@ class CommandLinePasswordDataSource: NSObject {
                 queue.enqueue(.readError(data))
             }
             stdinChannel = DispatchIO(type: .stream,
-                                      fileDescriptor: stdin.fileHandleForWriting.fileDescriptor,
+                                      fileDescriptor: dup(stdin.fileHandleForWriting.fileDescriptor),
                                       queue: ioQueue) { _ in }
             stdinChannel!.setLimit(lowWater: 1)
             process.launchPath = request.command
@@ -502,39 +512,52 @@ class CommandLinePasswordDataSource: NSObject {
             guard let channel = stdinChannel else {
                 return
             }
+            let count = data.count
             log("\(request.command) \(request.args) wants to write \(data.count) bytes: \(String(data: data, encoding: .utf8) ?? "(non-utf-8")")
             data.withUnsafeBytes { pointer in
                 channel.write(offset: 0,
                               data: DispatchData(bytes: pointer),
-                              queue: ioQueue) { _done, _data, _error in
-                    self.log("\(self.request.command) \(self.request.args) wrote \(_data?.count ?? 0) of \(data.count) bytes. done=\(_done) error=\(_error)")
-                    if _done, let completion = completion {
-                        completion()
-                    }
-                    guard self.debugging else {
-                        return
-                    }
-                    if let data = _data {
-                        for region in data.regions {
-                            var data = Data(count: region.count)
-                            data.withUnsafeMutableBytes {
-                                _ = region.copyBytes(to: $0)
-                            }
-                            self.log("stdin> \(String(data: data, encoding: .utf8) ?? "(non-UTF8)")")
-                        }
-                    } else if _error != 0 {
-                        self.log("stdin error: \(_error)")
-                    }
+                              queue: ioQueue) { [weak self] done, data, error in
+                    self?.writeDidComplete(done: done,
+                                           data: data,
+                                           count: count,
+                                           error: error,
+                                           completion: completion)
                 }
+            }
+        }
+
+        private func writeDidComplete(done: Bool,
+                                      data: DispatchData?,
+                                      count: Int,
+                                      error: Int32,
+                                      completion: (() -> ())?) {
+            self.log("\(self.request.command) \(self.request.args) wrote \(data?.count ?? 0) of \(count) bytes. done=\(done) error=\(error)")
+            if done, let completion = completion {
+                completion()
+            }
+            guard self.debugging else {
+                return
+            }
+            if let data = data {
+                for region in data.regions {
+                    var data = Data(count: region.count)
+                    data.withUnsafeMutableBytes {
+                        _ = region.copyBytes(to: $0)
+                    }
+                    self.log("stdin> \(String(data: data, encoding: .utf8) ?? "(non-UTF8)")")
+                }
+            } else if error != 0 {
+                self.log("stdin error: \(error)")
             }
         }
 
         func closeForWriting() {
             dispatchPrecondition(condition: .onQueue(ioQueue))
             log("close stdin")
-            stdin.fileHandleForWriting.closeFile()
             stdinChannel?.close()
             stdinChannel = nil
+            stdin.fileHandleForWriting.closeFile()
         }
 
         func run() throws -> Output {
