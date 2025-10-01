@@ -414,7 +414,10 @@ extension String {
 import Foundation
 
 extension String {
-    subscript(utf16 range: NSRange) -> String {
+    subscript(utf16 range: NSRange) -> String? {
+        if range.location == NSNotFound {
+            return nil
+        }
         let utf16View = utf16
 
         let fromUtf16Index = utf16View.index(
@@ -433,7 +436,7 @@ extension String {
     }
 
     subscript(utf16: Range<Int>) -> String {
-        return self[utf16: NSRange(utf16)]
+        return self[utf16: NSRange(utf16)]!
     }
 
     subscript(utf16 range: PartialRangeFrom<Int>) -> String {
@@ -442,7 +445,7 @@ extension String {
         let utf16Count = utf16View.count
         let length = utf16Count - startLocation
         let nsRange = NSRange(location: startLocation, length: length)
-        return self[utf16: nsRange]
+        return self[utf16: nsRange]!
     }
 }
 extension String {

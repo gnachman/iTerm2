@@ -36,14 +36,14 @@ extension String {
         guard let compiled = try! RegexCache.instance.get(regex) else {
             return false
         }
-        return compiled.numberOfMatches(in: self, range: NSRange(location: 0, length: count)) > 0
+        return compiled.numberOfMatches(in: self, range: NSRange(location: 0, length: utf16.count)) > 0
     }
 
     func captureGroups(regex: String) -> [NSRange] {
         guard let compiled = try! RegexCache.instance.get(regex) else {
             return []
         }
-        guard let match = compiled.firstMatch(in: self, range: NSRange(location: 0, length: count)) else {
+        guard let match = compiled.firstMatch(in: self, range: NSRange(location: 0, length: utf16.count)) else {
             return []
         }
         return (0..<match.numberOfRanges).map {

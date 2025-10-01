@@ -265,7 +265,7 @@ extension iTermBrowserWebView {
                 results.append(.init(beforeCount: 0,
                                      afterCount: 0,
                                      rule: rule,
-                                     components: components.map { substring[utf16: $0] },
+                                     components: components.map { substring[utf16: $0] ?? "" },
                                      score: rule.weight * Double(components[0].length)))
                 break
             }
@@ -300,7 +300,7 @@ extension iTermBrowserWebView {
                 if let result {
                     let matchingRange = result.range(at: 0)
                     DLog("Matches in \(matchingRange)")
-                    let matchingText = String(substring)[utf16: matchingRange]
+                    let matchingText = String(substring)[utf16: matchingRange] ?? ""
                     let score = rule.weight * Double(matchingText.utf16.count)
 
                     let matchAbsRange = (startOffset + matchingRange.lowerBound)..<(startOffset + matchingRange.upperBound)
@@ -317,7 +317,7 @@ extension iTermBrowserWebView {
                                 if range.location == NSNotFound || range.length == 0 {
                                     return ""
                                 }
-                                return String(substring)[utf16: range]
+                                return String(substring)[utf16: range] ?? ""
                             }
                             DLog("Add match with actions \(rule.actions) and components \(components)")
                             matches[matchingText] = WebSmartMatch(
