@@ -1098,7 +1098,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p tabs=%d window=%@>",
-            [self class], self, (int)[self numberOfTabs], [self window]];
+            [self class], self, (int)[self numberOfTabs], self.isWindowLoaded ? [self window] : nil];
 }
 
 - (BOOL)tabBarVisibleOnTopEvenWhenOnLoan {
