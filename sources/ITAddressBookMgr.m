@@ -315,7 +315,18 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
 }
 
 + (NSColor *)decodeColor:(NSDictionary*)plist {
-    return [plist colorValue];
+    if ([plist isKindOfClass:[NSDictionary class]]) {
+        return [plist colorValue];
+    }
+    DLog(@"Bogus color %@ from %@", plist, [NSThread callStackSymbols]);
+    NSString *string = [NSString castFrom:plist];
+    NSColor *colorFromString = [NSColor colorFromHexString:string];
+    if (colorFromString) {
+        DLog(@"Accepting a hex string because I'm easy like that");
+        return colorFromString;
+    }
+    DLog(@"Giving you red so you know it's bad");
+    return [NSColor colorWithDisplayP3Red:1.0 green:0 blue:0 alpha:1];
 }
 
 + (NSFont *)defaultFont {
