@@ -78,30 +78,34 @@
     self.checkingPermissions = YES;
     UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
     [center getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings * _Nonnull settings) {
-        DLog(@"auth status %@", @(settings.authorizationStatus));
-        switch (settings.authorizationStatus) {
-            case UNAuthorizationStatusAuthorized:
-                [self invokeAllPendingCompletionsWithResult:YES];
-                break;
-                
-            case UNAuthorizationStatusNotDetermined: {
-                [center requestAuthorizationWithOptions:(UNAuthorizationOptionAlert | UNAuthorizationOptionSound)
-                                      completionHandler:^(BOOL authGranted, NSError * _Nullable error) {
-                    if (error) {
-                        DLog(@"Notification authorization error: %@", error);
-                    }
-                    DLog(@"granted=%@", @(authGranted));
-                    [self invokeAllPendingCompletionsWithResult:authGranted];
-                }];
-                break;
-            }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            DLog(@"auth status %@", @(settings.authorizationStatus));
+            switch (settings.authorizationStatus) {
+                case UNAuthorizationStatusAuthorized:
+                    [self invokeAllPendingCompletionsWithResult:YES];
+                    break;
 
-            case UNAuthorizationStatusDenied:
-            case UNAuthorizationStatusProvisional:
-            default:
-                [self invokeAllPendingCompletionsWithResult:NO];
-                break;
-        }
+                case UNAuthorizationStatusNotDetermined: {
+                    [center requestAuthorizationWithOptions:(UNAuthorizationOptionAlert | UNAuthorizationOptionSound)
+                                          completionHandler:^(BOOL authGranted, NSError * _Nullable error) {
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            if (error) {
+                                DLog(@"Notification authorization error: %@", error);
+                            }
+                            DLog(@"granted=%@", @(authGranted));
+                            [self invokeAllPendingCompletionsWithResult:authGranted];
+                        });
+                    }];
+                    break;
+                }
+
+                case UNAuthorizationStatusDenied:
+                case UNAuthorizationStatusProvisional:
+                default:
+                    [self invokeAllPendingCompletionsWithResult:NO];
+                    break;
+            }
+        });
     }];
 }
 
