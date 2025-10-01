@@ -69,7 +69,11 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
 }
 
 + (NSUInteger)unsignedIntegerForKey:(NSString *)key inProfile:(Profile *)profile {
-    return [[self objectForKey:key inProfile:profile] unsignedIntegerValue];
+    id obj = [self objectForKey:key inProfile:profile];
+    if (![obj respondsToSelector:@selector(unsignedIntegerValue)]) {
+        return 0;
+    }
+    return [obj unsignedIntegerValue];
 }
 
 + (void)setUnsignedInteger:(NSUInteger)value
