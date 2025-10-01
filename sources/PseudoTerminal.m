@@ -8545,7 +8545,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     for (NSString *theKey in sessionMap) {
         PTYSession *session = sessionMap[theKey];
         DLog(@"Revive %@", session);
-        assert([session revive]);  // TODO: This isn't guaranteed
+        [session revive];
     }
 
     [self insertTab:tab atIndex:[self indexForTabWithPredecessors:predecessors]];
