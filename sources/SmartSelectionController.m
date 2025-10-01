@@ -137,6 +137,9 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
         NSString* plistFile = [[NSBundle bundleForClass:[self class]] pathForResource:@"SmartSelectionRules"
                                                                                ofType:@"plist"];
         NSDictionary* rulesDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
+        if (!plistFile) {
+            [iTermAppSignatureValidator warnWithReason:@"While loading the default smart selection rules"];
+        }
         ITCriticalError(rulesDict != nil, @"Failed to parse SmartSelectionRules: %@", [NSString stringWithContentsOfFile:plistFile encoding:NSUTF8StringEncoding error:nil]);
         rulesArray = [rulesDict objectForKey:@"Rules"];
     }
