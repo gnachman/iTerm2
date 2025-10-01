@@ -1656,6 +1656,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     savedLine = [savedLine screenCharArrayByRemovingTrailingNullsAndHardNewline];
 
     const long long firstScreenAbsLine = self.numberOfScrollbackLines + totalScrollbackOverflow;
+    DLog(@"absLine=%@ firstScreenAbsLine=%@ diff=%@", @(absLine), @(firstScreenAbsLine), @(absLine - firstScreenAbsLine));
     [self clearGridFromLineToEnd:MAX(0, absLine - firstScreenAbsLine)];
 
     [self clearScrollbackBufferFromLine:absLine - self.cumulativeScrollbackOverflow];
@@ -1726,16 +1727,17 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 
 - (void)clearGridFromLineToEnd:(int)line {
-    assert(line >= 0 && line < self.height);
-    const VT100GridCoord savedCursor = self.currentGrid.cursor;
-    self.currentGrid.cursor = VT100GridCoordMake(0, line);
-    [self removeSoftEOLBeforeCursor];
-    const VT100GridRun run = VT100GridRunFromCoords(VT100GridCoordMake(0, line),
-                                                    VT100GridCoordMake(self.width, self.height),
-                                                    self.width);
-    [self.currentGrid setCharsInRun:run toChar:0 externalAttributes:nil];
-    [self clearTriggerLine];
-    self.currentGrid.cursor = savedCursor;
+    if (line >= 0 && line < self.height) {
+        const VT100GridCoord savedCursor = self.currentGrid.cursor;
+        self.currentGrid.cursor = VT100GridCoordMake(0, line);
+        [self removeSoftEOLBeforeCursor];
+        const VT100GridRun run = VT100GridRunFromCoords(VT100GridCoordMake(0, line),
+                                                        VT100GridCoordMake(self.width, self.height),
+                                                        self.width);
+        [self.currentGrid setCharsInRun:run toChar:0 externalAttributes:nil];
+        [self clearTriggerLine];
+        self.currentGrid.cursor = savedCursor;
+    }
 }
 
 - (void)clearScrollbackBufferFromLine:(int)line {
