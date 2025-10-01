@@ -135,6 +135,9 @@ final class iTermMarginRenderer: NSObject, iTermMetalCellRendererProtocol {
 
     private func drawWithExtensions(with frameData: iTermMetalFrameData,
                                     transientState: iTermMarginRendererTransientState) {
+        guard let renderEncoder = frameData.renderEncoder else {
+            return
+        }
         drawNoExtensions(with: frameData, transientState: transientState, draw: .topAndBottom)
         if transientState.configuration.viewportSize.x > transientState.configuration.viewportSizeExcludingLegacyScrollbars.x {
             drawNoExtensions(with: frameData, transientState: transientState, draw: .underLegacyScrollbar)
@@ -162,7 +165,7 @@ final class iTermMarginRenderer: NSObject, iTermMetalCellRendererProtocol {
             transientState.pipelineState = cellRenderer.pipelineState()
             cellRenderer.draw(
                 with: transientState,
-                renderEncoder: frameData.renderEncoder!,
+                renderEncoder: renderEncoder,
                 numberOfVertices: 6,
                 numberOfPIUs: count,
                 vertexBuffers: [ NSNumber(value: iTermVertexInputIndexPerInstanceUniforms.rawValue): leftPIUs,
@@ -187,7 +190,7 @@ final class iTermMarginRenderer: NSObject, iTermMetalCellRendererProtocol {
             transientState.pipelineState = cellRenderer.pipelineState()
             cellRenderer.draw(
                 with: transientState,
-                renderEncoder: frameData.renderEncoder!,
+                renderEncoder: renderEncoder,
                 numberOfVertices: 6,
                 numberOfPIUs: count,
                 vertexBuffers: [ NSNumber(value: iTermVertexInputIndexPerInstanceUniforms.rawValue): rightPIUs,
@@ -229,6 +232,9 @@ final class iTermMarginRenderer: NSObject, iTermMetalCellRendererProtocol {
     private func drawNoExtensions(with frameData: iTermMetalFrameData,
                                   transientState: iTermMarginRendererTransientState,
                                   draw: Draw) {
+        guard let renderEncoder = frameData.renderEncoder else {
+            return
+        }
         initializeRegularVertexBuffer(tState: transientState, draw: draw)
         var color = transientState.regularHorizontalColor
         if iTermTextIsMonochrome() {
@@ -244,7 +250,7 @@ final class iTermMarginRenderer: NSObject, iTermMetalCellRendererProtocol {
         transientState.pipelineState = cellRenderer.pipelineState()
         cellRenderer.draw(
             with: transientState,
-            renderEncoder: frameData.renderEncoder!,
+            renderEncoder: renderEncoder,
             numberOfVertices: 6 * 4,
             numberOfPIUs: 0,
             vertexBuffers: [ NSNumber(value: iTermVertexInputIndexVertices.rawValue): transientState.vertexBuffer ],
