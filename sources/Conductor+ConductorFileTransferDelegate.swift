@@ -169,7 +169,9 @@ extension Conductor: ConductorFileTransferDelegate {
             return .directory
         }
 
-        it_assert(remoteFile.kind.isRegularFile, "Only files can be downloaded")
+        guard remoteFile.kind.isRegularFile else {
+            throw ConductorFileTransfer.ConductorFileTransferError("\(remoteFile.absolutePath) on \(sshIdentity.displayName) is not a regular file")
+        }
 
         let scpPath = SCPPath()
         scpPath.path = remoteFile.absolutePath
