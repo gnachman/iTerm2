@@ -4714,6 +4714,15 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (!updatedProfile) {
         return;
     }
+
+    [ProfileModel log:[NSString stringWithFormat:@"DIVORCE_SHARED_CHANGE: session=%p isDivorced=%d currentProfileGUID=%@ updatedProfileGUID=%@ originalProfileGUID=%@ overriddenFields=%@",
+                       self,
+                       self.isDivorced,
+                       self.profile[KEY_GUID],
+                       updatedProfile[KEY_GUID],
+                       _originalProfile[KEY_GUID],
+                       _overriddenFields]];
+
     if (!self.isDivorced) {
         [self setPreferencesFromAddressBookEntry:updatedProfile];
         [self setProfile:updatedProfile];
@@ -4725,6 +4734,12 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     NSMutableArray *noLongerOverriddenFields = [NSMutableArray array];
     NSMutableSet *keys = [NSMutableSet setWithArray:[updatedProfile allKeys]];
     [keys addObjectsFromArray:[_profile allKeys]];
+
+    [ProfileModel log:[NSString stringWithFormat:@"DIVORCE_MERGE_START: tempGUID=%@ updatedGUID=%@ KEY_GUID_is_overridden=%d",
+                       temp[KEY_GUID],
+                       updatedProfile[KEY_GUID],
+                       [_overriddenFields containsObject:KEY_GUID]]];
+
     for (NSString *key in keys) {
         NSObject *originalValue = updatedProfile[key];
         NSObject *currentValue = _profile[key];
@@ -4733,6 +4748,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                 [noLongerOverriddenFields addObject:key];
             }
         } else {
+            if ([key isEqualToString:KEY_GUID] || [key isEqualToString:KEY_ORIGINAL_GUID]) {
+                [ProfileModel log:[NSString stringWithFormat:@"DIVORCE_GUID_UPDATE: key=%@ from=%@ to=%@ (NOT OVERRIDDEN!)",
+                                   key, temp[key], originalValue]];
+            }
             if (!originalValue) {
                 DLog(@"Unset %@ in session because it was removed from shared profile", key);
                 [temp removeObjectForKey:key];
@@ -4748,11 +4767,16 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     // For fields that are no longer overridden because the shared profile took on the same value
     // as the sessions profile, remove those keys from overriddenFields.
     for (NSString *key in noLongerOverriddenFields) {
+        if ([key isEqualToString:KEY_GUID] || [key isEqualToString:KEY_ORIGINAL_GUID]) {
+            [ProfileModel log:[NSString stringWithFormat:@"DIVORCE_CRITICAL: Removing %@ from overriddenFields! Value=%@", key, temp[key]]];
+        }
         DLog(@"%p: %@ is no longer overridden because shared profile now matches session profile value of %@",
              self, key, temp[key]);
         [_overriddenFields removeObject:key];
     }
     DLog(@"After shared profile change overridden keys are: %@", _overriddenFields);
+
+    [ProfileModel log:[NSString stringWithFormat:@"DIVORCE_MERGE_END: finalTempGUID=%@ overriddenFields=%@", temp[KEY_GUID], _overriddenFields]];
 
     // Update saved state.
     [[ProfileModel sessionsInstance] setBookmark:temp withGuid:temp[KEY_GUID]];
@@ -4795,6 +4819,14 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
 - (BOOL)reloadProfile {
     DLog(@"Reload profile for %@", self);
+
+    [ProfileModel log:[NSString stringWithFormat:@"DIVORCE_RELOAD: session=%p isDivorced=%d currentGUID=%@ originalProfileGUID=%@ overriddenFields=%@",
+                       self,
+                       self.isDivorced,
+                       _profile[KEY_GUID],
+                       _originalProfile[KEY_GUID],
+                       _overriddenFields]];
+
     BOOL didChange = NO;
     NSDictionary *sharedProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:_originalProfile[KEY_GUID]];
     if (sharedProfile && ![sharedProfile isEqual:_originalProfile]) {
@@ -5947,6 +5979,27 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
 - (void)setProfile:(Profile *)newProfile {
     assert(newProfile);
+
+    NSString *oldGUID = _profile[KEY_GUID];
+    NSString *newGUID = newProfile[KEY_GUID];
+
+    [ProfileModel log:[NSString stringWithFormat:@"DIVORCE_SET_PROFILE: session=%p isDivorced=%d oldGUID=%@ newGUID=%@ originalProfileGUID=%@ overriddenFields=%@",
+                       self,
+                       _divorced,
+                       oldGUID,
+                       newGUID,
+                       _originalProfile[KEY_GUID],
+                       _overriddenFields]];
+
+    if (_divorced) {
+        BOOL newGUIDInShared = [[ProfileModel sharedInstance] bookmarkWithGuid:newGUID] != nil;
+        BOOL newGUIDInSessions = [[ProfileModel sessionsInstance] bookmarkWithGuid:newGUID] != nil;
+        if (newGUIDInShared && !newGUIDInSessions) {
+            [ProfileModel log:[NSString stringWithFormat:@"DIVORCE_BUG_DETECTED: Divorced session %p being set to shared-only GUID %@! Stack:\n%@",
+                               self, newGUID, [NSThread callStackSymbols]]];
+        }
+    }
+
     DLog(@"Set profile to one with guid %@\n%@", newProfile[KEY_GUID], [NSThread callStackSymbols]);
 
     NSMutableDictionary *mutableProfile = [[newProfile mutableCopy] autorelease];
@@ -6985,6 +7038,14 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
     [_overriddenFields removeAllObjects];
     [_overriddenFields addObjectsFromArray:parent->_overriddenFields.allObjects];
     DLog(@"%@: Set overridden fields from %@: %@", self, parent, _overriddenFields);
+
+    [ProfileModel log:[NSString stringWithFormat:@"DIVORCE_INHERIT: session=%p currentGUID=%@ parentGUID=%@ inheritedOverriddenFields=%@ KEY_GUID_in_overriddenFields=%d originalProfileGUID=%@",
+                       self,
+                       self.profile[KEY_GUID],
+                       parent.profile[KEY_GUID],
+                       _overriddenFields,
+                       [_overriddenFields containsObject:KEY_GUID],
+                       _originalProfile[KEY_GUID]]];
 }
 
 - (void)setIsDivorced:(BOOL)isDivorced withDecree:(NSString *)decree {
@@ -7011,6 +7072,11 @@ DLog(args); \
     Profile *bookmark = [self profile];
     NSString *guid = [bookmark objectForKey:KEY_GUID];
     if (self.isDivorced) {
+        BOOL guidInShared = [[ProfileModel sharedInstance] bookmarkWithGuid:guid] != nil;
+        BOOL guidInSessions = [[ProfileModel sessionsInstance] bookmarkWithGuid:guid] != nil;
+        [ProfileModel log:[NSString stringWithFormat:@"DIVORCE_ASSERTION_CHECK: guid=%@ inShared=%d inSessions=%d divorced=%d overriddenFields=%@",
+                           guid, guidInShared, guidInSessions, _divorced, _overriddenFields]];
+
         ITAssertWithMessage([[ProfileModel sessionsInstance] bookmarkWithGuid:guid] != nil,
                             @"I am divorced with guid %@ but the sessions instance has no such guid. Log:\n%@\n\nModel log:\n%@\nEnd.",
                             guid,
