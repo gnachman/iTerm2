@@ -340,23 +340,25 @@ class FontTable: NSObject, FontProviderProtocol {
         return font(for: UTF32Char(c.unicodeScalars.first!.value), remapped: remapped)
     }
 
-    private var cachedRangeMapEntry: RangeMap<FontBox>.Entry?
+    private var cachedRangeMapEntry = MutableAtomicObject<RangeMap<FontBox>.Entry?>(nil)
 
     @objc
     func font(for codePoint: UTF32Char,
               remapped: UnsafeMutablePointer<UTF32Char>) -> PTYFontInfo {
-        let fontBox: FontBox
-        if let cachedRangeMapEntry, cachedRangeMapEntry.range.contains(Int(codePoint)) {
-            fontBox = cachedRangeMapEntry.value
-        } else {
-            let entry = rangeMap[Int(codePoint)]!
-            cachedRangeMapEntry = entry
-            fontBox = entry.value
+        return cachedRangeMapEntry.mutableAccess { cachedRangeMapEntry in
+            let fontBox: FontBox
+            if let cachedRangeMapEntry, cachedRangeMapEntry.range.contains(Int(codePoint)) {
+                fontBox = cachedRangeMapEntry.value
+            } else {
+                let entry = rangeMap[Int(codePoint)]!
+                cachedRangeMapEntry = entry
+                fontBox = entry.value
+            }
+            if let delta = fontBox.delta {
+                remapped.pointee = UTF32Char(Int(codePoint) + delta)
+            }
+            return fontBox.font
         }
-        if let delta = fontBox.delta {
-            remapped.pointee = UTF32Char(Int(codePoint) + delta)
-        }
-        return fontBox.font
     }
 
     @objc
