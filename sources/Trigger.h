@@ -117,7 +117,7 @@ extern NSString * const kTriggerNameKey;
 @interface Trigger : NSObject<iTermObject>
 
 @property (nonatomic, readonly) iTermTriggerMatchType matchType;
-@property (nonatomic, copy, readonly) NSString *regex;
+@property (nonatomic, copy) NSString *regex;
 @property (nonatomic, copy, readonly) NSString *contentRegex;
 @property (nonatomic, copy, readonly) NSString *name;
 @property (nonatomic, copy) NSString *action;

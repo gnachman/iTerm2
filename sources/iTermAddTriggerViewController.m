@@ -1193,7 +1193,11 @@ static const CGFloat kLabelWidth = 124;
     _instantButton.state = [iTermUserDefaults addTriggerInstant] ? NSControlStateValueOn : NSControlStateValueOff;
     _updateProfileButton.state = [iTermUserDefaults addTriggerUpdateProfile] ? NSControlStateValueOn : NSControlStateValueOff;
     _prototypes = [[TriggerController triggerClassesForTerminal:!_browserMode] mapWithBlock:^id(Class triggerClass) {
-        return [[triggerClass alloc] init];
+        Trigger *trigger = [[triggerClass alloc] init];
+        if (_regex) {
+            trigger.regex = _regex;
+        }
+        return trigger;
     }];
     [_prototypes enumerateObjectsUsingBlock:^(Trigger *_Nonnull trigger, NSUInteger idx, BOOL * _Nonnull stop) {
         [trigger reloadData];
