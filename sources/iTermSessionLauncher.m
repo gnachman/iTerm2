@@ -335,11 +335,11 @@
     iTermSessionAttachOrLaunchRequest *launchRequest =
     [iTermSessionAttachOrLaunchRequest launchRequestWithSession:session
                                                       canPrompt:YES
-                                                     objectType:iTermPaneObject
+                                                     objectType:self.objectType
                                             hasServerConnection:NO
                                                serverConnection:(iTermGeneralServerConnection){}
-                                                      urlString:nil
-                                                   allowURLSubs:NO
+                                                      urlString:_url
+                                                   allowURLSubs:YES
                                                     environment:@{}
                                                     customShell:[ITAddressBookMgr customShellForProfile:profile]
                                                          oldCWD:nil
