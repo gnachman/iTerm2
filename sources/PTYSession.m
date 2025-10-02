@@ -9687,7 +9687,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 - (void)screenSync:(VT100ScreenMutableState *)mutableState {
     DLog(@"Will do screen-initiated sync");
     const VT100SyncResult result = [self syncCheckingTriggers:VT100ScreenTriggerCheckTypeNone
-                                                resetOverflow:NO
+                                                resetOverflow:YES
                                                  mutableState:mutableState];
     if (result.namedMarksChanged) {
         [[[[iTermNamedMarksDidChangeNotification alloc] initWithSessionGuid:self.guid] autorelease] post];
