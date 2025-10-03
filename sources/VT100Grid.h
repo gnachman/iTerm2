@@ -90,6 +90,7 @@
 
 // Returns a string for the character at |coord|.
 - (NSString *)stringForCharacterAt:(VT100GridCoord)coord;
+- (NSString *)stringOrKittyPlaceholderStringForCharacterAt:(VT100GridCoord)coord;
 - (VT100GridCoord)successorOf:(VT100GridCoord)coord;
 - (screen_char_t)characterAt:(VT100GridCoord)coord;
 
@@ -105,6 +106,7 @@
 - (NSString *)compactLineDump;
 - (NSString *)compactLineDumpWithTimestamps;
 - (NSString *)compactLineDumpWithContinuationMarks;
+- (NSString *)kittyPlaceholderDump;
 - (NSString *)compactDirtyDump;
 
 // Returns the coordinate of the cell before this one. It respects scroll regions and double-width

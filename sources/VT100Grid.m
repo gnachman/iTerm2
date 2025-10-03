@@ -2270,6 +2270,41 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     return dump;
 }
 
+- (NSString *)kittyPlaceholderDump {
+    NSMutableString *dump = [NSMutableString string];
+    for (int y = 0; y < size_.height; y++) {
+        const screen_char_t *line = [self immutableScreenCharsAtLineNumber:y];
+        VT100GridCoord prev = { -1, -1 };
+        for (int x = 0; x < size_.width; x++) {
+            if (line[x].virtualPlaceholder) {
+                // This is a kitty virtual placeholder. Extract x,y from combining marks.
+                NSString *str = ScreenCharToKittyPlaceholder(&line[x]);
+                VT100GridCoord coord;
+                int msb;
+                if ([str parseKittyUnicodePlaceholder:&coord imageMSB:&msb]) {
+                    [dump appendFormat:@"(%02d,%02d)", coord.x, coord.y];
+                    if (prev.x != -1) {
+                        if (coord.x != prev.x + 1 || coord.y != prev.y) {
+                            NSLog(@"BUG");
+                        }
+                    }
+                    prev = coord;
+                } else {
+                    // Debug: show what we got
+                    [dump appendFormat:@"[VP:%d/%@c=%x]", (int)(str ? str.length : -1),
+                     line[x].complexChar ? @"C" : @"S", (int)line[x].code];
+                }
+            } else {
+                [dump appendString:@"."];
+            }
+        }
+        if (y != size_.height - 1) {
+            [dump appendString:@"\n"];
+        }
+    }
+    return dump;
+}
+
 - (NSString *)compactDirtyDump {
     NSMutableString *dump = [NSMutableString string];
     for (int y = 0; y < size_.height; y++) {
@@ -2856,6 +2891,28 @@ static const screen_char_t *VT100GridDefaultLine(VT100Grid *self, int width) {
         return nil;
     }
     if (theChar.image) {
+        return nil;
+    }
+    if (theChar.complexChar) {
+        return ComplexCharToStr(theChar.code);
+    } else {
+        return [NSString stringWithFormat:@"%C", theChar.code];
+    }
+}
+
+- (NSString *)stringOrKittyPlaceholderStringForCharacterAt:(VT100GridCoord)coord {
+    const screen_char_t *theLine = [self immutableScreenCharsAtLineNumber:coord.y];
+    if (!theLine) {
+        return nil;
+    }
+    screen_char_t theChar = theLine[coord.x];
+    if (theChar.code == 0 && !theChar.complexChar) {
+        return nil;
+    }
+    if (theChar.image) {
+        if (theChar.virtualPlaceholder) {
+            return ScreenCharToKittyPlaceholder(&theChar);
+        }
         return nil;
     }
     if (theChar.complexChar) {

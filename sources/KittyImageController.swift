@@ -789,8 +789,8 @@ class KittyImageController: NSObject {
                                   origin: origin,
                                   pixelOffset: pixelOffset,
                                   sourceRect: sourceRect,
-                                  rows: command.c > 0 ? command.c : nil,
-                                  columns: command.r > 0 ? command.r : nil,
+                                  rows: command.r > 0 ? command.r : nil,
+                                  columns: command.c > 0 ? command.c : nil,
                                   zIndex: command.z,
                                   virtual: virtual)
         if addingFormsCycle(placement: placement) {
