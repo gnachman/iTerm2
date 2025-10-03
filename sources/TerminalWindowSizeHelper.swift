@@ -8,9 +8,8 @@
 @objc(iTermTerminalWindowSizeHelper)
 @MainActor
 class TerminalWindowSizeHelper: NSObject {
-    // For top/left/bottom of screen windows, this is the size it really wants to be.
-    // Initialized to -1 in -init and then set to the size of the first session
-    // forever.
+    // For top/left/bottom of screen windows, this is the desired size.
+    // nil means "no preference" (use profile defaults or fallback).
     private var desiredRows: Int32?
     private var desiredColumns: Int32?
 
@@ -33,8 +32,10 @@ extension TerminalWindowSizeHelper {
 
     @objc(willLoadArrangement:)
     func willLoad(arrangement: [AnyHashable: Any]) {
-        desiredRows = arrangement[TERMINAL_ARRANGEMENT_DESIRED_ROWS] as? Int32
-        desiredColumns = arrangement[TERMINAL_ARRANGEMENT_DESIRED_COLUMNS] as? Int32
+        let rows = arrangement[TERMINAL_ARRANGEMENT_DESIRED_ROWS] as? Int32
+        let columns = arrangement[TERMINAL_ARRANGEMENT_DESIRED_COLUMNS] as? Int32
+        desiredRows = (rows == nil || rows == -1) ? nil : rows
+        desiredColumns = (columns == nil || columns == -1) ? nil : columns
     }
 
     @objc(populateInArrangement:)

@@ -3055,8 +3055,14 @@ ITERM_WEAKLY_REFERENCEABLE
         rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
         rect.origin.y = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_Y_ORIGIN] doubleValue];
         // TODO: for window type top, set width to screen width.
+        const NSSize originalSize = term.window.frame.size;
         rect.size.width = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
         rect.size.height = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+        if (rect.size.width <= 0 || rect.size.height <= 0) {
+            // In version 3.6.0 some people started getting 0x0 windows in arrangements.
+            // I'm not sure why but at least we can repair them to be visible. Issue 12505.
+            rect.size = originalSize;
+        }
         DLog(@"Initialize nonfullscreen window to saved frame %@", NSStringFromRect(rect));
         rect = [self sanitizedWindowFrame:rect];
         [[term window] setFrame:rect display:NO];
@@ -3432,8 +3438,16 @@ ITERM_WEAKLY_REFERENCEABLE
     NSRect rect;
     rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
     rect.origin.y = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_Y_ORIGIN] doubleValue];
-    rect.size.width = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
-    rect.size.height = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+
+    NSSize proposedSize;
+    proposedSize.width = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
+    proposedSize.height = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+    if (proposedSize.width > 0 && proposedSize.height > 0) {
+        rect.size.width = proposedSize.width;
+        rect.size.height = proposedSize.height;
+    } else {
+        rect.size = self.window.frame.size;
+    }
 
     // TODO: The anchored screen isn't always respected, e.g., if the screen's origin/size changes
     // then rect might not lie inside it.
