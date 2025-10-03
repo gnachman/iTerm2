@@ -763,7 +763,7 @@ static _Atomic int gPerformingJoinedBlock;
     const VT100GridCoord pred = [self.currentGrid coordinateBefore:self.currentGrid.cursor
                                           movedBackOverDoubleWidth:&predecessorIsDoubleWidth];
     NSString *augmentedString = string;
-    NSString *predecessorString = pred.x >= 0 ? [self.currentGrid stringForCharacterAt:pred] : nil;
+    NSString *predecessorString = pred.x >= 0 ? [self.currentGrid stringOrKittyPlaceholderStringForCharacterAt:pred] : nil;
     const BOOL augmented = predecessorString != nil;
     if (augmented) {
         augmentedString = [predecessorString stringByAppendingString:string];
