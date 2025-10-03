@@ -13,9 +13,11 @@ class iTermSymbolicHotkeys: NSObject {
     @objc(haveBoundKeyForKeycode:modifiers:)
     static func haveBoundKey(keyCode: UInt16, modifiers: NSEvent.ModifierFlags) -> Bool {
         guard let userDefaults = UserDefaults(suiteName: "com.apple.symbolichotkeys") else {
+            DLog("No user default for com.apple.symbolichotkeys")
             return false
         }
         guard let dict = userDefaults.object(forKey: "AppleSymbolicHotKeys") as? [AnyHashable: Any] else {
+            DLog("AppleSymbolicHotKeys not in defaults")
             return false
         }
         for rawObj in dict.values {
@@ -32,10 +34,14 @@ class iTermSymbolicHotkeys: NSObject {
                   parameters.count >= 3 else {
                 continue
             }
-            if parameters[1] == keyCode && UInt(clamping: parameters[2]) & modifiers.rawValue == UInt(clamping: parameters[2]) {
-                return true
+            if parameters[1] == keyCode {
+                DLog("Found entry for keycode \(keyCode): \(parameters) and modifiers is \(modifiers.rawValue)")
+                if UInt(clamping: parameters[2]) & modifiers.rawValue == UInt(clamping: parameters[2]) {
+                    return true
+                }
             }
         }
+        DLog("Return false")
         return false
     }
 }

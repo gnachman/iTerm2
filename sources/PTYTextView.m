@@ -669,8 +669,10 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
         return YES;
     }
     if (@available(macOS 26, *)) {
+        DLog(@"kPreferenceKeyAllowSymbolicHotKeys=%@", @([iTermPreferences boolForKey:kPreferenceKeyAllowSymbolicHotKeys]));
         if ([iTermPreferences boolForKey:kPreferenceKeyAllowSymbolicHotKeys] &&
             [iTermSymbolicHotkeys haveBoundKeyForKeycode:theEvent.keyCode modifiers:theEvent.it_modifierFlags]) {
+            DLog(@"Return NO");
             return NO;
         }
     }
