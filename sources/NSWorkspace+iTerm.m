@@ -191,9 +191,11 @@
     [self openURL:url
     configuration:configuration
 completionHandler:^(NSRunningApplication *app, NSError *error) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            completion(app, error);
-        });
+        if (completion) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completion(app, error);
+            });
+        }
     }];
     return YES;
 }
