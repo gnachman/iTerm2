@@ -13381,6 +13381,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 }
 
+- (void)screenDidBecomeAutoComposerEligible {
+    _promptStateAllowsAutoComposer = YES;
+}
+
 - (void)screenRevealComposerWithPrompt:(NSArray<ScreenCharArray *> *)prompt {
     _promptStateAllowsAutoComposer = YES;
     if ([iTermPreferences boolForKey:kPreferenceAutoComposer]) {

@@ -107,6 +107,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
                                      atPrompt:(BOOL)atPrompt;
 
 - (void)screenRevealComposerWithPrompt:(NSArray<ScreenCharArray *> * _Nonnull)prompt;
+- (void)screenDidBecomeAutoComposerEligible;
 - (void)screenDismissComposer;
 - (void)screenAppendStringToComposer:(NSString * _Nonnull)string;
 

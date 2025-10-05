@@ -2377,6 +2377,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [_dataSource resetDirty];
 
     if (foundDirty) {
+        DLog(@"updateDirtyRects found dirty characters");
         [_dataSource saveToDvr:cleanLines];
         [_delegate textViewInvalidateRestorableState];
         [_delegate textViewDidFindDirtyRects];

@@ -6423,10 +6423,16 @@ launchCoprocessWithCommand:(NSString *)command
 }
 
 - (void)promptStateMachineRevealComposerWithPrompt:(NSArray<ScreenCharArray *> *)prompt {
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
-        [delegate screenRevealComposerWithPrompt:prompt];
-        [unpauser unpause];
-    }];
+    if (self.config.autoComposerEnabled) {
+        [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+            [delegate screenRevealComposerWithPrompt:prompt];
+            [unpauser unpause];
+        }];
+    } else {
+        [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+            [delegate screenDidBecomeAutoComposerEligible];
+        }];
+    }
 }
 
 - (void)promptStateMachineDismissComposer {
