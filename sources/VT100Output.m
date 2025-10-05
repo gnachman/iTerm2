@@ -404,8 +404,8 @@ typedef enum {
         36,  // yes   yes     no
         48,  // no    no      yes
         60,  // yes   no      yes
-        74,  // no    yes     yes
-        86,  // yes   yes     yes
+        72,  // no    yes     yes
+        84,  // yes   yes     yes
     };
     int i = 0;
     if (shift) {
@@ -562,74 +562,70 @@ typedef enum {
         case 65:
             return _optionIsMetaForSpecialKeys ? @"\e[15;10~" : @"\e[15;4~";
         case 66:
-            return _optionIsMetaForSpecialKeys ? @"\e[15;10~" : @"\e[15;4~";
-        case 67:
             return _optionIsMetaForSpecialKeys ? @"\e[17;10~" : @"\e[17;4~";
-        case 68:
+        case 67:
             return _optionIsMetaForSpecialKeys ? @"\e[18;10~" : @"\e[18;4~";
-        case 69:
+        case 68:
             return _optionIsMetaForSpecialKeys ? @"\e[19;10~" : @"\e[19;4~";
-        case 70:
+        case 69:
             return _optionIsMetaForSpecialKeys ? @"\e[20;10~" : @"\e[20;4~";
-        case 71:
+        case 70:
             return _optionIsMetaForSpecialKeys ? @"\e[21;10~" : @"\e[21;4~";
-        case 72:
-            return _optionIsMetaForSpecialKeys ? @"\e[22;10~" : @"\e[22;4~";
-        case 73:
+        case 71:
             return _optionIsMetaForSpecialKeys ? @"\e[23;10~" : @"\e[23;4~";
-        case 74:
+        case 72:
             return _optionIsMetaForSpecialKeys ? @"\e[24;10~" : @"\e[24;4~";
 
             // control-meta
-        case 75:
+        case 73:
             return _optionIsMetaForSpecialKeys ? @"\e[1;13P" : @"\e[1;7P";
-        case 76:
+        case 74:
             return _optionIsMetaForSpecialKeys ? @"\e[1;13Q" : @"\e[1;7Q";
-        case 77:
+        case 75:
             return _optionIsMetaForSpecialKeys ? @"\e[1;13R" : @"\e[1;7R";
-        case 78:
+        case 76:
             return _optionIsMetaForSpecialKeys ? @"\e[1;13S" : @"\e[1;7S";
-        case 79:
+        case 77:
             return _optionIsMetaForSpecialKeys ? @"\e[15;13~" : @"\e[15;7~";
-        case 80:
+        case 78:
             return _optionIsMetaForSpecialKeys ? @"\e[17;13~" : @"\e[17;7~";
-        case 81:
+        case 79:
             return _optionIsMetaForSpecialKeys ? @"\e[18;13~" : @"\e[18;7~";
-        case 82:
+        case 80:
             return _optionIsMetaForSpecialKeys ? @"\e[19;13~" : @"\e[19;7~";
-        case 83:
+        case 81:
             return _optionIsMetaForSpecialKeys ? @"\e[20;13~" : @"\e[20;7~";
-        case 84:
+        case 82:
             return _optionIsMetaForSpecialKeys ? @"\e[21;13~" : @"\e[21;7~";
-        case 85:
+        case 83:
             return _optionIsMetaForSpecialKeys ? @"\e[23;13~" : @"\e[23;7~";
-        case 86:
+        case 84:
             return _optionIsMetaForSpecialKeys ? @"\e[24;13~" : @"\e[24;7~";
 
             // shift-control-meta
-        case 87:
+        case 85:
             return _optionIsMetaForSpecialKeys ? @"\e[1;14P" : @"\e[1;8P";
-        case 88:
+        case 86:
             return _optionIsMetaForSpecialKeys ? @"\e[1;14Q" : @"\e[1;8Q";
-        case 89:
+        case 87:
             return _optionIsMetaForSpecialKeys ? @"\e[1;14R" : @"\e[1;8R";
-        case 90:
+        case 88:
             return _optionIsMetaForSpecialKeys ? @"\e[1;14S" : @"\e[1;8S";
-        case 91:
+        case 89:
             return _optionIsMetaForSpecialKeys ? @"\e[15;14~" : @"\e[15;8~";
-        case 92:
+        case 90:
             return _optionIsMetaForSpecialKeys ? @"\e[17;14~" : @"\e[17;8~";
-        case 93:
+        case 91:
             return _optionIsMetaForSpecialKeys ? @"\e[18;14~" : @"\e[18;8~";
-        case 94:
+        case 92:
             return _optionIsMetaForSpecialKeys ? @"\e[19;14~" : @"\e[19;8~";
-        case 95:
+        case 93:
             return _optionIsMetaForSpecialKeys ? @"\e[20;14~" : @"\e[20;8~";
-        case 96:
+        case 94:
             return _optionIsMetaForSpecialKeys ? @"\e[21;14~" : @"\e[21;8~";
-        case 97:
+        case 95:
             return _optionIsMetaForSpecialKeys ? @"\e[23;14~" : @"\e[23;8~";
-        case 98:
+        case 96:
             return _optionIsMetaForSpecialKeys ? @"\e[24;14~" : @"\e[24;8~";
     }
     return nil;
