@@ -242,8 +242,24 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
             os_log_with_type(OS_LOG_DEFAULT, OS_LOG_TYPE_DEBUG, "iTerm2DebugLog: %{public}s", message.UTF8String);
         }
 
-        [gDebugLogStr appendFormat:@"%lld.%06lld %s:%d (%s): ",
-            (long long)tv.tv_sec, (long long)tv.tv_usec, lastSlash, line, function];
+        const char *thread;
+        if ([iTermGCD onMainQueue]) {
+            if ([iTermGCD joined]) {
+                thread = "joined";
+            } else {
+                thread = "main";
+            }
+        } else if ([iTermGCD onMutationQueue]) {
+            if ([iTermGCD joined]) {
+                thread = "joined";
+            } else {
+                thread = "mut";
+            }
+        } else {
+            thread = "other";
+        }
+        [gDebugLogStr appendFormat:@"%lld.%06lld %s:%d (%s) %s: ",
+            (long long)tv.tv_sec, (long long)tv.tv_usec, lastSlash, line, function, thread];
         [gDebugLogStr appendString:value];
         [gDebugLogStr appendString:@"\n"];
         static const NSInteger kMaxLogSize = 1000000000;

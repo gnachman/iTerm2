@@ -11,6 +11,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermGCD : NSObject
 
+@property (atomic, class) BOOL joined;
+
 + (dispatch_queue_t)mutationQueue;
 + (void)assertMainQueueSafe;
 + (void)assertMainQueueSafe:(NSString *)message, ...;

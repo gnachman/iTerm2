@@ -105,4 +105,14 @@ static const char *iTermGCDMutationQueueLabel = "com.iterm2.mutation";
     return dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == dispatch_queue_get_label(dispatch_get_main_queue());
 }
 
+static _Atomic BOOL gJoined;
+
++ (BOOL)joined {
+    return gJoined;
+}
+
++ (void)setJoined:(BOOL)joined {
+    gJoined = joined;
+}
+
 @end

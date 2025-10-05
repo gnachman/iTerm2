@@ -224,8 +224,9 @@ class TokenExecutor: NSObject {
     // This can run on the main queue, or else on the mutation queue when joined.
     @objc(executeSideEffectsImmediatelySyncingFirst:)
     func executeSideEffectsImmediately(syncFirst: Bool) {
-        if gDebugLogging.boolValue { DLog("Execute side effects immediately syncFirst=\(syncFirst)") }
+        if gDebugLogging.boolValue { DLog("[side effects] Execute side effects immediately syncFirst=\(syncFirst)") }
         impl.executeSideEffects(syncFirst: syncFirst)
+        if gDebugLogging.boolValue { DLog("[side effects] Side effect execution complete") }
     }
 
     // This takes ownership of vector.
@@ -328,9 +329,9 @@ private class TokenExecutorImpl {
                 return
             }
             DispatchQueue.main.async { [weak self] in
-                DLog("Begin executing scheduled side effects")
+                DLog("[side effects] Begin executing scheduled side effects")
                 self?.executeSideEffects(syncFirst: true)
-                DLog("End executing scheduled side effects")
+                DLog("[side effects] End executing scheduled side effects")
             }
         })
         NotificationCenter.default.addObserver(forName: Self.didUnpauseGloballyNotification,
@@ -415,7 +416,10 @@ private class TokenExecutorImpl {
         let sema2 = DispatchSemaphore(value: 0)
         queue.async {
             sema2.signal()
+            iTermGCD.joined = true
             sema.wait()
+            iTermGCD.joined = false
+            DLog("Mutation queue unpaused")
         }
         if unpauser != nil {
             sema2.wait()
@@ -429,6 +433,7 @@ private class TokenExecutorImpl {
                 sema2.wait()
             }
         }
+        DLog("Mutation queue paused")
         block()
         if unpauser != nil {
             if gDebugLogging.boolValue { DLog("Decr pending pauses") }
@@ -462,34 +467,34 @@ private class TokenExecutorImpl {
 
     // This can run on the main queue, or else on the mutation queue when joined.
     func executeSideEffects(syncFirst: Bool) {
-        if gDebugLogging.boolValue { DLog("begin") }
+        if gDebugLogging.boolValue { DLog("[side effects] begin") }
         iTermGCD.assertMainQueueSafe()
 
         if executingSideEffects.getAndSet(true) {
             // Do not allow re-entrant side-effects.
-            if gDebugLogging.boolValue { DLog("reentrancy detected! aborting") }
+            if gDebugLogging.boolValue { DLog("[side effects] reentrancy detected! aborting") }
             return
         }
-        if gDebugLogging.boolValue { DLog("dequeuing side effects") }
+        if gDebugLogging.boolValue { DLog("[side effects] dequeuing side effects") }
         var shouldSync = syncFirst
         while let task = sideEffects.dequeue() {
             if shouldSync {
-                if gDebugLogging.boolValue { DLog("sync before first side effect") }
+                if gDebugLogging.boolValue { DLog("[side effects] sync before first side effect") }
                 delegate?.tokenExecutorSync()
                 shouldSync = false
             }
-            if gDebugLogging.boolValue { DLog("execute side effect") }
+            if gDebugLogging.boolValue { DLog("[side effects] execute side effect") }
             task()
         }
-        if gDebugLogging.boolValue { DLog("finished executing side effects") }
+        if gDebugLogging.boolValue { DLog("[side effects] finished executing side effects") }
         executingSideEffects.set(false)
 
         // Do this last because it might join.
         let flags = sideEffects.resetFlags()
         if flags != 0 {
-            if gDebugLogging.boolValue { DLog("flags=\(flags)") }
+            if gDebugLogging.boolValue { DLog("f[side effects] lags=\(flags)") }
             if shouldSync {
-                if gDebugLogging.boolValue { DLog("sync before handling flags") }
+                if gDebugLogging.boolValue { DLog("[side effects] sync before handling flags") }
                 delegate?.tokenExecutorSync()
             }
             delegate?.tokenExecutorHandleSideEffectFlags(flags)
@@ -553,7 +558,7 @@ private class TokenExecutorImpl {
                                               accumulatedLength: &accumulatedLength,
                                               delegate: delegate)
                 }
-                if gDebugLogging.boolValue { DLog("Finished enumerating token arrays") }
+                if gDebugLogging.boolValue { DLog("Finished enumerating token arrays. \(tokenQueue.isEmpty ? "There are no more tokens in the queue" : "The queue is not empty")") }
             }
         }
         if accumulatedLength.total > 0 || hadTokens {

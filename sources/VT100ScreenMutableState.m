@@ -238,7 +238,7 @@ static _Atomic int gPerformingJoinedBlock;
 // you're doing.
 - (void)addPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))sideEffect
                        name:(NSString *)name {
-    DLog(@"Add paused side effect %@", name);
+    DLog(@"[side effects] Add paused side effect %@", name);
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addSideEffect:^{
@@ -248,24 +248,26 @@ static _Atomic int gPerformingJoinedBlock;
 
 - (void)addDeferredSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect
                          name:(NSString *)name {
-    DLog(@"Add deferred side effect %@", name);
+    DLog(@"[side effects] Add deferred side effect %@", name);
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addDeferredSideEffect:^{
+        DLog(@"[side effects] Execute deferred side effect %@", name);
         [weakSelf performSideEffect:sideEffect name:name];
     }];
 }
 
 - (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect name:(NSString *)name {
-    DLog(@"Add side effect %@", name);
+    DLog(@"[side effects] Add side effect %@", name);
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addSideEffect:^{
+        DLog(@"[side effects] Execute side effect %@", name);
         [weakSelf performSideEffect:sideEffect name:name];
     }];
 }
 
 
 - (void)addNoDelegateSideEffect:(void (^)(void))sideEffect name:(NSString *)name {
-    DLog(@"Add side effect %@", name);
+    DLog(@"[side effects] Add side effect %@", name);
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addSideEffect:^{
         [weakSelf reallyPerformSideEffect:^(id<VT100ScreenDelegate> delegate) { sideEffect(); }
@@ -276,7 +278,7 @@ static _Atomic int gPerformingJoinedBlock;
 
 - (void)addPausedNoDelegateSideEffect:(void (^)(iTermTokenExecutorUnpauser *unpauser))sideEffect
                                  name:(NSString *)name {
-    DLog(@"Add side effect %@", name);
+    DLog(@"[side effects] Add side effect %@", name);
     __weak __typeof(self) weakSelf = self;
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     [_tokenExecutor addSideEffect:^{
@@ -286,7 +288,7 @@ static _Atomic int gPerformingJoinedBlock;
 
 - (void)addIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver> observer))sideEffect
                              name:(NSString *)name {
-    DLog(@"Add interval tree side effect %@", name);
+    DLog(@"[side effects] Add interval tree side effect %@", name);
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addSideEffect:^{
         [weakSelf performIntervalTreeSideEffect:sideEffect name:name];
@@ -299,26 +301,26 @@ static _Atomic int gPerformingJoinedBlock;
 // The main thread will be stopped while running your side effect and you can safely access both
 // mutation and main-thread data in it.
 - (void)addJoinedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect name:(NSString *)name {
-    DLog(@"Add joined side effect %@", name);
+    DLog(@"[side effects] Add joined side effect %@", name);
     __weak __typeof(self) weakSelf = self;
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         __strong __typeof(self) strongSelf = weakSelf;
-        DLog(@"Begin %@", name);
+        DLog(@"[side effects] Begin %@", name);
         if (!strongSelf) {
             [unpauser unpause];
-            DLog(@"dealloced %@", name);
+            DLog(@"[side effects] dealloced %@", name);
             return;
         }
         if (VT100ScreenMutableState.performingJoinedBlock) {
             sideEffect(delegate);
             [unpauser unpause];
-            DLog(@"Already performing %@", name);
+            DLog(@"[side effects] Already performing %@", name);
             return;
         }
         [strongSelf performBlockWithJoinedThreads:^(VT100Terminal * _Nonnull terminal,
                                                     VT100ScreenMutableState * _Nonnull mutableState,
                                                     id<VT100ScreenDelegate>  _Nonnull delegate) {
-            DLog(@"finished %@", name);
+            DLog(@"[side effects] finished %@", name);
             sideEffect(delegate);
             [unpauser unpause];
         }];
@@ -327,14 +329,14 @@ static _Atomic int gPerformingJoinedBlock;
 
 // This is run on the main queue.
 - (void)performSideEffect:(void (^)(id<VT100ScreenDelegate>))block name:(NSString *)name {
-    DLog(@"begin side-effect %@", name);
+    DLog(@"[side effects] begin side-effect %@", name);
     id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
     if (!delegate) {
-        DLog(@"no delegate for %@", name);
+        DLog(@"[side effects] no delegate for %@", name);
         return;
     }
     [self reallyPerformSideEffect:block delegate:delegate name:name];
-    DLog(@"end side-effect %@", name);
+    DLog(@"[side effects] end side-effect %@", name);
 }
 
 - (void)reallyPerformSideEffect:(void (^)(id<VT100ScreenDelegate>))block
@@ -342,19 +344,19 @@ static _Atomic int gPerformingJoinedBlock;
                            name:(NSString *)name {
     const BOOL saved = self.performingSideEffect;
     self.performingSideEffect = YES;
-    DLog(@"performing for delegate %@ name %@", delegate, name);
+    DLog(@"[side effects] performing for delegate %@ name %@", delegate, name);
     block(delegate);
-    DLog(@"done performing %@", name);
+    DLog(@"[side effects] done performing %@", name);
     self.performingSideEffect = saved;
 }
 
 - (void)performPausedSideEffect:(iTermTokenExecutorUnpauser *)unpauser
                           block:(void (^)(id<VT100ScreenDelegate>, iTermTokenExecutorUnpauser *))block
                            name:(NSString *)name {
-    DLog(@"begin %@", name);
+    DLog(@"[side effects] begin %@", name);
     id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
     if (!delegate) {
-        DLog(@"dealloced");
+        DLog(@"[side effects] dealloced");
         [unpauser unpause];
         return;
     }
@@ -362,9 +364,9 @@ static _Atomic int gPerformingJoinedBlock;
     const BOOL savedPausedSideEffect = self.performingPausedSideEffect;
     self.performingSideEffect = YES;
     self.performingPausedSideEffect = YES;
-    DLog(@"performing for delegate %@ name %@", delegate, name);
+    DLog(@"[side effects] performing for delegate %@ name %@", delegate, name);
     block(delegate, unpauser);
-    DLog(@"Done performing %@", name);
+    DLog(@"[side effects] Done performing %@", name);
     self.performingPausedSideEffect = savedPausedSideEffect;
     self.performingSideEffect = savedSideEffect;
 }
@@ -372,32 +374,32 @@ static _Atomic int gPerformingJoinedBlock;
 - (void)performPausedNoDelegateSideEffect:(iTermTokenExecutorUnpauser *)unpauser
                                     block:(void (^)(iTermTokenExecutorUnpauser *))block
                                      name:(NSString *)name {
-    DLog(@"begin %@", name);
+    DLog(@"[side effects] begin %@", name);
     const BOOL savedSideEffect = self.performingSideEffect;
     const BOOL savedPausedSideEffect = self.performingPausedSideEffect;
     self.performingSideEffect = YES;
     self.performingPausedSideEffect = YES;
-    DLog(@"performing for delegate %@ name %@", self.sideEffectPerformer.sideEffectPerformingScreenDelegate, name);
+    DLog(@"[side effects] performing for delegate %@ name %@", self.sideEffectPerformer.sideEffectPerformingScreenDelegate, name);
     block(unpauser);
     self.performingPausedSideEffect = savedPausedSideEffect;
     self.performingSideEffect = savedSideEffect;
-    DLog(@"done %@", name);
+    DLog(@"[side effects] done %@", name);
 }
 
 // See threading notes on performSideEffect:.
 - (void)performIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver>))block name:(NSString *)name {
-    DLog(@"begin %@", name);
+    DLog(@"[side effects] begin %@", name);
     id<iTermIntervalTreeObserver> observer = self.sideEffectPerformer.sideEffectPerformingIntervalTreeObserver;
     if (!observer) {
-        DLog(@"no observer for %@", name);
+        DLog(@"[side effects] no observer for %@", name);
         return;
     }
     const BOOL saved = self.performingSideEffect;
     self.performingSideEffect = YES;
-    DLog(@"perform for observer %@, name %@", observer, name);
+    DLog(@"[side effects] perform for observer %@, name %@", observer, name);
     block(observer);
     self.performingSideEffect = saved;
-    DLog(@"end %@", name);
+    DLog(@"[side effects] end %@", name);
 }
 
 - (void)setNeedsRedraw {
@@ -2716,6 +2718,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // Pause because delegate will change variables.
     __weak __typeof(self) weakSelf = self;
     DLog(@"commandDidEndWithRange: add paused side effect");
+    // TODO: Per issue 12581 I should consider finding a way to do this unpaused. Perhaps it could be
+    // unmanaged, or part of it could be unmanaged.
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf) {
@@ -3013,6 +3017,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [_commandRangeChangeJoiner setNeedsUpdateWithBlock:^{
             // This runs as a side-effect
             assert([NSThread isMainThread]);
+            DLog(@"[side effects] Command range change joiner will perform side effect]");
             [weakSelf performSideEffect:^(id<VT100ScreenDelegate> delegate) {
                 [weakSelf notifyDelegateOfCommandChange:command
                                                atPrompt:atPrompt
@@ -4788,6 +4793,7 @@ lengthExcludingInBandSignaling:data.length
 }
 
 - (void)performLightweightBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100ScreenMutableState *mutableState))block {
+    DLog(@"[side effects] begin performLightweightBlockWithJoinedThreads");
     DLog(@"%@", [NSThread callStackSymbols]);
     [iTermGCD assertMainQueueSafe];
 
@@ -4802,6 +4808,7 @@ lengthExcludingInBandSignaling:data.length
         [weakSelf reallyPerformLightweightBlockWithJoinedThreads:block];
     }];
     if (_runSideEffectAfterTopJoinFinishes) {
+        DLog(@"[side effects] Will execute side effects after performing lightweight block");
         [_tokenExecutor executeSideEffectsImmediatelySyncingFirst:NO];
         _runSideEffectAfterTopJoinFinishes = NO;
     }
@@ -4890,7 +4897,7 @@ lengthExcludingInBandSignaling:data.length
     //          encodeRestorableState
     //            performJoinedBlock
     //              executeSideEffectsImmediatelySyncingFirst (here)
-    DLog(@"Execute side effects without syncing first");
+    DLog(@"[side effects] Execute side effects without syncing first");
     [_tokenExecutor executeSideEffectsImmediatelySyncingFirst:NO];
 
     if (block) {
@@ -4899,7 +4906,7 @@ lengthExcludingInBandSignaling:data.length
         DLog(@"finish block");
     }
     // Run any side-effects enqueued by the block, taking advantage of the fact that state is in sync.
-    DLog(@"Execute side effects without syncing first (2)");
+    DLog(@"[side effects] Execute side effects without syncing first (2)");
     [_tokenExecutor executeSideEffectsImmediatelySyncingFirst:NO];
     if (!wasPerformingJoinedBlock) {
         DLog(@"restore state");
@@ -5643,8 +5650,10 @@ lengthExcludingInBandSignaling:data.length
 
 - (void)addUnmanagedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))block
                           name:(NSString *)name {
+    DLog(@"[side effects] Add unmanaged side effect %@", name);
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
+        DLog(@"[side effects] Execute unmanaged side effect %@", name);
         [weakSelf performSideEffect:^(id<VT100ScreenDelegate> delegate) {
             block(delegate);
         } name:name];
@@ -5653,7 +5662,8 @@ lengthExcludingInBandSignaling:data.length
 
 // Use this when the delegate can cause a sync. It completely prevents reentrant syncs, which are
 // very hard to reason about and are almost certainly incorrect.
-- (void)addUnmanagedPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))block  name:(NSString *)name {
+- (void)addUnmanagedPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))block name:(NSString *)name {
+    DLog(@"[side effects] add %@", name);
     __weak __typeof(self) weakSelf = self;
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -5662,7 +5672,9 @@ lengthExcludingInBandSignaling:data.length
             [unpauser unpause];
             return;
         }
+        DLog(@"[side effects] execute unmanaged paused side effect %@", name);
         [strongSelf.tokenExecutor executeSideEffectsImmediatelySyncingFirst:YES];
+        DLog(@"[side effects] will execute unmanaged paused side effect %@", name);
         [strongSelf performPausedSideEffect:unpauser
                                       block:^(id<VT100ScreenDelegate> delegate,
                                               iTermTokenExecutorUnpauser *unpauser) {
@@ -6364,12 +6376,13 @@ launchCoprocessWithCommand:(NSString *)command
 
 // Main queue or mutation queue while joined.
 - (void)tokenExecutorSync {
-    DLog(@"tokenExecutorSync");
+    DLog(@"[side effects] begin");
     [self performLightweightBlockWithJoinedThreads:^(VT100ScreenMutableState * _Nonnull mutableState) {
         [self performSideEffect:^(id<VT100ScreenDelegate> delegate) {
             [delegate screenSync:mutableState];
         } name:@"tokenExecutorSync calling screenSync"];
     }];
+    DLog(@"[side effects] end");
 }
 
 // Runs on mutation queue
@@ -6380,7 +6393,7 @@ launchCoprocessWithCommand:(NSString *)command
 
 // Runs on the main thread or while joined.
 - (void)tokenExecutorHandleSideEffectFlags:(int64_t)flags {
-    DLog(@"tokenExecutorHandleSideEffectFlags:%llx", (long long)flags);
+    DLog(@"[side effects] tokenExecutorHandleSideEffectFlags:%llx", (long long)flags);
     if (flags & VT100ScreenMutableStateSideEffectFlagNeedsRedraw) {
         [self performSideEffect:^(id<VT100ScreenDelegate> delegate) {
             [delegate screenNeedsRedraw];
