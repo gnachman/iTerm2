@@ -2702,7 +2702,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // Pause because delegate will change variables.
     __weak __typeof(self) weakSelf = self;
     DLog(@"commandDidEndWithRange: add paused side effect");
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf) {
             return;
@@ -2714,7 +2714,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                               inDirectory:workingDirectory
                                      mark:mark];
         DLog(@"commandDidEndWithRange: unpause");
-        [unpauser unpause];
     }];
 }
 
