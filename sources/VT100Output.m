@@ -574,7 +574,7 @@ typedef enum {
         case 71:
             return _optionIsMetaForSpecialKeys ? @"\e[23;10~" : @"\e[23;4~";
         case 72:
-            return _optionIsMetaForSpecialKeys ? @"\e[24;10~" : @"\e[22;4~";
+            return _optionIsMetaForSpecialKeys ? @"\e[24;10~" : @"\e[24;4~";
 
             // control-meta
         case 73:
