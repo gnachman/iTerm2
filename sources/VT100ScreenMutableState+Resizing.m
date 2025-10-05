@@ -77,7 +77,8 @@
     self.scrollbackOverflow = 0;
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenRemoveSelection];
-    }];
+    }
+                   name:@"destructively set screen width"];
 
     [self.primaryGrid markAllCharsDirty:YES updateTimestamps:NO];
     [self.altGrid markAllCharsDirty:YES updateTimestamps:NO];
@@ -1134,7 +1135,8 @@ static void SwapInt(int *a, int *b) {
         DLog(@"Running post-resize side effects");
         [delegate screenNeedsRedraw];
         [delegate screenSizeDidChangeWithNewTopLineAt:newTop];
-    }];
+    }
+                   name:@"did resize"];
 }
 
 - (void)reallySetSize:(VT100GridSize)newSize

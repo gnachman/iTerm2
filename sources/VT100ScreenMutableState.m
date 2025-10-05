@@ -173,7 +173,7 @@ static _Atomic int gPerformingJoinedBlock;
         mainThreadColorMap.delegate = strongSelf;
         block(mainThreadColorMap);
         [unpauser unpause];
-    }];
+    } name:@"mutateColorMap"];
 }
 
 - (void)updateExecutor {
@@ -236,55 +236,60 @@ static _Atomic int gPerformingJoinedBlock;
 // Don't create an unpauser yourself. If the delegate is nil, your block
 // doesn't get called to unpause. Use this instead unless you really know what
 // you're doing.
-- (void)addPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))sideEffect {
-    DLog(@"Add paused side effect");
+- (void)addPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))sideEffect
+                       name:(NSString *)name {
+    DLog(@"Add paused side effect %@", name);
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addSideEffect:^{
-        [weakSelf performPausedSideEffect:unpauser block:sideEffect];
+        [weakSelf performPausedSideEffect:unpauser block:sideEffect name:name];
     }];
 }
 
-- (void)addDeferredSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect {
-    DLog(@"Add deferred side effect");
+- (void)addDeferredSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect
+                         name:(NSString *)name {
+    DLog(@"Add deferred side effect %@", name);
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addDeferredSideEffect:^{
-        [weakSelf performSideEffect:sideEffect];
+        [weakSelf performSideEffect:sideEffect name:name];
     }];
 }
 
-- (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect {
-    DLog(@"Add side effect");
+- (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect name:(NSString *)name {
+    DLog(@"Add side effect %@", name);
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addSideEffect:^{
-        [weakSelf performSideEffect:sideEffect];
+        [weakSelf performSideEffect:sideEffect name:name];
     }];
 }
 
 
-- (void)addNoDelegateSideEffect:(void (^)(void))sideEffect {
-    DLog(@"Add side effect");
+- (void)addNoDelegateSideEffect:(void (^)(void))sideEffect name:(NSString *)name {
+    DLog(@"Add side effect %@", name);
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addSideEffect:^{
         [weakSelf reallyPerformSideEffect:^(id<VT100ScreenDelegate> delegate) { sideEffect(); }
-                                 delegate:nil];
+                                 delegate:nil
+                                     name:name];
     }];
 }
 
-- (void)addPausedNoDelegateSideEffect:(void (^)(iTermTokenExecutorUnpauser *unpauser))sideEffect {
-    DLog(@"Add side effect");
+- (void)addPausedNoDelegateSideEffect:(void (^)(iTermTokenExecutorUnpauser *unpauser))sideEffect
+                                 name:(NSString *)name {
+    DLog(@"Add side effect %@", name);
     __weak __typeof(self) weakSelf = self;
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     [_tokenExecutor addSideEffect:^{
-        [weakSelf performPausedNoDelegateSideEffect:unpauser block:sideEffect];
+        [weakSelf performPausedNoDelegateSideEffect:unpauser block:sideEffect name:name];
     }];
 }
 
-- (void)addIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver> observer))sideEffect {
-    DLog(@"Add interval tree side effect");
+- (void)addIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver> observer))sideEffect
+                             name:(NSString *)name {
+    DLog(@"Add interval tree side effect %@", name);
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addSideEffect:^{
-        [weakSelf performIntervalTreeSideEffect:sideEffect];
+        [weakSelf performIntervalTreeSideEffect:sideEffect name:name];
     }];
 }
 
@@ -293,55 +298,60 @@ static _Atomic int gPerformingJoinedBlock;
 // No more tokens will be executed until it completes.
 // The main thread will be stopped while running your side effect and you can safely access both
 // mutation and main-thread data in it.
-- (void)addJoinedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect {
-    DLog(@"Add joined side effect");
+- (void)addJoinedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect name:(NSString *)name {
+    DLog(@"Add joined side effect %@", name);
     __weak __typeof(self) weakSelf = self;
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         __strong __typeof(self) strongSelf = weakSelf;
+        DLog(@"Begin %@", name);
         if (!strongSelf) {
             [unpauser unpause];
-            DLog(@"dealloced");
+            DLog(@"dealloced %@", name);
             return;
         }
         if (VT100ScreenMutableState.performingJoinedBlock) {
             sideEffect(delegate);
             [unpauser unpause];
-            DLog(@"Already performing");
+            DLog(@"Already performing %@", name);
             return;
         }
         [strongSelf performBlockWithJoinedThreads:^(VT100Terminal * _Nonnull terminal,
                                                     VT100ScreenMutableState * _Nonnull mutableState,
                                                     id<VT100ScreenDelegate>  _Nonnull delegate) {
-            DLog(@"finished");
+            DLog(@"finished %@", name);
             sideEffect(delegate);
             [unpauser unpause];
         }];
-    }];
+    } name:name];
 }
 
 // This is run on the main queue.
-- (void)performSideEffect:(void (^)(id<VT100ScreenDelegate>))block {
-    DLog(@"begin");
+- (void)performSideEffect:(void (^)(id<VT100ScreenDelegate>))block name:(NSString *)name {
+    DLog(@"begin side-effect %@", name);
     id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
     if (!delegate) {
-        DLog(@"no delegate");
+        DLog(@"no delegate for %@", name);
         return;
     }
-    [self reallyPerformSideEffect:block delegate:delegate];
+    [self reallyPerformSideEffect:block delegate:delegate name:name];
+    DLog(@"end side-effect %@", name);
 }
 
 - (void)reallyPerformSideEffect:(void (^)(id<VT100ScreenDelegate>))block
-                       delegate:(id<VT100ScreenDelegate>)delegate {
+                       delegate:(id<VT100ScreenDelegate>)delegate
+                           name:(NSString *)name {
     const BOOL saved = self.performingSideEffect;
     self.performingSideEffect = YES;
-    DLog(@"performing for delegate %@", delegate);
+    DLog(@"performing for delegate %@ name %@", delegate, name);
     block(delegate);
+    DLog(@"done performing %@", name);
     self.performingSideEffect = saved;
 }
 
 - (void)performPausedSideEffect:(iTermTokenExecutorUnpauser *)unpauser
-                          block:(void (^)(id<VT100ScreenDelegate>, iTermTokenExecutorUnpauser *))block {
-    DLog(@"begin");
+                          block:(void (^)(id<VT100ScreenDelegate>, iTermTokenExecutorUnpauser *))block
+                           name:(NSString *)name {
+    DLog(@"begin %@", name);
     id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
     if (!delegate) {
         DLog(@"dealloced");
@@ -352,38 +362,42 @@ static _Atomic int gPerformingJoinedBlock;
     const BOOL savedPausedSideEffect = self.performingPausedSideEffect;
     self.performingSideEffect = YES;
     self.performingPausedSideEffect = YES;
-    DLog(@"performing for delegate %@", delegate);
+    DLog(@"performing for delegate %@ name %@", delegate, name);
     block(delegate, unpauser);
+    DLog(@"Done performing %@", name);
     self.performingPausedSideEffect = savedPausedSideEffect;
     self.performingSideEffect = savedSideEffect;
 }
 
 - (void)performPausedNoDelegateSideEffect:(iTermTokenExecutorUnpauser *)unpauser
-                                    block:(void (^)(iTermTokenExecutorUnpauser *))block {
-    DLog(@"begin");
+                                    block:(void (^)(iTermTokenExecutorUnpauser *))block
+                                     name:(NSString *)name {
+    DLog(@"begin %@", name);
     const BOOL savedSideEffect = self.performingSideEffect;
     const BOOL savedPausedSideEffect = self.performingPausedSideEffect;
     self.performingSideEffect = YES;
     self.performingPausedSideEffect = YES;
-    DLog(@"performing for delegate %@", self.sideEffectPerformer.sideEffectPerformingScreenDelegate);
+    DLog(@"performing for delegate %@ name %@", self.sideEffectPerformer.sideEffectPerformingScreenDelegate, name);
     block(unpauser);
     self.performingPausedSideEffect = savedPausedSideEffect;
     self.performingSideEffect = savedSideEffect;
+    DLog(@"done %@", name);
 }
 
 // See threading notes on performSideEffect:.
-- (void)performIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver>))block {
-    DLog(@"begin");
+- (void)performIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver>))block name:(NSString *)name {
+    DLog(@"begin %@", name);
     id<iTermIntervalTreeObserver> observer = self.sideEffectPerformer.sideEffectPerformingIntervalTreeObserver;
     if (!observer) {
-        DLog(@"no observer");
+        DLog(@"no observer for %@", name);
         return;
     }
     const BOOL saved = self.performingSideEffect;
     self.performingSideEffect = YES;
-    DLog(@"perform for observer %@", observer);
+    DLog(@"perform for observer %@, name %@", observer, name);
     block(observer);
     self.performingSideEffect = saved;
+    DLog(@"end %@", name);
 }
 
 - (void)setNeedsRedraw {
@@ -651,7 +665,7 @@ static _Atomic int gPerformingJoinedBlock;
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             DLog(@"begin side-effect");
             [delegate screenMoveSelectionUpBy:1 inRegion:rect];
-        }];
+        } name:@"appendLineFeed"];
     }
 
     // BE CAREFUL! This condition must match the implementation of -screenDidReceiveLineFeedAtLineBufferGeneration.
@@ -660,7 +674,7 @@ static _Atomic int gPerformingJoinedBlock;
         const long long lineBufferGeneration = self.linebuffer.generation;
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             [delegate screenDidReceiveLineFeedAtLineBufferGeneration:lineBufferGeneration];
-        }];
+        } name:@"append line feed"];
     } else {
         [self.tokenExecutor setSideEffectFlagWithValue:VT100ScreenMutableStateSideEffectFlagDidReceiveLineFeed];
     }
@@ -697,7 +711,7 @@ static _Atomic int gPerformingJoinedBlock;
     }
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSoftAlternateScreenModeDidChangeTo:enabled showingAltScreen:showing];
-    }];
+    }  name:@"soft alternate screen mode did change"];
 }
 
 - (void)performBlockWithoutTriggers:(void (^)(void))block {
@@ -896,7 +910,7 @@ static _Atomic int gPerformingJoinedBlock;
                                              metadata:temp
                                  lineBufferGeneration:lineBufferGeneration];
                 iTermImmutableMetadataRelease(temp);
-            }];
+            } name:@"append SCA"];
         }
     }
 
@@ -1214,7 +1228,7 @@ static _Atomic int gPerformingJoinedBlock;
     if (before && after) {
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             [delegate screenRemoveSelection];
-        }];
+        } name:@"erase in display"];
         if (!shouldHonorProtected) {
             [self scrollScreenIntoHistory];
         }
@@ -1239,7 +1253,7 @@ static _Atomic int gPerformingJoinedBlock;
             // And don't do it if in a protection mode since that would defeat the purpose.
             [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
                 [delegate screenRemoveSelection];
-            }];
+            } name:@"erase in display"];
             if (!shouldHonorProtected) {
                 [self scrollScreenIntoHistory];
             }
@@ -1419,7 +1433,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // would be desirable anyway. Like xterm (and unlike Terminal) we leave the cursor put.
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenRemoveSelection];
-    }];
+    } name:@"erase screen and remove selection"];
     [self.currentGrid setCharsFrom:VT100GridCoordMake(0, 0)
                                 to:VT100GridCoordMake(self.currentGrid.size.width - 1,
                                                       self.currentGrid.size.height - 1)
@@ -1467,7 +1481,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     __weak __typeof(self) weakSelf = self;
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [weakSelf continueResettingWithModifyContent:modifyContent];
-    }];
+    } name:@"reset preserving prompt"];
 }
 
 - (void)continueResettingWithModifyContent:(BOOL)modifyContent {
@@ -1490,7 +1504,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                 [weakSelf finishResetting];
                 [unpauser unpause];
             });
-        }];
+        } name:@"continue resetting"];
     } else {
         [self finishResetting];
     }
@@ -1500,7 +1514,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self invalidateCommandStartCoordWithoutSideEffects];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSetCursorVisible:YES];
-    }];
+    } name:@"finish resetting"];
     [self.currentGrid markCharDirty:YES at:self.currentGrid.cursor updateTimestamp:NO];
 }
 
@@ -1538,7 +1552,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [delegate screenDidClearScrollbackBuffer];
         [delegate screenRefreshFindOnPageView];
         [unpauser unpause];
-    }];
+    } name:@"clear scrollback buffer"];
 }
 
 - (void)clearBufferWithoutTriggersSavingPrompt:(BOOL)savePrompt {
@@ -1705,12 +1719,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                 if (annotation) {
                     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
                         [delegate screenDidAddNote:annotation focus:NO visible:YES];
-                    }];
+                    } name:@"really clear from absline to end 1"];
                 }
                 [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
                     [observer intervalTreeDidAddObjectOfType:iTermIntervalTreeObjectTypeForObject(obj)
                                                       onLine:range.start.y + totalScrollbackOverflow];
-                }];
+                } name:@"really clear from absline to end"];
             }];
         }
     } else {
@@ -1721,7 +1735,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self reloadMarkCache];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenRemoveSelection];
-    }];
+    } name:@"really clear from absline to end 2"];
     [self setNeedsRedraw];
 }
 
@@ -1861,13 +1875,13 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (visible) {
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             [delegate screenSetCursorVisible:YES];
-        }];
+        } name:@"set cursor visible 1"];
     } else {
         // Wait to hide the cursor because it's pretty likely it'll be shown right away, such as
         // when editing in emacs. Doing this prevents flicker. See issue 10206.
         [self addDeferredSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             [delegate screenSetCursorVisible:NO];
-        }];
+        } name:@"set cursor visible 2"];
     }
 }
 
@@ -1881,7 +1895,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                     visibly:flashBell
                               showIndicator:showBellIndicator
                                       quell:shouldQuellBell];
-    }];
+    } name:@"activate bell"];
 }
 
 - (BOOL)shouldQuellBell {
@@ -1920,7 +1934,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [delegate screenRemoveSelection];
         [delegate screenScheduleRedrawSoon];
         [unpauser unpause];
-    }];
+    } name:@"show alt buffer"];
 }
 
 - (void)showPrimaryBuffer {
@@ -1939,7 +1953,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [delegate screenRemoveSelection];
         [delegate screenScheduleRedrawSoon];
         [unpauser unpause];
-    }];
+    } name:@"show primary buffer"];
 }
 
 - (void)hideOnScreenNotesAndTruncateSpanners {
@@ -1979,7 +1993,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // Force annotations frames to be updated.
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [unpauser unpause];
-    }];
+    } name:@"hide on-screen notes and truncate spanners"];
     [self setNeedsRedraw];
 }
 
@@ -2273,7 +2287,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             [delegate screenAppendScreenCharArray:sca
                                          metadata:iTermImmutableMetadataDefault()
                              lineBufferGeneration:lineBufferGeneration];
-        }];
+        } name:@"append tab"];
     }
     self.currentGrid.cursorX = nextTabStop;
 }
@@ -2508,7 +2522,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
         [observer intervalTreeDidAddObjectOfType:objectType
                                           onLine:absLine];
-    }];
+    } name:@"add mark on line"];
     [self setNeedsRedraw];
     VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:mark];
     if (screenMark.name) {
@@ -2554,7 +2568,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
             [observer intervalTreeDidRemoveObjectOfType:type
                                                  onLine:line];
-        }];
+        } name:@"did remove object from interval tree"];
     }
 }
 
@@ -2715,7 +2729,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                      mark:mark];
         DLog(@"commandDidEndWithRange: unpause");
         [unpauser unpause];
-    }];
+    } name:@"command did end with range"];
 }
 
 - (void)removeInaccessibleIntervalTreeObjects {
@@ -2774,11 +2788,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             [delegate screenDidAddMark:newMark
                                  alert:YES
                             completion:^{ [unpauser unpause]; }];
-        }];
+        } name:@"add mark on line/column of class 1"];
     } else {
         [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
             [delegate screenDidAddMark:newMark alert:NO completion:^{}];
-        }];
+        } name:@"add mark on line/column of class 2"];
     }
     return newMark;
 }
@@ -2871,7 +2885,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self didUpdatePromptLocation];
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenPromptDidStartAtLine:line];
-    }];
+    } name:@"set prompt start line detected by trigger"];
     DLog(@"After setPromptStartLine:\n%@", [self intervalTreeDump]);
     return mark;
 }
@@ -2955,7 +2969,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                 block();
             }
             [unpauser unpause];
-        }];
+        } name:@"prompt did start"];
     }
     return mark;
 }
@@ -3005,7 +3019,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                             haveCommand:haveCommand
                                     sideEffectPerformer:weakSelf.sideEffectPerformer
                                                delegate:delegate];
-            }];
+            } name:@"command range did change"];
         }];
     }
 }
@@ -3058,7 +3072,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                     });
                 }
             }];
-        }];
+        } name:@"set pwd 1"];
         return;
     }
 
@@ -3118,7 +3132,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                             withDirectory:workingDirectory
                                                  pushType:pushType
                                                  accepted:accepted];
-    }];
+    } name:@"set pwd 2"];
 }
 
 - (void)currentDirectoryReallyDidChangeTo:(NSString *)dir
@@ -3147,7 +3161,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                 completion();
                 [unpauser unpause];
             });
-        }];
+        } name:@"pwd really did change"];
     } else {
         completion();
     }
@@ -3158,7 +3172,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     DLog(@"%p: currentDirectoryDidChangeTo:%@", self, dir);
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSetPreferredProxyIcon:nil]; // Clear current proxy icon if exists.
-    }];
+    } name:@"pwd did change 1"];
 
     const int cursorLine = self.numberOfLines - self.height + self.currentGrid.cursorY;
     const long long cursorAbsLine = self.cumulativeScrollbackOverflow + cursorLine;
@@ -3185,7 +3199,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                      completion:completion];
             }];
         }];
-    }];
+    } name:@"pwd did change 2"];
 }
 
 - (void)setRemoteHostFromString:(NSString *)unsafeRemoteHost {
@@ -3242,7 +3256,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                 completion();
                 [unpauser unpause];
             });
-        }];
+        } name:@"set host/user/ssh"];
     } else {
         completion();
     }
@@ -3287,18 +3301,18 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                  onLine:line];
             [observer intervalTreeDidAddObjectOfType:type
                                               onLine:line];
-        }];
+        } name:@"set rc 0"];
         id<VT100RemoteHostReading> remoteHost = [[self remoteHostOnLine:self.numberOfLines] doppelganger];
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             [delegate screenDidUpdateReturnCodeForMark:doppelganger
                                             remoteHost:remoteHost];
-        }];
+        } name:@"set rc 1"];
     } else {
         DLog(@"No last command mark found.");
     }
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenCommandDidExitWithCode:returnCode mark:doppelganger];
-    }];
+    } name:@"set rc 2"];
 }
 
 - (VT100ScreenMark *)promptMarkOnLine:(int)line {
@@ -3458,7 +3472,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             [observer intervalTreeDidUnhideObject:ito.doppelganger
                                            ofType:type
                                            onLine:line];
-        }];
+        } name:@"swap onscreen interval tree objects 1"];
     }
     for (iTermTuple<id<IntervalTreeObject>, Interval *> *tuple in formerlyInPrimary) {
         id<IntervalTreeObject> ito = tuple.firstObject;
@@ -3469,7 +3483,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             [observer intervalTreeDidHideObject:doppelganger
                                          ofType:type
                                          onLine:line];
-        }];
+        } name:@"swap onscreen interval tree objects 2"];
     }
     DLog(@"- done -");
 }
@@ -3497,7 +3511,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
     [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
         [observer intervalTreeDidReset];
-    }];
+    } name:@"reload mark cache"];
 }
 
 - (void)setWorkingDirectoryFromURLString:(NSString *)URLString {
@@ -3559,7 +3573,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
             [observer intervalTreeDidRemoveObjectOfType:iTermIntervalTreeObjectTypeForObject(screenMark)
                                                  onLine:line];
-        }];
+        } name:@"command was aborted 1"];
         DLog(@"Command was aborted. Remove %@", screenMark);
         [self.mutableIntervalTree removeObject:(VT100ScreenMark *)screenMark];
         [self.mutableSavedIntervalTree removeObject:(VT100ScreenMark *)screenMark];
@@ -3574,7 +3588,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                       outputRange:outputRange
                                           command:command
                                              mark:screenMark];
-        }];
+        } name:@"command was aborted 2"];
     }
 }
 
@@ -3631,7 +3645,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self addMarksForPathsInRange:promptRange];
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenPromptDidEndWithMark:mark];
-    }];
+    } name:@"prompt ended and command started"];
 }
 
 - (void)addMarksForPathsInRange:(VT100GridAbsCoordRange)absRange {
@@ -3851,13 +3865,13 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
         [observer intervalTreeDidAddObjectOfType:iTermIntervalTreeObjectTypeAnnotation
                                           onLine:line];
-    }];
+    } name:@"add annotation 1"];
     // Because -refresh gets called.
     [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
                                          iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         [delegate screenDidAddNote:doppelganger focus:focus visible:visible];
         [unpauser unpause];
-    }];
+    } name:@"add annotation 2"];
 }
 
 - (void)setStringValueOfAnnotation:(id<PTYAnnotationReading>)annotation to:(NSString *)stringValue {
@@ -4041,7 +4055,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
     [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
         [delegate screenDidAddPorthole:porthole];
-    }];
+    } name:@"replace range with porthole"];
 }
 
 - (void)changeHeightOfMark:(iTermMark *)mark to:(int)newHeight {
@@ -4346,7 +4360,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
     [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
         [observer intervalTreeDidMoveObjects:doppelgangers];
-    }];
+    } name:@"shift itos down"];
     [self reloadMarkCache];
 }
 
@@ -4592,7 +4606,7 @@ lengthExcludingInBandSignaling:data.length
                                               foreground:foregroundColorCode
                                               background:backgroundColorCode
                                                 atPrompt:atPrompt];
-        }];
+        } name:@"really append ascii data to trigger line"];
     }
     return YES;
 }
@@ -4646,7 +4660,7 @@ lengthExcludingInBandSignaling:data.length
                                          iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         [delegate screenRestoreColorsFromSlot:slot];
         [unpauser unpause];
-    }];
+    } name:@"restore colors from slot"];
 }
 
 #pragma mark - Cross-Thread Sync
@@ -5029,7 +5043,7 @@ lengthExcludingInBandSignaling:data.length
         [self reloadMarkCache];
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             [delegate screenSendModifiersDidChange];
-        }];
+        } name:@"restore from dictionary"];
 
         if (gDebugLogging) {
             DLog(@"Notes after restoring with width=%@", @(self.width));
@@ -5137,7 +5151,7 @@ lengthExcludingInBandSignaling:data.length
                         [delegate screenUpdateCommandUseWithGuid:screenMark.guid
                                                           onHost:lastRemoteHostDoppelganger
                                                    toReferToMark:screenMarkDoppelganger];
-                    }];
+                    } name:@"fix up deserialized interval tree 1"];
                 }
                 if ([screenMark.guid isEqualToString:guidOfLastCommandMark]) {
                     self.lastCommandMark = screenMark;
@@ -5168,7 +5182,7 @@ lengthExcludingInBandSignaling:data.length
                 if (visible) {
                     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
                         [delegate screenDidAddNote:note focus:NO visible:YES];
-                    }];
+                    } name:@"fix up deserialized interval tree 2"];
                 }
             } else if ([object isKindOfClass:[iTermImageMark class]]) {
                 id<iTermImageMarkReading> imageMark = (id<iTermImageMarkReading>)object;
@@ -5284,7 +5298,7 @@ lengthExcludingInBandSignaling:data.length
                                          iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         [delegate screenFileReceiptEndedUnexpectedly];
         [unpauser unpause];
-    }];
+    } name:@"file receipt ended unexpectedly"];
 }
 
 - (void)appendNativeImageAtCursorWithName:(NSString *)name width:(int)width {
@@ -5460,7 +5474,7 @@ lengthExcludingInBandSignaling:data.length
     self.currentGrid.scrollRegionRows = VT100GridRangeMake(top, bottom - top + 1);
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSetCursorVisible:[state[kStateDictCursorMode] boolValue]];
-    }];
+    } name:@"set tmux state"];
 
     [self.tabStops removeAllObjects];
     int maxTab = 0;
@@ -5596,7 +5610,7 @@ lengthExcludingInBandSignaling:data.length
         [delegate screenResetTailFind];
         [delegate screenRemoveSelection];
         [unpauser unpause];
-    }];
+    } name:@"set from frame"];
     [self.currentGrid markAllCharsDirty:YES updateTimestamps:NO];
 }
 
@@ -5614,7 +5628,7 @@ lengthExcludingInBandSignaling:data.length
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         block();
         [unpauser unpause];
-    }];
+    } name:@"trigger side effect"];
 }
 
 - (void)triggerEvaluatorOfferToDisableTriggersInInteractiveApps:(PTYTriggerEvaluator *)evaluator {
@@ -5623,21 +5637,23 @@ lengthExcludingInBandSignaling:data.length
     NSString *stats = [evaluator stats];
     [self addUnmanagedSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenOfferToDisableTriggersInInteractiveApps:stats];
-    }];
+    }
+                            name:@"offer to disable triggers"];
 }
 
-- (void)addUnmanagedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))block {
+- (void)addUnmanagedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))block
+                          name:(NSString *)name {
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         [weakSelf performSideEffect:^(id<VT100ScreenDelegate> delegate) {
             block(delegate);
-        }];
+        } name:name];
     });
 }
 
 // Use this when the delegate can cause a sync. It completely prevents reentrant syncs, which are
 // very hard to reason about and are almost certainly incorrect.
-- (void)addUnmanagedPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))block {
+- (void)addUnmanagedPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))block  name:(NSString *)name {
     __weak __typeof(self) weakSelf = self;
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -5651,7 +5667,8 @@ lengthExcludingInBandSignaling:data.length
                                       block:^(id<VT100ScreenDelegate> delegate,
                                               iTermTokenExecutorUnpauser *unpauser) {
             block(delegate, unpauser);
-        }];
+        }
+                                       name:name];
     });
 }
 
@@ -5662,7 +5679,7 @@ lengthExcludingInBandSignaling:data.length
         [iTermGCD assertMainQueueSafe];
         block([delegate triggerSideEffectVariableScope], delegate);
         [unpauser unpause];
-    }];
+    } name:@"trigger requested scope"];
 }
 
 // Main queue or mutation queue.
@@ -5691,7 +5708,7 @@ lengthExcludingInBandSignaling:data.length
         [delegate triggerSideEffectShowAlertWithMessage:message
                                               rateLimit:rateLimit
                                                 disable:disable];
-    }];
+    } name:@"trigger alert"];
 }
 
 - (void)triggerSessionRingBell:(Trigger *)trigger {
@@ -5701,7 +5718,7 @@ lengthExcludingInBandSignaling:data.length
 - (void)triggerSessionShowCapturedOutputTool:(Trigger *)trigger {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate triggerSideEffectShowCapturedOutputTool];
-    }];
+    } name:@"show captured output"];
 }
 
 - (BOOL)triggerSessionIsShellIntegrationInstalled:(Trigger *)trigger {
@@ -5711,13 +5728,13 @@ lengthExcludingInBandSignaling:data.length
 - (void)triggerSessionShowShellIntegrationRequiredAnnouncement:(Trigger *)trigger {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate triggerSideEffectShowShellIntegrationRequiredAnnouncement];
-    }];
+    } name:@"show shell integration required announcement"];
 }
 
 - (void)triggerSessionShowCapturedOutputToolNotVisibleAnnouncementIfNeeded:(Trigger *)trigger {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate triggerSideEffectShowCapturedOutputToolNotVisibleAnnouncementIfNeeded];
-    }];
+    } name:@"show captured output tool not visible announcement"];
 }
 
 - (void)triggerSession:(Trigger *)trigger didCaptureOutput:(CapturedOutput *)capturedOutput {
@@ -5741,7 +5758,7 @@ lengthExcludingInBandSignaling:data.length
     }];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate triggerSideEffectDidCaptureOutput];
-    }];
+    } name:@"trigger did capture output"];
 }
 
 - (void)triggerSession:(Trigger *)trigger
@@ -5754,7 +5771,7 @@ launchCoprocessWithCommand:(NSString *)command
                                                    identifier:identifier
                                                        silent:silent
                                                  triggerTitle:triggerName];
-    }];
+    } name:@"trigger launch coprocess"];
 }
 
 - (id<iTermTriggerScopeProvider>)triggerSessionVariableScopeProvider:(Trigger *)trigger {
@@ -5770,7 +5787,7 @@ launchCoprocessWithCommand:(NSString *)command
         [rateLimit performRateLimitedBlock:^{
             [delegate triggerSideEffectPostUserNotificationWithMessage:message];
         }];
-    }];
+    } name:@"trigger post notification"];
 }
 
 - (void)triggerSession:(Trigger *)trigger
@@ -5810,13 +5827,13 @@ launchCoprocessWithCommand:(NSString *)command
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate triggerSideEffectStopScrollingAtLine:line];
         [unpauser unpause];
-    }];
+    } name:@"trigger save cursor line and stop scrolling"];
 }
 
 - (void)triggerSession:(Trigger *)trigger openPasswordManagerToAccountName:(NSString *)accountName {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate triggerSideEffectOpenPasswordManagerToAccountName:accountName];
-    }];
+    } name:@"trigger open pw mgr"];
 }
 
 - (void)triggerSession:(Trigger *)trigger
@@ -5824,13 +5841,13 @@ launchCoprocessWithCommand:(NSString *)command
         withRunnerPool:(nonnull iTermBackgroundCommandRunnerPool *)pool {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate triggerSideEffectRunBackgroundCommand:command pool:pool];
-    }];
+    } name:@"trigger run command"];
 }
 
 - (void)triggerSession:(Trigger *)trigger writeText:(NSString *)text {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate triggerWriteTextWithoutBroadcasting:text];
-    }];
+    } name:@"trigger write text"];
 }
 
 - (void)triggerSession:(Trigger *)trigger setRemoteHostName:(NSString *)remoteHost {
@@ -5841,7 +5858,7 @@ launchCoprocessWithCommand:(NSString *)command
     // Stop the world (this affects a variable)
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate triggerSideEffectCurrentDirectoryDidChange:currentDirectory];
-    }];
+    } name:@"trigger set pwd"];
     // This can be sync
     [self currentDirectoryDidChangeTo:currentDirectory completion:^{}];
 }
@@ -5851,7 +5868,7 @@ launchCoprocessWithCommand:(NSString *)command
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate triggerSideEffectSetTitle:newName];
         [unpauser unpause];
-    }];
+    } name:@"trigger name change"];
 }
 
 - (void)handleTriggerDetectedPromptAt:(VT100GridAbsCoordRange)range {
@@ -5951,7 +5968,7 @@ launchCoprocessWithCommand:(NSString *)command
                                              captures:captureStringArray
                                               trigger:trigger];
         [unpauser unpause];
-    }];
+    } name:@"trigger invoke"];
 }
 
 - (id<PTYAnnotationReading>)triggerSession:(Trigger *)trigger
@@ -6010,7 +6027,7 @@ launchCoprocessWithCommand:(NSString *)command
 - (void)triggerSession:(Trigger *)trigger setVariableNamed:(NSString *)name toValue:(id)value {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate triggerSideEffectSetValue:value forVariableNamed:name];
-    }];
+    } name:@"trigger set variable"];
 }
 
 - (BOOL)triggerSessionIsInAlternateScreen {
@@ -6048,7 +6065,7 @@ launchCoprocessWithCommand:(NSString *)command
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenFoldRange:NSMakeRange(startAbsLine, MAX(1, absLine - startAbsLine))];
         [unpauser unpause];
-    }];
+    } name:@"trigger fold"];
 }
 
 #pragma mark - VT100GridDelegate
@@ -6061,7 +6078,7 @@ launchCoprocessWithCommand:(NSString *)command
     // This can happen pretty frequently so I think it's worth deferring.
     [self addDeferredSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenCursorDidMoveToLine:line];
-    }];
+    } name:@"grid line change"];
 }
 
 - (iTermUnicodeNormalization)gridUnicodeNormalizationForm {
@@ -6074,7 +6091,7 @@ launchCoprocessWithCommand:(NSString *)command
 - (void)gridDidResize {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenDidResize];
-    }];
+    } name:@"grid did resize"];
 }
 
 #pragma mark - VT100InlineImageHelperDelegate
@@ -6099,7 +6116,7 @@ launchCoprocessWithCommand:(NSString *)command
                                                queue:queue
                                             unpauser:unpauser];
         [unpauser unpause];
-    }];
+    } name:@"inline image confirm"];
 }
 
 - (NSSize)inlineImageCellSize {
@@ -6131,7 +6148,7 @@ launchCoprocessWithCommand:(NSString *)command
 - (void)inlineImageDidFinishWithImageData:(NSData *)imageData {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenDidAppendImageData:imageData];
-    }];
+    } name:@"inline image did finish"];
 }
 
 - (void)inlineImageDidCreateTextDocumentInRange:(VT100GridAbsCoordRange)range
@@ -6144,7 +6161,7 @@ launchCoprocessWithCommand:(NSString *)command
                                     filename:filename
                                    forceWide:forceWide];
         [unpauser unpause];
-    }];
+    } name:@"inline image did create text document"];
 }
 
 - (void)inlineImageAppendStringAtCursor:(nonnull NSString *)string {
@@ -6162,14 +6179,14 @@ launchCoprocessWithCommand:(NSString *)command
     __weak __typeof(self) weakSelf = self;
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [weakSelf.echoProbeDelegate echoProbe:echoProbe writeData:data];
-    }];
+    } name:@"echo probe write data"];
 }
 
 - (void)echoProbe:(iTermEchoProbe *)echoProbe writeString:(NSString *)string {
     __weak __typeof(self) weakSelf = self;
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [weakSelf.echoProbeDelegate echoProbe:echoProbe writeString:string];
-    }];
+    } name:@"echo probe write string"];
 }
 
 - (void)echoProbeDidFail:(iTermEchoProbe *)echoProbe {
@@ -6180,7 +6197,7 @@ launchCoprocessWithCommand:(NSString *)command
             [echoProbe reset];
         }
         [echoProbeDelegate echoProbeDidFail:echoProbe];
-    }];
+    } name:@"echo probe failed"];
 }
 
 - (void)echoProbeDidSucceed:(iTermEchoProbe *)echoProbe {
@@ -6191,7 +6208,7 @@ launchCoprocessWithCommand:(NSString *)command
                                          iTermTokenExecutorUnpauser *unpauser) {
         [weakSelf.echoProbeDelegate echoProbeDidSucceed:echoProbe];
         [unpauser unpause];
-    }];
+    } name:@"echo probe succeeded"];
 }
 
 - (BOOL)echoProbeShouldSendPassword:(iTermEchoProbe *)echoProbe {
@@ -6273,10 +6290,10 @@ launchCoprocessWithCommand:(NSString *)command
 
 #pragma mark - iTermEventuallyConsistentIntervalTreeSideEffectPerformer
 
-- (void)addEventuallyConsistentIntervalTreeSideEffect:(void (^)(void))block {
+- (void)addEventuallyConsistentIntervalTreeSideEffect:(void (^)(void))block name:(NSString *)name {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         block();
-    }];
+    } name:name];
 }
 
 #pragma mark - iTermTokenExecutorDelegate
@@ -6351,7 +6368,7 @@ launchCoprocessWithCommand:(NSString *)command
     [self performLightweightBlockWithJoinedThreads:^(VT100ScreenMutableState * _Nonnull mutableState) {
         [self performSideEffect:^(id<VT100ScreenDelegate> delegate) {
             [delegate screenSync:mutableState];
-        }];
+        } name:@"tokenExecutorSync calling screenSync"];
     }];
 }
 
@@ -6367,23 +6384,23 @@ launchCoprocessWithCommand:(NSString *)command
     if (flags & VT100ScreenMutableStateSideEffectFlagNeedsRedraw) {
         [self performSideEffect:^(id<VT100ScreenDelegate> delegate) {
             [delegate screenNeedsRedraw];
-        }];
+        } name:@"redraw flag"];
     }
     if (flags & VT100ScreenMutableStateSideEffectFlagIntervalTreeVisibleRangeDidChange) {
         [self performIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver> observer) {
             [observer intervalTreeVisibleRangeDidChange];
-        }];
+        } name:@"interval tree visible range did change flag"];
     }
     if (flags & VT100ScreenMutableStateSideEffectFlagDidReceiveLineFeed) {
         const long long lineBufferGeneration = self.linebuffer.generation;
         [self performSideEffect:^(id<VT100ScreenDelegate> delegate) {
             [delegate screenDidReceiveLineFeedAtLineBufferGeneration:lineBufferGeneration];
-        }];
+        } name:@"received line feed flag"];
     }
     if (flags & VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines) {
         [self performSideEffect:^(id<VT100ScreenDelegate> delegate) {
             [delegate screenRefreshFindOnPageView];
-        }];
+        } name:@"drop lines flag"];
     }
 }
 
@@ -6427,11 +6444,11 @@ launchCoprocessWithCommand:(NSString *)command
         [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
             [delegate screenRevealComposerWithPrompt:prompt];
             [unpauser unpause];
-        }];
+        } name:@"prompt state machine reveal composer 1"];
     } else {
         [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
             [delegate screenDidBecomeAutoComposerEligible];
-        }];
+        } name:@"prompt state machine reveal composer 2"];
     }
 }
 
@@ -6442,7 +6459,7 @@ launchCoprocessWithCommand:(NSString *)command
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenDismissComposer];
         [unpauser unpause];
-    }];
+    } name:@"prompt state machine dismiss composer"];
 }
 
 - (NSArray<ScreenCharArray *> *)promptStateMachineLastPrompt {
@@ -6457,7 +6474,7 @@ launchCoprocessWithCommand:(NSString *)command
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenAppendStringToComposer:command];
         [unpauser unpause];
-    }];
+    } name:@"prompt state machine append command to composer"];
 }
 
 - (void)promptStateMachineCheckForPrompt {
@@ -6479,7 +6496,7 @@ launchCoprocessWithCommand:(NSString *)command
         DLog(@"begin side-effect");
         [delegate screenSendReportData:[string dataUsingEncoding:encoding]];
         [weakSelf didSendReport:delegate];
-    }];
+    } name:@"kitty image report"];
 }
 
 - (void)kittyImageControllerPlacementsDidChange {
@@ -6528,7 +6545,7 @@ launchCoprocessWithCommand:(NSString *)command
   completion:(void (^)(int32_t, const struct stat *))completion {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenStatPath:path queue:queue completion:completion];
-    }];
+    } name:@"stat path"];
 }
 
 @end

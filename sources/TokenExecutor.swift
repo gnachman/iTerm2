@@ -328,7 +328,9 @@ private class TokenExecutorImpl {
                 return
             }
             DispatchQueue.main.async { [weak self] in
+                DLog("Begin executing scheduled side effects")
                 self?.executeSideEffects(syncFirst: true)
+                DLog("End executing scheduled side effects")
             }
         })
         NotificationCenter.default.addObserver(forName: Self.didUnpauseGloballyNotification,

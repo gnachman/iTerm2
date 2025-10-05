@@ -9,8 +9,8 @@ import Foundation
 
 @objc(iTermEventuallyConsistentIntervalTreeSideEffectPerformer)
 protocol EventuallyConsistentIntervalTreeSideEffectPerformer: AnyObject {
-    @objc(addEventuallyConsistentIntervalTreeSideEffect:)
-    func addSideEffect(_ closure: @escaping () -> ())
+    @objc(addEventuallyConsistentIntervalTreeSideEffect:name:)
+    func addSideEffect(_ closure: @escaping () -> (), name: String)
 }
 
 // The design of the interval tree is not obvious.
@@ -66,9 +66,9 @@ class EventuallyConsistentIntervalTree: IntervalTree {
     override func add(_ object: IntervalTreeObject, with interval: Interval) {
         super.add(object, with: interval)
         let copyOfInterval = interval.copy(with: nil) as! Interval
-        addSideEffect(object) { doppelganger, derivative in
+        addSideEffect(object, closure: { doppelganger, derivative in
             derivative.add(doppelganger, with: copyOfInterval)
-        }
+        }, name: "add object")
     }
 
     // Returns whether the object was actually removed.
@@ -76,9 +76,9 @@ class EventuallyConsistentIntervalTree: IntervalTree {
     @discardableResult
     override func remove(_ object: IntervalTreeObject) -> Bool {
         let result = super.remove(object)
-        addSideEffect(object) { doppelganger, derivative in
+        addSideEffect(object, closure: { doppelganger, derivative in
             derivative.remove(doppelganger)
-        }
+        }, name: "remove object")
         return result
     }
 
@@ -86,9 +86,10 @@ class EventuallyConsistentIntervalTree: IntervalTree {
     @objc
     override func removeAllObjects() {
         super.removeAllObjects()
-        sideEffectPerformer?.addSideEffect { [weak self] in
+        sideEffectPerformer?.addSideEffect({ [weak self] in
             self?._derivative.removeAllObjects()
-        }
+        },
+                                           name: "remove all objects")
     }
 
     // The `closure` gets called twice: once (synchronously) with `object` and a second time (maybe
@@ -104,9 +105,9 @@ class EventuallyConsistentIntervalTree: IntervalTree {
 #if DEBUG
         super.sanityCheck()
 #endif
-        addSideEffect(object as! IntervalTreeObject) { doppelganger, _ in
+        addSideEffect(object as! IntervalTreeObject, closure: { doppelganger, _ in
             closure(doppelganger)
-        }
+        }, name: "mutate object")
     }
 
     // If you know you're making lots of changes at one time, this is a faster version of
@@ -123,9 +124,9 @@ class EventuallyConsistentIntervalTree: IntervalTree {
             super.sanityCheck()
 #endif
         }
-        addBulkSideEffect(objects as! [IntervalTreeObject]) { _, doppelganger, _ in
+        addBulkSideEffect(objects as! [IntervalTreeObject], closure: { _, doppelganger, _ in
             closure(doppelganger)
-        }
+        }, name: "bulk mutate objects")
     }
 
     @objc(bulkRemoveObjects:)
@@ -149,10 +150,10 @@ class EventuallyConsistentIntervalTree: IntervalTree {
 #if DEBUG
         sanityCheck()
 #endif
-        addBulkSideEffect(objects as! [IntervalTreeObject]) { i, ito, tree in
+        addBulkSideEffect(objects as! [IntervalTreeObject], closure: { i, ito, tree in
             DLog("Running bulk removal side effect on \(ito.description)")
             tree.remove(ito)
-        }
+        }, name: "bulk remove objects")
         DLog("After bulk remove tree has:\n\(allObjects())")
     }
 
@@ -171,31 +172,36 @@ super.sanityCheck()
 super.sanityCheck()
 #endif
         }
-        addBulkSideEffect(objects as! [IntervalTreeObject]) { i, ito, tree in
+        addBulkSideEffect(objects as! [IntervalTreeObject], closure: { i, ito, tree in
             tree.remove(ito)
             tree.add(ito, with: newIntervals[i])
-        }
+        }, name: "bulk move objects")
     }
 
     private func addSideEffect(_ object: IntervalTreeObject,
-                               closure: @escaping (IntervalTreeObject, IntervalTree) -> ()) {
+                               closure: @escaping (IntervalTreeObject, IntervalTree) -> (),
+                               name: String) {
         let doppelganger = object.doppelganger()
-        sideEffectPerformer?.addSideEffect { [weak self] in
+        sideEffectPerformer?.addSideEffect( { [weak self] in
             if let self = self {
                 closure(doppelganger, self._derivative)
             }
-        }
+        },
+                                            name:name)
     }
 
     private func addBulkSideEffect(_ objects: [IntervalTreeObject],
-                                   closure: @escaping (Int, IntervalTreeObject, IntervalTree) -> ()) {
+                                   closure: @escaping (Int, IntervalTreeObject, IntervalTree) -> (),
+                                   name: String) {
         let doppelgangers = objects.map { $0.doppelganger() }
-        sideEffectPerformer?.addSideEffect { [weak self] in
+        sideEffectPerformer?.addSideEffect({ [weak self] in
             if let self = self {
                 for (i, doppelganger) in doppelgangers.enumerated() {
                     closure(i, doppelganger, self._derivative)
                 }
             }
-        }
+        },
+                                           name: name)
     }
 }
+

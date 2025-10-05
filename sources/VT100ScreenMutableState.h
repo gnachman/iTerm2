@@ -54,9 +54,11 @@ NS_ASSUME_NONNULL_BEGIN
 // This is how mutation code schedules work to be done on the main thread later. In particular, this
 // is the only way for it to call delegate methods. It will be performed asynchronously at some
 // later time.
-- (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect;
-- (void)addIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver> observer))sideEffect;
-- (void)addUnmanagedPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))block;
+- (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect name:(NSString *)name;
+- (void)addIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver> observer))sideEffect
+                             name:(NSString *)name;
+- (void)addUnmanagedPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))block
+                                name:(NSString *)name;
 
 - (void)setNeedsRedraw;
 - (iTermTokenExecutorUnpauser *)pauseTokenExecution;

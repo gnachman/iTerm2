@@ -31,7 +31,7 @@
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenAppendStringToComposer:string];
         [unpauser unpause];
-    }];
+    } name:@"append string to composer"];
 }
 
 - (void)terminalAppendString:(NSString *)string {
@@ -53,7 +53,7 @@
                                               foreground:foregroundColorCode
                                               background:backgroundColorCode
                                                 atPrompt:atPrompt];
-        }];
+        } name:@"append string"];
     }
 }
 
@@ -80,7 +80,7 @@
                                                  foreground:foregroundColorCode
                                                  background:backgroundColorCode
                                                    atPrompt:atPrompt];
-        }];
+        } name:@"append ascii data"];
     }
 }
 
@@ -392,7 +392,7 @@ typedef struct {
                                               foreground:foregroundColorCode
                                               background:backgroundColorCode
                                                 atPrompt:atPrompt];
-        }];
+        } name:@"ring bell"];
     }
 }
 
@@ -502,7 +502,7 @@ typedef struct {
         DLog(@"Now that I have synced, unpause and allow the report to go through");
         [unpauser unpause];
         weakSelf.allowNextReport = YES;
-    }];
+    } name:@"should send report"];
     DLog(@"Decline report");
     return NO;
 }
@@ -515,7 +515,7 @@ typedef struct {
         DLog(@"begin side-effect");
         [delegate screenReportVariableNamed:variable];
         [weakSelf didSendReport:delegate];
-    }];
+    } name:@"report variable"];
 }
 
 - (void)terminalSendReport:(NSData *)report {
@@ -528,7 +528,7 @@ typedef struct {
             DLog(@"begin side-effect");
             [delegate screenSendReportData:report];
             [weakSelf didSendReport:delegate];
-        }];
+        } name:@"send report"];
     }
 }
 
@@ -605,7 +605,7 @@ typedef struct {
     [self addDeferredSideEffect:^(id<VT100ScreenDelegate> delegate) {
         DLog(@"begin side-effect");
         [delegate screenSetCursorType:cursorType];
-    }];
+    } name:@"set cursor type"];
 }
 
 - (void)terminalSetCursorBlinking:(BOOL)blinking {
@@ -617,7 +617,7 @@ typedef struct {
     [self addDeferredSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenSetCursorBlinking:blinking];
-    }];
+    } name:@"set cursor blinking"];
 }
 
 - (iTermPromise<NSNumber *> *)terminalCursorIsBlinkingPromise {
@@ -637,7 +637,7 @@ typedef struct {
                 [seal fulfill:@(value)];
                 [unpauser unpause];
             });
-        }];
+        } name:@"cursor is blinking promise"];
     }];
 }
 
@@ -656,7 +656,7 @@ typedef struct {
             completion(type, blinking);
             [unpauser unpause];
         });
-    }];
+    } name:@"get cursor info"];
 }
 
 - (void)terminalResetCursorTypeAndBlink {
@@ -664,7 +664,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         DLog(@"begin side-effect");
         [delegate screenResetCursorTypeAndBlink];
-    }];
+    } name:@"reset cursor type and blink"];
 }
 
 - (BOOL)terminalLineDrawingFlagForCharset:(int)charset {
@@ -722,7 +722,7 @@ typedef struct {
                 [unpauser unpause];
             }];
         });
-    }];
+    } name:@"set width"];
 }
 
 - (void)terminalSetRows:(int)rows andColumns:(int)columns {
@@ -731,7 +731,7 @@ typedef struct {
                                          iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         [delegate screenSetSize:VT100GridSizeMake(rows, columns)];
         [unpauser unpause];
-    }];
+    } name:@"set rows/columns"];
 }
 
 // This runs on the mutation queue.
@@ -832,7 +832,7 @@ typedef struct {
             DLog(@"unpause");
             [unpauser unpause];
         }];
-    }];
+    } name:@"print buffer"];
 }
 
 - (void)terminalPrintScreen {
@@ -846,7 +846,7 @@ typedef struct {
         DLog(@"begin side-effect");
         [delegate screenPrintVisibleAreaIfAllowed];
         [unpauser unpause];
-    }];
+    } name:@"print screen"];
 }
 
 - (void)terminalBeginRedirectingToPrintBuffer {
@@ -873,7 +873,7 @@ typedef struct {
             DLog(@"calling screenSetWindowTitle:%@", title);
             [delegate screenSetWindowTitle:title];
         }
-    }];
+    } name:@"set window title"];
 
     // If you know to use RemoteHost then assume you also use CurrentDirectory. Innocent window title
     // changes shouldn't override CurrentDirectory.
@@ -905,7 +905,7 @@ typedef struct {
         if ([delegate screenAllowTitleSetting]) {
             [delegate screenSetIconName:title];
         }
-    }];
+    } name:@"set icon title"];
 }
 
 - (void)terminalSetSubtitle:(NSString *)subtitle {
@@ -918,7 +918,7 @@ typedef struct {
         if ([delegate screenAllowTitleSetting]) {
             [delegate screenSetSubtitle:subtitle];
         }
-    }];
+    } name:@"set subtitle"];
 }
 
 - (void)terminalCopyStringToPasteboard:(NSString *)string {
@@ -926,7 +926,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenCopyStringToPasteboard:string];
-    }];
+    } name:@"copy string to pasteboard"];
 }
 
 - (void)terminalReportPasteboard:(NSString *)pasteboard {
@@ -940,7 +940,7 @@ typedef struct {
             [unpauser unpause];
             [weakSelf didSendReport:delegate];
         }];
-    }];
+    } name:@"report pasteboard"];
 }
 
 - (void)terminalBeginCopyToPasteboard {
@@ -952,7 +952,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenTerminalAttemptedPasteboardAccess];
-    }];
+    } name:@"begin copy to pasteboard"];
 }
 
 - (void)terminalDidReceiveBase64PasteboardString:(NSString *)string {
@@ -982,7 +982,7 @@ typedef struct {
                 [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
                     DLog(@"begin side-effect");
                     [delegate screenCopyStringToPasteboard:string];
-                }];
+                } name:@"did finish receiving pasteboard"];
             }
         }
     }
@@ -1083,7 +1083,7 @@ typedef struct {
         DLog(@"begin side-effect");
         [delegate screenSetPointSize:NSMakeSize(width, height)];
         [unpauser unpause];
-    }];
+    } name:@"set pixel size"];
 }
 
 - (void)terminalMoveWindowTopLeftPointTo:(NSPoint)point {
@@ -1096,7 +1096,7 @@ typedef struct {
             DLog(@"doing it");
             [delegate screenMoveWindowTopLeftPointTo:point];
         }
-    }];
+    } name:@"move window top left point"];
 }
 
 - (void)terminalMiniaturize:(BOOL)mini {
@@ -1108,7 +1108,7 @@ typedef struct {
             ![delegate screenWindowIsFullscreen]) {
             [delegate screenMiniaturizeWindow:mini];
         }
-    }];
+    } name:@"miniaturize"];
 }
 
 - (void)terminalRaise:(BOOL)raise {
@@ -1118,7 +1118,7 @@ typedef struct {
         if ([delegate screenShouldInitiateWindowResize] == PTYSessionResizePermissionAllowed) {
             [delegate screenRaise:raise];
         }
-    }];
+    } name:@"raise"];
 }
 
 - (void)terminalScrollDown:(int)n {
@@ -1126,7 +1126,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenRemoveSelection];
-    }];
+    } name:@"scroll down"];
     [self.currentGrid scrollRect:[self.currentGrid scrollRegionRect]
                           downBy:MIN(self.currentGrid.size.height, n)
                        softBreak:NO];
@@ -1155,7 +1155,7 @@ typedef struct {
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             DLog(@"begin side-effect");
             [delegate screenMoveSelectionUpBy:n inRegion:rect];
-        }];
+        } name:@"scroll up"];
     }
     [self clearTriggerLine];
 }
@@ -1200,7 +1200,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenReportIconTitle];
         [weakSelf didSendReport:delegate];
-    }];
+    } name:@"report icon title"];
 }
 
 - (void)terminalReportWindowTitle {
@@ -1213,7 +1213,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenReportWindowTitle];
         [weakSelf didSendReport:delegate];
-    }];
+    } name:@"report window title"];
 }
 
 - (void)terminalPushCurrentTitleForWindow:(BOOL)isWindow {
@@ -1224,7 +1224,7 @@ typedef struct {
             DLog(@"allowed");
             [delegate screenPushCurrentTitleForWindow:isWindow];
         }
-    }];
+    } name:@"push title for window"];
 }
 
 - (void)terminalPopCurrentTitleForWindow:(BOOL)isWindow {
@@ -1239,7 +1239,7 @@ typedef struct {
         } else {
             [unpauser unpause];
         }
-    }];
+    } name:@"pop title for window"];
 }
 
 - (void)terminalPostUserNotification:(NSString *)message {
@@ -1256,7 +1256,7 @@ typedef struct {
         DLog(@"begin side-effect");
         DLog(@"Post %@", message);
         [delegate screenPostUserNotification:message rich:rich];
-    }];
+    } name:@"post user notification"];
 }
 
 - (void)terminalStartTmuxModeWithDCSIdentifier:(NSString *)dcsID {
@@ -1288,8 +1288,8 @@ typedef struct {
             [delegate screenStartTmuxModeWithDCSIdentifier:dcsID];
             dispatch_group_leave(group);
             [unpauser unpause];
-        }];
-    }];
+        } name:@"start tmux mode 1"];
+    } name:@"start tmux mode 2"];
 }
 
 // Tmux tokens are *not* side effects because it's basically impossible to avoid them having runloops.
@@ -1387,7 +1387,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         DLog(@"begin side-effect");
         [delegate screenMouseModeDidChange];
-    }];
+    } name:@"mouse mode did change"];
 }
 
 - (void)terminalShowAltBuffer {
@@ -1453,7 +1453,7 @@ typedef struct {
                                              iTermTokenExecutorUnpauser * _Nonnull unpauser) {
             [delegate screenSaveScrollPosition];
             [unpauser unpause];
-        }];
+        } name:@"save scroll position"];
     } else {  // implicitly "saveCursorLine"
         DLog(@"saveCursorLine");
         [self saveCursorLine];
@@ -1465,7 +1465,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenStealFocus];
-    }];
+    } name:@"steal focus"];
 }
 
 - (void)terminalSetProxyIcon:(NSString *)value {
@@ -1474,7 +1474,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenSetPreferredProxyIcon:path];
-    }];
+    } name:@"set proxy icon"];
 }
 
 - (void)terminalClearScrollbackBuffer {
@@ -1483,7 +1483,7 @@ typedef struct {
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             DLog(@"begin side-effect");
             [delegate screenAskAboutClearingScrollback];
-        }];
+        } name:@"clear scrollback buffer"];
         return;
     }
     [self clearScrollbackBuffer];
@@ -1501,7 +1501,7 @@ typedef struct {
         DLog(@"begin side-effect");
         [delegate screenSetProfileToProfileNamed:value];
         [unpauser unpause];
-    }];
+    } name:@"profile should change"];
 }
 
 - (void)terminalAddNote:(NSString *)value show:(BOOL)show {
@@ -1553,7 +1553,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenSetPasteboard:value];
-    }];
+    } name:@"set pasteboard"];
 }
 
 - (void)terminalAppendDataToPasteboard:(NSData *)data {
@@ -1561,7 +1561,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenAppendDataToPasteboard:data];
-    }];
+    } name:@"append data to pasteboard"];
 }
 
 - (void)terminalCopyBufferToPasteboard {
@@ -1569,7 +1569,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenCopyBufferToPasteboard];
-    }];
+    } name:@"copy buffer to pasteboard"];
 }
 
 - (BOOL)terminalIsTrusted {
@@ -1586,7 +1586,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenDidTryToUseDECRQCRA];
-    }];
+    } name:@"can use decrqcra"];
     DLog(@"fail by default");
     return NO;
 }
@@ -1596,7 +1596,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenRequestAttention:request];
-    }];
+    } name:@"request attention"];
 }
 
 - (void)terminalDisinterSession {
@@ -1604,7 +1604,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenDisinterSession];
-    }];
+    } name:@"disinter session"];
 }
 
 - (void)terminalSetBackgroundImageFile:(NSString *)filename {
@@ -1614,7 +1614,7 @@ typedef struct {
         DLog(@"begin side-effect");
         [delegate screenSetBackgroundImageFile:filename];
         [unpauser unpause];
-    }];
+    } name:@"set bg image"];
 }
 
 - (void)terminalSetBadgeFormat:(NSString *)badge {
@@ -1624,7 +1624,7 @@ typedef struct {
         DLog(@"begin side-effect");
         [delegate screenSetBadgeFormat:badge];
         [unpauser unpause];
-    }];
+    } name:@"set badge format"];
 }
 
 - (void)terminalSetUserVar:(NSString *)kvp {
@@ -1632,7 +1632,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         DLog(@"begin side-effect");
         [delegate screenSetUserVar:kvp];
-    }];
+    } name:@"set user var"];
 }
 
 - (void)terminalResetColor:(VT100TerminalColorIndex)n {
@@ -1692,7 +1692,7 @@ typedef struct {
         } else {
             [unpauser unpause];
         }
-    }];
+    } name:@"reset color"];
 }
 
 // These calls to `screenSetColor:` will modify the profile and will themselves join the mutation
@@ -1739,7 +1739,7 @@ typedef struct {
         NSString *profileKey = [state.colorMap profileKeyForColorMapKey:key];
         [delegate screenSetColor:color profileKey:profileKey];
         [unpauser unpause];
-    }];
+    } name:@"set color for key"];
 }
 
 - (void)terminalSetColorTableEntryAtIndex:(VT100TerminalColorIndex)n color:(NSColor *)color {
@@ -1760,7 +1760,7 @@ typedef struct {
             [weakSelf setColor:color forKey:key];
         }
         [unpauser unpause];
-    }];
+    } name:@"set color table entry"];
 }
 
 - (void)terminalSetCurrentTabColor:(NSColor *)color {
@@ -1769,7 +1769,7 @@ typedef struct {
                                          iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         [delegate screenSetCurrentTabColor:color];
         [unpauser unpause];
-    }];
+    } name:@"set current tab color"];
 }
 
 - (void)terminalSetTabColorRedComponentTo:(CGFloat)color {
@@ -1778,7 +1778,7 @@ typedef struct {
                                          iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         [delegate screenSetTabColorRedComponentTo:color];
         [unpauser unpause];
-    }];
+    } name:@"set tab color red"];
 }
 
 - (void)terminalSetTabColorGreenComponentTo:(CGFloat)color {
@@ -1787,7 +1787,7 @@ typedef struct {
                                          iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         [delegate screenSetTabColorGreenComponentTo:color];
         [unpauser unpause];
-    }];
+    } name:@"set tab color green"];
 }
 
 - (void)terminalSetTabColorBlueComponentTo:(CGFloat)color {
@@ -1796,7 +1796,7 @@ typedef struct {
                                          iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         [delegate screenSetTabColorBlueComponentTo:color];
         [unpauser unpause];
-    }];
+    } name:@"set tab color blue"];
 }
 
 - (BOOL)terminalFocusReportingAllowed {
@@ -1849,7 +1849,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenSetHighlightCursorLine:highlight];
-    }];
+    } name:@"set highlight cursor line"];
 }
 
 - (void)terminalClearCapturedOutput {
@@ -1861,7 +1861,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         DLog(@"begin side-effect");
         [delegate screenClearCapturedOutput];
-    }];
+    } name:@"clear captured output"];
 }
 
 - (void)terminalPromptDidStart:(BOOL)wasInCommand {
@@ -1997,7 +1997,7 @@ typedef struct {
             DLog(@"suggest upgrade");
             [delegate screenSuggestShellIntegrationUpgrade];
         }
-    }];
+    } name:@"set shell integration version"];
 }
 
 - (void)terminalWraparoundModeDidChangeTo:(BOOL)newValue {
@@ -2107,7 +2107,7 @@ typedef struct {
             completion(ok);
             [unpauser unpause];
         });
-    }];
+    } name:@"will receive file"];
 };
 
 - (void)terminalWillReceiveInlineFileNamed:(NSString *)name
@@ -2151,7 +2151,7 @@ typedef struct {
             completion(ok);
             [unpauser unpause];
         }];
-    }];
+    } name:@"will receive inline file"];
 }
 
 // Main queue, unmanaged
@@ -2243,7 +2243,7 @@ typedef struct {
             if (!confirmed){
                 [unpauser unpause];
             }
-        }];
+        } name:@"did receive base64 file"];
     }
 }
 
@@ -2282,7 +2282,7 @@ typedef struct {
                                          iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         [delegate screenSetUnicodeVersion:unicodeVersion];
         [unpauser unpause];
-    }];
+    } name:@"set unicode version"];
 }
 
 - (NSInteger)terminalUnicodeVersion {
@@ -2295,7 +2295,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenSetLabel:label forKey:keyName];
-    }];
+    } name:@"set label for key"];
 }
 
 - (void)terminalPushKeyLabels:(NSString *)value {
@@ -2303,7 +2303,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenPushKeyLabels:value];
-    }];
+    } name:@"push key labels"];
 }
 
 - (void)terminalPopKeyLabels:(NSString *)value {
@@ -2311,7 +2311,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenPopKeyLabels:value];
-    }];
+    } name:@"pop key labels"];
 }
 
 // fg=ff0080,bg=srgb:808080
@@ -2323,7 +2323,7 @@ typedef struct {
             DLog(@"handle preset");
             [delegate screenSelectColorPresetNamed:colorString];
             [unpauser unpause];
-        }];
+        } name:@"set color 1"];
         return;
     }
     if ([colorString isEqualToString:@"default"] && [name isEqualToString:@"tab"]) {
@@ -2332,7 +2332,7 @@ typedef struct {
             DLog(@"handle default");
             [delegate screenSetCurrentTabColor:nil];
             [unpauser unpause];
-        }];
+        } name:@"set color 2"];
         return;
     }
 
@@ -2400,7 +2400,7 @@ typedef struct {
             DLog(@"tab");
             [delegate screenSetCurrentTabColor:color];
             [unpauser unpause];
-        }];
+        } name:@"set color 3"];
         return;
     }
 
@@ -2461,7 +2461,7 @@ typedef struct {
         [delegate screenSetColor:color
                       profileKey:profileKey];
         [unpauser unpause];
-    }];
+    } name:@"set color 4"];
 }
 
 - (void)terminalCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> *)parameters
@@ -2471,7 +2471,7 @@ typedef struct {
         DLog(@"begin side-effect");
         [delegate screenDidReceiveCustomEscapeSequenceWithParameters:parameters
                                                              payload:payload];
-    }];
+    } name:@"custom esc sequence"];
 }
 
 - (void)terminalRepeatPreviousCharacter:(int)times {
@@ -2512,7 +2512,7 @@ typedef struct {
                                                       foreground:foregroundColorCode
                                                       background:backgroundColorCode
                                                         atPrompt:atPrompt];
-                }];
+                } name:@"repeat previous char"];
             }
         }
     }
@@ -2523,7 +2523,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenReportFocusWillChangeTo:reportFocus];
-    }];
+    } name:@"report focus change"];
 }
 
 - (void)terminalPasteBracketingWillChangeTo:(BOOL)bracket {
@@ -2531,7 +2531,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenReportPasteBracketingWillChangeTo:bracket];
-    }];
+    } name:@"paste bracketing"];
 }
 
 - (void)terminalReportKeyUpDidChange:(BOOL)reportKeyUp {
@@ -2539,7 +2539,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenReportKeyUpDidChange:reportKeyUp];
-    }];
+    } name:@"report key-up"];
 }
 
 - (BOOL)terminalIsInAlternateScreenMode {
@@ -2584,7 +2584,7 @@ typedef struct {
                 [seal rejectWithDefaultError];
             }
             [unpauser unpause];
-        }];
+        } name:@"string for keypress"];
     }];
 }
 
@@ -2603,7 +2603,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         DLog(@"begin side-effect");
         [delegate screenApplicationKeypadModeDidChange:mode];
-    }];
+    } name:@"keypad mode did change"];
 }
 
 - (VT100SavedColorsSlot *)terminalSavedColorsSlot {
@@ -2694,7 +2694,7 @@ typedef struct {
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenSendModifiersDidChange];
-    }];
+    } name:@"change send modifiers"];
 }
 
 - (void)terminalKeyReportingFlagsDidChange {
@@ -2705,7 +2705,7 @@ typedef struct {
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenKeyReportingFlagsDidChange];
-    }];
+    } name:@"key reporting flags did change"];
 }
 
 - (void)terminalDidFinishReceivingFile {
@@ -2718,13 +2718,13 @@ typedef struct {
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             DLog(@"begin side-effect");
             [delegate screenDidFinishReceivingInlineFile];
-        }];
+        } name:@"finished receiving file 1"];
     } else {
         DLog(@"Download finished");
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             DLog(@"begin side-effect");
             [delegate screenDidFinishReceivingFile];
-        }];
+        } name:@"finished receiving file 2"];
     }
 }
 
@@ -2735,7 +2735,7 @@ typedef struct {
         [delegate screenRequestUpload:args completion:^{
             [unpauser unpause];
         }];
-    }];
+    } name:@"request upload"];
 }
 
 - (void)terminalPasteboardReceiptEndedUnexpectedly {
@@ -2817,7 +2817,7 @@ typedef struct {
         DLog(@"begin side-effect");
         [delegate screenReportCapabilities];
         [weakSelf didSendReport:delegate];
-    }];
+    } name:@"send caps"];
 }
 
 - (NSArray<NSString *> *)parseHookSSHConductorParameter:(NSString *)param {
@@ -2880,20 +2880,20 @@ typedef struct {
                                              sshargs:sshargs
                                                dcsID:dcsID
                                        savedState:savedState];
-    }];
+    } name:@"did hook ssh"];
     [self.terminal resetForSSH];
 }
 
 - (void)terminalDidReadSSHConductorLine:(NSString *)string depth:(int)depth {
     [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
         [delegate screenDidReadSSHConductorLine:string depth:(int)depth];
-    }];
+    } name:@"read ssh"];
 
 }
 - (void)terminalDidUnhookSSHConductor {
     [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
         [delegate screenDidUnhookSSHConductor];
-    }];
+    } name:@"unhook ssh"];
 }
 
 - (void)terminalDidBeginSSHConductorCommandWithIdentifier:(NSString *)identifier
@@ -2901,7 +2901,7 @@ typedef struct {
     [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
         [delegate screenDidBeginSSHConductorCommandWithIdentifier:identifier
                                                             depth:depth];
-    }];
+    } name:@"begin ssh command"];
 }
 
 - (void)terminalDidEndSSHConductorCommandWithIdentifier:(NSString *)identifier
@@ -2915,7 +2915,7 @@ typedef struct {
                                                           depth:depth];
 
         [unpauser unpause];
-    }];
+    } name:@"end ssh command"];
 }
 
 - (void)terminalHandleSSHSideChannelOutput:(NSString *)string
@@ -2925,7 +2925,7 @@ typedef struct {
     DLog(@"terminalHandleSSHSideChannelOutput:%@ pid:%@ channel:%@ depth:%@", string, @(pid), @(channel), @(depth));
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenHandleSSHSideChannelOutput:string pid:pid channel:channel depth:depth];
-    }];
+    } name:@"handle side channel"];
 }
 
 - (void)terminalDidReadRawSSHData:(NSData *)data
@@ -2939,14 +2939,14 @@ typedef struct {
     DLog(@"Add side effect to handle raw ssh data %@", data.shortDebugString);
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenDidReadRawSSHData:data];
-    }];
+    } name:@"read raw ssh"];
 }
 
 - (void)terminalHandleSSHTerminatePID:(int)pid withCode:(int)code depth:(int)depth {
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenDidTerminateSSHProcess:pid code:code depth:depth];
         [unpauser unpause];
-    }];
+    } name:@"terminate pid"];
 }
 
 - (void)terminalBeginSSHIntegeration:(NSString *)args {
@@ -2960,7 +2960,7 @@ typedef struct {
         }
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             [delegate screenWillBeginSSHIntegration];
-        }];
+        } name:@"begin ssh integration"];
         _sshIntegrationFlags = parts;
         return;
     }
@@ -2995,7 +2995,7 @@ typedef struct {
                                            encodedBA:encodedBA
                                              sshArgs:sshArgs];
         [unpauser unpause];
-    }];
+    } name:@"send conductor"];
 }
 
 - (void)terminalUpdateEnv:(NSString *)value {
@@ -3039,7 +3039,7 @@ typedef struct {
         dispatch_async(queue, ^{
             [weakSelf appendBanner:banner andUnpause:unpauser];
         });
-    }];
+    } name:@"end ssh"];
 }
 
 - (void)appendBanner:(NSString *)banner andUnpause:(iTermTokenExecutorUnpauser *)unpauser {
@@ -3053,7 +3053,7 @@ typedef struct {
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenBeginFramerRecovery:parentDepth];
         [unpauser unpause];
-    }];
+    } name:@"begin framer recovery for child"];
 }
 
 - (void)terminalHandleFramerRecoveryString:(NSString *)string {
@@ -3073,13 +3073,13 @@ typedef struct {
         } else {
             [unpauser unpause];
         }
-    }];
+    } name:@"handle recovery"];
 }
 
 - (void)terminalDidResynchronizeSSH {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenDidResynchronizeSSH];
-    }];
+    } name:@"resynchronize"];
 }
 
 - (void)terminalDidExecuteToken:(VT100Token *)token {
@@ -3098,7 +3098,7 @@ willExecuteToken:(VT100Token *)token
         [delegate screenOpenURL:url completion:^{
             [unpauser unpause];
         }];
-    }];
+    } name:@"open url"];
 }
 
 - (void)terminalBlock:(NSString *)blockID
@@ -3182,7 +3182,7 @@ willExecuteToken:(VT100Token *)token
 - (void)terminalSetPointerShape:(NSString *)pointerShape {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSetPointerShape:pointerShape];
-    }];
+    } name:@"set pointer shape"];
 }
 
 - (void)terminalDidReceiveKittyImageCommand:(iTermKittyImageCommand *)kittyImageCommand {
@@ -3205,7 +3205,7 @@ willExecuteToken:(VT100Token *)token
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenStartWrappedCommand:command channel:uid];
         [unpauser unpause];
-    }];
+    } name:@"start wrapped command"];
 }
 
 @end

@@ -69,7 +69,8 @@ iTermTriggerScopeProvider> {
 - (iTermEventuallyConsistentIntervalTree *)mutableSavedIntervalTree;
 - (iTermColorMap *)mutableColorMap;
 
-- (void)addJoinedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect;
+- (void)addJoinedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect
+                       name:(NSString *)name;
 
 // Main thread/synchronized access only.
 @property (nonatomic, readonly) IntervalTree *derivativeIntervalTree;
@@ -77,12 +78,15 @@ iTermTriggerScopeProvider> {
 // Main thread/synchronized access only.
 @property (nonatomic, readonly) IntervalTree *derivativeSavedIntervalTree;
 
-- (void)addPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))sideEffect;
+- (void)addPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))sideEffect
+                       name:(NSString *)name;
 
-- (void)addDeferredSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect;
+- (void)addDeferredSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect
+                         name:(NSString *)name;
 
 // Runs even if there is no delegate yet.
-- (void)addNoDelegateSideEffect:(void (^)(void))sideEffect;
+- (void)addNoDelegateSideEffect:(void (^)(void))sideEffect
+                           name:(NSString *)name;
 
 - (void)willSendReport;
 - (void)didSendReport:(id<VT100ScreenDelegate>)delegate;
