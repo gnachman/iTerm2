@@ -533,8 +533,8 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
     }
     [self pushUndo];
     NSMutableDictionary *rule = [self.rules[rowIndex] mutableCopy];
-    rule[kNotesKey] = _nameTextField.stringValue;
-    rule[kRegexKey] = _regexTextView.textStorage.string ?: @"";
+    rule[kNotesKey] = [_nameTextField.stringValue copy];
+    rule[kRegexKey] = [_regexTextView.textStorage.string copy] ?: @"";
     rule[kPrecisionKey] = [self precisionKeyWithIndex:_precisionButton.selectedTag];
     [self setRule:rule forRow:rowIndex];
 }
