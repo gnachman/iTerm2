@@ -297,7 +297,7 @@ extension iTermBrowserWebView {
                                         length: substring.utf16.count)
                 let result = regex.firstMatch(in: String(substring),
                                               range: fullRange)
-                if let result {
+                if let result, result.range(at: 0).length > 0 {
                     let matchingRange = result.range(at: 0)
                     DLog("Matches in \(matchingRange)")
                     let matchingText = String(substring)[utf16: matchingRange] ?? ""

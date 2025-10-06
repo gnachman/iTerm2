@@ -418,6 +418,9 @@ extension String {
         if range.location == NSNotFound {
             return nil
         }
+        if range.length == 0 {
+            return ""
+        }
         let utf16View = utf16
 
         let fromUtf16Index = utf16View.index(
