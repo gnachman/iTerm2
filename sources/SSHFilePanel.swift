@@ -512,15 +512,30 @@ extension SSHFilePanel {
         }
         views.append(contentsOf: [toolbarView, separatorLine, fileList, separatorLine2] + makeAccessoryViews() + [spacer2, buttonStackView, spacer3])
 
-        let mainStackView = NSStackView(views: views)
+        // A real NSStackView would randomly change its layout. I don't know why because auto layout is impossible to analyze, but this works so far.
+        class SSHMainStackView: NSView { }
+        let mainStackView = SSHMainStackView()
         mainStackView.translatesAutoresizingMaskIntoConstraints = false
-        mainStackView.orientation = .vertical
-        mainStackView.alignment = .leading
-        mainStackView.distribution = .fill
-        mainStackView.spacing = 0
-        
+        var previous: NSView?
+        for view in views {
+            defer {
+                previous = view
+            }
+            mainStackView.addSubview(view)
+            NSLayoutConstraint.activate([
+                view.leadingAnchor.constraint(equalTo: mainStackView.leadingAnchor),
+                view.trailingAnchor.constraint(equalTo: mainStackView.trailingAnchor),
+                view.topAnchor.constraint(equalTo: previous?.bottomAnchor ?? mainStackView.topAnchor)
+            ])
+        }
+        if let previous {
+            NSLayoutConstraint.activate([
+                previous.bottomAnchor.constraint(equalTo: mainStackView.bottomAnchor)
+            ])
+        }
+
         mainContentView.addSubview(mainStackView)
-        
+
         // Create view controller for main content
         let mainViewController = NSViewController()
         mainViewController.view = mainContentView
@@ -562,10 +577,10 @@ extension SSHFilePanel {
             mainStackView.trailingAnchor.constraint(equalTo: trailingAnchor),
             mainStackView.topAnchor.constraint(equalTo: mainContentView.topAnchor),
             mainStackView.bottomAnchor.constraint(equalTo: mainContentView.bottomAnchor),
-            
+
             // Toolbar height
             toolbarView.heightAnchor.constraint(equalToConstant: 44),
-            
+
             // Separator line height
             separatorLine.heightAnchor.constraint(equalToConstant: 1),
             separatorLine2.heightAnchor.constraint(equalToConstant: 1),
@@ -588,7 +603,7 @@ extension SSHFilePanel {
 
             spacer2.heightAnchor.constraint(equalToConstant: 8),
         ])
-        
+
         // Additional constraints for save panel UI
         if let saveAsContainer = saveAsContainer {
             NSLayoutConstraint.activate([
@@ -751,6 +766,10 @@ extension SSHFilePanel {
         fileList.canChooseDirectories = canChooseDirectories
         fileList.canChooseFiles = canChooseFiles
         fileList.allowsMultipleSelection = allowsMultipleSelection
+
+        // Ensure fileList doesn't collapse when accessory views are present
+        fileList.setContentHuggingPriority(.defaultLow, for: .vertical)
+        fileList.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
 
         fileList.delegate = self
     }

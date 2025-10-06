@@ -230,7 +230,7 @@ private extension iTermModernSavePanel {
                                           window: NSWindow?,
                                           handler: @escaping (NSApplication.ModalResponse, iTermSavePanelItem?) -> Void) -> NSView {
         let container = NSView()
-        
+
         // Create SSH panel button
         let sshButton = SSHPanelButton()
         sshButton.title = "Open SSH Panel..."
@@ -242,11 +242,13 @@ private extension iTermModernSavePanel {
         sshButton.parentWindow = window
         sshButton.handler = handler
         sshButton.modernSavePanel = self
-        
+
         container.addSubview(sshButton)
-        
+
         // Add user's accessory view if provided
         if let userAccessory = userAccessory {
+            // Clean up from previous usage - removeFromSuperview will deactivate layout constraints
+            userAccessory.removeFromSuperview()
             userAccessory.translatesAutoresizingMaskIntoConstraints = false
             container.addSubview(userAccessory)
             
@@ -260,7 +262,8 @@ private extension iTermModernSavePanel {
                 userAccessory.leadingAnchor.constraint(equalTo: container.leadingAnchor),
                 userAccessory.topAnchor.constraint(equalTo: sshButton.bottomAnchor, constant: 12),
                 userAccessory.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-                userAccessory.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -8)
+                userAccessory.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -8),
+                userAccessory.heightAnchor.constraint(equalToConstant: userAccessory.frame.height)
             ])
         } else {
             // Layout constraints for button only - centered with margins
@@ -339,6 +342,11 @@ private extension iTermModernSavePanel {
         sshFilePanel.isSavePanel = true
         sshFilePanel.defaultFilename = defaultFilename
         sshFilePanel.canCreateDirectories = canCreateDirectories
+
+        // Reset accessory view layout properties if it was previously used in a system panel with SSH button
+        if let accessoryView = accessoryView {
+            accessoryView.removeFromSuperview()
+        }
         sshFilePanel.accessoryView = accessoryView
         DLog("makePanel: setting preferredSSHIdentity: \(String(describing: preferredSSHIdentity)), initialDirectory: \(String(describing: directoryURL))")
         sshFilePanel.preferredSSHIdentity = preferredSSHIdentity
