@@ -209,7 +209,7 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
         }
     }
     Profile* bookmark = [self bookmark];
-    [iTermProfilePreferences setObject:rules forKey:KEY_SMART_SELECTION_RULES inProfile:bookmark model:[self modelForBookmark:bookmark]];
+    [iTermProfilePreferences setObject:rules forKey:KEY_SMART_SELECTION_RULES inProfile:bookmark model:[self modelForBookmark:bookmark] withSideEffects:NO];
     if (rowIndex < 0) {
         [tableView_ insertRowsAtIndexes:[NSIndexSet indexSetWithIndex:actualIndex]
                           withAnimation:NSTableViewAnimationEffectNone];
@@ -222,6 +222,7 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
                               withAnimation:NSTableViewAnimationEffectNone];
         }
     }
+    [tableView_ noteHeightOfRowsWithIndexesChanged:[NSIndexSet indexSetWithIndex:rowIndex]];
     // This must flush user defaults for setUseInterpolatedStrings to work.
     [delegate_ smartSelectionChanged:nil];
 }
