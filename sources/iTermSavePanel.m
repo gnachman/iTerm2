@@ -198,6 +198,7 @@ static NSString *const iTermSavePanelLoggingStyleUserDefaultsKey = @"NoSyncLoggi
                               completion:(void (^)(iTermModernSavePanel *panel, iTermSavePanel *savePanel, BOOL))completion {
     if (response != NSModalResponseOK) {
         completion(nil, self, NO);
+        return;
     }
     [iTermSavePanel handleResponseFromSavePanel:savePanel
                                        delegate:self
@@ -243,9 +244,6 @@ typedef NS_ENUM(NSUInteger, iTermSavePanelAction) {
                             options:(NSInteger)options
                          completion:(void (^)(iTermSavePanelAction action))completion {
     iTermSavePanelItem *item = savePanel.item;
-    if (delegate.forcedExtension) {
-        [item setPathExtension:delegate.forcedExtension];
-    }
     NSArray<NSString *> *allowedFileTypes = [savePanel.allowedContentTypes mapWithBlock:^id _Nullable(UTType *uttype) {
         return uttype.preferredFilenameExtension;
     }];
@@ -270,7 +268,9 @@ typedef NS_ENUM(NSUInteger, iTermSavePanelAction) {
         }];
         return;
     }
-    if (allowedFileTypes.count && ![allowedFileTypes containsObject:delegate.item.pathExtension]) {
+    if (delegate.forcedExtension) {
+        [item setPathExtension:delegate.forcedExtension];
+    } else if (allowedFileTypes.count && ![allowedFileTypes containsObject:delegate.item.pathExtension]) {
         [item setPathExtension:allowedFileTypes.firstObject];
     }
     delegate.item = item;
@@ -423,7 +423,7 @@ typedef NS_ENUM(NSUInteger, iTermSavePanelAction) {
 
         case kiTermWarningSelection2:
             self.forcedExtension = [NSString stringWithFormat:@"%@.%@", proposedExtension, _requiredExtension];
-            break;
+            return YES;
 
         default:
             break;
