@@ -349,13 +349,16 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
 
     override func becomeFirstResponder() -> Bool {
         DLog("becomeFirstResponder \(url.d)")
-        browserDelegate?.webViewDidBecomeFirstResponder(self)
-        return true
+        let result = super.becomeFirstResponder()
+        if result {
+            browserDelegate?.webViewDidBecomeFirstResponder(self)
+        }
+        return result
     }
 
     override func resignFirstResponder() -> Bool {
         DLog("Resign first responder \(url.d)")
-        return true
+        return super.resignFirstResponder()
     }
 
     private func mouseDownImpl(event: NSEvent) -> (Bool, iTermClickSideEffects) {
