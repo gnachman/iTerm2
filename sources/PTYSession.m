@@ -15358,10 +15358,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenDidExecuteCommand:(NSString *)command
-                          range:(VT100GridCoordRange)range
+                          absRange:(VT100GridAbsCoordRange)absRange
                          onHost:(id<VT100RemoteHostReading>)host
                     inDirectory:(NSString *)directory
-                           mark:(id<VT100ScreenMarkReading>)mark {
+                           mark:(id<VT100ScreenMarkReading>)mark
+                         paused:(BOOL)paused {
     if (IsSecureEventInputEnabled()) {
         [[self appSwitchingPreventionDetector] didExecuteCommand:command];
     }
@@ -15376,11 +15377,18 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         [self trimCommandsIfNeeded];
     }
     self.lastCommand = command;
-    [self.variablesScope setValue:command forVariableNamed:iTermVariableKeySessionLastCommand];
+    if (paused) {
+        [self.variablesScope setValue:command forVariableNamed:iTermVariableKeySessionLastCommand];
+    } else {
+        // Not safe to update a variable in an unpaused side effect because it could do literally anything.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.variablesScope setValue:command forVariableNamed:iTermVariableKeySessionLastCommand];
+        });
+    }
 
     // `_screen.commandRange` is from the beginning of command, to the cursor, not necessarily the end of the command.
-    // `range` here includes the entire command and a new line.
-    _lastOrCurrentlyRunningCommandAbsRange = VT100GridAbsCoordRangeFromCoordRange(range, _screen.totalScrollbackOverflow);
+    // `absRange` here includes the entire command and a new line.
+    _lastOrCurrentlyRunningCommandAbsRange = absRange;
     DLog(@"Hide ACH because command ended");
     [[_delegate realParentWindow] hideAutoCommandHistoryForSession:self];
     [_promptSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
@@ -15397,7 +15405,18 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         }
     }];
     if ([iTermPreferences boolForKey:kPreferenceAutoComposer]) {
-        [_composerManager reset];
+        if (paused) {
+            [_composerManager reset];
+        } else {
+            // Rare - we lost a race
+            __weak __typeof(self) weakSelf = self;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                PTYSession *strongSelf = [[weakSelf retain] autorelease];
+                if (strongSelf) {
+                    [strongSelf->_composerManager reset];
+                }
+            });
+        }
     }
 }
 

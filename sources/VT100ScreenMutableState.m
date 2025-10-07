@@ -2720,20 +2720,39 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     DLog(@"commandDidEndWithRange: add paused side effect");
     // TODO: Per issue 12581 I should consider finding a way to do this unpaused. Perhaps it could be
     // unmanaged, or part of it could be unmanaged.
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
-        __strong __typeof(self) strongSelf = weakSelf;
-        if (!strongSelf) {
-            return;
-        }
-        DLog(@"commandDidEndWithRange: side effect calling screenDidExecuteCommand");
-        [delegate screenDidExecuteCommand:command
-                                    range:range
-                                   onHost:remoteHost
-                              inDirectory:workingDirectory
-                                     mark:mark];
-        DLog(@"commandDidEndWithRange: unpause");
-        [unpauser unpause];
-    } name:@"command did end with range"];
+    const VT100GridAbsCoordRange absRange = VT100GridAbsCoordRangeFromCoordRange(range, self.cumulativeScrollbackOverflow);
+
+    if (IsSecureEventInputEnabled() || self.config.autoComposerEnabled) {
+        [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+            __strong __typeof(self) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return;
+            }
+            DLog(@"commandDidEndWithRange: paused side effect calling screenDidExecuteCommand");
+            [delegate screenDidExecuteCommand:command
+                                     absRange:absRange
+                                       onHost:remoteHost
+                                  inDirectory:workingDirectory
+                                         mark:mark
+                                       paused:YES];
+            DLog(@"commandDidEndWithRange: unpause");
+            [unpauser unpause];
+        } name:@"command did end with range"];
+    } else {
+        [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+            __strong __typeof(self) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return;
+            }
+            DLog(@"commandDidEndWithRange: side effect calling screenDidExecuteCommand");
+            [delegate screenDidExecuteCommand:command
+                                     absRange:absRange
+                                       onHost:remoteHost
+                                  inDirectory:workingDirectory
+                                         mark:mark
+                                       paused:NO];
+        } name:@"command did end with range"];
+    }
 }
 
 - (void)removeInaccessibleIntervalTreeObjects {

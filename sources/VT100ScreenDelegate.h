@@ -332,10 +332,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
                      haveCommand:(BOOL)haveCommand;
 
 - (void)screenDidExecuteCommand:(NSString * _Nullable)command
-                          range:(VT100GridCoordRange)range
+                       absRange:(VT100GridAbsCoordRange)range
                          onHost:(id<VT100RemoteHostReading> _Nullable)host
                     inDirectory:(NSString * _Nullable)directory
-                           mark:(id<VT100ScreenMarkReading> _Nullable)mark;
+                           mark:(id<VT100ScreenMarkReading> _Nullable)mark
+                         paused:(BOOL)paused;
 - (void)screenCommandDidExitWithCode:(int)code mark:(id<VT100ScreenMarkReading> _Nullable)maybeMark;
 // Failed to run the command (e.g., syntax error)
 - (void)screenCommandDidAbortOnLine:(int)line
