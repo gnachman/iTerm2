@@ -357,6 +357,7 @@ typedef enum {
         state = [savedState[kXtermParserSavedStateStateKey] intValue];
         multitokenHeaderEmitted = [savedState[kXtermParserMultitokenHeaderEmittedkey] boolValue];
     } else {
+        DLog(@"Starting fresh parse (no saved state), datalen=%d", iTermParserLength(context));
         unsigned char peek = iTermParserPeek(context);
         BOOL apc = NO;
         if (support8BitControlCharacters && (peek == VT100CC_C1_OSC ||
@@ -408,9 +409,11 @@ typedef enum {
             case kXtermParserHeaderEndState:
                 // There's currently only one multitoken mode. Emit a header for it as an incidental.
                 assert([self tokenTypeForMode:mode] == XTERMCC_SET_KVP);
+                DLog(@"Emitting header incidental with data=%@", data);
                 [self emitIncidentalForSetKvpHeaderInVector:incidentals
                                                        data:data
                                                    encoding:encoding];
+                DLog(@"Header emitted, transitioning to MULTITOKEN_BODY mode");
                 state = kXtermParserParsingStringState;
                 mode = XTERMCC_MULTITOKEN_BODY;
                 multitokenHeaderEmitted = YES;
@@ -440,16 +443,19 @@ typedef enum {
             case kXtermParserFinishedState:
                 if (multitokenHeaderEmitted) {
                     if (data.length) {
+                        DLog(@"Emitting final body incidental with data=%@", data);
                         [self emitIncidentalForMultitokenBodyInVector:incidentals
                                                                  data:data
                                                              encoding:encoding];
                         [data setLength:0];
                     }
+                    DLog(@"Multitoken complete, returning MULTITOKEN_END");
                     result->type = XTERMCC_MULTITOKEN_END;
                 } else {
                     result.string = [[[NSString alloc] initWithData:data
                                                            encoding:encoding] autorelease];
                     result->type = [self tokenTypeForMode:mode];
+                    DLog(@"Finished parsing, returning type=%d", result->type);
                     if (result->type == XTERMCC_SET_KVP) {
                         [self parseKeyValuePairInToken:result];
                     }
@@ -458,6 +464,7 @@ typedef enum {
 
             case kXtermParserOutOfDataState:
                 if (data.length && multitokenHeaderEmitted) {
+                    DLog(@"Emitting body incidental with data=%@", data);
                     [self emitIncidentalForMultitokenBodyInVector:incidentals
                                                              data:data
                                                          encoding:encoding];
