@@ -35,7 +35,7 @@
     if (@available(macOS 26, *)) {
         NSGlassEffectView *glassView = [[NSGlassEffectView alloc] initWithFrame:self.bounds];
         _backgroundEffectView = glassView;
-        glassView.tintColor = [[NSColor controlBackgroundColor] colorWithAlphaComponent:0.2];
+        glassView.tintColor = [[NSColor controlBackgroundColor] colorWithAlphaComponent:0.7];
         _glassContentView = [[NSView alloc] initWithFrame:_backgroundEffectView.bounds];
         glassView.contentView = _glassContentView;
         [_container addSubview:_backgroundEffectView];
