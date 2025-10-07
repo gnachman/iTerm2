@@ -126,8 +126,10 @@
         contentView.layer.cornerRadius = 6;
     }
     contentView.layer.masksToBounds = YES;
-    contentView.layer.borderColor = [[NSColor colorWithCalibratedRed:0.66 green:0.66 blue:0.66 alpha:1] CGColor];
-    contentView.layer.borderWidth = 0.5;
+    if (@available(macOS 26, *)) {} else {
+        contentView.layer.borderColor = [[NSColor colorWithCalibratedRed:0.66 green:0.66 blue:0.66 alpha:1] CGColor];
+        contentView.layer.borderWidth = 0.5;
+    }
 
     if (@available(macOS 10.16, *)) {
         _divider.hidden = YES;
