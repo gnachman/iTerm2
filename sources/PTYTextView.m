@@ -665,10 +665,10 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     // performKeyEquivalent on subviews. The only subviews of this view are
     // highlight views or annotation views. This will usually return NO.
     if ([super performKeyEquivalent:theEvent]) {
-        NSLog(@"super performed it");
+        DLog(@"super performed it");
         return YES;
     }
-    if (@available(macOS 26, *)) {
+    if (@available(macOS 15, *)) {
         DLog(@"kPreferenceKeyAllowSymbolicHotKeys=%@", @([iTermPreferences boolForKey:kPreferenceKeyAllowSymbolicHotKeys]));
         if ([iTermPreferences boolForKey:kPreferenceKeyAllowSymbolicHotKeys] &&
             [iTermSymbolicHotkeys haveBoundKeyForKeycode:theEvent.keyCode modifiers:theEvent.it_modifierFlags]) {
