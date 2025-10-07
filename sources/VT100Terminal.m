@@ -1787,6 +1787,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             receivingFile_ = NO;
         }
     } else if (_copyMode != VT100TerminalCopyModeNone) {
+        DLog(@"Token type=%@ copyMode=%@ receivingFile=%@", @(token->type), @(_copyMode), @(receivingFile_));
         DLog(@"copy mode, might not execute token");
         if (token->type == XTERMCC_MULTITOKEN_BODY) {
             [_delegate terminalDidReceiveBase64PasteboardString:token.string ?: @""];
@@ -1804,10 +1805,12 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             [_delegate terminalDidFinishReceivingPasteboard];
             _copyMode = VT100TerminalCopyModeNone;
             return;
-        } else if (_copyMode != VT100TerminalCopyModeSegmented) {
+        } else if (_copyMode != VT100TerminalCopyModeSegmented &&
+                   token->type != SSH_OUTPUT) {
             // In segmented mode we allow unexpected tokens. This is to work around tmux's
-            // redrawing between passthroughs. Otherwise something went wrong (ssh died?) and it's
-            // best to exit copy mode.
+            // redrawing between passthroughs. SSH_OUTPUT tokens are also allowed since they
+            // are wrappers that contain the actual multitoken body. Otherwise something went
+            // wrong (ssh died?) and it's best to exit copy mode.
             [_delegate terminalPasteboardReceiptEndedUnexpectedly];
             _copyMode = VT100TerminalCopyModeNone;
         }
@@ -2788,6 +2791,10 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
 
         case XTERMCC_MULTITOKEN_HEADER_SET_KVP:
+            DLog(@"Execute MULTITOKEN_HEADER: kvpKey=%@ kvpValue=%@ string=%@", token.kvpKey, token.kvpValue, token.string);
+            [self executeXtermSetKvp:token];
+            break;
+
         case XTERMCC_SET_KVP:
             [self executeXtermSetKvp:token];
             break;
@@ -4073,6 +4080,7 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
         [_delegate terminalDidFinishReceivingFile];
         receivingFile_ = NO;
     } else if ([key isEqualToString:@"Copy"]) {
+        DLog(@"Handling Copy key with value=%@", value);
         if ([_delegate terminalIsTrusted]) {
             NSArray<NSString *> *parts = [value componentsSeparatedByString:@";"];
             int mode;
@@ -4081,9 +4089,11 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
             } else {
                 mode = parts[0].intValue;
             }
+            DLog(@"Copy mode=%d parts=%@", mode, parts);
             switch (mode) {
                 case 1:
                     // Contains the entirety.
+                    DLog(@"Setting _copyMode to Monolithic");
                     [_delegate terminalBeginCopyToPasteboard];
                     _copyMode = VT100TerminalCopyModeMonolithic;
                     self.uidForCopyMode = nil;
