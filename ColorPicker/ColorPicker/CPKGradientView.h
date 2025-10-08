@@ -41,7 +41,8 @@ typedef NS_ENUM(NSInteger, CPKGradientViewType) {
 /** Determines the type of gradient. */
 @property(nonatomic) CPKGradientViewType type;
 
-@property(nonatomic, readonly) NSColorSpace *colorSpace;
+/** Colorspace to use for interpreting hsb or rgb values. */
+@property(nonatomic) NSColorSpace *colorSpace;
 /**
  * Initializes a new gradient view with a callback.
  *

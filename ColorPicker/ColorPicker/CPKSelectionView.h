@@ -13,7 +13,10 @@
 
 /** Assign to this to programatically change the color. Will invoke the callback block. */
 @property(nonatomic) CPKColor *selectedColor;
-@property(nonatomic, readonly) NSColorSpace *colorSpace;
+@property(nonatomic) NSColorSpace *colorSpace;
+
+/** Called when the color space changes. */
+@property(nonatomic, copy) void (^colorSpaceDidChangeBlock)(NSColorSpace *);
 
 /**
  * Initializes a new selection view.

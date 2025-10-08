@@ -31,6 +31,14 @@
     return self;
 }
 
+- (void)setColorSpace:(NSColorSpace *)colorSpace {
+    if ([self.colorSpace isEqual:colorSpace]) {
+        return;
+    }
+    _colorSpace = colorSpace;
+    [self setNeedsDisplay:YES];
+}
+
 - (NSBezierPath *)boundingPath {
     NSRect rect = NSMakeRect(0.5,
                              0.5,

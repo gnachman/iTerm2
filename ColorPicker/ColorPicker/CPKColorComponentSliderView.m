@@ -50,6 +50,15 @@
     [self setGradientColor:color];
 }
 
+- (void)setColorSpace:(NSColorSpace *)colorSpace {
+    if ([self.colorSpace isEqual:colorSpace]) {
+        return;
+    }
+    [super setColorSpace:colorSpace];
+    [self updateGradient];
+    [self setNeedsDisplay:YES];
+}
+
 - (void)setGradientColor:(CPKColor *)color {
     _color = color;
     [self updateGradient];
@@ -68,22 +77,25 @@
     for (int i = 0; i <= parts; i++) {
         switch (self.type) {
             case kCPKColorComponentSliderTypeHue:
-                [colors addObject:[NSColor cpk_colorWithHue:(double)i / (double)parts
-                                                 saturation:self.color.saturationComponent
-                                                 brightness:self.color.brightnessComponent
-                                                      alpha:1]];
+                [colors addObject:[NSColor colorWithColorSpace:self.colorSpace
+                                                           hue:(double)i / (double)parts
+                                                    saturation:self.color.saturationComponent
+                                                    brightness:self.color.brightnessComponent
+                                                         alpha:1]];
                 break;
             case kCPKColorComponentSliderTypeSaturation:
-                [colors addObject:[NSColor cpk_colorWithHue:self.color.hueComponent
-                                                 saturation:(double)i / (double)parts
-                                                 brightness:self.color.brightnessComponent
-                                                      alpha:1]];
+                [colors addObject:[NSColor colorWithColorSpace:self.colorSpace
+                                                           hue:self.color.hueComponent
+                                                    saturation:(double)i / (double)parts
+                                                    brightness:self.color.brightnessComponent
+                                                         alpha:1]];
                 break;
             case kCPKColorComponentSliderTypeBrightness:
-                [colors addObject:[NSColor cpk_colorWithHue:self.color.hueComponent
-                                                 saturation:self.color.saturationComponent
-                                                 brightness:(double)i / (double)parts
-                                                      alpha:1]];
+                [colors addObject:[NSColor colorWithColorSpace:self.colorSpace
+                                                           hue:self.color.hueComponent
+                                                    saturation:self.color.saturationComponent
+                                                    brightness:(double)i / (double)parts
+                                                         alpha:1]];
                 break;
             case kCPKColorComponentSliderTypeRed:
                 [colors addObject:[NSColor cpk_colorWithRed:(double)i / (double)parts

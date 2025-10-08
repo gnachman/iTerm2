@@ -12,11 +12,6 @@
 
 - (BOOL)isApproximatelyEqualToColor:(NSColor *)color;
 
-+ (NSColor *)cpk_colorWithHue:(CGFloat)hue
-                   saturation:(CGFloat)saturation
-                   brightness:(CGFloat)brightness
-                        alpha:(CGFloat)alpha;
-
 + (NSColor *)cpk_colorWithRed:(CGFloat)red
                         green:(CGFloat)green
                          blue:(CGFloat)blue

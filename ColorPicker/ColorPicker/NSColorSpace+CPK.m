@@ -16,6 +16,6 @@
     if ([self isEqual:[NSColorSpace displayP3ColorSpace]]) {
         return @"P3";
     }
-    return self.localizedName;
+    return @"Dev";
 }
 @end

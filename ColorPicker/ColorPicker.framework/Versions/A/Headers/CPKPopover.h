@@ -12,8 +12,16 @@
 /** Reflects the final selected color. Setter changes color in open popover. */
 @property(nonatomic, strong) NSColor *selectedColor;
 
+/** The color space used by the popover. */
+@property(nonatomic, strong) NSColorSpace *colorSpace;
+
+/** Called when the color space changes. */
+@property(nonatomic, copy) void (^colorSpaceDidChange)(NSColorSpace *);
+
 /** Called before popover closes. */
 @property(nonatomic, copy) void (^willClose)(void);
+
+@property(nonatomic, readonly) BOOL closing;
 
 /**
  * Shows the color picker in a popover. Returns the semitransient popover.

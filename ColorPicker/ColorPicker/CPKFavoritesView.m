@@ -64,6 +64,14 @@ NSString *const kCPFavoritesUserDefaultsKey = @"kCPFavoritesUserDefaultsKey";
 
 @implementation CPKFavoritesView
 
+- (void)setColorSpace:(NSColorSpace *)colorSpace {
+    if ([_colorSpace isEqual:colorSpace]) {
+        return;
+    }
+    _colorSpace = colorSpace;
+    [self.tableView reloadData];
+}
+
 - (instancetype)initWithFrame:(NSRect)frameRect colorSpace:(NSColorSpace *)colorSpace {
     self = [super initWithFrame:frameRect];
     if (self) {

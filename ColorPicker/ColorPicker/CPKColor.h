@@ -35,7 +35,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithHue:(CGFloat)hue
                  saturation:(CGFloat)saturation
                  brightness:(CGFloat)brightness
-                      alpha:(CGFloat)alpha;
+                      alpha:(CGFloat)alpha
+                 colorSpace:(NSColorSpace *)colorSpace;
 
 - (instancetype)initWithRed:(CGFloat)red
                       green:(CGFloat)green

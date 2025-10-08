@@ -22,6 +22,7 @@
 }
 
 - (void)viewDidLoad {
+    _well.colorSpace = [NSColorSpace it_defaultColorSpace];
     _well.noColorAllowed = YES;
     self.view.autoresizesSubviews = NO;
     self.value = _value;
@@ -29,7 +30,8 @@
 
 - (void)setValue:(NSDictionary *)value {
     _value = value;
-    _well.color = [_value colorValue];
+    NSColor *color = [_value colorValue];
+    _well.color = color;
 }
 
 - (NSDictionary *)value {

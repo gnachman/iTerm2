@@ -13,9 +13,9 @@
 
 static CGFloat kDesiredWidth(void) {
     if (@available(macOS 26, *)) {
-        return 287;
+        return 307;
     }
-    return 272;
+    return 292;
 }
 
 static CGFloat kDesiredHeight(void) {
@@ -48,6 +48,7 @@ static const CGFloat kBottomMargin = 8;
                         color:(NSColor *)color
                       options:(CPKMainViewControllerOptions)options
                    colorSpace:(NSColorSpace *)colorSpace {
+    NSAssert(colorSpace != nil, @"colorSpace must not be nil");
     self = [super initWithNibName:nil bundle:nil];
     if (self) {
         _block = [block copy];
@@ -78,6 +79,7 @@ static const CGFloat kBottomMargin = 8;
     self.view.autoresizesSubviews = NO;
 
     __weak __typeof(self) weakSelf = self;
+    NSAssert(self.colorSpace != nil, @"colorSpace is nil when creating selectionView in loadView");
     self.selectionView = [[CPKSelectionView alloc] initWithFrame:self.view.bounds
                                                            block: ^(CPKColor *color) {
                                                                [weakSelf selectColor:color.color
@@ -87,6 +89,13 @@ static const CGFloat kBottomMargin = 8;
                                                       colorSpace:self.colorSpace
                                                     alphaAllowed:self.alphaAllowed];
     self.selectionView.delegate = self;
+    self.selectionView.colorSpaceDidChangeBlock = ^(NSColorSpace *newColorSpace) {
+        NSAssert(newColorSpace != nil, @"colorSpaceDidChangeBlock received nil colorSpace");
+        weakSelf.colorSpace = newColorSpace;
+        if (weakSelf.colorSpaceDidChangeBlock) {
+            weakSelf.colorSpaceDidChangeBlock(newColorSpace);
+        }
+    };
     [self.selectionView sizeToFit];
 
     self.controlsView =
@@ -185,6 +194,20 @@ static const CGFloat kBottomMargin = 8;
     [self.favoritesView selectColor:color];
     if (updateSelectionView) {
         [self.selectionView setSelectedColor:[[CPKColor alloc] initWithColor:color]];
+    }
+}
+
+- (void)setColorSpace:(NSColorSpace *)colorSpace {
+    NSAssert(colorSpace != nil, @"setColorSpace: called with nil colorSpace");
+    if ([_colorSpace isEqual:colorSpace]) {
+        return;
+    }
+    _colorSpace = colorSpace;
+    if (self.selectionView) {
+        self.selectionView.colorSpace = colorSpace;
+    }
+    if (self.favoritesView) {
+        self.favoritesView.colorSpace = colorSpace;
     }
 }
 

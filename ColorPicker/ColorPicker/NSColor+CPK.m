@@ -10,20 +10,6 @@
 
 @implementation NSColor (CPK)
 
-+ (NSColor *)cpk_colorWithHue:(CGFloat)hue
-                   saturation:(CGFloat)saturation
-                   brightness:(CGFloat)brightness
-                        alpha:(CGFloat)alpha {
-    if ([self respondsToSelector:@selector(colorWithHue:saturation:brightness:alpha:)]) {
-        return [self colorWithHue:hue saturation:saturation brightness:brightness alpha:alpha];
-    } else {
-        return [self colorWithCalibratedHue:hue
-                                 saturation:saturation
-                                 brightness:brightness
-                                      alpha:alpha];
-    }
-}
-
 + (NSColor *)cpk_colorWithRed:(CGFloat)red
                         green:(CGFloat)green
                          blue:(CGFloat)blue
@@ -63,6 +49,13 @@
                    extended.greenComponent > 1 ||
                    extended.blueComponent < 0 ||
                    extended.blueComponent > 1);
+    } else if ([colorSpace isEqual:NSColorSpace.deviceRGBColorSpace]) {
+        NSColor *deviceRGB = [self colorUsingColorSpace:NSColorSpace.deviceRGBColorSpace];
+        NSColor *backformed = [deviceRGB colorUsingColorSpace:self.colorSpace];
+        const CGFloat epsilon = 0.005;
+        clipped = (fabs(backformed.redComponent - self.redComponent) > epsilon ||
+                   fabs(backformed.greenComponent - self.greenComponent) > epsilon ||
+                   fabs(backformed.blueComponent - self.blueComponent) > epsilon);
     }
     if (clippedPtr) {
         *clippedPtr = clipped;

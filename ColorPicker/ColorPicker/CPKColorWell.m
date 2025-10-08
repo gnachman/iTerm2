@@ -7,6 +7,7 @@
 @protocol CPKColorWellViewDelegate
 @property(nonatomic, readonly) void (^willOpenPopover)(void);
 @property(nonatomic, readonly) void (^willClosePopover)(void);
+@property(nonatomic) NSColorSpace *colorSpace;
 
 - (NSRect)presentationRect;
 - (NSView *)presentingView;
@@ -303,6 +304,7 @@
     if (self.noColorAllowed) {
         options |= CPKMainViewControllerOptionsNoColor;
     }
+    NSAssert(self.colorSpace != nil, @"CPKColorWellView colorSpace must not be nil when opening popover");
     self.popover =
         [CPKPopover presentRelativeToRect:presentationRect
                                    ofView:presentingView
@@ -324,12 +326,17 @@
                          [weakSelf.popover close];
                          [self showSystemColorPicker];
                      }];
+    self.popover.colorSpaceDidChange = ^(NSColorSpace *newColorSpace) {
+        weakSelf.colorSpace = newColorSpace;
+    };
     self.open = YES;
     self.popover.willClose = ^() {
         if (weakSelf.willClosePopover) {
             weakSelf.willClosePopover(weakSelf.color);
         }
         weakSelf.color = weakSelf.selectedColor;
+        // Update color space - the view's colorSpace should already be up to date from the popover
+        weakSelf.delegate.colorSpace = weakSelf.colorSpace;
         weakSelf.open = NO;
         weakSelf.popover = nil;
     };
@@ -434,8 +441,15 @@ static NSColorSpace *gDefaultColorSpace;
 }
 
 - (void)setColorSpace:(NSColorSpace *)colorSpace {
+    if ([_colorSpace isEqual:colorSpace]) {
+        return;
+    }
     _colorSpace = colorSpace;
-    self.view.colorSpace = colorSpace;
+    [self load];
+    _view.colorSpace = colorSpace;
+    if (_view.popover && !_view.popover.closing) {
+        _view.popover.colorSpace = colorSpace;
+    }
 }
 
 - (NSColor *)color {
@@ -444,6 +458,9 @@ static NSColorSpace *gDefaultColorSpace;
 
 - (void)setColor:(NSColor *)color {
     CPKLog(@"setColor:%@", color);
+    if (color) {
+        self.colorSpace = color.colorSpace;
+    }
     self.view.color = color;
     self.view.selectedColor = color;
 }

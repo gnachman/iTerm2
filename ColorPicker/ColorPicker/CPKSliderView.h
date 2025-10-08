@@ -7,7 +7,7 @@
 
 /** The current value. Assign to this to move the slider. */
 @property(nonatomic) CGFloat selectedValue;
-@property(nonatomic, readonly) NSColorSpace *colorSpace;
+@property(nonatomic) NSColorSpace *colorSpace;
 
 /**
  * Initializes a slider.
