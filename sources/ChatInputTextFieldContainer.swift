@@ -122,8 +122,6 @@ class ChatInputTextFieldContainer: NSView {
             frame.size.height = usedRect.height
             textView.frame = frame
         }
-        // Invalidate intrinsic content size so container stays capped at maxHeight.
-        invalidateIntrinsicContentSize()
     }
 
     private func customizeAppearance() {
