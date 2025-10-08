@@ -16,7 +16,7 @@ protocol ChatToolbarDataSource: AnyObject {
     var thinkingEnabled: Bool { get }
     var effectiveModel: String? { get }
 
-    func showSessionButtonMenu()
+    func showSessionButtonMenu(_ sender: NSButton)
     func toggleWebSearch()
     func toggleThinking()
     func toolbarDidUpdate()
@@ -260,7 +260,7 @@ extension ChatToolbar {
     }
 
     @objc private func showSessionButtonMenu(_ sender: NSButton) {
-        dataSource?.showSessionButtonMenu()
+        dataSource?.showSessionButtonMenu(sender)
     }
 
     @objc private func toggleWebSearch(_ sender: Any) {
