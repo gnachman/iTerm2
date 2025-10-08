@@ -2,6 +2,7 @@
 #import "CPKEyedropperView.h"
 #import "CPKScreenshot.h"
 #import "NSColor+CPK.h"
+#import "NSColorSpace+CPK.h"
 
 // Size in points of one edge of the window. It is square.
 const CGFloat kSize = 200;
@@ -64,7 +65,7 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     }
 }
 
-+ (void)pickColorWithColorSpace:(NSColorSpace *)colorSpace completion:(void (^)(NSColor *color))completion {
++ (void)pickColorWithCompletion:(void (^)(NSColor *color, NSColorSpace *colorSpace))completion {
     if (![self canTakeScreenshot]) {
         [self complainAboutScreenCapturePermission];
         if (![self canTakeScreenshot]) {
@@ -78,13 +79,14 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
                                            styleMask:NSWindowStyleMaskBorderless
                                                      backing:NSBackingStoreBuffered
                                                        defer:NO];
-    eyedropperWindow->_colorSpace = colorSpace;
+    eyedropperWindow->_colorSpace = nil;
     eyedropperWindow.opaque = NO;
     eyedropperWindow.backgroundColor = [NSColor clearColor];
     eyedropperWindow.hasShadow = NO;
     eyedropperWindow.previousKeyWindow = [NSApp keyWindow];
     NSRect rect = NSMakeRect(0, 0, frame.size.width, frame.size.height);
-    eyedropperWindow.eyedropperView = [[CPKEyedropperView alloc] initWithFrame:rect colorSpace:colorSpace];
+    // Use P3 for display purposes since it has the widest gamut
+    eyedropperWindow.eyedropperView = [[CPKEyedropperView alloc] initWithFrame:rect colorSpace:[NSColorSpace displayP3ColorSpace]];
     __weak __typeof(eyedropperWindow) weakWindow = eyedropperWindow;
     eyedropperWindow.eyedropperView.click = ^() {
         [weakWindow accept];
@@ -104,7 +106,7 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     });
 }
 
-- (void)finishPickingColorWithCompletion:(void (^)(NSColor *color))completion {
+- (void)finishPickingColorWithCompletion:(void (^)(NSColor *color, NSColorSpace *colorSpace))completion {
     [[NSCursor crosshairCursor] push];
     [self doPick];
     [[NSCursor crosshairCursor] pop];
@@ -113,9 +115,9 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
         [self orderOut:nil];
     }
     if (selectedColor.alphaComponent == 0) {
-        completion(nil);
+        completion(nil, nil);
     } else {
-        completion(selectedColor);
+        completion(selectedColor, _colorSpace);
     }
 }
 
@@ -126,7 +128,8 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
 - (void)grabScreenshots {
     self.screenshots = [NSMutableArray array];
     for (NSScreen *screen in [NSScreen screens]) {
-        CPKScreenshot *screenshot = [CPKScreenshot grabFromScreen:screen colorSpace:_colorSpace];
+        // Pass nil for colorSpace to capture in the screen's native colorspace
+        CPKScreenshot *screenshot = [CPKScreenshot grabFromScreen:screen colorSpace:nil];
         [self.screenshots addObject:screenshot];
     }
 }
@@ -213,7 +216,8 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     NSMutableArray *outerArray = [NSMutableArray array];
     const NSInteger radius = 9;
     CPKScreenshot *screenshot = [self currentScreenScreenshot];
-    NSColor *blackColor = [NSColor cpk_colorWithRed:0 green:0 blue:0 alpha:1 colorSpace:self.colorSpace];
+    // Use P3 for display since it has the widest gamut
+    NSColor *blackColor = [NSColor cpk_colorWithRed:0 green:0 blue:0 alpha:1 colorSpace:[NSColorSpace displayP3ColorSpace]];
     for (NSInteger x = point.x - radius; x <= point.x + radius; x++) {
         NSMutableArray *innerArray = [NSMutableArray array];
         for (NSInteger y = point.y - radius; y <= point.y + radius; y++) {
@@ -254,7 +258,24 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     point.y = screen.frame.size.height - point.y;
     point.x *= screen.backingScaleFactor;
     point.y *= screen.backingScaleFactor;
-    self.selectedColor = [[self.currentScreenScreenshot colorAtX:point.x y:point.y] colorUsingColorSpace:_colorSpace];
+
+    CPKScreenshot *screenshot = self.currentScreenScreenshot;
+    NSColor *nativeColor = [screenshot colorAtX:point.x y:point.y];
+    if (nativeColor) {
+        NSColorSpace *nativeColorSpace = screenshot.colorSpace;
+
+        // Map the native colorspace to one of the supported colorspaces
+        NSColorSpace *supportedColorSpace = [NSColorSpace cpk_supportedColorSpaceForColorSpace:nativeColorSpace];
+
+        // Convert the color to the supported colorspace
+        NSColor *convertedColor = [nativeColor colorUsingColorSpace:supportedColorSpace];
+
+        self.selectedColor = convertedColor;
+        _colorSpace = supportedColorSpace;
+    } else {
+        self.selectedColor = nil;
+        self.colorSpace = [NSColorSpace displayP3ColorSpace];
+    }
 }
 
 - (void)dismiss {

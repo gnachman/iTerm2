@@ -12,6 +12,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface NSColorSpace(CPK)
 - (NSString *)cpk_shortLocalizedName;
+
+/**
+ * Maps a colorspace to one of the three supported colorspaces (P3, sRGB, or Device).
+ * Returns the closest supported colorspace.
+ */
++ (NSColorSpace *)cpk_supportedColorSpaceForColorSpace:(NSColorSpace *)colorSpace;
 @end
 
 NS_ASSUME_NONNULL_END

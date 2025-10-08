@@ -19,8 +19,16 @@
     size.width *= screen.backingScaleFactor;
     size.height *= screen.backingScaleFactor;
 
+    // Capture in the display's native colorspace to avoid lossy conversion
+    CGColorSpaceRef nativeColorSpaceRef = CGImageGetColorSpace(cgImage);
+    NSColorSpace *nativeColorSpace = nil;
+    if (nativeColorSpaceRef) {
+        nativeColorSpace = [[NSColorSpace alloc] initWithCGColorSpace:nativeColorSpaceRef];
+    }
+
+    // Use the native colorspace if available, otherwise fall back to the requested one
     CPKScreenshot *screenshot = [CPKScreenshot screenshotFromCGImage:cgImage
-                                                          colorSpace:colorSpace];
+                                                          colorSpace:nativeColorSpace ?: colorSpace ?: [NSColorSpace displayP3ColorSpace]];
     CFRelease(cgImage);
 
     return screenshot;
@@ -82,7 +90,7 @@
 - (NSColor *)colorAtX:(NSInteger)x y:(NSInteger)y {
     unsigned char *b = (unsigned char *)_data.bytes;
     NSInteger offset = (x + y * (NSInteger)_size.width) * 4;
-    if (offset < 0 || offset > _data.length) {
+    if (offset < 0 || offset + 3 >= _data.length) {
         return nil;
     }
     CGFloat components[] = {

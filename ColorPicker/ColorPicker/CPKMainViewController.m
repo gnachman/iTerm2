@@ -90,7 +90,7 @@ static const CGFloat kBottomMargin = 8;
                                                     alphaAllowed:self.alphaAllowed];
     self.selectionView.delegate = self;
     self.selectionView.colorSpaceDidChangeBlock = ^(NSColorSpace *newColorSpace) {
-        NSAssert(newColorSpace != nil, @"colorSpaceDidChangeBlock received nil colorSpace");
+        NSCAssert(newColorSpace != nil, @"colorSpaceDidChangeBlock received nil colorSpace");
         weakSelf.colorSpace = newColorSpace;
         if (weakSelf.colorSpaceDidChangeBlock) {
             weakSelf.colorSpaceDidChangeBlock(newColorSpace);
@@ -130,10 +130,13 @@ static const CGFloat kBottomMargin = 8;
     self.controlsView.removeFavoriteBlock = ^() {
         [weakSelf.favoritesView removeSelectedFavorites];
     };
-    NSColorSpace *colorSpace = self.colorSpace;
     self.controlsView.startPickingBlock = ^() {
-        [CPKEyedropperWindow pickColorWithColorSpace:colorSpace completion:^(NSColor *color) {
+        [CPKEyedropperWindow pickColorWithCompletion:^(NSColor *color, NSColorSpace *colorSpace) {
             if (color) {
+                // Adopt the colorspace from the eyedropper if available
+                if (colorSpace) {
+                    weakSelf.colorSpace = colorSpace;
+                }
                 weakSelf.selectionView.selectedColor = [[CPKColor alloc] initWithColor:color];
             }
         }];
@@ -151,7 +154,8 @@ static const CGFloat kBottomMargin = 8;
                                      colorSpace:self.colorSpace];
     self.favoritesView.selectionDidChangeBlock = ^(NSColor *newColor) {
         if (newColor) {
-            weakSelf.selectionView.selectedColor = [[CPKColor alloc] initWithColor:[newColor colorUsingColorSpace:colorSpace]];
+            weakSelf.selectionView.selectedColor = [[CPKColor alloc] initWithColor:newColor];
+            [weakSelf setColorSpace:newColor.colorSpace];
             weakSelf.controlsView.removeEnabled = YES;
         } else {
             weakSelf.controlsView.removeEnabled = NO;

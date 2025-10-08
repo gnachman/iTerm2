@@ -7,11 +7,12 @@
 @interface CPKEyedropperWindow : NSWindow
 
 /**
- * Shows the window, waits for the user to click, and then returns the color under the cursor.
+ * Shows the window, waits for the user to click, and then returns the color under the cursor
+ * in its native colorspace (mapped to one of the supported colorspaces: P3, sRGB, or Device).
  *
- * @return The selected color, or nil if the pick is aborted (e.g., by another application becoming
- *   active).
+ * @param completion A block that receives the selected color and its colorspace, or nil/nil if
+ *   the pick is aborted (e.g., by another application becoming active).
  */
-+ (void)pickColorWithColorSpace:(NSColorSpace *)colorSpace completion:(void (^)(NSColor *color))completion;
++ (void)pickColorWithCompletion:(void (^)(NSColor *color, NSColorSpace *colorSpace))completion;
 
 @end
