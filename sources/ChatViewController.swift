@@ -1753,7 +1753,7 @@ extension ChatViewController: ChatToolbarDataSource {
         }
     }
 
-    func showSessionButtonMenu() {
+    func showSessionButtonMenu(_ sender: NSButton) {
         guard let chatID else {
             return
         }
@@ -1831,8 +1831,8 @@ extension ChatViewController: ChatToolbarDataSource {
         menu.addItem(withTitle: "Help", action: #selector(showLinkedSessionHelp(_:)), target: self)
 
         // Position the menu just below the button
-        let location = NSPoint(x: 0, y: chatToolbar.sessionButton.bounds.height)
-        menu.popUp(positioning: nil, at: location, in: chatToolbar.sessionButton)
+        let location = NSPoint(x: 0, y: sender.bounds.height)
+        menu.popUp(positioning: nil, at: location, in: sender)
     }
 
     func toggleWebSearch() {
