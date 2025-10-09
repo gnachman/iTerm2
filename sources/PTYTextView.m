@@ -2328,7 +2328,20 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
     // Remove results from dirty lines and mark parts of the view as needing display.
     NSMutableIndexSet *cleanLines = [NSMutableIndexSet indexSet];
-    const BOOL marginColorChanged = [self updateMarginColor];
+
+    // We must update the margin color, which in minimal can cause the window chrome color to change.
+    // That can trigger a layout pass, which is not safe to do here because it runs in a
+    // side effect. So check if it would change, which is rare, and then actually modify it in the
+    // next spin.
+    const BOOL marginColorShouldChange = [self updateMarginColorState];
+    if (marginColorShouldChange) {
+        __weak __typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf updateMarginColorState];
+            [weakSelf.delegate textViewMarginColorDidChange];
+            [weakSelf requestDelegateRedraw];
+        });
+    }
     if (allDirty) {
         foundDirty = YES;
         DLog(@"allDirty=YES");
@@ -2353,9 +2366,6 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
             } else if (!haveScrolled) {
                 [cleanLines addIndex:y - lineStart];
             }
-        }
-        if (marginColorChanged) {
-            [self requestDelegateRedraw];
         }
     }
 
@@ -2426,7 +2436,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     return [_colorMap processedBackgroundColorForBackgroundColor:unprocessed];
 }
 
-- (BOOL)updateMarginColor {
+- (BOOL)updateMarginColorState {
     const BOOL enabledInSettings = [iTermAdvancedSettingsModel extendBackgroundColorIntoMargins];
     const VT100MarginColor before = _marginColor;
     if (!_marginColorAllowed || !enabledInSettings) {
@@ -2435,6 +2445,14 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         _marginColor = [self desiredMarginColor];
     }
     if (!VT100MarginColorsEqual(&before, &_marginColor)) {
+        return YES;
+    } else {
+        return NO;
+    }
+}
+
+- (BOOL)updateMarginColor {
+    if ([self updateMarginColorState]) {
         [self.delegate textViewMarginColorDidChange];
         return YES;
     } else {
