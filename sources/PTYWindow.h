@@ -45,6 +45,7 @@ extern const NSTimeInterval iTermWindowTitleChangeMinimumInterval;
 @protocol PTYWindowDelegateProtocol<NSObject,NSWindowDelegate>
 - (BOOL)lionFullScreen;
 - (BOOL)anyFullScreen;
+- (BOOL)terminalWindowIsEnteringLionFullScreen;
 - (void)windowWillShowInitial;
 - (void)toggleTraditionalFullScreenMode;
 - (BOOL)terminalWindowShouldHaveTitlebarSeparator NS_AVAILABLE_MAC(10_16);

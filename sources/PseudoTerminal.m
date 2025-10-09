@@ -4771,6 +4771,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return lionFullScreen_;
 }
 
+- (BOOL)terminalWindowIsEnteringLionFullScreen {
+    return togglingLionFullScreen_;
+}
+
 - (void)ptyWindowMakeCurrentSessionFirstResponder {
     [self.window makeFirstResponder:self.currentSession.mainResponder];
 }
