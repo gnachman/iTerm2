@@ -506,9 +506,15 @@
         case KEY_ACTION_REMAP_LOCALLY:
             DLog(@"Calling sendEvent:");
             [self.class remapModifiersInCGEvent:event];
-            [NSApp sendEvent:[NSEvent eventWithCGEvent:event]];
-            _remapped = NO;
-            return nil;
+            if (eventTap != nil) {
+                // Only re-send through sendEvent when coming from the event tap
+                [NSApp sendEvent:[NSEvent eventWithCGEvent:event]];
+                _remapped = NO;
+                return nil;
+            }
+            // When called from application-level remapping (eventTap==nil), just return the remapped event
+            _remapped = YES;
+            return event;
 
         case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
             DLog(@"Action is do not remap");
