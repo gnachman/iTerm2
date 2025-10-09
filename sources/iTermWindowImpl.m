@@ -598,6 +598,15 @@ ITERM_WEAKLY_REFERENCEABLE
           self.delegate,
          [NSThread callStackSymbols]);
     if (self.it_preventFrameChange) {
+        // Allow frame changes when entering Lion fullscreen, which is necessary during window
+        // restoration. Otherwise we'd get an infinite recursion when AppKit tries to resize
+        // the window to fit the fullscreen tile.
+        if ([self.ptyDelegate terminalWindowIsEnteringLionFullScreen]) {
+            DLog(@"Allowing frame change during Lion fullscreen transition");
+            [super setFrame:frameRect display:flag];
+            return;
+        }
+
         // This is a terrible hack.
         // When you restart and choose to restore windows after logging back in, appkit sets the
         // window size from the restoration completion block. This has the effect of reversing the
