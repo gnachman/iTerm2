@@ -185,7 +185,7 @@ private extension iTermBrowserTriggerHandler {
         triggers = [:]
         if let dicts: [[AnyHashable: Any]] = profileObserver.value(KEY_TRIGGERS) {
             for dict in dicts {
-                if let trigger = Trigger(fromDict: Trigger.triggerNormalizedDictionary(dict)),
+                if let trigger = Trigger(fromUntrustedDict: Trigger.triggerNormalizedDictionary(dict)),
                    let browserTrigger = trigger as? BrowserTrigger {
                     triggers[UUID().uuidString] = (dict as NSDictionary, browserTrigger)
                 }

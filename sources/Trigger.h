@@ -140,7 +140,6 @@ extern NSString * const kTriggerNameKey;
 @property (nonatomic, readonly) BOOL isBrowserTrigger;
 
 + (nullable NSSet<NSString *> *)synonyms;
-+ (nullable Trigger *)triggerFromDict:(NSDictionary *)dict;
 + (nullable Trigger *)triggerFromUntrustedDict:(NSDictionary *)dict;
 
 // Subclasses should implement:

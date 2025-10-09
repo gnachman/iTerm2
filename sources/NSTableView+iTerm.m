@@ -53,7 +53,8 @@
         text.stringValue = value;
         text.toolTip = value;
     } else {
-        assert(NO);
+        text.stringValue = @"";
+        text.toolTip = nil;
     }
 }
 

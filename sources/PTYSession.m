@@ -19186,7 +19186,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (NSArray<NSString *> *)triggerNames {
     return [_config.triggerProfileDicts mapWithBlock:^id(NSDictionary *dict) {
-        Trigger *trigger = [Trigger triggerFromDict:dict];
+        Trigger *trigger = [Trigger triggerFromUntrustedDict:dict];
+        if (!trigger) {
+            return nil;
+        }
         return [NSString stringWithFormat:@"%@ — %@", [[[trigger class] title] stringByRemovingSuffix:@"…"], trigger.regex];
     }];
 }

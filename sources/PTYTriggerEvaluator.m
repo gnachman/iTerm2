@@ -262,7 +262,7 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
         if (!triggers.count) {
             DLog(@"This is a new trigger");
             NSDictionary *clean = [profileDict dictionaryByRemovingObjectForKey:kTriggerPerformanceKey];
-            return [Trigger triggerFromDict:clean];
+            return [Trigger triggerFromUntrustedDict:clean];
         }
         DLog(@"Use second trigger from %@", triggers);
         table[dict] = [triggers arrayByRemovingFirstObject];

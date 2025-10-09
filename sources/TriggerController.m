@@ -852,7 +852,10 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 
 - (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)row {
     NSDictionary *triggerDictionary = [self triggerDictionariesForCurrentProfile][row];
-    Trigger *trigger = [Trigger triggerFromDict:triggerDictionary];
+    Trigger *trigger = [Trigger triggerFromUntrustedDict:triggerDictionary];
+    if (!trigger) {
+        return 12.0;
+    }
     NSAttributedString *attributedString = trigger.attributedString;
     return [attributedString heightForWidth:tableView.tableColumns[0].width] + 8;
 }
@@ -861,7 +864,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
    viewForTableColumn:(NSTableColumn *)tableColumn
                   row:(NSInteger)row {
     NSDictionary *triggerDictionary = [self triggerDictionariesForCurrentProfile][row];
-    Trigger *trigger = [Trigger triggerFromDict:triggerDictionary];
+    Trigger *trigger = [Trigger triggerFromUntrustedDict:triggerDictionary];
     iTermTableCellViewWithTextField *view = [tableView newTableCellViewWithTextFieldUsingIdentifier:@"Trigger Tableview Entry"
                                                                                    attributedString:trigger.attributedString];
     view.alphaValue = trigger.disabled ? 0.5 : 1.0;
@@ -877,11 +880,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 
 - (void)updateDetailViewController {
     if (_tableView.selectedRowIndexes.count != 1) {
-        if (_detailViewController) {
-            [_detailViewController willHide];
-            _detailViewController.view.hidden = YES;
-        }
-        _noTriggerSelected.hidden = NO;
+        [self hideDetailView];
         return;
     }
     _noTriggerSelected.hidden = YES;
@@ -895,8 +894,20 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     NSInteger i = _tableView.selectedRow;
     NSArray *triggers = [self triggerDictionariesForCurrentProfile];
     NSDictionary *dict = triggers[i];
-    Trigger *trigger = [Trigger triggerFromDict:dict];
-    [_detailViewController setTrigger:trigger];
+    Trigger *trigger = [Trigger triggerFromUntrustedDict:dict];
+    if (trigger) {
+        [_detailViewController setTrigger:trigger];
+    } else {
+        [self hideDetailView];
+    }
+}
+
+- (void)hideDetailView {
+    if (_detailViewController) {
+        [_detailViewController willHide];
+        _detailViewController.view.hidden = YES;
+    }
+    _noTriggerSelected.hidden = NO;
 }
 
 #pragma mark NSWindowDelegate
@@ -989,7 +1000,11 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     }
     NSMutableDictionary *triggerDictionary =
         [[self triggerDictionariesForCurrentProfile][row] mutableCopy];
-    Trigger<iTermColorSettable> *trigger = (id)[Trigger triggerFromDict:triggerDictionary];
+    Trigger<iTermColorSettable> *trigger = (id)[Trigger triggerFromUntrustedDict:triggerDictionary];
+    if (!trigger) {
+        DLog(@"Invalid trigger dict: %@", triggerDictionary);
+        return;
+    }
     if ([colorWell.identifier isEqual:kTextColorWellIdentifier]) {
         [trigger setTextColor:colorWell.color];
     } else {

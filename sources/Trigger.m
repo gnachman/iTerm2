@@ -11,6 +11,7 @@
 #import "iTermVariableScope.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
+#import "NSNumber+iTerm.h"
 #import "NSStringITerm.h"
 #import "RegexKitLite.h"
 #import "ScreenChar.h"
@@ -52,33 +53,32 @@ NSString * const kTriggerPerformanceKey = @"performance";
 
 // The purpose of this is to re-encode colors that were previously key-value encoded into hex so that the Python APi can consume them.
 + (NSDictionary *)sanitizedTriggerDictionary:(NSDictionary *)dict {
-    Trigger *trigger = [self triggerFromDict:dict];
+    Trigger *trigger = [self triggerFromUntrustedDict:dict];
     [trigger sanitize];
     return trigger.dictionaryValue;
 }
 
 + (nullable Trigger *)triggerFromUntrustedDict:(NSDictionary *)dict {
-    NSString *className = [dict objectForKey:kTriggerActionKey];
-    Class class = NSClassFromString(className);
-    if (![class isSubclassOfClass:[Trigger class]] || class == [Trigger class]) {
+    NSString *className = [NSString castFrom:[dict objectForKey:kTriggerActionKey]];
+    if (!className) {
+        DLog(@"Bad class name in %@", dict);
         return nil;
     }
-    return [self triggerFromDict:dict];
-}
-
-+ (Trigger *)triggerFromDict:(NSDictionary *)dict {
-    NSString *className = [dict objectForKey:kTriggerActionKey];
     Class class = NSClassFromString(className);
+    if (![class isSubclassOfClass:[Trigger class]] || class == [Trigger class]) {
+        DLog(@"Bad class for valid name in %@", dict);
+        return nil;
+    }
     Trigger *trigger = [[class alloc] init];
-    trigger.regex = dict[kTriggerRegexKey];
-    trigger.contentRegex = dict[kTriggerContentRegexKey];
+    trigger.regex = [NSString castFrom:dict[kTriggerRegexKey]];
+    trigger.contentRegex = [NSString castFrom:dict[kTriggerContentRegexKey]];
     trigger.param = dict[kTriggerParameterKey];
-    trigger.partialLine = [dict[kTriggerPartialLineKey] boolValue];
-    trigger.disabled = [dict[kTriggerDisabledKey] boolValue];
-    trigger->_matchType = [dict[kTriggerMatchTypeKey] unsignedIntegerValue];
+    trigger.partialLine = [[NSNumber coerceFrom:dict[kTriggerPartialLineKey]] boolValue];
+    trigger.disabled = [[NSNumber coerceFrom:dict[kTriggerDisabledKey]] boolValue];
+    trigger->_matchType = [[NSNumber coerceFrom:dict[kTriggerMatchTypeKey]] unsignedIntegerValue];
     trigger->_name = [NSString castFrom:dict[kTriggerNameKey]];
-    if (dict[kTriggerPerformanceKey]) {
-        iTermHistogram *histogram = [[iTermHistogram alloc] initWithDictionary:dict[kTriggerPerformanceKey]];
+    if ([NSDictionary castFrom:dict[kTriggerPerformanceKey]]) {
+        iTermHistogram *histogram = [[iTermHistogram alloc] initWithDictionary:[NSDictionary castFrom:dict[kTriggerPerformanceKey]]];
         trigger.performanceHistogram = histogram;
     }
     return trigger;

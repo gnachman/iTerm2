@@ -227,7 +227,8 @@ static const CGFloat kLabelWidth = 124;
     if (i != NSNotFound) {
         [_actionButton selectItemAtIndex:i];
     }
-    _currentTrigger = [Trigger triggerFromDict:trigger.dictionaryValue];
+    _currentTrigger = [Trigger triggerFromUntrustedDict:trigger.dictionaryValue];
+    ITAssertWithMessage(_currentTrigger != nil, @"Failed with %@", trigger.dictionaryValue);  // If this fails then a trigger is not round-tripping to its dictionary representation.
     [self updateCustomViewForTrigger:_currentTrigger value:_currentTrigger.param];
     _visualizationViewController.regex = _regex ?: @"";
     _contentRegexVisualizationViewController.regex = _contentRegex ?: @"";
@@ -1279,7 +1280,8 @@ static const CGFloat kLabelWidth = 124;
     NSMutableDictionary *dict = prototype.dictionaryValue.mutableCopy;
     dict[kTriggerRegexKey] = _regexTextField.stringValue ?: @"";
     dict[kTriggerNameKey] = _nameTextField.stringValue ?: @"";
-    prototype = [Trigger triggerFromDict:dict];
+    prototype = [Trigger triggerFromUntrustedDict:dict];
+    assert(prototype != nil);
     [self setTrigger:prototype];
     if (_didChange) {
         _didChange();
