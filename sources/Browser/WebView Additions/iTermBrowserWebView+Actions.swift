@@ -256,7 +256,9 @@ extension iTermBrowserWebView {
         var results = [WebSmartMatch]()
         for rule in rules {
             for i in 0..<text.utf16.count {
-                let substring = text[utf16: i...]
+                guard let substring = text[safeUTF16: i...] else {
+                    continue
+                }
                 let components = substring.captureGroups(regex: rule.regex)
                 if components.isEmpty {
                     continue
@@ -265,7 +267,7 @@ extension iTermBrowserWebView {
                 results.append(.init(beforeCount: 0,
                                      afterCount: 0,
                                      rule: rule,
-                                     components: components.map { substring[utf16: $0] ?? "" },
+                                     components: components.map { substring[safeUTF16: $0] ?? "" },
                                      score: rule.weight * Double(components[0].length)))
                 break
             }
@@ -292,6 +294,10 @@ extension iTermBrowserWebView {
             }
             var startOffset = 0
             while startOffset < before.utf16.count {
+                guard !before[utf16: startOffset].isLowSurrogate else {
+                    startOffset += 1
+                    continue
+                }
                 let substring = before[utf16: startOffset...] + after
                 let fullRange = NSRange(location: 0,
                                         length: substring.utf16.count)
@@ -300,7 +306,7 @@ extension iTermBrowserWebView {
                 if let result, result.range(at: 0).length > 0 {
                     let matchingRange = result.range(at: 0)
                     DLog("Matches in \(matchingRange)")
-                    let matchingText = String(substring)[utf16: matchingRange] ?? ""
+                    let matchingText = String(substring)[safeUTF16: matchingRange] ?? ""
                     let score = rule.weight * Double(matchingText.utf16.count)
 
                     let matchAbsRange = (startOffset + matchingRange.lowerBound)..<(startOffset + matchingRange.upperBound)
@@ -317,7 +323,7 @@ extension iTermBrowserWebView {
                                 if range.location == NSNotFound || range.length == 0 {
                                     return ""
                                 }
-                                return String(substring)[utf16: range] ?? ""
+                                return String(substring)[safeUTF16: range] ?? ""
                             }
                             DLog("Add match with actions \(rule.actions) and components \(components)")
                             matches[matchingText] = WebSmartMatch(

@@ -413,7 +413,54 @@ extension String {
 
 import Foundation
 
+extension UTF16.CodeUnit {
+    var isLowSurrogate: Bool {
+        return (0xDC00...0xDFFF).contains(self)
+    }
+}
+
 extension String {
+    subscript(utf16 i: Int) -> UTF16.CodeUnit {
+        let utf16Index = utf16.index(utf16.startIndex, offsetBy: i)
+        return utf16[utf16Index]
+    }
+
+    subscript(safeUTF16 range: NSRange) -> String? {
+        if range.location == NSNotFound {
+            return nil
+        }
+        if range.length == 0 {
+            return ""
+        }
+        let utf16View = utf16
+
+        let fromUtf16Index = utf16View.index(
+            utf16View.startIndex,
+            offsetBy: range.location,
+            limitedBy: utf16View.endIndex)
+        guard let fromUtf16Index,
+              let startIndex = String.Index(fromUtf16Index, within: self) else {
+            if let truncated = range.droppingFirst {
+                return self[safeUTF16: truncated]
+            } else {
+                return nil
+            }
+        }
+        let toUtf16Index = utf16View.index(
+            fromUtf16Index,
+            offsetBy: range.length,
+            limitedBy: utf16View.endIndex)
+        guard let toUtf16Index,
+              let endIndex = String.Index(toUtf16Index, within: self) else {
+            if let truncated = range.droppingLast {
+                return self[safeUTF16: truncated]
+            } else {
+                return nil
+            }
+        }
+        return String(self[startIndex..<endIndex])
+    }
+
     subscript(utf16 range: NSRange) -> String? {
         if range.location == NSNotFound {
             return nil
@@ -424,22 +471,18 @@ extension String {
         let utf16View = utf16
 
         let fromUtf16Index = utf16View.index(
-                utf16View.startIndex,
-                offsetBy: range.location,
-                limitedBy: utf16View.endIndex)!
+            utf16View.startIndex,
+            offsetBy: range.location,
+            limitedBy: utf16View.endIndex)!
         let toUtf16Index = utf16View.index(
-                fromUtf16Index,
-                offsetBy: range.length,
-                limitedBy: utf16View.endIndex)!
+            fromUtf16Index,
+            offsetBy: range.length,
+            limitedBy: utf16View.endIndex)!
 
         let startIndex = String.Index(fromUtf16Index, within: self)!
         let endIndex = String.Index(toUtf16Index, within: self)!
 
         return String(self[startIndex..<endIndex])
-    }
-
-    subscript(utf16: Range<Int>) -> String {
-        return self[utf16: NSRange(utf16)]!
     }
 
     subscript(utf16 range: PartialRangeFrom<Int>) -> String {
@@ -449,6 +492,15 @@ extension String {
         let length = utf16Count - startLocation
         let nsRange = NSRange(location: startLocation, length: length)
         return self[utf16: nsRange]!
+    }
+
+    subscript(safeUTF16 range: PartialRangeFrom<Int>) -> String? {
+        let utf16View = utf16
+        let startLocation = range.lowerBound
+        let utf16Count = utf16View.count
+        let length = utf16Count - startLocation
+        let nsRange = NSRange(location: startLocation, length: length)
+        return self[safeUTF16: nsRange]
     }
 }
 extension String {
