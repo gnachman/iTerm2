@@ -384,12 +384,13 @@ typedef enum {
     if (block()) {
         DLog(@"Commit");
         result = [_db commit];
+        if (!result) {
+            DLog(@"error in commit: %@", _db.lastError);
+        }
     } else {
-        DLog(@"Rollback");
-        result = [_db rollback];
-    }
-    if (!result) {
-        DLog(@"error=%@", _db.lastError);
+        DLog(@"Rollback: %@", _db.lastError);
+        [_db rollback];
+        result = NO;
     }
     return result;
 }

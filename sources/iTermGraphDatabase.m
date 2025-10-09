@@ -81,7 +81,9 @@
 
 - (void)doHousekeeping {
     [_thread dispatchAsync:^(iTermGraphDatabaseState *state) {
-        [state.db executeUpdate:@"pragma wal_checkpoint"];
+        // PRAGMA returns a result set, so we must use executeQuery and close it
+        FMResultSet *rs = [state.db executeQuery:@"pragma wal_checkpoint"];
+        [rs close];
         [state.db executeUpdate:@"vacuum"];
     }];
 }
@@ -223,13 +225,17 @@
             return;
         }
         _recoveryCount += 1;
-        // Create a fresh encoder that's not in a partially broken state. Replace the encoder pointer
-        // so we can get its record below, as a successful recovery mutates the record by setting
-        // rowids in it.
-        encoder = [[iTermGraphDeltaEncoder alloc] initWithRecord:originalEncoder.record];
+        // For recovery, create a fresh encoder with no previous revision.
+        // This treats everything as inserts, avoiding the need for valid rowIDs in "before" state.
+        encoder = [[iTermGraphDeltaEncoder alloc] initWithPreviousRevision:nil];
+        [encoder encodeGraph:originalEncoder.record];
+        // Erase rowIDs from the recovery encoder's record since we're treating everything as inserts.
+        // The "after" records will get new rowIDs assigned during the insert.
+        [encoder.record eraseRowIDs];
         ok = [self attemptRecovery:state encoder:encoder];
     } @catch (NSException *exception) {
         ITAssertWithMessage(NO, @"%@", exception.it_compressedDescription);
+        ok = NO;
     } @finally {
         [completion invokeWithObject:@(ok)];
         if (ok) {
@@ -237,7 +243,23 @@
             // very carefully take it from encoder, not originalEncoder, because regardless of
             // whether a recovery was attempted `encoder.record` has the correct rowids.
             self.record = encoder.record;
+        } else {
+            // Recovery failed. Clear self.record so the next save attempt won't have a corrupted
+            // "before" state with missing rowIDs.
+            self.record = nil;
         }
+        // Uncomment to debug missing rowIDs
+        // [self assertRecordIntegrity:self.record];
+    }
+}
+
+- (void)assertRecordIntegrity:(iTermEncoderGraphRecord *)record {
+    if (!record) {
+        return;
+    }
+    ITAssertWithMessage(record.rowid != nil, @"Record missing rowid: %@", record);
+    for (iTermEncoderGraphRecord *child in record.graphRecords) {
+        [self assertRecordIntegrity:child];
     }
 }
 
@@ -247,8 +269,27 @@
     if (!state.db) {
         return NO;
     }
+    // Close and unlink the old database.
     [state.db close];
     [state.db unlink];
+
+    // Save the URL before releasing the old instance.
+    NSURL *url = [state.db url];
+
+    // Release the advisory lock from the old instance before creating a new one.
+    [state.db unlock];
+
+    // Create a brand new FMDatabase instance to avoid any corrupted state from
+    // the old instance (especially if files were externally moved while open).
+    state.db = [[iTermSqliteDatabaseImpl alloc] initWithURL:url];
+
+    // Acquire the lock with the new instance.
+    if (![state.db lock]) {
+        DLog(@"Failed to acquire lock after recovery.");
+        return NO;
+    }
+
+    // Open and initialize the fresh database.
     if (![self openAndInitializeDatabase:state]) {
         DLog(@"Failed to open and initialize datbase after deleting it.");
         return NO;
@@ -275,7 +316,6 @@
         return [self reallySave:encoder state:state];
     }];
     if (!ok) {
-        [encoder.record eraseRowIDs];
         DLog(@"Commit transaction failed: %@", state.db.lastError);
     }
     return ok;
@@ -353,7 +393,9 @@
 }
 
 - (BOOL)createTables:(iTermGraphDatabaseState *)state {
-    [state.db executeUpdate:@"PRAGMA journal_mode=WAL"];
+    // PRAGMA returns a result set, so we must use executeQuery and close it explicitly
+    FMResultSet *rs = [state.db executeQuery:@"PRAGMA journal_mode=WAL"];
+    [rs close];
 
     if (![state.db executeUpdate:@"create table if not exists Node (key text not null, identifier text not null, parent integer not null, data blob)"]) {
         return NO;

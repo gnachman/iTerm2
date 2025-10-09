@@ -403,8 +403,10 @@ void DLogC(const char *format, va_list args) {
         temp[stackKey] = self.callStackSymbols;
         userInfo = temp;
     }
+    NSString *reason = [NSString stringWithFormat:@"%@:\n%@", string, self.reason];
+    DLog(@"Rethrow name=%@ reason=%@ userInfo=%@", self.name, reason, userInfo);
     @throw [NSException exceptionWithName:self.name
-                                   reason:[NSString stringWithFormat:@"%@:\n%@", string, self.reason]
+                                   reason:reason
                                  userInfo:userInfo];
 }
 

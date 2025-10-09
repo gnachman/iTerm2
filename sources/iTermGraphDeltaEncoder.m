@@ -142,7 +142,11 @@
         iTermEncoderGraphRecord *after = afterDict[key];
         @try {
             block(before, after, parent, path, stop);
+            if (stop && *stop) {
+                ok = NO;
+            }
         } @catch (NSException *exception) {
+            ok = NO;
             [exception it_rethrowWithMessage:@"(2) %@ [%@] vs %@ [%@]",
              before.compactDescription,
              beforeDict.debugString,
@@ -151,12 +155,15 @@
         }
         @try {
             // Now recurse for their descendants.
-            ok = [self enumerateBefore:before
-                                 after:after
-                                parent:before ? before.rowid : after.rowid
-                                  path:path
-                                 block:block];
+            if (ok) {
+                ok = [self enumerateBefore:before
+                                     after:after
+                                    parent:before ? before.rowid : after.rowid
+                                      path:path
+                                     block:block];
+            }
         } @catch (NSException *exception) {
+            ok = NO;
             [exception it_rethrowWithMessage:@"(3) %@ [%@] vs %@ [%@]",
              before.compactDescription,
              beforeDict.debugString,
@@ -169,6 +176,9 @@
         handle(key, beforeDict[key], [NSString stringWithFormat:@"%@.%@[%@]",
                                       path, key.firstObject, key.secondObject], stop);
         [seenKeys addObject:key];
+        if (!ok) {
+            *stop = YES;
+        }
     }];
     if (!ok) {
         return NO;
@@ -179,6 +189,9 @@
         }
         handle(key, afterDict[key], [NSString stringWithFormat:@"%@.%@[%@]",
                                      path, key.firstObject, key.secondObject], stop);
+        if (!ok) {
+            *stop = YES;
+        }
     }];
     return ok;
 }
