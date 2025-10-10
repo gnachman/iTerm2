@@ -315,6 +315,9 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
 }
 
 + (NSColor *)decodeColor:(NSDictionary*)plist {
+    if (!plist) {
+        return nil;
+    }
     if ([plist isKindOfClass:[NSDictionary class]]) {
         return [plist colorValue];
     }
