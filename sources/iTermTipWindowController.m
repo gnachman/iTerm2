@@ -570,6 +570,12 @@ static const CGFloat kWindowTopMargin = 8;
     // Card moved to exitingCardViewControllers while buttons are disabled so buttons will
     // never be enabled in this card again.
     [_exitingCardViewControllers addObject:_cardViewController];
+    // Prevent buttons in exiting card from being used after card is torn down
+    for (iTermTipCardActionButton *button in exitingCardViewController.actionButtons) {
+        button.block = nil;
+        button.target = nil;
+        button.action = nil;
+    }
     _cardViewController = nil;
     [self loadCardExpanded:expanded];
 
