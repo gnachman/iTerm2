@@ -921,7 +921,9 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 }
             }
         case .vectorStoreCreated, .userCommand:
-            it_fatalError()
+            DLog("Unexpected message content \(message.content)")
+            cell.buttonClicked = nil
+
         case .selectSessionRequest(let originalMessage, let terminal):
             cell.buttonClicked = { [weak self] identifier, messageID in
                 guard let self else {
@@ -1075,7 +1077,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         case .plainText:
             editable = message.author == .user
         case .vectorStoreCreated:
-            it_fatalError()
+            DLog("Unexpected vectorStoreCreated message in items")
+            break
         case .clientLocal(let clientLocal):
             switch clientLocal.action {
             case .pickingSession:
@@ -1542,7 +1545,14 @@ extension Message.Content {
             it_fatalError()  // TODO: This will be hit. We need a different cell type for multipart messages.
         case .renameChat, .append, .commit, .setPermissions, .terminalCommand, .appendAttachment,
                 .vectorStoreCreated, .userCommand:
-            it_fatalError()
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.lineBreakMode = .byWordWrapping
+            let attributes: [NSAttributedString.Key: Any] = [
+                .foregroundColor: textColor,
+                .paragraphStyle: paragraphStyle,
+                .font: NSFont.systemFont(ofSize: NSFont.systemFontSize)
+            ]
+            return NSAttributedString(string: "A vector store was created", attributes: attributes)
         case .plainText(let string, context: _):
             let paragraphStyle = NSMutableParagraphStyle()
             paragraphStyle.lineBreakMode = .byWordWrapping
