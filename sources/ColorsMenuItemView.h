@@ -30,6 +30,11 @@
 @property(nonatomic, strong) NSColor *currentColor;
 @property(nonatomic, readonly) NSColor *color;
 
+// Returns the preferred size for the menu item view based on the current
+// advanced setting for tab colors. Width is fixed to match existing layout;
+// height grows to accommodate multiple rows of color chips.
++ (NSSize)preferredSize;
+
 - (void)drawRect:(NSRect)rect;
 - (void)mouseUp:(NSEvent*) event;
 
