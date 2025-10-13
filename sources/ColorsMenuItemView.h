@@ -30,6 +30,9 @@
 @property(nonatomic, strong) NSColor *currentColor;
 @property(nonatomic, readonly) NSColor *color;
 
+
++ (NSSize)preferredSize;
+
 - (void)drawRect:(NSRect)rect;
 - (void)mouseUp:(NSEvent*) event;
 

@@ -333,8 +333,9 @@ static BOOL hasBecomeActive = NO;
     NSMenu *viewMenu = [self topLevelViewNamed:@"View"];
     [viewMenu addItem:[NSMenuItem separatorItem]];
 
+    NSSize tabColorViewSize = [ColorsMenuItemView preferredSize];
     ColorsMenuItemView *labelTrackView = [[[ColorsMenuItemView alloc]
-                                           initWithFrame:NSMakeRect(0, 0, 180, 50)] autorelease];
+                                           initWithFrame:NSMakeRect(0, 0, tabColorViewSize.width, tabColorViewSize.height)] autorelease];
     [self addMenuItemView:labelTrackView toMenu:viewMenu title:@"Current Tab Color"];
 
     if (![iTermTipController sharedInstance]) {
