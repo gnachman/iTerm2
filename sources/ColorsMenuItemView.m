@@ -53,7 +53,9 @@
     NSInteger _mouseDownIndex;
 }
 
-static const int kNumberOfColors = 8;
+// Layout constants
+static const int kColumnsPerRow = 8;          // reset + 7 colors = 8 cells per row
+static const int kRowDistanceY = 18;          // vertical spacing between rows
 static const int kOffsetX_PreBigSur = 20;
 static const int kOffsetX_BigSur = 24;
 static const int kOffsetX_BigSur_NoneChecked = 10;
@@ -90,8 +92,10 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
 }
 
 - (NSInteger)indexForPoint:(NSPoint)p {
-    for (NSInteger i = 0; i < kNumberOfColors; i++) {
-        if (NSPointInRect(p, [self rectForIndex:i enlarged:YES])) {
+    // Iterate all visible cells: index 0 is reset, followed by up to 31 colors.
+    const NSInteger totalCells = [self totalCellCount];
+    for (NSInteger i = 0; i < totalCells; i++) {
+        if (NSPointInRect(p, [self rectForCellIndex:i enlarged:YES])) {
             return i;
         }
     }
@@ -153,16 +157,30 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
     return kOffsetX_PreBigSur;
 }
 
-- (NSRect)rectForIndex:(NSInteger)i  enlarged:(BOOL)enlarged {
-    if (i == NSNotFound) {
+- (NSRect)rectForCellIndex:(NSInteger)cellIndex enlarged:(BOOL)enlarged {
+    if (cellIndex == NSNotFound) {
         return NSZeroRect;
     }
     CGFloat growth = enlarged ? 2 : 0;
-    return NSMakeRect(self.colorXOffset + kColorAreaDistanceX * i - growth,
-                      kOffsetY - growth,
+    // Compute row/column for multi-row layout with 8 columns per row.
+    NSInteger column = cellIndex % kColumnsPerRow;
+    NSInteger row = cellIndex / kColumnsPerRow;
+    const CGFloat x = self.colorXOffset + kColorAreaDistanceX * column - growth;
+    const CGFloat y = kOffsetY + (kRowDistanceY * row) - growth;
+    return NSMakeRect(x,
+                      y,
                       kColorAreaDimension + growth * 2,
                       kColorAreaDimension + growth * 2);
+}
 
+// Number of colors we will display (max 31)
+- (NSInteger)displayedColorCount {
+    return MIN((NSInteger)self.colors.count, 31);
+}
+
+// Total cells including the reset cell
+- (NSInteger)totalCellCount {
+    return 1 + [self displayedColorCount];
 }
 
 - (NSColor *)outlineColorAtIndex:(NSInteger)i enabled:(BOOL)enabled {
@@ -203,7 +221,7 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
     }
     [color set];
     [NSBezierPath setDefaultLineWidth:1];
-    const NSRect noColorRect = NSInsetRect([self rectForIndex:0 enlarged:(enabled && _selectedIndex == 0)],
+    const NSRect noColorRect = NSInsetRect([self rectForCellIndex:0 enlarged:(enabled && _selectedIndex == 0)],
                                            0.5,
                                            0.5);
     [NSBezierPath strokeRect:noColorRect];
@@ -211,10 +229,11 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
                               toPoint:NSMakePoint(NSMinX(noColorRect), NSMaxY(noColorRect))];
 
     [NSBezierPath setDefaultLineWidth:kDefaultColorStokeWidth];
-    // draw the colors
-    for (NSInteger i = 1; i < self.colors.count; i++) {
+    // draw the colors (indices 1..displayedColorCount)
+    const NSInteger colorCount = [self displayedColorCount];
+    for (NSInteger i = 1; i <= colorCount; i++) {
         const BOOL highlighted = enabled && i == _selectedIndex;
-        const NSRect outlineArea = [self rectForIndex:i enlarged:highlighted];
+        const NSRect outlineArea = [self rectForCellIndex:i enlarged:highlighted];
         // draw the outline
         [[self outlineColorAtIndex:i enabled:enabled] set];
         NSRectFill(outlineArea);
@@ -281,8 +300,9 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
 
 - (NSColor *)colorAtIndex:(NSUInteger)index enabled:(BOOL)enabled {
     const CGFloat alpha = enabled ? 1 : iTermColorsMenuItemViewDisabledAlpha;
-    if (index <= 0 || index > self.colors.count) {
-        return nil;
+    const NSInteger maxIndex = [self displayedColorCount];
+    if (index <= 0 || index > maxIndex) {
+        return nil;  // 0 -> reset; anything beyond visible colors is nil
     }
     return [self.colors[index - 1] colorWithAlphaComponent:alpha];
 }
@@ -304,6 +324,16 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
         ];
     }
     return result;
+}
+
++ (NSSize)preferredSize {
+    // Use existing width, grow height per required rows
+    ColorsMenuItemView *tmp = [[[ColorsMenuItemView alloc] initWithFrame:NSZeroRect] autorelease];
+    const NSInteger totalCells = [tmp totalCellCount];
+    const NSInteger rowCount = (totalCells + (kColumnsPerRow - 1)) / kColumnsPerRow;
+    const CGFloat baseHeight = 50; // current single-row height used in callers
+    const CGFloat height = baseHeight + (MAX(1, rowCount) - 1) * kRowDistanceY;
+    return NSMakeSize(180, height);
 }
 
 - (void)mouseUp:(NSEvent*) event {

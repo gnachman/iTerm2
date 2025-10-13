@@ -6974,8 +6974,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // add label
     [rootMenu addItem: [NSMenuItem separatorItem]];
+    NSSize tabColorViewSize = [ColorsMenuItemView preferredSize];
     ColorsMenuItemView *labelTrackView = [[[ColorsMenuItemView alloc]
-                                              initWithFrame:NSMakeRect(0, 0, 180, 50)] autorelease];
+                                              initWithFrame:NSMakeRect(0, 0, tabColorViewSize.width, tabColorViewSize.height)] autorelease];
     PTYTab *tab = [tabViewItem identifier];
     labelTrackView.currentColor = tab.activeSession.tabColor;
     item = [[[NSMenuItem alloc] initWithTitle:@"Tab Color"
