@@ -30,6 +30,17 @@
               -125.42919921875
             ]
           }
+        },
+        {
+          "image-name" : "bezel.png",
+          "name" : "bezel",
+          "position" : {
+            "scale" : 0.67,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
         }
       ],
       "shadow" : {

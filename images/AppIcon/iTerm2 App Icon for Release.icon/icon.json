@@ -10,6 +10,18 @@
     {
       "layers" : [
         {
+          "image-name" : "bezel.png",
+          "name" : "bezel",
+          "position" : {
+            "scale" : 0.67,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "hidden" : false,
           "image-name" : "cursor@2x 4.png",
           "name" : "cursor@2x 4",
           "position" : {
@@ -21,6 +33,7 @@
           }
         },
         {
+          "hidden" : false,
           "image-name" : "dollar@2x 2.png",
           "name" : "dollar@2x 2",
           "position" : {
