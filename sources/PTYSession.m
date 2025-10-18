@@ -17152,11 +17152,14 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 #pragma mark - iTermPasteHelperDelegate
 
 - (void)pasteHelperWriteString:(NSString *)string {
-    [self writeTask:string];
     if (_pasteHelper.pasteContext.bytesWritten == 0 &&
         (_pasteHelper.pasteContext.pasteEvent.flags & kPasteFlagsBracket) &&
         _screen.terminalBracketedPasteMode) {
-        [self watchForPasteBracketingOopsieWithPrefix:[_pasteHelper.pasteContext.pasteEvent.originalString it_substringToIndex:4]];
+        NSString *prefix = [_pasteHelper.pasteContext.pasteEvent.originalString it_substringToIndex:4];
+        [self watchForPasteBracketingOopsieWithPrefix:prefix
+                                             andWrite:string];
+    } else {
+        [self writeTask:string];
     }
 }
 
