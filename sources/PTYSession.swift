@@ -397,8 +397,11 @@ extension PTYSession {
                                      completion: @escaping (String, String) throws -> ()) rethrows {
         let uuid = UUID().uuidString
         let start = Int64(screen.numberOfScrollbackLines() + screen.cursorY() - 1) + screen.totalScrollbackOverflow()
-        writeTaskNoBroadcast(executeCommand.command + ";echo '-- FINISHED' \(uuid)\r")
-        let expectation = addExpectation("^-- FINISHED \(uuid)", after: nil, deadline: nil, willExpect: nil) { [weak self] _ in
+        let string = executeCommand.command + ";echo '-- FINISHED' \(uuid)\r"
+        let willExpect = { [weak self] in
+            _ = self?.writeTaskNoBroadcast(string)
+        }
+        let expectation = addExpectation("^-- FINISHED \(uuid)", after: nil, deadline: nil, willExpect: willExpect) { [weak self] _ in
             self?.runningRemoteCommand.state = .none
             if var content = self?.contentAfter(start) {
                 let ranges = content.ranges(of: uuid)
