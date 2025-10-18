@@ -4807,6 +4807,7 @@ lengthExcludingInBandSignaling:data.length
 }
 
 - (void)updateExpectFrom:(iTermExpect *)source {
+    DLog(@"Update expect %@", source);
     _triggerEvaluator.expect = [source copy];
     DLog(@"Mutation thread expectations are now %@", _triggerEvaluator.expect);
 }

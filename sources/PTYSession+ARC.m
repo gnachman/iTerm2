@@ -170,10 +170,12 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
     }
 }
 
-- (void)watchForPasteBracketingOopsieWithPrefix:(NSString *)prefix {
+- (void)watchForPasteBracketingOopsieWithPrefix:(NSString *)prefix
+                                       andWrite:(NSString *)string {
     NSString *const redflag = @"00~";
 
     if ([prefix hasPrefix:redflag]) {
+        [self writeTask:string];
         return;
     }
     __weak __typeof(self) weakSelf = self;
@@ -181,12 +183,19 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
     [_expect expectRegularExpression:[NSString stringWithFormat:@"(%@)?%@", redflag, prefix.it_escapedForRegex]
                                after:nil
                             deadline:[NSDate dateWithTimeIntervalSinceNow:0.5]
-                          willExpect:nil
+                          willExpect:^{
+        DLog(@"Write task");
+        [weakSelf writeTask:string];
+    }
                           completion:^(NSArray<NSString *> * _Nonnull captureGroups) {
         if ([captureGroups[1] isEqualToString:redflag]) {
             [weakSelf didFindPasteBracketingOopsie];
         }
     }];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        DLog(@"Sync expectations");
+        [weakSelf sync];
+    });
 }
 
 - (iTermExpectation *)addExpectation:(NSString *)regex

@@ -166,7 +166,7 @@
                                    completion:(void (^ _Nullable)(NSArray<NSString *> * _Nonnull))completion {
     assert(regex != nil);
     _dirty = YES;
-    DLog(@"Add expectation, set dirty");
+    DLog(@"Add expectation, set dirty dry=%d", _dry);
     assert([NSThread isMainThread]);
     __weak __typeof(self) weakSelf = self;
     void (^internalWillExpect)(iTermExpectation *) = ^(iTermExpectation *expectation){
@@ -193,15 +193,16 @@
 }
 
 - (void)addExpectation:(iTermExpectation *)expectation {
-    DLog(@"addExpectation:%@", expectation);
+    DLog(@"addExpectation:%@ dry=%d", expectation, _dry);
     if (!expectation) {
-        DLog(@"  - fail, is nil");
+        DLog(@"  - fail, is nil. dry=%d", _dry);
         return;
     }
     [_expectations addObject:expectation];
     if (_dry) {
         return;
     }
+    DLog(@"Wet add expectation");
     dispatch_async(dispatch_get_main_queue(), ^{
         [expectation.original invokeUserWillExpectCallbackIfNeeded];
     });
@@ -209,7 +210,7 @@
 
 - (void)removeExpectation:(iTermExpectation *)expectation {
     if (expectation) {
-        DLog(@"Remove expectation %@", expectation);
+        DLog(@"Remove expectation %@ from dry=%d", expectation, _dry);
     }
     [_expectations removeObject:expectation];
 }
@@ -217,7 +218,7 @@
 - (void)cancelExpectation:(iTermExpectation *)expectation {
     _dirty = YES;
     if (expectation != nil) {
-        DLog(@"cancel %@", expectation);
+        DLog(@"cancel %@ dry=%d", expectation, _dry);
     }
     [expectation cancel];
     [_expectations removeObject:expectation];
@@ -227,10 +228,11 @@
     if (_expectations.count == 0) {
         return;
     }
+    const BOOL dry = _dry;
     [_expectations removeObjectsPassingTest:^BOOL(iTermExpectation *expectation) {
-        const BOOL didExpire = expectation.deadline != nil && expectation.deadline.timeIntervalSinceNow < 0;
+        const BOOL didExpire = expectation.userWillExpectCalled && expectation.deadline != nil && expectation.deadline.timeIntervalSinceNow < 0;
         if (didExpire) {
-            DLog(@"Remove expired expectation %@", expectation);
+            DLog(@"Remove expired expectation %@ dry=%d", expectation, dry);
         }
         return didExpire;
     }];
@@ -254,8 +256,10 @@
 }
 
 - (void)resetDirty {
-    DLog(@"resetDirty");
-    _dirty = NO;
+    if (_dirty) {
+        DLog(@"resetDirty dry=%d", _dry);
+        _dirty = NO;
+    }
 }
 
 #pragma mark - NSCopying
@@ -292,6 +296,7 @@
 
 - (id)copyWithZone:(NSZone *)zone {
     iTermExpect *theCopy = [[iTermExpect alloc] initDry:NO];
+    DLog(@"Making a copy of dry=%d with expectations %@", _dry, self.expectations);
     [self.expectations enumerateObjectsUsingBlock:^(iTermExpectation * _Nonnull original, NSUInteger idx, BOOL * _Nonnull stop) {
         [theCopy addExpectation:[self copyOfExpectation:original
                                            copiedExpect:theCopy]];

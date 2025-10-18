@@ -1045,6 +1045,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (void)refuseFirstResponderAtCurrentMouseLocation;
 - (void)showError:(NSString *)message suppressionKey:(NSString *)key identifier:(NSString *)identifier;
 - (void)dismissAnnouncementWithIdentifier:(NSString *)identifier;
+- (void)sync;
 
 #pragma mark - API
 

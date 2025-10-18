@@ -23,7 +23,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Expect
 
-- (void)watchForPasteBracketingOopsieWithPrefix:(NSString *)prefix;
+- (void)watchForPasteBracketingOopsieWithPrefix:(NSString *)prefix
+                                       andWrite:(NSString *)string;
 - (iTermExpectation *)addExpectation:(NSString *)regex
                                after:(nullable iTermExpectation *)predecessor
                             deadline:(nullable NSDate *)deadline
