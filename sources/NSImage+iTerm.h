@@ -22,14 +22,16 @@
 + (instancetype)flippedImageOfSize:(NSSize)size drawBlock:(void (^ NS_NOESCAPE)(void))block;
 
 + (instancetype)imageWithRawData:(NSData *)data
-                            size:(NSSize)size
+                            size:(NSSize)size  // pixels
+                      scaledSize:(NSSize)scaledSize  // image.size
                    bitsPerSample:(NSInteger)bitsPerSample  // e.g. 8 or 1
                  samplesPerPixel:(NSInteger)samplesPerPixel  // e.g. 4 (RGBA) or 1
                         hasAlpha:(BOOL)hasAlpha
                   colorSpaceName:(NSString *)colorSpaceName;  // e.g., NSCalibratedRGBColorSpace
 
 + (instancetype)imageWithRawData:(NSData *)data
-                            size:(NSSize)size
+                            size:(NSSize)size  // pixels
+                      scaledSize:(NSSize)scaledSize  // image.size
                    bitsPerSample:(NSInteger)bitsPerSample
                  samplesPerPixel:(NSInteger)samplesPerPixel
                      bytesPerRow:(NSInteger)bytesPerRow

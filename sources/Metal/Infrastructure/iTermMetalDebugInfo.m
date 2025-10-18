@@ -130,6 +130,7 @@
              transientState:(iTermMetalRendererTransientState *)tState {
     tState.renderedOutputForDebugging = [NSImage imageWithRawData:data
                                                              size:size
+                                                       scaledSize:size
                                                     bitsPerSample:8
                                                   samplesPerPixel:4
                                                          hasAlpha:YES

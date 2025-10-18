@@ -13,6 +13,7 @@
 
 + (instancetype)imageWithRawData:(NSData *)data
                             size:(NSSize)size
+                      scaledSize:(NSSize)scaledSize
                    bitsPerSample:(NSInteger)bitsPerSample
                  samplesPerPixel:(NSInteger)samplesPerPixel
                         hasAlpha:(BOOL)hasAlpha
@@ -32,7 +33,7 @@
     
     memmove([bitmapImageRep bitmapData], data.bytes, data.length);
     
-    NSImage *theImage = [[NSImage alloc] initWithSize:size];
+    NSImage *theImage = [[NSImage alloc] initWithSize:scaledSize];
     [theImage addRepresentation:bitmapImageRep];
     
     return theImage;
@@ -76,6 +77,7 @@ static NSImage *DecodeSixelData(sixel_decoder_t *decoder, NSData *data) {
     free(pixels);
     return [NSImage imageWithRawData:rgbaData
                                 size:NSMakeSize(width, height)
+                          scaledSize:NSMakeSize(width, height)
                        bitsPerSample:8
                      samplesPerPixel:4
                             hasAlpha:YES

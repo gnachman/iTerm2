@@ -269,6 +269,7 @@ static NSString *const iTermSubpixelModelString = @"O";
 
     NSImage *image = [NSImage imageWithRawData:imageData
                                           size:iTermSubpixelModelSize
+                                    scaledSize:iTermSubpixelModelSize
                                  bitsPerSample:8
                                samplesPerPixel:4
                                       hasAlpha:YES

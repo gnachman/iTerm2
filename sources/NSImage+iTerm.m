@@ -163,6 +163,7 @@
 
 + (instancetype)imageWithRawData:(NSData *)data
                             size:(NSSize)size
+                      scaledSize:(NSSize)scaledSize
                    bitsPerSample:(NSInteger)bitsPerSample
                  samplesPerPixel:(NSInteger)samplesPerPixel
                      bytesPerRow:(NSInteger)bytesPerRow
@@ -171,6 +172,7 @@
     if (samplesPerPixel == 1) {
         return [self imageWithRawData:[self dataWithFourBytesPerPixelFromDataWithOneBytePerPixel:data]
                                  size:size
+                           scaledSize:scaledSize
                         bitsPerSample:8
                       samplesPerPixel:4
                              hasAlpha:YES
@@ -192,7 +194,7 @@
 
     memmove([bitmapImageRep bitmapData], data.bytes, data.length);
 
-    NSImage *theImage = [[NSImage alloc] initWithSize:size];
+    NSImage *theImage = [[NSImage alloc] initWithSize:scaledSize];
     [theImage addRepresentation:bitmapImageRep];
 
     return theImage;
@@ -200,6 +202,7 @@
 
 + (instancetype)imageWithRawData:(NSData *)data
                             size:(NSSize)size
+                      scaledSize:(NSSize)scaledSize
                    bitsPerSample:(NSInteger)bitsPerSample
                  samplesPerPixel:(NSInteger)samplesPerPixel
                         hasAlpha:(BOOL)hasAlpha
@@ -207,6 +210,7 @@
     if (samplesPerPixel == 1) {
         return [self imageWithRawData:[self dataWithFourBytesPerPixelFromDataWithOneBytePerPixel:data]
                                  size:size
+                           scaledSize:scaledSize
                         bitsPerSample:8
                       samplesPerPixel:4
                              hasAlpha:YES
@@ -228,7 +232,7 @@
 
     memmove([bitmapImageRep bitmapData], data.bytes, data.length);
 
-    NSImage *theImage = [[NSImage alloc] initWithSize:size];
+    NSImage *theImage = [[NSImage alloc] initWithSize:scaledSize];
     [theImage addRepresentation:bitmapImageRep];
 
     return theImage;

@@ -752,6 +752,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 
     NSImage *diffImage = [NSImage imageWithRawData:diffData
                                               size:size
+                                        scaledSize:size
                                      bitsPerSample:8
                                    samplesPerPixel:3
                                           hasAlpha:NO
