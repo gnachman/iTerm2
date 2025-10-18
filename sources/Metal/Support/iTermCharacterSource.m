@@ -599,6 +599,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     if (_debug) {
         NSImage *image = [NSImage imageWithRawData:bitmap.data
                                               size:bitmap.size
+                                        scaledSize:bitmap.size
                                      bitsPerSample:8
                                    samplesPerPixel:4
                                           hasAlpha:YES
@@ -612,6 +613,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         NSData *bigData = [NSData dataWithBytes:bitmapBytes length:sourceLength];
         image = [NSImage imageWithRawData:bigData
                                      size:_size
+                               scaledSize:_size
                             bitsPerSample:8
                           samplesPerPixel:4
                                  hasAlpha:YES

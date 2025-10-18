@@ -75,6 +75,7 @@ static const CGFloat kMaxDimension = 10000;
 - (void)encodeWithCoder:(nonnull NSCoder *)coder {
     [coder encodeObject:self.delays forKey:@"delays"];
     [coder encodeSize:self.size forKey:@"size"];
+    [coder encodeSize:self.scaledSize forKey:@"scaledSize"];
     NSMutableArray<NSData *> *imageDatas = [NSMutableArray new];
     for (NSImage *image in self.images) {
         NSData *imageData = [self dataForImage:image];
@@ -92,6 +93,11 @@ static const CGFloat kMaxDimension = 10000;
             DLog(@"Bogus size %@", NSStringFromSize(_size));
             return nil;
         }
+        if ([coder containsValueForKey:@"scaledSize"]) {
+            _scaledSize = [coder decodeSizeForKey:@"scaledSize"];
+        } else {
+            _scaledSize = _size;
+        }
         _images = [NSMutableArray new];
         NSMutableArray<NSData *> *imageDatas = [coder decodeObjectOfClasses:[NSSet setWithArray:@[[NSMutableArray class], [NSData class]]] forKey:@"images"];
         for (NSData *imageData in imageDatas) {
@@ -100,6 +106,7 @@ static const CGFloat kMaxDimension = 10000;
             }
             NSImage *image = [NSImage imageWithRawData:imageData
                                                   size:_size
+                                            scaledSize:_scaledSize
                                          bitsPerSample:8
                                        samplesPerPixel:4
                                               hasAlpha:YES

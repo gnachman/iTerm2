@@ -301,6 +301,7 @@ int iTermBitsPerSampleForPixelFormat(MTLPixelFormat format) {
           mipmapLevel:0];
     NSImage *image = [NSImage imageWithRawData:storage
                                           size:NSMakeSize(texture.width, texture.height)
+                                    scaledSize:NSMakeSize(texture.width, texture.height)
                                  bitsPerSample:[self bitsPerSampleInPixelFormat:texture.pixelFormat]
                                samplesPerPixel:samplesPerPixel
                                       hasAlpha:samplesPerPixel == 4
@@ -544,6 +545,7 @@ int iTermBitsPerSampleForPixelFormat(MTLPixelFormat format) {
     n++;
     [[NSImage imageWithRawData:[NSData dataWithBytes:bitmap.bitmapData length:bitmap.bytesPerRow * bitmap.size.height]
                           size:NSMakeSize(bitmap.size.width, bitmap.size.height)
+                    scaledSize:NSMakeSize(bitmap.size.width, bitmap.size.height)
                  bitsPerSample:bitmap.bitsPerSample
                samplesPerPixel:bitmap.samplesPerPixel
                    bytesPerRow:bitmap.bytesPerRow
