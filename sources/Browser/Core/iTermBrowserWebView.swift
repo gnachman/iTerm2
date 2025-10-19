@@ -118,6 +118,24 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
         threeFingerTapGestureRecognizer.disconnectTarget()
     }
 
+    override var pageZoom: CGFloat {
+        didSet {
+            if oldValue == pageZoom {
+                return
+            }
+            DLog("Page zoom set to \(pageZoom) from \(oldValue)\n\(Thread.callStackSymbols)")
+        }
+    }
+
+    override var magnification: CGFloat {
+        didSet {
+            if oldValue == magnification {
+                return
+            }
+            DLog("Magnification set to \(magnification) from \(oldValue)\n\(Thread.callStackSymbols)")
+        }
+    }
+
     @MainActor public func safelyCallAsyncJavaScript(_ functionBody: String,
                                                      arguments: [String : Any] = [:],
                                                      in frame: WKFrameInfo? = nil,
