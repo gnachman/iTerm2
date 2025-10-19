@@ -32,4 +32,7 @@
 // PTYAnnotation (which needs a delegate to function).
 + (id<IntervalTreeObject>)intervalTreeObjectWithDictionaryWithTypeInformation:(NSDictionary *)dict;
 
+// This is here for subclasses to override. They should always call it.
+- (void)becomeDoppelganger;
+
 @end

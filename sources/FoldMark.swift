@@ -12,6 +12,7 @@ protocol FoldMarkReading: AnyObject, iTermMarkProtocol {
     var savedLines: [ScreenCharArray]? { get }
     var savedITOs: [SavedIntervalTreeObject]? { get }
     var contentString: String { get }
+    var imageCodes: Set<Int32> { get }
 }
 
 @objc(iTermSavedIntervalTreeObject)
@@ -112,6 +113,12 @@ class SavedIntervalTreeObject: NSObject {
         case object = "object"
         case start = "start"
         case end = "end"
+    }
+
+    init(_ source: SavedIntervalTreeObject) {
+        start = source.start
+        end = source.end
+        object = source.object
     }
 
     init?(dictionaryValue: [AnyHashable : Any]) {
@@ -235,18 +242,30 @@ class FoldMark: iTermMark, FoldMarkReading {
     let savedLines: [ScreenCharArray]?
     let savedITOs: [SavedIntervalTreeObject]?
     private let promptLength: Int
+    let imageCodes: Set<Int32>
 
     private static let savedLinesKey = "saved lines"
     private static let savedITOsKey = "saved ITOs"
     private static let promptLengthKey = "prompt length"
+    private static let imageCodesKey = "image codes"
 
-    @objc(initWithLines:savedITOs:promptLength:)
+    @objc(initWithLines:savedITOs:promptLength:imageCodes:)
     init(savedLines: [ScreenCharArray]?,
          savedITOs: [SavedIntervalTreeObject],
-         promptLength: Int) {
+         promptLength: Int,
+         imageCodes: Set<Int32>) {
         self.savedLines = savedLines
         self.savedITOs = savedITOs
         self.promptLength = promptLength
+        self.imageCodes = imageCodes
+        super.init()
+    }
+
+    init(_ source: FoldMark) {
+        savedLines = source.savedLines?.map { $0.clone() }
+        savedITOs = source.savedITOs?.map { SavedIntervalTreeObject($0) }
+        promptLength = source.promptLength
+        imageCodes = source.imageCodes
         super.init()
     }
 
@@ -258,13 +277,15 @@ class FoldMark: iTermMark, FoldMarkReading {
             SavedIntervalTreeObject(dictionaryValue: dict)
         })
         promptLength = (dict[Self.promptLengthKey] as? Int) ?? 0
+        imageCodes = Set((dict[Self.imageCodesKey] as? [Int32]) ?? [])
         super.init(dictionary: dict)
     }
 
     override func dictionaryValue() -> [AnyHashable : Any]! {
         let unsafeDict: [String: Any?] = [ Self.savedLinesKey: savedLines?.map { $0.dictionaryValue },
                                            Self.savedITOsKey: savedITOs?.map { $0.dictionaryValue },
-                                           Self.promptLengthKey: promptLength ]
+                                           Self.promptLengthKey: promptLength,
+                                           Self.imageCodesKey: Array(imageCodes) ]
         return unsafeDict.filter { element in
             element.value != nil
         } as [AnyHashable : Any]
@@ -274,5 +295,41 @@ class FoldMark: iTermMark, FoldMarkReading {
         (savedLines ?? []).dropFirst(promptLength).map {
             $0.stringValueIncludingNewline
         }.joined(separator: "")
+    }
+
+    @objc(foldedContentUsesImageWithCode:)
+    func foldedContentUsesImage(code: Int32) -> Bool {
+        return imageCodes.contains(code)
+    }
+
+    // Call after restoring state to ensure images that are in the fold (and
+    // will therefore not have marks) do not get garbage collected.
+    @objc(recursivelyClearProvisionalFlagForSavedImageMarks)
+    func recursivelyClearProvisionalFlagForSavedImageMarks() {
+        for code in imageCodes {
+            ScreenCharClearProvisionalFlagForImageWithCode(code)
+        }
+    }
+
+    // The default implementation serializes and deserializes. That causes
+    // duplicate image marks to be created. That is a problem because the
+    // lifecycle of the progenitor image mark is used to determine when to
+    // release images. If we do not keep a strong reference to the image mark,
+    // the image will be released even though we have a copy of the image mark.
+    // So instead, we use cloning functionality that preserves references to
+    // marks.
+    override func copy(with zone: NSZone? = nil) -> Any {
+        return FoldMark(self)
+    }
+
+    // Since we overrode copyWithZone we must ensure that the fold mark's
+    // doppelganger only references mark doppelgangers to avoid data races.
+    override func becomeDoppelganger() {
+        super.becomeDoppelganger()
+        if let savedITOs {
+            for ito in savedITOs {
+                ito.object = ito.object.doppelganger()
+            }
+        }
     }
 }

@@ -327,6 +327,12 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     }
 }
 
+static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
+    NSInteger location = MAX(0, lowerBound);
+    NSInteger length = MAX(0, upperBound - location);
+    return NSMakeRange(location, length);
+}
+
 // Search cells backwards from the image mark to see if any of it is still referenced.
 - (BOOL)imageInUse:(iTermImageMark *)mark above:(long long)aboveAbsY searchHeight:(int)searchHeight {
     const int code = mark.imageCode.intValue;
@@ -339,6 +345,10 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     if (aboveY < 0) {
         DLog(@"Image has scrolled off");
         return NO;
+    }
+    if ([self anyFoldInAbsRange:NSRangeFromBounds(aboveAbsY - searchHeight, aboveAbsY)
+              containsImageMark:mark]) {
+        return YES;
     }
     const long long startY = MAX(0, aboveY - imageInfo.size.height);
     __block BOOL found = NO;
@@ -354,6 +364,16 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
         }
     }];
     return found;
+}
+
+- (BOOL)anyFoldInAbsRange:(NSRange)lineRange containsImageMark:(iTermImageMark *)imageMark {
+    if (!imageMark.imageCode) {
+        return NO;
+    }
+    NSArray<iTermFoldMark *> *foldMarks = [self foldMarksInRange:lineRange max:NSUIntegerMax];
+    return [foldMarks anyWithBlock:^BOOL(iTermFoldMark *foldMark) {
+        return [foldMark foldedContentUsesImageWithCode:imageMark.imageCode.intValue];
+    }];
 }
 
 - (BOOL)screenCharArray:(ScreenCharArray *)sca containsImageCode:(int)code {
@@ -621,6 +641,10 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 
 - (NSArray<iTermFoldMark *> *)foldMarksInRange:(NSRange)absLineRange max:(NSUInteger)maxCount {
     return [self marksInRange:absLineRange max:maxCount ofClass:[iTermFoldMark class]];
+}
+
+- (NSArray<iTermImageMark *> *)imageMarksInRange:(NSRange)absLineRange max:(NSUInteger)maxCount {
+    return [self marksInRange:absLineRange max:maxCount ofClass:[iTermImageMark class]];
 }
 
 - (NSArray *)marksInRange:(NSRange)absLineRange
@@ -985,6 +1009,11 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 
 - (NSArray<id<iTermFoldMarkReading>> *)foldMarksInRange:(VT100GridRange)range {
     return [self foldMarksInRange:NSMakeRange(MAX(0, range.location) + self.cumulativeScrollbackOverflow, range.length)
+                              max:NSUIntegerMax];
+}
+
+- (NSArray<id<iTermImageMarkReading>> *)imageMarksInRange:(VT100GridRange)range {
+    return [self imageMarksInRange:NSMakeRange(MAX(0, range.location) + self.cumulativeScrollbackOverflow, range.length)
                               max:NSUIntegerMax];
 }
 

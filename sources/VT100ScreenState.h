@@ -56,6 +56,7 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 @class iTermMarkCache;
 @protocol iTermBlockMarkReading;
 @class VT100ScreenMutableState;
+@protocol iTermImageMarkReading;
 
 @protocol VT100ScreenState<NSObject>
 
@@ -336,6 +337,7 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 - (BOOL)haveFoldsInRange:(NSRange)absLineRange;
 - (NSIndexSet *)foldsInRange:(VT100GridRange)gridRange;
 - (NSArray<id<iTermFoldMarkReading>> *)foldMarksInRange:(VT100GridRange)range;
+- (NSArray<id<iTermImageMarkReading>> *)imageMarksInRange:(VT100GridRange)range;
 
 // WARNING - If you add any new APIs that return interval tree objects update VT100ScreenStateSanitizingAdapter
 

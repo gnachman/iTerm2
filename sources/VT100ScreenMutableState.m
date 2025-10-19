@@ -3992,6 +3992,25 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             blockMarks:nil];
 }
 
+- (NSSet<NSNumber *> *)imageCodesUsedInAbsRange:(VT100GridAbsCoordRange)absRange {
+    const VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(absRange, self.cumulativeScrollbackOverflow);
+    VT100GridRange gridRange = VT100GridRangeMake(range.start.y, range.end.y - range.start.y + 1);
+
+    NSArray<id<iTermFoldMarkReading>> *foldMarks = [self foldMarksInRange:gridRange];
+
+    // Image marks occur below the image so search one extra line.
+    gridRange.length += 1;
+    NSArray<id<iTermImageMarkReading>> *imageMarks = [self imageMarksInRange:gridRange];
+
+    NSSet<NSNumber *> *imageMarkCodes = [NSSet setWithArray:[imageMarks mapWithBlock:^id(id<iTermImageMarkReading> imageMark) {
+        return imageMark.imageCode;
+    }]];
+    NSSet<NSNumber *> *foldedImageCodes = [NSSet setWithArray:[foldMarks flatMapWithBlock:^id(id<iTermFoldMarkReading> foldMark) {
+        return [foldMark imageCodes].allObjects;
+    }]];
+    return [imageMarkCodes setByAddingObjectsFromSet:foldedImageCodes];
+}
+
 - (void)replaceRange:(VT100GridAbsCoordRange)absRange
            withLines:(NSArray<ScreenCharArray *> *)lines
         promptLength:(NSInteger)promptLength
@@ -3999,6 +4018,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     DLog(@"replaceRange:withLine: (fold)");
     NSArray<iTermSavedIntervalTreeObject *> *savedITOs = nil;
     NSArray<ScreenCharArray *> *savedLines = nil;
+    NSSet<NSNumber *> *imageCodes = [self imageCodesUsedInAbsRange:absRange];
     const VT100GridAbsCoordRange markRange = [self replaceRange:absRange
                                                       withLines:lines
                                      removedIntervalTreeObjects:&savedITOs
@@ -4028,7 +4048,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         Interval *interval = [self intervalForGridAbsCoordRange:markRange];
         iTermFoldMark *mark = [[iTermFoldMark alloc] initWithLines:savedLines
                                                          savedITOs:savedITOs
-                                                      promptLength:promptLength];
+                                                      promptLength:promptLength
+                                                        imageCodes:imageCodes];
         [self.mutableIntervalTree addObject:mark withInterval:interval];
     }
     if (self.config.useLineStyleMarks) {
@@ -5214,6 +5235,9 @@ lengthExcludingInBandSignaling:data.length
             } else if ([object isKindOfClass:[iTermImageMark class]]) {
                 id<iTermImageMarkReading> imageMark = (id<iTermImageMarkReading>)object;
                 ScreenCharClearProvisionalFlagForImageWithCode(imageMark.imageCode.intValue);
+            } else if ([object isKindOfClass:[iTermFoldMark class]]) {
+                iTermFoldMark *foldMark = (iTermFoldMark *)object;
+                [foldMark recursivelyClearProvisionalFlagForSavedImageMarks];
             }
         }
     }

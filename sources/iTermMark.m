@@ -69,11 +69,15 @@
         assert(!_isDoppelganger);
         if (!_doppelganger) {
             _doppelganger = [self copy];
-            _doppelganger->_isDoppelganger = YES;
-            _doppelganger->_progenitor = self;
+            [_doppelganger becomeDoppelganger];
         }
         return _doppelganger;
     }
+}
+
+- (void)becomeDoppelganger {
+    _isDoppelganger = YES;
+    _progenitor = self;
 }
 
 - (NSString *)shortDebugDescription {
