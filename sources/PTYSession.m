@@ -6592,7 +6592,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         [_textview configureAsBrowser];
     }
     if (@available(macOS 11, *)) {
-        _view.browserViewController.zoom = newFontTable.browserZoom;
+        _view.browserViewController.zoom = newFontTable.browserZoom * 100.0;
     }
     DLog(@"Line height is now %f", [_textview lineHeight]);
     [_delegate sessionDidChangeFontSize:self adjustWindow:!_windowAdjustmentDisabled && !_view.isBrowser];
@@ -6842,7 +6842,7 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
                   horizontalSpacing:[hSpacing doubleValue]
                     verticalSpacing:[vSpacing doubleValue]];
             if (@available(macOS 11, *)) {
-                _view.browserViewController.zoom = fontTable.browserZoom;
+                _view.browserViewController.zoom = fontTable.browserZoom * 100.0;
             }
         }
     }
@@ -6897,7 +6897,7 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
             KEY_NORMAL_FONT: [newFontTable.asciiFont.font stringValue],
             KEY_NON_ASCII_FONT: [newFontTable.defaultNonASCIIFont.font stringValue] ?: [NSNull null],
             KEY_FONT_CONFIG: newFontTable.configString ?: [NSNull null],
-            KEY_BROWSER_ZOOM: @(newFontTable.browserZoom)
+            KEY_BROWSER_ZOOM: @(newFontTable.browserZoom * 100.0)
         }];
 
         // Update the model's copy of the bookmark.

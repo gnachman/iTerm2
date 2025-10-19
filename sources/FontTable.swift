@@ -424,7 +424,7 @@ class FontTable: NSObject, FontProviderProtocol {
                 PTYFontInfo(font: $0.font.it_fontByAdding(toPointSize: delta))
             },
             config: config.map { ($0.stringValue, $0.byAddingPointSize(delta)) },
-            browserZoom: min(500, max(5, browserZoom + delta * 5)))
+            browserZoom: min(5, max(0.05, browserZoom + delta * 0.05)))
     }
 
     @objc(fontTableForProfile:)

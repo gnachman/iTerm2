@@ -138,6 +138,7 @@ class iTermBrowserViewController: NSViewController {
         }
     }
 
+    // 100.0 = 100%
     @objc var zoom: CGFloat {
         get {
             round(browserManager.webView!.pageZoom * 100.0)
