@@ -6551,10 +6551,12 @@ typedef struct {
         // Dragging a tab handle. Source is a PSMTabBarControl.
         PTYTab *theTab = (PTYTab *)[[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] identifier];
         if ([[theTab sessions] containsObject:session] || [[theTab sessions] count] > 1) {
+            DLog(@"shouldAllowDrag: source tab has multiple sessions - NO");
             return NO;
         }
         if (![[theTab activeSession] isCompatibleWith:session]) {
             // Can't have heterogeneous tmux controllers in one tab.
+            DLog(@"shouldAllowDrag: active session incompatible %@", theTab.activeSession);
             return NO;
         }
     }

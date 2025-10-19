@@ -108,7 +108,10 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
                                                selector: #selector(applicationDidResignActive(_:)),
                                                name: NSApplication.didResignActiveNotification,
                                                object: nil)
-    }
+        registerForDraggedTypes([
+            NSPasteboard.PasteboardType(iTermMovePaneDragType),
+            NSPasteboard.PasteboardType("com.iterm2.psm.controlitem")
+        ])    }
 
     required init?(coder: NSCoder) {
         it_fatalError("init(coder:) has not been implemented")
@@ -1052,4 +1055,23 @@ extension iTermBrowserWebView {
 // safelyEvaluateJavaScript expects an IIFE. This makes it prettier to wrap a blob of code.
 func iife(_ value: String) -> String {
     return "(function() {" + value + "})();"
+}
+
+extension iTermBrowserWebView {
+    // Forward drag events to superview (SessionView)
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        return superview?.draggingEntered(sender) ?? []
+    }
+
+    override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
+        return superview?.draggingUpdated(sender) ?? []
+    }
+
+    override func draggingExited(_ sender: NSDraggingInfo?) {
+        superview?.draggingExited(sender)
+    }
+
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        return superview?.performDragOperation(sender) ?? false
+    }
 }
