@@ -17319,24 +17319,30 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (NSDragOperation)sessionViewDraggingEntered:(id<NSDraggingInfo>)sender {
+    DLog(@"sessionViewDraggingEntered: sessionViewDraggingEntered");
     [self.delegate sessionDraggingEntered:self];
 
     PTYSession *movingSession = [[MovePaneController sharedInstance] session];
+    DLog(@"sessionViewDraggingEntered: Moving session is %@", movingSession);
     if (![_delegate session:self shouldAllowDrag:sender]) {
+        DLog(@"sessionViewDraggingEntered: disallowed by delegate");
         return NSDragOperationNone;
     }
 
     if (!([[[sender draggingPasteboard] types] indexOfObject:@"com.iterm2.psm.controlitem"] != NSNotFound)) {
         if ([[MovePaneController sharedInstance] isMovingSession:self]) {
             // Moving me onto myself
+            DLog(@"sessionViewDraggingEntered: move onto self");
             return NSDragOperationMove;
         } else if (![movingSession isCompatibleWith:self]) {
             // We must both be non-tmux or belong to the same session.
+            DLog(@"sessionViewDraggingEntered: We must both be non-tmux or belong to the same session");
             return NSDragOperationNone;
         }
     }
 
     [self.view createSplitSelectionView];
+    DLog(@"sessionViewDraggingEntered: allow regular");
     return NSDragOperationMove;
 }
 
