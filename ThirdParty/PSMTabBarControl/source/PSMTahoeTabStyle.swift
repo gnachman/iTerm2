@@ -614,9 +614,32 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         }
     }
 
-    func drawDivider(betweenCell leftCell: PSMTabBarCell, andCell rightCell: PSMTabBarCell) {
+    var dividerColor: NSColor {
+        NSColor(displayP3Red: 0.82, green: 0.82, blue: 0.82, alpha: 1.0)
     }
-    
+
+    func drawDivider(betweenCell leftCell: PSMTabBarCell, andCell rightCell: PSMTabBarCell) {
+        if orientation != .horizontalOrientation {
+            return
+        }
+        if leftCell.isHighlighted || rightCell.isHighlighted || leftCell.state == .on || rightCell.state == .on {
+            return
+        }
+        guard let cells = tabBar?.cells() as? [PSMTabBarCell], cells.count >= 4 else {
+            return
+        }
+        dividerColor.set()
+        let rect = NSRect(x: leftCell.frame.maxX,
+                          y: leftCell.frame.minY + 5,
+                          width: 1.0,
+                          height: leftCell.frame.height - 10)
+        reallyDrawDivider(rect: rect)
+    }
+
+    func reallyDrawDivider(rect: NSRect) {
+        rect.fill(using: .sourceOver)
+    }
+
     @objc func accessoryFillColor() -> NSColor {
         return NSColor.windowBackgroundColor
     }
@@ -737,7 +760,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         if selected {
             drawCellOutline(path: path, rect: rect, radius: radius)
         }
-        
+
         if let tabColor {
             let color = cellBackgroundColor(forTabColor: tabColor, selected: true)
             color.set()
@@ -958,7 +981,11 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         if selected {
             return NSColor(white: 0.97, alpha: 1.0)
         } else {
-            return NSColor(white: 0, alpha: highlightAmount * 0.2)
+            if highlightAmount > 0 {
+                return NSColor(displayP3Red: 0.86, green: 0.86, blue: 0.86, alpha: 1.0)
+            } else {
+                return Self.backgroundColor
+            }
         }
     }
     
@@ -1580,9 +1607,9 @@ class PSMTahoeDarkTabStyle: PSMTahoeTabStyle {
     }
     
     override class var backgroundColor: NSColor {
-        return NSColor(displayP3Red: 43.0 / 255.0,
-                       green:        46.0 / 255.0,
-                       blue:         48.0 / 255.0,
+        return NSColor(displayP3Red: 0.17,
+                       green:        0.18,
+                       blue:         0.19,
                        alpha:        1.0)
     }
     
@@ -1604,9 +1631,9 @@ class PSMTahoeDarkTabStyle: PSMTahoeTabStyle {
                            alpha:        1.0)
         } else {
             if highlightAmount > 0 {
-                return NSColor(displayP3Red: 54.0 / 255.0,
-                               green:        56.0 / 255.0,
-                               blue:         58.0 / 255.0,
+                return NSColor(displayP3Red: 0.21,
+                               green:        0.21,
+                               blue:         0.22,
                                alpha:        1.0)
             } else {
                 return Self.backgroundColor
@@ -1670,21 +1697,10 @@ class PSMTahoeDarkTabStyle: PSMTahoeTabStyle {
         Bundle(for: PSMTahoeTabStyle.self).image(forResource: "TahoeDarkMidTab")!
     }()
     
-    override func drawDivider(betweenCell leftCell: PSMTabBarCell, andCell rightCell: PSMTabBarCell) {
-        if orientation != .horizontalOrientation {
-            return
-        }
-        if leftCell.isHighlighted || rightCell.isHighlighted || leftCell.state == .on || rightCell.state == .on {
-            return
-        }
-        NSColor.clear.set()
-        let rect = NSRect(x: leftCell.frame.maxX,
-                          y: leftCell.frame.minY + 3,
-                          width: 1.0,
-                          height: leftCell.frame.height - 6)
+    override func reallyDrawDivider(rect: NSRect) {
         rect.fill(using: .clear)
     }
-    
+
     override func useLightControls() -> Bool {
         return true
     }
