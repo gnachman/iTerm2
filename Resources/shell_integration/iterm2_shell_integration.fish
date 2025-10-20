@@ -83,14 +83,14 @@ if begin; status --is-interactive; and not functions -q -- iterm2_status; and te
     functions -c fish_mode_prompt iterm2_fish_mode_prompt
     function fish_mode_prompt --description 'Write out the mode prompt; do not replace this. Instead, change fish_mode_prompt before sourcing .iterm2_shell_integration.fish, or modify iterm2_fish_mode_prompt instead.'
       iterm2_common_prompt
-      iterm2_fish_mode_prompt
+      iterm2_fish_mode_prompt $argv
     end
 
     function fish_prompt --description 'Write out the prompt; do not replace this. Instead, change fish_prompt before sourcing .iterm2_shell_integration.fish, or modify iterm2_fish_prompt instead.'
       # Remove the trailing newline from the original prompt. This is done
       # using the string builtin from fish, but to make sure any escape codes
       # are correctly interpreted, use %b for printf.
-      printf "%b" (string join "\n" -- (iterm2_fish_prompt))
+      printf "%b" (string join "\n" -- (iterm2_fish_prompt $argv))
 
       iterm2_prompt_end
     end
@@ -102,7 +102,7 @@ if begin; status --is-interactive; and not functions -q -- iterm2_status; and te
       # Remove the trailing newline from the original prompt. This is done
       # using the string builtin from fish, but to make sure any escape codes
       # are correctly interpreted, use %b for printf.
-      printf "%b" (string join "\n" -- (iterm2_fish_prompt))
+      printf "%b" (string join "\n" -- (iterm2_fish_prompt $argv))
 
       iterm2_prompt_end
     end
