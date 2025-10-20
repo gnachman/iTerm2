@@ -944,7 +944,7 @@ static int VT100OutputSafeAddInt(int l, int r) {
                           length:STATIC_STRLEN(REPORT_STATUS)];
 }
 
-- (NSData *)reportDeviceAttribute {
+- (NSData *)reportDeviceAttribute:(VT100OutputOptionalDeviceAttributes)attrs {
     // VT220 + sixel
     // For a very long time we returned 1;2, like most other terms, but we need to advertise sixel
     // support. Let's see what happens! New in version 3.3.0.
@@ -989,6 +989,8 @@ static int VT100OutputSafeAddInt(int l, int r) {
     // 45: Soft key mapping
     // 46: ASCII terminal emulation
 
+    // https://github.com/contour-terminal/vt-extensions/blob/master/clipboard-extension.md
+    // 52: The Clipboard Extension supports copying to the clipboard using a subset of the XTerm OSC 52 escape sequence.
 
     typedef NS_ENUM(NSInteger, VT100OutputPrimaryDAFeature) {
         VT100OutputPrimaryDAFeature132Columns = 1,
@@ -1015,6 +1017,8 @@ static int VT100OutputSafeAddInt(int l, int r) {
         VT100OutputPrimaryDAFeaturePCTerm = 44,
         VT100OutputPrimaryDAFeatureSoftKeyMapping = 45,
         VT100OutputPrimaryDAFeatureASCIITerminalEmulation = 46,
+
+        VT100OutputPrimaryDAFeatureOSC52 = 52,
 
         VT100OutputPrimaryDAFeatureVT125 = 12,
         VT100OutputPrimaryDAFeatureVT220 = 62,
@@ -1089,9 +1093,13 @@ static int VT100OutputSafeAddInt(int l, int r) {
             count = sizeof(vt400Features) / sizeof(*vt400Features);
             break;
     }
-    NSString *params = [[[NSArray sequenceWithRange:NSMakeRange(0, count)] mapWithBlock:^id(NSNumber *anObject) {
+    NSMutableArray<NSString *> *values = [[[NSArray sequenceWithRange:NSMakeRange(0, count)] mapWithBlock:^id(NSNumber *anObject) {
         return [@(features[anObject.intValue]) stringValue];
-    }] componentsJoinedByString:@";"];
+    }] mutableCopy];
+    if (attrs.osc52) {
+        [values addObject:[@(VT100OutputPrimaryDAFeatureOSC52) stringValue]];
+    }
+    NSString *params = [values componentsJoinedByString:@";"];
     return [[NSString stringWithFormat:@"\033[?%@c", params] dataUsingEncoding:NSUTF8StringEncoding];
 }
 

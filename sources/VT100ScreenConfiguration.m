@@ -54,6 +54,7 @@
 @property (nonatomic, readwrite) BOOL useLineStyleMarks;
 @property (nonatomic, readwrite) BOOL optionIsMetaForSpecialChars;
 @property (nonatomic, readwrite) BOOL wantsCommandChangeNotifications;
+@property (nonatomic, readwrite) BOOL osc52;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -100,6 +101,7 @@
 @synthesize useLineStyleMarks = _useLineStyleMarks;
 @synthesize optionIsMetaForSpecialChars = _optionIsMetaForSpecialChars;
 @synthesize wantsCommandChangeNotifications = _wantsCommandChangeNotifications;
+@synthesize osc52 = _osc52;
 
 @synthesize isDirty = _isDirty;
 @synthesize terminfoValues = _terminfoValues;
@@ -150,6 +152,7 @@
         _useLineStyleMarks = other.useLineStyleMarks;
         _optionIsMetaForSpecialChars = other.optionIsMetaForSpecialChars;
         _wantsCommandChangeNotifications = other.wantsCommandChangeNotifications;
+        _osc52 = other.osc52;
 
         _isDirty = other.isDirty;
     }
@@ -208,6 +211,7 @@
                             @"useLineStyleMarks": @(_useLineStyleMarks),
                             @"optionIsMetaForSpecialChars": @(_optionIsMetaForSpecialChars),
                             @"wantsCommandChangeNotifications": @(_wantsCommandChangeNotifications),
+                            @"osc52": @(_osc52),
 
                             @"isDirty": @(_isDirty),
     };
@@ -269,6 +273,7 @@
 @dynamic useLineStyleMarks;
 @dynamic optionIsMetaForSpecialChars;
 @dynamic wantsCommandChangeNotifications;
+@dynamic osc52;
 
 @dynamic isDirty;
 

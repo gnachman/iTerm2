@@ -105,7 +105,12 @@ BOOL VT100OutputCursorInformationGetLineDrawingMode(VT100OutputCursorInformation
 
 - (NSData *)reportActivePositionWithX:(int)x Y:(int)y withQuestion:(BOOL)q vt330OrLater:(BOOL)vt330OrLater;
 - (NSData *)reportStatus;
-- (NSData *)reportDeviceAttribute;
+
+typedef struct {
+    BOOL osc52;
+} VT100OutputOptionalDeviceAttributes;
+
+- (NSData *)reportDeviceAttribute:(VT100OutputOptionalDeviceAttributes)attrs;
 - (NSData *)reportSecondaryDeviceAttribute;
 - (NSData *)reportExtendedDeviceAttribute;
 - (NSData *)reportTertiaryDeviceAttribute;

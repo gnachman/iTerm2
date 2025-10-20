@@ -100,6 +100,8 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 // Sends a report.
 - (void)terminalSendReport:(NSData *)report;
 
+- (VT100OutputOptionalDeviceAttributes)terminalOptionalDeviceAttributes;
+
 // Replaces the screen contents with a test pattern.
 - (void)terminalShowTestPattern;
 

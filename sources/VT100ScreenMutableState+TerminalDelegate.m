@@ -518,6 +518,12 @@ typedef struct {
     } name:@"report variable"];
 }
 
+- (VT100OutputOptionalDeviceAttributes)terminalOptionalDeviceAttributes {
+    return (VT100OutputOptionalDeviceAttributes) {
+        .osc52 = self.config.osc52
+    };
+}
+
 - (void)terminalSendReport:(NSData *)report {
     DLog(@"begin %@", report);
     if (!self.config.isTmuxClient && report) {

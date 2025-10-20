@@ -1937,7 +1937,8 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
         case VT100CSI_DA:
             if (token.csi->p[0] == 0 && [_delegate terminalShouldSendReport]) {
-                [_delegate terminalSendReport:[self.output reportDeviceAttribute]];
+                VT100OutputOptionalDeviceAttributes attrs = [_delegate terminalOptionalDeviceAttributes];
+                [_delegate terminalSendReport:[self.output reportDeviceAttribute:attrs]];
             }
             break;
         case VT100CSI_DA2:

@@ -15665,6 +15665,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         dirty = YES;
     }
 
+    const BOOL osc52 = [self supportsOSC52];
+    if (_config.osc52 != osc52) {
+        _config.osc52 = osc52;
+        dirty = YES;
+    }
+
     if (dirty) {
         _config.isDirty = dirty;
     }
@@ -16704,6 +16710,23 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         }
     }
     [self setSessionSpecificProfileValues:dict];
+}
+
+- (BOOL)supportsOSC52 {
+    if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
+        DLog(@"Clipboard access allowed");
+        return YES;
+    }
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyAllowClipboardAccessFromTerminal] != nil) {
+        DLog(@"Clipboard access explicitly denied");
+        return NO;
+    }
+    if ([iTermAdvancedSettingsModel noSyncSuppressClipboardAccessDeniedWarning]) {
+        DLog(@"Clipboard access implicitly denied and prompt disabled");
+        return NO;
+    }
+    DLog(@"Claim to support osc52 but will actually prompt");
+    return YES;
 }
 
 - (void)screenCopyStringToPasteboard:(NSString *)string {
