@@ -12,6 +12,7 @@
 
 @property(nonatomic, assign) int ordinal;
 @property(nonatomic, assign) BOOL isMain;
+@property(nonatomic, assign) BOOL hasRegularTitleBar;
 
 + (NSString *)modifiersString;
 + (NSString *)stringForOrdinal:(int)ordinal deemphasized:(out BOOL *)deemphasized;

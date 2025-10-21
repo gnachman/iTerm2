@@ -420,6 +420,8 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 
 - (void)setWindowType:(iTermWindowType)windowType {
     _windowType = iTermThemedWindowType(windowType);
+    _shortcutAccessoryViewController.hasRegularTitleBar = (_windowType == WINDOW_TYPE_NORMAL ||
+                                                           _windowType == WINDOW_TYPE_MAXIMIZED);
 }
 
 - (void)updateWindowType {

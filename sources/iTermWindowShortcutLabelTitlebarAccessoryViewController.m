@@ -47,7 +47,16 @@
         // wiggle room to keep it aligned.
         const CGFloat containerHeight = self.view.frame.size.height;
         NSRect frame = _label.frame;
-        frame.origin.y = containerHeight - 21;
+        CGFloat yOffset = 21;
+
+        // On macOS 26, adjust position for regular title bar to align with title baseline
+        if (@available(macOS 26, *)) {
+            if (self.hasRegularTitleBar) {
+                yOffset += 3;  // Move down by 3 points for regular theme
+            }
+        }
+
+        frame.origin.y = containerHeight - yOffset;
         _label.frame = frame;
     }
 }
