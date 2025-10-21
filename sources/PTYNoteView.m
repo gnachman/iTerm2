@@ -313,6 +313,7 @@ static NSRect FlipRect(NSRect rect, CGFloat height) {
     [super viewDidMoveToSuperview];
 
     NSClickGestureRecognizer *clickRecognizer = [[NSClickGestureRecognizer alloc] initWithTarget:self action:@selector(handleClick:)];
+    clickRecognizer.delegate = self;
     [self addGestureRecognizer:clickRecognizer];
 }
 
@@ -320,6 +321,14 @@ static NSRect FlipRect(NSRect rect, CGFloat height) {
     if (recognizer.state == NSGestureRecognizerStateRecognized) {
         [self reorderAboveSiblings];
     }
+}
+
+#pragma mark - NSGestureRecognizerDelegate
+
+- (BOOL)gestureRecognizerShouldBegin:(NSGestureRecognizer *)gestureRecognizer {
+    // Don't recognize clicks on the kill button - let the button handle them
+    NSPoint locationInView = [gestureRecognizer locationInView:self];
+    return !NSPointInRect(locationInView, killButton_.frame);
 }
 
 - (void)reorderAboveSiblings {

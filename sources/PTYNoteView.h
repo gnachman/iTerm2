@@ -22,7 +22,7 @@ typedef NS_ENUM(NSInteger, PTYNoteViewTipEdge) {
 - (void)killNote;
 @end
 
-@interface PTYNoteView : NSView {
+@interface PTYNoteView : NSView<NSGestureRecognizerDelegate> {
     PTYNoteViewController *noteViewController_;  // weak
     BOOL dragRight_;
     BOOL dragBottom_;
