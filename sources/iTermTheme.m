@@ -59,6 +59,7 @@
             // later in the call to updateTabColors.
             break;
     }
+    // Note that it_tabStyle: maps preferredStyle, which comes from settings, onto dark/light/dark high contrast/light high contrast.
     switch (tabStyle) {
         case TAB_STYLE_AUTOMATIC:
         case TAB_STYLE_COMPACT:
@@ -86,14 +87,16 @@
             return [[PSMDarkTabStyle alloc] init];
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
             if (@available(macOS 26, *)) {
-                if (![iTermAdvancedSettingsModel useSequoiaStyleTabs]) {
+                if (![iTermAdvancedSettingsModel useSequoiaStyleTabs] &&
+                    preferredStyle != TAB_STYLE_COMPACT) {
                     return [[PSMTahoeLightHighContrastTabStyle alloc] init];
                 }
             }
             return [[PSMLightHighContrastTabStyle alloc] init];
         case TAB_STYLE_DARK_HIGH_CONTRAST:
             if (@available(macOS 26, *)) {
-                if (![iTermAdvancedSettingsModel useSequoiaStyleTabs]) {
+                if (![iTermAdvancedSettingsModel useSequoiaStyleTabs] &&
+                    preferredStyle != TAB_STYLE_COMPACT) {
                     return [[PSMTahoeDarkHighContrastTabStyle alloc] init];
                 }
             }
