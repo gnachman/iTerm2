@@ -24,6 +24,16 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
         } \
     } while (0)
 
+// __cyclicLog should be an instance of iTermCyclicLog
+#define DLogCyclic(__cyclicLog, args...) \
+    do { \
+        NSString *__formatted = [NSString stringWithFormat:args]; \
+        if (gDebugLogging) { \
+            DebugLogImpl(__FILE__, __LINE__, __FUNCTION__, __formatted); \
+        } \
+        [__cyclicLog log:[NSString stringWithFormat:@"%s:%d: %@", __FILE__, __LINE__, __formatted]]; \
+    } while (0)
+
 @interface NSColor (HSP)
 @property (nonatomic, readonly) CGFloat it_hspBrightness;
 @end

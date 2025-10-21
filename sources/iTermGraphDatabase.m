@@ -11,6 +11,7 @@
 #import "FMDatabase.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermGraphDeltaEncoder.h"
 #import "iTermGraphTableTransformer.h"
 #import "iTermPromise.h"
@@ -51,15 +52,17 @@
     // from under you after this point.
     // There is no promised value. This is just used as a barrier.
     iTermPromise *_loadCompletePromise;
+    iTermCyclicLog *_log;
 }
 
 - (instancetype)initWithDatabase:(id<iTermDatabase>)db {
     self = [super init];
     if (self) {
         if (![db lock]) {
-            DLog(@"Could not acquire lock. Give up.");
+            DLogCyclic(_log, @"Could not acquire lock. Give up.");
             return nil;
         }
+        _log = [[iTermCyclicLog alloc] init];
         _updating = ATOMIC_VAR_INIT(0);
         _invalid = ATOMIC_VAR_INIT(0);
         _thread = [[iTermThread alloc] initWithLabel:@"com.iterm2.graph-db"
@@ -100,18 +103,19 @@
 
 - (BOOL)reallyFinishInitialization:(iTermGraphDatabaseState *)state {
     if (![self openAndInitializeDatabase:state]) {
-        DLog(@"openAndInitialize failed. Attempt recovery.");
+        DLogCyclic(_log, @"openAndInitialize failed. Attempt recovery.");
         return [self attemptRecovery:state encoder:nil];
     }
-    DLog(@"Opened ok.");
+    DLogCyclic(_log, @"Opened ok.");
 
     NSError *error = nil;
     self.record = [self load:state error:&error];
     if (error) {
-        DLog(@"load failed. Attempt recovery. %@", error);
+        DLogCyclic(_log, @"load failed. Attempt recovery. %@", error);
         return [self attemptRecovery:state encoder:nil];
     }
-    DLog(@"Loaded ok.");
+    DLogCyclic(_log, @"Loaded ok. Root record: key=%@ id=%@ gen=%@ rowid=%@",
+               self.record.key, self.record.identifier, @(self.record.generation), self.record.rowid);
 
     return YES;
 }
@@ -120,39 +124,42 @@
 - (BOOL)updateSynchronously:(BOOL)sync
                       block:(void (^ NS_NOESCAPE)(iTermGraphEncoder * _Nonnull))block
                  completion:(nullable iTermCallback *)completion {
-    DLog(@"updateSynchronously:%@", @(sync));
+    DLogCyclic(_log, @"updateSynchronously:%@", @(sync));
     assert([NSThread isMainThread]);
     if (_invalid) {
-        DLog(@"Invalid, so fail");
+        DLogCyclic(_log, @"Invalid, so fail");
         [completion invokeWithObject:@NO];
         return YES;
     }
     if (self.updating && !sync) {
-        DLog(@"Already updating and asynchronous, do nothing.");
+        DLogCyclic(_log, @"Already updating and asynchronous, do nothing.");
         return NO;
     }
-    DLog(@"beginUpdate");
+    DLogCyclic(_log, @"beginUpdate");
     [self beginUpdate];
     // You have to wait for loading to complete before initializing the delta encoder or you can end
     // up with two root nodes when a second instance of iTerm2 just quit and this races against loading.
     [_loadCompletePromise wait];
+    DLogCyclic(_log, @"Creating encoder. self.record: key=%@ id=%@ rowid=%@ ptr=%p",
+               self.record.key, self.record.identifier, self.record.rowid, self.record);
     iTermGraphDeltaEncoder *encoder = [[iTermGraphDeltaEncoder alloc] initWithPreviousRevision:self.record];
     block(encoder);
     __weak __typeof(self) weakSelf = self;
 
+    iTermCyclicLog *log = _log;
     void (^perform)(iTermGraphDatabaseState *) = ^(iTermGraphDatabaseState *state) {
-        DLog(@"Perform weakSelf=%@", weakSelf);
+        DLogCyclic(log, @"Perform weakSelf=%@", weakSelf);
         if (!self->_invalid) {
             [weakSelf trySaveEncoder:encoder state:state completion:completion];
         }
-        DLog(@"endUpdate");
+        DLogCyclic(log, @"endUpdate");
         [weakSelf endUpdate];
     };
     if (sync) {
-        DLog(@"dispatch sync");
+        DLogCyclic(_log, @"dispatch sync");
         [_thread dispatchSync:perform];
     } else {
-        DLog(@"dispatch async");
+        DLogCyclic(_log, @"dispatch async");
         [_thread dispatchAsync:perform];
     }
     return YES;
@@ -203,38 +210,50 @@
 - (void)trySaveEncoder:(iTermGraphDeltaEncoder *)originalEncoder
                  state:(iTermGraphDatabaseState *)state
             completion:(nullable iTermCallback *)completion {
-    DLog(@"trySaveEncoder");
+    DLogCyclic(_log, @"trySaveEncoder");
     iTermGraphDeltaEncoder *encoder = originalEncoder;
     BOOL ok = YES;
     @try {
         if (!state.db) {
             ok = NO;
-            DLog(@"I have no db");
+            DLogCyclic(_log, @"I have no db");
             return;
         }
         if ([self save:encoder state:state]) {
             _recoveryCount = 0;
-            DLog(@"Save succeeded");
+            DLogCyclic(_log, @"Save succeeded");
             return;
         }
 
-        DLog(@"save failed: %@ with recovery count %@", state.db.lastError, @(_recoveryCount));
+        DLogCyclic(_log, @"save failed: %@ with recovery count %@", state.db.lastError, @(_recoveryCount));
         if (_recoveryCount >= 3) {
-            DLog(@"Not attempting recovery.");
+            DLogCyclic(_log, @"Not attempting recovery.");
             ok = NO;
             return;
         }
         _recoveryCount += 1;
+        DLogCyclic(_log, @"Starting recovery attempt %@. originalEncoder.record rowid=%@ ptr=%p",
+                   @(_recoveryCount), originalEncoder.record.rowid, originalEncoder.record);
         // For recovery, create a fresh encoder with no previous revision.
         // This treats everything as inserts, avoiding the need for valid rowIDs in "before" state.
         encoder = [[iTermGraphDeltaEncoder alloc] initWithPreviousRevision:nil];
         [encoder encodeGraph:originalEncoder.record];
+        DLogCyclic(_log, @"Recovery: After encodeGraph, encoder.record rowid=%@ ptr=%p children=%@",
+                   encoder.record.rowid, encoder.record, @(encoder.record.graphRecords.count));
         // Erase rowIDs from the recovery encoder's record since we're treating everything as inserts.
         // The "after" records will get new rowIDs assigned during the insert.
         [encoder.record eraseRowIDs];
+        DLogCyclic(_log, @"Recovery: After eraseRowIDs, encoder.record rowid=%@ (should be nil)",
+                   encoder.record.rowid);
         ok = [self attemptRecovery:state encoder:encoder];
+        DLogCyclic(_log, @"Recovery attempt %@ result: %@", @(_recoveryCount), @(ok));
     } @catch (NSException *exception) {
-        ITAssertWithMessage(NO, @"%@", exception.it_compressedDescription);
+        NSString *description = [NSString stringWithFormat:@"%@:\n%@\n%@",
+                                 exception.name,
+                                 exception.reason,
+                                 [exception.it_originalCallStackSymbols componentsJoinedByString:@"\n"]];
+        DLogCyclic(_log, @"Exception: %@", description);
+        [_log fatalError];
         ok = NO;
     } @finally {
         [completion invokeWithObject:@(ok)];
@@ -242,10 +261,14 @@
             // If we were able to save, then use this record as the new baseline. Note that we
             // very carefully take it from encoder, not originalEncoder, because regardless of
             // whether a recovery was attempted `encoder.record` has the correct rowids.
+            DLogCyclic(_log, @"Save succeeded. Setting self.record from encoder.record: rowid=%@ ptr=%p",
+                       encoder.record.rowid, encoder.record);
             self.record = encoder.record;
         } else {
             // Recovery failed. Clear self.record so the next save attempt won't have a corrupted
             // "before" state with missing rowIDs.
+            DLogCyclic(_log, @"Save failed. Clearing self.record (was ptr=%p rowid=%@)",
+                       self.record, self.record.rowid);
             self.record = nil;
         }
         // Uncomment to debug missing rowIDs
@@ -285,20 +308,20 @@
 
     // Acquire the lock with the new instance.
     if (![state.db lock]) {
-        DLog(@"Failed to acquire lock after recovery.");
+        DLogCyclic(_log, @"Failed to acquire lock after recovery.");
         return NO;
     }
 
     // Open and initialize the fresh database.
     if (![self openAndInitializeDatabase:state]) {
-        DLog(@"Failed to open and initialize datbase after deleting it.");
+        DLogCyclic(_log, @"Failed to open and initialize datbase after deleting it.");
         return NO;
     }
     if (!encoder) {
-        DLog(@"Opened database after deleting it. There is no record to save.");
+        DLogCyclic(_log, @"Opened database after deleting it. There is no record to save.");
         return YES;
     }
-    DLog(@"Save record after deleting and creating database.");
+    DLogCyclic(_log, @"Save record after deleting and creating database.");
     const BOOL ok = [self save:encoder state:state];
     if (!ok) {
         [state.db close];
@@ -309,14 +332,14 @@
 
 - (BOOL)save:(iTermGraphDeltaEncoder *)encoder
        state:(iTermGraphDatabaseState *)state {
-    DLog(@"save");
+    DLogCyclic(_log, @"save");
     assert(state.db);
 
     const BOOL ok = [state.db transaction:^BOOL{
         return [self reallySave:encoder state:state];
     }];
     if (!ok) {
-        DLog(@"Commit transaction failed: %@", state.db.lastError);
+        DLogCyclic(_log, @"Commit transaction failed: %@", state.db.lastError);
     }
     return ok;
 }
@@ -333,8 +356,19 @@
                                 NSString *path,
                                 BOOL *stop) {
         if (before && !before.rowid) {
+            NSString *reason = [NSString stringWithFormat:@"MissingRowID: Before lacking a rowid! path=%@ before: key=%@ id=%@ gen=%@ ptr=%p after: key=%@ id=%@ gen=%@ rowid=%@ ptr=%p",
+                                path,
+                                before.key,
+                                before.identifier,
+                                @(before.generation),
+                                before,
+                                after.key,
+                                after.identifier,
+                                @(after.generation),
+                                after.rowid,
+                                after];
             @throw [NSException exceptionWithName:@"MissingRowID"
-                                           reason:[NSString stringWithFormat:@"Before lacking a rowid: %@", before]
+                                           reason:reason
                                          userInfo:nil];
         }
         if (before && !after) {
@@ -388,7 +422,8 @@
         assert(NO);
     }];
     NSDate *end = [NSDate date];
-    DLog(@"Save duration: %f0.1ms", (end.timeIntervalSinceNow - start.timeIntervalSinceNow) * 1000);
+    DLogCyclic(_log, @"Save result=%@ duration=%.1fms",
+               @(ok), (end.timeIntervalSinceNow - start.timeIntervalSinceNow) * 1000);
     return ok;
 }
 
@@ -426,7 +461,7 @@
     }
 
     if (![self createTables:state]) {
-        DLog(@"Create table failed: %@", state.db.lastError);
+        DLogCyclic(_log, @"Create table failed: %@", state.db.lastError);
         [state.db close];
         return NO;
     }

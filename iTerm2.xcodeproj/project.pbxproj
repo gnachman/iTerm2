@@ -1214,6 +1214,7 @@
 		A616839A22F94AEE00661F71 /* GPBEnumArray+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A616839822F94AEE00661F71 /* GPBEnumArray+iTerm.m */; };
 		A616CF0D284143A300EF82D0 /* ConductorRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = A616CF0C284143A300EF82D0 /* ConductorRecovery.swift */; };
 		A616CF112841AA1600EF82D0 /* WinSizeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A616CF102841AA1600EF82D0 /* WinSizeController.swift */; };
+		A616D78B2EA7F167000C0C18 /* CyclicLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = A616D78A2EA7F167000C0C18 /* CyclicLog.swift */; };
 		A6180D6C21A35D5E0073F219 /* iTermMetalPerFrameState.h in Headers */ = {isa = PBXBuildFile; fileRef = A6180D6A21A35D5E0073F219 /* iTermMetalPerFrameState.h */; };
 		A6180D6D21A35D5E0073F219 /* iTermMetalPerFrameState.m in Sources */ = {isa = PBXBuildFile; fileRef = A6180D6B21A35D5E0073F219 /* iTermMetalPerFrameState.m */; };
 		A6180D7021A364EE0073F219 /* iTermMetalPerFrameStateConfiguration.h in Headers */ = {isa = PBXBuildFile; fileRef = A6180D6E21A364EE0073F219 /* iTermMetalPerFrameStateConfiguration.h */; };
@@ -6623,6 +6624,7 @@
 		A616839822F94AEE00661F71 /* GPBEnumArray+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "GPBEnumArray+iTerm.m"; sourceTree = "<group>"; };
 		A616CF0C284143A300EF82D0 /* ConductorRecovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConductorRecovery.swift; sourceTree = "<group>"; };
 		A616CF102841AA1600EF82D0 /* WinSizeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WinSizeController.swift; sourceTree = "<group>"; };
+		A616D78A2EA7F167000C0C18 /* CyclicLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CyclicLog.swift; sourceTree = "<group>"; };
 		A6180D6A21A35D5E0073F219 /* iTermMetalPerFrameState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalPerFrameState.h; sourceTree = "<group>"; };
 		A6180D6B21A35D5E0073F219 /* iTermMetalPerFrameState.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMetalPerFrameState.m; sourceTree = "<group>"; };
 		A6180D6E21A364EE0073F219 /* iTermMetalPerFrameStateConfiguration.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalPerFrameStateConfiguration.h; sourceTree = "<group>"; };
@@ -13331,6 +13333,7 @@
 				A653F6A724D00FFE0062377E /* iTermRestorableStateSQLite.m */,
 				A653F6B224D1437B0062377E /* iTermEncoderAdapter.h */,
 				A653F6B324D1437B0062377E /* iTermEncoderAdapter.m */,
+				A616D78A2EA7F167000C0C18 /* CyclicLog.swift */,
 			);
 			name = StateRestoration;
 			sourceTree = "<group>";
@@ -19493,6 +19496,7 @@
 				A666D5E52219323D00D6184A /* iTermEventTap.m in Sources */,
 				A6CC498E2C08E567003484B2 /* CommandShareMenuProvider.swift in Sources */,
 				A629F5A623AFF5BA00C2F16B /* iTermShellIntegrationSecondPageViewController.m in Sources */,
+				A616D78B2EA7F167000C0C18 /* CyclicLog.swift in Sources */,
 				A6CC2D202E4BA17700F8D620 /* iTermBrowserGraphDiscoveryHandler.swift in Sources */,
 				A6405C0B2D7F64D0007A6A39 /* JSONPrettyPrinter.swift in Sources */,
 				5379C59823DBE9F100314F23 /* iTermFocusFollowsMouseController.m in Sources */,
