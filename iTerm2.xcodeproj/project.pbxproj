@@ -1215,6 +1215,7 @@
 		A616CF0D284143A300EF82D0 /* ConductorRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = A616CF0C284143A300EF82D0 /* ConductorRecovery.swift */; };
 		A616CF112841AA1600EF82D0 /* WinSizeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A616CF102841AA1600EF82D0 /* WinSizeController.swift */; };
 		A616D78B2EA7F167000C0C18 /* CyclicLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = A616D78A2EA7F167000C0C18 /* CyclicLog.swift */; };
+		A616D78C2EA82E71000C0C18 /* iTermTipWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA76A041B30892900CB272A /* iTermTipWindowController.m */; };
 		A6180D6C21A35D5E0073F219 /* iTermMetalPerFrameState.h in Headers */ = {isa = PBXBuildFile; fileRef = A6180D6A21A35D5E0073F219 /* iTermMetalPerFrameState.h */; };
 		A6180D6D21A35D5E0073F219 /* iTermMetalPerFrameState.m in Sources */ = {isa = PBXBuildFile; fileRef = A6180D6B21A35D5E0073F219 /* iTermMetalPerFrameState.m */; };
 		A6180D7021A364EE0073F219 /* iTermMetalPerFrameStateConfiguration.h in Headers */ = {isa = PBXBuildFile; fileRef = A6180D6E21A364EE0073F219 /* iTermMetalPerFrameStateConfiguration.h */; };
@@ -3659,7 +3660,6 @@
 		A6C763BB1B45C52B00E3C992 /* iTermTipController.m in Sources */ = {isa = PBXBuildFile; fileRef = A65B72A11B3134FB00F947A7 /* iTermTipController.m */; };
 		A6C763BC1B45C52B00E3C992 /* iTermTipData.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D374DEA1B349FC8007BE76A /* iTermTipData.m */; };
 		A6C763BD1B45C52B00E3C992 /* iTermTipRootView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA76A0F1B30895600CB272A /* iTermTipRootView.m */; };
-		A6C763BE1B45C52B00E3C992 /* iTermTipWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA76A041B30892900CB272A /* iTermTipWindowController.m */; };
 		A6C763BF1B45C52B00E3C992 /* VT100AnsiParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E39918C3515900450FA1 /* VT100AnsiParser.m */; };
 		A6C763C01B45C52B00E3C992 /* VT100ControlParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3AD18C3588800450FA1 /* VT100ControlParser.m */; };
 		A6C763C11B45C52B00E3C992 /* VT100CSIParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AB018C33ED300B241ED /* VT100CSIParser.m */; };
@@ -19248,6 +19248,7 @@
 				A67F5DE723947A2700D18028 /* iTermMultiServerConnection.m in Sources */,
 				A623D9551F8B04890011F8C3 /* iTermMetalGlue.m in Sources */,
 				A6F9821F2CA775E200229070 /* RoundedRectView.m in Sources */,
+				A616D78C2EA82E71000C0C18 /* iTermTipWindowController.m in Sources */,
 				53E9DFE4220D52EF0070C9C0 /* SendTextTrigger.m in Sources */,
 				A6FE7A772E0DF1DA00BEBCE4 /* iTermBrowserBookmarkFinder.swift in Sources */,
 				A67960D01F81FCBB008A42BC /* iTermBackgroundColorRenderer.mm in Sources */,
@@ -20085,7 +20086,6 @@
 				A6C763161B45C52B00E3C992 /* iTermMinimumSubsequenceMatcher.m in Sources */,
 				A6CEC10B1DCE8146009F4FD2 /* GPBDictionary.m in Sources */,
 				A6C763BD1B45C52B00E3C992 /* iTermTipRootView.m in Sources */,
-				A6C763BE1B45C52B00E3C992 /* iTermTipWindowController.m in Sources */,
 				A6C7638E1B45C52B00E3C992 /* iTermShellHistoryController.m in Sources */,
 				A6C7638A1B45C52B00E3C992 /* ProfileModelWrapper.m in Sources */,
 				A6C763BB1B45C52B00E3C992 /* iTermTipController.m in Sources */,
