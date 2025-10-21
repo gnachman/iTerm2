@@ -224,7 +224,7 @@ extension PTYTextView: ExternalSearchResultsController {
         portholes.remove(porthole)
         porthole.view.removeFromSuperview()
         if let mark = PortholeRegistry.instance.mark(for: porthole.uniqueIdentifier) {
-            dataSource.replace(mark, withLines: porthole.savedLines, savedITOs: porthole.savedITOs)
+            dataSource?.replace(mark, withLines: porthole.savedLines, savedITOs: porthole.savedITOs)
         }
         NotificationCenter.default.post(name: NSNotification.Name.iTermPortholesDidChange, object: nil)
         self.delegate?.textViewDidAddOrRemovePorthole()
@@ -489,7 +489,7 @@ extension PTYTextView: ExternalSearchResultsController {
         if coord.y < 0 {
             return nil
         }
-        return dataSource.commandMark(at: VT100GridCoord(x: 0, y: coord.y),
+        return dataSource?.commandMark(at: VT100GridCoord(x: 0, y: coord.y),
                                       mustHaveCommand: true,
                                       range: nil)
     }
@@ -498,6 +498,9 @@ extension PTYTextView: ExternalSearchResultsController {
     func pathMark(at windowCoord: NSPoint) -> PathMarkReading? {
         let locationInTextView = convert(windowCoord, from: nil)
         if Int(clamping: locationInTextView.x) < iTermPreferences.int(forKey: kPreferenceKeySideMargins) {
+            return nil
+        }
+        guard let dataSource = dataSource else {
             return nil
         }
         let coord = self.coord(for: locationInTextView, allowRightMarginOverflow: true)
@@ -553,7 +556,7 @@ extension PTYTextView: ExternalSearchResultsController {
     private func promptLength(at absY: Int64) -> Int32 {
         var result: Int32 = 0
         withRelativeCoord(VT100GridAbsCoord(x: 0, y: absY)) { coord in
-            if let mark = dataSource.commandMark(at: coord, mustHaveCommand: true, range: nil),
+            if let mark = dataSource?.commandMark(at: coord, mustHaveCommand: true, range: nil),
                mark.promptRange.start.y == absY {
                 result = mark.promptRange.height
             }
@@ -660,6 +663,9 @@ extension PTYTextView: ExternalSearchResultsController {
         guard let interval = mark.entry?.interval else {
             return
         }
+        guard let dataSource = dataSource else {
+            return
+        }
         DLog("Unfold")
         let coord = dataSource.absCoordRange(for: interval)
         dataSource.removeFolds(in: NSRange(location: Int(coord.start.y), length: 1))
@@ -669,6 +675,9 @@ extension PTYTextView: ExternalSearchResultsController {
 
     @objc(foldCommandMark:)
     func fold(commandMark: VT100ScreenMarkReading) {
+        guard let dataSource = dataSource else {
+            return
+        }
         let range = dataSource.rangeOfCommandAndOutput(forMark: commandMark, includeSucessorDivider: false)
         fold(range: Range(range.start.y...range.end.y),
              promptLength: Int(commandMark.promptRange.height))
