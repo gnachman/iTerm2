@@ -3214,5 +3214,11 @@ willExecuteToken:(VT100Token *)token
     } name:@"start wrapped command"];
 }
 
+- (void)terminalExecDidFail {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        [delegate screenExecDidFail];
+        [unpauser unpause];
+    } name:@"execDidFail"];
+}
 @end
 

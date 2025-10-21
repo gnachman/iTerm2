@@ -4283,6 +4283,8 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
                 }
             }
         }
+    } else if ([key isEqualToString:@"ExecFailed"]) {
+        [_delegate terminalExecDidFail];
     }
 }
 

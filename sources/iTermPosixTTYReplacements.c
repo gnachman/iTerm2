@@ -131,6 +131,96 @@ int iTermPosixTTYReplacementForkPty(int *amaster,
     }
 }
 
+static void MakeBlocking(int fd) {
+    int flags = fcntl(fd, F_GETFL);
+    int rc = 0;
+    do {
+        rc = fcntl(fd, F_SETFL, flags & (~O_NONBLOCK));
+    } while (rc == -1 && errno == EINTR);
+}
+
+// Like strerror but it's signal-safe.
+const char *iTermStrerror(int err) {
+    switch (err) {
+        case EPERM:           return "Operation not permitted";
+        case ENOENT:          return "No such file or directory";
+        case ESRCH:           return "No such process";
+        case EINTR:           return "Interrupted system call";
+        case EIO:             return "Input/output error";
+        case ENXIO:           return "Device not configured";
+        case E2BIG:           return "Argument list too long";
+        case ENOEXEC:         return "Exec format error";
+        case EBADF:           return "Bad file descriptor";
+        case ECHILD:          return "No child processes";
+        case EDEADLK:         return "Resource deadlock avoided";
+        case ENOMEM:          return "Cannot allocate memory";
+        case EACCES:          return "Permission denied";
+        case EFAULT:          return "Bad address";
+        case EBUSY:           return "Device or resource busy";
+        case EEXIST:          return "File exists";
+        case EXDEV:           return "Cross-device link";
+        case ENODEV:          return "Operation not supported by device";
+        case ENOTDIR:         return "Not a directory";
+        case EISDIR:          return "Is a directory";
+        case EINVAL:          return "Invalid argument";
+        case ENFILE:          return "Too many open files in system";
+        case EMFILE:          return "Too many open files";
+        case ENOTTY:          return "Inappropriate ioctl for device";
+        case EFBIG:           return "File too large";
+        case ENOSPC:          return "No space left on device";
+        case ESPIPE:          return "Illegal seek";
+        case EROFS:           return "Read-only file system";
+        case EMLINK:          return "Too many links";
+        case EPIPE:           return "Broken pipe";
+        case EDOM:            return "Numerical argument out of domain";
+        case ERANGE:          return "Result too large";
+        case EAGAIN:          return "Resource temporarily unavailable";
+        case EINPROGRESS:     return "Operation now in progress";
+        case EALREADY:        return "Operation already in progress";
+        case ENOTSOCK:        return "Socket operation on non-socket";
+        case EDESTADDRREQ:    return "Destination address required";
+        case EMSGSIZE:        return "Message too long";
+        case EPROTOTYPE:      return "Protocol wrong type for socket";
+        case ENOPROTOOPT:     return "Protocol not available";
+        case EPROTONOSUPPORT: return "Protocol not supported";
+        case ENOTSUP:         return "Operation not supported";
+        case EAFNOSUPPORT:    return "Address family not supported";
+        case EADDRINUSE:      return "Address already in use";
+        case EADDRNOTAVAIL:   return "Can't assign requested address";
+        case ENETDOWN:        return "Network is down";
+        case ENETUNREACH:     return "Network unreachable";
+        case ENETRESET:       return "Network dropped connection on reset";
+        case ECONNABORTED:    return "Software caused connection abort";
+        case ECONNRESET:      return "Connection reset by peer";
+        case ENOBUFS:         return "No buffer space available";
+        case EISCONN:         return "Socket is already connected";
+        case ENOTCONN:        return "Socket is not connected";
+        case ETIMEDOUT:       return "Operation timed out";
+        case ECONNREFUSED:    return "Connection refused";
+        case ELOOP:           return "Too many levels of symbolic links";
+        case ENAMETOOLONG:    return "File name too long";
+        case EHOSTUNREACH:    return "No route to host";
+        case ENOTEMPTY:       return "Directory not empty";
+        case EDQUOT:          return "Disc quota exceeded";
+        case ESTALE:          return "Stale NFS file handle";
+        case ENOLCK:          return "No locks available";
+        case ENOSYS:          return "Function not implemented";
+        case EOVERFLOW:       return "Value too large for data type";
+        case ECANCELED:       return "Operation canceled";
+        case EIDRM:           return "Identifier removed";
+        case ENOMSG:          return "No message of desired type";
+        case EILSEQ:          return "Illegal byte sequence";
+        case EBADMSG:         return "Bad message";
+        case EPROTO:          return "Protocol error";
+        case ETIME:           return "STREAM ioctl timeout";
+        case ENOPOLICY:       return "No such policy registered";
+        case ENOTRECOVERABLE: return "State not recoverable";
+        case EOWNERDEAD:      return "Previous owner died";
+        case ENOTCAPABLE:     return "Capabilities insufficient";
+        default:              return NULL;
+    }
+}
+
 void iTermExec(const char *argpath,
                char **argv,
                int closeFileDescriptors,
@@ -182,18 +272,86 @@ void iTermExec(const char *argpath,
     execvp(argpath, (char* const*)argv);
 
     if (errorFd >= 0) {
-        int e = errno;
-        iTermSignalSafeWrite(errorFd, "## exec failed ##\n");
-        iTermSignalSafeWrite(errorFd, "Program: ");
+        const int e = errno;
+
+        MakeBlocking(errorFd);
+        iTermSignalSafeWrite(errorFd, "\n\n\n\n");
+        iTermSignalSafeWrite(errorFd, "\033[97;41mThe program could not be run (execvp failed)\033[m\n\n");
+        iTermSignalSafeWrite(errorFd, "The failing command was:\n");
         iTermSignalSafeWrite(errorFd, argpath);
-        if (e == ENOENT) {
-            iTermSignalSafeWrite(errorFd, "\nNo such file or directory");
+        // Skip 0 because argv[0] is not informative to the user.
+        for (int i = 1; argv[i]; i++) {
+            iTermSignalSafeWrite(errorFd, " ");
+            iTermSignalSafeWrite(errorFd, argv[i]);
+        }
+        iTermSignalSafeWrite(errorFd, "\n\n");
+        iTermSignalSafeWrite(errorFd, "The reason for the failure was: ");
+        const char *str = iTermStrerror(e);
+        if (str) {
+            iTermSignalSafeWrite(errorFd, str);
+            iTermSignalSafeWrite(errorFd, " (errno ");
+            iTermSignalSafeWriteInt(errorFd, e);
+            iTermSignalSafeWrite(errorFd, ")");
         } else {
-            iTermSignalSafeWrite(errorFd, "\nErrno: ");
+            iTermSignalSafeWrite(errorFd, "error number ");
             iTermSignalSafeWriteInt(errorFd, e);
         }
         iTermSignalSafeWrite(errorFd, "\n");
+        iTermSignalSafeWrite(errorFd, "\n");
+        switch (e) {
+            case ENOENT:
+                iTermSignalSafeWrite(errorFd, "The command specified in this profile is probably incorrect. Ensure you have provided the full path to the command in Settings > Profiles > General and that you have spelled it correctly. Your $PATH is not searched, so you must provide an absolute path.\n");
+
+                break;
+            case E2BIG: {
+                iTermSignalSafeWrite(errorFd, "The number of bytes in the new process's argument list is larger than the system-imposed limit.  This limit is specified by the sysctl(3) MIB variable KERN_ARGMAX. The environment is:\n");
+                for (int i = 0; environ[i]; i++) {
+                    iTermSignalSafeWrite(errorFd, environ[i]);
+                    iTermSignalSafeWrite(errorFd, "\n");
+                }
+                break;
+            }
+            case EACCES:
+                iTermSignalSafeWrite(errorFd, "This error can occur for any of the following reasons:\n");
+                iTermSignalSafeWrite(errorFd, "  * Search permission is denied for a component of the path prefix.\n");
+                iTermSignalSafeWrite(errorFd, "  * The new process file is not an ordinary file.\n");
+                iTermSignalSafeWrite(errorFd, "  * The new process file mode denies execute permission.\n");
+                iTermSignalSafeWrite(errorFd, "  * The new process file is on a filesystem mounted with execution disabled (MNT_NOEXEC in ⟨sys/mount.h⟩).\n");
+                break;
+            case EINVAL:
+            case EFAULT:
+                iTermSignalSafeWrite(errorFd, "This appears to be a bug in iTerm2. Please report it at https://iterm2.com/bugs.");
+                break;
+            case EIO:
+                iTermSignalSafeWrite(errorFd, "An I/O error occurred while reading from the file system.");
+                break;
+            case ELOOP:
+                iTermSignalSafeWrite(errorFd, "Too many symbolic links were encountered in translating the pathname. This is probably a looping symbolic link.");
+                break;
+            case ENAMETOOLONG:
+                iTermSignalSafeWrite(errorFd, "A component of a pathname exceeded ");
+                iTermSignalSafeWriteInt(errorFd, NAME_MAX);
+                iTermSignalSafeWrite(errorFd, " characters, or an entire path name exceeded ");
+                iTermSignalSafeWriteInt(errorFd, PATH_MAX);
+                iTermSignalSafeWrite(errorFd, " characters.");
+                break;
+            case ENOEXEC:
+                iTermSignalSafeWrite(errorFd, "The new process file has the appropriate access permission, but has an unrecognized format (e.g., an invalid magic number in its header).");
+                break;
+            case ENOMEM:
+                iTermSignalSafeWrite(errorFd, "The new process requires more virtual memory than is allowed by the imposed maximum (getrlimit(2)). Check if your system is low on memory using Activity Monitor.");
+                break;
+            case ENOTDIR:
+                iTermSignalSafeWrite(errorFd, "A component of the path prefix is not a directory.");
+                break;
+            case ETXTBSY:
+                iTermSignalSafeWrite(errorFd, "The new process file is a pure procedure (shared text) file that is currently open for writing or reading by some process.");
+                break;
+            default:
+                iTermSignalSafeWrite(errorFd, "This error code is unexpected. Please report the value of Errno at https://iterm2.com/bugs.");
+        }
     }
+    iTermSignalSafeWrite(errorFd, "\e]1337;ExecFailed\e\\");
 
     sleep(1);
     _exit(1);

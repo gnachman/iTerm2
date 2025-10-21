@@ -58,7 +58,7 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
                        guid:(NSString *)guid;
 - (void)didRepairSavedArrangement;
 
-- (void)brokenPipe;
+- (void)sessionEndedWithExecFailure:(BOOL)execDidFail;
 
 - (void)didRestoreOrphan;
 - (void)willRecycleSession;

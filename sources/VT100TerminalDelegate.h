@@ -551,5 +551,6 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalSetPointerShape:(NSString *)pointerShape;
 - (void)terminalDidReceiveKittyImageCommand:(iTermKittyImageCommand *)kittyImageCommand;
 - (void)terminalStartWrappedCommand:(NSString *)command channel:(NSString *)uid;
+- (void)terminalExecDidFail;
 
 @end

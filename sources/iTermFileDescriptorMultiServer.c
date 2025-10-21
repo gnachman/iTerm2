@@ -208,7 +208,7 @@ static int LaunchLegacy(const iTermMultiServerRequestLaunch *launch,
                   forkState,
                   launch->pwd,
                   launch->envp,
-                  fd);
+                  2);  // write errors to stderr
     }
     if (forkState->pid == -1) {
         *errorPtr = errno;

@@ -457,5 +457,6 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
                  queue:(dispatch_queue_t _Nonnull)queue
             completion:(void (^ _Nonnull)(int32_t, const struct stat * _Nonnull))completion;
 - (void)screenStartWrappedCommand:(NSString * _Nonnull)command channel:(NSString * _Nonnull)uid;
+- (void)screenExecDidFail;
 
 @end

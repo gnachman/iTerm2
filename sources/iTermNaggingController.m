@@ -177,9 +177,9 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
     }];
 }
 
-- (void)brokenPipe {
-    [self.delegate naggingControllerShowMessage:@"Session ended (broken pipe). Restart it?"
-                                     isQuestion:YES
+- (void)sessionEndedWithExecFailure:(BOOL)execDidFail {
+    [self.delegate naggingControllerShowMessage:execDidFail ? @"Session failed to start." : @"Session ended (command exited). Restart it?"
+                                     isQuestion:!execDidFail
                                       important:YES
                                      identifier:iTermNaggingControllerReopenSessionAfterBrokenPipeIdentifier
                                         options:@[ @"_Restart", @"Don’t Ask Again" ]

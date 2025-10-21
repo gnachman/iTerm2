@@ -669,6 +669,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     
     // Browser navigation state
     BOOL _browserIsLoading;
+
+    // Disables short-lived session warning so the user can read the error.
+    BOOL _execDidFail;
 }
 
 @synthesize isDivorced = _divorced;
@@ -3348,7 +3351,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if ([[self textview] isFindingCursor]) {
         [[self textview] endFindCursor];
     }
-    if (_exited && !_shortLivedSingleUse) {
+    if (_exited && !_shortLivedSingleUse && !_execDidFail) {
         [self _maybeWarnAboutShortLivedSessions];
     }
     if (self.tmuxMode == TMUX_CLIENT) {
@@ -4134,7 +4137,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (_shortLivedSingleUse) {
         return;
     }
-    [self.naggingController brokenPipe];
+    [self.naggingController sessionEndedWithExecFailure:_execDidFail];
 }
 
 - (BOOL)isRestartable {
@@ -5586,6 +5589,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (void)resetForRelaunch {
+    _execDidFail = NO;
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                              VT100ScreenMutableState *mutableState,
                                              id<VT100ScreenDelegate> delegate) {
@@ -20232,6 +20236,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         return;
     }
     [self addChannelClient:channelClient command:command];
+}
+
+- (void)screenExecDidFail {
+    _execDidFail = YES;
 }
 
 - (CGFloat)composerManagerLineHeight:(iTermComposerManager *)composerManager {
