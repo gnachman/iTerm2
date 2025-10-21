@@ -232,7 +232,14 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         DLog(@"Not remapping modifiers");
         return event;
     }
-    CGEventRef maybeRemappedCGEvent = [[iTermModifierRemapper sharedInstance] eventByRemappingEvent:[event CGEvent]
+    CGEventRef cgEvent;
+    @try {
+        cgEvent = event.CGEvent;
+    } @catch (NSException *exception) {
+        DLog(@"Can't get CGEvent from %@", event);
+        return nil;
+    }
+    CGEventRef maybeRemappedCGEvent = [[iTermModifierRemapper sharedInstance] eventByRemappingEvent:cgEvent
                                                                                            eventTap:nil];
     if (!maybeRemappedCGEvent) {
         return nil;
