@@ -792,6 +792,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                 path2.addClip()
                 path2.lineWidth = 4.0
                 path2.stroke()
+
+                color.withAlphaComponent(0.1).set()
+                path2.fill()
             }
         }
     }
