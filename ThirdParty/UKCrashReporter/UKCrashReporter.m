@@ -174,11 +174,12 @@ NSString* UKCrashReporterFindTenFiveCrashReportPath(NSString* appName, NSArray *
     
     for (NSString *crashLogsFolder in folders) {
         // Find the newest of our crash log files:
-        NSDirectoryEnumerator*    enny =
-            [[NSFileManager defaultManager] enumeratorAtPath:crashLogsFolder];
-        while ((currName = [enny nextObject])) {
+        NSArray *contents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:crashLogsFolder error:nil];
+        for (currName in contents) {
             if ([currName hasPrefix:crashLogPrefix] && [currName hasSuffix:crashLogSuffix] ) {
-                NSDate*    currDate = [[enny fileAttributes] fileModificationDate];
+                NSString *fullPath = [crashLogsFolder stringByAppendingPathComponent:currName];
+                NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:fullPath error:nil];
+                NSDate *currDate = [attrs fileModificationDate];
                 if (foundName) {
                     if ([currDate isGreaterThan:foundDate]) {
                         foundName = currName;
