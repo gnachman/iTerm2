@@ -293,4 +293,8 @@
     return [self.font isEqual:other.font];
 }
 
+- (void)sanityCheck {
+    ITAssertWithMessage(self.font != nil, @"font is nil in %@", self);
+}
+
 @end

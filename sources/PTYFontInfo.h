@@ -48,6 +48,8 @@ NS_ASSUME_NONNULL_BEGIN
 // is available).
 - (PTYFontInfo * _Nullable)computedBoldItalicVersion;
 
+- (void)sanityCheck;
+
 @end
 
 @interface NSFont(PTYFontInfo)

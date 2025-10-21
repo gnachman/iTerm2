@@ -143,6 +143,7 @@ class SyntaxHighlighter {
     }
 
     func removeForegroundColorAndFontAttributes(range: Range<Int>) {
+        fontTable.asciiFont.sanityCheck()
         setFont(range: range, font: fontTable.asciiFont.font)
         setTextColor(range: range, color: colors.regular)
     }
