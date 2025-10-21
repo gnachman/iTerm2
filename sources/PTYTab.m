@@ -2001,6 +2001,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)adjustSubviewsOf:(NSSplitView *)split {
     PtyLog(@"--- adjust ---");
+    if (split.subviews.count == 0) {
+        DLog(@"Split has no subviews");
+        return;
+    }
     [split adjustSubviews];
     [self splitView:split resizeSubviewsWithOldSize:split.frame.size];
     PtyLog(@">>AFTER:");
