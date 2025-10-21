@@ -103,6 +103,7 @@ extern const NSInteger kLongMaximumWordLength;
                    plus:(int)delta
          skippingCoords:(NSIndexSet *)coordsToSkip
                 forward:(BOOL)forward;
+- (VT100GridCoord)coord:(VT100GridCoord)coord plus:(int)n;
 
 // block should return YES to stop searching and use the coordinate it was passed as the result.
 - (VT100GridCoord)searchFrom:(VT100GridCoord)start

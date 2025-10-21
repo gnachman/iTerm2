@@ -694,6 +694,14 @@ const NSInteger kLongMaximumWordLength = 100000;
     return n;
 }
 
+- (VT100GridCoord)coord:(VT100GridCoord)coord plus:(int)n {
+    VT100GridCoord result = coord;
+    for (int i = 0; i < n; i++) {
+        result = [self successorOfCoord:result];
+    }
+    return result;
+}
+
 - (VT100GridCoord)coord:(VT100GridCoord)coord
                    plus:(int)n
          skippingCoords:(NSIndexSet *)coordsToSkip

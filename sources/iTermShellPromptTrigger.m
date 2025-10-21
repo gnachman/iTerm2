@@ -7,6 +7,7 @@
 //
 
 #import "iTermShellPromptTrigger.h"
+#import "ScreenChar.h"
 #import "VT100GridTypes.h"
 
 @implementation iTermShellPromptTrigger
@@ -39,8 +40,10 @@
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     if (stringArray.count > 0) {
-        VT100GridAbsCoordRange range = VT100GridAbsCoordRangeMake(capturedRanges[0].location, lineNumber, NSMaxRange(capturedRanges[0]), lineNumber);
-        [aSession triggerSession:self didDetectPromptAt:range];
+        const NSRange screenCharRange = [stringLine rangeOfScreenCharsForRangeInString:capturedRanges[0]];
+        [aSession triggerSession:self
+        didDetectPromptAtAbsLine:lineNumber
+                           range:screenCharRange];
     }
     return NO;
 }

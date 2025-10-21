@@ -2934,7 +2934,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     count += 1;
     return count;
 }
-
+// FTCS A
 - (VT100ScreenMark *)promptDidStartAt:(VT100GridAbsCoord)initialCoord
                          wasInCommand:(BOOL)wasInCommand
                     detectedByTrigger:(BOOL)detectedByTrigger {
@@ -2975,9 +2975,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                          coord.x,
                                                          coord.y);
 
-    // FinalTerm uses this to define the start of a collapsible region. That would be a nightmare
-    // to add to iTerm, and our answer to this is marks, which already existed anyway.
-    VT100ScreenMark *mark = [self setPromptStartLine:self.numberOfScrollbackLines + self.cursorY - 1
+    // When detected by trigger, use initialCoord as the start of the prompt because we know it's correct.
+    // Otherwise, the cursor position may have moved (if a CRLF was added) and we want to use the
+    // current cursor position, which is the best predictor of the prompt start. Triggers being what
+    // they are, the cursor might be far from the prompt by now.
+    const int line = detectedByTrigger ? initialCoord.y : self.numberOfScrollbackLines + self.cursorY - 1;
+    VT100ScreenMark *mark = [self setPromptStartLine:line
                                    detectedByTrigger:detectedByTrigger];
     if ([iTermAdvancedSettingsModel resetSGROnPrompt]) {
         [self.terminal resetGraphicRendition];
@@ -5980,8 +5983,23 @@ launchCoprocessWithCommand:(NSString *)command
     }
 }
 
-- (void)triggerSession:(Trigger *)trigger didDetectPromptAt:(VT100GridAbsCoordRange)range {
-    DLog(@"Trigger detected prompt at %@", VT100GridAbsCoordRangeDescription(range));
+- (void)triggerSession:(Trigger *)trigger didDetectPromptAtAbsLine:(long long)lineNumber range:(NSRange)wrappedRange {
+    const long long overflow = self.totalScrollbackOverflow;
+    if (lineNumber < overflow) {
+        DLog(@"lineNumber=%@ tso=%@", @(lineNumber), @(overflow));
+        return;
+    }
+    iTermTextExtractor *extractor = [[iTermTextExtractor alloc] initWithDataSource:self];
+    VT100GridCoord startCoord = VT100GridCoordMake(0, lineNumber - overflow);
+    DLog(@"Begin advancing by %@", @(wrappedRange.location));
+    startCoord = [extractor coord:startCoord plus:wrappedRange.location];
+    DLog(@"Done advancing");
+    const VT100GridCoord endCoord = [extractor coord:startCoord plus:wrappedRange.length];
+    const VT100GridCoordRange relative = { .start = startCoord, .end = endCoord };
+    const VT100GridAbsCoordRange range = VT100GridAbsCoordRangeFromCoordRange(relative, overflow);
+
+    DLog(@"Trigger detected prompt at %@ of %@ (%@)",
+         NSStringFromRange(wrappedRange), @(lineNumber),  VT100GridAbsCoordRangeDescription(range));
 
     id<VT100ScreenMarkReading> lastPromptMark = [self lastPromptMark];
     if (lastPromptMark) {

@@ -78,7 +78,8 @@ extern NSString * const kTriggerNameKey;
 - (void)triggerSession:(Trigger *)trigger setRemoteHostName:(NSString *)remoteHost;
 - (void)triggerSession:(Trigger *)trigger setCurrentDirectory:(NSString *)text;
 - (void)triggerSession:(Trigger *)trigger didChangeNameTo:(NSString *)newName;
-- (void)triggerSession:(Trigger *)trigger didDetectPromptAt:(VT100GridAbsCoordRange)range;
+- (void)triggerSession:(Trigger *)trigger didDetectPromptAtAbsLine:(long long)lineNumber range:(NSRange)range;
+
 - (void)triggerSession:(Trigger *)trigger
     makeHyperlinkToURL:(NSURL *)url
                inRange:(NSRange)rangeInString
