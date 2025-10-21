@@ -26,7 +26,7 @@ class iTermLocaleGuesser: NSObject {
         private static var lowerCaseEncodings: [String: Bool] = {
             guard let plistFile = Bundle(for: iTermLocaleGuesser.self).path(forResource: "EncodingsWithLowerCase", ofType: "plist") else {
                 AppSignatureValidator.warn(reason: "While loading the list of known encodings")
-                return [:]
+                it_fatalError("bundle damaged")
             }
             return NSDictionary(contentsOfFile: plistFile) as? [String: Bool] ?? [:]
         }()
@@ -164,7 +164,7 @@ class iTermLocaleGuesser: NSObject {
     }
 
     private func properlyCapitalizedIANAEncoding(for cfEncoding: CFStringEncoding) -> String? {
-        precondition(!config.lowerCaseEncodings.isEmpty)
+        it_assert(!config.lowerCaseEncodings.isEmpty, "lowerCaseEncodings is empty")
 
         guard let cf = CFStringConvertEncodingToIANACharSetName(cfEncoding) else {
             return nil
