@@ -26,6 +26,7 @@
 #import "iTermTuple.h"
 #import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "NSFont+iTerm.h"
 #import "NSStringITerm.h"
 #import "PreferencePanel.h"
@@ -2871,8 +2872,10 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)getTabColorsResponse:(NSString *)encodedResult {
+    NSString *redString = @"p3#ffff00000000";
     NSString *result = [self decodedString:encodedResult
                             optionalPrefix:iTermTmuxControllerEncodingPrefixTabColors];
+    BOOL haveRed = NO;
     [_tabColors removeAllObjects];
     if (result.length > 0) {
         [_tabColors removeAllObjects];
@@ -2883,9 +2886,27 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                 NSString *wp = [part substringToIndex:equals];
                 NSString *colorString = [part substringFromIndex:equals + 1];
                 if (colorString && wp.length) {
+                    if ([colorString isEqualToString:redString]) {
+                        haveRed = YES;
+                    }
                     _tabColors[@(wp.intValue)] = colorString;
                 }
             }
+        }
+    }
+    if (haveRed) {
+        const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:@"While attaching to tmux, some tabs were found whose color is pure red. This may be due to a bug in early versions of iTerm2 3.6.x. Would you like to reset those tabs’ colors?"
+                                   actions:@[ @"Reset", @"Keep Red" ]
+                                 accessory:nil
+                                identifier:@"NoSyncResetRedTmuxTabs"
+                               silenceable:kiTermWarningTypePermanentlySilenceable
+                                   heading:@"Fix corrupted tab colors?"
+                                    window:[NSApp keyWindow]];
+        if (selection == kiTermWarningSelection0) {
+            [_tabColors removeObjectsPassingTest:^BOOL(NSNumber *key, NSString *obj) {
+                return [obj isEqualToString:redString];
+            }];
         }
     }
 }
