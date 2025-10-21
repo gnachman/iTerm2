@@ -578,6 +578,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (BOOL)updatePaneTitles {
     BOOL anyChange = NO;
     const BOOL showTitles = [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles];
+    const BOOL forceTitles = showTitles && [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitlesEvenIfOnlyOnePane];
     NSArray *sessions = [self sessions];
     const BOOL perPaneStatusBars = [self useSeparateStatusbarsPerPane];
     const BOOL statusBarsOnTop = (([iTermPreferences unsignedIntegerForKey:kPreferenceKeyStatusBarPosition] == iTermStatusBarPositionTop) &&
@@ -585,7 +586,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     const BOOL anySessionHasTopStatusBar = statusBarsOnTop && [sessions anyWithBlock:^BOOL(PTYSession *session) {
         return [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:session.profile];
     }];
-    const BOOL shouldShowTitles = (showTitles && [sessions count] > 1) || anySessionHasTopStatusBar;
+    const BOOL shouldShowTitles = forceTitles || (showTitles && [sessions count] > 1) || anySessionHasTopStatusBar;
     for (PTYSession *aSession in sessions) {
         const BOOL shouldShowBottomStatusBar = (perPaneStatusBars &&
                                                 !statusBarsOnTop &&
@@ -3857,9 +3858,10 @@ typedef struct {
     NSArray *theChildren = [parseTree objectForKey:kLayoutDictChildrenKey];
     BOOL haveMultipleSessions = ([theChildren count] > 1);
     const BOOL perPaneTitleBarEnabled = [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles];
+    const BOOL forceTitleBar = perPaneTitleBarEnabled && [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitlesEvenIfOnlyOnePane];
     // TODO: I'm not sure why zoomed is taken into account here but not in
     // other places like this that decide if titles should be shown.
-    const BOOL showTitles = perPaneTitleBarEnabled && (zoomed || haveMultipleSessions);
+    const BOOL showTitles = forceTitleBar || (perPaneTitleBarEnabled && (zoomed || haveMultipleSessions));
 
     // Begin by decorating the tree with pixel sizes.
     [PTYTab _recursiveSetSizesInTmuxParseTree:parseTree
@@ -3949,7 +3951,8 @@ typedef struct {
     NSArray *theChildren = [parseTree objectForKey:kLayoutDictChildrenKey];
     BOOL haveMultipleSessions = ([theChildren count] > 1);
     const BOOL titlesEnabled = [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles];
-    const BOOL shouldShowTitles = (titlesEnabled && haveMultipleSessions);
+    const BOOL forceTitles = titlesEnabled && [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitlesEvenIfOnlyOnePane];
+    const BOOL shouldShowTitles = forceTitles || (titlesEnabled && haveMultipleSessions);
     if (shouldShowTitles) {
         // Set the showTitle flag so recompact does not make the views too small.
         for (PTYSession *aSession in [theTab sessions]) {
@@ -4853,8 +4856,9 @@ typedef struct {
     }
 
     const BOOL perPaneTitleBarEnabled = [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles];
+    const BOOL forceTitleBar = perPaneTitleBarEnabled && [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitlesEvenIfOnlyOnePane];
     const BOOL haveMultipleSessions = self.sessions.count > 1;
-    const BOOL showTitles = (perPaneTitleBarEnabled && haveMultipleSessions);
+    const BOOL showTitles = forceTitleBar || (perPaneTitleBarEnabled && haveMultipleSessions);
 
     for (PTYSession *aSession in [self sessions]) {
         NSNumber *n = [NSNumber numberWithInt:[aSession tmuxPane]];
@@ -5108,6 +5112,8 @@ typedef struct {
 - (void)resizeMaximizedTmuxSessionView:(SessionView *)sessionView toGridSize:(VT100GridSize)gridSize {
     DLog(@"resize view %@ to grid size %@", sessionView, VT100GridSizeDescription(gridSize));
     const BOOL perPanelTitleBarsEnabled = [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles];
+    // Don't need to check kPreferenceKeyShowPaneTitlesEvenIfOnlyOnePane because this is not
+    // contingent on the number of panes. Maximized panes always get a titlebar.
     const BOOL showTitles = perPanelTitleBarsEnabled;
     NSSize size = [PTYTab _sessionSizeWithCellSize:[PTYTab cellSizeForBookmark:[self.tmuxController profileForWindow:self.tmuxWindow]]
                                         dimensions:NSMakeSize(gridSize.width, gridSize.height)

@@ -50,6 +50,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
 
     // Show per-pane title bar with split panes.
     IBOutlet NSButton *_showPaneTitles;
+    IBOutlet NSButton *_showPaneTitlesEvenIfOnlyOnePane;
 
     // Separate background images per pane
     IBOutlet NSButton *_separateBackgroundImages;
@@ -206,6 +207,16 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                    relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
+
+    info = [self defineControl:_showPaneTitlesEvenIfOnlyOnePane
+                           key:kPreferenceKeyShowPaneTitlesEvenIfOnlyOnePane
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() { [weakSelf postRefreshNotification]; };
+    info.shouldBeEnabled = ^BOOL {
+        return [weakSelf boolForKey:kPreferenceKeyShowPaneTitles];
+    };
+    [info addShouldBeEnabledDependencyOnSetting:kPreferenceKeyShowPaneTitles controller:self];
 
     info = [self defineControl:_separateBackgroundImages
                            key:kPreferenceKeyPerPaneBackgroundImage

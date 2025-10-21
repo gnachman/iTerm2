@@ -55,7 +55,9 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
 @property(nonatomic) BOOL deferUpdate;
 
 // A function that indicates if the control should be enabled. If nil, then the control is always
-// enabled.
+// enabled. If you set this and it depends on another setting, call
+// -addShouldBeEnabledDependencyOnSetting:controller: to ensure it is called when the setting it
+// depends on changes.
 @property(nonatomic, copy) BOOL (^shouldBeEnabled)(void);
 
 // Called when the user changes a control's value by interacting with it (after the underlying user

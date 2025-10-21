@@ -6792,12 +6792,13 @@ ITERM_WEAKLY_REFERENCEABLE
 
             // Update visibility of title bars.
             const BOOL perPaneTitleBarEnabled = [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles];
+            const BOOL forcePerPaneTitleBar = perPaneTitleBarEnabled && [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitlesEvenIfOnlyOnePane];
             const BOOL statusBarsOnTop = ([iTermPreferences unsignedIntegerForKey:kPreferenceKeyStatusBarPosition] == iTermStatusBarPositionTop);
             const BOOL perPaneStatusBars = [self useSeparateStatusbarsPerPane];
             const BOOL haveMultipleSessions = firstTab.sessions.count > 1;
             for (PTYSession *session in firstTab.sessions) {
                 const BOOL sessionHasStatusBar = [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:session.profile];
-                const BOOL showTitleBar = perPaneTitleBarEnabled && (firstTab.isMaximized || haveMultipleSessions);
+                const BOOL showTitleBar = forcePerPaneTitleBar || (perPaneTitleBarEnabled && (firstTab.isMaximized || haveMultipleSessions));
                 const BOOL showTopStatusBar = statusBarsOnTop && perPaneStatusBars && sessionHasStatusBar;
                 [[session view] setShowTitle:showTitleBar || showTopStatusBar adjustScrollView:YES];
             }

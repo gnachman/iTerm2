@@ -109,6 +109,7 @@ NSString *const kPreferenceKeyTabsHaveCloseButton = @"TabsHaveCloseButton";
 NSString *const kPreferenceKeyHideTabActivityIndicator = @"HideActivityIndicator";
 NSString *const kPreferenceKeyShowNewOutputIndicator = @"ShowNewOutputIndicator";
 NSString *const kPreferenceKeyShowPaneTitles = @"ShowPaneTitles";
+NSString *const kPreferenceKeyShowPaneTitlesEvenIfOnlyOnePane = @"ShowPaneTitlesEvenIfOnlyOnePane";
 NSString *const kPreferenceKeyPerPaneBackgroundImage = @"PerPaneBackgroundImage";
 NSString *const kPreferenceKeyStretchTabsToFillBar = @"StretchTabsToFillBar";
 NSString *const kPreferenceKeyHideMenuBarInFullscreen = @"HideMenuBarInFullscreen";
@@ -561,6 +562,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyStretchTabsToFillBar: @YES,
 
                   kPreferenceKeyShowPaneTitles: @YES,
+                  kPreferenceKeyShowPaneTitlesEvenIfOnlyOnePane: @NO,
                   kPreferenceKeyPerPaneBackgroundImage: @YES,
                   kPreferenceKeyHideMenuBarInFullscreen:@YES,
                   kPreferenceKeyUIElement: @NO,

@@ -710,7 +710,7 @@ Gw
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="gZI-PG-peZ">
                             <rect key="frame" x="1" y="1" width="373" height="353"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" autosaveColumns="NO" id="5845">
                                     <rect key="frame" x="0.0" y="0.0" width="373" height="353"/>
@@ -917,7 +917,7 @@ DQ
                                 <autoresizingMask key="autoresizingMask" heightSizable="YES"/>
                                 <clipView key="contentView" drawsBackground="NO" id="Yde-8Q-TRE">
                                     <rect key="frame" x="1" y="1" width="256" height="133"/>
-                                    <autoresizingMask key="autoresizingMask"/>
+                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" allowsUndo="YES" textCompletion="NO" id="235-ob-yuB">
                                             <rect key="frame" x="0.0" y="0.0" width="256" height="133"/>
@@ -937,7 +937,7 @@ DQ
                                     <autoresizingMask key="autoresizingMask"/>
                                 </scroller>
                                 <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="50U-sa-I1u">
-                                    <rect key="frame" x="241" y="1" width="16" height="133"/>
+                                    <rect key="frame" x="240" y="1" width="17" height="133"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                 </scroller>
                             </scrollView>
@@ -972,7 +972,7 @@ DQ
                         <autoresizingMask key="autoresizingMask"/>
                         <clipView key="contentView" drawsBackground="NO" id="XnQ-nh-5wv">
                             <rect key="frame" x="1" y="1" width="379" height="83"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" textCompletion="NO" id="ucv-8U-BE7" customClass="iTermPlaygroundTextView">
                                     <rect key="frame" x="0.0" y="0.0" width="379" height="83"/>
@@ -989,7 +989,7 @@ DQ
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
                         <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="Rdl-db-8ML">
-                            <rect key="frame" x="364" y="1" width="16" height="83"/>
+                            <rect key="frame" x="363" y="1" width="17" height="83"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
                     </scrollView>
@@ -1055,7 +1055,7 @@ DQ
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="Moz-RU-iUF">
                             <rect key="frame" x="1" y="1" width="343" height="375"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" autosaveColumns="NO" id="6283">
                                     <rect key="frame" x="0.0" y="0.0" width="343" height="375"/>
@@ -1397,6 +1397,7 @@ CA
                 <outlet property="_separateBackgroundImages" destination="FvM-qm-P8l" id="ZWl-m2-tm0"/>
                 <outlet property="_showNewOutputIndicator" destination="Q0o-aJ-Wec" id="QRv-Pu-9Qr"/>
                 <outlet property="_showPaneTitles" destination="6051" id="n0P-0K-pxx"/>
+                <outlet property="_showPaneTitlesEvenIfOnlyOnePane" destination="7KN-d8-slG" id="Wo4-BD-wWt"/>
                 <outlet property="_showTabBarInFullscreen" destination="e4x-7h-mzh" id="21B-SP-LU5"/>
                 <outlet property="_showWindowBorder" destination="5144" id="wpg-cZ-0wM"/>
                 <outlet property="_sideMargins" destination="B2G-t0-4Av" id="Zg0-QD-82E"/>
@@ -8356,11 +8357,11 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="DgM-Zm-3SV" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="16" y="129" width="551" height="135"/>
+                                        <rect key="frame" x="16" y="96" width="551" height="168"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rf8-fE-qJb">
-                                                <rect key="frame" x="235" y="99" width="267" height="18"/>
+                                                <rect key="frame" x="235" y="108" width="267" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Separate status bars per pane" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="pMF-0o-f7A">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -8371,9 +8372,9 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6051">
-                                                <rect key="frame" x="235" y="119" width="267" height="18"/>
+                                                <rect key="frame" x="235" y="148" width="267" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <buttonCell key="cell" type="check" title="Show per-pane title bar with split panes" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6052">
+                                                <buttonCell key="cell" type="check" title="Show per-pane title bars" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6052">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                     <font key="font" metaFont="system"/>
                                                 </buttonCell>
@@ -8382,7 +8383,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="FvM-qm-P8l">
-                                                <rect key="frame" x="235" y="79" width="267" height="18"/>
+                                                <rect key="frame" x="235" y="88" width="267" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Separate background images per pane" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="TMi-gO-FVp">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -8393,7 +8394,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="d3Q-GV-fUG">
-                                                <rect key="frame" x="86" y="45" width="142" height="16"/>
+                                                <rect key="frame" x="86" y="54" width="142" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Side margins:" id="mgo-bS-seC">
                                                     <font key="font" metaFont="system"/>
@@ -8402,7 +8403,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3t3-P2-4sV">
-                                                <rect key="frame" x="86" y="119" width="142" height="16"/>
+                                                <rect key="frame" x="86" y="150" width="142" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Per-pane UI:" id="Ela-2n-4A5">
                                                     <font key="font" metaFont="system"/>
@@ -8411,7 +8412,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Co8-1H-3eo">
-                                                <rect key="frame" x="86" y="14" width="142" height="16"/>
+                                                <rect key="frame" x="86" y="23" width="142" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" title="Top &amp; bottom margins:" id="moN-8d-dZd">
                                                     <font key="font" metaFont="system"/>
@@ -8420,7 +8421,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="B2G-t0-4Av">
-                                                <rect key="frame" x="237" y="42" width="39" height="21"/>
+                                                <rect key="frame" x="237" y="51" width="39" height="21"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="k9e-Jb-hHJ">
                                                     <font key="font" metaFont="system"/>
@@ -8433,7 +8434,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Wft-qJ-Yc8">
-                                                <rect key="frame" x="237" y="11" width="39" height="21"/>
+                                                <rect key="frame" x="237" y="20" width="39" height="21"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="W1r-ti-mOD">
                                                     <font key="font" metaFont="system"/>
@@ -8446,7 +8447,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </textField>
                                             <stepper horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5oY-ZI-y7J">
-                                                <rect key="frame" x="281" y="38" width="19" height="28"/>
+                                                <rect key="frame" x="281" y="47" width="19" height="28"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <stepperCell key="cell" continuous="YES" alignment="left" maxValue="100" id="CVL-uU-dFf"/>
                                                 <connections>
@@ -8454,13 +8455,24 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </stepper>
                                             <stepper horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dFP-N8-R4e">
-                                                <rect key="frame" x="281" y="7" width="19" height="28"/>
+                                                <rect key="frame" x="281" y="16" width="19" height="28"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <stepperCell key="cell" continuous="YES" alignment="left" maxValue="100" id="uEd-N6-4d9"/>
                                                 <connections>
                                                     <action selector="settingChanged:" target="wvi-ET-SJJ" id="d17-SK-PVg"/>
                                                 </connections>
                                             </stepper>
+                                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7KN-d8-slG">
+                                                <rect key="frame" x="255" y="128" width="356" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="check" title="…even if there is only one pane" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="1ba-rr-WCj">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="wvi-ET-SJJ" id="dm1-FT-oaZ"/>
+                                                </connections>
+                                            </button>
                                         </subviews>
                                     </customView>
                                 </subviews>
