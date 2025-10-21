@@ -853,8 +853,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     }
     [self addShortcutAccessorViewControllerToTitleBarIfNeeded];
     _shortcutAccessoryViewController.ordinal = number_ + 1;
-    _shortcutAccessoryViewController.hasRegularTitleBar = (self.windowType == WINDOW_TYPE_NORMAL ||
-                                                           self.windowType == WINDOW_TYPE_MAXIMIZED);
+    _shortcutAccessoryViewController.titlebarStyle = [iTermWindowShortcutLabelTitlebarAccessoryViewController titlebarStyleForWindowType:self.windowType];
 
     DLog(@"Creating window with profile:%@", profile);
     DLog(@"%@\n%@", self, [NSThread callStackSymbols]);

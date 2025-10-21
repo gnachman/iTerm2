@@ -8,6 +8,7 @@
 
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
 #import "iTermPreferences.h"
+#import "ITAddressBookMgr.h"
 #import "NSStringITerm.h"
 #import "PSMTabBarControl.h"
 
@@ -49,10 +50,17 @@
         NSRect frame = _label.frame;
         CGFloat yOffset = 21;
 
-        // On macOS 26, adjust position for regular title bar to align with title baseline
+        // On macOS 26, adjust position to align with title baseline
         if (@available(macOS 26, *)) {
-            if (self.hasRegularTitleBar) {
-                yOffset += 3;  // Move down by 3 points for regular theme
+            switch (self.titlebarStyle) {
+                case iTermTitlebarStyleRegular:
+                    yOffset += 3;  // Move down by 3 points for regular theme
+                    break;
+                case iTermTitlebarStyleMinimal:
+                    // Minimal theme doesn't use titlebar accessory - handled in iTermRootTerminalView
+                case iTermTitlebarStyleCompact:
+                case iTermTitlebarStyleNone:
+                    break;
             }
         }
 
@@ -110,6 +118,23 @@
     }
 
     return @"";
+}
+
++ (iTermTitlebarStyle)titlebarStyleForWindowType:(int)windowType {
+    iTermPreferencesTabStyle tabStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+
+    switch (windowType) {
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_MAXIMIZED:
+            return iTermTitlebarStyleRegular;
+
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            return iTermTitlebarStyleCompact;
+
+        default:
+            return iTermTitlebarStyleNone;
+    }
 }
 
 - (void)setIsMain:(BOOL)value {

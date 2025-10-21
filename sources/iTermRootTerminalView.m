@@ -539,7 +539,12 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     const CGFloat capHeight = _windowNumberLabel.font.capHeight;
     const CGFloat myHeight = self.frame.size.height;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-    const CGFloat shift = (preferredStyle == TAB_STYLE_MINIMAL) ? 0 : 1;
+    CGFloat shift = (preferredStyle == TAB_STYLE_MINIMAL) ? 0 : 1;
+    if (@available(macOS 26, *)) {
+        if (preferredStyle == TAB_STYLE_MINIMAL) {
+            shift = 1;  // Move down by 3 points on macOS 26 for minimal theme
+        }
+    }
     NSRect rect = NSMakeRect(NSMaxX(standardButtonsFrame) + iTermRootTerminalViewWindowNumberLabelMargin,
                              myHeight - tabBarHeight + (tabBarHeight - capHeight) / 2.0 - baselineOffset - shift,
                              iTermRootTerminalViewWindowNumberLabelWidth,
@@ -590,6 +595,9 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         y = [self retinaRound:myHeight - (tabBarHeight - fittingSize.height) / 2.0 - ceil(fittingSize.height)];
     } else {
         y = [self retinaRound:myHeight - tabBarHeight + (tabBarHeight - capHeight) / 2.0 - baselineOffset];
+        if (@available(macOS 26, *)) {
+            y -= 1;
+        }
     }
     NSRect rect = NSMakeRect([self retinaRound:leftInset],
                              y,
