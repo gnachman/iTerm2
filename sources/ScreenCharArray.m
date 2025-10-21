@@ -626,6 +626,9 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
 }
 
 - (ScreenCharArray *)screenCharArrayByRemovingLast:(int)n {
+    if (n <= 0) {
+        return self;
+    }
     if (n >= self.length) {
         return [ScreenCharArray emptyLineOfLength:0];
     }
