@@ -953,7 +953,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             if selected {
                 DLog("is selected")
                 // Select cell when any cell has a tab color
-                if cellBrightness > 0.5 {
+                if cellBrightness > 0.60 {
                     DLog("is bright. USE BLACK TEXT COLOR")
                     // bright tab
                     return NSColor.black
@@ -971,12 +971,23 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         }
 
         let mainAndActive = windowIsMainAndAppIsActive
+        let cellBackgroundColor: NSColor? = if let tabColor = cell.tabColor {
+            cellBackgroundColor(forTabColor: tabColor, selected: selected)
+        } else {
+            nil
+        }
         if selected {
             DLog("selected")
-            return textColorDefaultSelected(true, backgroundColor: nil, windowIsMainAndAppIsActive: mainAndActive)
+            return textColorDefaultSelected(
+                selected,
+                backgroundColor: cellBackgroundColor,
+                windowIsMainAndAppIsActive: mainAndActive)
         } else {
             DLog("not selected")
-            return textColorDefaultSelected(false, backgroundColor: nil, windowIsMainAndAppIsActive: mainAndActive)
+            return textColorDefaultSelected(
+                selected,
+                backgroundColor: cellBackgroundColor,
+                windowIsMainAndAppIsActive: mainAndActive)
         }
     }
 
