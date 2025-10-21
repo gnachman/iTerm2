@@ -8,6 +8,7 @@
 #import "iTermFakeWindowTitleLabel.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermPreferences.h"
 #import "NSAttributedString+PSM.h"
 #import "NSImage+iTerm.h"
@@ -150,6 +151,12 @@
 
 - (void)initCommon {
     _scratch = [NSTextField newLabelStyledTextField];
+    if (@available(macOS 26, *)) {
+        if ([iTermAdvancedSettingsModel leftAlignTitleBarMinimalTahoe]) {
+            _scratch.alignment = NSTextAlignmentLeft;
+            return;
+        }
+    }
     _scratch.alignment = NSTextAlignmentCenter;
 }
 

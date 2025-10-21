@@ -652,6 +652,7 @@ DEFINE_STRING(splitPaneColor, @"", SECTION_WINDOWS @"Custom color for split pane
 DEFINE_BOOL(bordersOnlyInLightMode, YES, SECTION_WINDOWS @"Opaque windows have a border only in light mode.\nThis setting modifies “Show border around windows”. Borders in opaque windows in dark mode are ugly and the OS draws one that is pretty serviceable. Enable this if you have trouble seeing them.")
 DEFINE_BOOL(allowLiveResize, YES, SECTION_WINDOWS @"Allow window resizing by dragging edges and corners?");
 DEFINE_SETTABLE_BOOL(showSecureKeyboardEntryIndicator, ShowSecureKeyboardEntryIndicator, YES, SECTION_WINDOWS @"Show secure keyboard entry indicator?");
+DEFINE_BOOL(leftAlignTitleBarMinimalTahoe, YES, SECTION_WINDOWS @"Left-align title bar in Minimal and Compact themes in macOS 26 and later?");
 
 #pragma mark tmux
 

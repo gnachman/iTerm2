@@ -235,6 +235,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)killSessionsOnLogout;
 + (NSString *)lastpassGroups;
 + (BOOL)laxNilPolicyInInterpolatedStrings;
++ (BOOL)leftAlignTitleBarMinimalTahoe;
 + (double)lightModeInactiveTabDarkness;
 + (NSString *)llmPlatform;
 + (BOOL)logDrawingPerformance;

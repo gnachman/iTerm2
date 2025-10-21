@@ -590,13 +590,18 @@ NS_CLASS_AVAILABLE_MAC(10_14)
             *leftAlignedPtr = YES;
         }
     }
+    if (@available(macOS 26, *)) {
+        if (leftAlignedPtr && [iTermAdvancedSettingsModel leftAlignTitleBarMinimalTahoe]) {
+            *leftAlignedPtr = YES;
+        }
+    }
     CGFloat y;
     if (hasSubtitle) {
         y = [self retinaRound:myHeight - (tabBarHeight - fittingSize.height) / 2.0 - ceil(fittingSize.height)];
     } else {
         y = [self retinaRound:myHeight - tabBarHeight + (tabBarHeight - capHeight) / 2.0 - baselineOffset];
         if (@available(macOS 26, *)) {
-            y -= 1;
+            y -= 1.5;
         }
     }
     NSRect rect = NSMakeRect([self retinaRound:leftInset],
