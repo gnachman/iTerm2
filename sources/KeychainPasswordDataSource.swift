@@ -59,7 +59,8 @@ fileprivate class ModernKeychainAccount: NSObject, PasswordManagerAccount {
         return keychainAccountName
     }
 
-    func fetchPassword(_ completion: (String?, String?, Error?) -> ()) {
+    func fetchPassword(context: RecipeExecutionContext,
+                       _ completion: @escaping (String?, String?, Error?) -> ()) {
         do {
             completion(try password(), nil, nil)
         } catch {
@@ -67,7 +68,7 @@ fileprivate class ModernKeychainAccount: NSObject, PasswordManagerAccount {
         }
     }
 
-    func set(password: String, completion: (Error?) -> ()) {
+    func set(context: RecipeExecutionContext, password: String, completion: @escaping (Error?) -> ()) {
         do {
             try set(password: password)
             completion(nil)
@@ -76,7 +77,7 @@ fileprivate class ModernKeychainAccount: NSObject, PasswordManagerAccount {
         }
     }
 
-    func delete(_ completion: (Error?) -> ()) {
+    func delete(context: RecipeExecutionContext, _ completion: @escaping (Error?) -> ()) {
         do {
             try delete()
             completion(nil)
@@ -162,7 +163,7 @@ fileprivate class LegacyKeychainAccount: NSObject, PasswordManagerAccount {
         it_fatalError()
     }
 
-    func fetchPassword(_ completion: (String?, String?, Error?) -> ()) {
+    func fetchPassword(context: RecipeExecutionContext, _ completion: (String?, String?, Error?) -> ()) {
         do {
             completion(try password(), nil, nil)
         } catch {
@@ -170,7 +171,7 @@ fileprivate class LegacyKeychainAccount: NSObject, PasswordManagerAccount {
         }
     }
 
-    func set(password: String, completion: (Error?) -> ()) {
+    func set(context: RecipeExecutionContext, password: String, completion: (Error?) -> ()) {
         do {
             try set(password: password)
             completion(nil)
@@ -179,7 +180,7 @@ fileprivate class LegacyKeychainAccount: NSObject, PasswordManagerAccount {
         }
     }
 
-    func delete(_ completion: (Error?) -> ()) {
+    func delete(context: RecipeExecutionContext, _ completion: (Error?) -> ()) {
         do {
             try delete()
             completion(nil)
@@ -223,20 +224,30 @@ class KeychainPasswordDataSource: NSObject, PasswordManagerDataSource {
     init(browser: Bool) {
         self.browser = browser
     }
+    @objc var name: String { "Keychain" }
+    @objc var canResetConfiguration: Bool { false }
+    @objc func resetConfiguration() { }
 
-    func fetchAccounts(_ completion: @escaping ([PasswordManagerAccount]) -> ()) {
+    func fetchAccounts(context: RecipeExecutionContext,
+                       completion: @escaping ([PasswordManagerAccount]) -> ()) {
         completion(self.accounts)
     }
 
-    func toggleShouldSendOTP(account: any PasswordManagerAccount, completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
+    func toggleShouldSendOTP(context: RecipeExecutionContext,
+                             account: any PasswordManagerAccount,
+                             completion: @escaping ((any PasswordManagerAccount)?, (any Error)?) -> ()) {
         it_fatalError()
     }
 
-    func add(userName: String, accountName: String, password: String, completion: (PasswordManagerAccount?, Error?) -> ()) {
+    func add(userName: String,
+             accountName: String,
+             password: String,
+             context: RecipeExecutionContext,
+             completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
         let account = ModernKeychainAccount(serviceName: serviceName,
                                             accountName: accountName,
                                             userName: userName)
-        account.set(password: password) { error in
+        account.set(context: context, password: password) { error in
             if let error = error {
                 completion(nil, error)
             } else {

@@ -25,28 +25,34 @@ class CommandLineProvidedAccount: NSObject, PasswordManagerAccount {
         return "\(accountName)\u{2002}—\u{2002}\(userName)"
     }
 
-    func fetchPassword(_ completion: @escaping (String?, String?, Error?) -> ()) {
-        configuration.getPasswordRecipe.transformAsync(inputs: CommandLinePasswordDataSource.AccountIdentifier(value: identifier)) { result, error in
-            completion(result?.password, result?.otp, error)
-        }
+    func fetchPassword(context: RecipeExecutionContext, _ completion: @escaping (String?, String?, Error?) -> ()) {
+        configuration.getPasswordRecipe.transformAsync(
+            context: context,
+            inputs: CommandLinePasswordDataSource.AccountIdentifier(value: identifier)) { result, error in
+                completion(result?.password, result?.otp, error)
+            }
     }
 
-    func set(password: String, completion: @escaping (Error?) -> ()) {
+    func set(context: RecipeExecutionContext, password: String, completion: @escaping (Error?) -> ()) {
         let accountIdentifier = CommandLinePasswordDataSource.AccountIdentifier(value: identifier)
         let request = CommandLinePasswordDataSource.SetPasswordRequest(accountIdentifier: accountIdentifier,
                                                                        newPassword: password)
-        configuration.setPasswordRecipe.transformAsync(inputs: request) { _, error in
-            completion(error)
-        }
+        configuration.setPasswordRecipe.transformAsync(
+            context: context,
+            inputs: request) { _, error in
+                completion(error)
+            }
     }
 
-    func delete(_ completion: @escaping (Error?) -> ()) {
-        configuration.deleteRecipe.transformAsync(inputs: CommandLinePasswordDataSource.AccountIdentifier(value: identifier)) { _, error in
-            if error == nil {
-                self.configuration.listAccountsRecipe.invalidateRecipe()
+    func delete(context: RecipeExecutionContext, _ completion: @escaping (Error?) -> ()) {
+        configuration.deleteRecipe.transformAsync(
+            context: context,
+            inputs: CommandLinePasswordDataSource.AccountIdentifier(value: identifier)) { _, error in
+                if error == nil {
+                    self.configuration.listAccountsRecipe.invalidateRecipe()
+                }
+                completion(error)
             }
-            completion(error)
-        }
     }
 
     func matches(filter: String) -> Bool {
@@ -89,10 +95,20 @@ protocol CommandLinePasswordDataSourceExecutableCommand {
     func execAsync(_ completion: @escaping (Output?, Error?) -> ())
 }
 
+@objc
+class RecipeExecutionContext: NSObject {
+    var window: NSWindow?
+    @objc init(window: NSWindow?) {
+        self.window = window
+    }
+}
+
 protocol Recipe {
     associatedtype Inputs
     associatedtype Outputs
-    func transformAsync(inputs: Inputs, completion: @escaping (Outputs?, Error?) -> ())
+    func transformAsync(context: RecipeExecutionContext,
+                        inputs: Inputs,
+                        completion: @escaping (Outputs?, Error?) -> ())
 }
 
 protocol InvalidatableRecipe {
@@ -376,9 +392,13 @@ class CommandLinePasswordDataSource: NSObject {
                 DLog("\(request.command) \(request.args) produced error output: \(String(data: data ?? Data(), encoding: .utf8) ?? String(describing: data))")
                 queue.enqueue(.readError(data))
             }
+            let dupedFD = dup(stdin.fileHandleForWriting.fileDescriptor)
             stdinChannel = DispatchIO(type: .stream,
-                                      fileDescriptor: dup(stdin.fileHandleForWriting.fileDescriptor),
-                                      queue: ioQueue) { _ in }
+                                      fileDescriptor: dupedFD,
+                                      queue: ioQueue) { error in
+                DLog("DispatchIO cleanup handler called for FD \(dupedFD), closing it now")
+                close(dupedFD)
+            }
             stdinChannel!.setLimit(lowWater: 1)
             process.launchPath = request.command
             process.arguments = request.args
@@ -554,7 +574,7 @@ class CommandLinePasswordDataSource: NSObject {
 
         func closeForWriting() {
             dispatchPrecondition(condition: .onQueue(ioQueue))
-            log("close stdin")
+            log("close stdin, file descriptor \(stdin.fileHandleForWriting.fileDescriptor) and \(stdinChannel?.fileDescriptor ?? -9999)")
             stdinChannel?.close()
             stdinChannel = nil
             stdin.fileHandleForWriting.closeFile()
@@ -605,12 +625,14 @@ class CommandLinePasswordDataSource: NSObject {
     }
 
     struct AsyncCommandRecipe<Inputs, Outputs>: Recipe {
-        private let asyncInputTransformer: (Inputs, @escaping (Result<CommandLinePasswordDataSourceExecutableCommand, Error>) -> ()) -> Void
+        private let asyncInputTransformer: (RecipeExecutionContext, Inputs, @escaping (Result<CommandLinePasswordDataSourceExecutableCommand, Error>) -> ()) -> Void
         private let asyncRecovery: (Error, @escaping (Error?) -> ()) -> Void
         private let asyncOutputTransformer: (Output, @escaping (Result<Outputs, Error>) -> ()) -> Void
 
-        func transformAsync(inputs: Inputs, completion: @escaping (Outputs?, Error?) -> ()) {
-            asyncInputTransformer(inputs) { result in
+        func transformAsync(context: RecipeExecutionContext,
+                            inputs: Inputs,
+                            completion: @escaping (Outputs?, Error?) -> ()) {
+            asyncInputTransformer(context, inputs) { result in
                 switch result {
                 case .success(let command):
                     DLog("\(inputs) -> \(command)")
@@ -654,7 +676,7 @@ class CommandLinePasswordDataSource: NSObject {
             }
         }
 
-        init(inputTransformer: @escaping (Inputs, @escaping (Result<CommandLinePasswordDataSourceExecutableCommand, Error>) -> ()) -> Void,
+        init(inputTransformer: @escaping (RecipeExecutionContext, Inputs, @escaping (Result<CommandLinePasswordDataSourceExecutableCommand, Error>) -> ()) -> Void,
              recovery: @escaping (Error, @escaping (Error?) -> ()) -> Void,
              outputTransformer: @escaping (Output, @escaping (Result<Outputs, Error>) -> ()) -> Void) {
             self.asyncInputTransformer = inputTransformer
@@ -668,7 +690,9 @@ class CommandLinePasswordDataSource: NSObject {
         private let recovery: (Error) throws -> Void
         private let outputTransformer: (Output) throws -> Outputs
 
-        func transformAsync(inputs: Inputs, completion: @escaping (Outputs?, Error?) -> ()) {
+        func transformAsync(context: RecipeExecutionContext,
+                            inputs: Inputs,
+                            completion: @escaping (Outputs?, Error?) -> ()) {
             do {
                 let command = try inputTransformer(inputs)
                 DLog("\(inputs) -> \(command)")
@@ -720,10 +744,12 @@ class CommandLinePasswordDataSource: NSObject {
             self.secondRecipe = secondRecipe
         }
 
-        func transformAsync(inputs: FirstRecipe.Inputs, completion: @escaping (SecondRecipe.Outputs?, Error?) -> ()) {
-            firstRecipe.transformAsync(inputs: inputs) { outputs, error in
+        func transformAsync(context: RecipeExecutionContext,
+                            inputs: FirstRecipe.Inputs,
+                            completion: @escaping (SecondRecipe.Outputs?, Error?) -> ()) {
+            firstRecipe.transformAsync(context: context, inputs: inputs) { outputs, error in
                 if let outputs = outputs {
-                    secondRecipe.transformAsync(inputs: outputs) { value, error in
+                    secondRecipe.transformAsync(context: context, inputs: outputs) { value, error in
                         completion(value, error)
                     }
                     return
@@ -746,10 +772,12 @@ class CommandLinePasswordDataSource: NSObject {
             self.secondRecipe = secondRecipe
         }
 
-        func transformAsync(inputs: FirstRecipe.Inputs, completion: @escaping (SecondRecipe.Outputs?, Error?) -> ()) {
-            firstRecipe.transformAsync(inputs: inputs) { intermediate, error in
+        func transformAsync(context: RecipeExecutionContext,
+                            inputs: FirstRecipe.Inputs,
+                            completion: @escaping (SecondRecipe.Outputs?, Error?) -> ()) {
+            firstRecipe.transformAsync(context: context, inputs: inputs) { intermediate, error in
                 if let intermediate = intermediate {
-                    secondRecipe.transformAsync(inputs: (inputs, intermediate), completion: completion)
+                    secondRecipe.transformAsync(context: context, inputs: (inputs, intermediate), completion: completion)
                     return
                 }
                 completion(nil, error)
@@ -767,8 +795,10 @@ class CommandLinePasswordDataSource: NSObject {
             self.errorHandler = errorHandler
         }
 
-        func transformAsync(inputs: Inner.Inputs, completion: @escaping (Inner.Outputs?, Error?) -> ()) {
-            inner.transformAsync(inputs: inputs) { outputs, error in
+        func transformAsync(context: RecipeExecutionContext,
+                            inputs: Inner.Inputs,
+                            completion: @escaping (Inner.Outputs?, Error?) -> ()) {
+            inner.transformAsync(context: context, inputs: inputs) { outputs, error in
                 if let outputs = outputs {
                     completion(outputs, nil)
                     return
@@ -802,12 +832,14 @@ class CommandLinePasswordDataSource: NSObject {
         let maxAge: TimeInterval
         let inner: AnyRecipe<Inputs, Outputs>
 
-        func transformAsync(inputs: Void, completion: @escaping (Outputs?, Error?) -> ()) {
+        func transformAsync(context: RecipeExecutionContext,
+                            inputs: Void,
+                            completion: @escaping (Outputs?, Error?) -> ()) {
             if let value = cacheEntry, value.age < maxAge {
                 completion(value.outputs, nil)
                 return
             }
-            inner.transformAsync(inputs: inputs) { [weak self] result, error in
+            inner.transformAsync(context: context, inputs: inputs) { [weak self] result, error in
                 if let result = result {
                     self?.cacheEntry = Entry(result)
                     completion(result, nil)
@@ -835,22 +867,25 @@ class CommandLinePasswordDataSource: NSObject {
         func transform(inputs: Inputs) throws -> Outputs {
             throw CommandLineRecipeError.unsupported(reason: reason)
         }
-        func transformAsync(inputs: Inputs, completion: @escaping (Outputs?, Error?) -> ()) {
+        func transformAsync(context: RecipeExecutionContext,
+                            inputs: Inputs, completion: @escaping (Outputs?, Error?) -> ()) {
             completion(nil, CommandLineRecipeError.unsupported(reason: reason))
         }
     }
     struct AnyRecipe<Inputs, Outputs>: Recipe, InvalidatableRecipe {
-        private let closure: (Inputs, @escaping (Outputs?, Error?) -> ()) -> ()
+        private let closure: (RecipeExecutionContext, Inputs, @escaping (Outputs?, Error?) -> ()) -> ()
         private let invalidate: () -> ()
 
-        func transformAsync(inputs: Inputs, completion: @escaping (Outputs?, Error?) -> ()) {
+        func transformAsync(context: RecipeExecutionContext,
+                            inputs: Inputs,
+                            completion: @escaping (Outputs?, Error?) -> ()) {
             DispatchQueue.main.async {
-                closure(inputs, completion)
+                closure(context, inputs, completion)
             }
         }
 
         init<T: Recipe>(_ recipe: T) where T.Inputs == Inputs, T.Outputs == Outputs {
-            closure = { recipe.transformAsync(inputs: $0, completion: $1) }
+            closure = { recipe.transformAsync(context: $0, inputs: $1, completion: $2) }
             invalidate = { (recipe as? InvalidatableRecipe)?.invalidateRecipe() }
         }
         func invalidateRecipe() {
@@ -894,34 +929,37 @@ class CommandLinePasswordDataSource: NSObject {
         let addAccountRecipe: AnyRecipe<AddRequest, AccountIdentifier>
     }
 
-    func standardAccounts(_ configuration: Configuration,
+    func standardAccounts(context: RecipeExecutionContext,
+                          configuration: Configuration,
                           completion: @escaping ([PasswordManagerAccount]?, Error?) -> ()) {
-        return configuration.listAccountsRecipe.transformAsync(inputs: ()) { maybeAccounts, maybeError in
-            if let error = maybeError {
-                completion(nil, error)
-                return
+        return configuration.listAccountsRecipe.transformAsync(
+            context: context, inputs: ()) { maybeAccounts, maybeError in
+                if let error = maybeError {
+                    completion(nil, error)
+                    return
+                }
+                let accounts = maybeAccounts!.compactMap { account in
+                    CommandLineProvidedAccount(identifier: account.identifier.value,
+                                               accountName: account.accountName,
+                                               userName: account.userName,
+                                               hasOTP: account.hasOTP,
+                                               sendOTP: account.sendOTP,
+                                               configuration: configuration)
+                }
+                completion(accounts, nil)
             }
-            let accounts = maybeAccounts!.compactMap { account in
-                CommandLineProvidedAccount(identifier: account.identifier.value,
-                                           accountName: account.accountName,
-                                           userName: account.userName,
-                                           hasOTP: account.hasOTP,
-                                           sendOTP: account.sendOTP,
-                                           configuration: configuration)
-            }
-            completion(accounts, nil)
-        }
     }
 
     func standardAdd(_ configuration: Configuration,
                      userName: String,
                      accountName: String,
                      password: String,
+                     context: RecipeExecutionContext,
                      completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
         let inputs = AddRequest(userName: userName,
                                 accountName: accountName,
                                 password: password)
-        configuration.addAccountRecipe.transformAsync(inputs: inputs) { accountIdentifier, maybeError in
+        configuration.addAccountRecipe.transformAsync(context: context, inputs: inputs) { accountIdentifier, maybeError in
             configuration.listAccountsRecipe.invalidateRecipe()
             if let error = maybeError {
                 completion(nil, error)

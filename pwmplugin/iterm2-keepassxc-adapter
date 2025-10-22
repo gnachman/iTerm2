@@ -1,0 +1,31 @@
+#!/bin/bash
+# Wrapper script for the iterm2-keepassxc-adapter CLI
+# Builds the CLI if needed and runs it
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLI_BINARY="$SCRIPT_DIR/.build/debug/iterm2-keepassxc-adapter"
+
+# Check if we need to rebuild
+NEEDS_BUILD=false
+
+if [ ! -f "$CLI_BINARY" ]; then
+    NEEDS_BUILD=true
+else
+    # Check if source files are newer than binary
+    if [ "$SCRIPT_DIR/Sources/PasswordManagerProtocol/PasswordManagerProtocol.swift" -nt "$CLI_BINARY" ] || \
+       [ "$SCRIPT_DIR/Sources/iterm2-keepassxc-adapter/main.swift" -nt "$CLI_BINARY" ]; then
+        NEEDS_BUILD=true
+    fi
+fi
+
+# Build if needed
+if [ "$NEEDS_BUILD" = true ]; then
+    cd "$SCRIPT_DIR"
+    swift build > /dev/null 2>&1 || {
+        echo "Error: Failed to build iterm2-keepassxc-adapter" >&2
+        exit 1
+    }
+fi
+
+# Run the CLI with all arguments
+exec "$CLI_BINARY" "$@"

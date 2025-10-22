@@ -11,11 +11,87 @@ class ModalPasswordAlert {
     private let prompt: String
     var username: String?
 
+    // Keep this object alive until the completion block runs.
+    private var keepalive: ModalPasswordAlert?
+
     init(_ prompt: String) {
         self.prompt = prompt
     }
 
+    private struct Views {
+        var alert: NSAlert
+        var newPassword: NSSecureTextField
+        var usernameField: NSTextField?
+    }
+
     func run(window: NSWindow?) -> String? {
+        let views = makeAlert()
+        let alert = views.alert
+        let newPassword = views.newPassword
+        scheduleTimer(views: views)
+
+        let result = { () -> NSApplication.ModalResponse in
+            if let window = window, window.isVisible {
+                return alert.runSheetModal(for: window)
+            } else {
+                return alert.runModal()
+            }
+        }()
+        if result == .alertFirstButtonReturn {
+            username = views.usernameField?.stringValue
+            return newPassword.stringValue
+        }
+        return nil
+    }
+
+    func runAsync(window: NSWindow?, completion: @escaping (String?) -> ()) {
+        precondition(keepalive == nil)
+        keepalive = self
+        let views = makeAlert()
+        scheduleTimer(views: views)
+        if let window {
+            views.alert.beginSheetModal(for: window) { [weak self] response in
+                self?.handleAsyncCompletion(response,
+                                            views: views,
+                                            completion: completion)
+            }
+        } else {
+            handleAsyncCompletion(views.alert.runModal(),
+                                  views: views,
+                                  completion: completion)
+        }
+    }
+
+    private func handleAsyncCompletion(_ response: NSApplication.ModalResponse,
+                                       views: Views,
+                                       completion: @escaping (String?) -> ()) {
+        if response == .alertFirstButtonReturn {
+            username = views.usernameField?.stringValue
+            completion(views.newPassword.stringValue)
+        } else {
+            completion(nil)
+        }
+        keepalive = nil
+    }
+
+    private func scheduleTimer(views: Views) {
+        let timer = Timer(timeInterval: 0, repeats: false) { [weak self] _ in
+            guard let self = self else {
+                return
+            }
+            views.alert.layout()
+            if let username = self.username, !username.isEmpty {
+                views.newPassword.window?.makeFirstResponder(views.newPassword)
+            } else if let usernameField = views.usernameField {
+                usernameField.window?.makeFirstResponder(usernameField)
+            } else {
+                views.newPassword.window?.makeFirstResponder(views.newPassword)
+            }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+    }
+
+    private func makeAlert() -> Views {
         let alert = NSAlert()
         alert.messageText = prompt
         alert.addButton(withTitle: "OK")
@@ -59,30 +135,8 @@ class ModalPasswordAlert {
 
 
         alert.accessoryView = wrapper
-        let timer = Timer(timeInterval: 0, repeats: false) { [weak self] _ in
-            guard let self = self else {
-                return
-            }
-            alert.layout()
-            if let username = self.username, !username.isEmpty {
-                newPassword.window?.makeFirstResponder(newPassword)
-            } else if let usernameField = usernameField {
-                usernameField.window?.makeFirstResponder(usernameField)
-            }
-        }
-        RunLoop.main.add(timer, forMode: .common)
-
-        let result = { () -> NSApplication.ModalResponse in
-            if let window = window, window.isVisible {
-                return alert.runSheetModal(for: window)
-            } else {
-                return alert.runModal()
-            }
-        }()
-        if result == .alertFirstButtonReturn {
-            username = usernameField?.stringValue
-            return newPassword.stringValue
-        }
-        return nil
+        return Views(alert: alert,
+                     newPassword: newPassword,
+                     usernameField: usernameField)
     }
 }

@@ -77,6 +77,7 @@
 - (dispatch_io_t)newChannelOnQueue:(dispatch_queue_t)queue {
     @synchronized(_fdSync) {
         return dispatch_io_create(DISPATCH_IO_STREAM, _fd, queue, ^(int error) {
+#warning Probably should close _fd here
             DLog(@"Channel closed");
         });
     }

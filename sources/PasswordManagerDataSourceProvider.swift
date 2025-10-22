@@ -18,6 +18,7 @@ class PasswordManagerDataSourceProvider: NSObject {
     private let _keychain: KeychainPasswordDataSource
     private var _onePassword: OnePasswordDataSource
     private var _lastPass: LastPassDataSource
+    private var _keePassXC: AdapterPasswordDataSource
     private let browser: Bool
     private var dataSourceNameUserDefaultsKey: String {
         "NoSyncPasswordManagerDataSourceName" + (browser ? "Browser" : "")
@@ -27,6 +28,7 @@ class PasswordManagerDataSourceProvider: NSObject {
         case keychain = "Keychain"
         case onePassword = "OnePassword"
         case lastPass = "LastPass"
+        case keePassXC = "KeePassXC"
 
         static let defaultValue = DataSource.keychain
     }
@@ -35,6 +37,12 @@ class PasswordManagerDataSourceProvider: NSObject {
         _keychain = KeychainPasswordDataSource(browser: browser)
         _onePassword = OnePasswordDataSource(browser: browser)
         _lastPass = LastPassDataSource(browser: browser)
+
+        let path = Bundle(for: Self.self).path(forAuxiliaryExecutable: "iterm2-keepassxc-adapter")!
+        _keePassXC = AdapterPasswordDataSource(browser: browser,
+                                               adapterPath: path,
+                                               identifier: "KeePassXC")
+
         self.browser = browser
 
         super.init()
@@ -66,12 +74,22 @@ class PasswordManagerDataSourceProvider: NSObject {
                     return onePassword!
                 case .lastPass:
                     return lastPass!
+                case .keePassXC:
+                    return keePassXC!
                 }
             }()
             _dataSource = fresh
             return fresh
         }
         return existing
+    }
+
+    @objc func enableKeePassXC() {
+        preferredDataSource = .keePassXC
+    }
+
+    @objc var keePassXCEnabled: Bool {
+        return preferredDataSource == .keePassXC
     }
 
     @objc func enableKeychain() {
@@ -117,6 +135,13 @@ class PasswordManagerDataSourceProvider: NSObject {
             return nil
         }
         return _lastPass
+    }
+
+    private var keePassXC: AdapterPasswordDataSource? {
+        if !authenticated {
+            return nil
+        }
+        return _keePassXC
     }
 
     @objc func revokeAuthentication() {

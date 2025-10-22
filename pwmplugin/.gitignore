@@ -1,0 +1,11 @@
+# Swift Package Manager
+.build/
+.build-arm64/
+.build-x86_64/
+.swiftpm/
+
+# Test databases
+*.kdbx
+
+# Temporary files
+/tmp/

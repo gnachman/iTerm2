@@ -87,9 +87,10 @@ class LastPassDataSource: CommandLinePasswordDataSource {
             }
         }
 
-        func transformAsync(inputs: Inputs,
+        func transformAsync(context: RecipeExecutionContext,
+                            inputs: Inputs,
                             completion: @escaping (Outputs?, Error?) -> ()) {
-            commandRecipe.transformAsync(inputs: inputs, completion: completion)
+            commandRecipe.transformAsync(context: context, inputs: inputs, completion: completion)
         }
         private func handleError(_ data: Data) {
 
@@ -113,9 +114,10 @@ class LastPassDataSource: CommandLinePasswordDataSource {
             }
         }
 
-        func transformAsync(inputs: Inputs,
+        func transformAsync(context: RecipeExecutionContext,
+                            inputs: Inputs,
                             completion: @escaping (Outputs?, Error?) -> ()) {
-            commandRecipe.transformAsync(inputs: inputs, completion: completion)
+            commandRecipe.transformAsync(context: context, inputs: inputs, completion: completion)
         }
     }
 
@@ -324,28 +326,36 @@ class LastPassDataSource: CommandLinePasswordDataSource {
 }
 
 extension LastPassDataSource: PasswordManagerDataSource {
+    @objc var name: String { "LastPass" }
+    @objc var canResetConfiguration: Bool { false }
+    @objc func resetConfiguration() { }
+
     var hasOTP: Bool { false }
     var sendOTP: Bool { false }
 
-    func toggleShouldSendOTP(account: any PasswordManagerAccount, completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
+    func toggleShouldSendOTP(context: RecipeExecutionContext,
+                             account: any PasswordManagerAccount,
+                             completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
         it_fatalError()
     }
 
-    func fetchAccounts(_ completion: @escaping ([PasswordManagerAccount]) -> ()) {
-        standardAccounts(configuration) { result, _ in
+    func fetchAccounts(context: RecipeExecutionContext, completion: @escaping ([PasswordManagerAccount]) -> ()) {
+        standardAccounts(context: context, configuration: configuration) { result, _ in
             completion(result ?? [])
         }
     }
 
-    @objc(addUserName:accountName:password:completion:)
+    @objc(addUserName:accountName:password:context:completion:)
     func add(userName: String,
              accountName: String,
              password: String,
+             context: RecipeExecutionContext,
              completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
         standardAdd(configuration,
                     userName: userName,
                     accountName: accountName,
                     password: password,
+                    context: context,
                     completion: completion)
     }
 
