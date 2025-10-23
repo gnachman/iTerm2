@@ -3830,6 +3830,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     // Note that we could overshoot the destination because of double-width characters if the target
     // is a DWC_RIGHT.
     while (![extractor coord:cursor isEqualToCoord:target]) {
+        DLog(@"Cursor is at %@, want it to go to %@", VT100GridCoordDescription(cursor),
+             VT100GridCoordDescription(target));
+        const VT100GridCoord before = cursor;
         switch (initialOrder) {
             case NSOrderedAscending:
                 [_delegate writeStringWithLatin1Encoding:[[terminalOutput keyArrowRight:0] stringWithEncoding:NSISOLatin1StringEncoding]];
@@ -3844,8 +3847,12 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
             case NSOrderedSame:
                 return cursor;
         }
+        if (VT100GridCoordEquals(before, cursor)) {
+            DLog(@"Cursor did not move. Aborting");
+            break;
+        }
     }
-    DLog(@"Cursor will move to %@", VT100GridCoordDescription(cursor));
+    DLog(@"Cursor did move horizontally to %@", VT100GridCoordDescription(cursor));
     return cursor;
 }
 

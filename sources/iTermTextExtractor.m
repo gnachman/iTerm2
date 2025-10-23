@@ -558,23 +558,28 @@ const NSInteger kLongMaximumWordLength = 100000;
 }
 
 - (VT100GridCoord)successorOfCoord:(VT100GridCoord)coord {
+    const int xLimit = [self xLimit];
+    DLog(@"Want successor of %@. xLimit=%@", VT100GridCoordDescription(coord), @(xLimit));
     coord.x++;
-    int xLimit = [self xLimit];
     BOOL checkedForDWC = NO;
     if (coord.x < xLimit && [self haveDoubleWidthExtensionAt:coord]) {
         coord.x++;
         checkedForDWC = YES;
     }
     if (coord.x >= xLimit) {
+        DLog(@"Clamp x coordinate");
         coord.x = _logicalWindow.location;
         coord.y++;
         if (coord.y >= [_dataSource numberOfLines]) {
+            DLog(@"Failed to find successor. numberOfLines=%@", @(_dataSource.numberOfLines));
             return VT100GridCoordMake(xLimit - 1, [_dataSource numberOfLines] - 1);
         }
         if (!checkedForDWC && [self haveDoubleWidthExtensionAt:coord]) {
+            DLog(@"Skip over DWC extension");
             coord.x++;
         }
     }
+    DLog(@"Successor is %@", VT100GridCoordDescription(coord));
     return coord;
 }
 
@@ -617,6 +622,8 @@ const NSInteger kLongMaximumWordLength = 100000;
 }
 
 - (VT100GridCoord)predecessorOfCoord:(VT100GridCoord)coord {
+    DLog(@"Want predecessor of %@.  logicalWindow.location=%@",
+         VT100GridCoordDescription(coord), @(_logicalWindow.location));
     coord.x--;
     BOOL checkedForDWC = NO;
     if (coord.x >= 0 && [self haveDoubleWidthExtensionAt:coord]) {
@@ -624,16 +631,20 @@ const NSInteger kLongMaximumWordLength = 100000;
         coord.x--;
     }
     if (coord.x < _logicalWindow.location) {
+        DLog(@"Clamp x coordinate");
         coord.x = [self xLimit] - 1;
         coord.y--;
         if (coord.y < 0) {
+            DLog(@"Failed to find predecessor.");
             return VT100GridCoordMake(_logicalWindow.location, 0);
         }
         if (!checkedForDWC && [self haveDoubleWidthExtensionAt:coord]) {
+            DLog(@"Back up over DWC extension");
             coord.x--;
         }
     }
 
+    DLog(@"Predecssor is %@", VT100GridCoordDescription(coord));
     return coord;
 }
 
