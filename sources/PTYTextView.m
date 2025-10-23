@@ -3829,29 +3829,34 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     NSComparisonResult initialOrder = VT100GridCoordOrder(cursor, target);
     // Note that we could overshoot the destination because of double-width characters if the target
     // is a DWC_RIGHT.
+    NSMutableString *stringToSend = [NSMutableString string];
+    NSString *rightArrow = [[terminalOutput keyArrowRight:0] stringWithEncoding:NSISOLatin1StringEncoding];
+    NSString *leftArrow = [[terminalOutput keyArrowLeft:0] stringWithEncoding:NSISOLatin1StringEncoding];
     while (![extractor coord:cursor isEqualToCoord:target]) {
         DLog(@"Cursor is at %@, want it to go to %@", VT100GridCoordDescription(cursor),
              VT100GridCoordDescription(target));
         const VT100GridCoord before = cursor;
         switch (initialOrder) {
             case NSOrderedAscending:
-                [_delegate writeStringWithLatin1Encoding:[[terminalOutput keyArrowRight:0] stringWithEncoding:NSISOLatin1StringEncoding]];
+                [stringToSend appendString:rightArrow];
                 cursor = [extractor successorOfCoord:cursor];
                 break;
 
             case NSOrderedDescending:
-                [_delegate writeStringWithLatin1Encoding:[[terminalOutput keyArrowLeft:0] stringWithEncoding:NSISOLatin1StringEncoding]];
+                [stringToSend appendString:leftArrow];
                 cursor = [extractor predecessorOfCoord:cursor];
                 break;
 
             case NSOrderedSame:
-                return cursor;
+                break;
         }
         if (VT100GridCoordEquals(before, cursor)) {
             DLog(@"Cursor did not move. Aborting");
             break;
         }
     }
+    [_delegate writeStringWithLatin1Encoding:stringToSend];
+
     DLog(@"Cursor did move horizontally to %@", VT100GridCoordDescription(cursor));
     return cursor;
 }
