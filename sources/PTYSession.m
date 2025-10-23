@@ -440,7 +440,6 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     BOOL _focused;
 
     iTermTailFindController *_tailFindController;
-    NSTimer *_tailFindTimer;
 
     TmuxGateway *_tmuxGateway;
     BOOL _haveKickedOffTmux;
@@ -793,8 +792,6 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
         _tmuxSecureLogging = NO;
         assert(_screen.syncDistributor != nil);
-        _tailFindController = [[iTermTailFindController alloc] initWithDataSource:_screen syncDistributor:_screen.syncDistributor];
-        _tailFindController.delegate = self;
         _lastOrCurrentlyRunningCommandAbsRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
         _activityCounter = [@0 retain];
         _announcements = [[NSMutableDictionary alloc] init];
@@ -2433,13 +2430,17 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview clearHighlights:NO];
     [_textview updatePortholeFrames];
     [[_delegate realParentWindow] invalidateRestorableState];
-    __weak __typeof(_tailFindController) weakTailFindController = _tailFindController;
+    __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
-        [weakTailFindController startTailFindIfVisible];
+        [weakSelf startTailFindIfVisible];
     });
     [self updateMetalDriver];
     [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionColumns: @(_screen.width),
                                                     iTermVariableKeySessionRows: @(_screen.height) }];
+}
+
+- (void)startTailFindIfVisible {
+    [_tailFindController startTailFindIfVisible];
 }
 
 - (Profile *)profileForSplit {
@@ -7298,14 +7299,14 @@ DLog(args); \
 - (void)searchNext {
     [_view createFindDriverIfNeeded];
     [_view.findDriver searchNext];
-    [_tailFindController beginOneShotTailFind];
+    [self.tailFindController beginOneShotTailFind];
 }
 
 // Note that the caller is responsible for respecting swapFindNextPrevious
 - (void)searchPrevious {
     [_view createFindDriverIfNeeded];
     [_view.findDriver searchPrevious];
-    [_tailFindController beginOneShotTailFind];
+    [self.tailFindController beginOneShotTailFind];
 }
 
 - (void)resetFindCursor {
@@ -8278,12 +8279,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     [self.textview requestDelegateRedraw];
 }
 
-- (BOOL)wantsContentChangedNotification
-{
+- (BOOL)wantsContentChangedNotification {
     // We want a content change notification if it's worth doing a tail find.
     // That means the find window is open, we're not already doing a tail find,
     // and a search was performed in the find window (vs select+cmd-e+cmd-f).
-    return (!_tailFindTimer &&
+    return (!_tailFindController.isPerformingContinuousTailFind &&
             !_view.findViewIsHidden &&
             _screen.searchEngine.hasRequest);
 }
@@ -13165,10 +13165,18 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 #pragma mark - Tail find
 
+- (iTermTailFindController *)tailFindController {
+    if (!_tailFindController) {
+        _tailFindController = [[iTermTailFindController alloc] initWithDataSource:_screen syncDistributor:_screen.syncDistributor];
+        _tailFindController.delegate = self;
+    }
+    return _tailFindController;
+}
+
 - (void)sessionContentsChanged:(NSNotification *)notification {
     if ([notification object] == self &&
         [_delegate sessionBelongsToVisibleTab]) {
-        [_tailFindController contentDidChange];
+        [self.tailFindController contentDidChange];
     }
 }
 
@@ -13202,6 +13210,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (LineBufferPosition *)tailFindControllerPositionForTailSearchOfMainSearchEngine {
     return [_screen positionForTailSearchOfScreen];
+}
+
+- (void)tailFindControllerDidBecomeIdle {
+    _tailFindController.delegate = nil;
+    [_tailFindController release];
+    _tailFindController = nil;
 }
 
 #pragma mark - tmux Output

@@ -15,6 +15,7 @@ protocol TailFindControllerDelegate: AnyObject {
     func tailFindControllerDidFinish(atLocation: LineBufferPosition?)
     func tailFindControllerMainSearchEngine() -> iTermSearchEngine
     func tailFindControllerPositionForTailSearchOfMainSearchEngine() -> LineBufferPosition
+    func tailFindControllerDidBecomeIdle()
 }
 
 @objc(iTermTailFindController)
@@ -75,6 +76,7 @@ class TailFindController: NSObject {
         searchEngine.cancel()
         timer?.invalidate()
         timer = nil
+        notifyIfIdle()
     }
 
     @objc
@@ -92,6 +94,16 @@ class TailFindController: NSObject {
         timer = nil
         searchEngine.updateSnapshot()
         startTailFindIfVisible()
+    }
+
+    @objc
+    var isIdle: Bool {
+        !performingOneShotTailFind && timer == nil
+    }
+
+    @objc
+    var isPerformingContinuousTailFind: Bool {
+        return timer != nil
     }
 }
 
@@ -132,6 +144,17 @@ extension TailFindController {
             timer?.invalidate()
             timer = nil
             performingOneShotTailFind = false
+            notifyIfIdle()
+        }
+    }
+
+    private func notifyIfIdle() {
+        // Do this after a spin of the runloop to prevent bugs where we do something causing it to
+        // become idle before synchronously doing something to make it non-idle.
+        DispatchQueue.main.async {
+            if self.isIdle {
+                self.delegate?.tailFindControllerDidBecomeIdle()
+            }
         }
     }
 
@@ -139,6 +162,7 @@ extension TailFindController {
         DLog("beginContinuousTailFind");
         performingOneShotTailFind = false
         _ = beginTailFindImpl()
+        notifyIfIdle()
     }
 
     private func beginTailFindImpl() -> Bool {

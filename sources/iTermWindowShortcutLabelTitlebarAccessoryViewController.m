@@ -121,8 +121,6 @@
 }
 
 + (iTermTitlebarStyle)titlebarStyleForWindowType:(int)windowType {
-    iTermPreferencesTabStyle tabStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-
     switch (windowType) {
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_MAXIMIZED:
