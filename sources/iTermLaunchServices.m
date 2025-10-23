@@ -188,11 +188,11 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
     }
 }
 
-- (void)openFile:(NSString *)fullPath completion:(void (^)(BOOL ok))completion {
-    [self openFile:fullPath fragment:nil completion:completion];
+- (void)openFile:(NSString *)fullPath window:(NSWindow *)window completion:(void (^)(BOOL ok))completion {
+    [self openFile:fullPath fragment:nil window:window completion:completion];
 }
 
-- (void)openFile:(NSString *)fullPath fragment:(NSString *)fragment completion:(void (^)(BOOL ok))completion {
+- (void)openFile:(NSString *)fullPath fragment:(NSString *)fragment window:(NSWindow *)window completion:(void (^)(BOOL ok))completion {
     DLog(@"openFile: %@ with fragment %@", fullPath, fragment);
     NSURL *url;
     BOOL shouldOfferToPickAppOnError = NO;
@@ -209,6 +209,7 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
                                      configuration:[NSWorkspaceOpenConfiguration configuration]
                                              style:iTermOpenStyleTab
                                             upsell:YES
+                                            window:window
                                         completion:^(NSRunningApplication *app, NSError *error) {
         if (error &&
             shouldOfferToPickAppOnError &&

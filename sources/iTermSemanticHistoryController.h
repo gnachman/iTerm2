@@ -27,6 +27,8 @@
 #import <Foundation/Foundation.h>
 #import "iTermCancelable.h"
 
+@class NSWindow;
+
 // Keys for substitutions of openPath:workingDirectory:substitutions:.
 extern NSString *const kSemanticHistoryPathSubstitutionKey;
 extern NSString *const kSemanticHistoryPrefixSubstitutionKey;
@@ -77,6 +79,7 @@ extern NSString *const kSemanticHistoryColumnNumberKey;
            scope:(iTermVariableScope *)scope
       lineNumber:(NSString *)lineNumber
     columnNumber:(NSString *)columnNumber
+          window:(NSWindow *)window
       completion:(void (^)(BOOL))completion;
 
 // Do a brute force search by putting together suffixes of beforeString with prefixes of afterString
@@ -133,7 +136,7 @@ extern NSString *const kSemanticHistoryColumnNumberKey;
 // Tests can subclass and override these methods to avoid interacting with the filesystem.
 - (void)launchTaskWithPath:(NSString *)path arguments:(NSArray *)arguments completion:(void (^)(void))completion;
 - (void)launchAppWithBundleIdentifier:(NSString *)bundleIdentifier path:(NSString *)path;
-- (void)openFile:(NSString *)fullPath fragment:(NSString *)fragment;
+- (void)openFile:(NSString *)fullPath fragment:(NSString *)fragment window:(NSWindow *)window;
 - (void)openURL:(NSURL *)url;
 - (void)openURL:(NSURL *)url editorIdentifier:(NSString *)editorIdentifier;
 - (BOOL)defaultAppForFileIsEditor:(NSString *)file;

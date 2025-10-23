@@ -230,6 +230,7 @@
                                        scope:[self.delegate urlActionHelperScope:self]
                                   lineNumber:lineNumber
                                 columnNumber:columnNumber
+                                      window:self.delegate.urlActionHelperWindow
                                   completion:completion];
 }
 
@@ -276,6 +277,7 @@ workingDirectory:(NSString *)workingDirectory
                                            scope:[self.delegate urlActionHelperScope:self]
                                       lineNumber:lineNumber
                                     columnNumber:columnNumber
+                                          window:self.delegate.urlActionHelperWindow
                                       completion:^(BOOL ignore) {}];
         return;
     }
