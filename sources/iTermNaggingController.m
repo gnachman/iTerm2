@@ -172,7 +172,8 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
             // Why?
             NSURL *whyUrl = [NSURL URLWithString:@"https://iterm2.com/why_no_content.html"];
             [[NSWorkspace sharedWorkspace] it_openURL:whyUrl
-                                                style:iTermOpenStyleTab];
+                                                style:iTermOpenStyleTab
+                                               window:self.delegate.naggingControllerWindow];
         }
     }];
 }
@@ -250,7 +251,8 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
 - (void)showTmuxSupplementaryPlaneBugHelpPage {
     NSURL *whyUrl = [NSURL URLWithString:@"https://iterm2.com//tmux22bug.html"];
     [[NSWorkspace sharedWorkspace] it_openURL:whyUrl
-                                        style:iTermOpenStyleTab];
+                                        style:iTermOpenStyleTab
+                                       window:self.delegate.naggingControllerWindow];
 }
 
 - (void)tryingToSendArrowKeysWithScrollWheel:(BOOL)isTrying {
@@ -419,7 +421,8 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
 
             case 3: // Help
                 [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/paste_bracketing"]
-                                                    style:iTermOpenStyleTab];
+                                                    style:iTermOpenStyleTab
+                                                   window:self.delegate.naggingControllerWindow];
                 break;
         }
     }];
@@ -468,7 +471,8 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
 
             case 4: // Help
                 [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/slow_triggers"]
-                                                    style:iTermOpenStyleTab];
+                                                    style:iTermOpenStyleTab
+                                                   window:self.delegate.naggingControllerWindow];
                 break;
         }
     }];
@@ -664,7 +668,8 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
     if ([iTermSecureUserDefaults openURLWithHost:url.host]) {
         DLog(@"Always allow %@", url.host);
         [[NSWorkspace sharedWorkspace] it_openURL:url
-                                            style:iTermOpenStyleTab];
+                                            style:iTermOpenStyleTab
+                                           window:self.delegate.naggingControllerWindow];
         return;
     }
 
@@ -683,13 +688,15 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
 
             case 0: // Allow
                 [[NSWorkspace sharedWorkspace] it_openURL:url
-                                                    style:iTermOpenStyleTab];
+                                                    style:iTermOpenStyleTab
+                                                   window:self.delegate.naggingControllerWindow];
                 break;
 
             case 1:  // Allow for this host
                 [iTermSecureUserDefaults setOpenURLWithHost:url.host allowed:YES];
                 [[NSWorkspace sharedWorkspace] it_openURL:url
-                                                    style:iTermOpenStyleTab];
+                                                    style:iTermOpenStyleTab
+                                                   window:self.delegate.naggingControllerWindow];
                 break;
 
             case 2:  // Never allow

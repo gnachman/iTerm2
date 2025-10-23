@@ -4603,7 +4603,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [NSURL URLWithUserSuppliedString:[selection stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
     if (url) {
         [[NSWorkspace sharedWorkspace] it_openURL:url
-                                            style:iTermOpenStyleTab];
+                                            style:iTermOpenStyleTab
+                                           window:self.view.window];
         return;
     }
 
@@ -19928,6 +19929,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                silenceable:kiTermWarningTypePersistent
                                     window:self.view.window];
     }
+}
+
+- (NSWindow * _Nullable)naggingControllerWindow {
+    return self.view.window;
 }
 
 - (void)naggingControllerRestart {

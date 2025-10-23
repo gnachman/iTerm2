@@ -8026,7 +8026,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (IBAction)copyModeShortcuts:(id)sender {
     [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/documentation-copymode.html"]
-                                        style:iTermOpenStyleTab];
+                                        style:iTermOpenStyleTab
+                                       window:self.window];
 }
 
 - (void)showRangeOfLines:(NSRange)rangeOfLines inSession:(PTYSession *)oldSession {
@@ -8166,10 +8167,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [NSApp stopModal];
 }
 
-- (IBAction)coprocessHelp:(id)sender
-{
+- (IBAction)coprocessHelp:(id)sender {
     [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"http://www.iterm2.com/coprocesses.html"]
-                                        style:iTermOpenStyleTab];
+                                        style:iTermOpenStyleTab
+                                       window:self.window];
 }
 
 - (IBAction)openSplitHorizontallySheet:(id)sender

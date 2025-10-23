@@ -276,7 +276,8 @@
 
 - (IBAction)help:(id)sender {
     [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/automatic-profile-switching.html"]
-                                        style:iTermOpenStyleTab];
+                                        style:iTermOpenStyleTab
+                                       window:self.view.window];
 }
 
 - (void)removeBoundHostOnRow:(NSInteger)rowIndex {

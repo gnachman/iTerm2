@@ -824,7 +824,8 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
 - (void)visitGallery:(id)sender {
     [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:kColorGalleryURL]
-                                        style:iTermOpenStyleTab];
+                                        style:iTermOpenStyleTab
+                                       window:self.view.window];
 }
 
 - (BOOL)currentColorsEqualPreset:(NSDictionary *)preset 

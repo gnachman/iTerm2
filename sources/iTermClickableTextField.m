@@ -33,7 +33,8 @@
 
 - (void)openURL:(NSURL *)url {
     [[NSWorkspace sharedWorkspace] it_openURL:url
-                                        style:iTermOpenStyleTab];
+                                        style:iTermOpenStyleTab
+                                       window:self.window];
 }
 
 @end

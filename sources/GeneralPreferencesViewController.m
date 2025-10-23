@@ -1275,7 +1275,8 @@ enum {
     [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/ai-plugin.html"]
                                 configuration:[NSWorkspaceOpenConfiguration configuration]
                                         style:iTermOpenStyleTab
-                                       upsell:NO];
+                                       upsell:NO
+                                       window:self.view.window];
 }
 
 - (void)revealPlugin:(id)sender {
@@ -1331,7 +1332,8 @@ enum {
                                 window:self.view.window];
     if (selection == kiTermWarningSelection0) {
         [[NSWorkspace sharedWorkspace] it_openURL:[NSURL fileURLWithPath:path]
-                                            style:iTermOpenStyleTab];
+                                            style:iTermOpenStyleTab
+                                           window:self.view.window];
     }
 }
 
@@ -1355,7 +1357,8 @@ enum {
 
 - (IBAction)pythonAPIAuthHelp:(id)sender {
     [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/python-api-auth.html"]
-                                        style:iTermOpenStyleTab];
+                                        style:iTermOpenStyleTab
+                                       window:self.view.window];
 }
 
 - (IBAction)resetAIPrompt:(id)sender {

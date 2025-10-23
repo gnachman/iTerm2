@@ -6562,7 +6562,8 @@ static NSString *iTermStringFromRange(NSRange range) {
                     [[NSWorkspace sharedWorkspace] it_openURL:url
                                                 configuration:[NSWorkspaceOpenConfiguration configuration]
                                                         style:size.width > size.height ? iTermOpenStyleVerticalSplit : iTermOpenStyleHorizontalSplit
-                                                       upsell:YES];
+                                                       upsell:YES
+                                                       window:self.window];
                     return;
                 }
             }

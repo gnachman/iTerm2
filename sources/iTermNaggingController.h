@@ -9,6 +9,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class NSWindow;
+
 extern NSString *const kTurnOffBracketedPasteOnHostChangeUserDefaultsKey;
 extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 
@@ -40,7 +42,7 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 - (void)naggingControllerAssignProfileToSession:(NSString *)arrangementName
                                            guid:(NSString *)guid;
 - (void)naggingControllerPrettyPrintJSON;
-
+- (NSWindow * _Nullable)naggingControllerWindow;
 @end
 
 @interface iTermNaggingController : NSObject

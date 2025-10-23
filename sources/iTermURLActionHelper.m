@@ -288,9 +288,14 @@ workingDirectory:(NSString *)workingDirectory
     if (background) {
         NSWorkspaceOpenConfiguration *config = [NSWorkspaceOpenConfiguration configuration];
         config.activates = NO;
-        [[NSWorkspace sharedWorkspace] it_openURL:url configuration:config style:style];
+        [[NSWorkspace sharedWorkspace] it_openURL:url
+                                    configuration:config
+                                            style:style
+                                           window:self.delegate.urlActionHelperWindow];
     } else {
-        [[NSWorkspace sharedWorkspace] it_openURL:url style:style];
+        [[NSWorkspace sharedWorkspace] it_openURL:url
+                                            style:style
+                                           window:self.delegate.urlActionHelperWindow];
     }
 }
 

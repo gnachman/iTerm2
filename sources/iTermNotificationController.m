@@ -374,10 +374,12 @@
         return;
     }
 
+    iTermController *controller = [iTermController sharedInstance];
     NSURL *url = [NSURL URLWithString:clickContext[@"URL"]];
     if (url) {
         [[NSWorkspace sharedWorkspace] it_openURL:url
-                                            style:iTermOpenStyleTab];
+                                            style:iTermOpenStyleTab
+                                           window:controller.currentTerminal.window];
         return;
     }
 
@@ -385,7 +387,6 @@
     int tab = [clickContext[@"tab"] intValue];
     int view = [clickContext[@"view"] intValue];
 
-    iTermController *controller = [iTermController sharedInstance];
     if (win >= [controller numberOfTerminals]) {
         DLog(@"Beep: bogus window number");
         NSBeep();

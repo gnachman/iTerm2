@@ -431,7 +431,8 @@ static const CGFloat kWindowTopMargin = 8;
 
 - (void)openURL {
     [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:self.tip.url]
-                                        style:iTermOpenStyleTab];
+                                        style:iTermOpenStyleTab
+                                       window:nil];
     [self dismiss];
 }
 

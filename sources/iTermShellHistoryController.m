@@ -379,7 +379,8 @@ static NSString *iTermShellIntegrationRemoteHostKey(id<VT100RemoteHostReading> s
         switch (returnCode) {
             case NSAlertFirstButtonReturn:
                 [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/shell_integration.html"]
-                                                    style:iTermOpenStyleTab];
+                                                    style:iTermOpenStyleTab
+                                                   window:window];
                 break;
                 
             case NSAlertThirdButtonReturn:  // Install now, optional button

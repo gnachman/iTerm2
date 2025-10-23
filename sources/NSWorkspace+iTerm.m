@@ -45,10 +45,11 @@
     return [bundleIdentifier isEqualToString:@"com.apple.SecurityAgent"];
 }
 
-- (void)it_openURL:(NSURL *)url style:(iTermOpenStyle)style {
+- (void)it_openURL:(NSURL *)url style:(iTermOpenStyle)style window:(NSWindow *)window {
     [self it_openURL:url
        configuration:[NSWorkspaceOpenConfiguration configuration]
-               style:style];
+               style:style
+              window:window];
 }
 
 - (BOOL)it_urlIsWeb:(NSURL *)url {
@@ -92,7 +93,8 @@
     return [self it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:url
                                                        configuration:nil
                                                                style:iTermOpenStyleTab
-                                                            testOnly:YES];
+                                                            testOnly:YES
+                                                              window:nil];
 }
 
 - (BOOL)it_urlIsLocallyOpenableWithUpsell:(NSURL *)url {
@@ -106,7 +108,8 @@
     return [self it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:url
                                                        configuration:nil
                                                                style:iTermOpenStyleTab
-                                                            testOnly:YES];
+                                                            testOnly:YES
+                                                              window:nil];
 }
 
 // A high-confidence check of whether we'd open this URL ourselves.
@@ -122,8 +125,9 @@
 
 - (void)it_openURL:(NSURL *)url
      configuration:(NSWorkspaceOpenConfiguration *)configuration
-             style:(iTermOpenStyle)style {
-    [self it_openURL:url configuration:configuration style:style upsell:YES];
+             style:(iTermOpenStyle)style
+            window:(NSWindow *)window {
+    [self it_openURL:url configuration:configuration style:style upsell:YES window:window];
 }
 
 
@@ -155,10 +159,11 @@
 }
 
 - (BOOL)it_tryToOpenFileURLLocally:(NSURL *)url
-                configuration:(NSWorkspaceOpenConfiguration *)configuration
-                        style:(iTermOpenStyle)style
-                       upsell:(BOOL)upsell
-                   completion:(void (^)(NSRunningApplication *app, NSError *error))completion {
+                     configuration:(NSWorkspaceOpenConfiguration *)configuration
+                             style:(iTermOpenStyle)style
+                            upsell:(BOOL)upsell
+                            window:(NSWindow *)window
+                        completion:(void (^)(NSRunningApplication *app, NSError *error))completion {
     if (![self it_localBrowserIsCompatibleWithFileURL:url]) {
         return NO;
     }
@@ -166,13 +171,15 @@
     return [self it_tryToOpenURLLocally:url
                           configuration:configuration
                                   style:style
-                                 upsell:upsell];
+                                 upsell:upsell
+                                 window:window];
 }
 
 - (BOOL)it_openIfNonWebURL:(NSURL *)url
              configuration:(NSWorkspaceOpenConfiguration *)configuration
                      style:(iTermOpenStyle)style
                     upsell:(BOOL)upsell
+                    window:(NSWindow *)window
                 completion:(void (^)(NSRunningApplication *app, NSError *error))completion {
     if ([@[ @"http", @"https", @"ftp" ] containsObject:url.scheme]) {
         return NO;
@@ -180,10 +187,11 @@
     if ([url.scheme isEqualToString:@"file"]) {
         // Some files could usefully be opened locally, like PDFs.
         if ([self it_tryToOpenFileURLLocally:url
-                            configuration:configuration
-                                    style:style
-                                   upsell:upsell
-                               completion:completion]) {
+                               configuration:configuration
+                                       style:style
+                                      upsell:upsell
+                                      window:window
+                                  completion:completion]) {
             return YES;
         }
     }
@@ -203,16 +211,17 @@ completionHandler:^(NSRunningApplication *app, NSError *error) {
 - (void)it_openURL:(NSURL *)url
      configuration:(NSWorkspaceOpenConfiguration *)configuration
              style:(iTermOpenStyle)style
-            upsell:(BOOL)upsell {
+            upsell:(BOOL)upsell
+            window:(NSWindow *)window {
     DLog(@"%@", url);
     if (!url) {
         return;
     }
-    if ([self it_openIfNonWebURL:url configuration:configuration style:style upsell:upsell completion:nil]) {
+    if ([self it_openIfNonWebURL:url configuration:configuration style:style upsell:upsell window:window completion:nil]) {
         return;
     }
 
-    if ([self it_tryToOpenURLLocally:url configuration:configuration style:style upsell:upsell]) {
+    if ([self it_tryToOpenURLLocally:url configuration:configuration style:style upsell:upsell window:window]) {
         return;
     }
 
@@ -224,7 +233,8 @@ completionHandler:^(NSRunningApplication *app, NSError *error) {
 - (BOOL)it_tryToOpenURLLocally:(NSURL *)url
                  configuration:(NSWorkspaceOpenConfiguration *)configuration
                          style:(iTermOpenStyle)style
-                        upsell:(BOOL)upsell {
+                        upsell:(BOOL)upsell
+                        window:(NSWindow *)window {
     if (!upsell && ![iTermBrowserGateway browserAllowedCheckingIfNot:YES]) {
         return NO;
     }
@@ -244,7 +254,8 @@ completionHandler:^(NSRunningApplication *app, NSError *error) {
         if ([self it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:url
                                                         configuration:configuration
                                                                 style:style
-                                                             testOnly:NO]) {
+                                                             testOnly:NO
+                                                               window:window]) {
             return YES;
         }
     }
@@ -298,6 +309,7 @@ withApplicationAtURL:appURL
           configuration:(NSWorkspaceOpenConfiguration *)configuration
                   style:(iTermOpenStyle)style
                  upsell:(BOOL)upsell
+                 window:(NSWindow *)window
              completion:(void (^)(NSRunningApplication *app, NSError *error))completion {
     DLog(@"%@", url);
     if (!url) {
@@ -307,10 +319,11 @@ withApplicationAtURL:appURL
                    configuration:configuration
                            style:style
                           upsell:upsell
+                          window:window
                       completion:completion]) {
         return;
     }
-    if ([self it_tryToOpenURLLocally:url configuration:configuration style:style upsell:upsell]) {
+    if ([self it_tryToOpenURLLocally:url configuration:configuration style:style upsell:upsell window:window]) {
         completion([NSRunningApplication currentApplication], nil);
         return;
     }
@@ -341,7 +354,8 @@ withApplicationAtURL:appURL
 - (BOOL)it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:(NSURL *)url
                                               configuration:(NSWorkspaceOpenConfiguration *)configuration
                                                       style:(iTermOpenStyle)style
-                                                   testOnly:(BOOL)testOnly {
+                                                   testOnly:(BOOL)testOnly
+                                                     window:(NSWindow *)window {
     if (![iTermBrowserGateway browserAllowedCheckingIfNot:YES]) {
         if ([iTermBrowserGateway shouldOfferPlugin]) {
             if (testOnly) {
@@ -388,7 +402,7 @@ withApplicationAtURL:appURL
                                                    identifier:identifier
                                                   silenceable:kiTermWarningTypePermanentlySilenceable
                                                       heading:@"Open in iTerm2?"
-                                                       window:nil] == kiTermWarningSelection1);
+                                                       window:window] == kiTermWarningSelection1);
             } else {
                 consent = ([iTermWarning showWarningWithTitle:@"iTerm2 can display web pages! Would you like to open this link in iTerm2?"
                                                       actions:@[ @"Use Default Browser", @"Open in iTerm2"]
@@ -396,7 +410,7 @@ withApplicationAtURL:appURL
                                                    identifier:identifier
                                                   silenceable:kiTermWarningTypePermanentlySilenceable
                                                       heading:@"Open in iTerm2?"
-                                                       window:nil] == kiTermWarningSelection1);
+                                                       window:window] == kiTermWarningSelection1);
             }
             break;
         case iTermOpenStyleVerticalSplit:

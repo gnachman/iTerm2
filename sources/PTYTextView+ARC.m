@@ -1397,6 +1397,10 @@ launchProfileInCurrentTerminal:(Profile *)profile
     [self showCommandInfoForMark:mark at:point];
 }
 
+- (NSWindow *)urlActionHelperWindow {
+    return self.window;
+}
+
 #pragma mark - Install Shell Integration
 
 - (IBAction)installShellIntegration:(id)sender {
@@ -1873,7 +1877,8 @@ withRelativeCoordRange:(VT100GridAbsCoordRange)range
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
             openURL:(NSURL *)url {
     [[NSWorkspace sharedWorkspace] it_openURL:url
-                                        style:iTermOpenStyleTab];
+                                        style:iTermOpenStyleTab
+                                       window:self.window];
 }
 
 - (NSView *)contextMenuViewForMenu:(iTermTextViewContextMenuHelper *)contextMenu {

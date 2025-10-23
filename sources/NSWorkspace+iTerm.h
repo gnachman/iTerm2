@@ -15,19 +15,22 @@
 - (NSString *)temporaryFileNameWithPrefix:(NSString *)prefix suffix:(NSString *)suffix;
 
 - (BOOL)it_securityAgentIsActive;
-- (void)it_openURL:(NSURL *)url style:(iTermOpenStyle)style;
-- (void)it_openURL:(NSURL *)url
-     configuration:(NSWorkspaceOpenConfiguration *)configuration
-             style:(iTermOpenStyle)style;
+- (void)it_openURL:(NSURL *)url style:(iTermOpenStyle)style window:(NSWindow *)window;
 - (void)it_openURL:(NSURL *)url
      configuration:(NSWorkspaceOpenConfiguration *)configuration
              style:(iTermOpenStyle)style
-            upsell:(BOOL)upsell;
+            window:(NSWindow *)window;
+- (void)it_openURL:(NSURL *)url
+     configuration:(NSWorkspaceOpenConfiguration *)configuration
+             style:(iTermOpenStyle)style
+            upsell:(BOOL)upsell
+            window:(NSWindow *)window;
 
 - (void)it_asyncOpenURL:(NSURL *)url
           configuration:(NSWorkspaceOpenConfiguration *)configuration
                   style:(iTermOpenStyle)style
                  upsell:(BOOL)upsell
+                 window:(NSWindow *)window
              completion:(void (^)(NSRunningApplication *app, NSError *error))completion;
 
 - (NSString *)it_newToken;

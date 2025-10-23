@@ -65,6 +65,7 @@ launchProfileInCurrentTerminal:(Profile *)profile
 - (void)urlActionHelperCopySelectionIfNeeded:(iTermURLActionHelper *)helper;
 - (iTermSelection *)urlActionHelperSelection:(iTermURLActionHelper *)helper;
 - (void)urlActionHelperShowCommandInfoForMark:(id<VT100ScreenMarkReading>)mark coord:(VT100GridCoord)coord;
+- (NSWindow * _Nullable)urlActionHelperWindow;
 @end
 
 @interface iTermURLActionHelper : NSObject
