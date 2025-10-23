@@ -110,7 +110,7 @@ class Connection:
                 # pylint: disable=protected-access
                 connection.__dispatch_forever_future = asyncio.ensure_future(
                     connection._async_dispatch_forever(
-                        connection, asyncio.get_event_loop()))
+                        connection, asyncio.get_running_loop()))
                 return connection
             except websockets.exceptions.InvalidStatusCode as status_code_exception:
                 if status_code_exception.status_code == 401:
@@ -217,7 +217,11 @@ class Connection:
         :param coro: A coroutine (async function) to run after connecting.
         :param retry: Keep trying to connect until it succeeds?
         """
-        loop = asyncio.get_event_loop()
+        if self.loop is not None:
+            self.loop.close()
+
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
 
         async def async_main(connection):
             # Set __tasks here in case coro returns before
