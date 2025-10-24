@@ -191,7 +191,7 @@ static void iTermClientServerProtocolEncoderEnsureSpace(iTermClientServerProtoco
     if (freeSpace >= additionalSpace) {
         return;
     }
-    iTermClientServerProtocolMessageEnsureSpace(encoder->message, additionalSpace - freeSpace);
+    iTermClientServerProtocolMessageEnsureSpace(encoder->message, encoder->offset + additionalSpace);
 }
 
 static void iTermClientServerProtocolEncoderCopyAndAdvance(iTermClientServerProtocolMessageEncoder *encoder,
