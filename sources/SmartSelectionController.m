@@ -140,7 +140,7 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
         if (!plistFile) {
             [iTermAppSignatureValidator warnWithReason:@"While loading the default smart selection rules"];
         }
-        ITCriticalError(rulesDict != nil, @"Failed to parse SmartSelectionRules: %@", [NSString stringWithContentsOfFile:plistFile encoding:NSUTF8StringEncoding error:nil]);
+        ITCriticalError(rulesDict != nil, @"Failed to parse SmartSelectionRules in %@: %@", plistFile, [NSString stringWithContentsOfFile:plistFile encoding:NSUTF8StringEncoding error:nil]);
         rulesArray = [rulesDict objectForKey:@"Rules"];
     }
     return rulesArray;
