@@ -137,7 +137,7 @@
                            :(NSModalResponse ) tag
                            :(NSString *) textFieldText
                            :(NSArray *) buttons
-                           :(NSArray *) combobox_items {
+                           :(NSArray *) comboboxItems {
     NSMutableArray *checkboxArray ;
     if ([items[1] isEqual:@"checkbox"]) {
         checkboxArray = [[NSMutableArray alloc] initWithCapacity:1];
@@ -153,39 +153,39 @@
         buttonText = buttons[tag - 1000];
     }
     NSString *comboBoxText = @"";
-    if ([combobox_items count] > 0) {
+    if ([comboboxItems count] > 0) {
         NSNumber *comboBoxIndex = [NSNumber numberWithInt:[items[0] indexOfSelectedItem]];
         if ([comboBoxIndex intValue] > -1) {
-            comboBoxText = [combobox_items objectAtIndex:[comboBoxIndex intValue]];
+            comboBoxText = [comboboxItems objectAtIndex:[comboBoxIndex intValue]];
         }
     }
     return [NSArray arrayWithObjects:buttonText, textFieldText, comboBoxText, checkboxArray,  nil];
 }
 + (NSRect)gegStackRectangle:(NSArray *)buttons
-                           :(NSArray *)combobox_items
+                           :(NSArray *)comboboxItems
                            :(NSArray *)checkboxes
-                           :(NSArray *)text_field
-                           :(NSNumber *)alert_width {
+                           :(NSArray *)textFieldArg
+                           :(NSNumber *)alertWidth {
     float height = 0.0;
-    if ([text_field count] == 2) {
+    if ([textFieldArg count] == 2) {
         height += 30.0;
     }
-    if ([combobox_items count] > 0) {
+    if ([comboboxItems count] > 0) {
         height += 30.0;
     }
     height += [checkboxes count] * 25;
-    return NSMakeRect(0, 0, alert_width.integerValue, height);
+    return NSMakeRect(0, 0, alertWidth.integerValue, height);
 }
 + (void)registerBuiltInFunction {
     static NSString *const title = @"title";
     static NSString *const subtitle = @"subtitle";
     static NSString *const buttons = @"buttons";
     static NSString *const checkboxes = @"checkboxes";
-    static NSString *const checkbox_defaults = @"checkbox_defaults";
-    static NSString *const combobox_items = @"combobox_items";
-    static NSString *const combobox_default = @"combobox_default";
-    static NSString *const text_field = @"text_field";
-    static NSString *const alert_width = @"width";
+    static NSString *const checkboxDefaults = @"checkboxDefaults";
+    static NSString *const comboboxItems = @"comboboxItems";
+    static NSString *const comboboxDefault = @"comboboxDefault";
+    static NSString *const textFieldArg = @"textFieldArg";
+    static NSString *const alertWidth = @"width";
     static NSString *const window_id = @"window_id";
 
     iTermBuiltInFunction *func =
@@ -194,11 +194,11 @@
                                                   subtitle: [NSString class],
                                                   buttons: [NSArray class],
                                                   checkboxes: [NSArray class],
-                                                  checkbox_defaults: [NSArray class],
-                                                  combobox_items: [NSArray class],
-                                                  combobox_default: [NSString class],
-                                                  text_field: [NSArray class],
-                                                  alert_width: [NSNumber class],
+                                                  checkboxDefaults: [NSArray class],
+                                                  comboboxItems: [NSArray class],
+                                                  comboboxDefault: [NSString class],
+                                                  textFieldArg: [NSArray class],
+                                                  alertWidth: [NSNumber class],
                                                   window_id: [NSObject class] }
                              optionalArguments:[NSSet setWithObject:window_id]
                                  defaultValues:@{ window_id: @"" }
@@ -209,11 +209,11 @@
                          subtitle:parameters[subtitle]
                           buttons:parameters[buttons]
                        checkboxes:parameters[checkboxes]
-                checkbox_defaults:parameters[checkbox_defaults]
-                   combobox_items:parameters[combobox_items]
-                 combobox_default:parameters[combobox_default]
-                       text_field:parameters[text_field]
-                      alert_width:parameters[alert_width]
+                checkboxDefaults:parameters[checkboxDefaults]
+                   comboboxItems:parameters[comboboxItems]
+                 comboboxDefault:parameters[comboboxDefault]
+                       textFieldArg:parameters[textFieldArg]
+                      alertWidth:parameters[alertWidth]
                          windowID:[NSString castFrom:parameters[window_id]]
                        completion:completion];
      }];
@@ -224,11 +224,11 @@
                   subtitle:(NSString *)subtitle
                    buttons:(NSArray *)buttons
                 checkboxes:(NSArray *)checkboxes
-         checkbox_defaults:(NSArray *)checkbox_defaults
-            combobox_items:(NSArray *)combobox_items
-          combobox_default:(NSString *)combobox_default
-                text_field:(NSArray *)text_field
-               alert_width:(NSNumber *)alert_width
+         checkboxDefaults:(NSArray *)checkboxDefaults
+            comboboxItems:(NSArray *)comboboxItems
+          comboboxDefault:(NSString *)comboboxDefault
+                textFieldArg:(NSArray *)textFieldArg
+               alertWidth:(NSNumber *)alertWidth
                   windowID:(NSString *)windowID
                 completion:(iTermBuiltInFunctionCompletionBlock)completion {
     NSAlert *alert = [[NSAlert alloc] init];
@@ -242,13 +242,13 @@
     }
     NSMutableArray *addedViews = [[NSMutableArray alloc] initWithCapacity:3];
     NSMutableArray *returnViews = [[NSMutableArray alloc] initWithCapacity:3];
-    if ([combobox_items count] > 0) {
+    if ([comboboxItems count] > 0) {
         NSComboBox *comboBox = [[NSComboBox alloc] init];
-        for (id combobox_item in combobox_items) {
+        for (id combobox_item in comboboxItems) {
             NSString *comboboxElementText = [NSString castFrom:combobox_item];
             if (comboboxElementText) {
                 [comboBox addItemWithObjectValue:comboboxElementText];
-                if ([comboboxElementText isEqualToString:combobox_default]) {
+                if ([comboboxElementText isEqualToString:comboboxDefault]) {
                     [comboBox selectItemWithObjectValue:comboboxElementText];
                 }
             }
@@ -267,7 +267,7 @@
             NSButton *currentCheckbox = [[NSButton alloc] initWithFrame:NSMakeRect(59, vertOffset, 82, 32)];
             [currentCheckbox setButtonType:NSButtonTypeSwitch];
             [currentCheckbox setTitle:checkbox];
-            NSUInteger st = [[checkbox_defaults objectAtIndex:idx] intValue];
+            NSUInteger st = [[checkboxDefaults objectAtIndex:idx] intValue];
             [currentCheckbox setState:st];
             [currentCheckbox setBezelStyle:NSBezelStylePush];
             [currentCheckbox setTarget:self];
@@ -281,22 +281,22 @@
     };
 
     NSTextField *textField = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)];
-    if ([text_field count] == 2) {
+    if ([textFieldArg count] == 2) {
         textField.editable = YES;
         textField.selectable = YES;
-        textField.stringValue = text_field[1];
-        textField.placeholderString = text_field[0];
+        textField.stringValue = textFieldArg[1];
+        textField.placeholderString = textFieldArg[0];
         [addedViews addObject:textField];
         [returnViews addObject:textField];
     } else {
-        [returnViews addObject:@"text_field"];
+        [returnViews addObject:@"textFieldArg"];
     };
     NSStackView *stackView = [NSStackView stackViewWithViews:addedViews];
     stackView.orientation = NSUserInterfaceLayoutOrientationVertical;
     stackView.alignment = NSLayoutAttributeLeft;
     stackView.distribution = NSStackViewDistributionFill;
     stackView.clipsToBounds = true;
-    stackView.frame = [self gegStackRectangle:buttons :combobox_items :checkboxes :text_field :alert_width];
+    stackView.frame = [self gegStackRectangle:buttons :comboboxItems :checkboxes :textFieldArg :alertWidth];
     stackView.translatesAutoresizingMaskIntoConstraints = true;
     alert.accessoryView = stackView;
     NSWindow *window = [[[iTermController sharedInstance] terminalWithGuid:windowID] window];
@@ -306,6 +306,6 @@
     } else {
         responseTag = [alert runModal];
     }
-    completion([self getCompletion:returnViews :responseTag :textField.stringValue :buttons :combobox_items], nil);
+    completion([self getCompletion:returnViews :responseTag :textField.stringValue :buttons :comboboxItems], nil);
 }
 @end
