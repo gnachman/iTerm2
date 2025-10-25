@@ -176,16 +176,12 @@ public class iTermMetalView: NSView, CALayerDelegate {
         }
     }
 
-    private var _framebufferOnly = true
-
     @objc
     public var framebufferOnly: Bool {
         get {
-            _framebufferOnly = false
             return metalLayer?.framebufferOnly ?? false
         }
         set {
-            _framebufferOnly = newValue
             metalLayer?.framebufferOnly = newValue
         }
     }
@@ -627,7 +623,6 @@ public class iTermMetalView: NSView, CALayerDelegate {
         metalLayer?.device = _device
         metalLayer?.delegate = self
         metalLayer?.framebufferOnly = true
-        _framebufferOnly = true
         clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
         _enableSetNeedsDisplay = false
         displaySource = DispatchSource.makeUserDataAddSource(queue: DispatchQueue.main)
