@@ -79,7 +79,7 @@ class AppSwitchingPreventionDetector: NSObject {
     }
 
     private func isValidOpenCommand(_ command: String) -> Bool {
-        let parts = (command as NSString).componentsInShellCommand() ?? []
+        let parts = (command as NSString).componentsInShellCommand()
         if parts.first != "open" {
             return false
         }

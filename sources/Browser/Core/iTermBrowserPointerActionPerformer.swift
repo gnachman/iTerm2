@@ -11,7 +11,7 @@ class iTermBrowserPointerActionPerformer: NSObject, PointerControllerDelegate {
     weak var delegate: iTermBrowserActionPerforming?
 
     func pasteFromClipboard(with event: NSEvent) {
-        if !NSString.fromPasteboard().isEmpty {
+        if NSString.fromPasteboard()?.isEmpty == false {
             delegate?.actionPerformingPasteFromClipboard()
         }
     }
@@ -23,7 +23,7 @@ class iTermBrowserPointerActionPerformer: NSObject, PointerControllerDelegate {
     func pasteFromSelection(with event: NSEvent) {
         withClipboardPreserved {
             delegate?.actionPerformingCopyToClipboard()
-            if !NSString.fromPasteboard().isEmpty {
+            if NSString.fromPasteboard()?.isEmpty == false {
                 delegate?.actionPerformingPasteFromClipboard()
             }
         }
@@ -86,11 +86,10 @@ class iTermBrowserPointerActionPerformer: NSObject, PointerControllerDelegate {
     }
 
     func sendHexCode(_ codes: String, withEvent event: NSEvent) {
-        if let data = NSString.data(forHexCodes: codes) {
-            delegate?.actionPerformingSend(
-                data: data,
-                broadcastAllowed: true)
-        }
+        let data = NSString.data(forHexCodes: codes)
+        delegate?.actionPerformingSend(
+            data: data,
+            broadcastAllowed: true)
     }
 
     func sendText(_ text: String, withEvent event: NSEvent, escaping: iTermSendTextEscaping) {

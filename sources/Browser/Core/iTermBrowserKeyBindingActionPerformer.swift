@@ -82,11 +82,10 @@ class iTermBrowserKeyBindingActionPerformer {
 
             // Variations of sending text
         case .ACTION_HEX_CODE:
-            if let data = NSString.data(forHexCodes: parameter as String) {
-                delegate?.actionPerformingSend(
-                    data: data,
-                    broadcastAllowed: true)
-            }
+            let data = NSString.data(forHexCodes: parameter as String)
+            delegate?.actionPerformingSend(
+                data: data,
+                broadcastAllowed: true)
         case .ACTION_TEXT:
             delegate?.actionPerformingSend(
                 data: iTermKeyBindingAction.escapedText(parameter as String,
@@ -148,7 +147,7 @@ class iTermBrowserKeyBindingActionPerformer {
             }
 
         case .ACTION_PASTE_OR_SEND:
-            if !NSString.fromPasteboard().isEmpty {
+            if NSString.fromPasteboard()?.isEmpty == false {
                 delegate?.actionPerformingPasteFromClipboard()
             } else if let event, let data = data(for: event) {
                 delegate?.actionPerformingSend(data: data,

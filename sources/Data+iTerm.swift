@@ -34,7 +34,7 @@ extension Data {
             return self[..<16].semiVerboseDescription + "…" + self.last(16).semiVerboseDescription
         }
         if let string = String(data: self, encoding: .utf8) {
-            let safe = (string as NSString).escapingControlCharactersAndBackslash()!
+            let safe = (string as NSString).escapingControlCharactersAndBackslash()
             return "“\(safe)”"
         }
         return (self as NSData).it_hexEncoded()

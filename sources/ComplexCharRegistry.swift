@@ -232,7 +232,7 @@ private class ComplexCharRegistryImpl: NSObject {
             DLog("<<\(string)>> with code \(code) reached max length \(kMaxParts)")
             return code
         }
-        return lazilyCreatedCode(for: string.it_string(byAppendingCharacter: codePoint)! as NSString,
+        return lazilyCreatedCode(for: string.it_string(byAppendingCharacter: codePoint) as NSString,
                                     isSpacingCombiningMark: .other)
     }
 

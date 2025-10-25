@@ -28,7 +28,7 @@ class iTermASCIIString: iTermBaseString, iTermString {
     }
 
     override var description: String {
-        return "<iTermASCIIString: cells=\(cellCount) value=\(deltaString(range: fullRange).string.trimmingTrailingNulls.escapingControlCharactersAndBackslash().d) \(ea?.description ?? "")>"
+        return "<iTermASCIIString: cells=\(cellCount) value=\(deltaString(range: fullRange).string.trimmingTrailingNulls.escapingControlCharactersAndBackslash()) \(ea?.description ?? "")>"
     }
 
     var cellCount: Int {

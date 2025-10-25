@@ -35,7 +35,7 @@ class iTermLegacyStyleString: iTermBaseString, iTermString {
     var cellCount: Int { line.count }
 
     override var description: String {
-        return "<iTermLegacyStyleString: cells=\(cellCount) ea=\(eaIndex?.description ?? "") value=\(deltaString(range: fullRange).string.trimmingTrailingNulls.escapingControlCharactersAndBackslash().d)>"
+        return "<iTermLegacyStyleString: cells=\(cellCount) ea=\(eaIndex?.description ?? "") value=\(deltaString(range: fullRange).string.trimmingTrailingNulls.escapingControlCharactersAndBackslash())>"
     }
 
     func usedLength(range: NSRange) -> Int32 {

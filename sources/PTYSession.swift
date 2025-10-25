@@ -713,7 +713,7 @@ extension PTYSession {
     private func fetchRemoteManpage(from conductor: Conductor,
                                     command: String,
                                     completion: @escaping (String) -> ()) {
-        conductor.runRemoteCommand("man \((command as NSString).withEscapedShellCharacters(includingNewlines: true)!) | cat") { data, status in
+        conductor.runRemoteCommand("man \((command as NSString).withEscapedShellCharacters(includingNewlines: true)) | cat") { data, status in
             if status != 0 {
                 completion("There was a problem running man on the remote host. It exited with status \(status)")
             } else {
@@ -995,7 +995,7 @@ extension PTYSession: PathCompletionHelperDelegate {
     }
 
     func pathCompletionHelper(_ helper: PathCompletionHelper, didSelect suggestion: String) {
-        let escaped = (suggestion as NSString).withBackslashEscapedShellCharacters(includingNewlines: true)!
+        let escaped = (suggestion as NSString).withBackslashEscapedShellCharacters(includingNewlines: true)
         if screen.isAtCommandPrompt && (currentCommand ?? "").isEmpty {
             writeTask("cd \(escaped)\r")
         } else {

@@ -274,8 +274,7 @@
     return [NSString stringWithString:aMutableString];
 }
 
-- (NSString *)stringWithShellEscapedTabs
-{
+- (NSString *)stringWithShellEscapedTabs {
     const int kLNEXT = 22;
     NSString *replacement = [NSString stringWithFormat:@"%c\t", kLNEXT];
 
@@ -623,8 +622,7 @@
     return candidate;
 }
 
-- (NSString *)stringByReplacingBackreference:(int)n withString:(NSString *)s
-{
+- (NSString *)stringByReplacingBackreference:(int)n withString:(NSString *)s {
     return [self stringByReplacingEscapedChar:'0' + n withString:s];
 }
 
@@ -670,8 +668,7 @@ static int fromhex(unichar c) {
     return result;
 }
 
-- (NSString *)stringByReplacingEscapedHexValuesWithChars
-{
+- (NSString *)stringByReplacingEscapedHexValuesWithChars {
     NSMutableArray *ranges = [NSMutableArray array];
     NSRange range = [self rangeOfString:@"\\x"];
     while (range.location != NSNotFound) {
@@ -861,8 +858,7 @@ static int minimal_subpart(const unsigned char *datap, int datalen)
 
 int decode_utf8_char(const unsigned char *datap,
                      int datalen,
-                     int * restrict result)
-{
+                     int * restrict result) {
     unsigned int theChar;
     int utf8Length;
     unsigned char c;

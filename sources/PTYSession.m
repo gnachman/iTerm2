@@ -11511,8 +11511,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 - (void)textViewPasteSpecialWithStringConfiguration:(NSString *)configuration
                                       fromSelection:(BOOL)fromSelection {
     NSString *string = fromSelection ? [[iTermController sharedInstance] lastSelectionPromise].wait.maybeFirst : [NSString stringFromPasteboard];
-    [_pasteHelper pasteString:string
-                 stringConfig:configuration];
+    if (string) {
+        [_pasteHelper pasteString:string
+                     stringConfig:configuration];
+    }
 }
 
 - (void)textViewInvokeScriptFunction:(NSString *)function {
@@ -21263,7 +21265,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 - (void)pasteboardReporter:(iTermPasteboardReporter *)sender reportPasteboard:(NSString *)pasteboard {
     NSData *data = [_screen.terminalOutput reportPasteboard:pasteboard
-                                                   contents:[NSString stringFromPasteboard]];
+                                                   contents:[NSString stringFromPasteboard] ?: @""];
     [self screenSendReportData:data];
     [_view showUnobtrusiveMessage:[NSString stringWithFormat:@"Clipboard contents reported"]
                          duration:3];

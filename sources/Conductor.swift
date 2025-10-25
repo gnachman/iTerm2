@@ -788,7 +788,7 @@ extension Conductor {
             case .execLoginShell(let args):
                 return (["exec_login_shell"] + args).joined(separator: "\n")
             case .setenv(let key, let value):
-                return "setenv \(key) \((value as NSString).stringEscapedForBash()!)"
+                return "setenv \(key) \((value as NSString).stringEscapedForBash())"
             case .run(let cmd):
                 return "run \(cmd)"
             case .runPython(_):

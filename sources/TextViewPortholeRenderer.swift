@@ -60,7 +60,7 @@ fileprivate extension TextViewPorthole.VisualAttributes {
             "${fontFamily}": font.familyName ?? NSFont.userFixedPitchFont(ofSize: 12)!.familyName!,
         ]
 
-        let css = (template as NSString).performingSubstitutions(subs)!
+        let css = (template as NSString).performingSubstitutions(subs)
         return css.minified
     }
 }

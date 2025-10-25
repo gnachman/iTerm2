@@ -39,6 +39,8 @@
 #import "NSString+CommonAdditions.h"
 #import "VT100GridTypes.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 @class iTermVariableScope;
 @class ScreenCharArray;
 
@@ -73,7 +75,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 + (NSString *)stringWithLongCharacter:(UTF32Char)longCharacter;
 
 // Returns the current string on the pasteboard (if any).
-+ (NSString *)stringFromPasteboard;
++ (NSString * _Nullable)stringFromPasteboard;
 
 // Returns the set of characters that should be backslash-escaped.
 + (NSString *)shellEscapableCharacters;
@@ -121,7 +123,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 // Convert a string of hex values (an even number of [0-9A-Fa-f]) into data.
 - (NSData *)dataFromHexValues;
-- (NSData *)dataFromWhitespaceDelimitedHexValues;
+- (NSData * _Nullable)dataFromWhitespaceDelimitedHexValues;
 
 // Always returns a non-null value, but it may contain replacement chars for
 // malformed utf-8 sequences.
@@ -135,15 +137,15 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 - (NSString *)stringByTrimmingTrailingCharactersFromCharacterSet:(NSCharacterSet *)charset;
 
-- (NSString *)stringByBase64DecodingStringWithEncoding:(NSStringEncoding)encoding;
-- (NSString *)base64EncodedWithEncoding:(NSStringEncoding)encoding;
+- (NSString * _Nullable)stringByBase64DecodingStringWithEncoding:(NSStringEncoding)encoding;
+- (NSString * _Nullable)base64EncodedWithEncoding:(NSStringEncoding)encoding;
 - (BOOL)mayBeBase64Encoded;
 
 // Returns a substring of contiguous characters only from a given character set
 // including some character in the middle of the target.
 - (NSString *)substringIncludingOffset:(int)offset
                       fromCharacterSet:(NSCharacterSet *)charSet
-                  charsTakenFromPrefix:(int*)charsTakenFromPrefixPtr;
+                  charsTakenFromPrefix:(int * _Nullable)charsTakenFromPrefixPtr;
 
 - (NSArray *)componentsBySplittingStringWithQuotesAndBackslashEscaping:(NSDictionary *)escapes;
 
@@ -198,10 +200,11 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)stringByExpandingTildeInPathPreservingSlash;
 
 // How tall is this string when rendered within a fixed width?
-- (CGFloat)heightWithAttributes:(NSDictionary *)attributes constrainedToWidth:(CGFloat)maxWidth;
+- (CGFloat)heightWithAttributes:(NSDictionary * _Nullable)attributes
+             constrainedToWidth:(CGFloat)maxWidth;
 
-- (iTermTuple *)keyValuePair;
-- (iTermTuple<NSString *, NSString *> *)it_stringBySplittingOnFirstSubstring:(NSString *)substring;
+- (iTermTuple<NSString *, NSString *> * _Nullable)keyValuePair;
+- (iTermTuple<NSString *, NSString *> * _Nullable)it_stringBySplittingOnFirstSubstring:(NSString *)substring;
 
 - (NSIndexSet *)indicesOfCharactersInSet:(NSCharacterSet *)characterSet;
 
@@ -241,10 +244,10 @@ int decode_utf8_char(const unsigned char * restrict datap,
                                               NSString *complexString,
                                               BOOL *stop))block;
 
-- (NSString *)firstComposedCharacter:(NSString **)rest;
+- (NSString *)firstComposedCharacter:(NSString * _Nullable * _Nullable)rest;
 - (NSString *)lastComposedCharacter;
 - (NSInteger)numberOfComposedCharacters;
-- (NSString *)byTruncatingComposedCharactersInCenter:(NSInteger)count;
+- (NSString * _Nullable)byTruncatingComposedCharactersInCenter:(NSInteger)count;
 
 // It is safe to modify, delete, or insert characters in `range` within `block`.
 - (void)reverseEnumerateSubstringsEqualTo:(NSString *)query
@@ -253,7 +256,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSUInteger)iterm_unsignedIntegerValue;
 
 // Returns modified attributes for drawing self fitting size within one point.
-- (NSDictionary *)attributesUsingFont:(NSFont *)font fittingSize:(NSSize)size attributes:(NSDictionary *)attributes;
+- (NSDictionary *)attributesUsingFont:(NSFont *)font
+                          fittingSize:(NSSize)size
+                           attributes:(NSDictionary * _Nullable)attributes;
 
 // Removes trailing zeros from a floating point value, leaving at most one.
 // 1.0000 -> 1.0
@@ -302,9 +307,14 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 // These methods work on 10.13 with strings that include newlines, and are consistent with each other.
 // The built in NSString API ignores everything from the first newline on for computing bounds.
-- (NSRect)it_boundingRectWithSize:(NSSize)bounds attributes:(NSDictionary *)attributes truncated:(BOOL *)truncated;
-- (void)it_drawInRect:(CGRect)rect attributes:(NSDictionary *)attributes;
-- (void)it_drawInRect:(CGRect)rect attributes:(NSDictionary *)attributes alpha:(CGFloat)alpha;
+- (NSRect)it_boundingRectWithSize:(NSSize)bounds
+                       attributes:(NSDictionary * _Nullable)attributes
+                        truncated:(BOOL *)truncated;
+- (void)it_drawInRect:(CGRect)rect
+           attributes:(NSDictionary * _Nullable)attributes;
+- (void)it_drawInRect:(CGRect)rect
+           attributes:(NSDictionary * _Nullable)attributes
+                alpha:(CGFloat)alpha;
 
 - (BOOL)startsWithEmoji;
 + (NSString *)it_formatBytes:(double)bytes;
@@ -326,7 +336,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (BOOL)it_hasPrefix:(NSString *)prefix;
 
 // If this is a 2+ part version number, return a 2 part version number. Otherwise, nil.
-- (NSString *)it_twoPartVersionNumber;
+- (NSString * _Nullable)it_twoPartVersionNumber;
 - (NSString *)stringByEscapingForSandboxLiteral;
 - (NSString *)stringByKeepingLastCharacters:(NSInteger)count;
 - (NSString *)stringByTrimmingOrphanedSurrogates;
@@ -335,11 +345,11 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)stringByAppendingPathComponents:(NSArray<NSString *> *)pathComponents;
 - (NSArray<NSString *> *)it_normalizedTokens;
 - (double)it_localizedDoubleValue;
-- (NSString *)it_contentHash;
+- (NSString * _Nullable)it_contentHash;
 - (NSString *)it_unescapedTmuxWindowName;
 - (NSString *)it_substringToIndex:(NSInteger)index;
 - (NSString *)it_escapedForRegex;
-- (NSString *)it_compressedString;
+- (NSString * _Nullable)it_compressedString;
 
 // Use this in #!/usr/bin/env -S "%@"
 // Important! It assumes you put the value in double quotes. Amusingly, the man page for env
@@ -369,16 +379,18 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSArray<NSString *> *)lastWords:(NSUInteger)count;
 @property (nonatomic, readonly) NSString *firstNonEmptyLine;
 - (NSString *)truncatedToLength:(NSInteger)maxLength ellipsis:(NSString *)ellipsis;
-- (NSString *)sanitizedUsername;
-- (NSString *)sanitizedHostname;
+- (NSString * _Nullable)sanitizedUsername;
+- (NSString * _Nullable)sanitizedHostname;
 - (NSString *)sanitizedCommand;
 - (NSString *)removingInvisibles;
 - (NSString *)stringByReplacingUnicodeSpacesWithASCIISpace;
 - (NSString *)stringByEscapingForRegex;
 
-- (NSString *)chunkedWithLineLength:(NSInteger)length separator:(NSString *)separator;
-- (BOOL)parseKittyUnicodePlaceholder:(out VT100GridCoord *)coord
-                            imageMSB:(out int *)imageMSB;
+- (NSString *)chunkedWithLineLength:(NSInteger)length
+                          separator:(NSString *)separator;
+
+- (BOOL)parseKittyUnicodePlaceholder:(out VT100GridCoord * _Nullable)coord
+                            imageMSB:(out int * _Nullable)imageMSB;
 
 @property (nonatomic, readonly) NSString *it_sanitized;
 @property(nonatomic, readonly) NSString *stringEnclosedInMarkdownInlineCode;
@@ -411,3 +423,5 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (void)escapeCharacters:(NSString *)charsToEscape;
 
 @end
+
+NS_ASSUME_NONNULL_END

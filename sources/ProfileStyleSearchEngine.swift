@@ -128,7 +128,7 @@ class ProfileStyleSearchEngineQuery: NSObject {
     
     @objc
     init(query: String, operators: [String]) {
-        let phrases = (query as NSString).componentsBySplittingProfileListQuery() ?? []
+        let phrases = (query as NSString).componentsBySplittingProfileListQuery()
         nodes = phrases.compactMap {
             ProfileSearchNode(phrase: $0, operators: operators)
         }

@@ -115,13 +115,7 @@ struct ParsedSSHArguments: Codable, CustomDebugStringConvertible {
 
     init(_ string: String, booleanArgs boolArgsString: String, hostnameFinder: SSHHostnameFinder) {
         let booleanArgs = Set(Array<String.Element>(boolArgsString).map { String($0) })
-        guard let args = (string as NSString).componentsInShellCommand() else {
-            host = ""
-            hostname = ""
-            username = nil
-            port = nil
-            return
-        }
+        let args = (string as NSString).componentsInShellCommand()
         var destination: String? = nil
         var optionsAllowed = true
         var preferredUser: String? = nil

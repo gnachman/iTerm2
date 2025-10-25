@@ -25,9 +25,7 @@ struct SecureUserDefaultValue<T: SecureUserDefaultStringTranscodable> {
         self.value = value
     }
     init?(sudString string: String) throws {
-        guard let data = (string as NSString).dataFromHexValues() else {
-            return nil
-        }
+        let data = (string as NSString).dataFromHexValues()
         guard let decodedString = String(data: data, encoding: .utf8) else {
             return nil
         }

@@ -340,8 +340,8 @@ fileprivate class SSHProcessDataSource: NSObject, ProcessDataSource {
         guard let row = self.row(pid: pid) else {
             return nil
         }
-        let args = (row.command as NSString).componentsInShellCommand() ?? []
-        execName?.pointee = (args[0] as NSString).removingPrefix("-")! as NSString
+        let args = (row.command as NSString).componentsInShellCommand()
+        execName?.pointee = (args[0] as NSString).removingPrefix("-") as NSString
         return args
     }
 

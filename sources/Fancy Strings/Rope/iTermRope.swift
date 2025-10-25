@@ -166,10 +166,13 @@ class iTermRope: iTermBaseString {
         let segmentStrings: [String] = guts.segments.enumerated().map { i, seg in
             "  Segment \(i) cumulativeCount=\(seg.cumulativeCellCount): \(seg.string)"
         }
-        let header = "\(String(describing: type(of: self))): \(it_addressString) " +
-                        "cells=\(cellCount) " +
-                        "deletedCellCount=\(guts.deletedHeadCellCount) " +
-        "value=\(deltaString(range: fullRange).string.trimmingTrailingNulls.escapingControlCharactersAndBackslash().d)"
+        let classString: String = String(describing: type(of: self))
+        let addressString: String = it_addressString
+        let valueString: String = deltaString(range: fullRange).string.trimmingTrailingNulls.escapingControlCharactersAndBackslash()
+        let header = ("\(classString): \(addressString) " +
+                      "cells=\(cellCount) " +
+                      "deletedCellCount=\(guts.deletedHeadCellCount) " +
+                      "value=\(valueString)")
         let array = [header] + segmentStrings
         let separator = segmentStrings.count == 1 ? " " : "\n"
         return "<" + array.joined(separator: separator) + ">"

@@ -35,7 +35,7 @@ class iTermSubString: iTermBaseString, iTermString {
     }
 
     override var description: String {
-        return "<iTermSubString: base=\(type(of: base)) @ \(((base as? NSObject)?.it_addressString).d) cells=\(cellCount) value=\(deltaString(range: fullRange).string.trimmingTrailingNulls.escapingControlCharactersAndBackslash().d)>"
+        return "<iTermSubString: base=\(type(of: base)) @ \(((base as? NSObject)?.it_addressString).d) cells=\(cellCount) value=\(deltaString(range: fullRange).string.trimmingTrailingNulls.escapingControlCharactersAndBackslash())>"
     }
 
     func deltaString(range: NSRange) -> DeltaString {
