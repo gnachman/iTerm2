@@ -119,9 +119,8 @@ func detectFavicon(
        let tintColor = NSColor(fromHexString: (best.colorHex.hasPrefix("#") ? "" : "#") + best.colorHex),
        let rawImage = NSImage(contentsOf: best.url) {
         rawImage.isTemplate = true
-        if let tinted = rawImage.it_image(withTintColor: tintColor) {
-            return .left(tinted)
-        }
+        let tinted = rawImage.it_image(withTintColor: tintColor)
+        return .left(tinted)
     }
 
     return .right(best.url)

@@ -31,7 +31,7 @@ class TintedImage: NSObject {
         if let cached, color == self.color, size == self.size {
             return cached
         }
-        let tinted = original.it_image(withTintColor: color, size: size)!
+        let tinted = original.it_image(withTintColor: color, size: size)
         self.size = size
         self.color = color
         cached = tinted

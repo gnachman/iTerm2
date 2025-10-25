@@ -201,7 +201,7 @@ extension iTermApplicationDelegate {
         for tip in tips {
             if let item = index[tip.identifier] {
                 controller.registerTip(forMenuItem: item,
-                                       image: tip.imageName.map { NSImage.it_imageNamed($0, for: Self.self) },
+                                       image: tip.imageName.compactMap { NSImage.it_imageNamed($0, for: Self.self) },
                                        attributedString: NSAttributedString.attributedString(markdown: tip.text,
                                                                                              font: NSFont.systemFont(ofSize: NSFont.systemFontSize),
                                                                                              paragraphStyle: NSParagraphStyle.default)!)
