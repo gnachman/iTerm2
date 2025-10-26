@@ -15,6 +15,7 @@
 #import "SessionView.h"
 
 #import <Cocoa/Cocoa.h>
+#import "NSArray+CommonAdditions.h"
 
 @implementation iTermAlertBuiltInFunction
 
@@ -131,43 +132,56 @@
 @end
 
 
+@interface PolyModalItems : NSObject
+@property (nonatomic, strong, nullable) NSArray<NSString *> *buttons;
+@property (nonatomic, strong, nullable) NSArray<NSButton *> *checkboxes;
+@property (nonatomic, strong, nullable) NSComboBox *comboBox;
+@property (nonatomic, strong, nullable) NSTextField *textField;
+@end
+
+@implementation PolyModalItems
+@end
+
 @implementation iTermGetPolyModalAlertBuiltInFunction
 
-+ (NSArray *) polyModalCompletion:(NSMutableArray * ) items
-                           tag:(NSModalResponse ) tag
-                 textFieldText:(NSString *) textFieldText
-                       buttons:(NSArray<NSString *> *) buttons
-                 comboboxItems:(NSArray<NSString *> *) comboboxItems {
-    NSMutableArray *checkboxArray;
-    if ([items[1] isEqual:@"checkbox"]) {
-        checkboxArray = [[NSMutableArray alloc] initWithCapacity:1];
-        [checkboxArray addObject:@(-1)];
-    } else {
-        checkboxArray =
-            [[NSMutableArray alloc] initWithCapacity:[items[1] count]];
-        for (NSButton *cb in items[1]) {
-            [checkboxArray addObject:@(cb.state)];
-        }
-    }
-    NSString *buttonText = @"button";
++ (NSDictionary *)polyModalCompletion:(PolyModalItems *)polyModalItems
+                                  tag:(NSModalResponse)tag {
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
+
     NSInteger index = tag - 1000;
-    if (index >= 0 && index < [buttons count]) {
-        buttonText = buttons[index];
+    if (index >= 0 && index < [polyModalItems.buttons count]) {
+        result[@"button"] = polyModalItems.buttons[index];
     }
-    NSString *comboBoxText = @"";
-    if ([comboboxItems count] > 0) {
-        NSInteger comboBoxIndex = [items[0] indexOfSelectedItem];
-        if (comboBoxIndex >= 0 && comboBoxIndex < [comboboxItems count]) {
-            comboBoxText = comboboxItems[comboBoxIndex];
+
+    if (polyModalItems.textField) {
+        result[@"tf_text"] = polyModalItems.textField.stringValue;
+    }
+
+    if (polyModalItems.checkboxes) {
+        result[@"checks"] = [[polyModalItems.checkboxes
+            mapToMutableArrayWithBlock:^id(NSButton *cb) {
+                return (cb.state == NSControlStateValueOn) ? cb.title : nil;
+            }] mutableCopy];
+    }
+
+    if (polyModalItems.comboBox) {
+        NSInteger comboBoxIndex = [polyModalItems.comboBox indexOfSelectedItem];
+        if (comboBoxIndex >= 0) {
+            result[@"combo"] =
+                [polyModalItems.comboBox itemObjectValueAtIndex:comboBoxIndex];
+        } else {
+            result[@"combo"] = @"";
         }
     }
-    return @[ buttonText, textFieldText, comboBoxText, checkboxArray ];
+
+    return result;
 }
 + (NSRect)stackRectangle:(NSArray<NSString *> *)buttons
            comboboxItems:(NSArray<NSString *> *)comboboxItems
               checkboxes:(NSArray<NSString *> *)checkboxes
-            textFieldParams:(NSArray<NSString *> *)textFieldParams
+         textFieldParams:(NSArray<NSString *> *)textFieldParams
               alertWidth:(NSNumber *)alertWidth {
+    
     CGFloat height = 0.0;
     if ([textFieldParams count] >= 2) {
         height += 30.0;
@@ -176,6 +190,7 @@
         height += 30.0;
     }
     height += [checkboxes count] * 25;
+    
     return NSMakeRect(0.0, 0.0, alertWidth.integerValue, height);
 }
 + (void)registerBuiltInFunction {
@@ -236,11 +251,12 @@
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = title;
     alert.informativeText = subtitle;
+    PolyModalItems *polyModalItems = [[PolyModalItems alloc] init];
+    polyModalItems.buttons = buttons;
     for (NSString *buttonTitle in buttons) {
         [alert addButtonWithTitle:buttonTitle];
     }
-    NSMutableArray *addedViews = [[NSMutableArray alloc] initWithCapacity:3];
-    NSMutableArray *returnViews = [[NSMutableArray alloc] initWithCapacity:3];
+    NSMutableArray *stackViews = [NSMutableArray array];
     if ([comboboxItems count] > 0) {
         NSComboBox *comboBox = [[NSComboBox alloc] init];
         for (NSString *item in comboboxItems) {
@@ -249,44 +265,38 @@
                 [comboBox selectItemWithObjectValue:item];
             }
         }
-        [addedViews addObject:comboBox];
-        [returnViews addObject:comboBox];
-    } else {
-        [returnViews addObject:@"comboBox"];
+        [stackViews addObject:comboBox];
+        polyModalItems.comboBox = comboBox;
     }
 
     if ([checkboxes count] > 0) {
-        NSMutableArray *checkboxViews = [[NSMutableArray alloc] initWithCapacity:[checkboxes count]];
+        NSMutableArray *checkboxViews = [NSMutableArray array];
         NSUInteger idx = 0;
         for (NSString *checkboxTitle in checkboxes) {
-            NSButton *currentCheckbox = [[NSButton alloc] initWithFrame:NSZeroRect];
-            currentCheckbox.translatesAutoresizingMaskIntoConstraints = NO;
+            NSButton *currentCheckbox =
+                [[NSButton alloc] initWithFrame:NSZeroRect];
+            currentCheckbox.translatesAutoresizingMaskIntoConstraints = YES;
             currentCheckbox.buttonType = NSButtonTypeSwitch;
             currentCheckbox.title = checkboxTitle;
             currentCheckbox.state = [[checkboxDefaults objectAtIndex:idx] integerValue];
             currentCheckbox.target = self;
             [checkboxViews addObject:currentCheckbox];
-            [addedViews addObject:currentCheckbox];
+            [stackViews addObject:currentCheckbox];
             idx++;
         }
-        [returnViews addObject:checkboxViews];
-    } else {
-        [returnViews addObject: @"checkbox"];
-    };
+        polyModalItems.checkboxes = checkboxViews;
+    }
 
-    NSTextField *textField = nil;
     if ([textFieldParams count] >= 2) {
-        textField = [[NSTextField alloc] initWithFrame:NSZeroRect];
+        NSTextField *textField = [[NSTextField alloc] initWithFrame:NSZeroRect];
         textField.editable = YES;
         textField.selectable = YES;
         textField.stringValue = textFieldParams[1];
         textField.placeholderString = textFieldParams[0];
-        [addedViews addObject:textField];
-        [returnViews addObject:textField];
-    } else {
-        [returnViews addObject:@"textFieldParams"];
-    };
-    NSStackView *stackView = [NSStackView stackViewWithViews:addedViews];
+        [stackViews addObject:textField];
+        polyModalItems.textField = textField;
+    }
+    NSStackView *stackView = [NSStackView stackViewWithViews:stackViews];
     stackView.orientation = NSUserInterfaceLayoutOrientationVertical;
     stackView.alignment = NSLayoutAttributeLeft;
     stackView.distribution = NSStackViewDistributionFill;
@@ -296,20 +306,16 @@
                                 checkboxes:checkboxes
                            textFieldParams:textFieldParams
                                 alertWidth:alertWidth];
-    stackView.translatesAutoresizingMaskIntoConstraints = NO;
+    stackView.translatesAutoresizingMaskIntoConstraints = YES;
     alert.accessoryView = stackView;
-    NSWindow *window = [[[iTermController sharedInstance] terminalWithGuid:windowID] window];
+    NSWindow *window =
+        [[[iTermController sharedInstance] terminalWithGuid:windowID] window];
     NSModalResponse responseTag;
     if (window) {
         responseTag = [alert runSheetModalForWindow:window];
     } else {
         responseTag = [alert runModal];
     }
-    completion([self polyModalCompletion:returnViews
-                                     tag:responseTag
-                           textFieldText:textField.stringValue ?: @""
-                                 buttons:buttons
-                           comboboxItems:comboboxItems],
-               nil);
+    completion([self polyModalCompletion:polyModalItems tag:responseTag], nil);
 }
 @end
