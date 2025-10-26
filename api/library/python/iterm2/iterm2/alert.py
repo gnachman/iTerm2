@@ -150,7 +150,7 @@ class TextInputAlert:
 
 
 class PolyModalAlert:
-    """A modal alert with various ui options
+    """A modal alert with various UI options
 
     :param title: The title, shown in bold at the top.
     :param subtitle: The informative text, which may be more than one line
@@ -290,10 +290,10 @@ class PolyModalAlert:
              f'subtitle: {subtitle}, ' +
              f'buttons: {buttons}, ' +
              f'checkboxes: {checkboxes_list}, ' +
-             f'checkbox_defaults: {checkbox_defaults}, ' +
-             f'combobox_items: {combobox_items}, ' +
-             f'combobox_default: {combobox_default}, ' +
-             f'text_field: {text_field}, ' +
+             f'checkboxDefaults: {checkbox_defaults}, ' +
+             f'comboboxItems: {combobox_items}, ' +
+             f'comboboxDefault: {combobox_default}, ' +
+             f'textFieldParams: {text_field}, ' +
              f'width: {width}, ' +
              f'window_id: {json.dumps(self.window_id)})'))
         checked_boxes = result_list[3]
