@@ -284,7 +284,7 @@ class PolyModalAlert:
         text_field = json.dumps(self.text_field)
         width = json.dumps(self.__width)
 
-        result_list = await iterm2.async_invoke_function(
+        return await iterm2.async_invoke_function(
             connection,
             (f'iterm2.get_poly_modal_alert(title: {title}, ' +
              f'subtitle: {subtitle}, ' +
@@ -296,16 +296,3 @@ class PolyModalAlert:
              f'textFieldParams: {text_field}, ' +
              f'width: {width}, ' +
              f'window_id: {json.dumps(self.window_id)})'))
-        checked_boxes = result_list[3]
-
-        checkbox_items = self.checkboxes
-        checked = []
-        for i, checked_box in enumerate(checked_boxes):
-            if checked_box == 1:
-                checked.append(checkbox_items[i])
-
-        result_object = {"button": result_list[0],
-                         "tf_text": result_list[1],
-                         "combo": result_list[2],
-                         "checks": checked}
-        return result_object
