@@ -1,7 +1,7 @@
 """Enables showing modal alerts."""
 import json
 import typing
-
+from dataclasses import dataclass
 import iterm2.connection
 
 
@@ -148,6 +148,12 @@ class TextInputAlert:
              f'defaultValue: {default_value}, ' +
              f'window_id: {json.dumps(self.window_id)})'))
 
+@dataclass
+class PolyModalResult:
+    button: typing.Optional[str] = None
+    tf_text: typing.Optional[str] = None
+    combo: typing.Optional[str] = None
+    checks: typing.Optional[List[str]] = None
 
 class PolyModalAlert:
     """A modal alert with various UI options
@@ -204,18 +210,28 @@ class PolyModalAlert:
 
     @property
     def combobox_items(self) -> typing.List[str]:
-        """Returns the list of strings that will populate the combobox"""
+        """Returns the list of strings that will populate the combobox."""
         return self.__combobox_items
 
     @property
     def combobox_default(self) -> str:
-        """Returns the combox item that is initially chosen"""
+        """Returns the combox item that is initially chosen."""
         return self.__combobox_default
 
     @property
     def window_id(self) -> typing.Optional[str]:
-        """Returns the window ID"""
+        """Returns the window ID."""
         return self.__window_id
+
+    @property
+    def width(self) -> int:
+        """The width of the alert modal."""
+        return self.__width
+
+    @width.setter
+    def width(self, value: int):
+        """Set the width of the model."""
+        self.__width = value
 
     def add_button(self, title: str):
         """Adds a button to the end of the list of buttons."""
@@ -224,52 +240,123 @@ class PolyModalAlert:
     def add_checkboxes(self, items: typing.List[str],
                        defaults: typing.List[int]):
         """Adds an array of checkbox items to the end of the list of
-        checkboxes."""
-        idx = 0
-        for item_text in items:
-            self.__checkbox_defaults.append(defaults[idx])
+        checkboxes.
+        Parameters
+        ----------
+        items : List[str]
+            A list of labels for the checkboxes to add.
+        defaults : List[int]
+            A list of default values (e.g., 0 or 1) indicating whether each checkbox is initially checked.
+            Must have the same length as `items`.
+
+        Raises
+        ------
+        AssertionError
+            If `items` and `defaults` do not have the same length.
+        """
+        assert len(items) == len(defaults), "items and defaults must have the same length."
+        for item_text, default in zip(items, defaults):
+            self.__checkbox_defaults.append(default)
             self.__checkboxes.append(item_text)
-            idx = idx + 1
 
     def add_checkbox_item(self, item_text: str, item_default: int = 0):
-        """Adds a checkbox to the end of the list of checkboxes."""
+        """
+        Adds a single checkbox item to the end of the list of checkboxes.
+
+        Parameters
+        ----------
+        item_text : str
+            The label for the checkbox.
+        item_default : int, optional
+            The default value of the checkbox (0 for unchecked, 1 for checked). Default is 0.
+        """
         self.__checkbox_defaults.append(item_default)
         self.__checkboxes.append(item_text)
 
-    def add_combobox(self, items: typing.List[str], default: str = ""):
-        """Adds a combobox item to the end of the list of __combobox_items."""
-        self.__combobox_default = default
+    def add_combobox(self, items: typing.List[str], default: str = None):
+        """
+        Adds multiple items to the combobox list and sets the default value.
+
+        Parameters
+        ----------
+        items : List[str]
+            A list of strings to add to the combobox.
+        default : str, optional
+            The default value for the combobox. If empty, no default is set.
+
+        Raises
+        ------
+        AssertionError
+            If `default ` is not present in items.
+        """
+        if default is not None:
+            assert default in items, f"default must be present in items"
+            self.__combobox_default = default
         for item_text in items:
             self.__combobox_items.append(item_text)
 
-    def add_combobox_item(self, item_text: str, is_default: int = 0):
-        """Adds a combobox item to the end of the list of __combobox_items."""
+    def set_combobox_items(self, items: typing.List[str], default_index: int):
+        """
+        Sets (or replaces) the combobox items with a list and sets the default by index.
+
+        Parameters
+        ----------
+        items : List[str]
+            A list of strings to set as the combobox items.
+        default_index : int
+            The index of the item in `items` to set as the default. Must be within the list range.
+
+        Raises
+        ------
+        AssertionError
+            If `default_index` is out of range of the items list.
+        """
+        assert default_index < len(items), f"default_index {default_index} is out of range for items list of length {len(items)}"
+        self.__combobox_default = items[default_index]
+        self.__combobox_items = items
+
+    def add_combobox_item(self, item_text: str, is_default: bool = False):
+        """
+        Adds a single item to the combobox list and optionally sets it as default.
+
+        Parameters
+        ----------
+        item_text : str
+            The text of the combobox item to add.
+        is_default : bool, optional
+            If True, this item becomes the default selection.
+        """
         self.__combobox_items.append(item_text)
-        if is_default == 1:
+        if is_default:
             self.__combobox_default = item_text
 
     def add_text_field(self, placeholder: str, default: str):
-        """add a text field to the alert """
+        """
+        Adds a text field to the alert.
+
+        Parameters
+        ----------
+        placeholder : str
+            The placeholder text to show in the text field.
+        default : str
+            The default text value of the text field.
+        """
         self.__text_field.append(placeholder)
         self.__text_field.append(default)
 
-    def set_width(self, width: int):
-        """ set the width of the poly modal alert (default is 300) """
-        self.__width = width
-
     async def async_run(self,
-                        connection: iterm2.connection.Connection) -> dict[str, typing.Any]:
+                        connection: iterm2.connection.Connection) -> PolyModalResult:
         """Shows the poly modal alert.
 
         :param connection: The connection to use.
-        :returns: an object containing the following keys -
-        - "button"  which will be a string with the name of the clicked button
-        - "tf_text" which will be the text entered into the text field
-        - "combo"   which will be the text of the chosen combobox
-        - "checks"  which will be a list of the checkboxes that are checked
+        :returns: A PolyModalResult object containing values corresponding to the UI elements that were added
+         - the label of clicked button
+         - text entered into the field input
+         - selected combobox text ('' if combobox was present but nothing selected)
+         - array of checked checkbox labels.
         If no buttons were defined
             then a single button, "OK", is automatically added
-            and "button" will be in the returned result.
+                and "button" will be absent from PolyModalResult.
 
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
