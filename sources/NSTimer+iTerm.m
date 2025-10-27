@@ -51,7 +51,7 @@
 - (void)timerDidFire:(NSTimer *)timer {
     id target = self.target;
     if (target) {
-        ((void (*)(id, SEL, NSTimer *))[target methodForSelector:self.selector])(self.target, self.selector, timer);
+        ((void (*)(id, SEL, NSTimer *))[target methodForSelector:self.selector])(target, self.selector, timer);
     } else {
         DLog(@"Automatically invalidate timer for selector %@", NSStringFromSelector(self.selector));
         [timer invalidate];
