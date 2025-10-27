@@ -16,6 +16,7 @@ class Alert:
 
     .. seealso:: Example ":ref:`oneshot_example`"
     """
+
     def __init__(
             self,
             title: str,
@@ -49,7 +50,8 @@ class Alert:
         """Shows the modal alert.
 
         :param connection: The connection to use.
-        :returns: The index of the selected button, plus 1000. If no buttons were defined
+        :returns: The index of the selected button, plus 1000. If no buttons
+        were defined
             then a single button, "OK", is automatically added.
 
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
@@ -77,6 +79,7 @@ class TextInputAlert:
     :param default_value: Default text to place in the text field.
     :param window_id: Window ID to attach to, or None to make app-modal.
     """
+
     # pylint: disable=too-many-arguments
     # pylint: disable=too-many-positional-arguments
     def __init__(
@@ -91,6 +94,7 @@ class TextInputAlert:
         self.__placeholder = placeholder
         self.__default_value = default_value
         self.__window_id = window_id
+
     # pylint: enable=too-many-arguments
 
     @property
@@ -118,6 +122,7 @@ class TextInputAlert:
     def defaultValue(self) -> str:
         """Deprecated in favor of default_valuedefault_value"""
         return self.__default_value
+
     # pylint: enable=invalid-name
 
     @property
@@ -148,12 +153,15 @@ class TextInputAlert:
              f'defaultValue: {default_value}, ' +
              f'window_id: {json.dumps(self.window_id)})'))
 
+
 @dataclass
 class PolyModalResult:
+    """Dedicate object to return for PolyModalAlert """
     button: typing.Optional[str] = None
     tf_text: typing.Optional[str] = None
     combo: typing.Optional[str] = None
-    checks: typing.Optional[List[str]] = None
+    checks: typing.Optional[typing.List[str]] = None
+
 
 class PolyModalAlert:
     """A modal alert with various UI options
@@ -246,7 +254,8 @@ class PolyModalAlert:
         items : List[str]
             A list of labels for the checkboxes to add.
         defaults : List[int]
-            A list of default values (e.g., 0 or 1) indicating whether each checkbox is initially checked.
+            A list of default values (e.g., 0 or 1) indicating whether each
+            checkbox is initially checked.
             Must have the same length as `items`.
 
         Raises
@@ -254,7 +263,8 @@ class PolyModalAlert:
         AssertionError
             If `items` and `defaults` do not have the same length.
         """
-        assert len(items) == len(defaults), "items and defaults must have the same length."
+        assert len(items) == len(
+            defaults), "items and defaults must have the same length."
         for item_text, default in zip(items, defaults):
             self.__checkbox_defaults.append(default)
             self.__checkboxes.append(item_text)
@@ -268,7 +278,8 @@ class PolyModalAlert:
         item_text : str
             The label for the checkbox.
         item_default : int, optional
-            The default value of the checkbox (0 for unchecked, 1 for checked). Default is 0.
+            The default value of the checkbox (0 for unchecked,
+            1 for checked). Default is 0.
         """
         self.__checkbox_defaults.append(item_default)
         self.__checkboxes.append(item_text)
@@ -290,34 +301,39 @@ class PolyModalAlert:
             If `default ` is not present in items.
         """
         if default is not None:
-            assert default in items, f"default must be present in items"
+            assert default in items, "default must be present in items"
             self.__combobox_default = default
         for item_text in items:
             self.__combobox_items.append(item_text)
 
     def set_combobox_items(self, items: typing.List[str], default_index: int):
         """
-        Sets (or replaces) the combobox items with a list and sets the default by index.
+        Sets (or replaces) the combobox items with a list and sets the
+        default by index.
 
         Parameters
         ----------
         items : List[str]
             A list of strings to set as the combobox items.
         default_index : int
-            The index of the item in `items` to set as the default. Must be within the list range.
+            The index of the item in `items` to set as the default. Must be
+            within the list range.
 
         Raises
         ------
         AssertionError
             If `default_index` is out of range of the items list.
         """
-        assert default_index < len(items), f"default_index {default_index} is out of range for items list of length {len(items)}"
+        assert default_index < len(
+            items), (f"default_index {default_index} is out of range for items "
+                     f"list of length {len(items)}")
         self.__combobox_default = items[default_index]
         self.__combobox_items = items
 
     def add_combobox_item(self, item_text: str, is_default: bool = False):
         """
-        Adds a single item to the combobox list and optionally sets it as default.
+        Adds a single item to the combobox list and optionally sets it as
+        default.
 
         Parameters
         ----------
@@ -345,14 +361,17 @@ class PolyModalAlert:
         self.__text_field.append(default)
 
     async def async_run(self,
-                        connection: iterm2.connection.Connection) -> PolyModalResult:
+                        connection: iterm2.connection.Connection) -> (
+            PolyModalResult):
         """Shows the poly modal alert.
 
         :param connection: The connection to use.
-        :returns: A PolyModalResult object containing values corresponding to the UI elements that were added
+        :returns: A PolyModalResult object containing values corresponding to
+        the UI elements that were added
          - the label of clicked button
          - text entered into the field input
-         - selected combobox text ('' if combobox was present but nothing selected)
+         - selected combobox text ('' if combobox was present but nothing
+         selected)
          - array of checked checkbox labels.
         If no buttons were defined
             then a single button, "OK", is automatically added
