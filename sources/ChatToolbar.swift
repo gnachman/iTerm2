@@ -69,7 +69,7 @@ class ChatToolbar {
             let webSearchButton = WebSearchButton(image: NSImage.it_image(forSymbolName: SFSymbol.globe.rawValue,
                                                                           accessibilityDescription: "Web search image",
                                                                           fallbackImageName: "globe",
-                                                                          for: Self.self),
+                                                                          for: Self.self)!,
                                                   target: nil,
                                                   action: nil)
             webSearchButton.imageScaling = .scaleProportionallyUpOrDown

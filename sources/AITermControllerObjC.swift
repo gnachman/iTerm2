@@ -69,7 +69,7 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
          handler: @escaping (iTermOr<NSString, NSError>) -> ()) {
         let pleaseWait = PleaseWaitWindow(owningWindow: window,
                                           message: "Thinking…",
-                                          image: NSImage.it_imageNamed("aiterm", for: AITermControllerObjC.self))
+                                          image: NSImage.it_imageNamed("aiterm", for: AITermControllerObjC.self)!)
         self.pleaseWait = pleaseWait
         var cancel: (() -> ())?
         var shouldCancel = false

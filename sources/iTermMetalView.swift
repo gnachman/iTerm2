@@ -19,15 +19,18 @@ import Metal
 
 /// Custom MetalKit-like view for rendering Metal content. This is a stripped-down version of `iTermMetalView_full` containing
 /// only useful code paths for iTerm2. It is more or less tested and works.
+@MainActor
 @objc(iTermMetalView)
-public class iTermMetalView: NSView, CALayerDelegate {
-    private var metalLayer: CAMetalLayer? = nil
+public class iTermMetalView: NSView {
+    private static let getDrawableQueue = DispatchQueue(label: "com.iterm2.get-drawable")
+
+    private var metalLayerBox: iTermMetalLayerBox? = nil
     private var frameInterval: Int = 0
     private var sizeDirty: Bool = false
     private var drawableScaleFactor: CGSize = .zero
     private var displayLink: CVDisplayLink?
     private var currentInterval: Int = 0
-    private var displaySource: DispatchSourceUserDataAdd?
+    private nonisolated let displaySource = MutableAtomicObject<DispatchSourceUserDataAdd?>(nil)
     private static var drawRectSuperIMP: IMP?
     private var drawRectSubIMP: IMP?
     private var subClassOverridesDrawRect: Bool = false
@@ -60,283 +63,30 @@ public class iTermMetalView: NSView, CALayerDelegate {
     }
     private var renderAttachmentDirtyState: DirtyState = []
     private var frameNum: UInt32 = 0
-
-    // MARK: - Properties
-
     @objc
     public weak var delegate: iTermMetalViewDelegate?
 
     private var _device: MTLDevice?
-
-    @objc
-    var device: MTLDevice? {
-        set {
-            if newValue === metalLayer?.device {
-                return
-            }
-            metalLayer?.device = newValue
-            renderAttachmentDirtyState.insert(.colorTexturesDirty)
-        }
-        get {
-            _device
-        }
-    }
     private var _currentDrawable: CAMetalDrawable?
     private class PendingDrawable {
         let drawable: CAMetalDrawable?
-        let context: LayerContext
-        init(_ context: LayerContext, drawable: CAMetalDrawable?) {
+        let context: iTermMetalLayerBox.LayerContext
+        init(_ context: iTermMetalLayerBox.LayerContext, drawable: CAMetalDrawable?) {
             self.drawable = drawable
             self.context = context
         }
     }
     private var pendingDrawablePromise: iTermPromise<PendingDrawable>?
-    private static let getDrawableQueue = DispatchQueue(label: "com.iterm2.get-drawable")
-
-    private struct LayerContext: Equatable {
-        static func == (lhs: iTermMetalView.LayerContext, rhs: iTermMetalView.LayerContext) -> Bool {
-            return (lhs.device === rhs.device &&
-                    lhs.framebufferOnly == rhs.framebufferOnly &&
-                    lhs.presentsWithTransaction == rhs.presentsWithTransaction &&
-                    lhs.pixelFormat == rhs.pixelFormat &&
-                    lhs.colorspace === rhs.colorspace &&
-                    lhs.size == rhs.size)
-        }
-        
-        weak var device: MTLDevice?
-        var framebufferOnly: Bool
-        var presentsWithTransaction: Bool
-        var pixelFormat: MTLPixelFormat
-        var colorspace: CGColorSpace?
-        var size: CGSize
-    }
-
-    private func layerContext(metalLayer: CAMetalLayer) -> LayerContext {
-        LayerContext(device: metalLayer.device,
-                     framebufferOnly: metalLayer.framebufferOnly,
-                     presentsWithTransaction: metalLayer.presentsWithTransaction,
-                     pixelFormat: metalLayer.pixelFormat,
-                     colorspace: metalLayer.colorspace,
-                     size: metalLayer.drawableSize)
-    }
-
-    private func fetchDrawable(timeout: TimeInterval) -> CAMetalDrawable? {
-        dispatchPrecondition(condition: .onQueue(.main))
-        guard let metalLayer else {
-            return nil
-        }
-        metalLayer.allowsNextDrawableTimeout = false
-
-        let context = layerContext(metalLayer: metalLayer)
-        var timedOut = false
-        while !timedOut {
-            let promise = pendingDrawablePromise ?? iTermPromise<PendingDrawable> { seal in
-                Self.getDrawableQueue.async {
-                    seal.fulfill(PendingDrawable(context, drawable: metalLayer.nextDrawable()))
-                }
-            }
-            var result: CAMetalDrawable?
-            DLog("Will wait for promise")
-            promise.wait(withTimeout: timeout).whenFirst { pending in
-                DLog("Promise fulfilled")
-                if pending.context == context {
-                    result = pending.drawable
-                }
-                pendingDrawablePromise = nil
-            } second: { err in
-                DLog("Promise rejected")
-                precondition(err.code == iTermPromiseErrorCode.timeout.rawValue)
-                pendingDrawablePromise = promise
-                timedOut = true
-            }
-            // If result is not nil, then it is valid and should be returned.
-            // If result is nil then either there was a timeout or the drawable was not usable (e.g., wrong size).
-            if let result {
-                DLog("Returning valid drawable")
-                return result
-            }
-        }
-        DLog("Return nil because of timeout")
-        return nil
-    }
-
-    @objc
-    func currentDrawable(timeout: TimeInterval) -> CAMetalDrawable? {
-        if let _currentDrawable {
-            return _currentDrawable
-        }
-        _currentDrawable = fetchDrawable(timeout: timeout)
-        return _currentDrawable
-    }
-
-    @objc
-    var currentDrawable: CAMetalDrawable? {
-        get {
-            currentDrawable(timeout: .infinity)
-        }
-    }
-
-    @objc
-    public var framebufferOnly: Bool {
-        get {
-            return metalLayer?.framebufferOnly ?? false
-        }
-        set {
-            metalLayer?.framebufferOnly = newValue
-        }
-    }
-
-    @objc
-    public var presentsWithTransaction: Bool {
-        get {
-            metalLayer?.presentsWithTransaction ?? false
-        }
-        set {
-            metalLayer?.presentsWithTransaction = newValue
-        }
-    }
-
-    @objc
-    public var colorPixelFormat: MTLPixelFormat {
-        set {
-            setColorPixelFormat(newValue, atIndex: _drawableAttachmentIndex)
-        }
-        get {
-            colorPixelFormats[_drawableAttachmentIndex]
-        }
-    }
-
-    private func setColorPixelFormat(_ format: MTLPixelFormat, atIndex index: Int) {
-        guard index < 8 else {
-            return
-        }
-
-        colorPixelFormats[index] = format
-        renderAttachmentDirtyState.insert(.colorTexturesDirty)
-        if _drawableAttachmentIndex == index {
-            metalLayer?.pixelFormat = format
-        }
-        if format != .invalid {
-            if maxValidAttachmentIndex < index {
-                maxValidAttachmentIndex = index
-            }
-            return
-        }
-        if maxValidAttachmentIndex != index {
-            return
-        }
-        if let i = colorPixelFormats.lastIndex(where: { $0 != .invalid }) {
-            maxValidAttachmentIndex = i
-        }
-    }
-
     @objc
     public var clearColor: MTLClearColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0)
 
-    @objc
-    public func display(_ layer: CALayer) {
-        if !_enableSetNeedsDisplay {
-            return
-        }
-        displaySource?.add(data: 1)
-    }
-
-    @objc(drawLayer:inContext:)
-    public func draw(_ layer: CALayer, in context: CGContext) {
-        if _enableSetNeedsDisplay {
-            display(layer)
-        }
-    }
-
-    func drawNumber() -> UInt32 {
-        frameNum
-    }
-
-    @objc
-    public func currentRenderPassDescriptor(timeout: TimeInterval) -> MTLRenderPassDescriptor? {
-        guard currentDrawable(timeout: timeout) != nil else {
-            return nil
-        }
-        let descriptor = MTLRenderPassDescriptor()
-        _ = colorTextures
-        for i in 0...maxValidAttachmentIndex {
-            descriptor.colorAttachments[i].texture = _colorTextures[i]!
-            descriptor.colorAttachments[i].loadAction = .clear
-            descriptor.colorAttachments[i].clearColor = clearColor
-        }
-        return descriptor
-    }
-
-    @objc
-    public var currentRenderPassDescriptor: MTLRenderPassDescriptor? {
-        return currentRenderPassDescriptor(timeout: .infinity)
-    }
-
     private var _preferredFramesPerSecond = 60
-
-    @objc
-    public var preferredFramesPerSecond: Int {
-        get {
-            _preferredFramesPerSecond
-        }
-        set {
-            _preferredFramesPerSecond = newValue
-            if _preferredFramesPerSecond <= 0 {
-                _preferredFramesPerSecond = 1
-                paused = true
-            }
-            let refreshesPerSecond = calculateRefreshesPerSecond()
-            let ratio = Int(ceil(Double(refreshesPerSecond) / Double(_preferredFramesPerSecond)))
-            frameInterval = ratio
-            nominalFramesPerSecond = refreshesPerSecond / ratio
-        }
-    }
-
-    private var _enableSetNeedsDisplay: Bool = false
-
-    @objc
-    public var enableSetNeedsDisplay: Bool {
-        get {
-            _enableSetNeedsDisplay
-        }
-        set {
-            _enableSetNeedsDisplay = newValue
-            if newValue {
-                paused = true
-            }
-        }
-    }
+    private nonisolated let _enableSetNeedsDisplay = MutableAtomicObject(false)
 
     @objc
     public var autoResizeDrawable: Bool = true
 
     private var _drawableSize = CGSize.zero
-
-    @objc
-    public var drawableSize: CGSize {
-        get {
-            _drawableSize
-        }
-        set {
-            if newValue == _drawableSize {
-                return
-            }
-
-            let myBounds = bounds
-            let screen = window?.screen
-            let backingScaleFactor = if let screen {
-                screen.backingScaleFactor
-            } else {
-                NSScreen.main?.backingScaleFactor ?? 0
-            }
-            drawableScaleFactor = CGSize(width: newValue.width / (myBounds.width * backingScaleFactor),
-                                         height: newValue.height / (myBounds.height * backingScaleFactor))
-            delegate?.metalView(self, drawableSizeWillChange: newValue)
-            _drawableSize = newValue
-            sizeDirty = true
-        }
-    }
-
     @objc
     public var paused: Bool = false {
         didSet {
@@ -352,26 +102,6 @@ public class iTermMetalView: NSView, CALayerDelegate {
         }
     }
 
-    @objc
-    public var colorspace: CGColorSpace? {
-        get {
-            metalLayer?.colorspace
-        }
-        set {
-            metalLayer?.colorspace = newValue
-        }
-    }
-
-    @objc
-    public var preferredDrawableSize: CGSize {
-        doesNotifyOnRecommendedSizeUpdate = true
-        return super._recommendedDrawableSize()
-    }
-
-    @objc
-    public var preferredDevice: MTLDevice? {
-        metalLayer?.preferredDevice
-    }
 
     // MARK: - Initializers
 
@@ -402,10 +132,10 @@ public class iTermMetalView: NSView, CALayerDelegate {
         }
         coder.encode(clearColorData, forKey: "MTKViewClearColorCoderKey")
         coder.encode(_preferredFramesPerSecond, forKey: "MTKViewPreferredFramesPerSecondCoderKey")
-        coder.encode(_enableSetNeedsDisplay, forKey: "MTKViewEnableSetNeedsDisplayCoderKey")
+        coder.encode(_enableSetNeedsDisplay.value, forKey: "MTKViewEnableSetNeedsDisplayCoderKey")
         coder.encode(paused, forKey: "MTKViewPausedCoderKey")
-        coder.encode(metalLayer?.framebufferOnly ?? false, forKey: "MTKViewFramebufferOnlyCoderKey")
-        coder.encode(metalLayer?.presentsWithTransaction ?? false, forKey: "MTKViewPresentsWithTransactionCoderKey")
+        coder.encode(metalLayerBox?.framebufferOnly ?? false, forKey: "MTKViewFramebufferOnlyCoderKey")
+        coder.encode(metalLayerBox?.presentsWithTransaction ?? false, forKey: "MTKViewPresentsWithTransactionCoderKey")
         coder.encode(autoResizeDrawable, forKey: "MTKViewAutoResizeDrawableCoderKey")
     }
 
@@ -478,33 +208,231 @@ public class iTermMetalView: NSView, CALayerDelegate {
         NotificationCenter.default.removeObserver(self)
         if let displayLink {
             CVDisplayLinkStop(displayLink)
-            displaySource?.cancel()
+            displaySource.value?.cancel()
+        }
+    }
+}
+
+// MARK: - Properties
+@MainActor
+extension iTermMetalView {
+    @objc
+    var device: MTLDevice? {
+        set {
+            if newValue === metalLayerBox?.device {
+                return
+            }
+            _device = newValue
+            metalLayerBox?.device = newValue
+            renderAttachmentDirtyState.insert(.colorTexturesDirty)
+        }
+        get {
+            _device
         }
     }
 
-    // MARK: - Methods
-
-    open override func setFrameSize(_ newSize: NSSize) {
-        super.setFrameSize(newSize)
-        if autoResizeDrawable {
-            resizeDrawable()
+    // Warning! This can take infinite time unless you're between a previously successful call to
+    // currentDrawable and draw().
+    @objc
+    var currentDrawable: CAMetalDrawable? {
+        get {
+            currentDrawable(timeout: .infinity)
         }
-    }
-
-    override static public func keyPathsForValuesAffectingValue(forKey key: String) -> Set<String> {
-        var paths = super.keyPathsForValuesAffectingValue(forKey: key)
-        if key == "preferredDrawableSize" {
-            paths.insert("_recommendedDrawableSize")
-        }
-        return paths
-    }
-
-    @objc static func layerClass() -> AnyClass {
-        return CAMetalLayer.self
     }
 
     @objc
-    public func releaseDrawables() {
+    public var framebufferOnly: Bool {
+        get {
+            return metalLayerBox?.framebufferOnly ?? false
+        }
+        set {
+            metalLayerBox?.framebufferOnly = newValue
+        }
+    }
+
+    @objc
+    public var presentsWithTransaction: Bool {
+        get {
+            metalLayerBox?.presentsWithTransaction ?? false
+        }
+        set {
+            metalLayerBox?.presentsWithTransaction = newValue
+        }
+    }
+
+    @objc
+    public var colorPixelFormat: MTLPixelFormat {
+        set {
+            setColorPixelFormat(newValue, atIndex: _drawableAttachmentIndex)
+        }
+        get {
+            colorPixelFormats[_drawableAttachmentIndex]
+        }
+    }
+
+    @objc
+    public var currentRenderPassDescriptor: MTLRenderPassDescriptor? {
+        return currentRenderPassDescriptor(timeout: .infinity)
+    }
+
+    @objc
+    public var preferredFramesPerSecond: Int {
+        get {
+            _preferredFramesPerSecond
+        }
+        set {
+            _preferredFramesPerSecond = newValue
+            if _preferredFramesPerSecond <= 0 {
+                _preferredFramesPerSecond = 1
+                paused = true
+            }
+            let refreshesPerSecond = calculateRefreshesPerSecond()
+            let ratio = Int(ceil(Double(refreshesPerSecond) / Double(_preferredFramesPerSecond)))
+            frameInterval = ratio
+            nominalFramesPerSecond = refreshesPerSecond / ratio
+        }
+    }
+
+    @objc
+    public var enableSetNeedsDisplay: Bool {
+        get {
+            _enableSetNeedsDisplay.value
+        }
+        set {
+            _enableSetNeedsDisplay.value = newValue
+            if newValue {
+                paused = true
+            }
+        }
+    }
+
+    @objc
+    public var drawableSize: CGSize {
+        get {
+            _drawableSize
+        }
+        set {
+            if newValue == _drawableSize {
+                return
+            }
+
+            let myBounds = bounds
+            let screen = window?.screen
+            let backingScaleFactor = if let screen {
+                screen.backingScaleFactor
+            } else {
+                NSScreen.main?.backingScaleFactor ?? 0
+            }
+            drawableScaleFactor = CGSize(width: newValue.width / (myBounds.width * backingScaleFactor),
+                                         height: newValue.height / (myBounds.height * backingScaleFactor))
+            delegate?.metalView(self, drawableSizeWillChange: newValue)
+            _drawableSize = newValue
+            sizeDirty = true
+        }
+    }
+
+    @objc
+    public var colorspace: CGColorSpace? {
+        get {
+            metalLayerBox?.colorspace
+        }
+        set {
+            metalLayerBox?.colorspace = newValue
+        }
+    }
+
+    @objc
+    public var preferredDrawableSize: CGSize {
+        doesNotifyOnRecommendedSizeUpdate = true
+        return super._recommendedDrawableSize()
+    }
+
+    @objc
+    public var preferredDevice: MTLDevice? {
+        metalLayerBox?.preferredDevice
+    }
+}
+
+// MARK: - Fetch drawable with configurable timeout
+
+@MainActor
+extension iTermMetalView {
+    private func fetchDrawable(timeout: TimeInterval) -> CAMetalDrawable? {
+        dispatchPrecondition(condition: .onQueue(.main))
+        guard let metalLayerBox else {
+            return nil
+        }
+        metalLayerBox.allowsNextDrawableTimeout = false
+
+        let context = metalLayerBox.layerContext
+        var timedOut = false
+        while !timedOut {
+            let promise = pendingDrawablePromise ?? iTermPromise<PendingDrawable> { seal in
+                Self.getDrawableQueue.async {
+                    seal.fulfill(PendingDrawable(context, drawable: metalLayerBox.nextDrawable()))
+                }
+            }
+            var result: CAMetalDrawable?
+            DLog("Will wait for promise")
+            promise.wait(withTimeout: timeout).whenFirst { pending in
+                DLog("Promise fulfilled")
+                if pending.context == context {
+                    result = pending.drawable
+                }
+                pendingDrawablePromise = nil
+            } second: { err in
+                DLog("Promise rejected")
+                precondition(err.code == iTermPromiseErrorCode.timeout.rawValue)
+                pendingDrawablePromise = promise
+                timedOut = true
+            }
+            // If result is not nil, then it is valid and should be returned.
+            // If result is nil then either there was a timeout or the drawable was not usable (e.g., wrong size).
+            if let result {
+                DLog("Returning valid drawable")
+                return result
+            }
+        }
+        DLog("Return nil because of timeout")
+        return nil
+    }
+
+    @objc
+    func currentDrawable(timeout: TimeInterval) -> CAMetalDrawable? {
+        if let _currentDrawable {
+            return _currentDrawable
+        }
+        _currentDrawable = fetchDrawable(timeout: timeout)
+        return _currentDrawable
+    }
+}
+
+// MARK: - Private Implementation Details
+
+@MainActor
+extension iTermMetalView {
+    private func setColorPixelFormat(_ format: MTLPixelFormat, atIndex index: Int) {
+        guard index < 8 else {
+            return
+        }
+
+        colorPixelFormats[index] = format
+        renderAttachmentDirtyState.insert(.colorTexturesDirty)
+        if _drawableAttachmentIndex == index {
+            metalLayerBox?.pixelFormat = format
+        }
+        if format != .invalid {
+            if maxValidAttachmentIndex < index {
+                maxValidAttachmentIndex = index
+            }
+            return
+        }
+        if maxValidAttachmentIndex != index {
+            return
+        }
+        if let i = colorPixelFormats.lastIndex(where: { $0 != .invalid }) {
+            maxValidAttachmentIndex = i
+        }
     }
 
     private func callDrawRectIMP(on target: AnyObject, with rect: CGRect, imp: IMP) {
@@ -516,6 +444,203 @@ public class iTermMetalView: NSView, CALayerDelegate {
 
         // Call the function
         drawRect(target, #selector(NSView.draw(_:)), rect)
+    }
+
+    private func initCommon() {
+        drawableScaleFactor = CGSize(width: 1.0, height: 1.0)
+        wantsLayer = true
+        let layer = CAMetalLayer()
+        metalLayerBox = iTermMetalLayerBox(metalLayer: layer)
+        self.layer = layer
+        layerContentsRedrawPolicy = .duringViewResize
+        paused = false
+        renderAttachmentDirtyState = [DirtyState.colorTexturesDirty]
+
+        colorPixelFormats = [.invalid, .invalid, .invalid, .invalid, .invalid, .invalid, .invalid, .invalid]
+        _colorTextures = [nil, nil, nil, nil, nil, nil, nil, nil]
+        _drawableAttachmentIndex = 0
+        maxValidAttachmentIndex = 0
+        colorPixelFormat = .bgra8Unorm
+        metalLayerBox?.device = _device
+        metalLayerBox?.delegate = self
+        metalLayerBox?.framebufferOnly = true
+        clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
+        _enableSetNeedsDisplay.value = false
+        displaySource.value = DispatchSource.makeUserDataAddSource(queue: DispatchQueue.main)
+        displaySource.value?.setEventHandler(handler: DispatchWorkItem(block: { [weak self] in
+            self?.draw()
+        }))
+        displaySource.value?.resume()
+        createCVDisplayLink()
+        if Self.drawRectSuperIMP == nil {
+            Self.drawRectSuperIMP =  NSView.instanceMethod(for: #selector(draw(_:)))
+        }
+        if responds(to: #selector(draw(_:))) {
+            // This is unreachable unless something crazy is done since NSView implements it.
+            drawRectSubIMP = method(for: #selector(draw(_:)))
+        }
+        subClassOverridesDrawRect = (drawRectSubIMP != nil && drawRectSubIMP != Self.drawRectSuperIMP)
+        autoResizeDrawable = true
+        resizeDrawable()
+    }
+
+    private func createCVDisplayLink() {
+        if displayLink == nil {
+            if CVDisplayLinkCreateWithActiveCGDisplays(&displayLink) == 0 {
+                if let displayLink,
+                   let displaySource = displaySource.value,
+                   CVDisplayLinkSetOutputCallback(displayLink, DisplayLinkCallback, Unmanaged.passUnretained(displaySource).toOpaque()) == 0 {
+                    if CVDisplayLinkSetCurrentCGDisplay(displayLink, CGMainDisplayID()) ==  kCVReturnSuccess {
+                        CVDisplayLinkStart(displayLink)
+                        NotificationCenter.default.addObserver(self, selector: #selector(_windowWillClose(_:)), name: NSWindow.willCloseNotification, object: window)
+                        preferredFramesPerSecond = 60
+                        return
+                    }
+                }
+            }
+        }
+        displayLink = nil
+        return
+    }
+
+    private func pixelSize(fromPointSize pointSize: CGSize) -> CGSize {
+        let converted = convertToBacking(pointSize)
+        return CGSize(width: converted.width.rounded(.toNearestOrAwayFromZero),
+                      height: converted.height.rounded(.toNearestOrAwayFromZero))
+    }
+
+    private func resizeDrawable() {
+        let newPixelSize = pixelSize(fromPointSize: bounds.size)
+        if newPixelSize != drawableSize {
+            if let delegate {
+                withExtendedLifetime(delegate) {
+                    delegate.metalView(self, drawableSizeWillChange: newPixelSize)
+                }
+            }
+            _drawableSize = newPixelSize
+            sizeDirty = true
+        }
+    }
+
+    private func resizeMetalLayerDrawable() {
+        guard sizeDirty else {
+            return
+        }
+
+        metalLayerBox?.drawableSize = drawableSize
+        renderAttachmentDirtyState.insert(.colorTexturesDirty)
+
+        sizeDirty = false
+    }
+
+    private func updateToNativeScale() {
+        guard autoResizeDrawable, let screen = window?.screen else {
+            return
+        }
+        metalLayerBox?.contentsScale = screen.backingScaleFactor
+    }
+
+    @objc private func _windowWillClose(_ notification: Notification) {
+        guard notification.object as? NSWindow === window else {
+            return
+        }
+        if let displayLink {
+            CVDisplayLinkStop(displayLink)
+        }
+        displaySource.value?.cancel()
+    }
+
+    private func calculateRefreshesPerSecond() -> Int {
+        if let displayLink {
+            let cvtime = CVDisplayLinkGetNominalOutputVideoRefreshPeriod(displayLink)
+            return Int(round(Double(cvtime.timeScale) / Double(cvtime.timeValue)))
+        } else {
+            return 60
+        }
+    }
+
+    private func colorTexturesForceUpdate(_ force: Bool) -> [MTLTexture?]? {
+        guard let device else {
+            return nil
+        }
+
+        // Calling currentDrawable can take infinite time, but it is fast between successful return
+        // from currentDrawable(timeout:) and a subsequent call to draw()
+        if let drawable = currentDrawable {
+            _colorTextures[_drawableAttachmentIndex] = drawable.texture
+        }
+
+        guard renderAttachmentDirtyState.contains(.colorTexturesDirty) else {
+            return _colorTextures
+        }
+        for i in 0...maxValidAttachmentIndex {
+            if _drawableAttachmentIndex == i {
+                break
+            }
+
+            if !force,
+               let colorTexture = _colorTextures[i],
+               metalLayerBox?.drawableSize.width == CGFloat(colorTexture.width),
+               metalLayerBox?.drawableSize.height == CGFloat(colorTexture.height),
+               colorTexture.pixelFormat == colorPixelFormats[i],
+               colorTexture.usage == .renderTarget {
+                break
+            }
+            let newTexture: MTLTexture?
+            if colorPixelFormats[i] != .invalid {
+                // I'm not 100% sure this is the right runloop mode.
+                CFRunLoopPerformBlock(CFRunLoopGetMain(), CFRunLoopMode.commonModes.rawValue) {
+                    self.resizeDrawable()
+                }
+                CFRunLoopWakeUp(CFRunLoopGetMain())
+                resizeMetalLayerDrawable()
+                let drawableSize = metalLayerBox?.drawableSize ?? CGSize.zero
+                let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: colorPixelFormats[i],
+                                                                          width: Int(drawableSize.width),
+                                                                          height: Int(drawableSize.height),
+                                                                          mipmapped: false)
+
+                descriptor.usage = .renderTarget
+                descriptor.storageMode = .private
+                newTexture = device.makeTexture(descriptor: descriptor)
+            } else {
+                newTexture = nil
+            }
+            _colorTextures[i] = newTexture
+        }
+
+        renderAttachmentDirtyState.remove(.colorTexturesDirty)
+        return _colorTextures
+    }
+}
+
+// MARK: - Public API
+
+@MainActor
+extension iTermMetalView {
+    @objc
+    func enableHDR() {
+        metalLayerBox?.wantsExtendedDynamicRangeContent = true
+        metalLayerBox?.pixelFormat = .rgba16Float
+    }
+
+    func drawNumber() -> UInt32 {
+        frameNum
+    }
+
+    @objc
+    public func currentRenderPassDescriptor(timeout: TimeInterval) -> MTLRenderPassDescriptor? {
+        guard currentDrawable(timeout: timeout) != nil else {
+            return nil
+        }
+        let descriptor = MTLRenderPassDescriptor()
+        _ = colorTextures  // This does not take infinite time only because currentDrawable returned a nonnil value.
+        for i in 0...maxValidAttachmentIndex {
+            descriptor.colorAttachments[i].texture = _colorTextures[i]!
+            descriptor.colorAttachments[i].loadAction = .clear
+            descriptor.colorAttachments[i].clearColor = clearColor
+        }
+        return descriptor
     }
 
     @objc
@@ -537,8 +662,29 @@ public class iTermMetalView: NSView, CALayerDelegate {
         _currentDrawable = nil
         _colorTextures[Int(_drawableAttachmentIndex)] = nil
     }
+}
 
-    // MARK: - Private Methods
+// MARK: - Overrides
+@MainActor
+extension iTermMetalView {
+    open override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        if autoResizeDrawable {
+            resizeDrawable()
+        }
+    }
+
+    override static public func keyPathsForValuesAffectingValue(forKey key: String) -> Set<String> {
+        var paths = super.keyPathsForValuesAffectingValue(forKey: key)
+        if key == "preferredDrawableSize" {
+            paths.insert("_recommendedDrawableSize")
+        }
+        return paths
+    }
+
+    @objc static func layerClass() -> AnyClass {
+        return CAMetalLayer.self
+    }
 
     open override func addObserver(_ observer: NSObject, forKeyPath keyPath: String, options: NSKeyValueObservingOptions, context: UnsafeMutableRawPointer?) {
         if keyPath == "preferredDrawableSize" {
@@ -603,171 +749,22 @@ public class iTermMetalView: NSView, CALayerDelegate {
     open override func viewDidMoveToWindow() {
         updateToNativeScale()
     }
+}
 
-    // MARK:- Private methods
-
-    private func initCommon() {
-        drawableScaleFactor = CGSize(width: 1.0, height: 1.0)
-        wantsLayer = true
-        metalLayer = CAMetalLayer()
-        layer = metalLayer
-        layerContentsRedrawPolicy = .duringViewResize
-        paused = false
-        renderAttachmentDirtyState = [DirtyState.colorTexturesDirty]
-
-        colorPixelFormats = [.invalid, .invalid, .invalid, .invalid, .invalid, .invalid, .invalid, .invalid]
-        _colorTextures = [nil, nil, nil, nil, nil, nil, nil, nil]
-        _drawableAttachmentIndex = 0
-        maxValidAttachmentIndex = 0
-        colorPixelFormat = .bgra8Unorm
-        metalLayer?.device = _device
-        metalLayer?.delegate = self
-        metalLayer?.framebufferOnly = true
-        clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
-        _enableSetNeedsDisplay = false
-        displaySource = DispatchSource.makeUserDataAddSource(queue: DispatchQueue.main)
-        displaySource?.setEventHandler(handler: DispatchWorkItem(block: { [weak self] in
-            self?.draw()
-        }))
-        displaySource?.resume()
-        createCVDisplayLink()
-        if Self.drawRectSuperIMP == nil {
-            Self.drawRectSuperIMP =  NSView.instanceMethod(for: #selector(draw(_:)))
-        }
-        if responds(to: #selector(draw(_:))) {
-            // This is unreachable unless something crazy is done since NSView implements it.
-            drawRectSubIMP = method(for: #selector(draw(_:)))
-        }
-        subClassOverridesDrawRect = (drawRectSubIMP != nil && drawRectSubIMP != Self.drawRectSuperIMP)
-        autoResizeDrawable = true
-        resizeDrawable()
-    }
-
-    private func createCVDisplayLink() {
-        if displayLink == nil {
-            if CVDisplayLinkCreateWithActiveCGDisplays(&displayLink) == 0 {
-                if let displayLink,
-                   let displaySource,
-                   CVDisplayLinkSetOutputCallback(displayLink, DisplayLinkCallback, Unmanaged.passUnretained(displaySource).toOpaque()) == 0 {
-                    if CVDisplayLinkSetCurrentCGDisplay(displayLink, CGMainDisplayID()) ==  kCVReturnSuccess {
-                        CVDisplayLinkStart(displayLink)
-                        NotificationCenter.default.addObserver(self, selector: #selector(_windowWillClose(_:)), name: NSWindow.willCloseNotification, object: window)
-                        preferredFramesPerSecond = 60
-                        return
-                    }
-                }
-            }
-        }
-        displayLink = nil
-        return
-    }
-
-    private func pixelSize(fromPointSize pointSize: CGSize) -> CGSize {
-        let converted = convertToBacking(pointSize)
-        return CGSize(width: converted.width.rounded(.toNearestOrAwayFromZero),
-                      height: converted.height.rounded(.toNearestOrAwayFromZero))
-    }
-
-    private func resizeDrawable() {
-        let newPixelSize = pixelSize(fromPointSize: bounds.size)
-        if newPixelSize != drawableSize {
-            if let delegate {
-                withExtendedLifetime(delegate) {
-                    delegate.metalView(self, drawableSizeWillChange: newPixelSize)
-                }
-            }
-            _drawableSize = newPixelSize
-            sizeDirty = true
-        }
-    }
-
-    private func resizeMetalLayerDrawable() {
-        guard sizeDirty else {
+extension iTermMetalView: CALayerDelegate {
+    @objc
+    nonisolated public func display(_ layer: CALayer) {
+        if !_enableSetNeedsDisplay.value {
             return
         }
-
-        metalLayer?.drawableSize = drawableSize
-        renderAttachmentDirtyState.insert(.colorTexturesDirty)
-
-        sizeDirty = false
+        displaySource.value?.add(data: 1)
     }
 
-    private func updateToNativeScale() {
-        guard autoResizeDrawable, let screen = window?.screen else {
-            return
+    @objc(drawLayer:inContext:)
+    nonisolated public func draw(_ layer: CALayer, in context: CGContext) {
+        if _enableSetNeedsDisplay.value {
+            display(layer)
         }
-        metalLayer?.contentsScale = screen.backingScaleFactor
-    }
-
-    @objc private func _windowWillClose(_ notification: Notification) {
-        guard notification.object as? NSWindow === window else {
-            return
-        }
-        if let displayLink {
-            CVDisplayLinkStop(displayLink)
-        }
-        displaySource?.cancel()
-    }
-
-    private func calculateRefreshesPerSecond() -> Int {
-        if let displayLink {
-            let cvtime = CVDisplayLinkGetNominalOutputVideoRefreshPeriod(displayLink)
-            return Int(round(Double(cvtime.timeScale) / Double(cvtime.timeValue)))
-        } else {
-            return 60
-        }
-    }
-
-    private func colorTexturesForceUpdate(_ force: Bool) -> [MTLTexture?]? {
-        guard let device else {
-            return nil
-        }
-
-        if let drawable = currentDrawable {
-            _colorTextures[_drawableAttachmentIndex] = drawable.texture
-        }
-
-        guard renderAttachmentDirtyState.contains(.colorTexturesDirty) else {
-            return _colorTextures
-        }
-        for i in 0...maxValidAttachmentIndex {
-            if _drawableAttachmentIndex == i {
-                break
-            }
-
-            if !force,
-               let colorTexture = _colorTextures[i],
-               metalLayer?.drawableSize.width == CGFloat(colorTexture.width),
-               metalLayer?.drawableSize.height == CGFloat(colorTexture.height),
-               colorTexture.pixelFormat == colorPixelFormats[i],
-               colorTexture.usage == .renderTarget {
-                break
-            }
-            let newTexture: MTLTexture?
-            if colorPixelFormats[i] != .invalid {
-                // I'm not 100% sure this is the right runloop mode.
-                CFRunLoopPerformBlock(CFRunLoopGetMain(), CFRunLoopMode.commonModes.rawValue) {
-                    self.resizeDrawable()
-                }
-                CFRunLoopWakeUp(CFRunLoopGetMain())
-                resizeMetalLayerDrawable()
-                let drawableSize = metalLayer?.drawableSize ?? CGSize.zero
-                let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: colorPixelFormats[i],
-                                                                          width: Int(drawableSize.width),
-                                                                          height: Int(drawableSize.height),
-                                                                          mipmapped: false)
-
-                descriptor.usage = .renderTarget
-                descriptor.storageMode = .private
-                newTexture = device.makeTexture(descriptor: descriptor)
-            } else {
-                newTexture = nil
-            }
-            _colorTextures[i] = newTexture
-        }
-
-        renderAttachmentDirtyState.remove(.colorTexturesDirty)
-        return _colorTextures
     }
 }
 
@@ -790,3 +787,4 @@ fileprivate func DisplayLinkCallback(displayLink: CVDisplayLink,
 }
 
 extension CAMetalLayer: @unchecked @retroactive Sendable {}
+

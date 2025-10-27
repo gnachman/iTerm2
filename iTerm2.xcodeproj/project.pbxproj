@@ -1000,6 +1000,7 @@
 		A6059414257DFD0300CACEE6 /* shell_launcher.c in Sources */ = {isa = PBXBuildFile; fileRef = 1D8FC67B17E67FA700A82402 /* shell_launcher.c */; };
 		A605943E2583305E00CACEE6 /* iTermSharedImageStore.h in Headers */ = {isa = PBXBuildFile; fileRef = A605943C2583305E00CACEE6 /* iTermSharedImageStore.h */; };
 		A605943F2583305E00CACEE6 /* iTermSharedImageStore.m in Sources */ = {isa = PBXBuildFile; fileRef = A605943D2583305E00CACEE6 /* iTermSharedImageStore.m */; };
+		A605A18B2EAD8CAE0072ED7E /* iTermMetalLayerBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = A605A18A2EAD8CAE0072ED7E /* iTermMetalLayerBox.swift */; };
 		A605D4B319CF796800D40343 /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A624232519CF70DF00182C08 /* NMSSH.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A605D4B419CF796F00D40343 /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A624232519CF70DF00182C08 /* NMSSH.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A6069EAC2DEE35E000EE6CC7 /* MultipartMessageCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069EAB2DEE35DD00EE6CC7 /* MultipartMessageCellView.swift */; };
@@ -6481,6 +6482,7 @@
 		A60593E8257DFBCC00CACEE6 /* legacy_server.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = legacy_server.c; sourceTree = "<group>"; };
 		A605943C2583305E00CACEE6 /* iTermSharedImageStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSharedImageStore.h; sourceTree = "<group>"; };
 		A605943D2583305E00CACEE6 /* iTermSharedImageStore.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSharedImageStore.m; sourceTree = "<group>"; };
+		A605A18A2EAD8CAE0072ED7E /* iTermMetalLayerBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermMetalLayerBox.swift; sourceTree = "<group>"; };
 		A6069EAB2DEE35DD00EE6CC7 /* MultipartMessageCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultipartMessageCellView.swift; sourceTree = "<group>"; };
 		A6069EAD2DEE70B200EE6CC7 /* document.on.document.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = document.on.document.png; path = images/document.on.document.png; sourceTree = "<group>"; };
 		A6069EAE2DEE70B200EE6CC7 /* document.on.document@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = "document.on.document@2x.png"; path = "images/document.on.document@2x.png"; sourceTree = "<group>"; };
@@ -10426,6 +10428,7 @@
 				A602AAE92B16A8B600E6C965 /* DraggableNSBox.swift */,
 				A6DCE3F32BFFCA6E005586F5 /* PlaceholderTextView.swift */,
 				A6CB24C02C682B6300005824 /* HueVisualizationView.swift */,
+				A605A18A2EAD8CAE0072ED7E /* iTermMetalLayerBox.swift */,
 			);
 			name = "Misc. Views";
 			sourceTree = "<group>";
@@ -19867,6 +19870,7 @@
 				A667C240276C7CC2006B4DEF /* iTermFullScreenWindowManager.m in Sources */,
 				A6F7D4B92E034E2B0065D09C /* iTermBrowserManager.swift in Sources */,
 				A6F3707A2DAC941600A0A59E /* ChannelClient.swift in Sources */,
+				A605A18B2EAD8CAE0072ED7E /* iTermMetalLayerBox.swift in Sources */,
 				A6F7D4C32E037BC80065D09C /* iTermBrowserCSSLoader.swift in Sources */,
 				53C166AB20C21FBB003B03AF /* iTermMigrationHelper.m in Sources */,
 				A6D420772E4FB53D00E8D3EF /* iTermBrowserNamedMark.swift in Sources */,
