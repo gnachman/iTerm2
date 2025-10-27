@@ -695,7 +695,7 @@ static void iTermAdvancedSettingsSaveSecureString(NSDictionary *dict, NSString *
     switch ([dict advancedSettingType]) {
         case kiTermAdvancedSettingTypeBoolean:
         case kiTermAdvancedSettingTypeOptionalBoolean:
-            ITAssertWithMessage(NO, @"Boolean can't end editing. %@", dict);
+            DLog(@"A boolean ended editing somehow");
             break;
 
         case kiTermAdvancedSettingTypeFloat:

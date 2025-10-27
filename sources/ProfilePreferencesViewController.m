@@ -548,8 +548,12 @@ andEditComponentWithIdentifier:(NSString *)identifier
 }
 
 - (void)resizeWindowForTabViewItem:(NSTabViewItem *)tabViewItem animated:(BOOL)animated {
-    iTermSizeRememberingView *theView = (iTermSizeRememberingView *)[tabViewItem view];
-    [self resizeWindowForView:theView animated:animated];
+    iTermSizeRememberingView *theView = [iTermSizeRememberingView castFrom:[tabViewItem view]];
+    if (theView) {
+        [self resizeWindowForView:theView animated:animated];
+    } else {
+        DLog(@"%@ is %@", tabViewItem.identifier, tabViewItem.view);
+    }
 }
 
 - (void)resizeWindowForView:(iTermSizeRememberingView *)theView animated:(BOOL)animated {
