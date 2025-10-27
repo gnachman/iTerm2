@@ -70,6 +70,10 @@ typedef NS_OPTIONS(NSUInteger, iTermPasteFlags) {
 // NO, no intent was expressed.
 @property(nonatomic, assign) BOOL slow;
 
+// If a shell knows about paste bracketing and we're trying to paste multiple
+// commands the newlines must be between bracketed segments.
+@property(nonatomic, assign) BOOL shouldPasteNewlinesOutsideBrackets;
+
 + (instancetype)pasteEventWithString:(NSString *)string
                                flags:(iTermPasteFlags)flags
                     defaultChunkSize:(int)defaultChunkSize
@@ -79,7 +83,8 @@ typedef NS_OPTIONS(NSUInteger, iTermPasteFlags) {
                         tabTransform:(iTermTabTransformTags)tabTransform
                         spacesPerTab:(int)spacePerTab
                                regex:(NSString *)regex
-                        substitution:(NSString *)substitution;
+                        substitution:(NSString *)substitution
+  shouldPasteNewlinesOutsideBrackets:(BOOL)shouldPasteNewlinesOutsideBrackets;
 
 - (void)setModifiedString:(NSString *)modifiedString;
 - (void)addPasteBracketing;

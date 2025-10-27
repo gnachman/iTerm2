@@ -403,6 +403,10 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (iTermTuple<NSArray<NSString *> *, NSString *> *)queryBySplittingLiteralPhrases;
 - (ScreenCharArray *)asScreenCharArray;
 + (NSData *)dataForHexCodes:(NSString *)codes;
+- (NSString *)it_pasteBracketed;
+
+// Returns tuples of (substring, subsequent separator). The last tuple may have a nil subsequent separator.
+- (NSArray<iTermTuple<NSString *, NSString *> *> *)it_componentsSeparatedByAnyStringIn:(NSArray<NSString *> *)separators;
 
 @end
 

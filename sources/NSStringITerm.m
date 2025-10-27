@@ -3047,6 +3047,119 @@ static NSDictionary<NSString *, NSNumber *> *iTermKittyDiacriticIndex(void) {
     return data;
 }
 
+- (NSString *)it_pasteBracketed {
+    NSString *startBracket = [NSString stringWithFormat:@"%c[200~", 27];
+    NSString *endBracket = [NSString stringWithFormat:@"%c[201~", 27];
+    NSArray *components = @[ startBracket, self, endBracket ];
+    return [components componentsJoinedByString:@""];
+}
+
+- (NSArray<NSValue *> *)it_rangesOfString:(NSString *)needle {
+    if (needle.length == 0) {
+        return @[];
+    }
+    NSMutableArray<NSValue *> *found = [NSMutableArray array];
+    NSRange rangeToSearch = NSMakeRange(0, self.length);
+    while (rangeToSearch.location < self.length) {
+        NSRange r = [self rangeOfString:needle options:0 range:rangeToSearch];
+        if (r.location == NSNotFound) {
+            break;
+        }
+        [found addObject:[NSValue valueWithRange:r]];
+        NSUInteger next = r.location + r.length; // advance by match length
+        if (next >= self.length) {
+            break;
+        }
+        rangeToSearch = NSMakeRange(next, self.length - next);
+    }
+    return found;
+}
+
+// Overlapping ranges are unioned.
+- (NSArray<NSValue *> *)it_rangesOfStringsIn:(NSArray<NSString *> *)needles {
+    if (needles.count == 0) {
+        return @[];
+    }
+
+    NSMutableArray<NSValue *> *found = [NSMutableArray array];
+    for (NSString *needle in needles) {
+        if (needle.length == 0) {
+            continue;
+        }
+        [found addObjectsFromArray:[self it_rangesOfString:needle]];
+    }
+    if (found.count == 0) {
+        return @[];
+    }
+
+    [found sortUsingComparator:^NSComparisonResult(NSValue * _Nonnull a, NSValue * _Nonnull b) {
+        NSRange ra = a.rangeValue;
+        NSRange rb = b.rangeValue;
+        if (ra.location < rb.location) {
+            return NSOrderedAscending;
+        }
+        if (ra.location > rb.location) {
+            return NSOrderedDescending;
+        }
+        if (ra.length < rb.length) {
+            return NSOrderedAscending;
+        }
+        if (ra.length > rb.length) {
+            return NSOrderedDescending;
+        }
+        return NSOrderedSame;
+    }];
+
+    NSMutableArray<NSValue *> *merged = [NSMutableArray array];
+    NSRange current = [found[0] rangeValue];
+    for (NSUInteger i = 1; i < found.count; i++) {
+        NSRange next = [found[i] rangeValue];
+        if (NSMaxRange(current) > next.location) {
+            current = NSUnionRange(current, next);
+            continue;
+        }
+        [merged addObject:[NSValue valueWithRange:current]];
+        current = next;
+    }
+    [merged addObject:[NSValue valueWithRange:current]];
+
+    return merged;
+}
+
+- (NSArray<iTermTuple<NSString *, NSString *> *> *)it_componentsSeparatedAtRanges:(NSArray<NSValue *> *)ranges {
+    // Expect sorted, non-overlapping ranges. If empty, return whole string.
+    if (ranges.count == 0) {
+        return @[[iTermTuple tupleWithObject:self andObject:nil]];
+    }
+
+    NSMutableArray<iTermTuple<NSString *, NSString *> *> *result = [NSMutableArray array];
+    NSUInteger start = 0;
+    for (NSValue *value in ranges) {
+        NSRange range = value.rangeValue;
+        if (range.location < start) {
+            // Defensive: skip bad input that would underflow.
+            continue;
+        }
+        NSString *prefix = [self substringWithRange:NSMakeRange(start, range.location - start)];
+        NSString *sep = [self substringWithRange:range];
+        [result addObject:[iTermTuple tupleWithObject:prefix andObject:sep]];
+        start = NSMaxRange(range);
+    }
+    if (start <= self.length) {
+        NSString *tail = [self substringWithRange:NSMakeRange(start, self.length - start)];
+        // There's no need to emit an empty item when there is a terminal empty range.
+        if (tail.length > 0 || [[ranges lastObject] rangeValue].length == 0) {
+            [result addObject:[iTermTuple tupleWithObject:tail andObject:nil]];
+        }
+    }
+    return result;
+}
+
+- (NSArray<iTermTuple<NSString *, NSString *> *> *)it_componentsSeparatedByAnyStringIn:(NSArray<NSString *> *)separators {
+    NSArray<NSValue *> *ranges = [self it_rangesOfStringsIn:separators];
+    return [self it_componentsSeparatedAtRanges:ranges];
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

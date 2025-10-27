@@ -347,7 +347,8 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
                                             tabTransform:tabTransform
                                             spacesPerTab:spacesPerTab
                                                    regex:nil
-                                            substitution:nil];
+                                            substitution:nil
+                      shouldPasteNewlinesOutsideBrackets:NO];
     event.slow = slowly;
     event.progress = progress;
     event.isUpload = isUpload;
@@ -444,7 +445,8 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
                                                 tabTransform:kTabTransformNone
                                                  spacesPerTab:4
                                                         regex:nil
-                                                 substitution:nil];
+                                                 substitution:nil
+                           shouldPasteNewlinesOutsideBrackets:NO];
 
     [self pasteLiteralEventUnconditionallyImmediately:pasteEvent];
 }
@@ -463,7 +465,8 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
                                                 tabTransform:kTabTransformNone
                                                  spacesPerTab:4
                                                         regex:nil
-                                                 substitution:nil];
+                                                 substitution:nil
+                           shouldPasteNewlinesOutsideBrackets:NO];
 
     [self pasteLiteralEventUnconditionallyImmediately:pasteEvent];
 }

@@ -362,18 +362,18 @@
     _pasteSpecialViewController.regexString = [iTermPreferences stringForKey:kPreferencesKeyPasteSpecialRegex];
     _pasteSpecialViewController.substitutionString = [iTermPreferences stringForKey:kPreferencesKeyPasteSpecialSubstitution];
     _pasteSpecialViewController.enableWaitForPrompt = _canWaitForPrompt;
-    _pasteSpecialViewController.shouldWaitForPrompt = _isAtShellPrompt && _canWaitForPrompt && [iTermAdvancedSettingsModel advancedPasteWaitsForPromptByDefault] && [self waitForPromptShouldWork];
+    _pasteSpecialViewController.shouldWaitForPrompt = _isAtShellPrompt && _canWaitForPrompt && [iTermAdvancedSettingsModel advancedPasteWaitsForPromptByDefault];
 
     [self updatePreview];
 }
 
-// When paste bracketing is on, some shells swallow newlines    .
-- (BOOL)waitForPromptShouldWork {
+// When paste bracketing is on, some shells swallow newlines so we shouldn't include newlines in the bracketed segment.
+- (BOOL)shouldPasteNewlinesOutsideBrackets {
     if (!_pasteSpecialViewController.shouldUseBracketedPasteMode) {
-        return YES;
+        return NO;
     }
     NSSet<NSString *> *shellsThatSwallowNewlines = [NSSet setWithArray:@[ @"zsh", @"fish", @"bash" ]];
-    return ![shellsThatSwallowNewlines containsObject:_shell ?: @""];
+    return [shellsThatSwallowNewlines containsObject:_shell ?: @""];
 }
 
 - (void)updatePreview {
@@ -530,7 +530,8 @@
                                tabTransform:tabTransform
                                spacesPerTab:_pasteSpecialViewController.numberOfSpacesPerTab
                                       regex:_pasteSpecialViewController.regexString
-                               substitution:_pasteSpecialViewController.substitutionString];
+                               substitution:_pasteSpecialViewController.substitutionString
+         shouldPasteNewlinesOutsideBrackets:self.shouldPasteNewlinesOutsideBrackets];
 }
 
 #pragma mark - Actions

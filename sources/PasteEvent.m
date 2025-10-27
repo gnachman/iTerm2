@@ -8,6 +8,7 @@
 
 #import "PasteEvent.h"
 
+#import "NSArray+iTerm.h"
 #import "NSStringITerm.h"
 
 @implementation PasteEvent {
@@ -23,7 +24,8 @@
                         tabTransform:(iTermTabTransformTags)tabTransform
                         spacesPerTab:(int)spacesPerTab
                                regex:(NSString *)regex
-                        substitution:(NSString *)substitution {
+                        substitution:(NSString *)substitution
+  shouldPasteNewlinesOutsideBrackets:(BOOL)shouldPasteNewlinesOutsideBrackets {
     PasteEvent *pasteEvent = [[PasteEvent alloc] init];
     pasteEvent->_originalString = [string copy];
     pasteEvent.flags = flags;
@@ -35,6 +37,7 @@
     pasteEvent.spacesPerTab = spacesPerTab;
     pasteEvent.regex = regex;
     pasteEvent.substitution = substitution;
+    pasteEvent.shouldPasteNewlinesOutsideBrackets = shouldPasteNewlinesOutsideBrackets;
     return pasteEvent;
 }
 
@@ -47,10 +50,21 @@
 }
 
 - (void)addPasteBracketing {
-    NSString *startBracket = [NSString stringWithFormat:@"%c[200~", 27];
-    NSString *endBracket = [NSString stringWithFormat:@"%c[201~", 27];
-    NSArray *components = @[ startBracket, self.string, endBracket ];
-    [self setModifiedString:[components componentsJoinedByString:@""]];
+    if (self.shouldPasteNewlinesOutsideBrackets) {
+        NSArray<iTermTuple<NSString *, NSString *> *> *tuples = [self.string it_componentsSeparatedByAnyStringIn:@[@"\r", @"\n", @"\r\n"]];
+        tuples = [tuples mapWithBlock:^id _Nullable(iTermTuple<NSString *, NSString *> *tuple) {
+            return [tuple mapFirst:^id _Nonnull(NSString *line) {
+                return [line it_pasteBracketed];
+            }];
+        }];
+        NSArray<NSString *> *linesWithNewlines = [tuples mapWithBlock:^id _Nullable(iTermTuple<NSString *,NSString *> *tuple) {
+            return [tuple.firstObject stringByAppendingString:tuple.secondObject ?: @""];
+        }];
+        NSString *joined = [linesWithNewlines componentsJoinedByString:@""];
+        [self setModifiedString:joined];
+    } else {
+        [self setModifiedString:[self.string it_pasteBracketed]];
+    }
 }
 
 - (void)trimNewlines {

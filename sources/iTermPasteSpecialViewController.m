@@ -576,7 +576,8 @@ static NSString *const kSubstitution = @"Substitution";
                                                  tabTransform:selectedTabTransform
                                                  spacesPerTab:numberOfSpacesPerTab
                                                         regex:dict[kRegularExpression] ?: @""
-                                                 substitution:dict[kSubstitution] ?: @""];
+                                                 substitution:dict[kSubstitution] ?: @""
+                           shouldPasteNewlinesOutsideBrackets:NO];
     return pasteEvent;
 }
 
