@@ -40,6 +40,10 @@
     return length;
 }
 
+- (int)upperBound {
+    return position + length;
+}
+
 - (id)mutableCopy {
     return [[MutableResultRange alloc]initWithPosition:position length:length];
 }

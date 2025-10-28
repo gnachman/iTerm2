@@ -401,6 +401,10 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
     [self.delegate statusBarPerformNaturalLanguageQuery:query];
 }
 
+- (iTermFindDriver * _Nullable)statusBarComponentFindDriver:(id<iTermStatusBarComponent>)component {
+    return [self.delegate statusBarFindDriver];
+}
+
 - (id<iTermTriggersDataSource>)statusBarComponentTriggersDataSource:(id<iTermStatusBarComponent>)component {
     return [self.delegate statusBarTriggersDataSource];
 }

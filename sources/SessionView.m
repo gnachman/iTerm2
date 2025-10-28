@@ -1933,16 +1933,44 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 
 - (void)updateFindDriver {
     iTermStatusBarViewController *statusBarViewController = [self.delegate sessionViewStatusBarViewController];
+    DLog(@"updateFindDriver: statusBarVC=%@, searchVC=%@, filterVC=%@, temporaryLeft=%@",
+         statusBarViewController,
+         statusBarViewController.searchViewController,
+         statusBarViewController.filterViewController,
+         statusBarViewController.temporaryLeftComponent);
     if (statusBarViewController.searchViewController && statusBarViewController.temporaryLeftComponent == nil) {
         _findDriverType = iTermSessionViewFindDriverPermanentStatusBar;
-        _permanentStatusBarFindDriver = [[iTermFindDriver alloc] initWithViewController:statusBarViewController.searchViewController
-                                                                   filterViewController:statusBarViewController.filterViewController];
-        _permanentStatusBarFindDriver.delegate = self.findDriverDelegate;
+        // Only recreate the driver if it doesn't exist or if the view controllers have changed
+        BOOL needsRecreate = (!_permanentStatusBarFindDriver ||
+                              _permanentStatusBarFindDriver.viewController != statusBarViewController.searchViewController ||
+                              _permanentStatusBarFindDriver.filterViewController != statusBarViewController.filterViewController);
+        DLog(@"updateFindDriver: permanent status bar type. existing driver=%@, needsRecreate=%@",
+             _permanentStatusBarFindDriver,
+             @(needsRecreate));
+        if (needsRecreate) {
+            DLog(@"updateFindDriver: Creating new permanent driver (old=%@, mode=%@)",
+                 _permanentStatusBarFindDriver,
+                 @(_permanentStatusBarFindDriver.filterMode));
+            _permanentStatusBarFindDriver = [[iTermFindDriver alloc] initWithViewController:statusBarViewController.searchViewController
+                                                                       filterViewController:statusBarViewController.filterViewController];
+            _permanentStatusBarFindDriver.delegate = self.findDriverDelegate;
+            DLog(@"updateFindDriver: Created new permanent driver %@ with mode=%@",
+                 _permanentStatusBarFindDriver,
+                 @(_permanentStatusBarFindDriver.filterMode));
+        } else {
+            DLog(@"updateFindDriver: Keeping existing permanent driver %@ with mode=%@",
+                 _permanentStatusBarFindDriver,
+                 @(_permanentStatusBarFindDriver.filterMode));
+        }
     } else if (statusBarViewController) {
+        DLog(@"updateFindDriver: Setting type to temporary status bar");
         _findDriverType = iTermSessionViewFindDriverTemporaryStatusBar;
     } else {
+        DLog(@"updateFindDriver: Setting type to dropdown");
         _findDriverType = iTermSessionViewFindDriverDropDown;
     }
+    // Ensure the driver is created, especially important for synthetic sessions
+    [self createFindDriverIfNeeded];
 }
 
 - (void)takeStatusBarViewFrom:(SessionView *)donor {

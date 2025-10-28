@@ -57,6 +57,7 @@ forInvocation:(NSString *)invocation
 - (void)statusBarSetFilter:(NSString * _Nullable)query;
 - (id<ProcessInfoProvider> _Nullable)statusBarComponentProcessInfoProvider;
 - (void)statusBarComponent:(id<iTermStatusBarComponent>)component performNaturalLanguageQuery:(NSString *)query;
+- (iTermFindDriver * _Nullable)statusBarComponentFindDriver:(id<iTermStatusBarComponent>)component;
 @end
 
 @protocol iTermStatusBarComponentFactory<NSSecureCoding, NSCopying, NSObject>

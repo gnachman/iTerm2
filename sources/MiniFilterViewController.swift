@@ -10,6 +10,7 @@ import Foundation
 protocol MiniFilterViewControllerDelegate: AnyObject {
     func closeFilterComponent()
     func searchQueryDidChange(_ query: String, editor: NSTextView?)
+    func filterViewControllerFindDriver() -> iTermFindDriver?
 }
 
 @objc(iTermMiniFilterField)
@@ -212,6 +213,31 @@ class MiniFilterViewController: NSViewController, NSTextFieldDelegate, iTermFilt
         if commandSelector == #selector(cancelOperation(_:)) {
             delegate?.closeFilterComponent()
             searchField.stringValue = ""
+            return true
+        }
+        return false
+    }
+
+    @IBAction func changeFilterMode(_ sender: Any?) {
+        guard let menuItem = sender as? NSMenuItem,
+              let driver = delegate?.filterViewControllerFindDriver() else {
+            DLog("changeFilterMode: failed to get menuItem or driver")
+            return
+        }
+        let oldMode = driver.filterMode
+        let newMode = iTermFindMode(rawValue: UInt(menuItem.tag)) ?? .smartCaseSensitivity
+        DLog("changeFilterMode: changing from mode \(oldMode.rawValue) to \(newMode.rawValue) (tag=\(menuItem.tag))")
+        driver.filterMode = newMode
+        DLog("changeFilterMode: driver.filterMode is now \(driver.filterMode.rawValue)")
+        delegate?.searchQueryDidChange(searchField.stringValue, editor: nil)
+    }
+}
+
+extension MiniFilterViewController: NSMenuItemValidation {
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        if menuItem.action == #selector(changeFilterMode(_:)) {
+            let currentMode = delegate?.filterViewControllerFindDriver()?.filterMode.rawValue ?? iTermFindMode.smartCaseSensitivity.rawValue
+            menuItem.state = (menuItem.tag == Int(currentMode)) ? .on : .off
             return true
         }
         return false

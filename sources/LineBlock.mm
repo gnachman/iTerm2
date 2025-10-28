@@ -14,6 +14,7 @@ extern "C" {
 #import "DebugLogging.h"
 #import "FindContext.h"
 #import "iTermCharacterBuffer.h"
+#import "iTermCoreSearch.h"
 #import "iTermExternalAttributeIndex.h"
 #import "iTermLegacyAtomicMutableArrayOfWeakObjects.h"
 #import "iTermMalloc.h"
@@ -54,20 +55,6 @@ NSString *const kLineBlockGuid = @"GUID";
 dispatch_queue_t gDeallocQueue;
 
 #ifdef DEBUG_SEARCH
-@interface NSString(LineBlockDebugging)
-@end
-
-@implementation NSString(LineBlockDebugging)
-- (NSString *)asciified {
-    NSMutableString *c = [self mutableCopy];
-    NSRange range = [c rangeOfCharacterFromSet:[NSCharacterSet characterSetWithRange:NSMakeRange(0, 32)]];
-    while (range.location != NSNotFound) {
-        [c replaceCharactersInRange:range withString:@"."];
-        range = [c rangeOfCharacterFromSet:[NSCharacterSet characterSetWithRange:NSMakeRange(0, 32)]];
-    }
-    return c;
-}
-@end
 #define SearchLog(args...) NSLog(args)
 #else
 #define SearchLog(args...)
@@ -103,9 +90,6 @@ static LineBlockLocation LineBlockMakeLocation(int offset, int length, int index
         .index = index
     };
 }
-
-const unichar kPrefixChar = REGEX_START;
-const unichar kSuffixChar = REGEX_END;
 
 void EnableDoubleWidthCharacterLineCache() {
     gEnableDoubleWidthCharacterLineCache = YES;
@@ -1961,235 +1945,9 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     }
 }
 
-static NSString* RewrittenRegex(NSString* originalRegex) {
-    // Convert ^ in a context where it refers to the start of string to kPrefixChar
-    // Convert $ in a context where it refers to the end of string to kSuffixChar
-    // ^ is NOT start-of-string when:
-    //   - it is escaped
-    //   - it is preceded by an unescaped [
-    //   - it is preceded by an unescaped [:
-    // $ is NOT end-of-string when:
-    //   - it is escaped
-    //
-    // It might be possible to write this as a regular substitution but it would be a crazy mess.
-
-    NSMutableString* rewritten = [NSMutableString stringWithCapacity:[originalRegex length]];
-    BOOL escaped = NO;
-    BOOL inSet = NO;
-    BOOL firstCharInSet = NO;
-    unichar prevChar = 0;
-    for (int i = 0; i < [originalRegex length]; i++) {
-        BOOL nextCharIsFirstInSet = NO;
-        unichar c = [originalRegex characterAtIndex:i];
-        const BOOL wasEscaped = escaped;
-        switch (c) {
-            case '\\':
-                escaped = !escaped;
-                break;
-
-            case '[':
-                if (!inSet && !escaped) {
-                    inSet = YES;
-                    nextCharIsFirstInSet = YES;
-                }
-                break;
-
-            case ']':
-                if (inSet && !escaped) {
-                    inSet = NO;
-                }
-                break;
-
-            case ':':
-                if (inSet && firstCharInSet && prevChar == '[') {
-                    nextCharIsFirstInSet = YES;
-                }
-                break;
-
-            case '^':
-                if (!escaped && !firstCharInSet) {
-                    c = kPrefixChar;
-                }
-                break;
-
-            case '$':
-                if (!escaped) {
-                    c = kSuffixChar;
-                }
-                break;
-        }
-        prevChar = c;
-        firstCharInSet = nextCharIsFirstInSet;
-        [rewritten appendFormat:@"%C", c];
-        if (wasEscaped) {
-            escaped = NO;
-        }
-    }
-
-    return rewritten;
-}
-
 // Returns the index into rawline that a result was found.
 // Fills in *resultLength with the number of screen_char_t's the result spans.
 // Fills in *rangeOut with the range of haystack/charHaystack where the result was found.
-static int CoreSearch(NSString *needle,
-                      int raw_line_length,
-                      int start,
-                      int end,
-                      FindOptions options,
-                      iTermFindMode mode,
-                      int *resultLength,
-                      NSString *entireHaystack,
-                      NSRange haystackRange,
-                      const unichar *charHaystack,
-                      const int *deltas,
-                      int deltaOffset,
-                      NSRange *rangeOut) {
-    RKLRegexOptions apiOptions = RKLNoOptions;
-    NSRange range;
-    const BOOL regex = (mode == iTermFindModeCaseInsensitiveRegex ||
-                        mode == iTermFindModeCaseSensitiveRegex);
-    if (regex) {
-        BOOL backwards = NO;
-        if (options & FindOptBackwards) {
-            backwards = YES;
-        }
-        if (mode == iTermFindModeCaseInsensitiveRegex) {
-            apiOptions = static_cast<RKLRegexOptions>(apiOptions | RKLCaseless);
-        }
-
-        NSError* regexError = nil;
-        NSRange temp;
-        NSString* rewrittenRegex = RewrittenRegex(needle);
-        // TODO: This is grossly inefficient. If you have a short needle and a long haystack this is done many times per raw line.
-        NSString *haystack = [entireHaystack substringWithRange:haystackRange];
-        NSString* sanitizedHaystack = [haystack stringByReplacingOccurrencesOfString:[NSString stringWithFormat:@"%c", kPrefixChar]
-                                                                          withString:[NSString stringWithFormat:@"%c", IMPOSSIBLE_CHAR]];
-        sanitizedHaystack = [sanitizedHaystack stringByReplacingOccurrencesOfString:[NSString stringWithFormat:@"%c", kSuffixChar]
-                                                                         withString:[NSString stringWithFormat:@"%c", IMPOSSIBLE_CHAR]];
-
-        NSString* sandwich;
-        BOOL hasPrefix = YES;
-        BOOL hasSuffix = YES;
-        if (end == raw_line_length) {
-            if (start == 0) {
-                sandwich = [NSString stringWithFormat:@"%C%@%C", kPrefixChar, sanitizedHaystack, kSuffixChar];
-            } else {
-                hasPrefix = NO;
-                sandwich = [NSString stringWithFormat:@"%@%C", sanitizedHaystack, kSuffixChar];
-            }
-        } else {
-            hasSuffix = NO;
-            sandwich = [NSString stringWithFormat:@"%C%@", kPrefixChar, sanitizedHaystack];
-        }
-
-        // TODO: RegexKitLite is grossly inefficient. It compiles the regex each and every time. Use NSRegularExpression instead.
-        // Also in the backwards code below.
-        temp = [sandwich rangeOfRegex:rewrittenRegex
-                              options:apiOptions
-                              inRange:NSMakeRange(0, [sandwich length])
-                              capture:0
-                                error:&regexError];
-        range = temp;
-
-        if (backwards) {
-            int locationAdjustment = hasSuffix ? 1 : 0;
-            // keep searching from one char after the start of the match until we don't find anything.
-            // regexes aren't good at searching backwards.
-            while (!regexError && temp.location != NSNotFound && temp.location+locationAdjustment < [sandwich length]) {
-                if (temp.length != 0) {
-                    range = temp;
-                }
-                temp.location += MAX(1, temp.length);
-                temp = [sandwich rangeOfRegex:rewrittenRegex
-                                      options:apiOptions
-                                      inRange:NSMakeRange(temp.location, [sandwich length] - temp.location)
-                                      capture:0
-                                        error:&regexError];
-            }
-        }
-        if (range.length == 0) {
-            range.location = NSNotFound;
-        }
-        if (!regexError && range.location != NSNotFound) {
-            if (hasSuffix && range.location + range.length == [sandwich length]) {
-                // match includes $
-                if (range.length > 0) {
-                    --range.length;
-                }
-                if (range.length == 0 && range.location > 0) {
-                    // matched only on $
-                    --range.location;
-                }
-            }
-            if (hasPrefix && range.location == 0) {
-                if (range.length > 0) {
-                    --range.length;
-                }
-            } else if (hasPrefix) {
-                if (range.location > 0) {
-                    --range.location;
-                }
-            }
-        }
-        if (range.length <= 0) {
-            // match on ^ or $
-            range.location = NSNotFound;
-        }
-        if (regexError) {
-            VLog(@"regex error: %@", regexError);
-            range.length = 0;
-            range.location = NSNotFound;
-        }
-    } else {
-        // Substring (not regex)
-        if (options & FindOptBackwards) {
-            apiOptions = static_cast<RKLRegexOptions>(apiOptions | NSBackwardsSearch);
-        }
-        BOOL caseInsensitive = (mode == iTermFindModeCaseInsensitiveSubstring);
-        if (mode == iTermFindModeSmartCaseSensitivity &&
-            [needle rangeOfCharacterFromSet:[NSCharacterSet uppercaseLetterCharacterSet]].location == NSNotFound) {
-            caseInsensitive = YES;
-        }
-        if (caseInsensitive) {
-            apiOptions = static_cast<RKLRegexOptions>(apiOptions | NSCaseInsensitiveSearch | NSDiacriticInsensitiveSearch | NSWidthInsensitiveSearch);
-        }
-        if ((options & FindOptEmptyQueryMatches) == FindOptEmptyQueryMatches && needle.length == 0) {
-            range = haystackRange;
-        } else {
-            SearchLog(@"Search subrange %@ of haystack %@", NSStringFromRange(haystackRange), [entireHaystack asciified]);
-            const NSRange foundRange = [entireHaystack rangeOfString:needle options:apiOptions range:haystackRange];
-            if (foundRange.location == NSNotFound) {
-                range = foundRange;
-            } else {
-                SearchLog(@"Searched %@ and found %@ at %@. Suffix from start of range is: %@", entireHaystack, needle, NSStringFromRange(foundRange), [entireHaystack substringFromIndex:foundRange.location]);
-                // `range` needs to be relative to `haystackRange`.
-                range = NSMakeRange(foundRange.location - haystackRange.location,
-                                    foundRange.length);
-                SearchLog(@"haystack-relative range is %@", NSStringFromRange(range));
-            }
-        }
-    }
-    int result = -1;
-    if (range.location != NSNotFound) {
-        // Convert range to locations in the full raw buffer.
-        const int adjustedLocation = range.location + haystackRange.location + deltas[range.location];
-        SearchLog(@"adjustedLocation(%@) = range.location(%@) + haystackRange.location(%@) + deltas[range.location](%@)",
-              @(adjustedLocation), @(range.location), @(haystackRange.location), @(deltas[range.location]));
-
-        const NSInteger di = MAX(range.location,
-                                 ((NSInteger)NSMaxRange(range)) - 1);
-        const int adjustedLength = range.length + deltas[di] - deltas[range.location];
-        SearchLog(@"adjustedLength(%@) = range.length(%@) + deltas[range.upperBound](%@) - deltas[range.location](%@)",
-                  @(adjustedLength), @(range.length), @(deltas[NSMaxRange(range)]), @(deltas[range.location]));
-        *resultLength = adjustedLength;
-        result = adjustedLocation;
-    }
-    if (rangeOut) {
-        *rangeOut = range;
-    }
-    return result;
-}
 
 #if DEBUG_SEARCH
 - (NSString *)prettyRawLine:(const screen_char_t *)line length:(int)length {
@@ -2258,165 +2016,31 @@ static int CoreSearch(NSString *needle,
                                                     length:raw_line_length]);
     SearchLog(@"Deltas: %@", [self prettyDeltas:deltas length:haystack.length]);
 #endif
-
+    CoreSearchRequest request = {
+        .needle = needle,
+        .options = options,
+        .mode = mode,
+        .haystack = haystack,
+        .deltas = deltas
+    };
+    NSArray<ResultRange *> *marginalResults = CoreSearch(&request);
     if (options & FindOptBackwards) {
-        // This algorithm is wacky and slow but stay with me here:
-        // When you search backward, the most common case is that you are
-        // repeating the previous search but with a one-character longer
-        // needle (having grown at the end). So the rightmost result we can
-        // accept is one whose leftmost position is at the leftmost position of
-        // the previous result.
-        //
-        // Example: Consider a previous search of [jump]
-        //  The quick brown fox jumps over the lazy dog.
-        //                      ^^^^
-        // The search is then extended to [jumps]. We want to return:
-        //  The quick brown fox jumps over the lazy dog.
-        //                      ^^^^^
-        // Ideally, we would search only the necessary part of the haystack:
-        //  Search("The quick brown fox jumps", "jumps")
-        //
-        // But what we did there was to add one byte to the haystack. That works
-        // for ascii, but not in other cases. Let us consider a localized
-        // German search where "ss" matches "ß". Let's first search for [jump]
-        // in this translation:
-        //
-        //  Ein quicken Braunfox jumpss uber die Lazydog.
-        //                       ^^^^
-        // Then the needle becomes [jumpß]. Under the previous algorithm we'd
-        // extend the haystack to:
-        //  Ein quicken Braunfox jumps
-        // And there is no match for jumpß.
-        //
-        // So to do the optimal algorithm, you'd have to know how many characters
-        // to add to the haystack in the worst localized case. With decomposed
-        // diacriticals, the upper bound is unclear.
-        //
-        // I'm going to err on the side of correctness over performance. I'm
-        // sure this could be improved if needed. One obvious
-        // approach is to use the naïve algorithm when the text is all ASCII.
-        //
-        // Thus, the algorithm is to do a reverse search until a hit is found
-        // that begins not before 'skip', which is the leftmost acceptable
-        // position.
-
-        int limit = raw_line_length;
-        int tempResultLength = 0;
-        int tempPosition;
-
-        int numUnichars = [haystack length];
-        const unsigned long long kMaxSaneStringLength = 1000000000LL;
-        NSRange previousRange = NSMakeRange(NSNotFound, 0);
-        do {
-            haystack = [haystack substringToIndex:numUnichars];
-            if ([haystack length] >= kMaxSaneStringLength) {
-                // There's a bug in OS 10.9.0 (and possibly other versions) where the string
-                // @"a⃑" reports a length of 0x7fffffffffffffff, which causes this loop to never
-                // terminate.
-                break;
-            }
-            tempPosition = CoreSearch(needle,
-                                      raw_line_length,
-                                      0,
-                                      limit,
-                                      options,
-                                      mode,
-                                      &tempResultLength,
-                                      haystack,
-                                      NSMakeRange(0, haystack.length),
-                                      charHaystack,
-                                      deltas,
-                                      0,
-                                      NULL);
-
-            limit = tempPosition + tempResultLength - 1;
-            // find i so that i-deltas[i] == limit
-
-            // If this is -1 it means we have nothing to search.
-            int lastIndexToInclude = MAX(-1, numUnichars - 1);
-            while (lastIndexToInclude >= 0 && lastIndexToInclude + deltas[lastIndexToInclude] >= limit) {
-                lastIndexToInclude -= 1;
-            }
-            numUnichars = lastIndexToInclude + 1;
-            NSRange range = NSMakeRange(tempPosition, tempResultLength);
-            if (tempPosition != -1 &&
-                tempPosition <= skip &&
-                !NSEqualRanges(NSIntersectionRange(range, previousRange), range)) {
-                previousRange = range;
-                ResultRange *r = [[ResultRange alloc] init];
-                r->position = tempPosition;
-                r->length = tempResultLength;
-                [results addObject:r];
-            }
-        } while (tempPosition != -1 && (multipleResults || tempPosition > skip));
+        marginalResults = [marginalResults filteredArrayUsingBlock:^BOOL(ResultRange *rr) {
+            return rr.position <= skip;
+        }];
     } else {
-        // Search forward
-        NSRange resultRange = NSMakeRange(UTF16OffsetFromCellOffset(skip, deltas, raw_line_length), 0);
-        while (skip < raw_line_length) {
-            const NSInteger codePointsToSkip = NSMaxRange(resultRange);
-            int tempResultLength = 0;
-            NSRange relativeResultRange = NSMakeRange(0, 0);
-#ifdef DEBUG_SEARCH
-            const int savedSkip = skip;
-#endif
-            // tempPosition and tempResultLength are indexes into rawline
-            // deltas is indexed by indexes into NSString.
-            int tempPosition = CoreSearch(needle,
-                                          raw_line_length,
-                                          skip,  // treated as index into rawline
-                                          raw_line_length,
-                                          options,
-                                          mode,
-                                          &tempResultLength,
-                                          haystack,
-                                          NSMakeRange(codePointsToSkip, haystack.length - codePointsToSkip),
-                                          charHaystack + codePointsToSkip,
-                                          deltas + codePointsToSkip,
-                                          deltas[codePointsToSkip],
-                                          &relativeResultRange);
-            resultRange = NSMakeRange(relativeResultRange.location + codePointsToSkip,
-                                      relativeResultRange.length);
-            if (tempPosition != -1) {
-                ResultRange *r = [[ResultRange alloc] init];
-                r->position = tempPosition;
-                r->length = tempResultLength;
-                SearchLog(@"Got result %@ in %@", r, [haystack asciified]);
-                [results addObject:r];
-                if (!multipleResults) {
-                    break;
-                }
-                assert(tempResultLength >= 0);
-                assert(tempPosition <= raw_line_length);
-                skip = tempPosition + tempResultLength;
-                assert(skip >= 0);
-#ifdef DEBUG_SEARCH
-                if (skip < 0) {
-                    skip = savedSkip;
-                    int tempPosition = CoreSearch(needle,
-                                                  raw_line_length,
-                                                  skip,
-                                                  raw_line_length,
-                                                  options,
-                                                  mode,
-                                                  &tempResultLength,
-                                                  haystack,
-                                                  NSMakeRange(codePointsToSkip, haystack.length - codePointsToSkip),
-                                                  charHaystack + codePointsToSkip,
-                                                  deltas + skip,
-                                                  deltas[skip],
-                                                  &relativeResultRange);
-                    skip = tempPosition + tempResultLength;
-                    assert(skip >= 0);
-                }
-#endif
-                if (options & FindOneResultPerRawLine) {
-                    break;
-                }
-            } else {
-                break;
-            }
+        marginalResults = [marginalResults filteredArrayUsingBlock:^BOOL(ResultRange *rr) {
+            return rr.position >= skip;
+        }];
+    }
+    if (marginalResults.count) {
+        if ((options & FindOneResultPerRawLine) || ((options & FindMultipleResults) == 0)) {
+            [results addObject:marginalResults.firstObject];
+        } else {
+            [results addObjectsFromArray:marginalResults];
         }
     }
+
     free(deltas);
     free(charHaystack);
 }

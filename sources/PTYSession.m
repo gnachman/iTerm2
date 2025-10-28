@@ -7417,8 +7417,29 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
 - (void)setFilter:(NSString *)filter {
     _modeHandler.mode = iTermSessionModeDefault;
-    DLog(@"setFilter:%@", filter);
-    if ([filter isEqualToString:_filter] && _asyncFilter.mode == _view.findDriver.filterMode) {
+    DLog(@"%@: setFilter:%@", self, filter);
+    // For synthetic sessions (instant replay or filtering), use this session's find driver
+    // because the synthetic session has taken ownership of the status bar view controller.
+    DLog(@"%@: Before updateFindDriver: findDriverType=%@, findDriver=%@", self, @(self.view.findDriverType), self.view.findDriver);
+    [self.view updateFindDriver];
+    DLog(@"%@: After updateFindDriver: findDriverType=%@, findDriver=%@", self, @(self.view.findDriverType), self.view.findDriver);
+    [self.view createFindDriverIfNeeded];
+    DLog(@"%@: After createFindDriverIfNeeded: findDriverType=%@, findDriver=%@", self, @(self.view.findDriverType), self.view.findDriver);
+    iTermFindDriver *findDriver = self.view.findDriver;
+    if (!findDriver) {
+        iTermStatusBarViewController *statusBarVC = _statusBarViewController;
+        DLog(@"%@: ERROR: No find driver available for filtering. findDriverType=%@, statusBarVC=%@, searchViewController=%@, filterViewController=%@, temporaryLeftComponent=%@",
+             self,
+             @(self.view.findDriverType),
+             statusBarVC,
+             statusBarVC.searchViewController,
+             statusBarVC.filterViewController,
+             statusBarVC.temporaryLeftComponent);
+        return;
+    }
+    DLog(@"%@: findDriver=%@, filterMode=%@", self, findDriver, @(findDriver.filterMode));
+    if ([filter isEqualToString:_filter] && _asyncFilter.mode == findDriver.filterMode) {
+        DLog(@"%@: Filter unchanged (filter='%@', mode=%@), returning early", self, _filter, @(_asyncFilter.mode));
         return;
     }
     if (!filter) {
@@ -7447,17 +7468,26 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     iTermAsyncFilter *refining = [[_asyncFilter retain] autorelease];
     [_asyncFilter release];
 
-    if (_asyncFilter.mode != _view.findDriver.filterMode ||
-        iTermFilterModeIsRegularExpression(_view.findDriver.filterMode)) {
+    DLog(@"%@: Previous asyncFilter=%@, mode=%@. Current findDriver.filterMode=%@, isRegex=%@",
+         self,
+         refining,
+         @(refining.mode),
+         @(findDriver.filterMode),
+         @(iTermFilterModeIsRegularExpression(findDriver.filterMode)));
+    if (_asyncFilter.mode != findDriver.filterMode ||
+        iTermFilterModeIsRegularExpression(findDriver.filterMode)) {
+        DLog(@"%@: Setting refining=nil because %@",
+             self,
+             (_asyncFilter.mode != findDriver.filterMode) ? @"mode changed" : @"filterMode is regex");
         refining = nil;
     }
 
-    DLog(@"Append lines from %@", self.liveSession);
+    DLog(@"%@: Append lines from %@", self, self.liveSession);
     __weak __typeof(self) weakSelf = self;
-    DLog(@"Will create new async filter for query %@ refining %@", filter, refining.it_addressString);
+    DLog(@"%@: Will create new async filter for query %@ refining %@", self, filter, refining.it_addressString);
     _asyncFilter = [source newAsyncFilterWithDestination:self
                                                    query:filter
-                                                    mode:_view.findDriver.filterMode
+                                                    mode:findDriver.filterMode
                                                 refining:refining
                                             absLineRange:sourceSession.textview.findOnPageHelper.absLineRange
                                                 progress:^(double progress) {
@@ -7468,8 +7498,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         [self.liveSession addContentSubscriber:_asyncFilter];
     }
     if (replacingFilter) {
-        DLog(@"Clear buffer because there is a pre-existing filter");
+        DLog(@"%@: Clear buffer because there is a pre-existing filter (was '%@'). Discarding %@ pending filter updates", self, _filter, @(_pendingFilterUpdates.count));
+        // Discard any pending filter updates from the previous query since we're clearing the buffer
+        [_pendingFilterUpdates removeAllObjects];
         [self.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+            DLog(@"%@: Calling clearBufferWithoutTriggersSavingPrompt", self);
             [mutableState clearBufferWithoutTriggersSavingPrompt:NO];
         }];
     }
@@ -19109,6 +19142,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return self.processInfoProvider;
 }
 
+- (iTermFindDriver *)statusBarFindDriver {
+    // Always use this session's find driver. For synthetic sessions (instant replay or filtering),
+    // the synthetic session has taken ownership of the status bar view controller.
+    [self.view createFindDriverIfNeeded];
+    return self.view.findDriver;
+}
+
 - (void)statusBarWriteString:(NSString *)string {
     [self writeTask:string];
 }
@@ -20886,7 +20926,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 - (void)filterDestinationAppendScreenCharArray:(ScreenCharArray *)sca {
     const BOOL wasEmpty = _pendingFilterUpdates.count == 0;
     [_pendingFilterUpdates addObject:sca];
-    DLog(@"Add <%@> to pending filter update which now has %@ entries", sca, @(_pendingFilterUpdates.count));
+    DLog(@"%@: filterDestinationAppendScreenCharArray: Add <%@> to pending filter update which now has %@ entries", self, sca, @(_pendingFilterUpdates.count));
     if (wasEmpty) {
         [self scheduleFilterUpdate];
     }
@@ -20894,19 +20934,21 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 - (void)scheduleFilterUpdate {
     dispatch_async(dispatch_get_main_queue(), ^{
-        DLog(@"Draining pending filter updates");
+        DLog(@"%@: scheduleFilterUpdate: Draining %@ pending filter updates", self, @(_pendingFilterUpdates.count));
         [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
             NSArray<ScreenCharArray *> *scas = [[_pendingFilterUpdates copy] autorelease];
             [_pendingFilterUpdates removeAllObjects];
             for (id obj in scas) {
                 ScreenCharArray *sca = [ScreenCharArray castFrom:obj];
                 if (sca) {
+                    DLog(@"%@: Appending filter result line: %@", self, sca);
                     [mutableState appendScreenChars:sca.line
                                              length:sca.length
                              externalAttributeIndex:sca.eaIndex
                                        continuation:sca.continuation
                                            rtlFound:sca.metadata.rtlFound];
                 } else {
+                    DLog(@"%@: Removing last line from filter results", self);
                     [mutableState removeLastLine];
                 }
             }
@@ -20915,6 +20957,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 - (void)filterDestinationRemoveLastLine {
+    DLog(@"%@: filterDestinationRemoveLastLine", self);
     [_pendingFilterUpdates addObject:[NSNull null]];
     [self scheduleFilterUpdate];
 }

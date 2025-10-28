@@ -170,4 +170,8 @@ extension StatusBarFilterComponent: MiniFilterViewControllerDelegate {
             editor?.setSelectedRange(range)
         }
     }
+
+    func filterViewControllerFindDriver() -> iTermFindDriver? {
+        return delegate?.statusBarComponentFindDriver(self)
+    }
 }

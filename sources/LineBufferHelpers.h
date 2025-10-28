@@ -23,6 +23,7 @@
 }
 @property (nonatomic, readonly) int position;
 @property (nonatomic, readonly) int length;
+@property (nonatomic, readonly) int upperBound;
 
 - (instancetype)initWithPosition:(int)position length:(int)length;
 - (MutableResultRange *)mutableCopy;
