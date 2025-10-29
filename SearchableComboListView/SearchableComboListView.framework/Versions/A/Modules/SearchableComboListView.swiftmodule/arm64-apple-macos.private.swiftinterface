@@ -15,6 +15,9 @@ import _SwiftConcurrencyShims
   #endif
 }
 @objc(iTermSearchableComboViewGroup) public class SearchableComboViewGroup : ObjectiveC.NSObject {
+  final public let label: Swift.String
+  final public let items: [SearchableComboListView.SearchableComboViewItem]
+  final public let labelTokens: [Swift.String]
   @objc(initWithLabel:items:) public init(_ label: Swift.String, items: [SearchableComboListView.SearchableComboViewItem])
   @objc deinit
 }

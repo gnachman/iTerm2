@@ -153,6 +153,11 @@ class iTermBrowserKeyBindingActionPerformer {
                 delegate?.actionPerformingSend(data: data,
                                                   broadcastAllowed: true)
             }
+        case .ACTION_TOGGLE_SETTING:
+            if let key = action.toggleSettingKey {
+                delegate?.actionPerformingToggleSetting(key: key,
+                                                        isProfile: action.toggleSettingIsProfile)
+            }
         @unknown default:
             break
         }

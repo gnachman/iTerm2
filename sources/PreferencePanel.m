@@ -610,6 +610,43 @@ static iTermPreferencesSearchEngine *gSearchEngine;
 
 #pragma mark - API
 
+- (BOOL)toggleSetting:(NSString *)key {
+    if (!key) {
+        return NO;
+    }
+    if (![iTermPreferences keyHasDefaultValue:key]) {
+        return NO;
+    }
+    [self window];
+    for (NSTabViewItem *tabViewItem in _tabView.tabViewItems) {
+        if ([tabViewItem.identifier isEqualToString:@"Profiles"]) {
+            continue;
+        }
+        iTermPreferencesBaseViewController *vc = [self viewControllerForTabViewItem:tabViewItem];
+        if (![vc hasControlWithKey:key]) {
+            continue;
+        }
+        [vc tryToggleControlWithKey:key];
+        break;
+    }
+    return YES;
+}
+
+- (BOOL)toggleProfileSetting:(NSString *)key {
+    if (!key) {
+        return NO;
+    }
+    [self window];
+    if (![iTermProfilePreferences keyHasDefaultValue:key]) {
+        return NO;
+    }
+    if (![_profilesViewController hasControlWithKey:key]) {
+        return NO;
+    }
+    [_profilesViewController tryToggleControlWithKey:key];
+    return YES;
+}
+
 - (void)configureHotkeyForProfile:(Profile *)profile {
     _profilesViewController.scope = nil;
     [self window];
@@ -636,16 +673,17 @@ static iTermPreferencesSearchEngine *gSearchEngine;
 }
 
 // NOTE: Callers should invoke makeKeyAndOrderFront if they are so inclined.
-- (void)openToProfileWithGuid:(NSString*)guid
+- (void)openToProfileWithGuid:(NSString *)guid
              selectGeneralTab:(BOOL)selectGeneralTab
                          tmux:(BOOL)tmux
-                        scope:(iTermVariableScope<iTermSessionScope> *)scope {
+                        scope:(iTermVariableScope<iTermSessionScope> *)scope
+                   showWindow:(BOOL)show {
     _tmux = tmux;
     _profilesViewController.tmuxSession = tmux;
     _profilesViewController.scope = scope;
     [self window];
     [self selectProfilesTab];
-    [self run];
+    [self runAndShow:show];
     [_profilesViewController openToProfileWithGuid:guid
                                   selectGeneralTab:selectGeneralTab
                                              scope:scope];
@@ -725,11 +763,17 @@ andEditComponentWithIdentifier:(NSString *)identifier
 }
 
 - (void)run {
-    [NSApp activateIgnoringOtherApps:YES];
+    [self runAndShow:YES];
+}
+
+- (void)runAndShow:(BOOL)show {
+    if (show) {
+        [NSApp activateIgnoringOtherApps:YES];
+    }
     [self window];
     [_generalPreferencesViewController updateEnabledState];
     [_profilesViewController selectFirstProfileIfNecessary];
-    if (!self.window.isVisible) {
+    if (!self.window.isVisible && show) {
         [self showWindow:self];
     }
 }
@@ -741,6 +785,13 @@ andEditComponentWithIdentifier:(NSString *)identifier
 
 - (NSString *)nameForFrame {
     return [NSString stringWithFormat:@"%@Preferences", _profileModel.modelName];
+}
+
+- (NSArray<iTermSetting *> *)allSettings {
+    return [_tabView.tabViewItems flatMapWithBlock:^NSArray *(__kindof NSTabViewItem *tabViewItem) {
+        iTermPreferencesBaseViewController *vc = [self viewControllerForTabViewItem:tabViewItem];
+        return [vc allSettingsWithPathComponents:@[tabViewItem.label]];
+    }];
 }
 
 #pragma mark - NSWindowController

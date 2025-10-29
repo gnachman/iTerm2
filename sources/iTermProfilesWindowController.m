@@ -343,14 +343,14 @@ typedef enum {
     }
 }
 
-- (void)editSelectedBookmark:(id)sender
-{
-    NSString* guid = [tableView_ selectedGuid];
+- (void)editSelectedBookmark:(id)sender {
+    NSString *guid = [tableView_ selectedGuid];
     if (guid) {
         [[PreferencePanel sharedInstance] openToProfileWithGuid:guid
                                                selectGeneralTab:YES
                                                            tmux:NO
-                                                          scope:nil];
+                                                          scope:nil
+                                                     showWindow:YES];
         [[[PreferencePanel sharedInstance] window] makeKeyAndOrderFront:nil];
     }
 }

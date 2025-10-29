@@ -6148,7 +6148,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [[PreferencePanel sessionsInstance] openToProfileWithGuid:newGuid
                                              selectGeneralTab:makeKey
                                                          tmux:session.isTmuxClient
-                                                        scope:session.variablesScope];
+                                                        scope:session.variablesScope
+                                                   showWindow:YES];
     if (makeKey) {
         [[[PreferencePanel sessionsInstance] window] makeKeyAndOrderFront:nil];
     }

@@ -8,6 +8,7 @@
 #import "iTermKeyBindingAction.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "ITAddressBookMgr.h"
 #import "iTermPasteSpecialViewController.h"
 #import "iTermSnippetsModel.h"
@@ -496,6 +497,9 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_COPY_MODE:
             actionString = [NSString stringWithFormat:@"Copy mode: %@", _parameter];
             break;
+        case KEY_ACTION_TOGGLE_SETTING:
+            actionString = [NSString stringWithFormat:@"Toggle %@", self.toggleSettingLabel];
+            break;
     }
 
     switch (self.applyMode) {
@@ -594,6 +598,7 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_ALERT_ON_NEXT_MARK:
         case KEY_ACTION_COPY_INTERPOLATED_STRING:
         case KEY_ACTION_COPY_MODE:
+        case KEY_ACTION_TOGGLE_SETTING:
             break;
 
         case KEY_ACTION_SEQUENCE:
@@ -683,6 +688,7 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_ALERT_ON_NEXT_MARK:
         case KEY_ACTION_COPY_INTERPOLATED_STRING:
         case KEY_ACTION_COPY_MODE:
+        case KEY_ACTION_TOGGLE_SETTING:
             break;
 
         case KEY_ACTION_SEQUENCE:
@@ -716,6 +722,49 @@ static NSString *GetProfileName(NSString *guid) {
         }
         return [iTermKeyBindingAction withDictionary:dict];
     }];
+}
+
+@end
+
+@implementation iTermKeyBindingAction(ParameterHelper)
+
+- (NSDictionary *)toggleSettingDict {
+    NSData *data = [self.parameter dataUsingEncoding:NSUTF8StringEncoding];
+    if (!data) {
+        return nil;
+    }
+    NSDictionary *dict = [NSDictionary castFrom:[NSJSONSerialization JSONObjectWithData:data
+                                                                                options:0
+                                                                                  error:nil]];
+    if (!dict) {
+        return nil;
+    }
+    return dict;
+}
+
+- (NSString *)toggleSettingKey {
+    return [NSString castFrom:self.toggleSettingDict[@"key"]];
+}
+
+- (NSString *)toggleSettingLabel {
+    return [NSString castFrom:self.toggleSettingDict[@"label"]];
+}
+
+- (BOOL)toggleSettingIsProfile {
+    return [[NSNumber castFrom:self.toggleSettingDict[@"isProfile"]] boolValue];
+}
+
++ (NSString *)toggleSettingParameterForKey:(NSString *)key
+                                 isProfile:(BOOL)isProfile
+                                     label:(NSString *)label {
+    NSDictionary *dict = @{ @"key": key,
+                            @"isProfile": @(isProfile),
+                            @"label": label };
+    NSData *data = [NSJSONSerialization dataWithJSONObject:dict options:0 error:nil];
+    if (!data) {
+        return @"";
+    }
+    return [data stringWithEncoding:NSUTF8StringEncoding] ?: @"";
 }
 
 @end

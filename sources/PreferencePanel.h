@@ -33,6 +33,8 @@
 #import "TriggerController.h"
 #import "WindowArrangements.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 extern NSString *const kRefreshTerminalNotification;
 extern NSString *const kUpdateLabelsNotification;
 extern NSString *const kPreferencePanelDidUpdateProfileFields;
@@ -57,6 +59,8 @@ CGFloat iTermPreferencePanelGetWindowMinimumWidth(BOOL session);
 @class iTermSemanticHistoryPrefsController;
 @class iTermShortcutInputView;
 @protocol iTermSessionScope;
+@class iTermSetting;
+@class PreferenceInfo;
 @class SmartSelectionController;
 @class TriggerController;
 
@@ -77,10 +81,10 @@ void LoadPrefsFromCustomFolder(void);
     NSWindowDelegate,
     NSMenuDelegate>
 
-@property(nonatomic, readonly) NSString *currentProfileGuid;
+@property(nonatomic, readonly, nullable) NSString *currentProfileGuid;
 
 // Returns the window if the pref panel is loaded or nil if not.
-@property(nonatomic, readonly) NSWindow *windowIfLoaded;
+@property(nonatomic, readonly, nullable) NSWindow *windowIfLoaded;
 
 + (instancetype)sharedInstance;
 + (instancetype)sessionsInstance;
@@ -91,14 +95,15 @@ void LoadPrefsFromCustomFolder(void);
 - (void)openToProfileWithGuid:(NSString *)guid
              selectGeneralTab:(BOOL)selectGeneralTab
                          tmux:(BOOL)tmux
-                        scope:(iTermVariableScope<iTermSessionScope> *)scope;
+                        scope:(iTermVariableScope<iTermSessionScope> * _Nullable)scope
+                   showWindow:(BOOL)show;
 
-- (IBAction)showGlobalTabView:(id)sender;
-- (IBAction)showAppearanceTabView:(id)sender;
-- (IBAction)showProfilesTabView:(id)sender;
-- (IBAction)showKeyboardTabView:(id)sender;
-- (IBAction)showArrangementsTabView:(id)sender;
-- (IBAction)showMouseTabView:(id)sender;
+- (IBAction)showGlobalTabView:(id _Nullable)sender;
+- (IBAction)showAppearanceTabView:(id _Nullable)sender;
+- (IBAction)showProfilesTabView:(id _Nullable)sender;
+- (IBAction)showKeyboardTabView:(id _Nullable)sender;
+- (IBAction)showArrangementsTabView:(id _Nullable)sender;
+- (IBAction)showMouseTabView:(id _Nullable)sender;
 
 - (void)underlyingProfileDidChange;
 
@@ -119,5 +124,10 @@ andEditComponentWithIdentifier:(NSString *)identifier
                           key:(NSString *)key;
 
 - (void)openToPreferenceWithKey:(NSString *)key;
+- (NSArray<iTermSetting *> *)allSettings;
+- (BOOL)toggleSetting:(NSString * _Nullable)key;
+- (BOOL)toggleProfileSetting:(NSString * _Nullable)key;
 
 @end
+
+NS_ASSUME_NONNULL_END

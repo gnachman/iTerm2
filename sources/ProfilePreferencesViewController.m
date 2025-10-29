@@ -1271,4 +1271,27 @@ andEditComponentWithIdentifier:(NSString *)identifier
     return nil;
 }
 
+- (NSArray<iTermSetting *> *)allSettingsWithPathComponents:(NSArray<NSString *> *)pathComponents {
+    return [[self tabViewControllerTuples] flatMapWithBlock:^NSArray *(NSArray *tuple) {
+        NSTabViewItem *tabViewItem = tuple[0];
+        iTermProfilePreferencesBaseViewController *vc = tuple[1];
+        return [vc allSettingsWithPathComponents:[pathComponents arrayByAddingObject:tabViewItem.label]];
+    }];
+}
+
+- (BOOL)hasControlWithKey:(NSString *)key {
+    return [[self tabViewControllers] anyWithBlock:^BOOL(iTermProfilePreferencesBaseViewController *vc) {
+        return [vc hasControlWithKey:key];
+    }];
+}
+
+- (BOOL)tryToggleControlWithKey:(NSString *)key {
+    for (iTermProfilePreferencesBaseViewController *vc in [self tabViewControllers]) {
+        if ([vc hasControlWithKey:key]) {
+            return [vc tryToggleControlWithKey:key];
+        }
+    }
+    return NO;
+}
+
 @end

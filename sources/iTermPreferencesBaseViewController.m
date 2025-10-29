@@ -12,6 +12,7 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermPreferences.h"
 #import "iTermSlider.h"
+#import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -932,6 +933,43 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
             [self updateValueForInfo:info];
         }
     }
+}
+
+- (NSArray<iTermSetting *> *)allSettingsWithPathComponents:(NSArray<NSString *> *)pathComponents {
+    NSDictionary<NSArray<NSString *> *, NSArray<NSView *> *> *dict = [self.view descendantsTabviewTreeWithBelongingToKeysIn:_keyMap];
+    NSMutableArray<iTermSetting *> *settings = [NSMutableArray array];
+    const BOOL isProfile = [self isKindOfClass:[iTermProfilePreferencesBaseViewController class]];
+    [dict enumerateKeysAndObjectsUsingBlock:^(NSArray<NSString *> *components,
+                                              NSArray<NSView *> *views,
+                                              BOOL * _Nonnull stop) {
+        for (NSView *control in views) {
+            PreferenceInfo *info = [_keyMap objectForKey:control];
+            [settings addObject:[[iTermSetting alloc] initWithInfo:info
+                                                         isProfile:isProfile
+                                                    pathComponents:[pathComponents arrayByAddingObjectsFromArray:components]]];
+        }
+    }];
+    return settings;
+}
+
+- (BOOL)hasControlWithKey:(NSString *)key {
+    return [_keys containsObject:key];
+}
+
+- (BOOL)tryToggleControlWithKey:(NSString *)key {
+    [self view];
+    PreferenceInfo *info = [self infoForKey:key];
+    if (info.type != kPreferenceInfoTypeCheckbox &&
+        info.type != kPreferenceInfoTypeInvertedCheckbox) {
+        return NO;
+    }
+    NSButton *button = [NSButton castFrom:info.control];
+    if (!button) {
+        return NO;
+    }
+    const NSControlStateValue valueBefore = button.state;
+    [button performClick:nil];
+    return valueBefore != button.state;
 }
 
 #pragma mark - Private

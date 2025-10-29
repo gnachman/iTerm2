@@ -14,9 +14,9 @@ public protocol SearchableComboViewDelegate: AnyObject {
 
 @objc(iTermSearchableComboViewGroup)
 public class SearchableComboViewGroup: NSObject {
-    let label: String
-    let items: [SearchableComboViewItem]
-    let labelTokens: [String]
+    public let label: String
+    public let items: [SearchableComboViewItem]
+    public let labelTokens: [String]
 
     @objc(initWithLabel:items:)
     public init(_ label: String, items: [SearchableComboViewItem]) {

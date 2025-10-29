@@ -51,6 +51,7 @@ const CGFloat sideMarginWidth = 40;
 @property (nonatomic, readonly) BOOL selectionMovementUnitHidden;
 @property (nonatomic, readonly) BOOL profileLabelHidden;
 @property (nonatomic, readonly) BOOL menuToSelectPopupHidden;
+@property (nonatomic, readonly) BOOL settingToTogglePopupHidden;
 @property (nonatomic, readonly) BOOL shortcutFieldDisableKeyRemapping;
 @property (nonatomic, readonly) BOOL colorPresetsLabelHidden;
 @property (nonatomic, readonly) BOOL colorPresetsPopupHidden;
@@ -78,6 +79,7 @@ const CGFloat sideMarginWidth = 40;
         _selectionMovementUnitHidden = YES;
         _profileLabelHidden = YES;
         _menuToSelectPopupHidden = YES;
+        _settingToTogglePopupHidden = YES;
         _shortcutFieldDisableKeyRemapping = NO;
         _colorPresetsLabelHidden = YES;
         _colorPresetsPopupHidden = YES;
@@ -200,6 +202,12 @@ const CGFloat sideMarginWidth = 40;
                 _helpString = @"Enter copy mode commands to move cursor, toggle selection, and so on. This key binding enters Copy Mode and then acts as though you had pressed the keys listed here. [See a list of all the commands](https://iterm2.com/documentation-copymode.html). Use vim syntax for control, option, and function keys (e.g., `<C-x>` or `<Up>`.";
                 break;
 
+            case KEY_ACTION_TOGGLE_SETTING:
+                _parameterPlaceholder = @"Enter name of menu item";
+                _settingToTogglePopupHidden = NO;
+                _parameterValue = @"";
+                break;
+
             case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
                 _parameterHidden = NO;
                 _parameterPlaceholder = @"Function Call";
@@ -307,6 +315,7 @@ const CGFloat sideMarginWidth = 40;
     IBOutlet NSPopUpButton *_profilePopup;
     IBOutlet NSPopUpButton *_selectionMovementUnit;
     IBOutlet iTermMenuItemPopupView *_menuToSelectPopup;
+    IBOutlet iTermSettingPopupView *_settingToTogglePopup;
     IBOutlet NSTextField *_profileLabel;
     IBOutlet NSTextField *_colorPresetsLabel;
     IBOutlet NSPopUpButton *_colorPresetsPopup;
@@ -462,6 +471,7 @@ const CGFloat sideMarginWidth = 40;
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Toggle Fullscreen" tag:KEY_ACTION_TOGGLE_FULLSCREEN],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Toggle Pin Hotkey Window" tag:KEY_ACTION_TOGGLE_HOTKEY_WINDOW_PINNING],
             _profileType != ProfileTypeTerminal ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:@"Toggle Mouse Reporting" tag:KEY_ACTION_TOGGLE_MOUSE_REPORTING],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Toggle Setting" tag:KEY_ACTION_TOGGLE_SETTING],
         ] arrayByRemovingNulls]],
 
         [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Selection" items:@[
@@ -488,7 +498,7 @@ const CGFloat sideMarginWidth = 40;
 
     _sequenceTableViewController.delegate = self;
     _menuToSelectPopup.delegate = self;
-
+    _settingToTogglePopup.delegate = self;
 
     switch (self.mode) {
         case iTermEditKeyActionWindowControllerModeKeyboardShortcut:
@@ -563,6 +573,9 @@ const CGFloat sideMarginWidth = 40;
                 [_menuToSelectPopup selectItemWithTitle:parts.firstObject];
             }
         }
+    } else if (action == KEY_ACTION_TOGGLE_SETTING) {
+        [_settingToTogglePopup reloadData];
+        [_settingToTogglePopup selectItemWithIdentifier:parameterValue ?: @""];
     }
 
     if (_pasteSpecialViewController == nil) {
@@ -732,6 +745,7 @@ const CGFloat sideMarginWidth = 40;
     [_selectionMovementUnit setHidden:config.selectionMovementUnitHidden];
     [_profileLabel setHidden:config.profileLabelHidden];
     [_menuToSelectPopup setHidden:config.menuToSelectPopupHidden];
+    [_settingToTogglePopup setHidden:config.settingToTogglePopupHidden];
     _shortcutField.disableKeyRemapping = config.shortcutFieldDisableKeyRemapping;
     [_colorPresetsLabel setHidden:config.colorPresetsLabelHidden];
     [_colorPresetsPopup setHidden:config.colorPresetsPopupHidden];
@@ -804,6 +818,7 @@ const CGFloat sideMarginWidth = 40;
     return (!_parameter.isHidden ||
             !_profilePopup.isHidden ||
             !_menuToSelectPopup.isHidden ||
+            !_settingToTogglePopup.isHidden ||
             !_colorPresetsPopup.isHidden ||
             !_snippetsPopup.isHidden ||
             !_pasteSpecialViewContainer.isHidden ||
@@ -984,6 +999,8 @@ const CGFloat sideMarginWidth = 40;
             } else {
                 return _menuToSelectPopup.selectedTitle;
             }
+        case KEY_ACTION_TOGGLE_SETTING:
+            return _settingToTogglePopup.selectedIdentifier;
 
         case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE:
         case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
@@ -1044,6 +1061,7 @@ const CGFloat sideMarginWidth = 40;
         [_colorPresetsPopup loadColorPresetsSelecting:_colorPresetsPopup.selectedItem.representedObject];
         [_snippetsPopup populateWithSnippetsSelectingActionKey:_snippetsPopup.selectedItem.representedObject];
         [_menuToSelectPopup reloadData];
+        [_settingToTogglePopup reloadData];
         const BOOL secondary = (view == _secondaryComboView);
         if (secondary) {
             [_sequenceTableViewController setActionForCurrentItem:view.selectedTag];
@@ -1053,6 +1071,8 @@ const CGFloat sideMarginWidth = 40;
             [_sequenceTableViewController reloadCurrentItem:[self secondaryAction]];
         }
     } else if (view == _menuToSelectPopup.comboView && view != nil) {
+        [_sequenceTableViewController reloadCurrentItem:[self secondaryAction]];
+    } else if (view == _settingToTogglePopup.comboView && view != nil) {
         [_sequenceTableViewController reloadCurrentItem:[self secondaryAction]];
     }
     [self updateError];

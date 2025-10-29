@@ -225,6 +225,9 @@ paranoidlibrailroad: force
 paranoid-colorpicker: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) ColorPicker
 	
+paranoid-SearchableComboListView: force
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) SearchableComboListView
+
 # You probably want make paranoiddeps to avoid depending on Hombrew stuff.
 deps: force fatlibsixel CoreParse NMSSH bindeps libgit2 sparkle librailroad_dsl sfsymbolenum pwmadapters
 

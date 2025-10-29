@@ -91,6 +91,9 @@ protocol iTermBrowserViewControllerDelegate: AnyObject, iTermBrowserFindManagerD
                                   announce: BrowserAnnouncement<T>) async -> T?
     func browserViewController(_ controller: iTermBrowserViewController,
                                handleKeyDown event: NSEvent) -> Bool
+    func browserViewControllerToggleSetting(_ controller: iTermBrowserViewController,
+                                            key: String,
+                                            isProfile: Bool)
 }
 
 @MainActor
@@ -1575,6 +1578,11 @@ extension iTermBrowserViewController: iTermBrowserActionPerforming {
                 }
             }
         }
+    }
+
+    func actionPerformingToggleSetting(key: String,
+                                       isProfile: Bool) {
+        delegate?.browserViewControllerToggleSetting(self, key: key, isProfile: isProfile)
     }
 }
 

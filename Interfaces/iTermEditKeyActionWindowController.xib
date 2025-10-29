@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24123.1" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24127" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24123.1"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24127"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -27,6 +27,7 @@
                 <outlet property="_selectionMovementUnit" destination="otv-pU-Wmk" id="00N-Yc-D4i"/>
                 <outlet property="_sequenceContainer" destination="oMF-mS-IVX" id="KSW-Gr-KxL"/>
                 <outlet property="_sequenceTableViewController" destination="VvU-kS-tIR" id="Qj0-dZ-ekb"/>
+                <outlet property="_settingToTogglePopup" destination="nFt-9i-VJ3" id="9Jd-ik-DPt"/>
                 <outlet property="_shortcutField" destination="OcE-sI-T64" id="El9-Wc-JTH"/>
                 <outlet property="_snippetsPopup" destination="cTx-aj-BkY" id="FtX-yX-BLZ"/>
                 <outlet property="_touchBarLabel" destination="oHw-49-aB1" id="SwV-cq-OK3"/>
@@ -206,11 +207,18 @@ Gw
                                 <rect key="frame" x="19" y="-276" width="530" height="387"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <subviews>
-                                    <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Vc6-sA-YtV" customClass="iTermMenuItemPopupView">
+                                    <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Vc6-sA-YtV" userLabel="Menu Item Popup View" customClass="iTermMenuItemPopupView">
                                         <rect key="frame" x="127" y="334" width="279" height="28"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <connections>
                                             <outlet property="delegate" destination="-2" id="Rfi-zY-Knn"/>
+                                        </connections>
+                                    </customView>
+                                    <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="nFt-9i-VJ3" userLabel="Setting Popup" customClass="iTermSettingPopupView">
+                                        <rect key="frame" x="127" y="334" width="279" height="28"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                        <connections>
+                                            <outlet property="delegate" destination="-2" id="KlO-x8-4IR"/>
                                         </connections>
                                     </customView>
                                     <textField hidden="YES" focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7I3-hB-fiC">

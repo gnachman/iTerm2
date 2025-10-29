@@ -10097,6 +10097,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         case KEY_ACTION_COPY_MODE:
             return NO;
 
+        case KEY_ACTION_TOGGLE_SETTING:
+            if (action.toggleSettingIsProfile) {
+                return NO;
+            }
+            [PreferencePanel.sharedInstance toggleSetting:action.toggleSettingKey];
+            return YES;
+
         case KEY_ACTION_COPY_OR_SEND:
             return [[NSApp mainMenu] performActionForItemWithSelector:@selector(copy:)];
 
@@ -10595,9 +10602,34 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             break;
         }
 
+        case KEY_ACTION_TOGGLE_SETTING: {
+            [self toggleSettingWithKey:action.toggleSettingKey
+                             isProfile:action.toggleSettingIsProfile];
+            break;
+        }
+
         default:
             XLog(@"Unknown key action %@", action);
             break;
+    }
+}
+
+- (void)toggleSettingWithKey:(NSString *)key
+                   isProfile:(BOOL)isProfile {
+    if (isProfile) {
+        PreferencePanel *panel = [PreferencePanel sessionsInstance];
+        NSString *newGuid = [self divorceAddressBookEntryFromPreferences];
+        [self willOpenEditSessionSettings];
+        [panel openToProfileWithGuid:newGuid
+                    selectGeneralTab:NO
+                                tmux:self.isTmuxClient
+                               scope:self.variablesScope
+                          showWindow:NO];
+        [panel toggleProfileSetting:key];
+    } else {
+        if ([PreferencePanel.sharedInstance toggleSetting:key]) {
+            return;
+        }
     }
 }
 

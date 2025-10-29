@@ -138,6 +138,182 @@
         "printedName": "SearchableComboViewGroup",
         "children": [
           {
+            "kind": "Var",
+            "name": "label",
+            "printedName": "label",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:23SearchableComboListView0abD5GroupC5labelSSvp",
+            "mangledName": "$s23SearchableComboListView0abD5GroupC5labelSSvp",
+            "moduleName": "SearchableComboListView",
+            "declAttributes": [
+              "Final",
+              "HasStorage",
+              "AccessControl"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:23SearchableComboListView0abD5GroupC5labelSSvg",
+                "mangledName": "$s23SearchableComboListView0abD5GroupC5labelSSvg",
+                "moduleName": "SearchableComboListView",
+                "implicit": true,
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "items",
+            "printedName": "items",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[SearchableComboListView.SearchableComboViewItem]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "SearchableComboViewItem",
+                    "printedName": "SearchableComboListView.SearchableComboViewItem",
+                    "usr": "c:@M@SearchableComboListView@objc(cs)iTermSearchableComboViewItem"
+                  }
+                ],
+                "usr": "s:Sa"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:23SearchableComboListView0abD5GroupC5itemsSayAA0abD4ItemCGvp",
+            "mangledName": "$s23SearchableComboListView0abD5GroupC5itemsSayAA0abD4ItemCGvp",
+            "moduleName": "SearchableComboListView",
+            "declAttributes": [
+              "Final",
+              "HasStorage",
+              "AccessControl"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[SearchableComboListView.SearchableComboViewItem]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "SearchableComboViewItem",
+                        "printedName": "SearchableComboListView.SearchableComboViewItem",
+                        "usr": "c:@M@SearchableComboListView@objc(cs)iTermSearchableComboViewItem"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:23SearchableComboListView0abD5GroupC5itemsSayAA0abD4ItemCGvg",
+                "mangledName": "$s23SearchableComboListView0abD5GroupC5itemsSayAA0abD4ItemCGvg",
+                "moduleName": "SearchableComboListView",
+                "implicit": true,
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "labelTokens",
+            "printedName": "labelTokens",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[Swift.String]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sa"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:23SearchableComboListView0abD5GroupC11labelTokensSaySSGvp",
+            "mangledName": "$s23SearchableComboListView0abD5GroupC11labelTokensSaySSGvp",
+            "moduleName": "SearchableComboListView",
+            "declAttributes": [
+              "Final",
+              "HasStorage",
+              "AccessControl"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[Swift.String]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:23SearchableComboListView0abD5GroupC11labelTokensSaySSGvg",
+                "mangledName": "$s23SearchableComboListView0abD5GroupC11labelTokensSaySSGvg",
+                "moduleName": "SearchableComboListView",
+                "implicit": true,
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
             "kind": "Constructor",
             "name": "init",
             "printedName": "init(_:items:)",
@@ -1892,21 +2068,21 @@
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "BooleanLiteral",
-      "offset": 1686,
+      "offset": 1707,
       "length": 4,
       "value": "true"
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "IntegerLiteral",
-      "offset": 2334,
+      "offset": 2355,
       "length": 2,
       "value": "99"
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "BooleanLiteral",
-      "offset": 2402,
+      "offset": 2423,
       "length": 5,
       "value": "false"
     },

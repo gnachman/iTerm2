@@ -393,6 +393,12 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
         }
         return false
     }
+
+    func browserViewControllerToggleSetting(_ controller: iTermBrowserViewController,
+                                            key: String,
+                                            isProfile: Bool) {
+        toggleSetting(withKey: key, isProfile: isProfile)
+    }
 }
 
 // MARK: - Browser Find Support

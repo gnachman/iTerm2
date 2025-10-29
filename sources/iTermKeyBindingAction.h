@@ -111,7 +111,8 @@ typedef NS_ENUM(int, KEY_ACTION) {
     KEY_ACTION_ALERT_ON_NEXT_MARK = 71,
     KEY_ACTION_COPY_INTERPOLATED_STRING = 72,
     KEY_ACTION_COPY_MODE = 73,
-    KEY_ACTION_BYPASS = 74
+    KEY_ACTION_BYPASS = 74,
+    KEY_ACTION_TOGGLE_SETTING = 75
 };
 
 @interface iTermKeyBindingAction : NSObject
@@ -151,6 +152,15 @@ typedef NS_ENUM(int, KEY_ACTION) {
 @interface NSString(iTermKeyBindingAction)
 + (instancetype)parameterForKeyBindingActionSequence:(NSArray<iTermKeyBindingAction *> *)actions;
 - (NSArray<iTermKeyBindingAction *> *)keyBindingActionsFromSequenceParameter;
+@end
+
+@interface iTermKeyBindingAction(ParameterHelper)
+@property (nonatomic, nullable, readonly) NSString *toggleSettingKey;
+@property (nonatomic, nullable, readonly) NSString *toggleSettingLabel;
+@property (nonatomic, readonly) BOOL toggleSettingIsProfile;
++ (NSString *)toggleSettingParameterForKey:(NSString *)key
+                                 isProfile:(BOOL)isProfile
+                                     label:(NSString *)label;
 @end
 
 NS_ASSUME_NONNULL_END

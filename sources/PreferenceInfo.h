@@ -31,6 +31,7 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
 
 @class iTermProfilePreferenceObserver;
 @class iTermPreferencesSearchDocument;
+@class iTermSetting;
 @class PreferenceInfo;
 @class ProfileModel;
 
