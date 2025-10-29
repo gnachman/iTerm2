@@ -698,66 +698,111 @@ iTermCommandInfoViewControllerDelegate>
     const NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
     const VT100GridCoord coord = VT100GridCoordMake(clickPoint.x, clickPoint.y);
     __weak __typeof(self) weakSelf = self;
+    const NSPoint mouseLocation = [NSEvent mouseLocation];
     [_urlActionHelper urlActionForClickAtCoord:coord completion:^(URLAction *action) {
-        [weakSelf finishHandlingQuickLookWithEvent:event action:action];
+        [weakSelf finishHandlingQuickLookWithEvent:event action:action mouseLocation:mouseLocation];
     }];
 }
 
+- (void)disambiguateQuicklookForEvent:(NSEvent *)event
+                           clickPoint:(NSPoint)clickPoint
+                                  url:(NSURL *)url
+                            urlAction:(URLAction *)urlAction
+                        mouseLocation:(NSPoint)mouseLocation {
+    iTermSimpleContextMenu *menu = [[iTermSimpleContextMenu alloc] init];
+    __weak __typeof(self) weakSelf = self;
+    [menu addItemWithTitle:@"Look Up in Dictionary" action:^{
+        [weakSelf showDefinitionForWordAt:clickPoint];
+    }];
+    [menu addItemWithTitle:@"Quick Look" action:^{
+        [weakSelf openQuickLookForURL:url
+                            urlAction:urlAction
+                            withEvent:event];
+    }];
+
+    [menu showInView:self forEvent:event];
+}
+
 - (void)finishHandlingQuickLookWithEvent:(NSEvent *)event
-                                  action:(URLAction *)urlAction {
-    if (!urlAction && [iTermAdvancedSettingsModel performDictionaryLookupOnQuickLook]) {
-        NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
-        [self showDefinitionForWordAt:clickPoint];
-        return;
-    }
-    const VT100GridCoord visualCoord = [self coordForMouseLocation:[NSEvent mouseLocation]];
-    if (!VT100GridWindowedRangeContainsCoord(urlAction.visualRange, visualCoord)) {
-        return;
-    }
+                                  action:(URLAction *)urlAction
+                           mouseLocation:(NSPoint)mouseLocation {
+    const VT100GridCoord visualCoord = [self coordForMouseLocation:mouseLocation];
+    BOOL canQuickLook = urlAction != nil && VT100GridWindowedRangeContainsCoord(urlAction.visualRange, visualCoord);
     NSURL *url = nil;
+    if (canQuickLook) {
+        url = [self urlForQuickLookWithURLAction:urlAction withEvent:event];
+        if (url == nil) {
+            canQuickLook = NO;
+        }
+    }
+    const BOOL canLookUp = [iTermAdvancedSettingsModel performDictionaryLookupOnQuickLook];
+    const NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
+
+    if (canQuickLook) {
+        if (canLookUp) {
+            [self disambiguateQuicklookForEvent:event
+                                     clickPoint:clickPoint
+                                            url:url
+                                      urlAction:urlAction
+                                  mouseLocation:mouseLocation];
+        } else {
+            [self openQuickLookForURL:url
+                            urlAction:urlAction
+                            withEvent:event];
+        }
+    } else if (canLookUp) {
+        [self showDefinitionForWordAt:clickPoint];
+    }
+}
+
+- (NSURL *)urlForQuickLookWithURLAction:(URLAction *)urlAction
+                              withEvent:(NSEvent *)event {
     switch (urlAction.actionType) {
         case kURLActionSecureCopyFile:
-            url = [urlAction.identifier URL];
-            break;
+            // The only value of this is for debugging scp problems.
+            return [urlAction.identifier URL];
 
         case kURLActionOpenExistingFile:
-            url = [NSURL fileURLWithPath:urlAction.fullPath];
-            break;
+            return [NSURL fileURLWithPath:urlAction.fullPath];
 
         case kURLActionOpenImage:
-            url = [NSURL fileURLWithPath:[urlAction.identifier nameForNewSavedTempFile]];
-            break;
+            return [NSURL fileURLWithPath:[urlAction.identifier nameForNewSavedTempFile]];
 
         case kURLActionOpenURL: {
             if (!urlAction.string) {
                 break;
             }
-            url = [NSURL URLWithUserSuppliedString:urlAction.string];
+            NSURL *url = [NSURL URLWithUserSuppliedString:urlAction.string];
             if (![[self allowedQuickLookURLSchemes] containsObject:url.scheme]) {
-                return;
+                return nil;
             }
-            if (url && [self showWebkitPopoverAtPoint:event.locationInWindow url:url]) {
-                return;
-            }
-            break;
+            return url;
         }
         case kURLActionShowCommandInfo:
         case kURLActionSmartSelectionAction:
-            break;
+            return nil;
+    }
+    return nil;
+}
+
+- (void)openQuickLookForURL:(NSURL *)url
+                  urlAction:(URLAction *)urlAction
+                  withEvent:(NSEvent *)event {
+    if (urlAction.actionType == kURLActionOpenURL) {
+        [self showWebkitPopoverAtPoint:event.locationInWindow url:url];
+        return;
     }
 
-    if (url) {
-        NSPoint windowPoint = event.locationInWindow;
-        NSRect windowRect = NSMakeRect(windowPoint.x - self.charWidth / 2,
-                                       windowPoint.y - self.lineHeight / 2,
-                                       self.charWidth,
-                                       self.lineHeight);
+    NSPoint windowPoint = event.locationInWindow;
+    NSRect windowRect = NSMakeRect(windowPoint.x - self.charWidth / 2,
+                                   windowPoint.y - self.lineHeight / 2,
+                                   self.charWidth,
+                                   self.lineHeight);
 
-        NSRect screenRect = [self.window convertRectToScreen:windowRect];
-        self.quickLookController = [[iTermQuickLookController alloc] init];
-        [self.quickLookController addURL:url];
-        [self.quickLookController showWithSourceRect:screenRect controller:self.window.delegate];
-    }
+    NSRect screenRect = [self.window convertRectToScreen:windowRect];
+    self.quickLookController = [[iTermQuickLookController alloc] init];
+    [self.quickLookController addURL:url];
+    [self.quickLookController showWithSourceRect:screenRect controller:self.window.delegate];
 }
 
 - (void)showDefinitionForWordAt:(NSPoint)clickPoint {
@@ -796,30 +841,25 @@ iTermCommandInfoViewControllerDelegate>
     }
 }
 
-- (BOOL)showWebkitPopoverAtPoint:(NSPoint)pointInWindow url:(NSURL *)url {
+- (void)showWebkitPopoverAtPoint:(NSPoint)pointInWindow url:(NSURL *)url {
     WKWebView *webView = [[iTermWebViewFactory sharedInstance] webViewWithDelegate:nil];
-    if (webView) {
-        NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url];
-        [webView loadRequest:request];
-        NSPopover *popover = [[NSPopover alloc] init];
-        NSViewController *viewController = [[iTermWebViewWrapperViewController alloc] initWithWebView:webView
-                                                                                            backupURL:url];
-        popover.contentViewController = viewController;
-        popover.contentSize = viewController.view.frame.size;
-        NSRect rect = NSMakeRect(pointInWindow.x - self.charWidth / 2,
-                                 pointInWindow.y - self.lineHeight / 2,
-                                 self.charWidth,
-                                 self.lineHeight);
-        rect = [self convertRect:rect fromView:nil];
-        popover.behavior = NSPopoverBehaviorSemitransient;
-        popover.delegate = self;
-        [popover showRelativeToRect:rect
-                             ofView:self
-                      preferredEdge:NSRectEdgeMinY];
-        return YES;
-    } else {
-        return NO;
-    }
+    NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url];
+    [webView loadRequest:request];
+    NSPopover *popover = [[NSPopover alloc] init];
+    NSViewController *viewController = [[iTermWebViewWrapperViewController alloc] initWithWebView:webView
+                                                                                        backupURL:url];
+    popover.contentViewController = viewController;
+    popover.contentSize = viewController.view.frame.size;
+    NSRect rect = NSMakeRect(pointInWindow.x - self.charWidth / 2,
+                             pointInWindow.y - self.lineHeight / 2,
+                             self.charWidth,
+                             self.lineHeight);
+    rect = [self convertRect:rect fromView:nil];
+    popover.behavior = NSPopoverBehaviorSemitransient;
+    popover.delegate = self;
+    [popover showRelativeToRect:rect
+                         ofView:self
+                  preferredEdge:NSRectEdgeMinY];
 }
 
 #pragma mark - Copy to Pasteboard

@@ -121,9 +121,7 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
 }
 
 - (WKWebView *)webViewWithDelegate:(id<iTermWebViewDelegate>)delegate {
-    Class WKWebViewClass = NSClassFromString(@"WKWebView");
-    Class WKWebViewConfigurationClass = NSClassFromString(@"WKWebViewConfiguration");
-    WKWebViewConfiguration *configuration = [[WKWebViewConfigurationClass alloc] init];
+    WKWebViewConfiguration *configuration = [[WKWebViewConfiguration alloc] init];
 
     NSString *webUserAgent = [iTermAdvancedSettingsModel webUserAgent];
     if (!webUserAgent.length) {
@@ -143,7 +141,7 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
 
     [self registerUserScriptInConfiguration:configuration delegate:delegate];
     configuration.websiteDataStore = [NSClassFromString(@"WKWebsiteDataStore") defaultDataStore];
-    WKWebView *webView = [[WKWebViewClass alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)
+    WKWebView *webView = [[WKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)
                                                  configuration:configuration];
     if (webUserAgent.length) {
         webView.customUserAgent = webUserAgent;
