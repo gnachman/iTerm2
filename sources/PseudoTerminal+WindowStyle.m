@@ -170,9 +170,9 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
                                                                        defer:defer];
     myWindow.collectionBehavior = [self desiredWindowCollectionBehavior];
     if (@available(macOS 26, *)) {
-	// macOS 26 forces me to use the .titled window style and set
-	// titleVisibility to .hidden. If I don't use .titled then the window
-	// gets ugly square corners.
+        // macOS 26 forces me to use the .titled window style and set
+        // titleVisibility to .hidden. If I don't use .titled then the window
+        // gets ugly square corners.
         myWindow.titleVisibility = [PseudoTerminal shouldHideWindowTitleForWindowType:windowType] ? NSWindowTitleHidden : NSWindowTitleVisible;
     }
     if (windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
@@ -1044,11 +1044,6 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     if (![iTermAdvancedSettingsModel allowLiveResize]) {
         resizable = 0;
     }
-    NSWindowStyleMask tahoeTitled = 0;
-    if (@available(macOS 26, *)) {
-	// See note at callsite of shouldHideWindowTitleForWindowType:
-        tahoeTitled = NSWindowStyleMaskTitled;
-    }
     switch (iTermThemedWindowType(windowType)) {
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_BOTTOM:
@@ -1060,7 +1055,7 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
         case WINDOW_TYPE_RIGHT_PARTIAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
             return (mask |
-                    tahoeTitled |
+                    NSWindowStyleMaskTitled |
                     NSWindowStyleMaskFullSizeContentView |
                     NSWindowStyleMaskClosable |
                     NSWindowStyleMaskMiniaturizable |
@@ -1071,7 +1066,7 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
 
         case WINDOW_TYPE_COMPACT:
             return (mask |
-                    tahoeTitled |
+                    NSWindowStyleMaskTitled |
                     NSWindowStyleMaskFullSizeContentView |
                     NSWindowStyleMaskClosable |
                     NSWindowStyleMaskMiniaturizable |
@@ -1079,7 +1074,7 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
 
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
             return (mask |
-                    tahoeTitled |
+                    NSWindowStyleMaskTitled |
                     NSWindowStyleMaskFullSizeContentView |
                     NSWindowStyleMaskClosable |
                     NSWindowStyleMaskMiniaturizable |
