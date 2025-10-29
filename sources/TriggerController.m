@@ -480,6 +480,9 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 }
 
 - (void)setGuid:(NSString *)guid {
+    if ([guid isEqual:_guid]) {
+        return;
+    }
     _guid = [guid copy];
     [self reloadData];
     [self updateUseInterpolatedStringParametersState];
