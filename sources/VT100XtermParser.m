@@ -259,7 +259,8 @@ typedef enum {
 }
 
 // Returns the enum value for the mode.
-+ (VT100TerminalTokenType)tokenTypeForMode:(int)mode {
++ (VT100TerminalTokenType)tokenTypeForMode:(int)mode
+                                      data:(NSString *)data {
     static NSDictionary *theMap = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -306,6 +307,21 @@ typedef enum {
 
     NSNumber *enumNumber = theMap[@(mode)];
     if (enumNumber) {
+        if (mode == 9) {
+            // If the next parameter is a number, return VT00_NOTSUPPORT,
+            // otherwise return ITERM_USER_NOTIFICATION.
+            // This is to ignore unwanted OSC 9 ; n ; ... sequences where n is
+            // a number.
+            NSArray *components = [data componentsSeparatedByString:@";"];
+            if (components.count > 0) {
+                NSString *firstToken = components.firstObject;
+                NSScanner *scanner = [NSScanner scannerWithString:firstToken];
+                NSInteger intValue;
+                if ([scanner scanInteger:&intValue] && scanner.isAtEnd) {
+                    return VT100_NOTSUPPORT;
+                }
+            }
+        }
         return [enumNumber intValue];
     } else {
         return VT100_NOTSUPPORT;
@@ -454,7 +470,8 @@ typedef enum {
                 } else {
                     result.string = [[[NSString alloc] initWithData:data
                                                            encoding:encoding] autorelease];
-                    result->type = [self tokenTypeForMode:mode];
+                    result->type = [self tokenTypeForMode:mode
+                                                     data:result.string];
                     DLog(@"Finished parsing, returning type=%d", result->type);
                     if (result->type == XTERMCC_SET_KVP) {
                         [self parseKeyValuePairInToken:result];
