@@ -2366,6 +2366,9 @@ CA
                                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                         <font key="font" metaFont="system"/>
                                     </buttonCell>
+                                    <userDefinedRuntimeAttributes>
+                                        <userDefinedRuntimeAttribute type="boolean" keyPath="hiddenFromActions" value="YES"/>
+                                    </userDefinedRuntimeAttributes>
                                     <connections>
                                         <action selector="settingChanged:" target="dVg-Ac-SiZ" id="srb-k2-P02"/>
                                     </connections>
@@ -4572,6 +4575,7 @@ CA
                             <buttonCell key="cell" type="check" title="…even if it is in an unselected tab or split pane" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="xLu-6A-YiV">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
+                                <accessibility description="A session may cause the window to resize even if it is in an unselected tab or split pane"/>
                             </buttonCell>
                             <connections>
                                 <action selector="settingChanged:" target="gMD-DK-gev" id="Kq4-5G-JFU"/>

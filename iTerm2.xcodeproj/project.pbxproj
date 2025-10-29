@@ -1005,6 +1005,8 @@
 		A605A18F2EB020070072ED7E /* iTermCoreSearch.m in Sources */ = {isa = PBXBuildFile; fileRef = A605A18E2EB020060072ED7E /* iTermCoreSearch.m */; };
 		A605A1D52EB17D840072ED7E /* iTermSetting.swift in Sources */ = {isa = PBXBuildFile; fileRef = A605A1D42EB17D840072ED7E /* iTermSetting.swift */; };
 		A605A1D72EB187D00072ED7E /* NSView+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A605A1D62EB187D00072ED7E /* NSView+iTerm.swift */; };
+		A605A1DB2EB292530072ED7E /* NSButton+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A605A1DA2EB292530072ED7E /* NSButton+iTerm.swift */; };
+		A605A1DD2EB293550072ED7E /* SettingPopupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A605A1DC2EB293550072ED7E /* SettingPopupView.swift */; };
 		A605D4B319CF796800D40343 /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A624232519CF70DF00182C08 /* NMSSH.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A605D4B419CF796F00D40343 /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A624232519CF70DF00182C08 /* NMSSH.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A6069EAC2DEE35E000EE6CC7 /* MultipartMessageCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6069EAB2DEE35DD00EE6CC7 /* MultipartMessageCellView.swift */; };
@@ -6491,6 +6493,8 @@
 		A605A18E2EB020060072ED7E /* iTermCoreSearch.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCoreSearch.m; sourceTree = "<group>"; };
 		A605A1D42EB17D840072ED7E /* iTermSetting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermSetting.swift; sourceTree = "<group>"; };
 		A605A1D62EB187D00072ED7E /* NSView+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSView+iTerm.swift"; sourceTree = "<group>"; };
+		A605A1DA2EB292530072ED7E /* NSButton+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSButton+iTerm.swift"; sourceTree = "<group>"; };
+		A605A1DC2EB293550072ED7E /* SettingPopupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingPopupView.swift; sourceTree = "<group>"; };
 		A6069EAB2DEE35DD00EE6CC7 /* MultipartMessageCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultipartMessageCellView.swift; sourceTree = "<group>"; };
 		A6069EAD2DEE70B200EE6CC7 /* document.on.document.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = document.on.document.png; path = images/document.on.document.png; sourceTree = "<group>"; };
 		A6069EAE2DEE70B200EE6CC7 /* document.on.document@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = "document.on.document@2x.png"; path = "images/document.on.document@2x.png"; sourceTree = "<group>"; };
@@ -10438,6 +10442,7 @@
 				A6DCE3F32BFFCA6E005586F5 /* PlaceholderTextView.swift */,
 				A6CB24C02C682B6300005824 /* HueVisualizationView.swift */,
 				A605A18A2EAD8CAE0072ED7E /* iTermMetalLayerBox.swift */,
+				A605A1DC2EB293550072ED7E /* SettingPopupView.swift */,
 			);
 			name = "Misc. Views";
 			sourceTree = "<group>";
@@ -10642,31 +10647,20 @@
 		1D9DDE31142E73E300275650 /* Categories */ = {
 			isa = PBXGroup;
 			children = (
-				A6E312B32E397EBD008222DE /* iTermBaseWKWebView.m */,
-				A6E312B12E397DF2008222DE /* iTermBaseWKWebView.h */,
-				A6E312612E38633F008222DE /* NSObject.swift */,
-				A6A3EDC92E0CE2A700D711DA /* NSMenu+iTerm.m */,
-				A6A3EDC72E0CE27900D711DA /* NSMenu+iTerm.h */,
-				A6E304422DFB394A0029CAB4 /* Codable+iTerm.swift */,
-				A61940062DF88E71002ABD3C /* Dictionary+iTerm.swift */,
-				A6069F132DF25D2C00EE6CC7 /* NSMutableAttributedString+iTerm.swift */,
-				A6069F112DF25D0900EE6CC7 /* Data+iTerm.swift */,
-				A6069EBB2DEFC3B000EE6CC7 /* NSImage+iTerm.swift */,
-				A60EF16B2DE6564D002837B9 /* DateFormatter+iTerm.swift */,
-				A6A723692DBD8DBC00A8115D /* NotificationCenter+iTerm.swift */,
-				A662B2462D937C6900C3D79A /* NSTableView+iTerm.swift */,
-				A6EC47A52D84BD680079845B /* JSONSerialization+iTerm.swift */,
-				A6631A1E2D6E4E3E006C603B /* Result+iTerm.swift */,
-				A6EB64392D5D800900481D33 /* NSDictionaryCodableBox.swift */,
-				A61E0C422D54300B00D4633A /* NSFileManager+iTerm.swift */,
-				A65B1C472D2478B500F5A740 /* NSString+iTerm.swift */,
-				A6BBBFD22CC876E2000A697C /* IndexSet+iTerm.swift */,
-				A6BBBFD02CC876CC000A697C /* Range+iTerm.swift */,
 				A6A9839227E5C450003319D1 /* Array+iTerm.swift */,
+				A6E304422DFB394A0029CAB4 /* Codable+iTerm.swift */,
+				A6069F112DF25D0900EE6CC7 /* Data+iTerm.swift */,
+				A60EF16B2DE6564D002837B9 /* DateFormatter+iTerm.swift */,
+				A61940062DF88E71002ABD3C /* Dictionary+iTerm.swift */,
 				1D9F6AB7140C9DC4009B5CD4 /* FutureMethods.m */,
 				A616839722F94AEE00661F71 /* GPBEnumArray+iTerm.h */,
 				A616839822F94AEE00661F71 /* GPBEnumArray+iTerm.m */,
+				A6BBBFD22CC876E2000A697C /* IndexSet+iTerm.swift */,
 				A6D1A3EE2C7E9A3A00FECDF2 /* Int+iTerm.swift */,
+				A6E312B12E397DF2008222DE /* iTermBaseWKWebView.h */,
+				A6E312B32E397EBD008222DE /* iTermBaseWKWebView.m */,
+				A6EC47A52D84BD680079845B /* JSONSerialization+iTerm.swift */,
+				A6A723692DBD8DBC00A8115D /* NotificationCenter+iTerm.swift */,
 				53BBA0F3214205200074D061 /* NSAlert+iTerm.h */,
 				53BBA0F4214205200074D061 /* NSAlert+iTerm.m */,
 				A621DDA6211D01D50095A399 /* NSAppearance+iTerm.h */,
@@ -10687,11 +10681,14 @@
 				1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */,
 				A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */,
 				A61ABBBA1AE5F38C004656C2 /* NSDictionary+Profile.m */,
+				A6EB64392D5D800900481D33 /* NSDictionaryCodableBox.swift */,
 				A6E77F8E1A2449EF009B1CB6 /* NSEvent+iTerm.m */,
 				A61562512C5FFF830085B285 /* NSEvent+iTerm.swift */,
 				1D67ABAA14285D6000D5DA4E /* NSFileManager+iTerm.m */,
+				A61E0C422D54300B00D4633A /* NSFileManager+iTerm.swift */,
 				A6A2698218FE48B200437DA9 /* NSFont+iTerm.m */,
 				A69B45B7197C60FB00F5444D /* NSImage+iTerm.m */,
+				A6069EBB2DEFC3B000EE6CC7 /* NSImage+iTerm.swift */,
 				A675271B213DB6E800035F2B /* NSImageView+iTerm.h */,
 				A675271C213DB6E800035F2B /* NSImageView+iTerm.m */,
 				53D0FD4B237DC30E00DAFA8A /* NSIndexSet+iTerm.h */,
@@ -10700,14 +10697,18 @@
 				530AB89E20B08CAF00D2AA08 /* NSJSONSerialization+iTerm.m */,
 				A6EFF21A1D1CA9F800806EEF /* NSLocale+iTerm.h */,
 				A6EFF21B1D1CA9F800806EEF /* NSLocale+iTerm.m */,
+				A6A3EDC72E0CE27900D711DA /* NSMenu+iTerm.h */,
+				A6A3EDC92E0CE2A700D711DA /* NSMenu+iTerm.m */,
 				A6E7E121286E41730067642D /* NSMenu+iTerm.swift */,
 				A60014F518550F3900CE38D8 /* NSMutableAttributedString+iTerm.m */,
+				A6069F132DF25D2C00EE6CC7 /* NSMutableAttributedString+iTerm.swift */,
 				A680AA1718CEBF5C0034D4F8 /* NSMutableData+iTerm.m */,
 				A61ABBC11AE5F54A004656C2 /* NSMutableDictionary+Profile.m */,
 				A6566751219EA582005FE60E /* NSNull+iTerm.h */,
 				A6566752219EA582005FE60E /* NSNull+iTerm.m */,
 				A656674D219EA46E005FE60E /* NSNumber+iTerm.h */,
 				A656674E219EA46E005FE60E /* NSNumber+iTerm.m */,
+				A6E312612E38633F008222DE /* NSObject.swift */,
 				A68A30CE186D1414007F550F /* NSObject+iTerm.m */,
 				A60D85A71A3A8105003AEE22 /* NSPasteboard+iTerm.m */,
 				A6D1A3E82C7E99A100FECDF2 /* NSPoint+iTerm.swift */,
@@ -10725,10 +10726,12 @@
 				A6024B78254C93DA0036D6CF /* NSSet+iTerm.m */,
 				A6E716D429FDBF540018738D /* NSSet+iTerm.swift */,
 				A6D1A3EA2C7E99E100FECDF2 /* NSSize+iTerm.swift */,
+				A65B1C472D2478B500F5A740 /* NSString+iTerm.swift */,
 				E8E901A202743CA303A80106 /* NSStringITerm.m */,
 				1DA1C1F11A2E49A3007381D3 /* NSTableColumn+iTerm.m */,
 				53D0FD4F237DCB5A00DAFA8A /* NSTableView+iTerm.h */,
 				53D0FD50237DCB5A00DAFA8A /* NSTableView+iTerm.m */,
+				A662B2462D937C6900C3D79A /* NSTableView+iTerm.swift */,
 				A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */,
 				A6BD5A712745D5710098594E /* NSTextView+iTerm.swift */,
 				A64AE5152084128500D02F06 /* NSThread+iTerm.h */,
@@ -10738,6 +10741,7 @@
 				53C2D3A32152CA3900FF6471 /* NSUserDefaults+iTerm.h */,
 				53C2D3A42152CA3900FF6471 /* NSUserDefaults+iTerm.m */,
 				A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */,
+				A605A1D62EB187D00072ED7E /* NSView+iTerm.swift */,
 				1D81F0BF183C3C2D00910838 /* NSView+RecursiveDescription.m */,
 				A686F3601D32CD8100F08ED7 /* NSWindow+iTerm.h */,
 				A686F3611D32CD8100F08ED7 /* NSWindow+iTerm.m */,
@@ -10745,10 +10749,12 @@
 				A6D1A3F02C7E9A6900FECDF2 /* Optional+iTerm.swift */,
 				5370F2E61C78958900874C0F /* QLPreviewPanel+iTerm.h */,
 				5370F2E71C78958900874C0F /* QLPreviewPanel+iTerm.m */,
+				A6BBBFD02CC876CC000A697C /* Range+iTerm.swift */,
+				A6631A1E2D6E4E3E006C603B /* Result+iTerm.swift */,
 				A6A9839427E5C45E003319D1 /* String+iTerm.swift */,
 				A6EC809A282EBFF200493544 /* URL+iTerm.swift */,
 				A6D1A3E42C7E994B00FECDF2 /* VT100GridTypes+Swift.swift */,
-				A605A1D62EB187D00072ED7E /* NSView+iTerm.swift */,
+				A605A1DA2EB292530072ED7E /* NSButton+iTerm.swift */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -19077,6 +19083,7 @@
 				A69FF3CD2E1467D800AFF7A8 /* iTermFileProviderServiceError.swift in Sources */,
 				A619DC4E2CD5A1D0004B8996 /* iTermCoreTextLineRenderingHelper.m in Sources */,
 				A606CBF42145AF4800B3A97E /* iTermRootTerminalView.m in Sources */,
+				A605A1DB2EB292530072ED7E /* NSButton+iTerm.swift in Sources */,
 				A65660D52372A4A600DC6744 /* iTermCache.m in Sources */,
 				A6EC937524E78A5100EEADEF /* iTermEditSnippetWindowController.m in Sources */,
 				A6CBB9D62E0B608F00B2CCCB /* iTermBrowserKeyBindingActionPerformer.swift in Sources */,
@@ -19558,6 +19565,7 @@
 				A6069EF82DF0142400EE6CC7 /* SSHFilePanel.swift in Sources */,
 				A6BC9B1F214A2AE900F50C09 /* iTermVariableReference.m in Sources */,
 				A64B68DB2337314E009DA064 /* ToolCapturedOutputView.m in Sources */,
+				A605A1DD2EB293550072ED7E /* SettingPopupView.swift in Sources */,
 				530098512259A44D00A69348 /* iTermSoundPlayer.m in Sources */,
 				A668E5102E2616BF00EE1627 /* iTermBrowserExtensionManager.swift in Sources */,
 				A6CBB8122E0A16A700B2CCCB /* iTermBookmarkTagEditorWindowController.swift in Sources */,

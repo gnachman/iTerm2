@@ -789,8 +789,9 @@ andEditComponentWithIdentifier:(NSString *)identifier
 
 - (NSArray<iTermSetting *> *)allSettings {
     return [_tabView.tabViewItems flatMapWithBlock:^NSArray *(__kindof NSTabViewItem *tabViewItem) {
+        NSToolbarItem *toolbarItem = [self toolbarItemForTabViewItem:tabViewItem];
         iTermPreferencesBaseViewController *vc = [self viewControllerForTabViewItem:tabViewItem];
-        return [vc allSettingsWithPathComponents:@[tabViewItem.label]];
+        return [vc allSettingsWithPathComponents:@[toolbarItem.label]];
     }];
 }
 
