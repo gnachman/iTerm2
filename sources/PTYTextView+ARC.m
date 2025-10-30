@@ -2130,6 +2130,15 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     [self requestDelegateRedraw];
 }
 
+- (BOOL)contextMenuWillDownloadWithSSHIntegrationOnAbsLine:(long long)absLine {
+    __block BOOL result = NO;
+    [self withRelativeCoord:VT100GridAbsCoordMake(0, absLine) block:^(VT100GridCoord coord) {
+        SCPPath *path = [self.dataSource scpPathForFile:@"placeholder" onLine:coord.y];
+        result = [self.delegate textViewCanUseSSHIntegrationFor:path];
+    }];
+    return result;
+}
+
 #pragma mark - NSResponder Additions
 
 - (void)sendSnippet:(id)sender {

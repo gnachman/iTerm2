@@ -335,6 +335,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (BOOL)textViewAlternateMouseScroll:(out BOOL *)verticalOnly;
 - (void)textViewMarginColorDidChange;
 - (BOOL)textViewProfileTypeIsTerminal;
+- (BOOL)textViewCanUseSSHIntegrationFor:(SCPPath *)path;
 @end
 
 @interface iTermHighlightedRow : NSObject

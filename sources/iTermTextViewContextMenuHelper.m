@@ -479,12 +479,16 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
     }
 
     // Menu items for acting on text selections
-    __block NSString *scpTitle = @"Download with scp";
+    const BOOL sshIntegrationDownload = [self.delegate contextMenuWillDownloadWithSSHIntegrationOnAbsLine:selection.lastAbsRange.coordRange.start.y];
+
+    __block NSString *scpTitle = sshIntegrationDownload ? @"Download using SSH Integration" : @"Download with scp";
     if (haveShortSelection) {
         [self.delegate contextMenu:self withRelativeCoord:selection.lastAbsRange.coordRange.start block:^(VT100GridCoord coord) {
             SCPPath *scpPath = [self.delegate contextMenu:self scpPathForFile:shortSelectedText onLine:coord.y];
             if (scpPath) {
-                scpTitle = [NSString stringWithFormat:@"Download with scp from %@", scpPath.hostname];
+                scpTitle = [NSString stringWithFormat:@"Download %@ from %@",
+                            sshIntegrationDownload ? @"using SSH Integration" : @"with scp",
+                            scpPath.hostname];
             }
         }];
     }

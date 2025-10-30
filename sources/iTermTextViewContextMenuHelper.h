@@ -176,6 +176,7 @@ runCommandInBackground:(NSString *)command;
                        currentBaseline:(out NSTimeInterval *)baselinePtr
                            clickedTime:(out NSTimeInterval *)clickedTimePtr;
 - (void)contextMenuSetTimestampBaseline:(NSTimeInterval)baseline;
+- (BOOL)contextMenuWillDownloadWithSSHIntegrationOnAbsLine:(long long)absLine;
 @end
 
 @interface iTermTextViewContextMenuHelper : NSObject<NSMenuDelegate>

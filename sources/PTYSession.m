@@ -13153,14 +13153,16 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return NO;
 }
 
-- (void)startDownloadOverSCP:(SCPPath *)path
-{
-    if (@available(macOS 11, *)) {
-        if ([_conductor canTransferFilesTo:path]) {
-            [_conductor downloadOrView:path window:self.view.window];
-            return;
-        }
+- (BOOL)textViewCanUseSSHIntegrationFor:(SCPPath *)path {
+    return [_conductor canTransferFilesTo:path];
+}
+
+- (void)startDownloadOverSCP:(SCPPath *)path {
+    if ([_conductor canTransferFilesTo:path]) {
+        [_conductor downloadOrView:path window:self.view.window];
+        return;
     }
+
     SCPFile *file = [[[SCPFile alloc] init] autorelease];
     file.path = path;
     [file download];
