@@ -55,6 +55,8 @@
 @property(nonatomic, readonly) NSAccessibilityElement *element;
 @property(nonatomic, copy) NSString *subtitleString;
 @property(nonatomic, readonly) CGFloat highlightAmount;
+@property(nonatomic) PSMProgress progress;
+@property(nonatomic) BOOL isProcessing;
 
 // creation/destruction
 - (id)initWithControlView:(PSMTabBarControl *)controlView;
@@ -78,6 +80,7 @@
 // iTerm additions
 - (void)updateForStyle;
 - (void)updateHighlight;
+- (void)updateIndicators;
 
 - (void)removeCloseButtonTrackingRectFrom:(NSView *)view;
 - (void)removeCellTrackingRectFrom:(NSView *)view;

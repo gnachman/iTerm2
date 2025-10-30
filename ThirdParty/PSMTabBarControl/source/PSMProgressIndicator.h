@@ -8,6 +8,15 @@
 
 #import <Cocoa/Cocoa.h>
 
+// This must be kept in sync with VT100ScreenProgress
+typedef NS_ENUM(NSInteger, PSMProgress) {
+    PSMProgressStopped = 0,
+    PSMProgressError = -1,
+    PSMProgressIndeterminate = -2,
+    PSMProgressBase = 1000,  // values base...base+100 are percentages.
+};
+
+
 @protocol PSMProgressIndicatorDelegate
 - (void)progressIndicatorNeedsUpdate;
 @end
@@ -21,5 +30,13 @@
 @property(nonatomic, assign) BOOL light;
 @property(nonatomic, assign) id<PSMProgressIndicatorDelegate> delegate;
 @property(nonatomic, assign) BOOL animate;
+
+@property(nonatomic, readonly) BOOL indeterminate;
+@property(nonatomic, readonly) BOOL error;
+@property(nonatomic, readonly) double fraction;
+
+// Enters determinate mode.
+- (void)becomeDeterminateWithFraction:(CGFloat)fraction error:(BOOL)error animated:(BOOL)animated;
+- (void)becomeIndeterminate;
 
 @end

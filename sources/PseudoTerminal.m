@@ -1985,6 +1985,11 @@ ITERM_WEAKLY_REFERENCEABLE
     [self refreshTools];
 }
 
+- (void)tab:(PTYTab *)tab progressDidChange:(VT100ScreenProgress)progress {
+    [_contentView.tabBarControl setProgress:(PSMProgress)progress
+                       forTabWithIdentifier:tab];
+}
+
 - (BOOL)tabBelongsToHotkeyWindow:(PTYTab *)tab {
     return [self isHotKeyWindow];
 }
@@ -6861,6 +6866,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     [self updateTabColors];
+    [self updateTabProgress];
     [self updateToolbeltAppearance];
     [self setNeedsUpdateTabObjectCounts:YES];
     [self updateTouchBarIfNeeded:NO];
@@ -7286,6 +7292,13 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     [_contentView updateTitleAndBorderViews];
+}
+
+- (void)updateTabProgress {
+    for (PTYTab *tab in [self tabs]) {
+        [_contentView.tabBarControl setProgress:(PSMProgress)tab.activeSession.screen.progress
+                           forTabWithIdentifier:tab];
+    }
 }
 
 - (void)setBackgroundColor:(nullable NSColor *)backgroundColor {
@@ -8902,6 +8915,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [session updateViewBackgroundImage];
     }
     [_contentView setCurrentSessionAlpha:self.currentSession.textview.transparencyAlpha];
+    [self updateTabProgress];
 }
 
 - (void)fitWindowToTabs {

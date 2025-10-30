@@ -1178,7 +1178,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return isProcessing_;
 }
 
-// This is KVO-observed by PSMTabBarControl and determines whether the activity indicator is visible.
 - (BOOL)isProcessing {
     return (![iTermPreferences hideTabActivityIndicator] &&
             isProcessing_ &&
@@ -6933,6 +6932,12 @@ backgroundColor:(NSColor *)backgroundColor {
         return;
     }
     [self.delegate tabProcessInfoProviderDidChange:self];
+}
+
+- (void)session:(PTYSession *)session progressDidChange:(VT100ScreenProgress)progress {
+    if (session == self.activeSession) {
+        [self.delegate tab:self progressDidChange:progress];
+    }
 }
 
 #pragma mark - iTermObject

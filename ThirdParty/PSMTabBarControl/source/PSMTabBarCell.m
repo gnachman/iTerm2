@@ -370,6 +370,61 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     return [tabStyle cachedSubtitleInputsForTabCell:self];
 }
 
+- (void)setProgress:(PSMProgress)progress {
+    if (_progress == progress) {
+        return;
+    }
+    _progress = progress;
+    [self updateIndicators];
+}
+
+- (void)setIsProcessing:(BOOL)isProcessing {
+    if (_isProcessing == isProcessing) {
+        return;
+    }
+    _isProcessing = isProcessing;
+    [self updateIndicators];
+}
+
+- (void)updateIndicators {
+    PSMProgress effectiveProgress = _progress;
+    if (self.state == NSControlStateValueOn) {
+        // For the active tab, act as though progress is stopped so we just indicate the processing
+        // state.
+        effectiveProgress = PSMProgressStopped;
+    }
+    switch (effectiveProgress) {
+        case PSMProgressStopped:
+            // Fall back to older behavior where the indeterminate progress bar indicates whether
+            // the tab is busy "processing".
+            self.indicator.hidden = !_isProcessing;
+            self.indicator.animate = _isProcessing;
+            [self.indicator becomeIndeterminate];
+            return;
+        case PSMProgressIndeterminate:
+            [self.indicator becomeIndeterminate];
+            self.indicator.hidden = NO;
+            self.indicator.animate = YES;
+            return;
+        case PSMProgressError:
+            self.indicator.hidden = NO;
+            [self.indicator becomeDeterminateWithFraction:1.0 error:YES animated:NO];
+            return;
+        case PSMProgressBase:
+            break;
+    }
+    NSInteger percentage = effectiveProgress - PSMProgressBase;
+    if (percentage < 0 || percentage > 100) {
+        self.indicator.hidden = YES;
+        self.indicator.animate = NO;
+        return;
+    }
+    [self.indicator becomeDeterminateWithFraction:((double)percentage) / 100.0
+                                            error:NO
+                                         animated:!self.indicator.indeterminate];
+    self.indicator.hidden = NO;
+}
+
 - (PSMProgressIndicator *)indicator {
     return _indicator;
 }

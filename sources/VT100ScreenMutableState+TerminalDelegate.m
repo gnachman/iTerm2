@@ -601,6 +601,10 @@ typedef struct {
     [self resetPreservingPrompt:preservePrompt modifyContent:modifyContent];
 }
 
+- (void)terminalDidReset {
+    self.progress = VT100ScreenProgressStopped;
+}
+
 - (void)terminalSetCursorType:(ITermCursorType)cursorType {
     DLog(@"begin cursorType=%@", @(cursorType));
     if (self.currentGrid.cursor.x < self.currentGrid.size.width) {
@@ -1249,7 +1253,29 @@ typedef struct {
 }
 
 - (void)terminalPostUserNotification:(NSString *)message {
-    [self terminalPostUserNotification:message rich:NO];
+    NSArray<NSString *> *params = [message componentsSeparatedByString:@";"];
+    if (params.count >= 2 && [params[0] isEqualToString:@"4"] && [params[1] isNumeric]) {
+        const int st = [params[1] intValue];
+        const int pr = params.count >= 3 ? [params[2] intValue] : -1;
+        switch (st) {
+            case 1:  // set progress value to pr (number, 0-100)
+                if (pr >= 0 && pr <= 100) {
+                    [self setProgress:VT100ScreenProgressBase + pr];
+                }
+                break;
+            case 2:  // set error state in progress. pr is optional
+                [self setProgress:VT100ScreenProgressError];
+                break;
+            case 3:  // set indeterminate state
+                [self setProgress:VT100ScreenProgressIndeterminate];
+                break;
+            case 4:  // set paused state, pr is optional
+                [self setProgress:VT100ScreenProgressStopped];
+                break;
+        }
+    } else {
+        [self terminalPostUserNotification:message rich:NO];
+    }
 }
 
 - (void)terminalPostUserNotification:(NSString *)message rich:(BOOL)rich {

@@ -50,6 +50,7 @@ NSString *const kScreenStateExfiltratedEnvironmentKey = @"Client Environment";
 NSString *const kScreenStatePromptStateKey = @"Prompt State";
 NSString *const kScreenStateBlockStartAbsLineKey = @"Block start lines";
 NSString *const kScreenStateKittyImageDrawsKey = @"Kitty Image Draws";
+NSString *const kScreenStateProgressKey = @"Progress Bar State";
 
 NSString *VT100ScreenTerminalStateKeyVT100Terminal = @"VT100Terminal";
 NSString *VT100ScreenTerminalStateKeySavedColors = @"SavedColors";
@@ -145,6 +146,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 @synthesize namedMarks = _namedMarks;
 @synthesize blockStartAbsLine = _blockStartAbsLine;
 @synthesize blocksGeneration = _blocksGeneration;
+@synthesize progress = _progress;
 
 - (instancetype)initForMutationOnQueue:(dispatch_queue_t)queue {
     self = [super init];
@@ -259,6 +261,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
         _blocksGeneration = source.blocksGeneration;
         _blockStartAbsLine = [source.blockStartAbsLine copy];
     }
+    _progress = source.progress;
     if (source.namedMarksDirty) {
         _namedMarks = [source.namedMarks compactMap:^NSObject * _Nonnull(NSObject * _Nonnull obj) {
             id<VT100ScreenMarkReading> mark = (id<VT100ScreenMarkReading>)obj;

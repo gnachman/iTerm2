@@ -9,6 +9,7 @@
 #import "iTermMetalUnavailableReason.h"
 
 #import "iTermSwipeHandler.h"
+#import "VT100ScreenProgress.h"
 
 @class iTermImageWrapper;
 @class iTermVariables;
@@ -75,4 +76,5 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)tab:(PTYTab *)tab closeSession:(PTYSession *)session;
 - (void)tabProcessInfoProviderDidChange:(PTYTab *)tab;
 - (BOOL)tabBelongsToHotkeyWindow:(PTYTab *)tab;
+- (void)tab:(PTYTab *)tab progressDidChange:(VT100ScreenProgress)progress;
 @end

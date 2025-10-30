@@ -7,7 +7,6 @@
 //
 
 #import "PSMProgressIndicator.h"
-#import "AMIndeterminateProgressIndicator.h"
 #import <QuartzCore/QuartzCore.h>
 
 @protocol PSMMinimalProgressIndicatorInterface <NSObject>
@@ -19,131 +18,199 @@
 
 @end
 
-@interface PSMNativeProgressIndicator : PSMProgressIndicator
+@interface PSMDeterminateIndicatorLayer: CALayer
+- (void)setFraction:(CGFloat)fraction color:(NSColor *)color animated:(BOOL)animated;
 @end
 
-@interface PSMCustomProgressIndicator: PSMProgressIndicator
-@end
+@implementation PSMDeterminateIndicatorLayer {
+    CAShapeLayer *_track;
+    CAShapeLayer *_progress;
+    CGFloat _fraction;
+    NSColor *_color;
+}
 
-@implementation PSMProgressIndicator
+- (instancetype)initWithDiameter:(CGFloat)diameter {
+    self = [super init];
+    if (self) {
+        self.frame = NSMakeRect(0, 0, diameter, diameter);
 
-+ (instancetype)allocWithZone:(struct _NSZone *)zone {
-    if (self != [PSMProgressIndicator class]) {
-        return [super allocWithZone:zone];
+        const CGFloat lineWidth = MAX(2.0, round(diameter * 0.08));
+
+        _track = [CAShapeLayer layer];
+        _track.fillColor = nil;
+        _track.lineCap = kCALineCapRound;
+        _track.lineWidth = lineWidth;
+
+        _progress = [CAShapeLayer layer];
+        _progress.lineWidth = lineWidth;
+        _progress.fillColor = nil;
+        _progress.lineCap = kCALineCapRound;
+        _progress.strokeStart = 0.0;
+
+        CGPathRef path = [self pathWithDiameter:diameter
+                                      lineWidth:lineWidth];
+        _track.path = path;
+        _progress.path = path;
+        CGPathRelease(path);
+
+        [self addSublayer:_track];
+        [self addSublayer:_progress];
     }
-    if (@available(macOS 12, *)) {
-        return [PSMNativeProgressIndicator alloc];
+    return self;
+}
+
+- (void)updateAnimated:(BOOL)animated {
+    const CGFloat fraction = MAX(MIN(1.0, _fraction), 0.0);
+
+    NSColor *baseColor = [_color colorUsingColorSpace:[NSColorSpace deviceRGBColorSpace]];
+    if (baseColor == nil) {
+        baseColor = [NSColor controlAccentColor];
     }
-    return [PSMCustomProgressIndicator alloc];
+
+    [CATransaction begin];
+    if (!animated) {
+        [CATransaction setDisableActions:YES];
+    }
+    _track.strokeColor = [[baseColor colorWithAlphaComponent:0.20] CGColor];
+    _progress.strokeColor = [baseColor CGColor];
+    _progress.strokeEnd = fraction;
+    [CATransaction commit];
+}
+
+- (CGPathRef)pathWithDiameter:(CGFloat)diameter
+                    lineWidth:(CGFloat)lineWidth {
+    CGPoint center = CGPointMake(diameter / 2.0, diameter / 2.0);
+    CGFloat radius = (diameter - lineWidth) / 2.0;
+
+    CGMutablePathRef path = CGPathCreateMutable();
+    CGPathAddArc(path, NULL, center.x, center.y, radius, (CGFloat)-M_PI_2, (CGFloat)(-M_PI_2 + 2.0 * M_PI), false);
+    return path;
+}
+
+- (void)setFraction:(CGFloat)fraction color:(NSColor *)color animated:(BOOL)animated {
+    _fraction = fraction;
+    _color = color;
+    [self updateAnimated:animated];
 }
 
 @end
 
-@implementation PSMNativeProgressIndicator {
-    NSProgressIndicator *_indicator;
+@interface PSMDeterminateIndicator: NSView
+@property (nonatomic) double fraction;
+@property (nonatomic, strong) NSColor *color;
+@end
+
+@implementation PSMDeterminateIndicator {
+    PSMDeterminateIndicatorLayer *_layer;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
-        _indicator = [[NSProgressIndicator alloc] initWithFrame:self.bounds];
-        _indicator.style = NSProgressIndicatorStyleSpinning;
-        [self addSubview:_indicator];
+        self.wantsLayer = YES;
+        _layer = [[PSMDeterminateIndicatorLayer alloc] initWithDiameter:frameRect.size.width];
+        self.layer = _layer;
     }
     return self;
 }
 
-- (void)setAnimate:(BOOL)animate {
-    if (animate == [self animate]) {
-        return;
-    }
-    [super setAnimate:animate];
-    if (animate) {
-        [_indicator startAnimation:nil];
-    } else {
-        [_indicator stopAnimation:nil];
-    }
-}
-
-- (void)setLight:(BOOL)light {
-    _indicator.appearance = light ? [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua] : [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+- (void)setFraction:(CGFloat)fraction color:(NSColor *)color animated:(BOOL)animated {
+    _fraction = fraction;
+    _color = color;
+    [_layer setFraction:_fraction color:_color animated:animated];
 }
 
 @end
 
-
-@implementation PSMCustomProgressIndicator {
-    AMIndeterminateProgressIndicator *_lightIndicator;
-    AMIndeterminateProgressIndicator *_darkIndicator;
+@implementation PSMProgressIndicator  {
+    NSProgressIndicator *_indeterminateIndicator;
+    PSMDeterminateIndicator *_determinateIndicator;
 }
 
-- (id)initWithFrame:(NSRect)frameRect {
+- (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
-        _darkIndicator = [[AMIndeterminateProgressIndicator alloc] initWithFrame:self.bounds];
-        _darkIndicator.color = [NSColor colorWithCalibratedWhite:0 alpha:1];
-        [self addSubview:_darkIndicator];
+        _indeterminate = YES;
+        _indeterminateIndicator = [[NSProgressIndicator alloc] initWithFrame:self.bounds];
+        _indeterminateIndicator.style = NSProgressIndicatorStyleSpinning;
+        _indeterminateIndicator.hidden = YES;
 
-        _lightIndicator = [[AMIndeterminateProgressIndicator alloc] initWithFrame:self.bounds];
-        _lightIndicator.color = [NSColor colorWithCalibratedWhite:0.8 alpha:1];
-        [self addSubview:_lightIndicator];
-        _lightIndicator.hidden = YES;
+        _determinateIndicator = [[PSMDeterminateIndicator alloc] initWithFrame:self.bounds];
+        _determinateIndicator.hidden = YES;
+
+        [self addSubview:_indeterminateIndicator];
+        [self addSubview:_determinateIndicator];
     }
     return self;
 }
 
-- (void)setHidden:(BOOL)flag {
-    [super setHidden:flag];
-    [self.delegate progressIndicatorNeedsUpdate];
-    if (self.animate && flag) {
-        [self stopAnimation:nil];
+- (void)setAnimate:(BOOL)animate {
+    if (animate == _animate) {
+        return;
     }
-}
-
-- (id<PSMMinimalProgressIndicatorInterface>)currentIndicator {
-    if (self.light) {
-        return (id<PSMMinimalProgressIndicatorInterface>)_lightIndicator;
+    _animate = animate;
+    if (animate) {
+        [_indeterminateIndicator startAnimation:nil];
     } else {
-        return (id<PSMMinimalProgressIndicatorInterface>)_darkIndicator;
+        [_indeterminateIndicator stopAnimation:nil];
     }
-}
-
-- (void)startAnimation:(id)sender {
-    self.animate = YES;
-    [self.currentIndicator startAnimation:sender];
-}
-
-- (void)stopAnimation:(id)sender {
-    self.animate = NO;
-    [self.currentIndicator stopAnimation:sender];
 }
 
 - (void)setLight:(BOOL)light {
-    if (light == self.light) {
-        return;
-    }
+    _light = light;
+    [self updateAnimated:NO];
+}
 
-    BOOL shouldHide = self.currentIndicator.isHidden;
-    [self.currentIndicator setHidden:YES];
-    [self.currentIndicator stopAnimation:nil];
+- (void)becomeIndeterminate {
+    _indeterminate = YES;
+    [self updateAnimated:NO];
+}
 
-    [super setLight:light];
+- (void)becomeDeterminateWithFraction:(CGFloat)fraction error:(BOOL)error animated:(BOOL)animated {
+    self.animate = NO;
+    _indeterminate = NO;
+    _error = error;
+    _fraction = fraction;
+    [self updateAnimated:animated];
+}
 
-    [self.currentIndicator setHidden:shouldHide];
-    if (!shouldHide && self.animate) {
-        [self.currentIndicator startAnimation:nil];
+- (void)updateAnimated:(BOOL)animated {
+    _indeterminateIndicator.appearance = _light ? [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua] : [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+    _indeterminateIndicator.hidden = !_indeterminate;
+    _determinateIndicator.hidden = _indeterminate;
+    if (!_indeterminate) {
+        [_determinateIndicator setFraction:_fraction
+                                     color:self.effectiveColor
+                                  animated:animated];
     }
 }
 
-- (void)setAnimate:(BOOL)animate {
-    if (animate != self.animate) {
-        [super setAnimate:animate];
-        if (animate && !self.isHidden) {
-            [self startAnimation:nil];
+- (NSColor *)effectiveColor {
+    if (_error) {
+        return [NSColor redColor];
+    } else {
+        if (self.inDarkMode) {
+            return [NSColor colorWithSRGBRed:00.0 green:1.0 blue:0.0 alpha:1.0];
         } else {
-            [self stopAnimation:nil];
+            return [NSColor blueColor];
         }
     }
+}
+
+- (void)viewDidChangeEffectiveAppearance {
+    [self updateAnimated:YES];
+}
+
+- (BOOL)inDarkMode {
+    NSAppearanceName bestMatch = [self.effectiveAppearance bestMatchFromAppearancesWithNames:@[ NSAppearanceNameDarkAqua,
+                                                                                                NSAppearanceNameVibrantDark,
+                                                                                                NSAppearanceNameAqua,
+                                                                                                NSAppearanceNameVibrantLight ]];
+    if ([bestMatch isEqualToString:NSAppearanceNameDarkAqua] ||
+        [bestMatch isEqualToString:NSAppearanceNameVibrantDark]) {
+        return YES;
+    }
+    return NO;
 }
 
 @end

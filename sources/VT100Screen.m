@@ -699,6 +699,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return [_state coordRangeForInterval:mark.entry.interval];
 }
 
+- (VT100ScreenProgress)progress {
+    return _state.progress;
+}
+
 - (BOOL)isAtCommandPrompt {
     id<VT100ScreenMarkReading> mark = [self screenMarkAtOrBeforeAbsLine:self.numberOfLines + _state.totalScrollbackOverflow + 1];
     if (!mark) {
@@ -1371,7 +1375,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                kScreenStateAlternateGridStateKey: _state.altGrid.dictionaryValue ?: [NSNull null],
                kScreenStateProtectedMode: @(_state.protectedMode),
                kScreenStatePromptStateKey: _state.promptStateDictionary ?: [NSNull null],
-               kScreenStateBlockStartAbsLineKey: _state.blockStartAbsLine
+               kScreenStateBlockStartAbsLineKey: _state.blockStartAbsLine,
+               kScreenStateProgressKey: @(_state.progress),
             };
             dict = [dict dictionaryByRemovingNullValues];
             [encoder mergeDictionary:dict];

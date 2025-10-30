@@ -33,6 +33,7 @@
 #import "PTYSession.h"
 #import "SessionTitleView.h"
 #import "SplitSelectionView.h"
+#import "VT100ScreenProgress.h"
 
 @class iTermAnnouncementViewController;
 @class iTermBrowserViewController;
@@ -212,6 +213,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property(nonatomic, readonly) NSEdgeInsets extraMargins;
 @property (nonatomic) CGFloat actualRightExtra;
 @property (nonatomic, readonly) BOOL isBrowser;
+@property (nonatomic) VT100ScreenProgress progress;
 
 - (void)setBrowserViewController:(iTermBrowserViewController *)browserViewController
                       initialURL:(NSString *)initialURL

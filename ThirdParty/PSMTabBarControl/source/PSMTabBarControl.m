@@ -1091,6 +1091,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
         // cell moves because of added/removed tab. Tracking rects aren't smart
         // enough to handle this.
         [cell updateHighlight];
+        [cell updateIndicators];
     }
 
     // Calculate number of cells to fit in the control and cell widths.
@@ -2235,8 +2236,12 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
 
 - (void)setIsProcessing:(BOOL)isProcessing forTabWithIdentifier:(id)identifier {
     PSMTabBarCell *cell = [self cellWithIdentifier:identifier];
-    cell.indicator.hidden = !isProcessing;
-    cell.indicator.animate = isProcessing;
+    cell.isProcessing = isProcessing;
+}
+
+- (void)setProgress:(PSMProgress)progress forTabWithIdentifier:(id)identifier {
+    PSMTabBarCell *cell = [self cellWithIdentifier:identifier];
+    cell.progress = progress;
 }
 
 - (void)graphicDidChangeForTabWithIdentifier:(id)identifier {

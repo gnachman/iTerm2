@@ -143,7 +143,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 
 // Clear the screen, preserving the cursor's line.
 - (void)terminalResetPreservingPrompt:(BOOL)preservePrompt modifyContent:(BOOL)modifyContent;
-
+- (void)terminalDidReset;  // Called on all types of reset.
 // Changes the cursor type.
 - (void)terminalSetCursorType:(ITermCursorType)cursorType;
 

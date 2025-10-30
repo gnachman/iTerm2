@@ -5049,6 +5049,7 @@ lengthExcludingInBandSignaling:data.length
     }
 
     if (screenState) {
+        self.progress = [screenState[kScreenStateProgressKey] integerValue];
         [self.blockStartAbsLine it_mergeFrom:[NSDictionary castFrom:screenState[kScreenStateBlockStartAbsLineKey]] ?: @{}];
         self.blocksGeneration = 1;
         self.protectedMode = [screenState[kScreenStateProtectedMode] unsignedIntegerValue];

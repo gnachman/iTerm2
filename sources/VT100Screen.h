@@ -10,6 +10,7 @@
 #import "SCPPath.h"
 #import "ScreenCharArray.h"
 #import "VT100ScreenDelegate.h"
+#import "VT100ScreenProgress.h"
 #import "VT100SyncResult.h"
 #import "VT100Terminal.h"
 #import "VT100Token.h"
@@ -124,6 +125,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property (nonatomic, readonly) BOOL isAtCommandPrompt;
 @property (nonatomic, readonly) VT100ScreenMutableState *mutableState;  // for tests
 @property (nonatomic, readonly) VT100ScreenState *immutableState;  // for tests
+@property (nonatomic, readonly) VT100ScreenProgress progress;
 
 // Indicates if line drawing mode is enabled for any character set, or if the current character set
 // is not G0.

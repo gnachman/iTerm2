@@ -247,6 +247,7 @@ typedef NS_ENUM(int, PSMTabPosition) {
 - (void)initializeStateForCell:(PSMTabBarCell *)cell;
 
 - (void)setIsProcessing:(BOOL)isProcessing forTabWithIdentifier:(id)identifier;
+- (void)setProgress:(PSMProgress)progress forTabWithIdentifier:(id)identifier;
 - (void)setIcon:(NSImage *)icon forTabWithIdentifier:(id)identifier;
 - (void)setObjectCount:(NSInteger)objectCount forTabWithIdentifier:(id)identifier;
 - (void)graphicDidChangeForTabWithIdentifier:(id)identifier;

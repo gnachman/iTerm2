@@ -310,6 +310,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (BOOL)sessionBelongsToHotkeyWindow:(PTYSession *)session;
 - (void)swapSession:(PTYSession *)existing withBuriedSession:(PTYSession *)buried;
 - (void)sessionExecDidFail;
+- (void)session:(PTYSession *)session progressDidChange:(VT100ScreenProgress)progress;
 
 @end
 

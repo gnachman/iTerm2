@@ -32,6 +32,7 @@ extern NSString *const kScreenStatePrimaryGridStateKey;
 extern NSString *const kScreenStateAlternateGridStateKey;
 extern NSString *const kScreenStateCursorCoord;
 extern NSString *const kScreenStateProtectedMode;
+extern NSString *const kScreenStateProgressKey;
 
 @interface VT100Screen () <
 VT100ScreenSideEffectPerforming> {

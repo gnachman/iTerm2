@@ -14,6 +14,7 @@
 #import "PTYTriggerEvaluator.h"
 #import "VT100Grid.h"
 #import "VT100ScreenConfiguration.h"
+#import "VT100ScreenProgress.h"
 #import "VT100ScreenMark.h"
 #import "VT100Terminal.h"
 #import "iTermColorMap.h"
@@ -48,6 +49,7 @@ extern NSString *const kScreenStateProtectedMode;
 extern NSString *const kScreenStateExfiltratedEnvironmentKey;
 extern NSString *const kScreenStateBlockStartAbsLineKey;
 extern NSString *const kScreenStateKittyImageDrawsKey;
+extern NSString *const kScreenStateProgressKey;
 
 @class IntervalTree;
 @class iTermMutableArrayOfWeakObjects;
@@ -204,6 +206,7 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 @property (nonatomic, readonly, copy) NSDictionary<NSString *, NSNumber *> *blockStartAbsLine;
 @property (nonatomic, readonly) NSInteger blocksGeneration;
 @property (nonatomic, readonly, copy) NSArray<iTermKittyImageDraw *> *kittyImageDraws;
+@property (nonatomic, readonly) VT100ScreenProgress progress;
 
 @end
 
@@ -264,6 +267,7 @@ extern NSString *const kScreenStateKittyImageDrawsKey;
 @property (nonatomic, readwrite, copy) NSMutableDictionary<NSString *, NSNumber *> *blockStartAbsLine;
 @property (nonatomic, readwrite) NSInteger blocksGeneration;
 @property (nonatomic, copy, readwrite) NSArray<iTermKittyImageDraw *> *kittyImageDraws;
+@property (nonatomic, readwrite) VT100ScreenProgress progress;
 
 @end
 

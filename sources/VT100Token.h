@@ -252,7 +252,7 @@ typedef enum {
     STRICT_ANSI_MODE,
 
     // iTerm extension
-    ITERM_USER_NOTIFICATION,
+    ITERM_USER_NOTIFICATION,  // Overloaded: also ConEnum control sequences.
     DCS_TMUX_HOOK,  // Enter tmux mode
 
     // Wraps an escape code. The escape code is in csi.string.

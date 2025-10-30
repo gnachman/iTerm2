@@ -255,8 +255,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         var result = NSRect()
         result.size = NSSize(width: kPSMTabBarIndicatorWidth, height: kPSMTabBarIndicatorWidth)
         result.origin.x = minX - kPSMTabBarCellIconPadding - kPSMTabBarIndicatorWidth
-        result.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0)
-        
+        result.origin.y = cellFrame.origin.y + round((cellFrame.size.height - result.size.height) / 2.0)
+
         return result
     }
     
@@ -1006,7 +1006,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     @objc func drawPostHocDecorations(onSelectedCell cell: PSMTabBarCell,
                                       tabBarControl bar: PSMTabBarControl) {
     }
-    
+
     // MARK: - Private Helper Methods
     
     private func retinaRoundUpCell(_ cell: PSMTabBarCell, value: CGFloat) -> CGFloat {

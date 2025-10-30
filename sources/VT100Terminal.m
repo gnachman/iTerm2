@@ -401,6 +401,7 @@ static const int kMaxScreenRows = 4096;
     _keyReportingFlags = 0;
     [self resetSendModifiersWithSideEffects:NO];
     [self.delegate terminalDidChangeSendModifiers];
+    [self.delegate terminalDidReset];
 }
 
 - (void)resetSendModifiersWithSideEffects:(BOOL)sideEffects {

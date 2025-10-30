@@ -20313,6 +20313,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 - (void)screenDidSynchronize {
     [self updateAutoComposerFrame];
     [self updateSearchRange];
+    if (_view.progress != _screen.progress) {
+        _view.progress = _screen.progress;
+        [self.delegate session:self progressDidChange:_screen.progress];
+    }
 }
 
 - (void)screenStartWrappedCommand:(NSString *)command channel:(NSString *)uid {

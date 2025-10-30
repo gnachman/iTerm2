@@ -158,6 +158,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
     // Don't dim while color settings is open.
     int _colorsSettingsVisible;
+
+    iTermProgressBarView *_progressBar;
 }
 
 + (double)titleHeight {
@@ -424,6 +426,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [self setNeedsDisplay:YES];
     [CATransaction commit];
     [self updateMinimapAlpha];
+    _progressBar.darkMode = color.isDark;
 }
 
 - (void)setTransparencyAlpha:(CGFloat)transparencyAlpha
@@ -1108,6 +1111,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     _backgroundColorView.frame = self.bounds;
     _smearView.frame = self.bounds;
     _legacyScrollerBackgroundView.frame = [self frameForLegacyScroller];
+    _progressBar.frame = NSMakeRect(0,
+                                    self.bounds.size.height - _progressBar.desiredHeight,
+                                    self.bounds.size.width,
+                                    _progressBar.desiredHeight);
     [CATransaction commit];
 
     if (_hoverURLView) {
@@ -1860,6 +1867,41 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     [self updateAnnouncementFrame];
     [self updateLayout];
     return YES;
+}
+
+- (void)setProgress:(VT100ScreenProgress)progress {
+    if (progress == _progress) {
+        return;
+    }
+    if (!_progressBar) {
+        _progressBar = [[iTermProgressBarView alloc] init];
+        _progressBar.darkMode = _terminalBackgroundColor.isDark;
+        [self addSubviewBelowFindView:_progressBar];
+        [self updateLayout];
+    }
+    _progress = progress;
+    _progressBar.state = progress;
+    switch (progress) {
+        case VT100ScreenProgressStopped:
+            _progressBar.hidden = YES;
+            break;
+        case VT100ScreenProgressError:
+            _progressBar.hidden = NO;
+            break;
+        case VT100ScreenProgressIndeterminate:
+            _progressBar.hidden = NO;
+            break;
+        case VT100ScreenProgressBase:
+            break;
+    }
+    if (progress >= VT100ScreenProgressBase) {
+        const int percentage = progress - VT100ScreenProgressBase;
+        if (percentage >= 0 && percentage <= 100) {
+            _progressBar.hidden = NO;
+        } else {
+            _progressBar.hidden = YES;
+        }
+    }
 }
 
 - (BOOL)statusBarIsInPaneTitleBar {
