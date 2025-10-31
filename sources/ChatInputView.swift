@@ -32,6 +32,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
     private var verticalStack: ChatInputVerticalStackView!
     private let sendImage: NSImage
     private let stopImage: NSImage
+    private var hintLabel: NSTextField!
 
     weak var delegate: ChatInputViewDelegate?
     var stoppable = false {
@@ -124,7 +125,16 @@ class ChatInputView: NSView, NSTextFieldDelegate {
             self?.updateAttachmentsView()
             self?.updateSendButtonEnabled()
         }
-        let horizontalStack = ChatInputHorizontalStackView(views: [addAttachmentButton, inputTextFieldContainer, sendButton])
+        
+        hintLabel = NSTextField(labelWithString: "⇧↩ to submit")
+        hintLabel.translatesAutoresizingMaskIntoConstraints = false
+        hintLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize - 1)
+        hintLabel.textColor = .tertiaryLabelColor
+        hintLabel.alignment = .right
+        hintLabel.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+        hintLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        
+        let horizontalStack = ChatInputHorizontalStackView(views: [addAttachmentButton, inputTextFieldContainer, hintLabel, sendButton])
         horizontalStack.orientation = .horizontal
         horizontalStack.spacing = 6
         horizontalStack.translatesAutoresizingMaskIntoConstraints = false
@@ -266,8 +276,10 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         sendButton.isEnabled = stoppable || (!inputTextFieldContainer.stringValue.isEmpty && !hasPlaceholder)
         if stoppable {
             sendButton.image = stopImage
+            hintLabel.isHidden = true
         } else {
             sendButton.image = sendImage
+            hintLabel.isHidden = false
         }
     }
 
