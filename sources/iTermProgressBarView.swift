@@ -10,11 +10,31 @@ import AppKit
 import QuartzCore
 
 extension VT100ScreenProgress {
-    var percentage: Int32? {
-        if rawValue < VT100ScreenProgress.base.rawValue {
+    var successPercentage: Int32? {
+        if rawValue < VT100ScreenProgress.successBase.rawValue {
             return nil
         }
-        let percentage = Int32(clamping: rawValue - VT100ScreenProgress.base.rawValue)
+        let percentage = Int32(clamping: rawValue - VT100ScreenProgress.successBase.rawValue)
+        if percentage < 0 || percentage > 100 {
+            return nil
+        }
+        return percentage
+    }
+    var errorPercentage: Int32? {
+        if rawValue < VT100ScreenProgress.errorBase.rawValue {
+            return nil
+        }
+        let percentage = Int32(clamping: rawValue - VT100ScreenProgress.errorBase.rawValue)
+        if percentage < 0 || percentage > 100 {
+            return nil
+        }
+        return percentage
+    }
+    var warningPercentage: Int32? {
+        if rawValue < VT100ScreenProgress.warningBase.rawValue {
+            return nil
+        }
+        let percentage = Int32(clamping: rawValue - VT100ScreenProgress.warningBase.rawValue)
         if percentage < 0 || percentage > 100 {
             return nil
         }
@@ -40,11 +60,16 @@ class iTermProgressBarView: NSView {
         }
     }
 
+    private enum Success {
+        case success
+        case warning
+        case error
+    }
     private enum Mode: Equatable {
         case ground
         case error
         case indeterminate
-        case determinate(Int32)
+        case determinate(success: Success, percentage: Int32)
     }
 
     private var mode = Mode.ground {
@@ -66,7 +91,8 @@ class iTermProgressBarView: NSView {
         iTermProgressBarView.makeGradientLayer(colors: indeterminateColors(dark: darkMode))
     }()
     private lazy var determinateLayer: CALayer = {
-        iTermProgressBarView.makeGradientLayer(colors: determinateColors(dark: darkMode))
+        iTermProgressBarView.makeGradientLayer(colors: determinateColors(success: .success,
+                                                                         dark: darkMode))
     }()
 
     override init(frame: NSRect) {
@@ -120,13 +146,32 @@ private extension iTermProgressBarView {
         }
     }
 
-    private func determinateColors(dark: Bool) -> [NSColor] {
-        if dark {
-            return [NSColor(srgbRed: 0.0, green: 1.0, blue: 0.0, alpha: 1.0),
-                    NSColor(srgbRed: 0.2, green: 1.0, blue: 0.2, alpha: 1.0)]
-        } else {
-            return [NSColor(srgbRed: 0.0, green: 0.0, blue: 1.0, alpha: 1.0),
-                    NSColor(srgbRed: 0.2, green: 0.2, blue: 1.0, alpha: 1.0)]
+    private func determinateColors(success: Success, dark: Bool) -> [NSColor] {
+        switch success {
+        case .success:
+            if dark {
+                return [NSColor(srgbRed: 0.0, green: 1.0, blue: 0.0, alpha: 1.0),
+                        NSColor(srgbRed: 0.2, green: 1.0, blue: 0.2, alpha: 1.0)]
+            } else {
+                return [NSColor(srgbRed: 0.0, green: 0.0, blue: 1.0, alpha: 1.0),
+                        NSColor(srgbRed: 0.2, green: 0.2, blue: 1.0, alpha: 1.0)]
+            }
+        case .warning:
+            if dark {
+                return [NSColor(srgbRed: 1.0, green: 0.5, blue: 0.0, alpha: 1.0),
+                        NSColor(srgbRed: 1.0, green: 0.7, blue: 0.2, alpha: 1.0)]
+            } else {
+                return [NSColor(srgbRed: 0.8, green: 0.6, blue: 0.0, alpha: 1.0),
+                        NSColor(srgbRed: 1.0, green: 0.8, blue: 0.2, alpha: 1.0)]
+            }
+        case .error:
+            if dark {
+                return [NSColor(srgbRed: 1.0, green: 0.0, blue: 0.0, alpha: 1.0),
+                        NSColor(srgbRed: 1.0, green: 0.2, blue: 0.2, alpha: 1.0)]
+            } else {
+                return [NSColor(srgbRed: 1.0, green: 0.0, blue: 0.0, alpha: 1.0),
+                        NSColor(srgbRed: 1.0, green: 0.2, blue: 0.2, alpha: 1.0)]
+            }
         }
     }
 
@@ -192,8 +237,16 @@ private extension iTermProgressBarView {
         }
 
         // Update determinate layer colors
+        if case let .determinate(success: success, percentage: _) = mode {
+            updateDeterminateColors(success: success)
+        } else {
+            updateDeterminateColors(success: .success)
+        }
+    }
+
+    private func updateDeterminateColors(success: Success) {
         if let determinateGradient = determinateLayer as? CAGradientLayer {
-            let colors = determinateColors(dark: darkMode)
+            let colors = determinateColors(success: success, dark: darkMode)
             determinateGradient.colors = colors.map { $0.cgColor }
         }
     }
@@ -212,13 +265,17 @@ private extension iTermProgressBarView {
         case .indeterminate:
             mode = .indeterminate
             return
-        case .base:
+        case .successBase, .errorBase, .warningBase:
             break
         @unknown default:
             break
         }
-        if let newPercentage = state.percentage {
-            mode = .determinate(newPercentage)
+        if let newPercentage = state.successPercentage {
+            mode = .determinate(success: .success, percentage: newPercentage)
+        } else if let newPercentage = state.errorPercentage {
+            mode = .determinate(success: .error, percentage: newPercentage)
+        } else if let newPercentage = state.warningPercentage {
+            mode = .determinate(success: .warning, percentage: newPercentage)
         } else {
             mode = .ground
         }
@@ -240,13 +297,13 @@ private extension iTermProgressBarView {
             layer?.addSublayer(indeterminateContainer)
             setupIndeterminateLayers()
             startIndeterminateAnimation()
-        case .determinate(let percentage):
+        case let .determinate(success: success, percentage: percentage):
             if case .determinate = oldValue {
-                setDeterminate(percentage: percentage, animated: true)
+                setDeterminate(success: success, percentage: percentage, animated: true)
             } else {
                 layer(for: oldValue)?.removeFromSuperlayer()
                 layer?.addSublayer(determinateLayer)
-                setDeterminate(percentage: percentage, animated: false)
+                setDeterminate(success: success, percentage: percentage, animated: false)
             }
         }
         layer?.setNeedsLayout()
@@ -351,7 +408,7 @@ private extension iTermProgressBarView {
         CATransaction.commit()
     }
 
-    private func setDeterminate(percentage: Int32, animated: Bool) {
+    private func setDeterminate(success: Success, percentage: Int32, animated: Bool) {
         let clamped = max(0, min(100, percentage))
         let width = layer?.bounds.width ?? bounds.width
         let progressWidth = width * CGFloat(clamped) / 100.0
@@ -364,9 +421,11 @@ private extension iTermProgressBarView {
             animation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
             determinateLayer.add(animation, forKey: "progressWidth")
             determinateLayer.frame = newFrame
+            updateDeterminateColors(success: success)
         } else {
             CATransaction.begin()
             CATransaction.setDisableActions(true)
+            updateDeterminateColors(success: success)
             determinateLayer.frame = newFrame
             CATransaction.commit()
         }
@@ -452,11 +511,12 @@ extension iTermProgressBarView: CALayerDelegate {
             if indeterminateLayer1.animation(forKey: "indeterminateScroll") == nil {
                 startIndeterminateAnimation()
             }
-        case .determinate(let percentage):
+        case let .determinate(success: success, percentage: percentage):
             // Set determinate layer width according to current percentage.
             let clamped = max(0, min(100, percentage))
             let progressWidth = width * CGFloat(clamped) / 100.0
             determinateLayer.frame = CGRect(x: 0, y: 0, width: progressWidth, height: height)
+            updateDeterminateColors(success: success)
         case .ground:
             // No visible layer to layout.
             break

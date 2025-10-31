@@ -408,19 +408,31 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
             return;
         case PSMProgressError:
             self.indicator.hidden = NO;
-            [self.indicator becomeDeterminateWithFraction:1.0 error:YES animated:NO];
+            [self.indicator becomeDeterminateWithFraction:1.0 status: PSMStatusError animated:NO];
             return;
-        case PSMProgressBase:
+        case PSMProgressSuccessBase:
+        case PSMProgressWarningBase:
+        case PSMProgressErrorBase:
             break;
     }
-    NSInteger percentage = effectiveProgress - PSMProgressBase;
-    if (percentage < 0 || percentage > 100) {
+    NSInteger percentage = 0;
+    PSMStatus status = PSMStatusError;
+    if (effectiveProgress >= PSMProgressSuccessBase && effectiveProgress <= PSMProgressSuccessBase + 100) {
+        percentage = effectiveProgress - PSMProgressSuccessBase;
+        status = PSMStatusSuccess;
+    } else if (effectiveProgress >= PSMProgressErrorBase && effectiveProgress <= PSMProgressErrorBase + 100) {
+        percentage = effectiveProgress - PSMProgressErrorBase;
+        status = PSMStatusError;
+    } else if (effectiveProgress >= PSMProgressWarningBase && effectiveProgress <= PSMProgressWarningBase + 100) {
+        percentage = effectiveProgress - PSMProgressWarningBase;
+        status = PSMStatusWarning;
+    } else {
         self.indicator.hidden = YES;
         self.indicator.animate = NO;
         return;
     }
     [self.indicator becomeDeterminateWithFraction:((double)percentage) / 100.0
-                                            error:NO
+                                           status:status
                                          animated:!self.indicator.indeterminate];
     self.indicator.hidden = NO;
 }

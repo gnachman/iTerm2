@@ -166,10 +166,12 @@
     [self updateAnimated:NO];
 }
 
-- (void)becomeDeterminateWithFraction:(CGFloat)fraction error:(BOOL)error animated:(BOOL)animated {
+- (void)becomeDeterminateWithFraction:(CGFloat)fraction
+                               status:(PSMStatus)status
+                             animated:(BOOL)animated {
     self.animate = NO;
     _indeterminate = NO;
-    _error = error;
+    _status = status;
     _fraction = fraction;
     [self updateAnimated:animated];
 }
@@ -186,14 +188,17 @@
 }
 
 - (NSColor *)effectiveColor {
-    if (_error) {
-        return [NSColor redColor];
-    } else {
-        if (self.inDarkMode) {
-            return [NSColor colorWithSRGBRed:00.0 green:1.0 blue:0.0 alpha:1.0];
-        } else {
-            return [NSColor blueColor];
-        }
+    switch (_status) {
+        case PSMStatusError:
+            return [NSColor redColor];
+        case PSMStatusSuccess:
+            if (self.inDarkMode) {
+                return [NSColor colorWithSRGBRed:00.0 green:1.0 blue:0.0 alpha:1.0];
+            } else {
+                return [NSColor blueColor];
+            }
+        case PSMStatusWarning:
+            return [NSColor orangeColor];
     }
 }
 

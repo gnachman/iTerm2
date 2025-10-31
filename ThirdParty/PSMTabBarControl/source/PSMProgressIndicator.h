@@ -13,7 +13,15 @@ typedef NS_ENUM(NSInteger, PSMProgress) {
     PSMProgressStopped = 0,
     PSMProgressError = -1,
     PSMProgressIndeterminate = -2,
-    PSMProgressBase = 1000,  // values base...base+100 are percentages.
+    PSMProgressSuccessBase = 1000,  // values base...base+100 are percentages.
+    PSMProgressErrorBase = 2000,  // values base...base+100 are percentages.
+    PSMProgressWarningBase = 3000,  // values base...base+100 are percentages.
+};
+
+typedef NS_ENUM(NSInteger, PSMStatus) {
+    PSMStatusSuccess,
+    PSMStatusWarning,
+    PSMStatusError
 };
 
 
@@ -32,11 +40,11 @@ typedef NS_ENUM(NSInteger, PSMProgress) {
 @property(nonatomic, assign) BOOL animate;
 
 @property(nonatomic, readonly) BOOL indeterminate;
-@property(nonatomic, readonly) BOOL error;
+@property(nonatomic, readonly) PSMStatus status;
 @property(nonatomic, readonly) double fraction;
 
 // Enters determinate mode.
-- (void)becomeDeterminateWithFraction:(CGFloat)fraction error:(BOOL)error animated:(BOOL)animated;
+- (void)becomeDeterminateWithFraction:(CGFloat)fraction status:(PSMStatus)PSMStatus animated:(BOOL)animated;
 - (void)becomeIndeterminate;
 
 @end

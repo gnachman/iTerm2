@@ -1891,11 +1891,29 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
         case VT100ScreenProgressIndeterminate:
             _progressBar.hidden = NO;
             break;
-        case VT100ScreenProgressBase:
+        case VT100ScreenProgressSuccessBase:
+        case VT100ScreenProgressErrorBase:
+        case VT100ScreenProgressWarningBase:
             break;
     }
-    if (progress >= VT100ScreenProgressBase) {
-        const int percentage = progress - VT100ScreenProgressBase;
+    if (progress >= VT100ScreenProgressSuccessBase && progress <= VT100ScreenProgressSuccessBase + 100) {
+        const int percentage = progress - VT100ScreenProgressSuccessBase;
+        if (percentage >= 0 && percentage <= 100) {
+            _progressBar.hidden = NO;
+        } else {
+            _progressBar.hidden = YES;
+        }
+    }
+    if (progress >= VT100ScreenProgressErrorBase && progress <= VT100ScreenProgressErrorBase + 100) {
+        const int percentage = progress - VT100ScreenProgressErrorBase;
+        if (percentage >= 0 && percentage <= 100) {
+            _progressBar.hidden = NO;
+        } else {
+            _progressBar.hidden = YES;
+        }
+    }
+    if (progress >= VT100ScreenProgressWarningBase && progress <= VT100ScreenProgressWarningBase + 100) {
+        const int percentage = progress - VT100ScreenProgressWarningBase;
         if (percentage >= 0 && percentage <= 100) {
             _progressBar.hidden = NO;
         } else {

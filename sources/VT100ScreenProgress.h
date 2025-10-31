@@ -12,6 +12,8 @@ typedef NS_ENUM(NSInteger, VT100ScreenProgress) {
     VT100ScreenProgressStopped = 0,
     VT100ScreenProgressError = -1,
     VT100ScreenProgressIndeterminate = -2,
-    VT100ScreenProgressBase = 1000,  // values base...base+100 are percentages.
+    VT100ScreenProgressSuccessBase = 1000,  // values base...base+100 are percentages.
+    VT100ScreenProgressErrorBase = 2000,  // same as .successBase
+    VT100ScreenProgressWarningBase = 3000  // same as .successBase
 };
 
