@@ -43,6 +43,7 @@ class ChatInputTextFieldContainer: NSView {
         tv.textContainer?.containerSize = NSSize(width: 0, height: CGFloat.greatestFiniteMagnitude)
         tv.textContainer?.widthTracksTextView = true
         tv.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        tv.allowsUndo = true
         return tv
     }()
 
