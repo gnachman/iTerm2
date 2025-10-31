@@ -133,8 +133,8 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         hintLabel.alignment = .right
         hintLabel.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         hintLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        
-        let horizontalStack = ChatInputHorizontalStackView(views: [addAttachmentButton, inputTextFieldContainer, hintLabel, sendButton])
+
+        let horizontalStack = ChatInputHorizontalStackView(views: [addAttachmentButton, inputTextFieldContainer, sendButton])
         horizontalStack.orientation = .horizontal
         horizontalStack.spacing = 6
         horizontalStack.translatesAutoresizingMaskIntoConstraints = false
@@ -156,6 +156,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         }
 
         addSubview(verticalStack)
+        addSubview(hintLabel)
 
         let inputStackVerticalInset = CGFloat(12)
 
@@ -182,6 +183,9 @@ class ChatInputView: NSView, NSTextFieldDelegate {
             sendButton.widthAnchor.constraint(greaterThanOrEqualToConstant: buttonHeight),
             sendButton.heightAnchor.constraint(equalToConstant: buttonHeight),
             sendButton.trailingAnchor.constraint(equalTo: horizontalStack.trailingAnchor),
+
+            hintLabel.trailingAnchor.constraint(equalTo: inputTextFieldContainer.trailingAnchor, constant: -12),
+            hintLabel.centerYAnchor.constraint(equalTo: inputTextFieldContainer.centerYAnchor),
         ])
         if let vev {
             NSLayoutConstraint.activate([
@@ -279,8 +283,46 @@ class ChatInputView: NSView, NSTextFieldDelegate {
             hintLabel.isHidden = true
         } else {
             sendButton.image = sendImage
-            hintLabel.isHidden = false
+            hintLabel.isHidden = shouldHideHintLabel()
         }
+    }
+
+    private func shouldHideHintLabel() -> Bool {
+        let textView = inputTextFieldContainer.textView
+        let text = textView.string
+
+        // Always show hint if empty
+        if text.isEmpty {
+            return false
+        }
+
+        // Hide if multiple lines (text contains newline or has wrapped)
+        guard let layoutManager = textView.layoutManager,
+              let textContainer = textView.textContainer else {
+            return !text.isEmpty
+        }
+
+        // Check if text spans multiple lines
+        let usedRect = layoutManager.usedRect(for: textContainer)
+        let lineHeight = layoutManager.defaultLineHeight(for: textView.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize))
+
+        // If content height is greater than one line, hide hint
+        if usedRect.height > lineHeight * 1.5 {
+            return true
+        }
+
+        // Calculate the width of the text to see if it would overlap with hint label
+        let textWidth = usedRect.width
+        let hintWidth = hintLabel.intrinsicContentSize.width
+        let availableWidth = textView.bounds.width
+
+        // Hide if text would be under the hint (leaving some padding)
+        let hintStartX = availableWidth - hintWidth - 12 // 12 is the trailing constraint constant
+        if textWidth > hintStartX - 20 { // 20px padding buffer
+            return true
+        }
+
+        return false
     }
 
     private func updateAttachmentsView() {
