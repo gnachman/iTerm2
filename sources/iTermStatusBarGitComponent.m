@@ -161,7 +161,7 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
                                           textColor:(NSColor *)textColor {
-    return @"⎇ master";
+    return @"⎇ main";
 }
 
 - (BOOL)statusBarComponentCanStretch {
@@ -702,12 +702,12 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         DLog(@"Not running command because status is %@", _status);
         return;
     }
-    
+
     if (!self.onLocalhost) {
         [self runGitOnRemoteHost:args];
         return;
     }
-    
+
     _status = status;
     [self updateTextFieldIfNeeded];
     NSString *gitWrapper = [[NSBundle bundleForClass:self.class] pathForResource:@"iterm2_git_wrapper" ofType:@"sh"];
