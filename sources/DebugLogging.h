@@ -203,6 +203,7 @@ extern BOOL gDebugLogging;
 
 void iTermFatalError(NSString *s) __attribute__((noreturn));
 
+NSString *iTermDebugLogHeaderString(void);
 void ToggleDebugLogging(void);
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
 void LogForNextCrash(const char *file, int line, const char *function, NSString* value, BOOL force);

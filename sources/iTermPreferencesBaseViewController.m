@@ -361,8 +361,14 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
                 [self setObject:[sender objectValue] forKey:info.key];
                 break;
 
+            case kPreferenceInfoTypeRadioButton: {
+                NSNumber *defaultValue = [NSNumber castFrom:[self defaultValueForKey:info.key]];
+                [self setInteger:[info.control it_selectedRadioButtonTagWithDefaultValue:defaultValue.integerValue]
+                          forKey:info.key];
+                break;
+            }
+
             case kPreferenceInfoTypeMatrix:
-            case kPreferenceInfoTypeRadioButton:
                 assert(false);  // Must use a custom setting changed handler
 
             case kPreferenceInfoTypePopup:
@@ -526,7 +532,6 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
     if (!settingChanged || !update) {
         assert([self defaultValueForKey:key isCompatibleWithType:type]);
         assert(type != kPreferenceInfoTypeMatrix);  // Matrix type requires both.
-        assert(type != kPreferenceInfoTypeRadioButton);  // This is just a modernized matrix
     }
 
     return [self unsafeDefineControl:control
@@ -821,8 +826,28 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
             break;
         }
 
+        case kPreferenceInfoTypeRadioButton: {
+            assert([info.control isKindOfClass:[NSView class]]);
+            NSView *container = [NSView castFrom:info.control];
+            id obj = [self objectForKey:info.key];
+            if (obj) {
+                const NSInteger tag = [self integerForKey:info.key];
+                for (NSView *subview in container.subviews) {
+                    NSButton *radioButton = [NSButton castFrom:subview];
+                    if (!radioButton) {
+                        continue;
+                    }
+                    if (radioButton.tag == tag) {
+                        radioButton.state = NSControlStateValueOn;
+                    } else {
+                        radioButton.state = NSControlStateValueOff;
+                    }
+                }
+            }
+            break;
+        }
+
         case kPreferenceInfoTypeMatrix:
-        case kPreferenceInfoTypeRadioButton:
             assert(false);  // Must use onChange() only.
 
         case kPreferenceInfoTypeColorWell: {
@@ -886,6 +911,14 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
 
 - (PreferenceInfo *)safeInfoForControl:(NSView *)control {
     PreferenceInfo *info = [_keyMap objectForKey:control];
+    if (!info && control.superview) {
+        info = [_keyMap objectForKey:control.superview];
+        if (info && info.type == kPreferenceInfoTypeRadioButton) {
+            return info;
+        } else {
+            return nil;
+        }
+    }
     return info;
 }
 

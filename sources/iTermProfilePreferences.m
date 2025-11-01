@@ -154,7 +154,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
         case kPreferenceInfoTypeMatrix:
             return [defaultValue isKindOfClass:[NSString class]];
         case kPreferenceInfoTypeRadioButton:
-            return [defaultValue isKindOfClass:[NSString class]];
+            return [defaultValue isKindOfClass:[NSNumber class]];
         case kPreferenceInfoTypeColorWell:
             return ([defaultValue isKindOfClass:[NSNull class]] ||
                     [defaultValue isKindOfClass:[NSDictionary class]]);

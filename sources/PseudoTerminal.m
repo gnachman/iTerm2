@@ -3933,6 +3933,11 @@ ITERM_WEAKLY_REFERENCEABLE
     return _fieldEditor;
 }
 
+- (NSDictionary<NSString *, NSString *> *)savedWindowPositions {
+    id obj = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeySavedWindowPositions];
+    return [NSDictionary castFrom:obj] ?: @{};
+}
+
 - (void)windowWillClose:(NSNotification *)aNotification {
    DLog(@"windowWillClose %@", self);
     _closing = YES;
@@ -3965,20 +3970,10 @@ ITERM_WEAKLY_REFERENCEABLE
             // We don't want the IR window to survive us, nor be saved in the restorable state.
             [self closeInstantReplayWindow];
         }
-        if ([iTermPreferences boolForKey:kPreferenceKeySmartWindowPlacement]) {
-            [[self window] saveFrameUsingName:[NSString stringWithFormat:kWindowNameFormat, 0]];
-        } else {
-            // Save frame position for window
-            [[self window] saveFrameUsingName:[NSString stringWithFormat:kWindowNameFormat, uniqueNumber_]];
-            [[TemporaryNumberAllocator sharedInstance] deallocateNumber:uniqueNumber_];
-        }
-    } else {
-        if (![iTermPreferences boolForKey:kPreferenceKeySmartWindowPlacement]) {
-            // Save frame position for window
-            [[self window] saveFrameUsingName:[NSString stringWithFormat:kWindowNameFormat, uniqueNumber_]];
-            [[TemporaryNumberAllocator sharedInstance] deallocateNumber:uniqueNumber_];
-        }
     }
+    [[self window] saveFrameUsingName:[NSString stringWithFormat:kWindowNameFormat, uniqueNumber_]];
+    [self saveWindowPosition];
+    [[TemporaryNumberAllocator sharedInstance] deallocateNumber:uniqueNumber_];
 
     if ([[self allSessions] count]) {
         // First close any tmux tabs because their closure is not undoable.
@@ -6050,21 +6045,42 @@ ITERM_WEAKLY_REFERENCEABLE
         frame.origin = preferredOrigin_;
         [window setFrame:frame display:NO];
     }
-    NSUInteger numberOfTerminalWindows = [[[iTermController sharedInstance] terminals] count];
-    if (numberOfTerminalWindows != 1 &&
-        [iTermPreferences boolForKey:kPreferenceKeySmartWindowPlacement]) {
-        PtyLog(@"Invoking smartLayout");
-        [window smartLayout];
-        return;
+    const NSUInteger numberOfTerminalWindows = [[[iTermController sharedInstance] terminals] count];
+    switch ([iTermPreferences unsignedIntegerForKey:kPreferenceKeyWindowPlacement]) {
+        case iTermWindowPlacementSystem:
+            DLog(@"Using system placement");
+            return;
+        case iTermWindowPlacementSizeAndPosition: {
+            DLog(@"Restoring size and position");
+            const int screenNumber = window.screenNumber;
+            [self loadAutoSaveFrame];
+            if (_isAnchoredToScreen && window.screenNumber != screenNumber) {
+                DLog(@"Move window to preferred origin because it moved to another screen.");
+                [window setFrameOrigin:preferredOrigin_];
+            }
+            break;
+        }
+        case iTermWindowPlacementPosition: {
+            DLog(@"Restoring position");
+            [self loadSavedWindowPosition:window];
+            break;
+        }
+        case iTermWindowPlacementSmart:
+            if (numberOfTerminalWindows != 1) {
+                PtyLog(@"Invoking smartLayout");
+                [window smartLayout];
+                return;
+            }
+            DLog(@"Smart Layout: restoring position");
+            [self loadSavedWindowPosition:window];
+            break;
     }
 
-    if (![iTermPreferences boolForKey:kPreferenceKeyUseAutoSaveFrames]) {
-        DLog(@"Not remembering window poasitions");
-        return;
-    }
+}
 
+- (void)loadSavedWindowPosition:(iTermTerminalWindow *)window {
     const int screenNumber = window.screenNumber;
-    [self loadAutoSaveFrame];
+    [self loadAutoSavePosition];
     if (_isAnchoredToScreen && window.screenNumber != screenNumber) {
         DLog(@"Move window to preferred origin because it moved to another screen.");
         [window setFrameOrigin:preferredOrigin_];
@@ -6089,6 +6105,58 @@ ITERM_WEAKLY_REFERENCEABLE
         [window setFrame:frame display:NO];
         DLog(@"Update frame to %@", NSStringFromRect(frame));
     }
+}
+
+- (void)saveWindowPosition {
+    NSMutableDictionary<NSString *, NSString *> *savedPositions = [[[self savedWindowPositions] mutableCopy] autorelease];
+    NSPoint point = self.window.frame.origin;
+    point.y += self.window.frame.size.height;
+    savedPositions[@(uniqueNumber_).stringValue] = NSStringFromPoint(point);
+    [[NSUserDefaults standardUserDefaults] setObject:savedPositions
+                                              forKey:kPreferenceKeySavedWindowPositions];
+}
+
+- (void)loadAutoSavePosition {
+    if ([_initialProfile[KEY_DISABLE_AUTO_FRAME] boolValue]) {
+        DLog(@"Auto-frame disabled.");
+        return;
+    }
+    switch (self.windowType) {
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_ACCESSORY:
+            break;
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            DLog(@"Window not positionable");
+            return;
+    }
+    DLog(@"Load auto-save position");
+    iTermTerminalWindow *window = [self ptyWindow];
+    NSRect frame = [window frame];
+    NSDictionary<NSString *, NSString *> *savedPositions = [self savedWindowPositions];
+    NSString *position = savedPositions[@(uniqueNumber_).stringValue];
+    if (position) {
+        NSPoint point = NSPointFromString(position);
+        point.y -= self.window.frame.size.height;
+        [self.window setFrameOrigin:point];
+        return;
+    }
+
+    frame.origin = preferredOrigin_;
+    [window setFrame:frame display:NO];
+    DLog(@"Update frame to %@", NSStringFromRect(frame));
 }
 
 - (BOOL)sessionInitiatedResize:(PTYSession *)session width:(int)width height:(int)height {

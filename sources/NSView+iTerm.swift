@@ -55,3 +55,12 @@ extension NSView {
     }
 }
 
+@objc
+extension NSView {
+    @objc(it_selectedRadioButtonTagWithDefaultValue:)
+    func it_selectedRadioButtonTag(defaultValue: Int) -> Int {
+        return subviews.first { subview in
+            return (subview as? NSButton)?.state == .on
+        }?.tag ?? defaultValue
+    }
+}

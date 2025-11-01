@@ -80,7 +80,7 @@ static NSString *iTermOSVersionInfo(void) {
     return value ?: @"(nil)";
 }
 
-static void WriteDebugLogHeader(void) {
+NSString *iTermDebugLogHeaderString(void) {
     NSMutableString *windows = [NSMutableString string];
     for (NSWindow *window in [[NSApplication sharedApplication] windows]) {
         AppendWindowDescription(window, windows);
@@ -111,7 +111,11 @@ static void WriteDebugLogHeader(void) {
                         windows,
                         [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels],
                         pinnedMessages];
-    gDebugLogHeader = [header copy];
+    return header;
+}
+
+static void WriteDebugLogHeader(void) {
+    gDebugLogHeader = [iTermDebugLogHeaderString() copy];
 }
 
 static void WriteDebugLogFooter(void) {

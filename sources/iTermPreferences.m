@@ -65,8 +65,9 @@ NSString *const kPreferenceKeySelectionCopiesText = @"CopySelection";
 NSString *const kPreferenceKeyCopyLastNewline = @"CopyLastNewline";
 NSString *const kPreferenceKeyAllowClipboardAccessFromTerminal = @"AllowClipboardAccess";
 NSString *const kPreferenceKeyCharactersConsideredPartOfAWordForSelection = @"WordCharacters";
-NSString *const kPreferenceKeySmartWindowPlacement = @"SmartPlacement";
-NSString *const kPreferenceKeyUseAutoSaveFrames = @"RememberWindowPositions";
+NSString *const kPreferenceKeySmartWindowPlacement_Deprecated = @"SmartPlacement";
+NSString *const kPreferenceKeyUseAutoSaveFrames_Deprecated = @"RememberWindowPositions";
+NSString *const kPreferenceKeyWindowPlacement = @"WindowPlacement";
 NSString *const kPreferenceKeyAdjustWindowForFontSizeChange = @"AdjustWindowForFontSizeChange";
 NSString *const kPreferenceKeyMaximizeVerticallyOnly = @"MaxVertically";
 NSString *const kPreferenceKeyLionStyleFullscreen = @"UseLionStyleFullscreen";
@@ -174,6 +175,7 @@ NSString *const kPreferenceKeyWrapDroppedFilenamesInQuotesWhenPasting = @"WrapDr
 NSString *const kPreferenceKeyReportHorizontalScrollEvents = @"ReportHorizontalScrollEvents";
 NSString *const kPreferenceKeyAppVersion = @"iTerm Version";  // Excluded from syncing
 NSString *const kPreferenceKeyAllAppVersions = @"NoSyncAllAppVersions";  // Array of known iTerm2 versions this user has used on this machine.
+NSString *const kPreferenceKeySavedWindowPositions = @"NoSyncSavedWindowPositions";
 NSString *const kPreferenceAutoCommandHistory = @"AutoCommandHistory";
 NSString *const kPreferenceAutoComposer = @"AutoComposer";
 NSString *const kPreferenceKeyOSVersion = @"NoSyncLastOSVersion";
@@ -482,8 +484,9 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyCopyLastNewline: @NO,
                   kPreferenceKeyAllowClipboardAccessFromTerminal: @NO,
                   kPreferenceKeyCharactersConsideredPartOfAWordForSelection: @"/-+\\~_.",
-                  kPreferenceKeySmartWindowPlacement: @NO,
-                  kPreferenceKeyUseAutoSaveFrames: @NO,
+                  kPreferenceKeySmartWindowPlacement_Deprecated: @NO,
+                  kPreferenceKeyUseAutoSaveFrames_Deprecated: @NO,
+                  kPreferenceKeyWindowPlacement: @(iTermWindowPlacementPosition),
                   kPreferenceKeyAdjustWindowForFontSizeChange: @YES,
                   kPreferenceKeyMaximizeVerticallyOnly: @NO,
                   kPreferenceKeyLionStyleFullscreen: @YES,
@@ -699,7 +702,7 @@ static NSString *sPreviousVersion;
         case kPreferenceInfoTypeMatrix:
             return [defaultValue isKindOfClass:[NSString class]];
         case kPreferenceInfoTypeRadioButton:
-            return [defaultValue isKindOfClass:[NSString class]];
+            return [defaultValue isKindOfClass:[NSNumber class]];
         case kPreferenceInfoTypeColorWell:
             return [defaultValue isKindOfClass:[NSDictionary class]];
     }
@@ -724,6 +727,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyTabsHaveCloseButton: BLOCK(computedTabsHaveCloseButton),
                   kPreferenceKeyLeftControlRemapping: BLOCK(computedLeftControlRemapping),
                   kPreferenceKeyRightControlRemapping: BLOCK(computedRightControlRemapping),
+                  kPreferenceKeyWindowPlacement: BLOCK(computedWindowPlacement),
                   };
     }
     return dict;
@@ -938,6 +942,23 @@ static NSString *sPreviousVersion;
         return @(value.intValue);
     }
     return [self defaultObjectForKey:kPreferenceKeyLeftControlRemapping];
+}
+
++ (NSNumber *)computedWindowPlacement {
+    NSNumber *value;
+    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyWindowPlacement];
+    if (value) {
+        return value;
+    }
+    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeySmartWindowPlacement_Deprecated];
+    if (value.boolValue) {
+        return @(iTermWindowPlacementSmart);
+    }
+    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyUseAutoSaveFrames_Deprecated];
+    if (value.boolValue) {
+        return @(iTermWindowPlacementSizeAndPosition);
+    }
+    return [self defaultObjectForKey:kPreferenceKeyWindowPlacement];
 }
 
 + (NSNumber *)computedRightControlRemapping {

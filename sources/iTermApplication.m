@@ -1079,7 +1079,13 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 }
 
 - (void)reportException:(NSException *)exception {
-    CrashLog(@"reportException: %@", exception.debugDescription);
+    NSString *header = nil;
+    @try {
+        header = iTermDebugLogHeaderString();
+    } @catch (NSError *headerException) {
+        header = [@"Exception while generating header: " stringByAppendingString:headerException.debugDescription];
+    }
+    CrashLog(@"reportException: %@\n\n%@", exception.debugDescription, header);
     [super reportException:exception];
 }
 

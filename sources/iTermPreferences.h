@@ -105,6 +105,13 @@ typedef NS_ENUM(NSUInteger, iTermAIPrompt) {
     iTermAIPromptAIChatReadWriteTerminalBrowser = 6,
 };
 
+typedef NS_ENUM(NSUInteger, iTermWindowPlacement) {
+    iTermWindowPlacementSystem,
+    iTermWindowPlacementSmart,
+    iTermWindowPlacementSizeAndPosition,
+    iTermWindowPlacementPosition,
+};
+
 // General
 extern NSString *const kPreferenceKeyOpenBookmark;
 extern NSString *const kPreferenceKeyOpenArrangementAtStartup;
@@ -148,8 +155,9 @@ extern NSString *const kPreferenceKeySelectionCopiesText;
 extern NSString *const kPreferenceKeyCopyLastNewline;
 extern NSString *const kPreferenceKeyAllowClipboardAccessFromTerminal;
 extern NSString *const kPreferenceKeyCharactersConsideredPartOfAWordForSelection;
-extern NSString *const kPreferenceKeySmartWindowPlacement;
-extern NSString *const kPreferenceKeyUseAutoSaveFrames;
+extern NSString *const kPreferenceKeySmartWindowPlacement_Deprecated;
+extern NSString *const kPreferenceKeyUseAutoSaveFrames_Deprecated;
+extern NSString *const kPreferenceKeyWindowPlacement;
 extern NSString *const kPreferenceKeyAdjustWindowForFontSizeChange;
 extern NSString *const kPreferenceKeyMaximizeVerticallyOnly;
 extern NSString *const kPreferenceKeyLionStyleFullscreen;
@@ -288,6 +296,7 @@ extern NSString *const kPreferenceKeyReportHorizontalScrollEvents;
 // Stores the last CFBundleVersion run.
 extern NSString *const kPreferenceKeyAppVersion;
 extern NSString *const kPreferenceKeyAllAppVersions;
+extern NSString *const kPreferenceKeySavedWindowPositions;
 
 // Auto-command history (set through menu)
 extern NSString *const kPreferenceAutoCommandHistory;

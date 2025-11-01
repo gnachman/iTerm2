@@ -125,6 +125,9 @@ enum {
     // Smart window placement
     IBOutlet NSButton *_smartPlacement;
     IBOutlet NSButton *_useAutoSaveFrames;
+    IBOutlet NSButton *_rememberPositionOnly;
+    IBOutlet NSButton *_defaultPositioning;
+    IBOutlet NSView *_placementContainer;
 
     // Adjust window size when changing font size
     IBOutlet NSButton *_adjustWindowForFontSizeChange;
@@ -625,19 +628,11 @@ enum {
                     key:kPreferenceKeyWrapDroppedFilenamesInQuotesWhenPasting
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
-    [self defineControl:_smartPlacement
-                    key:kPreferenceKeySmartWindowPlacement
-            relatedView:nil
-                   type:kPreferenceInfoTypeCheckbox];
-    info = [self defineControl:_useAutoSaveFrames
-                           key:kPreferenceKeyUseAutoSaveFrames
+
+    info = [self defineControl:_placementContainer
+                           key:kPreferenceKeyWindowPlacement
                    relatedView:nil
-                          type:kPreferenceInfoTypeCheckbox];
-    info.shouldBeEnabled = ^BOOL{
-        return ![weakSelf boolForKey:kPreferenceKeySmartWindowPlacement];
-    };
-    [info addShouldBeEnabledDependencyOnSetting:kPreferenceKeySmartWindowPlacement
-                                     controller:self];
+                          type:kPreferenceInfoTypeRadioButton];
 
     [self defineControl:_adjustWindowForFontSizeChange
                     key:kPreferenceKeyAdjustWindowForFontSizeChange
@@ -1318,7 +1313,7 @@ enum {
         action = @"Open System Settings";
         path = @"/System/Library/PreferencePanes/Dock.prefPane";
     } else {
-        message = @"System window restoration has been disabled, which prevents iTerm2 from respecting this setting. Disable System Preferences > General > Close windows when quitting an app to enable window restoration.";
+        message = @"System window restoration has been disabled, which prevents iTerm2 from respecting this setting. Disable System Settings > General > Close windows when quitting an app to enable window restoration.";
         action = @"Open System Preferences";
         path = @"/System/Library/PreferencePanes/Appearance.prefPane";
     }
