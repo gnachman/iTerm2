@@ -310,6 +310,10 @@
                                 alertWidth:alertWidth];
     stackView.translatesAutoresizingMaskIntoConstraints = YES;
     alert.accessoryView = stackView;
+    [alert layout];
+    if (polyModalItems.textField) {
+        [[alert window] makeFirstResponder:polyModalItems.textField];
+    }
     NSWindow *window =
         [[[iTermController sharedInstance] terminalWithGuid:windowID] window];
     NSModalResponse responseTag;
