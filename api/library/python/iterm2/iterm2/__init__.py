@@ -1,7 +1,7 @@
 """
 The iTerm2 module provides a Python interface for controlling iTerm2.
 """
-from iterm2.alert import Alert, TextInputAlert
+from iterm2.alert import Alert, TextInputAlert, PolyModalAlert
 
 from iterm2.app import (
     async_get_app, App, async_invoke_function,
