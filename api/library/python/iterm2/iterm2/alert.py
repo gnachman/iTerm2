@@ -156,7 +156,7 @@ class TextInputAlert:
 
 @dataclass
 class PolyModalResult:
-    """Dedicate object to return for PolyModalAlert """
+    """Dedicated object to return for PolyModalAlert """
     button: typing.Optional[str] = None
     tf_text: typing.Optional[str] = None
     combo: typing.Optional[str] = None
