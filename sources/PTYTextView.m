@@ -1529,6 +1529,14 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     NSRect rect = self.enclosingScrollView.documentVisibleRect;
     // Subtract the top margin's height.
     rect.origin.y = row * _lineHeight;
+
+    // Align text from the bottom instead of the top by adding excess pixels to the top.
+    // This ensures consistent bottom padding across split panes.
+    const double currentExcess = [self excess];
+    const CGFloat bottomMarginHeight = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    const double topOffset = MAX(0, currentExcess - bottomMarginHeight);
+    rect.origin.y += topOffset;
+
     if (excludeTopMargin) {
         rect.size.height -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     } else {
@@ -1789,8 +1797,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     }
 }
 
-// Number of extra lines below the last line of text that are always the background color.
-// This is 2 except for just after the frame has changed and things are resizing.
+// Number of extra pixels that don't fit evenly into line heights.
+// This is used to calculate top offset for bottom-aligned text rendering.
+// The value is at least the bottom margin height (typically 2px).
 - (double)excess {
     NSRect visibleRectExcludingTopAndBottomMargins = [self scrollViewContentSize];
     visibleRectExcludingTopAndBottomMargins.size.height -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2;  // Height without top and bottom margins.
