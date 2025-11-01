@@ -271,7 +271,16 @@
         [stackViews addObject:comboBox];
         polyModalItems.comboBox = comboBox;
     }
-
+    if ([checkboxes count] != [checkboxDefaults count]) {
+        if (completion) {
+            NSString *errorMessage = @"Number of checkboxes does not match number of defaults";
+            NSError *error = [NSError errorWithDomain:@"iTermPolyModalAlertError"
+                                                 code:1
+                                             userInfo:@{NSLocalizedDescriptionKey: errorMessage}];
+            completion(nil, error);
+        }
+        return;
+    }
     if ([checkboxes count] > 0) {
         NSMutableArray *checkboxViews = [NSMutableArray array];
         NSUInteger idx = 0;
