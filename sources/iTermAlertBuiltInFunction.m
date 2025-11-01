@@ -253,8 +253,11 @@
     alert.informativeText = subtitle;
     PolyModalItems *polyModalItems = [[PolyModalItems alloc] init];
     polyModalItems.buttons = buttons;
-    for (NSString *buttonTitle in buttons) {
-        [alert addButtonWithTitle:buttonTitle];
+    for (id button in buttons) {
+        NSString *buttonTitle = [NSString castFrom:button];
+        if (buttonTitle) {
+            [alert addButtonWithTitle:buttonTitle];
+        }
     }
     NSMutableArray *stackViews = [NSMutableArray array];
     if ([comboboxItems count] > 0) {
@@ -279,7 +282,6 @@
             currentCheckbox.buttonType = NSButtonTypeSwitch;
             currentCheckbox.title = checkboxTitle;
             currentCheckbox.state = [[checkboxDefaults objectAtIndex:idx] integerValue];
-            currentCheckbox.target = self;
             [checkboxViews addObject:currentCheckbox];
             [stackViews addObject:currentCheckbox];
             idx++;
