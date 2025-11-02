@@ -287,6 +287,30 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     }
 }
 
+- (void)launchBobWithPath:(NSString *)path {
+    assert(path);
+    if (!path) {
+        // I don't expect this to ever happen.
+        return;
+    }
+    NSString *bundlePath = nil;
+    bundlePath = [self absolutePathForAppBundleWithIdentifier:kBobIdentifier];
+    DLog(@"Bundle path for Bob is %@", bundlePath);
+    if (bundlePath) {
+        NSString *codeExecutable =
+        [bundlePath stringByAppendingPathComponent:@"Contents/Resources/app/bin/code"];
+        if ([self.fileManager fileExistsAtPath:codeExecutable]) {
+            DLog(@"Launch Bob %@ %@", codeExecutable, path);
+            [self launchTaskWithPath:codeExecutable arguments:@[ path, @"-g" ] completion:nil];
+        } else {
+            // This isn't as good as opening "code -g" because it always opens a new instance
+            // of the app but it's the OS-sanctioned way of running VSCode.  We can't
+            // use AppleScript because it won't open the file to a particular line number.
+            [self launchAppWithBundleIdentifier:kBobIdentifier path:path];
+        }
+    }
+}
+
 - (void)launchEmacsWithArguments:(NSArray *)args {
     // Try to find emacsclient.
     NSBundle *bundle = [self applicationBundleWithIdentifier:kEmacsAppIdentifier];
@@ -453,7 +477,8 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
               kNovaAppIdentifier,
               kXcodeAppIdentifier,
               kCursorAppIdentifier,
-              kZedAppIdentifier
+              kZedAppIdentifier,
+              kBobIdentifier
     ];
 }
 
@@ -487,6 +512,16 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         }
         [self launchVSCodeWithPath:path
                             codium:([identifier isEqualToString:kVSCodiumIdentifier1] || [identifier isEqualToString:kVSCodiumIdentifier2])];
+        return;
+    }
+    if ([identifier isEqualToString:kBobIdentifier]) {
+        if (lineNumber != nil) {
+            path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
+        }
+        if (columnNumber != nil) {
+            path = [path stringByAppendingFormat:@":%@", columnNumber];
+        }
+        [self launchBobWithPath:path];
         return;
     }
     if ([identifier isEqualToString:kSublimeText2Identifier] ||

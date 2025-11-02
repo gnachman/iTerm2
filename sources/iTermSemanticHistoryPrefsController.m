@@ -43,6 +43,8 @@ NSString *kNovaAppIdentifier = @"com.panic.Nova";
 NSString *kXcodeAppIdentifier = @"com.apple.dt.Xcode";
 NSString *kCursorAppIdentifier = @"com.todesktop.230313mzl4w4u92";
 NSString *kZedAppIdentifier = @"dev.zed.zed";
+NSString *kBobIdentifier = @"com.ibm.software.bob";
+
 NSString *kSemanticHistoryBestEditorAction = @"best editor";
 NSString *kSemanticHistoryUrlAction = @"url";
 NSString *kSemanticHistoryEditorAction = @"editor";
@@ -100,7 +102,8 @@ enum {
     kXcodeTag,
     kCursorTag,
     kZedTag,
-    kWindsurfTag
+    kWindsurfTag,
+    kBobTag
 
     // Only append to the end of the list; never delete or change.
 };
@@ -149,6 +152,7 @@ enum {
                                kVSCodiumIdentifier1: @"vscodium",
                                kVSCodiumIdentifier2: @"vscodium",
                                kVSCodeInsidersIdentifier: @"vscode",
+                               kBobIdentifier: @"vscode",  // This is just a guess
                                kEmacsAppIdentifier: @"",
                                kIntelliJIDEAIdentifierCE: @"",
                                kIntelliJIDEAIdentifierUE: @"",
@@ -186,7 +190,8 @@ enum {
               kRiderIdentifier,
               kCursorAppIdentifier,
               kZedAppIdentifier,
-              kWindsurfIdentifier ];
+              kWindsurfIdentifier,
+              kBobIdentifier ];
 }
 
 + (NSString *)bestEditor {
@@ -220,7 +225,8 @@ enum {
                                   kXcodeAppIdentifier,
                                   kCursorAppIdentifier,
                                   kZedAppIdentifier,
-                                  kWindsurfIdentifier];
+                                  kWindsurfIdentifier,
+                                  kBobIdentifier];
     return [editorBundleIds containsObject:bundleId];
 }
 
@@ -247,6 +253,7 @@ enum {
                                kCursorAppIdentifier: @(kCursorTag),
                                   kZedAppIdentifier: @(kZedTag),
                                 kWindsurfIdentifier: @(kWindsurfTag),
+                                     kBobIdentifier: @(kBobTag)
     };
     return tags;
 }
@@ -296,7 +303,8 @@ enum {
                                  kXcodeAppIdentifier: @"Xcode",
                                 kCursorAppIdentifier: @"Cursor",
                                    kZedAppIdentifier: @"Zed",
-                                 kWindsurfIdentifier: @"Windsurf"
+                                 kWindsurfIdentifier: @"Windsurf",
+                                      kBobIdentifier: @"IBM Bob",
     };
 
     NSDictionary *tags = [[self class] identifierToTagMap];
@@ -376,6 +384,7 @@ enum {
                                  @(kCursorTag): kCursorAppIdentifier,
                                     @(kZedTag): kZedAppIdentifier,
                                @(kWindsurfTag): kWindsurfIdentifier,
+                                    @(kBobTag): kBobIdentifier
     };
     return map[@([[editors_ selectedItem] tag])];
 }

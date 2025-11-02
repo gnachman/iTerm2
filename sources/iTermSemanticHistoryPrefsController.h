@@ -34,6 +34,7 @@ extern NSString *kNovaAppIdentifier;
 extern NSString *kXcodeAppIdentifier;
 extern NSString *kCursorAppIdentifier;
 extern NSString *kZedAppIdentifier;
+extern NSString *kBobIdentifier;
 
 extern NSString *kSemanticHistoryBestEditorAction;
 extern NSString *kSemanticHistoryUrlAction;
