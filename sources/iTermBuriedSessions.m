@@ -192,6 +192,11 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
         iTermRestorableSession *restorable = [[iTermRestorableSession alloc] initWithRestorableState:dict];
         if (restorable) {
             [_array addObject:restorable];
+            for (PTYSession *session in restorable.sessions) {
+                if (session.abortBury) {
+                    [[iTermBuriedSessions sharedInstance] restoreSession:session];
+                }
+            }
         }
     }
     [self updateMenus];

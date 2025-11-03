@@ -1969,6 +1969,11 @@ ITERM_WEAKLY_REFERENCEABLE
                     [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
                         [terminal.parser cancelTmuxRecoveryMode];
                     }];
+                    if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession]) {
+                        // It hasn't been added to buried sessions yet. Make a note to unbury it
+                        // after the session is created.
+                        aSession->_abortBury = YES;
+                    }
                 }
                 if (aSession->_conductor) {
                     [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
@@ -1981,7 +1986,6 @@ ITERM_WEAKLY_REFERENCEABLE
                     aSession->_shell.sshIntegrationActive = NO;
                 }
             }
-
         }
 
         // GUID will be set for new saved arrangements since late 2014.

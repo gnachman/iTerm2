@@ -628,6 +628,7 @@ backgroundColor:(NSColor *)backgroundColor;
 // Autodetected dominant color, otherwise configured bg color
 @property(nonatomic, readonly) NSColor *effectiveUnprocessedBackgroundColor;
 @property(nonatomic, readonly) NSColor *effectiveProcessedBackgroundColor;
+@property(nonatomic, readonly) BOOL abortBury;
 
 #pragma mark - methods
 
