@@ -71,6 +71,7 @@ typedef NS_ENUM(NSUInteger, PTYWindowTitleBarFlavor) {
 };
 
 - (PTYWindowTitleBarFlavor)ptyWindowTitleBarFlavor;
+- (CGFloat)ptyWindowTitleBarHeight NS_AVAILABLE_MAC(26);
 
 - (BOOL)ptyWindowIsDraggable:(id<PTYWindow>)window;
 - (void)ptyWindowDidMakeKeyAndOrderFront:(id<PTYWindow>)window;

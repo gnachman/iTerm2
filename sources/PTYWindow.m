@@ -29,7 +29,6 @@
 #import "iTermController.h"
 #import "iTermSelectorSwizzler.h"
 #import "iTermWindowOcclusionChangeMonitor.h"
-#import "iTermPreferences.h"
 #import "iTermSessionLauncher.h"
 #import "NSArray+iTerm.h"
 #import "PTYWindow.h"
@@ -83,6 +82,18 @@ const NSTimeInterval iTermWindowTitleChangeMinimumInterval = 0.1;
 
 // Height of built-in titlebar to create.
 - (CGFloat)_titlebarHeight {
+    // The design for hiding standard window buttons in macOS 26 is different
+    // (we don't make copies of the buttons) so we need fine-grained control
+    // over their vertical position which is done by lying about the titlebar
+    // height.
+    if (@available(macOS 26.0, *)) {
+        if ([self.window.ptyWindow.ptyDelegate ptyWindowTitleBarFlavor] == PTYWindowTitleBarFlavorDefault) {
+            if ([[[self class] superclass] instancesRespondToSelector:_cmd]) {
+                return [super _titlebarHeight];
+            }
+        }
+        return [self.window.ptyWindow.ptyDelegate ptyWindowTitleBarHeight];
+    }
     switch ([self.window.ptyWindow.ptyDelegate ptyWindowTitleBarFlavor]) {
         case PTYWindowTitleBarFlavorDefault:
             if ([[[self class] superclass] instancesRespondToSelector:_cmd]) {

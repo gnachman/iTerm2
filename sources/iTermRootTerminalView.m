@@ -202,9 +202,16 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 
         _tabBarControl.itermTabBarDelegate = self;
 
+        CGFloat hotboxWidth = iTermStoplightHotboxWidth;
+        if (@available(macOS 26.0, *)) {
+            // On macOS 26+, we have no control over the horizontal positions
+            // of the buttons so we must size the hotbox for where they happen
+            // to be.
+            hotboxWidth = iTermStoplightHotboxWidth - 42;
+        }
         NSRect stoplightFrame = NSMakeRect(0,
                                            0,
-                                           iTermStoplightHotboxWidth,
+                                           hotboxWidth,
                                            iTermStoplightHotboxHeight);
         _stoplightHotbox = [[iTermStoplightHotbox alloc] initWithFrame:stoplightFrame];
         [self addSubview:_stoplightHotbox];
@@ -646,7 +653,42 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     if (!needCustomButtons) {
         [_standardWindowButtonsView removeFromSuperview];
         _standardWindowButtonsView = nil;
-        if ([self.delegate rootTerminalViewShouldRevealStandardWindowButtons]) {
+
+        // On macOS 26+, we need to explicitly control standard button visibility
+        // based on whether they should be revealed (considering window style, etc.)
+        if (@available(macOS 26.0, *)) {
+            BOOL shouldShow = [self.delegate rootTerminalViewShouldRevealStandardWindowButtons];
+            for (int i = 0; i < self.numberOfWindowButtons; i++) {
+                [[self.window standardWindowButton:self.windowButtonTypes[i]] setHidden:!shouldShow];
+            }
+        } else {
+            // On older macOS, reveal standard buttons if needed
+            if ([self.delegate rootTerminalViewShouldRevealStandardWindowButtons]) {
+                for (int i = 0; i < self.numberOfWindowButtons; i++) {
+                    [[self.window standardWindowButton:self.windowButtonTypes[i]] setHidden:NO];
+                }
+            }
+        }
+        return;
+    }
+
+    // On macOS 26+, we never create custom buttons.
+    // Instead, we use a normal titlebar height which allows the real buttons to work properly.
+    // This check must come BEFORE the "already exists" check to handle existing custom buttons.
+    if (@available(macOS 26.0, *)) {
+        // Remove custom button view if it exists from earlier OS versions or settings changes
+        [_standardWindowButtonsView removeFromSuperview];
+        _standardWindowButtonsView = nil;
+
+        if (![self.delegate enableStoplightHotbox]) {
+            // No hotbox - show the standard buttons
+            BOOL showButtons = (ptyWindow.isCompact && [self.delegate rootTerminalViewShouldDrawStoplightButtons]);
+            for (int i = 0; i < self.numberOfWindowButtons; i++) {
+                [[self.window standardWindowButton:self.windowButtonTypes[i]] setHidden:!showButtons];
+            }
+        } else {
+            // Hotbox enabled - real buttons will be faded in/out by hotbox mouse enter/exit.
+            // Start with them hidden (alpha 0 is set in layoutWindowPaneDecorations)
             for (int i = 0; i < self.numberOfWindowButtons; i++) {
                 [[self.window standardWindowButton:self.windowButtonTypes[i]] setHidden:NO];
             }
@@ -656,7 +698,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     if (_standardWindowButtonsView) {
         return;
     }
-    
+
     // This is a compact window that gets special handling for the stoplights buttons.
     CGFloat x = self.leftInsetForWindowButtons;
     const CGFloat stride = self.strideForWindowButtons;
@@ -1540,6 +1582,51 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         [_windowNumberLabel sizeToFit];
         _windowNumberLabel.frame = [self frameForWindowNumberLabel];
     }
+
+    // On macOS 26+, manage real button state for both compact and non-compact windows
+    if (@available(macOS 26.0, *)) {
+        id<PTYWindow> ptyWindow = self.window.ptyWindow;
+        if (ptyWindow.isCompact) {
+            const BOOL hotboxEnabled = [self.delegate enableStoplightHotbox];
+
+            // Force titlebar height recalculation by toggling styleMask
+            // This ensures button position updates when hotbox state changes.
+            // The titlebar height (via overriding the private _titlebarHeight method of NSWindow)
+            // is tweaked to shift the buttons up or down on macOS 26.
+            NSWindowStyleMask styleMask = self.window.styleMask;
+            self.window.styleMask = styleMask & ~NSWindowStyleMaskTitled;
+            self.window.styleMask = styleMask;
+
+            if (!hotboxEnabled) {
+                // We're using real buttons, not custom copies. Show them if appropriate.
+                const BOOL shouldDraw = [self.delegate rootTerminalViewShouldDrawStoplightButtons];
+                for (int i = 0; i < self.numberOfWindowButtons; i++) {
+                    NSButton *button = [self.window standardWindowButton:self.windowButtonTypes[i]];
+                    [button setHidden:!shouldDraw];
+                    [button setAlphaValue:1];  // Restore alpha in case transitioning from hotbox
+                }
+                // Remove custom button view if it exists (e.g., transitioning from hotbox to no hotbox)
+                if (_standardWindowButtonsView) {
+                    [_standardWindowButtonsView removeFromSuperview];
+                    _standardWindowButtonsView = nil;
+                }
+            } else {
+                // Hotbox is enabled - set real buttons to alpha 0 (they'll fade in on mouse enter)
+                for (int i = 0; i < self.numberOfWindowButtons; i++) {
+                    NSButton *button = [self.window standardWindowButton:self.windowButtonTypes[i]];
+                    [button setHidden:NO];
+                    [button setAlphaValue:0];
+                }
+            }
+        } else {
+            // Non-compact window - restore buttons to normal state
+            for (int i = 0; i < self.numberOfWindowButtons; i++) {
+                NSButton *button = [self.window standardWindowButton:self.windowButtonTypes[i]];
+                [button setHidden:NO];
+                [button setAlphaValue:1];
+            }
+        }
+    }
     const BOOL hideWindowTitleLabel = ![self.delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar];
     if (!hideWindowTitleLabel) {
         if (_windowTitleLabel.superview != self) {
@@ -1813,16 +1900,33 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 #pragma mark - iTermStoplightHotboxDelegate
 
 - (void)stoplightHotboxMouseExit {
-    [NSView animateWithDuration:0.25
-                     animations:^{
-                         self->_stoplightHotbox.animator.alphaValue = 0;
-                         self->_standardWindowButtonsView.animator.alphaValue = 0;
-                     }
-                     completion:^(BOOL finished) {
-                         if (!finished) {
-                             return;
+    if (@available(macOS 26.0, *)) {
+        // On macOS 26+, fade out the real buttons
+        [NSView animateWithDuration:0.25
+                         animations:^{
+                             self->_stoplightHotbox.animator.alphaValue = 0;
+                             for (int i = 0; i < self.numberOfWindowButtons; i++) {
+                                 [[self.window standardWindowButton:self.windowButtonTypes[i]].animator setAlphaValue:0];
+                             }
                          }
-                     }];
+                         completion:^(BOOL finished) {
+                             if (!finished) {
+                                 return;
+                             }
+                         }];
+    } else {
+        // On macOS < 26, fade out custom button copies
+        [NSView animateWithDuration:0.25
+                         animations:^{
+                             self->_stoplightHotbox.animator.alphaValue = 0;
+                             self->_standardWindowButtonsView.animator.alphaValue = 0;
+                         }
+                         completion:^(BOOL finished) {
+                             if (!finished) {
+                                 return;
+                             }
+                         }];
+    }
 }
 
 - (BOOL)shouldRevealHotbox {
@@ -1862,13 +1966,30 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 
     [_stoplightHotbox setNeedsDisplay:YES];
     _stoplightHotbox.alphaValue = 0;
-    _standardWindowButtonsView.alphaValue = 0;
-    [NSView animateWithDuration:0.25
-                     animations:^{
-                         self->_stoplightHotbox.animator.alphaValue = 1;
-                         self->_standardWindowButtonsView.animator.alphaValue = 1;
-                     }
-                     completion:nil];
+
+    if (@available(macOS 26.0, *)) {
+        // On macOS 26+, fade in the real buttons instead of custom copies
+        for (int i = 0; i < self.numberOfWindowButtons; i++) {
+            [[self.window standardWindowButton:self.windowButtonTypes[i]] setAlphaValue:0];
+        }
+        [NSView animateWithDuration:0.25
+                         animations:^{
+                             self->_stoplightHotbox.animator.alphaValue = 1;
+                             for (int i = 0; i < self.numberOfWindowButtons; i++) {
+                                 [[self.window standardWindowButton:self.windowButtonTypes[i]].animator setAlphaValue:1];
+                             }
+                         }
+                         completion:nil];
+    } else {
+        // On macOS < 26, fade in custom button copies
+        _standardWindowButtonsView.alphaValue = 0;
+        [NSView animateWithDuration:0.25
+                         animations:^{
+                             self->_stoplightHotbox.animator.alphaValue = 1;
+                             self->_standardWindowButtonsView.animator.alphaValue = 1;
+                         }
+                         completion:nil];
+    }
     return YES;
 }
 
