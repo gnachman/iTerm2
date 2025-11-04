@@ -158,9 +158,12 @@ public class SSHIdentity: NSObject, Codable {
     // they are both `foo` it's wise to match state.host (derived from the it2ssh command line)
     // against the `host` parameter (derived from shell integration control sequences from the
     // remote host).
-    public func matches(host: String?, user: String?) -> Bool {
-        DLog("matches: \(hostname) or \(state.host) == \(host ?? "(nil)") && \(state.username ?? "(nil)") == \(user ?? "(nil)")")
-        guard (hostname == host || state.host == host) else {
+    public func matches(host: String?,  // Host of remote file
+                        user: String?,
+                        discoveredHostname: String?) -> Bool {  // `gethostname -f` of remote host
+        DLog("matches: host=\(host.d) user=\(user.d) discoveredHostname=\(discoveredHostname.d) state.host=\(state.host) state.username=\(state.username.d)")
+
+        guard (hostname == host || state.host == host || (discoveredHostname == host && host != nil)) else {
             return false
         }
         if state.username == nil {

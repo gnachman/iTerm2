@@ -67,6 +67,7 @@ class Conductor: NSObject {
         var shell: String?
         var uname: String?
         var _terminalConfiguration: CodableNSDictionary?
+        var discoveredHostname: String?
 
         init(sshargs: String,
              varsToSend: [String: String],
@@ -88,7 +89,8 @@ class Conductor: NSObject {
              homeDirectory: String?,
              shell: String?,
              uname: String?,
-             _terminalConfiguration: CodableNSDictionary?) {
+             _terminalConfiguration: CodableNSDictionary?,
+             discoveredHostname: String?) {
             self.sshargs = sshargs
             self.varsToSend = varsToSend
             self.clientVars = clientVars
@@ -110,6 +112,7 @@ class Conductor: NSObject {
             self.shell = shell
             self.uname = uname
             self._terminalConfiguration = _terminalConfiguration
+            self.discoveredHostname = discoveredHostname
         }
 
         private enum CodingKeys: CodingKey {
@@ -117,33 +120,40 @@ class Conductor: NSObject {
           case sshargs, varsToSend, payloads, initialDirectory, parsedSSHArguments, depth, parent,
                framedPID, remoteInfo, state, queue, boolArgs, dcsID, clientUniqueID,
                modifiedVars, modifiedCommandArgs, clientVars, shouldInjectShellIntegration,
-               homeDirectory, shell, pythonversion, uname, terminalConfiguration
+               homeDirectory, shell, pythonversion, uname, terminalConfiguration,
+               discoveredHostname
         }
 
         required init(from decoder: Decoder) throws {
-            let container = try decoder.container(keyedBy: CodingKeys.self)
-            sshargs = try container.decode(String.self, forKey: .sshargs)
-            varsToSend = try container.decode([String: String].self, forKey: .varsToSend)
-            clientVars = try container.decode([String: String].self, forKey: .clientVars)
-            payloads = try container.decode([(Payload)].self, forKey: .payloads)
-            initialDirectory = try container.decode(String?.self, forKey: .initialDirectory)
-            shouldInjectShellIntegration = try container.decode(Bool.self, forKey: .shouldInjectShellIntegration)
-            parsedSSHArguments = try container.decode(ParsedSSHArguments.self, forKey: .parsedSSHArguments)
-            depth = try container.decode(Int32.self, forKey: .depth)
-            parentState = try container.decode(RestorableState.self, forKey: .parent)
-            framedPID = try container.decode(Int32?.self, forKey: .framedPID)
-            state = try  container.decode(State.self, forKey: .state)
-            queue = try container.decode([ExecutionContext].self, forKey: .queue)
-            boolArgs = try container.decode(String.self, forKey: .boolArgs)
-            dcsID = try container.decode(String.self, forKey: .dcsID)
-            clientUniqueID = try container.decode(String.self, forKey: .clientUniqueID)
-            modifiedVars = try container.decode([String: String]?.self, forKey: .modifiedVars)
-            modifiedCommandArgs = try container.decode([String]?.self, forKey: .modifiedCommandArgs)
-            homeDirectory = try? container.decode(String?.self, forKey: .homeDirectory)
-            shell = try? container.decode(String?.self, forKey: .shell)
-            uname = try? container.decode(String?.self, forKey: .uname)
-            _terminalConfiguration = try? container.decode(CodableNSDictionary?.self,
-                                                           forKey: .terminalConfiguration)
+            do {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                sshargs = try container.decode(String.self, forKey: .sshargs)
+                varsToSend = try container.decode([String: String].self, forKey: .varsToSend)
+                clientVars = try container.decode([String: String].self, forKey: .clientVars)
+                payloads = try container.decode([(Payload)].self, forKey: .payloads)
+                initialDirectory = try container.decode(String?.self, forKey: .initialDirectory)
+                shouldInjectShellIntegration = try container.decode(Bool.self, forKey: .shouldInjectShellIntegration)
+                parsedSSHArguments = try container.decode(ParsedSSHArguments.self, forKey: .parsedSSHArguments)
+                depth = try container.decode(Int32.self, forKey: .depth)
+                parentState = try container.decode(RestorableState?.self, forKey: .parent)
+                framedPID = try container.decode(Int32?.self, forKey: .framedPID)
+                state = try  container.decode(State.self, forKey: .state)
+                queue = try container.decode([ExecutionContext].self, forKey: .queue)
+                boolArgs = try container.decode(String.self, forKey: .boolArgs)
+                dcsID = try container.decode(String.self, forKey: .dcsID)
+                clientUniqueID = try container.decode(String.self, forKey: .clientUniqueID)
+                modifiedVars = try container.decode([String: String]?.self, forKey: .modifiedVars)
+                modifiedCommandArgs = try container.decode([String]?.self, forKey: .modifiedCommandArgs)
+                homeDirectory = try? container.decode(String?.self, forKey: .homeDirectory)
+                shell = try? container.decode(String?.self, forKey: .shell)
+                uname = try? container.decode(String?.self, forKey: .uname)
+                _terminalConfiguration = try? container.decode(CodableNSDictionary?.self,
+                                                               forKey: .terminalConfiguration)
+                discoveredHostname = try? container.decode(String?.self, forKey: .discoveredHostname)
+            } catch {
+                DLogMain("Failed to restore conductor: \(error)")
+                throw error
+            }
         }
 
         func encode(to encoder: Encoder) throws {
@@ -169,6 +179,7 @@ class Conductor: NSObject {
             try container.encode(shell, forKey: .shell)
             try container.encode(uname, forKey: .uname)
             try container.encode(_terminalConfiguration, forKey: .terminalConfiguration)
+            try container.encode(discoveredHostname, forKey: .discoveredHostname)
         }
     }
     let guid = UUID().uuidString
@@ -184,6 +195,15 @@ class Conductor: NSObject {
     private(set) var framerVersion: FramerVersion?
     @objc var sshargs: String {
         restorableState.sshargs
+    }
+    private let discoverHostnameCommand = "hostname -f"
+    @objc private(set) var discoveredHostname: String? {
+        get {
+            restorableState.discoveredHostname
+        }
+        set {
+            restorableState.discoveredHostname = newValue
+        }
     }
 
     var varsToSend: [String: String] {
@@ -415,7 +435,8 @@ class Conductor: NSObject {
             homeDirectory: nil,
             shell: nil,
             uname: nil,
-            _terminalConfiguration: nil),
+            _terminalConfiguration: nil,
+            discoveredHostname: nil),
                   restored: false)
         _parent = parent
         DLog("Conductor starting")
@@ -456,7 +477,8 @@ class Conductor: NSObject {
             homeDirectory: nil,
             shell: nil,
             uname: nil,
-                                                   _terminalConfiguration: nil),
+            _terminalConfiguration: nil,
+            discoveredHostname: nil),
                   restored: false)
         _parent = recovery.parent
         framerVersion = .init(rawValue: recovery.version)
@@ -993,6 +1015,8 @@ extension Conductor {
                     return "handleGetenv"
                 case .handleReset(let expected, let actual):
                     return "handleReset(\(expected), \(actual.string))"
+                case .handleGetHostname:
+                    return "handleGetHostname"
                 }
             }
 
@@ -1010,6 +1034,7 @@ extension Conductor {
             case handleNonFramerLogin
             case handleGetenv(String, StringArray)
             case handleReset(expected: String, lines: StringArray)
+            case handleGetHostname
 
             private enum Key: CodingKey {
                 case rawValue
@@ -1032,6 +1057,7 @@ extension Conductor {
                 case handleNonFramerLogin
                 case handleGetenv
                 case handleReset
+                case handleGetHostname
             }
 
             private var rawValue: Int {
@@ -1064,6 +1090,8 @@ extension Conductor {
                     return RawValues.handleNonFramerLogin.rawValue
                 case .handleReset:
                     return RawValues.handleReset.rawValue
+                case .handleGetHostname:
+                    return RawValues.handleGetHostname.rawValue
                 }
             }
 
@@ -1072,7 +1100,8 @@ extension Conductor {
                 try container.encode(rawValue, forKey: .rawValue)
                 switch self {
                 case .failIfNonzeroStatus, .fireAndForget, .handleFramerLogin(_), .handlePoll(_, _),
-                        .handleJump, .handleNonFramerLogin, .handleGetenv, .handleReset:
+                        .handleJump, .handleNonFramerLogin, .handleGetenv, .handleReset,
+                        .handleGetHostname:
                     break
                 case .handleCheckForPython(let value):
                     try container.encode(value, forKey: .stringArray)
@@ -1126,6 +1155,8 @@ extension Conductor {
                 case .handleReset:
                     self = .handleReset(expected: try container.decode(String.self, forKey: .string),
                                         lines: try container.decode(StringArray.self, forKey: .stringArray))
+                case .handleGetHostname:
+                    self = .handleGetHostname
                 }
             }
         }
@@ -1385,7 +1416,9 @@ extension Conductor {
         guard framing else {
             return false
         }
-        return sshIdentity.matches(host: path.hostname, user: path.username)
+        return sshIdentity.matches(host: path.hostname,
+                                   user: path.username,
+                                   discoveredHostname: discoveredHostname)
     }
 
     @objc(downloadOrView:window:)
@@ -1620,6 +1653,7 @@ extension Conductor {
         if autopollEnabled {
             send(.framerAutopoll, .fireAndForget)
         }
+        send(.framerRun(discoverHostnameCommand), .handleGetHostname)
         delegate?.conductorStateDidChange()
     }
 
@@ -1842,10 +1876,27 @@ extension Conductor {
                 if lines.strings.contains(code) {
                     log("Have received the reset code \(code)")
                 } else {
-                    log("Throwing because twe have not received the reset code")
+                    log("Throwing because we have not received the reset code")
                     throw IgnoreCommandError()
                 }
             case .abort, .sideChannelLine, .canceled:
+                break
+            }
+        case .handleGetHostname:
+            switch result {
+            case .line(let line):
+                guard let pid = Int32(line) else {
+                    return
+                }
+                addBackgroundJob(pid,
+                                 command: .framerRun(discoverHostnameCommand)) { [weak self] data, status in
+                    let name = data.lossyString
+                    if status == 0 && !name.isEmpty {
+                        self?.DLog("Got hostname: \(name)")
+                        self?.discoveredHostname = name.trimmingCharacters(in: .whitespacesAndNewlines)
+                    }
+                }
+            case .abort, .sideChannelLine, .canceled, .end:
                 break
             }
         case .handleFramerLogin(let lines):

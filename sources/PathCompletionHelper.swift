@@ -52,7 +52,11 @@ class PathCompletionHelper: NSObject {
                     self?.handle(entries)
                 }
             }
-        } else if let conductor, conductor.framing, conductor.sshIdentity.matches(host: hostname, user: username) {
+        } else if let conductor,
+                  conductor.framing,
+                  conductor.sshIdentity.matches(host: hostname,
+                                                user: username,
+                                                discoveredHostname: conductor.discoveredHostname) {
             openWindowAsIndicator()
             Task {
                 do {
