@@ -82,7 +82,6 @@ typedef NS_ENUM(NSUInteger, PTYWindowTitleBarFlavor) {
 // Common methods implemented by terminal windows of both kinds.
 @protocol PTYWindow<NSObject>
 @property(nonatomic, readonly) int screenNumber;
-@property(nonatomic, readonly, getter=isTogglingLionFullScreen) BOOL togglingLionFullScreen;
 // A unique identifier that does not get recycled during the program's lifetime.
 @property(nonatomic, readonly) NSString *windowIdentifier;
 @property(nonatomic, readonly) id<PTYWindowDelegateProtocol> ptyDelegate;
@@ -95,6 +94,9 @@ typedef NS_ENUM(NSUInteger, PTYWindowTitleBarFlavor) {
 @property(nonatomic) BOOL it_restorableStateInvalid;
 @property(nonatomic) BOOL it_preventFrameChange;
 @property(nonatomic, readonly) BOOL it_isMovingScreen;
+@property(nonatomic) BOOL it_attemptingToEnterFullScreen;
+@property(nonatomic) BOOL it_lastTitlebarHeightWasCustom;
+
 - (NSColor *)it_terminalWindowDecorationBackgroundColor;
 - (NSColor *)it_terminalWindowDecorationTextColorForBackgroundColor:(NSColor *)backgroundColor;
 - (id<PSMTabStyle>)it_tabStyle;
