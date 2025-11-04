@@ -298,7 +298,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     DLog(@"Bundle path for Bob is %@", bundlePath);
     if (bundlePath) {
         NSString *codeExecutable =
-        [bundlePath stringByAppendingPathComponent:@"Contents/Resources/app/bin/code"];
+        [bundlePath stringByAppendingPathComponent:@"Contents/Resources/app/bin/bobide"];
         if ([self.fileManager fileExistsAtPath:codeExecutable]) {
             DLog(@"Launch Bob %@ %@", codeExecutable, path);
             [self launchTaskWithPath:codeExecutable arguments:@[ path, @"-g" ] completion:nil];

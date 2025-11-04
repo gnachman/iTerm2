@@ -152,7 +152,7 @@ enum {
                                kVSCodiumIdentifier1: @"vscodium",
                                kVSCodiumIdentifier2: @"vscodium",
                                kVSCodeInsidersIdentifier: @"vscode",
-                               kBobIdentifier: @"vscode",  // This is just a guess
+                               kBobIdentifier: @"bobide",
                                kEmacsAppIdentifier: @"",
                                kIntelliJIDEAIdentifierCE: @"",
                                kIntelliJIDEAIdentifierUE: @"",
