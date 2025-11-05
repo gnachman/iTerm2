@@ -14,10 +14,11 @@ import XCTest
 class iTermBrowserPageSaverTestHelper {
     private let tempDirectory: URL
     private let serverPort: Int
-    private var webView: WKWebView!
+    private var webView: iTermBrowserWebView!
     private var httpServer: iTermTestHTTPServer!
     private var navigationDelegate: WKNavigationDelegate?
-    
+    private let loggingHandler = iTermBrowserPageSaverTestHelperLoggingHandler()
+
     init() throws {
         // Create temporary directory for test files
         tempDirectory = FileManager.default.temporaryDirectory
@@ -151,7 +152,31 @@ class iTermBrowserPageSaverTestHelper {
     
     private func setupWebView() {
         let configuration = WKWebViewConfiguration()
-        webView = WKWebView(frame: NSRect(x: 0, y: 0, width: 800, height: 600), configuration: configuration)
+
+        let logErrors = iTermBrowserTemplateLoader.loadTemplate(named: "log-errors",
+                                                                        type: "js",
+                                                                        substitutions: [:])
+
+        let js = iTermBrowserTemplateLoader.loadTemplate(named: "console-log",
+                                                         type: "js",
+                                                         substitutions: ["LOG_ERRORS": logErrors])
+        configuration.userContentController.addUserScript(WKUserScript(
+            source: "(function() {" + js + "})();",
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: false,
+            in: .page))
+        configuration.userContentController.addUserScript(WKUserScript(
+            source: iTermBrowserTemplateLoader.load(template: "graph-discovery.js", substitutions: [:]),
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: false,
+            in: .page))
+
+        configuration.userContentController.add(loggingHandler, name: "iTerm2ConsoleLog")
+
+        let pointerController = PointerController()
+        webView = iTermBrowserWebView(frame: NSRect(x: 0, y: 0, width: 800, height: 600),
+                                       configuration: configuration,
+                                       pointerController: pointerController)
     }
     
     // MARK: - Test Methods
@@ -160,35 +185,35 @@ class iTermBrowserPageSaverTestHelper {
     func loadTestPage() async throws {
         let url = URL(string: "http://localhost:\(serverPort)/")!
         let request = URLRequest(url: url)
-        
+
         return try await withCheckedThrowingContinuation { continuation in
             @MainActor
             class NavigationDelegate: NSObject, WKNavigationDelegate {
                 let continuation: CheckedContinuation<Void, Error>
                 weak var helper: iTermBrowserPageSaverTestHelper?
-                
+
                 init(continuation: CheckedContinuation<Void, Error>, helper: iTermBrowserPageSaverTestHelper) {
                     self.continuation = continuation
                     self.helper = helper
                     super.init()
                 }
-                
+
                 func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
                     helper?.navigationDelegate = nil // Clean up reference
                     continuation.resume()
                 }
-                
+
                 func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
                     helper?.navigationDelegate = nil // Clean up reference
                     continuation.resume(throwing: error)
                 }
-                
+
                 func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
                     helper?.navigationDelegate = nil // Clean up reference
                     continuation.resume(throwing: error)
                 }
             }
-            
+
             let delegate = NavigationDelegate(continuation: continuation, helper: self)
             self.navigationDelegate = delegate // Keep strong reference
             webView.navigationDelegate = delegate
@@ -683,7 +708,7 @@ class iTermBrowserPageSaverTestHelper {
     }
     
     // Expose webView for tests
-    var testWebView: WKWebView { return webView }
+    var testWebView: iTermBrowserWebView { return webView }
 }
 
 // MARK: - Simple HTTP Server for Testing
@@ -748,5 +773,19 @@ private class iTermTestHTTPServer {
         }
         
         return Int(UInt16(bigEndian: addr.sin_port))
+    }
+}
+
+class iTermBrowserPageSaverTestHelperLoggingHandler: NSObject, WKScriptMessageHandler {
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        // Handle console.{log,debug,error} messages separately since they come as String
+        if let obj = message.body as? [String: String], let logMessage = obj["msg"], let level = obj["level"] {
+            switch level {
+            case "debug":
+                NSFuckingLog("Javascript Console: " + logMessage)
+            default:
+                NSFuckingLog("%@", "Javascript Console: \(logMessage)")
+            }
+        }
     }
 }

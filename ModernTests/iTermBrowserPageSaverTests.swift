@@ -10,9 +10,10 @@ import WebKit
 @testable import iTerm2SharedARC
 
 @available(macOS 11.0, *)
+@MainActor
 class iTermBrowserPageSaverTests: XCTestCase {
     private var testHelper: iTermBrowserPageSaverTestHelper!
-    
+
     override func setUpWithError() throws {
         try super.setUpWithError()
         testHelper = try iTermBrowserPageSaverTestHelper()
@@ -28,13 +29,13 @@ class iTermBrowserPageSaverTests: XCTestCase {
     func testBasicPageSaving() async throws {
         // Load the test page
         try await testHelper.loadTestPage()
-        
+
         // Save the page and get results
         let (originalHTML, savedHTML, savedFolder) = try await testHelper.savePageAndVerify()
-        
+
         // Verify the saved page integrity
         try testHelper.verifyPageIntegrity(originalHTML: originalHTML, savedHTML: savedHTML, savedFolder: savedFolder)
-        
+
         print("✅ Basic page saving test passed")
     }
     
@@ -252,15 +253,15 @@ class iTermBrowserPageSaverTests: XCTestCase {
     
     func testInvalidSaveLocation() async throws {
         try await testHelper.loadTestPage()
-        
+
         // Try to save to a location that doesn't exist and can't be created
-        let invalidPath = URL(fileURLWithPath: "/invalid/path/that/cannot/be/created")
-        
+        let invalidSSHLocation = SSHLocation(path: "/invalid/path/that/cannot/be/created", endpoint: LocalhostEndpoint.instance)
+
         let baseURL = await testHelper.testWebView.url!
         let pageSaver = iTermBrowserPageSaver(webView: testHelper.testWebView, baseURL: baseURL)
-        
+
         do {
-            try await pageSaver.savePageWithResources(to: invalidPath)
+            try await pageSaver.savePageWithResources(to: invalidSSHLocation)
             XCTFail("Should have thrown an error for invalid save location")
         } catch {
             // Expected to throw an error
@@ -271,8 +272,8 @@ class iTermBrowserPageSaverTests: XCTestCase {
     
     func testNetworkFailureHandling() async throws {
         // Stop the HTTP server to simulate network failure
-        testHelper.stopServer()
-        
+        await testHelper.stopServer()
+
         // Try to load page - this should fail gracefully
         do {
             try await testHelper.loadTestPage()
@@ -281,8 +282,8 @@ class iTermBrowserPageSaverTests: XCTestCase {
             // Expected to fail
             print("✅ Network failure handling test passed - correctly handled server failure")
         }
-        
+
         // Restart server for cleanup
-        testHelper.startServer()
+        await testHelper.startServer()
     }
 }

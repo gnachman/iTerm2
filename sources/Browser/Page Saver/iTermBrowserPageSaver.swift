@@ -82,9 +82,15 @@ class iTermBrowserPageSaver {
         let script = iTermBrowserTemplateLoader.loadTemplate(named: "extract-resources", type: "js")
         
         do {
-            let result = try await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
-            let urls = (result as? [String]) ?? []
-            DLog("Extracted \(urls.count) resource URLs")
+            let result = try await webView.evaluateJavaScript(script, contentWorld: .page)
+            DLog("JavaScript result type: \(type(of: result)), value: \(String(describing: result))")
+
+            guard let urls = result as? [String] else {
+                DLog("Result is not [String], it's: \(type(of: result))")
+                return []
+            }
+
+            DLog("Extracted \(urls.count) resource URLs: \(urls)")
             return urls
         } catch {
             DLog("Error extracting resource URLs: \(error)")
@@ -107,7 +113,7 @@ class iTermBrowserPageSaver {
         )
         
         do {
-            _ = try await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
+            _ = try await webView.evaluateJavaScript(script, contentWorld: .page)
             DLog("Added saved resource attributes")
         } catch {
             DLog("Error adding saved resource attributes: \(error)")
@@ -167,7 +173,7 @@ class iTermBrowserPageSaver {
         """
         
         do {
-            let result = try await webView.safelyEvaluateJavaScript(cloneAndProcessScript, contentWorld: .page)
+            let result = try await webView.evaluateJavaScript(cloneAndProcessScript, contentWorld: .page)
             return result as? String
         } catch {
             DLog("Error getting HTML with saved attributes: \(error)")
@@ -216,10 +222,10 @@ class iTermBrowserPageSaver {
             // Store the relative path
             let relativePath = "resources/\(filename)"
             downloadedResources[urlString] = relativePath
-            
+
             DLog("Downloaded resource: \(urlString) -> \(relativePath)")
             return relativePath
-            
+
         } catch {
             DLog("Failed to download resource \(urlString): \(error)")
             return nil
@@ -369,7 +375,7 @@ extension iTermBrowserPageSaver {
                 }
             }
         } catch {
-            DLog("Error saving page: \(error)")
+            NSLog("Error saving page: \(error)")
             showSaveError(error, window: window)
         }
     }

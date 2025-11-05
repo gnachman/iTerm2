@@ -886,10 +886,25 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
 - (int)offsetOfStartOfLineIncludingOffset:(int)offset {
     int i = [self _findEntryBeforeOffset:offset];
     if (i < 0) {
+        // _findEntryBeforeOffset returns -1 in two cases:
+        // 1. offset < bufferStartOffset (before any valid data) - should return start of first line
+        // 2. offset >= cumulative_line_lengths[cll_entries-1] (past end of buffer) - should return start of last line
+        if (offset < self.bufferStartOffset) {
+            // Case 1: offset is before valid data, return start of first line
+            return self.bufferStartOffset;
+        }
+        // Case 2: offset is past end of buffer, return start of last line
         i = cll_entries - 1;
     }
-    if (i < 1) {
-        return 0;
+
+    // Now i is the index of the line containing the offset.
+    // Return the start of line i.
+    // Note: cumulative_line_lengths[i] is the END of line i, so the START of line i is cumulative_line_lengths[i-1]
+    // (or bufferStartOffset for the first entry).
+    if (i <= _firstEntry || i <= 0) {
+        // Either i == _firstEntry (the first valid line), or i < _firstEntry (shouldn't happen, but defensive).
+        // In either case, return bufferStartOffset since we can't access cumulative_line_lengths before _firstEntry.
+        return self.bufferStartOffset;
     }
     return cumulative_line_lengths[i - 1];
 }

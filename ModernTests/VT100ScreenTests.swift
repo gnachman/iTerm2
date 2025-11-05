@@ -1340,8 +1340,8 @@ fileprivate class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
     
-    func screenShouldInitiateWindowResize() -> Bool {
-        false
+    func screenShouldInitiateWindowResize() -> PTYSessionResizePermission {
+        .denied
     }
     
     func screenResize(toWidth width: Int32, height: Int32) {
@@ -1462,5 +1462,16 @@ fileprivate class FakeSession: NSObject, VT100ScreenDelegate {
     func objectScope() -> iTermVariableScope? {
         return nil
     }
-    
+
+    func screenDidBecomeAutoComposerEligible() {
+    }
+
+    func screenDidExecuteCommand(_ command: String?, absRange range: VT100GridAbsCoordRange, onHost host: (any VT100RemoteHostReading)?, inDirectory directory: String?, mark: (any VT100ScreenMarkReading)?, paused: Bool) {
+    }
+
+    func screenOfferToDisableTriggers(inInteractiveApps stats: String) {
+    }
+
+    func screenExecDidFail() {
+    }
 }
