@@ -103,6 +103,7 @@ NSString *const kTerminalStateKeyReportingModeStack_Deprecated = @"Key Reporting
 NSString *const kTerminalStateKeyReportingModeStack_Main = @"Main Key Reporting Mode Stack";
 NSString *const kTerminalStateKeyReportingModeStack_Alternate = @"Alternate Key Reporting Mode Stack";
 NSString *const kTerminalStateResizeNotifications = @"Resize Notifications";
+NSString *const kTerminalStateSendUnsolicitedDarkModeDSRNotifications = @"Send Unsolicated Dark Mode DSR Notifications";
 NSString *const kTerminalStateSynchronizedUpdates = @"Synchronized Updates";
 NSString *const kTerminalStatePreserveScreenOnDECCOLM = @"Preserve Screen On DECCOLM";
 NSString *const kTerminalStateSavedColors = @"Saved Colors";  // For XTPUSHCOLORS/XTPOPCOLORS
@@ -374,6 +375,7 @@ static const int kMaxScreenRows = 4096;
     self.alternateScrollMode = NO;
     self.synchronizedUpdates = NO;
     self.sendResizeNotifications = NO;
+    self.sendUnsolicitedDarkModeDSR = NO;
     self.preserveScreenOnDECCOLM = NO;
     self.insertMode = NO;
     self.sendReceiveMode = NO;
@@ -956,12 +958,22 @@ static const int kMaxScreenRows = 4096;
                 self.synchronizedUpdates = mode;
                 break;
 
+            case 2031:
+                // https://github.com/contour-terminal/contour/blob/master/docs/vt-extensions/color-palette-update-notifications.md
+                self.sendUnsolicitedDarkModeDSR = mode;
+                break;
+
             case 2048:
                 // https://gist.github.com/rockorager/e695fb2924d36b2bcf1fff4a3704bd83
                 self.sendResizeNotifications = mode;
                 break;
         }
     }
+}
+
+- (void)setSendUnsolicitedDarkModeDSR:(BOOL)newValue {
+    self.dirty = YES;
+    _sendUnsolicitedDarkModeDSR = newValue;
 }
 
 - (void)setSendResizeNotifications:(BOOL)sendResizeNotifications {
@@ -1299,6 +1311,16 @@ static const int kMaxScreenRows = 4096;
                 }
                 break;
 
+            case 997:  // https://github.com/contour-terminal/contour/blob/master/docs/vt-extensions/color-palette-update-notifications.md
+                // Send CSI ? 996 n to the terminal to explicitly request the current color preference (dark mode or light mode) by the operating system.
+                // The terminal will reply back in either of the two ways:
+                // VT sequence      description
+                // CSI ? 997 ; 1 n	DSR reply to indicate dark mode
+                // CSI ? 997 ; 2 n	DSR reply to indicate light mode
+                if (withQuestion) {
+                    [self sendDarkModeDSR];
+                }
+                break;
             case 1337:  // iTerm2 extension
                 [_delegate terminalSendReport:[self.output reportiTerm2Version]];
                 break;
@@ -1308,6 +1330,11 @@ static const int kMaxScreenRows = 4096;
                 break;
         }
     }
+}
+
+- (void)sendDarkModeDSR {
+    const int subcode = [_delegate terminalIsInDarkMode] ? 1 : 2;
+    [_delegate terminalSendReport:[self.output reportDECDSR:997 :subcode]];
 }
 
 - (VT100GridRect)rectangleInToken:(VT100Token *)token
@@ -1622,6 +1649,7 @@ static const int kMaxScreenRows = 4096;
     self.metaSendsEscape = NO;
     self.alternateScrollMode = NO;
     self.sendResizeNotifications = NO;
+    self.sendUnsolicitedDarkModeDSR = NO;
     self.synchronizedUpdates = NO;
     self.preserveScreenOnDECCOLM = NO;
 
@@ -5174,6 +5202,9 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
         case 2026:
             return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.synchronizedUpdates);
 
+        case 2031:
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.sendUnsolicitedDarkModeDSR);
+
         case 2048:
             return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.sendResizeNotifications);
     }
@@ -5360,6 +5391,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
            kTerminalStateUnicodeVersionStack: _unicodeVersionStack,
            kTerminalStateSynchronizedUpdates: @(self.synchronizedUpdates),
            kTerminalStateResizeNotifications: @(self.sendResizeNotifications),
+           kTerminalStateSendUnsolicitedDarkModeDSRNotifications: @(self.sendUnsolicitedDarkModeDSR),
            kTerminalStatePreserveScreenOnDECCOLM: @(self.preserveScreenOnDECCOLM),
            kTerminalStateSavedColors: _savedColors.plist,
            kTerminalStateProtectedMode: @(_protectedMode),
@@ -5407,6 +5439,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
     [self setSGRStack:dict[kTerminalStateSGRStack]];
     _decsaceRectangleMode = [dict[kTerminalStateDECSACE] boolValue];
     self.sendResizeNotifications = [dict[kTerminalStateResizeNotifications] boolValue];
+    self.sendUnsolicitedDarkModeDSR = [dict[kTerminalStateSendUnsolicitedDarkModeDSRNotifications] boolValue];
     self.synchronizedUpdates = [dict[kTerminalStateSynchronizedUpdates] boolValue];
     self.preserveScreenOnDECCOLM = [dict[kTerminalStatePreserveScreenOnDECCOLM] boolValue];
     _savedColors = [VT100SavedColors fromData:[NSData castFrom:dict[kTerminalStateSavedColors]]] ?: [[VT100SavedColors alloc] init];

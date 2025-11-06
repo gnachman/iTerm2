@@ -12257,6 +12257,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 - (void)textViewBackgroundColorDidChangeFrom:(NSColor *)before to:(NSColor *)after {
     DLog(@"%@", [NSThread callStackSymbols]);
     [self backgroundColorDidChangeJigglingIfNeeded:before.isDark != after.isDark];
+    const BOOL darknessDidChange = (before.isDark != after.isDark);
     [self updateAutoComposerSeparatorVisibility];
     // Can't call this synchronously because we could get here from a side effect and
     // viewDidChangeEffectiveAppearance can cause performBlockWithJoinedThreads to be called.
@@ -12267,7 +12268,16 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         if (weakSelf.tmuxMode == TMUX_CLIENT) {
             [weakSelf sendTmuxPerPaneReports:PTYSessionTmuxReportBackground];
         }
+        if (darknessDidChange) {
+            [weakSelf notifyTerminalOfDarknessChange];
+        }
     });
+}
+
+- (void)notifyTerminalOfDarknessChange {
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState darknessDidChange];
+    }];
 }
 
 - (void)themeDidChange {

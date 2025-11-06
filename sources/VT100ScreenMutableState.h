@@ -394,6 +394,7 @@ lengthExcludingInBandSignaling:(int)lengthExcludingInBandSignaling
 
 // This is the only safe way to modify the color map. Call it from the mutation thread.
 - (void)mutateColorMap:(void (^)(iTermColorMap *colorMap))block;
+- (void)darknessDidChange;
 
 #pragma mark - Cross-Thread Sync
 

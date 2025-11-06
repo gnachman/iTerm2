@@ -103,6 +103,7 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 
 @property(nonatomic, readonly) VT100TerminalKeyReportingFlags keyReportingFlags;
 @property(nonatomic) BOOL sendResizeNotifications;
+@property(nonatomic) BOOL sendUnsolicitedDarkModeDSR;
 @property(nonatomic, readonly) BOOL synchronizedUpdates;
 @property(nonatomic, readonly) BOOL preserveScreenOnDECCOLM;
 @property(nonatomic, readonly) BOOL alternateScrollMode;
@@ -190,6 +191,8 @@ typedef NS_ENUM(NSUInteger, VT100TerminalResetReason) {
 
 // Call this after changing the graphic rendition externally;
 - (void)updateDefaultChar;
+
+- (void)sendDarkModeDSR;
 
 @property (nonatomic) iTermEmulationLevel emulationLevel;
 

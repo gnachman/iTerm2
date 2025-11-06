@@ -4695,6 +4695,12 @@ lengthExcludingInBandSignaling:data.length
     }];
 }
 
+- (void)darknessDidChange {
+    if (_terminal.sendUnsolicitedDarkModeDSR) {
+        [_terminal sendDarkModeDSR];
+    }
+}
+
 - (void)restoreColorsFromSlot:(VT100SavedColorsSlot *)slot {
     const int limit = MIN(kColorMapNumberOf8BitColors, slot.indexedColors.count);
     NSMutableDictionary<NSNumber *, id> *dict = [NSMutableDictionary dictionary];

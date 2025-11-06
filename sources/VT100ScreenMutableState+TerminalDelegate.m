@@ -12,6 +12,7 @@
 #import "CVector.h"
 #import "DebugLogging.h"
 #import "NSArray+iTerm.h"
+#import "NSColor+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSStringITerm.h"
 #import "VT100ScreenConfiguration.h"
@@ -3259,5 +3260,13 @@ willExecuteToken:(VT100Token *)token
         [unpauser unpause];
     } name:@"execDidFail"];
 }
+
+- (BOOL)terminalIsInDarkMode {
+    // I honestly don't understand how reporting the OS's dark/light mode would be useful, but
+    // for sure knowing the terminal's color scheme is so we'll do that instead.
+    NSColor *color = [self.colorMap colorForKey:kColorMapBackground];
+    return color.isDark;
+}
+
 @end
 
