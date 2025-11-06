@@ -257,7 +257,7 @@ class iTermBrowserPageSaverTests: XCTestCase {
         // Try to save to a location that doesn't exist and can't be created
         let invalidSSHLocation = SSHLocation(path: "/invalid/path/that/cannot/be/created", endpoint: LocalhostEndpoint.instance)
 
-        let baseURL = await testHelper.testWebView.url!
+        let baseURL = testHelper.testWebView.url!
         let pageSaver = iTermBrowserPageSaver(webView: testHelper.testWebView, baseURL: baseURL)
 
         do {
@@ -272,7 +272,7 @@ class iTermBrowserPageSaverTests: XCTestCase {
     
     func testNetworkFailureHandling() async throws {
         // Stop the HTTP server to simulate network failure
-        await testHelper.stopServer()
+        testHelper.stopServer()
 
         // Try to load page - this should fail gracefully
         do {
@@ -284,6 +284,6 @@ class iTermBrowserPageSaverTests: XCTestCase {
         }
 
         // Restart server for cleanup
-        await testHelper.startServer()
+        testHelper.startServer()
     }
 }

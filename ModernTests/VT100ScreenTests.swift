@@ -497,7 +497,6 @@ class VT100ScreenTests: XCTestCase {
             token.setAsciiBytes(umbp.baseAddress!,
                                 length: Int32(umbp.count))
             token.realizeCRLFs(withCapacity: 10)
-            let crlfs = token.crlfs
             for i in 0..<umbp.count {
                 if umbp[i] == 10 || umbp[i] == 13 {
                     token.appendCRLF(Int32(i))
