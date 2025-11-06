@@ -794,6 +794,14 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
             [self.currentGrid numberOfCellsUsedInRange:screenRange]);
 }
 
+- (NSInteger)numberOfRawLinesInRange:(VT100GridRange)range {
+    LineBuffer *temp = [_state.linebuffer copy];
+    [temp seal];
+    [_state.currentGrid appendLines:_state.currentGrid.size.height
+                       toLineBuffer:temp];
+    return [temp numberOfUnwrappedLinesInRange:range width:_state.width];
+}
+
 - (NSArray *)charactersWithNotesOnLine:(int)line {
     NSMutableArray *result = [NSMutableArray array];
     Interval *interval = [_state intervalForGridCoordRange:VT100GridCoordRangeMake(0,

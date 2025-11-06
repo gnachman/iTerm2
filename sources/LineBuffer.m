@@ -2301,6 +2301,11 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     return [block numberOfWrappedLinesForLastRawLineWrappedToWidth:width];
 }
 
+- (NSInteger)numberOfUnwrappedLinesInRange:(VT100GridRange)range width:(int)width {
+    return [_lineBlocks numberOfRawLinesInRange:NSMakeRange(range.location, range.length)
+                                          width:width];
+}
+
 #pragma mark - iTermLineBlockArrayDelegate
 
 - (void)lineBlockArrayDidChange:(iTermLineBlockArray *)lineBlockArray {

@@ -44,6 +44,7 @@ class CommandInfoViewController: NSViewController {
     private let _returnCode: iTermPromise<NSNumber>
     private let _runningTime: TimeInterval?
     private let _size: Int
+    private let _lines: Int
     private let _outputPromise: iTermRenegablePromise<NSString>
     private let _outputProgress: Progress
     private let _startDate: Date?
@@ -52,11 +53,12 @@ class CommandInfoViewController: NSViewController {
     private var runtimeConstraint: NSLayoutConstraint?
     private var _mark: VT100ScreenMarkReading
 
-    @objc(presentOffscreenCommandLine:directory:remoteHost:outputSize:outputPromise:outputProgress:inView:fromOffscreenCommandLine:at:delegate:)
+    @objc(presentOffscreenCommandLine:directory:remoteHost:outputSize:outputLines:outputPromise:outputProgress:inView:fromOffscreenCommandLine:at:delegate:)
     static func present(offscreenCommandLine: iTermOffscreenCommandLine,
                         directory: String?,
                         remoteHost: VT100RemoteHostReading?,
                         outputSize: Int,
+                        outputLines: Int,
                         outputPromise: iTermRenegablePromise<NSString>,
                         outputProgress: Progress,
                         inView view: NSView,
@@ -68,6 +70,7 @@ class CommandInfoViewController: NSViewController {
                 directory: directory,
                 remoteHost: remoteHost,
                 outputSize: outputSize,
+                outputLines: outputLines,
                 outputPromise: outputPromise,
                 outputProgress: outputProgress,
                 inView: view,
@@ -76,12 +79,13 @@ class CommandInfoViewController: NSViewController {
                 delegate: delegate)
     }
 
-    @objc(presentMark:date:directory:remoteHost:outputSize:outputPromise:outputProgress:inView:fromOffscreenCommandLine:at:delegate:)
+    @objc(presentMark:date:directory:remoteHost:outputSize:outputLines:outputPromise:outputProgress:inView:fromOffscreenCommandLine:at:delegate:)
     static func present(mark: VT100ScreenMarkReading,
                         date: Date?,
                         directory: String?,
                         remoteHost: VT100RemoteHostReading?,
                         outputSize: Int,
+                        outputLines: Int,
                         outputPromise: iTermRenegablePromise<NSString>,
                         outputProgress: Progress,
                         inView view: NSView,
@@ -110,6 +114,7 @@ class CommandInfoViewController: NSViewController {
             returnCode: codePromise,
             runningTime: runningTime,
             size: outputSize,
+            lines: outputLines,
             outputPromise: outputPromise,
             outputProgress: outputProgress,
             startDate: date)
@@ -135,6 +140,7 @@ class CommandInfoViewController: NSViewController {
          returnCode: iTermPromise<NSNumber>,
          runningTime: TimeInterval?,
          size: Int,
+         lines: Int,
          outputPromise: iTermRenegablePromise<NSString>,
          outputProgress: Progress,
          startDate: Date?) {
@@ -145,6 +151,7 @@ class CommandInfoViewController: NSViewController {
         _returnCode = returnCode
         _runningTime = runningTime
         _size = size
+        _lines = lines
         _outputPromise = outputPromise
         _outputProgress = outputProgress
         _startDate = startDate
@@ -233,7 +240,10 @@ class CommandInfoViewController: NSViewController {
         } else {
             runningTime.stringValue = "Unknown"
         }
-        output.stringValue = NSString.stringWithHumanReadableSize(UInt64(_size)) as String
+        let numberFormatter = NumberFormatter()
+        numberFormatter.numberStyle = .decimal
+        let formattedLines = numberFormatter.string(from: NSNumber(value: _lines)) ?? "\(_lines)"
+        output.stringValue = NSString.stringWithHumanReadableSize(UInt64(_size)) as String + " (\(formattedLines) line\(_lines != 1 ? "s" : ""))"
         copyOutput.isEnabled = false
         progressIndicator.isHidden = false
         _outputProgress.addObserver(owner: self, queue: .main) { [weak self] progress in

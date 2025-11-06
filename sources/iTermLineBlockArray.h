@@ -70,6 +70,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSSet<NSNumber *> *)cachedWidths;
 - (NSInteger)numberOfWrappedLinesForWidth:(int)width
                           upToBlockAtIndex:(NSInteger)limit;
+- (NSInteger)numberOfRawLinesInRange:(NSRange)range width:(int)width;
 
 @end
 

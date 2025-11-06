@@ -542,6 +542,7 @@ iTermCommandInfoViewControllerDelegate>
                                       directory:directory
                                      remoteHost:remoteHost
                                      outputSize:[self.dataSource numberOfCellsUsedInRange:lineRange]
+                                    outputLines:[self.dataSource numberOfRawLinesInRange:lineRange]
                                   outputPromise:outputPromise
                                  outputProgress:outputProgress
                                          inView:self

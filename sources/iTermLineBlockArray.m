@@ -697,6 +697,53 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     return [[_numLinesCaches numLinesCacheForWidth:width] sumOfValuesInRange:NSMakeRange(0, limit)];
 }
 
+- (NSInteger)numberOfRawLinesInRange:(NSRange)range width:(int)width {
+    if (range.length == 0) {
+        return 0;
+    }
+
+    // Step 1: Find which blocks contain your wrapped lines
+    int startWrappedLineInBlock = 0;
+    NSInteger startBlockIndex = [self indexOfBlockContainingLineNumber:range.location
+                                                                        width:width
+                                                                    remainder:&startWrappedLineInBlock];
+
+    int endWrappedLineInBlock = 0;
+    NSInteger endBlockIndex = [self indexOfBlockContainingLineNumber:NSMaxRange(range) - 1
+                                                                      width:width
+                                                                  remainder:&endWrappedLineInBlock];
+
+    // Step 2: Convert wrapped line offsets to raw line numbers within their blocks
+    LineBlock *startBlock = self[startBlockIndex];
+    NSNumber *startRawLineNum = [startBlock rawLineNumberAtWrappedLineOffset:startWrappedLineInBlock
+                                                                       width:width];
+
+    LineBlock *endBlock = self[endBlockIndex];
+    NSNumber *endRawLineNum = [endBlock rawLineNumberAtWrappedLineOffset:endWrappedLineInBlock
+                                                                   width:width];
+
+    // Step 3: Count raw lines
+    if (startBlockIndex == endBlockIndex) {
+        // Same block - simple subtraction
+        return [endRawLineNum intValue] - [startRawLineNum intValue] + 1;
+    } else {
+        // Multiple blocks - sum raw lines across blocks
+        int count = 0;
+
+        // Raw lines from start to end of first block
+        count += (startBlock.numRawLines - [startRawLineNum intValue]);
+
+        // All raw lines in intermediate blocks
+        for (NSInteger i = startBlockIndex + 1; i < endBlockIndex; i++) {
+            count += _blocks[i].numRawLines;
+        }
+
+        // Raw lines from start of last block to end position
+        count += [endRawLineNum intValue] + 1;
+        return count;
+    }
+}
+
 #pragma mark - Low level method
 
 - (id)objectAtIndexedSubscript:(NSUInteger)index {
