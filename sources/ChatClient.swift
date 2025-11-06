@@ -44,9 +44,12 @@ class ChatClient {
         switch message.content {
         case .userCommand:
             it_fatalError("Agent should not send userCommand")
-        case .remoteCommandRequest(let request):
+        case .remoteCommandRequest(let request, safe: let safe):
             it_assert(!partial)
-            return processRemoteCommandRequest(chatID: chatID, message: message, request: request)
+            return processRemoteCommandRequest(chatID: chatID,
+                                               message: message,
+                                               request: request,
+                                               safe: safe)
         case .plainText, .markdown, .explanationRequest, .remoteCommandResponse,
                 .selectSessionRequest, .clientLocal, .renameChat, .setPermissions,
                 .terminalCommand, .multipart, .vectorStoreCreated:
@@ -110,7 +113,8 @@ class ChatClient {
     
     private func processRemoteCommandRequest(chatID: String,
                                              message: Message,
-                                             request: RemoteCommand) -> Message? {
+                                             request: RemoteCommand,
+                                             safe: Bool?) -> Message? {
         let maybeGuid = if request.content.permissionCategory.isBrowserSpecific {
             model.chat(id: chatID)?.browserSessionGuid
         } else {
@@ -137,6 +141,9 @@ class ChatClient {
                 userNotice: "AI will not execute this command.")
             return nil
         case .always:
+            if safe == false {
+                return message
+            }
             try? performRemoteCommand(request,
                                       in: session,
                                       chatID: chatID,

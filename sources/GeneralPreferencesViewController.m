@@ -208,6 +208,7 @@ enum {
     NSPopover *_popover;
     IBOutlet NSButton *_manualAIConfiguration;
     IBOutlet NSPopUpButton *_aiVendor;
+    IBOutlet NSButton *_aiSafetyCheck;
 
     IBOutlet NSTextField *_checkTerminalStateLabel; // Check Terminal State
     IBOutlet NSPopUpButton *_checkTerminalStateButton;
@@ -912,6 +913,12 @@ enum {
                     key:kPreferenceKeyAITimeout
             relatedView:nil
                    type:kPreferenceInfoTypeIntegerTextField];
+
+    [self defineControl:_aiSafetyCheck
+                    key:kPreferenceKeyAISafetyCheck
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    _aiSafetyCheck.enabled = [iTermAIAvailabilityProbe check];
 
     // ---------------------------------------------------------------------------------------------
     [self defineControl:_enableRTL

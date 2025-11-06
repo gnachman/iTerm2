@@ -27,7 +27,7 @@ struct MessageToPromptStateMachine {
             return .text(value)
         case .explanationResponse(let annotations, _, _):
             return .text(annotations.rawResponse)
-        case .remoteCommandRequest(let request):
+        case .remoteCommandRequest(let request, safe: _):
             if let call = request.llmMessage.function_call {
                 return .functionCall(call,
                                      id: request.llmMessage.functionCallID)

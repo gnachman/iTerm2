@@ -197,6 +197,7 @@ extern NSString *const kPreferenceKeyAIFeatureStreamingResponses;
 extern NSString *const kPreferenceKeyAIVectorStore;
 extern NSString *const kPreferenceKeyUseRecommendedAIModel;
 extern NSString *const kPreferenceKeyAIVendor;  // iTermAIVendor
+extern NSString *const kPreferenceKeyAISafetyCheck;  // boolean
 
 extern NSString *const kPreferenceKeyAIPermissionCheckTerminalState;
 extern NSString *const kPreferenceKeyAIPermissionRunCommands;

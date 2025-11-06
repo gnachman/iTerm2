@@ -206,6 +206,61 @@ struct RemoteCommand: Codable {
     var llmMessage: LLM.Message
     var content: Content
 
+    var needsSafetyCheck: Bool {
+        if #unavailable(macOS 26) {
+            return false
+        }
+        switch content {
+        case .isAtPrompt, .getLastExitStatus, .getCommandHistory, .getLastCommand,
+                .getCommandBeforeCursor, .searchCommandHistory, .getCommandOutput,
+                .getTerminalSize, .getShellType, .detectSSHSession, .getRemoteHostname,
+                .getUserIdentity, .getCurrentDirectory, .setClipboard,
+                .deleteCurrentLine, .getManPage, .createFile, .searchBrowser,
+                .loadURL, .webSearch, .getURL, .readWebPage, .insertTextAtCursor:
+            return false
+        case .executeCommand:
+            return true
+        }
+    }
+
+    @MainActor
+    func isSafe() async -> Bool {
+        switch content {
+        case .isAtPrompt, .getLastExitStatus, .getCommandHistory, .getLastCommand,
+                .getCommandBeforeCursor, .searchCommandHistory, .getCommandOutput,
+                .getTerminalSize, .getShellType, .detectSSHSession, .getRemoteHostname,
+                .getUserIdentity, .getCurrentDirectory, .setClipboard,
+                .deleteCurrentLine, .getManPage, .createFile, .searchBrowser,
+                .loadURL, .webSearch, .getURL, .readWebPage, .insertTextAtCursor:
+            return true
+        case .executeCommand(let command):
+            if #available(macOS 26, *) {
+                if AIAvailabilityProbe.check() {
+                    let nagKey = "NoSyncAISafetyCheckNagComplete"
+                    if UserDefaults.standard.object(forKey: kPreferenceKeyAISafetyCheck) == nil &&
+                        !UserDefaults.standard.bool(forKey: nagKey) {
+                        let selection = iTermWarning.show(
+                            withTitle: "iTerm2 can use Apple Intelligence to check the safety of commands suggested by your AI agent. Would you like to enable safety checking?\n\nWhen enabled, commands may be sent to Apple’s servers for safety checking.",
+                            actions: ["OK", "Cancel"],
+                            accessory: nil,
+                            identifier: nil,
+                            silenceable: .kiTermWarningTypePersistent,
+                            heading: "Enable Command Safety Checking?",
+                            window: nil)
+                        iTermPreferences.setBool(true, forKey: nagKey)
+                        if selection == .kiTermWarningSelection0 {
+                            iTermPreferences.setBool(true, forKey: kPreferenceKeyAISafetyCheck)
+                        }
+                    }
+                    if iTermPreferences.bool(forKey: kPreferenceKeyAISafetyCheck) {
+                        return await CommandSafetyChecker.check(command.command)
+                    }
+                }
+            }
+            return true
+        }
+    }
+
     var markdownDescription: String {
         switch content {
         case .isAtPrompt:

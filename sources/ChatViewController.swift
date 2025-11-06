@@ -972,7 +972,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                     }
                 }
             }
-        case .remoteCommandRequest(let remoteCommand):
+        case .remoteCommandRequest(let remoteCommand, safe: _):
             let functionCallName = remoteCommand.llmMessage.function_call?.name ?? "Unknown function call name"
             let functionCallID = remoteCommand.llmMessage.functionCallID
             cell.buttonClicked = { [client, listModel] identifier, messageID in
@@ -1584,11 +1584,16 @@ extension Message.Content {
             return AttributedStringForGPTMarkdown(string + epilogue,
                                                   linkColor: linkColor,
                                                   textColor: textColor) { }
-        case .remoteCommandRequest(let request):
+        case .remoteCommandRequest(let request, safe: let safe):
             let specific = request.permissionDescription + "."
-            let general = "Would you like to grant AI **\(request.content.permissionCategory.rawValue)** permission?"
+            let warning = if safe == false {
+                "⚠️ **Apple Intelligence has flagged this command as potentially dangerous. Review it with care.**\n\n"
+            } else {
+                ""
+            }
+            let general =  "Would you like to grant AI **\(request.content.permissionCategory.rawValue)** permission?"
             let info = "*If you grant or deny permission, it affects only this chat conversation while linked to this particular terminal session. You can change permissions in the chat Info menu.*"
-            return AttributedStringForGPTMarkdown(specific + " " + general + "\n\n" + info,
+            return AttributedStringForGPTMarkdown(warning + specific + " " + general + "\n\n" + info,
                                                   linkColor: linkColor,
                                                   textColor: textColor) {}
         case .remoteCommandResponse(let response, _, _, _):

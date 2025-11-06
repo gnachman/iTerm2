@@ -17,7 +17,7 @@ fileprivate extension AITermController.Message {
 extension Message {
     var functionCallName: String? {
         switch content {
-        case .remoteCommandRequest(let request):
+        case .remoteCommandRequest(let request, safe: _):
             return request.llmMessage.function_call?.name
         case .remoteCommandResponse(_, _, let name, _):
             return name
@@ -28,7 +28,7 @@ extension Message {
 
     var functionCall: LLM.FunctionCall? {
         switch content {
-        case .remoteCommandRequest(let request):
+        case .remoteCommandRequest(let request, safe: _):
             return request.llmMessage.function_call
         default:
             return nil
@@ -37,7 +37,7 @@ extension Message {
 
     var functionCallID: LLM.Message.FunctionCallID? {
         switch content {
-        case .remoteCommandRequest(let request):
+        case .remoteCommandRequest(let request, safe: _):
             return request.llmMessage.functionCallID
         case .remoteCommandResponse(_, _, _, let id):
             return id
@@ -603,12 +603,35 @@ extension ChatAgent {
     private func runRemoteCommand(_ remoteCommand: RemoteCommand,
                                   _ responseID: String?,
                                   completion: @escaping (Result<String, Error>) throws -> ()) throws {
+        if remoteCommand.needsSafetyCheck {
+            Task { @MainActor in
+                let safe = await remoteCommand.isSafe()
+                do {
+                    try reallyRunCommand(remoteCommand,
+                                         responseID,
+                                         safe: safe,
+                                         completion: completion)
+                } catch {
+                    Task { @MainActor in
+                        try? completion(.failure(error))
+                    }
+                }
+            }
+        } else {
+            try reallyRunCommand(remoteCommand, responseID, safe: nil, completion: completion)
+        }
+    }
+
+    private func reallyRunCommand(_ remoteCommand: RemoteCommand,
+                                  _ responseID: String?,
+                                  safe: Bool?,
+                                  completion: @escaping (Result<String, Error>) throws -> ()) throws {
         let requestID = UUID()
         pendingRemoteCommands[requestID] = .init(completion: completion,
                                                  responseID: responseID)
         try broker.publish(message: .init(chatID: chatID,
                                           author: .agent,
-                                          content: .remoteCommandRequest(remoteCommand),
+                                          content: .remoteCommandRequest(remoteCommand, safe: safe),
                                           sentDate: Date(),
                                           uniqueID: requestID),
                            toChatID: chatID,

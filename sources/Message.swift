@@ -54,7 +54,7 @@ struct Message: Codable {
         // markdown is empty on the agent side. The client modifies the message to set markdown
         // as it sees fit.
         case explanationResponse(ExplanationResponse, ExplanationResponse.Update?, markdown: String)
-        case remoteCommandRequest(RemoteCommand)
+        case remoteCommandRequest(RemoteCommand, safe: Bool?)
         // Output/Error, message unique ID, function name, function call ID (used by Responses API but not older APIs)
         case remoteCommandResponse(Result<String, AIError>, UUID, String, LLM.Message.FunctionCallID?)
         case selectSessionRequest(Message, terminal: Bool)  // carries the original message that needs a session
@@ -122,7 +122,7 @@ struct Message: Codable {
                 } else {
                     return "Explanation: \(response.annotations.count) annotations: \(response.mainResponse?.truncatedWithTrailingEllipsis(to: maxLength) ?? "No main response")"
                 }
-            case .remoteCommandRequest(let rc):
+            case .remoteCommandRequest(let rc, safe: _):
                 return "Run remote command: \(rc.markdownDescription)"
             case .remoteCommandResponse(let result, _, let name, _):
                 return "Response to remote command \(name): " + result.map(success: { $0.truncatedWithTrailingEllipsis(to: maxLength)},
@@ -173,7 +173,7 @@ struct Message: Codable {
             case .explanationRequest(request: let request): return request.snippetText
             case .explanationResponse(_, _, let markdown):
                 return markdown.truncatedWithTrailingEllipsis(to: maxLength)
-            case .remoteCommandRequest(let command): return command.markdownDescription
+            case .remoteCommandRequest(let command, safe: _): return command.markdownDescription
             case .selectSessionRequest: return "Selecting session…"
             case .clientLocal(let cl):
                 switch cl.action {
