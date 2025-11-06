@@ -1046,6 +1046,92 @@ iTermP3Color iTermSRGBColorToP3Color(iTermSRGBColor srgb) {
                             self.alphaComponent);
 }
 
+- (NSColor *)colorByShiftingTowardsColor:(NSColor *)targetColor amount:(CGFloat)amount {
+    if (!targetColor) {
+        return self;
+    }
+
+    // Clamp amount to valid range
+    amount = MAX(0.0, MIN(1.0, amount));
+
+    // If amount is 0, return original color unchanged
+    if (amount <= 0.0) {
+        return self;
+    }
+
+    // If amount is 1, return target color
+    if (amount >= 1.0) {
+        // Try to convert to original color space
+        NSColorSpace *originalSpace = self.it_colorSpace;
+        if (originalSpace) {
+            NSColor *converted = [targetColor colorUsingColorSpace:originalSpace];
+            if (converted) {
+                return converted;
+            }
+        }
+        return targetColor;
+    }
+
+    // Convert both colors to sRGB for processing
+    NSColor *sourceSRGB = [self colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+    NSColor *targetSRGB = [targetColor colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+
+    if (!sourceSRGB || !targetSRGB) {
+        return self;
+    }
+
+    // Convert to LAB color space for perceptually uniform interpolation
+    iTermSRGBColor sourceSRGBColor = {
+        .r = sourceSRGB.redComponent,
+        .g = sourceSRGB.greenComponent,
+        .b = sourceSRGB.blueComponent
+    };
+
+    iTermSRGBColor targetSRGBColor = {
+        .r = targetSRGB.redComponent,
+        .g = targetSRGB.greenComponent,
+        .b = targetSRGB.blueComponent
+    };
+
+    iTermLABColor sourceLab = iTermLABFromSRGB(sourceSRGBColor);
+    iTermLABColor targetLab = iTermLABFromSRGB(targetSRGBColor);
+
+    // Interpolate in LAB space for perceptually uniform results
+    iTermLABColor resultLab = {
+        .l = sourceLab.l + (targetLab.l - sourceLab.l) * amount,
+        .a = sourceLab.a + (targetLab.a - sourceLab.a) * amount,
+        .b = sourceLab.b + (targetLab.b - sourceLab.b) * amount
+    };
+
+    // Convert back to sRGB
+    iTermSRGBColor resultSRGB = iTermSRGBFromLAB(resultLab);
+
+    // Clamp to valid range (LAB->sRGB can produce out-of-gamut values)
+    resultSRGB.r = MAX(0.0, MIN(1.0, resultSRGB.r));
+    resultSRGB.g = MAX(0.0, MIN(1.0, resultSRGB.g));
+    resultSRGB.b = MAX(0.0, MIN(1.0, resultSRGB.b));
+
+    // Interpolate alpha separately
+    CGFloat resultAlpha = self.alphaComponent + (targetColor.alphaComponent - self.alphaComponent) * amount;
+
+    // Create the result color in sRGB, then convert to original color space
+    NSColor *result = [NSColor colorWithSRGBRed:resultSRGB.r
+                                          green:resultSRGB.g
+                                           blue:resultSRGB.b
+                                          alpha:resultAlpha];
+
+    // Try to preserve the original color space
+    NSColorSpace *originalSpace = self.it_colorSpace;
+    if (originalSpace) {
+        NSColor *converted = [result colorUsingColorSpace:originalSpace];
+        if (converted) {
+            return converted;
+        }
+    }
+
+    return result;
+}
+
 @end
 
 @implementation NSColorSpace(iTerm)

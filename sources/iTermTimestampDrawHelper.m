@@ -20,6 +20,7 @@ const CGFloat iTermTimestampGradientWidth = 20;
 @interface iTermTimestampRow : NSObject
 @property (nonatomic, strong) NSString *string;
 @property (nonatomic) int line;
+@property (nonatomic) NSTimeInterval delta;
 @end
 
 @implementation iTermTimestampRow
@@ -78,15 +79,18 @@ const CGFloat iTermTimestampGradientWidth = 20;
 }
 
 - (void)setDate:(NSDate *)timestamp forLine:(int)line {
+    NSTimeInterval delta = 0;
     NSString *string = [self stringForTimestamp:timestamp
                                             now:_now
-                             useTestingTimezone:_useTestingTimezone];
+                             useTestingTimezone:_useTestingTimezone
+                                          delta:&delta];
     const NSRect textFrame = [self frameForString:string line:line maxX:0 virtualOffset:0];
     _maximumWidth = MAX(_maximumWidth, NSWidth(textFrame));
 
     iTermTimestampRow *row = [[iTermTimestampRow alloc] init];
     row.string = string;
     row.line = line;
+    row.delta = delta;
     [_rows addObject:row];
 }
 
@@ -109,7 +113,7 @@ const CGFloat iTermTimestampGradientWidth = 20;
                                                        line:row.line
                                                        maxX:NSMaxX(frame)
                                               virtualOffset:virtualOffset];
-        [self drawString:row.string row:idx frame:stringFrame];
+        [self drawString:row.string row:idx frame:stringFrame delta:row.delta];
     }];
 }
 
@@ -131,7 +135,7 @@ const CGFloat iTermTimestampGradientWidth = 20;
     [self drawBackgroundInFrame:[self backgroundFrameForTextFrame:stringFrame]
                         bgColor:_bgColor
                         context:context];
-    [self drawString:row.string row:index frame:stringFrame];
+    [self drawString:row.string row:index frame:stringFrame delta:row.delta];
 }
 
 - (BOOL)rowIsRepeat:(int)index {
@@ -178,11 +182,31 @@ const CGFloat iTermTimestampGradientWidth = 20;
     NSRectFillUsingOperation(solidFrame, NSCompositingOperationSourceOver);
 }
 
+- (NSColor *)tintedColor:(NSColor *)baseColor delta:(NSTimeInterval)delta {
+    const CGFloat x = fabs(delta);
+    // This is a "finite Prony series". It converges montonotically to 1 as x->infinity. The slope
+    // is positive for x>=0 and the slope itself is strictly decreasing.
+    // It is also globally concave.
+    // It also doesn't get NaNs or infinities for big x.
+    // Furthermore it gets us nice values in the domain we care most about:
+    // f(0) = 0
+    // f(60) ≅ 0.25
+    // f(86400) ≅ 0.5
+    // f(2,500,000) ≅ 0.9
+    const CGFloat amount = 1.0 - 0.35755 * exp(-0.02 * x) - 0.20831 * exp(-0.00001 * x) - 0.43413 * exp(-0.0000006 * x);
+    if (delta > 0) {
+        return [baseColor colorByShiftingTowardsColor:[NSColor colorWithSRGBRed:1 green:0 blue:0 alpha:1] amount:amount];
+    } else {
+        return [baseColor colorByShiftingTowardsColor:[NSColor colorWithSRGBRed:0 green:0 blue:1 alpha:1] amount:amount];
+    }
+}
+
 - (void)drawString:(NSString *)s
                row:(int)index
-             frame:(NSRect)frame {
-    NSColor *color = _fgColor;
-    NSDictionary *attributes = [self attributesForTextColor:color ?: [NSColor colorWithRed:0 green:0 blue:0 alpha:1]
+             frame:(NSRect)frame
+             delta:(NSTimeInterval)delta {
+    NSColor *color = _fgColor ?: [NSColor colorWithRed:0 green:0 blue:0 alpha:1];
+    NSDictionary *attributes = [self attributesForTextColor:[self tintedColor:color delta:delta]
                                                      shadow:[self shadowForTextColor:color ?: [NSColor colorWithRed:1 green:1 blue:1 alpha:1]]
                                                      retina:_isRetina];
     const BOOL repeat = [self rowIsRepeat:index];
@@ -291,11 +315,14 @@ const CGFloat iTermTimestampGradientWidth = 20;
 
 - (NSString *)stringForTimestamp:(NSDate *)timestamp
                              now:(NSTimeInterval)now
-              useTestingTimezone:(BOOL)useTestingTimezone {
+              useTestingTimezone:(BOOL)useTestingTimezone
+                           delta:(NSTimeInterval *)deltaPtr {
+    *deltaPtr = 0;
     if (!timestamp) {
         return @"";
     }
     if (self.timestampBaseline != 0) {
+        *deltaPtr = timestamp.timeIntervalSinceReferenceDate - self.timestampBaseline;
         return [self relativeStringForTimestamp:timestamp.timeIntervalSinceReferenceDate];
     }
     const NSTimeInterval timeSinceReference = round(timestamp.timeIntervalSinceReferenceDate);
@@ -303,6 +330,7 @@ const CGFloat iTermTimestampGradientWidth = 20;
         return @"";
     }
     const NSTimeInterval timeDelta = timeSinceReference - now;
+    *deltaPtr = timeDelta;
     NSDateFormatter *fmt = [self dateFormatterWithTimeDelta:timeDelta
                                          useTestingTimezone:useTestingTimezone];
     NSDate *rounded = [NSDate dateWithTimeIntervalSinceReferenceDate:timeSinceReference];

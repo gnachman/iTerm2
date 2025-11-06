@@ -185,6 +185,13 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 
 + (NSColor *)it_blue;
 
+// Shift the color towards another target color.
+// targetColor: The color to shift towards
+// amount: Interpolation amount in [0,1]. At 0, returns the original color unchanged.
+//         At 1, returns the target color.
+- (NSColor *)colorByShiftingTowardsColor:(NSColor *)targetColor
+                                  amount:(CGFloat)amount;
+
 @end
 
 @interface NSColorSpace(iTerm)
