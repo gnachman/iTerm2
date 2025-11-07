@@ -1312,7 +1312,11 @@ extension iTermBrowserManager: WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         it_assert(webView === self.webView)
-        localPageManager.unregisterAllMessageHandlers(webView: self.webView)
+        if webView.url == iTermBrowserErrorHandler.errorURL {
+            localPageManager.unregisterAllMessageHandlers(webView: self.webView, except: iTermBrowserErrorHandler.errorURL)
+        } else {
+            localPageManager.unregisterAllMessageHandlers(webView: self.webView, except: nil)
+        }
 
         // Track HTTP method for main frame navigations only
         if navigationAction.targetFrame?.isMainFrame == true {
@@ -1512,7 +1516,7 @@ extension iTermBrowserManager: WKUIDelegate {
             return nil
         }
         it_assert(webView === self.webView)
-        localPageManager.unregisterAllMessageHandlers(webView: self.webView)
+        localPageManager.unregisterAllMessageHandlers(webView: self.webView, except: nil)
         return delegate?.browserManager(self,
                                         requestNewWindowForURL: url,
                                         configuration: configuration)

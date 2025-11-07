@@ -209,13 +209,24 @@ class iTermBrowserLocalPageManager: NSObject {
         return context.requiresMessageHandler && !context.messageHandlerRegistered
     }
 
-    func unregisterAllMessageHandlers(webView: iTermBrowserWebView) {
+    func unregisterAllMessageHandlers(webView: iTermBrowserWebView, except: URL?) {
         for url in activePageContexts.keys {
+            if url == except?.absoluteString {
+                continue
+            }
             if activePageContexts[url]?.messageHandlerRegistered == true {
                 webView.configuration.userContentController.removeScriptMessageHandler(forName: url)
             }
         }
+        let saved: iTermBrowserPageContext? = if let except {
+            activePageContexts[except.absoluteString]
+        } else {
+            nil
+        }
         activePageContexts.removeAll()
+        if let saved, let except {
+            activePageContexts[except.absoluteString] = saved
+        }
     }
 
     /// Mark message handler as registered for URL
