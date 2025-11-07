@@ -15,6 +15,10 @@ class MessageCellView: NSView {
     var forkButtonClicked: ((UUID) -> Void)?
     var maxWidthConstraint: NSLayoutConstraint?
 
+    override var description: String {
+        "<\(Self.self): \(it_addressString) editable=\(editable)>"
+    }
+
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         setupViews()
@@ -59,43 +63,31 @@ class MessageCellView: NSView {
         return max(16, tableViewWidth * 0.7)
     }
 
-    override func viewDidMoveToWindow() {
-        super.viewDidMoveToWindow()
-        if window != nil {
-            // Add a local monitor for right mouse down events.
-            rightClickMonitor = NSEvent.addLocalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
-                guard let self = self else {
-                    return event
-                }
-                let pointInSelf = self.convert(event.locationInWindow, from: nil)
-                if self.bounds.contains(pointInSelf) {
-                    self.handleRightClick(event)
-                    return nil
-                }
-                return event
+    override var menu: NSMenu? {
+        get {
+            DLog("menu \(self)")
+            guard editable else {
+                DLog("Not editable so ignore right click")
+                return nil
             }
-        } else if let monitor = rightClickMonitor {
-            NSEvent.removeMonitor(monitor)
-            rightClickMonitor = nil
+            let menu = NSMenu(title: "Context Menu")
+            let editItem = NSMenuItem(title: "Edit", action: #selector(editMenuItemClicked(_:)), keyEquivalent: "")
+            editItem.target = self
+            menu.addItem(editItem)
+
+            let copyItem = NSMenuItem(title: "Copy", action: #selector(copyMenuItemClicked(_:)), keyEquivalent: "")
+            copyItem.target = self
+            menu.addItem(copyItem)
+
+            let forkItem = NSMenuItem(title: "Fork", action: #selector(forkMenuItemClicked(_:)), keyEquivalent: "")
+            forkItem.target = self
+            menu.addItem(forkItem)
+
+            return menu
         }
-    }
-
-    @objc private func handleRightClick(_ event: NSEvent) {
-        guard editable else { return }
-        let menu = NSMenu(title: "Context Menu")
-        let editItem = NSMenuItem(title: "Edit", action: #selector(editMenuItemClicked(_:)), keyEquivalent: "")
-        editItem.target = self
-        menu.addItem(editItem)
-
-        let copyItem = NSMenuItem(title: "Copy", action: #selector(copyMenuItemClicked(_:)), keyEquivalent: "")
-        copyItem.target = self
-        menu.addItem(copyItem)
-
-        let forkItem = NSMenuItem(title: "Fork", action: #selector(forkMenuItemClicked(_:)), keyEquivalent: "")
-        forkItem.target = self
-        menu.addItem(forkItem)
-
-        NSMenu.popUpContextMenu(menu, with: event, for: self)
+        set {
+            DLog("Unexpected call to set menu")
+        }
     }
 
     @objc func copyMenuItemClicked(_ sender: Any) {

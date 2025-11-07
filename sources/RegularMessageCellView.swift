@@ -79,6 +79,10 @@ class RegularMessageCellView: MessageCellView {
         bubbleView.translatesAutoresizingMaskIntoConstraints = false
     }
 
+    override var description: String {
+        "<\(Self.self): \(it_addressString) editable=\(editable) text=\(textLabel.textStorage?.string ?? "(nil)")>"
+    }
+
     // Update the bubble’s color if dark vs. light mode changes
     override func updateColors() {
         updateBubbleColor()
