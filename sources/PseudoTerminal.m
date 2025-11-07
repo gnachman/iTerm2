@@ -6175,8 +6175,13 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
 
+    // Put it on the correct display
     frame.origin = preferredOrigin_;
     [window setFrame:frame display:NO];
+
+    // And then move it to a nicer spot.
+    [self.ptyWindow smartLayout];
+
     DLog(@"Update frame to %@", NSStringFromRect(frame));
 }
 
