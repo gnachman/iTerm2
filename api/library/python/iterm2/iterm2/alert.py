@@ -390,7 +390,7 @@ class PolyModalAlert:
         text_field = json.dumps(self.text_field)
         width = json.dumps(self.__width)
 
-        return await iterm2.async_invoke_function(
+        result = await iterm2.async_invoke_function(
             connection,
             (f'iterm2.get_poly_modal_alert(title: {title}, ' +
              f'subtitle: {subtitle}, ' +
@@ -402,3 +402,4 @@ class PolyModalAlert:
              f'textFieldParams: {text_field}, ' +
              f'width: {width}, ' +
              f'window_id: {json.dumps(self.window_id)})'))
+        return PolyModalResult(**result)
