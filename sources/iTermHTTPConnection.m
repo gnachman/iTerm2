@@ -12,17 +12,52 @@
 #include <sys/select.h>
 #include <sys/time.h>
 
+// As long as iTermStream exists, fd and stream will be valid.
+// This object takes ownership of fd and you must not close it yourself.
+@interface iTermStream: NSObject
+@property (nonatomic, readonly) dispatch_io_t stream;
+@property (nonatomic, readonly) int fd;
+
+- (instancetype)initWithFileDescriptor:(int)fd queue:(dispatch_queue_t)queue;
+- (instancetype)init NS_UNAVAILABLE;
+
+@end
+
+@implementation iTermStream {
+    int _fd;
+}
+
+- (instancetype)initWithFileDescriptor:(int)fd queue:(dispatch_queue_t)queue {
+    self = [super init];
+    if (self) {
+        _fd = fd;
+        // cycle ensures that _stream sticks around long enough to close the file descriptor.
+        __block dispatch_io_t cycle;
+        _stream = dispatch_io_create(DISPATCH_IO_STREAM, fd, queue, ^(int error) {
+            close(fd);
+            cycle = nil;
+        });
+        cycle = _stream;
+    }
+    return self;
+}
+
+- (void)dealloc {
+    dispatch_io_close(_stream, DISPATCH_IO_STOP);
+}
+
+@end
+
 @interface iTermHTTPConnection()
 @property (atomic) BOOL closing;
 @end
 
 @implementation iTermHTTPConnection {
-    int _fd;  // @synchronized(_fdSync)
-    NSInteger _fdRetainCount;  // @synchronized(_fdSync);
-    NSObject *_fdSync;
+    NSObject *_lock;
     NSURLRequest *_request;
     NSTimeInterval _deadline;
     NSMutableData *_buffer;
+    iTermStream *_stream;
 }
 
 - (instancetype)initWithFileDescriptor:(int)fd
@@ -30,72 +65,26 @@
                                   euid:(NSNumber *)euid {
     self = [super init];
     if (self) {
-        _fd = fd;
-        _fdSync = [[NSObject alloc] init];
-        [self retainFileDescriptor];
+        _lock = [[NSObject alloc] init];
         _buffer = [[NSMutableData alloc] init];
         _clientAddress = address;
         _euid = euid;
         _queue = dispatch_queue_create("com.iterm2.httpconn", NULL);
+        _stream = [[iTermStream alloc] initWithFileDescriptor:fd queue:_queue];
+
     }
     return self;
 }
 
-- (void)retainFileDescriptor {
-    @synchronized (_fdSync) {
-        _fdRetainCount += 1;
-        DLog(@"%@ retain fd, rc <- %@", self, @(_fdRetainCount));
-    }
-}
-
-- (void)releaseFileDescriptor {
-    @synchronized (_fdSync) {
-        _fdRetainCount -= 1;
-        DLog(@"%@ release fd, rc <- %@", self, @(_fdRetainCount));
-        if (_fdRetainCount > 0) {
-            return;
-        }
-        [self closeFileDescriptor];
-    }
-}
-
-- (void)closeFileDescriptor {
-    DLog(@"Close http connection from %@", [NSThread callStackSymbols]);
-    @synchronized (_fdSync) {
-        if (_fd < 0) {
-            DLog(@"File descriptor already closed");
-            return;
-        }
-        const int rc = close(_fd);
-        if (rc != 0) {
-            XLog(@"close failed with %s", strerror(errno));
-        }
-        _fd = -1;
-    }
-}
-
-- (dispatch_io_t)newChannelOnQueue:(dispatch_queue_t)queue {
-    @synchronized(_fdSync) {
-        return dispatch_io_create(DISPATCH_IO_STREAM, _fd, queue, ^(int error) {
-#warning Probably should close _fd here
-            DLog(@"Channel closed");
-        });
-    }
-}
-
-- (void)threadSafeClose {
-    @synchronized (_fdSync) {
-        if (self.closing) {
-            return;
-        }
-        self.closing = YES;
-        [self releaseFileDescriptor];
+- (void)closeConnection {
+    @synchronized (_lock) {
+        _stream = nil;
     }
 }
 
 - (BOOL)sendResponseWithCode:(int)code reason:(NSString *)reason headers:(NSDictionary *)headers {
-    @synchronized(_fdSync) {
-        if (_fd < 0) {
+    @synchronized(_lock) {
+        if (!_stream) {
             return NO;
         }
 
@@ -103,19 +92,19 @@
         BOOL ok;
         ok = [self writeString:[NSString stringWithFormat:@"HTTP/1.1 %d %@\r\n", code, reason]];
         if (!ok) {
-            [self threadSafeClose];
+            _stream = nil;
             return NO;
         }
         for (NSString *key in headers) {
             ok = [self writeString:[NSString stringWithFormat:@"%@: %@\r\n", key, headers[key]]];
             if (!ok) {
-                [self threadSafeClose];
+                _stream = nil;
                 return NO;
             }
         }
         ok = [self writeString:[NSString stringWithFormat:@"\r\n"]];
         if (!ok) {
-            [self threadSafeClose];
+            _stream = nil;
             return NO;
         }
 
@@ -124,7 +113,7 @@
             _deadline = INFINITY;
         } else {
             DLog(@"Non-10x code, closing connection");
-            [self threadSafeClose];
+            _stream = nil;
         }
     }
     return YES;
@@ -283,18 +272,18 @@
         return NO;
     }
 
-    int fd;
-    @synchronized(_fdSync) {
-        fd = _fd;
-    }
-    if (fd < 0) {
-        return NO;
+    iTermStream *stream;
+    @synchronized(_lock) {
+        if (!_stream) {
+            return NO;
+        }
+        stream = _stream;
     }
 
     char buffer[4096];
     int rc;
     do {
-        rc = read(fd, buffer, sizeof(buffer));
+        rc = read(stream.fd, buffer, sizeof(buffer));
     } while (rc == -1 && (errno == EINTR || errno == EAGAIN));
     if (rc <= 0) {
         if (rc < 0) {
@@ -302,7 +291,9 @@
         } else {
             DLog(@"EOF reached");
         }
-        [self threadSafeClose];
+        @synchronized(_lock) {
+            _stream = nil;
+        }
         return NO;
     }
 
@@ -311,17 +302,18 @@
 }
 
 - (BOOL)waitForIO:(BOOL)read {
-    int fd;
     fd_set set;
     struct timeval timeout;
     struct timeval *timeoutPointer = NULL;
-    @synchronized(_fdSync) {
-        if (_fd < 0) {
-            DLog(@"Tried select on closed file descriptor");
+    iTermStream *stream;
+    @synchronized(_lock) {
+        if (!_stream) {
             return NO;
         }
+        stream = _stream;
+
         FD_ZERO(&set);
-        FD_SET(_fd, &set);
+        FD_SET(stream.fd, &set);
 
         if (!isinf(_deadline)) {
             CGFloat dt = _deadline - [NSDate timeIntervalSinceReferenceDate];
@@ -336,14 +328,13 @@
             timeout.tv_usec = fmod(dt, 1.0) * 1000000;
             timeoutPointer = &timeout;
         }
-        fd = _fd;
     }
     int rc;
     do {
         if (read) {
-            rc = select(fd + 1, &set, NULL, NULL, timeoutPointer);
+            rc = select(stream.fd + 1, &set, NULL, NULL, timeoutPointer);
         } else {
-            rc = select(fd + 1, NULL, &set, NULL, timeoutPointer);
+            rc = select(stream.fd + 1, NULL, &set, NULL, timeoutPointer);
         }
     } while (rc == -1 && (errno == EINTR || errno == EAGAIN));
     if (rc == 0) {
@@ -369,13 +360,16 @@
             return NO;
         }
 
-        int fd;
-        @synchronized(_fdSync) {
-            fd = _fd;
+        iTermStream *stream;
+        @synchronized(_lock) {
+            if (!_stream) {
+                return NO;
+            }
+            stream = _stream;
         }
         int rc;
         do {
-            rc = write(fd, data.bytes + offset, data.length - offset);
+            rc = write(stream.fd, data.bytes + offset, data.length - offset);
         } while (rc == -1 && (errno == EINTR || errno == EAGAIN));
         if (rc <= 0) {
             if (rc < 0) {
@@ -383,7 +377,9 @@
             } else {
                 DLog(@"EOF reached");
             }
-            [self threadSafeClose];
+            @synchronized(_lock) {
+                _stream = nil;
+            }
             return NO;
         }
         offset += rc;
@@ -392,28 +388,22 @@
 }
 
 - (void)writeAsynchronously:(dispatch_data_t)dispatchData
-                    channel:(dispatch_io_t)channel
                       queue:(dispatch_queue_t)queue
                  completion:(void (^)(bool done,
                                       dispatch_data_t _Nullable data,
                                       int error))completion {
-    @synchronized (_fdSync) {
-        if (self.closing) {
-            DLog(@"Decline to write asynchronously because the connection is closing.");
+    @synchronized(_lock) {
+        if (!_stream) {
             return;
         }
-        [self retainFileDescriptor];
+        dispatch_io_write(_stream.stream,
+                          0,  // offset
+                          dispatchData,
+                          queue,
+                          ^(bool done, dispatch_data_t  _Nullable data, int error) {
+            completion(done, data, error);
+        });
     }
-    dispatch_io_write(channel,
-                      0,  // offset
-                      dispatchData,
-                      queue,
-                      ^(bool done, dispatch_data_t  _Nullable data, int error) {
-        if (done) {
-            [self releaseFileDescriptor];
-        }
-        completion(done, data, error);
-    });
 }
 
 @end

@@ -221,7 +221,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     dispatch_sync(_queue, ^{
         DLog(@"Private queue: stop - begin");
         [self->_pendingConnections enumerateObjectsUsingBlock:^(iTermHTTPConnection * _Nonnull connection, NSUInteger idx, BOOL * _Nonnull stop) {
-            [connection threadSafeClose];
+            [connection closeConnection];
         }];
         [self->_pendingConnections removeAllObjects];
         [self queueStop];

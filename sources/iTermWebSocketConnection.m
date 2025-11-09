@@ -44,7 +44,6 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     iTermWebSocketFrame *_fragment;
     dispatch_queue_t _queue;
     iTermWebSocketFrameBuilder *_frameBuilder;
-    dispatch_io_t _channel;
 }
 
 + (instancetype)newWebSocketConnectionForRequest:(NSURLRequest *)request
@@ -202,7 +201,6 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     _state = iTermWebSocketConnectionStateOpen;
 
     _frameBuilder = [[iTermWebSocketFrameBuilder alloc] init];
-    _channel = [_connection newChannelOnQueue:_queue];
 
     // I tried using dispatch_read but it didn't work reliably. Seems to work OK for writing.
     __weak __typeof(self) weakSelf = self;
@@ -302,7 +300,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     });
 
     __weak __typeof(self) weakSelf = self;
-    [_connection writeAsynchronously:dispatchData channel:_channel queue:_queue completion:^(bool done, dispatch_data_t  _Nullable data, int error) {
+    [_connection writeAsynchronously:dispatchData queue:_queue completion:^(bool done, dispatch_data_t  _Nullable data, int error) {
         DLog(@"Write progress: done=%d error=%d", (int)done, (int)error);
         if (error) {
             [weakSelf reallyAbort];
@@ -333,9 +331,12 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
                 [self.delegate webSocketConnectionDidTerminate:self];
             });
         }
-        iTermHTTPConnection *connection = _connection;
-        [connection threadSafeClose];
+        [self performClose];
     }
+}
+
+- (void)performClose {
+    [_connection closeConnection];
 }
 
 // queue
@@ -407,14 +408,14 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
                 dispatch_async(self.delegateQueue, ^{
                     [self.delegate webSocketConnectionDidTerminate:self];
                 });
-                [_connection threadSafeClose];
+                [self performClose];
             } else if (_state == iTermWebSocketConnectionStateClosing) {
                 DLog(@"closing->closed");
                 _state = iTermWebSocketConnectionStateClosed;
                 dispatch_async(self.delegateQueue, ^{
                     [self.delegate webSocketConnectionDidTerminate:self];
                 });
-                [_connection threadSafeClose];
+                [self performClose];
             }
             break;
     }
