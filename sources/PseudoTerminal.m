@@ -1781,7 +1781,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (PTYWindowTitleBarFlavor)ptyWindowTitleBarFlavor {
-    if (self.lionFullScreen || togglingLionFullScreen_ || self.ptyWindow.it_attemptingToEnterFullScreen) {
+    if (self.lionFullScreen || togglingLionFullScreen_) {
         return PTYWindowTitleBarFlavorDefault;
     }
     switch (_windowType) {
@@ -6010,7 +6010,7 @@ ITERM_WEAKLY_REFERENCEABLE
     BOOL verticalOnly = NO;
 
     BOOL maxVerticallyPref;
-    if (togglingLionFullScreen_ || [self lionFullScreen]) {
+    if (togglingLionFullScreen_ || [[self ptyWindow] isTogglingLionFullScreen] || [self lionFullScreen]) {
         // Going into lion fullscreen mode. Disregard the "maximize vertically"
         // preference.
         DLog(@"Going into lion fullscreen mode so disregard maximize vertically preference");
@@ -9901,12 +9901,6 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     if ([self shouldHaveTallTabBar]) {
         return [iTermAdvancedSettingsModel compactMinimalTabBarHeight];
     } else {
-        if ([self anyFullScreen] || [self enteringLionFullscreen]) {
-            iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-            if (preferredStyle == TAB_STYLE_COMPACT) {
-                return [iTermAdvancedSettingsModel defaultTabBarHeight];
-            }
-        }
         if (iTermWindowTypeIsCompact(self.windowType)) {
             return [iTermAdvancedSettingsModel defaultTabBarHeight];
         }
@@ -9996,35 +9990,6 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     const BOOL hideProxy = ([self proxyIconIsAllowed] &&
                             ![self proxyIconShouldBeVisible]);
     [[self.window standardWindowButton:NSWindowDocumentIconButton] setHidden:hideProxy];
-}
-
-- (BOOL)rootTerminalViewShouldHideStoplightButtons {
-    [self updateProxyIconVisibility];
-    if (self.enteringLionFullscreen || self.anyFullScreen) {
-        return NO;
-    }
-    switch (self.windowType) {
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_NO_TITLE_BAR:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-            return YES;
-
-        case WINDOW_TYPE_LION_FULL_SCREEN:
-        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-        case WINDOW_TYPE_NORMAL:
-        case WINDOW_TYPE_MAXIMIZED:
-        case WINDOW_TYPE_ACCESSORY:
-        case WINDOW_TYPE_COMPACT:
-        case WINDOW_TYPE_COMPACT_MAXIMIZED:
-            return NO;
-    }
-    return NO;
 }
 
 - (BOOL)rootTerminalViewShouldDrawStoplightButtons {

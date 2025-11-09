@@ -18,7 +18,8 @@ NS_ASSUME_NONNULL_BEGIN
     // If set, then windowWillShowInitial is not invoked.
     BOOL _layoutDone;
 
-    BOOL _possiblyEnteringLionFullScreen;
+    // True while in -[NSWindow toggleFullScreen:].
+    BOOL isTogglingLionFullScreen_;
     NSObject *restoreState_;
     NSInteger _uniqueNumber;
 
@@ -41,8 +42,6 @@ NS_ASSUME_NONNULL_BEGIN
     NSInteger _resizingForTilingCount;
 }
 
-@synthesize it_attemptingToEnterFullScreen = _attemptingToEnterFullScreen;
-@synthesize it_lastTitlebarHeightWasCustom = _lastTitlebarHeightWasCustom;
 @synthesize it_openingSheet;
 @synthesize it_becomingKey;
 @synthesize it_accessibilityResizing;
@@ -281,29 +280,18 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)toggleFullScreen:(nullable id)sender {
     if ([self.ptyDelegate toggleFullScreenShouldUseLionFullScreen]) {
-        if (!(self.styleMask & NSWindowStyleMaskFullScreen) && _lastTitlebarHeightWasCustom) {
-            // Fix the titlebarHeight of the theme frame.
-            self.it_attemptingToEnterFullScreen = YES;
-            NSWindowStyleMask styleMask = self.styleMask;
-            self.styleMask = styleMask ^ NSWindowStyleMaskMiniaturizable;
-            self.styleMask = styleMask;
-        }
         [super toggleFullScreen:sender];
     } else {
         [(id<PTYWindowDelegateProtocol>)[self delegate] toggleTraditionalFullScreenMode];
     }
 }
 
+- (BOOL)isTogglingLionFullScreen {
+    return isTogglingLionFullScreen_;
+}
+
 - (int)screenNumber {
     return [[[[self screen] deviceDescription] objectForKey:@"NSScreenNumber"] intValue];
-}
-
-- (BOOL)it_attemptingToEnterFullScreen {
-    return _attemptingToEnterFullScreen;
-}
-
-- (void)setIt_attemptingToEnterFullScreen:(BOOL)newValue {
-    _attemptingToEnterFullScreen = newValue;
 }
 
 - (CGFloat)sumOfIntersectingAreaOfRect:(NSRect)rect withRects:(NSArray<NSValue *> *)rects {

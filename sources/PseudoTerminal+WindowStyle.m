@@ -460,7 +460,6 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     [self.window orderFront:nil];
     [self.contentView layoutSubviews];
     self.window.title = title;
-    self.window.titleVisibility = [PseudoTerminal shouldHideWindowTitleForWindowType:windowType] ? NSWindowTitleHidden : NSWindowTitleVisible;
 
     if (changed) {
         [self forceFrame:frame];
@@ -849,7 +848,6 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     [self.contentView layoutSubviews];
     // Set scrollbars appropriately
     [self updateSessionScrollbars];
-    [self.contentView layoutSubviews];
     [self fitTabsToWindow];
     [self invalidateRestorableState];
     [self notifyTmuxOfWindowResize];
@@ -880,7 +878,6 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 
 - (void)didFinishFullScreenTransitionSuccessfully:(BOOL)success {
     DLog(@"didFinishFullScreenTransitionSuccessfully:%@", @(success));
-    self.ptyWindow.it_attemptingToEnterFullScreen = NO;
     NSArray<void (^)(BOOL)> *blocks = [_toggleFullScreenModeCompletionBlocks copy];
     [_toggleFullScreenModeCompletionBlocks removeAllObjects];
     for (void (^block)(BOOL) in blocks) {

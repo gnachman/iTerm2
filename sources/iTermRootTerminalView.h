@@ -50,7 +50,6 @@
 - (NSImage *)rootTerminalViewCurrentTabIcon;
 - (BOOL)rootTerminalViewShouldDrawStoplightButtons;
 - (BOOL)rootTerminalViewShouldRevealStandardWindowButtons;
-- (BOOL)rootTerminalViewShouldHideStoplightButtons NS_AVAILABLE_MAC(26);
 - (iTermStatusBarViewController *)rootTerminalViewSharedStatusBarViewController;
 - (BOOL)rootTerminalViewWindowHasFullSizeContentView;
 - (BOOL)rootTerminalViewShouldLeaveEmptyAreaAtTop;

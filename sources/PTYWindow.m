@@ -89,16 +89,10 @@ const NSTimeInterval iTermWindowTitleChangeMinimumInterval = 0.1;
     if (@available(macOS 26.0, *)) {
         if ([self.window.ptyWindow.ptyDelegate ptyWindowTitleBarFlavor] == PTYWindowTitleBarFlavorDefault) {
             if ([[[self class] superclass] instancesRespondToSelector:_cmd]) {
-                self.window.ptyWindow.it_lastTitlebarHeightWasCustom = NO;
-                const CGFloat height = [super _titlebarHeight];
-                DLog(@"Use titlebar height from super of %f", height);
-                return height;
+                return [super _titlebarHeight];
             }
         }
-        self.window.ptyWindow.it_lastTitlebarHeightWasCustom = YES;
-        CGFloat height = [self.window.ptyWindow.ptyDelegate ptyWindowTitleBarHeight];
-        DLog(@"Title bar height will be %f", height);
-        return height;
+        return [self.window.ptyWindow.ptyDelegate ptyWindowTitleBarHeight];
     }
     switch ([self.window.ptyWindow.ptyDelegate ptyWindowTitleBarFlavor]) {
         case PTYWindowTitleBarFlavorDefault:

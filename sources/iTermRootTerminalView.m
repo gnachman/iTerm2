@@ -682,7 +682,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 
         if (![self.delegate enableStoplightHotbox]) {
             // No hotbox - show the standard buttons
-            BOOL showButtons = ![self.delegate rootTerminalViewShouldHideStoplightButtons];
+            BOOL showButtons = (ptyWindow.isCompact && [self.delegate rootTerminalViewShouldDrawStoplightButtons]);
             for (int i = 0; i < self.numberOfWindowButtons; i++) {
                 [[self.window standardWindowButton:self.windowButtonTypes[i]] setHidden:!showButtons];
             }
@@ -1599,10 +1599,10 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 
             if (!hotboxEnabled) {
                 // We're using real buttons, not custom copies. Show them if appropriate.
-                BOOL hideButtons = [self.delegate rootTerminalViewShouldHideStoplightButtons];
+                const BOOL shouldDraw = [self.delegate rootTerminalViewShouldDrawStoplightButtons];
                 for (int i = 0; i < self.numberOfWindowButtons; i++) {
                     NSButton *button = [self.window standardWindowButton:self.windowButtonTypes[i]];
-                    [button setHidden:hideButtons];
+                    [button setHidden:!shouldDraw];
                     [button setAlphaValue:1];  // Restore alpha in case transitioning from hotbox
                 }
                 // Remove custom button view if it exists (e.g., transitioning from hotbox to no hotbox)
