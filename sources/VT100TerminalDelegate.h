@@ -93,7 +93,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalMoveCursorToX:(int)x y:(int)y;
 
 // Returns if it's safe to send reports.
-- (BOOL)terminalShouldSendReport;
+- (BOOL)terminalShouldSendReport:(BOOL)tmuxAllowed;
 
 - (void)terminalReportVariableNamed:(NSString *)variable;
 

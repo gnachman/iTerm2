@@ -479,14 +479,17 @@ typedef struct {
 // want to pause & sync when mutating reportable state. Instead, pause and sync before sending a
 // report becuse reports are pretty rare compared to decset and friends.
 //
-// All reports go through -terminalShouldSendReport. I know this because any that don't will break
+// All reports go through -terminalShouldSendReport:. I know this because any that don't will break
 // tmux integration.
 //
 // When you get a report, roll back the token (so it will be executed again later) and pause. Force
 // a sync and unpause. The allowNextReport flag is temporarily set to allow the report to go through.
-- (BOOL)terminalShouldSendReport {
+//
+// Some reports are OK to send for a tmux integration client: those that tmux itself is known not
+// to catch.
+- (BOOL)terminalShouldSendReport:(BOOL)tmuxAllowed {
     DLog(@"begin");
-    if (self.config.isTmuxClient) {
+    if (!tmuxAllowed && self.config.isTmuxClient) {
         DLog(@"no - is tmux client");
         return NO;
     }

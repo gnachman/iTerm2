@@ -1218,7 +1218,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)handleDeviceStatusReportWithToken:(VT100Token *)token withQuestion:(BOOL)withQuestion {
-    if ([_delegate terminalShouldSendReport]) {
+    if ([_delegate terminalShouldSendReport:NO]) {
         switch (token.csi->p[0]) {
             case 3: // response from VT100 -- Malfunction -- retry
                 break;
@@ -1396,7 +1396,7 @@ static const int kMaxScreenRows = 4096;
 
 - (void)sendChecksumReportWithId:(int)identifier
                        rectangle:(VT100GridRect)rect {
-    if (![_delegate terminalShouldSendReport]) {
+    if (![_delegate terminalShouldSendReport:NO]) {
         return;
     }
     if (identifier < 0) {
@@ -1413,7 +1413,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)sendSGRReportWithRectangle:(VT100GridRect)rect {
-    if (![_delegate terminalShouldSendReport]) {
+    if (![_delegate terminalShouldSendReport:NO]) {
         return;
     }
     if (![self rectangleIsValid:rect]) {
@@ -1965,13 +1965,13 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                        andToStartOfLine:YES];
             break;
         case VT100CSI_DA:
-            if (token.csi->p[0] == 0 && [_delegate terminalShouldSendReport]) {
+            if (token.csi->p[0] == 0 && [_delegate terminalShouldSendReport:NO]) {
                 VT100OutputOptionalDeviceAttributes attrs = [_delegate terminalOptionalDeviceAttributes];
                 [_delegate terminalSendReport:[self.output reportDeviceAttribute:attrs]];
             }
             break;
         case VT100CSI_DA2:
-            if ([_delegate terminalShouldSendReport]) {
+            if ([_delegate terminalShouldSendReport:NO]) {
                 [_delegate terminalSendReport:[self.output reportSecondaryDeviceAttribute]];
             }
             break;
@@ -1981,12 +1981,12 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             } else {
                 DLog(@"vtlevel %@ denied", @(_vtLevel));
             }
-            if ([_delegate terminalShouldSendReport]) {
+            if ([_delegate terminalShouldSendReport:NO]) {
                 [_delegate terminalSendReport:[self.output reportTertiaryDeviceAttribute]];
             }
             break;
         case VT100CSI_XDA:
-            if ([_delegate terminalShouldSendReport]) {
+            if ([_delegate terminalShouldSendReport:NO]) {
                 if (token.csi->p[0] == 0 || token.csi->p[0] == -1) {
                     [_delegate terminalSendReport:[self.output reportExtendedDeviceAttribute]];
                 }
@@ -2159,7 +2159,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
         case VT100CSI_DECRQDE:
             if (_vtLevel >= iTermEmulationLevel300) {
-                if ([self.delegate terminalShouldSendReport]) {
+                if ([self.delegate terminalShouldSendReport:NO]) {
                     [_delegate terminalSendReport:[_output reportDisplayedExtentOfSize:_delegate.terminalSizeInCells]];
                 }
             } else {
@@ -2487,7 +2487,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
 
         case VT100CSI_QUERY_KEY_REPORTING_MODE:
-            if ([_delegate terminalShouldSendReport]) {
+            if ([_delegate terminalShouldSendReport:NO]) {
                 VT100TerminalKeyReportingFlags flags;
                 if (self.currentKeyReportingModeStack.count) {
                     flags = self.currentKeyReportingModeStack.lastObject.unsignedIntegerValue;
@@ -2575,7 +2575,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                 NSString *decoded = [self decodedBase64PasteCommand:token.string query:&query];
                 if (decoded) {
                     [_delegate terminalCopyStringToPasteboard:decoded];
-                } else if (query && [_delegate terminalShouldSendReport]) {
+                } else if (query && [_delegate terminalShouldSendReport:NO]) {
                     [_delegate terminalReportPasteboard:query];
                 }
             }
@@ -4190,7 +4190,7 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
     } else if ([key isEqualToString:@"SetUserVar"]) {
         [_delegate terminalSetUserVar:value];
     } else if ([key isEqualToString:@"ReportCellSize"]) {
-        if ([_delegate terminalShouldSendReport]) {
+        if ([_delegate terminalShouldSendReport:YES]) {
             double floatScale;
             NSSize size = [_delegate terminalCellSizeInPoints:&floatScale];
             NSString *width = [[NSString stringWithFormat:@"%0.2f", size.width] stringByCompactingFloatingPointString];
@@ -4232,7 +4232,7 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
     } else if ([key isEqualToString:@"Disinter"]) {
         [_delegate terminalDisinterSession];
     } else if ([key isEqualToString:@"ReportVariable"]) {
-        if ([_delegate terminalIsTrusted] && [_delegate terminalShouldSendReport]) {
+        if ([_delegate terminalIsTrusted] && [_delegate terminalShouldSendReport:YES]) {
             NSData *valueAsData = [value dataUsingEncoding:NSISOLatin1StringEncoding];
             if (!valueAsData) {
                 return;
@@ -4268,7 +4268,7 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
     } else if ([key isEqualToString:@"Notification"]) {
         [_delegate terminalPostUserNotification:(NSString *)value rich:YES];
     } else if ([key isEqualToString:@"Capabilities"]) {
-        if ([_delegate terminalIsTrusted] && [_delegate terminalShouldSendReport]) {
+        if ([_delegate terminalIsTrusted] && [_delegate terminalShouldSendReport:YES]) {
             [_delegate terminalSendCapabilitiesReport];
         }
     } else if ([key isEqualToString:@"Env"]) {
@@ -4694,7 +4694,7 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
 }
 
 - (void)executeReportColors:(VT100Token *)token {
-    if (![_delegate terminalShouldSendReport]) {
+    if (![_delegate terminalShouldSendReport:NO]) {
         return;
     }
     [_delegate terminalSendReport:[_output reportSavedColorsUsed:_savedColors.used largestUsed:_savedColors.last]];
@@ -5005,7 +5005,7 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
 - (void)sendGraphicsAttributeReportForToken:(VT100Token *)token
                                      status:(int)status
                                       value:(NSString *)value {
-    if (![_delegate terminalShouldSendReport]) {
+    if (![_delegate terminalShouldSendReport:NO]) {
         return;
     }
     [_delegate terminalSendReport:[_output reportGraphicsAttributeWithItem:token.csi->p[0]
@@ -5035,7 +5035,7 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
 }
 
 - (void)sendDECCIR {
-    if ([_delegate terminalShouldSendReport]) {
+    if ([_delegate terminalShouldSendReport:NO]) {
         const int width = [_delegate terminalSizeInCells].width;
         const int x = _delegate.terminalCursorX;
         const BOOL lineDrawingMode = [_delegate terminalLineDrawingFlagForCharset:self.charset];
@@ -5054,7 +5054,7 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
 }
 
 - (void)sendDECTABSR {
-    if ([_delegate terminalShouldSendReport]) {
+    if ([_delegate terminalShouldSendReport:NO]) {
         [_delegate terminalSendReport:[self.output reportTabStops:[_delegate terminalTabStops]]];
     }
 }

@@ -15220,9 +15220,6 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenReportVariableNamed:(NSString *)name {
-    if (self.isTmuxClient) {
-        return;
-    }
     NSString *value = nil;
     if ([self.naggingController permissionToReportVariableNamed:name]) {
         value = [self stringValueOfVariable:name];
