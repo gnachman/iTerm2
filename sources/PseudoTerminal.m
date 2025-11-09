@@ -1812,27 +1812,6 @@ ITERM_WEAKLY_REFERENCEABLE
     assert(NO);
 }
 
-- (CGFloat)ptyWindowTitleBarHeight {
-    // On macOS 26+, use normal titlebar height for proper button highlighting.
-    // Adjust height based on tab style and hotbox state to position buttons correctly.
-    CGFloat baseHeight = 28;  // Standard titlebar height
-
-    // Check tab style to determine vertical offset
-    iTermPreferencesTabStyle tabStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-    CGFloat styleOffset = 0;
-    if (tabStyle == TAB_STYLE_MINIMAL) {
-        styleOffset = 7;
-    }
-
-    // If hotbox is enabled, move buttons down an additional 5 points
-    CGFloat hotboxOffset = 0;
-    if ([self enableStoplightHotbox]) {
-        hotboxOffset = 4;
-    }
-
-    return baseHeight + styleOffset + hotboxOffset;
-}
-
 - (void)ptyWindowDidMakeKeyAndOrderFront:(id<PTYWindow>)window {
     DLog(@"%@", self);
     [[self currentTab] recheckBlur];
