@@ -129,7 +129,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         if orientation == .horizontalOrientation {
             return Self.horizontalTabBarHeight
         } else {
-            return 26.0
+            return max(26.0, iTermAdvancedSettingsModel.defaultTabBarHeight())
         }
     }
 
