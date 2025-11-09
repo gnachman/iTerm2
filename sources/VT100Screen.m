@@ -422,6 +422,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 // theIndex = 0 for first line in history; for sufficiently large values, it pulls from the current
 // grid.
+// `buffer` must be width+1 cells large. The extra one holds the continuation mark.
 - (const screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer {
     return [_state getLineAtIndex:theIndex withBuffer:buffer];
 }

@@ -716,6 +716,7 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
                           width:self.currentGrid.size.width];
 }
 
+// `buffer` must be width+1 cells large. The extra one holds the continuation mark.
 - (const screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t *)buffer {
     return [self getLineAtIndex:theIndex
                     destination:[NSMutableData dataWithBytesNoCopy:buffer
@@ -724,6 +725,7 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
                           width:self.currentGrid.size.width];
 }
 
+// `dataBuffer` must be width+1 cells large. The extra one holds the continuation mark.
 - (const screen_char_t *)getLineAtIndex:(int)theIndex
                             destination:(NSMutableData *)dataBuffer
                                   width:(int)width {

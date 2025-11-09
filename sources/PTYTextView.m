@@ -2471,7 +2471,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     if (!_marginColorTwiceHeightBuffer) {
         _marginColorTwiceHeightBuffer = [[NSMutableData alloc] init];
     }
-    _marginColorWidthBuffer.length = sizeof(screen_char_t) * width;
+    _marginColorWidthBuffer.length = sizeof(screen_char_t) * (width + 1);
     _marginColorTwiceHeightBuffer.length = sizeof(screen_char_t) * height * 2;
 
     // Collect the colors of the leftmost and rightmost cells on each row into values buffer.
