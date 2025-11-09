@@ -2186,10 +2186,32 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
 
 - (NSString *)view:(NSView *)view stringForToolTip:(NSToolTipTag)tag point:(NSPoint)point userData:(void *)userData
 {
+    // Schedule updating the tooltip window's appearance after it's created
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self updateTooltipAppearance];
+    });
+
     if ([[self delegate] respondsToSelector:@selector(tabView:toolTipForTabViewItem:)]) {
         return [[self delegate] tabView:[self tabView] toolTipForTabViewItem:[[self cellForPoint:point cellFrame:nil] representedObject]];
     }
     return @"";
+}
+
+- (void)updateTooltipAppearance {
+    NSAppearance *desiredAppearance = _style.accessoryAppearance;
+    if (!desiredAppearance) {
+        return;
+    }
+
+    // Tooltips just use the system light/dark mode, not that of the view that created them.
+    // Since you generally only have one tooltip at a time, go find the one we assume is ours and
+    // set its appearance properly.
+    for (NSWindow *window in [NSApp windows]) {
+        if ([[window className] isEqualToString:@"NSToolTipPanel"]) {
+            window.appearance = desiredAppearance;
+            break;
+        }
+    }
 }
 
 
