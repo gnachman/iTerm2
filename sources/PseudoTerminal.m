@@ -1820,7 +1820,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // Check tab style to determine vertical offset
     iTermPreferencesTabStyle tabStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     CGFloat styleOffset = 0;
-    if (tabStyle == TAB_STYLE_MINIMAL && [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
+    if (tabStyle == TAB_STYLE_MINIMAL) {
         styleOffset = 7;
     }
 
