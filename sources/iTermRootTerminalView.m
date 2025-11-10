@@ -533,7 +533,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     }
     [_windowNumberLabel sizeToFit];
     const NSRect standardButtonsFrame = [self frameForStandardWindowButtons];
-    const CGFloat tabBarHeight = _tabBarControl.height;
+    const CGFloat tabBarHeight = [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab ? 26.0 : _tabBarControl.height;
     const CGFloat windowNumberHeight = _windowNumberLabel.frame.size.height;
     const CGFloat baselineOffset = -_windowNumberLabel.font.descender;
     const CGFloat capHeight = _windowNumberLabel.font.capHeight;
