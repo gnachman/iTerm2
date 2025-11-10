@@ -1662,6 +1662,7 @@ CA
             <connections>
                 <outlet property="_ambiguousIsDoubleWidth" destination="5126" id="Eee-f8-fvr"/>
                 <outlet property="_animateMovement" destination="JXG-G1-APa" id="RAy-kz-OJc"/>
+                <outlet property="_animateMovementOnlyInInteractiveApps" destination="RBx-qn-HNB" id="wMl-Ad-iUw"/>
                 <outlet property="_asciiAntiAliased" destination="4782" id="P5t-r0-fdU"/>
                 <outlet property="_asciiFontPicker" destination="yZc-ct-5Wq" id="NZc-f0-T8A"/>
                 <outlet property="_asciiLigatures" destination="mlk-a6-xcL" id="FMp-la-RCY"/>
@@ -3171,7 +3172,7 @@ CA
             <point key="canvasLocation" x="2346" y="840"/>
         </customView>
         <customView id="G2G-W6-kWa" userLabel="Prefs - Profiles - Text" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="694" height="605"/>
+            <rect key="frame" x="0.0" y="0.0" width="694" height="635"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Dmd-F8-KRK" customClass="iTermTerminalModeEnclosure">
@@ -3327,7 +3328,7 @@ CA
                     </subviews>
                 </customView>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0rW-sK-lVO" customClass="iTermTerminalModeEnclosure">
-                    <rect key="frame" x="15" y="238" width="414" height="347"/>
+                    <rect key="frame" x="15" y="240" width="414" height="375"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8oY-ax-IVW">
@@ -3349,7 +3350,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <matrix verticalHuggingPriority="750" fixedFrame="YES" allowsEmptySelection="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5017">
-                            <rect key="frame" x="112" y="329" width="131" height="18"/>
+                            <rect key="frame" x="112" y="357" width="131" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                             <size key="cellSize" width="41" height="18"/>
@@ -3396,7 +3397,7 @@ CA
                             </connections>
                         </button>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4772">
-                            <rect key="frame" x="-2" y="330" width="106" height="16"/>
+                            <rect key="frame" x="-2" y="358" width="106" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Cursor:" id="4835">
                                 <font key="font" metaFont="system"/>
@@ -3414,7 +3415,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="JXG-G1-APa">
-                            <rect key="frame" x="113" y="260" width="143" height="18"/>
+                            <rect key="frame" x="113" y="288" width="143" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <string key="toolTip">When enabled, large cursor movements get an animation to help your eye follow the cursor. They are enabled only in interactive application (i.e., in alternate screen mode).</string>
                             <buttonCell key="cell" type="check" title="Animate movement" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="a5M-2m-nch">
@@ -3424,6 +3425,19 @@ CA
                             <connections>
                                 <action selector="settingChanged:" target="lhd-u6-xr5" id="npT-hf-bK8"/>
                                 <outlet property="nextKeyView" destination="4782" id="Ddq-1S-9QC"/>
+                            </connections>
+                        </button>
+                        <button toolTip="When disabled, cursor animation only occurs in alternate screen mode. When enabled, cursor movements are always animated." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RBx-qn-HNB">
+                            <rect key="frame" x="133" y="264" width="196" height="18"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="check" title="…but only in interactive apps" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="eWf-vs-e5c">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <accessibility description="Animate cursor only in interactive apps"/>
+                            <connections>
+                                <action selector="settingChanged:" target="lhd-u6-xr5" id="RmH-vx-odA"/>
+                                <outlet property="nextKeyView" destination="4782" id="OBl-Xy-D0G"/>
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5zv-42-e9U">
@@ -3473,7 +3487,7 @@ CA
                             </connections>
                         </button>
                         <button toolTip="Underline and vertical bar cursors may have a shadow to improve visibliity." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="eid-kp-DfH">
-                            <rect key="frame" x="113" y="304" width="75" height="18"/>
+                            <rect key="frame" x="113" y="332" width="75" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Shadow" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="3s8-2Y-ENx">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -3485,7 +3499,7 @@ CA
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4773">
-                            <rect key="frame" x="113" y="282" width="56" height="18"/>
+                            <rect key="frame" x="113" y="310" width="56" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Blink" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4834">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -3575,7 +3589,7 @@ CA
                 </customView>
             </subviews>
             <accessibility identifier="prefsProfilesText"/>
-            <point key="canvasLocation" x="560" y="1480.5"/>
+            <point key="canvasLocation" x="560" y="1495.5"/>
         </customView>
         <customView id="AAg-E0-J0n" userLabel="Prefs - Profiles - Web" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="577" height="332"/>
@@ -4580,6 +4594,7 @@ CA
                                 <font key="font" metaFont="system"/>
                                 <accessibility description="A session may cause the window to resize even if it is in an unselected tab or split pane"/>
                             </buttonCell>
+                            <accessibility description="A session may cause the window to resize even if it is in an unselected tab/pane"/>
                             <connections>
                                 <action selector="settingChanged:" target="gMD-DK-gev" id="Kq4-5G-JFU"/>
                                 <outlet property="nextKeyView" destination="4978" id="0xY-1H-p8P"/>

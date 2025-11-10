@@ -39,6 +39,7 @@
     IBOutlet NSButton *_shadow;
     IBOutlet NSButton *_hideOnLostFocus;
     IBOutlet NSButton *_animateMovement;
+    IBOutlet NSButton *_animateMovementOnlyInInteractiveApps;
     IBOutlet NSButton *_useItalicFont;
     IBOutlet NSButton *_ambiguousIsDoubleWidth;
     IBOutlet NSPopUpButton *_normalization;
@@ -138,6 +139,14 @@
                     key:KEY_ANIMATE_MOVEMENT
             displayName:nil
                    type:kPreferenceInfoTypeCheckbox];
+    info = [self defineControl:_animateMovementOnlyInInteractiveApps
+                           key:KEY_ANIMATE_MOVEMENT_ONLY_IN_INTERACTIVE_APPS
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.shouldBeEnabled = ^BOOL{
+        return [weakSelf boolForKey:KEY_ANIMATE_MOVEMENT];
+    };
+    [info addShouldBeEnabledDependencyOnSetting:KEY_ANIMATE_MOVEMENT controller:self];
 
     [self defineControl:_useItalicFont
                     key:KEY_USE_ITALIC_FONT

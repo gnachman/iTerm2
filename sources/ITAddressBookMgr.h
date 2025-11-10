@@ -158,6 +158,7 @@
 #define KEY_CURSOR_SHADOW          @"Cursor Shadow"
 #define KEY_CURSOR_HIDDEN_WITHOUT_FOCUS  @"Cursor Hidden When Unfocused"
 #define KEY_ANIMATE_MOVEMENT       @"Animate Movement"
+#define KEY_ANIMATE_MOVEMENT_ONLY_IN_INTERACTIVE_APPS     @"Animate Movement Only in Interactive Apps"
 #define KEY_BLINK_ALLOWED          @"Blink Allowed"
 #define KEY_CURSOR_TYPE            @"Cursor Type"
 #define KEY_DISABLE_BOLD           @"Disable Bold"  // DEPRECATED

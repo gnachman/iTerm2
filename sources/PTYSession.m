@@ -5128,6 +5128,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_textview setCursorShadow:[iTermProfilePreferences boolForKey:KEY_CURSOR_SHADOW inProfile:aDict]];
     _textview.hideCursorWhenUnfocused = [iTermProfilePreferences boolForKey:KEY_CURSOR_HIDDEN_WITHOUT_FOCUS inProfile:aDict];
     _textview.animateMovement = [iTermProfilePreferences boolForKey:KEY_ANIMATE_MOVEMENT inProfile:aDict];
+    _textview.animateMovementOnlyInInteractiveApps = [iTermProfilePreferences boolForKey:KEY_ANIMATE_MOVEMENT_ONLY_IN_INTERACTIVE_APPS
+                                                                               inProfile:aDict];
     [_textview setBlinkingCursor:[iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:aDict]];
     [_textview setCursorType:_cursorTypeOverride ? _cursorTypeOverride.integerValue : [iTermProfilePreferences intForKey:KEY_CURSOR_TYPE inProfile:aDict]];
 
@@ -18231,9 +18233,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)textViewSmearCursorFrom:(NSRect)from to:(NSRect)to color:(NSColor *)color {
-    if (_screen.terminalSoftAlternateScreenMode) {
-        [_view smearCursorFrom:from to:to color:color];
-    }
+    [_view smearCursorFrom:from to:to color:color];
 }
 
 - (void)textViewMarginColorDidChange {

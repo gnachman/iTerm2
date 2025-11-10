@@ -1387,6 +1387,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         DLog(@"Movement animation is off");
         return;
     }
+    if (self.animateMovementOnlyInInteractiveApps && !self.delegate.textViewInInteractiveApplication) {
+        DLog(@"Not in interactive app");
+        return;
+    }
     if (!drawingHelper.cursorIsSolidRectangle) {
         DLog(@"Cursor not a solid rectangle");
         _previousCursorFrame = NSZeroRect;
