@@ -12,6 +12,13 @@
 - (void)setDocumentEdited:(BOOL)setDocumentEdited;
 @end
 
+// Private API for macOS 26.0+
+@interface _NSThemeWidget : NSObject
+- (void)mouseEnteredOrExited;
+- (void)startMonitoringFlagsChanged;
+- (void)stopMonitoringFlagsChanged;
+@end
+
 @implementation iTermStandardWindowButtonsView {
     BOOL _mouseInGroup;
     BOOL _optionModifier;
@@ -95,11 +102,31 @@
 - (void)mouseEntered:(NSEvent *)event {
     [super mouseEntered:event];
     [self setShowIcons:YES];
+    if (@available(macOS 26, *)) {
+        for (NSView *subview in self.subviews) {
+            if ([subview respondsToSelector:@selector(mouseEnteredOrExited)]) {
+                [(_NSThemeWidget *)subview mouseEnteredOrExited];
+            }
+            if ([subview respondsToSelector:@selector(startMonitoringFlagsChanged)]) {
+                [(_NSThemeWidget *)subview startMonitoringFlagsChanged];
+            }
+        }
+    }
 }
 
 - (void)mouseExited:(NSEvent *)event {
     [super mouseExited:event];
     [self setShowIcons:NO];
+    if (@available(macOS 26, *)) {
+        for (NSView *subview in self.subviews) {
+            if ([subview respondsToSelector:@selector(mouseEnteredOrExited)]) {
+                [(_NSThemeWidget *)subview mouseEnteredOrExited];
+            }
+            if ([subview respondsToSelector:@selector(stopMonitoringFlagsChanged)]) {
+                [(_NSThemeWidget *)subview stopMonitoringFlagsChanged];
+            }
+       }
+    }
 }
 
 - (void)setShowIcons:(BOOL)mouseInGroup {
