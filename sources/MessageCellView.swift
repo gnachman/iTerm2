@@ -66,22 +66,22 @@ class MessageCellView: NSView {
     override var menu: NSMenu? {
         get {
             DLog("menu \(self)")
-            guard editable else {
-                DLog("Not editable so ignore right click")
-                return nil
-            }
             let menu = NSMenu(title: "Context Menu")
-            let editItem = NSMenuItem(title: "Edit", action: #selector(editMenuItemClicked(_:)), keyEquivalent: "")
-            editItem.target = self
-            menu.addItem(editItem)
+            if editable {
+                let editItem = NSMenuItem(title: "Edit", action: #selector(editMenuItemClicked(_:)), keyEquivalent: "")
+                editItem.target = self
+                menu.addItem(editItem)
+            }
 
             let copyItem = NSMenuItem(title: "Copy", action: #selector(copyMenuItemClicked(_:)), keyEquivalent: "")
             copyItem.target = self
             menu.addItem(copyItem)
 
-            let forkItem = NSMenuItem(title: "Fork", action: #selector(forkMenuItemClicked(_:)), keyEquivalent: "")
-            forkItem.target = self
-            menu.addItem(forkItem)
+            if editable {
+                let forkItem = NSMenuItem(title: "Fork", action: #selector(forkMenuItemClicked(_:)), keyEquivalent: "")
+                forkItem.target = self
+                menu.addItem(forkItem)
+            }
 
             return menu
         }
