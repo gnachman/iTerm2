@@ -1852,9 +1852,6 @@ DQ
                         </items>
                     </menu>
                 </menuItem>
-                <menuItem title="Item" id="Prz-DV-2Me">
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                </menuItem>
                 <menuItem title="Help" id="103">
                     <menu key="submenu" title="Help" id="106">
                         <items>

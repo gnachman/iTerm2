@@ -37,8 +37,8 @@ Shell > New Window                                                              
 Shell > New Window with Current Profile                                                 `New Window with Current Profile`                                             
 Shell > New Tab                                                                         `New Tab`                                                                     
 Shell > New Tab with Current Profile                                                    `New Tab with Current Profile`                                                
-Shell > Duplicate Tab                                                                   `Duplicate Tab`                                                               
 Shell > Duplicate Window                                                                `Duplicate Window`                                                            
+Shell > Duplicate Tab                                                                   `Duplicate Tab`                                                               
 Shell > Split Horizontally with Current Profile                                         `Split Horizontally with Current Profile`                                     
 Shell > Split Vertically with Current Profile                                           `Split Vertically with Current Profile`                                       
 Shell > Split Horizontally…                                                             `Split Horizontally…`                                                         
@@ -61,6 +61,7 @@ Shell > tmux > New Tmux Tab                                                     
 Shell > tmux > Pause Pane                                                               `trmux.Pause Pane`                                                            
 Shell > tmux > Dashboard                                                                `tmux.Dashboard`                                                              
 Shell > ssh > Disconnect                                                                `ssh.Disconnect`                                                              
+Shell > ssh > Download Files…                                                           `ssh.Download Files`                                                          
 Shell > Page Setup...                                                                   `Page Setup...`                                                               
 Shell > Print > Screen                                                                  `Print.Screen`                                                                
 Shell > Print > Selection                                                               `Print.Selection`                                                             
@@ -82,11 +83,15 @@ Edit > Paste Special > Paste Slowly Faster                                      
 Edit > Paste Special > Paste Slower                                                     `Paste Special.Paste Slower`                                                  
 Edit > Paste Special > Paste Slowly Slower                                              `Paste Special.Paste Slowly Slower`                                           
 Edit > Paste Special > Warn Before Multi-Line Paste                                     `Paste Special.Warn Before Multi-Line Paste`                                  
-Edit > Paste Special > Prompt to Convert Tabs to Spaces when Pasting                    `Paste Special.Prompt to Convert Tabs to Spaces when Pasting`                 
 Edit > Paste Special > Limit Multi-Line Paste Warning to Shell Prompt                   `Paste Special.Limit Multi-Line Paste Warning to Shell Prompt`                
+Edit > Paste Special > Prompt to Convert Tabs to Spaces when Pasting                    `Paste Special.Prompt to Convert Tabs to Spaces when Pasting`                 
 Edit > Paste Special > Warn Before Pasting One Line Ending in a Newline at Shell Prompt `Paste Special.Warn Before Pasting One Line Ending in a Newline at Shell Prompt`
-Edit > Render Selection                                                                 `Render Selection Natively`                                                   
+Edit > Replace Selection > Render Selection Natively                                    `Render Selection Natively`                                                   
+Edit > Replace Selection > Replace with Pretty-Printed JSON                             `Replace Selection.Replace with Pretty-Printed JSON`                          
+Edit > Replace Selection > Replace with Base 64-Encoded Value                           `Replace Selection.Replace with Base 64-Encoded Value`                        
+Edit > Replace Selection > Replace with Base 64-Decoded Value                           `Replace Selection.Replace with Base 64-Decoded Value`                        
 Edit > Engage Artificial Intelligence                                                   `Engage Artificial Intelligence`                                              
+Edit > Explain Output with AI                                                           `Explain Output with AI`                                                      
 Edit > Open Selection                                                                   `Open Selection`                                                              
 Edit > Jump to Selection                                                                `Find.Jump to Selection`                                                      
 Edit > Select All                                                                       `Select All`                                                                  
@@ -155,6 +160,7 @@ Session > Open Autocomplete…                                                  
 Session > Open Command History…                                                         `Open Command History…`                                                       
 Session > Open Recent Directories…                                                      `Open Recent Directories…`                                                    
 Session > Open Paste History…                                                           `Open Paste History…`                                                         
+Session > Open AI Chat…                                                                 `Open AI Chat`                                                                
 Session > Triggers > Add Trigger…                                                       `Add Trigger`                                                                 
 Session > Triggers > Edit Triggers                                                      `Edit Triggers`                                                               
 Session > Triggers > Enable Triggers in Interactive Apps                                `Enable Triggers in Interactive Apps`                                         
@@ -210,8 +216,24 @@ Window > Arrangements > Save Window Arrangement                                 
 Window > Arrangements > Save Current Window as Arrangement                              `Save Current Window as Arrangement`                                          
 Window > Arrangements > Load Arrangement from File…                                     `Load Arrangement from File…`                                                 
 Window > Arrangements > Change Profile in Arrangement…                                  `Change Profile in Arrangement…`                                              
-Window > Edit Tab Title                                                                 `Edit Tab Title`                                                              
 Window > Edit Window Title                                                              `Edit Window Title`                                                           
+Window > Tab > Edit Tab Title                                                           `Edit Tab Title`                                                              
+Window > Tab > Select Tab > Select Next Tab                                             `Select Next Tab`                                                             
+Window > Tab > Select Tab > Select Previous Tab                                         `Select Previous Tab`                                                         
+Window > Tab > Move Tab > Move Tab to New Window                                        `Move Tab to New Window`                                                      
+Window > Tab > Move Tab > Move Tab Left                                                 `Move Tab Left`                                                               
+Window > Tab > Move Tab > Move Tab Right                                                `Move Tab Right`                                                              
+Window > Split Pane > Select Split Pane > Select Pane Above                             `Select Split Pane.Select Pane Above`                                         
+Window > Split Pane > Select Split Pane > Select Pane Below                             `Select Split Pane.Select Pane Below`                                         
+Window > Split Pane > Select Split Pane > Select Pane Left                              `Select Split Pane.Select Pane Left`                                          
+Window > Split Pane > Select Split Pane > Select Pane Right                             `Select Split Pane.Select Pane Right`                                         
+Window > Split Pane > Select Split Pane > Next Pane                                     `Select Split Pane.Next Pane`                                                 
+Window > Split Pane > Select Split Pane > Previous Pane                                 `Select Split Pane.Previous Pane`                                             
+Window > Split Pane > Resize Split Pane > Move Divider Up                               `Resize Split Pane.Move Divider Up`                                           
+Window > Split Pane > Resize Split Pane > Move Divider Down                             `Resize Split Pane.Move Divider Down`                                         
+Window > Split Pane > Resize Split Pane > Move Divider Left                             `Resize Split Pane.Move Divider Left`                                         
+Window > Split Pane > Resize Split Pane > Move Divider Right                            `Resize Split Pane.Move Divider Right`                                        
+Window > Split Pane > Lock Split Pane Width                                             `Lock Split Pane Width`                                                       
 Window > Window Style > Normal                                                          `Window Style.Normal`                                                         
 Window > Window Style > Full Screen                                                     `Window Style.Full Screen`                                                    
 Window > Window Style > Maximized                                                       `Window Style.Maximized`                                                      
@@ -227,26 +249,12 @@ Window > Window Style > Right of Screen                                         
 Window > Arrange Windows > Merge All Windows                                            `Merge All Windows`                                                           
 Window > Arrange Windows > Arrange Windows Horizontally                                 `Arrange Windows Horizontally`                                                
 Window > Arrange Windows > Arrange Split Panes Evenly                                   `Arrange Split Panes Evenly`                                                  
-Window > Select Split Pane > Select Pane Above                                          `Select Split Pane.Select Pane Above`                                         
-Window > Select Split Pane > Select Pane Below                                          `Select Split Pane.Select Pane Below`                                         
-Window > Select Split Pane > Select Pane Left                                           `Select Split Pane.Select Pane Left`                                          
-Window > Select Split Pane > Select Pane Right                                          `Select Split Pane.Select Pane Right`                                         
-Window > Select Split Pane > Next Pane                                                  `Select Split Pane.Next Pane`                                                 
-Window > Select Split Pane > Previous Pane                                              `Select Split Pane.Previous Pane`                                             
-Window > Resize Split Pane > Move Divider Up                                            `Resize Split Pane.Move Divider Up`                                           
-Window > Resize Split Pane > Move Divider Down                                          `Resize Split Pane.Move Divider Down`                                         
-Window > Resize Split Pane > Move Divider Left                                          `Resize Split Pane.Move Divider Left`                                         
-Window > Resize Split Pane > Move Divider Right                                         `Resize Split Pane.Move Divider Right`                                        
-Window > Lock Split Pane Width                                                          `Lock Split Pane Width`                                                       
 Window > Resize Window > Decrease Height                                                `Resize Window.Decrease Height`                                               
 Window > Resize Window > Increase Height                                                `Resize Window.Increase Height`                                               
 Window > Resize Window > Decrease Width                                                 `Resize Window.Decrease Width`                                                
 Window > Resize Window > Increase Width                                                 `Resize Window.Increase Width`                                                
-Window > Select Next Tab                                                                `Select Next Tab`                                                             
-Window > Select Previous Tab                                                            `Select Previous Tab`                                                         
-Window > Move Tab > Move Tab Left                                                       `Move Tab Left`                                                               
-Window > Move Tab > Move Tab Right                                                      `Move Tab Right`                                                              
 Window > Password Manager                                                               `Password Manager`                                                            
+Window > AI Chats                                                                       `AI Chats`                                                                    
 Window > Pin Hotkey Window                                                              `Pin Hotkey Window`                                                           
 Window > Bring All To Front                                                             `Bring All To Front`                                                          
 Help > iTerm2 Help                                                                      `iTerm2 Help`                                                                 
