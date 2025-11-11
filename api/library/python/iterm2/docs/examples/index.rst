@@ -168,6 +168,8 @@ Here are a collection of working scripts for you to crib from. While they are ca
 
 :doc:`create_window` — Demonstrates custom control sequences.
 
+:doc:`ccs` — Demonstrates custom control sequences that identify the session that received the sequence.
+
 :doc:`oneshot` — Demonstrates registering a function and showing a modal alert.
 
 ----
