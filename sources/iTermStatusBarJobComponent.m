@@ -83,7 +83,21 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (nullable NSArray<NSString *> *)stringVariants {
-    return _cached ?: @[ @"" ];
+    if (_cached == nil) {
+        // Don't show a placeholder prior to the initial value.
+        return @[ @"" ];
+    }
+    if ([_cached anyWithBlock:^BOOL(NSString *string) {
+        return string.length > 0;
+    }]) {
+        DLog(@"Return valid cache: %@", _cached);
+        return _cached;
+    }
+    // Show a placeholder to avoid the component being hidden. In issue 12514 we see that this
+    // could happen when launching a command when the jobPid is stale but the process cache was
+    // updated.
+    DLog(@"No jobs");
+    return @[ @"…" ];
 }
 
 - (void)updateTextFieldIfNeeded {
@@ -101,10 +115,13 @@ NS_ASSUME_NONNULL_BEGIN
     while (current) {
         if (current.processID == sessionTaskPid && [current.name isEqualToString:@"login"]) {
             // Don't include login.
+            DLog(@"Exclude login");
             break;
         }
+        DLog(@"Add %@", current);
         [chain addObject:current.argv0 ?: current.name ?: @"?"];
         if (current.processID == sessionTaskPid || !sessionTaskPid) {
+            DLog(@"Stop with sessionTaskPid=%@", @(sessionTaskPid));
             break;
         }
         current = current.parent;
@@ -116,6 +133,7 @@ NS_ASSUME_NONNULL_BEGIN
     if ([NSObject object:chain isEqualToObject:_chain]) {
         return;
     }
+    DLog(@"setChain:%@", chain);
     _chain = [chain copy];
     _cached = [self variantsOfChain:chain];
 }
