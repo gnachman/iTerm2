@@ -171,7 +171,7 @@
 }
 
 + (NSString *)shellEscapableCharacters {
-    return @"\\ ()\"&'!$<>;|*?[]#`\t{}";
+    return @"\\ ()\"&'!$<>;|*?[]#`\t{}^+=@~";
 }
 
 - (NSString *)stringWithBackslashEscapedShellCharactersIncludingNewlines:(BOOL)includingNewlines {

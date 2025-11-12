@@ -132,7 +132,7 @@
     while (offset < argmax && argv.count < nargs) {
         if (procargs[offset] == 0) {
             NSString *string = [NSString stringWithUTF8String:start];
-            [argv addObject:[string stringWithEscapedShellCharactersIncludingNewlines:YES] ?: @""];
+            [argv addObject:[self escapedArgument:string] ?: @""];
             start = procargs + offset + 1;
         }
         offset++;
@@ -147,6 +147,61 @@
         argv[0] = [command substringFromIndex:lastSlash.location + 1];
     }
     return argv;
+}
+
++ (NSString *)escapedArgument:(NSString *)arg {
+    if (arg.length == 0) {
+        return @"\"\"";  // Empty string needs to be quoted
+    }
+
+    // Check if the string needs any escaping at all
+    NSCharacterSet *shellSpecialChars = [NSCharacterSet characterSetWithCharactersInString:[NSString shellEscapableCharacters]];
+    NSCharacterSet *controlChars = [NSCharacterSet controlCharacterSet];
+    if ([arg rangeOfCharacterFromSet:shellSpecialChars].location == NSNotFound &&
+        [arg rangeOfCharacterFromSet:controlChars].location == NSNotFound) {
+        // No special characters, return as-is
+        return arg;
+    }
+
+    // Check for characters that are dangerous inside double quotes.
+    // Parens are meaningful for fish.
+    // Also exclude control characters (except tab which we explicitly allow)
+    static NSCharacterSet *doubleQuoteUnsafe;
+    {
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            NSMutableCharacterSet *characterSet = [NSMutableCharacterSet characterSetWithCharactersInString:@"\"$`\\!()"];
+            NSMutableCharacterSet *unsafeControls = [[NSCharacterSet controlCharacterSet] mutableCopy];
+            [unsafeControls removeCharactersInString:@"\t"];  // tab is okay in double quotes
+            [characterSet formUnionWithCharacterSet:unsafeControls];
+            [characterSet addCharactersInRange:NSMakeRange(0, 1)];
+            doubleQuoteUnsafe = characterSet;
+        });
+    }
+    if ([arg rangeOfCharacterFromSet:doubleQuoteUnsafe].location == NSNotFound) {
+        return [NSString stringWithFormat:@"\"%@\"", arg];
+    }
+
+    // Try single quotes if the string doesn't contain problematic characters
+    // While single quotes make everything literal in POSIX shells, we need to be conservative
+    // to ensure proper round-tripping across bash, zsh, fish, and tcsh.
+    static NSCharacterSet *singleQuoteUnsafe;
+    {
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            NSMutableCharacterSet *characterSet = [NSMutableCharacterSet characterSetWithCharactersInString:@"'"];
+            [characterSet formUnionWithCharacterSet:[NSCharacterSet controlCharacterSet]];
+            [characterSet addCharactersInRange:NSMakeRange(0, 1)];
+            singleQuoteUnsafe = characterSet;
+        });
+    }
+    if ([arg rangeOfCharacterFromSet:singleQuoteUnsafe].location == NSNotFound) {
+        return [NSString stringWithFormat:@"'%@'", arg];
+    }
+
+    // Fall back to the comprehensive escaping method which handles all edge cases
+    // and ensures proper round-tripping across different shells
+    return [arg stringWithEscapedShellCharactersIncludingNewlines:YES];
 }
 
 + (NSArray<NSNumber *> *)allPids {
