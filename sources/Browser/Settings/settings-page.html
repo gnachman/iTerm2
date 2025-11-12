@@ -153,6 +153,11 @@
         .extensions-section .section h2::before {
             background: linear-gradient(135deg, #34c759, #5ac8fa);
         }
+
+        /* Link opening section specific styling */
+        .link-opening-section .section h2::before {
+            background: linear-gradient(135deg, #ff9500, #ffcc02);
+        }
         
         /* Extension item styling */
         .extension-box {
@@ -548,6 +553,25 @@
                 </div>
             </div>
         </div>
+
+        <div class="link-opening-section">
+            <div class="section">
+                <h2>Link Opening</h2>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3>Open Links From Terminal</h3>
+                        <p>Choose where links from the terminal should open</p>
+                    </div>
+                    <div class="search-engine-selector">
+                        <select id="linkOpeningSelect" onchange="updateLinkOpeningPreference()">
+                            <option value="ask">Always Ask</option>
+                            <option value="builtin">Built-in Browser</option>
+                            <option value="default">Default Browser</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
         
         <div class="search-section">
             <div class="section">
@@ -856,6 +880,23 @@
             return 'custom';
         }
         
+        // Link opening preference functions
+        function updateLinkOpeningPreference() {
+            const select = document.getElementById('linkOpeningSelect');
+            const selectedValue = select.value;
+
+            window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                action: 'setLinkOpeningPreference',
+                value: selectedValue,
+                sessionSecret: sessionSecret
+            });
+        }
+
+        function updateLinkOpeningUI(settings) {
+            const select = document.getElementById('linkOpeningSelect');
+            select.value = settings.preference || 'ask';
+        }
+
         // Initialize settings on page load
         window.addEventListener('load', function() {
             window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
@@ -878,7 +919,11 @@
                 action: 'getExtensions',
                 sessionSecret: sessionSecret
             });
-            
+            window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                action: 'getLinkOpeningPreference',
+                sessionSecret: sessionSecret
+            });
+
             // Restore extensions section expanded state
             const extensionsSectionExpanded = localStorage.getItem('extensionsSectionExpanded');
             if (extensionsSectionExpanded === 'true') {

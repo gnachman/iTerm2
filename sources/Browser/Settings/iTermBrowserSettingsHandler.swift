@@ -172,6 +172,12 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
                 revealExtensionsDirectory(webView: webView)
             }
 #endif
+        case "setLinkOpeningPreference":
+            if let preference = message["value"] as? String {
+                setLinkOpeningPreference(preference, webView: webView)
+            }
+        case "getLinkOpeningPreference":
+            sendLinkOpeningPreference(to: webView)
         default:
             break
         }
@@ -539,12 +545,71 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         }
     }
     
+    // MARK: - Link Opening Preference
+
+    private func setLinkOpeningPreference(_ preference: String, webView: iTermBrowserWebView) {
+        let identifier = "NoSyncOpenLinksInApp"
+
+        switch preference {
+        case "ask":
+            // Unsilence the warning to allow the prompt to show again
+            iTermWarning.unsilenceIdentifier(identifier)
+            showStatusMessage("Link opening preference set to always ask", type: "success", in: webView)
+
+        case "builtin":
+            // Set permanent selection to "Open in iTerm2" (selection 1)
+            iTermWarning.setIdentifier(identifier, permanentSelection: .kiTermWarningSelection1)
+            showStatusMessage("Links will always open in built-in browser", type: "success", in: webView)
+
+        case "default":
+            // Set permanent selection to "Use Default Browser" (selection 0)
+            iTermWarning.setIdentifier(identifier, permanentSelection: .kiTermWarningSelection0)
+            showStatusMessage("Links will always open in default browser", type: "success", in: webView)
+
+        default:
+            showStatusMessage("Invalid link opening preference", type: "error", in: webView)
+            return
+        }
+
+        DLog("Link opening preference updated to: \(preference)")
+    }
+
+    private func sendLinkOpeningPreference(to webView: iTermBrowserWebView) {
+        let identifier = "NoSyncOpenLinksInApp"
+
+        var preference = "ask"
+        if let savedSelection = iTermWarning.conditionalSavedSelection(forIdentifier: identifier) {
+            switch iTermWarningSelection(rawValue: savedSelection.intValue) {
+            case .kiTermWarningSelection0:
+                preference = "default"
+            case .kiTermWarningSelection1:
+                preference = "builtin"
+            default:
+                preference = "ask"
+            }
+        }
+
+        let settings = ["preference": preference]
+
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: settings)
+            let jsonString = String(data: jsonData, encoding: .utf8)!
+
+            let script = "updateLinkOpeningUI(\(jsonString));"
+            Task { @MainActor in
+                _ = try? await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
+            }
+        } catch {
+            DLog("Failed to encode link opening preference: \(error)")
+        }
+    }
+
     // MARK: - iTermBrowserPageHandler Protocol
-    
+
     func injectJavaScript(into webView: iTermBrowserWebView) {
         injectSettingsJavaScript(into: webView)
     }
-    
+
     func resetState() {
         // Settings handler doesn't maintain state that needs resetting
     }
