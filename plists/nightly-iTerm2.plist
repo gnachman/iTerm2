@@ -259,6 +259,8 @@
                                 <string>http</string>
                                 <string>https</string>
                         </array>
+                        <key>LSHandlerRank</key>
+                        <string>Alternate</string>
                 </dict>
                 <dict>
                         <key>CFBundleURLName</key>
