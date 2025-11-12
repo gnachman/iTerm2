@@ -598,6 +598,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
@@ -636,6 +637,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
@@ -920,6 +922,9 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
             break;
         case WINDOW_TYPE_BOTTOM_PARTIAL:
             style = @"bottom";
+            break;
+        case WINDOW_TYPE_CENTERED:
+            style = @"centered";
             break;
         case WINDOW_TYPE_TOP_PARTIAL:
             style = @"top";
@@ -1320,6 +1325,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
@@ -1349,6 +1355,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
@@ -1402,6 +1409,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
         case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
@@ -1573,6 +1581,7 @@ ITERM_WEAKLY_REFERENCEABLE
             case WINDOW_TYPE_LEFT:
             case WINDOW_TYPE_RIGHT:
             case WINDOW_TYPE_BOTTOM:
+            case WINDOW_TYPE_CENTERED:
             case WINDOW_TYPE_TOP_PARTIAL:
             case WINDOW_TYPE_LEFT_PARTIAL:
             case WINDOW_TYPE_RIGHT_PARTIAL:
@@ -1806,6 +1815,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_CENTERED:
             return PTYWindowTitleBarFlavorOnePoint;
     }
 
@@ -1825,6 +1835,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_LEFT:
@@ -2772,6 +2783,13 @@ ITERM_WEAKLY_REFERENCEABLE
             rect.origin.y = virtualScreenFrame.size.height - rect.size.height;
             break;
 
+        case WINDOW_TYPE_CENTERED:
+            rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
+            rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+            rect.origin.x = virtualScreenFrame.origin.x + (virtualScreenFrame.size.width - rect.size.width) / 2;
+            rect.origin.y = virtualScreenFrame.origin.y + (virtualScreenFrame.size.height - rect.size.height) / 2;
+            break;
+
         case WINDOW_TYPE_BOTTOM_PARTIAL:
             rect.origin.x = xOrigin;
             rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
@@ -3032,6 +3050,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     windowType = WINDOW_TYPE_RIGHT_PARTIAL;
                     break;
 
+                case WINDOW_TYPE_CENTERED:
                 case WINDOW_TYPE_MAXIMIZED:
                 case WINDOW_TYPE_COMPACT_MAXIMIZED:
                 case WINDOW_TYPE_NORMAL:
@@ -3540,6 +3559,7 @@ ITERM_WEAKLY_REFERENCEABLE
             case WINDOW_TYPE_TOP_PARTIAL:
             case WINDOW_TYPE_LEFT_PARTIAL:
             case WINDOW_TYPE_RIGHT_PARTIAL:
+            case WINDOW_TYPE_CENTERED:
                 DLog(@"No sanitization but width adjustment.");
                 // There's a good chance that sanitization would make sense here but I'm afraid of
                 // breaking things I don't understand by changing it.
@@ -4196,6 +4216,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
         case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
@@ -4342,6 +4363,26 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     BOOL edgeSpanning = YES;
     switch (self.windowType) {
+        case WINDOW_TYPE_CENTERED:
+            edgeSpanning = NO;
+            PtyLog(@"Window type = CENTERED. %@", _windowSizeHelper);
+            if (!preserveSize) {
+                // If the screen grew and the window was smaller than the desired number of rows, grow it.
+                frame.size.height = [_windowSizeHelper heightForScreenVisibleSize:screenVisibleFrame.size
+                                                                       lineHeight:[[session textview] lineHeight]
+                                                                 decorationHeight:decorationSize.height
+                                                                         fallback:frame.size.height];
+                frame.size.width = [_windowSizeHelper widthForScreenVisibleSize:screenVisibleFrame.size
+                                                                      charWidth:[[session textview] charWidth]
+                                                                decorationWidth:iTermScrollbarWidth()
+                                                                       fallback:frame.size.width];
+            }
+            frame = iTermRectCenteredHorizontallyWithinRect(frame, screenVisibleFrameIgnoringHiddenDock);
+            frame = iTermRectCenteredVerticallyWithinRect(frame, screenVisibleFrameIgnoringHiddenDock);
+            DLog(@"Canonical frame for centered window is %@", NSStringFromRect(frame));
+            return frame;
+            break;
+
         case WINDOW_TYPE_TOP_PARTIAL:
             edgeSpanning = NO;
             // Fall through
@@ -4636,6 +4677,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_CENTERED:
             return NO;
     }
 }
@@ -4654,6 +4696,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_CENTERED:
             return NO;
 
         case WINDOW_TYPE_NORMAL:
@@ -5390,6 +5433,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
@@ -5494,6 +5538,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
@@ -5582,6 +5627,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
@@ -5610,6 +5656,7 @@ ITERM_WEAKLY_REFERENCEABLE
         switch (self.windowType) {
             case WINDOW_TYPE_LION_FULL_SCREEN:
             case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            case WINDOW_TYPE_CENTERED:
             case WINDOW_TYPE_TOP_PARTIAL:
             case WINDOW_TYPE_LEFT_PARTIAL:
             case WINDOW_TYPE_NO_TITLE_BAR:
@@ -5841,6 +5888,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
         case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
@@ -6144,6 +6192,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
@@ -6494,6 +6543,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
         case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
@@ -6941,6 +6991,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 case WINDOW_TYPE_RIGHT_PARTIAL:
                 case WINDOW_TYPE_LEFT_PARTIAL:
                 case WINDOW_TYPE_TOP_PARTIAL:
+                case WINDOW_TYPE_CENTERED:
                 case WINDOW_TYPE_BOTTOM:
                 case WINDOW_TYPE_RIGHT:
                 case WINDOW_TYPE_LEFT:
@@ -7131,6 +7182,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 case WINDOW_TYPE_LEFT:
                 case WINDOW_TYPE_RIGHT:
                 case WINDOW_TYPE_BOTTOM:
+                case WINDOW_TYPE_CENTERED:
                 case WINDOW_TYPE_TOP_PARTIAL:
                 case WINDOW_TYPE_LEFT_PARTIAL:
                 case WINDOW_TYPE_RIGHT_PARTIAL:
@@ -7158,6 +7210,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 case WINDOW_TYPE_LEFT:
                 case WINDOW_TYPE_RIGHT:
                 case WINDOW_TYPE_BOTTOM:
+                case WINDOW_TYPE_CENTERED:
                 case WINDOW_TYPE_TOP_PARTIAL:
                 case WINDOW_TYPE_LEFT_PARTIAL:
                 case WINDOW_TYPE_RIGHT_PARTIAL:
@@ -7190,6 +7243,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 case WINDOW_TYPE_LEFT:
                 case WINDOW_TYPE_RIGHT:
                 case WINDOW_TYPE_BOTTOM:
+                case WINDOW_TYPE_CENTERED:
                 case WINDOW_TYPE_TOP_PARTIAL:
                 case WINDOW_TYPE_LEFT_PARTIAL:
                 case WINDOW_TYPE_RIGHT_PARTIAL:
@@ -7459,6 +7513,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
@@ -7482,6 +7537,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             break;
 
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
@@ -7830,6 +7886,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         case WINDOW_TYPE_RIGHT:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
         case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
         case WINDOW_TYPE_COMPACT:
@@ -9935,6 +9992,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
         case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
@@ -9963,6 +10021,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
         case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
@@ -10002,6 +10061,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
                     case WINDOW_TYPE_LEFT:
                     case WINDOW_TYPE_RIGHT:
                     case WINDOW_TYPE_BOTTOM:
+                    case WINDOW_TYPE_CENTERED:
                     case WINDOW_TYPE_TOP_PARTIAL:
                     case WINDOW_TYPE_LEFT_PARTIAL:
                     case WINDOW_TYPE_NO_TITLE_BAR:
@@ -10119,6 +10179,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
@@ -12881,6 +12942,7 @@ backgroundColor:(NSColor *)backgroundColor {
             DLog(@"No width adjustment because of window type");
             return rect;
 
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:

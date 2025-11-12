@@ -87,6 +87,7 @@ iTermWindowType iTermUnthemedWindowType(iTermWindowType windowType) {
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
@@ -141,6 +142,7 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_BOTTOM_PARTIAL:

@@ -1714,6 +1714,12 @@ DQ
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="xVP-RA-UyC"/>
+                                        <menuItem title="Centered" tag="17" identifier="Window Style.Centered" id="5lc-iD-Td3">
+                                            <connections>
+                                                <action selector="setWindowStyle:" target="-1" id="C6N-B8-fbV"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="tC0-nP-ChJ"/>
                                         <menuItem title="Full-Width Bottom of Screen" tag="5" identifier="Window Style.FullWidth Bottom of Screen" id="VcO-5C-gYt">
                                             <connections>
                                                 <action selector="setWindowStyle:" target="-1" id="AoZ-YA-7dw"/>

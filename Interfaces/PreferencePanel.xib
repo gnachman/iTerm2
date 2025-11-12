@@ -3833,6 +3833,8 @@ CA
                                         <menuItem isSeparatorItem="YES" id="f9k-Lu-L4T"/>
                                         <menuItem title="No Title Bar" tag="12" id="REd-Hh-bME"/>
                                         <menuItem isSeparatorItem="YES" id="ohs-lg-RYo"/>
+                                        <menuItem title="Centered" tag="17" id="r5u-Qn-ncn"/>
+                                        <menuItem isSeparatorItem="YES" id="DQW-yM-NUd"/>
                                         <menuItem title="Full-Width Bottom of Screen" tag="5" id="4943"/>
                                         <menuItem title="Full-Width Top of Screen" tag="2" id="5591"/>
                                         <menuItem title="Full-Height Left of Screen" tag="6" id="6376"/>

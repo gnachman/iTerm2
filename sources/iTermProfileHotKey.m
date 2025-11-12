@@ -414,6 +414,7 @@ static NSString *const kArrangement = @"Arrangement";
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_CENTERED:
             return [windowController canonicalFrameForScreen:screen];
 
         case WINDOW_TYPE_NORMAL:
@@ -442,6 +443,9 @@ static NSString *const kArrangement = @"Arrangement";
     NSRect rect = self.windowController.window.frame;
     DLog(@"Basing hidden origin on screen frame (IHD) %@", NSStringFromRect(screen.visibleFrameIgnoringHiddenDock));
     switch (self.windowController.windowType) {
+        case WINDOW_TYPE_CENTERED:
+            return rect.origin;
+
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_TOP_PARTIAL:
             return NSMakePoint(rect.origin.x, NSMaxY(screen.visibleFrame));
@@ -614,6 +618,7 @@ static NSString *const kArrangement = @"Arrangement";
             return kAnimationDirectionUp;
             break;
 
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
@@ -677,6 +682,7 @@ static NSString *const kArrangement = @"Arrangement";
 
             case WINDOW_TYPE_NORMAL:
             case WINDOW_TYPE_NO_TITLE_BAR:
+            case WINDOW_TYPE_CENTERED:
             case WINDOW_TYPE_COMPACT:
             case WINDOW_TYPE_MAXIMIZED:
             case WINDOW_TYPE_COMPACT_MAXIMIZED:
@@ -740,6 +746,7 @@ static NSString *const kArrangement = @"Arrangement";
             case WINDOW_TYPE_COMPACT_MAXIMIZED:
             case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
             case WINDOW_TYPE_ACCESSORY:
+            case WINDOW_TYPE_CENTERED:
                 [self fadeOut:causedByKeypress];
                 break;
 
