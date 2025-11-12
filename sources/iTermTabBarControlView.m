@@ -99,6 +99,12 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
 }
 
 - (void)setAlphaValue:(CGFloat)alphaValue animated:(BOOL)animated {
+    DLog(@"setAlphaValue:%@ animated:%@ (was %@) for %@\n%@",
+         @(alphaValue),
+         @(animated),
+         @(self.alphaValue),
+         self,
+         [NSThread callStackSymbols]);
     if ([self.superview conformsToProtocol:@protocol(iTermTabBarControlViewContainer)]) {
         if (animated) {
             self.superview.animator.alphaValue = alphaValue;
@@ -117,6 +123,11 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
 }
 
 - (void)setHidden:(BOOL)hidden {
+    DLog(@"setHidden:%@ (was %@) for %@\n%@",
+         @(hidden),
+         @(self.isHidden),
+         self,
+         [NSThread callStackSymbols]);
     if (!hidden || [self.itermTabBarDelegate iTermTabBarShouldHideBacking]) {
         if ([self.superview conformsToProtocol:@protocol(iTermTabBarControlViewContainer)]) {
             id<iTermTabBarControlViewContainer> container = (id<iTermTabBarControlViewContainer>)self.superview;
@@ -124,6 +135,15 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
         }
     }
     [super setHidden:hidden];
+}
+
+- (void)setFrame:(NSRect)frame {
+    DLog(@"setFrame:%@ (was %@) for %@\n%@",
+         NSStringFromRect(frame),
+         NSStringFromRect(self.frame),
+         self,
+         [NSThread callStackSymbols]);
+    [super setFrame:frame];
 }
 
 - (void)fadeIn {

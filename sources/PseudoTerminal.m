@@ -5888,6 +5888,12 @@ ITERM_WEAKLY_REFERENCEABLE
         const CGFloat tabBarHeight = self.shouldShowPermanentFullScreenTabBar ? self.desiredTabBarHeight : 0;
         viewController.fullScreenMinHeight = tabBarHeight;
         DLog(@"Set tabbar's fullScreenMinHeight to %@", @(tabBarHeight));
+        DLog(@"View controller state: %@", viewController);
+        DLog(@"Actual tab bar control: hidden=%@ alpha=%@ frame=%@",
+             @(_contentView.tabBarControl.isHidden),
+             @(_contentView.tabBarControl.alphaValue),
+             NSStringFromRect(_contentView.tabBarControl.frame));
+        DLog(@"View hierarchy:\n%@", [_contentView.tabBarControl.window.contentView iterm_recursiveDescription]);
 
         frame.size.height = self.desiredTabBarHeight;
         DLog(@"Set frame of tabbar as accessory to %@", NSStringFromRect(frame));
@@ -5903,6 +5909,10 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"tab bar should NOT be accessory, but is on loan.");
         [self returnTabBarToContentView];
     }
+    DLog(@"Tab bar state after updateTabBarControlIsTitlebarAccessory: hidden=%@ alpha=%@ frame=%@",
+         @(_contentView.tabBarControl.isHidden),
+         @(_contentView.tabBarControl.alphaValue),
+         NSStringFromRect(_contentView.tabBarControl.frame));
 }
 
 - (void)returnTabBarToContentView {
@@ -6907,6 +6917,12 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         // May need to enter or exit being a titlebar accessory if its visibility changed.
         [self updateTabBarControlIsTitlebarAccessory];
+        DLog(@"After updateTabBarControlIsTitlebarAccessory with %ld tabs: tabBarControl.hidden=%@ alpha=%@ frame=%@",
+             (long)_contentView.tabView.numberOfTabViewItems,
+             @(_contentView.tabBarControl.isHidden),
+             @(_contentView.tabBarControl.alphaValue),
+             NSStringFromRect(_contentView.tabBarControl.frame));
+        DLog(@"View hierarchy after tab count change:\n%@", [_contentView.tabBarControl.window.contentView iterm_recursiveDescription]);
 
         [self repositionWidgets];
         if (wasDraggedFromAnotherWindow_) {
