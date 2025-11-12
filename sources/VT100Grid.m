@@ -758,7 +758,8 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                                            scrollRight - scrollLeft + 1,
                                            scrollBottom - scrollTop + 1)
                     downBy:-1
-               softBreak:softBreak];
+               softBreak:softBreak
+                fillChar:(screen_char_t){0}];
         // Absolute line numbers referring to positions in the grid are no longer meaningful.
         // Although the grid didn't change everywhere, this is the simplest way to ensure that
         // things like search results get updated.
@@ -1683,7 +1684,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 }
 
 - (void)scrollDown {
-    [self scrollRect:[self scrollRegionRect] downBy:1 softBreak:NO];
+    [self scrollRect:[self scrollRegionRect] downBy:1 softBreak:NO fillChar:(screen_char_t){0}];
 }
 
 - (void)moveContentLeft:(int)n {
@@ -1710,7 +1711,10 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 }
 
 // NOTE: `rect` is *not* inclusive of rect.end.y, unlike most uses of VT100GridRect.
-- (void)scrollRect:(VT100GridRect)rect downBy:(int)distance softBreak:(BOOL)softBreak {
+- (void)scrollRect:(VT100GridRect)rect
+            downBy:(int)distance
+         softBreak:(BOOL)softBreak
+          fillChar:(screen_char_t)fillChar {
     DLog(@"scrollRect:%d,%d %dx%d downBy:%d",
              rect.origin.x, rect.origin.y, rect.size.width, rect.size.height, distance);
     if (distance == 0) {
@@ -1718,7 +1722,6 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     }
     int direction = (distance > 0) ? 1 : -1;
     [self resetDWCFreeCount];
-    screen_char_t defaultChar = [self defaultChar];
 
     if (rect.size.width > 0 && rect.size.height > 0) {
         int rightIndex = rect.origin.x + rect.size.width - 1;
@@ -1742,10 +1745,10 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             const int lineNumber = iteration + rect.origin.y;
             [self erasePossibleDoubleWidthCharInLineNumber:lineNumber
                                           startingAtOffset:rect.origin.x - 1
-                                                  withChar:defaultChar];
+                                                  withChar:fillChar];
             [self erasePossibleDoubleWidthCharInLineNumber:lineNumber
                                           startingAtOffset:rightIndex
-                                                  withChar:defaultChar];
+                                                  withChar:fillChar];
             if (rect.origin.x < 2 && rightIndex < size_.width - 1) {
                 // We could stop half a dwc (or not) but for safety erase the DWC_SKIP
                 [self erasePossibleDWCSkipOnLine:lineNumber];
@@ -1816,14 +1819,14 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             const VT100GridCoord extent = VT100GridCoordMake(rightIndex, MIN(bottomIndex, rect.origin.y + distance - 1));
             [self setCharsFrom:rect.origin
                             to:extent
-                        toChar:defaultChar
+                        toChar:fillChar
             externalAttributes:nil];
         } else {
             const VT100GridCoord origin = VT100GridCoordMake(rect.origin.x, MAX(rect.origin.y, bottomIndex + distance + 1));
             const VT100GridCoord extent = VT100GridCoordMake(rightIndex, bottomIndex);
             [self setCharsFrom:origin
                             to:extent
-                        toChar:defaultChar
+                        toChar:fillChar
             externalAttributes:nil];
         }
 
@@ -2001,7 +2004,8 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     [self resetDWCFreeCount];
     [self scrollRect:VT100GridRectMake(0, 0, width, self.size.height)
               downBy:1
-           softBreak:NO];
+           softBreak:NO
+            fillChar:(screen_char_t){0}];
     screen_char_t *line = [self screenCharsAtLineNumber:0];
     int eol = 0;
     iTermImmutableMetadata metadata;
@@ -2665,19 +2669,16 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 static const screen_char_t *VT100GridDefaultLine(VT100Grid *self, int width) {
     size_t length = (width + 1) * sizeof(screen_char_t);
 
-    screen_char_t *existingCache = (screen_char_t *)[self->cachedDefaultLine_ mutableBytes];
-    screen_char_t currentDefaultChar = self->_defaultChar;
-    if (self->cachedDefaultLine_ &&
-        self->cachedDefaultLine_.length == length &&
-        length > 0 &&
-        !memcmp(existingCache, &currentDefaultChar, sizeof(screen_char_t))) {
+    if (self->cachedDefaultLine_.length == length &&
+        length > 0) {
         return self->cachedDefaultLine_.bytes;
     }
 
     NSMutableData *line = [NSMutableData dataWithLength:length];
 
     self->cachedDefaultLine_ = nil;
-    [self clearLineDataBytes:line.mutableBytes count:line.length / sizeof(screen_char_t)];
+    [self clearLineDataBytes:line.mutableBytes
+                       count:line.length / sizeof(screen_char_t)];
     self->cachedDefaultLine_ = line;
 
     return line.bytes;
@@ -2689,37 +2690,8 @@ static const screen_char_t *VT100GridDefaultLine(VT100Grid *self, int width) {
     return cachedDefaultLine_;
 }
 
-// Not double-width char safe.
-- (void)clearScreenChars:(screen_char_t *)chars inRange:(VT100GridRange)range {
-    if (cachedDefaultLine_) {
-        // Only do this if there is a cached line; otherwise there's an infinite recursion since
-        // -defaultLineOfWidth indirectly calls this method.
-        const screen_char_t *defaultLineChars = VT100GridDefaultLine(self, size_.width);
-        memcpy(chars + range.location,
-               defaultLineChars,
-               sizeof(screen_char_t) * MIN(size_.width, range.length));
-        if (range.length > size_.width) {
-            const screen_char_t c = chars[range.location];
-            for (int i = range.location + MIN(size_.width, range.length);
-                 i < range.location + range.length;
-                 i++) {
-                chars[i] = c;
-            }
-        }
-    } else {
-        // Rarely called slow path.
-        screen_char_t c = _defaultChar;
-        for (int i = range.location; i < range.location + range.length; i++) {
-            chars[i] = c;
-        }
-    }
-}
-
 - (void)clearLineDataBytes:(screen_char_t *)dest count:(NSInteger)length {
-    const screen_char_t c = _defaultChar;
-    for (int i = 0; i < length; i++) {
-        dest[i] = c;
-    }
+    memset(dest, 0, length * sizeof(*dest));
     dest[length].code = EOL_HARD;
 }
 

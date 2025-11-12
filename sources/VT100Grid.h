@@ -321,7 +321,10 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 // Clears the left-over region.
 // If |softBreak| is YES then the soft line break on the top line (when scrolling down) or bottom
 // line (when scrolling up) is preserved. Otherwise it is made hard.
-- (void)scrollRect:(VT100GridRect)rect downBy:(int)direction softBreak:(BOOL)softBreak;
+- (void)scrollRect:(VT100GridRect)rect
+            downBy:(int)direction
+         softBreak:(BOOL)softBreak
+          fillChar:(screen_char_t)fillChar;
 
 // Load contents from a DVR frame.
 - (void)setContentsFromDVRFrame:(const screen_char_t*)s

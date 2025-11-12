@@ -1055,7 +1055,8 @@ typedef struct {
         int height = self.currentGrid.bottomMargin - top + 1;
         [self.currentGrid scrollRect:VT100GridRectMake(left, top, width, height)
                               downBy:n
-                           softBreak:NO];
+                           softBreak:NO
+                            fillChar:(screen_char_t){0}];
         [self clearTriggerLine];
     }
 }
@@ -1086,7 +1087,8 @@ typedef struct {
                                                        self.currentGrid.rightMargin - self.currentGrid.leftMargin + 1,
                                                        self.currentGrid.bottomMargin - self.currentGrid.cursorY + 1)
                               downBy:-n
-                           softBreak:NO];
+                           softBreak:NO
+                            fillChar:(screen_char_t){0}];
         [self clearTriggerLine];
     }
 }
@@ -1143,7 +1145,8 @@ typedef struct {
     } name:@"scroll down"];
     [self.currentGrid scrollRect:[self.currentGrid scrollRegionRect]
                           downBy:MIN(self.currentGrid.size.height, n)
-                       softBreak:NO];
+                       softBreak:NO
+                        fillChar:(screen_char_t){0}];
     [self clearTriggerLine];
 }
 

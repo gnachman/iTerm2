@@ -1121,7 +1121,8 @@ static _Atomic int gPerformingJoinedBlock;
             DLog( @"Scroll down by yet more: %@", @(marginalDelta));
             [self.currentGrid scrollRect:VT100GridRectMake(0, 0, self.width, self.height)
                                   downBy:marginalDelta
-                               softBreak:NO];
+                               softBreak:NO
+                                fillChar:(screen_char_t){0}];
         }
         [self shiftIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
                                                                       0,
@@ -5964,7 +5965,8 @@ launchCoprocessWithCommand:(NSString *)command
                                                        self.width,
                                                        self.height - gridRow)
                               downBy:1
-                           softBreak:NO];
+                           softBreak:NO
+                            fillChar:(screen_char_t){0}];
         range.start.y += 1;
         range.end.y += 1;
     }
