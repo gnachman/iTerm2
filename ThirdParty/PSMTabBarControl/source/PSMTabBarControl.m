@@ -570,8 +570,29 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
     [self update];
 }
 
+- (BOOL)pointIsInEdgeDragArea:(NSPoint)point {
+    const CGFloat edgeDragHeight = self.style.edgeDragHeight;
+    if (edgeDragHeight <= 0) {
+        return NO;
+    }
+    switch (_tabLocation) {
+        case PSMTab_TopTab:
+            return (point.y < edgeDragHeight);
+
+        case PSMTab_BottomTab:
+            return (point.y > self.bounds.size.height - edgeDragHeight);
+
+        case PSMTab_LeftTab:
+            break;
+    }
+    return NO;
+}
+
 - (BOOL)wantsMouseDownAtPoint:(NSPoint)point {
     if ([self orientation] == PSMTabBarHorizontalOrientation) {
+        if ([self pointIsInEdgeDragArea:point]) {
+            return NO;
+        }
         if (point.x < self.insets.left) {
             return NO;
         }
@@ -1591,8 +1612,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
     }
 }
 
-- (void)mouseDragged:(NSEvent *)theEvent
-{
+- (void)mouseDragged:(NSEvent *)theEvent {
     if ([self lastMouseDownEvent] == nil) {
         if (!_addTabButton.allowDrags) {
             [super mouseDragged:theEvent];
