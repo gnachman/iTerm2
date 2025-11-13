@@ -209,6 +209,9 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 - (NSArray *)makeTree {
     NSMutableArray *tagTree = [NSMutableArray array];
     [tagTree addObjectsFromArray:[_filteredSnippets mapWithBlock:^id _Nullable(iTermSnippet *snippet) {
+        if (snippet.tags.count) {
+            return nil;
+        }
         return [iTermSnippetItem itemWithSnippet:snippet];
     }]];
 
@@ -275,10 +278,14 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
                     toTree:container
                    parents:[parents arrayByAddingObject:folderName]];
 
-    id node = [self nodeForFolderNamed:folderName path:[[parents arrayByAddingObject:folderName] componentsJoinedByString:@"/"]];
+    iTermSnippetFolderItem *folderItem = [self itemForFolderNamed:folderName path:[[parents arrayByAddingObject:folderName] componentsJoinedByString:@"/"]];
     if (!child) {
-        [tree addObject:node];
-        iTermSnippetFolderItem *item = node;
+        [tree it_insertObjectInSortedArray:folderItem
+                                   inRange:[self rangeOfFolders:tree]
+                                comparator:^NSComparisonResult(id lhs, id rhs) {
+            return [self compareFolderItem:lhs to:rhs];
+        }];
+        iTermSnippetFolderItem *item = folderItem;
         item.children = container;
     } else {
         iTermSnippetFolderItem *item = child;
@@ -286,7 +293,21 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     }
 }
 
-- (id)nodeForFolderNamed:(NSString *)name path:(NSString *)path {
+- (NSComparisonResult)compareFolderItem:(iTermSnippetFolderItem *)lhs to:(iTermSnippetFolderItem *)rhs {
+    return [[self attributedStringForFolder:lhs].string localizedCaseInsensitiveCompare:[self attributedStringForFolder:rhs].string];
+}
+
+- (NSRange)rangeOfFolders:(NSArray *)items {
+    const NSInteger firstFolderIndex = [items indexOfObjectPassingTest:^BOOL(id element, NSUInteger index, BOOL *stop) {
+        return [element isKindOfClass:[iTermSnippetFolderItem class]];
+    }];
+    if (firstFolderIndex == NSNotFound) {
+        return NSMakeRange(items.count, 0);
+    }
+    return NSMakeRange(firstFolderIndex, items.count - firstFolderIndex);
+}
+
+- (iTermSnippetFolderItem *)itemForFolderNamed:(NSString *)name path:(NSString *)path {
     iTermSnippetFolderItem *item = [[iTermSnippetFolderItem alloc] init];
     item.path = path;
     item.title = name;

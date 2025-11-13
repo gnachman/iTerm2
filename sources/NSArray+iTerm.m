@@ -727,6 +727,19 @@ void iTermFreeeNullTerminatedCStringArray(char **array) {
     return NO;
 }
 
+- (NSUInteger)it_lastIndexOfObjectPassingTest:(BOOL (^ NS_NOESCAPE)(id element, NSUInteger index, BOOL *stop))block {
+    for (NSInteger i = ((NSInteger)self.count) - 1; i >= 0; i--) {
+        BOOL stop = NO;
+        if (block(self[i], i, &stop)) {
+            return i;
+        }
+        if (stop) {
+            return NSNotFound;
+        }
+    }
+    return NSNotFound;
+}
+
 @end
 
 @implementation NSMutableArray (iTerm)
@@ -752,6 +765,16 @@ void iTermFreeeNullTerminatedCStringArray(char **array) {
         }
     }];
     [self removeObjectsAtIndexes:indexes];
+}
+
+- (void)it_insertObjectInSortedArray:(id)object
+                             inRange:(NSRange)range
+                          comparator:(NSComparisonResult (^NS_NOESCAPE)(id lhs, id rhs))comparator {
+    const NSUInteger idx = [self indexOfObject:object
+                                 inSortedRange:range
+                                       options:NSBinarySearchingInsertionIndex
+                               usingComparator:comparator];
+    [self insertObject:object atIndex:idx];
 }
 
 @end

@@ -131,6 +131,7 @@
 - (NSArray *)arrayByStrongifyingWeakBoxes;
 - (NSArray<ObjectType> *)arrayByRemovingNulls;
 - (BOOL)it_containsSubarray:(NSArray<ObjectType> *)subarray;
+- (NSUInteger)it_lastIndexOfObjectPassingTest:(BOOL (^ NS_NOESCAPE)(id element, NSUInteger index, BOOL *stop))block;
 
 @end
 
@@ -139,5 +140,9 @@ void iTermFreeeNullTerminatedCStringArray(char **array);
 @interface NSMutableArray<ObjectType> (iTerm)
 - (void)reverse;
 - (void)removeObjectsPassingTest:(BOOL (^)(ObjectType anObject))block;
+- (void)it_insertObjectInSortedArray:(ObjectType)object
+                             inRange:(NSRange)range
+                          comparator:(NSComparisonResult (^NS_NOESCAPE)(ObjectType lhs, ObjectType rhs))comparator;
+
 @end
 
