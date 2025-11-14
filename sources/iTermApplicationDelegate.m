@@ -1450,7 +1450,7 @@ void TurnOnDebugLoggingAutomatically(void) {
                                             username:nil];
     }
 
-    [self registerMenuTips];
+    //[self registerMenuTips];
 #if DEBUG
     NSMenu *appMenu = [[[[NSApp mainMenu] itemArray] firstObject] submenu];
     [appMenu addItem:[NSMenuItem separatorItem]];
