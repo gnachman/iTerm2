@@ -4744,27 +4744,53 @@ ITERM_WEAKLY_REFERENCEABLE
                 case TAB_STYLE_LIGHT:
                 case TAB_STYLE_LIGHT_HIGH_CONTRAST:
                 case TAB_STYLE_DARK:
-                case TAB_STYLE_DARK_HIGH_CONTRAST:
+                case TAB_STYLE_DARK_HIGH_CONTRAST: {
+                    CGFloat topInset = 0;
+                    CGFloat bottomInset = 8;
+                    const CGFloat leftRightInset = 8;
+
                     if (self.window.titleVisibility == NSWindowTitleHidden) {
                         switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
                             case PSMTab_TopTab:
-                                return NSEdgeInsetsMake(4.5,  // top
-                                                        8,    // left
-                                                        3.5,  // bottom
-                                                        8);   // right
+                                topInset = 4.5;
+                                bottomInset = 3.5;
+                                break;
                             case PSMTab_BottomTab:
-                                return NSEdgeInsetsMake(3.5,  // top
-                                                        8,    // left
-                                                        4.5,  // bottom
-                                                        8);   // right
+                                topInset = 3.5;
+                                bottomInset = 4.5;
+                                break;
                             case PSMTab_LeftTab:
                                 break;
                         }
                     }
-                    return NSEdgeInsetsMake(0,  // top
-                                            8,  // left
-                                            8,  // bottom
-                                            8); // right
+
+                    // Apply vertical adjustments for Tahoe style misalignment
+                    PSMTabPosition tabPosition = [iTermPreferences intForKey:kPreferenceKeyTabPosition];
+
+                    if (lionFullScreen_ && _contentView.tabBarControlOnLoan) {
+                        topInset += 3;
+                    }
+                    if (lionFullScreen_ && tabPosition == PSMTab_BottomTab) {
+                        topInset += 4;
+                        bottomInset -= 4;
+                    }
+                    else if (_fullScreen && (tabPosition == PSMTab_TopTab || tabPosition == PSMTab_BottomTab)) {
+                        if (tabPosition == PSMTab_TopTab) {
+                            topInset += 4;
+                        } else {
+                            // Bottom tabs: increase bottom inset, decrease top inset
+                            bottomInset -= 4;
+                            topInset += 4;
+                        }
+                    }
+                    // Case 3: Outside fullscreen + tabbar on bottom → move down by 3 points
+                    else if (!lionFullScreen_ && !_fullScreen && tabPosition == PSMTab_BottomTab) {
+                        bottomInset -= 3.5;
+                        topInset += 3.5;
+                    }
+
+                    return NSEdgeInsetsMake(topInset, leftRightInset, bottomInset, leftRightInset);
+                }
             }
         }
         return NSEdgeInsetsZero;
