@@ -12,8 +12,10 @@
 #import "NSAppearance+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "PSMTabBarControl.h"
+#import "SFSymbolEnum/SFSymbolEnum.h"
 
 static NSSize kFocusRingInset = { 2, 3 };
 const CGFloat kEdgeWidth = 3;
@@ -31,9 +33,36 @@ const CGFloat kEdgeWidth = 3;
 @end
 
 @implementation iTermMiniSearchFieldCell
+
+- (void)setLoupeColor:(NSColor *)loupeColor {
+    _loupeColor = loupeColor;
+    [self updateSearchButtonImage];
+}
+
+- (void)updateSearchButtonImage {
+    NSButtonCell *searchButton = self.searchButtonCell;
+    if (!searchButton) {
+        return;
+    }
+
+    if (_loupeColor) {
+        NSImage *originalImage = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolMagnifyingglass)
+                                          accessibilityDescription:@"Search"];
+
+        if (originalImage) {
+            NSImage *tintedImage = [originalImage it_imageWithTintColor:_loupeColor];
+            [searchButton setImage:tintedImage];
+        }
+    } else {
+        // Reset to default
+        [searchButton setImage:nil];
+    }
+}
+
 - (BOOL)shouldUseFocusedAppearanceWithControlView:(NSView *)controlView {
     return YES;
 }
+
 @end
 
 @implementation iTermSearchFieldCell {

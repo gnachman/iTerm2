@@ -52,7 +52,13 @@ NSString *iTermStatusBarSearchComponentIsTemporaryKey = @"search: temporary";
 }
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
-    return @[];
+    return @[
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Color"
+                                                          type:iTermStatusBarComponentKnobTypeColor
+                                                   placeholder:nil
+                                                  defaultValue:nil
+                                                           key:iTermStatusBarSharedTextColorKey]
+    ];
 }
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
@@ -105,6 +111,23 @@ NSString *iTermStatusBarSearchComponentIsTemporaryKey = @"search: temporary";
 
 - (CGFloat)statusBarComponentVerticalOffset {
     return 0;
+}
+
+- (void)statusBarComponentUpdateColors {
+    NSColor *color = [self statusBarTextColor] ?: [self.delegate statusBarComponentDefaultTextColor];
+    if (color) {
+        _viewController.tintColor = color;
+    }
+}
+
+- (NSColor * _Nullable)statusBarTextColor {
+    NSDictionary *knobValues = [NSDictionary castFrom:self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues]];
+    NSDictionary *colorDict = [NSDictionary castFrom:knobValues[iTermStatusBarSharedTextColorKey]];
+    NSColor *color = [colorDict colorValue];
+    if (color) {
+        return color;
+    }
+    return [self defaultTextColor] ?: [self.delegate statusBarComponentDefaultTextColor];
 }
 
 @end

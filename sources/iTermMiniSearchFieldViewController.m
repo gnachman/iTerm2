@@ -61,12 +61,19 @@
 
 @implementation iTermMiniSearchFieldViewController {
     IBOutlet NSSearchField *_searchField;
+    IBOutlet iTermMiniSearchFieldCell *_searchFieldCell;
     IBOutlet NSSegmentedControl *_arrowsControl;
     IBOutlet NSButton *_closeButton;
     NSTimer *_animationTimer;
 }
 
 @synthesize driver;
+
+- (void)setTintColor:(NSColor *)tintColor {
+    _tintColor = tintColor;
+    _searchFieldCell.loupeColor = tintColor ?: [NSColor controlTextColor];
+    _searchField.textColor = tintColor ?: [NSColor controlTextColor];
+}
 
 - (void)sizeToFitSize:(NSSize)size {
     NSSize searchFieldSize = [_searchField sizeThatFits:NSMakeSize(size.width, self.view.frame.size.height)];

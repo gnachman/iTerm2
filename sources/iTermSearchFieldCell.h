@@ -35,4 +35,5 @@ typedef struct {
 @end
 
 @interface iTermMiniSearchFieldCell : iTermSearchFieldCell
+@property(nonatomic, strong, nullable) NSColor *loupeColor;
 @end
