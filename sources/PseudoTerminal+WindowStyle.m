@@ -9,6 +9,7 @@
 #import "PseudoTerminal+TouchBar.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermMenuBarObserver.h"
@@ -142,9 +143,8 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     if (self.window.styleMask & NSWindowStyleMaskTitled) {
         DLog(@"Remove title bar accessory view controllers to appease appkit");
         [self returnTabBarToContentView];
-        while (self.window.titlebarAccessoryViewControllers.count > 0) {
-            [self.window removeTitlebarAccessoryViewControllerAtIndex:0];
-        }
+        [_titlebarAccessoryNanny removeAll];
+        [_titlebarAccessoryNanny updateIfNeeded];
     }
 
     const BOOL panel = (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel) || (windowType == WINDOW_TYPE_ACCESSORY);

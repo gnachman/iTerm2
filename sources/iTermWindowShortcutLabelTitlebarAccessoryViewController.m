@@ -7,10 +7,15 @@
 //
 
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
+
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermPreferences.h"
 #import "ITAddressBookMgr.h"
 #import "NSStringITerm.h"
 #import "PSMTabBarControl.h"
+
+@interface iTermWindowShortcutLabelTitlebarAccessoryViewController()<iTermTitleBarAccessoryViewController>
+@end
 
 @implementation iTermWindowShortcutLabelTitlebarAccessoryViewController {
     IBOutlet NSTextField *_label;
@@ -152,6 +157,10 @@
 
 - (void)modifiersDidChange:(NSNotification *)notification {
     [self updateLabel];
+}
+
+- (BOOL)needsFullScreenMinHeight {
+    return NO;
 }
 
 @end

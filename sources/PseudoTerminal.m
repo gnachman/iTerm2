@@ -552,6 +552,9 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                                      screen:(int)screenNumber
                            hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                                     profile:(Profile *)profile {
+    _titlebarAccessoryNanny = [[iTermTitlebarAccessoryNanny alloc] init];
+    _titlebarAccessoryNanny.windowController = self;
+    _titlebarAccessoryNanny.defaultHeight = [self desiredTabBarHeight];
     _automaticallySelectNewTabs = YES;
     _creationTime = [NSDate it_timeSinceBoot];
     const iTermWindowType windowType = iTermThemedWindowType(unsafeWindowType);
@@ -847,8 +850,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     [[self window] setRestorationClass:[PseudoTerminalRestorer class]];
     self.terminalGuid = [NSString stringWithFormat:@"pty-%@", [NSString uuid]];
 
-    if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)] &&
-        [iTermAdvancedSettingsModel useShortcutAccessoryViewController]) {
+    if ([iTermAdvancedSettingsModel useShortcutAccessoryViewController]) {
         _shortcutAccessoryViewController =
             [[iTermWindowShortcutLabelTitlebarAccessoryViewController alloc] initWithNibName:@"iTermWindowShortcutAccessoryView"
                                                                                       bundle:[NSBundle bundleForClass:self.class]];
@@ -1098,6 +1100,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_fullScreenPromise release];
     [_fullScreenEnteredSeal release];
     [_windowSizeHelper release];
+    [_titlebarAccessoryNanny release];
 
     [super dealloc];
 }
@@ -5409,18 +5412,17 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     if (self.shouldHaveShortcutAccessory &&
-        [self.window.titlebarAccessoryViewControllers containsObject:_shortcutAccessoryViewController]) {
+        [_titlebarAccessoryNanny.viewControllers containsObject:_shortcutAccessoryViewController]) {
         DLog(@"Have one and should have one");
         return;
     }
-    if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)] &&
-        [self shouldHaveShortcutAccessory]) {
+    if ([self shouldHaveShortcutAccessory]) {
         DLog(@"Need to add one");
         // Explicitly load the view before adding. Otherwise, for some reason, on WINDOW_TYPE_MAXIMIZED windows,
         // the NSWindow miscalculates the size, and ends up resizing the iTermRootTerminalView incorrectly.
         [_shortcutAccessoryViewController view];
 
-        [self.window addTitlebarAccessoryViewController:_shortcutAccessoryViewController];
+        [_titlebarAccessoryNanny add:_shortcutAccessoryViewController];
         [self updateWindowNumberVisibility:nil];
     }
 }
@@ -5922,19 +5924,29 @@ ITERM_WEAKLY_REFERENCEABLE
     return YES;
 }
 
+//  Commit 2067c5e19 (Nov 2019) - Issue 8257:
+//  "Remove and re-add the tabbar titlebar accessory view when changing its height
+//  from 0 (one tab, hidden, minimal theme) to 38 (two tabs, visible tabbar, minimal
+//  theme) because otherwise the OS gets confused about how high it should be."
+//  This added the remove/re-add logic when the index was already present.
+//
+//  Commit c486f1a8e (Jan 2020) - Issue 8603:
+//  "Fix bug introduced by commit 2067c5e19 that caused the tab bar not to be visible
+//  when revealing the menu bar in native full screen. A gray bar does appear when
+//  switching from regular to minimal theme, but that's a better bug to live with."
+//  This reverted the remove/re-add approach because it broke the tab bar visibility when revealing the
+//  menu bar.
 - (void)updateTabBarControlIsTitlebarAccessory {
     DLog(@"updateTabBarControlIsTitlebarAccessory %@", self);
     if ((self.window.styleMask & NSWindowStyleMaskTitled) == 0) {
         DLog(@"Style mask does not include titled");
         return;
     }
-    const NSInteger index = [self.window.it_titlebarAccessoryViewControllers indexOfObject:_titleBarAccessoryTabBarViewController];
     if ([self tabBarShouldBeAccessory]) {
         DLog(@"tab bar should be accessory");
-        NSRect frame = _titleBarAccessoryTabBarViewController.view.superview.bounds;
+        const NSRect frame = NSMakeRect(0, 0, self.window.frame.size.width, self.desiredTabBarHeight);
         NSTitlebarAccessoryViewController *viewController = [self titleBarAccessoryTabBarViewController];
         const CGFloat tabBarHeight = self.shouldShowPermanentFullScreenTabBar ? self.desiredTabBarHeight : 0;
-        viewController.fullScreenMinHeight = tabBarHeight;
         DLog(@"Set tabbar's fullScreenMinHeight to %@", @(tabBarHeight));
         DLog(@"View controller state: %@", viewController);
         DLog(@"Actual tab bar control: hidden=%@ alpha=%@ frame=%@",
@@ -5943,16 +5955,10 @@ ITERM_WEAKLY_REFERENCEABLE
              NSStringFromRect(_contentView.tabBarControl.frame));
         DLog(@"View hierarchy:\n%@", [_contentView.tabBarControl.window.contentView iterm_recursiveDescription]);
 
-        frame.size.height = self.desiredTabBarHeight;
-        DLog(@"Set frame of tabbar as accessory to %@", NSStringFromRect(frame));
-        viewController.view.frame = frame;
-
-        if (index == NSNotFound) {
-            DLog(@"Call addTitlebarAccessoryViewController for title bar accessory view controller %@ for %@", viewController, self);
-            [self.window addTitlebarAccessoryViewController:viewController];
-        } else {
-            DLog(@"Already have tabbar as a titlebar accessory view controller so not calling addTitlebarAccessoryViewController");
-        }
+        [_titlebarAccessoryNanny add:viewController];
+        [_titlebarAccessoryNanny updateViewController:viewController
+                                     settingMinHeight:tabBarHeight
+                                                frame:frame];
     } else if (_contentView.tabBarControlOnLoan) {
         DLog(@"tab bar should NOT be accessory, but is on loan.");
         [self returnTabBarToContentView];
@@ -5969,14 +5975,15 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"Style mask does not include titled");
         return;
     }
-    const NSInteger index = [self.window.it_titlebarAccessoryViewControllers indexOfObject:_titleBarAccessoryTabBarViewController];
-    if (index == NSNotFound) {
+    if (![_titlebarAccessoryNanny has:_titleBarAccessoryTabBarViewController]) {
         assert(!_contentView.tabBarControlOnLoan);
         return;
     }
     assert(_contentView.tabBarControlOnLoan);
-    
-    [self.window removeTitlebarAccessoryViewControllerAtIndex:index];
+
+    [_titlebarAccessoryNanny remove:_titleBarAccessoryTabBarViewController];
+    [_titlebarAccessoryNanny updateIfNeeded];
+
     [_contentView returnTabBarControlView:(iTermTabBarControlView *)_titleBarAccessoryTabBarViewController.realView];
     [_titleBarAccessoryTabBarViewController release];
     _titleBarAccessoryTabBarViewController = nil;
@@ -5984,14 +5991,17 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)windowWillEnterFullScreen:(NSNotification *)notification {
+    _titlebarAccessoryNanny.enteringFullScreen = YES;
     [self windowWillEnterFullScreenImpl:notification];
 }
 
 - (void)windowDidEnterFullScreen:(NSNotification *)notification {
+    _titlebarAccessoryNanny.enteringFullScreen = NO;
     [self windowDidEnterFullScreenImpl:notification];
 }
 
 - (void)windowDidFailToEnterFullScreen:(NSWindow *)window {
+    _titlebarAccessoryNanny.enteringFullScreen = NO;
     [self windowDidFailToEnterFullScreenImpl:window];
 }
 
@@ -6005,9 +6015,8 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"Style mask does not include titled");
         return;
     }
-    while (self.window.titlebarAccessoryViewControllers.count) {
-        [self.window removeTitlebarAccessoryViewControllerAtIndex:0];
-    }
+    [_titlebarAccessoryNanny removeAll];
+    [_titlebarAccessoryNanny updateIfNeeded];
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification {
@@ -9950,6 +9959,12 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 - (CGFloat)desiredTabBarHeight {
+    const CGFloat value = [self _desiredTabBarHeight];
+    _titlebarAccessoryNanny.defaultHeight = value;
+    return value;
+}
+
+- (CGFloat)_desiredTabBarHeight {
     if ([self shouldHaveTallTabBar]) {
         return [iTermAdvancedSettingsModel compactMinimalTabBarHeight];
     } else {
@@ -10123,6 +10138,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
                 return NO;
             }
         }
+#warning This is a bug. Minimal takes this path for a regular window that became fullscreen but Regular does not.
         // The tab bar is not a titlebar accessory
         return YES;
     }

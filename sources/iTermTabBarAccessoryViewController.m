@@ -6,9 +6,11 @@
 //
 
 #import "iTermTabBarAccessoryViewController.h"
+
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 
-@interface iTermTabBarAccessoryViewController ()
+@interface iTermTabBarAccessoryViewController ()<iTermTitleBarAccessoryViewController>
 @end
 
 @implementation iTermTabBarAccessoryViewController {
@@ -40,6 +42,10 @@
 
 - (__kindof NSView *)realView {
     return _view;
+}
+
+- (BOOL)needsFullScreenMinHeight {
+    return YES;
 }
 
 @end

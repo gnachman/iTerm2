@@ -10,6 +10,7 @@
 
 @class iTermRootTerminalView;
 @class iTermWindowShortcutLabelTitlebarAccessoryViewController;
+@class iTermTitlebarAccessoryNanny;
 
 // Constants for saved window arrangement key names.
 extern NSString *const TERMINAL_ARRANGEMENT_OLD_X_ORIGIN;
@@ -99,6 +100,7 @@ extern NSString *const TERMINAL_ARRANGEMENT_MINIATURIZED;
     BOOL useTransparency_;
 
     BOOL _settingStyleMask;
+    iTermTitlebarAccessoryNanny *_titlebarAccessoryNanny;
 }
 
 @property (nonatomic, retain) NSCustomTouchBarItem *tabsTouchBarItem;

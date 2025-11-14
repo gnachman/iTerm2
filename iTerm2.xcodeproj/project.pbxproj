@@ -2009,6 +2009,7 @@
 		A6644BEE25CDD20800419355 /* iTermVirtualOffset.h in Headers */ = {isa = PBXBuildFile; fileRef = A6644BEC25CDD20800419355 /* iTermVirtualOffset.h */; };
 		A6644BEF25CDD20800419355 /* iTermVirtualOffset.m in Sources */ = {isa = PBXBuildFile; fileRef = A6644BED25CDD20800419355 /* iTermVirtualOffset.m */; };
 		A664AE782C55A6B800A6807A /* iTermModernKeyMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A664AE772C55A6B800A6807A /* iTermModernKeyMapper.swift */; };
+		A664EC392EC6A36800F0F596 /* iTermTitlebarAccessoryNanny.swift in Sources */ = {isa = PBXBuildFile; fileRef = A664EC382EC6A36800F0F596 /* iTermTitlebarAccessoryNanny.swift */; };
 		A66538852D0F90BF004B723B /* NSWorkspace+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57AF1B012BD100B4F135 /* NSWorkspace+iTerm.m */; };
 		A665388B2D10AB10004B723B /* CursorSmearView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A665388A2D10AB0B004B723B /* CursorSmearView.swift */; };
 		A665396C26B71B880049F375 /* iTermIndicatorsHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F721A23D195009B1CB6 /* iTermIndicatorsHelper.m */; };
@@ -7301,6 +7302,7 @@
 		A6644BEC25CDD20800419355 /* iTermVirtualOffset.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermVirtualOffset.h; sourceTree = "<group>"; };
 		A6644BED25CDD20800419355 /* iTermVirtualOffset.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermVirtualOffset.m; sourceTree = "<group>"; };
 		A664AE772C55A6B800A6807A /* iTermModernKeyMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermModernKeyMapper.swift; sourceTree = "<group>"; };
+		A664EC382EC6A36800F0F596 /* iTermTitlebarAccessoryNanny.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermTitlebarAccessoryNanny.swift; sourceTree = "<group>"; };
 		A665388A2D10AB0B004B723B /* CursorSmearView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorSmearView.swift; sourceTree = "<group>"; };
 		A665C1CA243A4DE300F623F0 /* SIGArchiveCommon.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGArchiveCommon.m; path = SignedArchive/SIGArchiveCommon.m; sourceTree = "<group>"; };
 		A665C1CE243A606C00F623F0 /* iTermRequestCookieCommand.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermRequestCookieCommand.h; sourceTree = "<group>"; };
@@ -11803,6 +11805,7 @@
 				A6A5162B2BCDE6C7006F3F09 /* PTYSessionHostState.swift */,
 				A6D7E0752C236D54007D0A37 /* LineBlockMetadataArray.h */,
 				A6D7E0762C236D54007D0A37 /* LineBlockMetadataArray.m */,
+				A664EC382EC6A36800F0F596 /* iTermTitlebarAccessoryNanny.swift */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -19540,6 +19543,7 @@
 				A6631A1D2D6E4DC7006C603B /* MarkdownHelpers.swift in Sources */,
 				A69FF38D2E13014600AFF7A8 /* iTermContextMenuUtilities.m in Sources */,
 				A675856124595D6C00827C25 /* iTermSquash.m in Sources */,
+				A664EC392EC6A36800F0F596 /* iTermTitlebarAccessoryNanny.swift in Sources */,
 				A6B540FB224838A100D3AD14 /* NSColor+PSM.m in Sources */,
 				A6D10E3D27F7C9FA0026DB56 /* ComposerTextView.swift in Sources */,
 				530AB8BD20B3D3D000D2AA08 /* iTermWindowHacks.m in Sources */,
