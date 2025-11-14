@@ -10128,22 +10128,24 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         DLog(@"NO because tabbar not on top");
         return NO;
     }
-    if ([PseudoTerminal windowTypeHasFullSizeContentView:self.savedWindowType]) {
-        DLog(@"YES because saved window type %@ has full size content view", @(self.savedWindowType));
-        if (![iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur] &&
-            !self.lionFullScreen &&
-            !togglingLionFullScreen_) {
-            if (@available(macOS 10.16, *)) {
-                DLog(@"NO because big sur");
-                return NO;
-            }
+
+    if (@available(macOS 13.0, *)) {
+        // macOS 13+: We need to leave an empty area at the top only if the tabbar is NOT
+        // a titlebar accessory (i.e., it's part of the content view instead).
+        const BOOL result = ![self tabBarShouldBeAccessory];
+        DLog(@"macOS 13+: tabBarShouldBeAccessory=%@ so returning %@", @([self tabBarShouldBeAccessory]), @(result));
+        return result;
+    } else {
+        // macOS 12: Preserve old behavior to avoid requiring testing on this deprecated OS.
+        // This had a bug where Minimal and Regular themes behaved differently, but we're
+        // leaving it as-is since macOS 12 support will be dropped eventually.
+        if ([PseudoTerminal windowTypeHasFullSizeContentView:self.savedWindowType]) {
+            DLog(@"macOS 12: YES because saved window type %@ has full size content view", @(self.savedWindowType));
+            return YES;
         }
-#warning This is a bug. Minimal takes this path for a regular window that became fullscreen but Regular does not.
-        // The tab bar is not a titlebar accessory
-        return YES;
+        DLog(@"macOS 12: NO because saved window type %@ does not have full size content view", @(self.savedWindowType));
+        return NO;
     }
-    DLog(@"NO because saved window type %@ does not have full size content view", @(self.savedWindowType));
-    return NO;
 }
 
 // Generally yes, but not when a fake titlebar is shown *and* the window has transparency.
