@@ -57,8 +57,9 @@ protocol iTermBrowserLocalPageManagerDelegate: AnyObject {
 struct iTermBrowserSchemes {
     static let about = "iterm2-about"
     static let ssh = "iterm2-ssh"
+    static let file = "iterm2-file"
 
-    static var allSchemes: [String] { [about, ssh] }
+    static var allSchemes: [String] { [about, ssh, file] }
 }
 
 @MainActor
@@ -85,26 +86,40 @@ class iTermBrowserLocalPageManager: NSObject {
     
     /// Prepare page context for navigation to a local page
     func prepareForNavigation(to url: URL) {
-        let urlString = url.absoluteString
-        guard urlString.hasPrefix(iTermBrowserSchemes.about + ":") else { return }
+        guard let scheme = url.scheme, scheme == iTermBrowserSchemes.about else {
+            return
+        }
 
+        let urlString = url.absoluteString
         setupPageContext(for: urlString)
     }
     
     /// Handle URL scheme task for local pages
     func handleURLSchemeTask(_ urlSchemeTask: WKURLSchemeTask, url: URL) -> Bool {
-        let urlString = url.absoluteString
-        guard urlString.hasPrefix(iTermBrowserSchemes.about + ":") else {
+        guard let scheme = url.scheme else {
             return false
         }
 
+        // Handle iterm2-file:// URLs
+        if scheme == iTermBrowserSchemes.file {
+            let handler = iTermBrowserFileHandler()
+            handler.start(urlSchemeTask: urlSchemeTask, url: url)
+            return true
+        }
+
+        // Handle iterm2-about: URLs
+        guard scheme == iTermBrowserSchemes.about else {
+            return false
+        }
+
+        let urlString = url.absoluteString
         setupPageContext(for: urlString)
-        
+
         guard let context = activePageContexts[urlString] else {
             urlSchemeTask.didFailWithError(NSError(domain: "iTermBrowserLocalPageManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unknown \(iTermBrowserSchemes.about) URL"]))
             return true
         }
-        
+
         context.handler.start(urlSchemeTask: urlSchemeTask, url: url)
 
         return true
@@ -169,7 +184,19 @@ class iTermBrowserLocalPageManager: NSObject {
         // Navigate to iterm2-about:error which our custom URL scheme handler will serve
         webView.load(URLRequest(url: iTermBrowserErrorHandler.errorURL))
     }
-    
+
+    func showFilePage(for path: String, webView: iTermBrowserWebView) {
+        // Navigate to iterm2-file:// URL with the file path
+        guard let fileURL = URL(string: "\(iTermBrowserSchemes.file)://\(path)") else {
+            showErrorPage(for: iTermError("Invalid file path: \(path)"),
+                          failedURL: URL(fileURLWithPath: path),
+                          webView: webView)
+            return
+        }
+
+        webView.load(URLRequest(url: fileURL))
+    }
+
     /// Show source page
     func showSourcePage(htmlSource: String, url: URL, webView: iTermBrowserWebView) {
         let urlString = iTermBrowserSourceHandler.sourceURL.absoluteString
@@ -302,7 +329,7 @@ private extension iTermBrowserLocalPageManager {
             }
             handler.delegate = self
             context = iTermBrowserPageContext(handler: handler, requiresMessageHandler: true)
-            
+
         default:
             // Check if this is a registered static page
             if let staticConfig = iTermBrowserStaticPageRegistry.shared.getConfig(for: urlString) {

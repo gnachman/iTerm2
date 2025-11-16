@@ -2010,6 +2010,13 @@
 		A6644BEF25CDD20800419355 /* iTermVirtualOffset.m in Sources */ = {isa = PBXBuildFile; fileRef = A6644BED25CDD20800419355 /* iTermVirtualOffset.m */; };
 		A664AE782C55A6B800A6807A /* iTermModernKeyMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A664AE772C55A6B800A6807A /* iTermModernKeyMapper.swift */; };
 		A664EC392EC6A36800F0F596 /* iTermTitlebarAccessoryNanny.swift in Sources */ = {isa = PBXBuildFile; fileRef = A664EC382EC6A36800F0F596 /* iTermTitlebarAccessoryNanny.swift */; };
+		A664EC422EC91AFC00F0F596 /* iTermBrowserFileHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A664EC3E2EC91A7E00F0F596 /* iTermBrowserFileHandler.swift */; };
+		A664EC452ECA620F00F0F596 /* file-page.css in Resources */ = {isa = PBXBuildFile; fileRef = A664EC432ECA620F00F0F596 /* file-page.css */; };
+		A664EC462ECA620F00F0F596 /* file-page.html in Resources */ = {isa = PBXBuildFile; fileRef = A664EC442ECA620F00F0F596 /* file-page.html */; };
+		A664EC472ECA620F00F0F596 /* file-page.css in Resources */ = {isa = PBXBuildFile; fileRef = A664EC432ECA620F00F0F596 /* file-page.css */; };
+		A664EC482ECA620F00F0F596 /* file-page.html in Resources */ = {isa = PBXBuildFile; fileRef = A664EC442ECA620F00F0F596 /* file-page.html */; };
+		A664EC492ECA620F00F0F596 /* file-page.css in Resources */ = {isa = PBXBuildFile; fileRef = A664EC432ECA620F00F0F596 /* file-page.css */; };
+		A664EC4A2ECA620F00F0F596 /* file-page.html in Resources */ = {isa = PBXBuildFile; fileRef = A664EC442ECA620F00F0F596 /* file-page.html */; };
 		A66538852D0F90BF004B723B /* NSWorkspace+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57AF1B012BD100B4F135 /* NSWorkspace+iTerm.m */; };
 		A665388B2D10AB10004B723B /* CursorSmearView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A665388A2D10AB0B004B723B /* CursorSmearView.swift */; };
 		A665396C26B71B880049F375 /* iTermIndicatorsHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F721A23D195009B1CB6 /* iTermIndicatorsHelper.m */; };
@@ -7303,6 +7310,9 @@
 		A6644BED25CDD20800419355 /* iTermVirtualOffset.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermVirtualOffset.m; sourceTree = "<group>"; };
 		A664AE772C55A6B800A6807A /* iTermModernKeyMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermModernKeyMapper.swift; sourceTree = "<group>"; };
 		A664EC382EC6A36800F0F596 /* iTermTitlebarAccessoryNanny.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermTitlebarAccessoryNanny.swift; sourceTree = "<group>"; };
+		A664EC3E2EC91A7E00F0F596 /* iTermBrowserFileHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserFileHandler.swift; sourceTree = "<group>"; };
+		A664EC432ECA620F00F0F596 /* file-page.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = "file-page.css"; sourceTree = "<group>"; };
+		A664EC442ECA620F00F0F596 /* file-page.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "file-page.html"; sourceTree = "<group>"; };
 		A665388A2D10AB0B004B723B /* CursorSmearView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorSmearView.swift; sourceTree = "<group>"; };
 		A665C1CA243A4DE300F623F0 /* SIGArchiveCommon.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGArchiveCommon.m; path = SignedArchive/SIGArchiveCommon.m; sourceTree = "<group>"; };
 		A665C1CE243A606C00F623F0 /* iTermRequestCookieCommand.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermRequestCookieCommand.h; sourceTree = "<group>"; };
@@ -13613,10 +13623,12 @@
 		A6CBB8162E0A1B7400B2CCCB /* Local Pages */ = {
 			isa = PBXGroup;
 			children = (
+				A664EC432ECA620F00F0F596 /* file-page.css */,
+				A6F7D4BE2E037BB20065D09C /* iterm-browser-common.css */,
 				A6AA2F8D2E296849002998B3 /* cert-error.html */,
 				A671D6D32E1E37200087348B /* dev.html */,
 				A6F7D4C62E037E780065D09C /* error-page.html */,
-				A6F7D4BE2E037BB20065D09C /* iterm-browser-common.css */,
+				A664EC442ECA620F00F0F596 /* file-page.html */,
 				A6A832252E67AA8F00157F82 /* onboarding-features.html */,
 				A6A832262E67AA8F00157F82 /* onboarding-intro.html */,
 				A6A832322E67ADBE00157F82 /* onboarding-profile.html */,
@@ -13625,6 +13637,7 @@
 				A6A832362E6808E000157F82 /* welcome-page.js */,
 				A6F7D4C22E037BC80065D09C /* iTermBrowserCSSLoader.swift */,
 				A6F7D4BA2E0373110065D09C /* iTermBrowserErrorHandler.swift */,
+				A664EC3E2EC91A7E00F0F596 /* iTermBrowserFileHandler.swift */,
 				A6AF79F92E07E27D008D77BA /* iTermBrowserLocalPageManager.swift */,
 				A6A832212E67AA8800157F82 /* iTermBrowserOnboardingHandler.swift */,
 				A6D16EB22E07EBD00099139D /* iTermBrowserStaticPageHandler.swift */,
@@ -16563,6 +16576,8 @@
 				A6E7AEB4214394F600DE9F3B /* graphic_ethereum@2x.png in Resources */,
 				A67D0D521A2EE12A003A8B35 /* FindView.xib in Resources */,
 				A65DF4AB2849F2AA00AA29AB /* iterm2-shell-integration-loader.fish in Resources */,
+				A664EC472ECA620F00F0F596 /* file-page.css in Resources */,
+				A664EC482ECA620F00F0F596 /* file-page.html in Resources */,
 				A6A3D192281663EE00C0C9E0 /* extensions.json in Resources */,
 				A6DB14662D6D09C800266394 /* AIStreaming.png in Resources */,
 				A6FEA28A1CF4DD2700376F28 /* iTermHotkeyPreferencesWindowController.xib in Resources */,
@@ -16986,6 +17001,8 @@
 				1DEDF56A19C917FD005B023A /* new-tab.png in Resources */,
 				A69C933A2121101C00531438 /* iTermsStatusBarComposerViewController.xib in Resources */,
 				A67F61F1214395D50093940A /* graphic_zip@2x.png in Resources */,
+				A664EC452ECA620F00F0F596 /* file-page.css in Resources */,
+				A664EC462ECA620F00F0F596 /* file-page.html in Resources */,
 				A618FFCE224602F800B8FD88 /* StatusBarIconAction@2x.png in Resources */,
 				1DA76A251B308AD000CB272A /* iTermTipCardViewController.xib in Resources */,
 				A67F616B214395990093940A /* graphic_micro@2x.png in Resources */,
@@ -17881,6 +17898,8 @@
 				A62CD06527E9124F00215E92 /* askpass.sh in Resources */,
 				A618FFD0224602F800B8FD88 /* StatusBarIconAction.png in Resources */,
 				A67F6134214395570093940A /* graphic_gulp.png in Resources */,
+				A664EC492ECA620F00F0F596 /* file-page.css in Resources */,
+				A664EC4A2ECA620F00F0F596 /* file-page.html in Resources */,
 				A67F61E1214395D50093940A /* graphic_zip.png in Resources */,
 				A6F7A73D213CB143004DE961 /* StatusBarIconJobs@2x.png in Resources */,
 				A67F6184214395A70093940A /* graphic_npm@2x.png in Resources */,
@@ -18840,6 +18859,7 @@
 				A66319872308C60000C502BD /* NSStringITerm.m in Sources */,
 				5370678A21C9D2780088D0F3 /* SIGKey.m in Sources */,
 				A6F718C62265B2580053488E /* iTermPathCleaner.m in Sources */,
+				A664EC422EC91AFC00F0F596 /* iTermBrowserFileHandler.swift in Sources */,
 				A6069EBA2DEFBB8000EE6CC7 /* ExtensionToMime.swift in Sources */,
 				A67D19582237289900BD0D4D /* iTermImage.m in Sources */,
 				A6069F1E2DF3AB5F00EE6CC7 /* LLMFiles.swift in Sources */,

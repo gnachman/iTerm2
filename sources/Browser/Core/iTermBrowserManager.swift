@@ -390,9 +390,10 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                                                     contentWorld: .defaultClient,
                                                     name: iTermBrowserNamedMarkManager.layoutUpdateHandlerName)
         }
-        // Register custom URL scheme handler for iterm2-about: URLs
+        // Register custom URL scheme handlers
         configuration.setURLSchemeHandler(handlerProxy, forURLScheme: iTermBrowserSchemes.about)
         configuration.setURLSchemeHandler(handlerProxy, forURLScheme: iTermBrowserSchemes.ssh)
+        configuration.setURLSchemeHandler(handlerProxy, forURLScheme: iTermBrowserSchemes.file)
     }
 
     private func setupWebView(configuration preferredConfiguration: WKWebViewConfiguration?,
@@ -736,7 +737,11 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private func showErrorPage(for error: Error, failedURL: URL?) {
         localPageManager.showErrorPage(for: error, failedURL: failedURL, webView: webView)
     }
-    
+    private func showFilePage(for path: String) {
+        localPageManager.showFilePage(for: path, webView: webView)
+    }
+
+
     private func isDownloadRelatedError(_ error: Error) -> Bool {
         let nsError = error as NSError
         
@@ -1165,7 +1170,7 @@ extension iTermBrowserManager {
         }
 
         switch url.scheme {
-        case iTermBrowserSchemes.about:
+        case iTermBrowserSchemes.about, iTermBrowserSchemes.file:
             if !localPageManager.handleURLSchemeTask(urlSchemeTask, url: url) {
                 urlSchemeTask.didFailWithError(NSError(domain: "iTermBrowserManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unknown URL scheme"]))
             }
@@ -1289,8 +1294,8 @@ extension iTermBrowserManager: WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
         let nsError = error as NSError
-        DLog("didFailProvisionalNavigation: domain=\(nsError.domain) code=\(nsError.code) — \(nsError.localizedDescription)")
         let failedURL = navigationState.lastRequestedURL
+        NSLog("didFailProvisionalNavigation: url=\(failedURL.d) domain=\(nsError.domain) code=\(nsError.code) — \(nsError.localizedDescription)")
 
         navigationState.didCompleteLoading(error: error)
 
@@ -1302,8 +1307,16 @@ extension iTermBrowserManager: WKNavigationDelegate {
 
         // Only show error page if this isn't the same URL that already failed
         if failedURL != lastFailedURL && failedURL != nil {
-            showErrorPage(for: error, failedURL: failedURL)
-            lastFailedURL = failedURL
+            // Convert regular file:// URLs to our custom iterm2-file:// scheme
+            if failedURL?.scheme == "file", let path = failedURL?.path {
+                showFilePage(for: path)
+            } else {
+                // Don't show error pages for our own custom schemes - they should handle their own errors
+                if failedURL?.scheme != iTermBrowserSchemes.file {
+                    showErrorPage(for: error, failedURL: failedURL)
+                    lastFailedURL = failedURL
+                }
+            }
         }
 
         delegate?.browserManager(self, didFailNavigation: navigation, withError: error)
@@ -1314,6 +1327,8 @@ extension iTermBrowserManager: WKNavigationDelegate {
         it_assert(webView === self.webView)
         if webView.url == iTermBrowserErrorHandler.errorURL {
             localPageManager.unregisterAllMessageHandlers(webView: self.webView, except: iTermBrowserErrorHandler.errorURL)
+        } else if webView.url?.scheme == iTermBrowserSchemes.file {
+            localPageManager.unregisterAllMessageHandlers(webView: self.webView, except: webView.url)
         } else {
             localPageManager.unregisterAllMessageHandlers(webView: self.webView, except: nil)
         }
@@ -1343,8 +1358,10 @@ extension iTermBrowserManager: WKNavigationDelegate {
         }
 
         // Store the target URL for this navigation so we can use it in error handlers
-        // But don't overwrite if this is our error page navigation
-        if let targetURL = navigationAction.request.url, targetURL != iTermBrowserErrorHandler.errorURL {
+        // But don't overwrite if this is our error page or file page navigation
+        if let targetURL = navigationAction.request.url,
+           targetURL != iTermBrowserErrorHandler.errorURL,
+           targetURL.scheme != iTermBrowserSchemes.file {
             navigationState.willLoadURL(targetURL)
         }
 

@@ -121,6 +121,9 @@ class iTermBrowserErrorHandler: NSObject, iTermBrowserPageHandler {
             case NSURLErrorServerCertificateUntrusted, NSURLErrorSecureConnectionFailed:
                 return ("Secure Connection Failed", "iTerm2 can’t verify the identity of the website. The connection may not be secure.", sslErrorDetails(from: error))
 
+            case NSURLErrorFileDoesNotExist:
+                return ("File Not Found", "The requested file does not exist.", nil)
+
             default:
                 return ("Page Can’t Be Loaded", "An error occurred while loading this page. \(error.localizedDescription)", nil)
             }

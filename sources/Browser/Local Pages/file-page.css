@@ -1,0 +1,121 @@
+body {
+    padding: 32px 20px;
+}
+
+.header {
+    margin-bottom: 28px;
+}
+
+.header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.folder-icon {
+    font-size: 36px;
+}
+
+.directory-path {
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+    font-size: 14px;
+    color: var(--secondary-text);
+    margin-left: 48px;
+}
+
+.directory-content {
+    background: var(--section-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    box-shadow: 0 2px 12px var(--shadow);
+}
+
+.directory-content ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.directory-content li {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.directory-content li:last-child {
+    border-bottom: none;
+}
+
+.directory-content a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 24px;
+    text-decoration: none;
+    color: var(--text-color);
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+
+.directory-content a:hover {
+    background: var(--bg-color);
+    color: var(--accent-color);
+    padding-left: 28px;
+}
+
+.directory-content a::before {
+    content: "📄";
+    font-size: 20px;
+}
+
+/* Folders get a different icon */
+.directory-content a[href$="/"]:not([href="../"])::before {
+    content: "📁";
+}
+
+/* Parent directory gets special styling */
+.directory-content a[href="../"] {
+    background: linear-gradient(135deg, var(--accent-color)10, var(--accent-color)05);
+    border-bottom: 2px solid var(--accent-color)40;
+    font-weight: 600;
+}
+
+.directory-content a[href="../"]:hover {
+    background: linear-gradient(135deg, var(--accent-color)20, var(--accent-color)10);
+    color: var(--accent-color);
+}
+
+.directory-content a[href="../"]::before {
+    content: "⬆️";
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 20px 12px;
+    }
+
+    .header h1 {
+        font-size: 26px;
+    }
+
+    .folder-icon {
+        font-size: 28px;
+    }
+
+    .directory-path {
+        font-size: 13px;
+        margin-left: 40px;
+    }
+
+    .directory-content a {
+        padding: 14px 20px;
+        font-size: 15px;
+    }
+
+    .directory-content a:hover {
+        padding-left: 24px;
+    }
+}

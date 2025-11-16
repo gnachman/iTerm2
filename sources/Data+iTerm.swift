@@ -40,3 +40,21 @@ extension Data {
         return (self as NSData).it_hexEncoded()
     }
 }
+
+extension Data {
+    func chunks(of size: Int) -> [SubData] {
+        var result: [SubData] = []
+        result.reserveCapacity(count / size + 1)
+
+        var index = 0
+
+        while index < count {
+            let end = Swift.min(index + size, count)
+            let range = index..<end
+            result.append(SubData(data: self, range: range))
+            index = end
+        }
+
+        return result
+    }
+}

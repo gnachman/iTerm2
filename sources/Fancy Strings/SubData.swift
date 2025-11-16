@@ -41,6 +41,11 @@ struct SubData {
     mutating func deleteFromEnd(count: Int) {
         range = range.lowerBound..<(range.upperBound - count)
     }
+
+    // BEWARE: INDEXES ARE NOT 0 BASED
+    var slice: Data.SubSequence {
+        return _data[range]
+    }
 }
 
 extension SubData: Sequence {
