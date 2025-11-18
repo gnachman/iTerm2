@@ -49,7 +49,10 @@ static const int iTermKeystrokeKeyCodeUnavailable = 0;
     NSRange range = [key rangeOfString:@"\\" options:0 range:NSMakeRange(start, key.length - start)];
     while (range.location != NSNotFound) {
         [key replaceCharactersInRange:range withString:@""];
-        start += 1;
+        start = range.location + 1;
+        if (start >= key.length) {
+            break;
+        }
         range = [key rangeOfString:@"\\" options:0 range:NSMakeRange(start, key.length - start)];
     }
     NSDictionary *modifiers = @{ @('C'): @(NSEventModifierFlagControl),
