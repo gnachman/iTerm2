@@ -122,8 +122,7 @@ class AIMetadata: NSObject {
     }
 
     static var recommendedOpenAIModel: Model {
-        // TOOD: When gpt-5 doesn't require identification for streaming switch this over
-        return AIMetadata.gpt4_1
+        return AIMetadata.gpt5_1
     }
 
     static var recommendedDeepSeekModel: Model {
@@ -131,15 +130,15 @@ class AIMetadata: NSObject {
     }
 
     static var recommendedGeminiModel: Model {
-        return AIMetadata.gemini_2_0_flash
+        return AIMetadata.gemini_2_5_flash
     }
 
     static var recommendedLlamaModel: Model {
-        return AIMetadata.llama_3_3_latest
+        return AIMetadata.llama_4_latest
     }
 
     static var recommendedAnthropicModel: Model {
-        return AIMetadata.claude_4_sonnet
+        return AIMetadata.claude_4_5_sonnet
     }
 
     static var alternateOpenAIModels: [Model] {
@@ -172,6 +171,24 @@ class AIMetadata: NSObject {
         }
     }
 
+    private static let gpt5_1 = Model(
+        name: "gpt-5.1",
+        contextWindowTokens: 400_000,
+        maxResponseTokens: 128_000,
+        url: "https://api.openai.com/v1/responses",
+        api: .responses,
+        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
+        vendor: .openAI
+    )
+    private static let gpt5_1_codex = Model(
+        name: "gpt-5.1-codex",
+        contextWindowTokens: 400_000,
+        maxResponseTokens: 128_000,
+        url: "https://api.openai.com/v1/responses",
+        api: .responses,
+        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
+        vendor: .openAI
+    )
     private static let gpt5 = Model(
         name: "gpt-5",
         contextWindowTokens: 400_000,
@@ -212,6 +229,66 @@ class AIMetadata: NSObject {
         vectorStoreConfig: .openAI,
         vendor: .openAI
     )
+    private static let gpt4o = Model(
+        name: "gpt-4o",
+        contextWindowTokens: 128_000,
+        maxResponseTokens: 16_384,
+        url: "https://api.openai.com/v1/responses",
+        api: .responses,
+        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
+        vectorStoreConfig: .openAI,
+        vendor: .openAI
+    )
+    private static let gpt4o_mini = Model(
+        name: "gpt-4o-mini",
+        contextWindowTokens: 128_000,
+        maxResponseTokens: 16_384,
+        url: "https://api.openai.com/v1/responses",
+        api: .responses,
+        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
+        vectorStoreConfig: .openAI,
+        vendor: .openAI
+    )
+    private static let gpt41_mini = Model(
+        name: "gpt-4.1-mini",
+        contextWindowTokens: 1_000_000,
+        maxResponseTokens: 16_384,
+        url: "https://api.openai.com/v1/responses",
+        api: .responses,
+        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
+        vectorStoreConfig: .openAI,
+        vendor: .openAI
+    )
+    private static let o3 = Model(
+        name: "o3",
+        contextWindowTokens: 200_000,
+        maxResponseTokens: 100_000,
+        url: "https://api.openai.com/v1/responses",
+        api: .responses,
+        features: [.hostedFileSearch, .hostedCodeInterpreter, .configurableThinking],
+        vectorStoreConfig: .openAI,
+        vendor: .openAI
+    )
+    private static let o3_pro = Model(
+        name: "o3-pro",
+        contextWindowTokens: 200_000,
+        maxResponseTokens: 100_000,
+        url: "https://api.openai.com/v1/responses",
+        api: .responses,
+        features: [.functionCalling, .hostedCodeInterpreter, .configurableThinking],
+        vectorStoreConfig: .openAI,
+        vendor: .openAI
+    )
+    private static let o4_mini = Model(
+        name: "o4-mini",
+        contextWindowTokens: 200_000,
+        maxResponseTokens: 100_000,
+        url: "https://api.openai.com/v1/responses",
+        api: .responses,
+        features: [.hostedFileSearch, .streaming, .functionCalling, .hostedCodeInterpreter, .configurableThinking],
+        vectorStoreConfig: .openAI,
+        vendor: .openAI
+    )
     private static let deepseek_chat = Model(
         name: "deepseek-chat",
         contextWindowTokens: 65_536,
@@ -230,6 +307,15 @@ class AIMetadata: NSObject {
         features: [.functionCalling, .streaming],
         vendor: .gemini
     )
+    private static let llama_4_latest = Model(
+        name: "llama4:latest",
+        contextWindowTokens: 10_000_000,
+        maxResponseTokens: 10_000_000,
+        url: "http://localhost:11434/api/chat",
+        api: .llama,
+        features: [.streaming, .functionCalling],
+        vendor: .llama
+    )
     static private let llama_3_3_latest = Model(
         name: "llama3.3:latest",
         contextWindowTokens: 131_072,
@@ -239,8 +325,64 @@ class AIMetadata: NSObject {
         features: [.streaming, .functionCalling],
         vendor: .llama
     )
+    private static let geimini_2_0_flash_lite = Model(
+        name: "gemini-2.0-flash-lite",
+        contextWindowTokens: 1_048_576,
+        maxResponseTokens: 8_192,
+        url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+        api: .gemini,
+        features: [.functionCalling, .streaming],
+        vendor: .gemini
+    )
+    private static let gemini_1_5_pro = Model(
+        name: "gemini-1.5-pro",
+        contextWindowTokens: 1_048_576,
+        maxResponseTokens: 8_192,
+        url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+        api: .gemini,
+        features: [.functionCalling, .streaming],
+        vendor: .gemini
+    )
+    private static let gemini_2_5_pro = Model(
+        name: "gemini-2.5-pro",
+        contextWindowTokens: 1_048_576,
+        maxResponseTokens: 65_536,
+        url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+        api: .gemini,
+        features: [.functionCalling, .streaming],
+        vendor: .gemini
+    )
 
-    // Latest Claude 4 models with official aliases
+    private static let gemini_2_5_flash = Model(
+        name: "gemini-2.5-flash",
+        contextWindowTokens: 1_048_576,
+        maxResponseTokens: 65_536,
+        url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+        api: .gemini,
+        features: [.functionCalling, .streaming],
+        vendor: .gemini
+    )
+
+    private static let gemini_2_5_flash_lite = Model(
+        name: "gemini-2.5-flash-lite",
+        contextWindowTokens: 1_048_576,
+        maxResponseTokens: 65_536,
+        url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+        api: .gemini,
+        features: [.functionCalling, .streaming],
+        vendor: .gemini
+    )
+
+
+    private static let claude_4_5_sonnet = Model(
+        name: "claude-sonnet-4-5",
+        contextWindowTokens: 200_000,
+        maxResponseTokens: 64_000,
+        url: "https://api.anthropic.com/v1/messages",
+        api: .anthropic,
+        features: [.functionCalling, .streaming],
+        vendor: .anthropic
+    )
     private static let claude_4_sonnet = Model(
         name: "claude-sonnet-4-0",
         contextWindowTokens: 200_000,
@@ -269,121 +411,55 @@ class AIMetadata: NSObject {
         features: [.functionCalling, .streaming],
         vendor: .anthropic
     )
+    private static let deepseek_coder = Model(
+        name: "deepseek-coder",
+        contextWindowTokens: 65_536,
+        maxResponseTokens: 8_000,
+        url: "https://api.deepseek.com/v1/chat/completions",
+        api: .deepSeek,
+        features: [.functionCalling, .streaming],
+        vendor: .deepSeek
+    )
+    private static let deepseek_reasoner = Model(
+        name: "deepseek-reasoner",
+        contextWindowTokens: 64_000,
+        maxResponseTokens: 8_000,
+        url: "https://api.deepseek.com/v1/chat/completions",
+        api: .deepSeek,
+        features: [.functionCalling, .streaming],
+        vendor: .deepSeek
+    )
     let models: [Model] = [
         // The first model will be the default.
+        AIMetadata.gpt5_1,
+        AIMetadata.gpt5_1_codex,
         AIMetadata.gpt5,
         AIMetadata.gpt5_mini,
         AIMetadata.gpt5_nano,
         AIMetadata.gpt4_1,
-        Model(
-            name: "gpt-4o",
-            contextWindowTokens: 128_000,
-            maxResponseTokens: 16_384,
-            url: "https://api.openai.com/v1/responses",
-            api: .responses,
-            features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
-            vectorStoreConfig: .openAI,
-            vendor: .openAI
-        ),
-        Model(
-            name: "gpt-4o-mini",
-            contextWindowTokens: 128_000,
-            maxResponseTokens: 16_384,
-            url: "https://api.openai.com/v1/responses",
-            api: .responses,
-            features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
-            vectorStoreConfig: .openAI,
-            vendor: .openAI
-        ),
-        Model(
-            name: "gpt-4.1-mini",
-            contextWindowTokens: 1_000_000,
-            maxResponseTokens: 16_384,
-            url: "https://api.openai.com/v1/responses",
-            api: .responses,
-            features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
-            vectorStoreConfig: .openAI,
-            vendor: .openAI
-        ),
-
-        // O-series reasoning models
-        Model(
-            name: "o3",
-            contextWindowTokens: 200_000,
-            maxResponseTokens: 100_000,
-            url: "https://api.openai.com/v1/responses",
-            api: .responses,
-            features: [.hostedFileSearch, .hostedCodeInterpreter, .configurableThinking],
-            vectorStoreConfig: .openAI,
-            vendor: .openAI
-        ),
-        Model(
-            name: "o3-pro",
-            contextWindowTokens: 200_000,
-            maxResponseTokens: 100_000,
-            url: "https://api.openai.com/v1/responses",
-            api: .responses,
-            features: [.functionCalling, .hostedCodeInterpreter, .configurableThinking],
-            vectorStoreConfig: .openAI,
-            vendor: .openAI
-        ),
-        Model(
-            name: "o4-mini",
-            contextWindowTokens: 200_000,
-            maxResponseTokens: 100_000,
-            url: "https://api.openai.com/v1/responses",
-            api: .responses,
-            features: [.hostedFileSearch, .streaming, .functionCalling, .hostedCodeInterpreter, .configurableThinking],
-            vectorStoreConfig: .openAI,
-            vendor: .openAI
-        ),
+        AIMetadata.gpt4o,
+        AIMetadata.gpt4o_mini,
+        AIMetadata.gpt41_mini,
+        AIMetadata.o3,
+        AIMetadata.o3_pro,
+        AIMetadata.o4_mini,
 
         // MARK: - Google Models
-
-        Model(
-            name: "gemini-2.0-flash-lite",
-            contextWindowTokens: 1_048_576,
-            maxResponseTokens: 8_192,
-            url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
-            api: .gemini,
-            features: [.functionCalling, .streaming],
-            vendor: .gemini
-        ),
+        AIMetadata.gemini_2_5_flash_lite,
+        AIMetadata.gemini_2_5_flash,
+        AIMetadata.gemini_2_5_pro,
+        AIMetadata.geimini_2_0_flash_lite,
         AIMetadata.gemini_2_0_flash,
-        Model(
-            name: "gemini-1.5-pro",
-            contextWindowTokens: 1_048_576,
-            maxResponseTokens: 8_192,
-            url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
-            api: .gemini,
-            features: [.functionCalling, .streaming],
-            vendor: .gemini
-        ),
+        AIMetadata.gemini_1_5_pro,
 
         // MARK: - DeepSeek Models
-
         AIMetadata.deepseek_chat,
-        Model(
-            name: "deepseek-coder",
-            contextWindowTokens: 65_536,
-            maxResponseTokens: 8_000,
-            url: "https://api.deepseek.com/v1/chat/completions",
-            api: .deepSeek,
-            features: [.functionCalling, .streaming],
-            vendor: .deepSeek
-        ),
-        Model(
-            name: "deepseek-reasoner",
-            contextWindowTokens: 64_000,
-            maxResponseTokens: 8_000,
-            url: "https://api.deepseek.com/v1/chat/completions",
-            api: .deepSeek,
-            features: [.functionCalling, .streaming],
-            vendor: .deepSeek
-        ),
+        AIMetadata.deepseek_coder,
+        AIMetadata.deepseek_reasoner,
+
 
         // MARK: - Anthropic Models
-
+        AIMetadata.claude_4_5_sonnet,
         AIMetadata.claude_4_sonnet,
         AIMetadata.claude_4_1_opus,
         AIMetadata.claude_4_opus,
@@ -400,6 +476,7 @@ class AIMetadata: NSObject {
         //    to false"
         // To find places where you need to make changes to adjust this logic search for
         // #llama-streaming-functions
+        AIMetadata.llama_4_latest,
         AIMetadata.llama_3_3_latest,
     ]
 
@@ -517,8 +594,4 @@ class AIMetadata: NSObject {
         }
         return obj.features.contains(.streaming)
     }
-
-
-
-
 }
