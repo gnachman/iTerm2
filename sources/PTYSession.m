@@ -4479,7 +4479,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [self writeLatin1EncodedData:[NSData dataWithBytes:&p length:1] broadcastAllowed:YES reporting:NO];
 }
 
-- (NSResponder *)mainResponder {
+- (NSView *)mainResponder {
     if (@available(macOS 11, *)) {
         if (_view.isBrowser) {
             return _view.browserViewController.webView;

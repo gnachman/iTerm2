@@ -6490,7 +6490,10 @@ ITERM_WEAKLY_REFERENCEABLE
         [self setWindowTitle];
     }
 
-    [[self window] makeFirstResponder:[[[tabViewItem identifier] activeSession] mainResponder]];
+    // The web browser is added after a spin of the runloop to dodge auto layout bugs.
+    if ([[[[tabViewItem identifier] activeSession] mainResponder] window] == [self window]) {
+        [[self window] makeFirstResponder:[[[tabViewItem identifier] activeSession] mainResponder]];
+    }
     if ([tab blur]) {
         [self enableBlur:[tab blurRadius]];
     } else {
