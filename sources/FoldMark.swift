@@ -324,8 +324,8 @@ class FoldMark: iTermMark, FoldMarkReading {
 
     // Since we overrode copyWithZone we must ensure that the fold mark's
     // doppelganger only references mark doppelgangers to avoid data races.
-    override func becomeDoppelganger() {
-        super.becomeDoppelganger()
+    override func becomeDoppelganger(withProgenitor progenitor: iTermMark) {
+        super.becomeDoppelganger(withProgenitor: progenitor)
         if let savedITOs {
             for ito in savedITOs {
                 ito.object = ito.object.doppelganger()

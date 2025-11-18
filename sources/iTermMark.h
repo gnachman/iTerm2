@@ -33,6 +33,6 @@
 + (id<IntervalTreeObject>)intervalTreeObjectWithDictionaryWithTypeInformation:(NSDictionary *)dict;
 
 // This is here for subclasses to override. They should always call it.
-- (void)becomeDoppelganger;
+- (void)becomeDoppelgangerWithProgenitor:(iTermMark *)progenitor;
 
 @end
