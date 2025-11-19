@@ -1,6 +1,6 @@
 # Generic Password Manager CLI
 
-A generic password manager CLI would be a command line program that takes a single argument that names a subcommand. Inputs and outputs are JSON documents which I will write as Swift structs since it makes for a nice simple JSON schema. You should ignore unrecognized keys in JSON dictionaries.
+A generic password manager CLI is a command line program that takes a single argument that names a subcommand. Inputs and outputs are JSON documents, which are described in this document as Swift structs since it makes for a nice simple JSON schema. Ignore unrecognized keys in JSON dictionaries (which you happens automatically if you use Swift's Codable).
 
 Inputs are provided on stdin and outputs are provided on stdout. Both are terminated by EOF (i.e., closing the write side of the pipe).
 
@@ -18,7 +18,7 @@ struct RequestHeader: Codable {
     }
 }
 
-Passwords for terminal-mode and browser-mode must be kept separate, typically using a feature like tags in the password database.
+Passwords for terminal-mode and browser-mode must be kept separate, typically using a feature like tags in the password database. It is nice if browser-mode passwords are the same that are exposed to web browsers using your password manager's browser extension.
 
 # Subcommands
 
@@ -60,6 +60,8 @@ Present authentication UI to the user. For example, request biometric authentica
  * Input:
 ```
 struct LoginRequest {
+  var header: RequestHeader
+
   var userAccountID: String?  // Will be set if HandshakeResponse.userAccounts was set
   var masterPassword: String?  // Will be set if HandshakeResponse.requiresMasterPassword was true
 }
@@ -78,6 +80,8 @@ Returns a list of items in the password manager.
  * Input
 ```
 struct ListAccountsRequest {
+  var header: RequestHeader
+
   var userAccountID: String?
   var token: String?
 }
@@ -106,6 +110,8 @@ Get the plaintext password for an account.
  * Input
 ```
 struct GetPasswordRequest {
+  var header: RequestHeader
+
   var userAccountID: String?
   var token: String?
   var accountIdentifier: AccountIdentifier
@@ -125,6 +131,8 @@ Change the password of an account.
  * Input
 ```
 struct SetPasswordRequest {
+  var header: RequestHeader
+
   var userAccountID: String?
   var token: String?
   var accountIdentifier: AccountIdentifier
@@ -141,6 +149,8 @@ struct SetPasswordResponse {
   * Input:
 ```
 struct DeleteAccountRequest {
+  var header: RequestHeader
+
   var userAccountID: String?
   var token: String?
   var accountIdentifier: AccountIdentifier
@@ -156,6 +166,8 @@ struct DeleteAccountResponse {
   * Input:
 ```
 struct AddAccountRequest {
+  var header: RequestHeader
+
   var userAccountID: String?
   var token: String?
   var userName: String
@@ -182,6 +194,6 @@ struct ErrorResponse {
 # Sample usage
 
 ```
-% echo '{"token": "secret goes here", "accountIdentifier": { "accountID": "123-456" } }' | pwmplugin get-password
+% echo '{"header": { "pathToDatabase": "/Users/george/passwords.db", "pathToExecutable": "/opt/homebrew/bin/SomePasswordManagerCLI", mode: "terminal" }, "token": "secret goes here", "accountIdentifier": { "accountID": "123-456" } }' | pwmplugin get-password
 { "password": "Hunter2" }
 ```
