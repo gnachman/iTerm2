@@ -8,6 +8,7 @@ All objects are encoded as JSON using UTF-8.
 
 All subcommands other than Handshake take a RequestHeader, which contains optional information that some CLIs need.
 
+```
 struct RequestHeader: Codable {
     var pathToDatabase: String?  // User-selected database path.
     var pathToExecutable: String?  // Path to backend specific CLI
@@ -17,6 +18,7 @@ struct RequestHeader: Codable {
         case browser
     }
 }
+```
 
 Passwords for terminal-mode and browser-mode must be kept separate, typically using a feature like tags in the password database. It is nice if browser-mode passwords are the same that are exposed to web browsers using your password manager's browser extension.
 
@@ -25,7 +27,7 @@ Passwords for terminal-mode and browser-mode must be kept separate, typically us
 ## handshake
 This is used so that we can introduce new versions of the protocol in the future and detect a mismatch between iTerm2 version and CLI version. The CLI can respond with an error if it can't complete the protocol version negotiation or the version of iTerm2 is known not to work. This also provides a way to query for capabilities and metadata.
 
-This draft document describes protocol version 0.
+This document describes protocol version 0.
 
  * Input:
 ```
