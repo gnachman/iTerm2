@@ -1291,6 +1291,8 @@ typedef struct {
                         }
                         break;
                 }
+            } else if (params.count == 1) {
+                [self setProgress:VT100ScreenProgressStopped];
             }
         } else {
             DLog(@"Ignoring %@", message);
