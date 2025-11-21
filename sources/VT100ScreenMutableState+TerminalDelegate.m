@@ -1262,33 +1262,37 @@ typedef struct {
 - (void)terminalPostUserNotification:(NSString *)message {
     NSArray<NSString *> *params = [message componentsSeparatedByString:@";"];
     if (params.count >= 1 && [params[0] isNumeric]) {
-        if ([params[0] intValue] == 4 && [params[1] isNumeric]) {
-            const int st = [params[1] intValue];
-            const int pr = params.count >= 3 ? [params[2] intValue] : -1;
-            switch (st) {
-                case 0:
-                    [self setProgress:VT100ScreenProgressStopped];
-                    break;
-                case 1:  // set progress value to pr (number, 0-100)
-                    if (pr >= 0 && pr <= 100) {
-                        [self setProgress:VT100ScreenProgressSuccessBase + pr];
-                    }
-                    break;
-                case 2:  // set error state in progress. pr is optional
-                    if (pr >= 0 && pr <= 100) {
-                        [self setProgress:VT100ScreenProgressErrorBase + pr];
-                    } else {
-                        [self setProgress:VT100ScreenProgressError];
-                    }
-                    break;
-                case 3:  // set indeterminate state
-                    [self setProgress:VT100ScreenProgressIndeterminate];
-                    break;
-                case 4:  // set error state in progress. pr is optional
-                    if (pr >= 0 && pr <= 100) {
-                        [self setProgress:VT100ScreenProgressWarningBase + pr];
-                    }
-                    break;
+        if ([params[0] intValue] == 4) {
+            if (params.count >= 2 && [params[1] isNumeric]) {
+                const int st = [params[1] intValue];
+                const int pr = params.count >= 3 ? [params[2] intValue] : -1;
+                switch (st) {
+                    case 0:
+                        [self setProgress:VT100ScreenProgressStopped];
+                        break;
+                    case 1:  // set progress value to pr (number, 0-100)
+                        if (pr >= 0 && pr <= 100) {
+                            [self setProgress:VT100ScreenProgressSuccessBase + pr];
+                        }
+                        break;
+                    case 2:  // set error state in progress. pr is optional
+                        if (pr >= 0 && pr <= 100) {
+                            [self setProgress:VT100ScreenProgressErrorBase + pr];
+                        } else {
+                            [self setProgress:VT100ScreenProgressError];
+                        }
+                        break;
+                    case 3:  // set indeterminate state
+                        [self setProgress:VT100ScreenProgressIndeterminate];
+                        break;
+                    case 4:  // set error state in progress. pr is optional
+                        if (pr >= 0 && pr <= 100) {
+                            [self setProgress:VT100ScreenProgressWarningBase + pr];
+                        }
+                        break;
+                }
+            } else if (params.count == 1) {
+                [self setProgress:VT100ScreenProgressStopped];
             }
         } else {
             DLog(@"Ignoring %@", message);
