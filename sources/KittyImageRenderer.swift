@@ -15,6 +15,9 @@ class KittyImageRun: NSObject {
     let destCoord: VT100GridCoord
     @objc var length: UInt
 
+    override var description: String {
+        return "<KittyImageRun: \(it_addressString) source=\(VT100GridCoordDescription(sourceCoord)) dest=\(VT100GridCoordDescription(destCoord)) draw=\(draw.description)>"
+    }
     @objc(initWithDraw:sourceCoord:destCoord:length:)
     init(draw: iTermKittyImageDraw,
          sourceCoord: VT100GridCoord,

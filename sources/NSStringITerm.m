@@ -2912,7 +2912,7 @@ static NSDictionary<NSString *, NSNumber *> *iTermKittyDiacriticIndex(void) {
     NSDictionary<NSString *, NSNumber *> *diacriticIndex = iTermKittyDiacriticIndex();
     __block int row = -1;
     __block int column = -1;
-    __block int image = 0;
+    __block int image = -1;
     __block BOOL valid = NO;
 
     [self enumerateLongCharactersWithIndex:^(UTF32Char ch, NSUInteger i, BOOL *stop) {
@@ -2945,7 +2945,7 @@ static NSDictionary<NSString *, NSNumber *> *iTermKittyDiacriticIndex(void) {
             } else if (image == -1) {
                 image = [index intValue];
             }
-            if (row != -1 && column != -1 && image != 0) {
+            if (row != -1 && column != -1 && image != -1) {
                 valid = YES;
                 *stop = YES;
                 return;

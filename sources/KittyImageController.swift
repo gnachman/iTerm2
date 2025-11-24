@@ -1109,7 +1109,7 @@ class iTermKittyImageDraw: NSObject {
         self.imageUniqueID = placement.image.uniqueId
         self.virtual = placement.virtual
         self.placementID = placement.placementId
-        self.imageID = placement.image.metadata.imageNumber
+        self.imageID = placement.image.metadata.identifier
         self.destinationFrame = destinationFrame
         // Size in pixels
         let pixelSize = image.size
@@ -1141,5 +1141,11 @@ class iTermKittyImageDraw: NSObject {
         return VT100GridRect(origin: origin,
                              size: VT100GridSize(width: Int32(clamping: ceil(destinationFrame.maxX / cellSize.width)),
                                                  height: Int32(clamping: ceil(destinationFrame.maxY / cellSize.height))))
+    }
+}
+
+extension iTermKittyImageDraw {
+    override var description: String {
+        return "<iTermKittyImageDraw: \(it_addressString) dest=\(destinationFrame) source=\(sourceFrame) index=\(index) zIndex=\(zIndex) virtual=\(virtual) placement=\(placementID) image=\(imageID) placementSize=\(placementSize) imageUniqueID=\(imageUniqueID)>"
     }
 }

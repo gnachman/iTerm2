@@ -3027,13 +3027,17 @@ iTermKittyPlaceholderDrawInstructions iTermKittyPlaceholderDrawInstructionsCreat
 iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermKittyImageDraw *> *draws,
                                                                   unsigned int placementID,
                                                                   unsigned int imageID) {
-    iTermKittyImageDraw *draw = [draws objectPassingTest:^BOOL(iTermKittyImageDraw *draw, NSUInteger index, BOOL *stop) {
-        return draw.placementID == placementID;
-    }];
+    iTermKittyImageDraw *draw = nil;
+    if (placementID != 0) {
+        // Look up by placement ID when specified
+        draw = [draws objectPassingTest:^BOOL(iTermKittyImageDraw *element, NSUInteger index, BOOL *stop) {
+            return element.placementID == placementID;
+        }];
+    }
     if (!draw) {
         // Look up placement by image ID. Must include a size.
         draw = [draws objectPassingTest:^BOOL(iTermKittyImageDraw *element, NSUInteger index, BOOL *stop) {
-            return draw.imageID == imageID && draw.placementSize.width > 0 && draw.placementSize.height > 0;
+            return element.imageID == imageID && element.placementSize.width > 0 && element.placementSize.height > 0;
         }];
     }
     return draw;

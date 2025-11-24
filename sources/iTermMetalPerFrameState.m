@@ -1195,9 +1195,9 @@ NS_INLINE void iTermGlyphKeyEmitImage(const screen_char_t *const line,
             if (info.runLength > 1) {
                 kittyImageRuns.lastObject.length += 1;
             } else {
-                iTermKittyImageDraw *draw = [kittyImageDraws objectPassingTest:^BOOL(iTermKittyImageDraw *draw, NSUInteger index, BOOL *stop) {
-                    return draw.placementID == info.placementID;
-                }];
+                iTermKittyImageDraw *draw = iTermFindKittyImageDrawForVirtualPlaceholder(kittyImageDraws,
+                                                                                         info.placementID,
+                                                                                         info.imageID);
                 if (draw) {
                     iTermKittyImageRun *run =
                     [[iTermKittyImageRun alloc] initWithDraw:draw
