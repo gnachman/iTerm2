@@ -1263,6 +1263,10 @@ typedef struct {
     NSArray<NSString *> *params = [message componentsSeparatedByString:@";"];
     if (params.count >= 1 && [params[0] isNumeric]) {
         if ([params[0] intValue] == 4) {
+            if ([iTermAdvancedSettingsModel disableProgressBarEscapeSequence]) {
+                DLog(@"Progress bar escape sequence disabled by user preference");
+                return;
+            }
             if (params.count >= 2 && [params[1] isNumeric]) {
                 const int st = [params[1] intValue];
                 const int pr = params.count >= 3 ? [params[2] intValue] : -1;
