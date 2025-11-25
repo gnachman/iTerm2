@@ -80,6 +80,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
     private let identifier: String
     private var pathToDatabase: String?
     private var pathToExecutable: String?
+    private let userAccountKey = "NoSyncAdapaterPasswordDataSource_"
 
     init(browser: Bool, adapterPath: String, identifier: String) {
         self.browser = browser
@@ -91,6 +92,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         } else {
             self.iTermVersion = "unknown"
         }
+        userAccountID = UserDefaults.standard.string(forKey: userAccountKey + identifier)
     }
 
     // MARK: - Helper Methods
@@ -725,7 +727,7 @@ extension AdapterPasswordDataSource {
         identifier
     }
     @objc var canResetConfiguration: Bool { true }
-    
+
     @objc func resetConfiguration() {
         pathToDatabase = nil
         pathToExecutable = nil
@@ -785,5 +787,18 @@ extension AdapterPasswordDataSource {
                              completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
         it_fatalError()
     }
-}
 
+    var supportsMultipleAccounts: Bool {
+        handshakeInfo?.userAccounts != nil
+    }
+
+    func switchAccount(completion: @escaping () -> ()) {
+        let userAccounts = handshakeInfo?.userAccounts ?? []
+        let identifier = AccountPicker.askUserToSelect(from: userAccounts.map {
+            AccountPicker.Account(title: $0.name, accountID: $0.identifier)
+        })
+        userAccountID = identifier
+        UserDefaults.standard.set(identifier, forKey: userAccountKey + identifier)
+        completion()
+    }
+}

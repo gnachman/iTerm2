@@ -823,6 +823,12 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     return [[RecipeExecutionContext alloc] initWithWindow:self.window];
 }
 
+- (IBAction)switchAccount:(id)sender {
+    [[self currentDataSource] switchAccountWithCompletion:^{
+        [self reloadItems:nil];
+    }];
+}
+
 - (IBAction)appendOTP:(id)sender {
     if (!self.dataSourceProvider.authenticated) {
         return;
@@ -978,6 +984,8 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     } else if (menuItem.action == @selector(toggleAutomaticallySendReturn:)) {
         menuItem.state = [iTermUserDefaults shouldSendReturnAfterPassword] ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
+    } else if (menuItem.action == @selector(switchAccount:)) {
+        return self.dataSourceProvider.authenticated && [[self currentDataSource] supportsMultipleAccounts];
     }
     return YES;
 }

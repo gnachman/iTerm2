@@ -227,6 +227,7 @@ class KeychainPasswordDataSource: NSObject, PasswordManagerDataSource {
     @objc var name: String { "Keychain" }
     @objc var canResetConfiguration: Bool { false }
     @objc func resetConfiguration() { }
+    @objc var supportsMultipleAccounts: Bool { false }
 
     func fetchAccounts(context: RecipeExecutionContext,
                        completion: @escaping ([PasswordManagerAccount]) -> ()) {
@@ -282,5 +283,8 @@ class KeychainPasswordDataSource: NSObject, PasswordManagerDataSource {
 
     func consolidateAvailabilityChecks(_ block: () -> ()) {
         block()
+    }
+    func switchAccount(completion: @escaping () -> ()) {
+        completion()
     }
 }

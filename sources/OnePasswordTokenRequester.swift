@@ -169,42 +169,20 @@ class OnePasswordUtils {
 }
 
 class OnePasswordAccountPicker {
+    static func askUserToSelect(from accounts: [Account]) {
+        let pickerAccounts = accounts.map {
+            AccountPicker.Account(title: $0.email, accountID: $0.account_uuid)
+        }
+        let identifier = AccountPicker.askUserToSelect(from: pickerAccounts)
+        iTermAdvancedSettingsModel.setOnePasswordAccount(identifier)
+    }
+
     struct Account: Codable {
         var url: String?
         var email: String?
         var user_uuid: String?
         var account_uuid: String?
     }
-
-    static func askUserToSelect(from accounts: [Account]) {
-        DLog("begin")
-        let alert = NSAlert()
-        alert.messageText = "Select an Account"
-        alert.informativeText = "Please choose an account:"
-        alert.alertStyle = .informational
-
-        var ids = [String]()
-        for account in accounts {
-            if let email = account.email, let uuid = account.account_uuid {
-                alert.addButton(withTitle: email)
-                ids.append(uuid)
-            }
-        }
-        if ids.count == 1 {
-            iTermAdvancedSettingsModel.setOnePasswordAccount(ids[0])
-            return
-        }
-        it_assert(ids.count > 1)
-
-        // Can't present a sheet modal within a sheet modal so go app modal instead.
-        let response = alert.runModal()
-
-        let selectedIndex = response.rawValue - NSApplication.ModalResponse.alertFirstButtonReturn.rawValue
-
-        let uuid = ids[selectedIndex]
-        iTermAdvancedSettingsModel.setOnePasswordAccount(uuid)
-    }
-
     static func asyncGetAccountList(_ completion: @escaping (Result<[Account], Error>) -> ()) {
         DLog("Read account list")
         let command = CommandLinePasswordDataSource.CommandRequestWithInput(

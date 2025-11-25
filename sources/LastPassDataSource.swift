@@ -412,6 +412,13 @@ extension LastPassDataSource: PasswordManagerDataSource {
         available = .wantCache
         block()
     }
+    var supportsMultipleAccounts: Bool {
+        false
+    }
+
+    func switchAccount(completion: @escaping () -> ()) {
+        completion()
+    }
 }
 
 class LastPassUtils {

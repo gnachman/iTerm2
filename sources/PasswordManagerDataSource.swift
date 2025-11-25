@@ -55,6 +55,8 @@ protocol PasswordManagerDataSource: AnyObject {
     @objc var canResetConfiguration: Bool { get }
     @objc func resetConfiguration()
     @objc var name: String { get }
+    @objc var supportsMultipleAccounts: Bool { get }
+    @objc(switchAccountWithCompletion:) func switchAccount(completion: @escaping () -> ())
 }
 
 extension PasswordManagerAccount {

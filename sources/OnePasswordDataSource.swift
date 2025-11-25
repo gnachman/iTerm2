@@ -53,6 +53,11 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
             asyncReallyGetToken(completion)
             return
         }
+        fetchAccountListAndMakeUserPick(forceSelection: false, completion)
+    }
+
+    private func fetchAccountListAndMakeUserPick(forceSelection: Bool,
+                                                 _ completion: @escaping (Result<OnePasswordTokenRequester.Auth, Error>) -> ()) {
         DLog("Checking account list")
         OnePasswordAccountPicker.asyncGetAccountList { [weak self] result in
             DLog("result=\(result)")
@@ -72,7 +77,7 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
                 if accounts.count > 1 {
                     let name = iTermAdvancedSettingsModel.onePasswordAccount()!
                     DLog("name=\(name)")
-                    if !accounts.anySatisfies({ $0.email == name || $0.account_uuid == name || $0.user_uuid == name }) {
+                    if forceSelection || !accounts.anySatisfies({ $0.email == name || $0.account_uuid == name || $0.user_uuid == name }) {
                         OnePasswordAccountPicker.askUserToSelect(from: accounts)
                     }
                 }
@@ -534,6 +539,17 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
         }, outputTransformer: { _ in }))
         return AnyRecipe(PipelineRecipe(getTagsRecipe(accountID: accountID),
                                         mutateTagsRecipe))
+    }
+
+    var supportsMultipleAccounts: Bool {
+        true
+    }
+
+    func switchAccount(completion: @escaping () -> ()) {
+        fetchAccountListAndMakeUserPick(forceSelection: true) { result in
+            DLog("\(result)")
+            completion()
+        }
     }
 }
 

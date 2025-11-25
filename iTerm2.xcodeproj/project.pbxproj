@@ -1546,6 +1546,7 @@
 		A63011CC20E851E0008114B7 /* iTermStatusBarSpringComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = A63011CA20E851E0008114B7 /* iTermStatusBarSpringComponent.h */; };
 		A63011CD20E851E0008114B7 /* iTermStatusBarSpringComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A63011CB20E851E0008114B7 /* iTermStatusBarSpringComponent.m */; };
 		A63011CE20E85B16008114B7 /* SessionTitleView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DEDC8FC1451F67D004F1615 /* SessionTitleView.m */; };
+		A6303A652ED626FB000CCDD2 /* AccountPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6303A642ED626F7000CCDD2 /* AccountPicker.swift */; };
 		A631749F21214698004F0142 /* iTermGenericStatusBarContainer.h in Headers */ = {isa = PBXBuildFile; fileRef = A631749D21214698004F0142 /* iTermGenericStatusBarContainer.h */; };
 		A63174A021214698004F0142 /* iTermGenericStatusBarContainer.m in Sources */ = {isa = PBXBuildFile; fileRef = A631749E21214698004F0142 /* iTermGenericStatusBarContainer.m */; };
 		A631FC8D20EDDAEA00EB824F /* iTermSearchFieldCell.h in Headers */ = {isa = PBXBuildFile; fileRef = A631FC8B20EDDAEA00EB824F /* iTermSearchFieldCell.h */; };
@@ -6915,6 +6916,7 @@
 		A63011C720E8518A008114B7 /* iTermStatusBarFixedSpacerComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarFixedSpacerComponent.m; sourceTree = "<group>"; };
 		A63011CA20E851E0008114B7 /* iTermStatusBarSpringComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarSpringComponent.h; sourceTree = "<group>"; };
 		A63011CB20E851E0008114B7 /* iTermStatusBarSpringComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarSpringComponent.m; sourceTree = "<group>"; };
+		A6303A642ED626F7000CCDD2 /* AccountPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountPicker.swift; sourceTree = "<group>"; };
 		A631749D21214698004F0142 /* iTermGenericStatusBarContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGenericStatusBarContainer.h; sourceTree = "<group>"; };
 		A631749E21214698004F0142 /* iTermGenericStatusBarContainer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGenericStatusBarContainer.m; sourceTree = "<group>"; };
 		A631FC8B20EDDAEA00EB824F /* iTermSearchFieldCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSearchFieldCell.h; sourceTree = "<group>"; };
@@ -13369,6 +13371,7 @@
 		A6A9838A27E5A7DE003319D1 /* Password Manager */ = {
 			isa = PBXGroup;
 			children = (
+				A6303A642ED626F7000CCDD2 /* AccountPicker.swift */,
 				A616D78D2EA85D9E000C0C18 /* AdapterPasswordDataSource.swift */,
 				1DFA7C991923EDD900DF1410 /* iTermPasswordManagerWindowController.m */,
 				1DFA7C981923EDD900DF1410 /* iTermPasswordManagerWindowController.h */,
@@ -19443,6 +19446,7 @@
 				A6A723A92DC010B400A8115D /* SubArray.swift in Sources */,
 				A61582A02E5E7BA80094B718 /* iTermHistogram.swift in Sources */,
 				A6153D5521F3D72A002976FC /* iTermStatusBarLayoutAlgorithm.m in Sources */,
+				A6303A652ED626FB000CCDD2 /* AccountPicker.swift in Sources */,
 				A67960D41F81FCBB008A42BC /* iTermCursorGuideRenderer.m in Sources */,
 				A692666A210A2FEA00A980C7 /* iTermTemporaryDoubleBufferedGridController.m in Sources */,
 				A6FF4AEF246BBFDB00410BA2 /* iTermTmuxWindowCache.m in Sources */,
