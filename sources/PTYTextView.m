@@ -6573,6 +6573,23 @@ static NSString *iTermStringFromRange(NSRange range) {
             }
         }
     }
+
+    // Handle OSC 8 URL shift-clicks.
+    if (coord.x >= 0 && coord.y >= 0) {
+        iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+        NSString *urlId = nil;
+        NSURL *url = [extractor urlOfHypertextLinkAt:coord urlId:&urlId];
+        if (url && [[NSWorkspace sharedWorkspace] it_urlIsLocallyOpenableWithUpsell:url]) {
+            const NSSize size = self.enclosingScrollView.frame.size;
+            [[NSWorkspace sharedWorkspace] it_openURL:url
+                                        configuration:[NSWorkspaceOpenConfiguration configuration]
+                                                style:size.width > size.height ? iTermOpenStyleVerticalSplit : iTermOpenStyleHorizontalSplit
+                                               upsell:YES
+                                               window:self.window];
+            return;
+        }
+    }
+
     id<VT100ScreenMarkReading> mark = [_delegate textViewMarkForCommandAt:coord];
     if (!mark) {
         return;
