@@ -8,6 +8,8 @@
 #import "iTermStatusBarVariableBaseComponent.h"
 
 #import "iTermController.h"
+#import "iTermDirectoryActionsViewController.h"
+#import "iTermPreferences.h"
 #import "iTermSessionLauncher.h"
 #import "iTermShellHistoryController.h"
 #import "iTermVariableScope.h"
@@ -18,9 +20,8 @@
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
-#import "iTermProfile.h"
+#import "Profile.h"
 #import "ProfileModel.h"
-#import "iTermProfilePreferences.h"
 #import "VT100RemoteHost.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -240,6 +241,9 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
 @end
 
 
+@interface iTermStatusBarWorkingDirectoryComponent () <iTermDirectoryActionsDelegate>
+@end
+
 @implementation iTermStatusBarWorkingDirectoryComponent {
     NSString *_home;
 }
@@ -311,7 +315,7 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
 }
 
 - (void)statusBarComponentDidClickWithView:(NSView *)view {
-    [self openMenuWithView:view];
+    [self openPopoverWithView:view];
 }
 
 - (BOOL)statusBarComponentHandlesMouseDown:(NSView *)view {
@@ -319,7 +323,41 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
 }
 
 - (void)statusBarComponentMouseDownWithView:(NSView *)view {
-    [self openMenuWithView:view];
+}
+
+- (void)openPopoverWithView:(NSView *)view {
+    NSString *currentPath = self.fullString;
+    if (!currentPath.length) {
+        return;
+    }
+    
+    NSPopover *popover = [[NSPopover alloc] init];
+    popover.appearance = view.effectiveAppearance;
+    
+    iTermDirectoryActionsViewController *viewController = [[iTermDirectoryActionsViewController alloc] initWithDirectoryPath:currentPath];
+    viewController.delegate = self;
+    viewController.font = [self font];
+    
+    popover.contentViewController = viewController;
+    popover.contentSize = viewController.view.frame.size;
+    popover.behavior = NSPopoverBehaviorTransient;
+    
+    NSRectEdge preferredEdge = NSRectEdgeMinY;
+    switch ([iTermPreferences unsignedIntegerForKey:kPreferenceKeyStatusBarPosition]) {
+        case iTermStatusBarPositionTop:
+            preferredEdge = NSRectEdgeMaxY;
+            break;
+        case iTermStatusBarPositionBottom:
+            preferredEdge = NSRectEdgeMinY;
+            break;
+    }
+    
+    NSView *relativeView = view.subviews.firstObject ?: view;
+    NSRect rect = relativeView.bounds;
+    rect.size.width = [self statusBarComponentMinimumWidth];
+    [popover showRelativeToRect:rect
+                         ofView:relativeView
+                  preferredEdge:preferredEdge];
 }
 
 - (void)openMenuWithView:(NSView *)view {
@@ -394,7 +432,9 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
     return result;
 }
 
-- (void)copyCurrentPath:(NSMenuItem *)sender {
+#pragma mark - iTermDirectoryActionsDelegate
+
+- (void)directoryActionsDidSelectCopyPath {
     NSString *path = self.fullString;
     if (path.length) {
         [[NSPasteboard generalPasteboard] clearContents];
@@ -402,57 +442,81 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
     }
 }
 
-- (void)copyCurrentBasename:(NSMenuItem *)sender {
+- (void)directoryActionsDidSelectCopyBasename {
     NSString *path = self.fullString;
     if (path.length) {
+        NSString *basename = [path lastPathComponent];
         [[NSPasteboard generalPasteboard] clearContents];
-        [[NSPasteboard generalPasteboard] setString:[path lastPathComponent] forType:NSPasteboardTypeString];
+        [[NSPasteboard generalPasteboard] setString:basename forType:NSPasteboardTypeString];
     }
 }
 
-- (void)openCurrentPathInFinder:(NSMenuItem *)sender {
+- (void)directoryActionsDidSelectOpenInFinder {
     NSString *path = self.fullString;
     if (path.length) {
         [[NSWorkspace sharedWorkspace] selectFile:nil inFileViewerRootedAtPath:path];
     }
 }
 
-- (void)openCurrentPathInNewWindow:(NSMenuItem *)sender {
-    [self launchSessionWithPath:self.fullString style:iTermOpenStyleWindow terminal:nil];
-}
-
-- (void)openCurrentPathInNewTab:(NSMenuItem *)sender {
+- (void)directoryActionsDidSelectOpenInNewWindow {
     NSString *path = self.fullString;
-    PseudoTerminal *currentTerminal = [[iTermController sharedInstance] currentTerminal];
-    if (currentTerminal) {
-        [self launchSessionWithPath:path style:iTermOpenStyleTab terminal:currentTerminal];
-    } else {
-        [self launchSessionWithPath:path style:iTermOpenStyleWindow terminal:nil];
-    }
-}
-
-- (void)launchSessionWithPath:(NSString *)path
-                        style:(iTermOpenStyle)style
-                     terminal:(nullable PseudoTerminal *)terminal {
     if (!path.length) {
         return;
     }
-    MutableProfile *profile = [[[ProfileModel sharedInstance] defaultBookmark] mutableCopy];
+
+    Profile *profile = [[ProfileModel sharedInstance] defaultBookmark];
     if (!profile) {
         return;
     }
-    profile[KEY_WORKING_DIRECTORY] = path;
-    profile[KEY_CUSTOM_DIRECTORY] = kProfilePreferenceInitialDirectoryCustomValue;
+
+    NSString *command = [NSString stringWithFormat:@"cd %@ && exec $SHELL -l",
+                        [path stringWithEscapedShellCharactersIncludingNewlines:YES]];
+
     [iTermSessionLauncher launchBookmark:profile
-                              inTerminal:terminal
-                                   style:style
+                              inTerminal:nil
+                                   style:iTermOpenStyleNewWindow
                                  withURL:nil
                         hotkeyWindowType:iTermHotkeyWindowTypeNone
                                  makeKey:YES
                              canActivate:YES
                       respectTabbingMode:NO
                                    index:nil
-                                 command:nil
+                                 command:command
+                             makeSession:nil
+                          didMakeSession:nil
+                              completion:nil];
+}
+
+- (void)directoryActionsDidSelectOpenInNewTab {
+    NSString *path = self.fullString;
+    if (!path.length) {
+        return;
+    }
+
+    Profile *profile = [[ProfileModel sharedInstance] defaultBookmark];
+    if (!profile) {
+        return;
+    }
+
+    PseudoTerminal *currentTerminal = [[iTermController sharedInstance] currentTerminal];
+    if (!currentTerminal) {
+        [self directoryActionsDidSelectOpenInNewWindow];
+        return;
+    }
+
+    NSString *command = [NSString stringWithFormat:@"cd %@ && exec $SHELL -l",
+                        [path stringWithEscapedShellCharactersIncludingNewlines:YES]];
+
+    [iTermSessionLauncher launchBookmark:profile
+                              inTerminal:currentTerminal
+                                   style:iTermOpenStyleNewTabAtEndOfTabs
+                                 withURL:nil
+                        hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                 makeKey:YES
+                             canActivate:YES
+                      respectTabbingMode:NO
+                                   index:nil
+                                 command:command
                              makeSession:nil
                           didMakeSession:nil
                               completion:nil];
