@@ -82,6 +82,8 @@ class MiniFilterViewController: NSViewController, NSTextFieldDelegate, iTermFilt
     @IBOutlet var searchField: MiniFilterField!
     @IBOutlet var closeButton: NSButton!
     private var timer: Timer? = nil
+    private var debounceTimer: Timer? = nil
+    private let debounceDelay: TimeInterval = 0.3
     weak var delegate: MiniFilterViewControllerDelegate? = nil
 
     init() {
@@ -202,8 +204,12 @@ class MiniFilterViewController: NSViewController, NSTextFieldDelegate, iTermFilt
         if field !== searchField {
             return
         }
-        delegate?.searchQueryDidChange(searchField.stringValue,
-                                       editor: obj.userInfo?["NSFieldEditor"] as? NSTextView)
+        debounceTimer?.invalidate()
+        let editor = obj.userInfo?["NSFieldEditor"] as? NSTextView
+        let query = searchField.stringValue
+        debounceTimer = Timer.scheduledTimer(withTimeInterval: debounceDelay, repeats: false) { [weak self] _ in
+            self?.delegate?.searchQueryDidChange(query, editor: editor)
+        }
     }
 
     func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {

@@ -65,6 +65,7 @@
     IBOutlet NSSegmentedControl *_arrowsControl;
     IBOutlet NSButton *_closeButton;
     NSTimer *_animationTimer;
+    NSTimer *_debounceTimer;
 }
 
 @synthesize driver;
@@ -334,8 +335,24 @@
         return;
     }
 
-    [self.driver userDidEditSearchQuery:_searchField.stringValue
-                            fieldEditor:aNotification.userInfo[@"NSFieldEditor"]];
+    [_debounceTimer invalidate];
+    NSString *query = _searchField.stringValue;
+    id fieldEditor = aNotification.userInfo[@"NSFieldEditor"];
+    _debounceTimer = [NSTimer scheduledTimerWithTimeInterval:0.3
+                                                      target:self
+                                                    selector:@selector(performDebouncedSearch:)
+                                                    userInfo:@{@"query": query ?: @"", @"fieldEditor": fieldEditor ?: [NSNull null]}
+                                                     repeats:NO];
+}
+
+- (void)performDebouncedSearch:(NSTimer *)timer {
+    NSDictionary *userInfo = timer.userInfo;
+    NSString *query = userInfo[@"query"];
+    id fieldEditor = userInfo[@"fieldEditor"];
+    if ([fieldEditor isKindOfClass:[NSNull class]]) {
+        fieldEditor = nil;
+    }
+    [self.driver userDidEditSearchQuery:query fieldEditor:fieldEditor];
 }
 
 - (NSArray *)control:(NSControl *)control
