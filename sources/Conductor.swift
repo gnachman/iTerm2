@@ -495,6 +495,38 @@ class Conductor: NSObject {
 }
 
 extension Conductor {
+    @objc(fetchTimeOffset:)
+    func fetchTimeOffset(completion: @escaping (TimeInterval, String?, NSError?) -> ()) {
+        let script = """
+        import time
+        from datetime import datetime, timezone
+
+        tz = time.tzname[time.daylight and time.localtime().tm_isdst]
+        delta = time.time() - \(Date().timeIntervalSince1970)
+        return f"{delta}\\n{tz}"
+        """
+        let start = NSDate.it_timeSinceBoot()
+        framerExecPythonStatements(statements: script) { [weak self] ok, output in
+            let end = NSDate.it_timeSinceBoot()
+            guard ok else {
+                self?.DLog("Failed to fetch time: \(output)")
+                completion(0, nil, iTermError("Failed to fetch time: \(output)") as NSError)
+                return
+            }
+            let lines = output.components(separatedBy: "\n")
+            if lines.count >= 2, let diff = Double(lines[0]) {
+                let latency = end - start
+                let offset = diff - latency / 2.0
+                let tzName = lines[1]
+                completion(offset, tzName, nil)
+            } else {
+                completion(0, nil, iTermError("Invalid output: \(output)") as NSError)
+            }
+        }
+    }
+}
+
+extension Conductor {
     @objc(subsequentJumps) var subsequentJumps_objc: [SSHReconnectionInfoObjC] {
         return subsequentJumps.map { SSHReconnectionInfoObjC($0) }
     }
@@ -791,6 +823,7 @@ extension Conductor {
         case framerSave([String:String])
         case framerFile(FileSubcommand)
         case framerGetenv(String)
+        case framerExecPythonStatements(String)
 
         var isFramer: Bool {
             switch self {
@@ -800,7 +833,7 @@ extension Conductor {
 
             case .framerRun, .framerLogin, .framerSend, .framerKill, .framerQuit, .framerRegister(_),
                     .framerDeregister(_), .framerPoll, .framerReset1, .framerReset2, .framerAutopoll, .framerSave(_),
-                    .framerFile(_), .framerEval, .framerGetenv:
+                    .framerFile(_), .framerEval, .framerGetenv, .framerExecPythonStatements:
                 return true
             }
         }
@@ -842,6 +875,8 @@ extension Conductor {
                 return ["kill", String(pid)].joined(separator: "\n")
             case .framerGetenv(let name):
                 return ["getenv", name].joined(separator: "\n")
+            case .framerExecPythonStatements(let statements):
+                return ["runpy", statements.lossyData.base64EncodedString()].joined(separator: "\n")
             case .framerQuit:
                 return "quit"
             case .framerRegister(pid: let pid):
@@ -902,6 +937,8 @@ extension Conductor {
                 return "kill \(pid)"
             case .framerGetenv(let name):
                 return "getenv \(name)"
+            case .framerExecPythonStatements(let statements):
+                return "exec python statements \(statements)"
             case .framerQuit:
                 return "quit"
             case .framerRegister(pid: let pid):
@@ -1017,6 +1054,8 @@ extension Conductor {
                     return "handleReset(\(expected), \(actual.string))"
                 case .handleGetHostname:
                     return "handleGetHostname"
+                case .handleEphemeralCompletion:
+                    return "handleEphemeralCompletion"
                 }
             }
 
@@ -1035,6 +1074,7 @@ extension Conductor {
             case handleGetenv(String, StringArray)
             case handleReset(expected: String, lines: StringArray)
             case handleGetHostname
+            case handleEphemeralCompletion(StringArray, OneTimeClosure2<String, Int32, Void>)
 
             private enum Key: CodingKey {
                 case rawValue
@@ -1058,6 +1098,7 @@ extension Conductor {
                 case handleGetenv
                 case handleReset
                 case handleGetHostname
+                case handleEphemeralCompletion
             }
 
             private var rawValue: Int {
@@ -1092,6 +1133,8 @@ extension Conductor {
                     return RawValues.handleReset.rawValue
                 case .handleGetHostname:
                     return RawValues.handleGetHostname.rawValue
+                case .handleEphemeralCompletion:
+                    return RawValues.handleEphemeralCompletion.rawValue
                 }
             }
 
@@ -1101,7 +1144,7 @@ extension Conductor {
                 switch self {
                 case .failIfNonzeroStatus, .fireAndForget, .handleFramerLogin(_), .handlePoll(_, _),
                         .handleJump, .handleNonFramerLogin, .handleGetenv, .handleReset,
-                        .handleGetHostname:
+                        .handleGetHostname, .handleEphemeralCompletion:
                     break
                 case .handleCheckForPython(let value):
                     try container.encode(value, forKey: .stringArray)
@@ -1157,6 +1200,8 @@ extension Conductor {
                                         lines: try container.decode(StringArray.self, forKey: .stringArray))
                 case .handleGetHostname:
                     self = .handleGetHostname
+                case .handleEphemeralCompletion:
+                    self = .handleEphemeralCompletion(StringArray(), .init({ _, _ in }))
                 }
             }
         }
@@ -1712,6 +1757,13 @@ extension Conductor {
         send(.framerGetenv(name), .handleGetenv(name, StringArray()))
     }
 
+    private func framerExecPythonStatements(statements: String,
+                                            completion: @escaping (Bool, String) -> ()) {
+        send(.framerExecPythonStatements(statements), .handleEphemeralCompletion(StringArray(), .init({ string, code in
+            completion(code == 0, string)
+        })))
+    }
+
     private func framerQuit() {
         send(.framerQuit, .fireAndForget)
     }
@@ -2048,6 +2100,16 @@ extension Conductor {
                 let combined = output.strings.joined(separator: "")
                 completion.call(combined.data(using: .utf8) ?? Data(),
                                 Int32(status))
+            }
+            return
+        case .handleEphemeralCompletion(let lines, let completion):
+            switch result {
+            case .line(let line):
+                lines.strings.append(line)
+            case .sideChannelLine(_, _, _), .abort, .canceled:
+                break
+            case .end(let status):
+                completion.call(lines.strings.joined(separator: ""), Int32(status))
             }
             return
         }
