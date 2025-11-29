@@ -62,6 +62,11 @@
     IBOutlet NSButton *_dragToScrollInAlternateScreenModeDisabled;
     IBOutlet NSButton *_suppressAlertsInActiveSession;
 
+    IBOutlet iTermColorWell *_sessionEndMessageColorWell;
+    IBOutlet NSTextField *_sessionEndMessageText;
+    IBOutlet NSTextField *_sessionRestartedMessageText;
+    IBOutlet NSTextField *_sessionFinishedMessageText;
+
     IBOutlet NSButton *_automaticallyEnableAlternatemouseScroll;
     IBOutlet NSButton *_restrictAlternateMouseScrollToVertical;
 
@@ -258,6 +263,26 @@
     [self defineUnsearchableControl:_suppressAlertsInActiveSession
                                 key:KEY_SUPPRESS_ALERTS_IN_ACTIVE_SESSION
                                type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_sessionEndMessageColorWell
+                    key:KEY_SESSION_END_MESSAGE_COLOR
+            relatedView:nil
+                   type:kPreferenceInfoTypeColorWell];
+    
+    [self defineControl:_sessionEndMessageText
+                    key:KEY_SESSION_END_MESSAGE_TEXT
+            relatedView:nil
+                   type:kPreferenceInfoTypeStringTextField];
+    
+    [self defineControl:_sessionRestartedMessageText
+                    key:KEY_SESSION_RESTARTED_MESSAGE_TEXT
+            relatedView:nil
+                   type:kPreferenceInfoTypeStringTextField];
+    
+    [self defineControl:_sessionFinishedMessageText
+                    key:KEY_SESSION_FINISHED_MESSAGE_TEXT
+            relatedView:nil
+                   type:kPreferenceInfoTypeStringTextField];
 
     [self defineControl:_flashingBell
                     key:KEY_FLASHING_BELL
