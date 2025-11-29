@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Example Session Messages Customization -->
+	<!-- Copy these keys into your iTerm2 profile preferences -->
+	
+	<!-- Session End Message Color (Red example) -->
+	<key>Session End Message Color</key>
+	<dict>
+		<key>Red Component</key>
+		<real>1.0</real>
+		<key>Green Component</key>
+		<real>0.0</real>
+		<key>Blue Component</key>
+		<real>0.0</real>
+		<key>Alpha Component</key>
+		<real>1.0</real>
+		<key>Color Space</key>
+		<string>sRGB</string>
+	</dict>
+	
+	<!-- Custom Session Ended Text -->
+	<key>Session End Message Text</key>
+	<string>🔴 Connection Closed</string>
+	
+	<!-- Custom Session Restarted Text -->
+	<key>Session Restarted Message Text</key>
+	<string>🔄 Reconnected</string>
+	
+	<!-- Custom Session Finished Text -->
+	<key>Session Finished Message Text</key>
+	<string>✅ Task Complete</string>
+</dict>
+</plist>
