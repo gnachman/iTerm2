@@ -3888,24 +3888,69 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         }
         screen_char_t savedFgColor = [terminal foregroundColorCode];
         screen_char_t savedBgColor = [terminal backgroundColorCode];
-        // This color matches the color used in BrokenPipeDivider.png.
-        [terminal setForeground24BitColor:[NSColor colorWithCalibratedRed:70.0/255.0
-                                                                    green:83.0/255.0
-                                                                     blue:246.0/255.0
-                                                                    alpha:1]];
+        NSColor *messageColor = [iTermProfilePreferences colorForKey:KEY_SESSION_END_MESSAGE_COLOR inProfile:self.profile];
+        if (!messageColor) {
+            messageColor = [NSColor colorWithCalibratedRed:70.0/255.0
+                                                     green:83.0/255.0
+                                                      blue:246.0/255.0
+                                                     alpha:1];
+        }
+        [terminal setForeground24BitColor:messageColor];
         [terminal setBackgroundColor:ALTSEM_DEFAULT
                   alternateSemantics:YES];
         [terminal updateDefaultChar];
         mutableState.currentGrid.defaultChar = terminal.defaultChar;
+        
+        NSString *dividerStyle = [iTermAdvancedSettingsModel sessionEndMessageDividerStyle];
+        BOOL showDividers = ![dividerStyle isEqualToString:@"none"];
         int width = (mutableState.width - message.length) / 2;
-        if (width > 0) {
-            [mutableState appendNativeImageAtCursorWithName:@"BrokenPipeDivider"
-                                                      width:width];
+        
+        if (showDividers && width > 0) {
+            // Determine divider character based on style
+            NSString *dividerChar = @"━"; // default double line
+            if ([dividerStyle isEqualToString:@"single"]) {
+                dividerChar = @"─";
+            } else if ([dividerStyle isEqualToString:@"double"]) {
+                dividerChar = @"━";
+            } else if ([dividerStyle isEqualToString:@"dashed"]) {
+                dividerChar = @"╌";
+            } else if ([dividerStyle isEqualToString:@"dotted"]) {
+                dividerChar = @"┄";
+            } else if ([dividerStyle isEqualToString:@"heavy"]) {
+                dividerChar = @"═";
+            } else if ([dividerStyle isEqualToString:@"light"]) {
+                dividerChar = @"─";
+            }
+            
+            // Create divider string by repeating the character
+            NSMutableString *leftDivider = [NSMutableString string];
+            for (int i = 0; i < width; i++) {
+                [leftDivider appendString:dividerChar];
+            }
+            [mutableState appendStringAtCursor:leftDivider];
         }
         [mutableState appendStringAtCursor:message];
-        if (width > 0) {
-            [mutableState appendNativeImageAtCursorWithName:@"BrokenPipeDivider"
-                                                      width:(mutableState.width - mutableState.cursorX + 1)];
+        if (showDividers && width > 0) {
+            int rightWidth = mutableState.width - mutableState.cursorX + 1;
+            NSMutableString *rightDivider = [NSMutableString string];
+            NSString *dividerChar = @"━";
+            if ([dividerStyle isEqualToString:@"single"]) {
+                dividerChar = @"─";
+            } else if ([dividerStyle isEqualToString:@"double"]) {
+                dividerChar = @"━";
+            } else if ([dividerStyle isEqualToString:@"dashed"]) {
+                dividerChar = @"╌";
+            } else if ([dividerStyle isEqualToString:@"dotted"]) {
+                dividerChar = @"┄";
+            } else if ([dividerStyle isEqualToString:@"heavy"]) {
+                dividerChar = @"═";
+            } else if ([dividerStyle isEqualToString:@"light"]) {
+                dividerChar = @"─";
+            }
+            for (int i = 0; i < rightWidth; i++) {
+                [rightDivider appendString:dividerChar];
+            }
+            [mutableState appendStringAtCursor:rightDivider];
         }
         [mutableState appendCarriageReturnLineFeed];
         [terminal setForegroundColor:savedFgColor.foregroundColor
@@ -4068,7 +4113,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_shell killWithMode:iTermJobManagerKillingModeBrokenPipe];
     if ([self shouldPostUserNotification] &&
         [iTermProfilePreferences boolForKey:KEY_SEND_SESSION_ENDED_ALERT inProfile:self.profile]) {
-        [[iTermNotificationController sharedInstance] notify:@"Session Ended"
+        NSString *notificationText = [iTermAdvancedSettingsModel sessionEndMessageText];
+        [[iTermNotificationController sharedInstance] notify:notificationText
                                              withDescription:[NSString stringWithFormat:@"Session \"%@\" in tab #%d just terminated.",
                                                               [[self name] removingHTMLFromTabTitleIfNeeded],
                                                               [_delegate tabNumber]]];
@@ -4083,7 +4129,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                                  VT100ScreenMutableState *mutableState,
                                                  id<VT100ScreenDelegate> delegate) {
             [terminal resetForReason:VT100TerminalResetReasonBrokenPipe];
-            [self appendBrokenPipeMessage:@"Session Restarted"];
+            [self appendBrokenPipeMessage:[iTermAdvancedSettingsModel sessionRestartedMessageText]];
             [self replaceTerminatedShellWithNewInstance];
         }];
         return;
@@ -4091,7 +4137,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
     if (_shortLivedSingleUse) {
         [[iTermBuriedSessions sharedInstance] restoreSession:self];
-        [self appendBrokenPipeMessage:@"Finished"];
+        [self appendBrokenPipeMessage:[iTermAdvancedSettingsModel sessionFinishedMessageText]];
         // restart is not respected here because it doesn't make sense and would make for an awful bug.
         if (self.endAction == iTermSessionEndActionClose) {
             [_delegate closeSession:self];
