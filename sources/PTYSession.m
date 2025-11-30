@@ -5178,6 +5178,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                                                 inProfile:aDict]];
     self.view.enableProgressBars = [iTermProfilePreferences boolForKey:KEY_ENABLE_PROGRESS_BARS
                                                              inProfile:aDict];
+    self.view.progressBarHeight = [iTermProfilePreferences floatForKey:KEY_PROGRESS_BAR_HEIGHT
+                                                             inProfile:aDict];
+    self.view.progressBarColorScheme = [iTermProfilePreferences stringForKey:KEY_PROGRESS_BAR_COLOR_SCHEME
+                                                                   inProfile:aDict];
     if (didAllowPasteBracketing && !_screen.terminalAllowPasteBracketing) {
         // If the user flips the setting off, disable bracketed paste.
         terminal.bracketedPasteMode = NO;

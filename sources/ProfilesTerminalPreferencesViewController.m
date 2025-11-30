@@ -33,6 +33,8 @@
     IBOutlet NSButton *_restrictMouseReportingToAlternateScreenMode;
     IBOutlet NSButton *_allowPasteBracketing;
     IBOutlet NSButton *_enableProgressBars;
+    IBOutlet NSTextField *_progressBarHeight;
+    IBOutlet NSPopUpButton *_progressBarColorScheme;
     IBOutlet NSButton *_disablePrinting;
     IBOutlet NSButton *_disableAltScreen;
     IBOutlet NSButton *_disableWindowResizing;
@@ -195,6 +197,17 @@
                     key:KEY_ENABLE_PROGRESS_BARS
             displayName:nil
                    type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_progressBarHeight
+                    key:KEY_PROGRESS_BAR_HEIGHT
+            displayName:nil
+                   type:kPreferenceInfoTypeFloatingPoint];
+
+    [self populateProgressBarColorSchemes];
+    [self defineControl:_progressBarColorScheme
+                    key:KEY_PROGRESS_BAR_COLOR_SCHEME
+            displayName:nil
+                   type:kPreferenceInfoTypePopup];
 
     [self defineControl:_disablePrinting
                     key:KEY_DISABLE_PRINTING
@@ -390,6 +403,19 @@
         NSString *theTitle = [NSString localizedNameOfStringEncoding:[anEncoding unsignedIntValue]];
         [_characterEncoding addItemWithTitle:theTitle];
         [[_characterEncoding lastItem] setTag:[anEncoding unsignedIntValue]];
+    }
+}
+
+- (void)populateProgressBarColorSchemes {
+    [_progressBarColorScheme removeAllItems];
+    NSArray *schemes = @[@"default", @"rainbow", @"red", @"green", @"blue", @"yellow", @"purple", @"cyan", @"orange"];
+    for (NSString *scheme in schemes) {
+        NSString *title = [scheme capitalizedString];
+        if ([scheme isEqualToString:@"default"]) {
+            title = @"Default (Green/Blue)";
+        }
+        [_progressBarColorScheme addItemWithTitle:title];
+        [[_progressBarColorScheme lastItem] setRepresentedObject:scheme];
     }
 }
 
