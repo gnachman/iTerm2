@@ -1131,7 +1131,7 @@ const CGFloat kDefaultTagsWidth = 80;
                                        frame.size.height - kSearchWidgetHeight - margin_);
     splitView_.frame = splitViewFrame;
 
-    if (tableView_.delegate) {
+    if (tableView_.delegate && frame.size.width != oldBoundsSize.width) {
         NSMutableIndexSet *rowsWithHeightChange = [NSMutableIndexSet indexSet];
         for (NSInteger i = 0; i < self.numberOfRows; i++) {
             CGFloat savedHeight = [_savedHeights[@(i)] doubleValue];
