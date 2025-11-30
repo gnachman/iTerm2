@@ -1881,9 +1881,13 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     if (!_progressBar) {
         _progressBar = [[iTermProgressBarView alloc] init];
         _progressBar.darkMode = _terminalBackgroundColor.isDark;
+        _progressBar.heightValue = _progressBarHeight;
+        _progressBar.colorScheme = _progressBarColorScheme;
         [self addSubviewBelowFindView:_progressBar];
         [self updateLayout];
     }
+    _progressBar.heightValue = _progressBarHeight;
+    _progressBar.colorScheme = _progressBarColorScheme;
     _progressBar.state = _progress;
     switch (_progress) {
         case VT100ScreenProgressStopped:
@@ -1932,6 +1936,22 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 - (void)setEnableProgressBars:(BOOL)enableProgressBars {
     _enableProgressBars = enableProgressBars;
     [self updateProgressBar];
+}
+
+- (void)setProgressBarHeight:(CGFloat)progressBarHeight {
+    _progressBarHeight = progressBarHeight;
+    if (_progressBar) {
+        _progressBar.heightValue = progressBarHeight;
+        [self updateLayout];
+    }
+}
+
+- (void)setProgressBarColorScheme:(NSString *)progressBarColorScheme {
+    _progressBarColorScheme = [progressBarColorScheme copy];
+    if (_progressBar) {
+        _progressBar.colorScheme = progressBarColorScheme;
+        [_progressBar setNeedsDisplay:YES];
+    }
 }
 
 - (BOOL)statusBarIsInPaneTitleBar {

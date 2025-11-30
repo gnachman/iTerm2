@@ -215,6 +215,8 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property (nonatomic, readonly) BOOL isBrowser;
 @property (nonatomic) VT100ScreenProgress progress;
 @property (nonatomic) BOOL enableProgressBars;
+@property (nonatomic) CGFloat progressBarHeight;
+@property (nonatomic, copy) NSString *progressBarColorScheme;
 
 - (void)setBrowserViewController:(iTermBrowserViewController *)browserViewController
                       initialURL:(NSString *)initialURL
