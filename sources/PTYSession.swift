@@ -1187,6 +1187,8 @@ extension PTYSession {
             KEY_RESTRICT_MOUSE_REPORTING_TO_ALTERNATE_SCREEN_MODE: nullValue,
             KEY_ALLOW_PASTE_BRACKETING: nullValue,
             KEY_ENABLE_PROGRESS_BARS: nullValue,
+            KEY_PROGRESS_BAR_HEIGHT: nullValue,
+            KEY_PROGRESS_BAR_COLOR_SCHEME: nullValue,
             KEY_ALLOW_TITLE_SETTING: nullValue,
             KEY_DISABLE_PRINTING: nullValue,
             KEY_SCROLLBACK_WITH_STATUS_BAR: nullValue,

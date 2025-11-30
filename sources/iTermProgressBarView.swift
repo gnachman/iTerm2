@@ -44,8 +44,10 @@ extension VT100ScreenProgress {
 
 @objc
 class iTermProgressBarView: NSView {
+    @objc var heightValue: CGFloat = 2.0
+    @objc var colorScheme: String = "default"
     @objc var desiredHeight: CGFloat {
-        iTermPreferences.float(forKey: kPreferenceKeyTopBottomMargins)
+        return heightValue > 0 ? heightValue : 0
     }
     @objc var darkMode = false {
         didSet {
@@ -139,24 +141,18 @@ private extension iTermProgressBarView {
     }
 
     private func indeterminateColors(dark: Bool) -> [NSColor] {
-        if dark {
-            return [green(0.0), green(0.5), green(1.0), green(1.0), green(0.5), green(0.0)]
-        } else {
-            return [blue(0.0), blue(0.3), blue(1.0), blue(0.3), blue(0.0)]
-        }
+        return colorSchemeColors(scheme: colorScheme, dark: dark, isIndeterminate: true)
     }
 
     private func determinateColors(success: Success, dark: Bool) -> [NSColor] {
-        switch success {
-        case .success:
-            if dark {
-                return [NSColor(srgbRed: 0.0, green: 1.0, blue: 0.0, alpha: 1.0),
-                        NSColor(srgbRed: 0.2, green: 1.0, blue: 0.2, alpha: 1.0)]
-            } else {
-                return [NSColor(srgbRed: 0.0, green: 0.0, blue: 1.0, alpha: 1.0),
-                        NSColor(srgbRed: 0.2, green: 0.2, blue: 1.0, alpha: 1.0)]
-            }
-        case .warning:
+        let scheme = colorScheme
+        
+        if success == .error {
+            return [NSColor(srgbRed: 1.0, green: 0.0, blue: 0.0, alpha: 1.0),
+                    NSColor(srgbRed: 1.0, green: 0.2, blue: 0.2, alpha: 1.0)]
+        }
+        
+        if success == .warning {
             if dark {
                 return [NSColor(srgbRed: 1.0, green: 0.5, blue: 0.0, alpha: 1.0),
                         NSColor(srgbRed: 1.0, green: 0.7, blue: 0.2, alpha: 1.0)]
@@ -164,15 +160,9 @@ private extension iTermProgressBarView {
                 return [NSColor(srgbRed: 0.8, green: 0.6, blue: 0.0, alpha: 1.0),
                         NSColor(srgbRed: 1.0, green: 0.8, blue: 0.2, alpha: 1.0)]
             }
-        case .error:
-            if dark {
-                return [NSColor(srgbRed: 1.0, green: 0.0, blue: 0.0, alpha: 1.0),
-                        NSColor(srgbRed: 1.0, green: 0.2, blue: 0.2, alpha: 1.0)]
-            } else {
-                return [NSColor(srgbRed: 1.0, green: 0.0, blue: 0.0, alpha: 1.0),
-                        NSColor(srgbRed: 1.0, green: 0.2, blue: 0.2, alpha: 1.0)]
-            }
         }
+        
+        return colorSchemeColors(scheme: scheme, dark: dark, isIndeterminate: false)
     }
 
     private func backgroundColor(dark: Bool) -> CGColor {
@@ -189,6 +179,74 @@ private extension iTermProgressBarView {
 
     private func green(_ greenness: CGFloat) -> NSColor {
         return NSColor(srgbRed: 0.0, green: greenness, blue: 0.0, alpha: 1)
+    }
+    
+    private func colorSchemeColors(scheme: String, dark: Bool, isIndeterminate: Bool) -> [NSColor] {
+        let lowerScheme = scheme.lowercased()
+        
+        switch lowerScheme {
+        case "rainbow":
+            return [
+                NSColor(srgbRed: 1.0, green: 0.0, blue: 0.0, alpha: 1.0),
+                NSColor(srgbRed: 1.0, green: 0.5, blue: 0.0, alpha: 1.0),
+                NSColor(srgbRed: 1.0, green: 1.0, blue: 0.0, alpha: 1.0),
+                NSColor(srgbRed: 0.0, green: 1.0, blue: 0.0, alpha: 1.0),
+                NSColor(srgbRed: 0.0, green: 0.5, blue: 1.0, alpha: 1.0),
+                NSColor(srgbRed: 0.5, green: 0.0, blue: 1.0, alpha: 1.0),
+                NSColor(srgbRed: 1.0, green: 0.0, blue: 0.5, alpha: 1.0)
+            ]
+        case "red":
+            return [
+                NSColor(srgbRed: 0.8, green: 0.0, blue: 0.0, alpha: 1.0),
+                NSColor(srgbRed: 1.0, green: 0.2, blue: 0.2, alpha: 1.0)
+            ]
+        case "green":
+            return [
+                NSColor(srgbRed: 0.0, green: 0.8, blue: 0.0, alpha: 1.0),
+                NSColor(srgbRed: 0.2, green: 1.0, blue: 0.2, alpha: 1.0)
+            ]
+        case "blue":
+            return [
+                NSColor(srgbRed: 0.0, green: 0.0, blue: 0.8, alpha: 1.0),
+                NSColor(srgbRed: 0.2, green: 0.2, blue: 1.0, alpha: 1.0)
+            ]
+        case "yellow":
+            return [
+                NSColor(srgbRed: 0.8, green: 0.8, blue: 0.0, alpha: 1.0),
+                NSColor(srgbRed: 1.0, green: 1.0, blue: 0.2, alpha: 1.0)
+            ]
+        case "purple":
+            return [
+                NSColor(srgbRed: 0.6, green: 0.0, blue: 0.8, alpha: 1.0),
+                NSColor(srgbRed: 0.8, green: 0.2, blue: 1.0, alpha: 1.0)
+            ]
+        case "cyan":
+            return [
+                NSColor(srgbRed: 0.0, green: 0.8, blue: 0.8, alpha: 1.0),
+                NSColor(srgbRed: 0.2, green: 1.0, blue: 1.0, alpha: 1.0)
+            ]
+        case "orange":
+            return [
+                NSColor(srgbRed: 1.0, green: 0.5, blue: 0.0, alpha: 1.0),
+                NSColor(srgbRed: 1.0, green: 0.7, blue: 0.2, alpha: 1.0)
+            ]
+        default:
+            if isIndeterminate {
+                if dark {
+                    return [green(0.0), green(0.5), green(1.0), green(1.0), green(0.5), green(0.0)]
+                } else {
+                    return [blue(0.0), blue(0.3), blue(1.0), blue(0.3), blue(0.0)]
+                }
+            } else {
+                if dark {
+                    return [NSColor(srgbRed: 0.0, green: 1.0, blue: 0.0, alpha: 1.0),
+                            NSColor(srgbRed: 0.2, green: 1.0, blue: 0.2, alpha: 1.0)]
+                } else {
+                    return [NSColor(srgbRed: 0.0, green: 0.0, blue: 1.0, alpha: 1.0),
+                            NSColor(srgbRed: 0.2, green: 0.2, blue: 1.0, alpha: 1.0)]
+                }
+            }
+        }
     }
 
     // MARK: - Layer Creation
