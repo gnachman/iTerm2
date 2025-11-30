@@ -5175,6 +5175,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     const BOOL didAllowPasteBracketing = _screen.terminalAllowPasteBracketing;
     [terminal setAllowPasteBracketing:[iTermProfilePreferences boolForKey:KEY_ALLOW_PASTE_BRACKETING
                                                                 inProfile:aDict]];
+    self.view.enableProgressBars = [iTermProfilePreferences boolForKey:KEY_ENABLE_PROGRESS_BARS
+                                                             inProfile:aDict];
     if (didAllowPasteBracketing && !_screen.terminalAllowPasteBracketing) {
         // If the user flips the setting off, disable bracketed paste.
         terminal.bracketedPasteMode = NO;
