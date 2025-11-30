@@ -4,8 +4,6 @@
 
 ### macOS Terminal Replacement
 
-[![Build Status](https://travis-ci.org/gnachman/iTerm2.svg?branch=master)](https://travis-ci.org/gnachman/iTerm2)
-[![Coverage Status](https://coveralls.io/repos/github/gnachman/iTerm2/badge.svg?branch=master)](https://coveralls.io/github/gnachman/iTerm2?branch=master)
 ![Version](https://img.shields.io/badge/version-3.6-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-macOS-lightgrey.svg)
 
