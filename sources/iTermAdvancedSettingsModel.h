@@ -318,6 +318,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)openFileInNewWindows;
 + (BOOL)openFileInSplitPanes;
 + (BOOL)openFileInVerticalSplitPane;
++ (NSInteger)newInstanceOpenStyle;
 + (BOOL)openFileOverridesSendText;
 + (BOOL)openNewWindowAtStartup;
 + (BOOL)openUntitledFile;

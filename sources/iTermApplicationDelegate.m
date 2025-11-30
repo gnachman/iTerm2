@@ -755,7 +755,10 @@ static BOOL hasBecomeActive = NO;
         }
         DLog(@"application:openFile: launching new session in window %@", windowController);
         iTermOpenStyle style = iTermOpenStyleTab;
-        if ([iTermAdvancedSettingsModel openFileInNewWindows]) {
+        NSInteger stylePreference = [iTermAdvancedSettingsModel newInstanceOpenStyle];
+        if (stylePreference >= 0 && stylePreference <= 3) {
+            style = (iTermOpenStyle)stylePreference;
+        } else if ([iTermAdvancedSettingsModel openFileInNewWindows]) {
             style = iTermOpenStyleWindow;
         } else if ([iTermAdvancedSettingsModel openFileInSplitPanes]) {
             if ([iTermAdvancedSettingsModel openFileInVerticalSplitPane]) {
