@@ -132,8 +132,23 @@
 }
 
 - (void)drawSourceWithMessage:(NSString *)message rect:(NSRect)dirtyRect {
-    [[NSColor colorWithCalibratedRed:0 green:0.5 blue:0 alpha:1] set];
+    NSString *hexColor = [iTermAdvancedSettingsModel splitPaneSourceFillColor];
+    NSColor *color = [NSColor colorFromHexString:hexColor];
+    [color ?: [NSColor colorWithCalibratedRed:0 green:0.5 blue:0 alpha:1] set];
     NSRectFill(dirtyRect);
+    
+    NSRect highlightRect = self.frame;
+    hexColor = [iTermAdvancedSettingsModel splitPaneSourceBorderColor];
+    color = [NSColor colorFromHexString:hexColor];
+    [color ?: [NSColor whiteColor] set];
+    NSFrameRect(highlightRect);
+    
+    highlightRect = NSInsetRect(highlightRect, 1, 1);
+    hexColor = [iTermAdvancedSettingsModel splitPaneSourceInnerBorderColor];
+    color = [NSColor colorFromHexString:hexColor];
+    [color ?: [NSColor blackColor] set];
+    NSFrameRect(highlightRect);
+    
     [self _showMessage:message inRect:self.frame];
 }
 
