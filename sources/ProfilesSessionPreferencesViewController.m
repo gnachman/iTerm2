@@ -10,9 +10,11 @@
 #import "ITAddressBookMgr.h"
 #import "iTermColorMap.h"
 #import "iTermFunctionCallTextFieldDelegate.h"
+#import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermStatusBarSetupViewController.h"
 #import "iTermTheme.h"
+#import "iTermUserDefaultsObserver.h"
 #import "iTermVariableHistory.h"
 #import "iTermVariables.h"
 #import "iTermWarning.h"
@@ -24,6 +26,7 @@
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSView+iTerm.h"
 #import "PSMMinimalTabStyle.h"
 #import "PreferencePanel.h"
 
@@ -84,9 +87,16 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     IBOutlet NSTextField *_showTimestampsLabel;
     IBOutlet NSButton *_warnAboutShortLivedSessions;
 
+    IBOutlet NSButton *_enableProgressBars;
+    IBOutlet NSTextField *_progressBarHeight;
+    IBOutlet NSStepper *_progressBarHeightStepper;
+    IBOutlet NSPopUpButton *_progressBarColorScheme;
+
     iTermStatusBarSetupViewController *_statusBarSetupViewController;
     iTermStatusBarSetupPanel *_statusBarSetupWindow;
     BOOL _awoken;
+    iTermUserDefaultsObserver *_topBottomMarginsObserver;
+    PreferenceInfo *_progressBarHeightInfo;
 }
 
 - (void)dealloc {
@@ -283,6 +293,44 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
+    [self defineControl:_enableProgressBars
+                    key:KEY_ENABLE_PROGRESS_BARS
+            displayName:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    _progressBarHeightInfo = [self defineControl:_progressBarHeight
+                                              key:KEY_PROGRESS_BAR_HEIGHT
+                                      displayName:@"Progress bar height"
+                                             type:kPreferenceInfoTypeIntegerTextField];
+    _progressBarHeightInfo.shouldBeEnabled = ^BOOL {
+        return [weakSelf boolForKey:KEY_ENABLE_PROGRESS_BARS];
+    };
+    __weak NSView *heightView = _progressBarHeight;
+    _progressBarHeightInfo.didClamp = ^(int oobValue) {
+        if (oobValue > [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]) {
+            [heightView it_showInformativeMessageWithMarkdown:@"The progress bar height cannot exceed the top margin’s height. You can adjust it in **Settings > Appearance > Panes > Top & Bottom Margins**."];
+        }
+    };
+    [_progressBarHeightInfo addShouldBeEnabledDependencyOnSetting:KEY_ENABLE_PROGRESS_BARS
+                                                       controller:self];
+    [self associateStepper:_progressBarHeightStepper withPreference:_progressBarHeightInfo];
+    [self updateProgressBarHeightRange];
+
+    [self populateProgressBarColorSchemes];
+    info = [self defineControl:_progressBarColorScheme
+                           key:KEY_PROGRESS_BAR_COLOR_SCHEME
+                   displayName:@"Progress bar color scheme"
+                          type:kPreferenceInfoTypeStringPopup];
+    info.shouldBeEnabled = ^BOOL {
+        return [weakSelf boolForKey:KEY_ENABLE_PROGRESS_BARS];
+    };
+    [info addShouldBeEnabledDependencyOnSetting:KEY_ENABLE_PROGRESS_BARS
+                                     controller:self];
+    _topBottomMarginsObserver = [[iTermUserDefaultsObserver alloc] init];
+    [_topBottomMarginsObserver observeKey:kPreferenceKeyTopBottomMargins block:^{
+        [weakSelf updateProgressBarHeightRange];
+    }];
+
     info = [self unsafeDefineControl:_warnAboutShortLivedSessions
                                  key:ProfilesSessionPreferencesViewControllerPhonyShortLivedSessionsKey
                          relatedView:nil
@@ -344,6 +392,37 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
                        phrases:@[]
                            key:nil];
     [self commitControls];
+}
+
+- (void)populateProgressBarColorSchemes {
+    [_progressBarColorScheme removeAllItems];
+    NSArray<NSString *> *schemes = @[
+        iTermProgressBarColorSchemeDefault,
+        iTermProgressBarColorSchemeRainbow,
+        iTermProgressBarColorSchemeRed,
+        iTermProgressBarColorSchemeGreen,
+        iTermProgressBarColorSchemeBlue,
+        iTermProgressBarColorSchemeYellow,
+        iTermProgressBarColorSchemePurple,
+        iTermProgressBarColorSchemeCyan,
+        iTermProgressBarColorSchemeOrange
+    ];
+    NSDictionary<NSString *, NSString *> *titles = @{
+        iTermProgressBarColorSchemeDefault: @"Default",
+        iTermProgressBarColorSchemeRainbow: @"Rainbow",
+        iTermProgressBarColorSchemeRed: @"Red",
+        iTermProgressBarColorSchemeGreen: @"Green",
+        iTermProgressBarColorSchemeBlue: @"Blue",
+        iTermProgressBarColorSchemeYellow: @"Yellow",
+        iTermProgressBarColorSchemePurple: @"Purple",
+        iTermProgressBarColorSchemeCyan: @"Cyan",
+        iTermProgressBarColorSchemeOrange: @"Orange"
+    };
+    for (NSString *scheme in schemes) {
+        NSString *title = titles[scheme];
+        [_progressBarColorScheme addItemWithTitle:title];
+        [[_progressBarColorScheme lastItem] setRepresentedObject:scheme];
+    }
 }
 
 - (void)onEndSettingDidChange {
@@ -654,6 +733,14 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
 
 - (BOOL)logDirIsWritable {
     return [[NSFileManager defaultManager] directoryIsWritable:[_logDir stringValue].stringByExpandingTildeInPath];
+}
+
+- (void)updateProgressBarHeightRange {
+    if (!_progressBarHeightInfo) {
+        return;
+    }
+    const NSInteger topBottomMargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    _progressBarHeightInfo.range = NSMakeRange(1, topBottomMargin);
 }
 
 #pragma mark - PSMMinimalTabStyleDelegate
