@@ -213,6 +213,7 @@
 #define KEY_ALLOW_ALTERNATE_MOUSE_SCROLL      @"Allow Alternate Mouse Scroll"
 #define KEY_RESTRICT_MOUSE_REPORTING_TO_ALTERNATE_SCREEN_MODE @"Restrict Mouse Reporting to Alternate Screen Mode"
 #define KEY_ALLOW_PASTE_BRACKETING            @"Allow Paste Bracketing"
+#define KEY_ENABLE_PROGRESS_BARS              @"Enable Progress Bars"
 #define KEY_ALLOW_TITLE_SETTING               @"Allow Title Setting"
 #define KEY_DISABLE_PRINTING                  @"Disable Printing"
 #define KEY_SCROLLBACK_WITH_STATUS_BAR        @"Scrollback With Status Bar"
