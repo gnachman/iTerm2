@@ -11,6 +11,7 @@
 #import "FindContext.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermDebouncer.h"
 #import "iTermFindPasteboard.h"
 #import "iTermSearchHistory.h"
 #import "iTermTuple.h"
@@ -45,17 +46,7 @@ static NSString *gSearchString;
     FindState *_savedState;
     FindState *_state;
     iTermSearchEngine *_searchEngine;
-
-    // Last time the text field was edited.
-    NSTimeInterval _lastEditTime;
-    enum {
-        kFindViewDelayStateEmpty,
-        kFindViewDelayStateDelaying,
-        kFindViewDelayStateActiveShort,
-        kFindViewDelayStateActiveMedium,
-        kFindViewDelayStateActiveLong,
-    } _delayState;
-
+    iTermDebouncer *_debouncer;
     iTermFindMode _filterMode;
 }
 
@@ -115,6 +106,10 @@ static NSString *gSearchString;
         _state.mode = gFindMode;
         _filterMode = gFilterMode;
         __weak __typeof(self) weakSelf = self;
+        _debouncer = [[iTermDebouncer alloc] initWithCallback:^(NSString *query) {
+            [[iTermSearchHistory sharedInstance] addQuery:query];
+            [weakSelf doSearch];
+        }];
         [[iTermFindPasteboard sharedInstance] addObserver:self block:^(id sender, NSString *newValue, BOOL internallyGenerated) {
             [weakSelf loadFindStringFromSharedPasteboard:newValue];
         }];
@@ -277,113 +272,11 @@ static NSString *gSearchString;
                                   userOriginated:YES];
     }
 
-    // A query becomes stale when it is 1 or 2 chars long and it hasn't been edited in 3 seconds (or
-    // the search field has lost focus since the last char was entered).
-    static const CGFloat kStaleTime = 3;
-    BOOL isStale = (([NSDate timeIntervalSinceReferenceDate] - _lastEditTime) > kStaleTime &&
-                    updatedQuery.length > 0 &&
-                    [self queryIsShort:updatedQuery]);
-
-    void (^search)(void) = ^{
-        [[iTermSearchHistory sharedInstance] addQuery:updatedQuery];
-        [self doSearch];
-    };
-    // This state machine implements a delay before executing short (1 or 2 char) queries. The delay
-    // is incurred again when a 5+ char query becomes short. It's kind of complicated so the delay
-    // gets inserted at appropriate but minimally annoying times. Plug this into graphviz to see the
-    // full state machine:
-    //
-    // digraph g {
-    //   Empty -> Delaying [ label = "1 or 2 chars entered" ]
-    //   Empty -> ActiveShort
-    //   Empty -> ActiveMedium [ label = "3 or 4 chars entered" ]
-    //   Empty -> ActiveLong [ label = "5+ chars entered" ]
-    //
-    //   Delaying -> Empty [ label = "Erased" ]
-    //   Delaying -> ActiveShort [ label = "After Delay" ]
-    //   Delaying -> ActiveMedium
-    //   Delaying -> ActiveLong
-    //
-    //   ActiveShort -> ActiveMedium
-    //   ActiveShort -> ActiveLong
-    //   ActiveShort -> Delaying [ label = "When Stale" ]
-    //
-    //   ActiveMedium -> Empty
-    //   ActiveMedium -> ActiveLong
-    //   ActiveMedium -> Delaying [ label = "When Stale" ]
-    //
-    //   ActiveLong -> Delaying [ label = "Becomes Short" ]
-    //   ActiveLong -> ActiveMedium
-    //   ActiveLong -> Empty
-    // }
-    switch (_delayState) {
-        case kFindViewDelayStateEmpty:
-            if (updatedQuery.length == 0) {
-                break;
-            } else if ([self queryIsShort:updatedQuery]) {
-                [self startDelay];
-            } else {
-                [self becomeActive];
-            }
-            break;
-
-        case kFindViewDelayStateDelaying:
-            if (updatedQuery.length == 0) {
-                _delayState = kFindViewDelayStateEmpty;
-            } else if (![self queryIsShort:updatedQuery]) {
-                [self becomeActive];
-            }
-            break;
-
-        case kFindViewDelayStateActiveShort:
-            // This differs from ActiveMedium in that it will not enter the Empty state.
-            if (isStale) {
-                [self startDelay];
-                break;
-            }
-
-            search();
-            if ([self queryIsLong:updatedQuery]) {
-                _delayState = kFindViewDelayStateActiveLong;
-            } else if (![self queryIsShort:updatedQuery]) {
-                _delayState = kFindViewDelayStateActiveMedium;
-            }
-            break;
-
-        case kFindViewDelayStateActiveMedium:
-            if (isStale) {
-                [self startDelay];
-                break;
-            }
-            if (updatedQuery.length == 0) {
-                _delayState = kFindViewDelayStateEmpty;
-            } else if ([self queryIsLong:updatedQuery]) {
-                _delayState = kFindViewDelayStateActiveLong;
-            }
-            // This state intentionally does not transition to ActiveShort. If you backspace over
-            // the whole query, the delay must be done again.
-            search();
-            break;
-
-        case kFindViewDelayStateActiveLong:
-            if (updatedQuery.length == 0) {
-                _delayState = kFindViewDelayStateEmpty;
-                search();
-            } else if ([self queryIsShort:updatedQuery]) {
-                // long->short transition. Common when select-all followed by typing.
-                [self startDelay];
-            } else if (![self queryIsLong:updatedQuery]) {
-                _delayState = kFindViewDelayStateActiveMedium;
-                search();
-            } else {
-                search();
-            }
-            break;
-    }
-    _lastEditTime = [NSDate timeIntervalSinceReferenceDate];
+    [_debouncer updateQuery:updatedQuery];
 }
 
 - (void)owningViewDidBecomeFirstResponder {
+    [_debouncer owningViewDidBecomeFirstResponder];
     if (!self.needsUpdateOnFocus) {
         return;
     }
@@ -647,41 +540,6 @@ static NSString *gSearchString;
         [self searchNext];
     } else {
         [self searchPrevious];
-    }
-}
-
-- (void)startDelay {
-    _delayState = kFindViewDelayStateDelaying;
-    NSTimeInterval delay = [iTermAdvancedSettingsModel findDelaySeconds];
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)),
-                   dispatch_get_main_queue(), ^{
-                       if (!self.viewController.view.isHidden &&
-                           self->_delayState == kFindViewDelayStateDelaying) {
-                           [self becomeActive];
-                       }
-                   });
-}
-
-- (BOOL)queryIsLong:(NSString *)query {
-    return query.length >= 5;
-}
-
-- (BOOL)queryIsShort:(NSString *)query {
-    return query.length <= 2;
-}
-
-- (void)becomeActive {
-    [self updateDelayState];
-    [self doSearch];
-}
-
-- (void)updateDelayState {
-    if ([self queryIsLong:_viewController.findString]) {
-        _delayState = kFindViewDelayStateActiveLong;
-    } else if ([self queryIsShort:_viewController.findString]) {
-        _delayState = kFindViewDelayStateActiveShort;
-    } else {
-        _delayState = kFindViewDelayStateActiveMedium;
     }
 }
 
