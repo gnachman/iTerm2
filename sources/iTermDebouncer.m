@@ -6,7 +6,6 @@
 #import "iTermDebouncer.h"
 #import "iTermAdvancedSettingsModel.h"
 
-// State machine states for debouncing
 typedef NS_ENUM(NSInteger, iTermDebouncerState) {
     iTermDebouncerStateEmpty,
     iTermDebouncerStateDelaying,
@@ -16,16 +15,9 @@ typedef NS_ENUM(NSInteger, iTermDebouncerState) {
 };
 
 @implementation iTermDebouncer {
-    // Callback to invoke when query should be executed
     void (^_callback)(NSString *query);
-
-    // Current state in the state machine
     iTermDebouncerState _state;
-
-    // Last time the query was edited
     NSTimeInterval _lastEditTime;
-
-    // Current query string
     NSString *_currentQuery;
 }
 
