@@ -319,6 +319,9 @@ DEFINE_BOOL(placeTabsInTitlebarAccessoryInFullScreen, YES, SECTION_TABS @"Place 
 DEFINE_BOOL(defaultIconsUsingLetters, YES, SECTION_TABS @"Use the running command's first letter as the tab's default icon if there isn't a built in one.\nThis takes effect when tabs are configured to use built-in icons.");
 DEFINE_BOOL(tabCloseButtonsAlwaysVisible, NO, SECTION_TABS @"Should tab close buttons always remain visible?");
 DEFINE_BOOL(useSequoiaStyleTabs, NO, SECTION_TABS @"Use Sequoia-style tabs in Tahoe and later?");
+DEFINE_STRING(splitPaneSourceFillColor, @"#008000", SECTION_TABS @"Color of source pane fill when moving/swapping a split pane.\nShould be a web-style color, #rrggbb. You can also use p3#rrggbb for p3 color space.")
+DEFINE_STRING(splitPaneSourceBorderColor, @"#ffffff", SECTION_TABS @"Color of source pane outer border when moving/swapping a split pane.\nShould be a web-style color, #rrggbb. You can also use p3#rrggbb for p3 color space.")
+DEFINE_STRING(splitPaneSourceInnerBorderColor, @"#000000", SECTION_TABS @"Color of source pane inner border when moving/swapping a split pane.\nShould be a web-style color, #rrggbb. You can also use p3#rrggbb for p3 color space.")
 DEFINE_STRING(splitPaneTargetDropFillColor, @"#800000", SECTION_TABS @"Color of drop target fill when dragging a split pane.\nShould be a web-style color, #rrggbb. You can also use p3#rrggbb for p3 color space.")
 DEFINE_STRING(splitPaneTargetDropBorderColor, @"#ffffff", SECTION_TABS @"Color of drop target outer border when dragging a split pane.\nShould be a web-style color, #rrggbb. You can also use p3#rrggbb for p3 color space.")
 DEFINE_STRING(splitPaneTargetDropInnerBorderColor, @"#000000", SECTION_TABS @"Color of drop target inner border when dragging a split pane.\nShould be a web-style color, #rrggbb. You can also use p3#rrggbb for p3 color space.")
