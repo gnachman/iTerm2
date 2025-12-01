@@ -878,10 +878,6 @@ typedef struct {
                   KEY_CURSOR_GUIDE_COLOR:  [[NSColor colorWithCalibratedRed:0.650 green:0.910 blue:1.000 alpha:0.25] dictionaryValue],
                   KEY_BADGE_COLOR:         [[NSColor colorWithCalibratedRed:1.0 green:0.000 blue:0.000 alpha:0.5] dictionaryValue],
                   KEY_ACTIVE_PANE_BORDER_COLOR: [[NSColor colorWithCalibratedRed:0.0 green:0.5 blue:1.0 alpha:1.0] dictionaryValue],
-                  KEY_SESSION_END_MESSAGE_COLOR: [[NSColor colorWithCalibratedRed:70.0/255.0 green:83.0/255.0 blue:246.0/255.0 alpha:1] dictionaryValue],
-                  KEY_SESSION_END_MESSAGE_TEXT: @"Session Ended",
-                  KEY_SESSION_RESTARTED_MESSAGE_TEXT: @"Session Restarted",
-                  KEY_SESSION_FINISHED_MESSAGE_TEXT: @"Finished",
 
                   // The light and dark variants are used.
                   KEY_FOREGROUND_COLOR COLORS_LIGHT_MODE_SUFFIX:    [[NSColor colorWithCalibratedRed:0.733 green:0.733 blue:0.733 alpha:1] dictionaryValue],
