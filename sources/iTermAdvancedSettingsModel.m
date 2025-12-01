@@ -628,9 +628,10 @@ DEFINE_STRING(errorSound, @"", SECTION_SESSION @"When Alert on Next Mark is conf
 
 #define SECTION_WINDOWS @"Windows: "
 
-DEFINE_BOOL(openFileInNewWindows, NO, SECTION_WINDOWS @"Open files in new windows, not new tabs or split panes.\nThis affects shell scripts opened from Finder, for example. See also “Open files in split panes”.");
-DEFINE_BOOL(openFileInSplitPanes, NO, SECTION_WINDOWS @"Open files in split panes.\nThis affects shell scripts opened from Finder, for example. You must set “Open files in new windows, not new tabs” to “No” for this to take effect. See also “When opening a file in a split pane, should it be a vertical split?”");
-DEFINE_BOOL(openFileInVerticalSplitPane, YES, SECTION_WINDOWS @"When opening a file in a split pane, should it be a vertical split?")
+DEFINE_BOOL(openFileInNewWindows, NO, SECTION_WINDOWS @"DEPRECATED: Use "How should new instances be opened" instead.\nOpen files in new windows, not new tabs or split panes.\nThis affects shell scripts opened from Finder, for example. See also "Open files in split panes".");
+DEFINE_BOOL(openFileInSplitPanes, NO, SECTION_WINDOWS @"DEPRECATED: Use "How should new instances be opened" instead.\nOpen files in split panes.\nThis affects shell scripts opened from Finder, for example. You must set "Open files in new windows, not new tabs" to "No" for this to take effect. See also "When opening a file in a split pane, should it be a vertical split?"");
+DEFINE_BOOL(openFileInVerticalSplitPane, YES, SECTION_WINDOWS @"DEPRECATED: Use "How should new instances be opened" instead.\nWhen opening a file in a split pane, should it be a vertical split?")
+DEFINE_INT(newInstanceOpenStyle, -1, SECTION_WINDOWS @"How should new instances be opened when triggered by scripts or external applications?\n-1: Use legacy settings (default)\n0: New Window\n1: New Tab\n2: Vertical Split Pane\n3: Horizontal Split Pane\nThis provides a unified setting for controlling external instance creation.")
 DEFINE_BOOL(disableWindowSizeSnap, NO, SECTION_WINDOWS @"Terminal windows resize smoothly.\nDisables snapping to character grid. Holding Control will temporarily disable snap-to-grid.");
 DEFINE_BOOL(profilesWindowJoinsActiveSpace, NO, SECTION_WINDOWS @"If the Profiles window is open, it always moves to join the active Space.\nYou must restart iTerm2 for a change in this setting to take effect.");
 DEFINE_BOOL(darkThemeHasBlackTitlebar, YES, SECTION_WINDOWS @"Dark themes give terminal windows black title bars by default.");
